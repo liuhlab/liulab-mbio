@@ -40,6 +40,13 @@ Where a primer's 3' part anneals to a sequence record, and on which strand. A 5'
 an enzyme site added for cloning, lies outside it.
 _Avoid_: primer site, hybridization site
 
+### Placement
+
+Where a primer's binding site may lie: the positions each of its two ends may take. A tail fixes
+the 5' end, a target to read across bounds each end's distance from it, and a region bounds the
+amplicon.
+_Avoid_: window, flexibility, allowance
+
 ### Across the origin
 
 Of a span on a circular sequence record: running through the last base and on into the first.
