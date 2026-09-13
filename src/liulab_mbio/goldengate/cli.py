@@ -33,7 +33,7 @@ def plan(
     out: Annotated[
         Path,
         typer.Option(
-            "--out", "-o", file_okay=False, help="Directory to write the three outputs into."
+            "--out", "-o", file_okay=False, help="Directory to write the four outputs into."
         ),
     ],
     site: Annotated[
@@ -99,7 +99,7 @@ def plan(
         f"{len(made.parts)} fragments, overhangs {', '.join(made.overhangs.overhangs)}, "
         f"fidelity {scored.value:.0%} ({scored.label}), checks {made.status}"
     )
-    for path in (outputs.product, outputs.primers, outputs.protocol):
+    for path in (outputs.product, outputs.primers, outputs.protocol_data, outputs.protocol):
         typer.echo(str(path))
 
 

@@ -18,7 +18,7 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.goldengate import Plan, plan_assembly
 from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
-from liulab_mbio.protocol import OVERVIEW_CHARS
+from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
@@ -154,16 +154,27 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     assert bands["Empty vector"] == (COLONY_FLANK + removed + REVERSE_FLANK,)
 
 
-def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
+def test_the_four_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
     outputs = plan.write(tmp_path / "run")
-    assert [path.name for path in (outputs.product, outputs.primers, outputs.protocol)] == [
-        "product.dna",
-        "primers.tsv",
-        "protocol.html",
+    paths = (outputs.product, outputs.primers, outputs.protocol_data, outputs.protocol)
+    assert [(path.parent, path.name) for path in paths] == [
+        (tmp_path / "run", "product.dna"),
+        (tmp_path / "run", "primers.tsv"),
+        (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "protocol.html"),
     ]
-    assert all(
-        path.stat().st_size > 0 for path in (outputs.product, outputs.primers, outputs.protocol)
-    )
+    assert all(path.stat().st_size > 0 for path in paths)
+
+
+def test_the_protocol_data_reads_back_to_exactly_the_plans_protocol(plan, tmp_path):
+    outputs = plan.write(tmp_path)
+    assert read_protocol(outputs.protocol_data) == plan.protocol()
+
+
+def test_the_page_is_exactly_the_one_rendered_from_the_protocol_data(plan, tmp_path):
+    outputs = plan.write(tmp_path)
+    page = outputs.protocol.read_text(encoding="utf-8")
+    assert page == render_html(read_protocol(outputs.protocol_data))
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
@@ -172,6 +183,7 @@ def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
     for one, other in (
         (first.product, second.product),
         (first.primers, second.primers),
+        (first.protocol_data, second.protocol_data),
         (first.protocol, second.protocol),
     ):
         assert one.read_bytes() == other.read_bytes()

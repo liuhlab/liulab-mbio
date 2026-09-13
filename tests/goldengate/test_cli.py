@@ -1,5 +1,6 @@
 """The one verb over the pipeline, which is what the skill and the docs build call."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -28,17 +29,18 @@ def run(*arguments: str):
     return CliRunner().invoke(app, ["goldengate", "plan", *arguments])
 
 
-def test_the_cli_writes_the_three_outputs_into_the_directory(
+def test_the_cli_writes_the_four_outputs_into_the_directory_and_prints_their_paths(
     vector_and_insert, tmp_path: Path
 ) -> None:
     out = tmp_path / "run"
     result = run(*vector_and_insert, "--out", str(out))
     assert result.exit_code == 0, result.output
-    assert (out / "product.dna").exists()
-    assert (out / "primers.tsv").exists()
-    assert (out / "protocol.html").exists()
-    assert "BbsI" in result.output
-    assert "3347 bp" in result.output
+    summary, *paths = re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
+    names = ["product.dna", "primers.tsv", "protocol.json", "protocol.html"]
+    assert paths == [str(out / name) for name in names]
+    assert all((out / name).exists() for name in names)
+    assert "BbsI" in summary
+    assert "3347 bp" in summary
 
 
 def test_the_cli_takes_a_span_as_well_as_a_feature_name(vector_and_insert, tmp_path: Path) -> None:
