@@ -38,7 +38,7 @@ from liulab_mbio.goldengate.bench import (
     to_pmol,
 )
 from liulab_mbio.io import read_record
-from liulab_mbio.primers import Q5, TAQ, amplicon_sizes
+from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, Polymerase, amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord
 
 DATA = Path(__file__).parent / "data"
@@ -303,6 +303,109 @@ def test_taq_goes_two_step_above_sixty_five_degrees_and_not_at_it() -> None:
     above = pcr_program(TAQ, annealing_temperature=65.1, amplicon_length=500)
     assert len(at.stages[1].incubations) == 3
     assert len(above.stages[1].incubations) == 2
+
+
+#: NEB's 50 µL PCR for each shipped polymerase, line by line as (name, µL, stock, final); its
+#: program for 1.5 kb annealing at 55 °C as (label, °C, seconds); and the lowest two-step Ta.
+SHIPPED_PCR = {
+    "Q5": (
+        [
+            ("Q5 Reaction Buffer", 10.0, "5X", "1X"),
+            ("dNTP mix", 1.0, "10 mM each", "200 µM each"),
+            ("Forward primer", 2.5, "10 µM", "500 nM"),
+            ("Reverse primer", 2.5, "10 µM", "500 nM"),
+            ("Template DNA", 1.0, "", ""),
+            ("Q5 DNA Polymerase", 0.5, "2 U/µL", "1 units"),
+            ("Nuclease-free water", 32.5, "", "to 50 µL"),
+        ],
+        [
+            ("Initial denaturation", 98.0, 30),
+            ("Denature", 98.0, 10),
+            ("Anneal", 55.0, 20),
+            ("Extend", 72.0, 40),
+            ("Final extension", 72.0, 120),
+            ("Hold", 4.0, None),
+        ],
+        72.0,
+    ),
+    "Phusion": (
+        [
+            ("Phusion HF Buffer", 10.0, "5X", "1X"),
+            ("dNTP mix", 1.0, "10 mM each", "200 µM each"),
+            ("Forward primer", 2.5, "10 µM", "500 nM"),
+            ("Reverse primer", 2.5, "10 µM", "500 nM"),
+            ("Template DNA", 1.0, "", ""),
+            ("Phusion DNA Polymerase", 0.5, "2 U/µL", "1 units"),
+            ("Nuclease-free water", 32.5, "", "to 50 µL"),
+        ],
+        [
+            ("Initial denaturation", 98.0, 30),
+            ("Denature", 98.0, 10),
+            ("Anneal", 55.0, 20),
+            ("Extend", 72.0, 30),
+            ("Final extension", 72.0, 300),
+            ("Hold", 4.0, None),
+        ],
+        72.0,
+    ),
+    "Taq": (
+        [
+            ("Standard Taq Reaction Buffer", 5.0, "10X", "1X"),
+            ("dNTP mix", 1.0, "10 mM each", "200 µM each"),
+            ("Forward primer", 1.0, "10 µM", "200 nM"),
+            ("Reverse primer", 1.0, "10 µM", "200 nM"),
+            ("Template DNA", 1.0, "", ""),
+            ("Taq DNA Polymerase", 0.25, "5 U/µL", "1.25 units"),
+            ("Nuclease-free water", 40.75, "", "to 50 µL"),
+        ],
+        [
+            ("Initial denaturation", 95.0, 30),
+            ("Denature", 95.0, 30),
+            ("Anneal", 55.0, 30),
+            ("Extend", 68.0, 120),
+            ("Final extension", 68.0, 300),
+            ("Hold", 4.0, None),
+        ],
+        65.1,
+    ),
+    "OneTaq": (
+        [
+            ("OneTaq Standard Reaction Buffer", 10.0, "5X", "1X"),
+            ("dNTP mix", 1.0, "10 mM each", "200 µM each"),
+            ("Forward primer", 1.0, "10 µM", "200 nM"),
+            ("Reverse primer", 1.0, "10 µM", "200 nM"),
+            ("Template DNA", 1.0, "", ""),
+            ("OneTaq DNA Polymerase", 0.25, "5 U/µL", "1.25 units"),
+            ("Nuclease-free water", 35.75, "", "to 50 µL"),
+        ],
+        [
+            ("Initial denaturation", 94.0, 30),
+            ("Denature", 94.0, 30),
+            ("Anneal", 55.0, 30),
+            ("Extend", 68.0, 120),
+            ("Final extension", 68.0, 300),
+            ("Hold", 4.0, None),
+        ],
+        68.0,
+    ),
+}
+
+
+@pytest.mark.parametrize("polymerase", [Q5, PHUSION, TAQ, ONETAQ], ids=lambda one: one.name)
+def test_each_shipped_polymerase_gets_nebs_reaction_and_program(polymerase: Polymerase) -> None:
+    lines, program, two_step = SHIPPED_PCR[polymerase.name]
+    table = pcr_reaction(polymerase)
+    assert [(one.name, one.volume_ul, one.stock, one.final) for one in table.components] == lines
+    cycled = pcr_program(polymerase, annealing_temperature=55.0, amplicon_length=1500)
+    assert [stage.cycles for stage in cycled.stages] == [1, 30, 1, 1]
+    assert [
+        (one.label, one.temperature_c, one.seconds)
+        for stage in cycled.stages
+        for one in stage.incubations
+    ] == program
+    for annealing, steps in ((round(two_step - 0.1, 1), 3), (two_step, 2)):
+        split = pcr_program(polymerase, annealing_temperature=annealing, amplicon_length=1500)
+        assert len(split.stages[1].incubations) == steps
 
 
 def test_the_colony_pcr_reaction_is_half_master_mix() -> None:

@@ -20,7 +20,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans |
 | biology | `enzymes`, `sites`, `codons` | shipped enzyme data, cut sites, domestication |
-| primers | `primers/` | `polymerase`, its Tm and Ta; `thresholds` and their wording; `placement`, `evaluation`, `design` |
+| primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
 | pipeline | `goldengate/` | `design`, `assembly`, `bench`, `ligase`, `steps`, joined by `plan` |
 

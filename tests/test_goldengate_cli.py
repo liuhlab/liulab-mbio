@@ -55,7 +55,13 @@ def test_the_cli_says_which_enzyme_it_refused(tmp_path: Path) -> None:
 def test_the_cli_refuses_a_polymerase_the_package_does_not_ship(tmp_path: Path) -> None:
     result = run(VECTOR, INSERT, "--out", str(tmp_path / "run"), "--polymerase", "Pfu")
     assert result.exit_code == 1
-    assert "Q5" in result.output
+    assert "this package ships Q5, Phusion, Taq, OneTaq" in result.output
+
+
+def test_the_cli_reads_a_polymerase_name_in_any_case(tmp_path: Path) -> None:
+    result = run(VECTOR, INSERT, "--out", str(tmp_path / "run"), "--polymerase", "phusion")
+    assert result.exit_code == 0, result.output
+    assert "Phusion DNA Polymerase" in (tmp_path / "run" / "protocol.html").read_text()
 
 
 def test_the_cli_takes_more_than_one_insert_file(tmp_path: Path) -> None:

@@ -468,100 +468,6 @@ PRIMER_STOCK_UM = 10.0
 DNTP_STOCK_MM = 10.0
 
 
-@dataclass(frozen=True, slots=True)
-class PcrProfile:
-    """What NEB's protocol puts in one polymerase's PCR, and the program around it.
-
-    Parameters
-    ----------
-    buffer_name, buffer_fold
-        The reaction buffer as supplied, so its volume is the reaction over `buffer_fold`.
-    units_per_ul
-        Polymerase in the reaction.
-    stock_units_ul
-        Polymerase in the tube it is pipetted from.
-    initial_denaturation_c, initial_denaturation_seconds
-        The step before the cycles.
-    denaturation_c, denaturation_seconds, annealing_seconds
-        Inside each cycle; the annealing temperature is the primer pair's.
-    final_extension_seconds
-        At the polymerase's own extension temperature.
-    two_step_celsius
-        The lowest annealing temperature that gets a two-step program, annealing and extension
-        combined. Taq's rule is "above 65 °C", which at a tenth of a degree is 65.1.
-    cycles, dntp_um_each, hold_c
-        The rest of NEB's table.
-    """
-
-    buffer_name: str
-    _: KW_ONLY
-    buffer_fold: float
-    units_per_ul: float
-    stock_units_ul: float
-    initial_denaturation_c: float
-    denaturation_c: float
-    denaturation_seconds: int
-    annealing_seconds: int
-    final_extension_seconds: int
-    two_step_celsius: float
-    cycles: int = 30
-    initial_denaturation_seconds: int = 30
-    dntp_um_each: float = 200.0
-    hold_c: float = 4.0
-
-
-#: One profile per polymerase `liulab_mbio.primers` ships, keyed by its name.
-PCR_PROFILES: Mapping[str, PcrProfile] = {
-    "Q5": PcrProfile(
-        "Q5 Reaction Buffer",
-        buffer_fold=5.0,
-        units_per_ul=0.02,
-        stock_units_ul=2.0,
-        initial_denaturation_c=98.0,
-        denaturation_c=98.0,
-        denaturation_seconds=10,
-        annealing_seconds=20,
-        final_extension_seconds=120,
-        two_step_celsius=72.0,
-    ),
-    "Phusion": PcrProfile(
-        "Phusion HF Buffer",
-        buffer_fold=5.0,
-        units_per_ul=0.02,
-        stock_units_ul=2.0,
-        initial_denaturation_c=98.0,
-        denaturation_c=98.0,
-        denaturation_seconds=10,
-        annealing_seconds=20,
-        final_extension_seconds=300,
-        two_step_celsius=72.0,
-    ),
-    "OneTaq": PcrProfile(
-        "OneTaq Standard Reaction Buffer",
-        buffer_fold=5.0,
-        units_per_ul=0.025,
-        stock_units_ul=5.0,
-        initial_denaturation_c=94.0,
-        denaturation_c=94.0,
-        denaturation_seconds=30,
-        annealing_seconds=30,
-        final_extension_seconds=300,
-        two_step_celsius=68.0,
-    ),
-    "Taq": PcrProfile(
-        "Standard Taq Reaction Buffer",
-        buffer_fold=10.0,
-        units_per_ul=0.025,
-        stock_units_ul=5.0,
-        initial_denaturation_c=95.0,
-        denaturation_c=95.0,
-        denaturation_seconds=30,
-        annealing_seconds=30,
-        final_extension_seconds=300,
-        two_step_celsius=65.1,
-    ),
-}
-
 #: NEB's colony PCR: a 2X master mix, a colony picked with a toothpick, and a lysis step long
 #: enough to open the cells.
 COLONY_PCR_MASTER_MIX = "OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)"
@@ -587,9 +493,9 @@ def pcr_reaction(
     Raises
     ------
     ValueError
-        If the polymerase has no profile, or the components do not fit `volume_ul`.
+        If the components do not fit `volume_ul`.
     """
-    profile = _profile(polymerase)
+    profile = polymerase.pcr
     components = [
         Component(
             profile.buffer_name,
@@ -679,20 +585,14 @@ def pcr_program(
     Annealing and extension are combined into one step at the extension temperature once the
     annealing temperature reaches the polymerase's `PcrProfile.two_step_celsius`. An amplicon
     that is a Golden Gate insert wants `GOLDEN_GATE_PCR_CYCLES`, the fewest NEB finds enough.
-
-    Raises
-    ------
-    ValueError
-        If the polymerase has no profile.
     """
-    profile = _profile(polymerase)
+    profile = polymerase.pcr
     initial = Incubation(
         "Initial denaturation",
         profile.initial_denaturation_c,
         profile.initial_denaturation_seconds,
     )
     return _program(
-        profile,
         polymerase,
         initial,
         annealing_temperature=annealing_temperature,
@@ -710,17 +610,10 @@ def colony_pcr_program(
     amplicon_length: int,
     cycles: int | None = None,
 ) -> ThermocyclerProgram:
-    """Return the colony PCR program, which opens the cells before it denatures anything.
-
-    Raises
-    ------
-    ValueError
-        If the polymerase has no profile.
-    """
-    profile = _profile(polymerase)
+    """Return the colony PCR program, which opens the cells before it denatures anything."""
+    profile = polymerase.pcr
     lysis = Incubation("Lysis", profile.initial_denaturation_c, COLONY_LYSIS_SECONDS)
     return _program(
-        profile,
         polymerase,
         lysis,
         annealing_temperature=annealing_temperature,
@@ -732,7 +625,6 @@ def colony_pcr_program(
 
 
 def _program(
-    profile: PcrProfile,
     polymerase: Polymerase,
     first: Incubation,
     *,
@@ -742,6 +634,7 @@ def _program(
     hold_c: float,
     title: str,
 ) -> ThermocyclerProgram:
+    profile = polymerase.pcr
     extension = polymerase.extension_seconds(amplicon_length)
     denature = Incubation("Denature", profile.denaturation_c, profile.denaturation_seconds)
     if annealing_temperature >= profile.two_step_celsius:
@@ -772,12 +665,6 @@ def _program(
         ),
         title=title,
     )
-
-
-def _profile(polymerase: Polymerase) -> PcrProfile:
-    if polymerase.name not in PCR_PROFILES:
-        raise ValueError(f"no NEB PCR protocol is recorded for {polymerase.name}")
-    return PCR_PROFILES[polymerase.name]
 
 
 # --------------------------------------------------------------------------------------

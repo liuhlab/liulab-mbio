@@ -6,12 +6,9 @@ from typing import Annotated
 import typer
 
 from liulab_mbio.goldengate.plan import DEFAULT_HOST, Orientation, Site, plan_assembly
-from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, Polymerase
+from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
-
-#: The polymerases a caller can name on the command line.
-POLYMERASES: dict[str, Polymerase] = {one.name.lower(): one for one in (Q5, PHUSION, TAQ, ONETAQ)}
 
 #: Where a ligase fidelity matrix is read from when `--ligase-matrix` names none. The package
 #: ships no such matrix; this points at a copy the user holds.
@@ -149,15 +146,15 @@ def _orientation(text: str) -> Orientation:
 
 
 def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships.
+    """Read one of the polymerases this package ships, whatever the case of its name.
 
     Raises
     ------
     ValueError
         If it ships no polymerase of that name.
     """
-    found = POLYMERASES.get(name.lower())
+    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
     if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES.values())
+        shipped = ", ".join(one.name for one in POLYMERASES)
         raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
     return found

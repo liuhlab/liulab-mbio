@@ -1,4 +1,4 @@
-"""A DNA polymerase: the buffer its Tm is computed in, and its annealing and extension rules.
+"""A DNA polymerase: the buffer its Tm is computed in, its cycling rules, and NEB's PCR for it.
 
 Tm is the SantaLucia (1998) nearest-neighbour model computed by primer3-py, salt-corrected as
 NEB's Tm Calculator does it: Owczarzy (2004) at the monovalent equivalent NEB assigns the
@@ -12,12 +12,55 @@ turning a pair's Tms into an annealing temperature (Ta), and its extension rate:
 - `TAQ` and `ONETAQ`, 200 nM: Ta is the lower Tm - 5 °C, at most 68 °C, and NEB asks for at
   least 45 °C. Extension 68 °C, 60 s/kb.
 
+Each also carries its `PcrProfile`: the buffer, the enzyme and the cycling NEB's protocol sets.
 Sources, and the values these reproduce: ``docs/research/primer-design-and-pcr.md``.
 """
 
 import math
 from dataclasses import KW_ONLY, dataclass
 from typing import TypedDict
+
+
+@dataclass(frozen=True, slots=True)
+class PcrProfile:
+    """What NEB's protocol puts in one polymerase's PCR, and the program around it.
+
+    Parameters
+    ----------
+    buffer_name, buffer_fold
+        The reaction buffer as supplied, so its volume is the reaction over `buffer_fold`.
+    units_per_ul
+        Polymerase in the reaction.
+    stock_units_ul
+        Polymerase in the tube it is pipetted from.
+    initial_denaturation_c, initial_denaturation_seconds
+        The step before the cycles.
+    denaturation_c, denaturation_seconds, annealing_seconds
+        Inside each cycle; the annealing temperature is the primer pair's.
+    final_extension_seconds
+        At the polymerase's own extension temperature.
+    two_step_celsius
+        The lowest annealing temperature that gets a two-step program, annealing and extension
+        combined. Taq's rule is "above 65 °C", which at a tenth of a degree is 65.1.
+    cycles, dntp_um_each, hold_c
+        The rest of NEB's table.
+    """
+
+    buffer_name: str
+    _: KW_ONLY
+    buffer_fold: float
+    units_per_ul: float
+    stock_units_ul: float
+    initial_denaturation_c: float
+    denaturation_c: float
+    denaturation_seconds: int
+    annealing_seconds: int
+    final_extension_seconds: int
+    two_step_celsius: float
+    cycles: int = 30
+    initial_denaturation_seconds: int = 30
+    dntp_um_each: float = 200.0
+    hold_c: float = 4.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +90,8 @@ class Polymerase:
         °C.
     extension_seconds_per_kb
         Extension time per kilobase of amplicon.
+    pcr
+        What NEB's protocol puts in this polymerase's PCR, and the program around it.
     """
 
     name: str
@@ -61,6 +106,7 @@ class Polymerase:
     annealing_min: float
     extension_temperature: float
     extension_seconds_per_kb: int
+    pcr: PcrProfile
 
     def annealing_temperature(self, tm: float, other_tm: float) -> float:
         """Return the annealing temperature for a pair with these Tms, °C to a tenth."""
@@ -87,6 +133,18 @@ Q5 = Polymerase(
     annealing_min=55.0,
     extension_temperature=72.0,
     extension_seconds_per_kb=20,
+    pcr=PcrProfile(
+        "Q5 Reaction Buffer",
+        buffer_fold=5.0,
+        units_per_ul=0.02,
+        stock_units_ul=2.0,
+        initial_denaturation_c=98.0,
+        denaturation_c=98.0,
+        denaturation_seconds=10,
+        annealing_seconds=20,
+        final_extension_seconds=120,
+        two_step_celsius=72.0,
+    ),
 )
 
 #: NEB Phusion High-Fidelity DNA Polymerase (M0530). NEB corrects its salt the older way and
@@ -103,6 +161,18 @@ PHUSION = Polymerase(
     annealing_min=45.0,
     extension_temperature=72.0,
     extension_seconds_per_kb=15,
+    pcr=PcrProfile(
+        "Phusion HF Buffer",
+        buffer_fold=5.0,
+        units_per_ul=0.02,
+        stock_units_ul=2.0,
+        initial_denaturation_c=98.0,
+        denaturation_c=98.0,
+        denaturation_seconds=10,
+        annealing_seconds=20,
+        final_extension_seconds=300,
+        two_step_celsius=72.0,
+    ),
 )
 
 #: NEB Taq DNA Polymerase with Standard Taq Buffer (M0273).
@@ -118,6 +188,18 @@ TAQ = Polymerase(
     annealing_min=45.0,
     extension_temperature=68.0,
     extension_seconds_per_kb=60,
+    pcr=PcrProfile(
+        "Standard Taq Reaction Buffer",
+        buffer_fold=10.0,
+        units_per_ul=0.025,
+        stock_units_ul=5.0,
+        initial_denaturation_c=95.0,
+        denaturation_c=95.0,
+        denaturation_seconds=30,
+        annealing_seconds=30,
+        final_extension_seconds=300,
+        two_step_celsius=65.1,
+    ),
 )
 
 #: NEB OneTaq DNA Polymerase (M0480) in Standard Reaction Buffer, the colony PCR default.
@@ -133,7 +215,22 @@ ONETAQ = Polymerase(
     annealing_min=45.0,
     extension_temperature=68.0,
     extension_seconds_per_kb=60,
+    pcr=PcrProfile(
+        "OneTaq Standard Reaction Buffer",
+        buffer_fold=5.0,
+        units_per_ul=0.025,
+        stock_units_ul=5.0,
+        initial_denaturation_c=94.0,
+        denaturation_c=94.0,
+        denaturation_seconds=30,
+        annealing_seconds=30,
+        final_extension_seconds=300,
+        two_step_celsius=68.0,
+    ),
 )
+
+#: Every polymerase this package ships.
+POLYMERASES: tuple[Polymerase, ...] = (Q5, PHUSION, TAQ, ONETAQ)
 
 
 class _Conditions(TypedDict):
