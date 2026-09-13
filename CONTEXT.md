@@ -157,6 +157,35 @@ supplier's own incubation, heat-inactivation and methylation answers, which diff
 products of one enzyme.
 _Avoid_: brand, product name
 
+### Cut site
+
+Where an enzyme reads its recognition site in a record: the strand carrying it, where each
+strand is severed, and the overhang that leaves. A site is reported wherever the enzyme may
+cut, so an IUPAC code in the template that could spell the site counts as one.
+_Avoid_: hit, match, restriction site
+
+### Digest fragment
+
+One piece a digest leaves, bounded by two cuts in the top strand and carrying an overhang at
+each end. Its length is the top strand's, which is what a gel measures. An uncut circular
+record leaves none, nothing having been cut; an uncut linear one is a single fragment already.
+_Avoid_: band, piece
+
+### Domestication
+
+Taking a recognition site out of a coding sequence by changing one codon for another spelling
+the same amino acid, so the reading frame and the protein survive. The replacement is the one
+the host uses most often among those that create no new site. A site outside a coding sequence
+cannot be domesticated, and is reported for someone to decide about.
+_Avoid_: silent mutation, site removal
+
+### Codon usage
+
+How often a host spells each of the 64 codons, counted over every complete coding sequence of
+its genome. A whole-genome table is the background the genome itself uses; a highly expressed
+table counts a small reference set and is a different thing.
+_Avoid_: codon bias, codon frequency table
+
 ### Packet
 
 One unit of a SnapGene `.dna` file: a type byte, a length, then the payload. A reader keeps the
