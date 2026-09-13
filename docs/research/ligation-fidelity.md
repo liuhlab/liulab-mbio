@@ -5,7 +5,7 @@ search:
 
 # Ligation fidelity data: sources, licence, and how a set of overhangs is scored
 
-Research note for issue #11. Everything below was retrieved on **2026-09-12**. It records where
+Research note for issues #11 and #18. Everything below was retrieved on **2026-09-12**. It records where
 `src/liulab_mbio/data/ligation_fidelity.json` comes from, what its licence allows, how the
 shipped matrices are read, and which overhang rules the code applies and on whose authority.
 
@@ -248,9 +248,99 @@ A tempting alternative was rejected: scoring PaqCI on BsaI's matrix, on the argu
 ligation fidelity belongs to T4 ligase and the cycling temperature rather than to the Type IIS
 enzyme. It is a reasonable argument and it is still a substitution of one enzyme's measurement
 for another's, so `choose_enzyme` prefers an enzyme that has its own matrix instead, and says
-so in its ranking.
+so in its ranking. Section 8 does the different thing that argument actually licenses: score the
+overhangs against a measurement of **the ligase itself**, and label the number as the ligase's
+and not the enzyme's.
 
-## 8. Regeneration
+## 8. A matrix the user holds
+
+Potapov 2018 covers what Pryor does not. It profiled **T4 DNA ligase itself** across all 256
+four-base overhangs, at 25 °C and at 37 °C, for 1 hour and for 18 hours, and T7 ligase besides.
+Ligation is the ligase's work, so that data speaks to every Type IIS enzyme, including the ones
+nobody has measured.
+
+**It is CC BY-NC 4.0, so none of it is here.** No file from that archive is in this repository,
+no test fixture is copied from it, and no number of it is transcribed into the code or the tests.
+The package reads a matrix from a file **the user already holds**, so nothing is redistributed
+and nothing needs licence marking. Whoever downloads the archive accepts its terms themselves.
+
+### Where the archive is
+
+figshare item 7267505, `sb8b00333_si_002.zip`, the Supporting Data of
+[doi:10.1021/acssynbio.8b00333](https://doi.org/10.1021/acssynbio.8b00333). Six of its files are
+count matrices over every overhang pair, one per condition:
+
+| File | Ligase | Incubation |
+| --- | --- | --- |
+| `FileS01_T4_01h_25C.xlsx` | T4 | 1 h at 25 °C |
+| `FileS02_T4_01h_37C.xlsx` | T4 | 1 h at 37 °C |
+| `FileS03_T4_18h_25C.xlsx` | T4 | 18 h at 25 °C |
+| `FileS04_T4_18h_37C.xlsx` | T4 | 18 h at 37 °C |
+| `FileS06_T7_18h_25C.csv` | T7 | 18 h at 25 °C |
+| `FileS08_T7_18h_37C.csv` | T7 | 18 h at 37 °C |
+
+`FileS03` is the one to reach for, because NEB's own Viewer defaults to it: "The default
+conditions are ligation at 25°C for 18 hours; these conditions have been shown to well predict
+the results of Golden Gate assembly using typical cycled conditions."
+
+The `*_cycled` files in the same archive are **per-assembly summaries, not matrices**. They are
+refused rather than read as fidelity data, because their labels are assembly compositions and
+not overhangs.
+
+### Pointing the tool at a copy
+
+```python
+from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.goldengate.ligase import read_profile
+
+profile = read_profile("~/potapov/FileS03_T4_18h_25C.xlsx")
+plan_assembly(vector, insert, enzyme="PaqCI", profile=profile)
+```
+
+On the command line, as an option or as an environment variable:
+
+```sh
+liulab_mbio goldengate plan vector.dna insert.dna --out run \
+    --ligase-matrix ~/potapov/FileS03_T4_18h_25C.xlsx
+
+export LIULAB_MBIO_LIGASE_MATRIX=~/potapov/FileS03_T4_18h_25C.xlsx
+liulab_mbio goldengate plan vector.dna insert.dna --out run
+```
+
+Both shapes load with the standard library alone. An `.xlsx` is read by the same `zipfile` and
+`xml.etree` code the build script uses, which moved into `liulab_mbio.goldengate.ligase` so that
+the package and the script share one reader; a `.csv` is read by `csv`. **No dependency was
+added.** A file that is not a count matrix is refused with a message saying what one is, rather
+than a stack trace: a header row of overhang labels, the same labels down the first column, and
+a count in each cell.
+
+The conditions are read off the file name where it is named the way the archive names one, and
+`conditions=` states them for a file that has been renamed.
+
+### What the report then says
+
+A profile belongs to the ligase and the conditions, not to the Type IIS enzyme, and
+`FidelityReport` keeps the three kinds of number apart:
+
+| Scored by | `measured` | `enzyme_specific` | `label` |
+| --- | --- | --- | --- |
+| the enzyme's own shipped matrix | `True` | `True` | `measured` |
+| a ligase profile | `True` | `False` | `measured ligase profile, not specific to PaqCI` |
+| the rules | `False` | `True` | `rule-based estimate` |
+
+`source` names the conditions and the file, so the protocol cites the file the number came from
+and the overview prints the label beside the percentage. **A ligase profile is never presented as
+a measurement of the enzyme**, and a rule-based score is still never printed beside a measured
+one as though the two were the same kind of number.
+
+The enzyme's own matrix wins where there is one, because a profile stands in for a measurement
+nobody has made rather than replacing one somebody has. `prefer_profile` overrides that, for a
+designer who wants one set of conditions across several enzymes.
+
+**Without such a file nothing changes.** PaqCI is scored by the rules exactly as it was before,
+which a test pins.
+
+## 9. Regeneration
 
 ```sh
 pixi run python scripts/build_ligation_fidelity.py            # downloads the five tables
@@ -264,14 +354,14 @@ redirecting to signed storage, which `urllib` follows. Nothing else is fetched.
 Tests never touch the network: `tests/test_build_ligation_fidelity.py` writes the three XML
 parts of a workbook itself and reads them back, which is also what makes the guards testable.
 
-## 9. Open gaps
+## 10. Open gaps
 
 | Item | Why it is missing | What is done instead |
 | --- | --- | --- |
 | The exact query set NEB's own tool uses | The Viewer v2 help page is 403 and the v1 page does not spell the arithmetic | The reading above, checked against three published numbers |
 | Why two GetSet table sets score 1.5 and 4 points low | The sets as printed may not be the whole reaction | Recorded in section 5, untouched |
-| T7 DNA ligase, and static 25 °C conditions | Only Potapov 2018 covers them, CC BY-NC | Cited, not shipped |
-| A matrix for PaqCI, AarI, BspQI, BtgZI | Nobody has published one | The rule-based fallback, labelled as such |
+| T7 DNA ligase, and static 25 °C conditions | Only Potapov 2018 covers them, CC BY-NC | Not shipped; read from the user's own copy (section 8) |
+| A matrix for PaqCI, AarI, BspQI, BtgZI | Nobody has published one | A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled |
 
 ## Sources
 

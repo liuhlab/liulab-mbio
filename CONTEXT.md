@@ -251,6 +251,14 @@ product over the junctions of correct ligations over all ligations. It is a meas
 ligase at one temperature, so it belongs to the enzyme it was measured with.
 _Avoid_: accuracy, specificity, efficiency
 
+### Ligase profile
+
+A count matrix measured with the ligase alone, over every overhang pair, at one temperature for
+one incubation. Because the joining is the ligase's work, it scores the overhangs of a Type IIS
+enzyme nobody has measured. It is still not a measurement of that enzyme, and a report scored
+against one says so. This package ships none: it reads a file the user already holds.
+_Avoid_: ligase data, T4 table
+
 ### Near-duplicate
 
 Of two overhangs in one set: differing in fewer bases than the set's distance rule allows. Two
