@@ -27,8 +27,10 @@ from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers import (
     Q5,
     THRESHOLDS,
+    Check,
     PairReport,
     Polymerase,
+    Status,
     Thresholds,
     design_pair,
     evaluate_pair,
@@ -42,7 +44,14 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import SPACER_LENGTH, EnzymeLike, Fragment, digest, primer_tail
+from liulab_mbio.sites import (
+    SPACER_LENGTH,
+    EnzymeLike,
+    Fragment,
+    digest,
+    find_sites,
+    primer_tail,
+)
 
 #: Dam methylates the adenine of this site, and DpnI cuts only where it has.
 DAM_SITE = "GATC"
@@ -50,6 +59,8 @@ DAM_SITE = "GATC"
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
 JUNCTION_COLOR = "#ff9900"
+
+_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
 
 
 def dam_sites(record: SequenceRecord) -> int:
@@ -120,6 +131,14 @@ class Part:
     def fragment_length(self) -> int:
         """Bases this part puts into the product, its own overhang counted."""
         return self.span[1] - self.span[0]
+
+    @property
+    def bases(self) -> str:
+        """What this part puts into the product, its own overhang standing first."""
+        start, end = self.span
+        return self.left_overhang + self.template.extract(
+            Segment(start + len(self.left_overhang), end)
+        )
 
 
 def amplify(
@@ -347,6 +366,71 @@ class Assembly:
         """Where each junction begins, which is what a validation design reads across."""
         return tuple(one.start for one in self.junctions)
 
+    @property
+    def checks(self) -> tuple[Check, ...]:
+        """Judge the product, as data a protocol can print.
+
+        The sites left for the enzyme come first — one that remains would cut the product open
+        again — then a check for each part counting the copies of it the product holds, then how
+        many junctions spell the overhang they claim. A part is counted from its template and
+        not from the digest, so the count answers for the ligation rather than repeating it.
+        """
+        left = len(find_sites(self.product, self.enzyme))
+        checks = [
+            Check(
+                "sites",
+                "pass" if left == 0 else "fail",
+                left,
+                f"{self.enzyme.name} no longer cuts the product"
+                if left == 0
+                else f"{self.enzyme.name} still cuts the product open",
+            )
+        ]
+        for index, part in enumerate(self.parts):
+            copies = _copies(self.product, part.bases)
+            checks.append(
+                Check(
+                    part.name or f"part {index}",
+                    "pass" if copies == 1 else "fail",
+                    copies,
+                    f"{part.fragment_length} bases, whole and once"
+                    if copies == 1
+                    else f"{copies} whole copies of its {part.fragment_length} bases",
+                )
+            )
+        matched = sum(self.product.extract(one.span) == one.overhang for one in self.junctions)
+        checks.append(
+            Check(
+                "junctions",
+                "pass" if matched == len(self.junctions) else "fail",
+                matched,
+                ", ".join(f"{one.overhang} at {one.start}" for one in self.junctions),
+            )
+        )
+        return tuple(checks)
+
+    @property
+    def status(self) -> Status:
+        """The worst status of any check."""
+        worst: Status = "pass"
+        for check in self.checks:
+            if _RANK[check.status] > _RANK[worst]:
+                worst = check.status
+        return worst
+
+    def __getitem__(self, name: str) -> Check:
+        """Return the check of that name.
+
+        Raises
+        ------
+        KeyError
+            If no check has it.
+        """
+        for check in self.checks:
+            if check.name == name:
+                return check
+        raise KeyError(name)
+
 
 def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> Assembly:
     """Cut every part with `enzyme` and ligate them into one circular product.
@@ -477,6 +561,24 @@ def _carried(
         if sites:
             primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
     return tuple(features), tuple(primers)
+
+
+def _copies(record: SequenceRecord, bases: str) -> int:
+    """Count where `bases` reads whole in `record`, on either strand and across the origin."""
+    if not bases or len(bases) > len(record):
+        return 0
+    haystack = record.sequence
+    if record.topology == "circular":
+        haystack += record.sequence[: len(bases) - 1]
+    return _occurrences(haystack, bases) + _occurrences(haystack, reverse_complement(bases))
+
+
+def _occurrences(haystack: str, needle: str) -> int:
+    """Count where `needle` reads in `haystack`, overlapping copies counted separately."""
+    found, at = 0, haystack.find(needle)
+    while at >= 0:
+        found, at = found + 1, haystack.find(needle, at + 1)
+    return found
 
 
 def _ordered(record: SequenceRecord) -> SequenceRecord:

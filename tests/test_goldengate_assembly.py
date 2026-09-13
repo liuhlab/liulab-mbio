@@ -5,10 +5,12 @@ in both, so the enzyme here is BbsI or PaqCI. Nothing about the fixtures is hard
 package: the spans and overhangs below are read off the records and pinned here.
 """
 
+import dataclasses
 from pathlib import Path
 
 import pytest
 
+from liulab_mbio import edits
 from liulab_mbio.goldengate import bench
 from liulab_mbio.goldengate.assembly import (
     JUNCTION_COLOR,
@@ -26,7 +28,7 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import find_sites, has_site
+from liulab_mbio.sites import find_sites, has_site, insert_site
 from liulab_mbio.snapgene import read_dna, write_dna
 
 DATA = Path(__file__).parent / "data"
@@ -303,6 +305,53 @@ def test_the_bands_bench_expects_are_the_ones_this_product_gives(assembly, puc19
     bands = {one.name: one.bands_bp for one in check.clones}
     assert bands["Correct clone"] == (797,)
     assert bands["Empty vector"] == (137,)
+
+
+def test_a_part_puts_exactly_its_own_span_into_the_product(backbone, insert, gfp):
+    # The insert is scarless, so its overhang is its own first bases and nothing is added.
+    assert insert.bases == gfp.sequence
+    assert len(backbone.bases) == backbone.fragment_length
+
+
+def test_the_product_passes_every_check(assembly):
+    assert assembly.status == "pass"
+    assert [one.name for one in assembly.checks] == [
+        "sites",
+        "pUC19 backbone",
+        "GFP",
+        "junctions",
+    ]
+    assert assembly["sites"].value == 0
+    assert assembly["GFP"].value == 1
+    assert assembly["pUC19 backbone"].value == 1
+    assert assembly["junctions"].value == 2
+
+
+def test_a_site_left_for_the_enzyme_fails_the_check(assembly):
+    spoiled, _ = insert_site(assembly.product, "BbsI", 2000)
+    checked = dataclasses.replace(assembly, product=spoiled)
+    assert checked["sites"].value == 1
+    assert checked["sites"].status == "fail"
+    assert checked.status == "fail"
+
+
+def test_an_insert_found_twice_fails_its_check(assembly, gfp):
+    doubled, _ = edits.insert(assembly.product, 2000, gfp.sequence)
+    checked = dataclasses.replace(assembly, product=doubled)
+    assert checked["GFP"].value == 2
+    assert checked["GFP"].status == "fail"
+
+
+def test_a_junction_that_lost_its_bases_fails_the_check(assembly):
+    changed, _ = edits.replace(assembly.product, 395, 399, "TTTT")
+    checked = dataclasses.replace(assembly, product=changed)
+    assert checked["junctions"].value == 1
+    assert checked["junctions"].status == "fail"
+
+
+def test_an_unknown_check_is_a_key_error(assembly):
+    with pytest.raises(KeyError):
+        assembly["nonsense"]
 
 
 def _annealed(primer: Primer) -> int:
