@@ -101,6 +101,10 @@ class Thresholds:
         genome beside it (#44, #47).
     genome_max_amplicon
         The longest amplicon a genome search reports, bp: the length #44 measured with.
+    genome_pairs_per_search, genome_rounds
+        How many pairs a design checks in one genome search, and how many searches it runs
+        before it gives up. A search costs seconds and each pair added to one costs a fraction
+        of a second, so a round is wide and there are few of them (#44).
     """
 
     length: Band = Band(18, 30, 15, 35)
@@ -129,6 +133,8 @@ class Thresholds:
     genome_mismatches_above_limit: int = 0
     genome_terminal_window: int = 3
     genome_max_amplicon: int = 4000
+    genome_pairs_per_search: int = 20
+    genome_rounds: int = 3
 
 
 #: The thresholds every check uses unless a caller passes its own: a PCR primer's.
