@@ -17,6 +17,7 @@ from liulab_mbio.primers.evaluation import (
     annealing_checks,
     evaluate_pair,
     evaluate_primer,
+    pair_checks,
 )
 from liulab_mbio.primers.placement import (
     PrimingSite,
@@ -72,5 +73,6 @@ __all__ = [
     "find_binding_sites",
     "find_priming_sites",
     "melting_temperature",
+    "pair_checks",
     "reading",
 ]

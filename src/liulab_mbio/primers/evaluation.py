@@ -118,8 +118,8 @@ def annealing_checks(
 ) -> tuple[Check, ...]:
     """Judge what an annealing region's length decides: its length, GC, GC clamp and Tm.
 
-    These are the checks a design chooses a length by, so it keeps inside the bands it is
-    judged by wherever some length can.
+    A design judges every candidate by `evaluate_primer` instead; these are the four checks
+    that its length alone moves.
 
     Examples
     --------
@@ -202,22 +202,49 @@ def evaluate_pair(
     >>> report.amplicon_length, report["products"].status
     (48, 'pass')
     """
-    import primer3
-
     reports = tuple(
         evaluate_primer(primer, template, polymerase=polymerase, thresholds=thresholds)
         for primer in (forward, reverse)
     )
+    checks = pair_checks(reports[0], reports[1], template, thresholds=thresholds)
     tms = tuple(report["tm"].value for report in reports)
-    first, second = (_thermo_sequence(primer.sequence) for primer in (forward, reverse))
+    length = int(checks[-1].value) or None
+    return PairReport(
+        reports[0],
+        reports[1],
+        checks,
+        polymerase.annealing_temperature(*tms),
+        length,
+        None if length is None else polymerase.extension_seconds(length),
+    )
+
+
+def pair_checks(
+    forward: PrimerReport,
+    reverse: PrimerReport,
+    template: SequenceRecord,
+    *,
+    thresholds: Thresholds = THRESHOLDS,
+) -> tuple[Check, ...]:
+    """Judge what only a pair can be judged on, from what each primer already scored.
+
+    The gap between their annealing Tms, their heterodimers, and every product their binding
+    sites can make. The last check, the amplicon size, carries no verdict and is zero unless
+    the pair makes exactly one product. `evaluate_pair` is the whole judgement; a design that
+    has judged each primer already calls this.
+    """
+    import primer3
+
+    primers = (forward.primer, reverse.primer)
+    tms = (forward["tm"].value, reverse["tm"].value)
+    first, second = (_thermo_sequence(primer.sequence) for primer in primers)
     note = first[1] or second[1]
     anchored = max(
         primer3.calc_end_stability(first[0], second[0]).tm,
         primer3.calc_end_stability(second[0], first[0]).tm,
     )
-    products = amplicon_sizes(forward, reverse, template, thresholds=thresholds)
-    length = products[0] if len(products) == 1 else None
-    checks = (
+    products = amplicon_sizes(*primers, template, thresholds=thresholds)
+    return (
         _graded("tm_difference", abs(tms[0] - tms[1]), thresholds.tm_difference),
         _graded(
             "heterodimer", primer3.calc_heterodimer(first[0], second[0]).tm, thresholds.dimer, note
@@ -229,15 +256,7 @@ def evaluate_pair(
             thresholds.products,
             ", ".join(f"{size} bp" for size in products),
         ),
-        Check("amplicon_size", None, length or 0),
-    )
-    return PairReport(
-        reports[0],
-        reports[1],
-        checks,
-        polymerase.annealing_temperature(*tms),
-        length,
-        None if length is None else polymerase.extension_seconds(length),
+        Check("amplicon_size", None, products[0] if len(products) == 1 else 0),
     )
 
 
