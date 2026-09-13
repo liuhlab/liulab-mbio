@@ -9,19 +9,37 @@ Ligase Master Mix (M1100), which takes any NEB Type IIS enzyme; `KIT` is one of 
 carry their own enzyme mix and so exist only for BsaI-HFv2 and BsmBI-v2.
 """
 
+import dataclasses
 from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass
 from typing import Literal
 
+from liulab_mbio import edits
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers import ONETAQ, Q5, Polymerase
+from liulab_mbio.primers import (
+    ONETAQ,
+    Q5,
+    THRESHOLDS,
+    Polymerase,
+    PrimerReport,
+    Thresholds,
+    amplicon_sizes,
+    design_pair,
+    design_primer,
+    evaluate_primer,
+)
 from liulab_mbio.protocol import (
     Component,
+    Gel,
     Incubation,
+    Ladder,
+    Lane,
     ReactionTable,
+    Reference,
     Stage,
     ThermocyclerProgram,
 )
+from liulab_mbio.sequence import Primer, SequenceRecord, Strand, reverse_complement
 
 #: NEBioCalculator's double-stranded DNA weight, g/mol: `_DUPLEX_ENDS + bp * _BASE_PAIR`. NEB's
 #: manuals use 650 Da per base pair instead, which differs by about 5%, so a protocol says which.
@@ -759,3 +777,379 @@ def _profile(polymerase: Polymerase) -> PcrProfile:
     if polymerase.name not in PCR_PROFILES:
         raise ValueError(f"no NEB PCR protocol is recorded for {polymerase.name}")
     return PCR_PROFILES[polymerase.name]
+
+
+# --------------------------------------------------------------------------------------
+# Colony PCR validation
+# --------------------------------------------------------------------------------------
+
+#: NEB's two ladders, each with 500 and 517 counted as the one band NEB counts them as.
+LADDER_100_BP = Ladder(
+    "NEB 100 bp DNA Ladder (N3231)",
+    (100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1517),
+)
+LADDER_1_KB_PLUS = Ladder(
+    "NEB 1 kb Plus DNA Ladder (N3200)",
+    (
+        100,
+        200,
+        300,
+        400,
+        500,
+        600,
+        700,
+        800,
+        900,
+        1000,
+        1200,
+        1517,
+        2017,
+        3001,
+        4001,
+        5001,
+        6001,
+        8001,
+        10002,
+    ),
+)
+
+#: Where the 100 bp ladder at 2% agarose gives way to the 1 kb Plus ladder at 1%, bp.
+_LADDER_LIMIT = 1000
+
+#: Vector kept either side of the junctions by a designed colony PCR pair, bases. Twice this is
+#: the empty-vector band, and the note asks for every band to stay at 100 bp or more.
+COLONY_FLANK = 60
+
+#: How far into the insert a junction primer anneals, bases, for the same reason.
+JUNCTION_OFFSET = 100
+
+#: Genewiz asks for a sequencing primer 100 bases from what it reads, 50 to 60 at the closest.
+SANGER_FLANK = 100
+
+#: What the three candidate plasmids are called, correct first.
+CORRECT_CLONE = "Correct clone"
+EMPTY_CLONE = "Empty vector"
+REVERSED_CLONE = "Reversed insert"
+
+
+def choose_ladder(bands_bp: tuple[int, ...]) -> Ladder:
+    """Return the ladder covering these bands.
+
+    Raises
+    ------
+    ValueError
+        If no band is given.
+    """
+    return LADDER_100_BP if _largest(bands_bp) < _LADDER_LIMIT else LADDER_1_KB_PLUS
+
+
+def agarose_percent(bands_bp: tuple[int, ...]) -> float:
+    """Return the agarose percentage these bands resolve on.
+
+    Raises
+    ------
+    ValueError
+        If no band is given.
+    """
+    return 2.0 if _largest(bands_bp) < _LADDER_LIMIT else 1.0
+
+
+def _largest(bands_bp: tuple[int, ...]) -> int:
+    if not bands_bp:
+        raise ValueError("a gel needs at least one expected band")
+    return max(bands_bp)
+
+
+@dataclass(frozen=True, slots=True)
+class Clone:
+    """One plasmid a colony may carry, and the bands a colony PCR gives from it."""
+
+    name: str
+    bands_bp: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ColonyCheck:
+    """A colony PCR reading across an assembly's junctions.
+
+    Parameters
+    ----------
+    primers
+        The flanking pair first, then a junction primer where one was asked for.
+    reports
+        What each primer scored on the assembled plasmid.
+    clones
+        The candidates a colony can hold, correct first.
+    annealing_temperature
+        By the polymerase's rule over the two lowest Tms of the set, °C.
+    extension_seconds
+        For the largest band any candidate gives.
+    ladder, agarose_percent
+        Chosen for that band range.
+    """
+
+    primers: tuple[Primer, ...]
+    reports: tuple[PrimerReport, ...]
+    clones: tuple[Clone, ...]
+    annealing_temperature: float
+    extension_seconds: int
+    ladder: Ladder
+    agarose_percent: float
+
+    @property
+    def gel(self) -> Gel:
+        """The gel these clones should give, one lane each."""
+        return Gel(
+            self.ladder,
+            tuple(Lane(clone.name, clone.bands_bp) for clone in self.clones),
+            title="Colony PCR",
+        )
+
+    @property
+    def tells_orientation(self) -> bool:
+        """Whether the gel separates a reversed insert from the correct clone.
+
+        Two vector primers flanking the insert never do: they amplify it whichever way round it
+        sits. A junction primer does, unless the two vector primers happen to lie the same
+        distance from their own junctions.
+        """
+        bands = {clone.name: clone.bands_bp for clone in self.clones}
+        return bands.get(REVERSED_CLONE) != bands.get(CORRECT_CLONE)
+
+
+def colony_pcr_check(
+    product: SequenceRecord,
+    junctions: tuple[int, int],
+    *,
+    vector: SequenceRecord,
+    primers: tuple[Primer, ...] | None = None,
+    insert_primer: bool = False,
+    flank: int = COLONY_FLANK,
+    junction_offset: int = JUNCTION_OFFSET,
+    polymerase: Polymerase = ONETAQ,
+    thresholds: Thresholds = THRESHOLDS,
+) -> ColonyCheck:
+    """Return what a colony PCR across these junctions should show.
+
+    The insert is the span between the two junctions, so a product whose insert crosses the
+    origin is rotated first. Without `primers`, a pair is designed in the vector `flank` bases
+    outside each junction; `insert_primer` adds a third annealing `junction_offset` bases into
+    the insert, which is what tells a reversed insert apart. Each candidate plasmid is amplified
+    on its own, so the bands are simulated rather than derived.
+
+    Raises
+    ------
+    ValueError
+        If the junctions are not two positions inside the product, if fewer than two primers
+        are given, if the insert is too short for a junction primer, or if the primers amplify
+        nothing at all.
+    """
+    start, end = _junction_pair(junctions, len(product))
+    chosen = (
+        list(primers)
+        if primers is not None
+        else list(_flanking_pair(product, start, end, flank, polymerase, thresholds))
+    )
+    if insert_primer:
+        chosen.append(
+            _junction_primer(product, start, end, junction_offset, polymerase, thresholds)
+        )
+    if len(chosen) < 2:
+        raise ValueError("a colony PCR needs at least two primers")
+    placed = tuple(chosen)
+    clones = tuple(
+        Clone(name, _bands(placed, record, thresholds))
+        for name, record in (
+            (CORRECT_CLONE, product),
+            (EMPTY_CLONE, vector),
+            (REVERSED_CLONE, _reversed_insert(product, start, end)),
+        )
+    )
+    sizes = tuple(sorted({bp for clone in clones for bp in clone.bands_bp}))
+    if not sizes:
+        raise ValueError("these primers amplify nothing on any of the candidate plasmids")
+    reports = tuple(
+        evaluate_primer(primer, product, polymerase=polymerase, thresholds=thresholds)
+        for primer in placed
+    )
+    tms = sorted(report["tm"].value for report in reports)
+    return ColonyCheck(
+        placed,
+        reports,
+        clones,
+        polymerase.annealing_temperature(tms[0], tms[1]),
+        polymerase.extension_seconds(max(sizes)),
+        choose_ladder(sizes),
+        agarose_percent(sizes),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class SangerRead:
+    """A sequencing primer and the read it has to give.
+
+    Parameters
+    ----------
+    primer
+        Reading towards the junction it sits outside.
+    distance_bp
+        From its 3' end to that junction.
+    read_bp
+        From its 3' end to the far junction, which is what the read must cover for the insert to
+        be confirmed at both ends.
+    """
+
+    primer: Primer
+    distance_bp: int
+    read_bp: int
+
+
+def sanger_primers(
+    product: SequenceRecord,
+    junctions: tuple[int, int],
+    *,
+    flank: int = SANGER_FLANK,
+    polymerase: Polymerase = Q5,
+    thresholds: Thresholds = THRESHOLDS,
+) -> tuple[SangerRead, SangerRead]:
+    """Return a sequencing primer reading into each junction from outside it.
+
+    Every 3' end lands at least `flank` bases from its own junction, near enough for the read to
+    be clean there. A provider whose reads are shorter than `SangerRead.read_bp` needs a primer
+    inside the insert as well.
+
+    Raises
+    ------
+    ValueError
+        If the junctions are not two positions inside the product, or no primer fits outside
+        one of them.
+    """
+    start, end = _junction_pair(junctions, len(product))
+    longest = _longest_annealing(thresholds)
+    forward = design_primer(
+        product,
+        start - flank - longest,
+        Strand.FORWARD,
+        name="Sequencing forward",
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+    reverse = design_primer(
+        product,
+        end + flank + longest,
+        Strand.REVERSE,
+        name="Sequencing reverse",
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+    length = len(product)
+    ahead = forward.binding_sites[0].end
+    behind = reverse.binding_sites[0].start
+    return (
+        SangerRead(forward, (start - ahead) % length, (end - ahead) % length),
+        SangerRead(reverse, (behind - end) % length, (behind - start) % length),
+    )
+
+
+def _junction_pair(junctions: tuple[int, int], length: int) -> tuple[int, int]:
+    if len(junctions) != 2:
+        raise ValueError(f"a single-insert assembly has two junctions, got {len(junctions)}")
+    start, end = sorted(junctions)
+    if not 0 <= start < end <= length:
+        raise ValueError(f"junctions {start} and {end} do not lie inside {length} bases")
+    return start, end
+
+
+def _flanking_pair(
+    product: SequenceRecord,
+    start: int,
+    end: int,
+    flank: int,
+    polymerase: Polymerase,
+    thresholds: Thresholds,
+) -> tuple[Primer, Primer]:
+    return design_pair(
+        product,
+        start - flank,
+        end + flank,
+        forward_name="Colony PCR forward",
+        reverse_name="Colony PCR reverse",
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+
+
+def _junction_primer(
+    product: SequenceRecord,
+    start: int,
+    end: int,
+    offset: int,
+    polymerase: Polymerase,
+    thresholds: Thresholds,
+) -> Primer:
+    if end - start <= offset:
+        raise ValueError(f"the insert is shorter than the {offset} bases a junction primer needs")
+    return design_primer(
+        product,
+        start + offset,
+        Strand.REVERSE,
+        name="Junction reverse",
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+
+
+def _reversed_insert(product: SequenceRecord, start: int, end: int) -> SequenceRecord:
+    flipped, _ = edits.replace(product, start, end, reverse_complement(product.sequence[start:end]))
+    return flipped
+
+
+def _bands(
+    primers: tuple[Primer, ...], record: SequenceRecord, thresholds: Thresholds
+) -> tuple[int, ...]:
+    """Return every band this primer set gives on one candidate plasmid.
+
+    Binding sites are cleared first: they were found on the product, and each candidate has to
+    be searched on its own.
+    """
+    free = [dataclasses.replace(primer, binding_sites=()) for primer in primers]
+    sizes: set[int] = set()
+    for index, one in enumerate(free):
+        for other in free[index + 1 :]:
+            sizes.update(amplicon_sizes(one, other, record, thresholds=thresholds))
+    return tuple(sorted(sizes))
+
+
+def _longest_annealing(thresholds: Thresholds) -> int:
+    """Return the longest annealing region `design_primer` will choose."""
+    band = thresholds.length
+    return int(band.high if band.warn_high == float("inf") else band.warn_high)
+
+
+#: Where the numbers above come from, ready for a protocol's reference list.
+REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, "
+        "version 5.0_6/26",
+        url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
+    ),
+    Reference(
+        "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+        url="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
+    ),
+    Reference(
+        "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
+        url="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines",
+    ),
+    Reference(
+        "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
+        url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
+    ),
+    Reference(
+        "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master "
+        "Mixes (Y. Xu, 11/13)"
+    ),
+    Reference("NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion"),
+    Reference("NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)"),
+    Reference("NEB, Agarose Gel Resolution, for the percentage a band range resolves on"),
+)

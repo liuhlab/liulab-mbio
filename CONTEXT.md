@@ -175,3 +175,35 @@ What an edit did to the features and primer binding sites it did not simply shif
 ones lost bases, **dropped** ones lost all of them, and **changed** ones now span the new bases
 because the edit fell inside them.
 _Avoid_: diff, changelog, summary
+
+### Molar ratio
+
+How many molecules of insert an assembly gets for each molecule of vector. Counted in moles and
+not in mass, because a short insert weighs less at the same ratio: a protocol prints pmol beside
+ng for that reason.
+_Avoid_: insert ratio, stoichiometry
+
+### Junction
+
+Where two fragments meet in an assembled product: the four bases, three for SapI, that one
+overhang paired with its match. Validation reads across it.
+_Avoid_: joint, seam, fusion site
+
+### End soak
+
+The 60 °C step every Golden Gate program ends with. It is a digest and not heat inactivation: it
+cuts destination plasmid that never opened or has closed again, so fewer empty colonies grow.
+_Avoid_: final incubation, kill step
+
+### Colony PCR
+
+A PCR templated by a colony lifted off the plate with a toothpick, which the long hot step at
+the start lyses. It says which clone a colony carries without a plasmid prep.
+_Avoid_: screening PCR, colony screen
+
+### Reversed insert
+
+A clone carrying its insert the other way round. Two vector primers flanking the insert give it
+the same band as the correct clone, so a gel separates the two only with a third primer inside
+the insert.
+_Avoid_: flipped clone, wrong orientation
