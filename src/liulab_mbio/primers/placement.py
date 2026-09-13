@@ -4,6 +4,7 @@ A site or an amplicon crosses the origin of a circular template, ending past its
 """
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
 from liulab_mbio.sequence import (
@@ -124,37 +125,51 @@ def find_priming_sites(
     A place counts when few enough of its bases mismatch, fewest of all at the 3' end, and
     when the primer annealed there melts within `Thresholds.off_target_margin` of a perfect
     match. Sites cross the origin of a circular template.
+
+    A design tests thousands of candidates against one template, so what a sequence primes there
+    is remembered: it depends on nothing but the sequence, the template and the thresholds.
     """
+    return _priming_sites(sequence.upper(), template.sequence, template.topology, thresholds)
+
+
+@lru_cache(maxsize=1 << 15)
+def _priming_sites(
+    dna: str, sequence: str, topology: str, thresholds: Thresholds
+) -> tuple[PrimingSite, ...]:
     import primer3
 
-    dna = sequence.upper()
     size = len(dna)
-    length = len(template)
+    length = len(sequence)
     if size > length:
         return ()
-    circular = template.topology == "circular"
-    top = template.sequence + (template.sequence[: size - 1] if circular else "")
+    circular = topology == "circular"
+    top = sequence + (sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
     edge = min(size, thresholds.off_target_3prime_window)
     floor = primer3.calc_end_stability(dna, reverse).tm - thresholds.off_target_margin
+    starts = range(length if circular else length - size + 1)
     ends = tuple(
-        _near(window, set(top), thresholds.off_target_3prime_mismatches)
-        for window in (dna[-edge:], reverse[:edge])
+        _anchored(
+            window,
+            sequence,
+            circular,
+            edge,
+            offset,
+            thresholds.off_target_3prime_mismatches,
+            starts,
+        )
+        for window, offset in ((dna[-edge:], size - edge), (reverse[:edge], 0))
     )
     found = []
-    for start in range(length if circular else length - size + 1):
-        forward_end = ends[0] is None or top[start + size - edge : start + size] in ends[0]
-        reverse_end = ends[1] is None or top[start : start + edge] in ends[1]
-        if not (forward_end or reverse_end):
-            continue
+    for start in sorted(ends[0] | ends[1]):
         here = top[start : start + size]
         for strand, probe, anchored, annealed in (
-            (Strand.FORWARD, dna, forward_end, None),
-            (Strand.REVERSE, reverse, reverse_end, here),
+            (Strand.FORWARD, dna, start in ends[0], None),
+            (Strand.REVERSE, reverse, start in ends[1], here),
         ):
             if not anchored:
                 continue
-            mismatches = _mismatches(probe, here)
+            mismatches = _mismatches(probe, here, thresholds.off_target_mismatches)
             if mismatches > thresholds.off_target_mismatches:
                 continue
             tm = primer3.calc_end_stability(dna, annealed or reverse_complement(here)).tm
@@ -238,8 +253,58 @@ def _near(window: str, alphabet: set[str], mismatches: int) -> frozenset[str] | 
     return frozenset(near)
 
 
-def _mismatches(one: str, other: str) -> int:
-    return sum(base != base_here for base, base_here in zip(one, other, strict=True))
+def _anchored(
+    window: str,
+    sequence: str,
+    circular: bool,
+    edge: int,
+    offset: int,
+    mismatches: int,
+    starts: range,
+) -> set[int]:
+    """Return every start whose 3' window can match the template, `offset` bases into the site.
+
+    A design judges thousands of candidates against one template, so the template is indexed
+    once and each candidate looks up only the few windows its own can match, rather than walking
+    every position itself.
+    """
+    near = _near(window, set(sequence), mismatches)
+    if near is None:
+        return set(starts)
+    length = len(sequence)
+    index = _windows(sequence, edge, circular)
+    found = set()
+    for probe in near:
+        for position in index.get(probe, ()):
+            start = (position - offset) % length if circular else position - offset
+            if start in starts:
+                found.add(start)
+    return found
+
+
+@lru_cache(maxsize=8)
+def _windows(sequence: str, edge: int, circular: bool) -> dict[str, tuple[int, ...]]:
+    """Return where every window of `edge` bases starts, wrapping one round the origin."""
+    scan = sequence + (sequence[: edge - 1] if circular else "")
+    index: dict[str, list[int]] = {}
+    for position in range(len(scan) - edge + 1):
+        index.setdefault(scan[position : position + edge], []).append(position)
+    return {window: tuple(positions) for window, positions in index.items()}
+
+
+def _mismatches(one: str, other: str, cap: int) -> int:
+    """Return how many bases differ, counting no further than one past `cap`.
+
+    A count over the cap is only ever compared with it, and most places a primer is tested
+    against differ within the first few bases.
+    """
+    count = 0
+    for base, base_here in zip(one, other, strict=True):
+        if base != base_here:
+            count += 1
+            if count > cap:
+                break
+    return count
 
 
 def _span(forward: BindingSite, reverse: BindingSite, template: SequenceRecord) -> int | None:
