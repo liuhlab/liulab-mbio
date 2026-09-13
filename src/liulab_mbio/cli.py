@@ -11,12 +11,14 @@ import typer
 
 from liulab_mbio import __version__ as _package_version
 from liulab_mbio.core import greet as _greet
+from liulab_mbio.goldengate.cli import app as _goldengate_app
 from liulab_mbio.protocol.cli import app as _protocol_app
 
 #: What `[project.scripts]` registers. Typer builds the parser from the signatures below, so
 #: a verb is a function and its help is the docstring.
 app = typer.Typer(help="The placeholder command.", no_args_is_help=True)
 
+app.add_typer(_goldengate_app, name="goldengate")
 app.add_typer(_protocol_app, name="protocol")
 
 
