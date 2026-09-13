@@ -37,6 +37,52 @@ _Avoid_: primer site, hybridization site
 Of a span on a circular sequence record: running through the last base and on into the first.
 _Avoid_: wrapping, wraparound
 
+### Annealing region
+
+The 3' part of a primer that pairs with its binding site. Length, GC content and Tm are read
+from it, not from the whole primer.
+_Avoid_: priming region, homology arm
+
+### Tail
+
+The 5' bases of a primer that pair with nothing on the template, such as a spacer, an enzyme
+site and an overhang. Copies made from the primer carry them, so later cycles anneal it whole.
+_Avoid_: overhang, flap, adapter
+
+### Melting temperature
+
+Tm: the temperature at which half of a primer is paired with its complement, in a named
+polymerase's buffer. Of the annealing region unless said otherwise.
+_Avoid_: melting point, annealing temperature
+
+### Annealing temperature
+
+Ta: the temperature of a PCR's annealing step, set from the lower Tm of the pair by a rule
+belonging to the polymerase.
+_Avoid_: hybridization temperature, Tm
+
+### 3'-anchored dimer
+
+A self-dimer or heterodimer that pairs a primer's 3' end, which the polymerase can extend into
+primer dimer. Worse than one pairing only inside the primer.
+_Avoid_: end dimer, self-complementarity
+
+### Off-target site
+
+A place other than its binding site where a primer's annealing region can prime: its 3' end
+pairs, and it melts near the temperature a perfect match would.
+_Avoid_: mispriming site, secondary binding site
+
+### Amplicon
+
+What a primer pair copies, from one binding site to the other, tails included.
+_Avoid_: PCR product, band
+
+### Check
+
+One pass, warn or fail verdict on a primer or a pair, carrying the value it judged.
+_Avoid_: validation, rule, test
+
 ### Protocol
 
 A bench procedure someone can follow without asking anything: summary, materials, numbered

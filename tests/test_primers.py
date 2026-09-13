@@ -14,6 +14,8 @@ from liulab_mbio.primers import (
     TAQ,
     THRESHOLDS,
     Band,
+    design_pair,
+    design_primer,
     evaluate_primer,
     find_binding_sites,
     find_priming_sites,
@@ -22,6 +24,7 @@ from liulab_mbio.primers import (
 from liulab_mbio.sequence import (
     BindingSite,
     Primer,
+    Segment,
     SequenceRecord,
     Strand,
     reverse_complement,
@@ -214,6 +217,59 @@ def test_a_primer_that_binds_nowhere_fails(puc19) -> None:
     report = evaluate_primer(Primer("elsewhere", "ATGAGTAAAGGAGAAGAACTTTTC"), puc19)
     assert report["binding_sites"].value == 0
     assert report["binding_sites"].status == "fail"
+
+
+def test_a_forward_primer_is_designed_from_a_position_to_a_target_tm(puc19) -> None:
+    primer = design_primer(puc19, 452, Strand.FORWARD, name="MCS fwd")
+    assert primer.name == "MCS fwd"
+    assert primer.sequence == MCS_FWD
+    assert primer.binding_sites == (BindingSite(452, 472, Strand.FORWARD),)
+    assert melting_temperature(primer.sequence) == pytest.approx(62.0, abs=2.0)
+
+
+def test_a_reverse_primer_reads_back_from_its_position(puc19) -> None:
+    primer = design_primer(puc19, 396, Strand.REVERSE)
+    site = primer.binding_sites[0]
+    assert site.strand is Strand.REVERSE
+    assert site.end == 396
+    assert primer.sequence == reverse_complement(puc19.extract(Segment(site.start, site.end)))
+    assert melting_temperature(primer.sequence) == pytest.approx(62.0, abs=2.0)
+
+
+def test_a_tail_stays_outside_the_binding_site(puc19) -> None:
+    tail = "TTGGTCTCAAATG"
+    primer = design_primer(puc19, 452, Strand.FORWARD, tail=tail)
+    site = primer.binding_sites[0]
+    assert primer.sequence == tail + MCS_FWD
+    assert site.end - site.start == len(primer.sequence) - len(tail)
+
+
+def test_a_primer_may_be_designed_across_the_origin(puc19) -> None:
+    primer = design_primer(puc19, len(puc19) - 8, Strand.FORWARD)
+    site = primer.binding_sites[0]
+    assert site.start == len(puc19) - 8
+    assert site.end > len(puc19)
+    assert primer.sequence == puc19.extract(Segment(site.start, site.end))
+
+
+def test_a_pair_is_designed_with_matched_tms(puc19) -> None:
+    forward, reverse = design_pair(puc19, 378, 481)
+    assert forward.binding_sites[0].start == 378
+    assert reverse.binding_sites[0].end == 481
+    tms = [melting_temperature(primer.sequence) for primer in (forward, reverse)]
+    assert abs(tms[0] - tms[1]) <= 2.0
+
+
+def test_a_pair_may_amplify_across_the_origin(puc19) -> None:
+    forward, reverse = design_pair(puc19, 452, 396 + len(puc19))
+    assert forward.binding_sites[0].start == 452
+    assert reverse.binding_sites[0].end % len(puc19) == 396
+
+
+def test_design_refuses_a_position_a_linear_template_cannot_hold() -> None:
+    template = SequenceRecord("ACGT" * 10)
+    with pytest.raises(ValueError, match="fit"):
+        design_primer(template, 38, Strand.FORWARD)
 
 
 def test_every_threshold_comes_from_one_place() -> None:
