@@ -1,4 +1,5 @@
-from collections.abc import Callable
+import re
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,48 @@ def test_a_missing_required_key_is_refused_and_located() -> None:
     data = {"title": "t", "steps": [{"title": "s", "tables": [{"components": [{"name": "x"}]}]}]}
     with pytest.raises(ValueError, match=r"components\[0\].*volume_ul"):
         Protocol.from_dict(data)
+
+
+def _one_table(
+    *,
+    step: Mapping[str, object] | None = None,
+    table: Mapping[str, object] | None = None,
+    component: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """A protocol of one step holding one reaction table of one component, with values changed."""
+    one_component = {"name": "water", "volume_ul": 1, **(component or {})}
+    one_table = {"components": [one_component], **(table or {})}
+    return {"title": "t", "steps": [{"title": "s", "tables": [one_table], **(step or {})}]}
+
+
+STEP = "protocol.steps[0]"
+TABLE = f"{STEP}.tables[0]"
+COMPONENT = f"{TABLE}.components[0]"
+
+
+@pytest.mark.parametrize(
+    ("data", "where", "expected"),
+    [
+        (_one_table(step={"instructions": "Mix well."}), f"{STEP}.instructions", "a list"),
+        (_one_table(component={"volume_ul": "5"}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"volume_ul": True}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"volume_ul": None}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"master_mix": "false"}), f"{COMPONENT}.master_mix", "true or false"),
+        (_one_table(table={"reactions": 2.5}), f"{TABLE}.reactions", "a whole number"),
+        (_one_table(step={"title": 5}), f"{STEP}.title", "a string"),
+        ({"title": "t", "overview": ["Vector"]}, "protocol.overview", "an object"),
+    ],
+)
+def test_a_value_of_the_wrong_type_is_refused_and_located(
+    data: Mapping[str, object], where: str, expected: str
+) -> None:
+    with pytest.raises(ValueError, match=f"^{re.escape(where)}: expected {expected}"):
+        Protocol.from_dict(data)
+
+
+def test_a_whole_number_is_a_measurement() -> None:
+    protocol = Protocol.from_dict(_one_table(component={"volume_ul": 5}))
+    assert protocol.steps[0].tables[0].components[0].volume_ul == 5
 
 
 def test_the_master_mix_scales_by_reaction_count_with_overage() -> None:

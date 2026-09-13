@@ -8,9 +8,10 @@ import json
 import math
 import os
 from collections.abc import Callable, Mapping
-from dataclasses import KW_ONLY, MISSING, dataclass, field, fields
+from dataclasses import KW_ONLY, MISSING, dataclass, field, fields, is_dataclass
 from pathlib import Path
-from typing import Any
+from types import NoneType, UnionType
+from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
 
 from liulab_mbio.checks import STATUSES, Status
 
@@ -448,10 +449,14 @@ class Protocol:
     def from_dict(cls, data: Mapping[str, Any]) -> "Protocol":
         """Build a protocol from parsed JSON; keys are the field names, lists become tuples.
 
+        Each value takes its field's JSON type: a whole number for an ``int``, any number but
+        not true or false for a ``float``, and null only where the field is optional.
+
         Raises
         ------
         ValueError
-            On an unknown or missing key, naming where it is, or a value the model refuses.
+            On an unknown or missing key or a value of another JSON type, naming where it is,
+            or on a value the model refuses.
         """
         return _PROTOCOL(data, "protocol")
 
@@ -464,24 +469,59 @@ def read_protocol(path: str | os.PathLike[str]) -> Protocol:
 type _Convert = Callable[[Any, str], Any]
 
 
-def _object[T](cls: Callable[..., T], **nested: _Convert) -> Callable[[Any, str], T]:
-    """Return a converter from a JSON object to `cls`, checking its keys."""
+def _refused(where: str, expected: str, value: Any) -> ValueError:
+    match value:
+        case str():
+            got = "a string"
+        case list():
+            got = "a list"
+        case Mapping():
+            got = "an object"
+        case None | bool():
+            got = json.dumps(value)
+        case int() | float():
+            got = repr(value)
+        case _:
+            got = type(value).__name__
+    return ValueError(f"{where}: expected {expected}, got {got}")
+
+
+def _converter(hint: Any) -> _Convert:
+    """Return a converter from parsed JSON to the annotation `hint`, refusing another JSON type."""
+    if isinstance(hint, TypeAliasType):
+        return _converter(hint.__value__)
+    origin, args = get_origin(hint), get_args(hint)
+    if origin is Literal:
+        return _converter(type(args[0]))
+    if origin in (Union, UnionType) and len(args) == 2 and NoneType in args:
+        (inner,) = (arg for arg in args if arg is not NoneType)
+        return _or_null(_converter(inner))
+    if origin is tuple and args[1:] == (...,):
+        return _list(_converter(args[0]))
+    if origin is Mapping and args[0] is str:
+        return _mapping(_converter(args[1]))
+    if isinstance(hint, type) and is_dataclass(hint):
+        return _object(hint)
+    if hint in _SCALARS:
+        return _scalar(*_SCALARS[hint])
+    raise TypeError(f"a protocol field has no JSON form: {hint!r}")
+
+
+def _object[T](cls: type[T]) -> Callable[[Any, str], T]:
+    """Return a converter from a JSON object to the dataclass `cls`, checking its keys."""
     spec = fields(cls)  # pyright: ignore[reportArgumentType]
-    names = {f.name for f in spec}
+    hints = get_type_hints(cls)
+    nested = {f.name: _converter(hints[f.name]) for f in spec}
     required = {f.name for f in spec if f.default is MISSING and f.default_factory is MISSING}
 
     def convert(data: Any, where: str) -> T:
         if not isinstance(data, Mapping):
-            raise ValueError(f"{where}: expected an object, got {type(data).__name__}")
-        if unknown := sorted(set(data) - names):
+            raise _refused(where, "an object", data)
+        if unknown := sorted(set(data) - set(nested)):
             raise ValueError(f"{where}: unknown key(s) {', '.join(unknown)}")
         if missing := sorted(required - set(data)):
             raise ValueError(f"{where}: missing key(s) {', '.join(missing)}")
-        kwargs = {
-            key: nested[key](value, f"{where}.{key}") if key in nested else _plain(value)
-            for key, value in data.items()
-        }
-        return cls(**kwargs)
+        return cls(**{key: nested[key](value, f"{where}.{key}") for key, value in data.items()})
 
     return convert
 
@@ -489,34 +529,42 @@ def _object[T](cls: Callable[..., T], **nested: _Convert) -> Callable[[Any, str]
 def _list(item: _Convert) -> _Convert:
     def convert(data: Any, where: str) -> tuple[Any, ...]:
         if not isinstance(data, list):
-            raise ValueError(f"{where}: expected a list, got {type(data).__name__}")
+            raise _refused(where, "a list", data)
         return tuple(item(value, f"{where}[{i}]") for i, value in enumerate(data))
 
     return convert
 
 
-def _plain(value: Any) -> Any:
-    return tuple(value) if isinstance(value, list) else value
+def _mapping(value: _Convert) -> _Convert:
+    def convert(data: Any, where: str) -> dict[str, Any]:
+        if not isinstance(data, Mapping):
+            raise _refused(where, "an object", data)
+        return {
+            key: value(item, f"{where}[{json.dumps(key, ensure_ascii=False)}]")
+            for key, item in data.items()
+        }
+
+    return convert
 
 
-_STEP = _object(
-    Step,
-    tables=_list(_object(ReactionTable, components=_list(_object(Component)))),
-    programs=_list(
-        _object(
-            ThermocyclerProgram,
-            stages=_list(_object(Stage, incubations=_list(_object(Incubation)))),
-        )
-    ),
-    timers=_list(_object(Timer)),
-    gels=_list(_object(Gel, ladder=_object(Ladder), lanes=_list(_object(Lane)))),
-    troubleshooting=_list(_object(Troubleshooting)),
-)
-_PROTOCOL = _object(
-    Protocol,
-    checks=_list(_object(Check)),
-    materials=_list(_object(Material)),
-    oligos=_list(_object(Oligo, checks=_list(_object(Check)))),
-    steps=_list(_STEP),
-    references=_list(_object(Reference)),
-)
+def _or_null(convert: _Convert) -> _Convert:
+    return lambda data, where: None if data is None else convert(data, where)
+
+
+def _scalar(expected: str, accepts: Callable[[Any], bool]) -> _Convert:
+    def convert(data: Any, where: str) -> Any:
+        if not accepts(data):
+            raise _refused(where, expected, data)
+        return data
+
+    return convert
+
+
+# `bool` is a subclass of `int` in Python, and true is not a number in JSON.
+_SCALARS: dict[type, tuple[str, Callable[[Any], bool]]] = {
+    str: ("a string", lambda value: isinstance(value, str)),
+    bool: ("true or false", lambda value: isinstance(value, bool)),
+    int: ("a whole number", lambda value: type(value) is int),
+    float: ("a number", lambda value: type(value) in (int, float)),
+}
+_PROTOCOL = _object(Protocol)
