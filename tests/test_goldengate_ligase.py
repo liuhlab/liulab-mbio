@@ -1,4 +1,4 @@
-"""Reading a ligase fidelity matrix the user holds on their own disk.
+"""Scoring overhangs against a ligase fidelity matrix the user holds on their own disk.
 
 The archive such a file comes from is CC BY-NC 4.0 and none of it is in this repository. Every
 matrix here is four overhangs written by this file, with plausible integers in the cells.
@@ -10,8 +10,15 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
+from liulab_mbio.cli import app
+from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.goldengate.cli import LIGASE_MATRIX_ENV
+from liulab_mbio.goldengate.design import Junction, design_overhangs, fidelity, ligation_matrix
 from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, read_profile
+
+DATA = Path(__file__).parent / "data"
 
 #: Two Watson-Crick pairs seen often, and one cross pair seen rarely. A row pairs with the
 #: column spelling its reverse complement, so AAAA pairs with TTTT and GGAA with TTCC.
@@ -175,6 +182,136 @@ def test_a_matrix_holding_no_counts_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="no counts"):
         read_profile(path)
+
+
+def test_an_enzyme_with_no_matrix_of_its_own_is_scored_on_the_profile(profile_path: Path) -> None:
+    profile = read_profile(profile_path)
+
+    report = fidelity(("AAAA", "GGAA"), "PaqCI", profile=profile)
+
+    assert report.measured
+    assert not report.enzyme_specific
+    assert report.value > 0.99
+    assert len(report.ligations) == 2
+
+
+def test_the_report_says_a_profile_is_not_a_measurement_of_the_enzyme(profile_path: Path) -> None:
+    report = fidelity(("AAAA", "GGAA"), "PaqCI", profile=read_profile(profile_path))
+
+    assert NAMED in report.source
+    assert "25 °C" in report.source
+    assert "PaqCI" in report.label
+    assert "not specific" in report.label
+
+
+def test_without_a_profile_an_unmeasured_enzyme_is_still_scored_by_the_rules() -> None:
+    report = fidelity(("AATG", "GCTT", "TACA"), "PaqCI")
+
+    assert not report.measured
+    assert report.enzyme_specific
+    assert report.label == "rule-based estimate"
+    assert "rule" in report.source
+
+
+def test_an_enzyme_with_its_own_matrix_keeps_it_when_a_profile_is_there(profile_path: Path) -> None:
+    profile = read_profile(profile_path)
+    shipped = ligation_matrix("BsaI")
+    assert shipped is not None
+
+    report = fidelity(("AAAA", "GGAA"), "BsaI", profile=profile)
+
+    assert report.enzyme_specific
+    assert report.source == shipped.source
+
+
+def test_a_caller_can_prefer_the_profile_over_the_shipped_matrix(profile_path: Path) -> None:
+    profile = read_profile(profile_path)
+
+    report = fidelity(("AAAA", "GGAA"), "BsaI", profile=profile, prefer_profile=True)
+
+    assert not report.enzyme_specific
+    assert NAMED in report.source
+
+
+def test_a_profile_of_the_wrong_overhang_length_for_the_enzyme_is_refused(
+    profile_path: Path,
+) -> None:
+    with pytest.raises(ValueError, match="3"):
+        fidelity(("AAA", "GGA"), "BspQI", profile=read_profile(profile_path))
+
+
+def test_a_design_ranks_free_candidates_by_the_profile_where_no_matrix_exists(
+    profile_path: Path,
+) -> None:
+    designed = design_overhangs(
+        [Junction("left"), Junction("right")], "PaqCI", profile=read_profile(profile_path)
+    )
+
+    assert designed.overhangs[0] == "GGAA"
+    assert designed.fidelity.measured
+    assert not designed.fidelity.enzyme_specific
+
+
+def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
+    profile_path: Path,
+) -> None:
+    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna", enzyme="PaqCI", profile=profile_path)
+
+    scored = made.overhangs.fidelity
+    assert scored.measured
+    assert not scored.enzyme_specific
+    protocol = made.protocol()
+    assert "not specific to PaqCI" in protocol.overview["Overhangs"]
+    assert NAMED in " ".join(one.text for one in protocol.references)
+
+
+def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before() -> None:
+    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna", enzyme="PaqCI")
+
+    assert not made.overhangs.fidelity.measured
+    assert "rule-based estimate" in made.protocol().overview["Overhangs"]
+
+
+def test_the_command_line_takes_the_matrix_as_an_option(profile_path: Path, tmp_path: Path) -> None:
+    result = _run(tmp_path / "given", "--enzyme", "PaqCI", "--ligase-matrix", str(profile_path))
+
+    assert result.exit_code == 0, result.output
+    assert "not specific to PaqCI" in result.output
+
+
+def test_the_command_line_takes_the_matrix_from_the_environment(
+    profile_path: Path, tmp_path: Path
+) -> None:
+    result = _run(tmp_path / "env", "--enzyme", "PaqCI", env={LIGASE_MATRIX_ENV: str(profile_path)})
+
+    assert result.exit_code == 0, result.output
+    assert "not specific to PaqCI" in result.output
+
+
+def test_the_command_line_refuses_a_file_that_is_not_a_matrix(tmp_path: Path) -> None:
+    path = _written(tmp_path / "fragments.csv", "Fragment #,Sequence\n1,ATGC\n")
+
+    result = _run(tmp_path / "run", "--ligase-matrix", str(path))
+
+    assert result.exit_code == 1
+    assert "not a ligation count matrix" in result.output
+
+
+def _run(out: Path, *arguments: str, env: Mapping[str, str] | None = None):
+    """Plan the fixture assembly on the command line, writing the three outputs into OUT."""
+    return CliRunner().invoke(
+        app,
+        [
+            "goldengate",
+            "plan",
+            str(DATA / "pUC19.dna"),
+            str(DATA / "GFP.dna"),
+            "--out",
+            str(out),
+            *arguments,
+        ],
+        env=dict(env or {}),
+    )
 
 
 def _written(path: Path, text: str) -> Path:

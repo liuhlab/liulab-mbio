@@ -13,6 +13,10 @@ app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
 #: The polymerases a caller can name on the command line.
 POLYMERASES: dict[str, Polymerase] = {one.name.lower(): one for one in (Q5, PHUSION, TAQ, ONETAQ)}
 
+#: Where a ligase fidelity matrix is read from when `--ligase-matrix` names none. The package
+#: ships no such matrix; this points at a copy the user holds.
+LIGASE_MATRIX_ENV = "LIULAB_MBIO_LIGASE_MATRIX"
+
 
 @app.command()
 def plan(
@@ -50,6 +54,25 @@ def plan(
     enzyme: Annotated[
         str, typer.Option(help="Type IIS enzyme to use; the best free one when not given.")
     ] = "",
+    ligase_matrix: Annotated[
+        Path | None,
+        typer.Option(
+            "--ligase-matrix",
+            envvar=LIGASE_MATRIX_ENV,
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A ligase fidelity matrix you hold (.xlsx or .csv), to score the overhangs of "
+            "an enzyme nobody has measured.",
+        ),
+    ] = None,
+    prefer_ligase_matrix: Annotated[
+        bool,
+        typer.Option(
+            "--prefer-ligase-matrix",
+            help="Score with that matrix even where the enzyme has a measured one.",
+        ),
+    ] = False,
     polymerase: Annotated[str, typer.Option(help="Polymerase for the two PCRs.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
@@ -63,6 +86,8 @@ def plan(
             orientation=_orientations(orientation, len(inserts)),
             in_frame=in_frame,
             enzyme=enzyme or None,
+            profile=ligase_matrix,
+            prefer_profile=prefer_ligase_matrix,
             polymerase=_polymerase(polymerase),
             host=host,
             name=name,
@@ -71,10 +96,11 @@ def plan(
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
+    scored = made.overhangs.fidelity
     typer.echo(
         f"{made.product.name}: {len(made.product)} bp, {made.enzyme.name}, "
         f"{len(made.parts)} fragments, overhangs {', '.join(made.overhangs.overhangs)}, "
-        f"checks {made.status}"
+        f"fidelity {scored.value:.0%} ({scored.label}), checks {made.status}"
     )
     for path in (outputs.product, outputs.primers, outputs.protocol):
         typer.echo(str(path))

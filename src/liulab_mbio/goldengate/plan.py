@@ -37,6 +37,7 @@ from liulab_mbio.goldengate.design import (
     choose_enzyme,
     design_overhangs,
 )
+from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
 from liulab_mbio.io import read_record
 from liulab_mbio.primers import (
     ONETAQ,
@@ -302,6 +303,8 @@ def plan_assembly(
     orientation: Orientation | Sequence[Orientation] = "forward",
     in_frame: bool | Sequence[bool] = False,
     enzyme: EnzymeLike | None = None,
+    profile: LigaseProfile | str | os.PathLike[str] | None = None,
+    prefer_profile: bool = False,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
     name: str = "",
@@ -332,6 +335,12 @@ def plan_assembly(
     enzyme
         The Type IIS enzyme to use. Chosen by `choose_enzyme` when not given, and refused
         either way if it reads a site in any part.
+    profile
+        A ligase fidelity matrix the caller holds, as a path or an already read `LigaseProfile`.
+        It scores the overhangs where no shipped matrix covers the enzyme. The package ships
+        none: see `liulab_mbio.goldengate.ligase`.
+    prefer_profile
+        Use it even where a shipped matrix covers the enzyme.
     polymerase
         For the PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
     host, name
@@ -350,8 +359,8 @@ def plan_assembly(
     ------
     ValueError
         If no insert is given, if no insertion site is named and the vector annotates none, if
-        the enzyme reads a site in a part, if no overhang passes every rule, or if the parts do
-        not assemble.
+        the enzyme reads a site in a part, if no overhang passes every rule, if `profile` names
+        a file that is not a count matrix, or if the parts do not assemble.
     """
     if not inserts:
         raise ValueError("an assembly needs a vector and at least one insert")
@@ -376,6 +385,8 @@ def plan_assembly(
             Junction(one.name or "vector", record=one, position=end, scarless=True, window=window),
         ),
         chosen,
+        profile=_profile(profile),
+        prefer_profile=prefer_profile,
     )
     overhangs = designed.overhangs
     span = (start, end + designed.choices[-1].offset)
@@ -570,6 +581,13 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
 def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
     """Read a record, or take one already read."""
     return value if isinstance(value, SequenceRecord) else read_record(value)
+
+
+def _profile(value: LigaseProfile | str | os.PathLike[str] | None) -> LigaseProfile | None:
+    """Read a ligase profile, or take one already read."""
+    if value is None or isinstance(value, LigaseProfile):
+        return value
+    return read_profile(value)
 
 
 def _span(vector: SequenceRecord, site: Site) -> tuple[int, int]:

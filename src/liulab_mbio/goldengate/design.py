@@ -10,8 +10,9 @@ Three decisions, in the order a design makes them:
   a near-duplicate is what mis-ligates; each refusal is reported with the rule that made it.
 - **How well the set should ligate.** Pryor et al. 2020 measured every overhang pair for five
   enzymes, and that data ships here: fidelity is the product over the junctions of correct
-  ligations over all ligations. An enzyme they did not measure is scored by the rules instead,
-  and the report says which it was.
+  ligations over all ligations. An enzyme they did not measure is scored against a ligase
+  profile the caller holds (`liulab_mbio.goldengate.ligase`) where there is one and by the rules
+  where there is not, and the report says which of the three scored it.
 
 The fidelity data is `src/liulab_mbio/data/ligation_fidelity.json`, from the supplementary
 tables of Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S.
@@ -29,6 +30,7 @@ from typing import Literal
 
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.goldengate.ligase import LigaseProfile
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import (
     CutSite,
@@ -79,6 +81,9 @@ _RULE_SOURCE = "rule-based estimate: no published ligation data covers this enzy
 
 #: Why a candidate overhang was refused.
 type RejectionRule = Literal["length", "palindrome", "uniform", "repeat", "near-duplicate", "site"]
+
+#: What a set of overhangs is scored against: the enzyme's own matrix, or a ligase's profile.
+type Scoring = LigationMatrix | LigaseProfile
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,6 +184,9 @@ class FidelityReport:
     mismatches
         Top overhang, bottom overhang and normalised count, for every cross pair seen at least
         `MODEST_MISMATCH` times per 100,000 ligation events, the worst first.
+    enzyme_specific
+        ``False`` when a ligase profile scored the set: a measurement of the ligase and the
+        conditions, and not of this enzyme.
     """
 
     enzyme: str
@@ -189,6 +197,16 @@ class FidelityReport:
     ligations: tuple[Ligation, ...] = ()
     weak: tuple[str, ...] = ()
     mismatches: tuple[tuple[str, str, float], ...] = ()
+    enzyme_specific: bool = True
+
+    @property
+    def label(self) -> str:
+        """What kind of number this is, for a report printing it beside the value."""
+        if not self.measured:
+            return "rule-based estimate"
+        if not self.enzyme_specific:
+            return f"measured ligase profile, not specific to {self.enzyme}"
+        return "measured"
 
 
 @dataclass(frozen=True, slots=True)
@@ -484,6 +502,8 @@ def design_overhangs(
     avoid: Iterable[EnzymeLike] = (),
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
+    profile: LigaseProfile | None = None,
+    prefer_profile: bool = False,
 ) -> OverhangSet:
     """Choose one overhang per junction, and say what was refused on the way.
 
@@ -503,11 +523,17 @@ def design_overhangs(
         How many bases two overhangs in the set must differ by.
     allow_uniform
         Accept an overhang of one base kind. Refused by default: an all-GC junction truncates.
+    profile
+        A ligase's own matrix, read by `liulab_mbio.goldengate.ligase.read_profile`. It ranks
+        the free candidates and scores the set where no shipped matrix covers the enzyme.
+    prefer_profile
+        Use `profile` even where a shipped matrix covers the enzyme.
 
     Raises
     ------
     ValueError
-        If a junction has no candidate left, naming the rule that refused the last one.
+        If a junction has no candidate left, naming the rule that refused the last one, or if
+        a profile covers overhangs of another length than the enzyme leaves.
 
     Examples
     --------
@@ -518,7 +544,7 @@ def design_overhangs(
     """
     one = _type_iis(_one(enzyme))
     others = _resolve(avoid)
-    matrix = ligation_matrix(one)
+    table, _ = _scoring(one, profile, prefer_profile)
     wanted = tuple(junctions)
     order = sorted(range(len(wanted)), key=lambda index: _freedom(wanted[index]))
     chosen: dict[int, Choice] = {}
@@ -526,7 +552,7 @@ def design_overhangs(
     for index in order:
         junction = wanted[index]
         rejected: list[Rejection] = []
-        for offset, candidate in _candidates(junction, one, matrix):
+        for offset, candidate in _candidates(junction, one, table):
             refusal = _refuse(candidate, one, taken, others, min_distance, allow_uniform)
             if refusal is None:
                 chosen[index] = Choice(junction, candidate, offset, tuple(rejected))
@@ -536,7 +562,13 @@ def design_overhangs(
         else:
             raise _stuck(junction, rejected)
     choices = tuple(chosen[index] for index in range(len(wanted)))
-    return OverhangSet(one, choices, fidelity([choice.overhang for choice in choices], one))
+    scored = fidelity(
+        [choice.overhang for choice in choices],
+        one,
+        profile=profile,
+        prefer_profile=prefer_profile,
+    )
+    return OverhangSet(one, choices, scored)
 
 
 def _freedom(junction: Junction) -> int:
@@ -563,7 +595,7 @@ def _stuck(junction: Junction, rejected: Sequence[Rejection]) -> ValueError:
 
 
 def _candidates(
-    junction: Junction, enzyme: Enzyme, matrix: LigationMatrix | None
+    junction: Junction, enzyme: Enzyme, table: Scoring | None
 ) -> Iterator[tuple[int, str]]:
     """Every overhang this junction could take, best first, with how far it moved to get it."""
     length = enzyme.overhang_length
@@ -583,10 +615,10 @@ def _candidates(
                 yield offset, bases
         return
     free = ("".join(bases) for bases in product("ACGT", repeat=length))
-    if matrix is None:
+    if table is None:
         yield from ((0, candidate) for candidate in free)
         return
-    ranked = sorted(free, key=lambda one: (-matrix.count(one, reverse_complement(one)), one))
+    ranked = sorted(free, key=lambda one: (-table.count(one, reverse_complement(one)), one))
     yield from ((0, candidate) for candidate in ranked)
 
 
@@ -703,7 +735,13 @@ def _distance(one: str, other: str) -> int:
     return sum(a != b for a, b in zip(one, other, strict=True))
 
 
-def fidelity(overhangs: Iterable[str], enzyme: EnzymeLike) -> FidelityReport:
+def fidelity(
+    overhangs: Iterable[str],
+    enzyme: EnzymeLike,
+    *,
+    profile: LigaseProfile | None = None,
+    prefer_profile: bool = False,
+) -> FidelityReport:
     """Score how well a set of overhangs should ligate to their own partners and nothing else.
 
     With shipped data, this is Pryor 2020's definition: the product over the junctions of
@@ -712,14 +750,19 @@ def fidelity(overhangs: Iterable[str], enzyme: EnzymeLike) -> FidelityReport:
     presenting its reverse complement, and both are counted — which is what reproduces the
     fidelity the paper reports for its own worked examples.
 
-    With no data for the enzyme, the rules score the set instead and `FidelityReport.measured`
-    is ``False``. Those numbers are a ranking, not a prediction: they compare one candidate set
-    with another scored the same way and with nothing else.
+    A `profile` stands in where no shipped matrix covers the enzyme, and `prefer_profile` uses
+    it even where one does. A profile is a measurement of the ligase and the conditions and not
+    of the enzyme, so `FidelityReport.enzyme_specific` is then ``False`` and the source says so.
+
+    With neither, the rules score the set instead and `FidelityReport.measured` is ``False``.
+    Those numbers are a ranking, not a prediction: they compare one candidate set with another
+    scored the same way and with nothing else.
 
     Raises
     ------
     ValueError
-        If an overhang is not one this enzyme leaves.
+        If an overhang is not one this enzyme leaves, or a profile covers overhangs of another
+        length than the enzyme leaves.
 
     Examples
     --------
@@ -734,8 +777,8 @@ def fidelity(overhangs: Iterable[str], enzyme: EnzymeLike) -> FidelityReport:
                 f"{one.name} leaves a {one.overhang_length}-base overhang, "
                 f"and {overhang!r} is {len(overhang)}"
             )
-    matrix = ligation_matrix(one)
-    if matrix is None:
+    table, specific = _scoring(one, profile, prefer_profile)
+    if table is None:
         return _by_rule(one, chosen)
     query = sorted({*chosen, *(reverse_complement(overhang) for overhang in chosen)})
     ligations: list[Ligation] = []
@@ -746,31 +789,35 @@ def fidelity(overhangs: Iterable[str], enzyme: EnzymeLike) -> FidelityReport:
         ends = (overhang, partner)
         ligation = Ligation(
             overhang,
-            sum(matrix.count(end, other) for end, other in (ends, ends[::-1])),
-            sum(matrix.count(end, column) for end in ends for column in query),
+            sum(table.count(end, other) for end, other in (ends, ends[::-1])),
+            sum(table.count(end, column) for end in ends for column in query),
         )
         ligations.append(ligation)
         value *= ligation.value
-        if matrix.normalised(overhang, partner) < STRONG_LIGATION:
+        if table.normalised(overhang, partner) < STRONG_LIGATION:
             weak.append(overhang)
     mismatches = sorted(
         (
-            (row, column, matrix.normalised(row, column))
+            (row, column, table.normalised(row, column))
             for row in query
             for column in query
             if column != reverse_complement(row)
-            and matrix.normalised(row, column) >= MODEST_MISMATCH
+            and table.normalised(row, column) >= MODEST_MISMATCH
         ),
         key=lambda entry: (-entry[2], entry[0], entry[1]),
     )
+    source = table.source
+    if not specific:
+        source = f"{source}, a ligase profile and not a measurement of {one.name}"
     return FidelityReport(
         one.name,
-        matrix.source,
+        source,
         measured=True,
         value=value,
         ligations=tuple(ligations),
         weak=tuple(weak),
         mismatches=tuple(mismatches),
+        enzyme_specific=specific,
     )
 
 
@@ -791,6 +838,30 @@ def _by_rule(enzyme: Enzyme, chosen: Sequence[str]) -> FidelityReport:
         )
         value *= max(0.0, 1.0 - penalty)
     return FidelityReport(enzyme.name, _RULE_SOURCE, measured=False, value=value)
+
+
+def _scoring(
+    enzyme: Enzyme, profile: LigaseProfile | None, prefer_profile: bool
+) -> tuple[Scoring | None, bool]:
+    """Return what scores this enzyme's overhangs, and whether the enzyme itself was measured.
+
+    The enzyme's own matrix wins unless the caller asks for the profile, because a ligase
+    profile stands in for a measurement nobody has made rather than replacing one they have.
+
+    Raises
+    ------
+    ValueError
+        If the profile covers overhangs of another length than the enzyme leaves.
+    """
+    matrix = ligation_matrix(enzyme)
+    if profile is not None and (prefer_profile or matrix is None):
+        if profile.overhang_length != enzyme.overhang_length:
+            raise ValueError(
+                f"{profile.path.name} covers {profile.overhang_length}-base overhangs and "
+                f"{enzyme.name} leaves {enzyme.overhang_length}"
+            )
+        return profile, False
+    return matrix, matrix is not None
 
 
 def _one(enzyme: EnzymeLike) -> Enzyme:

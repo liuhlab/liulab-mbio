@@ -98,7 +98,6 @@ def protocol(plan: "Plan") -> Protocol:
 def _overview(plan: "Plan") -> dict[str, str]:
     """Return the facts to check before starting."""
     fidelity = plan.overhangs.fidelity
-    measured = "measured" if fidelity.measured else "rule-based estimate"
     facts = {
         "Vector": f"{plan.vector.name}, {len(plan.vector)} bp, {plan.vector.topology}",
         "Insert" if len(plan.inserts) == 1 else "Inserts": "; ".join(
@@ -112,7 +111,7 @@ def _overview(plan: "Plan") -> dict[str, str]:
         "Enzyme": f"{_label(plan.enzyme)} at {golden_gate_temperature(plan.enzyme):g} °C",
         "Overhangs": (
             f"{_listed(plan.overhangs.overhangs)}, ligation fidelity "
-            f"{fidelity.value:.0%} ({measured})"
+            f"{fidelity.value:.0%} ({fidelity.label})"
         ),
         "Product": f"{plan.product.name}, {len(plan.product)} bp, circular",
         "Junctions": (
