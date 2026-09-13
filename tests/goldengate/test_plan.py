@@ -116,8 +116,8 @@ def test_the_other_orientation_puts_the_insert_on_the_other_strand(puc19, gfp):
     assert back.assembly.status == "pass"
 
 
-def test_the_files_are_read_from_disk_when_a_path_is_given(data_dir):
-    made = plan_assembly(data_dir / "pUC19.dna", data_dir / "GFP.dna")
+def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file):
+    made = plan_assembly(puc19_file, gfp_file)
     assert made.product.name == "pUC19-GFP"
     assert len(made.product) == 3347
 

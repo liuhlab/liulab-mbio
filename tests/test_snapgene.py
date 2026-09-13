@@ -3,24 +3,12 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import pytest
-
 from liulab_mbio.edits import delete
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 from liulab_mbio.snapgene import read_dna, write_dna
 
 #: The packets the model holds, which the writer builds rather than keeping.
 MODELLED = (0x00, 0x05, 0x06, 0x0A)
-
-
-@pytest.fixture(scope="module")
-def puc19_file(data_dir: Path) -> Path:
-    return data_dir / "pUC19.dna"
-
-
-@pytest.fixture(scope="module")
-def gfp_file(data_dir: Path) -> Path:
-    return data_dir / "GFP.dna"
 
 
 def _packets(data: bytes) -> list[tuple[int, bytes]]:
@@ -167,9 +155,9 @@ def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name(
 def test_write_dna_round_trips_a_record_through_a_file(
     puc19_file: Path, gfp_file: Path, tmp_path: Path
 ) -> None:
-    for fixture in (puc19_file, gfp_file):
-        record = read_dna(fixture)
-        path = tmp_path / fixture.name
+    for source in (puc19_file, gfp_file):
+        record = read_dna(source)
+        path = tmp_path / source.name
         write_dna(record, path)
         assert read_dna(path) == record
 
@@ -206,9 +194,8 @@ def test_write_dna_drops_the_cut_site_cache_once_the_sequence_changes(
 def test_the_sequence_packet_flags_hold_topology_strandedness_and_methylation(
     puc19_file: Path, gfp_file: Path, tmp_path: Path
 ) -> None:
-    assert (
-        _flags(puc19_file.read_bytes()) == 0x1F
-    )  # circular, double, Dam, Dcm and EcoKI methylated
+    # Circular, double-stranded, and Dam, Dcm and EcoKI methylated.
+    assert _flags(puc19_file.read_bytes()) == 0x1F
     assert _flags(gfp_file.read_bytes()) == 0x02  # linear and double-stranded
     linear = dataclasses.replace(read_dna(puc19_file), topology="linear")
     write_dna(linear, tmp_path / "linear.dna")
@@ -297,8 +284,8 @@ def test_the_reader_agrees_with_biopython_on_both_fixtures(
 ) -> None:
     from Bio import SeqIO
 
-    for fixture in (puc19_file, gfp_file):
-        record, reference = read_dna(fixture), SeqIO.read(fixture, "snapgene")
+    for source in (puc19_file, gfp_file):
+        record, reference = read_dna(source), SeqIO.read(source, "snapgene")
         assert record.sequence == str(reference.seq).upper()
         assert record.topology == reference.annotations["topology"]
         assert {(f.name, f.segments[0].start, f.segments[-1].end) for f in record.features} == {

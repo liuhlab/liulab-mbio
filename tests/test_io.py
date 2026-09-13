@@ -19,8 +19,8 @@ ORIGIN
 """
 
 
-def test_read_record_reads_a_snapgene_file(data_dir: Path) -> None:
-    record = read_record(data_dir / "GFP.dna")
+def test_read_record_reads_a_snapgene_file(gfp_file: Path) -> None:
+    record = read_record(gfp_file)
     assert (len(record), record.topology, record.name) == (717, "linear", "GFP")
     assert record.features[0].name == "GFP"
 

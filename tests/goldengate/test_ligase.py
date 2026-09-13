@@ -262,10 +262,15 @@ def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before(puc19
 
 
 def test_the_command_line_takes_the_matrix_as_an_option(
-    data_dir: Path, profile_path: Path, tmp_path: Path
+    puc19_file: Path, gfp_file: Path, profile_path: Path, tmp_path: Path
 ) -> None:
     result = _run(
-        data_dir, tmp_path / "given", "--enzyme", "PaqCI", "--ligase-matrix", str(profile_path)
+        (puc19_file, gfp_file),
+        tmp_path / "given",
+        "--enzyme",
+        "PaqCI",
+        "--ligase-matrix",
+        str(profile_path),
     )
 
     assert result.exit_code == 0, result.output
@@ -273,10 +278,14 @@ def test_the_command_line_takes_the_matrix_as_an_option(
 
 
 def test_the_command_line_takes_the_matrix_from_the_environment(
-    data_dir: Path, profile_path: Path, tmp_path: Path
+    puc19_file: Path, gfp_file: Path, profile_path: Path, tmp_path: Path
 ) -> None:
     result = _run(
-        data_dir, tmp_path / "env", "--enzyme", "PaqCI", env={LIGASE_MATRIX_ENV: str(profile_path)}
+        (puc19_file, gfp_file),
+        tmp_path / "env",
+        "--enzyme",
+        "PaqCI",
+        env={LIGASE_MATRIX_ENV: str(profile_path)},
     )
 
     assert result.exit_code == 0, result.output
@@ -284,25 +293,28 @@ def test_the_command_line_takes_the_matrix_from_the_environment(
 
 
 def test_the_command_line_refuses_a_file_that_is_not_a_matrix(
-    data_dir: Path, tmp_path: Path
+    puc19_file: Path, gfp_file: Path, tmp_path: Path
 ) -> None:
     path = _written(tmp_path / "fragments.csv", "Fragment #,Sequence\n1,ATGC\n")
 
-    result = _run(data_dir, tmp_path / "run", "--ligase-matrix", str(path))
+    result = _run((puc19_file, gfp_file), tmp_path / "run", "--ligase-matrix", str(path))
 
     assert result.exit_code == 1
     assert "not a ligation count matrix" in result.output
 
 
-def _run(data_dir: Path, out: Path, *arguments: str, env: Mapping[str, str] | None = None):
-    """Plan the fixture assembly on the command line, writing the three outputs into OUT."""
+def _run(
+    files: tuple[Path, Path], out: Path, *arguments: str, env: Mapping[str, str] | None = None
+):
+    """Plan the vector and insert FILES on the command line, writing the three outputs into OUT."""
+    vector, insert = files
     return CliRunner().invoke(
         app,
         [
             "goldengate",
             "plan",
-            str(data_dir / "pUC19.dna"),
-            str(data_dir / "GFP.dna"),
+            str(vector),
+            str(insert),
             "--out",
             str(out),
             *arguments,
