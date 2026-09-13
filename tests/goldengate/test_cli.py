@@ -1,5 +1,6 @@
 """The one verb over the pipeline, which is what the skill and the docs build call."""
 
+import json
 import re
 from pathlib import Path
 
@@ -41,6 +42,26 @@ def test_the_cli_writes_the_four_outputs_into_the_directory_and_prints_their_pat
     assert all((out / name).exists() for name in names)
     assert "BbsI" in summary
     assert "3347 bp" in summary
+
+
+def test_a_step_deleted_from_the_protocol_data_is_gone_from_the_page_rendered_again(
+    vector_and_insert, tmp_path: Path
+) -> None:
+    out = tmp_path / "run"
+    assert run(*vector_and_insert, "--out", str(out)).exit_code == 0
+    data, page = out / "protocol.json", out / "protocol.html"
+    dropped = "Digest the plasmid template with DpnI"
+    assert dropped in page.read_text(encoding="utf-8")
+    protocol = json.loads(data.read_text(encoding="utf-8"))
+    kept = [step for step in protocol["steps"] if step["title"] != dropped]
+    assert len(kept) == len(protocol["steps"]) - 1
+    data.write_text(json.dumps({**protocol, "steps": kept}), encoding="utf-8")
+    result = CliRunner().invoke(app, ["protocol", "render", str(data)])
+    assert result.exit_code == 0, result.output
+    assert re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines() == [str(page)]
+    rendered = page.read_text(encoding="utf-8")
+    assert dropped not in rendered
+    assert all(step["title"] in rendered for step in kept)
 
 
 def test_the_cli_takes_a_span_as_well_as_a_feature_name(vector_and_insert, tmp_path: Path) -> None:
