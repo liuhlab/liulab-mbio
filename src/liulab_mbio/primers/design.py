@@ -2,7 +2,7 @@
 
 import heapq
 import math
-from collections.abc import Iterator
+from collections.abc import Container, Iterator
 from dataclasses import dataclass
 from itertools import groupby
 
@@ -111,6 +111,7 @@ def design_pair(
     target_tm: float = TARGET_TM,
     polymerase: Polymerase = Q5,
     thresholds: Thresholds = THRESHOLDS,
+    exclude: Container[BindingSite] = (),
 ) -> tuple[Primer, Primer]:
     """Design a pair amplifying `start` to `end`, judged on what a pair adds as well.
 
@@ -120,12 +121,13 @@ def design_pair(
     its worst status, then on the same keys summed over both primers, so a pair worse than a
     pass means nothing here passes; `ranked_pairs` gives the rest in that order. A placement
     widens either primer's search; the two bound the amplicon between them, which is why
-    nothing takes an amplicon size.
+    nothing takes an amplicon size. Neither primer takes a binding site in `exclude`.
 
     Raises
     ------
     ValueError
-        If no annealing region fits the template at either end, or fits that end's placement.
+        If no annealing region fits the template at either end, or fits that end's placement,
+        or `exclude` holds every one at an end.
 
     Examples
     --------
@@ -164,6 +166,7 @@ def design_pair(
             target_tm=target_tm,
             polymerase=polymerase,
             thresholds=thresholds,
+            exclude=exclude,
         )
     )
     return best.forward.primer, best.reverse.primer
@@ -183,11 +186,14 @@ def ranked_pairs(
     target_tm: float = TARGET_TM,
     polymerase: Polymerase = Q5,
     thresholds: Thresholds = THRESHOLDS,
+    exclude: Container[BindingSite] = (),
 ) -> Iterator[PairReport]:
     """Yield every pair `design_pair` chooses between, best first, judged as by `evaluate_pair`.
 
     The first is the pair `design_pair` chooses. A pair is judged only once no pair still to
-    judge could rank above it, so taking the first few judges few.
+    judge could rank above it, so taking the first few judges few. A pair holding a binding site
+    in `exclude` is passed over, and `exclude` is read as pairs are taken: a site added to it
+    between two pairs stays out of every later one.
 
     Raises
     ------
@@ -200,12 +206,18 @@ def ranked_pairs(
     ...     "GGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCT"
     ...     "TACAGGATCCACTAGTAACGGCCGCCAGTGTGCTGGAATTCGCCCTTA"
     ... )
-    >>> pairs = ranked_pairs(template, 0, len(template))
-    >>> best, second = next(pairs), next(pairs)
+    >>> excluded = set()
+    >>> pairs = ranked_pairs(template, 0, len(template), exclude=excluded)
+    >>> best = next(pairs)
     >>> [primer.sequence for primer in (best.forward.primer, best.reverse.primer)]
     ['GGCGTAATCATGGTCATAGC', 'TAAGGGCGAATTCCAGCA']
-    >>> [primer.sequence for primer in (second.forward.primer, second.reverse.primer)]
-    ['GGCGTAATCATGGTCATAG', 'TAAGGGCGAATTCCAGCA']
+
+    A site excluded once a pair is taken stays out of every pair after it:
+
+    >>> excluded.add(best.reverse.primer.binding_sites[0])
+    >>> after = next(pairs)
+    >>> [primer.sequence for primer in (after.forward.primer, after.reverse.primer)]
+    ['GGCGTAATCATGGTCATAGC', 'TAAGGGCGAATTCCAGCAC']
     """
     forwards = _options(
         template,
@@ -229,13 +241,13 @@ def ranked_pairs(
         polymerase,
         thresholds,
     )
-    return _in_rank_order(
-        _fitted(forwards, start, forward_placement),
-        _fitted(reverses, end, reverse_placement),
-        template,
-        polymerase,
-        thresholds,
-    )
+    _fitted(forwards, start, forward_placement)
+    _fitted(reverses, end, reverse_placement)
+    for options in (forwards, reverses):
+        if all(option.site in exclude for option in options):
+            strand = options[0].site.strand.name.lower()
+            raise ValueError(f"every {strand} binding site is excluded")
+    return _in_rank_order(forwards, reverses, template, polymerase, thresholds, exclude)
 
 
 @dataclass(frozen=True, slots=True)
@@ -245,6 +257,11 @@ class _Option:
     primer: Primer
     report: PrimerReport
     rank: _Rank
+
+    @property
+    def site(self) -> BindingSite:
+        """Return the binding site."""
+        return self.primer.binding_sites[0]
 
 
 def _options(
@@ -357,29 +374,44 @@ def _in_rank_order(
     template: SequenceRecord,
     polymerase: Polymerase,
     thresholds: Thresholds,
+    exclude: Container[BindingSite],
 ) -> Iterator[PairReport]:
     """Yield every pair best first, judging pairs in the order of their bounds.
 
     No pair ranks above its bound, so a judged pair ranking above the next bound ranks above
-    every pair still to judge, and is yielded before that one is judged.
+    every pair still to judge, and is yielded before that one is judged. `exclude` may grow
+    while a pair is yielded, so it is read after every yield.
     """
     judged: list[_Judged] = []
     pairs = _by_bound(_ranked(forwards), _ranked(reverses))
     for order, (bound, forward, reverse) in enumerate(pairs):
-        yield from _taken(judged, bound, polymerase)
+        yield from _taken(judged, bound, polymerase, exclude)
+        if _excluded(forward, reverse, exclude):
+            continue
         checks = pair_checks(forward.report, reverse.report, template, thresholds=thresholds)
         rank = _pair_rank(bound, forward, reverse, checks)
         heapq.heappush(judged, (rank, order, forward, reverse, checks))
-    yield from _taken(judged, None, polymerase)
+    yield from _taken(judged, None, polymerase, exclude)
 
 
 def _taken(
-    judged: list[_Judged], bound: _PairRank | None, polymerase: Polymerase
+    judged: list[_Judged],
+    bound: _PairRank | None,
+    polymerase: Polymerase,
+    exclude: Container[BindingSite],
 ) -> Iterator[PairReport]:
-    """Yield, best first, every judged pair ranking above a bound, or every one without it."""
+    """Yield, best first, every judged pair ranking above a bound, or every one without it.
+
+    A pair holding an excluded site is dropped instead.
+    """
     while judged and (bound is None or judged[0][0] < bound):
         _, _, forward, reverse, checks = heapq.heappop(judged)
-        yield _report(forward, reverse, checks, polymerase)
+        if not _excluded(forward, reverse, exclude):
+            yield _report(forward, reverse, checks, polymerase)
+
+
+def _excluded(forward: _Option, reverse: _Option, exclude: Container[BindingSite]) -> bool:
+    return forward.site in exclude or reverse.site in exclude
 
 
 def _report(
