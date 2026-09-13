@@ -91,7 +91,7 @@ class Polymerase:
     extension_seconds_per_kb
         Extension time per kilobase of amplicon.
     pcr
-        What NEB's protocol puts in this polymerase's PCR, and the program around it.
+        Its buffer, enzyme dose and cycling, as NEB's protocol for it sets them.
     """
 
     name: str

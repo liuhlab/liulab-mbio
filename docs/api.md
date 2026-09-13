@@ -72,8 +72,8 @@ across the origin of a circular record ends past the record's length — see
 
 ## Primers
 
-`liulab_mbio.primers` is five modules, and every public name in them imports from the package
-too: `from liulab_mbio.primers import design_pair` works as well as the longer path.
+Every public name in the modules below imports from `liulab_mbio.primers` too:
+`from liulab_mbio.primers import design_pair` works as well as the longer path.
 
 ::: liulab_mbio.primers
     options:

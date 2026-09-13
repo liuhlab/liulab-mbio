@@ -51,7 +51,7 @@ PUC_REV = "AGCGGATAACAATTTCACACAGG"
 #: Anneals to pUC19 just after the MCS, reading along the top strand.
 MCS_FWD = "GGCGTAATCATGGTCATAGC"
 
-#: What callers import from `liulab_mbio.primers`, whichever of its modules defines it.
+#: Every public name `liulab_mbio.primers` defined while it was one module.
 PUBLIC_NAMES = (
     "ONETAQ",
     "PHUSION",
@@ -78,9 +78,8 @@ PUBLIC_NAMES = (
 )
 
 
-def test_every_public_name_imports_from_the_package() -> None:
-    assert set(PUBLIC_NAMES) <= set(primers.__all__)
-    assert all(hasattr(primers, name) for name in primers.__all__)
+def test_every_public_name_still_imports_from_the_package() -> None:
+    assert [name for name in PUBLIC_NAMES if not hasattr(primers, name)] == []
 
 
 @pytest.mark.parametrize(

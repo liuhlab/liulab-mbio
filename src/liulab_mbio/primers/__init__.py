@@ -1,6 +1,6 @@
 """Design PCR primers and judge them.
 
-Five modules, and every public name in them imports from here as well:
+Every public name in its modules imports from here as well:
 
 - `polymerase`: a polymerase, the Tm in its buffer, its annealing and extension rules, and
   NEB's PCR for it.

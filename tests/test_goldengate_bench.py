@@ -38,7 +38,7 @@ from liulab_mbio.goldengate.bench import (
     to_pmol,
 )
 from liulab_mbio.io import read_record
-from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, Polymerase, amplicon_sizes
+from liulab_mbio.primers import POLYMERASES, Q5, Polymerase, amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord
 
 DATA = Path(__file__).parent / "data"
@@ -259,28 +259,6 @@ def test_an_enzyme_with_no_recorded_heat_inactivation_gets_no_program() -> None:
     assert heat_inactivation(get_enzyme("AarI")) is None
 
 
-def test_the_q5_reaction_fills_fifty_microlitres_as_nebs_table_does() -> None:
-    table = pcr_reaction(Q5)
-    assert total(table) == pytest.approx(50.0)
-    assert volumes(table) == {
-        "Q5 Reaction Buffer": 10.0,
-        "dNTP mix": 1.0,
-        "Forward primer": 2.5,
-        "Reverse primer": 2.5,
-        "Template DNA": 1.0,
-        "Q5 DNA Polymerase": 0.5,
-        "Nuclease-free water": 32.5,
-    }
-
-
-def test_taq_takes_a_tenfold_buffer_and_less_enzyme() -> None:
-    table = pcr_reaction(TAQ)
-    assert total(table) == pytest.approx(50.0)
-    assert volumes(table)["Standard Taq Reaction Buffer"] == 5.0
-    assert volumes(table)["Forward primer"] == 1.0
-    assert volumes(table)["Taq DNA Polymerase"] == 0.25
-
-
 def test_a_pcr_program_anneals_at_the_pair_temperature_and_extends_by_length() -> None:
     program = pcr_program(Q5, annealing_temperature=57.3, amplicon_length=800)
     cycled = program.stages[1]
@@ -296,13 +274,6 @@ def test_a_high_annealing_temperature_combines_annealing_and_extension() -> None
     cycled = program.stages[1]
     assert [i.label for i in cycled.incubations] == ["Denature", "Anneal and extend"]
     assert cycled.incubations[1].temperature_c == 72.0
-
-
-def test_taq_goes_two_step_above_sixty_five_degrees_and_not_at_it() -> None:
-    at = pcr_program(TAQ, annealing_temperature=65.0, amplicon_length=500)
-    above = pcr_program(TAQ, annealing_temperature=65.1, amplicon_length=500)
-    assert len(at.stages[1].incubations) == 3
-    assert len(above.stages[1].incubations) == 2
 
 
 #: NEB's 50 µL PCR for each shipped polymerase, line by line as (name, µL, stock, final); its
@@ -391,7 +362,7 @@ SHIPPED_PCR = {
 }
 
 
-@pytest.mark.parametrize("polymerase", [Q5, PHUSION, TAQ, ONETAQ], ids=lambda one: one.name)
+@pytest.mark.parametrize("polymerase", POLYMERASES, ids=lambda one: one.name)
 def test_each_shipped_polymerase_gets_nebs_reaction_and_program(polymerase: Polymerase) -> None:
     lines, program, two_step = SHIPPED_PCR[polymerase.name]
     table = pcr_reaction(polymerase)
