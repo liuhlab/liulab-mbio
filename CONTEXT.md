@@ -23,8 +23,16 @@ _Avoid_: range, interval, part
 ### Primer
 
 A named oligonucleotide, written 5' to 3', that primes DNA synthesis. A sequence record
-annotates each of its primers with its binding sites.
-_Avoid_: oligo
+annotates each of its primers with its binding sites. Every primer is an **Oligo**; say primer
+only for one that primes something.
+_Avoid_: oligo (the wider word, and its own entry)
+
+### Oligo
+
+A short synthetic DNA a protocol orders: a row of the order sheet, with the name it is ordered
+under, the sequence, the length and the Tm. It is what a bench buys rather than what a reaction
+does, so a protocol may order one that primes nothing.
+_Avoid_: primer (unless it primes), synthetic DNA
 
 ### Binding site
 
