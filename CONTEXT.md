@@ -310,3 +310,30 @@ The circular plasmid an assembly makes: every part's features carried to their n
 its primers annotated where they anneal, and each junction marked. It keeps the vector's origin,
 so the vector's own coordinates still read true and no junction sits at base zero.
 _Avoid_: construct, output, final plasmid
+
+### Assembly plan
+
+The whole design for one assembly: the enzyme, the overhang set, the parts and their primers, the
+simulated product, the bench quantities, and the colony PCR and sequencing that confirm it. It
+holds every number a protocol prints, and writes the three files a bench needs.
+_Avoid_: design, run, recipe
+
+### Primer order sheet
+
+Every oligo one design asks for, as a table to order from: the name each is ordered under, the
+sequence 5' to 3', its length, and the Tm of the part that anneals.
+_Avoid_: oligo list, primer table
+
+### Phenotype
+
+What a clone is expected to show rather than what it holds: the colour it grows on an indicator
+plate, the antibiotic it resists, and whether the insert is transcribed and translated. Read off
+the product's own features, so a protocol states it instead of a person asserting it.
+_Avoid_: behaviour, readout, construct
+
+### Blue/white screening
+
+Reading a plate by colour: an insertion interrupting the vector's lacZ fragment leaves a colony
+white where an empty vector is blue. It reports nothing unless the host supplies the rest of
+lacZ, so the strain is part of the screen.
+_Avoid_: colour screen, X-gal screen
