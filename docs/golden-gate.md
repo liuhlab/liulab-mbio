@@ -11,7 +11,7 @@ Both sequence files ship with the repo, under `tests/data/`.
 pixi run liulab_mbio goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out docs/examples/pUC19-GFP
 ```
 
-It prints one summary line, then the three paths it wrote:
+It prints one summary line, then the four paths it wrote:
 
 ```text
 pUC19-GFP: 3347 bp, BbsI, 2 fragments, overhangs ATGA, TGGC, fidelity 100% (measured), checks warn
@@ -57,10 +57,18 @@ one that warns least, so each of these comes from where that primer has to sit.
 | --- | --- |
 | `product.dna` | the finished plasmid, with every feature carried over and both joins marked. Opens in SnapGene |
 | `primers.tsv` | the nine oligos, with length and melting temperature. This is your order |
+| `protocol.json` | the bench protocol written as data. The page is made from this file |
 | `protocol.html` | the bench protocol: one page, no network, nothing to install |
 
-Nothing here is written by hand, so the same two input files always give the same three files.
-That means you can run it again instead of editing the output.
+Nothing here is written by hand, so the same two input files always give the same four files.
+To change the design, run the command again.
+
+The page is made from `protocol.json`, so the two always agree. To change what the page says,
+edit `protocol.json` and turn it back into a page:
+
+```bash
+pixi run liulab_mbio protocol render protocol.json
+```
 
 ## How to read the protocol
 

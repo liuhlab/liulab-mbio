@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -30,6 +31,17 @@ def test_the_cli_says_which_key_it_could_not_read(tmp_path: Path) -> None:
     result = CliRunner().invoke(app, ["protocol", "render", str(bad)])
     assert result.exit_code == 1
     assert "name" in result.output
+
+
+def test_the_cli_says_in_one_line_where_a_value_has_the_wrong_type(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.json"
+    bad.write_text(
+        '{"title": "t", "steps": [{"title": "s", "instructions": "Mix well."}]}', encoding="utf-8"
+    )
+    result = CliRunner().invoke(app, ["protocol", "render", str(bad)])
+    assert result.exit_code == 1
+    [line] = re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
+    assert "protocol.steps[0].instructions" in line
 
 
 def test_the_cli_refuses_a_protocol_file_that_is_not_there(tmp_path: Path) -> None:

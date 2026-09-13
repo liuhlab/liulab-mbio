@@ -306,7 +306,7 @@ def test_the_command_line_refuses_a_file_that_is_not_a_matrix(
 def _run(
     files: tuple[Path, Path], out: Path, *arguments: str, env: Mapping[str, str] | None = None
 ):
-    """Plan the vector and insert FILES on the command line, writing the three outputs into OUT."""
+    """Plan the vector and insert FILES on the command line, writing the four outputs into OUT."""
     vector, insert = files
     return CliRunner().invoke(
         app,

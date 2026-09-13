@@ -13,9 +13,9 @@ description: >-
 # Golden Gate assembly
 
 `liulab_mbio` does the design. This skill is the way in: one command turns a vector and its
-inserts into a product map, a primer order sheet and a bench protocol. Do not hand-design
-primers, overhangs or band sizes beside it — the package computes them from the sequences, and a
-number written by hand is one that nothing checks.
+inserts into a product map, a primer order sheet and a bench protocol. Never invent a primer, an
+overhang, a band size or any other number the package computes: it works each one out from the
+sequences and checks it, and nothing checks a number you made up.
 
 ## Run it
 
@@ -30,15 +30,16 @@ before it. A single insert is the ordinary case, not a special one.
 
 It chooses the enzyme, designs every junction's overhang together, simulates the PCRs and the
 ligation, works out the bench quantities, and designs the colony PCR and sequencing that confirm
-the clone. Three files land in the directory you name:
+the clone. Four files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
-- `primers.tsv` — every oligo it designed, with length and Tm
-- `protocol.html` — one self-contained page: reagents, reaction tables, thermocycler programs,
-  expected bands, a simulated gel and troubleshooting, step by step
+- `primers.tsv` — every oligo it designed, with length and Tm; it stays whole when a step
+  leaves the page
+- `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
+- `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
+  tables, thermocycler programs, expected bands, a simulated gel and troubleshooting, step by step
 
-The command prints a summary line and the three paths. The same inputs write the same bytes, so
-a protocol can be regenerated rather than edited.
+The command prints a summary line and the four paths. The same inputs write the same bytes.
 
 ## What the fragment count changes
 
@@ -75,13 +76,17 @@ from liulab_mbio.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
-plan.write("plan/")  # the same three files
+plan.write("plan/")  # the same four files
 ```
 
 `plan.assembly.checks` carries one verdict per part beside the product's own,
 `plan.overhangs.fidelity` the score of the set, `plan.colony.clones` the expected bands per
 candidate clone, and `plan.phenotype` what the product says about itself — what drives the
 inserts, whether anything should be translated, and how a plate reads.
+
+A value the user gives goes in here. For another amount of DNA, replace `plan.amounts` with
+`liulab_mbio.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
+and write the plan again.
 
 ## Before you hand it over
 
@@ -107,5 +112,10 @@ It raises rather than guessing, and the message names the cause.
 
 ## The protocol side
 
-`build-protocol` owns the page: the model, the data format and how to render one. Read it when
-you need to change what a protocol says, rather than what the design computes.
+`build-protocol` owns the page and the rules for changing it. When the user asks for what the
+plan did not anticipate — skip the DpnI digest, add a gel purification, add a caution — edit
+`protocol.json` as it says and render it again.
+
+A change to what the plan computes — the enzyme, the polymerase, the inserts or their
+orientation — goes back through `goldengate plan`, which writes `protocol.json` afresh. Within
+the session, reapply the changes the user asked for to the new protocol.

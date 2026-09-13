@@ -1,8 +1,10 @@
-from collections.abc import Callable
+import re
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pytest
 
+from liulab_mbio.goldengate import Plan
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -20,6 +22,7 @@ from liulab_mbio.protocol import (
     ThermocyclerProgram,
     Timer,
     read_protocol,
+    write_protocol,
 )
 
 
@@ -33,6 +36,48 @@ def test_a_missing_required_key_is_refused_and_located() -> None:
     data = {"title": "t", "steps": [{"title": "s", "tables": [{"components": [{"name": "x"}]}]}]}
     with pytest.raises(ValueError, match=r"components\[0\].*volume_ul"):
         Protocol.from_dict(data)
+
+
+def _one_table(
+    *,
+    step: Mapping[str, object] | None = None,
+    table: Mapping[str, object] | None = None,
+    component: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """A protocol of one step holding one reaction table of one component, with values changed."""
+    one_component = {"name": "water", "volume_ul": 1, **(component or {})}
+    one_table = {"components": [one_component], **(table or {})}
+    return {"title": "t", "steps": [{"title": "s", "tables": [one_table], **(step or {})}]}
+
+
+STEP = "protocol.steps[0]"
+TABLE = f"{STEP}.tables[0]"
+COMPONENT = f"{TABLE}.components[0]"
+
+
+@pytest.mark.parametrize(
+    ("data", "where", "expected"),
+    [
+        (_one_table(step={"instructions": "Mix well."}), f"{STEP}.instructions", "a list"),
+        (_one_table(component={"volume_ul": "5"}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"volume_ul": True}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"volume_ul": None}), f"{COMPONENT}.volume_ul", "a number"),
+        (_one_table(component={"master_mix": "false"}), f"{COMPONENT}.master_mix", "true or false"),
+        (_one_table(table={"reactions": 2.5}), f"{TABLE}.reactions", "a whole number"),
+        (_one_table(step={"title": 5}), f"{STEP}.title", "a string"),
+        ({"title": "t", "overview": ["Vector"]}, "protocol.overview", "an object"),
+    ],
+)
+def test_a_value_of_the_wrong_type_is_refused_and_located(
+    data: Mapping[str, object], where: str, expected: str
+) -> None:
+    with pytest.raises(ValueError, match=f"^{re.escape(where)}: expected {expected}"):
+        Protocol.from_dict(data)
+
+
+def test_a_whole_number_is_a_measurement() -> None:
+    protocol = Protocol.from_dict(_one_table(component={"volume_ul": 5}))
+    assert protocol.steps[0].tables[0].components[0].volume_ul == 5
 
 
 def test_the_master_mix_scales_by_reaction_count_with_overage() -> None:
@@ -191,3 +236,35 @@ def test_a_protocol_reads_from_its_json_file(data_dir: Path) -> None:
     assert gel.lanes[1].bands_bp == ()
     assert protocol.steps[2].troubleshooting[0].problem == "No band"
     assert protocol.references[0].url == "https://example.org/pcr"
+
+
+def test_a_protocol_written_as_json_reads_back_equal(
+    data_dir: Path, plan: Plan, tmp_path: Path
+) -> None:
+    for name, protocol in (
+        ("example", read_protocol(data_dir / "pcr-protocol.json")),
+        ("golden-gate", plan.protocol()),
+    ):
+        path = write_protocol(protocol, tmp_path / f"{name}.json")
+        assert read_protocol(path) == protocol
+
+
+def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: Path) -> None:
+    path = write_protocol(Protocol("Spin at 4 °C"), tmp_path / "protocol.json")
+    assert path.read_bytes() == "\n".join(
+        [
+            "{",
+            '  "title": "Spin at 4 °C",',
+            '  "summary": "",',
+            '  "overview": {},',
+            '  "highlights": [],',
+            '  "checks": [],',
+            '  "materials": [],',
+            '  "oligos": [],',
+            '  "equipment": [],',
+            '  "steps": [],',
+            '  "references": []',
+            "}",
+            "",
+        ]
+    ).encode("utf-8")

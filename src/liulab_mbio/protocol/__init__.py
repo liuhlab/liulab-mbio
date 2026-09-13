@@ -1,7 +1,7 @@
-"""Bench protocols: a small model, loaded from JSON and rendered to one self-contained HTML file.
+"""Bench protocols: a small model, read from and written to JSON, and rendered to one HTML file.
 
 JSON keys are the field names of the classes below, lists stand for tuples, and only the
-fields without a default are required::
+fields without a default are required; `write_protocol` writes every field::
 
     {"title": str, "summary": str, "overview": {label: short value},
      "highlights": [sentence], "checks": [{"name", "status", "detail"}],
@@ -43,6 +43,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Troubleshooting,
     read_protocol,
+    write_protocol,
 )
 from liulab_mbio.protocol.render import render_html, write_html
 
@@ -67,4 +68,5 @@ __all__ = [
     "read_protocol",
     "render_html",
     "write_html",
+    "write_protocol",
 ]

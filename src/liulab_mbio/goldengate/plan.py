@@ -3,8 +3,9 @@
 `plan_assembly` joins as many inserts as the overhangs allow, given in the order they go round
 the product, and runs the whole design: choose the enzyme, design the overhangs, simulate the
 PCRs and the ligation, work out the bench quantities, and design the colony PCR and sequencing
-that validate the clone. `Plan.write` puts the three things a bench needs in one directory --
-the annotated product, a primer order sheet, and the interactive HTML protocol.
+that validate the clone. `Plan.write` puts four files in one directory -- the annotated
+product, a primer order sheet, the protocol as JSON data, and the interactive HTML page
+rendered from that data.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
 protocol says about the phenotype -- what drives the inserts, whether anything should be
@@ -58,7 +59,7 @@ from liulab_mbio.primers import (
     evaluate_primer,
     reading,
 )
-from liulab_mbio.protocol import Protocol, write_html
+from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -89,15 +90,16 @@ VECTOR_WINDOW = 6
 #: the same bands as a correct one, so the gel could not tell them apart.
 REVERSE_FLANK = 2 * COLONY_FLANK
 
-#: What `Plan.write` calls the three files it writes.
+#: What `Plan.write` calls the four files it writes.
 PRODUCT_FILE = "product.dna"
 PRIMER_FILE = "primers.tsv"
+PROTOCOL_DATA_FILE = "protocol.json"
 PROTOCOL_FILE = "protocol.html"
 
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The three files a plan writes.
+    """The four files a plan writes.
 
     Parameters
     ----------
@@ -105,12 +107,16 @@ class Files:
         The annotated product, as a SnapGene ``.dna`` file.
     primers
         Every designed oligo, as a tab-separated sheet to order from.
+    protocol_data
+        The bench protocol as JSON, which ``protocol render`` turns back into a page.
     protocol
-        The interactive bench protocol, as one self-contained HTML page.
+        The interactive bench protocol, as one self-contained HTML page rendered from
+        `protocol_data`.
     """
 
     product: Path
     primers: Path
+    protocol_data: Path
     protocol: Path
 
 
@@ -239,11 +245,12 @@ class Plan:
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the primer sheet and the protocol into `directory`.
+        """Write the product, the primer sheet, the protocol data and its page into `directory`.
 
-        The directory is made when it is not there. The three files are named by
-        `PRODUCT_FILE`, `PRIMER_FILE` and `PROTOCOL_FILE`, and a second run over the same
-        inputs writes the same bytes.
+        The directory is made when it is not there. The four files are named by
+        `PRODUCT_FILE`, `PRIMER_FILE`, `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`, and a second
+        run over the same inputs writes the same bytes. The page is rendered from the data as
+        written, so the two cannot disagree.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -251,7 +258,8 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        return Files(product, sheet, write_html(self.protocol(), out / PROTOCOL_FILE))
+        data = write_protocol(self.protocol(), out / PROTOCOL_DATA_FILE)
+        return Files(product, sheet, data, write_html(read_protocol(data), out / PROTOCOL_FILE))
 
 
 def plan_assembly(
