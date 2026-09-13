@@ -1,18 +1,19 @@
-"""One Golden Gate experiment, planned from a vector and an insert.
+"""One Golden Gate experiment, planned from a vector and the inserts that go round it.
 
-`plan_assembly` runs the whole design: choose the enzyme, design the overhangs, simulate the
+`plan_assembly` joins as many inserts as the overhangs allow, given in the order they go round
+the product, and runs the whole design: choose the enzyme, design the overhangs, simulate the
 PCRs and the ligation, work out the bench quantities, and design the colony PCR and sequencing
 that validate the clone. `Plan.write` puts the three things a bench needs in one directory --
 the annotated product, a primer order sheet, and the interactive HTML protocol.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
-protocol says about the phenotype -- what drives the insert, whether it should be translated,
-and how a plate reads -- is `Phenotype`, read off the product's own features.
+protocol says about the phenotype -- what drives the inserts, whether anything should be
+translated, and how a plate reads -- is `Phenotype`, read off the product's own features.
 """
 
 import dataclasses
 import os
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -64,10 +65,10 @@ from liulab_mbio.snapgene import write_dna
 if TYPE_CHECKING:
     from liulab_mbio.protocol import Protocol
 
-#: Which way round the insert goes into the vector.
+#: Which way round an insert goes into the vector.
 type Orientation = Literal["forward", "reverse"]
 
-#: Where the insert goes: a feature name, a span, or `None` to look for `MCS_FEATURE`.
+#: Where the inserts go: a feature name, a span, or `None` to look for `MCS_FEATURE`.
 type Site = str | tuple[int, int] | None
 
 #: The feature a vector names its cloning site with, looked for when the caller names none.
@@ -131,9 +132,9 @@ class Phenotype:
     Parameters
     ----------
     insert
-        The span the insert occupies in the product, between its two junctions.
+        The span the inserts occupy in the product, between the first junction and the last.
     coding
-        The insert's coding sequence in the product, or ``None`` when it annotates none.
+        The longest coding sequence in that span, or ``None`` when it annotates none.
     promoter
         The promoter nearest the insert on the promoter's own reading direction, or ``None``.
     gap_bp
@@ -185,8 +186,9 @@ class Plan:
 
     Parameters
     ----------
-    vector, insert
-        The records the plan was made from; `insert` is the strand that goes in.
+    vector, inserts
+        The records the plan was made from, the inserts in the order they go round the product
+        and each on the strand that goes in.
     span
         The vector bases the assembly replaces, after any junction slide.
     choice
@@ -194,25 +196,27 @@ class Plan:
     ranking
         Every candidate enzyme, best first.
     overhangs
-        The overhangs the two junctions take, with the fidelity of the set.
+        The overhang every junction takes, with the fidelity of the whole set. An assembly of n
+        inserts has n + 1 junctions.
     assembly
         The simulated product, the parts and the junctions.
     colony
-        The colony PCR that tells a correct clone from an empty or reversed one.
+        The colony PCR that reads every junction and tells a correct clone from an empty vector
+        or from one carrying an insert the other way round.
     reads
-        A sequencing primer reading into each junction from outside it.
+        A sequencing primer reading in from outside the first junction and the last.
     amounts
         What to put in the assembly reaction, vector first.
     phenotype
         What the product says about itself.
     reports
-        Every designed oligo's evaluation, in order: the two PCRs, the colony PCR, the reads.
+        Every designed oligo's evaluation, in order: each part's PCR, the colony PCR, the reads.
     host, polymerase
         The choices the protocol names.
     """
 
     vector: SequenceRecord
-    insert: SequenceRecord
+    inserts: tuple[SequenceRecord, ...]
     span: tuple[int, int]
     choice: EnzymeChoice
     ranking: tuple[EnzymeChoice, ...]
@@ -293,11 +297,10 @@ class Plan:
 
 def plan_assembly(
     vector: SequenceRecord | str | os.PathLike[str],
-    insert: SequenceRecord | str | os.PathLike[str],
-    *,
+    *inserts: SequenceRecord | str | os.PathLike[str],
     site: Site = None,
-    orientation: Orientation = "forward",
-    in_frame: bool = False,
+    orientation: Orientation | Sequence[Orientation] = "forward",
+    in_frame: bool | Sequence[bool] = False,
     enzyme: EnzymeLike | None = None,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
@@ -305,29 +308,32 @@ def plan_assembly(
     window: int = VECTOR_WINDOW,
     thresholds: Thresholds = THRESHOLDS,
 ) -> Plan:
-    """Plan one Golden Gate experiment putting `insert` into `vector`.
+    """Plan one Golden Gate experiment putting `inserts` into `vector`.
 
-    The vector is opened by PCR across the span the insert replaces, the insert is amplified
-    with tails of its own, and both junctions are scarless: each takes the bases the part
-    already spells there. The vector junction may slide by up to `window` bases to get past an
-    overhang rule, which moves where the vector is cut and not what the insert spells.
+    One reaction joins as many inserts as the overhangs allow, given in the order they go round
+    the product. The vector is opened by PCR across the span they replace, each insert is
+    amplified with tails of its own, and every junction is scarless: it takes the bases the part
+    already spells there. Only the vector junction may slide, by up to `window` bases, to get
+    past an overhang rule, which moves where the vector is cut and not what the inserts spell.
 
     Parameters
     ----------
-    vector, insert
+    vector, inserts
         A record, or a path to a ``.dna``, GenBank or FASTA file holding one.
     site
-        Where the insert goes: a feature name, a ``(start, end)`` span of the vector, or
+        Where the inserts go: a feature name, a ``(start, end)`` span of the vector, or
         ``None`` to use the vector's own `MCS_FEATURE` feature.
     orientation
-        ``"reverse"`` puts the other strand of `insert` into the product.
+        ``"reverse"`` puts the other strand of an insert into the product. One value covers
+        every insert; a sequence gives one for each.
     in_frame
-        Hold the insert's junction on a codon boundary of the coding sequence it lies in.
+        Hold an insert's junction on a codon boundary of the coding sequence it lies in. One
+        value covers every insert; a sequence gives one for each.
     enzyme
         The Type IIS enzyme to use. Chosen by `choose_enzyme` when not given, and refused
-        either way if it reads a site in either part.
+        either way if it reads a site in any part.
     polymerase
-        For the two PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
+        For the PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
     host, name
         The strain the protocol names, and what to call the product.
     window
@@ -343,60 +349,67 @@ def plan_assembly(
     Raises
     ------
     ValueError
-        If no insertion site is named and the vector annotates none, if the enzyme reads a site
-        in either part, if no overhang passes every rule, or if the parts do not assemble.
+        If no insert is given, if no insertion site is named and the vector annotates none, if
+        the enzyme reads a site in a part, if no overhang passes every rule, or if the parts do
+        not assemble.
     """
-    one, other = _record(vector), _record(insert)
-    if orientation not in ("forward", "reverse"):
-        raise ValueError(f"orientation is 'forward' or 'reverse', got {orientation!r}")
-    if orientation == "reverse":
-        other = flipped(other)
+    if not inserts:
+        raise ValueError("an assembly needs a vector and at least one insert")
+    one = _record(vector)
+    ways = _orientations(orientation, len(inserts))
+    frames = _frames(in_frame, len(inserts))
+    going = [
+        flipped(read) if way == "reverse" else read
+        for read, way in ((_record(record), way) for record, way in zip(inserts, ways, strict=True))
+    ]
+    labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
     start, end = _span(one, site)
-    ranking = choose_enzyme([one, other])
-    choice = _chosen(ranking, enzyme, (one, other))
+    ranking = choose_enzyme([one, *going])
+    choice = _chosen(ranking, enzyme, (one, *going))
     chosen = choice.enzyme
     designed = design_overhangs(
         (
-            Junction(
-                other.name or "insert",
-                record=other,
-                position=0,
-                scarless=not in_frame,
-                in_frame=in_frame,
+            *(
+                Junction(label, record=record, position=0, scarless=not frame, in_frame=frame)
+                for label, record, frame in zip(labels, going, frames, strict=True)
             ),
             Junction(one.name or "vector", record=one, position=end, scarless=True, window=window),
         ),
         chosen,
     )
-    at_insert, at_vector = designed.overhangs
-    span = (start, end + designed.choices[1].offset)
+    overhangs = designed.overhangs
+    span = (start, end + designed.choices[-1].offset)
     parts = (
         open_vector(
             one,
             chosen,
             *span,
-            overhangs=(at_insert, at_vector),
+            overhangs=(overhangs[0], overhangs[-1]),
             name=f"{one.name} backbone".strip(),
             polymerase=polymerase,
             thresholds=thresholds,
         ),
-        amplify(
-            other,
-            chosen,
-            0,
-            len(other),
-            left_overhang=at_insert,
-            right_overhang=at_vector,
-            name=other.name or "insert",
-            polymerase=polymerase,
-            thresholds=thresholds,
+        *(
+            amplify(
+                record,
+                chosen,
+                0,
+                len(record),
+                left_overhang=overhangs[number],
+                right_overhang=overhangs[number + 1],
+                name=label,
+                polymerase=polymerase,
+                thresholds=thresholds,
+            )
+            for number, (label, record) in enumerate(zip(labels, going, strict=True))
         ),
     )
-    built = assemble(parts, chosen, name=name or f"{one.name}-{other.name}".strip("-"))
-    first, last = built.junction_positions
+    built = assemble(parts, chosen, name=name or "-".join([one.name, *labels]).strip("-"))
+    junctions = built.junction_positions
+    first, last = junctions[0], junctions[-1]
     colony = colony_pcr_check(
         built.product,
-        (first, last),
+        junctions,
         vector=one,
         primers=design_pair(
             built.product,
@@ -411,10 +424,10 @@ def plan_assembly(
         polymerase=ONETAQ,
         thresholds=thresholds,
     )
-    reads = sanger_primers(built.product, (first, last), thresholds=thresholds)
+    reads = sanger_primers(built.product, junctions, thresholds=thresholds)
     return Plan(
         one,
-        other,
+        tuple(going),
         span,
         choice,
         ranking,
@@ -423,20 +436,51 @@ def plan_assembly(
         colony,
         reads,
         assembly_amounts(
-            Fragment(parts[0].name, parts[0].length), (Fragment(parts[1].name, parts[1].length),)
+            Fragment(parts[0].name, parts[0].length),
+            tuple(Fragment(part.name, part.length) for part in parts[1:]),
         ),
         _phenotype(one, built, span),
         (
-            parts[0].report.forward,
-            parts[0].report.reverse,
-            parts[1].report.forward,
-            parts[1].report.reverse,
+            *(report for part in parts for report in (part.report.forward, part.report.reverse)),
             *colony.reports,
             *(evaluate_primer(read.primer, built.product, thresholds=thresholds) for read in reads),
         ),
         host,
         polymerase,
     )
+
+
+def _orientations(
+    orientation: Orientation | Sequence[Orientation], count: int
+) -> tuple[Orientation, ...]:
+    """Spread one orientation over every insert, or take the one given for each.
+
+    Raises
+    ------
+    ValueError
+        If a value is neither ``forward`` nor ``reverse``, or there is not one per insert.
+    """
+    given = (orientation,) * count if isinstance(orientation, str) else tuple(orientation)
+    if len(given) != count:
+        raise ValueError(f"orientation has {len(given)} values for {count} insert(s)")
+    for one in given:
+        if one not in ("forward", "reverse"):
+            raise ValueError(f"orientation is 'forward' or 'reverse', got {one!r}")
+    return given
+
+
+def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
+    """Spread one in-frame choice over every insert, or take the one given for each.
+
+    Raises
+    ------
+    ValueError
+        If there is not one per insert.
+    """
+    given = (in_frame,) * count if isinstance(in_frame, bool) else tuple(in_frame)
+    if len(given) != count:
+        raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
+    return given
 
 
 def primer_sheet(plan: Plan) -> str:
@@ -597,7 +641,8 @@ def _chosen(
 
 def _phenotype(vector: SequenceRecord, built: Assembly, span: tuple[int, int]) -> Phenotype:
     """Read what the product says about itself off its own features."""
-    first, last = built.junction_positions
+    junctions = built.junction_positions
+    first, last = junctions[0], junctions[-1]
     coding = _coding(built.product, first, last)
     promoter, gap = _promoter(built.product, first, last)
     return Phenotype(
@@ -613,7 +658,7 @@ def _phenotype(vector: SequenceRecord, built: Assembly, span: tuple[int, int]) -
 
 
 def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
-    """Return the longest coding sequence lying wholly between the two junctions."""
+    """Return the longest coding sequence lying wholly between the outer two junctions."""
     inside = [
         feature
         for feature in product.features

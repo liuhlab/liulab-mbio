@@ -20,9 +20,14 @@ def plan(
         Path,
         typer.Argument(exists=True, dir_okay=False, readable=True, help="Vector sequence file."),
     ],
-    insert: Annotated[
-        Path,
-        typer.Argument(exists=True, dir_okay=False, readable=True, help="Insert sequence file."),
+    inserts: Annotated[
+        list[Path],
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Insert sequence files, in the order they go round the product.",
+        ),
     ],
     out: Annotated[
         Path,
@@ -32,13 +37,15 @@ def plan(
     ],
     site: Annotated[
         str,
-        typer.Option(help="Feature name, or START-END, that the insert replaces."),
+        typer.Option(help="Feature name, or START-END, that the inserts replace."),
     ] = "",
     orientation: Annotated[
-        str, typer.Option(help="Which way round the insert goes: forward or reverse.")
-    ] = "forward",
+        list[str] | None,
+        typer.Option(help="Which way round an insert goes: forward or reverse; once per insert."),
+    ] = None,
     in_frame: Annotated[
-        bool, typer.Option("--in-frame", help="Hold the insert's junction on a codon boundary.")
+        bool,
+        typer.Option("--in-frame", help="Hold every insert's junction on a codon boundary."),
     ] = False,
     enzyme: Annotated[
         str, typer.Option(help="Type IIS enzyme to use; the best free one when not given.")
@@ -51,9 +58,9 @@ def plan(
     try:
         made = plan_assembly(
             vector,
-            insert,
+            *inserts,
             site=_site(site),
-            orientation=_orientation(orientation),
+            orientation=_orientations(orientation, len(inserts)),
             in_frame=in_frame,
             enzyme=enzyme or None,
             polymerase=_polymerase(polymerase),
@@ -65,8 +72,9 @@ def plan(
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
     typer.echo(
-        f"{made.product.name}: {len(made.product)} bp, {made.enzyme.name}, overhangs "
-        f"{' and '.join(made.overhangs.overhangs)}, checks {made.status}"
+        f"{made.product.name}: {len(made.product)} bp, {made.enzyme.name}, "
+        f"{len(made.parts)} fragments, overhangs {', '.join(made.overhangs.overhangs)}, "
+        f"checks {made.status}"
     )
     for path in (outputs.product, outputs.primers, outputs.protocol):
         typer.echo(str(path))
@@ -80,6 +88,23 @@ def _site(text: str) -> Site:
     if sep and start.strip().isdigit() and end.strip().isdigit():
         return int(start), int(end)
     return text
+
+
+def _orientations(given: list[str] | None, count: int) -> tuple[Orientation, ...]:
+    """Read one orientation per insert, spreading a single value over them all.
+
+    Raises
+    ------
+    ValueError
+        If a value is neither ``forward`` nor ``reverse``, or there is more than one and not
+        one per insert.
+    """
+    values = given or ["forward"]
+    if len(values) == 1:
+        values = values * count
+    if len(values) != count:
+        raise ValueError(f"--orientation given {len(values)} times for {count} insert(s)")
+    return tuple(_orientation(text) for text in values)
 
 
 def _orientation(text: str) -> Orientation:

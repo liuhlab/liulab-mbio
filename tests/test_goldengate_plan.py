@@ -3,6 +3,9 @@
 `tests/data/pUC19.dna` and `tests/data/GFP.dna`: put GFP into the pUC19 multiple cloning site
 and validate the insertion by colony PCR. Nothing about the fixtures is hard-coded in the
 package; the numbers below are read off the records and pinned here.
+
+Two fixtures make only a two-fragment assembly, so the many-part tests synthesise their own
+inserts. The first four bases of each are the overhang its junction takes.
 """
 
 from pathlib import Path
@@ -13,7 +16,7 @@ from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
 from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.io import read_record
-from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
 
@@ -21,6 +24,36 @@ DATA = Path(__file__).parent / "data"
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)
+
+#: A flexible glycine-serine linker and a His-tagged spacer, written here rather than read from
+#: a file: they carry no BbsI site and begin on bases no other junction of the set can take.
+LINKER = (
+    "AACGGTTCAGGTGGATCTGGCGGTTCTGGAGGCAGCGGTTCAGGAGGTTCTGGCGGATCA"
+    "GGTGGTTCAGGAGGCTCAGGTTCTGGAGGATCTGGCGGTTCAGGAGGTTCTGGATCAGGT"
+    "TCTGGAGGCAGCGGTTCAGGAGGATCTGGT"
+)
+TAG = (
+    "CTTGGTCACCATCACCATCACCATGGTTCTGGATCAGGTTCTGCTTGGAGCCATCCGCAA"
+    "TTCGAAAAAGGTGGTTCTGGCGGATCAGGTTCTGGAGGCAGCTTCGGTTCAGGAGGATCT"
+    "GGTGGTTCAGGAAGCTCAGGTTCTGGAGGT"
+)
+
+
+def synthesised(name: str, sequence: str, color: str) -> SequenceRecord:
+    """An insert written in code, its one feature drawn in a colour of its own."""
+    return SequenceRecord(
+        sequence,
+        name=name,
+        features=(
+            Feature(
+                name,
+                "misc_feature",
+                (Segment(0, len(sequence)),),
+                strand=Strand.FORWARD,
+                color=color,
+            ),
+        ),
+    )
 
 
 @pytest.fixture(scope="module")
@@ -34,8 +67,26 @@ def gfp() -> SequenceRecord:
 
 
 @pytest.fixture(scope="module")
+def linker() -> SequenceRecord:
+    return synthesised("Linker", LINKER, "#3366cc")
+
+
+@pytest.fixture(scope="module")
+def tag() -> SequenceRecord:
+    return synthesised("Tag", TAG, "#cc6633")
+
+
+@pytest.fixture(scope="module")
 def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
     return plan_assembly(puc19, gfp)
+
+
+@pytest.fixture(scope="module")
+def four(
+    puc19: SequenceRecord, gfp: SequenceRecord, linker: SequenceRecord, tag: SequenceRecord
+) -> Plan:
+    """A backbone and three inserts, in the order they go round the product."""
+    return plan_assembly(puc19, gfp, linker, tag)
 
 
 def test_the_pipeline_picks_the_enzyme_with_no_site_in_either_part(plan, puc19, gfp):
@@ -248,6 +299,108 @@ def test_the_protocol_cites_the_data_its_fidelity_came_from(plan):
     citations = " ".join(reference.text for reference in plan.protocol().references)
     assert "Pryor" in citations
     assert "NEBridge" in citations
+
+
+def test_one_insert_plans_exactly_what_it_did_before(plan):
+    # The two-fragment pin: taking any number of inserts changes none of these.
+    assert plan.enzyme.name == "BbsI"
+    assert (len(plan.product), plan.assembly.junction_positions) == (3347, (395, 1112))
+    assert {clone.name: clone.bands_bp for clone in plan.colony.clones} == {
+        "Correct clone": (160, 897),
+        "Empty vector": (236,),
+        "Reversed insert": (220, 897),
+    }
+    assert len(plan.parts) == 2
+    assert len(plan.reports) == 9
+
+
+def test_a_vector_with_nothing_to_put_in_it_is_refused(puc19):
+    with pytest.raises(ValueError, match="insert"):
+        plan_assembly(puc19)
+
+
+def test_every_insert_reaches_the_product_in_the_order_it_was_given(four, gfp):
+    product = four.product.sequence
+    assert [part.name for part in four.parts] == ["pUC19 backbone", "GFP", "Linker", "Tag"]
+    places = [product.index(bases) for bases in (gfp.sequence, LINKER, TAG)]
+    assert places == sorted(places)
+    assert [product.count(bases) for bases in (gfp.sequence, LINKER, TAG)] == [1, 1, 1]
+    assert len(four.product) == 3347 + len(LINKER) + len(TAG)
+    assert four.assembly.status == "pass"
+
+
+def test_three_inserts_make_four_junctions_no_two_of_them_alike(four):
+    overhangs = four.overhangs.overhangs
+    assert len(four.assembly.junctions) == len(overhangs) == 4
+    assert len(set(overhangs)) == 4
+    assert not set(overhangs) & {reverse_complement(one) for one in overhangs}
+
+
+def test_the_fidelity_of_the_set_falls_as_junctions_are_added(plan, four):
+    assert four.overhangs.fidelity.measured
+    assert four.overhangs.fidelity.enzyme == plan.overhangs.fidelity.enzyme
+    assert four.overhangs.fidelity.value < plan.overhangs.fidelity.value
+
+
+def test_each_insert_goes_in_the_orientation_it_was_given(puc19, gfp, linker):
+    made = plan_assembly(puc19, gfp, linker, orientation=("forward", "reverse"))
+    product = made.product.sequence
+    assert product.count(gfp.sequence) == 1
+    assert product.count(reverse_complement(LINKER)) == 1
+    assert LINKER not in product
+    assert made.assembly.status == "pass"
+
+
+def test_the_reaction_takes_one_amount_for_every_part(four):
+    assert [amount.name for amount in four.amounts] == [part.name for part in four.parts]
+    assert len(four.amounts) == 4
+
+
+def test_the_cycling_tier_follows_the_fragment_count(plan, four):
+    two, many = _assembly_program(plan).stages[0], _assembly_program(four).stages[0]
+    # NEB holds two fragments at 37 °C and cycles three or more of them.
+    assert (two.cycles, two.incubations[0].seconds) == (1, 900)
+    assert (many.cycles, many.incubations[0].seconds) == (30, 60)
+
+
+def test_the_colony_pcr_reads_every_junction_and_turns_every_insert(four):
+    check = four.colony
+    assert len(check.primers) == 5
+    assert [clone.name for clone in check.clones] == [
+        "Correct clone",
+        "Empty vector",
+        "Reversed insert 1",
+        "Reversed insert 2",
+        "Reversed insert 3",
+    ]
+    correct = next(clone.bands_bp for clone in check.clones if clone.name == "Correct clone")
+    assert len(correct) == 4
+    assert check.tells_orientation
+
+
+def test_the_protocol_names_every_part_and_every_junction(four):
+    overview = four.protocol().overview
+    for part in four.parts:
+        assert part.name in overview["Fragments"]
+    for junction in four.assembly.junctions:
+        assert f"{junction.start}" in overview["Junctions"]
+        assert junction.overhang in overview["Junctions"]
+    assert f"{four.overhangs.fidelity.value:.0%}" in overview["Overhangs"]
+
+
+def test_a_step_is_per_experiment_and_not_per_pair_of_fragments(plan, four):
+    # One more PCR step for each part, and the rest of the protocol the same length.
+    assert len(four.protocol().steps) - len(plan.protocol().steps) == 2
+
+
+def _assembly_program(plan):
+    """The Golden Gate program the protocol prints."""
+    return next(
+        program
+        for step in plan.protocol().steps
+        for program in step.programs
+        if program.title == "Golden Gate assembly"
+    )
 
 
 def _sentences(protocol) -> str:

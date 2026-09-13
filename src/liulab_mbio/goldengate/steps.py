@@ -5,6 +5,7 @@ every sentence about the phenotype is read off the product's own features. The c
 are the bench choices that no table of NEB's covers; each says where it comes from.
 """
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from liulab_mbio.enzymes import Enzyme
@@ -74,17 +75,18 @@ NEB_COLONIES = 687
 def protocol(plan: "Plan") -> Protocol:
     """Return the bench protocol for `plan`, ready to render.
 
-    The steps run in the order someone does them: the two PCRs, the gel that checks them, the
-    DpnI digest and cleanup, quantification, the assembly, transformation and plating, colony
-    PCR, and sequencing.
+    The steps run in the order someone does them: one PCR per part, the gel that checks them,
+    the DpnI digest and cleanup, quantification, the assembly, transformation and plating,
+    colony PCR, and sequencing. Every step is per experiment, however many parts there are.
     """
-    insert, vector = plan.insert, plan.vector
+    vector = plan.vector
+    inserts = _listed(_insert_names(plan))
     return Protocol(
-        f"Golden Gate assembly: {insert.name} into {vector.name}",
+        f"Golden Gate assembly: {inserts} into {vector.name}",
         summary=(
             f"Open {vector.name} by PCR across {plan.span[0]}-{plan.span[1]}, amplify "
-            f"{insert.name} with {plan.enzyme.name} tails, join the two in one Golden Gate "
-            f"reaction, and confirm the clone by colony PCR and sequencing."
+            f"{inserts} with {plan.enzyme.name} tails, join the {len(plan.parts)} fragments in "
+            "one Golden Gate reaction, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(plan),
         materials=_materials(plan),
@@ -97,17 +99,29 @@ def _overview(plan: "Plan") -> dict[str, str]:
     """Return the facts to check before starting."""
     fidelity = plan.overhangs.fidelity
     measured = "measured" if fidelity.measured else "rule-based estimate"
-    junctions = ", ".join(str(at) for at in plan.assembly.junction_positions)
     facts = {
         "Vector": f"{plan.vector.name}, {len(plan.vector)} bp, {plan.vector.topology}",
-        "Insert": f"{plan.insert.name}, {len(plan.insert)} bp, {plan.insert.topology}",
+        "Insert" if len(plan.inserts) == 1 else "Inserts": "; ".join(
+            f"{name}, {len(record)} bp, {record.topology}"
+            for name, record in zip(_insert_names(plan), plan.inserts, strict=True)
+        ),
+        "Fragments": (
+            f"{len(plan.parts)} in one reaction: "
+            + _listed([f"{part.name} ({part.fragment_length} bp)" for part in plan.parts])
+        ),
         "Enzyme": f"{_label(plan.enzyme)} at {golden_gate_temperature(plan.enzyme):g} °C",
         "Overhangs": (
-            f"{' and '.join(plan.overhangs.overhangs)}, ligation fidelity "
+            f"{_listed(plan.overhangs.overhangs)}, ligation fidelity "
             f"{fidelity.value:.0%} ({measured})"
         ),
         "Product": f"{plan.product.name}, {len(plan.product)} bp, circular",
-        "Junctions": f"{junctions} (0-based, on the product)",
+        "Junctions": (
+            "; ".join(
+                f"{one.overhang} at {one.start}, {one.before} to {one.after}"
+                for one in plan.assembly.junctions
+            )
+            + " (0-based, on the product)"
+        ),
     }
     facts.update(_phenotype_facts(plan))
     facts["Checks"] = "; ".join(f"{check.name} {check.status}" for check in plan.checks)
@@ -118,7 +132,7 @@ def _phenotype_facts(plan: "Plan") -> dict[str, str]:
     """Return what the product's own features say about the insert and about the plate."""
     phenotype = plan.phenotype
     facts: dict[str, str] = {}
-    coding = phenotype.coding.name if phenotype.coding is not None else plan.insert.name
+    coding = phenotype.coding.name if phenotype.coding is not None else _listed(_insert_names(plan))
     if phenotype.promoter is not None:
         way = (
             f"reads on the same strand as {phenotype.promoter.name}, "
@@ -156,7 +170,10 @@ def _materials(plan: "Plan") -> tuple[Material, ...]:
     ]
     items += [
         Material(f"{plan.vector.name} plasmid", note="PCR template", storage="-20 °C"),
-        Material(f"{plan.insert.name} template", note="PCR template", storage="-20 °C"),
+        *(
+            Material(f"{name} template", note="PCR template", storage="-20 °C")
+            for name in _insert_names(plan)
+        ),
         Material(f"{plan.polymerase.name} DNA Polymerase and its buffer", storage="-20 °C"),
         Material("dNTP mix", storage="-20 °C"),
         Material("DpnI", storage="-20 °C", note="cuts the methylated plasmid template only"),
@@ -243,11 +260,11 @@ def _pcr_step(plan: "Plan", part: Part) -> Step:
 
 
 def _gel_step(plan: "Plan") -> Step:
-    """Check both PCRs before anything is spent on them."""
+    """Check every PCR before anything is spent on them."""
     sizes = tuple(part.length for part in plan.parts)
     percent = agarose_percent(sizes)
     return Step(
-        "Check both PCRs on a gel",
+        "Check the PCRs on a gel",
         instructions=(
             f"Pour a {percent:g}% agarose gel.",
             "Load 5 µL of each reaction beside the ladder.",
@@ -304,9 +321,9 @@ def _dpni_step(plan: "Plan") -> Step:
 
 
 def _cleanup_step(plan: "Plan") -> Step:
-    """Purify both amplicons, which NEB asks for."""
+    """Purify every amplicon, which NEB asks for."""
     return Step(
-        "Purify both amplicons",
+        "Purify every amplicon",
         instructions=(
             "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
         ),
@@ -332,7 +349,7 @@ def _quantify_step(plan: "Plan") -> Step:
         for amount in plan.amounts
     )
     return Step(
-        "Measure both concentrations",
+        "Measure every concentration",
         instructions=(
             "Measure each purified amplicon by A260 or with a fluorometer.",
             "Work out the volume that carries the picomoles the next table asks for.",
@@ -465,7 +482,7 @@ def _transform_step(plan: "Plan") -> Step:
 def _expression_note(plan: "Plan") -> str:
     """One sentence on whether the clone should make the insert's protein."""
     phenotype = plan.phenotype
-    coding = phenotype.coding.name if phenotype.coding is not None else plan.insert.name
+    coding = phenotype.coding.name if phenotype.coding is not None else _listed(_insert_names(plan))
     reasons = []
     if phenotype.promoter is not None and not phenotype.driven:
         reasons.append(f"it reads on the opposite strand from {phenotype.promoter.name}")
@@ -480,12 +497,16 @@ def _colony_step(plan: "Plan") -> Step:
     check = plan.colony
     sizes = tuple(bp for clone in check.clones for bp in clone.bands_bp)
     expected = [
-        f"{clone.name}: {', '.join(f'{bp} bp' for bp in clone.bands_bp) or 'no band'}."
-        for clone in check.clones
+        f"Each of the {len(plan.assembly.junctions)} junctions is read: the flanking pair "
+        "crosses them all, and each junction primer stops inside its own insert.",
+        *(
+            f"{clone.name}: {', '.join(f'{bp} bp' for bp in clone.bands_bp) or 'no band'}."
+            for clone in check.clones
+        ),
     ]
     expected.append(
-        "The three primers tell a reversed insert from a correct one, because the two vector "
-        "primers sit at different distances from their own junctions."
+        "A reversed insert is told from a correct one, because the two vector primers sit at "
+        "different distances from their own junctions."
         if check.tells_orientation
         else "These primers cannot tell a reversed insert from a correct one."
     )
@@ -533,18 +554,18 @@ def _sequencing_step(plan: "Plan") -> Step:
         instructions=(
             "Miniprep two or three colonies that read as correct.",
             "Send each with both sequencing primers.",
-            "Check the read across both junctions and the whole insert.",
+            "Check the read across every junction and the whole of each insert.",
         ),
         expected=(
             *reads,
-            f"Both junctions read as {' and '.join(plan.overhangs.overhangs)}, and the "
-            f"insert matches {plan.insert.name}.",
+            f"The junctions read as {_listed(plan.overhangs.overhangs)}, and the parts match "
+            f"{_listed(_insert_names(plan))}.",
         ),
         notes=(
             "NEB asks for the assembly to be confirmed by sequencing across the junctions "
             "whatever the screen said.",
-            "A provider whose read is shorter than the lengths above needs a third primer "
-            "inside the insert.",
+            "A provider whose read is shorter than the lengths above needs a further primer "
+            "inside the inserts.",
         ),
         troubleshooting=(
             Troubleshooting(
@@ -576,6 +597,18 @@ def _references(plan: "Plan") -> tuple[Reference, ...]:
             )
         )
     return tuple(items)
+
+
+def _insert_names(plan: "Plan") -> tuple[str, ...]:
+    """Return what each insert is called, which is what its part and its tube are labelled."""
+    return tuple(part.name for part in plan.parts[1:])
+
+
+def _listed(items: Sequence[str]) -> str:
+    """Join names the way a sentence does, with `and` before the last."""
+    if len(items) < 3:
+        return " and ".join(items)
+    return f"{', '.join(items[:-1])} and {items[-1]}"
 
 
 def _label(enzyme: Enzyme) -> str:

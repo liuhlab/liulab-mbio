@@ -10,6 +10,15 @@ DATA = Path(__file__).parent / "data"
 VECTOR = str(DATA / "pUC19.dna")
 INSERT = str(DATA / "GFP.dna")
 
+#: A second insert, written here rather than kept as a fixture: it carries no BbsI site and
+#: begins on bases no other junction of the set can take.
+LINKER = """\
+>Linker
+AACGGTTCAGGTGGATCTGGCGGTTCTGGAGGCAGCGGTTCAGGAGGTTCTGGCGGATCA
+GGTGGTTCAGGAGGCTCAGGTTCTGGAGGATCTGGCGGTTCAGGAGGTTCTGGATCAGGT
+TCTGGAGGCAGCGGTTCAGGAGGATCTGGT
+"""
+
 
 def run(*arguments: str):
     """Invoke the command line with these arguments."""
@@ -47,6 +56,16 @@ def test_the_cli_refuses_a_polymerase_the_package_does_not_ship(tmp_path: Path) 
     result = run(VECTOR, INSERT, "--out", str(tmp_path / "run"), "--polymerase", "Pfu")
     assert result.exit_code == 1
     assert "Q5" in result.output
+
+
+def test_the_cli_takes_more_than_one_insert_file(tmp_path: Path) -> None:
+    linker = tmp_path / "linker.fasta"
+    linker.write_text(LINKER, encoding="utf-8")
+    out = tmp_path / "run"
+    result = run(VECTOR, INSERT, str(linker), "--out", str(out))
+    assert result.exit_code == 0, result.output
+    assert "3497 bp" in result.output
+    assert (out / "product.dna").exists()
 
 
 def test_the_cli_refuses_a_sequence_file_that_is_not_there(tmp_path: Path) -> None:
