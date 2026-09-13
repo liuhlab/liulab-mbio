@@ -1,54 +1,157 @@
+"""Pinned Tm and Ta values come from NEB's own calculator and API, through
+``docs/research/primer-design-and-pcr.md``.
+"""
+
+import dataclasses
+
 import pytest
 
-from liulab_mbio.primers import ONETAQ, Q5, TAQ, melting_temperature
+from liulab_mbio.primers import (
+    ONETAQ,
+    PHUSION,
+    Q5,
+    TAQ,
+    THRESHOLDS,
+    Band,
+    evaluate_primer,
+    melting_temperature,
+)
+from liulab_mbio.sequence import BindingSite, Primer, Strand
 
 M13_FWD = "GTAAAACGACGGCCAGT"
 M13_REV = "CAGGAAACAGCTATGAC"
+#: The 23-mer M13/pUC pair, which colony PCR uses instead of the 17-mers.
+PUC_FWD = "CCCAGTCACGACGTTGTAAAACG"
+PUC_REV = "AGCGGATAACAATTTCACACAGG"
+#: Anneals to pUC19 just after the MCS, reading along the top strand.
+MCS_FWD = "GGCGTAATCATGGTCATAGC"
 
 
 @pytest.mark.parametrize(
-    ("polymerase", "monovalent", "magnesium", "primer_nm"),
-    [(Q5, 50.0, 2.0, 500.0), (TAQ, 50.0, 1.5, 200.0), (ONETAQ, 44.0, 1.8, 200.0)],
-    ids=["Q5", "Taq", "OneTaq"],
+    ("polymerase", "forward_tm", "reverse_tm"),
+    [
+        (Q5, 62.27, 56.31),
+        (PHUSION, 56.57, 50.89),
+        (TAQ, 53.96, 47.99),
+        (ONETAQ, 53.82, 47.85),
+    ],
+    ids=lambda value: getattr(value, "name", value),
 )
-def test_tm_is_santalucia_nearest_neighbour_in_the_polymerase_buffer(
-    polymerase, monovalent, magnesium, primer_nm
-) -> None:
-    from Bio.SeqUtils import MeltingTemp
-
-    # An independent implementation; primer3 takes a quarter of the primer concentration.
-    expected = MeltingTemp.Tm_NN(
-        M13_FWD,
-        nn_table=MeltingTemp.DNA_NN3,
-        Na=monovalent,
-        Mg=magnesium,
-        dNTPs=0.8,
-        dnac1=primer_nm / 4,
-        dnac2=0,
-        saltcorr=5,
-    )
-    assert melting_temperature(M13_FWD, polymerase) == pytest.approx(expected, abs=0.05)
+def test_tm_matches_nebs_calculator_for_the_polymerase(polymerase, forward_tm, reverse_tm) -> None:
+    assert melting_temperature(M13_FWD, polymerase) == pytest.approx(forward_tm, abs=0.01)
+    assert melting_temperature(M13_REV, polymerase) == pytest.approx(reverse_tm, abs=0.01)
 
 
 def test_tm_defaults_to_q5() -> None:
     assert melting_temperature(M13_REV) == melting_temperature(M13_REV, Q5)
 
 
-def test_q5_anneals_3_degrees_above_the_lower_tm_and_never_above_72() -> None:
-    assert Q5.annealing_temperature(61.0, 58.0) == 61.0
-    assert Q5.annealing_temperature(71.0, 74.0) == 72.0
-
-
-@pytest.mark.parametrize("polymerase", [TAQ, ONETAQ], ids=["Taq", "OneTaq"])
-def test_taq_polymerases_anneal_5_degrees_below_the_lower_tm_and_never_above_68(
-    polymerase,
+@pytest.mark.parametrize(
+    ("polymerase", "annealing_temperature"),
+    [(Q5, 57.3), (PHUSION, 54.8), (TAQ, 43.0), (ONETAQ, 42.8)],
+    ids=lambda value: getattr(value, "name", value),
+)
+def test_annealing_temperature_follows_nebs_rule_for_the_polymerase(
+    polymerase, annealing_temperature
 ) -> None:
-    assert polymerase.annealing_temperature(61.0, 58.0) == 53.0
-    assert polymerase.annealing_temperature(80.0, 75.0) == 68.0
+    tms = (melting_temperature(M13_FWD, polymerase), melting_temperature(M13_REV, polymerase))
+    assert polymerase.annealing_temperature(*tms) == pytest.approx(annealing_temperature, abs=0.1)
+
+
+def test_the_annealing_temperature_is_capped() -> None:
+    long_pair = ("CGCCAGGGTTTTCCCAGTCACGACGTTG", "GCGGATAACAATTTCACACAGGAAACAGCTATGAC")
+    tms = tuple(melting_temperature(primer, Q5) for primer in long_pair)
+    assert Q5.annealing_temperature(*tms) == 72.0
+    assert TAQ.annealing_temperature(80.0, 75.0) == 68.0
+
+
+def test_the_twenty_three_mer_pair_anneals_above_nebs_floor_in_onetaq() -> None:
+    tms = (melting_temperature(PUC_FWD, ONETAQ), melting_temperature(PUC_REV, ONETAQ))
+    assert ONETAQ.annealing_temperature(*tms) == pytest.approx(51.5, abs=0.1)
+    assert ONETAQ.annealing_temperature(*tms) > ONETAQ.annealing_min
 
 
 def test_extension_time_rounds_the_amplicon_up_to_whole_kilobases() -> None:
-    assert Q5.extension_seconds(2686) == 90
-    assert Q5.extension_seconds(1000) == 30
+    assert Q5.extension_seconds(2686) == 60
+    assert Q5.extension_seconds(1000) == 20
+    assert PHUSION.extension_seconds(1000) == 15
     assert TAQ.extension_seconds(103) == 60
     assert ONETAQ.extension_seconds(1001) == 120
+
+
+def test_a_primer_without_a_tail_anneals_along_its_whole_length() -> None:
+    report = evaluate_primer(Primer("M13 fwd", M13_FWD))
+    assert report["length"].value == 17
+    assert report["length"].status == "warn"
+    assert report["gc_percent"].value == pytest.approx(52.9, abs=0.1)
+    assert report["gc_percent"].status == "pass"
+    assert report["gc_clamp"].value == 3
+    assert report["gc_clamp"].status == "pass"
+    assert report["tm"].value == pytest.approx(62.27, abs=0.01)
+    assert report["tm"].status == "pass"
+    assert report["tm_full"].value == pytest.approx(report["tm"].value)
+    # The worst of its checks: the annealing region is shorter than primer3's minimum.
+    assert report.status == "warn"
+
+
+def test_a_tail_raises_the_full_primer_tm_and_leaves_the_annealing_region_alone() -> None:
+    tailed = Primer(
+        "MCS fwd",
+        "TTGGTCTCA" + MCS_FWD,
+        binding_sites=(BindingSite(452, 452 + len(MCS_FWD), Strand.FORWARD),),
+    )
+    report = evaluate_primer(tailed)
+    assert report["length"].value == 20
+    assert report["length"].status == "pass"
+    assert report["tm"].value == pytest.approx(melting_temperature(MCS_FWD))
+    assert report["tm_full"].value > report["tm"].value + 5
+
+
+def test_end_stability_is_reported_but_not_judged() -> None:
+    # primer3's own value for a 3' end of CCAGT, as a delta G.
+    check = evaluate_primer(Primer("M13 fwd", M13_FWD))["end_stability"]
+    assert check.value == pytest.approx(-4.0, abs=0.01)
+    assert check.status == "pass"
+    assert "not judged" in check.detail
+
+
+def test_runs_and_repeats_are_counted_over_the_whole_primer() -> None:
+    runs = evaluate_primer(Primer("run", "GCTAAAAAAAGCTGCTGATCG"))
+    assert runs["mononucleotide_run"].value == 7
+    assert runs["mononucleotide_run"].status == "fail"
+    guanines = evaluate_primer(Primer("g run", "GCTGGGGATCGATCGATCGA"))
+    assert guanines["mononucleotide_run"].value == 4
+    assert guanines["mononucleotide_run"].status == "warn"
+    repeats = evaluate_primer(Primer("repeat", "GCGATATATATATATGCG"))
+    assert repeats["dinucleotide_repeat"].value == 6
+    assert repeats["dinucleotide_repeat"].status == "warn"
+    assert repeats["mononucleotide_run"].value == 1
+
+
+def test_a_hairpin_above_the_threshold_warns() -> None:
+    report = evaluate_primer(Primer("hairpin", "GCGCGCGAAAAACGCGCGC"))
+    assert report["hairpin"].value == pytest.approx(88.65, abs=0.01)
+    assert report["hairpin"].status == "warn"
+    assert evaluate_primer(Primer("M13 fwd", M13_FWD))["hairpin"].status == "pass"
+
+
+def test_a_three_prime_anchored_self_dimer_fails_where_an_internal_one_warns() -> None:
+    anchored = evaluate_primer(Primer("anchored", "ATCGATCGATCAGCGCGCGCGC"))
+    assert anchored["self_dimer_3prime"].value == pytest.approx(57.0, abs=0.01)
+    assert anchored["self_dimer_3prime"].status == "fail"
+    assert anchored.status == "fail"
+    internal = evaluate_primer(Primer("internal", "GCGCGCGCGCTTTTTTTTTTTTTTT"))
+    assert internal["self_dimer_3prime"].status == "pass"
+    assert internal["self_dimer"].status == "warn"
+
+
+def test_a_primer_longer_than_primer3_allows_is_judged_on_its_three_prime_end() -> None:
+    long_tail = "GCTAGCTGACTGACTGATCGATCGATCGTAGCTAGCTGATCGATCGATGCTAGCTGA"
+    report = evaluate_primer(Primer("long", long_tail + MCS_FWD))
+    assert "60" in report["hairpin"].detail
+
+
+def test_every_threshold_comes_from_one_place() -> None:
+    strict = dataclasses.replace(THRESHOLDS, tm=Band(63.0, 64.0, 62.5, 65.0))
+    report = evaluate_primer(Primer("M13 fwd", M13_FWD), thresholds=strict)
+    assert report["tm"].status == "fail"

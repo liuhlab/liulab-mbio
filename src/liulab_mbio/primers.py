@@ -1,35 +1,73 @@
 """Design PCR primers and judge them.
 
-Tm is computed by primer3-py with the SantaLucia (1998) nearest-neighbour parameters and salt
-correction; Mg²⁺ and dNTPs enter as a monovalent equivalent (von Ahsen et al. 2001), as primer3
-does. A `Polymerase` holds the buffer a Tm is computed in and the rule that turns a pair's Tms
-into an annealing temperature (Ta). Buffers are monovalent, Mg²⁺, dNTPs and each primer:
+Tm is the SantaLucia (1998) nearest-neighbour model computed by primer3-py, salt-corrected as
+NEB's Tm Calculator does it: Owczarzy (2004) at the monovalent equivalent NEB assigns the
+buffer, or Schildkraut (1965) for Phusion. Each `Polymerase` carries that buffer, the rule
+turning a pair's Tms into an annealing temperature (Ta), and its extension rate:
 
-- `Q5`: 50 mM, 2.0 mM, 0.8 mM, 500 nM. Ta is the lower Tm + 3 °C, at most 72 °C.
-- `TAQ`: 50 mM, 1.5 mM, 0.8 mM, 200 nM. Ta is the lower Tm − 5 °C, at most 68 °C.
-- `ONETAQ`: 44 mM, 1.8 mM, 0.8 mM, 200 nM. Ta as for `TAQ`.
+- `Q5` (the default), each primer 500 nM: Ta is the lower Tm + 1 °C, at most 72 °C, and NEB
+  asks for at least 55 °C. Extension 72 °C, 20 s/kb.
+- `PHUSION`, 500 nM: Ta is 0.93 * the lower Tm + 7.5 °C, at most 72 °C. Extension 72 °C,
+  15 s/kb.
+- `TAQ` and `ONETAQ`, 200 nM: Ta is the lower Tm - 5 °C, at most 68 °C, and NEB asks for at
+  least 45 °C. Extension 68 °C, 60 s/kb.
+
+Hairpins and dimers are structure Tms at primer3's own default conditions, which is where its
+47 °C threshold comes from. Sources, and the values these reproduce:
+``docs/research/primer-design-and-pcr.md``.
 """
 
+import itertools
 import math
+from collections.abc import Iterable
 from dataclasses import KW_ONLY, dataclass
+from typing import Literal, TypedDict
+
+from liulab_mbio.sequence import BindingSite, Primer
+
+type Status = Literal["pass", "warn", "fail"]
+
+_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
+
+#: primer3 refuses a thermodynamic alignment on anything longer.
+_THERMO_MAX = 60
+
+#: SantaLucia (1998) nearest-neighbour ΔG°37, kcal/mol.
+_NEAREST_NEIGHBOUR_DG = {
+    "AA": -1.00, "AC": -1.44, "AG": -1.28, "AT": -0.88,
+    "CA": -1.45, "CC": -1.84, "CG": -2.17, "CT": -1.28,
+    "GA": -1.30, "GC": -2.24, "GG": -1.84, "GT": -1.44,
+    "TA": -0.58, "TC": -1.30, "TG": -1.45, "TT": -1.00,
+}  # fmt: skip
+
+#: Duplex initiation and the penalty for each terminal A or T, as primer3 applies them.
+_INITIATION_DG = 1.96
+_TERMINAL_AT_DG = 0.05
 
 
 @dataclass(frozen=True, slots=True)
 class Polymerase:
-    """A DNA polymerase, its reaction buffer and its cycling rules.
+    """A DNA polymerase, the buffer its Tm is computed in, and its cycling rules.
 
     Parameters
     ----------
     name
         As sold, such as ``"Q5"``.
-    monovalent_mm, divalent_mm, dntp_mm
-        Final concentrations, millimolar. dNTPs are summed over all four.
+    monovalent_mm
+        The monovalent cation concentration NEB's calculator assigns this buffer, mM. It
+        stands for the whole buffer, so Mg²⁺ and dNTPs are left out of the Tm: primer3's
+        Owczarzy (2008) magnesium term divides by an integer and vanishes.
+    salt_correction
+        primer3's `salt_corrections_method`.
     primer_nm
-        Final concentration of each primer, nanomolar.
-    annealing_offset
-        Added to the lower Tm of a pair to give the annealing temperature, °C.
-    annealing_max
-        The highest annealing temperature, °C.
+        Each primer in the reaction, nanomolar.
+    tm_dna_conc_nm
+        What primer3 is given, which is four times `primer_nm` under the Owczarzy correction:
+        primer3 always divides by four, where NEB divides only for Phusion.
+    annealing_slope, annealing_offset
+        Ta is `annealing_slope` times the lower Tm of the pair, plus `annealing_offset`, °C.
+    annealing_max, annealing_min
+        Ta is capped at `annealing_max`; NEB warns below `annealing_min`.
     extension_temperature
         °C.
     extension_seconds_per_kb
@@ -39,87 +77,369 @@ class Polymerase:
     name: str
     _: KW_ONLY
     monovalent_mm: float
-    divalent_mm: float
-    dntp_mm: float
+    salt_correction: str
     primer_nm: float
+    tm_dna_conc_nm: float
+    annealing_slope: float
     annealing_offset: float
     annealing_max: float
+    annealing_min: float
     extension_temperature: float
     extension_seconds_per_kb: int
 
     def annealing_temperature(self, tm: float, other_tm: float) -> float:
-        """Return the annealing temperature for a primer pair with these Tms, °C."""
-        return min(min(tm, other_tm) + self.annealing_offset, self.annealing_max)
+        """Return the annealing temperature for a pair with these Tms, °C to a tenth."""
+        lower = min(tm, other_tm)
+        return round(
+            min(self.annealing_slope * lower + self.annealing_offset, self.annealing_max), 1
+        )
 
     def extension_seconds(self, amplicon_length: int) -> int:
         """Return the extension time for an amplicon, rounded up to whole kilobases."""
         return max(1, math.ceil(amplicon_length / 1000)) * self.extension_seconds_per_kb
 
 
-#: NEB Q5 High-Fidelity DNA Polymerase (M0491) protocol; 30 s/kb is its upper figure. NEB does
-#: not publish the buffer's monovalent salt, so that is primer3's default.
+#: NEB Q5 High-Fidelity DNA Polymerase (M0491).
 Q5 = Polymerase(
     "Q5",
-    monovalent_mm=50.0,
-    divalent_mm=2.0,
-    dntp_mm=0.8,
+    monovalent_mm=150.0,
+    salt_correction="owczarzy",
     primer_nm=500.0,
-    annealing_offset=3.0,
+    tm_dna_conc_nm=2000.0,
+    annealing_slope=1.0,
+    annealing_offset=1.0,
     annealing_max=72.0,
+    annealing_min=55.0,
     extension_temperature=72.0,
-    extension_seconds_per_kb=30,
+    extension_seconds_per_kb=20,
 )
 
-#: NEB Taq DNA Polymerase with Standard Taq Buffer (M0273): 50 mM KCl, 1.5 mM MgCl₂.
+#: NEB Phusion High-Fidelity DNA Polymerase (M0530). NEB corrects its salt the older way and
+#: divides the primer concentration itself.
+PHUSION = Polymerase(
+    "Phusion",
+    monovalent_mm=222.0,
+    salt_correction="schildkraut",
+    primer_nm=500.0,
+    tm_dna_conc_nm=500.0,
+    annealing_slope=0.93,
+    annealing_offset=7.5,
+    annealing_max=72.0,
+    annealing_min=45.0,
+    extension_temperature=72.0,
+    extension_seconds_per_kb=15,
+)
+
+#: NEB Taq DNA Polymerase with Standard Taq Buffer (M0273).
 TAQ = Polymerase(
     "Taq",
-    monovalent_mm=50.0,
-    divalent_mm=1.5,
-    dntp_mm=0.8,
+    monovalent_mm=55.0,
+    salt_correction="owczarzy",
     primer_nm=200.0,
+    tm_dna_conc_nm=800.0,
+    annealing_slope=1.0,
     annealing_offset=-5.0,
     annealing_max=68.0,
+    annealing_min=45.0,
     extension_temperature=68.0,
     extension_seconds_per_kb=60,
 )
 
-#: NEB OneTaq DNA Polymerase (M0480), Standard Reaction Buffer: 22 mM KCl, 22 mM NH₄Cl,
-#: 1.8 mM MgCl₂.
+#: NEB OneTaq DNA Polymerase (M0480) in Standard Reaction Buffer, the colony PCR default.
 ONETAQ = Polymerase(
     "OneTaq",
-    monovalent_mm=44.0,
-    divalent_mm=1.8,
-    dntp_mm=0.8,
+    monovalent_mm=54.0,
+    salt_correction="owczarzy",
     primer_nm=200.0,
+    tm_dna_conc_nm=800.0,
+    annealing_slope=1.0,
     annealing_offset=-5.0,
     annealing_max=68.0,
+    annealing_min=45.0,
     extension_temperature=68.0,
     extension_seconds_per_kb=60,
 )
 
 
-def _conditions(polymerase: Polymerase) -> dict[str, float]:
+class _Conditions(TypedDict):
+    mv_conc: float
+    dv_conc: float
+    dntp_conc: float
+    dna_conc: float
+    salt_corrections_method: str
+
+
+def _conditions(polymerase: Polymerase) -> _Conditions:
     return {
         "mv_conc": polymerase.monovalent_mm,
-        "dv_conc": polymerase.divalent_mm,
-        "dntp_conc": polymerase.dntp_mm,
-        "dna_conc": polymerase.primer_nm,
+        "dv_conc": 0.0,
+        "dntp_conc": 0.0,
+        "dna_conc": polymerase.tm_dna_conc_nm,
+        "salt_corrections_method": polymerase.salt_correction,
     }
 
 
 def melting_temperature(sequence: str, polymerase: Polymerase = Q5) -> float:
-    """Return the Tm of a sequence paired with its complement, in a polymerase's buffer, °C.
+    """Return the Tm of a sequence in a polymerase's buffer, °C.
+
+    The value NEB's Tm Calculator gives for that polymerase.
 
     Examples
     --------
     >>> round(melting_temperature("GTAAAACGACGGCCAGT"))
-    59
+    62
     """
     import primer3
 
-    return primer3.calc_tm(
-        sequence.upper(),
-        **_conditions(polymerase),
-        tm_method="santalucia",
-        salt_corrections_method="santalucia",
+    return primer3.calc_tm(sequence.upper(), tm_method="santalucia", **_conditions(polymerase))
+
+
+@dataclass(frozen=True, slots=True)
+class Band:
+    """The values a check passes on, and the wider band it only warns on.
+
+    Parameters
+    ----------
+    low, high
+        A value between them, inclusive, passes.
+    warn_low, warn_high
+        A value between them warns; outside them the check fails. Infinite by default, so a
+        value outside the passing band only warns.
+    """
+
+    low: float
+    high: float
+    warn_low: float = -math.inf
+    warn_high: float = math.inf
+
+    def grade(self, value: float) -> Status:
+        """Return the status of a value."""
+        if self.low <= value <= self.high:
+            return "pass"
+        if self.warn_low <= value <= self.warn_high:
+            return "warn"
+        return "fail"
+
+
+@dataclass(frozen=True, slots=True)
+class Thresholds:
+    """Every threshold the checks are judged by, with its source.
+
+    Sources are in ``docs/research/primer-design-and-pcr.md``; where it found no published
+    rule, the note's own proposal is marked below.
+
+    Parameters
+    ----------
+    length
+        Annealing region, nt. primer3's minimum of 18 and IDT's 18-30, warning out to the
+        longest primer primer3's Tm formula takes. The warning band is the note's proposal.
+    gc_percent
+        Of the annealing region. NEB asks for 40-60%; primer3 allows 20-80.
+    gc_clamp
+        Gs and Cs in the last five 3' bases. primer3 allows five; one to three is the note's
+        proposal, from NEB's "avoid GC-rich 3' ends".
+    tm
+        Of the annealing region, °C, on this polymerase's scale. IDT asks for 60-64 °C; the
+        warning band is the note's proposal.
+    mononucleotide_run, guanine_run
+        Longest run of one base, and of G alone, anywhere in the primer. primer3 allows a run
+        of five; IDT warns at four Gs.
+    dinucleotide_repeat
+        Most repeats of one dinucleotide anywhere in the primer. Four is the note's proposal;
+        no source gives a limit.
+    hairpin, dimer
+        Melting temperature of the structure at primer3's default conditions, °C: primer3's
+        `PRIMER_MAX_HAIRPIN_TH` and `PRIMER_MAX_SELF_ANY_TH`, both 47 °C.
+    dimer_3prime
+        As `dimer`, for a structure holding the 3' end, which the polymerase can extend:
+        primer3's `PRIMER_MAX_SELF_END_TH`, failing rather than warning.
+    """
+
+    length: Band = Band(18, 30, 15, 35)
+    gc_percent: Band = Band(40.0, 60.0, 20.0, 80.0)
+    gc_clamp: Band = Band(1, 3, 0, 5)
+    tm: Band = Band(60.0, 64.0, 55.0, 70.0)
+    mononucleotide_run: Band = Band(0, 4, 0, 5)
+    guanine_run: Band = Band(0, 3)
+    dinucleotide_repeat: Band = Band(0, 3)
+    hairpin: Band = Band(-math.inf, 47.0)
+    dimer: Band = Band(-math.inf, 47.0)
+    dimer_3prime: Band = Band(-math.inf, 47.0, -math.inf, 47.0)
+
+
+#: The thresholds every check uses unless a caller passes its own.
+THRESHOLDS = Thresholds()
+
+
+@dataclass(frozen=True, slots=True)
+class Check:
+    """One verdict on a primer or a pair, with the value it judged.
+
+    Parameters
+    ----------
+    name
+        What was measured, such as ``"gc_clamp"``.
+    status
+        ``"pass"``, ``"warn"`` or ``"fail"``.
+    value
+        The measurement, in the unit `Thresholds` documents for it.
+    detail
+        What a reader needs besides the number.
+    """
+
+    name: str
+    status: Status
+    value: float
+    detail: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class PrimerReport:
+    """Every check on one primer.
+
+    Parameters
+    ----------
+    primer
+        The primer judged.
+    checks
+        In the order they were run.
+    """
+
+    primer: Primer
+    checks: tuple[Check, ...]
+
+    @property
+    def status(self) -> Status:
+        """Return the worst status of any check."""
+        return _worst(check.status for check in self.checks)
+
+    def __getitem__(self, name: str) -> Check:
+        """Return the check of that name.
+
+        Raises
+        ------
+        KeyError
+            If no check has it.
+        """
+        for check in self.checks:
+            if check.name == name:
+                return check
+        raise KeyError(name)
+
+
+def evaluate_primer(
+    primer: Primer,
+    *,
+    polymerase: Polymerase = Q5,
+    thresholds: Thresholds = THRESHOLDS,
+) -> PrimerReport:
+    """Judge one primer on its own.
+
+    The annealing region is the 3' part its binding site covers, or the whole primer when it
+    has none: length, GC and Tm are of that part, runs and structures of the whole primer. A
+    primer longer than primer3 will align is judged on its 3'-terminal bases. The full-primer
+    Tm and the 3'-end stability are reported without a verdict.
+
+    Examples
+    --------
+    >>> report = evaluate_primer(Primer("M13 fwd", "GTAAAACGACGGCCAGT"))
+    >>> report["gc_clamp"].value, report.status
+    (3, 'warn')
+    """
+    import primer3
+
+    annealing = _annealing_region(primer)
+    thermo, note = _thermo_sequence(primer.sequence)
+    gc = 100.0 * sum(annealing.count(base) for base in "GC") / len(annealing)
+    checks = (
+        _graded("length", len(annealing), thresholds.length),
+        _graded("gc_percent", gc, thresholds.gc_percent),
+        _graded("gc_clamp", sum(annealing[-5:].count(base) for base in "GC"), thresholds.gc_clamp),
+        _graded("tm", melting_temperature(annealing, polymerase), thresholds.tm),
+        Check("tm_full", "pass", melting_temperature(primer.sequence, polymerase), "not judged"),
+        Check("end_stability", "pass", _end_stability(annealing), "not judged"),
+        _run_check(primer.sequence, thresholds),
+        _graded(
+            "dinucleotide_repeat",
+            _longest_dinucleotide_repeat(primer.sequence),
+            thresholds.dinucleotide_repeat,
+        ),
+        _graded("hairpin", primer3.calc_hairpin(thermo).tm, thresholds.hairpin, note),
+        _graded("self_dimer", primer3.calc_homodimer(thermo).tm, thresholds.dimer, note),
+        _graded(
+            "self_dimer_3prime",
+            primer3.calc_end_stability(thermo, thermo).tm,
+            thresholds.dimer_3prime,
+            note,
+        ),
     )
+    return PrimerReport(primer, checks)
+
+
+def _graded(name: str, value: float, band: Band, detail: str = "") -> Check:
+    return Check(name, band.grade(value), value, detail)
+
+
+def _worst(statuses: Iterable[Status]) -> Status:
+    worst: Status = "pass"
+    for status in statuses:
+        if _RANK[status] > _RANK[worst]:
+            worst = status
+    return worst
+
+
+def _run_check(sequence: str, thresholds: Thresholds) -> Check:
+    longest = _longest_run(sequence)
+    guanines = _longest_run(sequence, "G")
+    guanine_status = thresholds.guanine_run.grade(guanines)
+    return Check(
+        "mononucleotide_run",
+        _worst((thresholds.mononucleotide_run.grade(longest), guanine_status)),
+        longest,
+        f"{guanines} Gs in a row" if guanine_status != "pass" else "",
+    )
+
+
+def _annealing_region(primer: Primer, sites: tuple[BindingSite, ...] = ()) -> str:
+    sites = sites or primer.binding_sites
+    if not sites:
+        return primer.sequence
+    return primer.sequence[-max(site.end - site.start for site in sites) :]
+
+
+def _thermo_sequence(sequence: str) -> tuple[str, str]:
+    if len(sequence) <= _THERMO_MAX:
+        return sequence, ""
+    return sequence[-_THERMO_MAX:], f"judged on the 3'-terminal {_THERMO_MAX} bases"
+
+
+def _end_stability(sequence: str) -> float:
+    """Return ΔG°37 of the 3'-terminal pentamer, kcal/mol. Bases outside ACGT add nothing."""
+    pentamer = sequence[-5:]
+    total = _INITIATION_DG + sum(
+        _NEAREST_NEIGHBOUR_DG.get(pair, 0.0)
+        for pair in (pentamer[i : i + 2] for i in range(len(pentamer) - 1))
+    )
+    return total + _TERMINAL_AT_DG * sum(base in "AT" for base in (pentamer[0], pentamer[-1]))
+
+
+def _longest_run(sequence: str, base: str = "") -> int:
+    longest = run = 1 if not base else 0
+    for previous, this in itertools.pairwise(sequence):
+        run = run + 1 if this == previous else 1
+        if not base or this == base == previous:
+            longest = max(longest, run)
+    return longest
+
+
+def _longest_dinucleotide_repeat(sequence: str) -> int:
+    longest = 1
+    for start in range(len(sequence) - 1):
+        unit = sequence[start : start + 2]
+        if unit[0] == unit[1]:
+            continue
+        repeats = 1
+        while sequence[start + 2 * repeats : start + 2 * repeats + 2] == unit:
+            repeats += 1
+        longest = max(longest, repeats)
+    return longest
