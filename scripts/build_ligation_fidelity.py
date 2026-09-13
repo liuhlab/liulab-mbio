@@ -8,25 +8,24 @@ they may be redistributed with attribution. `docs/research/ligation-fidelity.md`
 licence, the axis convention and what each table measured.
 
 Without `--from` the five workbooks are downloaded from `journals.plos.org`; with it they are
-read from a directory holding files named as PLOS serves them. Each workbook is a zip of XML,
-so `zipfile` and `xml.etree` read it and no spreadsheet library is needed.
+read from a directory holding files named as PLOS serves them. A workbook is read by
+`liulab_mbio.goldengate.ligase`, which the package itself reads a user's own matrix with, so no
+spreadsheet library is needed here either.
 """
 
 from __future__ import annotations
 
 import argparse
-import io
 import json
-import re
 import sys
 import urllib.request
-import zipfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree
+
+from liulab_mbio.goldengate.ligase import read_workbook
 
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "src/liulab_mbio/data/ligation_fidelity.json"
@@ -40,10 +39,6 @@ STEM = "pone.0238592"
 SUPPLEMENTARY = (
     "https://journals.plos.org/plosone/article/file?id={doi}.{suffix}&type=supplementary"
 )
-
-#: The spreadsheet XML namespace, and the column letters of a cell reference.
-_MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
-_COLUMN = re.compile(r"[A-Z]+")
 
 #: What the file says about itself, so a reader need not find this script first.
 FORMAT = (
@@ -105,89 +100,6 @@ def fetch(table: Table) -> bytes:
     """Download one workbook."""
     with urllib.request.urlopen(url(table), timeout=300) as response:
         return response.read()
-
-
-def read_workbook(blob: bytes) -> tuple[str, dict[str, dict[str, int]]]:
-    """Read one workbook into its sheet name and a sparse count matrix.
-
-    The first row and the first column hold the overhang labels; every other cell is an
-    observation count, and a zero is dropped.
-
-    Raises
-    ------
-    ValueError
-        If a cell is neither a shared string nor a number, which is not a shape these
-        workbooks have and so is a sign the file is not the one expected.
-    """
-    with zipfile.ZipFile(io.BytesIO(blob)) as archive:
-        sheet_name = _sheet_name(archive)
-        shared = _shared_strings(archive)
-        rows = _rows(archive, shared)
-    header, *body = rows
-    # Keyed by column number, because a row drops the cells it has no count for.
-    columns = {_index(reference): str(label) for reference, label in header}
-    counts: dict[str, dict[str, int]] = {}
-    for cells in body:
-        values = {_index(reference): value for reference, value in cells}
-        counts[str(values[1])] = {
-            columns[index]: value
-            for index, value in values.items()
-            if index != 1 and isinstance(value, int) and value
-        }
-    return sheet_name, counts
-
-
-def _sheet_name(archive: zipfile.ZipFile) -> str:
-    """Return the name of the workbook's first sheet."""
-    workbook = ElementTree.fromstring(archive.read("xl/workbook.xml"))
-    sheets = workbook.find(f"{_MAIN}sheets")
-    if sheets is None or len(sheets) == 0:
-        raise ValueError("the workbook holds no sheet")
-    return sheets[0].get("name", "")
-
-
-def _shared_strings(archive: zipfile.ZipFile) -> list[str]:
-    """Return the workbook's shared string table, which is where its labels live."""
-    if "xl/sharedStrings.xml" not in archive.namelist():
-        return []
-    table = ElementTree.fromstring(archive.read("xl/sharedStrings.xml"))
-    return ["".join(node.itertext()) for node in table]
-
-
-def _rows(archive: zipfile.ZipFile, shared: list[str]) -> list[list[tuple[str, str | int]]]:
-    """Return every non-empty cell of the first sheet, row by row, as reference and value."""
-    sheet = ElementTree.fromstring(archive.read("xl/worksheets/sheet1.xml"))
-    data = sheet.find(f"{_MAIN}sheetData")
-    if data is None:
-        raise ValueError("the sheet holds no data")
-    rows: list[list[tuple[str, str | int]]] = []
-    for row in data:
-        cells: list[tuple[str, str | int]] = []
-        for cell in row:
-            text = cell.findtext(f"{_MAIN}v")
-            if text is None:
-                continue
-            kind = cell.get("t")
-            if kind == "s":
-                cells.append((cell.get("r", ""), shared[int(text)]))
-            elif kind in (None, "n"):
-                cells.append((cell.get("r", ""), int(float(text))))
-            else:
-                raise ValueError(f"cell {cell.get('r')} is of unread type {kind!r}")
-        if cells:
-            rows.append(cells)
-    return rows
-
-
-def _index(reference: str) -> int:
-    """Return the 1-based column number of a cell reference such as ``"IW257"``."""
-    letters = _COLUMN.match(reference)
-    if letters is None:
-        raise ValueError(f"{reference!r} is not a cell reference")
-    number = 0
-    for letter in letters.group():
-        number = number * 26 + ord(letter) - ord("A") + 1
-    return number
 
 
 def matrix(table: Table, blob: bytes) -> dict[str, Any]:

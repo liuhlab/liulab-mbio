@@ -1,4 +1,7 @@
-"""The ligation fidelity build script's parsing, on a workbook built here rather than fetched."""
+"""The ligation fidelity build script, on a workbook built here rather than fetched.
+
+The workbook reader it calls is the package's, `liulab_mbio.goldengate.ligase`.
+"""
 
 import importlib.util
 import io
@@ -10,6 +13,8 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+
+from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, column_index, read_workbook
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -61,26 +66,28 @@ def workbook(
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr(
             "xl/workbook.xml",
-            f'<workbook xmlns="{build._MAIN[1:-1]}"><sheets><sheet name="{sheet}"/>'
+            f'<workbook xmlns="{SPREADSHEET_NS[1:-1]}"><sheets><sheet name="{sheet}"/>'
             "</sheets></workbook>",
         )
-        archive.writestr("xl/sharedStrings.xml", f'<sst xmlns="{build._MAIN[1:-1]}">{shared}</sst>')
+        archive.writestr(
+            "xl/sharedStrings.xml", f'<sst xmlns="{SPREADSHEET_NS[1:-1]}">{shared}</sst>'
+        )
         archive.writestr(
             "xl/worksheets/sheet1.xml",
-            f'<worksheet xmlns="{build._MAIN[1:-1]}"><sheetData>{rows}</sheetData></worksheet>',
+            f'<worksheet xmlns="{SPREADSHEET_NS[1:-1]}"><sheetData>{rows}</sheetData></worksheet>',
         )
     return buffer.getvalue()
 
 
 def test_a_workbook_is_read_into_rows_of_counts_without_a_spreadsheet_library() -> None:
-    sheet, counts = build.read_workbook(workbook())
+    sheet, counts = read_workbook(workbook())
 
     assert sheet == SHEET
     assert counts == {"TTTT": {"AAAA": 635, "TTTT": 4}, "AAAA": {"TTTT": 635}}
 
 
 def test_a_pair_never_observed_is_absent_rather_than_zero() -> None:
-    _, counts = build.read_workbook(workbook())
+    _, counts = read_workbook(workbook())
 
     assert "AAAC" not in counts["TTTT"]
     assert "AAAA" not in counts["AAAA"]
@@ -91,21 +98,21 @@ def test_a_column_is_placed_by_its_letters_and_not_by_its_order_in_the_row() -> 
     cells = {"A1": ("s", 0), "B1": ("s", 1), "C1": ("s", 2), "D1": ("s", 3),
              "A2": ("s", 3), "D2": (None, 7)}  # fmt: skip
 
-    _, counts = build.read_workbook(workbook(cells=cells))
+    _, counts = read_workbook(workbook(cells=cells))
 
     assert counts == {"TTTT": {"TTTT": 7}}
 
 
 def test_columns_past_the_alphabet_keep_their_place() -> None:
-    assert (build._index("A1"), build._index("Z9"), build._index("AA1")) == (1, 26, 27)
-    assert build._index("IW257") == 257
+    assert (column_index("A1"), column_index("Z9"), column_index("AA1")) == (1, 26, 27)
+    assert column_index("IW257") == 257
 
 
 def test_a_cell_of_an_unread_type_is_refused_rather_than_guessed() -> None:
     cells = {"A1": ("s", 0), "B1": ("s", 1), "A2": ("s", 1), "B2": ("e", 0)}
 
     with pytest.raises(ValueError, match="unread type"):
-        build.read_workbook(workbook(cells=cells))
+        read_workbook(workbook(cells=cells))
 
 
 def test_a_sheet_named_after_another_enzyme_is_refused() -> None:
