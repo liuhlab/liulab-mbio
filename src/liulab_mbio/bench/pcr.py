@@ -7,7 +7,14 @@ them unchanged.
 
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL
 from liulab_mbio.primers import ONETAQ, Q5, Polymerase
-from liulab_mbio.protocol import Component, Incubation, ReactionTable, Stage, ThermocyclerProgram
+from liulab_mbio.protocol import (
+    Component,
+    Incubation,
+    ReactionTable,
+    Reference,
+    Stage,
+    ThermocyclerProgram,
+)
 
 #: The tubes a PCR is pipetted from: each primer at 10 µM, and a dNTP mix at 10 mM of each base.
 PRIMER_STOCK_UM = 10.0
@@ -134,8 +141,8 @@ def pcr_program(
     """Return the program for this polymerase, annealing temperature and amplicon.
 
     Annealing and extension are combined into one step at the extension temperature once the
-    annealing temperature reaches the polymerase's `PcrProfile.two_step_celsius`. An amplicon
-    that is a Golden Gate insert wants `GOLDEN_GATE_PCR_CYCLES`, the fewest NEB finds enough.
+    annealing temperature reaches the polymerase's `PcrProfile.two_step_celsius`. `cycles`, when
+    given, replaces the profile's own count.
     """
     profile = polymerase.pcr
     initial = Incubation(
@@ -216,3 +223,12 @@ def _program(
         ),
         title=title,
     )
+
+
+#: Where the numbers above come from, ready for a protocol's reference list.
+REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master "
+        "Mixes (Y. Xu, 11/13)"
+    ),
+)

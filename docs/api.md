@@ -12,8 +12,8 @@ from liulab_mbio.io import read_record
 from liulab_mbio.goldengate import plan_assembly
 ```
 
-Three names are spelled twice across the package on purpose — `Check`, `Fragment` and
-`Junction` each mean something different in the two modules that define them. A
+Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
+something different in the two modules that define them. A
 `liulab_mbio.checks.Check` is the judged check, with the value it measured. A
 `liulab_mbio.protocol.Check` is how a protocol page shows one. A flat re-export would have to
 rename one of each pair, and would import every dependency the moment you imported the package.
@@ -104,6 +104,27 @@ refused rather than truncated.
 ::: liulab_mbio.protocol.model
 
 ::: liulab_mbio.protocol.render
+
+## Bench
+
+The numbers any cloning pipeline shares: DNA amounts, PCR and colony PCR, gels, the checks
+that confirm a clone, and heat inactivation. Every public name in the modules below imports
+from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERENCES`, and
+`liulab_mbio.bench.REFERENCES` gathers them all.
+
+::: liulab_mbio.bench
+    options:
+      members: false
+
+::: liulab_mbio.bench.amounts
+
+::: liulab_mbio.bench.pcr
+
+::: liulab_mbio.bench.gels
+
+::: liulab_mbio.bench.validation
+
+::: liulab_mbio.bench.inactivation
 
 ## Golden Gate
 

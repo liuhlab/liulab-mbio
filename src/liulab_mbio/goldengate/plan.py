@@ -30,7 +30,7 @@ from liulab_mbio.bench import (
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.goldengate.bench import Fragment, assembly_amounts
+from liulab_mbio.goldengate.bench import assembly_amounts
 from liulab_mbio.goldengate.design import (
     EnzymeChoice,
     Junction,
@@ -486,8 +486,8 @@ def plan_assembly(
         colony,
         reads,
         assembly_amounts(
-            Fragment(linearised_vector.name, linearised_vector.length),
-            tuple(Fragment(part.name, part.length) for part in insert_parts),
+            (linearised_vector.name, linearised_vector.length),
+            tuple((part.name, part.length) for part in insert_parts),
         ),
         _phenotype(one, built, span),
         (

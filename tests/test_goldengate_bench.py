@@ -5,11 +5,11 @@ The source is `docs/research/golden-gate-assembly.md` for the reactions and cycl
 
 import pytest
 
-from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
+from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.goldengate.bench import (
+    FRAGMENT_PMOL,
     KIT,
-    Fragment,
     assembly_amounts,
     assembly_program,
     assembly_reaction,
@@ -29,7 +29,7 @@ def total(table: ReactionTable) -> float:
 
 
 def two_fragments() -> tuple[Amount, ...]:
-    return assembly_amounts(Fragment("pUC19", 2686), (Fragment("GFP", 717),))
+    return assembly_amounts(("pUC19", 2686), (("GFP", 717),))
 
 
 def test_every_fragment_takes_the_same_picomoles() -> None:
@@ -40,24 +40,9 @@ def test_every_fragment_takes_the_same_picomoles() -> None:
 
 
 def test_a_molar_ratio_scales_the_inserts_and_not_the_vector() -> None:
-    amounts = assembly_amounts(Fragment("pUC19", 2686), (Fragment("GFP", 717),), insert_ratio=2.0)
+    amounts = assembly_amounts(("pUC19", 2686), (("GFP", 717),), insert_ratio=2.0)
     assert amounts[0].pmol == pytest.approx(0.05)
     assert amounts[1].pmol == pytest.approx(0.10)
-
-
-def test_a_known_concentration_gives_a_volume_to_pipette() -> None:
-    amounts = assembly_amounts(Fragment("pUC19", 2686, concentration_ng_ul=100.0), ())
-    assert amounts[0].volume_ul == pytest.approx(0.83, abs=0.01)
-
-
-def test_an_unknown_concentration_falls_back_to_one_microlitre() -> None:
-    amounts = assembly_amounts(Fragment("pUC19", 2686), ())
-    assert amounts[0].volume_ul == DNA_VOLUME_UL
-
-
-def test_a_fragment_refuses_a_length_that_is_not_positive() -> None:
-    with pytest.raises(ValueError, match="length_bp"):
-        Fragment("empty", 0)
 
 
 def test_the_ligase_master_mix_reaction_holds_fifteen_microlitres_for_two_fragments() -> None:
@@ -81,9 +66,7 @@ def test_paqci_carries_an_activator_line_and_bsai_does_not() -> None:
 
 
 def test_seven_fragments_double_the_reaction_and_the_bsmbi_enzyme() -> None:
-    amounts = assembly_amounts(
-        Fragment("pUC19", 2686), tuple(Fragment(f"part {n}", 700) for n in range(6))
-    )
+    amounts = assembly_amounts(("pUC19", 2686), tuple((f"part {n}", 700) for n in range(6)))
     table = assembly_reaction(get_enzyme("BsmBI"), amounts)
     assert total(table) == pytest.approx(30.0)
     assert volumes(table)["NEBridge Ligase Master Mix"] == 10.0
@@ -96,7 +79,7 @@ def test_the_master_mix_and_enzyme_components_are_the_ones_the_reaction_prints(
 ) -> None:
     enzyme = get_enzyme(name)
     amounts = assembly_amounts(
-        Fragment("pUC19", 2686), tuple(Fragment(f"part {n}", 700) for n in range(fragments - 1))
+        ("pUC19", 2686), tuple((f"part {n}", 700) for n in range(fragments - 1))
     )
     components = assembly_reaction(enzyme, amounts).components
     assert ligase_master_mix_component(fragments) in components
@@ -127,9 +110,9 @@ def test_an_enzyme_neb_gives_no_golden_gate_protocol_for_is_refused() -> None:
 
 
 def test_dna_that_does_not_fit_the_reaction_is_refused() -> None:
-    dilute = assembly_amounts(
-        Fragment("pUC19", 2686, concentration_ng_ul=1.0),
-        (Fragment("GFP", 717, concentration_ng_ul=1.0),),
+    dilute = (
+        dna_amount("pUC19", 2686, pmol=FRAGMENT_PMOL, concentration_ng_ul=1.0),
+        dna_amount("GFP", 717, pmol=FRAGMENT_PMOL, concentration_ng_ul=1.0),
     )
     with pytest.raises(ValueError, match="µL reaction"):
         assembly_reaction(get_enzyme("BbsI"), dilute)

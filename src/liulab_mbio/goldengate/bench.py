@@ -10,10 +10,10 @@ carry their own enzyme mix and so exist only for BsaI-HFv2 and BsmBI-v2.
 """
 
 from collections.abc import Mapping
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
 from typing import Literal
 
-from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount, to_nanograms
+from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol import (
     Component,
@@ -32,72 +32,30 @@ FRAGMENT_PMOL = 0.05
 INSERT_RATIO = 1.0
 
 
-@dataclass(frozen=True, slots=True)
-class Fragment:
-    """One piece of DNA going into an assembly.
-
-    Parameters
-    ----------
-    name
-        What its tube is labelled.
-    length_bp
-        Base pairs.
-    concentration_ng_ul
-        Of that tube, or ``None`` when it is not measured yet.
-
-    Raises
-    ------
-    ValueError
-        If either number is not positive.
-    """
-
-    name: str
-    length_bp: int
-    _: KW_ONLY
-    concentration_ng_ul: float | None = None
-
-    def __post_init__(self) -> None:
-        """Refuse a length or a concentration that is not positive."""
-        if self.length_bp <= 0:
-            raise ValueError(f"fragment {self.name!r}: length_bp must be positive")
-        if self.concentration_ng_ul is not None and self.concentration_ng_ul <= 0:
-            raise ValueError(f"fragment {self.name!r}: concentration_ng_ul must be positive")
-
-
 def assembly_amounts(
-    vector: Fragment,
-    inserts: tuple[Fragment, ...],
+    vector: tuple[str, int],
+    inserts: tuple[tuple[str, int], ...],
     *,
     vector_pmol: float = FRAGMENT_PMOL,
     insert_ratio: float = INSERT_RATIO,
 ) -> tuple[Amount, ...]:
     """Return what to put in the assembly, vector first.
 
-    NEB asks for `FRAGMENT_PMOL` of the destination plasmid and the same of each precloned
-    insert; `insert_ratio` is the insert to vector molar ratio for amplicon inserts.
+    The vector and each insert are a name and a length in base pairs. NEB asks for
+    `FRAGMENT_PMOL` of the destination plasmid and the same of each precloned insert;
+    `insert_ratio` is the insert to vector molar ratio for amplicon inserts.
+
+    Raises
+    ------
+    ValueError
+        If a length is not positive.
     """
     return tuple(
-        _amount(fragment, pmol)
-        for fragment, pmol in (
+        dna_amount(name, length_bp, pmol=pmol)
+        for (name, length_bp), pmol in (
             (vector, vector_pmol),
             *((insert, vector_pmol * insert_ratio) for insert in inserts),
         )
-    )
-
-
-def _amount(fragment: Fragment, pmol: float) -> Amount:
-    nanograms = to_nanograms(pmol, fragment.length_bp)
-    volume = (
-        DNA_VOLUME_UL
-        if fragment.concentration_ng_ul is None
-        else nanograms / fragment.concentration_ng_ul
-    )
-    return Amount(
-        fragment.name,
-        fragment.length_bp,
-        pmol=pmol,
-        nanograms=round(nanograms, 2),
-        volume_ul=round(volume, 2),
     )
 
 
@@ -392,11 +350,4 @@ REFERENCES: tuple[Reference, ...] = (
         "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
         url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
     ),
-    Reference(
-        "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master "
-        "Mixes (Y. Xu, 11/13)"
-    ),
-    Reference("NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion"),
-    Reference("NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)"),
-    Reference("NEB, Agarose Gel Resolution, for the percentage a band range resolves on"),
 )

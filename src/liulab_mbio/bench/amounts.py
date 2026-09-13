@@ -5,12 +5,14 @@ The conversion is NEBioCalculator's, through ``docs/research/primer-design-and-p
 
 from dataclasses import KW_ONLY, dataclass
 
+from liulab_mbio.protocol import Reference
+
 #: NEBioCalculator's double-stranded DNA weight, g/mol: `_DUPLEX_ENDS + bp * _BASE_PAIR`. NEB's
 #: manuals use 650 Da per base pair instead, which differs by about 5%, so a protocol says which.
 _DUPLEX_ENDS = 36.04
 _BASE_PAIR = 615.94
 
-#: What to pipette of a fragment whose concentration is not known yet, µL.
+#: What to pipette of a DNA whose concentration is not known yet, µL.
 DNA_VOLUME_UL = 1.0
 
 
@@ -37,18 +39,18 @@ def to_nanograms(pmol: float, length_bp: int) -> float:
 
 @dataclass(frozen=True, slots=True)
 class Amount:
-    """How much of one fragment a reaction takes, in the three units a bench needs.
+    """How much of one DNA a reaction takes, in the three units a bench needs.
 
     Parameters
     ----------
     name, length_bp
-        The fragment's.
+        The DNA's.
     pmol
         What the protocol asks for.
     nanograms
         The same amount weighed.
     volume_ul
-        What to pipette at the fragment's concentration, or `DNA_VOLUME_UL` without one.
+        What to pipette at the DNA's concentration, or `DNA_VOLUME_UL` without one.
 
     Raises
     ------
@@ -72,3 +74,46 @@ class Amount:
         ):
             if value <= 0:
                 raise ValueError(f"amount {self.name!r}: {field} must be positive")
+
+
+def dna_amount(
+    name: str, length_bp: int, *, pmol: float, concentration_ng_ul: float | None = None
+) -> Amount:
+    """Return how much of one DNA a reaction takes, weighed and as a volume to pipette.
+
+    Parameters
+    ----------
+    name
+        What its tube is labelled.
+    length_bp
+        Base pairs.
+    pmol
+        What the reaction asks for.
+    concentration_ng_ul
+        Of that tube, or ``None`` when it is not measured yet.
+
+    Raises
+    ------
+    ValueError
+        If the length, the concentration or the picomoles are not positive.
+
+    Examples
+    --------
+    >>> dna_amount("pUC19", 2686, pmol=0.05).nanograms
+    82.72
+    """
+    if length_bp <= 0:
+        raise ValueError(f"amount {name!r}: length_bp must be positive")
+    if concentration_ng_ul is not None and concentration_ng_ul <= 0:
+        raise ValueError(f"amount {name!r}: concentration_ng_ul must be positive")
+    nanograms = to_nanograms(pmol, length_bp)
+    volume = DNA_VOLUME_UL if concentration_ng_ul is None else nanograms / concentration_ng_ul
+    return Amount(
+        name, length_bp, pmol=pmol, nanograms=round(nanograms, 2), volume_ul=round(volume, 2)
+    )
+
+
+#: Where the numbers above come from, ready for a protocol's reference list.
+REFERENCES: tuple[Reference, ...] = (
+    Reference("NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion"),
+)

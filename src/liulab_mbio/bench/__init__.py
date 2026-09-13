@@ -1,6 +1,7 @@
 """The bench numbers any cloning pipeline shares: reactions, programs and validation.
 
-Every public name in its modules imports from here as well:
+Every public name in its modules imports from here as well. A module that cites a source keeps
+it as its own `REFERENCES`; `REFERENCES` here gathers them.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
 - `pcr`: the PCR and colony PCR reactions and programs.
@@ -11,9 +12,11 @@ Every public name in its modules imports from here as well:
 Nothing here imports `liulab_mbio.goldengate`.
 """
 
+from liulab_mbio.bench import amounts, gels, pcr
 from liulab_mbio.bench.amounts import (
     DNA_VOLUME_UL,
     Amount,
+    dna_amount,
     molecular_weight,
     to_nanograms,
     to_pmol,
@@ -46,6 +49,10 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
+from liulab_mbio.protocol import Reference
+
+#: Every source the modules cite, in the order a protocol lists them.
+REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels.REFERENCES)
 
 __all__ = [
     "COLONY_FLANK",
@@ -61,6 +68,7 @@ __all__ = [
     "LADDER_1_KB_PLUS",
     "LADDER_100_BP",
     "PRIMER_STOCK_UM",
+    "REFERENCES",
     "REVERSED_CLONE",
     "SANGER_FLANK",
     "Amount",
@@ -73,6 +81,7 @@ __all__ = [
     "colony_pcr_master_mix_component",
     "colony_pcr_program",
     "colony_pcr_reaction",
+    "dna_amount",
     "heat_inactivation",
     "molecular_weight",
     "pcr_program",

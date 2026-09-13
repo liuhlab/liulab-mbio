@@ -23,6 +23,7 @@ from liulab_mbio.bench import (
     pcr_program,
     pcr_reaction,
 )
+from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.goldengate.assembly import Part, dam_sites
 from liulab_mbio.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
@@ -763,7 +764,7 @@ def _sequencing_step(plan: "Plan") -> Step:
 
 def _references(plan: "Plan") -> tuple[Reference, ...]:
     """Where the numbers come from."""
-    items = list(REFERENCES)
+    items = [*REFERENCES, *BENCH_REFERENCES]
     items.append(Reference(plan.overhangs.fidelity.source))
     if any(part.dpni for part in plan.parts):
         items.append(

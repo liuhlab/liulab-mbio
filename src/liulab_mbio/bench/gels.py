@@ -3,7 +3,7 @@
 Both are NEB's, through ``docs/research/primer-design-and-pcr.md``.
 """
 
-from liulab_mbio.protocol import Ladder
+from liulab_mbio.protocol import Ladder, Reference
 
 #: NEB's two ladders, each with 500 and 517 counted as the one band NEB counts them as.
 LADDER_100_BP = Ladder(
@@ -65,3 +65,10 @@ def _largest(bands_bp: tuple[int, ...]) -> int:
     if not bands_bp:
         raise ValueError("a gel needs at least one expected band")
     return max(bands_bp)
+
+
+#: Where the numbers above come from, ready for a protocol's reference list.
+REFERENCES: tuple[Reference, ...] = (
+    Reference("NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)"),
+    Reference("NEB, Agarose Gel Resolution, for the percentage a band range resolves on"),
+)
