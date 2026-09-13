@@ -78,16 +78,24 @@ def find_priming_sites(
     circular = template.topology == "circular"
     top = template.sequence + (template.sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
-    window = thresholds.off_target_3prime_window
+    edge = min(size, thresholds.off_target_3prime_window)
     floor = primer3.calc_end_stability(dna, reverse).tm - thresholds.off_target_margin
+    ends = tuple(
+        _near(window, set(top), thresholds.off_target_3prime_mismatches)
+        for window in (dna[-edge:], reverse[:edge])
+    )
     found = []
     for start in range(length if circular else length - size + 1):
+        forward_end = ends[0] is None or top[start + size - edge : start + size] in ends[0]
+        reverse_end = ends[1] is None or top[start : start + edge] in ends[1]
+        if not (forward_end or reverse_end):
+            continue
         here = top[start : start + size]
-        for strand, probe, anchor, annealed in (
-            (Strand.FORWARD, dna, _mismatches(dna[-window:], here[-window:]), None),
-            (Strand.REVERSE, reverse, _mismatches(reverse[:window], here[:window]), here),
+        for strand, probe, anchored, annealed in (
+            (Strand.FORWARD, dna, forward_end, None),
+            (Strand.REVERSE, reverse, reverse_end, here),
         ):
-            if anchor > thresholds.off_target_3prime_mismatches:
+            if not anchored:
                 continue
             mismatches = _mismatches(probe, here)
             if mismatches > thresholds.off_target_mismatches:
@@ -144,6 +152,26 @@ def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int
             break
         matched += 1
     return matched
+
+
+def _near(window: str, alphabet: set[str], mismatches: int) -> frozenset[str] | None:
+    """Return every string `mismatches` substitutions or fewer from `window`, over `alphabet`.
+
+    ``None`` stands for every string of that length, which is no filter at all. A template is
+    scanned once per base, so testing its 3' window against this set is what keeps a design's
+    search of every length affordable.
+    """
+    if mismatches >= len(window):
+        return None
+    near = {window}
+    for _ in range(mismatches):
+        near |= {
+            one[:index] + base + one[index + 1 :]
+            for one in near
+            for index in range(len(one))
+            for base in alphabet
+        }
+    return frozenset(near)
 
 
 def _mismatches(one: str, other: str) -> int:
