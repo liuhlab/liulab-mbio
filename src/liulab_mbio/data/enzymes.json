@@ -1,0 +1,1133 @@
+{
+  "rebase_version": "609",
+  "built": "2026-09-13",
+  "sources": {
+    "rebase": {
+      "title": "REBASE, withrefm \u2014 all enzymes with references and isoschizomers",
+      "url": "https://rebase.neb.com/rebase/link_withrefm",
+      "retrieved": "2026-09-12"
+    },
+    "neb-r3101": {
+      "title": "NEB EcoRI-HF (NEB #R3101) product page",
+      "url": "https://www.neb.com/en-us/products/r3101-ecori-hf",
+      "archived": "2025-12-30"
+    },
+    "neb-r3156": {
+      "title": "NEB SacI-HF (NEB #R3156) product page",
+      "url": "https://www.neb.com/en-us/products/r3156-saci-hf",
+      "archived": "2026-02-13"
+    },
+    "neb-r3142": {
+      "title": "NEB KpnI-HF (NEB #R3142) product page",
+      "url": "https://www.neb.com/en-us/products/r3142-kpni-hf",
+      "archived": "2025-12-31"
+    },
+    "neb-r0141": {
+      "title": "NEB SmaI (NEB #R0141) product page",
+      "url": "https://www.neb.com/en-us/products/r0141-smai",
+      "archived": "2025-10-07"
+    },
+    "neb-r0180": {
+      "title": "NEB XmaI (NEB #R0180) product page",
+      "url": "https://www.neb.com/en-us/products/r0180-xmai",
+      "archived": "2026-01-05"
+    },
+    "neb-r3136": {
+      "title": "NEB BamHI-HF (NEB #R3136) product page",
+      "url": "https://www.neb.com/en-us/products/r3136-bamhi-hf",
+      "archived": "2026-01-03"
+    },
+    "neb-r0145": {
+      "title": "NEB XbaI (NEB #R0145) product page",
+      "url": "https://www.neb.com/en-us/products/r0145-xbai",
+      "archived": "2026-02-21"
+    },
+    "neb-r3138": {
+      "title": "NEB SalI-HF (NEB #R3138) product page",
+      "url": "https://www.neb.com/en-us/products/r3138-sali-hf",
+      "archived": "2026-01-16"
+    },
+    "neb-r3140": {
+      "title": "NEB PstI-HF (NEB #R3140) product page",
+      "url": "https://www.neb.com/en-us/products/r3140-psti-hf",
+      "archived": "2026-01-12"
+    },
+    "neb-r3642": {
+      "title": "NEB SbfI-HF (NEB #R3642) product page",
+      "url": "https://www.neb.com/en-us/products/r3642-sbfi-hf",
+      "archived": "2026-02-15"
+    },
+    "neb-r3182": {
+      "title": "NEB SphI-HF (NEB #R3182) product page",
+      "url": "https://www.neb.com/en-us/products/r3182-sphi-hf",
+      "archived": "2026-01-13"
+    },
+    "neb-r3104": {
+      "title": "NEB HindIII-HF (NEB #R3104) product page",
+      "url": "https://www.neb.com/en-us/products/r3104-hindiii-hf",
+      "archived": "2026-01-09"
+    },
+    "neb-r0111": {
+      "title": "NEB NdeI (NEB #R0111) product page",
+      "url": "https://www.neb.com/en-us/products/r0111-ndei",
+      "archived": "2026-02-02"
+    },
+    "neb-r3193": {
+      "title": "NEB NcoI-HF (NEB #R3193) product page",
+      "url": "https://www.neb.com/en-us/products/r3193-ncoi-hf",
+      "archived": "2025-12-29"
+    },
+    "neb-r0146": {
+      "title": "NEB XhoI (NEB #R0146) product page",
+      "url": "https://www.neb.com/en-us/products/r0146-xhoi",
+      "archived": "2026-02-26"
+    },
+    "neb-r3189": {
+      "title": "NEB NotI-HF (NEB #R3189) product page",
+      "url": "https://www.neb.com/en-us/products/r3189-noti-hf",
+      "archived": "2026-01-07"
+    },
+    "neb-r3733": {
+      "title": "NEB BsaI-HFv2 (NEB #R3733) product page",
+      "url": "https://www.neb.com/en-us/products/r3733-bsai-hf-v2",
+      "archived": "2026-02-21"
+    },
+    "neb-r0739": {
+      "title": "NEB BsmBI-v2 (NEB #R0739) product page",
+      "url": "https://www.neb.com/en-us/products/r0739-bsmbi-v2",
+      "archived": "2026-08-14"
+    },
+    "neb-r0734": {
+      "title": "NEB Esp3I (NEB #R0734) product page",
+      "url": "https://www.neb.com/en-us/products/r0734-esp3i",
+      "archived": "2026-01-11"
+    },
+    "neb-r3539": {
+      "title": "NEB BbsI-HF (NEB #R3539) product page",
+      "url": "https://www.neb.com/en-us/products/r3539-bbsi-hf",
+      "archived": "2026-01-10"
+    },
+    "neb-r0569": {
+      "title": "NEB SapI (NEB #R0569) product page",
+      "url": "https://www.neb.com/en-us/products/r0569-sapi",
+      "archived": "2025-12-31"
+    },
+    "neb-r0712": {
+      "title": "NEB BspQI (NEB #R0712) product page",
+      "url": "https://www.neb.com/en-us/products/r0712-bspqi",
+      "archived": "2026-01-03"
+    },
+    "neb-r0745": {
+      "title": "NEB PaqCI (NEB #R0745) product page",
+      "url": "https://www.neb.com/en-us/products/r0745-paqci",
+      "archived": "2026-02-23"
+    },
+    "neb-r0703": {
+      "title": "NEB BtgZI (NEB #R0703) product page",
+      "url": "https://www.neb.com/en-us/products/r0703-btgzi",
+      "archived": "2025-12-31"
+    },
+    "thermo-er1011": {
+      "title": "Thermo Scientific BpiI (BbsI) (#ER1011) product page",
+      "url": "https://www.thermofisher.com/order/catalog/product/ER1011",
+      "archived": "2026-08-02"
+    },
+    "thermo-er1581": {
+      "title": "Thermo Scientific AarI (#ER1581) product page",
+      "url": "https://www.thermofisher.com/order/catalog/product/ER1581",
+      "archived": "2026-08-02"
+    }
+  },
+  "enzymes": [
+    {
+      "name": "AarI",
+      "site": "CACCTGC",
+      "top_cut": 11,
+      "bottom_cut": 15,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "PaqCI"
+      ],
+      "suppliers": "B",
+      "commercial_name": "AarI",
+      "catalog_number": "ER1581",
+      "supplier": "Thermo Fisher Scientific",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": null,
+      "heat_inactivation_minutes": null,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "sensitive"
+      },
+      "unverified": [
+        "heat_inactivation_celsius",
+        "heat_inactivation_minutes"
+      ],
+      "provenance": {
+        "commercial_name": "thermo-er1581",
+        "catalog_number": "thermo-er1581",
+        "supplier": "thermo-er1581",
+        "incubation_celsius": "thermo-er1581",
+        "heat_inactivation_celsius": "thermo-er1581",
+        "heat_inactivation_minutes": "thermo-er1581",
+        "methylation": "thermo-er1581",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BamHI",
+      "site": "GGATCC",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "BamHI-HF",
+      "catalog_number": "R3136",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": null,
+      "heat_inactivation_minutes": null,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3136",
+        "catalog_number": "neb-r3136",
+        "supplier": "neb-r3136",
+        "incubation_celsius": "neb-r3136",
+        "heat_inactivation_celsius": "neb-r3136",
+        "heat_inactivation_minutes": "neb-r3136",
+        "methylation": "neb-r3136",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BbsI",
+      "site": "GAAGAC",
+      "top_cut": 8,
+      "bottom_cut": 12,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "BpiI",
+        "BstV2I"
+      ],
+      "suppliers": "NV",
+      "commercial_name": "BbsI-HF",
+      "catalog_number": "R3539",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3539",
+        "catalog_number": "neb-r3539",
+        "supplier": "neb-r3539",
+        "incubation_celsius": "neb-r3539",
+        "heat_inactivation_celsius": "neb-r3539",
+        "heat_inactivation_minutes": "neb-r3539",
+        "methylation": "neb-r3539",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BpiI",
+      "site": "GAAGAC",
+      "top_cut": 8,
+      "bottom_cut": 12,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "BbsI",
+        "BstV2I"
+      ],
+      "suppliers": "B",
+      "commercial_name": "BpiI",
+      "catalog_number": "ER1011",
+      "supplier": "Thermo Fisher Scientific",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": null,
+      "heat_inactivation_minutes": null,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [
+        "heat_inactivation_celsius",
+        "heat_inactivation_minutes"
+      ],
+      "provenance": {
+        "commercial_name": "thermo-er1011",
+        "catalog_number": "thermo-er1011",
+        "supplier": "thermo-er1011",
+        "incubation_celsius": "thermo-er1011",
+        "heat_inactivation_celsius": "thermo-er1011",
+        "heat_inactivation_minutes": "thermo-er1011",
+        "methylation": "thermo-er1011",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BsaI",
+      "site": "GGTCTC",
+      "top_cut": 7,
+      "bottom_cut": 11,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "Eco31I",
+        "Bso31I",
+        "Pse31I"
+      ],
+      "suppliers": "NSV",
+      "commercial_name": "BsaI-HFv2",
+      "catalog_number": "R3733",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "impaired by some combinations of overlapping",
+        "cpg": "blocked by some combinations of overlapping"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3733",
+        "catalog_number": "neb-r3733",
+        "supplier": "neb-r3733",
+        "incubation_celsius": "neb-r3733",
+        "heat_inactivation_celsius": "neb-r3733",
+        "heat_inactivation_minutes": "neb-r3733",
+        "methylation": "neb-r3733",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BsmBI",
+      "site": "CGTCTC",
+      "top_cut": 7,
+      "bottom_cut": 11,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "Esp3I"
+      ],
+      "suppliers": "NS",
+      "commercial_name": "BsmBI-v2",
+      "catalog_number": "R0739",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 55,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0739",
+        "catalog_number": "neb-r0739",
+        "supplier": "neb-r0739",
+        "incubation_celsius": "neb-r0739",
+        "heat_inactivation_celsius": "neb-r0739",
+        "heat_inactivation_minutes": "neb-r0739",
+        "methylation": "neb-r0739",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BspQI",
+      "site": "GCTCTTC",
+      "top_cut": 8,
+      "bottom_cut": 11,
+      "overhang_length": 3,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "SapI",
+        "LguI",
+        "PciSI"
+      ],
+      "suppliers": "KN",
+      "commercial_name": "BspQI",
+      "catalog_number": "R0712",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 50,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0712",
+        "catalog_number": "neb-r0712",
+        "supplier": "neb-r0712",
+        "incubation_celsius": "neb-r0712",
+        "heat_inactivation_celsius": "neb-r0712",
+        "heat_inactivation_minutes": "neb-r0712",
+        "methylation": "neb-r0712",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "BtgZI",
+      "site": "GCGATG",
+      "top_cut": 16,
+      "bottom_cut": 20,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [],
+      "suppliers": "N",
+      "commercial_name": "BtgZI",
+      "catalog_number": "R0703",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 60,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "impaired"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0703",
+        "catalog_number": "neb-r0703",
+        "supplier": "neb-r0703",
+        "incubation_celsius": "neb-r0703",
+        "heat_inactivation_celsius": "neb-r0703",
+        "heat_inactivation_minutes": "neb-r0703",
+        "methylation": "neb-r0703",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "EcoRI",
+      "site": "GAATTC",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "EcoRI-HF",
+      "catalog_number": "R3101",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked by some combinations of overlapping"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3101",
+        "catalog_number": "neb-r3101",
+        "supplier": "neb-r3101",
+        "incubation_celsius": "neb-r3101",
+        "heat_inactivation_celsius": "neb-r3101",
+        "heat_inactivation_minutes": "neb-r3101",
+        "methylation": "neb-r3101",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "Esp3I",
+      "site": "CGTCTC",
+      "top_cut": 7,
+      "bottom_cut": 11,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "BsmBI"
+      ],
+      "suppliers": "BNS",
+      "commercial_name": "Esp3I",
+      "catalog_number": "R0734",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0734",
+        "catalog_number": "neb-r0734",
+        "supplier": "neb-r0734",
+        "incubation_celsius": "neb-r0734",
+        "heat_inactivation_celsius": "neb-r0734",
+        "heat_inactivation_minutes": "neb-r0734",
+        "methylation": "neb-r0734",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "HindIII",
+      "site": "AAGCTT",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "BstFI"
+      ],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "HindIII-HF",
+      "catalog_number": "R3104",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3104",
+        "catalog_number": "neb-r3104",
+        "supplier": "neb-r3104",
+        "incubation_celsius": "neb-r3104",
+        "heat_inactivation_celsius": "neb-r3104",
+        "heat_inactivation_minutes": "neb-r3104",
+        "methylation": "neb-r3104",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "KpnI",
+      "site": "GGTACC",
+      "top_cut": 5,
+      "bottom_cut": 1,
+      "overhang_length": 4,
+      "end": "3'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "KpnI-HF",
+      "catalog_number": "R3142",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": null,
+      "heat_inactivation_minutes": null,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3142",
+        "catalog_number": "neb-r3142",
+        "supplier": "neb-r3142",
+        "incubation_celsius": "neb-r3142",
+        "heat_inactivation_celsius": "neb-r3142",
+        "heat_inactivation_minutes": "neb-r3142",
+        "methylation": "neb-r3142",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "NcoI",
+      "site": "CCATGG",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "Bsp19I"
+      ],
+      "suppliers": "BJNQRSVX",
+      "commercial_name": "NcoI-HF",
+      "catalog_number": "R3193",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3193",
+        "catalog_number": "neb-r3193",
+        "supplier": "neb-r3193",
+        "incubation_celsius": "neb-r3193",
+        "heat_inactivation_celsius": "neb-r3193",
+        "heat_inactivation_minutes": "neb-r3193",
+        "methylation": "neb-r3193",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "NdeI",
+      "site": "CATATG",
+      "top_cut": 2,
+      "bottom_cut": 4,
+      "overhang_length": 2,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "FauNDI"
+      ],
+      "suppliers": "BJNQRSVX",
+      "commercial_name": "NdeI",
+      "catalog_number": "R0111",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0111",
+        "catalog_number": "neb-r0111",
+        "supplier": "neb-r0111",
+        "incubation_celsius": "neb-r0111",
+        "heat_inactivation_celsius": "neb-r0111",
+        "heat_inactivation_minutes": "neb-r0111",
+        "methylation": "neb-r0111",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "NotI",
+      "site": "GCGGCCGC",
+      "top_cut": 2,
+      "bottom_cut": 6,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "CciNI"
+      ],
+      "suppliers": "BJNQRSVX",
+      "commercial_name": "NotI-HF",
+      "catalog_number": "R3189",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3189",
+        "catalog_number": "neb-r3189",
+        "supplier": "neb-r3189",
+        "incubation_celsius": "neb-r3189",
+        "heat_inactivation_celsius": "neb-r3189",
+        "heat_inactivation_minutes": "neb-r3189",
+        "methylation": "neb-r3189",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "PaqCI",
+      "site": "CACCTGC",
+      "top_cut": 11,
+      "bottom_cut": 15,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "AarI"
+      ],
+      "suppliers": "N",
+      "commercial_name": "PaqCI",
+      "catalog_number": "R0745",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "impaired by overlapping"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0745",
+        "catalog_number": "neb-r0745",
+        "supplier": "neb-r0745",
+        "incubation_celsius": "neb-r0745",
+        "heat_inactivation_celsius": "neb-r0745",
+        "heat_inactivation_minutes": "neb-r0745",
+        "methylation": "neb-r0745",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "PstI",
+      "site": "CTGCAG",
+      "top_cut": 5,
+      "bottom_cut": 1,
+      "overhang_length": 4,
+      "end": "3'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "PstI-HF",
+      "catalog_number": "R3140",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": null,
+      "heat_inactivation_minutes": null,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3140",
+        "catalog_number": "neb-r3140",
+        "supplier": "neb-r3140",
+        "incubation_celsius": "neb-r3140",
+        "heat_inactivation_celsius": "neb-r3140",
+        "heat_inactivation_minutes": "neb-r3140",
+        "methylation": "neb-r3140",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SacI",
+      "site": "GAGCTC",
+      "top_cut": 5,
+      "bottom_cut": 1,
+      "overhang_length": 4,
+      "end": "3'",
+      "type": "II",
+      "isoschizomers": [
+        "Psp124BI"
+      ],
+      "suppliers": "BJNQRSVX",
+      "commercial_name": "SacI-HF",
+      "catalog_number": "R3156",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked by some combinations of overlapping"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3156",
+        "catalog_number": "neb-r3156",
+        "supplier": "neb-r3156",
+        "incubation_celsius": "neb-r3156",
+        "heat_inactivation_celsius": "neb-r3156",
+        "heat_inactivation_minutes": "neb-r3156",
+        "methylation": "neb-r3156",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SalI",
+      "site": "GTCGAC",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "SalI-HF",
+      "catalog_number": "R3138",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3138",
+        "catalog_number": "neb-r3138",
+        "supplier": "neb-r3138",
+        "incubation_celsius": "neb-r3138",
+        "heat_inactivation_celsius": "neb-r3138",
+        "heat_inactivation_minutes": "neb-r3138",
+        "methylation": "neb-r3138",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SapI",
+      "site": "GCTCTTC",
+      "top_cut": 8,
+      "bottom_cut": 11,
+      "overhang_length": 3,
+      "end": "5'",
+      "type": "IIS",
+      "isoschizomers": [
+        "BspQI",
+        "LguI",
+        "PciSI"
+      ],
+      "suppliers": "N",
+      "commercial_name": "SapI",
+      "catalog_number": "R0569",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0569",
+        "catalog_number": "neb-r0569",
+        "supplier": "neb-r0569",
+        "incubation_celsius": "neb-r0569",
+        "heat_inactivation_celsius": "neb-r0569",
+        "heat_inactivation_minutes": "neb-r0569",
+        "methylation": "neb-r0569",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SbfI",
+      "site": "CCTGCAGG",
+      "top_cut": 6,
+      "bottom_cut": 2,
+      "overhang_length": 4,
+      "end": "3'",
+      "type": "II",
+      "isoschizomers": [
+        "SdaI"
+      ],
+      "suppliers": "INSV",
+      "commercial_name": "SbfI-HF",
+      "catalog_number": "R3642",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 80,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3642",
+        "catalog_number": "neb-r3642",
+        "supplier": "neb-r3642",
+        "incubation_celsius": "neb-r3642",
+        "heat_inactivation_celsius": "neb-r3642",
+        "heat_inactivation_minutes": "neb-r3642",
+        "methylation": "neb-r3642",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SmaI",
+      "site": "CCCGGG",
+      "top_cut": 3,
+      "bottom_cut": 3,
+      "overhang_length": 0,
+      "end": "blunt",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJNQRSVX",
+      "commercial_name": "SmaI",
+      "catalog_number": "R0141",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0141",
+        "catalog_number": "neb-r0141",
+        "supplier": "neb-r0141",
+        "incubation_celsius": "neb-r0141",
+        "heat_inactivation_celsius": "neb-r0141",
+        "heat_inactivation_minutes": "neb-r0141",
+        "methylation": "neb-r0141",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SphI",
+      "site": "GCATGC",
+      "top_cut": 5,
+      "bottom_cut": 1,
+      "overhang_length": 4,
+      "end": "3'",
+      "type": "II",
+      "isoschizomers": [
+        "BbuI",
+        "PaeI"
+      ],
+      "suppliers": "IJNQRSVX",
+      "commercial_name": "SphI-HF",
+      "catalog_number": "R3182",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r3182",
+        "catalog_number": "neb-r3182",
+        "supplier": "neb-r3182",
+        "incubation_celsius": "neb-r3182",
+        "heat_inactivation_celsius": "neb-r3182",
+        "heat_inactivation_minutes": "neb-r3182",
+        "methylation": "neb-r3182",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "XbaI",
+      "site": "TCTAGA",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "BIJMNQRSVX",
+      "commercial_name": "XbaI",
+      "catalog_number": "R0145",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "blocked by overlapping",
+        "dcm": "not sensitive",
+        "cpg": "not sensitive"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0145",
+        "catalog_number": "neb-r0145",
+        "supplier": "neb-r0145",
+        "incubation_celsius": "neb-r0145",
+        "heat_inactivation_celsius": "neb-r0145",
+        "heat_inactivation_minutes": "neb-r0145",
+        "methylation": "neb-r0145",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "XhoI",
+      "site": "CTCGAG",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "PaeR7I",
+        "Sfr274I"
+      ],
+      "suppliers": "BJNQRVX",
+      "commercial_name": "XhoI",
+      "catalog_number": "R0146",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "impaired"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0146",
+        "catalog_number": "neb-r0146",
+        "supplier": "neb-r0146",
+        "incubation_celsius": "neb-r0146",
+        "heat_inactivation_celsius": "neb-r0146",
+        "heat_inactivation_minutes": "neb-r0146",
+        "methylation": "neb-r0146",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "XmaI",
+      "site": "CCCGGG",
+      "top_cut": 1,
+      "bottom_cut": 5,
+      "overhang_length": 4,
+      "end": "5'",
+      "type": "II",
+      "isoschizomers": [
+        "Cfr9I",
+        "TspMI",
+        "XmaCI"
+      ],
+      "suppliers": "INRV",
+      "commercial_name": "XmaI",
+      "catalog_number": "R0180",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "impaired"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0180",
+        "catalog_number": "neb-r0180",
+        "supplier": "neb-r0180",
+        "incubation_celsius": "neb-r0180",
+        "heat_inactivation_celsius": "neb-r0180",
+        "heat_inactivation_minutes": "neb-r0180",
+        "methylation": "neb-r0180",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    }
+  ]
+}
