@@ -14,6 +14,7 @@ from liulab_mbio.primers import (
     TAQ,
     THRESHOLDS,
     Band,
+    Check,
     design_pair,
     design_primer,
     evaluate_pair,
@@ -21,6 +22,7 @@ from liulab_mbio.primers import (
     find_binding_sites,
     find_priming_sites,
     melting_temperature,
+    reading,
 )
 from liulab_mbio.sequence import (
     BindingSite,
@@ -129,12 +131,35 @@ def test_a_tail_raises_the_full_primer_tm_and_leaves_the_annealing_region_alone(
     assert report["tm_full"].value > report["tm"].value + 5
 
 
-def test_end_stability_is_reported_but_not_judged() -> None:
+def test_a_check_no_sourced_threshold_judges_carries_no_verdict() -> None:
     # primer3's own value for a 3' end of CCAGT, as a delta G.
-    check = evaluate_primer(Primer("M13 fwd", M13_FWD))["end_stability"]
-    assert check.value == pytest.approx(-4.0, abs=0.01)
-    assert check.status == "pass"
-    assert "not judged" in check.detail
+    report = evaluate_primer(Primer("M13 fwd", M13_FWD))
+    assert report["end_stability"].value == pytest.approx(-4.0, abs=0.01)
+    assert report["end_stability"].status is None
+    assert report["tm_full"].status is None
+    # The report's verdict is the worst of the checks something judged.
+    assert report.status == "warn"
+
+
+def test_a_check_reads_as_a_label_a_value_and_the_band_it_was_held_to() -> None:
+    report = evaluate_primer(Primer("M13 fwd", M13_FWD))
+    length = reading(report["length"])
+    assert (length.label, length.value, length.limit) == ("length", "17", "band 18-30")
+    assert length.detail == "17 (band 18-30)"
+    assert reading(report["gc_percent"]).detail == "53% (band 40-60)"
+    assert reading(report["gc_clamp"]).detail == "3 (band 1-3)"
+    assert reading(report["tm"]).detail == "62.3 °C (band 60-64)"
+    # A check nothing judged has no band to print, and says only what it measured.
+    unjudged = reading(report["end_stability"])
+    assert (unjudged.label, unjudged.limit) == ("3' end stability", "")
+    assert unjudged.detail == "-4.0 kcal/mol"
+
+
+def test_a_reading_is_held_to_the_thresholds_it_is_given() -> None:
+    strict = dataclasses.replace(THRESHOLDS, gc_percent=Band(45.0, 55.0))
+    assert reading(Check("gc_percent", "warn", 39.1), strict).limit == "band 45-55"
+    assert reading(Check("hairpin", "warn", 52.0)).limit == "max 47"
+    assert reading(Check("binding_sites", "fail", 0)).limit == "exactly 1"
 
 
 def test_runs_and_repeats_are_counted_over_the_whole_primer() -> None:

@@ -315,7 +315,7 @@ class Check:
     name
         What was measured, such as ``"gc_clamp"``.
     status
-        ``"pass"``, ``"warn"`` or ``"fail"``.
+        ``"pass"``, ``"warn"`` or ``"fail"``, or ``None`` where no sourced threshold judges it.
     value
         The measurement, in the unit `Thresholds` documents for it.
     detail
@@ -323,9 +323,97 @@ class Check:
     """
 
     name: str
-    status: Status
+    status: Status | None
     value: float
     detail: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class _Wording:
+    """How one check is written for a reader."""
+
+    label: str
+    unit: str = ""
+    decimals: int = 0
+    #: The `Thresholds` field holding its band, where that is not the check's own name.
+    band: str = ""
+
+
+#: The words every check is printed in. A name absent from here reads as itself.
+_WORDING: dict[str, _Wording] = {
+    "length": _Wording("length"),
+    "gc_percent": _Wording("GC", "%"),
+    "gc_clamp": _Wording("GC clamp"),
+    "tm": _Wording("Tm", " °C", 1),
+    "tm_full": _Wording("full-primer Tm", " °C", 1),
+    "end_stability": _Wording("3' end stability", " kcal/mol", 1),
+    "mononucleotide_run": _Wording("longest run"),
+    "dinucleotide_repeat": _Wording("dinucleotide repeat"),
+    "hairpin": _Wording("hairpin", " °C", 1),
+    "self_dimer": _Wording("self-dimer", " °C", 1, "dimer"),
+    "self_dimer_3prime": _Wording("3'-anchored self-dimer", " °C", 1, "dimer_3prime"),
+    "tm_difference": _Wording("Tm difference", " °C", 1),
+    "heterodimer": _Wording("heterodimer", " °C", 1, "dimer"),
+    "heterodimer_3prime": _Wording("3'-anchored heterodimer", " °C", 1, "dimer_3prime"),
+    "binding_sites": _Wording("binding sites"),
+    "off_target": _Wording("off-target sites"),
+    "products": _Wording("products"),
+    "amplicon_size": _Wording("amplicon", " bp"),
+}
+
+
+@dataclass(frozen=True, slots=True)
+class Reading:
+    """One check in the few words a page prints.
+
+    Parameters
+    ----------
+    label
+        What a reader calls the check, such as ``"GC"``.
+    value
+        What it measured, with its unit, such as ``"39%"``.
+    limit
+        The band it was held to, such as ``"band 40-60"``, empty where nothing judged it.
+    """
+
+    label: str
+    value: str
+    limit: str = ""
+
+    @property
+    def detail(self) -> str:
+        """The value and the band it was held to."""
+        return f"{self.value} ({self.limit})" if self.limit else self.value
+
+
+def reading(check: Check, thresholds: Thresholds = THRESHOLDS) -> Reading:
+    """Return `check` in the words a page prints: its label, its value and its band.
+
+    A check no sourced threshold judges carries no band, so it says only what it measured.
+
+    Examples
+    --------
+    >>> reading(Check("gc_percent", "warn", 39.1)).detail
+    '39% (band 40-60)'
+    """
+    wording = _WORDING.get(check.name, _Wording(check.name.replace("_", " ")))
+    band = getattr(thresholds, wording.band or check.name, None)
+    return Reading(
+        wording.label,
+        f"{check.value:.{wording.decimals}f}{wording.unit}",
+        _band_text(band) if isinstance(band, Band) else "",
+    )
+
+
+def _band_text(band: Band) -> str:
+    """Return the values a band passes, in a few words."""
+    if band.low == band.high:
+        return f"exactly {band.low:g}"
+    if not math.isfinite(band.low):
+        return f"max {band.high:g}"
+    if not math.isfinite(band.high):
+        return f"min {band.low:g}"
+    return f"band {band.low:g}-{band.high:g}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,8 +433,8 @@ class PrimerReport:
 
     @property
     def status(self) -> Status:
-        """Return the worst status of any check."""
-        return _worst(check.status for check in self.checks)
+        """Return the worst status of any check that was judged."""
+        return _worst(check.status for check in self.checks if check.status is not None)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.
@@ -466,8 +554,8 @@ def evaluate_primer(
         _graded("gc_percent", gc, thresholds.gc_percent),
         _graded("gc_clamp", sum(annealing[-5:].count(base) for base in "GC"), thresholds.gc_clamp),
         _graded("tm", melting_temperature(annealing, polymerase), thresholds.tm),
-        Check("tm_full", "pass", melting_temperature(primer.sequence, polymerase), "not judged"),
-        Check("end_stability", "pass", _end_stability(annealing), "not judged"),
+        Check("tm_full", None, melting_temperature(primer.sequence, polymerase)),
+        Check("end_stability", None, _end_stability(annealing)),
         _run_check(primer.sequence, thresholds),
         _graded(
             "dinucleotide_repeat",
@@ -516,10 +604,9 @@ class PairReport:
 
     @property
     def status(self) -> Status:
-        """Return the worst status of either primer or of any pair check."""
-        return _worst(
-            (self.forward.status, self.reverse.status, *(check.status for check in self.checks))
-        )
+        """Return the worst status of either primer or of any pair check that was judged."""
+        judged = [check.status for check in self.checks if check.status is not None]
+        return _worst((self.forward.status, self.reverse.status, *judged))
 
     def __getitem__(self, name: str) -> Check:
         """Return the pair check of that name.
@@ -581,7 +668,7 @@ def evaluate_pair(
             thresholds.products,
             ", ".join(f"{size} bp" for size in products),
         ),
-        Check("amplicon_size", "pass", length or 0, "not judged"),
+        Check("amplicon_size", None, length or 0),
     )
     return PairReport(
         reports[0],
