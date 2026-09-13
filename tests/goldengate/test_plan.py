@@ -10,10 +10,17 @@ inserts. The first four bases of each are the overhang its junction takes.
 
 import dataclasses
 from collections import Counter
+from itertools import pairwise
 
 import pytest
 
-from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET
+from liulab_mbio.bench import (
+    COLONY_ALLOWANCE,
+    COLONY_FLANK,
+    JUNCTION_OFFSET,
+    SANGER_ALLOWANCE,
+    SANGER_FLANK,
+)
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.goldengate import Plan, plan_assembly
 from liulab_mbio.goldengate.oligos import DesignedOligo
@@ -130,9 +137,16 @@ def test_the_written_product_reads_back_identically(plan, tmp_path):
 def test_every_designed_primer_passes_evaluation(plan):
     # Two PCRs, three colony PCR primers and two sequencing primers.
     assert len(plan.reports) == 9
-    for report in plan.reports:
-        failed = [check.name for check in report.checks if check.status == "fail"]
-        assert failed == [], f"{report.primer.name}: {failed}"
+    left = [
+        (report.primer.name, check.name)
+        for report in plan.reports
+        for check in report.checks
+        if check.status not in (None, "pass")
+    ]
+    # What is left is what no primer within its placement could avoid: the backbone reverse
+    # primer's Tm, which only moving the vector cut would clear, and the GFP reverse primer,
+    # anchored at its junction and warning at every length there.
+    assert left == [("pUC19 backbone reverse", "tm"), ("GFP reverse", "gc_percent")]
     assert plan.status != "fail"
 
 
@@ -140,18 +154,16 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
     insert_bp = plan.phenotype.insert[1] - plan.phenotype.insert[0]
     removed = plan.span[1] - plan.span[0]
+    start, end = plan.assembly.junction_positions
+    forward, reverse, junction = (primer.binding_sites[0] for primer in plan.colony.primers)
+    # Where the three primers landed inside their placements, which is what the bands count off.
+    ahead, behind, into = start - forward.start, reverse.end - end, junction.end - start
     assert insert_bp == len(gfp)
     # The junction primer reaches the near vector primer in a correct clone and the far one in
     # a reversed clone, and the two vector primers span the insert whichever way it sits.
-    assert bands["Correct clone"] == (
-        COLONY_FLANK + JUNCTION_OFFSET,
-        COLONY_FLANK + insert_bp + REVERSE_FLANK,
-    )
-    assert bands["Reversed insert"] == (
-        REVERSE_FLANK + JUNCTION_OFFSET,
-        COLONY_FLANK + insert_bp + REVERSE_FLANK,
-    )
-    assert bands["Empty vector"] == (COLONY_FLANK + removed + REVERSE_FLANK,)
+    assert bands["Correct clone"] == (ahead + into, ahead + insert_bp + behind)
+    assert bands["Reversed insert"] == (behind + into, ahead + insert_bp + behind)
+    assert bands["Empty vector"] == (ahead + removed + behind,)
 
 
 def test_the_four_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
@@ -213,13 +225,13 @@ def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
 def test_every_oligo_row_carries_its_verdict_and_a_warned_one_says_why(plan):
     rows = {oligo.name: oligo for oligo in plan.protocol().oligos}
     assert [row.status for row in rows.values()] == [report.status for report in plan.reports]
-    warned = rows["Sequencing forward"]
+    warned = rows["pUC19 backbone reverse"]
     assert warned.status == "warn"
-    # The check, the value and the band it missed, in a few words each. Judged as a sequencing
-    # primer, its 16 bases are not short.
+    # The check, the value and the band it missed, in a few words each. The Tm is of the part
+    # that anneals, so the tail is none of the 36 bases it was read from.
     assert (len(warned.sequence), [(check.name, check.detail) for check in warned.checks]) == (
-        16,
-        [("GC clamp", "4 (proposed band 1-3)")],
+        36,
+        [("Tm", "64.1 °C (band 60-64)")],
     )
     assert (rows["GFP forward"].status, rows["GFP forward"].checks) == ("pass", ())
 
@@ -341,10 +353,17 @@ def test_one_insert_plans_exactly_what_it_did_before(plan):
     assert plan.enzyme.name == "BbsI"
     assert (len(plan.product), plan.assembly.junction_positions) == (3347, (395, 1112))
     assert {clone.name: clone.bands_bp for clone in plan.colony.clones} == {
-        "Correct clone": (160, 897),
-        "Empty vector": (236,),
-        "Reversed insert": (220, 897),
+        "Correct clone": (160, 878),
+        "Empty vector": (217,),
+        "Reversed insert": (219, 878),
     }
+    # Each part primer stays anchored where its junction put it; only validation primers move.
+    assert [
+        (site.start, site.end)
+        for oligo in plan.designed_oligos
+        if oligo.role == "amplification"
+        for site in oligo.report.primer.binding_sites
+    ] == [(455, 479), (377, 395), (4, 29), (691, 717)]
     assert len(plan.parts) == 2
     assert len(plan.reports) == 9
 
@@ -450,6 +469,24 @@ def test_the_cycling_tier_follows_the_fragment_count(plan, four):
     # NEB holds two fragments at 37 °C and cycles three or more of them.
     assert (two.cycles, two.incubations[0].seconds) == (1, 900)
     assert (many.cycles, many.incubations[0].seconds) == (30, 60)
+
+
+def test_every_validation_primer_lies_where_its_placement_allows(plan, four):
+    for made in (plan, four):
+        junctions = made.assembly.junction_positions
+        start, end = junctions[0], junctions[-1]
+        forward, reverse, *inserts = (primer.binding_sites[0] for primer in made.colony.primers)
+        ahead, behind = start - forward.start, reverse.end - end
+        assert abs(ahead - COLONY_FLANK) <= COLONY_ALLOWANCE
+        assert abs(behind - REVERSE_FLANK) <= COLONY_ALLOWANCE
+        # Far enough apart that the junction band of a reversed insert is not the correct one's.
+        assert behind - ahead >= REVERSE_FLANK - COLONY_FLANK - 2 * COLONY_ALLOWANCE
+        for site, (first, last) in zip(inserts, pairwise(junctions), strict=True):
+            assert abs((site.end - first) - JUNCTION_OFFSET) <= COLONY_ALLOWANCE
+            assert first <= site.start < site.end <= last
+        for read in made.reads:
+            assert SANGER_FLANK <= read.distance_bp <= SANGER_FLANK + SANGER_ALLOWANCE
+        assert made.colony.tells_orientation
 
 
 def test_the_colony_pcr_reads_every_junction_and_turns_every_insert(four):

@@ -7,7 +7,13 @@ import pytest
 
 from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
-from liulab_mbio.bench.validation import ColonyCheck, colony_pcr_check, sanger_primers
+from liulab_mbio.bench.validation import (
+    SANGER_ALLOWANCE,
+    SANGER_FLANK,
+    ColonyCheck,
+    colony_pcr_check,
+    sanger_primers,
+)
 from liulab_mbio.primers import amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord
 
@@ -92,11 +98,12 @@ def test_a_reverse_distance_of_its_own_gives_a_reversed_insert_bands_of_its_own(
     check = colony_pcr_check(
         product, junctions, vector=puc19, flank=60, reverse_flank=120, insert_primer=True
     )
-    # 60 bases of vector before the first junction and 120 past the last, so the junction primer
-    # reaches the near flank in a correct clone and the far one in a reversed clone.
-    assert bands(check, "Correct clone") == (160, 897)
-    assert bands(check, "Reversed insert") == (220, 897)
-    assert bands(check, "Empty vector") == (237,)
+    # 60 bases of vector before the first junction and 120 past the last, each primer free to
+    # move a little either way, so the junction primer reaches the near flank in a correct clone
+    # and the far one in a reversed clone.
+    assert bands(check, "Correct clone") == (160, 879)
+    assert bands(check, "Reversed insert") == (220, 879)
+    assert bands(check, "Empty vector") == (219,)
     assert check.tells_orientation
 
 
@@ -127,8 +134,9 @@ def test_sanger_primers_read_from_outside_each_junction(
     product: SequenceRecord, junctions: tuple[int, int], gfp: SequenceRecord
 ) -> None:
     forward, reverse = sanger_primers(product, junctions)
-    assert forward.distance_bp >= 100
-    assert reverse.distance_bp >= 100
+    # Genewiz's 100 bases at the closest, and no further out than the allowance past it.
+    for read in (forward, reverse):
+        assert SANGER_FLANK <= read.distance_bp <= SANGER_FLANK + SANGER_ALLOWANCE
     assert forward.read_bp == forward.distance_bp + len(gfp)
     assert reverse.read_bp == reverse.distance_bp + len(gfp)
 
@@ -157,8 +165,9 @@ def test_the_correct_clone_shows_one_band_reading_each_junction(
     product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
 ) -> None:
     check = colony_pcr_check(product, three_junctions, vector=puc19, flank=60, insert_primer=True)
-    # 60 bases of vector then 100 into each insert, and the flanking pair across the whole span.
-    assert bands(check, "Correct clone") == (160, 510, 837)
+    # 60 bases of vector then 100 into each insert, each within its allowance of that, and the
+    # flanking pair across the whole span.
+    assert bands(check, "Correct clone") == (160, 492, 837)
     assert bands(check, "Empty vector") == (177,)
 
 
