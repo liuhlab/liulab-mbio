@@ -89,6 +89,8 @@ Every public name in the modules below imports from `liulab_mbio.primers` too:
 
 ::: liulab_mbio.primers.design
 
+::: liulab_mbio.primers.genome
+
 ## Protocols
 
 The model a bench protocol is written in, and the renderer that turns one into a single

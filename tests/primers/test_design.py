@@ -1,9 +1,13 @@
 import dataclasses
+from collections import Counter
+from collections.abc import Container, Iterator
+from itertools import islice
 
 import pytest
 
 from liulab_mbio.checks import STATUSES
 from liulab_mbio.primers import (
+    TARGET_TM,
     THRESHOLDS,
     THRESHOLDS_FOR,
     Band,
@@ -15,6 +19,7 @@ from liulab_mbio.primers import (
     evaluate_pair,
     evaluate_primer,
     melting_temperature,
+    ranked_pairs,
 )
 from liulab_mbio.sequence import (
     BindingSite,
@@ -231,11 +236,117 @@ def test_the_same_inputs_choose_the_same_primer_inside_a_placement(puc19) -> Non
     assert first == second
 
 
+def test_pairs_come_back_in_the_order_judging_every_pair_gives(puc19, every_pair) -> None:
+    assert {pair.status for pair in every_pair} == {"pass", "warn", "fail"}
+    ranked = list(pairs_in_regions(puc19))
+    assert Counter(ranked) == Counter(every_pair)
+    assert [rank(pair) for pair in ranked] == sorted(rank(pair) for pair in every_pair)
+
+
+def test_the_first_pair_in_rank_order_is_the_pair_a_design_chooses(puc19) -> None:
+    first = next(pairs_in_regions(puc19))
+    assert (first.forward.primer, first.reverse.primer) == pair_in_regions(puc19)
+
+
+def test_an_excluded_binding_site_is_never_part_of_a_pair(puc19, every_pair) -> None:
+    excluded = {primer.binding_sites[0] for primer in pair_in_regions(puc19)}
+    left = [pair for pair in every_pair if not excluded & sites(pair)]
+    assert Counter(pairs_in_regions(puc19, excluded)) == Counter(left)
+    chosen = evaluate_pair(*pair_in_regions(puc19, excluded), puc19, thresholds=NARROW)
+    assert rank(chosen) == min(rank(pair) for pair in left)
+
+
+def test_a_site_excluded_while_pairs_are_taken_stays_out_of_every_later_pair(puc19) -> None:
+    order = list(pairs_in_regions(puc19))
+    excluded: set[BindingSite] = set()
+    pairs = pairs_in_regions(puc19, excluded)
+    # Past the passing pairs, where pairs already judged wait for their turn.
+    taken = list(islice(pairs, 70))
+    excluded.add(order[70].forward.primer.binding_sites[0])
+    kept = [pair for pair in taken if not excluded & sites(pair)]
+    assert kept + list(pairs) == list(pairs_in_regions(puc19, excluded))
+
+
+def test_excluding_every_binding_site_at_one_end_is_refused(puc19, every_pair) -> None:
+    forwards = {pair.forward.primer.binding_sites[0] for pair in every_pair}
+    reverses = {pair.reverse.primer.binding_sites[0] for pair in every_pair}
+    with pytest.raises(ValueError, match="every forward binding site"):
+        pairs_in_regions(puc19, forwards)
+    with pytest.raises(ValueError, match="every reverse binding site"):
+        pair_in_regions(puc19, reverses)
+
+
 #: Every length a design considers, which is the band `Thresholds.length` does not fail on.
 SIZES = range(15, 36)
 
 #: A narrow band, so a placement's options stay few enough to judge every one of them.
 NARROW = dataclasses.replace(THRESHOLDS, length=Band(18, 24, 18, 24))
+
+#: A pair's two regions on pUC19, where pairs pass, warn and fail.
+START, END = 1160, 1310
+FORWARD_REGION = Placement(five_prime=Segment(1160, 1163), three_prime=Segment(1180, 1184))
+REVERSE_REGION = Placement(five_prime=Segment(1310, 1313), three_prime=Segment(1286, 1290))
+
+
+def pairs_in_regions(
+    template: SequenceRecord, exclude: Container[BindingSite] = ()
+) -> Iterator[PairReport]:
+    """Every pair the two regions allow, in rank order."""
+    return ranked_pairs(
+        template,
+        START,
+        END,
+        forward_placement=FORWARD_REGION,
+        reverse_placement=REVERSE_REGION,
+        thresholds=NARROW,
+        exclude=exclude,
+    )
+
+
+def pair_in_regions(
+    template: SequenceRecord, exclude: Container[BindingSite] = ()
+) -> tuple[Primer, Primer]:
+    """The pair a design chooses in the two regions."""
+    return design_pair(
+        template,
+        START,
+        END,
+        forward_placement=FORWARD_REGION,
+        reverse_placement=REVERSE_REGION,
+        thresholds=NARROW,
+        exclude=exclude,
+    )
+
+
+def sites(report: PairReport) -> set[BindingSite]:
+    """The binding sites of a pair's two primers."""
+    return {report.forward.primer.binding_sites[0], report.reverse.primer.binding_sites[0]}
+
+
+@pytest.fixture(scope="module")
+def every_pair(puc19) -> list[PairReport]:
+    """Every pair the two regions allow, each judged by `evaluate_pair`."""
+    reverses = list(allowed(puc19, REVERSE_REGION, Strand.REVERSE))
+    return [
+        evaluate_pair(one, other, puc19, thresholds=NARROW)
+        for one in allowed(puc19, FORWARD_REGION, Strand.FORWARD)
+        for other in reverses
+    ]
+
+
+def rank(report: PairReport) -> tuple[float, ...]:
+    """How a design ranks a pair in the regions, as far as its docstring says."""
+    primers = (report.forward, report.reverse)
+    fives = (
+        primers[0].primer.binding_sites[0].start - START,
+        primers[1].primer.binding_sites[0].end - END,
+    )
+    return (
+        *shape(report),
+        sum(one["length"].status != "pass" for one in primers),
+        sum(abs(one["tm"].value - TARGET_TM) for one in primers),
+        sum(abs(five) for five in fives),
+    )
 
 
 def allowed(

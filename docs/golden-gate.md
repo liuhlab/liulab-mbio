@@ -39,17 +39,17 @@ sequence to make one fit.
 
 ### Why `checks warn`
 
-Nine oligos were designed and five carry a warning: two on GC content, two on the GC clamp and
-one on melting temperature. None fails. The badge names those kinds, and the oligo
-sheet gives every oligo a verdict of its own.
+Nine oligos were designed and two carry a warning: melting temperature on the pUC19 backbone
+reverse primer, GC content on the GFP reverse primer. None fails. The badge names those kinds,
+and the oligo sheet gives every oligo a verdict of its own.
 
 Each oligo is judged by what it is for. A sequencing primer may be as short as 16 bases, since
-one of the free primers Genewiz itself offers is that long. A PCR primer needs 18. The GC clamp
-asks for one to three G or C bases among the last five. No published rule sets that band, so
-the sheet calls it proposed.
+one of the free primers Genewiz itself offers is that long. A PCR primer needs 18.
 
-A warning is yours to judge. The design tries every length a primer could have and keeps the
-one that warns least, so each of these comes from where that primer has to sit.
+A warning is yours to judge. Both of these sit on a primer that carries a BbsI tail, and the
+junction fixes where such a primer binds. The design searches every binding site a placement
+allows and keeps the one that warns least, so a warning left on a tailed primer is one nothing
+nearby could clear.
 
 ## What comes out
 
@@ -98,9 +98,10 @@ Reaction tables rescale when you change the number of reactions at the top of th
 you do not do that arithmetic yourself. Gel steps draw the bands to expect.
 
 **The screening step** is the one to read twice. A correct clone gives two bands, 160 and
-897 bp. An empty vector gives one band at 236 bp. A clone with GFP the wrong way round gives
-220 and 897 bp. Those three lanes are different on purpose, so the gel alone tells you which
-you have.
+878 bp. An empty vector gives one band at 217 bp. A clone with GFP the wrong way round gives
+219 and 878 bp. Read the big band first: only the two lanes that hold GFP carry it, and 160
+against 219 then tells those two apart. The empty vector and the flipped insert are 2 bp
+apart, so the small band on its own will not separate them.
 
 ## The finished example
 
@@ -150,7 +151,7 @@ nobody has made; it does not replace one somebody has. Without such a file nothi
 - Look at every badge that is not green, and decide about it.
 - Open the line under the oligo sheet and decide about each warning.
 - Check that the product map holds what you meant to clone.
-- Check the three screening bands are different from each other.
+- Check the three screening lanes can still be told apart.
 
 `pixi run liulab_mbio goldengate plan --help` lists the rest of the options: where to put the
 insert, which way round it goes, holding a join in frame, forcing an enzyme, and which

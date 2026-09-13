@@ -20,7 +20,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans |
 | biology | `enzymes`, `sites`, `codons` | shipped enzyme data, cut sites, domestication |
-| primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design` |
+| primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
 | bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
 | pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
@@ -56,7 +56,8 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
   `conformance` holds that copy to the floor.
 - **hatchling + hatch-vcs**. The version comes from the newest git tag, CalVer `vYYYY.M.PATCH`.
   Never hand-edit a version.
-- Platforms: `osx-arm64` and `linux-64`. Dependencies: `typer`, `biopython`, `primer3-py`.
+- Platforms: `osx-arm64` and `linux-64`. Dependencies: `typer`, `biopython`, `primer3-py`, and
+  `ipcr` from bioconda, a pixi dependency only.
 
 ## Commands
 

@@ -5,10 +5,12 @@ description: >-
   state how far each primer may move as a placement — anchored by a tail, near a target it must
   read across, or free inside a region — and the package searches every binding site that
   placement allows and ranks them on every check, so a primer warns only where nothing nearby
-  passes. Use whenever someone wants primers designed, judged or improved: amplifying a fragment
-  from a plasmid or genomic DNA, cloning primers carrying a restriction or Type IIS tail, colony
-  PCR, junction or sequencing primers, a primer with a maximum length or another preference, or
-  asks why a primer warns and whether a better one lies nearby.
+  passes. Primers for genomic DNA are then checked against the genome itself, offline, and
+  redesigned around any off-target amplicon. Use whenever someone wants primers designed, judged
+  or improved: amplifying a fragment from a plasmid or genomic DNA, cloning primers carrying a
+  restriction or Type IIS tail, colony PCR, junction or sequencing primers, a primer with a
+  maximum length or another preference, asks whether a pair is specific on a genome or would
+  amplify somewhere else, or asks why a primer warns and whether a better one lies nearby.
 ---
 
 # Primer design
@@ -66,6 +68,12 @@ say what holds the primer there (the tail, the junction, the region they named),
 wider placement or a changed constraint could clear it. A primer that warns wherever it may go
 is worth ordering; one nobody can explain is not.
 
+**Where the task leaves room, spend it before you report a warning.** A colony PCR distance
+range, a region's flanks, a sequencing window — widen the one the task itself left open, design
+again, and keep the better result. Never change a constraint the user set, and never move a
+vector cut to clear a warning: a cut moves for the overhang rules only. Then explain what is
+left.
+
 ## A preference goes in through the thresholds
 
 A user asking for primers no longer than 25 bases is setting a band, not choosing a primer:
@@ -83,17 +91,67 @@ defaults per role — `"amplification"`, `"colony PCR"`, `"sequencing"` — and 
 warn_low, warn_high)` is what passes and what only warns. Never meet a preference by picking a
 primer by hand.
 
-## What it does not check
+## A genomic primer needs a genome check
 
-Binding sites and off-target sites are found on the template you pass, and nowhere else. A
-primer meant for a genome needs a specificity check this package does not do — Primer-BLAST or
-similar. Say so plainly; never let a clean report read as genome-wide specificity.
+Binding sites and off-target sites are found on the template you pass and nowhere else, so a
+clean report covers that template only. Check the genome as well whenever the primers amplify
+genomic DNA, or must not amplify a host — colony PCR on a genomic background. A plasmid template
+needs no genome check: the plasmid is the template.
+
+The genome comes from liulab-genome. Never use `Genome(name)`, which registers and can download:
+
+```bash
+genome assembly files ce11 --json
+```
+
+It downloads nothing and prints one JSON line: `genome_files.fasta` and `genome_files.fai` are
+absolute paths, and the top-level `assembly` is the name to report. The top-level `files` maps
+file names to byte sizes, not paths. Exit 1 with empty stdout means the assembly is not
+registered or not trusted — pass its stderr on, which names `genome assembly register`. Show the
+user a `--force` it suggests rather than running it, because that can download again. Exit 2 with
+`No such command 'files'` means the installed liulab-genome predates the command, which is on
+main and in no release yet: say so rather than guessing a cache layout.
+
+The search runs `ipcr`, which `pixi install` brings in — a pixi dependency, not on PyPI.
+
+```python
+from liulab_mbio.primers import Locus, design_pair_on_genome, evaluate_pair_on_genome
+
+evaluate_pair_on_genome(forward, reverse, fasta, assembly, intended=Locus(name, start, end))
+design_pair_on_genome(fasta, assembly, Locus(name, start, end), flank=200)
+```
+
+Check a pair you already hold, or design one for a region: the design places the primers in the
+region's flanks, checks the best-ranked pairs in one search, and designs around an off-target
+amplicon until a pair is specific. `evaluate_on_genome` checks several pairs in one search. Read
+the docstrings rather than reconstructing a call.
+
+A `Locus` names its sequence as the FASTA spells it. A combined genome keeps each component's
+own chromosome names and suffixes them, so ce11 in `ce11_ecHT115` reads `I__ce11`, not
+`chrI__ce11`; `details.separator` carries the separator.
+
+## What the genome answers
+
+- `report.off_target` is every amplicon but the intended one, each with where it lies, how long
+  it is, and `made_by` — `"pair"`, or `"forward"` or `"reverse"` where one primer makes it alone.
+  Give the user the size and the place: that is what a gel would show.
+- `design.specific` says the pair makes only its intended amplicon, and `design.rounds` how many
+  searches that took. Where it is false the rounds ran out, and the best pair found comes back
+  with its off-target amplicons — a result to report, not to bury.
+- `report.near_matches_checked` false means the genome was too large to search for near matches,
+  so only perfect ones were found. Say so every time it is false, or a clean mouse or human
+  result reads as a specificity nobody checked.
+
+When nothing specific turns up, wider flanks give the design more room; the other option is to
+accept the pair with its off-target amplicons stated. Which of the two is the user's call.
 
 ## When it refuses
 
 `ValueError`, naming the cause: no annealing region fits the placement, or fits the template at
 that position. Widen the span, or move the position, rather than catching it — a placement
-holding nothing is a question about the task, not a failure to handle.
+holding nothing is a question about the task, not a failure to handle. A genome call also
+raises on a FASTA with no index, a missing `ipcr`, or a search past its timeout, each message
+naming its fix.
 
 ## A whole cloning experiment
 

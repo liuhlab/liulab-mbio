@@ -7,10 +7,11 @@ Every public name in its modules imports from here as well:
 - `thresholds`: the bands a check is judged by, and the words it is printed in.
 - `placement`: where a primer may anneal, where it does, where else it primes, and amplicons.
 - `evaluation`: judging a primer, or a pair on a template, and what a primer's length decides.
-- `design`: choosing the annealing region of a primer or a pair.
+- `design`: choosing the annealing region of a primer or a pair, and ranking every pair.
+- `genome`: checking pairs against a genome FASTA, and designing a pair specific on one.
 """
 
-from liulab_mbio.primers.design import design_pair, design_primer
+from liulab_mbio.primers.design import design_pair, design_primer, ranked_pairs
 from liulab_mbio.primers.evaluation import (
     PairReport,
     PrimerReport,
@@ -18,6 +19,16 @@ from liulab_mbio.primers.evaluation import (
     evaluate_pair,
     evaluate_primer,
     pair_checks,
+)
+from liulab_mbio.primers.genome import (
+    Amplicon,
+    GenomeDesign,
+    GenomeReport,
+    Locus,
+    MadeBy,
+    design_pair_on_genome,
+    evaluate_on_genome,
+    evaluate_pair_on_genome,
 )
 from liulab_mbio.primers.placement import (
     Placement,
@@ -56,7 +67,12 @@ __all__ = [
     "TARGET_TM",
     "THRESHOLDS",
     "THRESHOLDS_FOR",
+    "Amplicon",
     "Band",
+    "GenomeDesign",
+    "GenomeReport",
+    "Locus",
+    "MadeBy",
     "PairReport",
     "PcrProfile",
     "Placement",
@@ -69,12 +85,16 @@ __all__ = [
     "amplicon_sizes",
     "annealing_checks",
     "design_pair",
+    "design_pair_on_genome",
     "design_primer",
+    "evaluate_on_genome",
     "evaluate_pair",
+    "evaluate_pair_on_genome",
     "evaluate_primer",
     "find_binding_sites",
     "find_priming_sites",
     "melting_temperature",
     "pair_checks",
+    "ranked_pairs",
     "reading",
 ]

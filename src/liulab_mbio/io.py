@@ -1,4 +1,4 @@
-"""Read a sequence file into the shared model, choosing the reader by its suffix."""
+"""Read a sequence file, or one region of an indexed FASTA, into the shared model."""
 
 import os
 from pathlib import Path
@@ -45,6 +45,64 @@ def read_record(path: str | os.PathLike[str]) -> SequenceRecord:
     from Bio import SeqIO
 
     return _converted(SeqIO.read(os.fspath(path), fmt))
+
+
+def read_region(
+    path: str | os.PathLike[str], sequence_name: str, start: int, end: int
+) -> SequenceRecord:
+    """Read one span of one sequence of a FASTA, through the `.fai` index beside it.
+
+    Only the bytes the index points at are read, so a region of a chromosome costs the same on
+    a whole genome as on a small file. `start` and `end` are 0-based and half-open: a `start`
+    below zero reads from the first base, and an `end` past the sequence reads to its last. The
+    record comes back linear and upper-case, named as the FASTA spells it.
+
+    Raises
+    ------
+    FileNotFoundError
+        If no index lies beside the FASTA.
+    ValueError
+        If the index names no such sequence, the span holds no base of it, or the FASTA does
+        not read as the index describes.
+
+    Examples
+    --------
+    >>> read_region("hg38.fa", "chr1", 156710401, 156710421).sequence  # doctest: +SKIP
+    'ACCTAGGAGAAGTGGCCAGC'
+    """
+    fasta = Path(path)
+    index = fasta.with_name(fasta.name + ".fai")
+    if not index.is_file():
+        raise FileNotFoundError(
+            f"{fasta} has no index beside it: `genome assembly register` writes {index.name}"
+        )
+    length, offset, bases_per_line, bytes_per_line = _indexed(index, sequence_name)
+    first, last = max(start, 0), min(end, length)
+    if first >= last:
+        raise ValueError(f"{sequence_name} is {length} bases: none of it lies in {start}-{end}")
+    here = offset + _byte(first, bases_per_line, bytes_per_line)
+    with fasta.open("rb") as handle:
+        handle.seek(here)
+        read = handle.read(offset + _byte(last, bases_per_line, bytes_per_line) - here)
+    bases = read.replace(b"\r", b"").replace(b"\n", b"").decode()
+    if len(bases) != last - first:
+        raise ValueError(f"{fasta} does not read as {index.name} describes it")
+    return SequenceRecord(bases, name=sequence_name)
+
+
+def _indexed(index: Path, sequence_name: str) -> tuple[int, int, int, int]:
+    """Return a sequence's length, offset, bases per line and bytes per line, from a `.fai`."""
+    for row in index.read_text().splitlines():
+        fields = row.split("\t")
+        if fields[0] == sequence_name and len(fields) >= 5:
+            length, offset, bases_per_line, bytes_per_line = (int(field) for field in fields[1:5])
+            return length, offset, bases_per_line, bytes_per_line
+    raise ValueError(f"{index} names no sequence {sequence_name!r}")
+
+
+def _byte(position: int, bases_per_line: int, bytes_per_line: int) -> int:
+    """Return how far into a sequence the base at `position` lies, its line endings counted."""
+    return position // bases_per_line * bytes_per_line + position % bases_per_line
 
 
 def _converted(record: "SeqRecord") -> SequenceRecord:

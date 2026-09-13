@@ -93,6 +93,12 @@ _Avoid_: mispriming site, secondary binding site
 What a primer pair copies, from one binding site to the other, tails included.
 _Avoid_: PCR product, band
 
+### Off-target amplicon
+
+An amplicon a pair, or one of its primers alone, makes on a genome other than the intended one.
+Where no amplicon is named as intended, every amplicon is one.
+_Avoid_: non-specific product, secondary product
+
 ### Check
 
 One pass, warn or fail verdict on a primer, a pair or an assembled product, carrying the value
