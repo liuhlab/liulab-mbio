@@ -13,7 +13,8 @@ sets one.
   any number of inserts, picks a Type IIS enzyme with no site in the parts, designs the whole
   overhang set, checks every primer, simulates the assembly, and designs the colony PCR and
   sequencing that confirm the clone. `Plan.write` writes the annotated product, the primer
-  order sheet and an interactive HTML bench protocol.
+  order sheet and an interactive HTML bench protocol whose order sheet carries each oligo's
+  verdict, and says which check fired and what it measured.
 - `liulab_mbio goldengate plan` and `liulab_mbio protocol render` on the command line, and a
   repo-local `golden-gate-assembly` skill that calls them.
 - SnapGene `.dna` read and write, with editing that carries features and primer binding sites,

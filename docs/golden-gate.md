@@ -39,10 +39,10 @@ sequence to make one fit.
 
 ### Why `checks warn`
 
-Nine oligos were designed and six carry a warning, on GC content, on a hairpin or on length.
-None fails. The protocol prints the warnings rather than hiding them, and so does
-`plan.status` in Python. A warning is yours to judge: these ones come from the enzyme tails,
-which are fixed by the design and cannot be shortened.
+Nine oligos were designed and six carry a warning: three on GC content, three on the GC clamp
+and two on length. None fails. The badge names those kinds, and the oligo sheet gives every
+oligo a verdict of its own. A warning is yours to judge: most of these come from the enzyme
+tails, which the design fixes and cannot shorten.
 
 ## What comes out
 
@@ -71,6 +71,11 @@ Two of those sentences matter before you start:
 
 That is the design telling you what it is and is not. It reads both from the finished plasmid,
 so it cannot disagree with the map.
+
+**The oligo sheet** gives each oligo its own verdict, written as a word rather than a colour:
+`pass`, `warn` or `fail`. One line under the sheet opens to show which check fired on which
+oligo, what it measured, and the band it missed. It stays closed, so the sheet you order from
+is still a list of oligos.
 
 **The middle** is eleven numbered steps, from the first PCR to sequencing. Each step has a
 check mark, what to do, what a good result looks like, and what to do when it is wrong.
@@ -128,6 +133,7 @@ nobody has made; it does not replace one somebody has. Without such a file nothi
 
 - Read the whole protocol once, top to bottom.
 - Look at every badge that is not green, and decide about it.
+- Open the line under the oligo sheet and decide about each warning.
 - Check that the product map holds what you meant to clone.
 - Check the three screening bands are different from each other.
 
