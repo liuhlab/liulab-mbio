@@ -13,7 +13,6 @@ from liulab_mbio.bench import (
     COLONY_PCR_MASTER_MIX,
     DNA_VOLUME_UL,
     DNTP_STOCK_MM,
-    PRIMER_STOCK_UM,
     agarose_percent,
     choose_ladder,
     colony_pcr_master_mix_component,
@@ -24,6 +23,7 @@ from liulab_mbio.bench import (
     pcr_reaction,
 )
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
+from liulab_mbio.bench.oligos import oligo_row
 from liulab_mbio.goldengate.assembly import Part, dam_sites
 from liulab_mbio.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
@@ -34,7 +34,7 @@ from liulab_mbio.goldengate.bench import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from liulab_mbio.primers import PrimerReport, Thresholds, reading
+from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -51,7 +51,7 @@ from liulab_mbio.protocol import (
 )
 
 if TYPE_CHECKING:
-    from liulab_mbio.goldengate.plan import DesignedOligo, Plan
+    from liulab_mbio.goldengate.plan import Plan
 
 #: The DpnI digest that takes the plasmid template away. NEB's Golden Gate pages prescribe no
 #: such step -- `docs/research/golden-gate-assembly.md` §3 justifies it from REBASE's record of
@@ -332,34 +332,13 @@ def _per_reaction(component: Component) -> str:
 
 def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
     """Every designed oligo, in the order the primer sheet lists them, each with its verdict."""
-    stock = f"{PRIMER_STOCK_UM:g} µM"
     return tuple(
-        Oligo(
-            oligo.report.primer.name,
-            oligo.report.primer.sequence,
-            purpose=_purpose(oligo),
-            tm_c=round(oligo.report["tm"].value, 1),
-            stock=stock,
-            status=oligo.report.status,
-            checks=_oligo_checks(oligo.report, plan.thresholds),
-        )
+        oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=plan.thresholds)
         for oligo in plan.designed_oligos
     )
 
 
-def _oligo_checks(report: PrimerReport, thresholds: Thresholds) -> tuple[Check, ...]:
-    """Return the checks that did not pass, each as its value and the band it missed."""
-    fired = []
-    for check in report.checks:
-        status = check.status
-        if status is None or status == "pass":
-            continue
-        word = reading(check, thresholds)
-        fired.append(Check(word.label, status, detail=word.detail))
-    return tuple(fired)
-
-
-def _purpose(oligo: "DesignedOligo") -> str:
+def _purpose(oligo: DesignedOligo) -> str:
     """Return the title of the step that uses this oligo."""
     if oligo.part is not None:
         return _amplify(oligo.part)

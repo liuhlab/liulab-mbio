@@ -108,7 +108,8 @@ refused rather than truncated.
 ## Bench
 
 The numbers any cloning pipeline shares: DNA amounts, PCR and colony PCR, gels, the checks
-that confirm a clone, and heat inactivation. Every public name in the modules below imports
+that confirm a clone, heat inactivation, the phenotype a clone should show, and the primer
+order sheet. Every public name in the modules below imports
 from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERENCES`, and
 `liulab_mbio.bench.REFERENCES` gathers them all.
 
@@ -125,6 +126,10 @@ from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERE
 ::: liulab_mbio.bench.validation
 
 ::: liulab_mbio.bench.inactivation
+
+::: liulab_mbio.bench.phenotype
+
+::: liulab_mbio.bench.oligos
 
 ## Golden Gate
 
@@ -145,6 +150,8 @@ because one reaction joins as many inserts as the overhangs allow.
 ::: liulab_mbio.goldengate.bench
 
 ::: liulab_mbio.goldengate.ligase
+
+::: liulab_mbio.goldengate.oligos
 
 ::: liulab_mbio.goldengate.steps
 

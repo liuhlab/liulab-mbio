@@ -8,13 +8,14 @@ the annotated product, a primer order sheet, and the interactive HTML protocol.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
 protocol says about the phenotype -- what drives the inserts, whether anything should be
-translated, and how a plate reads -- is `Phenotype`, read off the product's own features.
+translated, and how a plate reads -- is `liulab_mbio.bench.phenotype`, read off the product's
+own features.
 """
 
 import dataclasses
 import os
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -27,6 +28,8 @@ from liulab_mbio.bench import (
     colony_pcr_check,
     sanger_primers,
 )
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
@@ -39,6 +42,7 @@ from liulab_mbio.goldengate.design import (
     design_overhangs,
 )
 from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
+from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.steps import DEFAULT_HOST
 from liulab_mbio.goldengate.steps import protocol as protocol_for
 from liulab_mbio.io import read_record
@@ -84,21 +88,10 @@ VECTOR_WINDOW = 6
 #: the same bands as a correct one, so the gel could not tell them apart.
 REVERSE_FLANK = 2 * COLONY_FLANK
 
-#: Selection markers this package can name an antibiotic for, keyed by the feature name lowered.
-#: pUC19's is the one `docs/research/golden-gate-assembly.md` §8 states a plate recipe for; a
-#: marker absent from here is named rather than translated.
-SELECTION: Mapping[str, str] = {
-    "ampr": "ampicillin or carbenicillin",
-    "bla": "ampicillin or carbenicillin",
-}
-
 #: What `Plan.write` calls the three files it writes.
 PRODUCT_FILE = "product.dna"
 PRIMER_FILE = "primers.tsv"
 PROTOCOL_FILE = "protocol.html"
-
-#: The columns of the primer order sheet.
-SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,97 +111,6 @@ class Files:
     product: Path
     primers: Path
     protocol: Path
-
-
-@dataclass(frozen=True, slots=True)
-class Phenotype:
-    """What the product says about itself, read off its own features.
-
-    Parameters
-    ----------
-    insert
-        The span the inserts occupy in the product, between the first junction and the last.
-    coding
-        The longest coding sequence in that span, or ``None`` when it annotates none.
-    promoter
-        The promoter nearest the insert on the promoter's own reading direction, or ``None``.
-    gap_bp
-        Bases between that promoter and the insert.
-    driven
-        Whether that promoter reads along the strand the insert is coded on.
-    ribosome_binding_site
-        Whether one is annotated between that promoter and the insert.
-    reporter
-        The vector coding sequence the insertion interrupts, or ``None``.
-    marker
-        The vector's selection marker, or ``None`` when it annotates none this package knows.
-    """
-
-    insert: tuple[int, int]
-    coding: Feature | None
-    promoter: Feature | None
-    gap_bp: int
-    driven: bool
-    ribosome_binding_site: bool
-    reporter: Feature | None
-    marker: Feature | None
-
-    @property
-    def expressed(self) -> bool:
-        """Whether the product should make the insert's protein."""
-        return self.coding is not None and self.driven and self.ribosome_binding_site
-
-    @property
-    def blue_white(self) -> bool:
-        """Whether X-gal and IPTG tell a correct clone from an empty vector.
-
-        True when the insertion interrupts a lacZ fragment, which is then not there to
-        complement the host's own.
-        """
-        return self.reporter is not None and self.reporter.name.lower().startswith("lacz")
-
-    @property
-    def antibiotic(self) -> str:
-        """What to select transformants on, or an empty string when the marker is unknown."""
-        if self.marker is None:
-            return ""
-        return SELECTION.get(self.marker.name.lower(), "")
-
-
-#: What an oligo is for: amplifying a part, colony PCR, or sequencing the clone.
-type OligoRole = Literal["amplification", "colony PCR", "sequencing"]
-
-
-@dataclass(frozen=True, slots=True)
-class DesignedOligo:
-    """One oligo a plan orders, and what it is for.
-
-    Parameters
-    ----------
-    report
-        What it scored, the primer included.
-    role
-        What it is for.
-    part
-        The part it amplifies, given for an amplification primer and for nothing else.
-
-    Raises
-    ------
-    ValueError
-        If a part is given for any role but amplification, or not given for amplification.
-    """
-
-    report: PrimerReport
-    role: OligoRole
-    part: Part | None = None
-
-    def __post_init__(self) -> None:
-        """Refuse a part on anything but an amplification primer, and one missing from it."""
-        if (self.role == "amplification") != (self.part is not None):
-            raise ValueError(
-                f"oligo {self.report.primer.name!r}: an amplification primer names its part, "
-                "and no other role does"
-            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -330,7 +232,7 @@ class Plan:
         product = out / PRODUCT_FILE
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
-        sheet.write_text(primer_sheet(self), encoding="utf-8")
+        sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         return Files(product, sheet, write_html(self.protocol(), out / PROTOCOL_FILE))
 
 
@@ -489,7 +391,7 @@ def plan_assembly(
             (linearised_vector.name, linearised_vector.length),
             tuple((part.name, part.length) for part in insert_parts),
         ),
-        _phenotype(one, built, span),
+        read_phenotype(built.product, (first, last), vector=one, span=span),
         (
             *(
                 DesignedOligo(report, "amplification", part)
@@ -571,28 +473,6 @@ def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
     if len(given) != count:
         raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
     return given
-
-
-def primer_sheet(plan: Plan) -> str:
-    """Return every designed oligo as a tab-separated sheet, one row each.
-
-    The columns are `SHEET_COLUMNS`: the name to order it under, the sequence 5' to 3', its
-    length, and the Tm of the part that anneals.
-    """
-    rows = ["\t".join(SHEET_COLUMNS)]
-    for report in plan.reports:
-        primer = report.primer
-        rows.append(
-            "\t".join(
-                (
-                    primer.name,
-                    primer.sequence,
-                    str(len(primer.sequence)),
-                    f"{report['tm'].value:.1f}",
-                )
-            )
-        )
-    return "\n".join(rows) + "\n"
 
 
 def flipped(record: SequenceRecord) -> SequenceRecord:
@@ -733,101 +613,4 @@ def _chosen(
     raise ValueError(
         f"{choice.enzyme.name} reads {choice.sites} site(s) in the parts, so it would cut the "
         f"product open again; {rest}"
-    )
-
-
-def _phenotype(vector: SequenceRecord, built: Assembly, span: tuple[int, int]) -> Phenotype:
-    """Read what the product says about itself off its own features."""
-    junctions = built.junction_positions
-    first, last = junctions[0], junctions[-1]
-    coding = _coding(built.product, first, last)
-    promoter, gap = _promoter(built.product, first, last)
-    return Phenotype(
-        (first, last),
-        coding,
-        promoter,
-        gap,
-        promoter is not None and coding is not None and promoter.strand == coding.strand,
-        _ribosome_binding_site(built.product, promoter, first, last),
-        _interrupted(vector, span),
-        _marker(vector),
-    )
-
-
-def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
-    """Return the longest coding sequence lying wholly between the outer two junctions."""
-    inside = [
-        feature
-        for feature in product.features
-        if feature.type == "CDS"
-        and all(first <= segment.start and segment.end <= last for segment in feature.segments)
-    ]
-    return max(
-        inside,
-        key=lambda feature: sum(segment.end - segment.start for segment in feature.segments),
-        default=None,
-    )
-
-
-def _promoter(product: SequenceRecord, first: int, last: int) -> tuple[Feature | None, int]:
-    """Return the promoter nearest the insert along its own reading direction, and the gap."""
-    length = len(product)
-    found: Feature | None = None
-    gap = length
-    for feature in product.features:
-        if feature.type != "promoter":
-            continue
-        low = min(segment.start for segment in feature.segments)
-        high = max(segment.end for segment in feature.segments)
-        distance = (
-            (low - last) % length if feature.strand == Strand.REVERSE else (first - high) % length
-        )
-        if distance < gap:
-            found, gap = feature, distance
-    return found, gap if found is not None else 0
-
-
-def _ribosome_binding_site(
-    product: SequenceRecord, promoter: Feature | None, first: int, last: int
-) -> bool:
-    """Whether one is annotated between the promoter and the insert."""
-    if promoter is None:
-        return False
-    length = len(product)
-    if promoter.strand == Strand.REVERSE:
-        low, high = last, min(segment.start for segment in promoter.segments)
-    else:
-        low, high = max(segment.end for segment in promoter.segments), first
-    return any(
-        feature.type == "RBS"
-        and any(
-            (segment.start - low) % length < (high - low) % length for segment in feature.segments
-        )
-        for feature in product.features
-    )
-
-
-def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | None:
-    """Return the vector coding sequence the insertion breaks, or ``None``."""
-    start, end = span
-    return next(
-        (
-            feature
-            for feature in vector.features
-            if feature.type == "CDS"
-            and any(segment.start < end and start < segment.end for segment in feature.segments)
-        ),
-        None,
-    )
-
-
-def _marker(vector: SequenceRecord) -> Feature | None:
-    """Return the vector's selection marker, or ``None`` when it annotates none."""
-    return next(
-        (
-            feature
-            for feature in vector.features
-            if feature.type == "CDS" and feature.name.lower() in SELECTION
-        ),
-        None,
     )

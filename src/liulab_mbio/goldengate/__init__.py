@@ -13,20 +13,16 @@ from liulab_mbio.goldengate.plan import (
     DEFAULT_HOST,
     Files,
     Orientation,
-    Phenotype,
     Plan,
     Site,
     plan_assembly,
-    primer_sheet,
 )
 
 __all__ = [
     "DEFAULT_HOST",
     "Files",
     "Orientation",
-    "Phenotype",
     "Plan",
     "Site",
     "plan_assembly",
-    "primer_sheet",
 ]

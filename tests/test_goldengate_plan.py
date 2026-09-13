@@ -15,8 +15,10 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
-from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
-from liulab_mbio.goldengate.plan import REVERSE_FLANK, DesignedOligo
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.goldengate import Plan, plan_assembly
+from liulab_mbio.goldengate.oligos import DesignedOligo
+from liulab_mbio.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.io import read_record
 from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
@@ -243,7 +245,7 @@ def test_the_same_inputs_write_the_same_bytes(puc19, gfp, tmp_path):
 
 
 def test_the_primer_sheet_carries_every_oligo(plan):
-    rows = primer_sheet(plan).splitlines()
+    rows = primer_sheet(plan.reports).splitlines()
     assert rows[0].split("\t") == ["name", "sequence", "length", "tm_c"]
     assert len(rows) == 1 + len(plan.reports)
     for row, report in zip(rows[1:], plan.reports, strict=True):
@@ -255,7 +257,7 @@ def test_the_primer_sheet_carries_every_oligo(plan):
 
 def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
     oligos = plan.protocol().oligos
-    rows = primer_sheet(plan).splitlines()[1:]
+    rows = primer_sheet(plan.reports).splitlines()[1:]
     for oligo, row in zip(oligos, rows, strict=True):
         name, sequence, length, tm = row.split("\t")
         assert (oligo.name, oligo.sequence) == (name, sequence)

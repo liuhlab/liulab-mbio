@@ -8,6 +8,8 @@ it as its own `REFERENCES`; `REFERENCES` here gathers them.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
 - `inactivation`: an enzyme's heat inactivation.
+- `phenotype`: what a clone is expected to show, read off the product's own features.
+- `oligos`: the primer order sheet.
 
 Nothing here imports `liulab_mbio.goldengate`.
 """
@@ -23,6 +25,7 @@ from liulab_mbio.bench.amounts import (
 )
 from liulab_mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
 from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.oligos import SHEET_COLUMNS, oligo_row, primer_sheet
 from liulab_mbio.bench.pcr import (
     COLONY_HOLD_CELSIUS,
     COLONY_LYSIS_SECONDS,
@@ -36,6 +39,7 @@ from liulab_mbio.bench.pcr import (
     pcr_program,
     pcr_reaction,
 )
+from liulab_mbio.bench.phenotype import SELECTION, Phenotype, read_phenotype
 from liulab_mbio.bench.validation import (
     COLONY_FLANK,
     CORRECT_CLONE,
@@ -71,9 +75,12 @@ __all__ = [
     "REFERENCES",
     "REVERSED_CLONE",
     "SANGER_FLANK",
+    "SELECTION",
+    "SHEET_COLUMNS",
     "Amount",
     "Clone",
     "ColonyCheck",
+    "Phenotype",
     "SangerRead",
     "agarose_percent",
     "choose_ladder",
@@ -84,8 +91,11 @@ __all__ = [
     "dna_amount",
     "heat_inactivation",
     "molecular_weight",
+    "oligo_row",
     "pcr_program",
     "pcr_reaction",
+    "primer_sheet",
+    "read_phenotype",
     "sanger_primers",
     "to_nanograms",
     "to_pmol",
