@@ -236,7 +236,7 @@ def test_a_primer_tail_is_cut_to_leave_exactly_the_overhang_it_was_asked_for(
     (site,) = find_sites(SequenceRecord(tail), enzyme)
     assert site.overhang == overhang
     assert tail.endswith(overhang)
-    # Six flanking bases, then the site, then whatever the enzyme reaches over to cut.
+    # A six-base spacer, then the site, then whatever the enzyme reaches over to cut.
     assert len(tail) == 6 + enzyme.bottom_cut
 
 
@@ -246,16 +246,16 @@ def test_a_primer_tail_holds_the_recognition_site_once() -> None:
     assert len(find_sites(SequenceRecord(tail), "BsaI")) == 1
 
 
-def test_a_flank_that_spells_a_second_site_is_refused() -> None:
+def test_a_spacer_that_spells_a_second_site_is_refused() -> None:
     with pytest.raises(ValueError, match="BsaI"):
-        primer_tail(get_enzyme("BsaI"), "AATG", flank="GGTCTC")
+        primer_tail(get_enzyme("BsaI"), "AATG", spacer="GGTCTC")
 
 
 def test_a_dcm_site_is_refused_only_where_the_supplier_says_dcm_impairs_the_enzyme() -> None:
     # NEB: BsaI is impaired by overlapping Dcm methylation, and BsmBI is not sensitive to it.
     with pytest.raises(ValueError, match=r"[Dd]cm"):
-        primer_tail(get_enzyme("BsaI"), "AATG", flank="ACCAGG")
-    assert primer_tail(get_enzyme("BsmBI"), "AATG", flank="ACCAGG").startswith("ACCAGG")
+        primer_tail(get_enzyme("BsaI"), "AATG", spacer="ACCAGG")
+    assert primer_tail(get_enzyme("BsmBI"), "AATG", spacer="ACCAGG").startswith("ACCAGG")
 
 
 def test_an_overhang_the_enzyme_would_not_leave_is_refused() -> None:

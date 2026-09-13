@@ -28,13 +28,13 @@ from liulab_mbio.enzymes import enzymes as shipped
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
 #: How many bases NEB recommends 5' of a recognition site for an enzyme to cut near an end.
-FLANK_LENGTH = 6
+SPACER_LENGTH = 6
 
 #: Dcm methylates the inner cytosine of this site. Only an enzyme whose supplier says Dcm
 #: affects it is held to the rule; `Enzyme.methylation` carries that answer.
 DCM_SITE = "CCWGG"
 
-#: How many candidate flanks or fillers to try before giving up on an overhang.
+#: How many candidate spacers or fillers to try before giving up on an overhang.
 _TRIES = 4096
 
 _RUN = re.compile(r"(.)\1{3}")
@@ -318,13 +318,13 @@ def primer_tail(
     enzyme: EnzymeLike,
     overhang: str = "",
     *,
-    flank: str | None = None,
-    flank_length: int = FLANK_LENGTH,
+    spacer: str | None = None,
+    spacer_length: int = SPACER_LENGTH,
     avoid: Iterable[EnzymeLike] = (),
 ) -> str:
     """Build the 5' tail of a cloning primer, 5' to 3', for the caller to put its own 3' end on.
 
-    The tail is flanking bases, the recognition site, the bases the enzyme reaches over, and
+    The tail is a spacer, the recognition site, the bases the enzyme reaches over, and
     then `overhang` — so that cutting the amplicon leaves exactly `overhang` single-stranded.
 
     Parameters
@@ -334,17 +334,17 @@ def primer_tail(
     overhang
         The overhang the cut should leave, as long as the enzyme leaves. Empty, and only
         empty, for an enzyme that cuts inside its own site.
-    flank
+    spacer
         The bases 5' of the site. Chosen when not given, and checked when it is.
-    flank_length
-        How many bases to choose when `flank` is not given. NEB recommends six.
+    spacer_length
+        How many bases to choose when `spacer` is not given. NEB recommends six.
     avoid
         Enzymes besides this one whose sites the tail must not spell.
 
     Raises
     ------
     ValueError
-        If `overhang` is not one this enzyme leaves, if `flank` spells a further site or puts a
+        If `overhang` is not one this enzyme leaves, if `spacer` spells a further site or puts a
         Dcm site beside one this enzyme is impaired by, or if no bases could be found that
         avoid both.
 
@@ -362,12 +362,12 @@ def primer_tail(
         max(0, one.top_cut - len(site)), lambda bases: site + bases + overhang, active, one
     )
     core = site + filler + overhang
-    if flank is None:
-        return _search(flank_length, lambda bases: bases + core, active, one) + core
-    flank = flank.upper()
-    if (reason := _problem(flank + core, active, one)) is not None:
-        raise ValueError(f"flank {flank!r} cannot be used: {reason}")
-    return flank + core
+    if spacer is None:
+        return _search(spacer_length, lambda bases: bases + core, active, one) + core
+    spacer = spacer.upper()
+    if (reason := _problem(spacer + core, active, one)) is not None:
+        raise ValueError(f"spacer {spacer!r} cannot be used: {reason}")
+    return spacer + core
 
 
 def _check_overhang(enzyme: Enzyme, overhang: str) -> None:
