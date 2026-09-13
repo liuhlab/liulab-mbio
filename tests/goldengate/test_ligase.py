@@ -18,8 +18,6 @@ from liulab_mbio.goldengate.cli import LIGASE_MATRIX_ENV
 from liulab_mbio.goldengate.design import Junction, design_overhangs, fidelity, ligation_matrix
 from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, read_profile
 
-DATA = Path(__file__).parents[1] / "data"
-
 #: Two Watson-Crick pairs seen often, and one cross pair seen rarely. A row pairs with the
 #: column spelling its reverse complement, so AAAA pairs with TTTT and GGAA with TTCC.
 LABELS = ("AAAA", "TTTT", "GGAA", "TTCC")
@@ -253,9 +251,9 @@ def test_a_design_ranks_free_candidates_by_the_profile_where_no_matrix_exists(
 
 
 def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
-    profile_path: Path,
+    puc19, gfp, profile_path: Path
 ) -> None:
-    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna", enzyme="PaqCI", profile=profile_path)
+    made = plan_assembly(puc19, gfp, enzyme="PaqCI", profile=profile_path)
 
     scored = made.overhangs.fidelity
     assert scored.measured
@@ -265,47 +263,55 @@ def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
     assert NAMED in " ".join(one.text for one in protocol.references)
 
 
-def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before() -> None:
-    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna", enzyme="PaqCI")
+def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before(puc19, gfp) -> None:
+    made = plan_assembly(puc19, gfp, enzyme="PaqCI")
 
     assert not made.overhangs.fidelity.measured
     assert "rule-based estimate" in made.protocol().overview["Fidelity"]
 
 
-def test_the_command_line_takes_the_matrix_as_an_option(profile_path: Path, tmp_path: Path) -> None:
-    result = _run(tmp_path / "given", "--enzyme", "PaqCI", "--ligase-matrix", str(profile_path))
+def test_the_command_line_takes_the_matrix_as_an_option(
+    data_dir: Path, profile_path: Path, tmp_path: Path
+) -> None:
+    result = _run(
+        data_dir, tmp_path / "given", "--enzyme", "PaqCI", "--ligase-matrix", str(profile_path)
+    )
 
     assert result.exit_code == 0, result.output
     assert "not specific to PaqCI" in result.output
 
 
 def test_the_command_line_takes_the_matrix_from_the_environment(
-    profile_path: Path, tmp_path: Path
+    data_dir: Path, profile_path: Path, tmp_path: Path
 ) -> None:
-    result = _run(tmp_path / "env", "--enzyme", "PaqCI", env={LIGASE_MATRIX_ENV: str(profile_path)})
+    result = _run(
+        data_dir, tmp_path / "env", "--enzyme", "PaqCI", env={LIGASE_MATRIX_ENV: str(profile_path)}
+    )
 
     assert result.exit_code == 0, result.output
     assert "not specific to PaqCI" in result.output
 
 
-def test_the_command_line_refuses_a_file_that_is_not_a_matrix(tmp_path: Path) -> None:
+def test_the_command_line_refuses_a_file_that_is_not_a_matrix(
+    data_dir: Path, tmp_path: Path
+) -> None:
     path = _written(tmp_path / "fragments.csv", "Fragment #,Sequence\n1,ATGC\n")
 
-    result = _run(tmp_path / "run", "--ligase-matrix", str(path))
+    result = _run(data_dir, tmp_path / "run", "--ligase-matrix", str(path))
 
     assert result.exit_code == 1
     assert "not a ligation count matrix" in result.output
 
 
-def _run(out: Path, *arguments: str, env: Mapping[str, str] | None = None):
+def _run(data_dir: Path, out: Path, *arguments: str, env: Mapping[str, str] | None = None):
     """Plan the fixture assembly on the command line, writing the three outputs into OUT."""
     return CliRunner().invoke(
         app,
         [
             "goldengate",
             "plan",
-            str(DATA / "pUC19.dna"),
-            str(DATA / "GFP.dna"),
+            str(data_dir / "pUC19.dna"),
+            str(data_dir / "GFP.dna"),
             "--out",
             str(out),
             *arguments,

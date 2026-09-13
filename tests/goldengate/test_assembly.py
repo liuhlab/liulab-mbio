@@ -6,7 +6,6 @@ package: the spans and overhangs below are read off the records and pinned here.
 """
 
 import dataclasses
-from pathlib import Path
 
 import pytest
 
@@ -18,7 +17,6 @@ from liulab_mbio.goldengate.assembly import (
     dam_sites,
     open_vector,
 )
-from liulab_mbio.io import read_record
 from liulab_mbio.sequence import (
     BindingSite,
     Primer,
@@ -30,24 +28,12 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import find_sites, has_site, insert_site
 from liulab_mbio.snapgene import read_dna, write_dna
 
-DATA = Path(__file__).parents[1] / "data"
-
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6
 
 #: Addgene's 23-mer M13/pUC pair, which #13 pins its own expected bands against.
 M13_FORWARD = Primer("M13/pUC Forward", "CCCAGTCACGACGTTGTAAAACG")
 M13_REVERSE = Primer("M13/pUC Reverse", "AGCGGATAACAATTTCACACAGG")
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
 
 
 @pytest.fixture(scope="module")

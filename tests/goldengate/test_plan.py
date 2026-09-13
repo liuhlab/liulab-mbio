@@ -10,7 +10,6 @@ inserts. The first four bases of each are the overhang its junction takes.
 
 import dataclasses
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
@@ -19,13 +18,10 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.goldengate import Plan, plan_assembly
 from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
-from liulab_mbio.io import read_record
 from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
-
-DATA = Path(__file__).parents[1] / "data"
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)
@@ -62,16 +58,6 @@ def synthesised(name: str, sequence: str, color: str) -> SequenceRecord:
 
 
 @pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
-
-
-@pytest.fixture(scope="module")
 def linker() -> SequenceRecord:
     return synthesised("Linker", LINKER, "#3366cc")
 
@@ -79,11 +65,6 @@ def linker() -> SequenceRecord:
 @pytest.fixture(scope="module")
 def tag() -> SequenceRecord:
     return synthesised("Tag", TAG, "#cc6633")
-
-
-@pytest.fixture(scope="module")
-def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    return plan_assembly(puc19, gfp)
 
 
 @pytest.fixture(scope="module")
@@ -170,8 +151,8 @@ def test_the_other_orientation_puts_the_insert_on_the_other_strand(puc19, gfp):
     assert back.assembly.status == "pass"
 
 
-def test_the_files_are_read_from_disk_when_a_path_is_given():
-    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna")
+def test_the_files_are_read_from_disk_when_a_path_is_given(data_dir):
+    made = plan_assembly(data_dir / "pUC19.dna", data_dir / "GFP.dna")
     assert made.product.name == "pUC19-GFP"
     assert len(made.product) == 3347
 
@@ -233,8 +214,8 @@ def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path
     )
 
 
-def test_the_same_inputs_write_the_same_bytes(puc19, gfp, tmp_path):
-    first = plan_assembly(puc19, gfp).write(tmp_path / "one")
+def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
+    first = plan.write(tmp_path / "one")
     second = plan_assembly(puc19, gfp).write(tmp_path / "two")
     for one, other in (
         (first.product, second.product),

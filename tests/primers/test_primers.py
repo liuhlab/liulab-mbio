@@ -3,7 +3,6 @@
 """
 
 import dataclasses
-from pathlib import Path
 
 import pytest
 
@@ -34,15 +33,6 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    from Bio import SeqIO
-
-    record = SeqIO.read(Path(__file__).parents[1] / "data" / "pUC19.dna", "snapgene")
-    return SequenceRecord(str(record.seq), topology="circular", name="pUC19")
-
 
 M13_FWD = "GTAAAACGACGGCCAGT"
 M13_REV = "CAGGAAACAGCTATGAC"

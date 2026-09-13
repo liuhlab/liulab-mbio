@@ -3,34 +3,19 @@
 The source is `docs/research/primer-design-and-pcr.md` for the bands and the read geometry.
 """
 
-from pathlib import Path
-
 import pytest
 
 from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
 from liulab_mbio.bench.validation import ColonyCheck, colony_pcr_check, sanger_primers
-from liulab_mbio.io import read_record
 from liulab_mbio.primers import amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord
-
-DATA = Path(__file__).parents[1] / "data"
 
 #: The multiple cloning site of the fixture, 0-based and half-open, and the GFP that replaces it.
 MCS = (395, 452)
 #: Addgene's 23-mer M13/pUC pair, which the note recommends over the 17-mers for colony PCR.
 M13_FORWARD = Primer("M13/pUC Forward", "CCCAGTCACGACGTTGTAAAACG")
 M13_REVERSE = Primer("M13/pUC Reverse", "AGCGGATAACAATTTCACACAGG")
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
 
 
 @pytest.fixture(scope="module")

@@ -17,15 +17,8 @@ from liulab_mbio.goldengate.bench import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from liulab_mbio.protocol import ReactionTable
 
-
-def volumes(table: ReactionTable) -> dict[str, float]:
-    return {component.name: component.volume_ul for component in table.components}
-
-
-def total(table: ReactionTable) -> float:
-    return sum(component.volume_ul for component in table.components)
+from ..reactions import total, volumes
 
 
 def two_fragments() -> tuple[Amount, ...]:

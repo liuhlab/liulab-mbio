@@ -3,16 +3,24 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
+
 from liulab_mbio.edits import delete
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 from liulab_mbio.snapgene import read_dna, write_dna
 
-DATA = Path(__file__).parent / "data"
-PUC19 = DATA / "pUC19.dna"
-GFP = DATA / "GFP.dna"
-
 #: The packets the model holds, which the writer builds rather than keeping.
 MODELLED = (0x00, 0x05, 0x06, 0x0A)
+
+
+@pytest.fixture(scope="module")
+def puc19_file(data_dir: Path) -> Path:
+    return data_dir / "pUC19.dna"
+
+
+@pytest.fixture(scope="module")
+def gfp_file(data_dir: Path) -> Path:
+    return data_dir / "GFP.dna"
 
 
 def _packets(data: bytes) -> list[tuple[int, bytes]]:
@@ -67,17 +75,19 @@ def _feature(record_features: tuple[Feature, ...], name: str) -> Feature:
     return feature
 
 
-def test_read_dna_gives_the_sequence_and_topology() -> None:
-    puc19 = read_dna(PUC19)
-    gfp = read_dna(GFP)
+def test_read_dna_gives_the_sequence_and_topology(puc19_file: Path, gfp_file: Path) -> None:
+    puc19 = read_dna(puc19_file)
+    gfp = read_dna(gfp_file)
     assert (len(puc19), puc19.topology) == (2686, "circular")
     assert puc19.sequence.startswith("TCGCGCGTTTCGGTGATGACGG")
     assert (len(gfp), gfp.topology) == (717, "linear")
     assert gfp.sequence.startswith("ATGAGTAAAGGAGAAGAACTTTTCACTGG")
 
 
-def test_read_dna_converts_feature_ranges_to_half_open_segments() -> None:
-    features = read_dna(PUC19).features
+def test_read_dna_converts_feature_ranges_to_half_open_segments(
+    puc19_file: Path, gfp_file: Path
+) -> None:
+    features = read_dna(puc19_file).features
     assert [f.name for f in features] == [
         "lac operator",
         "M13 rev",
@@ -96,17 +106,17 @@ def test_read_dna_converts_feature_ranges_to_half_open_segments() -> None:
         (Segment(378, 395),),
     )
     assert _feature(features, "lacZα").segments == (Segment(145, 469),)  # noqa: RUF001
-    assert _feature(read_dna(GFP).features, "GFP").segments == (Segment(0, 717),)
+    assert _feature(read_dna(gfp_file).features, "GFP").segments == (Segment(0, 717),)
 
 
-def test_read_dna_maps_directionality_to_strand() -> None:
-    features = read_dna(PUC19).features
+def test_read_dna_maps_directionality_to_strand(puc19_file: Path) -> None:
+    features = read_dna(puc19_file).features
     assert _feature(features, "M13 rev").strand == Strand.REVERSE
     assert _feature(features, "MCS").strand == Strand.NONE
 
 
-def test_read_dna_keeps_named_segments_and_colours() -> None:
-    features = read_dna(PUC19).features
+def test_read_dna_keeps_named_segments_and_colours(puc19_file: Path) -> None:
+    features = read_dna(puc19_file).features
     promoter = _feature(features, "lac promoter")
     assert promoter.color == "#ffffff"
     assert promoter.segments == (
@@ -121,9 +131,11 @@ def test_read_dna_keeps_named_segments_and_colours() -> None:
     )
 
 
-def test_read_dna_converts_binding_sites_and_ignores_simplified_duplicates(tmp_path: Path) -> None:
+def test_read_dna_converts_binding_sites_and_ignores_simplified_duplicates(
+    gfp_file: Path, tmp_path: Path
+) -> None:
     path = tmp_path / "primers.dna"
-    path.write_bytes(_rewritten(GFP, 0x05, PRIMERS_XML))
+    path.write_bytes(_rewritten(gfp_file, 0x05, PRIMERS_XML))
     assert read_dna(path).primers == (
         Primer(
             "GFP fwd",
@@ -139,10 +151,12 @@ def test_read_dna_converts_binding_sites_and_ignores_simplified_duplicates(tmp_p
     )
 
 
-def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name() -> None:
-    record = read_dna(PUC19)
+def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name(
+    puc19_file: Path, gfp_file: Path
+) -> None:
+    record = read_dna(puc19_file)
     assert record.name == "pUC19"
-    assert read_dna(GFP).name == "GFP"
+    assert read_dna(gfp_file).name == "GFP"
     assert record.notes["Type"] == "Synthetic"
     assert record.notes["CreatedBy"] == "New England Biolabs"
     assert record.notes["Comments"] == "See also GenBank accession L09137."
@@ -150,24 +164,30 @@ def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name() -> None:
     assert "CustomMapLabel" not in record.notes
 
 
-def test_write_dna_round_trips_a_record_through_a_file(tmp_path: Path) -> None:
-    for fixture in (PUC19, GFP):
+def test_write_dna_round_trips_a_record_through_a_file(
+    puc19_file: Path, gfp_file: Path, tmp_path: Path
+) -> None:
+    for fixture in (puc19_file, gfp_file):
         record = read_dna(fixture)
         path = tmp_path / fixture.name
         write_dna(record, path)
         assert read_dna(path) == record
 
 
-def test_write_dna_keeps_the_packets_the_model_does_not_hold(tmp_path: Path) -> None:
+def test_write_dna_keeps_the_packets_the_model_does_not_hold(
+    puc19_file: Path, tmp_path: Path
+) -> None:
     path = tmp_path / "same.dna"
-    write_dna(read_dna(PUC19), path)
-    before, after = _packets(PUC19.read_bytes()), _packets(path.read_bytes())
+    write_dna(read_dna(puc19_file), path)
+    before, after = _packets(puc19_file.read_bytes()), _packets(path.read_bytes())
     assert [p for p in after if p[0] not in MODELLED] == [p for p in before if p[0] not in MODELLED]
     assert dict(after)[0x00] == dict(before)[0x00]
 
 
-def test_write_dna_drops_the_cut_site_cache_once_the_sequence_changes(tmp_path: Path) -> None:
-    edited, _ = delete(read_dna(PUC19), 100, 200)
+def test_write_dna_drops_the_cut_site_cache_once_the_sequence_changes(
+    puc19_file: Path, tmp_path: Path
+) -> None:
+    edited, _ = delete(read_dna(puc19_file), 100, 200)
     path = tmp_path / "edited.dna"
     write_dna(edited, path)
     assert [kind for kind, _ in _packets(path.read_bytes())] == [
@@ -184,18 +204,22 @@ def test_write_dna_drops_the_cut_site_cache_once_the_sequence_changes(tmp_path: 
 
 
 def test_the_sequence_packet_flags_hold_topology_strandedness_and_methylation(
-    tmp_path: Path,
+    puc19_file: Path, gfp_file: Path, tmp_path: Path
 ) -> None:
-    assert _flags(PUC19.read_bytes()) == 0x1F  # circular, double, Dam, Dcm and EcoKI methylated
-    assert _flags(GFP.read_bytes()) == 0x02  # linear and double-stranded
-    linear = dataclasses.replace(read_dna(PUC19), topology="linear")
+    assert (
+        _flags(puc19_file.read_bytes()) == 0x1F
+    )  # circular, double, Dam, Dcm and EcoKI methylated
+    assert _flags(gfp_file.read_bytes()) == 0x02  # linear and double-stranded
+    linear = dataclasses.replace(read_dna(puc19_file), topology="linear")
     write_dna(linear, tmp_path / "linear.dna")
     assert _flags((tmp_path / "linear.dna").read_bytes()) == 0x1E
     write_dna(SequenceRecord("ACGT"), tmp_path / "new.dna")
     assert _flags((tmp_path / "new.dna").read_bytes()) == 0x02
 
 
-def test_write_dna_writes_a_span_across_the_origin_as_a_wrapped_range(tmp_path: Path) -> None:
+def test_write_dna_writes_a_span_across_the_origin_as_a_wrapped_range(
+    puc19_file: Path, tmp_path: Path
+) -> None:
     site = Feature(
         "BsmBI",
         "misc_feature",
@@ -203,46 +227,50 @@ def test_write_dna_writes_a_span_across_the_origin_as_a_wrapped_range(tmp_path: 
         strand=Strand.FORWARD,
         color="#ff0000",
     )
-    record = dataclasses.replace(read_dna(PUC19), features=(site,))
+    record = dataclasses.replace(read_dna(puc19_file), features=(site,))
     path = tmp_path / "wrapped.dna"
     write_dna(record, path)
     assert b'range="2683-2"' in path.read_bytes()
     assert read_dna(path).features == (site,)
 
 
-def test_write_dna_fills_a_hole_between_segments_with_a_gap_segment(tmp_path: Path) -> None:
+def test_write_dna_fills_a_hole_between_segments_with_a_gap_segment(
+    gfp_file: Path, tmp_path: Path
+) -> None:
     feature = Feature(
         "exons", "mRNA", (Segment(10, 20), Segment(30, 40)), strand=Strand.FORWARD, color="#ff0000"
     )
-    record = dataclasses.replace(read_dna(GFP), features=(feature,))
+    record = dataclasses.replace(read_dna(gfp_file), features=(feature,))
     path = tmp_path / "gap.dna"
     write_dna(record, path)
     assert b'range="21-30" color="noColor" type="gap"' in path.read_bytes()
     assert read_dna(path).features == (feature,)
 
 
-def test_write_dna_writes_primers_that_were_built_in_code(tmp_path: Path) -> None:
+def test_write_dna_writes_primers_that_were_built_in_code(gfp_file: Path, tmp_path: Path) -> None:
     primer = Primer(
         "GFP fwd",
         "CAGTCAGGATCCATGAGTAAAGGAGAAGAACT",
         binding_sites=(BindingSite(0, 20, Strand.FORWARD),),
         description="forward",
     )
-    record = dataclasses.replace(read_dna(GFP), primers=(primer,))
+    record = dataclasses.replace(read_dna(gfp_file), primers=(primer,))
     path = tmp_path / "primers.dna"
     write_dna(record, path)
     assert b'annealedBases="ATGAGTAAAGGAGAAGAACT"' in path.read_bytes()
     assert read_dna(path).primers == (primer,)
 
 
-def test_write_dna_pairs_each_binding_site_with_a_simplified_copy(tmp_path: Path) -> None:
+def test_write_dna_pairs_each_binding_site_with_a_simplified_copy(
+    gfp_file: Path, tmp_path: Path
+) -> None:
     primer = Primer(
         "GFP fwd",
         "CAGTCAGGATCCATGAGTAAAGGAGAAGAACT",
         binding_sites=(BindingSite(0, 20, Strand.FORWARD),),
     )
     path = tmp_path / "primers.dna"
-    write_dna(dataclasses.replace(read_dna(GFP), primers=(primer,)), path)
+    write_dna(dataclasses.replace(read_dna(gfp_file), primers=(primer,)), path)
     (packet,) = (payload for kind, payload in _packets(path.read_bytes()) if kind == 0x05)
     site, simplified = ET.fromstring(packet).iter("BindingSite")
     assert simplified.attrib == {"simplified": "1", **site.attrib}
@@ -251,21 +279,25 @@ def test_write_dna_pairs_each_binding_site_with_a_simplified_copy(tmp_path: Path
     ]
 
 
-def test_write_dna_has_snapgene_label_the_map_with_the_name(tmp_path: Path) -> None:
+def test_write_dna_has_snapgene_label_the_map_with_the_name(
+    puc19_file: Path, tmp_path: Path
+) -> None:
     path = tmp_path / "file-name.dna"
     for record in (
         SequenceRecord("ACGT", name="probe"),
-        dataclasses.replace(read_dna(PUC19), name="renamed"),
+        dataclasses.replace(read_dna(puc19_file), name="renamed"),
     ):
         write_dna(record, path)
         notes = ET.fromstring(dict(_packets(path.read_bytes()))[0x06])
         assert [node.text for node in notes.iter("UseCustomMapLabel")] == ["1"]
 
 
-def test_the_reader_agrees_with_biopython_on_both_fixtures() -> None:
+def test_the_reader_agrees_with_biopython_on_both_fixtures(
+    puc19_file: Path, gfp_file: Path
+) -> None:
     from Bio import SeqIO
 
-    for fixture in (PUC19, GFP):
+    for fixture in (puc19_file, gfp_file):
         record, reference = read_dna(fixture), SeqIO.read(fixture, "snapgene")
         assert record.sequence == str(reference.seq).upper()
         assert record.topology == reference.annotations["topology"]
@@ -279,8 +311,8 @@ def test_the_reader_agrees_with_biopython_on_both_fixtures() -> None:
         }
 
 
-def test_read_dna_keeps_qualifiers_with_their_integer_and_text_values() -> None:
-    amp = _feature(read_dna(PUC19).features, "AmpR")
+def test_read_dna_keeps_qualifiers_with_their_integer_and_text_values(puc19_file: Path) -> None:
+    amp = _feature(read_dna(puc19_file).features, "AmpR")
     assert amp.qualifiers["codon_start"] == (1,)
     assert amp.qualifiers["product"] == ("<html><body>β-lactamase</body></html>",)
     assert set(amp.qualifiers) == {

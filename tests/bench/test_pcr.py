@@ -14,15 +14,8 @@ from liulab_mbio.bench.pcr import (
     pcr_reaction,
 )
 from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
-from liulab_mbio.protocol import ReactionTable
 
-
-def volumes(table: ReactionTable) -> dict[str, float]:
-    return {component.name: component.volume_ul for component in table.components}
-
-
-def total(table: ReactionTable) -> float:
-    return sum(component.volume_ul for component in table.components)
+from ..reactions import total, volumes
 
 
 def test_the_colony_pcr_master_mix_component_is_the_one_its_reaction_prints() -> None:

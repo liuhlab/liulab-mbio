@@ -16,7 +16,6 @@ from liulab_mbio.protocol import (
     write_html,
 )
 
-EXAMPLE = Path(__file__).parents[1] / "data" / "pcr-protocol.json"
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "wbr"}
 
 
@@ -81,8 +80,8 @@ def parse(html: str) -> Node:
 
 
 @pytest.fixture(scope="module")
-def page_html() -> str:
-    return render_html(read_protocol(EXAMPLE))
+def page_html(data_dir: Path) -> str:
+    return render_html(read_protocol(data_dir / "pcr-protocol.json"))
 
 
 @pytest.fixture(scope="module")
@@ -293,7 +292,7 @@ def test_the_page_fits_a_phone_prints_and_follows_dark_mode(page: Node) -> None:
     assert "prefers-color-scheme: dark" in style
 
 
-def test_write_html_writes_the_rendered_page(tmp_path: Path) -> None:
-    protocol = read_protocol(EXAMPLE)
+def test_write_html_writes_the_rendered_page(data_dir: Path, tmp_path: Path) -> None:
+    protocol = read_protocol(data_dir / "pcr-protocol.json")
     path = write_html(protocol, tmp_path / "protocol.html")
     assert path.read_text(encoding="utf-8") == render_html(protocol)

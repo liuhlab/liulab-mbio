@@ -5,8 +5,6 @@ import pytest
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Segment, Strand
 
-DATA = Path(__file__).parent / "data"
-
 GENBANK = """LOCUS       mini                      12 bp    DNA     circular SYN 01-JAN-2020
 DEFINITION  a tiny circular record.
 FEATURES             Location/Qualifiers
@@ -21,8 +19,8 @@ ORIGIN
 """
 
 
-def test_read_record_reads_a_snapgene_file() -> None:
-    record = read_record(DATA / "GFP.dna")
+def test_read_record_reads_a_snapgene_file(data_dir: Path) -> None:
+    record = read_record(data_dir / "GFP.dna")
     assert (len(record), record.topology, record.name) == (717, "linear", "GFP")
     assert record.features[0].name == "GFP"
 
