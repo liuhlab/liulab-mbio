@@ -8,7 +8,7 @@ Every public name in its modules imports from here as well:
 - `placement`: where a primer may anneal, where it does, where else it primes, and amplicons.
 - `evaluation`: judging a primer, or a pair on a template, and what a primer's length decides.
 - `design`: choosing the annealing region of a primer or a pair, and ranking every pair.
-- `genome`: checking pairs against a genome FASTA, and the amplicons they make there.
+- `genome`: checking pairs against a genome FASTA, and designing a pair specific on one.
 """
 
 from liulab_mbio.primers.design import design_pair, design_primer, ranked_pairs
@@ -22,9 +22,11 @@ from liulab_mbio.primers.evaluation import (
 )
 from liulab_mbio.primers.genome import (
     Amplicon,
+    GenomeDesign,
     GenomeReport,
     Locus,
     MadeBy,
+    design_pair_on_genome,
     evaluate_on_genome,
     evaluate_pair_on_genome,
 )
@@ -67,6 +69,7 @@ __all__ = [
     "THRESHOLDS_FOR",
     "Amplicon",
     "Band",
+    "GenomeDesign",
     "GenomeReport",
     "Locus",
     "MadeBy",
@@ -82,6 +85,7 @@ __all__ = [
     "amplicon_sizes",
     "annealing_checks",
     "design_pair",
+    "design_pair_on_genome",
     "design_primer",
     "evaluate_on_genome",
     "evaluate_pair",

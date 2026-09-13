@@ -2,13 +2,21 @@
 
 import dataclasses
 import random
+from itertools import islice
+from pathlib import Path
 
 import pytest
 
-from liulab_mbio.primers import THRESHOLDS, amplicon_sizes
-from liulab_mbio.primers.genome import Locus, evaluate_on_genome, evaluate_pair_on_genome
-from liulab_mbio.sequence import Primer, reverse_complement
+from liulab_mbio.primers import THRESHOLDS, PairReport, Placement, amplicon_sizes, ranked_pairs
+from liulab_mbio.primers.genome import (
+    Locus,
+    design_pair_on_genome,
+    evaluate_on_genome,
+    evaluate_pair_on_genome,
+)
+from liulab_mbio.sequence import BindingSite, Primer, Segment, SequenceRecord, reverse_complement
 
+from ..fasta import write_fasta
 from .sequences import M13_FWD, M13_REV, PUC_FWD, PUC_REV
 
 #: Pairs whose primers differ from each other in eight bases or more, so none primes another's site.
@@ -167,3 +175,176 @@ def test_a_missing_tool_or_a_run_past_its_time_limit_raises_a_clear_error(
     monkeypatch.setenv("PATH", str(tmp_path))
     with pytest.raises(RuntimeError, match="pixi"):
         evaluate_pair_on_genome(*_pair(ONE), genome, "planted")
+
+
+#: A region to amplify, in a record named as a chimera genome spells one, and its flank width.
+REGION = Locus("I__ce11", 200, 300)
+FLANK = 25
+#: Where a test plants a second place the design's primers could prime.
+ELSEWHERE = "chrII__ecHT115"
+#: Bases padding what is planted there, so an off-target amplicon does not start at zero.
+PAD = "".join(random.Random(58).choice("ACGT") for _ in range(60))
+
+
+@pytest.fixture(scope="module")
+def sequence() -> str:
+    """The record the region lies in: random bases, so nothing primes twice by accident."""
+    rng = random.Random(1901)
+    return "".join(rng.choice("ACGT") for _ in range(600))
+
+
+@pytest.fixture(scope="module")
+def template(sequence) -> str:
+    """What a design works on: the region and a flank each side."""
+    return sequence[REGION.start - FLANK : REGION.end + FLANK]
+
+
+@pytest.fixture(scope="module")
+def order(template) -> list[PairReport]:
+    """The pairs a design chooses between, best first, as its docstring places them."""
+    record = SequenceRecord(template)
+    left, right = FLANK, len(template) - FLANK
+    return list(
+        islice(
+            ranked_pairs(
+                record,
+                left,
+                right,
+                forward_placement=Placement(
+                    five_prime=Segment(0, left), three_prime=Segment(0, left + 1)
+                ),
+                reverse_placement=Placement(
+                    five_prime=Segment(right + 1, len(record) + 1),
+                    three_prime=Segment(right, len(record)),
+                ),
+            ),
+            20,
+        )
+    )
+
+
+@pytest.fixture(scope="module")
+def together(sequence, template, order, tmp_path_factory) -> Path:
+    """A genome where the best-ranked pair's two primers amplify somewhere else as well."""
+    pair = order[0]
+    planted = [_copied(template, site) for site in _sites(pair)]
+    return _written(tmp_path_factory, "together.fa", sequence, PAD.join(["", *planted, ""]))
+
+
+@pytest.fixture(scope="module")
+def alone(sequence, template, order, tmp_path_factory) -> Path:
+    """A genome where the best-ranked pair's reverse primer amplifies on its own."""
+    copy = reverse_complement(_copied(template, _sites(order[0])[1]))
+    planted = PAD.join(["", copy, reverse_complement(copy), ""])
+    return _written(tmp_path_factory, "alone.fa", sequence, planted)
+
+
+@pytest.fixture(scope="module")
+def everywhere(sequence, template, tmp_path_factory) -> Path:
+    """A genome carrying the whole template twice, so no pair at all is specific."""
+    return _written(tmp_path_factory, "everywhere.fa", sequence, PAD + template + PAD)
+
+
+def test_the_best_ranked_pair_with_no_off_target_amplicon_is_the_one_chosen(
+    together, order
+) -> None:
+    design = design_pair_on_genome(together, "planted", REGION, flank=FLANK)
+    assert (design.specific, design.rounds, design.exhausted) == (True, 1, False)
+    assert design.template == Locus(REGION.sequence_name, REGION.start - FLANK, REGION.end + FLANK)
+    assert design.genome.off_target == ()
+    assert [one.sequence_name for one in design.genome.amplicons] == [REGION.sequence_name]
+    # Every pair ranked above the one chosen makes an off-target amplicon, and it makes none.
+    chosen = [_primers(pair) for pair in order].index((design.forward, design.reverse))
+    above = order[:chosen]
+    assert above
+    reports = evaluate_on_genome(
+        [_primers(pair) for pair in above],
+        together,
+        "planted",
+        intended=[_amplicon(pair) for pair in above],
+    )
+    assert all(report.off_target for report in reports)
+
+
+def test_a_primer_that_amplifies_on_its_own_is_kept_out_of_every_later_pair(alone, order) -> None:
+    # One pair a search, so a pair carrying that primer is checked again unless it is kept out.
+    thresholds = dataclasses.replace(THRESHOLDS, genome_pairs_per_search=1, genome_rounds=2)
+    ruled_out = _sites(order[0])[1]
+    assert _sites(order[1])[1].start == ruled_out.start
+    design = design_pair_on_genome(alone, "planted", REGION, flank=FLANK, thresholds=thresholds)
+    assert (design.specific, design.rounds) == (True, 2)
+    assert design.reverse.binding_sites[0].start != ruled_out.start
+
+
+def test_a_pair_that_amplifies_only_together_leaves_each_of_its_primers_free(
+    together, order
+) -> None:
+    thresholds = dataclasses.replace(THRESHOLDS, genome_pairs_per_search=1)
+    design = design_pair_on_genome(together, "planted", REGION, flank=FLANK, thresholds=thresholds)
+    assert (design.specific, design.rounds) == (True, 2)
+    assert {design.forward, design.reverse} & set(_primers(order[0]))
+
+
+def test_when_no_pair_is_specific_the_best_ranked_pair_checked_comes_back(
+    everywhere, order
+) -> None:
+    design = design_pair_on_genome(everywhere, "planted", REGION, flank=FLANK)
+    assert (design.specific, design.rounds, design.exhausted) == (False, 3, False)
+    assert (design.forward, design.reverse) == _primers(order[0])
+    assert [one.sequence_name for one in design.genome.off_target] == [ELSEWHERE]
+    assert design.genome.off_target[0].length == design.pair.amplicon_length
+    assert design.genome["off_target_amplicons"].status == "warn"
+
+
+def test_a_search_that_runs_out_of_pairs_stops_and_says_so(everywhere) -> None:
+    # Flanks this narrow allow nine pairs in all, fewer than one search checks.
+    design = design_pair_on_genome(everywhere, "planted", REGION, flank=16)
+    assert (design.specific, design.rounds, design.exhausted) == (False, 1, True)
+
+
+def test_a_fasta_with_no_index_is_refused(sequence, tmp_path) -> None:
+    path = tmp_path / "bare.fa"
+    path.write_text(f">{REGION.sequence_name}\n{sequence}\n")
+    with pytest.raises(FileNotFoundError, match="genome assembly register"):
+        design_pair_on_genome(path, "planted", REGION, flank=FLANK)
+
+
+def test_a_region_with_no_flank_beside_it_is_refused(together) -> None:
+    with pytest.raises(ValueError, match="flank"):
+        design_pair_on_genome(together, "planted", Locus(REGION.sequence_name, 0, 100), flank=FLANK)
+
+
+def _written(factory, name: str, sequence: str, planted: str) -> Path:
+    path = factory.mktemp("region") / name
+    write_fasta(path, {REGION.sequence_name: sequence, ELSEWHERE: planted})
+    return path
+
+
+def _copied(template: str, site: BindingSite) -> str:
+    """A binding site's bases, between neighbours complementing the ones it has on the template.
+
+    A primer with another 3' end mismatches the copy where it reaches a neighbour, so only the
+    primers of the site planted prime here.
+    """
+    flip = str.maketrans("ACGT", "TGCA")
+    return (
+        template[max(site.start - 4, 0) : site.start].translate(flip)
+        + template[site.start : site.end]
+        + template[site.end : site.end + 4].translate(flip)
+    )
+
+
+def _sites(pair: PairReport) -> tuple[BindingSite, BindingSite]:
+    """Where a pair's two primers anneal on the template."""
+    return pair.forward.primer.binding_sites[0], pair.reverse.primer.binding_sites[0]
+
+
+def _primers(pair: PairReport) -> tuple[Primer, Primer]:
+    return pair.forward.primer, pair.reverse.primer
+
+
+def _amplicon(pair: PairReport) -> Locus:
+    """Where a pair's amplicon lies on the genome, counted from the template's own start."""
+    forward, reverse = _sites(pair)
+    start = REGION.start - FLANK
+    return Locus(REGION.sequence_name, start + forward.start, start + reverse.end)

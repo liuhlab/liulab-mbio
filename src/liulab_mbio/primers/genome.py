@@ -1,6 +1,8 @@
-"""Check primer pairs against a genome FASTA: every amplicon they make there, and which is intended.
+"""Check primer pairs against a genome FASTA, and design a pair specific on one.
 
-The in-silico PCR tool `ipcr` does the search; ``docs/adr/0003-genome-check.md`` says why.
+A check reports every amplicon a pair makes there and which is intended; a design searches a
+region's flanks for the best-ranked pair that makes only the intended one. The in-silico PCR
+tool `ipcr` does the search; ``docs/adr/0003-genome-check.md`` says why.
 """
 
 import json
@@ -9,12 +11,18 @@ import subprocess
 import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import islice
 from pathlib import Path
 from typing import Any, Literal
 
 from liulab_mbio.checks import Check, Status, worst
-from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
-from liulab_mbio.sequence import Primer, reverse_complement
+from liulab_mbio.io import read_region
+from liulab_mbio.primers.design import ranked_pairs
+from liulab_mbio.primers.evaluation import PairReport
+from liulab_mbio.primers.placement import Placement
+from liulab_mbio.primers.polymerase import Q5, Polymerase
+from liulab_mbio.primers.thresholds import TARGET_TM, THRESHOLDS, Thresholds
+from liulab_mbio.sequence import BindingSite, Primer, Segment, Strand, reverse_complement
 
 #: Which primers make an amplicon: the two together, or one alone.
 type MadeBy = Literal["pair", "forward", "reverse"]
@@ -266,6 +274,186 @@ def evaluate_on_genome(
         )
         for (forward, reverse), amplicons, locus in zip(pairs, found, loci, strict=True)
     )
+
+
+@dataclass(frozen=True, slots=True)
+class GenomeDesign:
+    """A primer pair designed for a genome region, and what it makes on that genome.
+
+    Parameters
+    ----------
+    template
+        Where the region and its flanks lie, so a binding site's position counts from its start.
+    pair
+        Every check on the pair, on that template.
+    genome
+        Every amplicon it makes on the genome, and the checks on them.
+    rounds
+        Genome searches run.
+    specific
+        Whether it makes no off-target amplicon.
+    exhausted
+        Whether the pairs ran out, so nothing was left to check.
+    """
+
+    template: Locus
+    pair: PairReport
+    genome: GenomeReport
+    rounds: int
+    specific: bool
+    exhausted: bool
+
+    @property
+    def forward(self) -> Primer:
+        """Return the forward primer."""
+        return self.pair.forward.primer
+
+    @property
+    def reverse(self) -> Primer:
+        """Return the reverse primer."""
+        return self.pair.reverse.primer
+
+
+def design_pair_on_genome(
+    fasta: str | Path,
+    assembly: str,
+    region: Locus,
+    *,
+    flank: int,
+    forward_tail: str = "",
+    reverse_tail: str = "",
+    forward_name: str = "",
+    reverse_name: str = "",
+    target_tm: float = TARGET_TM,
+    polymerase: Polymerase = Q5,
+    thresholds: Thresholds = THRESHOLDS,
+    timeout: float = 300.0,
+) -> GenomeDesign:
+    """Design the best-ranked pair amplifying a genome region that is specific on that genome.
+
+    The template is the region and a flank each side, read through the FASTA's index and
+    clipped to the sequence. The forward primer is placed in the left flank and the reverse in
+    the right, so the amplicon covers the region whole and ties go to the pair nearest it, as
+    `design_pair` ranks one. `Thresholds.genome_pairs_per_search` pairs are then checked in one
+    genome search, best-ranked first, and the first making no off-target amplicon wins.
+
+    Where none does, the round leaves the search narrower: a primer that makes an off-target
+    amplicon on its own is kept out of every later pair, as is every binding site sharing its
+    3' end, which primes the same place; a pair that makes one only together is passed over,
+    each of its primers still free to pair with another. After `Thresholds.genome_rounds`
+    searches, or once the pairs run out, the best-ranked pair checked comes back with its
+    off-target amplicons, marked not specific.
+
+    Raises
+    ------
+    FileNotFoundError
+        If no index lies beside the FASTA.
+    RuntimeError
+        If `ipcr` is not installed, or refuses a search.
+    TimeoutError
+        If a search runs past `timeout`.
+    ValueError
+        If the sequence does not hold the region, or a flank holds no annealing region.
+
+    Examples
+    --------
+    >>> region = Locus("chr1", 156710401, 156710701)
+    >>> design = design_pair_on_genome("hg38.fa", "hg38", region, flank=100)  # doctest: +SKIP
+    >>> design.specific, design.rounds, design.forward.sequence  # doctest: +SKIP
+    (True, 1, 'ACCTAGGAGAAGTGGCCAGC')
+    """
+    start = max(region.start - flank, 0)
+    template = read_region(fasta, region.sequence_name, start, region.end + flank)
+    where = Locus(region.sequence_name, start, start + len(template))
+    left, right = region.start - where.start, region.end - where.start
+    if left < 1 or right >= len(template):
+        raise ValueError(
+            f"{region.sequence_name} holds no flank either side of {region.start}-{region.end}"
+        )
+    excluded = _ThreePrimeEnds()
+    pairs = ranked_pairs(
+        template,
+        left,
+        right,
+        forward_placement=Placement(five_prime=Segment(0, left), three_prime=Segment(0, left + 1)),
+        reverse_placement=Placement(
+            five_prime=Segment(right + 1, len(template) + 1),
+            three_prime=Segment(right, len(template)),
+        ),
+        forward_tail=forward_tail,
+        reverse_tail=reverse_tail,
+        forward_name=forward_name,
+        reverse_name=reverse_name,
+        target_tm=target_tm,
+        polymerase=polymerase,
+        thresholds=thresholds,
+        exclude=excluded,
+    )
+    best: tuple[PairReport, GenomeReport] | None = None
+    rounds = 0
+    exhausted = False
+    while rounds < thresholds.genome_rounds and not exhausted:
+        batch = list(islice(pairs, thresholds.genome_pairs_per_search))
+        exhausted = len(batch) < thresholds.genome_pairs_per_search
+        if not batch:
+            break
+        rounds += 1
+        reports = evaluate_on_genome(
+            [(pair.forward.primer, pair.reverse.primer) for pair in batch],
+            fasta,
+            assembly,
+            intended=[_intended(pair, where) for pair in batch],
+            thresholds=thresholds,
+            timeout=timeout,
+        )
+        for pair, report in zip(batch, reports, strict=True):
+            best = best or (pair, report)
+            if not report.off_target:
+                return GenomeDesign(where, pair, report, rounds, True, exhausted)
+            for amplicon in report.off_target:
+                if amplicon.made_by != "pair":
+                    alone = pair.forward if amplicon.made_by == "forward" else pair.reverse
+                    excluded.add(alone.primer.binding_sites[0])
+    if best is None:
+        raise ValueError(f"no pair amplifies {region.sequence_name}:{region.start}-{region.end}")
+    return GenomeDesign(where, *best, rounds, False, exhausted)
+
+
+def _intended(pair: PairReport, template: Locus) -> Locus:
+    """Return where a designed pair's amplicon lies on the genome.
+
+    The one place a template coordinate becomes a genome one.
+    """
+    forward = pair.forward.primer.binding_sites[0]
+    reverse = pair.reverse.primer.binding_sites[0]
+    return Locus(
+        template.sequence_name, template.start + forward.start, template.start + reverse.end
+    )
+
+
+class _ThreePrimeEnds:
+    """The 3' ends a design has ruled out, matching a binding site of any length.
+
+    A primer primes an off-target site by its 3' end, so a site sharing that end primes there
+    too: a shorter one matches whatever the longer one did, and a longer one only adds bases
+    away from the end. Ruling out the end rather than the site keeps every one of them out.
+    """
+
+    def __init__(self) -> None:
+        self._ends: set[tuple[Strand, int]] = set()
+
+    def add(self, site: BindingSite) -> None:
+        """Rule out every binding site with this one's 3' end."""
+        self._ends.add(_three_prime(site))
+
+    def __contains__(self, site: object) -> bool:
+        """Return whether a binding site's 3' end is ruled out."""
+        return isinstance(site, BindingSite) and _three_prime(site) in self._ends
+
+
+def _three_prime(site: BindingSite) -> tuple[Strand, int]:
+    """Return the strand a binding site lies on and where its 3' end is."""
+    return site.strand, site.end if site.strand is Strand.FORWARD else site.start
 
 
 @dataclass(frozen=True, slots=True)
