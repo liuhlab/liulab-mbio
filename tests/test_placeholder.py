@@ -2,8 +2,8 @@
 
 from typer.testing import CliRunner
 
-from newpkg import __version__, greet
-from newpkg.cli import app
+from liulab_mbio import __version__, greet
+from liulab_mbio.cli import app
 
 
 def test_greet_addresses_the_name_it_is_given() -> None:
