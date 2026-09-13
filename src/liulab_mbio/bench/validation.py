@@ -15,6 +15,7 @@ from liulab_mbio.primers import (
     ONETAQ,
     Q5,
     THRESHOLDS_FOR,
+    Placement,
     Polymerase,
     PrimerReport,
     Thresholds,
@@ -24,7 +25,7 @@ from liulab_mbio.primers import (
     evaluate_primer,
 )
 from liulab_mbio.protocol import Gel, Ladder, Lane
-from liulab_mbio.sequence import Primer, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand, reverse_complement
 
 #: Vector kept either side of the junctions by a designed colony PCR pair, bases. Twice this is
 #: the empty-vector band, and the note asks for every band to stay at 100 bp or more.
@@ -38,8 +39,18 @@ REVERSE_FLANK = 2 * COLONY_FLANK
 #: How far into the insert a junction primer anneals, bases, for the same reason.
 JUNCTION_OFFSET = 100
 
+#: How far either way a colony PCR primer's 5' end may move from where a flank or an offset puts
+#: it, bases. This design's proposal. It is small enough that the two flanking primers keep 40
+#: bases between their distances from their junctions, which is what leaves a reversed insert a
+#: band of its own.
+COLONY_ALLOWANCE = 10
+
 #: Genewiz asks for a sequencing primer 100 bases from what it reads, 50 to 60 at the closest.
 SANGER_FLANK = 100
+
+#: How much further out than `SANGER_FLANK` a sequencing primer's 3' end may sit, bases. The
+#: 100-base minimum is Genewiz's; how far past it a primer may go is this design's proposal.
+SANGER_ALLOWANCE = 30
 
 #: What the candidate plasmids are called, correct first. A reversed lane is numbered after
 #: `REVERSED_CLONE` wherever an assembly holds more than one insert to turn round.
@@ -134,6 +145,8 @@ def colony_pcr_check(
     reversed insert bands of its own, and `tells_orientation` says why one distance cannot.
     `insert_primer` adds one primer per insert, annealing `junction_offset` bases into it. Those
     are what tell a reversed insert apart and what put a band of their own on each junction.
+    Every designed primer's 5' end is free `COLONY_ALLOWANCE` bases either way of where its flank
+    or its offset puts it, so each is the best primer near that place rather than the best at it.
     Each candidate plasmid is amplified on its own, so the bands are simulated rather than
     derived.
 
@@ -217,9 +230,10 @@ def sanger_primers(
 ) -> tuple[SangerRead, SangerRead]:
     """Return a sequencing primer reading into the inserts from outside the first and last junction.
 
-    Every 3' end lands at least `flank` bases from its own junction, near enough for the read to
-    be clean there, and `SangerRead.read_bp` is how far it must carry to reach the far junction.
-    A provider whose reads are shorter needs a primer inside the inserts as well.
+    Every 3' end lands `flank` to `flank` plus `SANGER_ALLOWANCE` bases from its own junction,
+    near enough for the read to be clean there and never nearer, and `SangerRead.read_bp` is how
+    far it must carry to reach the far junction. A provider whose reads are shorter needs a
+    primer inside the inserts as well.
 
     Raises
     ------
@@ -234,6 +248,9 @@ def sanger_primers(
         product,
         start - flank - longest,
         Strand.FORWARD,
+        placement=Placement(
+            three_prime=_span(start - flank - SANGER_ALLOWANCE, SANGER_ALLOWANCE + 1, product)
+        ),
         name="Sequencing forward",
         polymerase=polymerase,
         thresholds=thresholds,
@@ -242,6 +259,7 @@ def sanger_primers(
         product,
         end + flank + longest,
         Strand.REVERSE,
+        placement=Placement(three_prime=_span(end + flank, SANGER_ALLOWANCE + 1, product)),
         name="Sequencing reverse",
         polymerase=polymerase,
         thresholds=thresholds,
@@ -276,6 +294,22 @@ def _numbered(label: str, inserts: Sequence[tuple[int, int]]) -> tuple[str, ...]
     return tuple(f"{label} {number}" for number in range(1, len(inserts) + 1))
 
 
+def _span(start: int, width: int, product: SequenceRecord) -> Segment:
+    """Return the `width` positions from `start`, wrapped round a circular product's origin.
+
+    A linear product holds nothing outside itself, so the span stops at its ends.
+    """
+    if product.topology == "circular":
+        start %= len(product)
+        return Segment(start, start + width)
+    return Segment(max(start, 0), min(start + width, len(product)))
+
+
+def _near(position: int, reach: int, product: SequenceRecord) -> Segment:
+    """Return the positions `reach` either way of one."""
+    return _span(position - reach, 2 * reach + 1, product)
+
+
 def _flanking_pair(
     product: SequenceRecord,
     start: int,
@@ -285,10 +319,14 @@ def _flanking_pair(
     polymerase: Polymerase,
     thresholds: Thresholds,
 ) -> tuple[Primer, Primer]:
+    forward = start - flank
+    reverse = end + (flank if reverse_flank is None else reverse_flank)
     return design_pair(
         product,
-        start - flank,
-        end + (flank if reverse_flank is None else reverse_flank),
+        forward,
+        reverse,
+        forward_placement=Placement(five_prime=_near(forward, COLONY_ALLOWANCE, product)),
+        reverse_placement=Placement(five_prime=_near(reverse, COLONY_ALLOWANCE, product)),
         forward_name="Colony PCR forward",
         reverse_name="Colony PCR reverse",
         polymerase=polymerase,
@@ -305,12 +343,17 @@ def _junction_primer(
     thresholds: Thresholds,
     name: str = _JUNCTION_PRIMER,
 ) -> Primer:
-    if end - start <= offset:
-        raise ValueError(f"an insert is shorter than the {offset} bases a junction primer needs")
+    needed = offset + COLONY_ALLOWANCE
+    if end - start <= needed:
+        raise ValueError(f"an insert is shorter than the {needed} bases a junction primer needs")
     return design_primer(
         product,
         start + offset,
         Strand.REVERSE,
+        placement=Placement(
+            five_prime=_near(start + offset, COLONY_ALLOWANCE, product),
+            three_prime=Segment(start, end),
+        ),
         name=name,
         polymerase=polymerase,
         thresholds=thresholds,
