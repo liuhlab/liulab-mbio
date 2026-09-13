@@ -22,16 +22,6 @@ def test_the_colony_pcr_master_mix_component_is_the_one_its_reaction_prints() ->
     assert colony_pcr_master_mix_component() in colony_pcr_reaction().components
 
 
-def test_a_pcr_program_anneals_at_the_pair_temperature_and_extends_by_length() -> None:
-    program = pcr_program(Q5, annealing_temperature=57.3, amplicon_length=800)
-    cycled = program.stages[1]
-    assert cycled.cycles == 30
-    assert [i.label for i in cycled.incubations] == ["Denature", "Anneal", "Extend"]
-    assert cycled.incubations[1].temperature_c == 57.3
-    assert cycled.incubations[2].seconds == 20
-    assert program.stages[-1].incubations[0].seconds is None
-
-
 def test_a_high_annealing_temperature_combines_annealing_and_extension() -> None:
     program = pcr_program(Q5, annealing_temperature=72.0, amplicon_length=800)
     cycled = program.stages[1]

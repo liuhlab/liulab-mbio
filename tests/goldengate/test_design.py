@@ -294,6 +294,8 @@ def test_an_enzyme_with_no_matrix_falls_back_to_the_rules_and_says_so() -> None:
     report = fidelity(("AATG", "GCTT", "TACA"), "PaqCI")
 
     assert not report.measured
+    assert report.enzyme_specific
+    assert report.label == "rule-based estimate"
     assert "rule" in report.source
     assert report.ligations == ()
 

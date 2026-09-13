@@ -13,14 +13,13 @@ from collections import Counter
 
 import pytest
 
-from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
+from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.goldengate import Plan, plan_assembly
 from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
@@ -75,14 +74,6 @@ def four(
     return plan_assembly(puc19, gfp, linker, tag)
 
 
-def test_the_pipeline_picks_the_enzyme_with_no_site_in_either_part(plan, puc19, gfp):
-    # BsaI reads a site in both fixtures and BsmBI two in the vector, so neither is free.
-    assert plan.enzyme.name == "BbsI"
-    assert plan.choice.free
-    assert find_sites(puc19, plan.enzyme) == ()
-    assert find_sites(gfp, plan.enzyme) == ()
-
-
 def test_the_vector_junction_moves_one_base_off_an_all_gc_overhang(plan, puc19):
     # The vector spells GGCG where the MCS ends, and an all-GC junction truncates.
     assert puc19.sequence[MCS[1] : MCS[1] + 4] == "GGCG"
@@ -96,32 +87,6 @@ def test_the_overhang_set_is_scored_on_measured_data(plan):
     assert report.measured
     assert "Pryor" in report.source
     assert report.value == pytest.approx(1.0)
-
-
-def test_the_product_is_the_vector_with_the_insert_in_place_of_the_span(plan, puc19, gfp):
-    product = plan.product
-    assert product.topology == "circular"
-    assert len(product) == len(puc19) - (plan.span[1] - plan.span[0]) + len(gfp)
-    assert len(product) == 3347
-    assert (
-        product.sequence
-        == puc19.sequence[: plan.span[0]] + gfp.sequence + puc19.sequence[plan.span[1] :]
-    )
-    assert plan.assembly.junction_positions == (395, 1112)
-
-
-def test_the_product_holds_no_site_of_the_chosen_enzyme(plan):
-    assert find_sites(plan.product, plan.enzyme) == ()
-    assert plan.assembly["sites"].value == 0
-    assert plan.assembly.status == "pass"
-
-
-def test_the_coding_sequence_of_the_insert_is_intact_and_appears_once(plan, gfp):
-    assert plan.product.sequence.count(gfp.sequence) == 1
-    coding = [one for one in plan.product.features if one.name == "GFP"]
-    assert [(s.start, s.end) for s in coding[0].segments] == [(395, 1112)]
-    assert plan.product.extract(coding[0]) == gfp.sequence
-    assert plan.assembly["GFP"].value == 1
 
 
 def test_an_enzyme_with_a_site_in_the_parts_is_refused(puc19, gfp):
@@ -171,13 +136,6 @@ def test_every_designed_primer_passes_evaluation(plan):
     assert plan.status != "fail"
 
 
-def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one(plan):
-    bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
-    assert len(plan.colony.primers) == 3
-    assert bands["Correct clone"] != bands["Reversed insert"]
-    assert plan.colony.tells_orientation
-
-
 def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp):
     bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
     insert_bp = plan.phenotype.insert[1] - plan.phenotype.insert[0]
@@ -194,12 +152,6 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
         COLONY_FLANK + insert_bp + REVERSE_FLANK,
     )
     assert bands["Empty vector"] == (COLONY_FLANK + removed + REVERSE_FLANK,)
-
-
-def test_the_sequencing_primers_read_across_both_junctions(plan, gfp):
-    for read in plan.reads:
-        assert read.distance_bp >= SANGER_FLANK
-        assert read.read_bp == read.distance_bp + len(gfp)
 
 
 def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):

@@ -202,15 +202,6 @@ def test_the_report_says_a_profile_is_not_a_measurement_of_the_enzyme(profile_pa
     assert "not specific" in report.label
 
 
-def test_without_a_profile_an_unmeasured_enzyme_is_still_scored_by_the_rules() -> None:
-    report = fidelity(("AATG", "GCTT", "TACA"), "PaqCI")
-
-    assert not report.measured
-    assert report.enzyme_specific
-    assert report.label == "rule-based estimate"
-    assert "rule" in report.source
-
-
 def test_an_enzyme_with_its_own_matrix_keeps_it_when_a_profile_is_there(profile_path: Path) -> None:
     profile = read_profile(profile_path)
     shipped = ligation_matrix("BsaI")
