@@ -21,10 +21,11 @@ from dataclasses import KW_ONLY, dataclass
 from functools import cache
 from itertools import islice, product
 
-from liulab_mbio.edits import EditReport, insert
+from liulab_mbio.codons import CodonUsage, codon_usage
+from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
 #: How many bases NEB recommends 5' of a recognition site for an enzyme to cut near an end.
 FLANK_LENGTH = 6
@@ -128,6 +129,56 @@ class Fragment:
     def length(self) -> int:
         """How many bases of top strand it carries, which is what a gel measures."""
         return self.end - self.start
+
+
+@dataclass(frozen=True, slots=True)
+class Domestication:
+    """One synonymous codon change, and the site it took away.
+
+    Parameters
+    ----------
+    site
+        The site that was there before the change.
+    feature
+        The coding sequence the codon belongs to, as it read before the change.
+    position
+        0-based index on the TOP strand where the codon's three bases begin. A codon of a
+        reverse-strand coding sequence reads back from ``position + 2``.
+    codon_index
+        Which codon of the coding sequence this is, counting from zero.
+    old_codon, new_codon
+        The codon before and after, read 5' to 3' along the coding sequence.
+    amino_acid
+        The one-letter amino acid both codons spell.
+    """
+
+    site: CutSite
+    feature: Feature
+    position: int
+    codon_index: int
+    old_codon: str
+    new_codon: str
+    amino_acid: str
+
+
+@dataclass(frozen=True, slots=True)
+class DomesticationReport:
+    """What domestication changed, and what it left for someone to decide.
+
+    Attributes
+    ----------
+    changes
+        Each site taken away, with the codon change that did it.
+    outside_cds
+        Sites lying in no coding sequence. Removing one of these changes what the record
+        spells, so it is reported and the choice is left to the caller.
+    unchanged
+        Sites in a coding sequence that no synonymous change could take away.
+    """
+
+    changes: tuple[Domestication, ...] = ()
+    outside_cds: tuple[CutSite, ...] = ()
+    unchanged: tuple[CutSite, ...] = ()
 
 
 def find_sites(
@@ -377,6 +428,156 @@ def _candidates(length: int) -> Iterable[str]:
         for choice in product("ACGT", repeat=length)
         if not _RUN.search(candidate := "".join(choice))
         and (length < 4 or 0.25 <= sum(base in "GC" for base in candidate) / length <= 0.75)
+    )
+
+
+def domesticate(
+    record: SequenceRecord,
+    enzymes: EnzymeLike | Iterable[EnzymeLike],
+    *,
+    usage: CodonUsage | None = None,
+    avoid: Iterable[EnzymeLike] = (),
+) -> tuple[SequenceRecord, DomesticationReport]:
+    """Take away every site of `enzymes` that a synonymous codon change can reach.
+
+    A site inside a coding sequence goes by changing one codon for another spelling the same
+    amino acid, keeping the reading frame and the protein. The replacement is the one the host
+    uses most often, among those that take the site away and spell no new site for `enzymes` or
+    `avoid`. A site lying in no coding sequence is reported and **not** edited: removing it
+    would change what the record spells, which is the caller's decision to make.
+
+    Parameters
+    ----------
+    record
+        The record to domesticate.
+    enzymes
+        The enzyme or enzymes whose sites should go.
+    usage
+        The host's codon usage. The shipped *E. coli* K-12 table by default.
+    avoid
+        Further enzymes whose sites no change may create.
+
+    Returns
+    -------
+    tuple[SequenceRecord, DomesticationReport]
+        The edited record, and what changed and what did not.
+    """
+    table = usage if usage is not None else codon_usage()
+    targets = _resolve(enzymes)
+    active = targets + _resolve(avoid)
+    changes: list[Domestication] = []
+    outside: list[CutSite] = []
+    unchanged: list[CutSite] = []
+    handled: set[tuple[str, int, int]] = set()
+    while True:
+        pending = [
+            site
+            for site in find_sites(record, targets)
+            if (site.enzyme.name, site.start, int(site.strand)) not in handled
+        ]
+        if not pending:
+            return record, DomesticationReport(tuple(changes), tuple(outside), tuple(unchanged))
+        site = pending[0]
+        handled.add((site.enzyme.name, site.start, int(site.strand)))
+        feature = _coding_feature(record, site)
+        if feature is None:
+            outside.append(site)
+        elif (swap := _synonymous(record, site, feature, table, active)) is None:
+            unchanged.append(site)
+        else:
+            record, change = swap
+            changes.append(change)
+
+
+def _coding_feature(record: SequenceRecord, site: CutSite) -> Feature | None:
+    """Return the first coding sequence the site touches, or ``None`` when it touches none."""
+    covered = _covered(record, site)
+    for feature in record.features:
+        if feature.type == "CDS" and covered & set(_coding_positions(record, feature)):
+            return feature
+    return None
+
+
+def _covered(record: SequenceRecord, site: CutSite) -> set[int]:
+    """Return the record indices the matched site occupies, reduced across the origin."""
+    length = len(record)
+    return {(site.start + step) % length for step in range(len(site.enzyme.site))}
+
+
+def _coding_positions(record: SequenceRecord, feature: Feature) -> list[int]:
+    """Return each base of a coding sequence as a record index, in the order the codons read."""
+    length = len(record)
+    positions = [
+        index % length
+        for segment in feature.segments
+        for index in range(segment.start, segment.end)
+    ]
+    if feature.strand == Strand.REVERSE:
+        positions.reverse()
+    return positions
+
+
+def _codon_span(three: list[int], length: int) -> tuple[int, int] | None:
+    """One codon's span on the top strand, or ``None`` when its bases do not run together."""
+    if len(three) != 3:
+        return None
+    top = three if (three[0] + 1) % length == three[1] else three[::-1]
+    if (top[0] + 1) % length != top[1] or (top[1] + 1) % length != top[2]:
+        return None
+    return top[0], top[0] + 3
+
+
+def _synonymous(
+    record: SequenceRecord,
+    site: CutSite,
+    feature: Feature,
+    table: CodonUsage,
+    active: tuple[Enzyme, ...],
+) -> tuple[SequenceRecord, Domestication] | None:
+    """Change one codon to take the site away, or ``None`` when no synonymous codon does."""
+    length = len(record)
+    positions = _coding_positions(record, feature)
+    coding = record.extract(feature)
+    if len(coding) != len(positions):
+        return None
+    where = {position: index for index, position in enumerate(positions)}
+    before = len(find_sites(record, active))
+    candidates: list[tuple[float, int, int, str, str, str, tuple[int, int]]] = []
+    for index in sorted({where[at] // 3 for at in _covered(record, site) if at in where}):
+        old = coding[3 * index : 3 * index + 3]
+        span = _codon_span(positions[3 * index : 3 * index + 3], length)
+        if len(old) != 3 or span is None or set(old) - set("ACGT"):
+            continue
+        amino = table.amino_acid(old)
+        candidates.extend(
+            (
+                -table.fraction(new),
+                sum(a != b for a, b in zip(old, new, strict=True)),
+                index,
+                old,
+                new,
+                amino,
+                span,
+            )
+            for new in table.synonymous(old)
+            if new != old
+        )
+    for _, _, index, old, new, amino, span in sorted(candidates):
+        bases = reverse_complement(new) if feature.strand == Strand.REVERSE else new
+        edited, _ = replace(record, span[0], span[1], bases)
+        after = find_sites(edited, active)
+        if len(after) != before - 1 or any(_is(one, site) for one in after):
+            continue
+        return edited, Domestication(site, feature, span[0], index, old, new, amino)
+    return None
+
+
+def _is(one: CutSite, other: CutSite) -> bool:
+    """Whether two hits are the same site of the same enzyme on the same strand."""
+    return (one.enzyme.name, one.start, one.strand) == (
+        other.enzyme.name,
+        other.start,
+        other.strand,
     )
 
 

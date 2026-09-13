@@ -2,12 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.codons import codon_usage
 from liulab_mbio.edits import EditReport
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import (
     digest,
+    domesticate,
     find_sites,
     free_enzymes,
     has_site,
@@ -26,6 +28,10 @@ REVERSE = "GGGGAAAACGAGACCTTTT"
 ROTATED = "GTTTTCCCCAAAAGGTCTC"
 # Twenty bases whose BsaI site begins at 17 and finishes in the first three.
 ACROSS = "CTC" + "A" * 14 + "GGT"
+
+# A coding sequence whose BsaI site straddles two codons, built so that the leucine codon
+# E. coli prefers, CTC -> CTG, spells an EcoRI site that was not there before.
+FORCED = "ATG" + "GGTCTC" + "AATTC" + "A" + "TAA"
 
 BSAI = get_enzyme("BsaI")
 # An invented enzyme whose site carries an IUPAC code and is not its own reverse complement.
@@ -263,6 +269,82 @@ def test_a_type_ii_enzyme_gets_its_site_and_no_overhang_to_choose() -> None:
     assert len(tail) == 6 + 6
     with pytest.raises(ValueError, match="overhang"):
         primer_tail(get_enzyme("EcoRI"), "AATG")
+
+
+def test_a_site_inside_a_cds_goes_by_the_codon_the_host_uses_most(gfp: SequenceRecord) -> None:
+    edited, report = domesticate(gfp, "BsaI")
+    assert not has_site(edited, "BsaI")
+    (change,) = report.changes
+    # Aspartate: E. coli spells it GAT more often than GAC, and one base does it.
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("GAC", "GAT", "D")
+    assert (change.position, change.codon_index) == (645, 215)
+    assert change.feature.name == "GFP"
+    assert (report.outside_cds, report.unchanged) == ((), ())
+
+
+def test_domestication_changes_the_bases_and_not_the_protein(gfp: SequenceRecord) -> None:
+    edited, _ = domesticate(gfp, "BsaI")
+    before = next(f for f in gfp.features if f.type == "CDS")
+    after = next(f for f in edited.features if f.type == "CDS")
+    assert edited.extract(after) != gfp.extract(before)
+    assert _protein(edited.extract(after)) == _protein(gfp.extract(before))
+
+
+def test_a_reverse_strand_cds_is_read_in_its_own_frame(puc19: SequenceRecord) -> None:
+    edited, report = domesticate(puc19, "BsaI")
+    assert not has_site(edited, "BsaI")
+    (change,) = report.changes
+    assert change.feature.name == "AmpR"
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("GGG", "GGC", "G")
+    assert (change.position, change.codon_index) == (1769, 238)
+    # A synonymous swap is the same length, so nothing else in the record moves.
+    assert len(edited) == len(puc19)
+
+
+def test_a_site_outside_any_cds_is_reported_and_left_alone(puc19: SequenceRecord) -> None:
+    edited, report = domesticate(puc19, "BsmBI")
+    assert report.changes == ()
+    assert [site.start for site in report.outside_cds] == [50, 2682]
+    assert edited == puc19
+
+
+def test_a_lone_site_outside_a_cds_is_reported_too(puc19: SequenceRecord) -> None:
+    _, report = domesticate(puc19, "SapI")
+    assert [site.start for site in report.outside_cds] == [682]
+
+
+def test_the_favourite_codon_is_passed_over_when_it_spells_a_site_to_avoid() -> None:
+    # Leucine CTG is the codon E. coli uses most, and here it would spell an EcoRI site.
+    plain, report = domesticate(_cds(FORCED), "BsaI")
+    assert (report.changes[0].old_codon, report.changes[0].new_codon) == ("CTC", "CTG")
+    assert has_site(plain, "EcoRI")
+
+    edited, report = domesticate(_cds(FORCED), "BsaI", avoid=["EcoRI"])
+    (change,) = report.changes
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("GGT", "GGC", "G")
+    assert not has_site(edited, ["BsaI", "EcoRI"])
+
+
+def test_a_site_no_synonymous_change_can_remove_is_reported_unchanged() -> None:
+    # Methionine and tryptophan have one codon each, so this site cannot be changed silently.
+    enzyme = Enzyme("MetTrpI", "ATGTGG", top_cut=6, bottom_cut=10)
+    record = _cds("ATGATGTGGTAA")
+    edited, report = domesticate(record, enzyme)
+    assert report.changes == ()
+    assert [site.start for site in report.unchanged] == [3]
+    assert edited == record
+
+
+def _cds(sequence: str) -> SequenceRecord:
+    segments = (Segment(0, len(sequence)),)
+    return SequenceRecord(
+        sequence, features=(Feature("test", "CDS", segments, strand=Strand.FORWARD),)
+    )
+
+
+def _protein(coding: str) -> str:
+    usage = codon_usage()
+    return "".join(usage.amino_acid(coding[at : at + 3]) for at in range(0, len(coding), 3))
 
 
 def _found(record: SequenceRecord, name: str) -> list[tuple[int, Strand]]:
