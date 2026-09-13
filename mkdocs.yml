@@ -18,6 +18,8 @@ site_description: "Molecular biology design and analysis tools for DNA sequences
 # rule `agent-docs-unpublished` fails the build if you do.
 nav:
   - Home: index.md
+  - Put GFP into pUC19: golden-gate.md
+  - Example plan: examples/pUC19-GFP/index.md
   - API reference: api.md
 
 # What `--strict` catches. Every row was built against the pinned zensical and watched, not
