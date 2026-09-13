@@ -15,6 +15,7 @@ from liulab_mbio.protocol.model import (
     Protocol,
     ReactionTable,
     Reference,
+    Status,
     Step,
     ThermocyclerProgram,
     Timer,
@@ -184,9 +185,12 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
         ("Note", "", lambda o: o.note),
     ]
     shown = [(label, css, get) for label, css, get in columns if any(get(o) for o in oligos)]
+    judged = any(oligo.status is not None for oligo in oligos)
     written = escape("Sequence (5'→3')")
-    head = f'<th>Name</th><th>{written}</th><th class="num">Length</th>' + "".join(
-        _cell("th", css, escape(label)) for label, css, _ in shown
+    head = (
+        f'<th>Name</th><th>{written}</th><th class="num">Length</th>'
+        + "".join(_cell("th", css, escape(label)) for label, css, _ in shown)
+        + ("<th>Checks</th>" if judged else "")
     )
     rows = []
     for oligo in oligos:
@@ -197,6 +201,8 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
             f'<td class="num">{len(oligo.sequence)}</td>',
             *(_cell("td", css, escape(get(oligo))) for _, css, get in shown),
         ]
+        if judged:
+            cells.append(f'<td class="verdict-cell">{_verdict(oligo.status)}</td>')
         rows.append(f"<tr>{''.join(cells)}</tr>")
     copy_all = ""
     if len(oligos) > 1:
@@ -205,7 +211,36 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
     return (
         '<section class="block oligos">\n<h2>Oligos</h2>\n'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
-        f"<tbody>{''.join(rows)}</tbody></table></div>{copy_all}\n</section>\n"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+        f"{_oligo_checks(oligos)}{copy_all}\n</section>\n"
+    )
+
+
+def _verdict(status: Status | None) -> str:
+    """One row's verdict, as a word: the fill is never what carries it."""
+    if status is None:
+        return '<span class="muted">not judged</span>'
+    return f'<span class="check is-{status}"><span class="verdict">{escape(status)}</span></span>'
+
+
+def _oligo_checks(oligos: tuple[Oligo, ...]) -> str:
+    """One closed toggle under the sheet: which rows are not a plain pass, and why.
+
+    Closed and out of the table, so the order sheet stays a sheet. What to do about a warning
+    is the reader's call, not this page's.
+    """
+    flagged = [oligo for oligo in oligos if oligo.checks]
+    if not flagged:
+        return ""
+    items = "".join(
+        f"<li><strong>{escape(oligo.name)}</strong> {escape(oligo.status or '')}: "
+        + ", ".join(f"{escape(check.name)} {escape(check.detail)}" for check in oligo.checks)
+        + "</li>"
+        for oligo in flagged
+    )
+    return (
+        f'<details class="oligo-checks"><summary>Checks on {len(flagged)} of {len(oligos)} '
+        f"oligos</summary><ul>{items}</ul></details>"
     )
 
 

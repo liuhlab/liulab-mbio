@@ -13,6 +13,7 @@ translated, and how a plate reads -- is `Phenotype`, read off the product's own 
 
 import dataclasses
 import os
+from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,6 +51,7 @@ from liulab_mbio.primers import (
     Thresholds,
     design_pair,
     evaluate_primer,
+    reading,
 )
 from liulab_mbio.sequence import (
     BindingSite,
@@ -214,6 +216,8 @@ class Plan:
         Every designed oligo's evaluation, in order: each part's PCR, the colony PCR, the reads.
     host, polymerase
         The choices the protocol names.
+    thresholds
+        What those oligos were judged by, so a page prints the band beside the value.
     """
 
     vector: SequenceRecord
@@ -230,6 +234,7 @@ class Plan:
     reports: tuple[PrimerReport, ...]
     host: str
     polymerase: Polymerase
+    thresholds: Thresholds = THRESHOLDS
 
     @property
     def enzyme(self) -> Enzyme:
@@ -254,16 +259,13 @@ class Plan:
     @property
     def checks(self) -> tuple[Check, ...]:
         """The product's checks, with one more for the oligos."""
-        worst = _worst(report.status for report in self.reports)
-        warned = sum(1 for report in self.reports if report.status == "warn")
-        failed = sum(1 for report in self.reports if report.status == "fail")
         return (
             *self.assembly.checks,
             Check(
                 "primers",
-                worst,
+                _worst(report.status for report in self.reports),
                 len(self.reports),
-                f"{len(self.reports)} designed, {warned} with a warning, {failed} failing",
+                _primer_detail(self.reports, self.thresholds),
             ),
         )
 
@@ -458,7 +460,37 @@ def plan_assembly(
         ),
         host,
         polymerase,
+        thresholds,
     )
+
+
+def _primer_detail(reports: tuple[PrimerReport, ...], thresholds: Thresholds) -> str:
+    """Return what the oligos' verdicts say: the counts, the kinds, and what nothing judged.
+
+    A count alone cannot be acted on, so each kind that fired is named with the rows it covers.
+    """
+    warned = sum(1 for report in reports if report.status == "warn")
+    failed = sum(1 for report in reports if report.status == "fail")
+    counted = Counter(
+        reading(check, thresholds).label
+        for report in reports
+        for check in report.checks
+        if check.status not in (None, "pass")
+    )
+    unjudged = dict.fromkeys(
+        reading(check, thresholds).label
+        for report in reports
+        for check in report.checks
+        if check.status is None
+    )
+    said = f"{len(reports)} designed, {warned} with a warning, {failed} failing"
+    if counted:
+        kinds = ", ".join(
+            f"{label} on {rows}"
+            for label, rows in sorted(counted.items(), key=lambda one: (-one[1], one[0]))
+        )
+        said += f": {kinds}"
+    return f"{said}; not judged: {', '.join(unjudged)}" if unjudged else said
 
 
 def _orientations(
@@ -754,10 +786,10 @@ def _marker(vector: SequenceRecord) -> Feature | None:
     )
 
 
-def _worst(statuses: Iterable[Status]) -> Status:
-    """Return the worst of these statuses."""
+def _worst(statuses: Iterable[Status | None]) -> Status:
+    """Return the worst of these statuses, passing over anything nothing judged."""
     worst: Status = "pass"
     for status in statuses:
-        if _RANK[status] > _RANK[worst]:
+        if status is not None and _RANK[status] > _RANK[worst]:
             worst = status
     return worst

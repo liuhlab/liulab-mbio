@@ -89,7 +89,8 @@ _Avoid_: PCR product, band
 ### Check
 
 One pass, warn or fail verdict on a primer, a pair or an assembled product, carrying the value
-it judged.
+it judged. A check no sourced threshold judges carries no verdict at all rather than a pass,
+and says so wherever it is shown.
 _Avoid_: validation, rule, test
 
 ### Protocol

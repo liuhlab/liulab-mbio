@@ -6,7 +6,8 @@ fields without a default are required::
     {"title": str, "summary": str, "overview": {label: short value},
      "highlights": [sentence], "checks": [{"name", "status", "detail"}],
      "materials": [{"name", "supplier", "catalog", "storage", "amount", "note"}],
-     "oligos": [{"name", "sequence", "purpose", "tm_c", "stock", "note"}],
+     "oligos": [{"name", "sequence", "purpose", "tm_c", "stock", "note", "status",
+         "checks": [{"name", "status", "detail"}]}],
      "equipment": [str],
      "steps": [{"title", "instructions": [str], "cautions": [str], "notes": [str],
          "tables": [{"title", "reactions", "overage",
@@ -19,7 +20,8 @@ fields without a default are required::
      "references": [{"text", "url"}]}
 
 An incubation's ``"seconds": null`` holds indefinitely. A check's ``"status"`` is ``"pass"``,
-``"warn"`` or ``"fail"``. An ``"overview"`` value is a card: a few words, never a sentence.
+``"warn"`` or ``"fail"``; an oligo's may also be absent, which says nothing judged that row. An
+``"overview"`` value is a card: a few words, never a sentence.
 """
 
 from liulab_mbio.protocol.model import (

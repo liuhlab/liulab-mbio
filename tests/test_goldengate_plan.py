@@ -8,6 +8,7 @@ Two fixtures make only a two-fragment assembly, so the many-part tests synthesis
 inserts. The first four bases of each are the overhang its junction takes.
 """
 
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -259,6 +260,32 @@ def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
         assert (oligo.name, oligo.sequence) == (name, sequence)
         assert len(oligo.sequence) == int(length)
         assert oligo.tm_c == pytest.approx(float(tm), abs=0.05)
+
+
+def test_every_oligo_row_carries_its_verdict_and_a_warned_one_says_why(plan):
+    rows = {oligo.name: oligo for oligo in plan.protocol().oligos}
+    assert [row.status for row in rows.values()] == [report.status for report in plan.reports]
+    warned = rows["Sequencing forward"]
+    assert warned.status == "warn"
+    # The check, the value and the band it missed, in a few words each.
+    assert [(check.name, check.detail) for check in warned.checks] == [
+        ("length", "16 (band 18-30)"),
+        ("GC clamp", "4 (band 1-3)"),
+    ]
+    assert (rows["GFP forward"].status, rows["GFP forward"].checks) == ("pass", ())
+
+
+def test_the_oligo_summary_names_the_kinds_and_counts_the_rows_it_names(plan):
+    detail = next(check for check in plan.checks if check.name == "primers").detail
+    oligos = plan.protocol().oligos
+    warned = sum(1 for oligo in oligos if oligo.status == "warn")
+    assert detail.startswith(f"{len(oligos)} designed, {warned} with a warning, 0 failing")
+    fired = Counter(check.name for oligo in oligos for check in oligo.checks)
+    assert fired
+    for label, rows in fired.items():
+        assert f"{label} on {rows}" in detail
+    # A check no sourced threshold judges is named, not counted as a pass.
+    assert detail.endswith("not judged: full-primer Tm, 3' end stability")
 
 
 def test_every_oligo_names_the_step_that_uses_it_and_is_no_material(plan):

@@ -60,8 +60,11 @@ anything. Everything they need to decide what to do next is on the page, or it d
 - **Materials, oligos and equipment are three lists.** `materials` is every reagent and
   consumable, with supplier, catalogue number, storage and what one run takes — leave a cell
   empty rather than guess a catalogue number, because it is ordered as written. `oligos` is the
-  order sheet: sequence, Tm, which step uses it, working stock, each with a copy button.
-  `equipment` is one light line of hardware.
+  order sheet: sequence, Tm, which step uses it, working stock, each with a copy button. A row
+  may carry its own `status` and the `checks` that fired, each a few words — the value and the
+  band it missed; the page prints the verdict in the row and keeps the reasons behind one
+  toggle. Leave `status` out where nothing judged that oligo, and it says so rather than
+  reading as a pass. `equipment` is one light line of hardware.
 - **Steps in the order they happen**, each one action per instruction, in the imperative. A
   step the reader could split in two usually should be.
 - **Volumes in a reaction table**, never buried in a sentence: the reader scales it to their

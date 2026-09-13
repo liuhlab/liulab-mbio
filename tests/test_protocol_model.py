@@ -84,6 +84,10 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: Ladder("marker", ()),
         lambda: Lane("sample", (0,)),
         lambda: Oligo("M13 fwd", "  "),
+        lambda: Oligo("M13 fwd", "GTAAAACG", checks=(Check("length", "warn", "17"),)),
+        lambda: Oligo(
+            "M13 fwd", "GTAAAACG", status="pass", checks=(Check("length", "warn", "17"),)
+        ),
         lambda: Reference("x", url="javascript:alert(1)"),
         lambda: Step(""),
         lambda: Protocol(""),
@@ -111,9 +115,35 @@ def test_a_fact_of_a_few_words_is_a_card() -> None:
     assert Protocol("t", overview={"Vector": "pUC19, 2686 bp"}).overview["Vector"]
 
 
+def test_an_oligo_carries_its_own_verdict_and_the_checks_that_fired() -> None:
+    row = Oligo(
+        "Sequencing forward",
+        "AACTGTTGGGAAGGGC",
+        status="warn",
+        checks=(
+            Check("length", "warn", "16 (band 18-30)"),
+            Check("GC clamp", "warn", "4 (band 1-3)"),
+        ),
+    )
+    assert row.status == "warn"
+    assert [(check.name, check.detail) for check in row.checks] == [
+        ("length", "16 (band 18-30)"),
+        ("GC clamp", "4 (band 1-3)"),
+    ]
+
+
+def test_an_oligo_nothing_judged_says_so_rather_than_reading_as_a_pass() -> None:
+    assert Oligo("M13 fwd", "GTAAAACGACGGCCAGT").status is None
+    assert Oligo("M13 fwd", "GTAAAACGACGGCCAGT", status="pass").checks == ()
+
+
 def test_a_verdict_outside_the_three_is_refused() -> None:
     with pytest.raises(ValueError, match="status"):
         Protocol.from_dict({"title": "t", "checks": [{"name": "junctions", "status": "ok"}]})
+    with pytest.raises(ValueError, match="status"):
+        Protocol.from_dict(
+            {"title": "t", "oligos": [{"name": "M13 fwd", "sequence": "ACGT", "status": "ok"}]}
+        )
 
 
 def test_a_protocol_reads_from_its_json_file() -> None:
@@ -122,7 +152,12 @@ def test_a_protocol_reads_from_its_json_file() -> None:
     assert protocol.overview["Expected product"] == "500 bp"
     assert protocol.highlights[0].startswith("The reaction is a colony check")
     assert protocol.checks == (
-        Check("primers", "pass", detail="2 designed, 0 with a warning"),
+        Check(
+            "primers",
+            "warn",
+            detail="2 designed, 2 with a warning, 0 failing: length on 2; "
+            "not judged: full-primer Tm, 3' end stability",
+        ),
         Check("controls", "warn", detail="no positive control is set up"),
     )
     # Oligos are their own list, and a material the file gives no catalogue number keeps none.
@@ -131,7 +166,13 @@ def test_a_protocol_reads_from_its_json_file() -> None:
     assert (protocol.materials[-1].supplier, protocol.materials[-1].catalog) == ("", "")
     assert [o.name for o in protocol.oligos] == ["M13 fwd", "M13 rev"]
     assert protocol.oligos[0] == Oligo(
-        "M13 fwd", "GTAAAACGACGGCCAGT", purpose="Set up the PCR", tm_c=55.4, stock="10 µM"
+        "M13 fwd",
+        "GTAAAACGACGGCCAGT",
+        purpose="Set up the PCR",
+        tm_c=55.4,
+        stock="10 µM",
+        status="warn",
+        checks=(Check("length", "warn", "17 (band 18-30)"),),
     )
     assert protocol.equipment[0] == "Thermocycler with a heated lid"
     assert [s.title for s in protocol.steps] == [

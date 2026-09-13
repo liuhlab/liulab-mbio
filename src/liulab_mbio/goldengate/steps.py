@@ -30,6 +30,7 @@ from liulab_mbio.goldengate.bench import (
     pcr_reaction,
 )
 from liulab_mbio.goldengate.plan import DEFAULT_HOST
+from liulab_mbio.primers import PrimerReport, Thresholds, reading
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -218,8 +219,15 @@ def _phenotype_sentences(plan: "Plan") -> tuple[str, ...]:
 
 
 def _checks(plan: "Plan") -> tuple[Check, ...]:
-    """Return the plan's verdicts, one badge each, so a warning is seen and not read."""
-    return tuple(Check(check.name, check.status, detail=check.detail) for check in plan.checks)
+    """Return the plan's verdicts, one badge each, so a warning is seen and not read.
+
+    A badge is a verdict, so a check carrying none has none to show.
+    """
+    return tuple(
+        Check(check.name, check.status, detail=check.detail)
+        for check in plan.checks
+        if check.status is not None
+    )
 
 
 def _materials(plan: "Plan") -> tuple[Material, ...]:
@@ -317,7 +325,7 @@ def _per_reaction(table: ReactionTable, name: str) -> str:
 
 
 def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
-    """Every designed oligo, in the order the primer sheet lists them."""
+    """Every designed oligo, in the order the primer sheet lists them, each with its verdict."""
     stock = f"{PRIMER_STOCK_UM:g} µM"
     return tuple(
         Oligo(
@@ -326,9 +334,23 @@ def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
             purpose=purpose,
             tm_c=round(report["tm"].value, 1),
             stock=stock,
+            status=report.status,
+            checks=_oligo_checks(report, plan.thresholds),
         )
         for report, purpose in zip(plan.reports, _purposes(plan), strict=True)
     )
+
+
+def _oligo_checks(report: PrimerReport, thresholds: Thresholds) -> tuple[Check, ...]:
+    """Return the checks that did not pass, each as its value and the band it missed."""
+    fired = []
+    for check in report.checks:
+        status = check.status
+        if status is None or status == "pass":
+            continue
+        word = reading(check, thresholds)
+        fired.append(Check(word.label, status, detail=word.detail))
+    return tuple(fired)
 
 
 def _purposes(plan: "Plan") -> tuple[str, ...]:

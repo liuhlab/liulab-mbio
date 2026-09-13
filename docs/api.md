@@ -72,8 +72,9 @@ across the origin of a circular record ends past the record's length — see
 
 The model a bench protocol is written in, and the renderer that turns one into a single
 self-contained HTML page. `Check` is one pass, warn or fail verdict; `Oligo` is one row of the
-order sheet; `OVERVIEW_CHARS` is the character budget for a header card, and a longer value is
-refused rather than truncated.
+order sheet, carrying its own verdict and the checks that fired where something judged it;
+`OVERVIEW_CHARS` is the character budget for a header card, and a longer value is refused
+rather than truncated.
 
 ::: liulab_mbio.protocol
     options:

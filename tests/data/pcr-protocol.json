@@ -10,7 +10,7 @@
     "A colony that gives no band was too much material, not a failed clone."
   ],
   "checks": [
-    {"name": "primers", "status": "pass", "detail": "2 designed, 0 with a warning"},
+    {"name": "primers", "status": "warn", "detail": "2 designed, 2 with a warning, 0 failing: length on 2; not judged: full-primer Tm, 3' end stability"},
     {"name": "controls", "status": "warn", "detail": "no positive control is set up"}
   ],
   "materials": [
@@ -20,8 +20,8 @@
     {"name": "1% agarose gel in 1x TAE"}
   ],
   "oligos": [
-    {"name": "M13 fwd", "sequence": "GTAAAACGACGGCCAGT", "purpose": "Set up the PCR", "tm_c": 55.4, "stock": "10 µM"},
-    {"name": "M13 rev", "sequence": "CAGGAAACAGCTATGAC", "purpose": "Set up the PCR", "tm_c": 52.8, "stock": "10 µM"}
+    {"name": "M13 fwd", "sequence": "GTAAAACGACGGCCAGT", "purpose": "Set up the PCR", "tm_c": 55.4, "stock": "10 µM", "status": "warn", "checks": [{"name": "length", "status": "warn", "detail": "17 (band 18-30)"}]},
+    {"name": "M13 rev", "sequence": "CAGGAAACAGCTATGAC", "purpose": "Set up the PCR", "tm_c": 52.8, "stock": "10 µM", "status": "warn", "checks": [{"name": "length", "status": "warn", "detail": "17 (band 18-30)"}]}
   ],
   "equipment": [
     "Thermocycler with a heated lid",

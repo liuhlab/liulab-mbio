@@ -414,7 +414,7 @@ class Assembly:
         """The worst status of any check."""
         worst: Status = "pass"
         for check in self.checks:
-            if _RANK[check.status] > _RANK[worst]:
+            if check.status is not None and _RANK[check.status] > _RANK[worst]:
                 worst = check.status
         return worst
 

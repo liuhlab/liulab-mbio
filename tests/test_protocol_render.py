@@ -133,12 +133,14 @@ def test_a_card_holds_a_fact_and_a_sentence_is_prose(page: Node) -> None:
 
 def test_each_check_is_a_badge_and_a_warn_shows_without_being_read(page: Node) -> None:
     badges = page.find_all("li", cls="check")
-    assert [badge.attrs["class"] for badge in badges] == ["check is-pass", "check is-warn"]
-    assert [badge.find_all(cls="verdict")[0].text for badge in badges] == ["pass", "warn"]
+    assert [badge.attrs["class"] for badge in badges] == ["check is-warn", "check is-warn"]
+    assert [badge.find_all(cls="verdict")[0].text for badge in badges] == ["warn", "warn"]
     assert badges[1].find_all(cls="check-name")[0].text == "controls"
-    # Only a verdict that is not a pass spells its detail out.
+    # Only a verdict that is not a pass spells its detail out, and it names the kinds.
     details = [p.text for p in page.find_all(cls="check-detail")]
-    assert details == ["controls warn: no positive control is set up"]
+    assert details[0].startswith("primers warn: 2 designed, 2 with a warning")
+    assert "0 failing: length on 2" in details[0]
+    assert details[1] == "controls warn: no positive control is set up"
 
 
 def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
@@ -160,12 +162,37 @@ def test_an_oligo_is_an_order_sheet_row_and_never_a_material(page: Node) -> None
         "Tm (°C)",
         "For",
         "Working stock",
+        "Checks",
     ]
     row = next(r for r in oligos.find_all("tr") if "M13 fwd" in r.text)
     cells = [cell.text for cell in row.find_all("td")]
     assert cells[0] == "M13 fwd"
     assert cells[2] == str(len("GTAAAACGACGGCCAGT"))
-    assert cells[3:] == ["55.4", "Set up the PCR", "10 µM"]
+    assert cells[3:] == ["55.4", "Set up the PCR", "10 µM", "warn"]
+
+
+def test_a_warned_row_says_its_verdict_in_a_word_and_why_behind_a_toggle(page: Node) -> None:
+    oligos = page.find_all("section", cls="oligos")[0]
+    row = next(r for r in oligos.find_all("tr") if "M13 fwd" in r.text)
+    # The word carries the verdict, so a colour fill is never what the reader has to see.
+    assert row.find_all("td", cls="verdict-cell")[0].find_all(cls="verdict")[0].text == "warn"
+    toggle = oligos.find_all("details")[0]
+    assert toggle.find_all("summary")[0].text == "Checks on 2 of 2 oligos"
+    assert [li.text for li in toggle.find_all("li")] == [
+        "M13 fwd warn: length 17 (band 18-30)",
+        "M13 rev warn: length 17 (band 18-30)",
+    ]
+
+
+def test_a_clean_row_says_pass_and_an_unjudged_one_says_so() -> None:
+    protocol = Protocol(
+        "t",
+        oligos=(Oligo("clean", "ACGTACGTACGTACGTACGT", status="pass"), Oligo("bare", "ACGTACGT")),
+    )
+    page = parse(render_html(protocol))
+    assert [td.text for td in page.find_all("td", cls="verdict-cell")] == ["pass", "not judged"]
+    # Nothing fired, so the sheet carries no toggle at all.
+    assert not page.find_all("details")
 
 
 def test_a_material_with_no_catalogue_number_gets_an_empty_cell(page: Node) -> None:

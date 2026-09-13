@@ -58,6 +58,32 @@ class Material:
 
 
 @dataclass(frozen=True, slots=True)
+class Check:
+    """One pass, warn or fail verdict on the work, shown in the header as a badge.
+
+    Parameters
+    ----------
+    name
+        What was judged, such as ``"junctions"``.
+    status
+        One of `STATUSES`.
+    detail
+        What a reader needs besides the verdict, shown only where the verdict is not a pass.
+    """
+
+    name: str
+    status: Status
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a verdict that is not one of the three."""
+        _require(
+            self.status in STATUSES,
+            f"check {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class Oligo:
     """One synthetic DNA to order: a row of the order sheet, kept apart from the reagents.
 
@@ -75,6 +101,12 @@ class Oligo:
         The working dilution, such as ``"10 µM"``.
     note
         Anything else, such as a modification or a purification.
+    status
+        The row's own verdict, one of `STATUSES`, or ``None`` where nothing judged it. A row
+        with no verdict says so rather than reading as a pass.
+    checks
+        Why the verdict is not a pass: the checks that fired, each in a few words. The sheet
+        shows the verdict in the row and keeps these behind a toggle, so it stays a sheet.
     """
 
     name: str
@@ -84,10 +116,23 @@ class Oligo:
     tm_c: float | None = None
     stock: str = ""
     note: str = ""
+    status: Status | None = None
+    checks: tuple[Check, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an oligo with no sequence."""
+        """Refuse an oligo with no sequence, or a verdict better than its own checks."""
         _require(bool(self.sequence.strip()), f"oligo {self.name!r} has no sequence")
+        _require(
+            self.status is None or self.status in STATUSES,
+            f"oligo {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
+        )
+        for check in self.checks:
+            _require(
+                self.status is not None
+                and STATUSES.index(self.status) >= STATUSES.index(check.status),
+                f"oligo {self.name!r}: {check.name} is {check.status!r} and the row says "
+                f"{self.status!r}",
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -320,32 +365,6 @@ class Reference:
 
 
 @dataclass(frozen=True, slots=True)
-class Check:
-    """One pass, warn or fail verdict on the work, shown in the header as a badge.
-
-    Parameters
-    ----------
-    name
-        What was judged, such as ``"junctions"``.
-    status
-        One of `STATUSES`.
-    detail
-        What a reader needs besides the verdict, shown only where the verdict is not a pass.
-    """
-
-    name: str
-    status: Status
-    detail: str = ""
-
-    def __post_init__(self) -> None:
-        """Refuse a verdict that is not one of the three."""
-        _require(
-            self.status in STATUSES,
-            f"check {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
-        )
-
-
-@dataclass(frozen=True, slots=True)
 class Step:
     """One numbered step of a protocol.
 
@@ -501,7 +520,7 @@ _PROTOCOL = _object(
     Protocol,
     checks=_list(_object(Check)),
     materials=_list(_object(Material)),
-    oligos=_list(_object(Oligo)),
+    oligos=_list(_object(Oligo, checks=_list(_object(Check)))),
     steps=_list(_STEP),
     references=_list(_object(Reference)),
 )
