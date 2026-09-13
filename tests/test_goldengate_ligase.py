@@ -261,7 +261,7 @@ def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
     assert scored.measured
     assert not scored.enzyme_specific
     protocol = made.protocol()
-    assert "not specific to PaqCI" in protocol.overview["Overhangs"]
+    assert "not specific to PaqCI" in protocol.overview["Fidelity"]
     assert NAMED in " ".join(one.text for one in protocol.references)
 
 
@@ -269,7 +269,7 @@ def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before() -> 
     made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna", enzyme="PaqCI")
 
     assert not made.overhangs.fidelity.measured
-    assert "rule-based estimate" in made.protocol().overview["Overhangs"]
+    assert "rule-based estimate" in made.protocol().overview["Fidelity"]
 
 
 def test_the_command_line_takes_the_matrix_as_an_option(profile_path: Path, tmp_path: Path) -> None:

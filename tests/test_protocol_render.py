@@ -6,7 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.protocol import Material, Protocol, Step, read_protocol, render_html, write_html
+from liulab_mbio.protocol import (
+    OVERVIEW_CHARS,
+    Material,
+    Protocol,
+    Step,
+    read_protocol,
+    render_html,
+    write_html,
+)
 
 EXAMPLE = Path(__file__).parent / "data" / "pcr-protocol.json"
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "wbr"}
@@ -105,6 +113,32 @@ def test_text_from_the_protocol_is_escaped() -> None:
     assert page.find_all("h1")[0].text == '<script>alert("t")</script>'
     assert "5 µL &lt; 10 µL" in html
     assert page.find_all("button", cls="copy")[0].attrs["data-copy"] == 'AC"GT'
+
+
+def test_the_header_reads_title_summary_facts_sentences_then_badges(page: Node) -> None:
+    header = page.find_all("header", cls="intro")[0]
+    blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
+    assert blocks[:5] == ["h1", "summary", "overview", "highlights", "checks"]
+
+
+def test_a_card_holds_a_fact_and_a_sentence_is_prose(page: Node) -> None:
+    cards = page.find_all("dl", cls="overview")[0].find_all("div")
+    assert [card.find_all("dt")[0].text for card in cards] == ["Template", "Expected product"]
+    assert all(len(card.find_all("dd")[0].text) <= OVERVIEW_CHARS for card in cards)
+    prose = [p.text for p in page.find_all(cls="highlights")[0].find_all("p")]
+    assert len(prose) == 2
+    assert prose[0].startswith("The reaction is a colony check")
+    assert prose[0] not in page.find_all("dl", cls="overview")[0].text
+
+
+def test_each_check_is_a_badge_and_a_warn_shows_without_being_read(page: Node) -> None:
+    badges = page.find_all("li", cls="check")
+    assert [badge.attrs["class"] for badge in badges] == ["check is-pass", "check is-warn"]
+    assert [badge.find_all(cls="verdict")[0].text for badge in badges] == ["pass", "warn"]
+    assert badges[1].find_all(cls="check-name")[0].text == "controls"
+    # Only a verdict that is not a pass spells its detail out.
+    details = [p.text for p in page.find_all(cls="check-detail")]
+    assert details == ["controls warn: no positive control is set up"]
 
 
 def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:

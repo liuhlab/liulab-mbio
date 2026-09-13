@@ -5,6 +5,14 @@
     "Template": "Plasmid DNA or a picked colony",
     "Expected product": "500 bp"
   },
+  "highlights": [
+    "The reaction is a colony check, so the only answer it gives is a band size.",
+    "A colony that gives no band was too much material, not a failed clone."
+  ],
+  "checks": [
+    {"name": "primers", "status": "pass", "detail": "2 designed, 0 with a warning"},
+    {"name": "controls", "status": "warn", "detail": "no positive control is set up"}
+  ],
   "materials": [
     {"name": "Taq DNA polymerase", "storage": "-20 °C"},
     {"name": "10x standard Taq buffer", "storage": "-20 °C"},

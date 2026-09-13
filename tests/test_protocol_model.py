@@ -4,6 +4,8 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.protocol import (
+    OVERVIEW_CHARS,
+    Check,
     Component,
     Gel,
     Incubation,
@@ -96,10 +98,31 @@ def test_master_mix_volumes_round_to_a_hundredth_of_a_microlitre() -> None:
     assert table.mix_volumes(2) == (0.73,)
 
 
+def test_a_sentence_is_refused_a_place_in_the_card_grid() -> None:
+    sentence = "The insert reads on the opposite strand, so that promoter does not transcribe it."
+    assert len(sentence) > OVERVIEW_CHARS
+    with pytest.raises(ValueError, match="highlights"):
+        Protocol("t", overview={"Orientation": sentence})
+
+
+def test_a_fact_of_a_few_words_is_a_card() -> None:
+    assert Protocol("t", overview={"Vector": "pUC19, 2686 bp"}).overview["Vector"]
+
+
+def test_a_verdict_outside_the_three_is_refused() -> None:
+    with pytest.raises(ValueError, match="status"):
+        Protocol.from_dict({"title": "t", "checks": [{"name": "junctions", "status": "ok"}]})
+
+
 def test_a_protocol_reads_from_its_json_file() -> None:
     protocol = read_protocol(EXAMPLE)
     assert protocol.title == "Colony check by PCR"
     assert protocol.overview["Expected product"] == "500 bp"
+    assert protocol.highlights[0].startswith("The reaction is a colony check")
+    assert protocol.checks == (
+        Check("primers", "pass", detail="2 designed, 0 with a warning"),
+        Check("controls", "warn", detail="no positive control is set up"),
+    )
     assert [m.name for m in protocol.materials][3:5] == ["M13 fwd", "M13 rev"]
     assert protocol.materials[3].sequence == "GTAAAACGACGGCCAGT"
     assert [s.title for s in protocol.steps] == [

@@ -10,7 +10,18 @@ import os
 from collections.abc import Callable, Mapping
 from dataclasses import KW_ONLY, MISSING, dataclass, field, fields
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+#: One verdict a check can carry.
+type Status = Literal["pass", "warn", "fail"]
+
+#: The three verdicts, so a value read out of JSON can be held to them.
+STATUSES: tuple[Status, ...] = ("pass", "warn", "fail")
+
+#: The most characters `Protocol.overview` gives one card. Anything longer is a sentence, which
+#: reads badly in a grid and drags the cards to different heights; it belongs in
+#: `Protocol.highlights`.
+OVERVIEW_CHARS = 80
 
 
 def _require(ok: bool, message: str) -> None:
@@ -271,6 +282,32 @@ class Reference:
 
 
 @dataclass(frozen=True, slots=True)
+class Check:
+    """One pass, warn or fail verdict on the work, shown in the header as a badge.
+
+    Parameters
+    ----------
+    name
+        What was judged, such as ``"junctions"``.
+    status
+        One of `STATUSES`.
+    detail
+        What a reader needs besides the verdict, shown only where the verdict is not a pass.
+    """
+
+    name: str
+    status: Status
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a verdict that is not one of the three."""
+        _require(
+            self.status in STATUSES,
+            f"check {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class Step:
     """One numbered step of a protocol.
 
@@ -318,7 +355,13 @@ class Protocol:
     summary
         One paragraph: what the protocol does.
     overview
-        Key facts shown as label and value, in order.
+        Short facts, label to value, shown as a grid of cards. A handful of words each, at most
+        `OVERVIEW_CHARS` characters, so the row scans left to right and stays one height.
+    highlights
+        What a fact means, a sentence each, shown as prose under the cards. A statement a reader
+        has to read rather than scan goes here and not in `overview`.
+    checks
+        Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
     materials, steps, references
         In the order they are shown.
     """
@@ -327,13 +370,21 @@ class Protocol:
     _: KW_ONLY
     summary: str = ""
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
+    highlights: tuple[str, ...] = ()
+    checks: tuple[Check, ...] = ()
     materials: tuple[Material, ...] = ()
     steps: tuple[Step, ...] = ()
     references: tuple[Reference, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title."""
+        """Refuse an empty title, or an overview value too long to be a card."""
         _require(bool(self.title.strip()), "a protocol needs a title")
+        for label, value in self.overview.items():
+            _require(
+                len(value) <= OVERVIEW_CHARS,
+                f"overview {label!r} is {len(value)} characters, over {OVERVIEW_CHARS}: a card "
+                "holds a few words, so put a sentence in highlights instead",
+            )
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Protocol":
@@ -405,6 +456,7 @@ _STEP = _object(
 )
 _PROTOCOL = _object(
     Protocol,
+    checks=_list(_object(Check)),
     materials=_list(_object(Material)),
     steps=_list(_STEP),
     references=_list(_object(Reference)),

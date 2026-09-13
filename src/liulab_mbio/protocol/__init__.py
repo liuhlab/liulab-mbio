@@ -3,7 +3,8 @@
 JSON keys are the field names of the classes below, lists stand for tuples, and only the
 fields without a default are required::
 
-    {"title": str, "summary": str, "overview": {label: value},
+    {"title": str, "summary": str, "overview": {label: short value},
+     "highlights": [sentence], "checks": [{"name", "status", "detail"}],
      "materials": [{"name", "sequence", "source", "storage", "note"}],
      "steps": [{"title", "instructions": [str], "cautions": [str], "notes": [str],
          "tables": [{"title", "reactions", "overage",
@@ -15,10 +16,13 @@ fields without a default are required::
          "expected": [str], "troubleshooting": [{"problem", "solution"}]}],
      "references": [{"text", "url"}]}
 
-An incubation's ``"seconds": null`` holds indefinitely.
+An incubation's ``"seconds": null`` holds indefinitely. A check's ``"status"`` is ``"pass"``,
+``"warn"`` or ``"fail"``. An ``"overview"`` value is a card: a few words, never a sentence.
 """
 
 from liulab_mbio.protocol.model import (
+    OVERVIEW_CHARS,
+    Check,
     Component,
     Gel,
     Incubation,
@@ -38,6 +42,8 @@ from liulab_mbio.protocol.model import (
 from liulab_mbio.protocol.render import render_html, write_html
 
 __all__ = [
+    "OVERVIEW_CHARS",
+    "Check",
     "Component",
     "Gel",
     "Incubation",

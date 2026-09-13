@@ -8,6 +8,7 @@ from importlib.resources import files
 from pathlib import Path
 
 from liulab_mbio.protocol.model import (
+    Check,
     Gel,
     Material,
     Protocol,
@@ -94,6 +95,10 @@ def _header(protocol: Protocol) -> str:
             for k, v in protocol.overview.items()
         )
         parts.append(f'<dl class="overview">{facts}</dl>\n')
+    if protocol.highlights:
+        lines = "".join(f"<p>{escape(one)}</p>" for one in protocol.highlights)
+        parts.append(f'<div class="highlights">{lines}</div>\n')
+    parts.append(_checks(protocol.checks))
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
@@ -108,6 +113,24 @@ def _header(protocol: Protocol) -> str:
         parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
     parts.append("</header>\n")
     return "".join(parts)
+
+
+def _checks(checks: tuple[Check, ...]) -> str:
+    """One badge per verdict, and the detail of every verdict that is not a pass."""
+    if not checks:
+        return ""
+    badges = "".join(
+        f'<li class="check is-{check.status}"><span class="check-name">{escape(check.name)}</span>'
+        f'<span class="verdict">{escape(check.status)}</span></li>'
+        for check in checks
+    )
+    details = "".join(
+        f'<p class="check-detail"><strong>{escape(check.name)} {escape(check.status)}:</strong> '
+        f"{escape(check.detail)}</p>"
+        for check in checks
+        if check.status != "pass" and check.detail
+    )
+    return f'<ul class="checks" aria-label="Checks">{badges}</ul>\n{details}\n'
 
 
 def _materials(materials: tuple[Material, ...]) -> str:

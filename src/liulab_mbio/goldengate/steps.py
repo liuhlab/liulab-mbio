@@ -27,6 +27,8 @@ from liulab_mbio.goldengate.bench import (
     pcr_reaction,
 )
 from liulab_mbio.protocol import (
+    OVERVIEW_CHARS,
+    Check,
     Gel,
     Lane,
     Material,
@@ -89,6 +91,8 @@ def protocol(plan: "Plan") -> Protocol:
             "one Golden Gate reaction, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(plan),
+        highlights=_highlights(plan),
+        checks=_checks(plan),
         materials=_materials(plan),
         steps=_steps(plan),
         references=_references(plan),
@@ -96,42 +100,65 @@ def protocol(plan: "Plan") -> Protocol:
 
 
 def _overview(plan: "Plan") -> dict[str, str]:
-    """Return the facts to check before starting."""
+    """Return the facts to check before starting, each short enough to be a card."""
     fidelity = plan.overhangs.fidelity
     facts = {
-        "Vector": f"{plan.vector.name}, {len(plan.vector)} bp, {plan.vector.topology}",
-        "Insert" if len(plan.inserts) == 1 else "Inserts": "; ".join(
-            f"{name}, {len(record)} bp, {record.topology}"
-            for name, record in zip(_insert_names(plan), plan.inserts, strict=True)
-        ),
-        "Fragments": (
-            f"{len(plan.parts)} in one reaction: "
-            + _listed([f"{part.name} ({part.fragment_length} bp)" for part in plan.parts])
-        ),
+        "Vector": f"{plan.vector.name}, {len(plan.vector)} bp",
+        "Insert" if len(plan.inserts) == 1 else "Inserts": _insert_fact(plan),
         "Enzyme": f"{_label(plan.enzyme)} at {golden_gate_temperature(plan.enzyme):g} °C",
-        "Overhangs": (
-            f"{_listed(plan.overhangs.overhangs)}, ligation fidelity "
-            f"{fidelity.value:.0%} ({fidelity.label})"
-        ),
-        "Product": f"{plan.product.name}, {len(plan.product)} bp, circular",
-        "Junctions": (
-            "; ".join(
-                f"{one.overhang} at {one.start}, {one.before} to {one.after}"
-                for one in plan.assembly.junctions
-            )
-            + " (0-based, on the product)"
-        ),
+        "Fragments": f"{len(plan.parts)} in one reaction",
+        "Overhangs": _brief(plan.overhangs.overhangs, "junctions"),
+        "Fidelity": f"{fidelity.value:.0%}, {fidelity.label}",
+        "Product": f"{plan.product.name}, {len(plan.product)} bp",
     }
-    facts.update(_phenotype_facts(plan))
-    facts["Checks"] = "; ".join(f"{check.name} {check.status}" for check in plan.checks)
+    selection = _selection(plan)
+    if selection:
+        facts["Selection"] = selection
     return facts
 
 
-def _phenotype_facts(plan: "Plan") -> dict[str, str]:
+def _insert_fact(plan: "Plan") -> str:
+    """Return the insert card: the one insert with its length, or what the inserts are called."""
+    names = _insert_names(plan)
+    if len(names) == 1:
+        return f"{names[0]}, {len(plan.inserts[0])} bp"
+    return _brief(names, "inserts")
+
+
+def _selection(plan: "Plan") -> str:
+    """Return what to select transformants on, or nothing where the vector annotates no marker."""
+    phenotype = plan.phenotype
+    if phenotype.antibiotic:
+        return phenotype.antibiotic
+    return f"{phenotype.marker.name} marker" if phenotype.marker is not None else ""
+
+
+def _brief(items: Sequence[str], noun: str) -> str:
+    """List these where a card holds the list, and count them where it does not.
+
+    Examples
+    --------
+    >>> _brief(("ATGA", "TGGC"), "junctions")
+    'ATGA and TGGC'
+    """
+    listed = _listed(items)
+    return listed if len(listed) <= OVERVIEW_CHARS else f"{len(items)} {noun}"
+
+
+def _highlights(plan: "Plan") -> tuple[str, ...]:
+    """Return what the facts mean, a sentence each: the fragments, then the phenotype."""
+    joined = _listed([f"{part.name} ({part.fragment_length} bp)" for part in plan.parts])
+    return (
+        f"One reaction joins {len(plan.parts)} fragments: {joined}.",
+        *_phenotype_sentences(plan),
+    )
+
+
+def _phenotype_sentences(plan: "Plan") -> tuple[str, ...]:
     """Return what the product's own features say about the insert and about the plate."""
     phenotype = plan.phenotype
-    facts: dict[str, str] = {}
     coding = phenotype.coding.name if phenotype.coding is not None else _listed(_insert_names(plan))
+    lines: list[str] = []
     if phenotype.promoter is not None:
         way = (
             f"reads on the same strand as {phenotype.promoter.name}, "
@@ -142,22 +169,23 @@ def _phenotype_facts(plan: "Plan") -> dict[str, str]:
                 f"{phenotype.gap_bp} bp away, so that promoter does not transcribe it"
             )
         )
-        facts["Orientation"] = f"{coding} {way}."
+        lines.append(f"{coding} {way}.")
     site = "is" if phenotype.ribosome_binding_site else "is no"
-    facts["Expression"] = (
+    lines.append(
         f"There {site} ribosome binding site annotated ahead of {coding}, so the clone "
         f"{'may make' if phenotype.expressed else 'is not expected to make'} its protein."
     )
     if phenotype.blue_white and phenotype.reporter is not None:
-        facts["Screening"] = (
+        lines.append(
             f"The insertion interrupts {phenotype.reporter.name}, so correct clones are white "
             "and empty vector is blue on X-gal and IPTG."
         )
-    if phenotype.antibiotic:
-        facts["Selection"] = phenotype.antibiotic
-    elif phenotype.marker is not None:
-        facts["Selection"] = f"the antibiotic {phenotype.marker.name} confers resistance to"
-    return facts
+    return tuple(lines)
+
+
+def _checks(plan: "Plan") -> tuple[Check, ...]:
+    """Return the plan's verdicts, one badge each, so a warning is seen and not read."""
+    return tuple(Check(check.name, check.status, detail=check.detail) for check in plan.checks)
 
 
 def _materials(plan: "Plan") -> tuple[Material, ...]:
@@ -404,12 +432,18 @@ def _cycling_step(plan: "Plan") -> Step:
     expected = [
         "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it "
         "cuts vector that never opened or has closed again, so fewer empty colonies grow.",
+        *(
+            f"The product carries {one.overhang} at {one.start}, joining {one.before} to "
+            f"{one.after}."
+            for one in plan.assembly.junctions
+        ),
     ]
     return Step(
         "Run the Golden Gate program",
         instructions=("Put the tube in the thermocycler and run the program below.",),
         programs=tuple(programs),
         expected=tuple(expected),
+        notes=("Junction positions are 0-based, on the product.",),
         troubleshooting=(
             Troubleshooting(
                 "Mostly empty vector later",

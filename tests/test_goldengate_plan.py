@@ -16,6 +16,7 @@ from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
 from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.io import read_record
+from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
@@ -267,12 +268,33 @@ def test_the_protocol_states_the_colony_colour_and_the_host_it_needs(plan):
 
 
 def test_the_protocol_states_the_orientation_and_that_no_protein_is_expected(plan):
-    overview = plan.protocol().overview
-    assert "opposite strand" in overview["Orientation"]
-    assert "lac promoter" in overview["Orientation"]
-    assert "no ribosome binding site" in overview["Expression"]
-    assert "not expected to make" in overview["Expression"]
+    prose = " ".join(plan.protocol().highlights)
+    assert "opposite strand" in prose
+    assert "lac promoter" in prose
+    assert "no ribosome binding site" in prose
+    assert "not expected to make" in prose
     assert not plan.phenotype.expressed
+
+
+def test_the_header_splits_short_facts_from_sentences_and_verdicts(plan):
+    protocol = plan.protocol()
+    assert list(protocol.overview) == [
+        "Vector",
+        "Insert",
+        "Enzyme",
+        "Fragments",
+        "Overhangs",
+        "Fidelity",
+        "Product",
+        "Selection",
+    ]
+    # A card is a fact of a few words; a sentence is prose and never a card.
+    assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
+    assert not any(value.endswith(".") for value in protocol.overview.values())
+    assert all(sentence.endswith(".") for sentence in protocol.highlights)
+    assert [(one.name, one.status) for one in protocol.checks] == [
+        (one.name, one.status) for one in plan.checks
+    ]
 
 
 def test_the_protocol_carries_the_numbers_the_package_computed(plan):
@@ -379,13 +401,15 @@ def test_the_colony_pcr_reads_every_junction_and_turns_every_insert(four):
 
 
 def test_the_protocol_names_every_part_and_every_junction(four):
-    overview = four.protocol().overview
+    protocol = four.protocol()
+    prose = " ".join(protocol.highlights)
     for part in four.parts:
-        assert part.name in overview["Fragments"]
+        assert part.name in prose
+    results = " ".join(line for step in protocol.steps for line in step.expected)
     for junction in four.assembly.junctions:
-        assert f"{junction.start}" in overview["Junctions"]
-        assert junction.overhang in overview["Junctions"]
-    assert f"{four.overhangs.fidelity.value:.0%}" in overview["Overhangs"]
+        assert f"{junction.start}" in results
+        assert junction.overhang in results
+    assert f"{four.overhangs.fidelity.value:.0%}" in protocol.overview["Fidelity"]
 
 
 def test_a_step_is_per_experiment_and_not_per_pair_of_fragments(plan, four):
@@ -405,7 +429,12 @@ def _assembly_program(plan):
 
 def _sentences(protocol) -> str:
     """Every sentence the protocol says, for a test to read."""
-    parts = [protocol.title, protocol.summary, *protocol.overview.values()]
+    parts = [
+        protocol.title,
+        protocol.summary,
+        *protocol.overview.values(),
+        *protocol.highlights,
+    ]
     for material in protocol.materials:
         parts += [material.name, material.note]
     for step in protocol.steps:
