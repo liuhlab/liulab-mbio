@@ -1,34 +1,53 @@
+import dataclasses
 import struct
 from pathlib import Path
 
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, Strand
-from liulab_mbio.snapgene import read_dna
+from liulab_mbio.edits import delete
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.snapgene import read_dna, write_dna
 
 DATA = Path(__file__).parent / "data"
 PUC19 = DATA / "pUC19.dna"
 GFP = DATA / "GFP.dna"
 
+#: The packets the model holds, which the writer builds rather than keeping.
+MODELLED = (0x00, 0x05, 0x06, 0x0A)
+
+
+def _packets(data: bytes) -> list[tuple[int, bytes]]:
+    packets, offset = [], 0
+    while offset < len(data):
+        kind, length = struct.unpack_from(">BI", data, offset)
+        packets.append((kind, data[offset + 5 : offset + 5 + length]))
+        offset += 5 + length
+    return packets
+
+
+def _flags(data: bytes) -> int:
+    return next(payload[0] for kind, payload in _packets(data) if kind == 0x00)
+
+
 # Shaped like the primers packet SnapGene writes, with binding sites on the GFP fixture.
 PRIMERS_XML = (
-    '<?xml version="1.0"?><Primers nextValidID="2"><HybridizationParams'
-    ' minContinuousMatchLen="10" allowMismatch="1" minMeltingTemperature="40"'
-    ' showAdditionalFivePrimeMatches="1" minimumFivePrimeAnnealing="15"/>'
-    '<Primer recentID="0" name="GFP fwd" sequence="CAGTCAGGATCCATGAGTAAAGGAGAAGAACT"'
-    ' description="&lt;html&gt;&lt;body&gt;forward&lt;/body&gt;&lt;/html&gt;"'
-    ' dateAdded="2023-05-18T20:25:03Z">'
-    '<BindingSite location="0-19" boundStrand="0" annealedBases="ATGAGTAAAGGAGAAGAACT"'
-    ' meltingTemperature="57"><Component bases="CAGTCAGGATCC"/>'
-    '<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite>'
-    '<BindingSite simplified="1" location="0-19" boundStrand="0"'
-    ' annealedBases="ATGAGTAAAGGAGAAGAACT" meltingTemperature="57">'
-    '<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite></Primer>'
-    '<Primer recentID="1" name="GFP rev" sequence="CTGACAGAATTCTTTGTATAGTTCATCCATGG"'
-    ' description=""><BindingSite location="697-716" boundStrand="1"'
-    ' annealedBases="CCATGGATGAACTATACAAA" meltingTemperature="55">'
-    '<Component bases="CTGACAGAATTC"/>'
-    '<Component hybridizedRange="697-716" bases="CCATGGATGAACTATACAAA"/>'
-    "</BindingSite></Primer></Primers>"
-).encode()
+    b'<?xml version="1.0"?><Primers nextValidID="2"><HybridizationParams'
+    b' minContinuousMatchLen="10" allowMismatch="1" minMeltingTemperature="40"'
+    b' showAdditionalFivePrimeMatches="1" minimumFivePrimeAnnealing="15"/>'
+    b'<Primer recentID="0" name="GFP fwd" sequence="CAGTCAGGATCCATGAGTAAAGGAGAAGAACT"'
+    b' description="&lt;html&gt;&lt;body&gt;forward&lt;/body&gt;&lt;/html&gt;"'
+    b' dateAdded="2023-05-18T20:25:03Z">'
+    b'<BindingSite location="0-19" boundStrand="0" annealedBases="ATGAGTAAAGGAGAAGAACT"'
+    b' meltingTemperature="57"><Component bases="CAGTCAGGATCC"/>'
+    b'<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite>'
+    b'<BindingSite simplified="1" location="0-19" boundStrand="0"'
+    b' annealedBases="ATGAGTAAAGGAGAAGAACT" meltingTemperature="57">'
+    b'<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite></Primer>'
+    b'<Primer recentID="1" name="GFP rev" sequence="CTGACAGAATTCTTTGTATAGTTCATCCATGG"'
+    b' description=""><BindingSite location="697-716" boundStrand="1"'
+    b' annealedBases="CCATGGATGAACTATACAAA" meltingTemperature="55">'
+    b'<Component bases="CTGACAGAATTC"/>'
+    b'<Component hybridizedRange="697-716" bases="CCATGGATGAACTATACAAA"/>'
+    b"</BindingSite></Primer></Primers>"
+)
 
 
 def _rewritten(path: Path, kind: int, payload: bytes) -> bytes:
@@ -128,6 +147,108 @@ def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name() -> None:
     assert record.notes["Comments"] == "See also GenBank accession L09137."
     assert record.notes["Description"].startswith("<html><body>Standard <i>E. coli</i> vector")
     assert "CustomMapLabel" not in record.notes
+
+
+def test_write_dna_round_trips_a_record_through_a_file(tmp_path: Path) -> None:
+    for fixture in (PUC19, GFP):
+        record = read_dna(fixture)
+        path = tmp_path / fixture.name
+        write_dna(record, path)
+        assert read_dna(path) == record
+
+
+def test_write_dna_keeps_the_packets_the_model_does_not_hold(tmp_path: Path) -> None:
+    path = tmp_path / "same.dna"
+    write_dna(read_dna(PUC19), path)
+    before, after = _packets(PUC19.read_bytes()), _packets(path.read_bytes())
+    assert [p for p in after if p[0] not in MODELLED] == [p for p in before if p[0] not in MODELLED]
+    assert dict(after)[0x00] == dict(before)[0x00]
+
+
+def test_write_dna_drops_the_cut_site_cache_once_the_sequence_changes(tmp_path: Path) -> None:
+    edited, _ = delete(read_dna(PUC19), 100, 200)
+    path = tmp_path / "edited.dna"
+    write_dna(edited, path)
+    assert [kind for kind, _ in _packets(path.read_bytes())] == [
+        0x09,  # cookie
+        0x00,  # sequence
+        0x08,  # end properties
+        0x0A,  # features
+        0x05,  # primers
+        0x06,  # notes
+        0x0D,  # display settings
+        0x1C,  # enzyme visibilities
+        0x0E,  # custom enzyme sets
+    ]
+
+
+def test_the_sequence_packet_flags_hold_topology_strandedness_and_methylation(
+    tmp_path: Path,
+) -> None:
+    assert _flags(PUC19.read_bytes()) == 0x1F  # circular, double, Dam, Dcm and EcoKI methylated
+    assert _flags(GFP.read_bytes()) == 0x02  # linear and double-stranded
+    linear = dataclasses.replace(read_dna(PUC19), topology="linear")
+    write_dna(linear, tmp_path / "linear.dna")
+    assert _flags((tmp_path / "linear.dna").read_bytes()) == 0x1E
+    write_dna(SequenceRecord("ACGT"), tmp_path / "new.dna")
+    assert _flags((tmp_path / "new.dna").read_bytes()) == 0x02
+
+
+def test_write_dna_writes_a_span_across_the_origin_as_a_wrapped_range(tmp_path: Path) -> None:
+    site = Feature(
+        "BsmBI",
+        "misc_feature",
+        (Segment(2682, 2688),),
+        strand=Strand.FORWARD,
+        color="#ff0000",
+    )
+    record = dataclasses.replace(read_dna(PUC19), features=(site,))
+    path = tmp_path / "wrapped.dna"
+    write_dna(record, path)
+    assert b'range="2683-2"' in path.read_bytes()
+    assert read_dna(path).features == (site,)
+
+
+def test_write_dna_fills_a_hole_between_segments_with_a_gap_segment(tmp_path: Path) -> None:
+    feature = Feature(
+        "exons", "mRNA", (Segment(10, 20), Segment(30, 40)), strand=Strand.FORWARD, color="#ff0000"
+    )
+    record = dataclasses.replace(read_dna(GFP), features=(feature,))
+    path = tmp_path / "gap.dna"
+    write_dna(record, path)
+    assert b'range="21-30" color="noColor" type="gap"' in path.read_bytes()
+    assert read_dna(path).features == (feature,)
+
+
+def test_write_dna_writes_primers_that_were_built_in_code(tmp_path: Path) -> None:
+    primer = Primer(
+        "GFP fwd",
+        "CAGTCAGGATCCATGAGTAAAGGAGAAGAACT",
+        binding_sites=(BindingSite(0, 20, Strand.FORWARD),),
+        description="forward",
+    )
+    record = dataclasses.replace(read_dna(GFP), primers=(primer,))
+    path = tmp_path / "primers.dna"
+    write_dna(record, path)
+    assert b'annealedBases="ATGAGTAAAGGAGAAGAACT"' in path.read_bytes()
+    assert read_dna(path).primers == (primer,)
+
+
+def test_the_reader_agrees_with_biopython_on_both_fixtures() -> None:
+    from Bio import SeqIO
+
+    for fixture in (PUC19, GFP):
+        record, reference = read_dna(fixture), SeqIO.read(fixture, "snapgene")
+        assert record.sequence == str(reference.seq).upper()
+        assert record.topology == reference.annotations["topology"]
+        assert {(f.name, f.segments[0].start, f.segments[-1].end) for f in record.features} == {
+            (
+                f.qualifiers["label"][0],
+                min(int(part.start) for part in f.location.parts),
+                max(int(part.end) for part in f.location.parts),
+            )
+            for f in reference.features
+        }
 
 
 def test_read_dna_keeps_qualifiers_with_their_integer_and_text_values() -> None:
