@@ -26,10 +26,13 @@ from liulab_mbio.goldengate.bench import (
     assembly_reaction,
     choose_ladder,
     colony_pcr_check,
+    colony_pcr_master_mix_component,
     colony_pcr_program,
     colony_pcr_reaction,
+    enzyme_component,
     golden_gate_temperature,
     heat_inactivation,
+    ligase_master_mix_component,
     molecular_weight,
     pcr_program,
     pcr_reaction,
@@ -172,6 +175,28 @@ def test_seven_fragments_double_the_reaction_and_the_bsmbi_enzyme() -> None:
     assert total(table) == pytest.approx(30.0)
     assert volumes(table)["NEBridge Ligase Master Mix"] == 10.0
     assert volumes(table)["BsmBI-v2 (R0739)"] == 6.0
+
+
+@pytest.mark.parametrize(("name", "fragments"), [("BbsI", 2), ("PaqCI", 4), ("BsmBI", 7)])
+def test_the_master_mix_and_enzyme_components_are_the_ones_the_reaction_prints(
+    name: str, fragments: int
+) -> None:
+    enzyme = get_enzyme(name)
+    amounts = assembly_amounts(
+        Fragment("pUC19", 2686), tuple(Fragment(f"part {n}", 700) for n in range(fragments - 1))
+    )
+    components = assembly_reaction(enzyme, amounts).components
+    assert ligase_master_mix_component(fragments) in components
+    assert enzyme_component(enzyme, fragments) in components
+
+
+def test_an_enzyme_with_no_row_in_nebs_table_has_no_component() -> None:
+    with pytest.raises(ValueError, match="no row"):
+        enzyme_component(get_enzyme("BtgZI"), 2)
+
+
+def test_the_colony_pcr_master_mix_component_is_the_one_its_reaction_prints() -> None:
+    assert colony_pcr_master_mix_component() in colony_pcr_reaction().components
 
 
 def test_the_kit_reaction_is_twenty_microlitres_with_its_own_enzyme_mix() -> None:

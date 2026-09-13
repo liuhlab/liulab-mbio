@@ -8,6 +8,7 @@ Two fixtures make only a two-fragment assembly, so the many-part tests synthesis
 inserts. The first four bases of each are the overhang its junction takes.
 """
 
+import dataclasses
 from collections import Counter
 from pathlib import Path
 
@@ -15,7 +16,7 @@ import pytest
 
 from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
 from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
-from liulab_mbio.goldengate.plan import REVERSE_FLANK
+from liulab_mbio.goldengate.plan import REVERSE_FLANK, DesignedOligo
 from liulab_mbio.io import read_record
 from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
@@ -413,6 +414,60 @@ def test_every_insert_reaches_the_product_in_the_order_it_was_given(four, gfp):
     assert [product.count(bases) for bases in (gfp.sequence, LINKER, TAG)] == [1, 1, 1]
     assert len(four.product) == 3347 + len(LINKER) + len(TAG)
     assert four.assembly.status == "pass"
+
+
+def test_the_plan_names_its_linearised_vector_and_each_insert_in_insert_order(four):
+    assert four.linearised_vector.name == "pUC19 backbone"
+    assert four.linearised_vector.template is four.vector
+    assert [part.name for part in four.insert_parts] == ["GFP", "Linker", "Tag"]
+    assert four.parts == (four.linearised_vector, *four.insert_parts)
+
+
+def test_every_oligo_says_what_it_is_for(plan):
+    assert [(oligo.report.primer.name, oligo.role) for oligo in plan.designed_oligos] == [
+        ("pUC19 backbone forward", "amplification"),
+        ("pUC19 backbone reverse", "amplification"),
+        ("GFP forward", "amplification"),
+        ("GFP reverse", "amplification"),
+        ("Colony PCR forward", "colony PCR"),
+        ("Colony PCR reverse", "colony PCR"),
+        ("Junction reverse", "colony PCR"),
+        ("Sequencing forward", "sequencing"),
+        ("Sequencing reverse", "sequencing"),
+    ]
+    for oligo in plan.designed_oligos:
+        if oligo.role == "amplification":
+            assert oligo.part is not None
+            assert oligo.report in (oligo.part.report.forward, oligo.part.report.reverse)
+        else:
+            assert oligo.part is None
+
+
+def test_an_oligo_keeps_its_purpose_wherever_it_is_listed(plan):
+    turned = dataclasses.replace(plan, designed_oligos=plan.designed_oligos[::-1])
+    written = {oligo.name: oligo.purpose for oligo in plan.protocol().oligos}
+    assert {oligo.name: oligo.purpose for oligo in turned.protocol().oligos} == written
+    assert written["GFP reverse"] == "Amplify GFP"
+    assert written["Junction reverse"] == "Screen colonies by PCR"
+    assert written["Sequencing reverse"] == "Confirm the clone by sequencing"
+
+
+def test_an_oligo_amplifies_a_part_exactly_when_that_is_its_role(plan):
+    colony, amplifying = plan.designed_oligos[4], plan.designed_oligos[0]
+    with pytest.raises(ValueError, match="part"):
+        DesignedOligo(colony.report, "colony PCR", amplifying.part)
+    with pytest.raises(ValueError, match="part"):
+        DesignedOligo(amplifying.report, "amplification")
+
+
+def test_a_plan_whose_parts_are_not_vector_first_writes_the_same_protocol(four):
+    turned = dataclasses.replace(
+        four, assembly=dataclasses.replace(four.assembly, parts=four.assembly.parts[::-1])
+    )
+    # The checks judge the parts in the assembly's own order, so only their order may differ.
+    written, again = four.protocol(), turned.protocol()
+    assert sorted(again.checks, key=repr) == sorted(written.checks, key=repr)
+    assert dataclasses.replace(again, checks=()) == dataclasses.replace(written, checks=())
 
 
 def test_three_inserts_make_four_junctions_no_two_of_them_alike(four):

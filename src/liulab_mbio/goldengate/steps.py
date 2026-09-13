@@ -9,7 +9,6 @@ import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.goldengate.assembly import Part, dam_sites
 from liulab_mbio.goldengate.bench import (
     COLONY_PCR_MASTER_MIX,
@@ -22,24 +21,26 @@ from liulab_mbio.goldengate.bench import (
     assembly_program,
     assembly_reaction,
     choose_ladder,
+    colony_pcr_master_mix_component,
     colony_pcr_program,
     colony_pcr_reaction,
+    enzyme_component,
     golden_gate_temperature,
     heat_inactivation,
+    ligase_master_mix_component,
     pcr_program,
     pcr_reaction,
 )
-from liulab_mbio.goldengate.plan import DEFAULT_HOST
 from liulab_mbio.primers import PrimerReport, Thresholds, reading
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
+    Component,
     Gel,
     Lane,
     Material,
     Oligo,
     Protocol,
-    ReactionTable,
     Reference,
     Step,
     Timer,
@@ -47,7 +48,7 @@ from liulab_mbio.protocol import (
 )
 
 if TYPE_CHECKING:
-    from liulab_mbio.goldengate.plan import Plan
+    from liulab_mbio.goldengate.plan import DesignedOligo, Plan
 
 #: The DpnI digest that takes the plasmid template away. NEB's Golden Gate pages prescribe no
 #: such step -- `docs/research/golden-gate-assembly.md` §3 justifies it from REBASE's record of
@@ -84,9 +85,12 @@ NEB_COLONIES = 687
 #: enzyme record or a product name a supplier wrote; none is written here.
 SUPPLIER = "New England Biolabs"
 
-#: NEBridge Ligase Master Mix: as `assembly_reaction` names the line, and as NEB sells it.
-LIGASE_MIX = "NEBridge Ligase Master Mix"
-LIGASE_MIX_PRODUCT = f"{LIGASE_MIX} (M1100)"
+#: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
+#: that supplies the rest of the lacZ fragment the vector carries, which this one does.
+DEFAULT_HOST = "NEB 5-alpha Competent E. coli (C2987)"
+
+#: The catalogue number NEB sells NEBridge Ligase Master Mix under.
+LIGASE_MIX_CATALOG = "M1100"
 
 #: The steps an oligo's row points at, written once so a row and its step cannot drift.
 COLONY_STEP = "Screen colonies by PCR"
@@ -140,7 +144,7 @@ def _overview(plan: "Plan") -> dict[str, str]:
     facts = {
         "Vector": f"{plan.vector.name}, {len(plan.vector)} bp",
         "Insert" if len(plan.inserts) == 1 else "Inserts": _insert_fact(plan),
-        "Enzyme": f"{_label(plan.enzyme)} at {golden_gate_temperature(plan.enzyme):g} °C",
+        "Enzyme": f"{plan.enzyme.supplier_label} at {golden_gate_temperature(plan.enzyme):g} °C",
         "Fragments": f"{len(plan.parts)} in one reaction",
         "Overhangs": _brief(plan.overhangs.overhangs, "junctions"),
         "Fidelity": f"{fidelity.value:.0%}, {fidelity.label}",
@@ -233,7 +237,8 @@ def _checks(plan: "Plan") -> tuple[Check, ...]:
 def _materials(plan: "Plan") -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are `_oligos`."""
     enzyme = plan.enzyme
-    assembly = assembly_reaction(enzyme, plan.amounts)
+    fragments = len(plan.parts)
+    mix = ligase_master_mix_component(fragments)
     ladders = dict.fromkeys(
         (choose_ladder(tuple(part.length for part in plan.parts)).name, plan.colony.ladder.name)
     )
@@ -257,18 +262,19 @@ def _materials(plan: "Plan") -> tuple[Material, ...]:
             note="cuts the methylated plasmid template only",
         ),
         Material("PCR and gel cleanup spin columns"),
-        _catalogued(
-            LIGASE_MIX_PRODUCT,
+        Material(
+            mix.name,
             supplier=SUPPLIER,
+            catalog=LIGASE_MIX_CATALOG,
             storage="-20 °C",
-            amount=_per_reaction(assembly, LIGASE_MIX),
+            amount=_per_reaction(mix),
         ),
         Material(
             enzyme.commercial_name or enzyme.name,
             supplier=enzyme.supplier or "",
             catalog=enzyme.catalog_number or "",
             storage="-20 °C",
-            amount=_per_reaction(assembly, _label(enzyme)),
+            amount=_per_reaction(enzyme_component(enzyme, fragments)),
         ),
         _catalogued(
             plan.host,
@@ -285,7 +291,7 @@ def _materials(plan: "Plan") -> tuple[Material, ...]:
             COLONY_PCR_MASTER_MIX,
             supplier=SUPPLIER,
             storage="-20 °C",
-            amount=_per_reaction(colony_pcr_reaction(), COLONY_PCR_MASTER_MIX),
+            amount=_per_reaction(colony_pcr_master_mix_component()),
         ),
         Material("Agarose and 1X TAE or TBE"),
         *(_catalogued(name, supplier=SUPPLIER) for name in ladders),
@@ -316,12 +322,9 @@ def _catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str
     )
 
 
-def _per_reaction(table: ReactionTable, name: str) -> str:
-    """Return what one reaction takes of a component, or nothing where no line names it."""
-    for component in table.components:
-        if component.name.startswith(name):
-            return f"{component.volume_ul:g} µL per reaction"
-    return ""
+def _per_reaction(component: Component) -> str:
+    """Return what one reaction takes of this component."""
+    return f"{component.volume_ul:g} µL per reaction"
 
 
 def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
@@ -329,15 +332,15 @@ def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
     stock = f"{PRIMER_STOCK_UM:g} µM"
     return tuple(
         Oligo(
-            report.primer.name,
-            report.primer.sequence,
-            purpose=purpose,
-            tm_c=round(report["tm"].value, 1),
+            oligo.report.primer.name,
+            oligo.report.primer.sequence,
+            purpose=_purpose(oligo),
+            tm_c=round(oligo.report["tm"].value, 1),
             stock=stock,
-            status=report.status,
-            checks=_oligo_checks(report, plan.thresholds),
+            status=oligo.report.status,
+            checks=_oligo_checks(oligo.report, plan.thresholds),
         )
-        for report, purpose in zip(plan.reports, _purposes(plan), strict=True)
+        for oligo in plan.designed_oligos
     )
 
 
@@ -353,13 +356,16 @@ def _oligo_checks(report: PrimerReport, thresholds: Thresholds) -> tuple[Check, 
     return tuple(fired)
 
 
-def _purposes(plan: "Plan") -> tuple[str, ...]:
-    """Which step uses each oligo, in the order `Plan.reports` lists them."""
-    return (
-        *(f"Amplify {part.name}" for part in plan.parts for _ in ("forward", "reverse")),
-        *(COLONY_STEP for _ in plan.colony.reports),
-        *(SEQUENCING_STEP for _ in plan.reads),
-    )
+def _purpose(oligo: "DesignedOligo") -> str:
+    """Return the title of the step that uses this oligo."""
+    if oligo.part is not None:
+        return _amplify(oligo.part)
+    return COLONY_STEP if oligo.role == "colony PCR" else SEQUENCING_STEP
+
+
+def _amplify(part: Part) -> str:
+    """Return the title of the step that amplifies this part."""
+    return f"Amplify {part.name}"
 
 
 def _plate(plan: "Plan") -> str:
@@ -390,7 +396,7 @@ def _pcr_step(plan: "Plan", part: Part) -> Step:
     """Amplify one part with the tails that carry the enzyme site."""
     report = part.report
     return Step(
-        f"Amplify {part.name}",
+        _amplify(part),
         instructions=(
             "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
             f"Mix the master mix and put it in each tube, then add the "
@@ -778,7 +784,7 @@ def _references(plan: "Plan") -> tuple[Reference, ...]:
 
 def _insert_names(plan: "Plan") -> tuple[str, ...]:
     """Return what each insert is called, which is what its part and its tube are labelled."""
-    return tuple(part.name for part in plan.parts[1:])
+    return tuple(part.name for part in plan.insert_parts)
 
 
 def _listed(items: Sequence[str]) -> str:
@@ -786,9 +792,3 @@ def _listed(items: Sequence[str]) -> str:
     if len(items) < 3:
         return " and ".join(items)
     return f"{', '.join(items[:-1])} and {items[-1]}"
-
-
-def _label(enzyme: Enzyme) -> str:
-    """Return the enzyme as a supplier sells it."""
-    name = enzyme.commercial_name or enzyme.name
-    return f"{name} ({enzyme.catalog_number})" if enzyme.catalog_number else name

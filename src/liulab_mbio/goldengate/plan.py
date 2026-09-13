@@ -17,7 +17,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.enzymes import Enzyme, get_enzyme
@@ -40,6 +40,8 @@ from liulab_mbio.goldengate.design import (
     design_overhangs,
 )
 from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
+from liulab_mbio.goldengate.steps import DEFAULT_HOST
+from liulab_mbio.goldengate.steps import protocol as protocol_for
 from liulab_mbio.io import read_record
 from liulab_mbio.primers import (
     ONETAQ,
@@ -52,6 +54,7 @@ from liulab_mbio.primers import (
     evaluate_primer,
     reading,
 )
+from liulab_mbio.protocol import Protocol, write_html
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -64,9 +67,6 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
 
-if TYPE_CHECKING:
-    from liulab_mbio.protocol import Protocol
-
 #: Which way round an insert goes into the vector.
 type Orientation = Literal["forward", "reverse"]
 
@@ -75,10 +75,6 @@ type Site = str | tuple[int, int] | None
 
 #: The feature a vector names its cloning site with, looked for when the caller names none.
 MCS_FEATURE = "MCS"
-
-#: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
-#: that supplies the rest of the lacZ fragment the vector carries, which this one does.
-DEFAULT_HOST = "NEB 5-alpha Competent E. coli (C2987)"
 
 #: How far the vector junction may slide to get past an overhang rule. It moves where the vector
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
@@ -180,6 +176,42 @@ class Phenotype:
         return SELECTION.get(self.marker.name.lower(), "")
 
 
+#: What an oligo is for: amplifying a part, colony PCR, or sequencing the clone.
+type OligoRole = Literal["amplification", "colony PCR", "sequencing"]
+
+
+@dataclass(frozen=True, slots=True)
+class DesignedOligo:
+    """One oligo a plan orders, and what it is for.
+
+    Parameters
+    ----------
+    report
+        What it scored, the primer included.
+    role
+        What it is for.
+    part
+        The part it amplifies, given for an amplification primer and for nothing else.
+
+    Raises
+    ------
+    ValueError
+        If a part is given for any role but amplification, or not given for amplification.
+    """
+
+    report: PrimerReport
+    role: OligoRole
+    part: Part | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a part on anything but an amplification primer, and one missing from it."""
+        if (self.role == "amplification") != (self.part is not None):
+            raise ValueError(
+                f"oligo {self.report.primer.name!r}: an amplification primer names its part, "
+                "and no other role does"
+            )
+
+
 @dataclass(frozen=True, slots=True)
 class Plan:
     """One planned Golden Gate experiment.
@@ -198,6 +230,10 @@ class Plan:
     overhangs
         The overhang every junction takes, with the fidelity of the whole set. An assembly of n
         inserts has n + 1 junctions.
+    linearised_vector
+        The part the vector is opened into.
+    insert_parts
+        The part each insert is amplified into, in insert order.
     assembly
         The simulated product, the parts and the junctions.
     colony
@@ -209,8 +245,9 @@ class Plan:
         What to put in the assembly reaction, vector first.
     phenotype
         What the product says about itself.
-    reports
-        Every designed oligo's evaluation, in order: each part's PCR, the colony PCR, the reads.
+    designed_oligos
+        Every designed oligo and what it is for, in order: each part's PCR, the colony PCR, the
+        reads.
     host, polymerase
         The choices the protocol names.
     thresholds
@@ -223,12 +260,14 @@ class Plan:
     choice: EnzymeChoice
     ranking: tuple[EnzymeChoice, ...]
     overhangs: OverhangSet
+    linearised_vector: Part
+    insert_parts: tuple[Part, ...]
     assembly: Assembly
     colony: ColonyCheck
     reads: tuple[SangerRead, SangerRead]
     amounts: tuple[Amount, ...]
     phenotype: Phenotype
-    reports: tuple[PrimerReport, ...]
+    designed_oligos: tuple[DesignedOligo, ...]
     host: str
     polymerase: Polymerase
     thresholds: Thresholds = THRESHOLDS
@@ -246,12 +285,17 @@ class Plan:
     @property
     def parts(self) -> tuple[Part, ...]:
         """The parts that go into the reaction, the linearised vector first."""
-        return self.assembly.parts
+        return (self.linearised_vector, *self.insert_parts)
 
     @property
     def oligos(self) -> tuple[Primer, ...]:
         """Every oligo the plan designs, in the order the sheet lists them."""
         return tuple(report.primer for report in self.reports)
+
+    @property
+    def reports(self) -> tuple[PrimerReport, ...]:
+        """Every designed oligo's evaluation, in the order the sheet lists them."""
+        return tuple(oligo.report for oligo in self.designed_oligos)
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -271,11 +315,9 @@ class Plan:
         """The worst status of any check."""
         return worst(check.status for check in self.checks)
 
-    def protocol(self) -> "Protocol":
+    def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
-        from liulab_mbio.goldengate.steps import protocol
-
-        return protocol(self)
+        return protocol_for(self)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the primer sheet and the protocol into `directory`.
@@ -284,8 +326,6 @@ class Plan:
         `PRODUCT_FILE`, `PRIMER_FILE` and `PROTOCOL_FILE`, and a second run over the same
         inputs writes the same bytes.
         """
-        from liulab_mbio.protocol import write_html
-
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
         product = out / PRODUCT_FILE
@@ -389,31 +429,30 @@ def plan_assembly(
     )
     overhangs = designed.overhangs
     span = (start, end + designed.choices[-1].offset)
-    parts = (
-        open_vector(
-            one,
+    linearised_vector = open_vector(
+        one,
+        chosen,
+        *span,
+        overhangs=(overhangs[0], overhangs[-1]),
+        name=f"{one.name} backbone".strip(),
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+    insert_parts = tuple(
+        amplify(
+            record,
             chosen,
-            *span,
-            overhangs=(overhangs[0], overhangs[-1]),
-            name=f"{one.name} backbone".strip(),
+            0,
+            len(record),
+            left_overhang=overhangs[number],
+            right_overhang=overhangs[number + 1],
+            name=label,
             polymerase=polymerase,
             thresholds=thresholds,
-        ),
-        *(
-            amplify(
-                record,
-                chosen,
-                0,
-                len(record),
-                left_overhang=overhangs[number],
-                right_overhang=overhangs[number + 1],
-                name=label,
-                polymerase=polymerase,
-                thresholds=thresholds,
-            )
-            for number, (label, record) in enumerate(zip(labels, going, strict=True))
-        ),
+        )
+        for number, (label, record) in enumerate(zip(labels, going, strict=True))
     )
+    parts = (linearised_vector, *insert_parts)
     built = assemble(parts, chosen, name=name or "-".join([one.name, *labels]).strip("-"))
     junctions = built.junction_positions
     first, last = junctions[0], junctions[-1]
@@ -442,18 +481,30 @@ def plan_assembly(
         choice,
         ranking,
         designed,
+        linearised_vector,
+        insert_parts,
         built,
         colony,
         reads,
         assembly_amounts(
-            Fragment(parts[0].name, parts[0].length),
-            tuple(Fragment(part.name, part.length) for part in parts[1:]),
+            Fragment(linearised_vector.name, linearised_vector.length),
+            tuple(Fragment(part.name, part.length) for part in insert_parts),
         ),
         _phenotype(one, built, span),
         (
-            *(report for part in parts for report in (part.report.forward, part.report.reverse)),
-            *colony.reports,
-            *(evaluate_primer(read.primer, built.product, thresholds=thresholds) for read in reads),
+            *(
+                DesignedOligo(report, "amplification", part)
+                for part in parts
+                for report in (part.report.forward, part.report.reverse)
+            ),
+            *(DesignedOligo(report, "colony PCR") for report in colony.reports),
+            *(
+                DesignedOligo(
+                    evaluate_primer(read.primer, built.product, thresholds=thresholds),
+                    "sequencing",
+                )
+                for read in reads
+            ),
         ),
         host,
         polymerase,

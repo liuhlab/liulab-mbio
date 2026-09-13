@@ -343,21 +343,11 @@ def _master_mix_components(
     enzyme: Enzyme, amounts: tuple[Amount, ...]
 ) -> tuple[float, list[Component]]:
     fragments = len(amounts)
-    if enzyme.name not in _ENZYME_DOSE:
-        raise ValueError(f"NEB's Ligase Master Mix table has no row for {enzyme.name}")
-    total, master_mix = _MASTER_MIX_VOLUMES[1 if fragments >= 7 else 0]
+    total, _ = _master_mix_volumes(fragments)
     tier = _dose_tier(fragments)
-    dose = _ENZYME_DOSE[enzyme.name][tier]
     components = _dna_components(amounts)
-    components.append(Component("NEBridge Ligase Master Mix", master_mix, stock="3X", final="1X"))
-    components.append(
-        Component(
-            _enzyme_label(enzyme),
-            dose.volume_ul,
-            stock=f"{dose.units / dose.volume_ul:g} U/µL",
-            final=f"{dose.units:g} units",
-        )
-    )
+    components.append(ligase_master_mix_component(fragments))
+    components.append(enzyme_component(enzyme, fragments))
     if enzyme.name in _NEEDS_ACTIVATOR:
         components.append(
             Component(
@@ -370,6 +360,35 @@ def _master_mix_components(
     return total, components
 
 
+def ligase_master_mix_component(fragments: int) -> Component:
+    """Return the NEBridge Ligase Master Mix component of a reaction joining `fragments`."""
+    _, volume = _master_mix_volumes(fragments)
+    return Component("NEBridge Ligase Master Mix", volume, stock="3X", final="1X")
+
+
+def enzyme_component(enzyme: Enzyme, fragments: int) -> Component:
+    """Return the Type IIS enzyme component of a Ligase Master Mix reaction joining `fragments`.
+
+    Raises
+    ------
+    ValueError
+        If NEB's Ligase Master Mix table has no row for the enzyme.
+    """
+    if enzyme.name not in _ENZYME_DOSE:
+        raise ValueError(f"NEB's Ligase Master Mix table has no row for {enzyme.name}")
+    dose = _ENZYME_DOSE[enzyme.name][_dose_tier(fragments)]
+    return Component(
+        enzyme.supplier_label,
+        dose.volume_ul,
+        stock=f"{dose.units / dose.volume_ul:g} U/µL",
+        final=f"{dose.units:g} units",
+    )
+
+
+def _master_mix_volumes(fragments: int) -> tuple[float, float]:
+    return _MASTER_MIX_VOLUMES[1 if fragments >= 7 else 0]
+
+
 def _kit_components(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> tuple[float, list[Component]]:
     if enzyme.name not in _KIT_CATALOG:
         raise ValueError(f"no NEBridge kit carries {enzyme.name}; use the Ligase Master Mix system")
@@ -379,11 +398,6 @@ def _kit_components(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> tuple[float,
         Component("NEBridge Golden Gate Enzyme Mix", 1.0 if len(amounts) - 1 <= 10 else 2.0)
     )
     return _KIT_VOLUME_UL, components
-
-
-def _enzyme_label(enzyme: Enzyme) -> str:
-    name = enzyme.commercial_name or enzyme.name
-    return f"{name} ({enzyme.catalog_number})" if enzyme.catalog_number else name
 
 
 def _dose_tier(fragments: int) -> int:
@@ -546,7 +560,7 @@ def colony_pcr_reaction(
         If the primers and master mix do not fit `volume_ul`.
     """
     components = [
-        Component(COLONY_PCR_MASTER_MIX, round(volume_ul / 2, 2), stock="2X", final="1X"),
+        colony_pcr_master_mix_component(volume_ul),
         *(
             Component(
                 f"{end} primer",
@@ -558,6 +572,11 @@ def colony_pcr_reaction(
         ),
     ]
     return _filled(components, volume_ul, title="Colony PCR", reactions=reactions)
+
+
+def colony_pcr_master_mix_component(volume_ul: float = COLONY_PCR_VOLUME_UL) -> Component:
+    """Return the 2X master mix component of a colony PCR of `volume_ul`."""
+    return Component(COLONY_PCR_MASTER_MIX, round(volume_ul / 2, 2), stock="2X", final="1X")
 
 
 def _filled(
