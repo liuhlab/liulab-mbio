@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.goldengate import Plan
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -21,6 +22,7 @@ from liulab_mbio.protocol import (
     ThermocyclerProgram,
     Timer,
     read_protocol,
+    write_protocol,
 )
 
 
@@ -234,3 +236,35 @@ def test_a_protocol_reads_from_its_json_file(data_dir: Path) -> None:
     assert gel.lanes[1].bands_bp == ()
     assert protocol.steps[2].troubleshooting[0].problem == "No band"
     assert protocol.references[0].url == "https://example.org/pcr"
+
+
+def test_a_protocol_written_as_json_reads_back_equal(
+    data_dir: Path, plan: Plan, tmp_path: Path
+) -> None:
+    for name, protocol in (
+        ("example", read_protocol(data_dir / "pcr-protocol.json")),
+        ("golden-gate", plan.protocol()),
+    ):
+        path = write_protocol(protocol, tmp_path / f"{name}.json")
+        assert read_protocol(path) == protocol
+
+
+def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: Path) -> None:
+    path = write_protocol(Protocol("Spin at 4 °C"), tmp_path / "protocol.json")
+    assert path.read_bytes() == "\n".join(
+        [
+            "{",
+            '  "title": "Spin at 4 °C",',
+            '  "summary": "",',
+            '  "overview": {},',
+            '  "highlights": [],',
+            '  "checks": [],',
+            '  "materials": [],',
+            '  "oligos": [],',
+            '  "equipment": [],',
+            '  "steps": [],',
+            '  "references": []',
+            "}",
+            "",
+        ]
+    ).encode("utf-8")

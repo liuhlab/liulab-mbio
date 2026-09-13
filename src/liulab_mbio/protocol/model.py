@@ -1,4 +1,4 @@
-"""The protocol model, and loading it from JSON.
+"""The protocol model, and reading and writing it as JSON.
 
 Every class refuses, with `ValueError`, a value no bench could follow: an empty title, a
 non-positive volume, time, cycle count or band size, or a link that is not http(s).
@@ -8,7 +8,7 @@ import json
 import math
 import os
 from collections.abc import Callable, Mapping
-from dataclasses import KW_ONLY, MISSING, dataclass, field, fields, is_dataclass
+from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass
 from pathlib import Path
 from types import NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -464,6 +464,19 @@ class Protocol:
 def read_protocol(path: str | os.PathLike[str]) -> Protocol:
     """Read a protocol from a JSON file; see `Protocol.from_dict`."""
     return Protocol.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def write_protocol(protocol: Protocol, path: str | os.PathLike[str]) -> Path:
+    """Write `protocol` to `path` as JSON that `read_protocol` reads back equal; return the path.
+
+    Every field is written, empty and default ones too, in the order its class declares them,
+    indented two spaces and as UTF-8 ending in a newline, so one protocol always writes the same
+    bytes.
+    """
+    out = Path(path)
+    text = json.dumps(asdict(protocol), ensure_ascii=False, indent=2)
+    out.write_text(text + "\n", encoding="utf-8")
+    return out
 
 
 type _Convert = Callable[[Any, str], Any]
