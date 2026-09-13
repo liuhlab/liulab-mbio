@@ -23,7 +23,13 @@ from collections.abc import Iterable
 from dataclasses import KW_ONLY, dataclass
 from typing import Literal, TypedDict
 
-from liulab_mbio.sequence import BindingSite, Primer
+from liulab_mbio.sequence import (
+    BindingSite,
+    Primer,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 
 type Status = Literal["pass", "warn", "fail"]
 
@@ -253,6 +259,19 @@ class Thresholds:
     dimer_3prime
         As `dimer`, for a structure holding the 3' end, which the polymerase can extend:
         primer3's `PRIMER_MAX_SELF_END_TH`, failing rather than warning.
+    binding_sites
+        Places on a template where the annealing region matches. A primer wants exactly one.
+    off_target
+        Other places where it can prime, which warn.
+    binding_min_length
+        Bases at the 3' end that must match for a primer carrying no binding site to be placed
+        on a template. The note's proposal.
+    off_target_mismatches, off_target_3prime_window, off_target_3prime_mismatches
+        What is worth scoring at all: at most five mismatches, and at most one in the last five
+        3' bases. Primer-BLAST's defaults (Ye et al. 2012, *BMC Bioinformatics* 13:134).
+    off_target_margin
+        How far under a perfect match's Tm a place can still prime, °C. primer3 sets its
+        mispriming threshold 10 °C below its own minimum Tm.
     """
 
     length: Band = Band(18, 30, 15, 35)
@@ -265,6 +284,13 @@ class Thresholds:
     hairpin: Band = Band(-math.inf, 47.0)
     dimer: Band = Band(-math.inf, 47.0)
     dimer_3prime: Band = Band(-math.inf, 47.0, -math.inf, 47.0)
+    binding_sites: Band = Band(1, 1, 1, 1)
+    off_target: Band = Band(0, 0)
+    binding_min_length: int = 15
+    off_target_mismatches: int = 5
+    off_target_3prime_window: int = 5
+    off_target_3prime_mismatches: int = 1
+    off_target_margin: float = 10.0
 
 
 #: The thresholds every check uses unless a caller passes its own.
@@ -329,16 +355,18 @@ class PrimerReport:
 
 def evaluate_primer(
     primer: Primer,
+    template: SequenceRecord | None = None,
     *,
     polymerase: Polymerase = Q5,
     thresholds: Thresholds = THRESHOLDS,
 ) -> PrimerReport:
-    """Judge one primer on its own.
+    """Judge one primer, and where it anneals when a template is given.
 
-    The annealing region is the 3' part its binding site covers, or the whole primer when it
-    has none: length, GC and Tm are of that part, runs and structures of the whole primer. A
-    primer longer than primer3 will align is judged on its 3'-terminal bases. The full-primer
-    Tm and the 3'-end stability are reported without a verdict.
+    The annealing region is the 3' part its binding site covers; a primer carrying none is
+    placed on the template by `find_binding_sites`, and judged whole without one. Length, GC
+    and Tm are of the annealing region, runs and structures of the whole primer. A primer
+    longer than primer3 will align is judged on its 3'-terminal bases. The full-primer Tm and
+    the 3'-end stability are reported without a verdict.
 
     Examples
     --------
@@ -348,7 +376,8 @@ def evaluate_primer(
     """
     import primer3
 
-    annealing = _annealing_region(primer)
+    sites = _placed(primer, template, thresholds)
+    annealing = _annealing_region(primer, sites)
     thermo, note = _thermo_sequence(primer.sequence)
     gc = 100.0 * sum(annealing.count(base) for base in "GC") / len(annealing)
     checks = (
@@ -373,7 +402,153 @@ def evaluate_primer(
             note,
         ),
     )
+    if template is not None:
+        checks += _template_checks(annealing, sites, template, thresholds)
     return PrimerReport(primer, checks)
+
+
+@dataclass(frozen=True, slots=True)
+class PrimingSite:
+    """Where a primer's 3' end can anneal on a template, and how strongly.
+
+    Parameters
+    ----------
+    site
+        What the annealing region covers, running past the end of a circular template when it
+        crosses the origin.
+    tm
+        Of the primer annealed there, °C at primer3's default conditions.
+    mismatches
+        Bases of the annealing region that do not pair.
+    """
+
+    site: BindingSite
+    tm: float
+    mismatches: int
+
+
+def find_binding_sites(
+    sequence: str, template: SequenceRecord, *, thresholds: Thresholds = THRESHOLDS
+) -> tuple[BindingSite, ...]:
+    """Return every place a primer's 3' end matches a template exactly, on either strand.
+
+    The match runs from the 3' end back towards the 5' end, so a tail hangs off it; it must
+    reach `Thresholds.binding_min_length`. A site crosses the origin of a circular template.
+
+    Examples
+    --------
+    >>> template = SequenceRecord("CGGCGTAATCATGGTCATAGCTGTTTCC")
+    >>> sites = find_binding_sites("TTGGTCTCAGGCGTAATCATGGTCATAGC", template)
+    >>> [(site.start, site.end, site.strand.name) for site in sites]
+    [(1, 21, 'FORWARD')]
+    """
+    dna = sequence.upper()
+    length = len(template)
+    reverse = reverse_complement(dna)
+    sites = []
+    for index in range(length):
+        matched = _matched(template, index, dna[::-1], -1)
+        if matched >= thresholds.binding_min_length:
+            start = (index - matched + 1) % length
+            sites.append(BindingSite(start, start + matched, Strand.FORWARD))
+        matched = _matched(template, index, reverse, 1)
+        if matched >= thresholds.binding_min_length:
+            sites.append(BindingSite(index, index + matched, Strand.REVERSE))
+    return tuple(sorted(sites, key=lambda site: (site.start, site.strand)))
+
+
+def find_priming_sites(
+    sequence: str, template: SequenceRecord, *, thresholds: Thresholds = THRESHOLDS
+) -> tuple[PrimingSite, ...]:
+    """Return every place an annealing region can prime a template, on either strand.
+
+    A place counts when few enough of its bases mismatch, fewest of all at the 3' end, and
+    when the primer annealed there melts within `Thresholds.off_target_margin` of a perfect
+    match. Sites cross the origin of a circular template.
+    """
+    import primer3
+
+    dna = sequence.upper()
+    size = len(dna)
+    length = len(template)
+    if size > length:
+        return ()
+    circular = template.topology == "circular"
+    top = template.sequence + (template.sequence[: size - 1] if circular else "")
+    reverse = reverse_complement(dna)
+    window = thresholds.off_target_3prime_window
+    floor = primer3.calc_end_stability(dna, reverse).tm - thresholds.off_target_margin
+    found = []
+    for start in range(length if circular else length - size + 1):
+        here = top[start : start + size]
+        for strand, probe, anchor, annealed in (
+            (Strand.FORWARD, dna, _mismatches(dna[-window:], here[-window:]), None),
+            (Strand.REVERSE, reverse, _mismatches(reverse[:window], here[:window]), here),
+        ):
+            if anchor > thresholds.off_target_3prime_mismatches:
+                continue
+            mismatches = _mismatches(probe, here)
+            if mismatches > thresholds.off_target_mismatches:
+                continue
+            tm = primer3.calc_end_stability(dna, annealed or reverse_complement(here)).tm
+            if tm >= floor:
+                found.append(PrimingSite(BindingSite(start, start + size, strand), tm, mismatches))
+    return tuple(found)
+
+
+def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int:
+    """Return how many bases of `probe` match the template from `index`, walking by `step`."""
+    length = len(template)
+    circular = template.topology == "circular"
+    matched = 0
+    while matched < min(len(probe), length):
+        position = index + step * matched
+        if not circular and not 0 <= position < length:
+            break
+        if template.sequence[position % length] != probe[matched]:
+            break
+        matched += 1
+    return matched
+
+
+def _mismatches(one: str, other: str) -> int:
+    return sum(base != base_here for base, base_here in zip(one, other, strict=True))
+
+
+def _placed(
+    primer: Primer, template: SequenceRecord | None, thresholds: Thresholds
+) -> tuple[BindingSite, ...]:
+    if primer.binding_sites or template is None:
+        return primer.binding_sites
+    return find_binding_sites(primer.sequence, template, thresholds=thresholds)
+
+
+def _template_checks(
+    annealing: str,
+    sites: tuple[BindingSite, ...],
+    template: SequenceRecord,
+    thresholds: Thresholds,
+) -> tuple[Check, ...]:
+    length = len(template)
+    intended = {_three_prime_end(site, length) for site in sites}
+    elsewhere = [
+        site
+        for site in find_priming_sites(annealing, template, thresholds=thresholds)
+        if _three_prime_end(site.site, length) not in intended
+    ]
+    detail = ", ".join(
+        f"{site.site.start} {site.site.strand.name.lower()}, {site.mismatches} mismatched"
+        for site in elsewhere
+    )
+    return (
+        _graded("binding_sites", len(sites), thresholds.binding_sites),
+        _graded("off_target", len(elsewhere), thresholds.off_target, detail),
+    )
+
+
+def _three_prime_end(site: BindingSite, length: int) -> tuple[int, Strand]:
+    end = site.start if site.strand is Strand.REVERSE else site.end - 1
+    return end % length, site.strand
 
 
 def _graded(name: str, value: float, band: Band, detail: str = "") -> Check:

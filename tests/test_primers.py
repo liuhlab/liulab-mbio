@@ -3,6 +3,7 @@
 """
 
 import dataclasses
+from pathlib import Path
 
 import pytest
 
@@ -14,9 +15,26 @@ from liulab_mbio.primers import (
     THRESHOLDS,
     Band,
     evaluate_primer,
+    find_binding_sites,
+    find_priming_sites,
     melting_temperature,
 )
-from liulab_mbio.sequence import BindingSite, Primer, Strand
+from liulab_mbio.sequence import (
+    BindingSite,
+    Primer,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
+
+
+@pytest.fixture(scope="module")
+def puc19() -> SequenceRecord:
+    from Bio import SeqIO
+
+    record = SeqIO.read(Path(__file__).parent / "data" / "pUC19.dna", "snapgene")
+    return SequenceRecord(str(record.seq), topology="circular", name="pUC19")
+
 
 M13_FWD = "GTAAAACGACGGCCAGT"
 M13_REV = "CAGGAAACAGCTATGAC"
@@ -149,6 +167,53 @@ def test_a_primer_longer_than_primer3_allows_is_judged_on_its_three_prime_end() 
     long_tail = "GCTAGCTGACTGACTGATCGATCGATCGTAGCTAGCTGATCGATCGATGCTAGCTGA"
     report = evaluate_primer(Primer("long", long_tail + MCS_FWD))
     assert "60" in report["hairpin"].detail
+
+
+def test_a_primer_is_placed_on_a_template_by_its_three_prime_match(puc19) -> None:
+    assert find_binding_sites(M13_FWD, puc19) == (BindingSite(378, 395, Strand.FORWARD),)
+    assert find_binding_sites(M13_REV, puc19) == (BindingSite(464, 481, Strand.REVERSE),)
+    tailed = "TTGAAGACAA" + MCS_FWD
+    assert find_binding_sites(tailed, puc19) == (BindingSite(452, 472, Strand.FORWARD),)
+
+
+def test_a_binding_site_may_run_across_the_origin(puc19) -> None:
+    across = puc19.sequence[-10:] + puc19.sequence[:10]
+    assert find_binding_sites(across, puc19) == (BindingSite(2676, 2696, Strand.FORWARD),)
+
+
+def test_a_primer_that_binds_one_place_has_no_off_target(puc19) -> None:
+    report = evaluate_primer(Primer("M13 fwd", M13_FWD), puc19)
+    assert report["binding_sites"].value == 1
+    assert report["binding_sites"].status == "pass"
+    assert report["off_target"].value == 0
+    assert report["off_target"].status == "pass"
+    assert report.status == "warn"  # its length, as without a template
+
+
+def test_a_second_copy_of_the_annealing_region_is_an_off_target_site() -> None:
+    template = SequenceRecord(
+        "A" * 30 + MCS_FWD + "C" * 30 + reverse_complement(MCS_FWD) + "T" * 30,
+        topology="circular",
+    )
+    primer = Primer("MCS fwd", MCS_FWD, binding_sites=(BindingSite(30, 50, Strand.FORWARD),))
+    report = evaluate_primer(primer, template)
+    off_target = report["off_target"]
+    assert off_target.value == 1
+    assert off_target.status == "warn"
+    assert "80" in off_target.detail
+
+
+def test_priming_sites_carry_their_strand_mismatches_and_tm(puc19) -> None:
+    sites = find_priming_sites(M13_FWD, puc19)
+    assert [site.site for site in sites] == [BindingSite(378, 395, Strand.FORWARD)]
+    assert sites[0].mismatches == 0
+    assert sites[0].tm == pytest.approx(54.61, abs=0.01)
+
+
+def test_a_primer_that_binds_nowhere_fails(puc19) -> None:
+    report = evaluate_primer(Primer("elsewhere", "ATGAGTAAAGGAGAAGAACTTTTC"), puc19)
+    assert report["binding_sites"].value == 0
+    assert report["binding_sites"].status == "fail"
 
 
 def test_every_threshold_comes_from_one_place() -> None:
