@@ -30,14 +30,15 @@ before it. A single insert is the ordinary case, not a special one.
 
 It chooses the enzyme, designs every junction's overhang together, simulates the PCRs and the
 ligation, works out the bench quantities, and designs the colony PCR and sequencing that confirm
-the clone. Three files land in the directory you name:
+the clone. Four files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm
-- `protocol.html` — one self-contained page: reagents, reaction tables, thermocycler programs,
-  expected bands, a simulated gel and troubleshooting, step by step
+- `protocol.json` — the protocol as data, which `protocol render` turns into the page
+- `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
+  tables, thermocycler programs, expected bands, a simulated gel and troubleshooting, step by step
 
-The command prints a summary line and the three paths. The same inputs write the same bytes, so
+The command prints a summary line and the four paths. The same inputs write the same bytes, so
 a protocol can be regenerated rather than edited.
 
 ## What the fragment count changes
@@ -75,7 +76,7 @@ from liulab_mbio.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
-plan.write("plan/")  # the same three files
+plan.write("plan/")  # the same four files
 ```
 
 `plan.assembly.checks` carries one verdict per part beside the product's own,

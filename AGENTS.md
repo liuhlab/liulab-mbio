@@ -25,9 +25,10 @@ One direction, bottom to top — nothing lower imports anything higher.
 | bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
 | pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
 
-`goldengate.plan_assembly` is the one way in, and `Plan.write` puts the product, the primer
-sheet and the protocol in a directory. `__init__.py` re-exports only `__version__`: `Check` and
-`Junction` each mean different things in two modules, so import by module path.
+`goldengate.plan_assembly` is the one way in, and `Plan.write` puts four files in a directory:
+the product, the primer sheet, `protocol.json`, and the `protocol.html` page rendered from it.
+`__init__.py` re-exports only `__version__`: `Check` and `Junction` each mean different things
+in two modules, so import by module path.
 `Check` is the judged check in `checks` and its displayed form in `protocol`.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and

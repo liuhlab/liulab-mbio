@@ -332,7 +332,8 @@ _Avoid_: construct, output, final plasmid
 
 The whole design for one assembly: the enzyme, the overhang set, the parts and their primers, the
 simulated product, the bench quantities, and the colony PCR and sequencing that confirm it. It
-holds every number a protocol prints, and writes the three files a bench needs.
+holds every number a protocol prints, and writes four files: the product, the primer order sheet,
+the protocol as data, and the page rendered from that data.
 _Avoid_: design, run, recipe
 
 ### Primer order sheet

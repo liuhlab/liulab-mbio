@@ -13,6 +13,7 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | File | What it is |
 | --- | --- |
 | [protocol.html](protocol.html) | the bench protocol: eleven steps, reaction tables, expected bands |
+| [protocol.json](protocol.json) | the same protocol as data, which the page is made from |
 | [product.dna](product.dna) | the finished plasmid, for SnapGene |
 | [primers.tsv](primers.tsv) | the nine oligos to order |
 

@@ -19,9 +19,16 @@ Plan a Golden Gate cloning job from a vector file and an insert file:
 pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
 ```
 
-Three files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
-primers marked. `primers.tsv` is the oligos to order. `protocol.html` is one page you can
-follow at the bench: reagents, reaction tables, programs, expected bands and troubleshooting.
+Four files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
+primers marked. `primers.tsv` is the oligos to order. `protocol.json` is the protocol written
+as data. `protocol.html` is the page made from that data, one page you can follow at the bench:
+reagents, reaction tables, programs, expected bands and troubleshooting.
+
+If you edit `protocol.json`, turn it back into a page:
+
+```bash
+pixi run liulab_mbio protocol render plan/protocol.json
+```
 
 The same thing from Python:
 
