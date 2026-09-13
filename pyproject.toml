@@ -70,8 +70,8 @@ pyyaml = "*"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
-# Declared here too, not inherited: the tests run conformance, and a test environment shaped
-# differently from this one would import-error on every test.
+# Declared here too, not inherited: `tests/test_conformance.py` runs conformance, and a test
+# environment shaped differently from this one would import-error on every test in it.
 pyyaml = "*"
 
 # Exact: at 0.0.x nothing promises the next patch is compatible.
@@ -190,6 +190,10 @@ addopts = [
     "--strict-config",
     "--doctest-modules",
     "--continue-on-collection-errors",
+    # The conformance checker's own tests stay out of a routine run: the checker is the template's,
+    # unedited here, and the template already tests it. Drop this line if this repo edits the
+    # checker. Name the file to run them: `pixi run test -- tests/test_conformance.py`.
+    "--ignore=tests/test_conformance.py",
 ]
 xfail_strict = true
 filterwarnings = ["error"]
