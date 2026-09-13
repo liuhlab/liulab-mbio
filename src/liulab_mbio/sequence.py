@@ -32,6 +32,18 @@ def reverse_complement(sequence: str) -> str:
     return sequence.translate(_COMPLEMENT)[::-1]
 
 
+def _dna(sequence: str) -> str:
+    upper = sequence.upper()
+    if bad := set(upper) - IUPAC_DNA:
+        raise ValueError(f"not IUPAC DNA: {''.join(sorted(bad))}")
+    return upper
+
+
+def _check_span(start: int, end: int) -> None:
+    if not 0 <= start < end:
+        raise ValueError(f"need 0 <= start < end, got start={start}, end={end}")
+
+
 class Strand(IntEnum):
     """The strand a feature or primer binding site lies on."""
 
@@ -70,8 +82,7 @@ class Segment:
 
     def __post_init__(self) -> None:
         """Refuse an empty or negative span."""
-        if not 0 <= self.start < self.end:
-            raise ValueError(f"need 0 <= start < end, got start={self.start}, end={self.end}")
+        _check_span(self.start, self.end)
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,8 +125,69 @@ class Feature:
 
 
 @dataclass(frozen=True, slots=True)
+class BindingSite:
+    """Where a primer's 3' part anneals to a record.
+
+    Parameters
+    ----------
+    start, end
+        0-based, half-open, as for `Segment`. The primer's 5' tail lies outside.
+    strand
+        `Strand.FORWARD` when the primer reads along the top strand, towards higher
+        coordinates; `Strand.REVERSE` when it reads along the bottom strand.
+
+    Raises
+    ------
+    ValueError
+        Unless ``0 <= start < end`` and `strand` is forward or reverse.
+    """
+
+    start: int
+    end: int
+    strand: Strand
+
+    def __post_init__(self) -> None:
+        """Refuse an empty span or a strand that is neither forward nor reverse."""
+        _check_span(self.start, self.end)
+        if self.strand not in (Strand.FORWARD, Strand.REVERSE):
+            raise ValueError(f"a binding site needs a forward or reverse strand, got {self.strand}")
+
+
+@dataclass(frozen=True, slots=True)
+class Primer:
+    """A named oligonucleotide.
+
+    Parameters
+    ----------
+    name
+        The name it is ordered under.
+    sequence
+        5' to 3', tail included. Stored upper-case.
+    binding_sites
+        Where it anneals to the record that carries it.
+    description
+        Free text.
+
+    Raises
+    ------
+    ValueError
+        If `sequence` holds a letter outside `IUPAC_DNA`.
+    """
+
+    name: str
+    sequence: str
+    _: KW_ONLY
+    binding_sites: tuple[BindingSite, ...] = ()
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        """Upper-case and check the sequence."""
+        object.__setattr__(self, "sequence", _dna(self.sequence))
+
+
+@dataclass(frozen=True, slots=True)
 class SequenceRecord:
-    """A DNA sequence with its topology and features.
+    """A DNA sequence with its topology, features, primers and notes.
 
     Parameters
     ----------
@@ -123,32 +195,42 @@ class SequenceRecord:
         Stored upper-case.
     topology
         ``"linear"`` or ``"circular"``.
-    features
-        Every segment must fit the sequence under its topology.
+    name
+        The name shown on a map.
+    features, primers
+        Every feature segment and primer binding site must fit the sequence under its topology.
+    notes
+        Descriptive fields, such as ``"Description"``, keyed by name.
+    extras
+        Format-specific data a reader keeps for its writer. Ignored by ``==``.
 
     Raises
     ------
     ValueError
-        If `sequence` holds a letter outside `IUPAC_DNA`, `topology` is unknown, or a segment
-        does not fit.
+        If `sequence` holds a letter outside `IUPAC_DNA`, `topology` is unknown, or a span does
+        not fit.
     """
 
     sequence: str
     _: KW_ONLY
     topology: Topology = "linear"
+    name: str = ""
     features: tuple[Feature, ...] = ()
+    primers: tuple[Primer, ...] = ()
+    notes: Mapping[str, str] = field(default_factory=dict, hash=False)
+    extras: Mapping[str, object] = field(default_factory=dict, hash=False, compare=False)
 
     def __post_init__(self) -> None:
-        """Upper-case the sequence and check every segment fits."""
+        """Upper-case the sequence and check every span fits."""
         if self.topology not in ("linear", "circular"):
             raise ValueError(f"topology must be 'linear' or 'circular', got {self.topology!r}")
-        sequence = self.sequence.upper()
-        if bad := set(sequence) - IUPAC_DNA:
-            raise ValueError(f"not IUPAC DNA: {''.join(sorted(bad))}")
-        object.__setattr__(self, "sequence", sequence)
+        object.__setattr__(self, "sequence", _dna(self.sequence))
         for feature in self.features:
             for segment in feature.segments:
-                self._check_fits(segment, f"feature {feature.name!r}")
+                self._check_fits(segment.start, segment.end, f"feature {feature.name!r}")
+        for primer in self.primers:
+            for site in primer.binding_sites:
+                self._check_fits(site.start, site.end, f"primer {primer.name!r}")
 
     def __len__(self) -> int:
         """Return the number of bases."""
@@ -177,17 +259,17 @@ class SequenceRecord:
         return bases
 
     def _bases(self, segment: Segment) -> str:
-        self._check_fits(segment, "extracted")
+        self._check_fits(segment.start, segment.end, "extracted")
         n = len(self.sequence)
         if segment.end <= n:
             return self.sequence[segment.start : segment.end]
         return self.sequence[segment.start :] + self.sequence[: segment.end - n]
 
-    def _check_fits(self, segment: Segment, owner: str) -> None:
+    def _check_fits(self, start: int, end: int, owner: str) -> None:
         n = len(self.sequence)
-        span = f"{owner} segment {segment.start}-{segment.end}"
+        span = f"{owner} span {start}-{end}"
         if self.topology == "linear":
-            if segment.end > n:
+            if end > n:
                 raise ValueError(f"{span} runs past the end of a linear record of {n} bases")
-        elif segment.start >= n or segment.end - segment.start > n:
+        elif start >= n or end - start > n:
             raise ValueError(f"{span} does not fit a circular record of {n} bases")

@@ -1,6 +1,14 @@
 import pytest
 
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 
 
 def _feature(*segments: tuple[int, int], strand: Strand = Strand.FORWARD) -> Feature:
@@ -90,3 +98,28 @@ def test_extract_reads_a_segment_across_the_origin() -> None:
     assert CIRCULAR.extract(Segment(8, 12)) == "ACAA"
     assert CIRCULAR.extract(_feature((8, 12), strand=Strand.REVERSE)) == "TTGT"
     assert CIRCULAR.extract(Segment(3, 13)) == "CGGTTACAAC"
+
+
+def test_a_primer_holds_its_sequence_in_upper_case_and_refuses_other_letters() -> None:
+    assert Primer("M13 fwd", "gtaaaacgacggccagt").sequence == "GTAAAACGACGGCCAGT"
+    with pytest.raises(ValueError, match="U"):
+        Primer("bad", "ACGU")
+
+
+def test_a_binding_site_lies_on_one_strand() -> None:
+    with pytest.raises(ValueError, match="strand"):
+        BindingSite(0, 4, Strand.BOTH)
+
+
+def test_a_binding_site_across_the_origin_fits_a_circular_record_only() -> None:
+    primer = Primer("p", "TTGT", binding_sites=(BindingSite(8, 12, Strand.REVERSE),))
+    assert SequenceRecord("AACCGGTTAC", topology="circular", primers=(primer,)).primers == (primer,)
+    with pytest.raises(ValueError, match="primer 'p'"):
+        SequenceRecord("AACCGGTTAC", primers=(primer,))
+
+
+def test_extras_a_reader_keeps_for_its_writer_do_not_affect_equality() -> None:
+    notes = {"Description": "cloning vector"}
+    kept = SequenceRecord("ACGT", name="pUC19", notes=notes, extras={"cache": b"\x00"})
+    assert kept == SequenceRecord("ACGT", name="pUC19", notes=notes)
+    assert kept != SequenceRecord("ACGT", name="pUC18", notes=notes)
