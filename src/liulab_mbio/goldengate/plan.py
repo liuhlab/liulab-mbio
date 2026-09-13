@@ -1,0 +1,700 @@
+"""One Golden Gate experiment, planned from a vector and an insert.
+
+`plan_assembly` runs the whole design: choose the enzyme, design the overhangs, simulate the
+PCRs and the ligation, work out the bench quantities, and design the colony PCR and sequencing
+that validate the clone. `Plan.write` puts the three things a bench needs in one directory --
+the annotated product, a primer order sheet, and the interactive HTML protocol.
+
+Every number the protocol prints is computed here or by the modules this one calls. What the
+protocol says about the phenotype -- what drives the insert, whether it should be translated,
+and how a plate reads -- is `Phenotype`, read off the product's own features.
+"""
+
+import dataclasses
+import os
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
+
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.goldengate.bench import (
+    COLONY_FLANK,
+    Amount,
+    ColonyCheck,
+    Fragment,
+    SangerRead,
+    assembly_amounts,
+    colony_pcr_check,
+    sanger_primers,
+)
+from liulab_mbio.goldengate.design import (
+    EnzymeChoice,
+    Junction,
+    OverhangSet,
+    choose_enzyme,
+    design_overhangs,
+)
+from liulab_mbio.io import read_record
+from liulab_mbio.primers import (
+    ONETAQ,
+    Q5,
+    THRESHOLDS,
+    Check,
+    Polymerase,
+    PrimerReport,
+    Status,
+    Thresholds,
+    design_pair,
+    evaluate_primer,
+)
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
+from liulab_mbio.sites import EnzymeLike
+from liulab_mbio.snapgene import write_dna
+
+if TYPE_CHECKING:
+    from liulab_mbio.protocol import Protocol
+
+#: Which way round the insert goes into the vector.
+type Orientation = Literal["forward", "reverse"]
+
+#: Where the insert goes: a feature name, a span, or `None` to look for `MCS_FEATURE`.
+type Site = str | tuple[int, int] | None
+
+#: The feature a vector names its cloning site with, looked for when the caller names none.
+MCS_FEATURE = "MCS"
+
+#: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
+#: that supplies the rest of the lacZ fragment the vector carries, which this one does.
+DEFAULT_HOST = "NEB 5-alpha Competent E. coli (C2987)"
+
+#: How far the vector junction may slide to get past an overhang rule. It moves where the vector
+#: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
+VECTOR_WINDOW = 6
+
+#: Bases of vector between the downstream colony PCR primer and its own junction. Deliberately
+#: not `COLONY_FLANK`: two primers the same distance from their junctions give a reversed insert
+#: the same bands as a correct one, so the gel could not tell them apart.
+REVERSE_FLANK = 2 * COLONY_FLANK
+
+#: Selection markers this package can name an antibiotic for, keyed by the feature name lowered.
+#: pUC19's is the one `docs/research/golden-gate-assembly.md` §8 states a plate recipe for; a
+#: marker absent from here is named rather than translated.
+SELECTION: Mapping[str, str] = {
+    "ampr": "ampicillin or carbenicillin",
+    "bla": "ampicillin or carbenicillin",
+}
+
+#: What `Plan.write` calls the three files it writes.
+PRODUCT_FILE = "product.dna"
+PRIMER_FILE = "primers.tsv"
+PROTOCOL_FILE = "protocol.html"
+
+#: The columns of the primer order sheet.
+SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")
+
+_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
+
+
+@dataclass(frozen=True, slots=True)
+class Files:
+    """The three files a plan writes.
+
+    Parameters
+    ----------
+    product
+        The annotated product, as a SnapGene ``.dna`` file.
+    primers
+        Every designed oligo, as a tab-separated sheet to order from.
+    protocol
+        The interactive bench protocol, as one self-contained HTML page.
+    """
+
+    product: Path
+    primers: Path
+    protocol: Path
+
+
+@dataclass(frozen=True, slots=True)
+class Phenotype:
+    """What the product says about itself, read off its own features.
+
+    Parameters
+    ----------
+    insert
+        The span the insert occupies in the product, between its two junctions.
+    coding
+        The insert's coding sequence in the product, or ``None`` when it annotates none.
+    promoter
+        The promoter nearest the insert on the promoter's own reading direction, or ``None``.
+    gap_bp
+        Bases between that promoter and the insert.
+    driven
+        Whether that promoter reads along the strand the insert is coded on.
+    ribosome_binding_site
+        Whether one is annotated between that promoter and the insert.
+    reporter
+        The vector coding sequence the insertion interrupts, or ``None``.
+    marker
+        The vector's selection marker, or ``None`` when it annotates none this package knows.
+    """
+
+    insert: tuple[int, int]
+    coding: Feature | None
+    promoter: Feature | None
+    gap_bp: int
+    driven: bool
+    ribosome_binding_site: bool
+    reporter: Feature | None
+    marker: Feature | None
+
+    @property
+    def expressed(self) -> bool:
+        """Whether the product should make the insert's protein."""
+        return self.coding is not None and self.driven and self.ribosome_binding_site
+
+    @property
+    def blue_white(self) -> bool:
+        """Whether X-gal and IPTG tell a correct clone from an empty vector.
+
+        True when the insertion interrupts a lacZ fragment, which is then not there to
+        complement the host's own.
+        """
+        return self.reporter is not None and self.reporter.name.lower().startswith("lacz")
+
+    @property
+    def antibiotic(self) -> str:
+        """What to select transformants on, or an empty string when the marker is unknown."""
+        if self.marker is None:
+            return ""
+        return SELECTION.get(self.marker.name.lower(), "")
+
+
+@dataclass(frozen=True, slots=True)
+class Plan:
+    """One planned Golden Gate experiment.
+
+    Parameters
+    ----------
+    vector, insert
+        The records the plan was made from; `insert` is the strand that goes in.
+    span
+        The vector bases the assembly replaces, after any junction slide.
+    choice
+        The enzyme the plan uses, and what using it costs.
+    ranking
+        Every candidate enzyme, best first.
+    overhangs
+        The overhangs the two junctions take, with the fidelity of the set.
+    assembly
+        The simulated product, the parts and the junctions.
+    colony
+        The colony PCR that tells a correct clone from an empty or reversed one.
+    reads
+        A sequencing primer reading into each junction from outside it.
+    amounts
+        What to put in the assembly reaction, vector first.
+    phenotype
+        What the product says about itself.
+    reports
+        Every designed oligo's evaluation, in order: the two PCRs, the colony PCR, the reads.
+    host, polymerase
+        The choices the protocol names.
+    """
+
+    vector: SequenceRecord
+    insert: SequenceRecord
+    span: tuple[int, int]
+    choice: EnzymeChoice
+    ranking: tuple[EnzymeChoice, ...]
+    overhangs: OverhangSet
+    assembly: Assembly
+    colony: ColonyCheck
+    reads: tuple[SangerRead, SangerRead]
+    amounts: tuple[Amount, ...]
+    phenotype: Phenotype
+    reports: tuple[PrimerReport, ...]
+    host: str
+    polymerase: Polymerase
+
+    @property
+    def enzyme(self) -> Enzyme:
+        """The Type IIS enzyme the assembly is cut with."""
+        return self.assembly.enzyme
+
+    @property
+    def product(self) -> SequenceRecord:
+        """The circular plasmid the assembly makes."""
+        return self.assembly.product
+
+    @property
+    def parts(self) -> tuple[Part, ...]:
+        """The parts that go into the reaction, the linearised vector first."""
+        return self.assembly.parts
+
+    @property
+    def oligos(self) -> tuple[Primer, ...]:
+        """Every oligo the plan designs, in the order the sheet lists them."""
+        return tuple(report.primer for report in self.reports)
+
+    @property
+    def checks(self) -> tuple[Check, ...]:
+        """The product's checks, with one more for the oligos."""
+        worst = _worst(report.status for report in self.reports)
+        warned = sum(1 for report in self.reports if report.status == "warn")
+        failed = sum(1 for report in self.reports if report.status == "fail")
+        return (
+            *self.assembly.checks,
+            Check(
+                "primers",
+                worst,
+                len(self.reports),
+                f"{len(self.reports)} designed, {warned} with a warning, {failed} failing",
+            ),
+        )
+
+    @property
+    def status(self) -> Status:
+        """The worst status of any check."""
+        return _worst(check.status for check in self.checks)
+
+    def protocol(self) -> "Protocol":
+        """Return the bench protocol for this plan."""
+        from liulab_mbio.goldengate.steps import protocol
+
+        return protocol(self)
+
+    def write(self, directory: str | os.PathLike[str]) -> Files:
+        """Write the product, the primer sheet and the protocol into `directory`.
+
+        The directory is made when it is not there. The three files are named by
+        `PRODUCT_FILE`, `PRIMER_FILE` and `PROTOCOL_FILE`, and a second run over the same
+        inputs writes the same bytes.
+        """
+        from liulab_mbio.protocol import write_html
+
+        out = Path(directory)
+        out.mkdir(parents=True, exist_ok=True)
+        product = out / PRODUCT_FILE
+        write_dna(self.product, product)
+        sheet = out / PRIMER_FILE
+        sheet.write_text(primer_sheet(self), encoding="utf-8")
+        return Files(product, sheet, write_html(self.protocol(), out / PROTOCOL_FILE))
+
+
+def plan_assembly(
+    vector: SequenceRecord | str | os.PathLike[str],
+    insert: SequenceRecord | str | os.PathLike[str],
+    *,
+    site: Site = None,
+    orientation: Orientation = "forward",
+    in_frame: bool = False,
+    enzyme: EnzymeLike | None = None,
+    polymerase: Polymerase = Q5,
+    host: str = DEFAULT_HOST,
+    name: str = "",
+    window: int = VECTOR_WINDOW,
+    thresholds: Thresholds = THRESHOLDS,
+) -> Plan:
+    """Plan one Golden Gate experiment putting `insert` into `vector`.
+
+    The vector is opened by PCR across the span the insert replaces, the insert is amplified
+    with tails of its own, and both junctions are scarless: each takes the bases the part
+    already spells there. The vector junction may slide by up to `window` bases to get past an
+    overhang rule, which moves where the vector is cut and not what the insert spells.
+
+    Parameters
+    ----------
+    vector, insert
+        A record, or a path to a ``.dna``, GenBank or FASTA file holding one.
+    site
+        Where the insert goes: a feature name, a ``(start, end)`` span of the vector, or
+        ``None`` to use the vector's own `MCS_FEATURE` feature.
+    orientation
+        ``"reverse"`` puts the other strand of `insert` into the product.
+    in_frame
+        Hold the insert's junction on a codon boundary of the coding sequence it lies in.
+    enzyme
+        The Type IIS enzyme to use. Chosen by `choose_enzyme` when not given, and refused
+        either way if it reads a site in either part.
+    polymerase
+        For the two PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
+    host, name
+        The strain the protocol names, and what to call the product.
+    window
+        How far the vector junction may slide.
+    thresholds
+        Passed to `liulab_mbio.primers`.
+
+    Returns
+    -------
+    Plan
+        The design, the simulated product and the validation.
+
+    Raises
+    ------
+    ValueError
+        If no insertion site is named and the vector annotates none, if the enzyme reads a site
+        in either part, if no overhang passes every rule, or if the parts do not assemble.
+    """
+    one, other = _record(vector), _record(insert)
+    if orientation not in ("forward", "reverse"):
+        raise ValueError(f"orientation is 'forward' or 'reverse', got {orientation!r}")
+    if orientation == "reverse":
+        other = flipped(other)
+    start, end = _span(one, site)
+    ranking = choose_enzyme([one, other])
+    choice = _chosen(ranking, enzyme, (one, other))
+    chosen = choice.enzyme
+    designed = design_overhangs(
+        (
+            Junction(
+                other.name or "insert",
+                record=other,
+                position=0,
+                scarless=not in_frame,
+                in_frame=in_frame,
+            ),
+            Junction(one.name or "vector", record=one, position=end, scarless=True, window=window),
+        ),
+        chosen,
+    )
+    at_insert, at_vector = designed.overhangs
+    span = (start, end + designed.choices[1].offset)
+    parts = (
+        open_vector(
+            one,
+            chosen,
+            *span,
+            overhangs=(at_insert, at_vector),
+            name=f"{one.name} backbone".strip(),
+            polymerase=polymerase,
+            thresholds=thresholds,
+        ),
+        amplify(
+            other,
+            chosen,
+            0,
+            len(other),
+            left_overhang=at_insert,
+            right_overhang=at_vector,
+            name=other.name or "insert",
+            polymerase=polymerase,
+            thresholds=thresholds,
+        ),
+    )
+    built = assemble(parts, chosen, name=name or f"{one.name}-{other.name}".strip("-"))
+    first, last = built.junction_positions
+    colony = colony_pcr_check(
+        built.product,
+        (first, last),
+        vector=one,
+        primers=design_pair(
+            built.product,
+            first - COLONY_FLANK,
+            last + REVERSE_FLANK,
+            forward_name="Colony PCR forward",
+            reverse_name="Colony PCR reverse",
+            polymerase=ONETAQ,
+            thresholds=thresholds,
+        ),
+        insert_primer=True,
+        polymerase=ONETAQ,
+        thresholds=thresholds,
+    )
+    reads = sanger_primers(built.product, (first, last), thresholds=thresholds)
+    return Plan(
+        one,
+        other,
+        span,
+        choice,
+        ranking,
+        designed,
+        built,
+        colony,
+        reads,
+        assembly_amounts(
+            Fragment(parts[0].name, parts[0].length), (Fragment(parts[1].name, parts[1].length),)
+        ),
+        _phenotype(one, built, span),
+        (
+            parts[0].report.forward,
+            parts[0].report.reverse,
+            parts[1].report.forward,
+            parts[1].report.reverse,
+            *colony.reports,
+            *(evaluate_primer(read.primer, built.product, thresholds=thresholds) for read in reads),
+        ),
+        host,
+        polymerase,
+    )
+
+
+def primer_sheet(plan: Plan) -> str:
+    """Return every designed oligo as a tab-separated sheet, one row each.
+
+    The columns are `SHEET_COLUMNS`: the name to order it under, the sequence 5' to 3', its
+    length, and the Tm of the part that anneals.
+    """
+    rows = ["\t".join(SHEET_COLUMNS)]
+    for report in plan.reports:
+        primer = report.primer
+        rows.append(
+            "\t".join(
+                (
+                    primer.name,
+                    primer.sequence,
+                    str(len(primer.sequence)),
+                    f"{report['tm'].value:.1f}",
+                )
+            )
+        )
+    return "\n".join(rows) + "\n"
+
+
+def flipped(record: SequenceRecord) -> SequenceRecord:
+    """Return `record` read from the other strand, features and binding sites turned with it.
+
+    Raises
+    ------
+    ValueError
+        If a span runs across the origin, which has no place on the other strand of a record
+        this turns end for end.
+
+    Examples
+    --------
+    >>> flipped(SequenceRecord("AAAACCCG")).sequence
+    'CGGGTTTT'
+    """
+    length = len(record)
+    other = {Strand.FORWARD: Strand.REVERSE, Strand.REVERSE: Strand.FORWARD}
+    spans = [
+        (segment.start, segment.end) for feature in record.features for segment in feature.segments
+    ]
+    spans += [(site.start, site.end) for primer in record.primers for site in primer.binding_sites]
+    if any(end > length for _, end in spans):
+        raise ValueError("a record with a span across its origin cannot be turned end for end")
+    features = tuple(
+        dataclasses.replace(
+            feature,
+            segments=tuple(
+                sorted(
+                    (
+                        Segment(
+                            length - segment.end,
+                            length - segment.start,
+                            name=segment.name,
+                            color=segment.color,
+                        )
+                        for segment in feature.segments
+                    ),
+                    key=lambda segment: (segment.start, segment.end),
+                )
+            ),
+            strand=other.get(feature.strand, feature.strand),
+        )
+        for feature in record.features
+    )
+    primers = tuple(
+        dataclasses.replace(
+            primer,
+            binding_sites=tuple(
+                BindingSite(length - site.end, length - site.start, other[site.strand])
+                for site in primer.binding_sites
+            ),
+        )
+        for primer in record.primers
+    )
+    return dataclasses.replace(
+        record,
+        sequence=reverse_complement(record.sequence),
+        features=features,
+        primers=primers,
+        extras={},
+    )
+
+
+def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
+    """Read a record, or take one already read."""
+    return value if isinstance(value, SequenceRecord) else read_record(value)
+
+
+def _span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
+    """Return the vector bases the assembly replaces."""
+    if isinstance(site, tuple):
+        start, end = site
+    else:
+        if site is None:
+            found = _named(vector, MCS_FEATURE)
+            if found is None:
+                raise ValueError(
+                    f"name the insertion site: this vector annotates no {MCS_FEATURE!r} "
+                    "feature. Pass a feature name or a (start, end) span"
+                )
+        else:
+            found = _named(vector, site)
+            if found is None:
+                raise ValueError(f"this vector annotates no feature called {site!r}")
+        start, end = found.segments[0].start, found.segments[-1].end
+    if not 0 <= start < end <= len(vector):
+        raise ValueError(
+            f"the insertion site {start}-{end} does not lie inside {len(vector)} bases"
+        )
+    return start, end
+
+
+def _named(record: SequenceRecord, name: str) -> Feature | None:
+    """Return the first feature of that name, whatever its case."""
+    return next(
+        (feature for feature in record.features if feature.name.lower() == name.lower()), None
+    )
+
+
+def _chosen(
+    ranking: tuple[EnzymeChoice, ...],
+    enzyme: EnzymeLike | None,
+    parts: tuple[SequenceRecord, ...],
+) -> EnzymeChoice:
+    """Return the enzyme to use, refusing one that would cut the product open.
+
+    Raises
+    ------
+    ValueError
+        If the enzyme reads a site in either part.
+    """
+    if enzyme is None:
+        choice = ranking[0]
+    else:
+        wanted = get_enzyme(enzyme) if isinstance(enzyme, str) else enzyme
+        choice = next(
+            (one for one in ranking if one.enzyme.name == wanted.name),
+            choose_enzyme(parts, enzymes=[wanted])[0],
+        )
+    if choice.free:
+        return choice
+    free = [one.enzyme.name for one in ranking if one.free]
+    if free:
+        rest = f"free here: {', '.join(free)}"
+    else:
+        rest = (
+            f"no candidate is free, and of this one's sites {len(choice.changes)} could go by a "
+            f"synonymous codon change and {len(choice.outside_cds)} lie outside a coding sequence"
+        )
+    raise ValueError(
+        f"{choice.enzyme.name} reads {choice.sites} site(s) in the parts, so it would cut the "
+        f"product open again; {rest}"
+    )
+
+
+def _phenotype(vector: SequenceRecord, built: Assembly, span: tuple[int, int]) -> Phenotype:
+    """Read what the product says about itself off its own features."""
+    first, last = built.junction_positions
+    coding = _coding(built.product, first, last)
+    promoter, gap = _promoter(built.product, first, last)
+    return Phenotype(
+        (first, last),
+        coding,
+        promoter,
+        gap,
+        promoter is not None and coding is not None and promoter.strand == coding.strand,
+        _ribosome_binding_site(built.product, promoter, first, last),
+        _interrupted(vector, span),
+        _marker(vector),
+    )
+
+
+def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
+    """Return the longest coding sequence lying wholly between the two junctions."""
+    inside = [
+        feature
+        for feature in product.features
+        if feature.type == "CDS"
+        and all(first <= segment.start and segment.end <= last for segment in feature.segments)
+    ]
+    return max(
+        inside,
+        key=lambda feature: sum(segment.end - segment.start for segment in feature.segments),
+        default=None,
+    )
+
+
+def _promoter(product: SequenceRecord, first: int, last: int) -> tuple[Feature | None, int]:
+    """Return the promoter nearest the insert along its own reading direction, and the gap."""
+    length = len(product)
+    found: Feature | None = None
+    gap = length
+    for feature in product.features:
+        if feature.type != "promoter":
+            continue
+        low = min(segment.start for segment in feature.segments)
+        high = max(segment.end for segment in feature.segments)
+        distance = (
+            (low - last) % length if feature.strand == Strand.REVERSE else (first - high) % length
+        )
+        if distance < gap:
+            found, gap = feature, distance
+    return found, gap if found is not None else 0
+
+
+def _ribosome_binding_site(
+    product: SequenceRecord, promoter: Feature | None, first: int, last: int
+) -> bool:
+    """Whether one is annotated between the promoter and the insert."""
+    if promoter is None:
+        return False
+    length = len(product)
+    if promoter.strand == Strand.REVERSE:
+        low, high = last, min(segment.start for segment in promoter.segments)
+    else:
+        low, high = max(segment.end for segment in promoter.segments), first
+    return any(
+        feature.type == "RBS"
+        and any(
+            (segment.start - low) % length < (high - low) % length for segment in feature.segments
+        )
+        for feature in product.features
+    )
+
+
+def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | None:
+    """Return the vector coding sequence the insertion breaks, or ``None``."""
+    start, end = span
+    return next(
+        (
+            feature
+            for feature in vector.features
+            if feature.type == "CDS"
+            and any(segment.start < end and start < segment.end for segment in feature.segments)
+        ),
+        None,
+    )
+
+
+def _marker(vector: SequenceRecord) -> Feature | None:
+    """Return the vector's selection marker, or ``None`` when it annotates none."""
+    return next(
+        (
+            feature
+            for feature in vector.features
+            if feature.type == "CDS" and feature.name.lower() in SELECTION
+        ),
+        None,
+    )
+
+
+def _worst(statuses: Iterable[Status]) -> Status:
+    """Return the worst of these statuses."""
+    worst: Status = "pass"
+    for status in statuses:
+        if _RANK[status] > _RANK[worst]:
+            worst = status
+    return worst

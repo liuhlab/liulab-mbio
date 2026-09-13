@@ -1,0 +1,262 @@
+"""The whole pipeline, run on the fixtures with no agent.
+
+`tests/data/pUC19.dna` and `tests/data/GFP.dna`: put GFP into the pUC19 multiple cloning site
+and validate the insertion by colony PCR. Nothing about the fixtures is hard-coded in the
+package; the numbers below are read off the records and pinned here.
+"""
+
+from pathlib import Path
+
+import pytest
+
+from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
+from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
+from liulab_mbio.goldengate.plan import REVERSE_FLANK
+from liulab_mbio.io import read_record
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sites import find_sites
+from liulab_mbio.snapgene import read_dna
+
+DATA = Path(__file__).parent / "data"
+
+#: Where the fixture's own MCS feature sits, and the vector bases past it.
+MCS = (395, 452)
+
+
+@pytest.fixture(scope="module")
+def puc19() -> SequenceRecord:
+    return read_record(DATA / "pUC19.dna")
+
+
+@pytest.fixture(scope="module")
+def gfp() -> SequenceRecord:
+    return read_record(DATA / "GFP.dna")
+
+
+@pytest.fixture(scope="module")
+def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
+    return plan_assembly(puc19, gfp)
+
+
+def test_the_pipeline_picks_the_enzyme_with_no_site_in_either_part(plan, puc19, gfp):
+    # BsaI reads a site in both fixtures and BsmBI two in the vector, so neither is free.
+    assert plan.enzyme.name == "BbsI"
+    assert plan.choice.free
+    assert find_sites(puc19, plan.enzyme) == ()
+    assert find_sites(gfp, plan.enzyme) == ()
+
+
+def test_the_vector_junction_moves_one_base_off_an_all_gc_overhang(plan, puc19):
+    # The vector spells GGCG where the MCS ends, and an all-GC junction truncates.
+    assert puc19.sequence[MCS[1] : MCS[1] + 4] == "GGCG"
+    assert plan.overhangs.overhangs == ("ATGA", "TGGC")
+    assert plan.span == (MCS[0], MCS[1] - 1)
+    assert [rejection.rule for rejection in plan.overhangs.choices[1].rejected] == ["uniform"]
+
+
+def test_the_overhang_set_is_scored_on_measured_data(plan):
+    report = plan.overhangs.fidelity
+    assert report.measured
+    assert "Pryor" in report.source
+    assert report.value == pytest.approx(1.0)
+
+
+def test_the_product_is_the_vector_with_the_insert_in_place_of_the_span(plan, puc19, gfp):
+    product = plan.product
+    assert product.topology == "circular"
+    assert len(product) == len(puc19) - (plan.span[1] - plan.span[0]) + len(gfp)
+    assert len(product) == 3347
+    assert (
+        product.sequence
+        == puc19.sequence[: plan.span[0]] + gfp.sequence + puc19.sequence[plan.span[1] :]
+    )
+    assert plan.assembly.junction_positions == (395, 1112)
+
+
+def test_the_product_holds_no_site_of_the_chosen_enzyme(plan):
+    assert find_sites(plan.product, plan.enzyme) == ()
+    assert plan.assembly["sites"].value == 0
+    assert plan.assembly.status == "pass"
+
+
+def test_the_coding_sequence_of_the_insert_is_intact_and_appears_once(plan, gfp):
+    assert plan.product.sequence.count(gfp.sequence) == 1
+    coding = [one for one in plan.product.features if one.name == "GFP"]
+    assert [(s.start, s.end) for s in coding[0].segments] == [(395, 1112)]
+    assert plan.product.extract(coding[0]) == gfp.sequence
+    assert plan.assembly["GFP"].value == 1
+
+
+def test_an_enzyme_with_a_site_in_the_parts_is_refused(puc19, gfp):
+    with pytest.raises(ValueError, match="BsaI"):
+        plan_assembly(puc19, gfp, enzyme="BsaI")
+
+
+def test_the_insertion_site_is_read_from_a_feature_name_or_given_as_coordinates(puc19, gfp):
+    named = plan_assembly(puc19, gfp, site="MCS")
+    given = plan_assembly(puc19, gfp, site=MCS)
+    assert named.product.sequence == given.product.sequence
+    assert named.span == given.span
+
+
+def test_a_vector_with_no_multiple_cloning_site_asks_where_to_put_the_insert(gfp):
+    bare = SequenceRecord("ACGT" * 400, topology="circular", name="bare")
+    with pytest.raises(ValueError, match="insertion site"):
+        plan_assembly(bare, gfp)
+
+
+def test_the_other_orientation_puts_the_insert_on_the_other_strand(puc19, gfp):
+    back = plan_assembly(puc19, gfp, orientation="reverse")
+    assert back.product.sequence.count(reverse_complement(gfp.sequence)) == 1
+    assert gfp.sequence not in back.product.sequence
+    coding = next(one for one in back.product.features if one.name == "GFP")
+    assert coding.strand == Strand.REVERSE
+    assert back.assembly.status == "pass"
+
+
+def test_the_files_are_read_from_disk_when_a_path_is_given():
+    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna")
+    assert made.product.name == "pUC19-GFP"
+    assert len(made.product) == 3347
+
+
+def test_the_written_product_reads_back_identically(plan, tmp_path):
+    outputs = plan.write(tmp_path)
+    assert read_dna(outputs.product) == plan.product
+
+
+def test_every_designed_primer_passes_evaluation(plan):
+    # Two PCRs, three colony PCR primers and two sequencing primers.
+    assert len(plan.reports) == 9
+    for report in plan.reports:
+        failed = [check.name for check in report.checks if check.status == "fail"]
+        assert failed == [], f"{report.primer.name}: {failed}"
+    assert plan.status != "fail"
+
+
+def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one(plan):
+    bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
+    assert len(plan.colony.primers) == 3
+    assert bands["Correct clone"] != bands["Reversed insert"]
+    assert plan.colony.tells_orientation
+
+
+def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp):
+    bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
+    insert_bp = plan.phenotype.insert[1] - plan.phenotype.insert[0]
+    removed = plan.span[1] - plan.span[0]
+    assert insert_bp == len(gfp)
+    # The junction primer reaches the near vector primer in a correct clone and the far one in
+    # a reversed clone, and the two vector primers span the insert whichever way it sits.
+    assert bands["Correct clone"] == (
+        COLONY_FLANK + JUNCTION_OFFSET,
+        COLONY_FLANK + insert_bp + REVERSE_FLANK,
+    )
+    assert bands["Reversed insert"] == (
+        REVERSE_FLANK + JUNCTION_OFFSET,
+        COLONY_FLANK + insert_bp + REVERSE_FLANK,
+    )
+    assert bands["Empty vector"] == (COLONY_FLANK + removed + REVERSE_FLANK,)
+
+
+def test_the_sequencing_primers_read_across_both_junctions(plan, gfp):
+    for read in plan.reads:
+        assert read.distance_bp >= SANGER_FLANK
+        assert read.read_bp == read.distance_bp + len(gfp)
+
+
+def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
+    outputs = plan.write(tmp_path / "run")
+    assert [path.name for path in (outputs.product, outputs.primers, outputs.protocol)] == [
+        "product.dna",
+        "primers.tsv",
+        "protocol.html",
+    ]
+    assert all(
+        path.stat().st_size > 0 for path in (outputs.product, outputs.primers, outputs.protocol)
+    )
+
+
+def test_the_same_inputs_write_the_same_bytes(puc19, gfp, tmp_path):
+    first = plan_assembly(puc19, gfp).write(tmp_path / "one")
+    second = plan_assembly(puc19, gfp).write(tmp_path / "two")
+    for one, other in (
+        (first.product, second.product),
+        (first.primers, second.primers),
+        (first.protocol, second.protocol),
+    ):
+        assert one.read_bytes() == other.read_bytes()
+
+
+def test_the_primer_sheet_carries_every_oligo(plan):
+    rows = primer_sheet(plan).splitlines()
+    assert rows[0].split("\t") == ["name", "sequence", "length", "tm_c"]
+    assert len(rows) == 1 + len(plan.reports)
+    for row, report in zip(rows[1:], plan.reports, strict=True):
+        name, sequence, length, tm = row.split("\t")
+        assert (name, sequence) == (report.primer.name, report.primer.sequence)
+        assert int(length) == len(sequence)
+        assert float(tm) == pytest.approx(report["tm"].value, abs=0.05)
+
+
+def test_every_step_of_the_protocol_says_what_a_good_result_looks_like(plan):
+    steps = plan.protocol().steps
+    assert len(steps) >= 10
+    for step in steps:
+        assert step.expected, step.title
+
+
+def test_the_protocol_states_the_colony_colour_and_the_host_it_needs(plan):
+    text = _sentences(plan.protocol())
+    assert "white" in text
+    assert "blue" in text
+    assert "lacZ" in text
+    assert plan.host in text
+    assert "alpha-complementing" in text
+
+
+def test_the_protocol_states_the_orientation_and_that_no_protein_is_expected(plan):
+    overview = plan.protocol().overview
+    assert "opposite strand" in overview["Orientation"]
+    assert "lac promoter" in overview["Orientation"]
+    assert "no ribosome binding site" in overview["Expression"]
+    assert "not expected to make" in overview["Expression"]
+    assert not plan.phenotype.expressed
+
+
+def test_the_protocol_carries_the_numbers_the_package_computed(plan):
+    protocol = plan.protocol()
+    text = _sentences(protocol)
+    for part in plan.parts:
+        assert f"{part.length} bp" in text
+    assert plan.enzyme.name in _sentences(protocol)
+    gels = [gel for step in protocol.steps for gel in step.gels]
+    lanes = {lane.label: lane.bands_bp for gel in gels for lane in gel.lanes}
+    for clone in plan.colony.clones:
+        assert lanes[clone.name] == clone.bands_bp
+    programs = [program for step in protocol.steps for program in step.programs]
+    assert any(program.title == "Golden Gate assembly" for program in programs)
+    assert any(
+        incubation.temperature_c == 60.0
+        for program in programs
+        for stage in program.stages
+        for incubation in stage.incubations
+    )
+
+
+def test_the_protocol_cites_the_data_its_fidelity_came_from(plan):
+    citations = " ".join(reference.text for reference in plan.protocol().references)
+    assert "Pryor" in citations
+    assert "NEBridge" in citations
+
+
+def _sentences(protocol) -> str:
+    """Every sentence the protocol says, for a test to read."""
+    parts = [protocol.title, protocol.summary, *protocol.overview.values()]
+    for material in protocol.materials:
+        parts += [material.name, material.note]
+    for step in protocol.steps:
+        parts += [step.title, *step.instructions, *step.cautions, *step.notes, *step.expected]
+        for entry in step.troubleshooting:
+            parts += [entry.problem, entry.solution]
+    return " ".join(parts)
