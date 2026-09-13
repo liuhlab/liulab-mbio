@@ -9,7 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.goldengate.assembly import amplify, dam_sites, open_vector
+from liulab_mbio.goldengate import bench
+from liulab_mbio.goldengate.assembly import (
+    JUNCTION_COLOR,
+    amplify,
+    assemble,
+    dam_sites,
+    open_vector,
+)
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import (
     BindingSite,
@@ -20,11 +27,16 @@ from liulab_mbio.sequence import (
     reverse_complement,
 )
 from liulab_mbio.sites import find_sites, has_site
+from liulab_mbio.snapgene import read_dna, write_dna
 
 DATA = Path(__file__).parent / "data"
 
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6
+
+#: Addgene's 23-mer M13/pUC pair, which #13 pins its own expected bands against.
+M13_FORWARD = Primer("M13/pUC Forward", "CCCAGTCACGACGTTGTAAAACG")
+M13_REVERSE = Primer("M13/pUC Reverse", "AGCGGATAACAATTTCACACAGG")
 
 
 @pytest.fixture(scope="module")
@@ -171,6 +183,126 @@ def test_a_template_primer_is_kept_only_where_its_whole_site_survives():
     part = amplify(record, "BbsI", 4, 32, left_overhang="AAAA", right_overhang="CCCC")
     # "cut" annealed across the edge of the span, so it has nowhere left to sit.
     assert [one.name for one in part.amplicon.primers] == ["kept", "forward", "reverse"]
+
+
+@pytest.fixture(scope="module")
+def assembly(backbone, insert):
+    return assemble((backbone, insert), "BbsI", name="pUC19-GFP")
+
+
+def test_the_product_replaces_the_span_with_the_insert(assembly, puc19, gfp, mcs):
+    product = assembly.product
+    assert product.topology == "circular"
+    assert product.sequence == puc19.sequence[: mcs[0]] + gfp.sequence + puc19.sequence[mcs[1] :]
+    assert len(product) == 3346
+    assert product.name == "pUC19-GFP"
+
+
+def test_the_product_keeps_the_vector_origin(assembly, puc19, mcs):
+    # Rotating back to the backbone's own first base keeps the vector's coordinates readable
+    # and keeps a junction off base zero, which is what #13's validation reads across.
+    assert assembly.product.sequence[: mcs[0]] == puc19.sequence[: mcs[0]]
+
+
+def test_junctions_are_the_overhangs_standing_in_the_product(assembly, overhangs):
+    assert assembly.junction_positions == (395, 1112)
+    at = {one.start: one for one in assembly.junctions}
+    assert (at[395].overhang, at[1112].overhang) == overhangs
+    for junction in assembly.junctions:
+        assert assembly.product.extract(junction.span) == junction.overhang
+    assert (at[395].before, at[395].after) == ("pUC19 backbone", "GFP")
+    assert (at[1112].before, at[1112].after) == ("GFP", "pUC19 backbone")
+
+
+def test_features_carry_over_to_their_new_coordinates(assembly):
+    carried = {one.name: one for one in assembly.product.features}
+    assert _spans(carried["GFP"]) == [(395, 1112)]
+    assert _spans(carried["lacZα"]) == [(145, 395), (1112, 1129)]  # noqa: RUF001
+    assert _spans(carried["AmpR"]) == [(2285, 3077), (3077, 3146)]
+    assert _spans(carried["ori"]) == [(1526, 2115)]
+    # The MCS went with the span the insert replaced.
+    assert "MCS" not in carried
+
+
+def test_every_feature_of_the_product_carries_a_colour(assembly):
+    # SnapGene writes its own default grey for a feature that has none.
+    assert all(one.color for one in assembly.product.features)
+
+
+def test_each_junction_is_annotated(assembly, overhangs):
+    drawn = [one for one in assembly.product.features if one.color == JUNCTION_COLOR]
+    assert [one.name for one in drawn] == [f"{one} junction" for one in overhangs]
+    assert _spans(drawn[0]) == [(395, 399)]
+
+
+def test_the_designed_primers_are_annotated_where_they_anneal(assembly):
+    annotated = {one.name: one for one in assembly.product.primers}
+    assert {
+        "pUC19 backbone forward",
+        "pUC19 backbone reverse",
+        "GFP forward",
+        "GFP reverse",
+    } <= set(annotated)
+    for primer in annotated.values():
+        site = primer.binding_sites[0]
+        annealed = assembly.product.extract(Segment(site.start, site.end))
+        assert primer.sequence.endswith(
+            annealed if site.strand == Strand.FORWARD else reverse_complement(annealed)
+        )
+
+
+def test_the_product_writes_and_reads_back_unchanged(assembly, tmp_path):
+    path = tmp_path / "product.dna"
+    write_dna(assembly.product, path)
+    assert read_dna(path) == assembly.product
+
+
+def test_another_enzyme_reaching_further_leaves_the_same_product(
+    assembly, puc19, gfp, mcs, overhangs
+):
+    # PaqCI reads a longer site and cuts further from it, so the tails differ and the product
+    # must not.
+    parts = (
+        open_vector(puc19, "PaqCI", *mcs, overhangs=overhangs, name="pUC19 backbone"),
+        amplify(
+            gfp,
+            "PaqCI",
+            0,
+            len(gfp),
+            left_overhang=overhangs[0],
+            right_overhang=overhangs[1],
+            name="GFP",
+        ),
+    )
+    assert len(parts[0].amplicon) != len(assembly.parts[0].amplicon)
+    other = assemble(parts, "PaqCI", name="pUC19-GFP")
+    assert other.product.sequence == assembly.product.sequence
+    assert other.junction_positions == assembly.junction_positions
+
+
+def test_assemble_refuses_parts_that_do_not_close_the_circle(backbone, gfp, overhangs):
+    stranger = amplify(
+        gfp, "BbsI", 0, len(gfp), left_overhang=overhangs[0], right_overhang="TTAG", name="GFP"
+    )
+    with pytest.raises(ValueError, match="TTAG"):
+        assemble((backbone, stranger), "BbsI")
+
+
+def test_assemble_refuses_one_part(backbone):
+    with pytest.raises(ValueError, match="two"):
+        assemble((backbone,), "BbsI")
+
+
+def test_the_bands_bench_expects_are_the_ones_this_product_gives(assembly, puc19):
+    check = bench.colony_pcr_check(
+        assembly.product,
+        assembly.junction_positions,
+        vector=puc19,
+        primers=(M13_FORWARD, M13_REVERSE),
+    )
+    bands = {one.name: one.bands_bp for one in check.clones}
+    assert bands["Correct clone"] == (797,)
+    assert bands["Empty vector"] == (137,)
 
 
 def _annealed(primer: Primer) -> int:

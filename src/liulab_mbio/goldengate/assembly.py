@@ -19,9 +19,10 @@ record ends past the record's length.
 """
 
 import dataclasses
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers import (
     Q5,
@@ -41,10 +42,14 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import SPACER_LENGTH, EnzymeLike, primer_tail
+from liulab_mbio.sites import SPACER_LENGTH, EnzymeLike, Fragment, digest, primer_tail
 
 #: Dam methylates the adenine of this site, and DpnI cuts only where it has.
 DAM_SITE = "GATC"
+
+#: What a junction is drawn in. A feature built in code has no colour of its own, and
+#: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
+JUNCTION_COLOR = "#ff9900"
 
 
 def dam_sites(record: SequenceRecord) -> int:
@@ -285,6 +290,133 @@ def open_vector(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class Junction:
+    """Where two parts meet in the product: the bases their two overhangs paired on.
+
+    Parameters
+    ----------
+    start
+        0-based index of the first of those bases in the product.
+    overhang
+        What they spell, written on the top strand.
+    before, after
+        The parts either side, named as they were given.
+    """
+
+    start: int
+    overhang: str
+    before: str
+    after: str
+
+    @property
+    def end(self) -> int:
+        """Where the junction's bases end."""
+        return self.start + len(self.overhang)
+
+    @property
+    def span(self) -> Segment:
+        """The junction's bases, as a segment of the product."""
+        return Segment(self.start, self.end)
+
+
+@dataclass(frozen=True, slots=True)
+class Assembly:
+    """What one Golden Gate reaction makes.
+
+    Parameters
+    ----------
+    product
+        The circular plasmid: every part's features carried to their new coordinates, the
+        primers annotated where they anneal, and each junction drawn in `JUNCTION_COLOR`.
+    parts
+        The parts that went in, in the order they were given.
+    junctions
+        Where they meet, in the product's own order.
+    enzyme
+        The enzyme the reaction was cut with.
+    """
+
+    product: SequenceRecord
+    parts: tuple[Part, ...]
+    junctions: tuple[Junction, ...]
+    enzyme: Enzyme
+
+    @property
+    def junction_positions(self) -> tuple[int, ...]:
+        """Where each junction begins, which is what a validation design reads across."""
+        return tuple(one.start for one in self.junctions)
+
+
+def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> Assembly:
+    """Cut every part with `enzyme` and ligate them into one circular product.
+
+    Two ends join where their overhangs are equal, both being written on the top strand, so the
+    parts are chained from the first one round until the circle closes. That first part sets the
+    origin: the product is turned so its template's own first base keeps the place it had, which
+    leaves the vector's coordinates readable and keeps a junction off base zero.
+
+    Parameters
+    ----------
+    parts
+        Two or more, the linearised vector first.
+    enzyme
+        The Type IIS enzyme, which must be the one the parts carry tails for.
+    name
+        What to call the product.
+
+    Returns
+    -------
+    Assembly
+        The product, the parts that made it, and the junctions between them.
+
+    Raises
+    ------
+    ValueError
+        If fewer than two parts are given, if cutting one does not leave the fragment its tails
+        were designed for, or if the overhangs do not chain into one circle.
+    """
+    one = _enzyme(enzyme)
+    if len(parts) < 2:
+        raise ValueError(f"an assembly joins at least two parts, got {len(parts)}")
+    order = _chain(parts)
+    bases = ""
+    features: list[Feature] = []
+    primers: list[Primer] = []
+    joins: list[tuple[int, Part, Part]] = []
+    for place, index in enumerate(order):
+        part, piece = parts[index], _cut(parts[index], one)
+        at = len(bases)
+        bases += part.amplicon.extract(Segment(piece.start, piece.end))
+        carried, kept = _carried(part.template, *part.span, at - part.span[0])
+        features.extend(carried)
+        primers.extend(kept)
+        primers.append(_placed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
+        primers.append(_placed(part.reverse, at + part.fragment_length, Strand.REVERSE))
+        joins.append((at, parts[order[place - 1]], part))
+    features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
+    origin = _origin(parts[order[0]])
+    product = SequenceRecord(
+        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+    )
+    return Assembly(
+        _ordered(rotate(product, origin) if origin else product),
+        tuple(parts),
+        tuple(
+            sorted(
+                (
+                    Junction(
+                        (at - origin) % len(bases), after.left_overhang, before.name, after.name
+                    )
+                    for at, before, after in joins
+                ),
+                key=lambda junction: junction.start,
+            )
+        ),
+        one,
+    )
+
+
 def _enzyme(enzyme: EnzymeLike) -> Enzyme:
     """Read one enzyme by name or by record."""
     return get_enzyme(enzyme) if isinstance(enzyme, str) else enzyme
@@ -345,3 +477,84 @@ def _carried(
         if sites:
             primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
     return tuple(features), tuple(primers)
+
+
+def _ordered(record: SequenceRecord) -> SequenceRecord:
+    """Put `record`'s features in position order, each one's segments in top-strand order.
+
+    Turning a record moves its segments without reordering them, and parts are joined in the
+    order they ligate rather than the order they end up in.
+    """
+    features = [
+        dataclasses.replace(
+            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
+        )
+        for feature in record.features
+    ]
+    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
+    return dataclasses.replace(record, features=tuple(features))
+
+
+def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Feature:
+    """Draw the junction that begins at `at`, where `before` gives way to `after`."""
+    overhang = after.left_overhang
+    return Feature(
+        f"{overhang} junction",
+        "misc_feature",
+        (Segment(at, at + len(overhang)),),
+        color=JUNCTION_COLOR,
+        qualifiers={"note": (f"{before.name} to {after.name}, {enzyme.name} overhang",)},
+    )
+
+
+def _cut(part: Part, enzyme: Enzyme) -> Fragment:
+    """Return the one piece a digest of `part` releases with the ends it was designed for."""
+    wanted = (part.left_overhang, part.right_overhang)
+    pieces = [
+        piece
+        for piece in digest(part.amplicon, enzyme)
+        if (piece.left_overhang, piece.right_overhang) == wanted
+    ]
+    if len(pieces) != 1:
+        raise ValueError(
+            f"cutting {part.name or 'a part'} with {enzyme.name} leaves {len(pieces)} pieces "
+            f"ending in {wanted[0]} and {wanted[1]}, the overhangs its tails were designed for"
+        )
+    return pieces[0]
+
+
+def _chain(parts: Sequence[Part]) -> list[int]:
+    """Return the order the parts ligate in, starting from the first one given."""
+    order, used = [0], {0}
+    while len(order) < len(parts):
+        before = parts[order[-1]]
+        found = [
+            index
+            for index, part in enumerate(parts)
+            if index not in used and part.left_overhang == before.right_overhang
+        ]
+        if len(found) != 1:
+            raise ValueError(
+                f"{len(found)} parts begin with the overhang {before.right_overhang}, which "
+                f"{before.name or 'the part before'} ends with"
+            )
+        order.append(found[0])
+        used.add(found[0])
+    last, first = parts[order[-1]], parts[0]
+    if last.right_overhang != first.left_overhang:
+        raise ValueError(
+            f"the circle does not close: {last.name or 'the last part'} ends with "
+            f"{last.right_overhang} and {first.name or 'the first'} begins with "
+            f"{first.left_overhang}"
+        )
+    return order
+
+
+def _origin(part: Part) -> int:
+    """Where the first part's template origin falls in the product, or 0 when it is not there."""
+    start, end = part.span
+    turns = (0, len(part.template)) if part.template.topology == "circular" else (0,)
+    for turn in turns:
+        if start <= turn < end:
+            return turn - start
+    return 0
