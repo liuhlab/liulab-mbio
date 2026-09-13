@@ -70,3 +70,43 @@ _Avoid_: virtual gel, gel image
 
 The size marker lane of a simulated gel: a name and the band sizes it carries.
 _Avoid_: marker, standard
+
+### Recognition site
+
+The sequence a restriction enzyme binds, written 5' to 3' in IUPAC codes.
+_Avoid_: recognition sequence, restriction site
+
+### Cut offset
+
+Where an enzyme cuts one strand, counted from the first base of its recognition site: a 0-based
+boundary, so offset 7 severs the strand between the seventh and eighth base. An offset outside
+the site is what makes an enzyme Type IIS. The same two cuts placed in a record's own
+coordinates are its cut positions.
+_Avoid_: cleavage coordinate, cut index
+
+### Overhang
+
+The bases two staggered cuts leave single-stranded. The end is 5' when the bottom strand is cut
+further along than the top, 3' when it is cut nearer, and blunt when neither strand overhangs.
+Golden Gate joins two fragments by matching overhangs.
+_Avoid_: sticky end, extension
+
+### Type IIS
+
+A restriction enzyme that cuts outside its recognition site, so the overhang it leaves is
+whatever the DNA holds there rather than part of the site. BsaI, BsmBI, BbsI, SapI, PaqCI and
+BtgZI are the ones this package ships.
+_Avoid_: type 2S, IIs
+
+### Isoschizomer
+
+An enzyme a supplier sells that reads the same site as another and cuts it in the same place. A
+neoschizomer shares the site but cuts elsewhere — XmaI to SmaI — and is not an isoschizomer.
+_Avoid_: equivalent enzyme, alias
+
+### Commercial name
+
+The name a supplier sells an enzyme under, such as BsaI-HFv2 for BsaI. It carries the
+supplier's own incubation, heat-inactivation and methylation answers, which differ between
+products of one enzyme.
+_Avoid_: brand, product name
