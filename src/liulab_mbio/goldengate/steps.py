@@ -30,6 +30,7 @@ from liulab_mbio.goldengate.bench import (
     pcr_reaction,
 )
 from liulab_mbio.goldengate.plan import DEFAULT_HOST
+from liulab_mbio.primers import PrimerReport, Thresholds, reading
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -317,7 +318,7 @@ def _per_reaction(table: ReactionTable, name: str) -> str:
 
 
 def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
-    """Every designed oligo, in the order the primer sheet lists them."""
+    """Every designed oligo, in the order the primer sheet lists them, each with its verdict."""
     stock = f"{PRIMER_STOCK_UM:g} µM"
     return tuple(
         Oligo(
@@ -326,9 +327,22 @@ def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
             purpose=purpose,
             tm_c=round(report["tm"].value, 1),
             stock=stock,
+            status=report.status,
+            checks=_oligo_checks(report, plan.thresholds),
         )
         for report, purpose in zip(plan.reports, _purposes(plan), strict=True)
     )
+
+
+def _oligo_checks(report: PrimerReport, thresholds: Thresholds) -> tuple[Check, ...]:
+    """Return the checks that did not pass, each as its value and the band it missed."""
+    fired = []
+    for check in report.checks:
+        if check.status is None or check.status == "pass":
+            continue
+        word = reading(check, thresholds)
+        fired.append(Check(word.label, check.status, detail=word.detail))
+    return tuple(fired)
 
 
 def _purposes(plan: "Plan") -> tuple[str, ...]:
