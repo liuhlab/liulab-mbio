@@ -89,12 +89,8 @@ def evaluate_primer(
         sites = find_binding_sites(primer.sequence, template, thresholds=thresholds)
     annealing = _annealing_region(primer, sites)
     thermo, note = _thermo_sequence(primer.sequence)
-    gc = 100.0 * sum(annealing.count(base) for base in "GC") / len(annealing)
     checks = (
-        _graded("length", len(annealing), thresholds.length),
-        _graded("gc_percent", gc, thresholds.gc_percent),
-        _graded("gc_clamp", sum(annealing[-5:].count(base) for base in "GC"), thresholds.gc_clamp),
-        _graded("tm", melting_temperature(annealing, polymerase), thresholds.tm),
+        *annealing_checks(annealing, polymerase=polymerase, thresholds=thresholds),
         Check("tm_full", None, melting_temperature(primer.sequence, polymerase)),
         Check("end_stability", None, _end_stability(annealing)),
         _run_check(primer.sequence, thresholds),
@@ -115,6 +111,28 @@ def evaluate_primer(
     if template is not None:
         checks += _template_checks(annealing, sites, template, thresholds)
     return PrimerReport(primer, checks)
+
+
+def annealing_checks(
+    annealing: str, *, polymerase: Polymerase = Q5, thresholds: Thresholds = THRESHOLDS
+) -> tuple[Check, ...]:
+    """Judge what an annealing region's length decides: its length, GC, GC clamp and Tm.
+
+    These are the checks a design chooses a length by, so it keeps inside the bands it is
+    judged by wherever some length can.
+
+    Examples
+    --------
+    >>> [check.status for check in annealing_checks("GTAAAACGACGGCCAGT")]
+    ['warn', 'pass', 'pass', 'pass']
+    """
+    gc = 100.0 * sum(annealing.count(base) for base in "GC") / len(annealing)
+    return (
+        _graded("length", len(annealing), thresholds.length),
+        _graded("gc_percent", gc, thresholds.gc_percent),
+        _graded("gc_clamp", sum(annealing[-5:].count(base) for base in "GC"), thresholds.gc_clamp),
+        _graded("tm", melting_temperature(annealing, polymerase), thresholds.tm),
+    )
 
 
 @dataclass(frozen=True, slots=True)

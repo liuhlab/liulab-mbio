@@ -15,6 +15,7 @@ from liulab_mbio.primers import (
     Q5,
     TAQ,
     THRESHOLDS,
+    THRESHOLDS_FOR,
     Band,
     design_pair,
     design_primer,
@@ -50,6 +51,10 @@ PUC_FWD = "CCCAGTCACGACGTTGTAAAACG"
 PUC_REV = "AGCGGATAACAATTTCACACAGG"
 #: Anneals to pUC19 just after the MCS, reading along the top strand.
 MCS_FWD = "GGCGTAATCATGGTCATAGC"
+#: Genewiz's free M13F universal sequencing primer, and a 16-mer sequencing primer annealing
+#: upstream of the first pUC19-GFP junction.
+GENEWIZ_M13F = "GTAAAACGACGGCCAG"
+PLAN_SEQUENCING_FORWARD = "AACTGTTGGGAAGGGC"
 
 #: Every public name `liulab_mbio.primers` defined while it was one module.
 PUBLIC_NAMES = (
@@ -162,6 +167,27 @@ def test_a_tail_raises_the_full_primer_tm_and_leaves_the_annealing_region_alone(
     assert report["tm_full"].value > report["tm"].value + 5
 
 
+def test_a_sixteen_mer_is_short_for_pcr_not_for_sequencing_and_a_poor_primer_still_warns() -> None:
+    for sequence in (GENEWIZ_M13F, PLAN_SEQUENCING_FORWARD):
+        lengths = {
+            role: evaluate_primer(Primer(role, sequence), thresholds=THRESHOLDS_FOR[role])["length"]
+            for role in ("amplification", "colony PCR", "sequencing")
+        }
+        assert {role: check.status for role, check in lengths.items()} == {
+            "amplification": "warn",
+            "colony PCR": "warn",
+            "sequencing": "pass",
+        }
+    # Shorter than any universal primer Genewiz offers, and faultless otherwise.
+    short = evaluate_primer(
+        Primer("short", "ACGGTCACAGCTTGT"), thresholds=THRESHOLDS_FOR["sequencing"]
+    )
+    assert [check.name for check in short.checks if check.status not in (None, "pass")] == [
+        "length"
+    ]
+    assert short.status == "warn"
+
+
 def test_a_check_no_sourced_threshold_judges_carries_no_verdict() -> None:
     # primer3's own value for a 3' end of CCAGT, as a delta G.
     report = evaluate_primer(Primer("M13 fwd", M13_FWD))
@@ -178,8 +204,10 @@ def test_a_check_reads_as_a_label_a_value_and_the_band_it_was_held_to() -> None:
     assert (length.label, length.value, length.limit) == ("length", "17", "band 18-30")
     assert length.detail == "17 (band 18-30)"
     assert reading(report["gc_percent"]).detail == "53% (band 40-60)"
-    assert reading(report["gc_clamp"]).detail == "3 (band 1-3)"
     assert reading(report["tm"]).detail == "62.3 °C (band 60-64)"
+    # A band no published rule sets says so.
+    assert reading(report["gc_clamp"]).detail == "3 (proposed band 1-3)"
+    assert reading(Check("dinucleotide_repeat", "warn", 4)).limit == "proposed band 0-3"
     # A check nothing judged has no band to print, and says only what it measured.
     unjudged = reading(report["end_stability"])
     assert (unjudged.label, unjudged.limit) == ("3' end stability", "")
@@ -291,6 +319,29 @@ def test_a_reverse_primer_reads_back_from_its_position(puc19) -> None:
     assert site.end == 396
     assert primer.sequence == reverse_complement(puc19.extract(Segment(site.start, site.end)))
     assert melting_temperature(primer.sequence) == pytest.approx(62.0, abs=2.0)
+
+
+def test_a_design_keeps_inside_the_length_band_it_is_judged_by(puc19) -> None:
+    # No region 18 bases or longer reaches the Tm band here; a 16-mer lands on the target.
+    for thresholds in (THRESHOLDS, THRESHOLDS_FOR["sequencing"]):
+        primer = design_primer(puc19, 32, Strand.FORWARD, thresholds=thresholds)
+        assert evaluate_primer(primer, thresholds=thresholds)["length"].status == "pass"
+    forward, reverse = design_pair(puc19, 32, 232)
+    assert [evaluate_primer(one)["length"].status for one in (forward, reverse)] == ["pass"] * 2
+    # A sequencing primer may be 16 bases, so it keeps that one.
+    sequencing = design_primer(puc19, 32, Strand.FORWARD, thresholds=THRESHOLDS_FOR["sequencing"])
+    assert sequencing.sequence == "TGACACATGCAGCTCC"
+
+
+def test_a_design_keeps_inside_the_bands_its_length_decides_where_a_length_can(puc19) -> None:
+    decided = ("length", "gc_percent", "gc_clamp", "tm")
+    # The 20-mer nearest the target Tm ends on four Gs and Cs; the 19-mer passes.
+    primer = evaluate_primer(design_primer(puc19, 210, Strand.FORWARD))
+    assert [primer[name].status for name in decided] == ["pass"] * 4
+    # The reverse primer warns at every length here, and does not drag its partner with it.
+    forward, reverse = (evaluate_primer(one) for one in design_pair(puc19, 455, 395 + len(puc19)))
+    assert [forward[name].status for name in decided] == ["pass"] * 4
+    assert reverse.status == "warn"
 
 
 def test_a_tail_stays_outside_the_binding_site(puc19) -> None:

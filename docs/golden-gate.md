@@ -39,10 +39,17 @@ sequence to make one fit.
 
 ### Why `checks warn`
 
-Nine oligos were designed and six carry a warning: three on GC content, three on the GC clamp
-and two on length. None fails. The badge names those kinds, and the oligo sheet gives every
-oligo a verdict of its own. A warning is yours to judge: most of these come from the enzyme
-tails, which the design fixes and cannot shorten.
+Nine oligos were designed and five carry a warning: two on GC content, two on the GC clamp and
+one on melting temperature. None fails. The badge names those kinds, and the oligo
+sheet gives every oligo a verdict of its own.
+
+Each oligo is judged by what it is for. A sequencing primer may be as short as 16 bases, since
+one of the free primers Genewiz itself offers is that long. A PCR primer needs 18. The GC clamp
+asks for one to three G or C bases among the last five. No published rule sets that band, so
+the sheet calls it proposed.
+
+A warning is yours to judge. The design tries every length a primer could have and keeps the
+one that warns least, so each of these comes from where that primer has to sit.
 
 ## What comes out
 

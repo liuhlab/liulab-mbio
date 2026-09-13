@@ -15,7 +15,7 @@ own features.
 import dataclasses
 import os
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -49,9 +49,10 @@ from liulab_mbio.io import read_record
 from liulab_mbio.primers import (
     ONETAQ,
     Q5,
-    THRESHOLDS,
+    THRESHOLDS_FOR,
     Polymerase,
     PrimerReport,
+    PrimerRole,
     Thresholds,
     design_pair,
     evaluate_primer,
@@ -152,7 +153,8 @@ class Plan:
     host, polymerase
         The choices the protocol names.
     thresholds
-        What those oligos were judged by, so a page prints the band beside the value.
+        What those oligos were designed and judged by, for each role, so a page prints the band
+        beside the value.
     """
 
     vector: SequenceRecord
@@ -171,7 +173,7 @@ class Plan:
     designed_oligos: tuple[DesignedOligo, ...]
     host: str
     polymerase: Polymerase
-    thresholds: Thresholds = THRESHOLDS
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
     def enzyme(self) -> Enzyme:
@@ -207,7 +209,7 @@ class Plan:
                 "primers",
                 worst(report.status for report in self.reports),
                 len(self.reports),
-                _primer_detail(self.reports, self.thresholds),
+                _primer_detail(self.reports),
             ),
         )
 
@@ -265,7 +267,7 @@ def plan_assembly(
     host: str = DEFAULT_HOST,
     name: str = "",
     window: int = VECTOR_WINDOW,
-    thresholds: Thresholds = THRESHOLDS,
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
     """Plan one Golden Gate experiment putting `inserts` into `vector`.
 
@@ -304,7 +306,7 @@ def plan_assembly(
     window
         How far the vector junction may slide.
     thresholds
-        Passed to `liulab_mbio.primers`.
+        For each role, what its oligos are designed and judged by in `liulab_mbio.primers`.
 
     Returns
     -------
@@ -353,7 +355,7 @@ def plan_assembly(
         overhangs=(overhangs[0], overhangs[-1]),
         name=f"{one.name} backbone".strip(),
         polymerase=polymerase,
-        thresholds=thresholds,
+        thresholds=thresholds["amplification"],
     )
     insert_parts = tuple(
         amplify(
@@ -365,7 +367,7 @@ def plan_assembly(
             right_overhang=overhangs[number + 1],
             name=label,
             polymerase=polymerase,
-            thresholds=thresholds,
+            thresholds=thresholds["amplification"],
         )
         for number, (label, record) in enumerate(zip(labels, going, strict=True))
     )
@@ -384,13 +386,13 @@ def plan_assembly(
             forward_name="Colony PCR forward",
             reverse_name="Colony PCR reverse",
             polymerase=ONETAQ,
-            thresholds=thresholds,
+            thresholds=thresholds["colony PCR"],
         ),
         insert_primer=True,
         polymerase=ONETAQ,
-        thresholds=thresholds,
+        thresholds=thresholds["colony PCR"],
     )
-    reads = sanger_primers(built.product, junctions, thresholds=thresholds)
+    reads = sanger_primers(built.product, junctions, thresholds=thresholds["sequencing"])
     return Plan(
         one,
         tuple(going),
@@ -417,7 +419,9 @@ def plan_assembly(
             *(DesignedOligo(report, "colony PCR") for report in colony.reports),
             *(
                 DesignedOligo(
-                    evaluate_primer(read.primer, built.product, thresholds=thresholds),
+                    evaluate_primer(
+                        read.primer, built.product, thresholds=thresholds["sequencing"]
+                    ),
                     "sequencing",
                 )
                 for read in reads
@@ -429,7 +433,7 @@ def plan_assembly(
     )
 
 
-def _primer_detail(reports: tuple[PrimerReport, ...], thresholds: Thresholds) -> str:
+def _primer_detail(reports: tuple[PrimerReport, ...]) -> str:
     """Return what the oligos' verdicts say: the counts, the kinds, and what nothing judged.
 
     A count alone cannot be acted on, so each kind that fired is named with the rows it covers.
@@ -437,13 +441,13 @@ def _primer_detail(reports: tuple[PrimerReport, ...], thresholds: Thresholds) ->
     warned = sum(1 for report in reports if report.status == "warn")
     failed = sum(1 for report in reports if report.status == "fail")
     counted = Counter(
-        reading(check, thresholds).label
+        reading(check).label
         for report in reports
         for check in report.checks
         if check.status not in (None, "pass")
     )
     unjudged = dict.fromkeys(
-        reading(check, thresholds).label
+        reading(check).label
         for report in reports
         for check in report.checks
         if check.status is None

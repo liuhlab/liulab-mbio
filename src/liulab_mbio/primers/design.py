@@ -4,7 +4,8 @@ import math
 from dataclasses import dataclass
 
 from liulab_mbio.checks import STATUSES, Status, worst
-from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
+from liulab_mbio.primers.evaluation import annealing_checks
+from liulab_mbio.primers.polymerase import Q5, Polymerase
 from liulab_mbio.primers.thresholds import TARGET_TM, THRESHOLDS, Thresholds
 from liulab_mbio.sequence import (
     BindingSite,
@@ -31,9 +32,10 @@ def design_primer(
 
     A forward primer's annealing region starts at `position` and reads towards higher
     coordinates; a reverse primer's ends there and reads back. Either crosses the origin of a
-    circular template. Of the lengths `Thresholds.length` allows, the chosen one grades best
-    and then lands closest to `target_tm`. `tail` joins its 5' end and stays out of the
-    binding site.
+    circular template. Each length `Thresholds.length` does not fail is graded by
+    `annealing_checks`; the chosen one grades best, then lies inside the band a length passes
+    on, then lands closest to `target_tm`. `tail` joins its 5' end and stays out of the binding
+    site.
 
     Raises
     ------
@@ -69,8 +71,9 @@ def design_pair(
     """Design a pair amplifying `start` to `end`, with their Tms as near each other as they go.
 
     `end` passes the length of a circular template when the amplicon crosses the origin. The
-    two lengths are chosen together: the pair grading best, then the Tms sitting closest to
-    each other and to `target_tm`.
+    two lengths are chosen together: the pair grading best, then its two primers grading best
+    together, then inside the length band, then the Tms sitting closest to each other and to
+    `target_tm`.
 
     Raises
     ------
@@ -97,6 +100,8 @@ class _Option:
     sequence: str
     tm: float
     grade: Status
+    #: Whether its length lies in the band a length passes on.
+    in_band: bool
 
 
 def _annealing_options(
@@ -121,29 +126,44 @@ def _annealing_options(
             continue
         bases = template.extract(Segment(start, start + size))
         sequence = bases if strand is Strand.FORWARD else reverse_complement(bases)
-        tm = melting_temperature(sequence, polymerase)
+        checks = {
+            check.name: check
+            for check in annealing_checks(sequence, polymerase=polymerase, thresholds=thresholds)
+        }
         options.append(
             _Option(
                 BindingSite(start, start + size, strand),
                 sequence,
-                tm,
-                worst((thresholds.length.grade(size), thresholds.tm.grade(tm))),
+                checks["tm"].value,
+                worst(check.status for check in checks.values()),
+                checks["length"].status == "pass",
             )
         )
     return options
 
 
-def _option_score(option: _Option, target_tm: float) -> tuple[int, float, int]:
-    return STATUSES.index(option.grade), abs(option.tm - target_tm), len(option.sequence)
+def _option_score(option: _Option, target_tm: float) -> tuple[int, int, float, int]:
+    return (
+        STATUSES.index(option.grade),
+        int(not option.in_band),
+        abs(option.tm - target_tm),
+        len(option.sequence),
+    )
 
 
 def _pair_score(
     forward: _Option, reverse: _Option, target_tm: float, thresholds: Thresholds
-) -> tuple[int, float, int]:
+) -> tuple[int, int, int, float, int]:
     difference = abs(forward.tm - reverse.tm)
     grade = worst((forward.grade, reverse.grade, thresholds.tm_difference.grade(difference)))
     drift = max(abs(forward.tm - target_tm), abs(reverse.tm - target_tm))
-    return STATUSES.index(grade), drift + difference, len(forward.sequence) + len(reverse.sequence)
+    return (
+        STATUSES.index(grade),
+        STATUSES.index(forward.grade) + STATUSES.index(reverse.grade),
+        int(not forward.in_band) + int(not reverse.in_band),
+        drift + difference,
+        len(forward.sequence) + len(reverse.sequence),
+    )
 
 
 def _finite(value: float, fallback: float) -> float:

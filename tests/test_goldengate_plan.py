@@ -270,11 +270,12 @@ def test_every_oligo_row_carries_its_verdict_and_a_warned_one_says_why(plan):
     assert [row.status for row in rows.values()] == [report.status for report in plan.reports]
     warned = rows["Sequencing forward"]
     assert warned.status == "warn"
-    # The check, the value and the band it missed, in a few words each.
-    assert [(check.name, check.detail) for check in warned.checks] == [
-        ("length", "16 (band 18-30)"),
-        ("GC clamp", "4 (band 1-3)"),
-    ]
+    # The check, the value and the band it missed, in a few words each. Judged as a sequencing
+    # primer, its 16 bases are not short.
+    assert (len(warned.sequence), [(check.name, check.detail) for check in warned.checks]) == (
+        16,
+        [("GC clamp", "4 (proposed band 1-3)")],
+    )
     assert (rows["GFP forward"].status, rows["GFP forward"].checks) == ("pass", ())
 
 

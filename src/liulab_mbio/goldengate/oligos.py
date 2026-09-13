@@ -1,13 +1,9 @@
 """Every oligo a Golden Gate plan orders, and what it is for."""
 
 from dataclasses import dataclass
-from typing import Literal
 
 from liulab_mbio.goldengate.assembly import Part
-from liulab_mbio.primers import PrimerReport
-
-#: What an oligo is for: amplifying a part, colony PCR, or sequencing the clone.
-type OligoRole = Literal["amplification", "colony PCR", "sequencing"]
+from liulab_mbio.primers import PrimerReport, PrimerRole
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,7 +15,8 @@ class DesignedOligo:
     report
         What it scored, the primer included.
     role
-        What it is for.
+        What it is for: amplifying a part, colony PCR, or sequencing the clone. It chooses the
+        thresholds the oligo is designed and judged by.
     part
         The part it amplifies, given for an amplification primer and for nothing else.
 
@@ -30,7 +27,7 @@ class DesignedOligo:
     """
 
     report: PrimerReport
-    role: OligoRole
+    role: PrimerRole
     part: Part | None = None
 
     def __post_init__(self) -> None:

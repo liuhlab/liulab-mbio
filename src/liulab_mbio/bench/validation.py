@@ -14,7 +14,7 @@ from liulab_mbio.bench.gels import agarose_percent, choose_ladder
 from liulab_mbio.primers import (
     ONETAQ,
     Q5,
-    THRESHOLDS,
+    THRESHOLDS_FOR,
     Polymerase,
     PrimerReport,
     Thresholds,
@@ -117,7 +117,7 @@ def colony_pcr_check(
     flank: int = COLONY_FLANK,
     junction_offset: int = JUNCTION_OFFSET,
     polymerase: Polymerase = ONETAQ,
-    thresholds: Thresholds = THRESHOLDS,
+    thresholds: Thresholds = THRESHOLDS_FOR["colony PCR"],
 ) -> ColonyCheck:
     """Return what a colony PCR across these junctions should show.
 
@@ -205,7 +205,7 @@ def sanger_primers(
     *,
     flank: int = SANGER_FLANK,
     polymerase: Polymerase = Q5,
-    thresholds: Thresholds = THRESHOLDS,
+    thresholds: Thresholds = THRESHOLDS_FOR["sequencing"],
 ) -> tuple[SangerRead, SangerRead]:
     """Return a sequencing primer reading into the inserts from outside the first and last junction.
 

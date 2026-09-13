@@ -1,7 +1,10 @@
 """The bands every primer check is judged by, and the words a check is printed in."""
 
 import math
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, replace
+from types import MappingProxyType
+from typing import Literal
 
 from liulab_mbio.checks import Check, Status
 
@@ -17,12 +20,16 @@ class Band:
     warn_low, warn_high
         A value between them warns; outside them the check fails. Infinite by default, so a
         value outside the passing band only warns.
+    proposed
+        Whether the passing band is the research note's own proposal rather than a published
+        rule. A page prints it as proposed.
     """
 
     low: float
     high: float
     warn_low: float = -math.inf
     warn_high: float = math.inf
+    proposed: bool = False
 
     def grade(self, value: float) -> Status:
         """Return the status of a value."""
@@ -85,12 +92,12 @@ class Thresholds:
 
     length: Band = Band(18, 30, 15, 35)
     gc_percent: Band = Band(40.0, 60.0, 20.0, 80.0)
-    gc_clamp: Band = Band(1, 3, 0, 5)
+    gc_clamp: Band = Band(1, 3, 0, 5, proposed=True)
     tm: Band = Band(60.0, 64.0, 55.0, 70.0)
     tm_difference: Band = Band(0.0, 5.0)
     mononucleotide_run: Band = Band(0, 4, 0, 5)
     guanine_run: Band = Band(0, 3)
-    dinucleotide_repeat: Band = Band(0, 3)
+    dinucleotide_repeat: Band = Band(0, 3, proposed=True)
     hairpin: Band = Band(-math.inf, 47.0)
     dimer: Band = Band(-math.inf, 47.0)
     dimer_3prime: Band = Band(-math.inf, 47.0, -math.inf, 47.0)
@@ -104,8 +111,23 @@ class Thresholds:
     off_target_margin: float = 10.0
 
 
-#: The thresholds every check uses unless a caller passes its own.
+#: The thresholds every check uses unless a caller passes its own: a PCR primer's.
 THRESHOLDS = Thresholds()
+
+#: What a primer is for, which chooses the thresholds it is designed and judged by.
+type PrimerRole = Literal["amplification", "colony PCR", "sequencing"]
+
+#: The thresholds for each role. A colony PCR primer is held to a PCR primer's. A sequencing
+#: primer passes on 16-24 bases, warning beyond them as `Thresholds.length` does: Genewiz asks
+#: for 18-24, and its own M13F universal primer is 16. The note's implications for primer
+#: design say why its other bands stay a PCR primer's.
+THRESHOLDS_FOR: Mapping[PrimerRole, Thresholds] = MappingProxyType(
+    {
+        "amplification": THRESHOLDS,
+        "colony PCR": THRESHOLDS,
+        "sequencing": replace(THRESHOLDS, length=Band(16, 24, 15, 35)),
+    }
+)
 
 #: The Tm design aims for, °C: IDT's ideal, in the middle of `Thresholds.tm`.
 TARGET_TM = 62.0
@@ -189,11 +211,13 @@ def reading(check: Check, thresholds: Thresholds = THRESHOLDS) -> Reading:
 
 
 def _band_text(band: Band) -> str:
-    """Return the values a band passes, in a few words."""
+    """Return the values a band passes, in a few words, saying so where it is only proposed."""
     if band.low == band.high:
-        return f"exactly {band.low:g}"
-    if not math.isfinite(band.low):
-        return f"max {band.high:g}"
-    if not math.isfinite(band.high):
-        return f"min {band.low:g}"
-    return f"band {band.low:g}-{band.high:g}"
+        text = f"exactly {band.low:g}"
+    elif not math.isfinite(band.low):
+        text = f"max {band.high:g}"
+    elif not math.isfinite(band.high):
+        text = f"min {band.low:g}"
+    else:
+        text = f"band {band.low:g}-{band.high:g}"
+    return f"proposed {text}" if band.proposed else text

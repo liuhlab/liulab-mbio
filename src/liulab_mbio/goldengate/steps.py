@@ -7,7 +7,7 @@ table of NEB's covers, and each says where it comes from.
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench import (
@@ -58,7 +58,7 @@ from liulab_mbio.goldengate.bench import (
 )
 from liulab_mbio.goldengate.design import OverhangSet
 from liulab_mbio.goldengate.oligos import DesignedOligo
-from liulab_mbio.primers import Polymerase, Thresholds
+from liulab_mbio.primers import Polymerase, PrimerRole, Thresholds
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -118,7 +118,7 @@ def protocol(
     checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
-    thresholds: Thresholds,
+    thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
 
@@ -153,7 +153,7 @@ def protocol(
             phenotype=phenotype,
         ),
         oligos=tuple(
-            oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=thresholds)
+            oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=thresholds[oligo.role])
             for oligo in oligos
         ),
         equipment=EQUIPMENT,
