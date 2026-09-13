@@ -27,6 +27,8 @@ One direction, bottom to top — nothing lower imports anything higher.
 
 `goldengate.plan_assembly` is the one way in, and `Plan.write` puts four files in a directory:
 the product, the primer sheet, `protocol.json`, and the `protocol.html` page rendered from it.
+A pipeline's protocol is data an agent may edit and render again, never a place to invent a
+number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 `__init__.py` re-exports only `__version__`: `Check` and `Junction` each mean different things
 in two modules, so import by module path.
 `Check` is the judged check in `checks` and its displayed form in `protocol`.
