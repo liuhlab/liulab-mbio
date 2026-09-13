@@ -236,3 +236,49 @@ A clone carrying its insert the other way round. Two vector primers flanking the
 the same band as the correct clone, so a gel separates the two only with a third primer inside
 the insert.
 _Avoid_: flipped clone, wrong orientation
+
+### Overhang set
+
+The overhangs an assembly's junctions take, together. Chosen together and not one at a time,
+because every rule and the fidelity score are about the whole set.
+_Avoid_: fusion sites, overhang list
+
+### Ligation fidelity
+
+The chance that every junction of an assembly joins the two ends meant for it, counted as the
+product over the junctions of correct ligations over all ligations. It is a measurement of one
+ligase at one temperature, so it belongs to the enzyme it was measured with.
+_Avoid_: accuracy, specificity, efficiency
+
+### Near-duplicate
+
+Of two overhangs in one set: differing in fewer bases than the set's distance rule allows. Two
+bases is what modular cloning standards require; a measurement can show a particular pair is
+safer than that, which is why the rule is a dial.
+_Avoid_: similar overhang, close pair
+
+### Scarless junction
+
+A junction whose overhang is the bases the part already spells there, so the product reads as
+the parts do and gains nothing. Moving one changes where the cut falls and not what the product
+spells.
+_Avoid_: seamless, native junction
+
+### In-frame junction
+
+A scarless junction inside a coding sequence that has to read through it: it sits on a codon
+boundary and moves only by whole codons, so the protein either side survives.
+_Avoid_: fusion junction, translational junction
+
+### Free enzyme
+
+An enzyme with no recognition site in any of the parts, so an assembly can use it without
+changing a base. A design prefers one; only when none is free does it propose domestication.
+_Avoid_: clean enzyme, available enzyme
+
+### Domestication candidate
+
+A site an enzyme reads inside a coding sequence, which a synonymous codon change could take
+away. A site outside a coding sequence is not one: removing it changes what the part spells,
+which is a decision for a human.
+_Avoid_: removable site, fixable site
