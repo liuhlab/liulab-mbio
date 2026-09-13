@@ -7,6 +7,7 @@ Hairpins and dimers are structure Tms at primer3's own default conditions, which
 
 import itertools
 from dataclasses import dataclass
+from functools import lru_cache
 
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.primers.placement import amplicon_sizes, find_binding_sites, find_priming_sites
@@ -82,13 +83,12 @@ def evaluate_primer(
     >>> report["gc_clamp"].value, report.status
     (3, 'warn')
     """
-    import primer3
-
     sites = primer.binding_sites
     if not sites and template is not None:
         sites = find_binding_sites(primer.sequence, template, thresholds=thresholds)
     annealing = _annealing_region(primer, sites)
     thermo, note = _thermo_sequence(primer.sequence)
+    hairpin, self_dimer, anchored_dimer = _structure_tms(thermo)
     checks = (
         *annealing_checks(annealing, polymerase=polymerase, thresholds=thresholds),
         Check("tm_full", None, melting_temperature(primer.sequence, polymerase)),
@@ -99,14 +99,9 @@ def evaluate_primer(
             _longest_dinucleotide_repeat(primer.sequence),
             thresholds.dinucleotide_repeat,
         ),
-        _graded("hairpin", primer3.calc_hairpin(thermo).tm, thresholds.hairpin, note),
-        _graded("self_dimer", primer3.calc_homodimer(thermo).tm, thresholds.dimer, note),
-        _graded(
-            "self_dimer_3prime",
-            primer3.calc_end_stability(thermo, thermo).tm,
-            thresholds.dimer_3prime,
-            note,
-        ),
+        _graded("hairpin", hairpin, thresholds.hairpin, note),
+        _graded("self_dimer", self_dimer, thresholds.dimer, note),
+        _graded("self_dimer_3prime", anchored_dimer, thresholds.dimer_3prime, note),
     )
     if template is not None:
         checks += _template_checks(annealing, sites, template, thresholds)
@@ -322,6 +317,22 @@ def _thermo_sequence(sequence: str) -> tuple[str, str]:
     if len(sequence) <= _THERMO_MAX:
         return sequence, ""
     return sequence[-_THERMO_MAX:], f"judged on the 3'-terminal {_THERMO_MAX} bases"
+
+
+@lru_cache(maxsize=1 << 15)
+def _structure_tms(sequence: str) -> tuple[float, float, float]:
+    """Return the hairpin, self-dimer and 3'-anchored self-dimer Tms of one sequence, °C.
+
+    A design judges thousands of candidates, so these are remembered: each depends on nothing
+    but the sequence.
+    """
+    import primer3
+
+    return (
+        primer3.calc_hairpin(sequence).tm,
+        primer3.calc_homodimer(sequence).tm,
+        primer3.calc_end_stability(sequence, sequence).tm,
+    )
 
 
 def _end_stability(sequence: str) -> float:
