@@ -2,10 +2,19 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.edits import EditReport
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand
-from liulab_mbio.sites import digest, find_sites, free_enzymes, has_site, site_counts
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sites import (
+    digest,
+    find_sites,
+    free_enzymes,
+    has_site,
+    insert_site,
+    primer_tail,
+    site_counts,
+)
 
 DATA = Path(__file__).parent / "data"
 
@@ -181,6 +190,79 @@ def test_a_blunt_cutter_leaves_fragments_with_no_overhang() -> None:
     left, right = digest(SequenceRecord("AAACCCGGGTTT"), "SmaI")
     assert (left.length, right.length) == (6, 6)
     assert {left.right_overhang, right.left_overhang} == {""}
+
+
+def test_a_site_put_into_a_record_is_found_there() -> None:
+    edited, report = insert_site(SequenceRecord("AAAACCCC"), "BsaI", 4)
+    assert edited.sequence == "AAAAGGTCTCCCCC"
+    assert [(s.start, s.strand) for s in find_sites(edited, "BsaI")] == [(4, Strand.FORWARD)]
+    assert report == EditReport()
+
+
+def test_a_site_may_be_put_in_pointing_the_other_way() -> None:
+    edited, _ = insert_site(SequenceRecord("AAAACCCC"), "BsaI", 4, strand=Strand.REVERSE)
+    assert edited.sequence == "AAAAGAGACCCCCC"
+    assert [(s.start, s.strand) for s in find_sites(edited, "BsaI")] == [(4, Strand.REVERSE)]
+
+
+def test_putting_a_site_in_shifts_what_the_record_annotates() -> None:
+    record = SequenceRecord(
+        "AAAACCCC", features=(Feature("tag", "misc_feature", (Segment(4, 8),)),)
+    )
+    edited, _ = insert_site(record, "BsaI", 4)
+    assert edited.features[0].segments == (Segment(10, 14),)
+
+
+def test_a_site_holding_an_iupac_code_cannot_be_put_in_as_written() -> None:
+    with pytest.raises(ValueError, match="FooI"):
+        insert_site(SequenceRecord("AAAACCCC"), FOOI, 4)
+
+
+@pytest.mark.parametrize(
+    ("name", "overhang"),
+    [("BsaI", "AATG"), ("BbsI", "AATG"), ("SapI", "ATG"), ("PaqCI", "AATG"), ("BtgZI", "AATG")],
+)
+def test_a_primer_tail_is_cut_to_leave_exactly_the_overhang_it_was_asked_for(
+    name: str, overhang: str
+) -> None:
+    enzyme = get_enzyme(name)
+    tail = primer_tail(enzyme, overhang)
+    (site,) = find_sites(SequenceRecord(tail), enzyme)
+    assert site.overhang == overhang
+    assert tail.endswith(overhang)
+    # Six flanking bases, then the site, then whatever the enzyme reaches over to cut.
+    assert len(tail) == 6 + enzyme.bottom_cut
+
+
+def test_a_primer_tail_holds_the_recognition_site_once() -> None:
+    tail = primer_tail(get_enzyme("BsaI"), "AATG")
+    assert tail.count("GGTCTC") == 1
+    assert len(find_sites(SequenceRecord(tail), "BsaI")) == 1
+
+
+def test_a_flank_that_spells_a_second_site_is_refused() -> None:
+    with pytest.raises(ValueError, match="BsaI"):
+        primer_tail(get_enzyme("BsaI"), "AATG", flank="GGTCTC")
+
+
+def test_a_dcm_site_is_refused_only_where_the_supplier_says_dcm_impairs_the_enzyme() -> None:
+    # NEB: BsaI is impaired by overlapping Dcm methylation, and BsmBI is not sensitive to it.
+    with pytest.raises(ValueError, match=r"[Dd]cm"):
+        primer_tail(get_enzyme("BsaI"), "AATG", flank="ACCAGG")
+    assert primer_tail(get_enzyme("BsmBI"), "AATG", flank="ACCAGG").startswith("ACCAGG")
+
+
+def test_an_overhang_the_enzyme_would_not_leave_is_refused() -> None:
+    with pytest.raises(ValueError, match="4"):
+        primer_tail(get_enzyme("BsaI"), "AAT")
+
+
+def test_a_type_ii_enzyme_gets_its_site_and_no_overhang_to_choose() -> None:
+    tail = primer_tail(get_enzyme("EcoRI"))
+    assert tail.endswith("GAATTC")
+    assert len(tail) == 6 + 6
+    with pytest.raises(ValueError, match="overhang"):
+        primer_tail(get_enzyme("EcoRI"), "AATG")
 
 
 def _found(record: SequenceRecord, name: str) -> list[tuple[int, Strand]]:

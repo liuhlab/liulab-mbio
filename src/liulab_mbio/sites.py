@@ -16,13 +16,27 @@ record ends past the record's length.
 """
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, dataclass
 from functools import cache
+from itertools import islice, product
 
+from liulab_mbio.edits import EditReport, insert
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
+
+#: How many bases NEB recommends 5' of a recognition site for an enzyme to cut near an end.
+FLANK_LENGTH = 6
+
+#: Dcm methylates the inner cytosine of this site. Only an enzyme whose supplier says Dcm
+#: affects it is held to the rule; `Enzyme.methylation` carries that answer.
+DCM_SITE = "CCWGG"
+
+#: How many candidate flanks or fillers to try before giving up on an overhang.
+_TRIES = 4096
+
+_RUN = re.compile(r"(.)\1{3}")
 
 #: What each IUPAC code stands for. `liulab_mbio.sequence.IUPAC_DNA` names the same fifteen.
 _BASES: Mapping[str, frozenset[str]] = {
@@ -217,6 +231,152 @@ def digest(
     return tuple(
         Fragment(start, end, boundaries.get(start, ""), boundaries.get(end % length, ""))
         for start, end in zip(cuts, ends, strict=True)
+    )
+
+
+def insert_site(
+    record: SequenceRecord,
+    enzyme: EnzymeLike,
+    position: int,
+    *,
+    strand: Strand = Strand.FORWARD,
+) -> tuple[SequenceRecord, EditReport]:
+    """Put one enzyme's recognition site into `record` before `position`.
+
+    Everything after the site shifts, and the report says which features the insertion fell
+    inside. A reverse-strand site is written as the reverse complement, so the enzyme reaches
+    back towards lower coordinates to cut.
+
+    Raises
+    ------
+    ValueError
+        If the recognition site holds an IUPAC code, there being no one sequence to write.
+
+    Examples
+    --------
+    >>> edited, _ = insert_site(SequenceRecord("AAAACCCC"), "BsaI", 4)
+    >>> edited.sequence
+    'AAAAGGTCTCCCCC'
+    """
+    one = _resolve(enzyme)[0]
+    bases = _definite(one)
+    return insert(record, position, reverse_complement(bases) if strand < 0 else bases)
+
+
+def primer_tail(
+    enzyme: EnzymeLike,
+    overhang: str = "",
+    *,
+    flank: str | None = None,
+    flank_length: int = FLANK_LENGTH,
+    avoid: Iterable[EnzymeLike] = (),
+) -> str:
+    """Build the 5' tail of a cloning primer, 5' to 3', for the caller to put its own 3' end on.
+
+    The tail is flanking bases, the recognition site, the bases the enzyme reaches over, and
+    then `overhang` — so that cutting the amplicon leaves exactly `overhang` single-stranded.
+
+    Parameters
+    ----------
+    enzyme
+        The enzyme the tail is cut by.
+    overhang
+        The overhang the cut should leave, as long as the enzyme leaves. Empty, and only
+        empty, for an enzyme that cuts inside its own site.
+    flank
+        The bases 5' of the site. Chosen when not given, and checked when it is.
+    flank_length
+        How many bases to choose when `flank` is not given. NEB recommends six.
+    avoid
+        Enzymes besides this one whose sites the tail must not spell.
+
+    Raises
+    ------
+    ValueError
+        If `overhang` is not one this enzyme leaves, if `flank` spells a further site or puts a
+        Dcm site beside one this enzyme is impaired by, or if no bases could be found that
+        avoid both.
+
+    Examples
+    --------
+    >>> primer_tail("BsaI", "AATG")
+    'AAACACGGTCTCAAATG'
+    """
+    one = _resolve(enzyme)[0]
+    overhang = overhang.upper()
+    _check_overhang(one, overhang)
+    active = (one, *_resolve(avoid))
+    site = _definite(one)
+    filler = _search(
+        max(0, one.top_cut - len(site)), lambda bases: site + bases + overhang, active, one
+    )
+    core = site + filler + overhang
+    if flank is None:
+        return _search(flank_length, lambda bases: bases + core, active, one) + core
+    flank = flank.upper()
+    if (reason := _problem(flank + core, active, one)) is not None:
+        raise ValueError(f"flank {flank!r} cannot be used: {reason}")
+    return flank + core
+
+
+def _check_overhang(enzyme: Enzyme, overhang: str) -> None:
+    """Refuse an overhang this enzyme would not leave."""
+    if enzyme.type == "II":
+        if overhang:
+            raise ValueError(
+                f"{enzyme.name} cuts inside its own site, so its overhang is not one to choose"
+            )
+    elif len(overhang) != enzyme.overhang_length:
+        raise ValueError(
+            f"{enzyme.name} leaves a {enzyme.overhang_length}-base overhang, "
+            f"and {overhang!r} is {len(overhang)}"
+        )
+
+
+def _definite(enzyme: Enzyme) -> str:
+    """Return the recognition site as bases to write, refusing one that holds an IUPAC code."""
+    if ambiguous := sorted(set(enzyme.site) - set("ACGT")):
+        raise ValueError(
+            f"the {enzyme.name} site {enzyme.site} holds the IUPAC code(s) "
+            f"{''.join(ambiguous)}, so write the bases you mean instead"
+        )
+    return enzyme.site
+
+
+def _problem(tail: str, active: tuple[Enzyme, ...], enzyme: Enzyme) -> str | None:
+    """Why this tail will not do, or ``None`` when it will."""
+    found = find_sites(SequenceRecord(tail), active)
+    if len(found) != 1:
+        names = ", ".join(sorted({site.enzyme.name for site in found})) or "none"
+        return f"it spells {len(found)} sites ({names}) where one {enzyme.name} site is wanted"
+    if enzyme.methylation.get("dcm", "not sensitive") != "not sensitive" and _pattern(
+        DCM_SITE
+    ).search(tail):
+        return f"it puts a Dcm site ({DCM_SITE}) across the {enzyme.name} site"
+    return None
+
+
+def _search(
+    length: int, build: Callable[[str], str], active: tuple[Enzyme, ...], enzyme: Enzyme
+) -> str:
+    """Return the first candidate of `length` bases leaving one site and no Dcm site."""
+    for candidate in islice(_candidates(length), _TRIES):
+        if _problem(build(candidate), active, enzyme) is None:
+            return candidate
+    raise ValueError(
+        f"no {length} bases leave a clean {enzyme.name} tail; choose the overhang again"
+    )
+
+
+def _candidates(length: int) -> Iterable[str]:
+    """Bases to try, in a fixed order, skipping runs and lopsided GC that nobody would order."""
+    if length == 0:
+        return [""]
+    return (
+        candidate
+        for choice in product("ACGT", repeat=length)
+        if not _RUN.search(candidate := "".join(choice))
+        and (length < 4 or 0.25 <= sum(base in "GC" for base in candidate) / length <= 0.75)
     )
 
 
