@@ -35,6 +35,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     read_protocol,
 )
+from liulab_mbio.protocol.render import render_html, write_html
 
 __all__ = [
     "Component",
@@ -52,4 +53,6 @@ __all__ = [
     "Timer",
     "Troubleshooting",
     "read_protocol",
+    "render_html",
+    "write_html",
 ]
