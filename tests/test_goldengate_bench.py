@@ -72,6 +72,12 @@ def junctions(gfp: SequenceRecord) -> tuple[int, int]:
     return (MCS[0], MCS[0] + len(gfp))
 
 
+@pytest.fixture(scope="module")
+def three_junctions(gfp: SequenceRecord) -> tuple[int, int, int]:
+    """The same product read as two inserts, split inside GFP."""
+    return (MCS[0], MCS[0] + 350, MCS[0] + len(gfp))
+
+
 def volumes(table: ReactionTable) -> dict[str, float]:
     return {component.name: component.volume_ul for component in table.components}
 
@@ -405,4 +411,44 @@ def test_colony_pcr_check_refuses_a_junction_pair_it_cannot_place(
     product: SequenceRecord, puc19: SequenceRecord
 ) -> None:
     with pytest.raises(ValueError, match="junction"):
-        colony_pcr_check(product, (395,), vector=puc19)  # pyright: ignore[reportArgumentType]
+        colony_pcr_check(product, (395,), vector=puc19)
+
+
+def test_a_junction_primer_is_designed_for_every_insert(
+    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
+) -> None:
+    check = colony_pcr_check(product, three_junctions, vector=puc19, flank=60, insert_primer=True)
+    assert len(check.primers) == 4
+    assert [clone.name for clone in check.clones] == [
+        "Correct clone",
+        "Empty vector",
+        "Reversed insert 1",
+        "Reversed insert 2",
+    ]
+
+
+def test_the_correct_clone_shows_one_band_reading_each_junction(
+    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
+) -> None:
+    check = colony_pcr_check(product, three_junctions, vector=puc19, flank=60, insert_primer=True)
+    # 60 bases of vector then 100 into each insert, and the flanking pair across the whole span.
+    assert bands(check, "Correct clone") == (160, 510, 837)
+    assert bands(check, "Empty vector") == (177,)
+
+
+def test_each_insert_gets_its_own_reversed_lane(
+    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
+) -> None:
+    check = colony_pcr_check(product, three_junctions, vector=puc19, flank=60, insert_primer=True)
+    correct = bands(check, "Correct clone")
+    assert bands(check, "Reversed insert 1") != correct
+    assert bands(check, "Reversed insert 2") != correct
+    assert check.tells_orientation
+
+
+def test_sanger_primers_read_from_outside_the_whole_inserted_span(
+    product: SequenceRecord, three_junctions: tuple[int, ...], gfp: SequenceRecord
+) -> None:
+    forward, reverse = sanger_primers(product, three_junctions)
+    assert forward.read_bp == forward.distance_bp + len(gfp)
+    assert reverse.read_bp == reverse.distance_bp + len(gfp)

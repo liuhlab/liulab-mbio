@@ -10,8 +10,9 @@ carry their own enzyme mix and so exist only for BsaI-HFv2 and BsmBI-v2.
 """
 
 import dataclasses
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
+from itertools import pairwise
 from typing import Literal
 
 from liulab_mbio import edits
@@ -826,10 +827,14 @@ JUNCTION_OFFSET = 100
 #: Genewiz asks for a sequencing primer 100 bases from what it reads, 50 to 60 at the closest.
 SANGER_FLANK = 100
 
-#: What the three candidate plasmids are called, correct first.
+#: What the candidate plasmids are called, correct first. A reversed lane is numbered after
+#: `REVERSED_CLONE` wherever an assembly holds more than one insert to turn round.
 CORRECT_CLONE = "Correct clone"
 EMPTY_CLONE = "Empty vector"
 REVERSED_CLONE = "Reversed insert"
+
+#: What a primer reading out of one insert is called, numbered the same way.
+_JUNCTION_PRIMER = "Junction reverse"
 
 
 def choose_ladder(bands_bp: tuple[int, ...]) -> Ladder:
@@ -875,11 +880,12 @@ class ColonyCheck:
     Parameters
     ----------
     primers
-        The flanking pair first, then a junction primer where one was asked for.
+        The flanking pair first, then one junction primer per insert where they were asked for.
     reports
         What each primer scored on the assembled plasmid.
     clones
-        The candidates a colony can hold, correct first.
+        The candidates a colony can hold: the correct one, the empty vector, and one carrying
+        each insert the other way round.
     annealing_temperature
         By the polymerase's rule over the two lowest Tms of the set, °C.
     extension_seconds
@@ -907,19 +913,22 @@ class ColonyCheck:
 
     @property
     def tells_orientation(self) -> bool:
-        """Whether the gel separates a reversed insert from the correct clone.
+        """Whether the gel separates every reversed insert from the correct clone.
 
-        Two vector primers flanking the insert never do: they amplify it whichever way round it
-        sits. A junction primer does, unless the two vector primers happen to lie the same
+        Two vector primers flanking the inserts never do: they amplify them whichever way round
+        they sit. A junction primer does, unless the two vector primers happen to lie the same
         distance from their own junctions.
         """
-        bands = {clone.name: clone.bands_bp for clone in self.clones}
-        return bands.get(REVERSED_CLONE) != bands.get(CORRECT_CLONE)
+        correct = next(
+            (clone.bands_bp for clone in self.clones if clone.name == CORRECT_CLONE), None
+        )
+        turned = [clone.bands_bp for clone in self.clones if clone.name.startswith(REVERSED_CLONE)]
+        return bool(turned) and all(lane != correct for lane in turned)
 
 
 def colony_pcr_check(
     product: SequenceRecord,
-    junctions: tuple[int, int],
+    junctions: Sequence[int],
     *,
     vector: SequenceRecord,
     primers: tuple[Primer, ...] | None = None,
@@ -931,40 +940,45 @@ def colony_pcr_check(
 ) -> ColonyCheck:
     """Return what a colony PCR across these junctions should show.
 
-    The insert is the span between the two junctions, so a product whose insert crosses the
-    origin is rotated first. Without `primers`, a pair is designed in the vector `flank` bases
-    outside each junction; `insert_primer` adds a third annealing `junction_offset` bases into
-    the insert, which is what tells a reversed insert apart. Each candidate plasmid is amplified
-    on its own, so the bands are simulated rather than derived.
+    An assembly of n inserts has n + 1 junctions and the inserts are the spans between them, so
+    a product whose inserts cross the origin is rotated first. Without `primers`, a pair is
+    designed in the vector `flank` bases outside the first and the last junction;
+    `insert_primer` adds one primer per insert, annealing `junction_offset` bases into it. Those
+    are what tell a reversed insert apart and what put a band of their own on each junction.
+    Each candidate plasmid is amplified on its own, so the bands are simulated rather than
+    derived.
 
     Raises
     ------
     ValueError
-        If the junctions are not two positions inside the product, if fewer than two primers
-        are given, if the insert is too short for a junction primer, or if the primers amplify
-        nothing at all.
+        If the junctions are not two or more separate positions inside the product, if fewer
+        than two primers are given, if an insert is too short for a junction primer, or if the
+        primers amplify nothing at all.
     """
-    start, end = _junction_pair(junctions, len(product))
+    places = _junction_span(junctions, len(product))
+    start, end = places[0], places[-1]
+    inserts = tuple(pairwise(places))
     chosen = (
         list(primers)
         if primers is not None
         else list(_flanking_pair(product, start, end, flank, polymerase, thresholds))
     )
     if insert_primer:
-        chosen.append(
-            _junction_primer(product, start, end, junction_offset, polymerase, thresholds)
+        chosen.extend(
+            _junction_primer(product, first, last, junction_offset, polymerase, thresholds, name)
+            for name, (first, last) in zip(
+                _numbered(_JUNCTION_PRIMER, inserts), inserts, strict=True
+            )
         )
     if len(chosen) < 2:
         raise ValueError("a colony PCR needs at least two primers")
     placed = tuple(chosen)
-    clones = tuple(
-        Clone(name, _bands(placed, record, thresholds))
-        for name, record in (
-            (CORRECT_CLONE, product),
-            (EMPTY_CLONE, vector),
-            (REVERSED_CLONE, _reversed_insert(product, start, end)),
-        )
-    )
+    candidates = [(CORRECT_CLONE, product), (EMPTY_CLONE, vector)]
+    candidates += [
+        (name, _reversed_insert(product, first, last))
+        for name, (first, last) in zip(_numbered(REVERSED_CLONE, inserts), inserts, strict=True)
+    ]
+    clones = tuple(Clone(name, _bands(placed, record, thresholds)) for name, record in candidates)
     sizes = tuple(sorted({bp for clone in clones for bp in clone.bands_bp}))
     if not sizes:
         raise ValueError("these primers amplify nothing on any of the candidate plasmids")
@@ -1006,25 +1020,26 @@ class SangerRead:
 
 def sanger_primers(
     product: SequenceRecord,
-    junctions: tuple[int, int],
+    junctions: Sequence[int],
     *,
     flank: int = SANGER_FLANK,
     polymerase: Polymerase = Q5,
     thresholds: Thresholds = THRESHOLDS,
 ) -> tuple[SangerRead, SangerRead]:
-    """Return a sequencing primer reading into each junction from outside it.
+    """Return a sequencing primer reading into the inserts from outside the first and last junction.
 
     Every 3' end lands at least `flank` bases from its own junction, near enough for the read to
-    be clean there. A provider whose reads are shorter than `SangerRead.read_bp` needs a primer
-    inside the insert as well.
+    be clean there, and `SangerRead.read_bp` is how far it must carry to reach the far junction.
+    A provider whose reads are shorter needs a primer inside the inserts as well.
 
     Raises
     ------
     ValueError
-        If the junctions are not two positions inside the product, or no primer fits outside
-        one of them.
+        If the junctions are not two or more separate positions inside the product, or no primer
+        fits outside the first or the last.
     """
-    start, end = _junction_pair(junctions, len(product))
+    places = _junction_span(junctions, len(product))
+    start, end = places[0], places[-1]
     longest = _longest_annealing(thresholds)
     forward = design_primer(
         product,
@@ -1051,13 +1066,25 @@ def sanger_primers(
     )
 
 
-def _junction_pair(junctions: tuple[int, int], length: int) -> tuple[int, int]:
-    if len(junctions) != 2:
-        raise ValueError(f"a single-insert assembly has two junctions, got {len(junctions)}")
-    start, end = sorted(junctions)
-    if not 0 <= start < end <= length:
-        raise ValueError(f"junctions {start} and {end} do not lie inside {length} bases")
-    return start, end
+def _junction_span(junctions: Sequence[int], length: int) -> tuple[int, ...]:
+    """Return the junctions in rising order, refusing a set no assembly could leave."""
+    if len(junctions) < 2:
+        raise ValueError(
+            f"an assembly has a junction at each end of every insert, got {len(junctions)}"
+        )
+    places = tuple(sorted(junctions))
+    if len(set(places)) != len(places):
+        raise ValueError(f"two junctions share a position: {places}")
+    if places[0] < 0 or places[-1] > length:
+        raise ValueError(f"junctions {places} do not lie inside {length} bases")
+    return places
+
+
+def _numbered(label: str, inserts: Sequence[tuple[int, int]]) -> tuple[str, ...]:
+    """Label one thing per insert, numbered only where there is more than one to tell apart."""
+    if len(inserts) == 1:
+        return (label,)
+    return tuple(f"{label} {number}" for number in range(1, len(inserts) + 1))
 
 
 def _flanking_pair(
@@ -1086,14 +1113,15 @@ def _junction_primer(
     offset: int,
     polymerase: Polymerase,
     thresholds: Thresholds,
+    name: str = _JUNCTION_PRIMER,
 ) -> Primer:
     if end - start <= offset:
-        raise ValueError(f"the insert is shorter than the {offset} bases a junction primer needs")
+        raise ValueError(f"an insert is shorter than the {offset} bases a junction primer needs")
     return design_primer(
         product,
         start + offset,
         Strand.REVERSE,
-        name="Junction reverse",
+        name=name,
         polymerase=polymerase,
         thresholds=thresholds,
     )
