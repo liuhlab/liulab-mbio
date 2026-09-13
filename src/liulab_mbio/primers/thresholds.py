@@ -88,6 +88,19 @@ class Thresholds:
     off_target_margin
         How far under a perfect match's Tm a place can still prime, °C. primer3 sets its
         mispriming threshold 10 °C below its own minimum Tm.
+    off_target_amplicons
+        Amplicons a pair, or either primer alone, makes on a genome besides the intended one,
+        which warn as an off-target site does.
+    intended_amplicon
+        The amplicon named as intended, which a genome must hold.
+    genome_size_limit, genome_mismatches, genome_mismatches_above_limit, genome_terminal_window
+        How near a match a genome search finds: up to 3 mismatches, none in the 3'-terminal 3
+        bases, on a FASTA up to 110 MB on disk, and a perfect match only on a larger one. On
+        hg38 one mismatch took minutes where a perfect match took seconds; the limit takes in
+        the 100 Mb worm genome, searched with 3 mismatches in under a second, and an E. coli
+        genome beside it (#44, #47).
+    genome_max_amplicon
+        The longest amplicon a genome search reports, bp: the length #44 measured with.
     """
 
     length: Band = Band(18, 30, 15, 35)
@@ -109,6 +122,13 @@ class Thresholds:
     off_target_3prime_window: int = 5
     off_target_3prime_mismatches: int = 1
     off_target_margin: float = 10.0
+    off_target_amplicons: Band = Band(0, 0)
+    intended_amplicon: Band = Band(1, 1)
+    genome_size_limit: int = 110_000_000
+    genome_mismatches: int = 3
+    genome_mismatches_above_limit: int = 0
+    genome_terminal_window: int = 3
+    genome_max_amplicon: int = 4000
 
 
 #: The thresholds every check uses unless a caller passes its own: a PCR primer's.
@@ -163,6 +183,8 @@ _WORDING: dict[str, _Wording] = {
     "binding_sites": _Wording("binding sites"),
     "off_target": _Wording("off-target sites"),
     "products": _Wording("products"),
+    "off_target_amplicons": _Wording("off-target amplicons"),
+    "intended_amplicon": _Wording("intended amplicon"),
     "amplicon_size": _Wording("amplicon", " bp"),
 }
 

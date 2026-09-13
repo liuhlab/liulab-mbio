@@ -20,6 +20,7 @@ environments:
     - https://pypi.org/simple
     packages:
       linux-64:
+      - conda: https://conda.anaconda.org/bioconda/linux-64/ipcr-5.0.0-hac3de82_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/primer3-py-2.3.1-py313hd978853_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/biopython-1.88-py313h995f894_1.conda
@@ -90,6 +91,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
       osx-arm64:
+      - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-doc-0.0.5-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.7.22-hbd8a1cb_0.conda
@@ -165,6 +167,7 @@ environments:
     - https://pypi.org/simple
     packages:
       linux-64:
+      - conda: https://conda.anaconda.org/bioconda/linux-64/ipcr-5.0.0-hac3de82_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/primer3-py-2.3.1-py313hd978853_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/biopython-1.88-py313h995f894_1.conda
@@ -256,6 +259,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
       osx-arm64:
+      - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-doc-0.0.5-pyhcf101f3_0.conda
@@ -352,6 +356,7 @@ environments:
     - https://pypi.org/simple
     packages:
       linux-64:
+      - conda: https://conda.anaconda.org/bioconda/linux-64/ipcr-5.0.0-hac3de82_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/primer3-py-2.3.1-py313hd978853_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/biopython-1.88-py313h995f894_1.conda
@@ -422,6 +427,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
       osx-arm64:
+      - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-doc-0.0.5-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.7.22-hbd8a1cb_0.conda
@@ -490,6 +496,17 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
 packages:
+- conda: https://conda.anaconda.org/bioconda/linux-64/ipcr-5.0.0-hac3de82_0.conda
+  sha256: a0e9792c7a679d22b39f91161e559b8d16025ea66a6072e5dea5a5f9e1027968
+  md5: fb920f82de0100530b834194799a045e
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 1958876
+  timestamp: 1779317422649
 - conda: https://conda.anaconda.org/bioconda/linux-64/primer3-py-2.3.1-py313hd978853_0.conda
   sha256: b1988e16327bb06b2366dcb9f1e734ad7a9f43a92f7b41abd5abd2720a96320b
   md5: b3b14f22a9b042b85fde8a9c3d519d29
@@ -506,6 +523,16 @@ packages:
   - pkg:pypi/primer3-py?source=project-defined-mapping
   size: 1173703
   timestamp: 1788705425520
+- conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
+  sha256: 185112b67c356a591434de28db8baaa4958227e2f390cdee8afba98a6a6f9383
+  md5: fda7d52df1e7391879e257a11d83bc74
+  depends:
+  - __osx >=11.0
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 1754128
+  timestamp: 1779317082622
 - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
   sha256: f38e7b75941c80d0f84dd424386c05a89c58da1c5980832a5bf602f634157ba3
   md5: 77583968d909cae4c98a88b7ee0b6889
