@@ -49,6 +49,9 @@ from liulab_mbio.io import read_record
 record = read_record("vector.dna")
 ```
 
+A primer pair can also be checked against a whole genome, so you learn where else it would
+amplify before you order it — see [check primers on a genome](genome-check.md).
+
 [Put GFP into pUC19](golden-gate.md) walks through one job from end to end. The
 [API reference](api.md) has the full list, built from the docstrings in `src/`.
 

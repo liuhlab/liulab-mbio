@@ -47,6 +47,10 @@ from liulab_mbio.io import read_record
 record = read_record("vector.dna")
 ```
 
+A primer pair can also be checked against a whole genome, so you learn where else it would
+amplify before you order it:
+[check primers on a genome](https://liuhlab.github.io/liulab-mbio/genome-check/).
+
 The docs have [a worked example](https://liuhlab.github.io/liulab-mbio/golden-gate/): GFP into
 pUC19, with the protocol it writes.
 
