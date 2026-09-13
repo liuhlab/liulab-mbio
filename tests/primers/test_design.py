@@ -1,9 +1,12 @@
 import dataclasses
+from collections import Counter
+from collections.abc import Iterator
 
 import pytest
 
 from liulab_mbio.checks import STATUSES
 from liulab_mbio.primers import (
+    TARGET_TM,
     THRESHOLDS,
     THRESHOLDS_FOR,
     Band,
@@ -15,6 +18,7 @@ from liulab_mbio.primers import (
     evaluate_pair,
     evaluate_primer,
     melting_temperature,
+    ranked_pairs,
 )
 from liulab_mbio.sequence import (
     BindingSite,
@@ -231,11 +235,78 @@ def test_the_same_inputs_choose_the_same_primer_inside_a_placement(puc19) -> Non
     assert first == second
 
 
+def test_pairs_come_back_in_the_order_judging_every_pair_gives(puc19, every_pair) -> None:
+    assert {pair.status for pair in every_pair} == {"pass", "warn", "fail"}
+    ranked = list(pairs_in_regions(puc19))
+    assert Counter(ranked) == Counter(every_pair)
+    assert [rank(pair) for pair in ranked] == sorted(rank(pair) for pair in every_pair)
+
+
+def test_the_first_pair_in_rank_order_is_the_pair_a_design_chooses(puc19) -> None:
+    first = next(pairs_in_regions(puc19))
+    assert (first.forward.primer, first.reverse.primer) == pair_in_regions(puc19)
+
+
 #: Every length a design considers, which is the band `Thresholds.length` does not fail on.
 SIZES = range(15, 36)
 
 #: A narrow band, so a placement's options stay few enough to judge every one of them.
 NARROW = dataclasses.replace(THRESHOLDS, length=Band(18, 24, 18, 24))
+
+#: A pair's two regions on pUC19, where pairs pass, warn and fail.
+START, END = 1160, 1310
+FORWARD_REGION = Placement(five_prime=Segment(1160, 1163), three_prime=Segment(1180, 1184))
+REVERSE_REGION = Placement(five_prime=Segment(1310, 1313), three_prime=Segment(1286, 1290))
+
+
+def pairs_in_regions(template: SequenceRecord) -> Iterator[PairReport]:
+    """Every pair the two regions allow, in rank order."""
+    return ranked_pairs(
+        template,
+        START,
+        END,
+        forward_placement=FORWARD_REGION,
+        reverse_placement=REVERSE_REGION,
+        thresholds=NARROW,
+    )
+
+
+def pair_in_regions(template: SequenceRecord) -> tuple[Primer, Primer]:
+    """The pair a design chooses in the two regions."""
+    return design_pair(
+        template,
+        START,
+        END,
+        forward_placement=FORWARD_REGION,
+        reverse_placement=REVERSE_REGION,
+        thresholds=NARROW,
+    )
+
+
+@pytest.fixture(scope="module")
+def every_pair(puc19) -> list[PairReport]:
+    """Every pair the two regions allow, each judged by `evaluate_pair`."""
+    reverses = list(allowed(puc19, REVERSE_REGION, Strand.REVERSE))
+    return [
+        evaluate_pair(one, other, puc19, thresholds=NARROW)
+        for one in allowed(puc19, FORWARD_REGION, Strand.FORWARD)
+        for other in reverses
+    ]
+
+
+def rank(report: PairReport) -> tuple[float, ...]:
+    """How a design ranks a pair in the regions, as far as its docstring says."""
+    primers = (report.forward, report.reverse)
+    fives = (
+        primers[0].primer.binding_sites[0].start - START,
+        primers[1].primer.binding_sites[0].end - END,
+    )
+    return (
+        *shape(report),
+        sum(one["length"].status != "pass" for one in primers),
+        sum(abs(one["tm"].value - TARGET_TM) for one in primers),
+        sum(abs(five) for five in fives),
+    )
 
 
 def allowed(

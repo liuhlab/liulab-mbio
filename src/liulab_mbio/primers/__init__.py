@@ -7,10 +7,10 @@ Every public name in its modules imports from here as well:
 - `thresholds`: the bands a check is judged by, and the words it is printed in.
 - `placement`: where a primer may anneal, where it does, where else it primes, and amplicons.
 - `evaluation`: judging a primer, or a pair on a template, and what a primer's length decides.
-- `design`: choosing the annealing region of a primer or a pair.
+- `design`: choosing the annealing region of a primer or a pair, and ranking every pair.
 """
 
-from liulab_mbio.primers.design import design_pair, design_primer
+from liulab_mbio.primers.design import design_pair, design_primer, ranked_pairs
 from liulab_mbio.primers.evaluation import (
     PairReport,
     PrimerReport,
@@ -76,5 +76,6 @@ __all__ = [
     "find_priming_sites",
     "melting_temperature",
     "pair_checks",
+    "ranked_pairs",
     "reading",
 ]

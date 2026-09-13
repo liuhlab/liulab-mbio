@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from itertools import groupby
 
 from liulab_mbio.checks import STATUSES, Check, Status, worst
-from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer, pair_checks
+from liulab_mbio.primers.evaluation import PairReport, PrimerReport, evaluate_primer, pair_checks
 from liulab_mbio.primers.placement import Placement
 from liulab_mbio.primers.polymerase import Q5, Polymerase
 from liulab_mbio.primers.thresholds import TARGET_TM, THRESHOLDS, Thresholds
@@ -27,6 +27,9 @@ type _Rank = tuple[int, int, int, float, int, int, int]
 
 #: A pair's rank, or the best one a pair could still reach: the same keys, summed.
 type _PairRank = tuple[float, ...]
+
+#: A judged pair: its rank, the order it was judged in, which settles a tie, and what it scored.
+type _Judged = tuple[_PairRank, int, _Option, _Option, tuple[Check, ...]]
 
 
 def design_primer(
@@ -115,8 +118,9 @@ def design_pair(
     candidate is judged as in `design_primer`, and every pair of them adds `pair_checks`: the
     gap between the two Tms, the heterodimers and the products. The pair chosen ranks best on
     its worst status, then on the same keys summed over both primers, so a pair worse than a
-    pass means nothing here passes. A placement widens either primer's search; the two bound
-    the amplicon between them, which is why nothing takes an amplicon size.
+    pass means nothing here passes; `ranked_pairs` gives the rest in that order. A placement
+    widens either primer's search; the two bound the amplicon between them, which is why
+    nothing takes an amplicon size.
 
     Raises
     ------
@@ -146,6 +150,63 @@ def design_pair(
     >>> [primer.sequence for primer in pair]
     ['CGTAATCATGGTCATAGCTGTT', 'CGAATTCCAGCACACTGG']
     """
+    best = next(
+        ranked_pairs(
+            template,
+            start,
+            end,
+            forward_placement=forward_placement,
+            reverse_placement=reverse_placement,
+            forward_tail=forward_tail,
+            reverse_tail=reverse_tail,
+            forward_name=forward_name,
+            reverse_name=reverse_name,
+            target_tm=target_tm,
+            polymerase=polymerase,
+            thresholds=thresholds,
+        )
+    )
+    return best.forward.primer, best.reverse.primer
+
+
+def ranked_pairs(
+    template: SequenceRecord,
+    start: int,
+    end: int,
+    *,
+    forward_placement: Placement | None = None,
+    reverse_placement: Placement | None = None,
+    forward_tail: str = "",
+    reverse_tail: str = "",
+    forward_name: str = "",
+    reverse_name: str = "",
+    target_tm: float = TARGET_TM,
+    polymerase: Polymerase = Q5,
+    thresholds: Thresholds = THRESHOLDS,
+) -> Iterator[PairReport]:
+    """Yield every pair `design_pair` chooses between, best first, judged as by `evaluate_pair`.
+
+    The first is the pair `design_pair` chooses. A pair is judged only once no pair still to
+    judge could rank above it, so taking the first few judges few.
+
+    Raises
+    ------
+    ValueError
+        As `design_pair` does, on the call rather than when the first pair is taken.
+
+    Examples
+    --------
+    >>> template = SequenceRecord(
+    ...     "GGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCT"
+    ...     "TACAGGATCCACTAGTAACGGCCGCCAGTGTGCTGGAATTCGCCCTTA"
+    ... )
+    >>> pairs = ranked_pairs(template, 0, len(template))
+    >>> best, second = next(pairs), next(pairs)
+    >>> [primer.sequence for primer in (best.forward.primer, best.reverse.primer)]
+    ['GGCGTAATCATGGTCATAGC', 'TAAGGGCGAATTCCAGCA']
+    >>> [primer.sequence for primer in (second.forward.primer, second.reverse.primer)]
+    ['GGCGTAATCATGGTCATAG', 'TAAGGGCGAATTCCAGCA']
+    """
     forwards = _options(
         template,
         start,
@@ -168,10 +229,11 @@ def design_pair(
         polymerase,
         thresholds,
     )
-    return _best_pair(
+    return _in_rank_order(
         _fitted(forwards, start, forward_placement),
         _fitted(reverses, end, reverse_placement),
         template,
+        polymerase,
         thresholds,
     )
 
@@ -289,35 +351,50 @@ def _apart(position: int, wanted: int, template: SequenceRecord) -> int:
     return min(gap, len(template) - gap)
 
 
-def _best_pair(
+def _in_rank_order(
     forwards: list[_Option],
     reverses: list[_Option],
     template: SequenceRecord,
+    polymerase: Polymerase,
     thresholds: Thresholds,
-) -> tuple[Primer, Primer]:
-    """Return the pair ranking best, judging only pairs that can still reach the best rank."""
+) -> Iterator[PairReport]:
+    """Yield every pair best first, judging pairs in the order of their bounds.
+
+    No pair ranks above its bound, so a judged pair ranking above the next bound ranks above
+    every pair still to judge, and is yielded before that one is judged.
+    """
+    judged: list[_Judged] = []
     pairs = _by_bound(_ranked(forwards), _ranked(reverses))
-    bound, forward, reverse = next(pairs)
-    best = (_judged(bound, forward, reverse, template, thresholds), forward, reverse)
-    for bound, forward, reverse in pairs:
-        if bound >= best[0]:
-            break
-        rank = _judged(bound, forward, reverse, template, thresholds)
-        if rank < best[0]:
-            best = (rank, forward, reverse)
-    return best[1].primer, best[2].primer
+    for order, (bound, forward, reverse) in enumerate(pairs):
+        yield from _taken(judged, bound, polymerase)
+        checks = pair_checks(forward.report, reverse.report, template, thresholds=thresholds)
+        rank = _pair_rank(bound, forward, reverse, checks)
+        heapq.heappush(judged, (rank, order, forward, reverse, checks))
+    yield from _taken(judged, None, polymerase)
 
 
-def _judged(
-    bound: _PairRank,
-    forward: _Option,
-    reverse: _Option,
-    template: SequenceRecord,
-    thresholds: Thresholds,
-) -> _PairRank:
-    """Return how a pair ranks once what only a pair can be judged on has been judged."""
-    checks = pair_checks(forward.report, reverse.report, template, thresholds=thresholds)
-    return _pair_rank(bound, forward, reverse, checks)
+def _taken(
+    judged: list[_Judged], bound: _PairRank | None, polymerase: Polymerase
+) -> Iterator[PairReport]:
+    """Yield, best first, every judged pair ranking above a bound, or every one without it."""
+    while judged and (bound is None or judged[0][0] < bound):
+        _, _, forward, reverse, checks = heapq.heappop(judged)
+        yield _report(forward, reverse, checks, polymerase)
+
+
+def _report(
+    forward: _Option, reverse: _Option, checks: tuple[Check, ...], polymerase: Polymerase
+) -> PairReport:
+    """Return what `evaluate_pair` reports, from what a design has judged already."""
+    length = int(checks[-1].value) or None
+    return PairReport(
+        forward.report,
+        reverse.report,
+        checks,
+        polymerase.annealing_temperature(forward.report["tm"].value, reverse.report["tm"].value),
+        length,
+        None if length is None else polymerase.extension_seconds(length),
+    )
 
 
 def _pair_rank(
