@@ -223,8 +223,8 @@ def _table(key: str, table: ReactionTable) -> str:
     caption = f"<figcaption>{escape(table.title)}</figcaption>" if table.title else ""
     return (
         f'<figure class="reaction" data-overage="{table.overage!r}">{caption}'
-        f'<label class="count">Reactions <input type="number" class="rxn-count" min="1" step="1"'
-        f' inputmode="numeric" value="{table.reactions}" data-key="{key}"></label>'
+        f'<label class="count">Reactions <input type="number" class="rxn-count" name="reactions"'
+        f' min="1" step="1" inputmode="numeric" value="{table.reactions}" data-key="{key}"></label>'
         f'<span class="muted">mix includes {_num(table.overage * 100)}% extra</span>'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{"".join(rows)}</tbody>'
         f"<tfoot>{foot}</tfoot></table></div>{dispense}</figure>\n"

@@ -25,7 +25,7 @@ From Python, when another module computes the numbers:
 ```python
 from liulab_mbio.protocol import Protocol, read_protocol, render_html, write_html
 
-write_html(read_protocol("protocol.json"), "protocol.html")   # from a data file
+write_html(read_protocol("protocol.json"), "protocol.html")  # from a data file
 write_html(Protocol(title="...", steps=(...)), "protocol.html")  # built in code
 ```
 
