@@ -1,0 +1,111 @@
+{
+  "title": "Colony check by PCR",
+  "summary": "Amplify the insert region with flanking primers and check the product size on an agarose gel.",
+  "overview": {
+    "Template": "Plasmid DNA or a picked colony",
+    "Expected product": "500 bp"
+  },
+  "highlights": [
+    "The reaction is a colony check, so the only answer it gives is a band size.",
+    "A colony that gives no band was too much material, not a failed clone."
+  ],
+  "checks": [
+    {"name": "primers", "status": "pass", "detail": "2 designed, 0 with a warning"},
+    {"name": "controls", "status": "warn", "detail": "no positive control is set up"}
+  ],
+  "materials": [
+    {"name": "Taq DNA Polymerase", "supplier": "NEB", "catalog": "M0273", "storage": "-20 °C", "amount": "0.125 µL per reaction"},
+    {"name": "10x standard Taq buffer", "storage": "-20 °C", "amount": "2.5 µL per reaction"},
+    {"name": "10 mM dNTPs", "storage": "-20 °C", "note": "10 mM of each base"},
+    {"name": "1% agarose gel in 1x TAE"}
+  ],
+  "oligos": [
+    {"name": "M13 fwd", "sequence": "GTAAAACGACGGCCAGT", "purpose": "Set up the PCR", "tm_c": 55.4, "stock": "10 µM"},
+    {"name": "M13 rev", "sequence": "CAGGAAACAGCTATGAC", "purpose": "Set up the PCR", "tm_c": 52.8, "stock": "10 µM"}
+  ],
+  "equipment": [
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
+    "Microcentrifuge"
+  ],
+  "steps": [
+    {
+      "title": "Set up the PCR",
+      "cautions": ["Keep the polymerase on ice."],
+      "instructions": [
+        "Thaw buffer, dNTPs and primers on ice, then vortex and spin down.",
+        "Mix the master mix, then add it to each tube.",
+        "Add template to each tube last."
+      ],
+      "tables": [
+        {
+          "title": "PCR master mix",
+          "reactions": 4,
+          "overage": 0.1,
+          "components": [
+            {"name": "Nuclease-free water", "volume_ul": 19.875},
+            {"name": "10x standard Taq buffer", "volume_ul": 2.5, "stock": "10x", "final": "1x"},
+            {"name": "10 mM dNTPs", "volume_ul": 0.5, "stock": "10 mM", "final": "200 µM"},
+            {"name": "M13 fwd", "volume_ul": 0.5, "stock": "10 µM", "final": "0.2 µM"},
+            {"name": "M13 rev", "volume_ul": 0.5, "stock": "10 µM", "final": "0.2 µM"},
+            {"name": "Taq DNA polymerase", "volume_ul": 0.125, "stock": "5 U/µL", "final": "1.25 U/50 µL"},
+            {"name": "Template DNA", "volume_ul": 1, "master_mix": false}
+          ]
+        }
+      ],
+      "notes": ["Include a no-template control."]
+    },
+    {
+      "title": "Run the thermocycler",
+      "instructions": ["Place the tubes in the thermocycler and start the program."],
+      "programs": [
+        {
+          "title": "Taq PCR",
+          "lid_temperature_c": 105,
+          "stages": [
+            {"incubations": [{"label": "Initial denaturation", "temperature_c": 95, "seconds": 30}]},
+            {
+              "cycles": 30,
+              "incubations": [
+                {"label": "Denaturation", "temperature_c": 95, "seconds": 15},
+                {"label": "Annealing", "temperature_c": 55, "seconds": 15},
+                {"label": "Extension", "temperature_c": 68, "seconds": 60}
+              ]
+            },
+            {"incubations": [{"label": "Final extension", "temperature_c": 68, "seconds": 300}]},
+            {"incubations": [{"label": "Hold", "temperature_c": 4, "seconds": null}]}
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Check the product on a gel",
+      "instructions": [
+        "Load 5 µL of each reaction next to the ladder.",
+        "Run at 120 V until the dye front is two thirds down the gel."
+      ],
+      "timers": [{"label": "Gel run", "seconds": 1800}],
+      "gels": [
+        {
+          "title": "Expected bands",
+          "ladder": {
+            "name": "1 kb ladder",
+            "bands_bp": [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 700, 500, 300, 100]
+          },
+          "lanes": [
+            {"label": "Sample", "bands_bp": [500]},
+            {"label": "No template", "bands_bp": []}
+          ]
+        }
+      ],
+      "expected": ["One band at 500 bp in the sample lane and none in the no-template lane."],
+      "troubleshooting": [
+        {"problem": "No band", "solution": "Check the template and lower the annealing temperature by 3 °C."},
+        {"problem": "Band in the no-template lane", "solution": "Replace the water and primers; the reagents are contaminated."}
+      ]
+    }
+  ],
+  "references": [
+    {"text": "Example reference for the protocol format.", "url": "https://example.org/pcr"}
+  ]
+}

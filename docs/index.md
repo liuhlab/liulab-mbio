@@ -16,19 +16,35 @@ same versions the tests ran on.
 
 ## Use it
 
-```python
-from liulab_mbio import greet
-
-print(greet("lab"))
-```
-
-The same thing from a shell:
+Plan a Golden Gate cloning job from a vector file and an insert file:
 
 ```bash
-pixi run liulab_mbio greet lab
+pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
 ```
 
-The [API reference](api.md) has the full list, built from the docstrings in `src/`.
+Three files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
+primers marked. `primers.tsv` is the oligos to order. `protocol.html` is one page you can
+follow at the bench.
+
+The same thing from Python:
+
+```python
+from liulab_mbio.goldengate import plan_assembly
+
+plan = plan_assembly("vector.dna", "insert.dna")
+plan.write("plan/")
+```
+
+Sequence files are read into one shared model, whatever their format:
+
+```python
+from liulab_mbio.io import read_record
+
+record = read_record("vector.dna")
+```
+
+[Put GFP into pUC19](golden-gate.md) walks through one job from end to end. The
+[API reference](api.md) has the full list, built from the docstrings in `src/`.
 
 ## Check your work
 

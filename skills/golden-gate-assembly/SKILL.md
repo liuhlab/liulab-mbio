@@ -1,54 +1,111 @@
 ---
 name: golden-gate-assembly
 description: >-
-  Plan a Golden Gate cloning experiment end to end from a vector and an insert sequence file
-  (SnapGene .dna, GenBank or FASTA): pick a Type IIS enzyme, remove internal sites, design and
-  check PCR primers, simulate the assembly, design colony PCR validation, and write an
-  interactive HTML bench protocol with expected results. Use when the user wants to clone,
-  insert or subclone a sequence into a plasmid by Golden Gate, asks for primers with BsaI,
-  BsmBI, BbsI, PaqCI or SapI tails, or wants a ready-to-run cloning protocol from two
-  sequence files.
+  Plan a Golden Gate cloning experiment end to end from a vector and one or more insert
+  sequence files (SnapGene .dna, GenBank or FASTA): pick a Type IIS enzyme with no site in the
+  parts, design and score the whole overhang set, check the PCR primers, simulate the assembly,
+  design the colony PCR that validates every junction, and write an interactive HTML bench
+  protocol with expected results. Use when the user wants to clone, insert, subclone or join
+  sequences into a plasmid by Golden Gate, asks for primers with BsaI, BsmBI, BbsI, PaqCI or
+  SapI tails, or wants a ready-to-run cloning protocol from sequence files.
 ---
 
 # Golden Gate assembly
 
-> **Scaffold.** The `liulab_mbio` functions this skill needs do not exist yet; issue #1
-> tracks them. Until they land, tell the user the skill is not usable and point to #1.
-> Do not hand-design primers or protocols in its place.
+`liulab_mbio` does the design. This skill is the way in: one command turns a vector and its
+inserts into a product map, a primer order sheet and a bench protocol. Do not hand-design
+primers, overhangs or band sizes beside it — the package computes them from the sequences, and a
+number written by hand is one that nothing checks.
 
-## Inputs
+## Run it
 
-- **Vector**: a sequence file, usually circular.
-- **Insert**: a sequence file.
-- **Optional**: where to insert (a feature name or coordinates), orientation, in-frame
-  fusion, preferred enzyme, polymerase, host strain. Ask only for what the files do not
-  settle.
+```bash
+pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
+pixi run liulab_mbio goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+```
 
-## Outputs
+One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
+the product: the vector is opened across the span they replace, and each insert follows the one
+before it. A single insert is the ordinary case, not a special one.
 
-One output directory holding:
+It chooses the enzyme, designs every junction's overhang together, simulates the PCRs and the
+ligation, works out the bench quantities, and designs the colony PCR and sequencing that confirm
+the clone. Three files land in the directory you name:
 
-- the annotated product as `.dna`;
-- a primer order sheet;
-- one self-contained interactive HTML protocol, with expected results at every step.
+- `product.dna` — the assembled plasmid, features carried over and each junction annotated
+- `primers.tsv` — every oligo it designed, with length and Tm
+- `protocol.html` — one self-contained page: reagents, reaction tables, thermocycler programs,
+  expected bands, a simulated gel and troubleshooting, step by step
 
-## Workflow
+The command prints a summary line and the three paths. The same inputs write the same bytes, so
+a protocol can be regenerated rather than edited.
 
-Each step binds to package functions once #1 lands.
+## What the fragment count changes
 
-1. Read both files; report topology, length and features.
-2. Scan both for Type IIS sites. Choose an enzyme with no site in the parts kept in the
-   product; domesticate only when none is free.
-3. Choose junctions and overhangs; score the overhang set.
-4. Design vector and insert primers with tails; evaluate every primer and pair.
-5. Simulate PCR, digestion and ligation. Confirm the product has no remaining site and
-   carries the insert intact.
-6. Design colony PCR and sequencing primers; compute expected bands for correct and empty
-   clones.
-7. Render the protocol: reagents, reaction tables, thermocycler programs, checks and
-   troubleshooting per step.
+- **n inserts means n + 1 junctions**, and the overhangs are chosen as one set: all different,
+  none the reverse complement of another, and scored together.
+- **Fidelity falls as junctions are added.** The report and the protocol print the number and
+  say whether it was measured or estimated.
+- **The reaction and the cycling follow the count.** NEB's tables step up at three fragments, at
+  seven and at fourteen, and the amounts cover every part.
+- **Validation covers every junction**: a colony PCR band that reads each one, and a
+  wrong-orientation lane for each insert.
+- **The steps stay per experiment.** More parts add one PCR step each, not a protocol per pair.
 
-## Smoke test
+## Ask only for what the files do not settle
 
-`tests/data/pUC19.dna` and `tests/data/GFP.dna`: insert GFP into the pUC19 multiple cloning
-site and validate the insertion by colony PCR.
+Every option below has a default; a vector and one insert are enough on their own.
+
+| Option | What it sets |
+| --- | --- |
+| `--site` | A feature name, or `START-END`, that the inserts replace. Defaults to the vector's own `MCS` feature |
+| `--orientation` | `forward` or `reverse`. Give it once for all the inserts, or once per insert, in order |
+| `--in-frame` | Hold every insert's junction on a codon boundary, for a fusion |
+| `--enzyme` | Force one. Refused when it reads a site in any part |
+| `--polymerase` | For the PCRs |
+| `--host` | The strain the protocol names |
+| `--name` | What to call the product |
+
+## From Python
+
+When you need the numbers rather than the files:
+
+```python
+from liulab_mbio.goldengate import plan_assembly
+
+plan = plan_assembly("vector.dna", "first.dna", "second.dna")
+plan.status  # "pass", "warn" or "fail" over every check and every primer
+plan.write("plan/")  # the same three files
+```
+
+`plan.assembly.checks` carries one verdict per part beside the product's own,
+`plan.overhangs.fidelity` the score of the set, `plan.colony.clones` the expected bands per
+candidate clone, and `plan.phenotype` what the product says about itself — what drives the
+inserts, whether anything should be translated, and how a plate reads.
+
+## Before you hand it over
+
+Open `protocol.html` and read it back, as `build-protocol` asks. Then tell the user what the
+design chose and what it cost: the enzyme, the overhang set and its fidelity, the product
+length, and the expected colony PCR bands. Say which checks warned rather than hiding them, and
+say whether a fidelity number was measured or estimated — the report carries that flag, and the
+two are not the same kind of number.
+
+## When it refuses
+
+It raises rather than guessing, and the message names the cause.
+
+- **No enzyme is free.** Every candidate reads a site in the parts. Taking one out changes what
+  a part spells, so it is the user's call; the ranking reports which sites a synonymous codon
+  change could reach and which lie outside a coding sequence.
+- **A junction has no overhang left.** Every candidate was refused and the message names the
+  rule. More junctions leave fewer overhangs, so this is likeliest on a long assembly. A wider
+  junction window lets the vector-side junction slide; a junction between two inserts cannot
+  move, neither part being able to spell the other's bases.
+- **The DNA does not fit the reaction.** Concentrate the fragments, or scale the reaction up.
+- **The parts do not chain.** The overhangs do not close the circle.
+
+## The protocol side
+
+`build-protocol` owns the page: the model, the data format and how to render one. Read it when
+you need to change what a protocol says, rather than what the design computes.

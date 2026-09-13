@@ -18,7 +18,7 @@ classifiers = [
 ]
 # hatch-vcs reads the newest git tag. Never add a `version` key.
 dynamic = ["version"]
-dependencies = ["typer>=0.12"]
+dependencies = ["typer>=0.12", "biopython>=1.88", "primer3-py>=2.3"]
 
 [project.scripts]
 liulab_mbio = "liulab_mbio.cli:app"
@@ -39,7 +39,11 @@ packages = ["src/liulab_mbio"]
 # ============================== pixi ==============================
 
 [tool.pixi.workspace]
-channels = ["conda-forge"]
+# `bioconda` for `primer3-py`, which conda-forge does not carry.
+channels = ["conda-forge", "bioconda"]
+# pixi's conda-to-PyPI map lacks bioconda's `primer3-py`. Without this entry the editable install
+# pulls it from PyPI as well, over the conda build.
+conda-pypi-map = { bioconda = { mapping = { primer3-py = "primer3-py" } } }
 platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
@@ -52,6 +56,8 @@ liulab-mbio = { path = ".", editable = true }
 [tool.pixi.dependencies]
 python = "3.13.*"
 typer = ">=0.12"
+biopython = ">=1.88"
+primer3-py = ">=2.3"
 ruff = "*"
 # Exact: Pylance is pyright, so the editor and CI must give one verdict.
 pyright = "==1.1.411"
