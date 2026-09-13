@@ -10,12 +10,16 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from pathlib import Path
 
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 _SEQUENCE = 0x00
+_PRIMERS = 0x05
+_NOTES = 0x06
 _COOKIE = 0x09
 _FEATURES = 0x0A
 _CIRCULAR = 0x01
+#: SnapGene's name for the record on a map; the model holds it as `SequenceRecord.name`.
+_MAP_LABEL = "CustomMapLabel"
 
 _STRAND_OF_DIRECTIONALITY = {"1": Strand.FORWARD, "2": Strand.REVERSE, "3": Strand.BOTH}
 
@@ -84,8 +88,45 @@ def _packets(data: bytes) -> Iterator[tuple[int, bytes]]:
         offset += 5 + length
 
 
+def _read_primers(payload: bytes, length: int) -> tuple[Primer, ...]:
+    primers = []
+    for node in ET.fromstring(payload).iter("Primer"):
+        sites = tuple(
+            BindingSite(
+                *_span(site.get("location", ""), length, base=0),
+                Strand.REVERSE if site.get("boundStrand") == "1" else Strand.FORWARD,
+            )
+            for site in node.iter("BindingSite")
+            if site.get("simplified") != "1"
+        )
+        primers.append(
+            Primer(
+                node.get("name", ""),
+                node.get("sequence", ""),
+                binding_sites=sites,
+                description=node.get("description", ""),
+            )
+        )
+    return tuple(primers)
+
+
+def _read_notes(payload: bytes) -> tuple[str, dict[str, str]]:
+    """Return the map label, which the model holds as a name, and the remaining notes."""
+    name, notes = "", {}
+    for child in ET.fromstring(payload):
+        if len(child):  # A note holding elements of its own, such as References.
+            continue
+        if child.tag == _MAP_LABEL:
+            name = child.text or ""
+        else:
+            notes[child.tag] = child.text or ""
+    return name, notes
+
+
 def read_dna(path: str | os.PathLike[str]) -> SequenceRecord:
     """Read a SnapGene ``.dna`` file.
+
+    SnapGene's HTML markup in note and qualifier text is kept as it is written.
 
     Raises
     ------
@@ -100,9 +141,12 @@ def read_dna(path: str | os.PathLike[str]) -> SequenceRecord:
         raise ValueError(f"{os.fspath(path)} holds {len(sequences)} DNA sequence packets, not 1")
     flags, bases = sequences[0][0], sequences[0][1:].decode("ascii")
     by_kind = dict(packets)
-    features = _read_features(by_kind[_FEATURES], len(bases)) if _FEATURES in by_kind else ()
+    name, notes = _read_notes(by_kind[_NOTES]) if _NOTES in by_kind else ("", {})
     return SequenceRecord(
         bases,
         topology="circular" if flags & _CIRCULAR else "linear",
-        features=features,
+        name=name,
+        features=_read_features(by_kind[_FEATURES], len(bases)) if _FEATURES in by_kind else (),
+        primers=_read_primers(by_kind[_PRIMERS], len(bases)) if _PRIMERS in by_kind else (),
+        notes=notes,
     )

@@ -1,11 +1,45 @@
+import struct
 from pathlib import Path
 
-from liulab_mbio.sequence import Feature, Segment, Strand
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, Strand
 from liulab_mbio.snapgene import read_dna
 
 DATA = Path(__file__).parent / "data"
 PUC19 = DATA / "pUC19.dna"
 GFP = DATA / "GFP.dna"
+
+# Shaped like the primers packet SnapGene writes, with binding sites on the GFP fixture.
+PRIMERS_XML = (
+    '<?xml version="1.0"?><Primers nextValidID="2"><HybridizationParams'
+    ' minContinuousMatchLen="10" allowMismatch="1" minMeltingTemperature="40"'
+    ' showAdditionalFivePrimeMatches="1" minimumFivePrimeAnnealing="15"/>'
+    '<Primer recentID="0" name="GFP fwd" sequence="CAGTCAGGATCCATGAGTAAAGGAGAAGAACT"'
+    ' description="&lt;html&gt;&lt;body&gt;forward&lt;/body&gt;&lt;/html&gt;"'
+    ' dateAdded="2023-05-18T20:25:03Z">'
+    '<BindingSite location="0-19" boundStrand="0" annealedBases="ATGAGTAAAGGAGAAGAACT"'
+    ' meltingTemperature="57"><Component bases="CAGTCAGGATCC"/>'
+    '<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite>'
+    '<BindingSite simplified="1" location="0-19" boundStrand="0"'
+    ' annealedBases="ATGAGTAAAGGAGAAGAACT" meltingTemperature="57">'
+    '<Component hybridizedRange="0-19" bases="ATGAGTAAAGGAGAAGAACT"/></BindingSite></Primer>'
+    '<Primer recentID="1" name="GFP rev" sequence="CTGACAGAATTCTTTGTATAGTTCATCCATGG"'
+    ' description=""><BindingSite location="697-716" boundStrand="1"'
+    ' annealedBases="CCATGGATGAACTATACAAA" meltingTemperature="55">'
+    '<Component bases="CTGACAGAATTC"/>'
+    '<Component hybridizedRange="697-716" bases="CCATGGATGAACTATACAAA"/>'
+    "</BindingSite></Primer></Primers>"
+).encode()
+
+
+def _rewritten(path: Path, kind: int, payload: bytes) -> bytes:
+    """The file's packets with every packet of `kind` replaced by one holding `payload`."""
+    data, out, offset = path.read_bytes(), bytearray(), 0
+    while offset < len(data):
+        packet_kind, length = struct.unpack_from(">BI", data, offset)
+        packet = data[offset : offset + 5 + length]
+        out += struct.pack(">BI", kind, len(payload)) + payload if packet_kind == kind else packet
+        offset += 5 + length
+    return bytes(out)
 
 
 def _feature(record_features: tuple[Feature, ...], name: str) -> Feature:
@@ -65,6 +99,35 @@ def test_read_dna_keeps_named_segments_and_colours() -> None:
         "#ccffcc",
         (Segment(1625, 2417), Segment(2417, 2486, name="signal sequence")),
     )
+
+
+def test_read_dna_converts_binding_sites_and_ignores_simplified_duplicates(tmp_path: Path) -> None:
+    path = tmp_path / "primers.dna"
+    path.write_bytes(_rewritten(GFP, 0x05, PRIMERS_XML))
+    assert read_dna(path).primers == (
+        Primer(
+            "GFP fwd",
+            "CAGTCAGGATCCATGAGTAAAGGAGAAGAACT",
+            binding_sites=(BindingSite(0, 20, Strand.FORWARD),),
+            description="<html><body>forward</body></html>",
+        ),
+        Primer(
+            "GFP rev",
+            "CTGACAGAATTCTTTGTATAGTTCATCCATGG",
+            binding_sites=(BindingSite(697, 717, Strand.REVERSE),),
+        ),
+    )
+
+
+def test_read_dna_takes_the_notes_and_reads_the_map_label_as_the_name() -> None:
+    record = read_dna(PUC19)
+    assert record.name == "pUC19"
+    assert read_dna(GFP).name == "GFP"
+    assert record.notes["Type"] == "Synthetic"
+    assert record.notes["CreatedBy"] == "New England Biolabs"
+    assert record.notes["Comments"] == "See also GenBank accession L09137."
+    assert record.notes["Description"].startswith("<html><body>Standard <i>E. coli</i> vector")
+    assert "CustomMapLabel" not in record.notes
 
 
 def test_read_dna_keeps_qualifiers_with_their_integer_and_text_values() -> None:
