@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio import primers
 from liulab_mbio.checks import Check
 from liulab_mbio.primers import (
     ONETAQ,
@@ -49,6 +50,37 @@ PUC_FWD = "CCCAGTCACGACGTTGTAAAACG"
 PUC_REV = "AGCGGATAACAATTTCACACAGG"
 #: Anneals to pUC19 just after the MCS, reading along the top strand.
 MCS_FWD = "GGCGTAATCATGGTCATAGC"
+
+#: What callers import from `liulab_mbio.primers`, whichever of its modules defines it.
+PUBLIC_NAMES = (
+    "ONETAQ",
+    "PHUSION",
+    "Q5",
+    "TAQ",
+    "TARGET_TM",
+    "THRESHOLDS",
+    "Band",
+    "PairReport",
+    "Polymerase",
+    "PrimerReport",
+    "PrimingSite",
+    "Reading",
+    "Thresholds",
+    "amplicon_sizes",
+    "design_pair",
+    "design_primer",
+    "evaluate_pair",
+    "evaluate_primer",
+    "find_binding_sites",
+    "find_priming_sites",
+    "melting_temperature",
+    "reading",
+)
+
+
+def test_every_public_name_imports_from_the_package() -> None:
+    assert set(PUBLIC_NAMES) <= set(primers.__all__)
+    assert all(hasattr(primers, name) for name in primers.__all__)
 
 
 @pytest.mark.parametrize(
