@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Literal
 
 from liulab_mbio.bench import (
-    COLONY_FLANK,
+    REVERSE_FLANK,
     Amount,
     ColonyCheck,
     SangerRead,
@@ -55,7 +55,6 @@ from liulab_mbio.primers import (
     PrimerReport,
     PrimerRole,
     Thresholds,
-    design_pair,
     evaluate_primer,
     reading,
 )
@@ -84,11 +83,6 @@ MCS_FEATURE = "MCS"
 #: How far the vector junction may slide to get past an overhang rule. It moves where the vector
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
 VECTOR_WINDOW = 6
-
-#: Bases of vector between the downstream colony PCR primer and its own junction. Deliberately
-#: not `COLONY_FLANK`: two primers the same distance from their junctions give a reversed insert
-#: the same bands as a correct one, so the gel could not tell them apart.
-REVERSE_FLANK = 2 * COLONY_FLANK
 
 #: What `Plan.write` calls the four files it writes.
 PRODUCT_FILE = "product.dna"
@@ -387,15 +381,7 @@ def plan_assembly(
         built.product,
         junctions,
         vector=one,
-        primers=design_pair(
-            built.product,
-            first - COLONY_FLANK,
-            last + REVERSE_FLANK,
-            forward_name="Colony PCR forward",
-            reverse_name="Colony PCR reverse",
-            polymerase=ONETAQ,
-            thresholds=thresholds["colony PCR"],
-        ),
+        reverse_flank=REVERSE_FLANK,
         insert_primer=True,
         polymerase=ONETAQ,
         thresholds=thresholds["colony PCR"],
