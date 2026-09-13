@@ -84,7 +84,6 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: Ladder("marker", ()),
         lambda: Lane("sample", (0,)),
         lambda: Oligo("M13 fwd", "  "),
-        lambda: Oligo("M13 fwd", "GTAAAACG", status="ok"),
         lambda: Oligo("M13 fwd", "GTAAAACG", checks=(Check("length", "warn", "17"),)),
         lambda: Oligo(
             "M13 fwd", "GTAAAACG", status="pass", checks=(Check("length", "warn", "17"),)
@@ -141,6 +140,10 @@ def test_an_oligo_nothing_judged_says_so_rather_than_reading_as_a_pass() -> None
 def test_a_verdict_outside_the_three_is_refused() -> None:
     with pytest.raises(ValueError, match="status"):
         Protocol.from_dict({"title": "t", "checks": [{"name": "junctions", "status": "ok"}]})
+    with pytest.raises(ValueError, match="status"):
+        Protocol.from_dict(
+            {"title": "t", "oligos": [{"name": "M13 fwd", "sequence": "ACGT", "status": "ok"}]}
+        )
 
 
 def test_a_protocol_reads_from_its_json_file() -> None:

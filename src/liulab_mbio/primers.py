@@ -434,7 +434,7 @@ class PrimerReport:
     @property
     def status(self) -> Status:
         """Return the worst status of any check that was judged."""
-        return _worst(check.status for check in self.checks if check.status is not None)
+        return _worst(check.status for check in self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.
@@ -605,8 +605,9 @@ class PairReport:
     @property
     def status(self) -> Status:
         """Return the worst status of either primer or of any pair check that was judged."""
-        judged = [check.status for check in self.checks if check.status is not None]
-        return _worst((self.forward.status, self.reverse.status, *judged))
+        return _worst(
+            (self.forward.status, self.reverse.status, *(one.status for one in self.checks))
+        )
 
     def __getitem__(self, name: str) -> Check:
         """Return the pair check of that name.
@@ -940,10 +941,11 @@ def _graded(name: str, value: float, band: Band, detail: str = "") -> Check:
     return Check(name, band.grade(value), value, detail)
 
 
-def _worst(statuses: Iterable[Status]) -> Status:
+def _worst(statuses: Iterable[Status | None]) -> Status:
+    """Return the worst of these, passing over anything nothing judged."""
     worst: Status = "pass"
     for status in statuses:
-        if _RANK[status] > _RANK[worst]:
+        if status is not None and _RANK[status] > _RANK[worst]:
             worst = status
     return worst
 

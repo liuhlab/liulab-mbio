@@ -786,10 +786,10 @@ def _marker(vector: SequenceRecord) -> Feature | None:
     )
 
 
-def _worst(statuses: Iterable[Status]) -> Status:
-    """Return the worst of these statuses."""
+def _worst(statuses: Iterable[Status | None]) -> Status:
+    """Return the worst of these statuses, passing over anything nothing judged."""
     worst: Status = "pass"
     for status in statuses:
-        if _RANK[status] > _RANK[worst]:
+        if status is not None and _RANK[status] > _RANK[worst]:
             worst = status
     return worst

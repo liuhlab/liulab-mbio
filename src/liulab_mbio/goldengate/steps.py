@@ -219,8 +219,15 @@ def _phenotype_sentences(plan: "Plan") -> tuple[str, ...]:
 
 
 def _checks(plan: "Plan") -> tuple[Check, ...]:
-    """Return the plan's verdicts, one badge each, so a warning is seen and not read."""
-    return tuple(Check(check.name, check.status, detail=check.detail) for check in plan.checks)
+    """Return the plan's verdicts, one badge each, so a warning is seen and not read.
+
+    A badge is a verdict, so a check carrying none has none to show.
+    """
+    return tuple(
+        Check(check.name, check.status, detail=check.detail)
+        for check in plan.checks
+        if check.status is not None
+    )
 
 
 def _materials(plan: "Plan") -> tuple[Material, ...]:
@@ -338,10 +345,11 @@ def _oligo_checks(report: PrimerReport, thresholds: Thresholds) -> tuple[Check, 
     """Return the checks that did not pass, each as its value and the band it missed."""
     fired = []
     for check in report.checks:
-        if check.status is None or check.status == "pass":
+        status = check.status
+        if status is None or status == "pass":
             continue
         word = reading(check, thresholds)
-        fired.append(Check(word.label, check.status, detail=word.detail))
+        fired.append(Check(word.label, status, detail=word.detail))
     return tuple(fired)
 
 
