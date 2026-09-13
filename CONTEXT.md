@@ -36,3 +36,37 @@ _Avoid_: primer site, hybridization site
 
 Of a span on a circular sequence record: running through the last base and on into the first.
 _Avoid_: wrapping, wraparound
+
+### Protocol
+
+A bench procedure someone can follow without asking anything: summary, materials, numbered
+steps, expected results and references. Rendered as one self-contained HTML page.
+_Avoid_: SOP, recipe, method
+
+### Step
+
+One numbered unit of a protocol: what to do, what it needs, what a successful result looks
+like, and what to do when the result is wrong.
+_Avoid_: task, procedure
+
+### Reaction table
+
+The volumes of one reaction, scaled to a master mix for several reactions plus an overage. A
+component marked per-tube, such as template, is added to each tube instead of to the mix.
+_Avoid_: mix table, recipe
+
+### Thermocycler program
+
+Stages run in order, each a list of incubations repeated for a number of cycles.
+_Avoid_: cycling conditions, PCR conditions
+
+### Simulated gel
+
+A drawing of the agarose gel a step should produce: a ladder lane and sample lanes, each band
+placed by the logarithm of its size in base pairs.
+_Avoid_: virtual gel, gel image
+
+### Ladder
+
+The size marker lane of a simulated gel: a name and the band sizes it carries.
+_Avoid_: marker, standard
