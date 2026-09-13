@@ -41,8 +41,8 @@ packages = ["src/liulab_mbio"]
 [tool.pixi.workspace]
 # `bioconda` for `primer3-py`, which conda-forge does not carry.
 channels = ["conda-forge", "bioconda"]
-# pixi has no conda-to-PyPI name mapping for bioconda. Without this entry the editable install
-# pulls `primer3-py` from PyPI as well, over the conda build.
+# pixi's conda-to-PyPI map lacks bioconda's `primer3-py`. Without this entry the editable install
+# pulls it from PyPI as well, over the conda build.
 conda-pypi-map = { bioconda = { mapping = { primer3-py = "primer3-py" } } }
 platforms = ["osx-arm64", "linux-64"]
 
