@@ -16,6 +16,7 @@ from liulab_mbio.primers import (
     Band,
     design_pair,
     design_primer,
+    evaluate_pair,
     evaluate_primer,
     find_binding_sites,
     find_priming_sites,
@@ -270,6 +271,61 @@ def test_design_refuses_a_position_a_linear_template_cannot_hold() -> None:
     template = SequenceRecord("ACGT" * 10)
     with pytest.raises(ValueError, match="fit"):
         design_primer(template, 38, Strand.FORWARD)
+
+
+def test_a_pair_is_judged_with_its_amplicon(puc19) -> None:
+    report = evaluate_pair(Primer("M13 fwd", M13_FWD), Primer("M13 rev", M13_REV), puc19)
+    assert report["amplicon_size"].value == 103
+    assert report["products"].value == 1
+    assert report["products"].status == "pass"
+    assert report["tm_difference"].value == pytest.approx(62.27 - 56.31, abs=0.02)
+    assert report["tm_difference"].status == "warn"
+    assert report["heterodimer"].status == "pass"
+    assert report.amplicon_length == 103
+    assert report.annealing_temperature == pytest.approx(57.3, abs=0.1)
+    assert report.extension_seconds == 20
+
+
+def test_the_colony_pcr_pair_gives_its_empty_vector_band(puc19) -> None:
+    report = evaluate_pair(
+        Primer("M13/pUC fwd", PUC_FWD), Primer("M13/pUC rev", PUC_REV), puc19, polymerase=ONETAQ
+    )
+    assert report["amplicon_size"].value == 137
+    assert report["tm_difference"].status == "pass"
+    assert report.annealing_temperature == pytest.approx(51.5, abs=0.1)
+    assert report.extension_seconds == 60
+
+
+def test_an_amplicon_may_run_across_the_origin(puc19) -> None:
+    forward, reverse = design_pair(puc19, 452, 396 + len(puc19))
+    report = evaluate_pair(forward, reverse, puc19)
+    assert report.amplicon_length == 396 + len(puc19) - 452
+    assert report["products"].status == "pass"
+
+
+def test_tails_count_towards_the_amplicon(puc19) -> None:
+    forward, reverse = design_pair(
+        puc19, 378, 481, forward_tail="TTGGTCTCA", reverse_tail="TTGGTCTCA"
+    )
+    report = evaluate_pair(forward, reverse, puc19)
+    assert report.amplicon_length == 103 + 9 + 9
+
+
+def test_a_three_prime_anchored_heterodimer_fails(puc19) -> None:
+    primer = Primer("dimer", "ATCGATCGATCAGCGCGCGCGC")
+    report = evaluate_pair(primer, primer, puc19)
+    assert report["heterodimer_3prime"].value == pytest.approx(57.0, abs=0.01)
+    assert report["heterodimer_3prime"].status == "fail"
+
+
+def test_a_pair_that_cannot_face_each_other_makes_no_product() -> None:
+    template = SequenceRecord(MCS_FWD + "TTTT" + PUC_FWD)
+    report = evaluate_pair(Primer("one", MCS_FWD), Primer("two", PUC_FWD), template)
+    assert report["products"].value == 0
+    assert report["products"].status == "fail"
+    assert report.amplicon_length is None
+    assert report.extension_seconds is None
+    assert report.status == "fail"
 
 
 def test_every_threshold_comes_from_one_place() -> None:

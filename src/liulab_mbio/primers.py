@@ -262,8 +262,9 @@ class Thresholds:
     dimer_3prime
         As `dimer`, for a structure holding the 3' end, which the polymerase can extend:
         primer3's `PRIMER_MAX_SELF_END_TH`, failing rather than warning.
-    binding_sites
-        Places on a template where the annealing region matches. A primer wants exactly one.
+    binding_sites, products
+        Places on a template where the annealing region matches, and amplicons the pair can
+        make. A primer wants exactly one of each.
     off_target
         Other places where it can prime, which warn.
     binding_min_length
@@ -289,6 +290,7 @@ class Thresholds:
     dimer: Band = Band(-math.inf, 47.0)
     dimer_3prime: Band = Band(-math.inf, 47.0, -math.inf, 47.0)
     binding_sites: Band = Band(1, 1, 1, 1)
+    products: Band = Band(1, 1, 1, 1)
     off_target: Band = Band(0, 0)
     binding_min_length: int = 15
     off_target_mismatches: int = 5
@@ -354,10 +356,7 @@ class PrimerReport:
         KeyError
             If no check has it.
         """
-        for check in self.checks:
-            if check.name == name:
-                return check
-        raise KeyError(name)
+        return _named(self.checks, name)
 
 
 def design_primer(
@@ -487,6 +486,111 @@ def evaluate_primer(
     if template is not None:
         checks += _template_checks(annealing, sites, template, thresholds)
     return PrimerReport(primer, checks)
+
+
+@dataclass(frozen=True, slots=True)
+class PairReport:
+    """Every check on a primer pair, and the numbers its PCR needs.
+
+    Parameters
+    ----------
+    forward, reverse
+        What each primer scored on its own.
+    checks
+        What only a pair can be judged on.
+    annealing_temperature
+        °C, by the polymerase's rule over the two annealing regions.
+    amplicon_length
+        Bases between the primers' 5' ends, tails included, or ``None`` unless they make
+        exactly one product.
+    extension_seconds
+        For that amplicon, or ``None``.
+    """
+
+    forward: PrimerReport
+    reverse: PrimerReport
+    checks: tuple[Check, ...]
+    annealing_temperature: float
+    amplicon_length: int | None
+    extension_seconds: int | None
+
+    @property
+    def status(self) -> Status:
+        """Return the worst status of either primer or of any pair check."""
+        return _worst(
+            (self.forward.status, self.reverse.status, *(check.status for check in self.checks))
+        )
+
+    def __getitem__(self, name: str) -> Check:
+        """Return the pair check of that name.
+
+        Raises
+        ------
+        KeyError
+            If no check has it.
+        """
+        return _named(self.checks, name)
+
+
+def evaluate_pair(
+    forward: Primer,
+    reverse: Primer,
+    template: SequenceRecord,
+    *,
+    polymerase: Polymerase = Q5,
+    thresholds: Thresholds = THRESHOLDS,
+) -> PairReport:
+    """Judge a primer pair on a template, with the amplicon it makes.
+
+    Each primer is judged as on its own, and the pair adds the gap between their Tms, their
+    heterodimers, and every product their binding sites can make. An amplicon runs from one
+    primer's 5' end to the other's, tails counted, across the origin where it must.
+
+    Examples
+    --------
+    >>> template = SequenceRecord("GGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCT")
+    >>> pair = design_pair(template, 0, len(template))
+    >>> report = evaluate_pair(pair[0], pair[1], template)
+    >>> report.amplicon_length, report["products"].status
+    (48, 'pass')
+    """
+    import primer3
+
+    reports = tuple(
+        evaluate_primer(primer, template, polymerase=polymerase, thresholds=thresholds)
+        for primer in (forward, reverse)
+    )
+    tms = tuple(report["tm"].value for report in reports)
+    first, second = (_thermo_sequence(primer.sequence) for primer in (forward, reverse))
+    note = first[1] or second[1]
+    anchored = max(
+        primer3.calc_end_stability(first[0], second[0]).tm,
+        primer3.calc_end_stability(second[0], first[0]).tm,
+    )
+    products = _products(forward, reverse, template, thresholds)
+    length = products[0] if len(products) == 1 else None
+    checks = (
+        _graded("tm_difference", abs(tms[0] - tms[1]), thresholds.tm_difference),
+        _graded(
+            "heterodimer", primer3.calc_heterodimer(first[0], second[0]).tm, thresholds.dimer, note
+        ),
+        _graded("heterodimer_3prime", anchored, thresholds.dimer_3prime, note),
+        _graded(
+            "products",
+            len(products),
+            thresholds.products,
+            ", ".join(f"{size} bp" for size in products),
+        ),
+        Check("amplicon_size", "pass", length or 0, "not judged"),
+    )
+    return PairReport(
+        reports[0],
+        reports[1],
+        checks,
+        polymerase.annealing_temperature(*tms),
+        length,
+        None if length is None else polymerase.extension_seconds(length),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -690,6 +794,43 @@ def _pair_score(
 
 def _finite(value: float, fallback: float) -> float:
     return value if math.isfinite(value) else fallback
+
+
+def _named(checks: tuple[Check, ...], name: str) -> Check:
+    for check in checks:
+        if check.name == name:
+            return check
+    raise KeyError(name)
+
+
+def _products(
+    forward: Primer, reverse: Primer, template: SequenceRecord, thresholds: Thresholds
+) -> list[int]:
+    """Return the size of every amplicon the two primers' sites can make, tails included."""
+    placed: list[tuple[BindingSite, int]] = []
+    for primer in (forward, reverse):
+        sites = _placed(primer, template, thresholds)
+        annealing = max((site.end - site.start for site in sites), default=len(primer.sequence))
+        placed.extend((site, len(primer.sequence) - annealing) for site in sites)
+    products = []
+    for site, tail in placed:
+        if site.strand is not Strand.FORWARD:
+            continue
+        for other, other_tail in placed:
+            if other.strand is not Strand.REVERSE:
+                continue
+            span = _span(site, other, template)
+            if span is not None:
+                products.append(span + tail + other_tail)
+    return sorted(products)
+
+
+def _span(forward: BindingSite, reverse: BindingSite, template: SequenceRecord) -> int | None:
+    length = len(template)
+    if template.topology == "circular":
+        return (reverse.end - forward.start) % length or length
+    span = reverse.end - forward.start
+    return span if span > 0 else None
 
 
 def _graded(name: str, value: float, band: Band, detail: str = "") -> Check:
