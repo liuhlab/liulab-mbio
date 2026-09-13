@@ -10,13 +10,9 @@ import os
 from collections.abc import Callable, Mapping
 from dataclasses import KW_ONLY, MISSING, dataclass, field, fields
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
-#: One verdict a check can carry.
-type Status = Literal["pass", "warn", "fail"]
-
-#: The three verdicts, so a value read out of JSON can be held to them.
-STATUSES: tuple[Status, ...] = ("pass", "warn", "fail")
+from liulab_mbio.checks import STATUSES, Status
 
 #: The most characters `Protocol.overview` gives one card. Anything longer is a sentence, which
 #: reads badly in a grid and drags the cards to different heights; it belongs in

@@ -12,10 +12,12 @@ from liulab_mbio.io import read_record
 from liulab_mbio.goldengate import plan_assembly
 ```
 
-Three names are spelled twice across the package on purpose — `Check`, `Fragment` and
-`Junction` each mean something different in the two modules that define them. A flat re-export
-would have to rename one of each pair, and would import every dependency the moment you
-imported the package. So the module path is the name.
+Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
+something different in the two modules that define them. A
+`liulab_mbio.checks.Check` is the judged check, with the value it measured. A
+`liulab_mbio.protocol.Check` is how a protocol page shows one. A flat re-export would have to
+rename one of each pair, and would import every dependency the moment you imported the package.
+So the module path is the name.
 
 `liulab_mbio.goldengate` re-exports the pipeline's entry point and its result types.
 `design` and `ligase` are **not** re-exported: reach them at
@@ -48,6 +50,10 @@ across the origin of a circular record ends past the record's length — see
 
 ::: liulab_mbio.sequence
 
+## Checks
+
+::: liulab_mbio.checks
+
 ## Files
 
 ::: liulab_mbio.io
@@ -66,15 +72,30 @@ across the origin of a circular record ends past the record's length — see
 
 ## Primers
 
+Every public name in the modules below imports from `liulab_mbio.primers` too:
+`from liulab_mbio.primers import design_pair` works as well as the longer path.
+
 ::: liulab_mbio.primers
+    options:
+      members: false
+
+::: liulab_mbio.primers.polymerase
+
+::: liulab_mbio.primers.thresholds
+
+::: liulab_mbio.primers.placement
+
+::: liulab_mbio.primers.evaluation
+
+::: liulab_mbio.primers.design
 
 ## Protocols
 
 The model a bench protocol is written in, and the renderer that turns one into a single
-self-contained HTML page. `Check` is one pass, warn or fail verdict; `Oligo` is one row of the
-order sheet, carrying its own verdict and the checks that fired where something judged it;
-`OVERVIEW_CHARS` is the character budget for a header card, and a longer value is refused
-rather than truncated.
+self-contained HTML page. `Check` is how a page shows a verdict, with no value; `Oligo` is one
+row of the order sheet, carrying its own verdict and the checks that fired where something
+judged it; `OVERVIEW_CHARS` is the character budget for a header card, and a longer value is
+refused rather than truncated.
 
 ::: liulab_mbio.protocol
     options:
@@ -83,6 +104,35 @@ rather than truncated.
 ::: liulab_mbio.protocol.model
 
 ::: liulab_mbio.protocol.render
+
+## Bench
+
+The numbers any cloning pipeline shares: DNA amounts, PCR and colony PCR, gels, the checks
+that confirm a clone, heat inactivation, the phenotype a clone should show, the primer order
+sheet, and the protocol steps any pipeline reuses. Every public name in the modules below imports
+from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERENCES`, and
+`liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the one exception: a protocol cites
+its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the step they belong to.
+
+::: liulab_mbio.bench
+    options:
+      members: false
+
+::: liulab_mbio.bench.amounts
+
+::: liulab_mbio.bench.pcr
+
+::: liulab_mbio.bench.gels
+
+::: liulab_mbio.bench.validation
+
+::: liulab_mbio.bench.inactivation
+
+::: liulab_mbio.bench.phenotype
+
+::: liulab_mbio.bench.oligos
+
+::: liulab_mbio.bench.steps
 
 ## Golden Gate
 
@@ -103,6 +153,8 @@ because one reaction joins as many inserts as the overhangs allow.
 ::: liulab_mbio.goldengate.bench
 
 ::: liulab_mbio.goldengate.ligase
+
+::: liulab_mbio.goldengate.oligos
 
 ::: liulab_mbio.goldengate.steps
 

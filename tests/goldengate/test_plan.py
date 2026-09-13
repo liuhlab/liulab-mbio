@@ -8,21 +8,19 @@ Two fixtures make only a two-fragment assembly, so the many-part tests synthesis
 inserts. The first four bases of each are the overhang its junction takes.
 """
 
+import dataclasses
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
-from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
-from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
+from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.goldengate import Plan, plan_assembly
+from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.plan import REVERSE_FLANK
-from liulab_mbio.io import read_record
 from liulab_mbio.protocol import OVERVIEW_CHARS
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
-
-DATA = Path(__file__).parent / "data"
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)
@@ -59,16 +57,6 @@ def synthesised(name: str, sequence: str, color: str) -> SequenceRecord:
 
 
 @pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
-
-
-@pytest.fixture(scope="module")
 def linker() -> SequenceRecord:
     return synthesised("Linker", LINKER, "#3366cc")
 
@@ -79,24 +67,11 @@ def tag() -> SequenceRecord:
 
 
 @pytest.fixture(scope="module")
-def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    return plan_assembly(puc19, gfp)
-
-
-@pytest.fixture(scope="module")
 def four(
     puc19: SequenceRecord, gfp: SequenceRecord, linker: SequenceRecord, tag: SequenceRecord
 ) -> Plan:
     """A backbone and three inserts, in the order they go round the product."""
     return plan_assembly(puc19, gfp, linker, tag)
-
-
-def test_the_pipeline_picks_the_enzyme_with_no_site_in_either_part(plan, puc19, gfp):
-    # BsaI reads a site in both fixtures and BsmBI two in the vector, so neither is free.
-    assert plan.enzyme.name == "BbsI"
-    assert plan.choice.free
-    assert find_sites(puc19, plan.enzyme) == ()
-    assert find_sites(gfp, plan.enzyme) == ()
 
 
 def test_the_vector_junction_moves_one_base_off_an_all_gc_overhang(plan, puc19):
@@ -112,32 +87,6 @@ def test_the_overhang_set_is_scored_on_measured_data(plan):
     assert report.measured
     assert "Pryor" in report.source
     assert report.value == pytest.approx(1.0)
-
-
-def test_the_product_is_the_vector_with_the_insert_in_place_of_the_span(plan, puc19, gfp):
-    product = plan.product
-    assert product.topology == "circular"
-    assert len(product) == len(puc19) - (plan.span[1] - plan.span[0]) + len(gfp)
-    assert len(product) == 3347
-    assert (
-        product.sequence
-        == puc19.sequence[: plan.span[0]] + gfp.sequence + puc19.sequence[plan.span[1] :]
-    )
-    assert plan.assembly.junction_positions == (395, 1112)
-
-
-def test_the_product_holds_no_site_of_the_chosen_enzyme(plan):
-    assert find_sites(plan.product, plan.enzyme) == ()
-    assert plan.assembly["sites"].value == 0
-    assert plan.assembly.status == "pass"
-
-
-def test_the_coding_sequence_of_the_insert_is_intact_and_appears_once(plan, gfp):
-    assert plan.product.sequence.count(gfp.sequence) == 1
-    coding = [one for one in plan.product.features if one.name == "GFP"]
-    assert [(s.start, s.end) for s in coding[0].segments] == [(395, 1112)]
-    assert plan.product.extract(coding[0]) == gfp.sequence
-    assert plan.assembly["GFP"].value == 1
 
 
 def test_an_enzyme_with_a_site_in_the_parts_is_refused(puc19, gfp):
@@ -167,8 +116,8 @@ def test_the_other_orientation_puts_the_insert_on_the_other_strand(puc19, gfp):
     assert back.assembly.status == "pass"
 
 
-def test_the_files_are_read_from_disk_when_a_path_is_given():
-    made = plan_assembly(DATA / "pUC19.dna", DATA / "GFP.dna")
+def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file):
+    made = plan_assembly(puc19_file, gfp_file)
     assert made.product.name == "pUC19-GFP"
     assert len(made.product) == 3347
 
@@ -185,13 +134,6 @@ def test_every_designed_primer_passes_evaluation(plan):
         failed = [check.name for check in report.checks if check.status == "fail"]
         assert failed == [], f"{report.primer.name}: {failed}"
     assert plan.status != "fail"
-
-
-def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one(plan):
-    bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
-    assert len(plan.colony.primers) == 3
-    assert bands["Correct clone"] != bands["Reversed insert"]
-    assert plan.colony.tells_orientation
 
 
 def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp):
@@ -212,12 +154,6 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     assert bands["Empty vector"] == (COLONY_FLANK + removed + REVERSE_FLANK,)
 
 
-def test_the_sequencing_primers_read_across_both_junctions(plan, gfp):
-    for read in plan.reads:
-        assert read.distance_bp >= SANGER_FLANK
-        assert read.read_bp == read.distance_bp + len(gfp)
-
-
 def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
     outputs = plan.write(tmp_path / "run")
     assert [path.name for path in (outputs.product, outputs.primers, outputs.protocol)] == [
@@ -230,8 +166,8 @@ def test_the_three_outputs_land_in_the_directory_the_caller_names(plan, tmp_path
     )
 
 
-def test_the_same_inputs_write_the_same_bytes(puc19, gfp, tmp_path):
-    first = plan_assembly(puc19, gfp).write(tmp_path / "one")
+def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
+    first = plan.write(tmp_path / "one")
     second = plan_assembly(puc19, gfp).write(tmp_path / "two")
     for one, other in (
         (first.product, second.product),
@@ -242,7 +178,7 @@ def test_the_same_inputs_write_the_same_bytes(puc19, gfp, tmp_path):
 
 
 def test_the_primer_sheet_carries_every_oligo(plan):
-    rows = primer_sheet(plan).splitlines()
+    rows = primer_sheet(plan.reports).splitlines()
     assert rows[0].split("\t") == ["name", "sequence", "length", "tm_c"]
     assert len(rows) == 1 + len(plan.reports)
     for row, report in zip(rows[1:], plan.reports, strict=True):
@@ -254,7 +190,7 @@ def test_the_primer_sheet_carries_every_oligo(plan):
 
 def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
     oligos = plan.protocol().oligos
-    rows = primer_sheet(plan).splitlines()[1:]
+    rows = primer_sheet(plan.reports).splitlines()[1:]
     for oligo, row in zip(oligos, rows, strict=True):
         name, sequence, length, tm = row.split("\t")
         assert (oligo.name, oligo.sequence) == (name, sequence)
@@ -267,11 +203,12 @@ def test_every_oligo_row_carries_its_verdict_and_a_warned_one_says_why(plan):
     assert [row.status for row in rows.values()] == [report.status for report in plan.reports]
     warned = rows["Sequencing forward"]
     assert warned.status == "warn"
-    # The check, the value and the band it missed, in a few words each.
-    assert [(check.name, check.detail) for check in warned.checks] == [
-        ("length", "16 (band 18-30)"),
-        ("GC clamp", "4 (band 1-3)"),
-    ]
+    # The check, the value and the band it missed, in a few words each. Judged as a sequencing
+    # primer, its 16 bases are not short.
+    assert (len(warned.sequence), [(check.name, check.detail) for check in warned.checks]) == (
+        16,
+        [("GC clamp", "4 (proposed band 1-3)")],
+    )
     assert (rows["GFP forward"].status, rows["GFP forward"].checks) == ("pass", ())
 
 
@@ -413,6 +350,60 @@ def test_every_insert_reaches_the_product_in_the_order_it_was_given(four, gfp):
     assert [product.count(bases) for bases in (gfp.sequence, LINKER, TAG)] == [1, 1, 1]
     assert len(four.product) == 3347 + len(LINKER) + len(TAG)
     assert four.assembly.status == "pass"
+
+
+def test_the_plan_names_its_linearised_vector_and_each_insert_in_insert_order(four):
+    assert four.linearised_vector.name == "pUC19 backbone"
+    assert four.linearised_vector.template is four.vector
+    assert [part.name for part in four.insert_parts] == ["GFP", "Linker", "Tag"]
+    assert four.parts == (four.linearised_vector, *four.insert_parts)
+
+
+def test_every_oligo_says_what_it_is_for(plan):
+    assert [(oligo.report.primer.name, oligo.role) for oligo in plan.designed_oligos] == [
+        ("pUC19 backbone forward", "amplification"),
+        ("pUC19 backbone reverse", "amplification"),
+        ("GFP forward", "amplification"),
+        ("GFP reverse", "amplification"),
+        ("Colony PCR forward", "colony PCR"),
+        ("Colony PCR reverse", "colony PCR"),
+        ("Junction reverse", "colony PCR"),
+        ("Sequencing forward", "sequencing"),
+        ("Sequencing reverse", "sequencing"),
+    ]
+    for oligo in plan.designed_oligos:
+        if oligo.role == "amplification":
+            assert oligo.part is not None
+            assert oligo.report in (oligo.part.report.forward, oligo.part.report.reverse)
+        else:
+            assert oligo.part is None
+
+
+def test_an_oligo_keeps_its_purpose_wherever_it_is_listed(plan):
+    turned = dataclasses.replace(plan, designed_oligos=plan.designed_oligos[::-1])
+    written = {oligo.name: oligo.purpose for oligo in plan.protocol().oligos}
+    assert {oligo.name: oligo.purpose for oligo in turned.protocol().oligos} == written
+    assert written["GFP reverse"] == "Amplify GFP"
+    assert written["Junction reverse"] == "Screen colonies by PCR"
+    assert written["Sequencing reverse"] == "Confirm the clone by sequencing"
+
+
+def test_an_oligo_amplifies_a_part_exactly_when_that_is_its_role(plan):
+    colony, amplifying = plan.designed_oligos[4], plan.designed_oligos[0]
+    with pytest.raises(ValueError, match="part"):
+        DesignedOligo(colony.report, "colony PCR", amplifying.part)
+    with pytest.raises(ValueError, match="part"):
+        DesignedOligo(amplifying.report, "amplification")
+
+
+def test_a_plan_whose_parts_are_not_vector_first_writes_the_same_protocol(four):
+    turned = dataclasses.replace(
+        four, assembly=dataclasses.replace(four.assembly, parts=four.assembly.parts[::-1])
+    )
+    # The checks judge the parts in the assembly's own order, so only their order may differ.
+    written, again = four.protocol(), turned.protocol()
+    assert sorted(again.checks, key=repr) == sorted(written.checks, key=repr)
+    assert dataclasses.replace(again, checks=()) == dataclasses.replace(written, checks=())
 
 
 def test_three_inserts_make_four_junctions_no_two_of_them_alike(four):

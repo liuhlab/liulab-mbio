@@ -222,7 +222,7 @@ The script sends `tool=liulab-mbio` and **no** address: a build script should no
 runs it on a mailing list they did not ask for. One fetch per rebuild is far inside the rate
 limit.
 
-Tests never reach the network. `tests/test_build_codon_usage.py` counts a four-record excerpt.
+Tests never reach the network. `tests/scripts/test_build_codon_usage.py` counts a four-record excerpt.
 
 **`U00096.3` is the accession, not `NC_000913.3`.** Both fetch identically and both report
 4,318 coding sequences; U00096.3 is the INSDC record of record and RefSeq is derived from it.

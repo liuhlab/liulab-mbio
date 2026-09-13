@@ -22,8 +22,6 @@ from liulab_mbio.protocol import (
     read_protocol,
 )
 
-EXAMPLE = Path(__file__).parent / "data" / "pcr-protocol.json"
-
 
 def test_an_unknown_key_is_refused_and_located() -> None:
     data = {"title": "t", "steps": [{"title": "s", "instruction": ["typo"]}]}
@@ -146,8 +144,8 @@ def test_a_verdict_outside_the_three_is_refused() -> None:
         )
 
 
-def test_a_protocol_reads_from_its_json_file() -> None:
-    protocol = read_protocol(EXAMPLE)
+def test_a_protocol_reads_from_its_json_file(data_dir: Path) -> None:
+    protocol = read_protocol(data_dir / "pcr-protocol.json")
     assert protocol.title == "Colony check by PCR"
     assert protocol.overview["Expected product"] == "500 bp"
     assert protocol.highlights[0].startswith("The reaction is a colony check")

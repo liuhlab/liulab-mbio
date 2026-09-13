@@ -2,7 +2,7 @@
 
 Only the version is re-exported. Import a name from the module that owns it --
 ``from liulab_mbio.io import read_record`` -- because names are spelled twice across modules
-(`Check`, `Fragment`, `Junction`) and a flat re-export would import every dependency here.
+(`Check`, `Junction`) and a flat re-export would import every dependency here.
 """
 
 from importlib.metadata import version

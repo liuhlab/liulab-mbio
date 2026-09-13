@@ -705,6 +705,7 @@ The two NEB constants differ by about 5.5%. 1 µg of pUC19 is 0.573 pmol by the 
    | Check | Pass | Warn | Fail | Basis |
    | --- | --- | --- | --- | --- |
    | Annealing length | 18–30 nt | 15–17 or 31–35 nt | < 15 or > 35 nt | primer3 18/27 and 35 cap; IDT 18–30; *proposal* for the warn band |
+   | Annealing length, sequencing primer | 16–24 nt | 15 or 25–35 nt | < 15 or > 35 nt | Genewiz 18–24 (§4); Genewiz's own M13F universal primer is 16 nt (§5.2); warn band as above |
    | GC % (annealing part) | 40–60 | 20–40 or 60–80 | < 20 or > 80 | NEB 40–60; primer3 20–80 |
    | G/C in last 5 bases | 1–3 | 0 or 4–5 | — | primer3 `MAX_END_GC` 5; NEB "avoid GC-rich 3´ ends"; *proposal* |
    | Mononucleotide run | ≤ 4 (G ≤ 3) | 5, or G run ≥ 4 | ≥ 6 | primer3 `MAX_POLY_X` 5; IDT G run |
@@ -713,6 +714,11 @@ The two NEB constants differ by about 5.5%. 1 µg of pUC19 is 0.573 pmol by the 
    | Hairpin, dimers: ΔG at 37 °C | > −9.0 kcal/mol | ≤ −9.0, not 3′-anchored | ≤ −9.0 and 3′-anchored | IDT −9.0; 3′ rule *proposal* |
    | 3′ end stability | report only | — | — | primer3 default off; no primary threshold found |
    | Off-target: other template sites, both strands, origin-joined, 3′ end anchored | Tm < annealing-part Tm − 10 °C | within 10 °C | would give an extra product with the partner primer inside the size range | primer3 manual (47 vs 57); *proposal* for fail |
+
+   Every other row holds for a sequencing primer as well. Genewiz's own universal primers miss its
+   45–55% GC (M13F 56%, M13-48REV 40%, §5.2), and its 50–60 °C Tm (§5.3) names no method, so it
+   cannot be placed on a polymerase's scale. A colony PCR primer is a PCR primer: §3.2 gives it no
+   primer rules of its own.
 
 ### For #13, bench numbers and colony PCR; #14, protocol skill
 

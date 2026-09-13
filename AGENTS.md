@@ -17,16 +17,18 @@ One direction, bottom to top — nothing lower imports anything higher.
 
 | Layer | Modules | What it owns |
 | --- | --- | --- |
-| model | `sequence` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule |
+| model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans |
 | biology | `enzymes`, `sites`, `codons` | shipped enzyme data, cut sites, domestication |
-| primers | `primers` | design and evaluation; Tm and Ta per polymerase |
+| primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
-| pipeline | `goldengate/` | `design`, `assembly`, `bench`, `ligase`, `steps`, joined by `plan` |
+| bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
+| pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
 
 `goldengate.plan_assembly` is the one way in, and `Plan.write` puts the product, the primer
-sheet and the protocol in a directory. `__init__.py` re-exports only `__version__`: `Check`,
-`Fragment` and `Junction` each mean different things in two modules, so import by module path.
+sheet and the protocol in a directory. `__init__.py` re-exports only `__version__`: `Check` and
+`Junction` each mean different things in two modules, so import by module path.
+`Check` is the judged check in `checks` and its displayed form in `protocol`.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence

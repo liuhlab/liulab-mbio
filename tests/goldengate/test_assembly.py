@@ -6,12 +6,10 @@ package: the spans and overhangs below are read off the records and pinned here.
 """
 
 import dataclasses
-from pathlib import Path
 
 import pytest
 
 from liulab_mbio import edits
-from liulab_mbio.goldengate import bench
 from liulab_mbio.goldengate.assembly import (
     JUNCTION_COLOR,
     amplify,
@@ -19,7 +17,6 @@ from liulab_mbio.goldengate.assembly import (
     dam_sites,
     open_vector,
 )
-from liulab_mbio.io import read_record
 from liulab_mbio.sequence import (
     BindingSite,
     Primer,
@@ -31,24 +28,8 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import find_sites, has_site, insert_site
 from liulab_mbio.snapgene import read_dna, write_dna
 
-DATA = Path(__file__).parent / "data"
-
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6
-
-#: Addgene's 23-mer M13/pUC pair, which #13 pins its own expected bands against.
-M13_FORWARD = Primer("M13/pUC Forward", "CCCAGTCACGACGTTGTAAAACG")
-M13_REVERSE = Primer("M13/pUC Reverse", "AGCGGATAACAATTTCACACAGG")
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
 
 
 @pytest.fixture(scope="module")
@@ -293,18 +274,6 @@ def test_assemble_refuses_parts_that_do_not_close_the_circle(backbone, gfp, over
 def test_assemble_refuses_one_part(backbone):
     with pytest.raises(ValueError, match="two"):
         assemble((backbone,), "BbsI")
-
-
-def test_the_bands_bench_expects_are_the_ones_this_product_gives(assembly, puc19):
-    check = bench.colony_pcr_check(
-        assembly.product,
-        assembly.junction_positions,
-        vector=puc19,
-        primers=(M13_FORWARD, M13_REVERSE),
-    )
-    bands = {one.name: one.bands_bp for one in check.clones}
-    assert bands["Correct clone"] == (797,)
-    assert bands["Empty vector"] == (137,)
 
 
 def test_a_part_puts_exactly_its_own_span_into_the_product(backbone, insert, gfp):

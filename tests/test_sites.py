@@ -1,11 +1,8 @@
-from pathlib import Path
-
 import pytest
 
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.edits import EditReport
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import (
     digest,
@@ -17,8 +14,6 @@ from liulab_mbio.sites import (
     primer_tail,
     site_counts,
 )
-
-DATA = Path(__file__).parent / "data"
 
 # A BsaI site at index 4, its spacer base, and the four bases it leaves single-stranded.
 FORWARD = "AAAAGGTCTCGTTTTCCCC"
@@ -36,16 +31,6 @@ FORCED = "ATG" + "GGTCTC" + "AATTC" + "A" + "TAA"
 BSAI = get_enzyme("BsaI")
 # An invented enzyme whose site carries an IUPAC code and is not its own reverse complement.
 FOOI = Enzyme("FooI", "GGWCA", top_cut=1, bottom_cut=5)
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
 
 
 def test_a_forward_site_reports_its_span_its_cuts_and_its_overhang() -> None:

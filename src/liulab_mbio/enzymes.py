@@ -99,6 +99,22 @@ class Enzyme:
         return abs(self.bottom_cut - self.top_cut)
 
     @property
+    def supplier_label(self) -> str:
+        """The enzyme as its supplier sells it: the commercial name and the catalogue number.
+
+        Examples
+        --------
+        >>> Enzyme("BsaI", "GGTCTC", top_cut=7, bottom_cut=11).supplier_label
+        'BsaI'
+        >>> sold = Enzyme("BsaI", "GGTCTC", top_cut=7, bottom_cut=11, commercial_name="BsaI-HFv2",
+        ...               catalog_number="R3733")
+        >>> sold.supplier_label
+        'BsaI-HFv2 (R3733)'
+        """
+        name = self.commercial_name or self.name
+        return f"{name} ({self.catalog_number})" if self.catalog_number else name
+
+    @property
     def end(self) -> EndType:
         """The end left behind: ``"5'"``, ``"3'"`` or ``"blunt"``.
 

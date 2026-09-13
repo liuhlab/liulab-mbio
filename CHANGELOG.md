@@ -27,6 +27,14 @@ sets one.
 - Docs: a walkthrough of GFP into pUC19, the plan it writes published as a live example, and
   an API reference covering every public module.
 
+### Changed
+
+- Each designed oligo is judged by what it is for, and `plan_assembly` takes its thresholds for
+  each role. A sequencing primer passes from 16 bases, the length of Genewiz's own M13F primer,
+  while a PCR primer still needs 18. A design picks the primer length that warns least on
+  length, GC, GC clamp and Tm. A band no published rule sets, such as the GC clamp, reads as
+  proposed on the order sheet.
+
 ### Removed
 
 - The template's placeholder `greet()`, its CLI verb and its test.

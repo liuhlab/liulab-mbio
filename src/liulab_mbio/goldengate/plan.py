@@ -8,29 +8,32 @@ the annotated product, a primer order sheet, and the interactive HTML protocol.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
 protocol says about the phenotype -- what drives the inserts, whether anything should be
-translated, and how a plate reads -- is `Phenotype`, read off the product's own features.
+translated, and how a plate reads -- is `liulab_mbio.bench.phenotype`, read off the product's
+own features.
 """
 
 import dataclasses
 import os
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.bench import (
     COLONY_FLANK,
     Amount,
     ColonyCheck,
-    Fragment,
     SangerRead,
-    assembly_amounts,
     colony_pcr_check,
     sanger_primers,
 )
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
+from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.goldengate.bench import assembly_amounts
 from liulab_mbio.goldengate.design import (
     EnzymeChoice,
     Junction,
@@ -39,20 +42,23 @@ from liulab_mbio.goldengate.design import (
     design_overhangs,
 )
 from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
+from liulab_mbio.goldengate.oligos import DesignedOligo
+from liulab_mbio.goldengate.steps import DEFAULT_HOST
+from liulab_mbio.goldengate.steps import protocol as protocol_for
 from liulab_mbio.io import read_record
 from liulab_mbio.primers import (
     ONETAQ,
     Q5,
-    THRESHOLDS,
-    Check,
+    THRESHOLDS_FOR,
     Polymerase,
     PrimerReport,
-    Status,
+    PrimerRole,
     Thresholds,
     design_pair,
     evaluate_primer,
     reading,
 )
+from liulab_mbio.protocol import Protocol, write_html
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -65,9 +71,6 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
 
-if TYPE_CHECKING:
-    from liulab_mbio.protocol import Protocol
-
 #: Which way round an insert goes into the vector.
 type Orientation = Literal["forward", "reverse"]
 
@@ -76,10 +79,6 @@ type Site = str | tuple[int, int] | None
 
 #: The feature a vector names its cloning site with, looked for when the caller names none.
 MCS_FEATURE = "MCS"
-
-#: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
-#: that supplies the rest of the lacZ fragment the vector carries, which this one does.
-DEFAULT_HOST = "NEB 5-alpha Competent E. coli (C2987)"
 
 #: How far the vector junction may slide to get past an overhang rule. It moves where the vector
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
@@ -90,23 +89,10 @@ VECTOR_WINDOW = 6
 #: the same bands as a correct one, so the gel could not tell them apart.
 REVERSE_FLANK = 2 * COLONY_FLANK
 
-#: Selection markers this package can name an antibiotic for, keyed by the feature name lowered.
-#: pUC19's is the one `docs/research/golden-gate-assembly.md` §8 states a plate recipe for; a
-#: marker absent from here is named rather than translated.
-SELECTION: Mapping[str, str] = {
-    "ampr": "ampicillin or carbenicillin",
-    "bla": "ampicillin or carbenicillin",
-}
-
 #: What `Plan.write` calls the three files it writes.
 PRODUCT_FILE = "product.dna"
 PRIMER_FILE = "primers.tsv"
 PROTOCOL_FILE = "protocol.html"
-
-#: The columns of the primer order sheet.
-SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")
-
-_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,61 +115,6 @@ class Files:
 
 
 @dataclass(frozen=True, slots=True)
-class Phenotype:
-    """What the product says about itself, read off its own features.
-
-    Parameters
-    ----------
-    insert
-        The span the inserts occupy in the product, between the first junction and the last.
-    coding
-        The longest coding sequence in that span, or ``None`` when it annotates none.
-    promoter
-        The promoter nearest the insert on the promoter's own reading direction, or ``None``.
-    gap_bp
-        Bases between that promoter and the insert.
-    driven
-        Whether that promoter reads along the strand the insert is coded on.
-    ribosome_binding_site
-        Whether one is annotated between that promoter and the insert.
-    reporter
-        The vector coding sequence the insertion interrupts, or ``None``.
-    marker
-        The vector's selection marker, or ``None`` when it annotates none this package knows.
-    """
-
-    insert: tuple[int, int]
-    coding: Feature | None
-    promoter: Feature | None
-    gap_bp: int
-    driven: bool
-    ribosome_binding_site: bool
-    reporter: Feature | None
-    marker: Feature | None
-
-    @property
-    def expressed(self) -> bool:
-        """Whether the product should make the insert's protein."""
-        return self.coding is not None and self.driven and self.ribosome_binding_site
-
-    @property
-    def blue_white(self) -> bool:
-        """Whether X-gal and IPTG tell a correct clone from an empty vector.
-
-        True when the insertion interrupts a lacZ fragment, which is then not there to
-        complement the host's own.
-        """
-        return self.reporter is not None and self.reporter.name.lower().startswith("lacz")
-
-    @property
-    def antibiotic(self) -> str:
-        """What to select transformants on, or an empty string when the marker is unknown."""
-        if self.marker is None:
-            return ""
-        return SELECTION.get(self.marker.name.lower(), "")
-
-
-@dataclass(frozen=True, slots=True)
 class Plan:
     """One planned Golden Gate experiment.
 
@@ -201,6 +132,10 @@ class Plan:
     overhangs
         The overhang every junction takes, with the fidelity of the whole set. An assembly of n
         inserts has n + 1 junctions.
+    linearised_vector
+        The part the vector is opened into.
+    insert_parts
+        The part each insert is amplified into, in insert order.
     assembly
         The simulated product, the parts and the junctions.
     colony
@@ -212,12 +147,14 @@ class Plan:
         What to put in the assembly reaction, vector first.
     phenotype
         What the product says about itself.
-    reports
-        Every designed oligo's evaluation, in order: each part's PCR, the colony PCR, the reads.
+    designed_oligos
+        Every designed oligo and what it is for, in order: each part's PCR, the colony PCR, the
+        reads.
     host, polymerase
         The choices the protocol names.
     thresholds
-        What those oligos were judged by, so a page prints the band beside the value.
+        What those oligos were designed and judged by, for each role, so a page prints the band
+        beside the value.
     """
 
     vector: SequenceRecord
@@ -226,15 +163,17 @@ class Plan:
     choice: EnzymeChoice
     ranking: tuple[EnzymeChoice, ...]
     overhangs: OverhangSet
+    linearised_vector: Part
+    insert_parts: tuple[Part, ...]
     assembly: Assembly
     colony: ColonyCheck
     reads: tuple[SangerRead, SangerRead]
     amounts: tuple[Amount, ...]
     phenotype: Phenotype
-    reports: tuple[PrimerReport, ...]
+    designed_oligos: tuple[DesignedOligo, ...]
     host: str
     polymerase: Polymerase
-    thresholds: Thresholds = THRESHOLDS
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
     def enzyme(self) -> Enzyme:
@@ -249,12 +188,17 @@ class Plan:
     @property
     def parts(self) -> tuple[Part, ...]:
         """The parts that go into the reaction, the linearised vector first."""
-        return self.assembly.parts
+        return (self.linearised_vector, *self.insert_parts)
 
     @property
     def oligos(self) -> tuple[Primer, ...]:
         """Every oligo the plan designs, in the order the sheet lists them."""
         return tuple(report.primer for report in self.reports)
+
+    @property
+    def reports(self) -> tuple[PrimerReport, ...]:
+        """Every designed oligo's evaluation, in the order the sheet lists them."""
+        return tuple(oligo.report for oligo in self.designed_oligos)
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -263,22 +207,36 @@ class Plan:
             *self.assembly.checks,
             Check(
                 "primers",
-                _worst(report.status for report in self.reports),
+                worst(report.status for report in self.reports),
                 len(self.reports),
-                _primer_detail(self.reports, self.thresholds),
+                _primer_detail(self.reports),
             ),
         )
 
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return _worst(check.status for check in self.checks)
+        return worst(check.status for check in self.checks)
 
-    def protocol(self) -> "Protocol":
+    def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
-        from liulab_mbio.goldengate.steps import protocol
-
-        return protocol(self)
+        return protocol_for(
+            vector=self.vector,
+            span=self.span,
+            overhangs=self.overhangs,
+            linearised_vector=self.linearised_vector,
+            insert_parts=self.insert_parts,
+            assembly=self.assembly,
+            colony=self.colony,
+            reads=self.reads,
+            amounts=self.amounts,
+            phenotype=self.phenotype,
+            oligos=self.designed_oligos,
+            checks=self.checks,
+            host=self.host,
+            polymerase=self.polymerase,
+            thresholds=self.thresholds,
+        )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the primer sheet and the protocol into `directory`.
@@ -287,14 +245,12 @@ class Plan:
         `PRODUCT_FILE`, `PRIMER_FILE` and `PROTOCOL_FILE`, and a second run over the same
         inputs writes the same bytes.
         """
-        from liulab_mbio.protocol import write_html
-
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
         product = out / PRODUCT_FILE
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
-        sheet.write_text(primer_sheet(self), encoding="utf-8")
+        sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         return Files(product, sheet, write_html(self.protocol(), out / PROTOCOL_FILE))
 
 
@@ -311,7 +267,7 @@ def plan_assembly(
     host: str = DEFAULT_HOST,
     name: str = "",
     window: int = VECTOR_WINDOW,
-    thresholds: Thresholds = THRESHOLDS,
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
     """Plan one Golden Gate experiment putting `inserts` into `vector`.
 
@@ -350,7 +306,7 @@ def plan_assembly(
     window
         How far the vector junction may slide.
     thresholds
-        Passed to `liulab_mbio.primers`.
+        For each role, what its oligos are designed and judged by in `liulab_mbio.primers`.
 
     Returns
     -------
@@ -392,31 +348,30 @@ def plan_assembly(
     )
     overhangs = designed.overhangs
     span = (start, end + designed.choices[-1].offset)
-    parts = (
-        open_vector(
-            one,
-            chosen,
-            *span,
-            overhangs=(overhangs[0], overhangs[-1]),
-            name=f"{one.name} backbone".strip(),
-            polymerase=polymerase,
-            thresholds=thresholds,
-        ),
-        *(
-            amplify(
-                record,
-                chosen,
-                0,
-                len(record),
-                left_overhang=overhangs[number],
-                right_overhang=overhangs[number + 1],
-                name=label,
-                polymerase=polymerase,
-                thresholds=thresholds,
-            )
-            for number, (label, record) in enumerate(zip(labels, going, strict=True))
-        ),
+    linearised_vector = open_vector(
+        one,
+        chosen,
+        *span,
+        overhangs=(overhangs[0], overhangs[-1]),
+        name=f"{one.name} backbone".strip(),
+        polymerase=polymerase,
+        thresholds=thresholds["amplification"],
     )
+    insert_parts = tuple(
+        amplify(
+            record,
+            chosen,
+            0,
+            len(record),
+            left_overhang=overhangs[number],
+            right_overhang=overhangs[number + 1],
+            name=label,
+            polymerase=polymerase,
+            thresholds=thresholds["amplification"],
+        )
+        for number, (label, record) in enumerate(zip(labels, going, strict=True))
+    )
+    parts = (linearised_vector, *insert_parts)
     built = assemble(parts, chosen, name=name or "-".join([one.name, *labels]).strip("-"))
     junctions = built.junction_positions
     first, last = junctions[0], junctions[-1]
@@ -431,13 +386,13 @@ def plan_assembly(
             forward_name="Colony PCR forward",
             reverse_name="Colony PCR reverse",
             polymerase=ONETAQ,
-            thresholds=thresholds,
+            thresholds=thresholds["colony PCR"],
         ),
         insert_primer=True,
         polymerase=ONETAQ,
-        thresholds=thresholds,
+        thresholds=thresholds["colony PCR"],
     )
-    reads = sanger_primers(built.product, junctions, thresholds=thresholds)
+    reads = sanger_primers(built.product, junctions, thresholds=thresholds["sequencing"])
     return Plan(
         one,
         tuple(going),
@@ -445,18 +400,32 @@ def plan_assembly(
         choice,
         ranking,
         designed,
+        linearised_vector,
+        insert_parts,
         built,
         colony,
         reads,
         assembly_amounts(
-            Fragment(parts[0].name, parts[0].length),
-            tuple(Fragment(part.name, part.length) for part in parts[1:]),
+            (linearised_vector.name, linearised_vector.length),
+            tuple((part.name, part.length) for part in insert_parts),
         ),
-        _phenotype(one, built, span),
+        read_phenotype(built.product, (first, last), vector=one, span=span),
         (
-            *(report for part in parts for report in (part.report.forward, part.report.reverse)),
-            *colony.reports,
-            *(evaluate_primer(read.primer, built.product, thresholds=thresholds) for read in reads),
+            *(
+                DesignedOligo(report, "amplification", part)
+                for part in parts
+                for report in (part.report.forward, part.report.reverse)
+            ),
+            *(DesignedOligo(report, "colony PCR") for report in colony.reports),
+            *(
+                DesignedOligo(
+                    evaluate_primer(
+                        read.primer, built.product, thresholds=thresholds["sequencing"]
+                    ),
+                    "sequencing",
+                )
+                for read in reads
+            ),
         ),
         host,
         polymerase,
@@ -464,7 +433,7 @@ def plan_assembly(
     )
 
 
-def _primer_detail(reports: tuple[PrimerReport, ...], thresholds: Thresholds) -> str:
+def _primer_detail(reports: tuple[PrimerReport, ...]) -> str:
     """Return what the oligos' verdicts say: the counts, the kinds, and what nothing judged.
 
     A count alone cannot be acted on, so each kind that fired is named with the rows it covers.
@@ -472,13 +441,13 @@ def _primer_detail(reports: tuple[PrimerReport, ...], thresholds: Thresholds) ->
     warned = sum(1 for report in reports if report.status == "warn")
     failed = sum(1 for report in reports if report.status == "fail")
     counted = Counter(
-        reading(check, thresholds).label
+        reading(check).label
         for report in reports
         for check in report.checks
         if check.status not in (None, "pass")
     )
     unjudged = dict.fromkeys(
-        reading(check, thresholds).label
+        reading(check).label
         for report in reports
         for check in report.checks
         if check.status is None
@@ -524,28 +493,6 @@ def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
     if len(given) != count:
         raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
     return given
-
-
-def primer_sheet(plan: Plan) -> str:
-    """Return every designed oligo as a tab-separated sheet, one row each.
-
-    The columns are `SHEET_COLUMNS`: the name to order it under, the sequence 5' to 3', its
-    length, and the Tm of the part that anneals.
-    """
-    rows = ["\t".join(SHEET_COLUMNS)]
-    for report in plan.reports:
-        primer = report.primer
-        rows.append(
-            "\t".join(
-                (
-                    primer.name,
-                    primer.sequence,
-                    str(len(primer.sequence)),
-                    f"{report['tm'].value:.1f}",
-                )
-            )
-        )
-    return "\n".join(rows) + "\n"
 
 
 def flipped(record: SequenceRecord) -> SequenceRecord:
@@ -687,109 +634,3 @@ def _chosen(
         f"{choice.enzyme.name} reads {choice.sites} site(s) in the parts, so it would cut the "
         f"product open again; {rest}"
     )
-
-
-def _phenotype(vector: SequenceRecord, built: Assembly, span: tuple[int, int]) -> Phenotype:
-    """Read what the product says about itself off its own features."""
-    junctions = built.junction_positions
-    first, last = junctions[0], junctions[-1]
-    coding = _coding(built.product, first, last)
-    promoter, gap = _promoter(built.product, first, last)
-    return Phenotype(
-        (first, last),
-        coding,
-        promoter,
-        gap,
-        promoter is not None and coding is not None and promoter.strand == coding.strand,
-        _ribosome_binding_site(built.product, promoter, first, last),
-        _interrupted(vector, span),
-        _marker(vector),
-    )
-
-
-def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
-    """Return the longest coding sequence lying wholly between the outer two junctions."""
-    inside = [
-        feature
-        for feature in product.features
-        if feature.type == "CDS"
-        and all(first <= segment.start and segment.end <= last for segment in feature.segments)
-    ]
-    return max(
-        inside,
-        key=lambda feature: sum(segment.end - segment.start for segment in feature.segments),
-        default=None,
-    )
-
-
-def _promoter(product: SequenceRecord, first: int, last: int) -> tuple[Feature | None, int]:
-    """Return the promoter nearest the insert along its own reading direction, and the gap."""
-    length = len(product)
-    found: Feature | None = None
-    gap = length
-    for feature in product.features:
-        if feature.type != "promoter":
-            continue
-        low = min(segment.start for segment in feature.segments)
-        high = max(segment.end for segment in feature.segments)
-        distance = (
-            (low - last) % length if feature.strand == Strand.REVERSE else (first - high) % length
-        )
-        if distance < gap:
-            found, gap = feature, distance
-    return found, gap if found is not None else 0
-
-
-def _ribosome_binding_site(
-    product: SequenceRecord, promoter: Feature | None, first: int, last: int
-) -> bool:
-    """Whether one is annotated between the promoter and the insert."""
-    if promoter is None:
-        return False
-    length = len(product)
-    if promoter.strand == Strand.REVERSE:
-        low, high = last, min(segment.start for segment in promoter.segments)
-    else:
-        low, high = max(segment.end for segment in promoter.segments), first
-    return any(
-        feature.type == "RBS"
-        and any(
-            (segment.start - low) % length < (high - low) % length for segment in feature.segments
-        )
-        for feature in product.features
-    )
-
-
-def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | None:
-    """Return the vector coding sequence the insertion breaks, or ``None``."""
-    start, end = span
-    return next(
-        (
-            feature
-            for feature in vector.features
-            if feature.type == "CDS"
-            and any(segment.start < end and start < segment.end for segment in feature.segments)
-        ),
-        None,
-    )
-
-
-def _marker(vector: SequenceRecord) -> Feature | None:
-    """Return the vector's selection marker, or ``None`` when it annotates none."""
-    return next(
-        (
-            feature
-            for feature in vector.features
-            if feature.type == "CDS" and feature.name.lower() in SELECTION
-        ),
-        None,
-    )
-
-
-def _worst(statuses: Iterable[Status | None]) -> Status:
-    """Return the worst of these statuses, passing over anything nothing judged."""
-    worst: Status = "pass"
-    for status in statuses:
-        if status is not None and _RANK[status] > _RANK[worst]:
-            worst = status
-    return worst

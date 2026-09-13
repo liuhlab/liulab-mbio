@@ -1,7 +1,5 @@
 """Choosing the enzyme and the overhangs, against the fixtures and against Pryor 2020."""
 
-from pathlib import Path
-
 import pytest
 
 from liulab_mbio.enzymes import get_enzyme
@@ -15,11 +13,8 @@ from liulab_mbio.goldengate.design import (
     fidelity,
     ligation_matrix,
 )
-from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites, primer_tail
-
-DATA = Path(__file__).parent / "data"
 
 # Pryor 2020's worked example: the eleven overhangs the plant synthetic biology community
 # standardised on, which the paper scores at 81% with BsmBI-v2 and 42 C / 16 C cycling.
@@ -31,16 +26,6 @@ HIGH_FIDELITY = (
     "TGCC", "GCAA", "ACTA", "TTAC", "CAGA", "TGTG", "GAGC", "AGGA",
     "ATTC", "CGAA", "ATAG", "AAGG", "AACT", "AAAA", "ACCG",
 )  # fmt: skip
-
-
-@pytest.fixture(scope="module")
-def puc19() -> SequenceRecord:
-    return read_record(DATA / "pUC19.dna")
-
-
-@pytest.fixture(scope="module")
-def gfp() -> SequenceRecord:
-    return read_record(DATA / "GFP.dna")
 
 
 def test_the_fixtures_leave_bbsi_and_paqci_free(puc19: SequenceRecord, gfp: SequenceRecord) -> None:
@@ -309,6 +294,8 @@ def test_an_enzyme_with_no_matrix_falls_back_to_the_rules_and_says_so() -> None:
     report = fidelity(("AATG", "GCTT", "TACA"), "PaqCI")
 
     assert not report.measured
+    assert report.enzyme_specific
+    assert report.label == "rule-based estimate"
     assert "rule" in report.source
     assert report.ligations == ()
 
