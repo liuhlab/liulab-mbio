@@ -20,6 +20,7 @@ nav:
   - Home: index.md
   - Put GFP into pUC19: golden-gate.md
   - Example plan: examples/pUC19-GFP/index.md
+  - Check primers on a genome: genome-check.md
   - API reference: api.md
 
 # What `--strict` catches. Every row was built against the pinned zensical and watched, not

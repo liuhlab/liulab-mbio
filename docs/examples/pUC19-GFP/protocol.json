@@ -41,7 +41,7 @@
     {
       "name": "primers",
       "status": "warn",
-      "detail": "9 designed, 5 with a warning, 0 failing: GC on 2, GC clamp on 2, Tm on 1; not judged: full-primer Tm, 3' end stability"
+      "detail": "9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3' end stability"
     }
   ],
   "materials": [
@@ -205,9 +205,9 @@
     },
     {
       "name": "GFP reverse",
-      "sequence": "AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCATG",
+      "sequence": "AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCAT",
       "purpose": "Amplify GFP",
-      "tm_c": 63.1,
+      "tm_c": 62.0,
       "stock": "10 µM",
       "note": "",
       "status": "warn",
@@ -215,15 +215,15 @@
         {
           "name": "GC",
           "status": "warn",
-          "detail": "37% (band 40-60)"
+          "detail": "35% (band 40-60)"
         }
       ]
     },
     {
       "name": "Colony PCR forward",
-      "sequence": "CGATTAAGTTGGGTAACGCCAGGGTTTT",
+      "sequence": "TGGGTAACGCCAGGGTTTTCC",
       "purpose": "Screen colonies by PCR",
-      "tm_c": 62.4,
+      "tm_c": 61.9,
       "stock": "10 µM",
       "note": "",
       "status": "pass",
@@ -231,25 +231,19 @@
     },
     {
       "name": "Colony PCR reverse",
-      "sequence": "GTTAGCTCACTCATTAGGCACCCCA",
+      "sequence": "TCATTAGGCACCCCAGGCTTTACA",
       "purpose": "Screen colonies by PCR",
-      "tm_c": 62.2,
+      "tm_c": 61.8,
       "stock": "10 µM",
       "note": "",
-      "status": "warn",
-      "checks": [
-        {
-          "name": "GC clamp",
-          "status": "warn",
-          "detail": "4 (proposed band 1-3)"
-        }
-      ]
+      "status": "pass",
+      "checks": []
     },
     {
       "name": "Junction reverse",
-      "sequence": "CACCCTCTCCACTGACAGAAAATTTGTGC",
+      "sequence": "CATCACCTTCACCCTCTCCACTGA",
       "purpose": "Screen colonies by PCR",
-      "tm_c": 62.9,
+      "tm_c": 62.0,
       "stock": "10 µM",
       "note": "",
       "status": "pass",
@@ -257,35 +251,23 @@
     },
     {
       "name": "Sequencing forward",
-      "sequence": "AACTGTTGGGAAGGGC",
+      "sequence": "GCGCAACTGTTGGGAA",
       "purpose": "Confirm the clone by sequencing",
-      "tm_c": 62.0,
+      "tm_c": 63.3,
       "stock": "10 µM",
       "note": "",
-      "status": "warn",
-      "checks": [
-        {
-          "name": "GC clamp",
-          "status": "warn",
-          "detail": "4 (proposed band 1-3)"
-        }
-      ]
+      "status": "pass",
+      "checks": []
     },
     {
       "name": "Sequencing reverse",
-      "sequence": "ACGCAATTAATGTGAGTTAGCT",
+      "sequence": "CGCAACGCAATTAATGTGAG",
       "purpose": "Confirm the clone by sequencing",
-      "tm_c": 61.7,
+      "tm_c": 62.2,
       "stock": "10 µM",
       "note": "",
-      "status": "warn",
-      "checks": [
-        {
-          "name": "GC",
-          "status": "warn",
-          "detail": "36% (band 40-60)"
-        }
-      ]
+      "status": "pass",
+      "checks": []
     }
   ],
   "equipment": [
@@ -448,7 +430,7 @@
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
-        "Run the program below: 64 °C annealing and 20 s extension for a 749 bp product."
+        "Run the program below: 63 °C annealing and 20 s extension for a 749 bp product."
       ],
       "cautions": [
         "Keep the polymerase on ice."
@@ -537,7 +519,7 @@
                 },
                 {
                   "label": "Anneal",
-                  "temperature_c": 64.0,
+                  "temperature_c": 63.0,
                   "seconds": 20
                 },
                 {
@@ -993,7 +975,7 @@
                 },
                 {
                   "label": "Anneal",
-                  "temperature_c": 57.2,
+                  "temperature_c": 56.8,
                   "seconds": 30
                 },
                 {
@@ -1054,20 +1036,20 @@
               "label": "Correct clone",
               "bands_bp": [
                 160,
-                897
+                878
               ]
             },
             {
               "label": "Empty vector",
               "bands_bp": [
-                236
+                217
               ]
             },
             {
               "label": "Reversed insert",
               "bands_bp": [
-                220,
-                897
+                219,
+                878
               ]
             }
           ],
@@ -1076,9 +1058,9 @@
       ],
       "expected": [
         "Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.",
-        "Correct clone: 160 bp, 897 bp.",
-        "Empty vector: 236 bp.",
-        "Reversed insert: 220 bp, 897 bp.",
+        "Correct clone: 160 bp, 878 bp.",
+        "Empty vector: 217 bp.",
+        "Reversed insert: 219 bp, 878 bp.",
         "A reversed insert is told from a correct one, because the two vector primers sit at different distances from their own junctions."
       ],
       "troubleshooting": [
@@ -1109,8 +1091,8 @@
       "timers": [],
       "gels": [],
       "expected": [
-        "Sequencing forward anneals 119 bp from its own junction and has to read 836 bp to cover the far one.",
-        "Sequencing reverse anneals 113 bp from its own junction and has to read 830 bp to cover the far one.",
+        "Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.",
+        "Sequencing reverse anneals 119 bp from its own junction and has to read 836 bp to cover the far one.",
         "The junctions read as ATGA and TGGC, and the parts match GFP."
       ],
       "troubleshooting": [
