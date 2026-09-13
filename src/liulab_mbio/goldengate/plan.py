@@ -19,19 +19,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from liulab_mbio.checks import Check, Status, worst
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.bench import (
     COLONY_FLANK,
     Amount,
     ColonyCheck,
-    Fragment,
     SangerRead,
-    assembly_amounts,
     colony_pcr_check,
     sanger_primers,
 )
+from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.goldengate.bench import Fragment, assembly_amounts
 from liulab_mbio.goldengate.design import (
     EnzymeChoice,
     Junction,

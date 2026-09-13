@@ -10,8 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio import edits
-from liulab_mbio.goldengate import bench
+from liulab_mbio import bench, edits
 from liulab_mbio.goldengate.assembly import (
     JUNCTION_COLOR,
     amplify,

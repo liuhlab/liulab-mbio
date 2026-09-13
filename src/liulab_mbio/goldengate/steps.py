@@ -9,27 +9,29 @@ import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from liulab_mbio.goldengate.assembly import Part, dam_sites
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.bench import (
     COLONY_PCR_MASTER_MIX,
     DNA_VOLUME_UL,
     DNTP_STOCK_MM,
-    GOLDEN_GATE_PCR_CYCLES,
     PRIMER_STOCK_UM,
-    REFERENCES,
     agarose_percent,
-    assembly_program,
-    assembly_reaction,
     choose_ladder,
     colony_pcr_master_mix_component,
     colony_pcr_program,
     colony_pcr_reaction,
-    enzyme_component,
-    golden_gate_temperature,
     heat_inactivation,
-    ligase_master_mix_component,
     pcr_program,
     pcr_reaction,
+)
+from liulab_mbio.goldengate.assembly import Part, dam_sites
+from liulab_mbio.goldengate.bench import (
+    GOLDEN_GATE_PCR_CYCLES,
+    REFERENCES,
+    assembly_program,
+    assembly_reaction,
+    enzyme_component,
+    golden_gate_temperature,
+    ligase_master_mix_component,
 )
 from liulab_mbio.primers import PrimerReport, Thresholds, reading
 from liulab_mbio.protocol import (

@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
 from liulab_mbio.goldengate import Plan, plan_assembly, primer_sheet
-from liulab_mbio.goldengate.bench import COLONY_FLANK, JUNCTION_OFFSET, SANGER_FLANK
 from liulab_mbio.goldengate.plan import REVERSE_FLANK, DesignedOligo
 from liulab_mbio.io import read_record
 from liulab_mbio.protocol import OVERVIEW_CHARS
