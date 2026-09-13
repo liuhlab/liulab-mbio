@@ -1,5 +1,6 @@
 import dataclasses
 import struct
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from liulab_mbio.edits import delete
@@ -232,6 +233,33 @@ def test_write_dna_writes_primers_that_were_built_in_code(tmp_path: Path) -> Non
     write_dna(record, path)
     assert b'annealedBases="ATGAGTAAAGGAGAAGAACT"' in path.read_bytes()
     assert read_dna(path).primers == (primer,)
+
+
+def test_write_dna_pairs_each_binding_site_with_a_simplified_copy(tmp_path: Path) -> None:
+    primer = Primer(
+        "GFP fwd",
+        "CAGTCAGGATCCATGAGTAAAGGAGAAGAACT",
+        binding_sites=(BindingSite(0, 20, Strand.FORWARD),),
+    )
+    path = tmp_path / "primers.dna"
+    write_dna(dataclasses.replace(read_dna(GFP), primers=(primer,)), path)
+    (packet,) = (payload for kind, payload in _packets(path.read_bytes()) if kind == 0x05)
+    site, simplified = ET.fromstring(packet).iter("BindingSite")
+    assert simplified.attrib == {"simplified": "1", **site.attrib}
+    assert [component.attrib for component in simplified] == [
+        component.attrib for component in site
+    ]
+
+
+def test_write_dna_has_snapgene_label_the_map_with_the_name(tmp_path: Path) -> None:
+    path = tmp_path / "file-name.dna"
+    for record in (
+        SequenceRecord("ACGT", name="probe"),
+        dataclasses.replace(read_dna(PUC19), name="renamed"),
+    ):
+        write_dna(record, path)
+        notes = ET.fromstring(dict(_packets(path.read_bytes()))[0x06])
+        assert [node.text for node in notes.iter("UseCustomMapLabel")] == ["1"]
 
 
 def test_the_reader_agrees_with_biopython_on_both_fixtures() -> None:

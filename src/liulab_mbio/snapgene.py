@@ -39,6 +39,8 @@ _DOUBLE_STRANDED = 0x02
 
 #: SnapGene's name for the record on a map; the model holds it as `SequenceRecord.name`.
 _MAP_LABEL = "CustomMapLabel"
+#: Unless this note is 1, SnapGene labels the map with the file name instead.
+_USE_MAP_LABEL = "UseCustomMapLabel"
 _DEFAULT_COLOR = "#a6acb3"
 _COOKIE_PAYLOAD = b"SnapGene\x00\x01\x00\x0f\x00\x14"
 
@@ -173,14 +175,17 @@ def _read_primers(payload: bytes, length: int) -> tuple[tuple[Primer, ...], dict
 
 
 def _read_notes(payload: bytes) -> tuple[str, dict[str, str]]:
-    """Return the map label, which the model holds as a name, and the remaining notes."""
+    """Return the map label, which the model holds as a name, and the remaining notes.
+
+    A flag showing the label is implied by the name, and a flag hiding it stays a note.
+    """
     name, notes = "", {}
     for child in ET.fromstring(payload):
         if len(child):  # A note holding elements of its own, such as References.
             continue
         if child.tag == _MAP_LABEL:
             name = child.text or ""
-        else:
+        elif child.tag != _USE_MAP_LABEL or child.text != "1":
             notes[child.tag] = child.text or ""
     return name, notes
 
@@ -369,18 +374,19 @@ def _primer_node(primer: Primer, record: SequenceRecord) -> ET.Element:
         if site.strand == Strand.REVERSE:
             annealed = reverse_complement(annealed)
         location = _range(site.start, site.end, len(record), base=0)
-        binding = ET.SubElement(
-            node,
-            "BindingSite",
-            {
-                "location": location,
-                "boundStrand": "1" if site.strand == Strand.REVERSE else "0",
-                "annealedBases": annealed,
-            },
-        )
+        attributes = {
+            "location": location,
+            "boundStrand": "1" if site.strand == Strand.REVERSE else "0",
+            "annealedBases": annealed,
+        }
+        components = [{"hybridizedRange": location, "bases": annealed}]
         if tail := primer.sequence[: len(primer.sequence) - (site.end - site.start)]:
-            ET.SubElement(binding, "Component", {"bases": tail})
-        ET.SubElement(binding, "Component", {"hybridizedRange": location, "bases": annealed})
+            components.insert(0, {"bases": tail})
+        # SnapGene takes a site without its simplified copy for an old file format and rewrites it.
+        for simplified in ({}, {"simplified": "1"}):
+            binding = ET.SubElement(node, "BindingSite", simplified | attributes)
+            for component in components:
+                ET.SubElement(binding, "Component", component)
     return node
 
 
@@ -398,4 +404,6 @@ def _notes_packet(record: SequenceRecord, kept: _Kept | None) -> bytes:
         ET.SubElement(root, tag).text = text
     if record.name:
         ET.SubElement(root, _MAP_LABEL).text = record.name
+        if _USE_MAP_LABEL not in record.notes:
+            ET.SubElement(root, _USE_MAP_LABEL).text = "1"
     return _xml(root, declaration=False)
