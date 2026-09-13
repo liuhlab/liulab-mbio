@@ -1,0 +1,411 @@
+"""The protocol model, and loading it from JSON.
+
+Every class refuses, with `ValueError`, a value no bench could follow: an empty title, a
+non-positive volume, time, cycle count or band size, or a link that is not http(s).
+"""
+
+import json
+import math
+import os
+from collections.abc import Callable, Mapping
+from dataclasses import KW_ONLY, MISSING, dataclass, field, fields
+from pathlib import Path
+from typing import Any
+
+
+def _require(ok: bool, message: str) -> None:
+    if not ok:
+        raise ValueError(message)
+
+
+@dataclass(frozen=True, slots=True)
+class Material:
+    """A reagent, oligo, kit or piece of equipment the protocol needs.
+
+    Parameters
+    ----------
+    name
+        As it is labelled on the tube or shelf.
+    sequence
+        5' to 3', for an oligo; shown with a copy button.
+    source, storage, note
+        Free text, such as a supplier and catalogue number, ``"-20 °C"``, or a stock
+        concentration.
+    """
+
+    name: str
+    _: KW_ONLY
+    sequence: str = ""
+    source: str = ""
+    storage: str = ""
+    note: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class Component:
+    """One line of a reaction table.
+
+    Parameters
+    ----------
+    name
+        What to pipette.
+    volume_ul
+        Microlitres per reaction.
+    stock, final
+        Free-text concentrations, such as ``"10x"`` and ``"1x"``.
+    master_mix
+        ``False`` for a component added to each tube separately, such as template.
+    """
+
+    name: str
+    volume_ul: float
+    _: KW_ONLY
+    stock: str = ""
+    final: str = ""
+    master_mix: bool = True
+
+    def __post_init__(self) -> None:
+        """Refuse a volume that is not positive."""
+        _require(self.volume_ul > 0, f"component {self.name!r}: volume_ul must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class ReactionTable:
+    """Per-reaction volumes, scaled to a master mix for several reactions.
+
+    Parameters
+    ----------
+    components
+        In pipetting order; at least one.
+    title
+        Such as ``"PCR master mix"``.
+    reactions
+        The reaction count shown first; the reader can change it.
+    overage
+        Extra master mix as a fraction, so ``0.1`` makes enough for 10% more reactions.
+    """
+
+    components: tuple[Component, ...]
+    _: KW_ONLY
+    title: str = ""
+    reactions: int = 1
+    overage: float = 0.1
+
+    def __post_init__(self) -> None:
+        """Refuse an empty table, fewer than one reaction, or a negative overage."""
+        _require(bool(self.components), f"reaction table {self.title!r} has no component")
+        _require(self.reactions >= 1, "reactions must be at least 1")
+        _require(self.overage >= 0, "overage must not be negative")
+
+    def mix_volumes(self, reactions: int) -> tuple[float | None, ...]:
+        """Return each component's master-mix volume in µL, to 0.01 µL.
+
+        ``None`` marks a component added to each tube instead.
+
+        Examples
+        --------
+        >>> ReactionTable((Component("Buffer", 2.5),), overage=0.1).mix_volumes(8)
+        (22.0,)
+        """
+        scale = reactions * (1 + self.overage)
+        return tuple(
+            round(c.volume_ul * scale, 2) if c.master_mix else None for c in self.components
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Incubation:
+    """One temperature held for a time.
+
+    Parameters
+    ----------
+    label
+        Such as ``"Annealing"``.
+    temperature_c
+        Degrees Celsius.
+    seconds
+        ``None`` holds until the reader stops it.
+    """
+
+    label: str
+    temperature_c: float
+    seconds: float | None
+
+    def __post_init__(self) -> None:
+        """Refuse a time that is not positive."""
+        _require(
+            self.seconds is None or self.seconds > 0,
+            f"incubation {self.label!r}: seconds must be positive or null",
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Stage:
+    """Incubations run in order, repeated `cycles` times."""
+
+    incubations: tuple[Incubation, ...]
+    _: KW_ONLY
+    cycles: int = 1
+
+    def __post_init__(self) -> None:
+        """Refuse an empty stage or fewer than one cycle."""
+        _require(bool(self.incubations), "a stage needs at least one incubation")
+        _require(self.cycles >= 1, "cycles must be at least 1")
+
+
+@dataclass(frozen=True, slots=True)
+class ThermocyclerProgram:
+    """Stages run in order.
+
+    Parameters
+    ----------
+    stages
+        In run order; at least one.
+    title
+        The name to save the program under.
+    lid_temperature_c
+        Heated lid, or ``None`` to leave it unstated.
+    """
+
+    stages: tuple[Stage, ...]
+    _: KW_ONLY
+    title: str = ""
+    lid_temperature_c: float | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a program with no stage."""
+        _require(bool(self.stages), f"program {self.title!r} has no stage")
+
+    @property
+    def duration_seconds(self) -> float:
+        """Run time at the block temperatures, leaving out ramps and indefinite holds."""
+        return sum(
+            stage.cycles * sum(i.seconds or 0 for i in stage.incubations) for stage in self.stages
+        )
+
+
+def _check_bands(bands_bp: tuple[int, ...], owner: str) -> None:
+    _require(all(bp > 0 for bp in bands_bp), f"{owner}: band sizes must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class Ladder:
+    """A named DNA size marker and its band sizes in base pairs."""
+
+    name: str
+    bands_bp: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        """Refuse a ladder with no band or a non-positive band size."""
+        _require(bool(self.bands_bp), f"ladder {self.name!r} has no band")
+        _check_bands(self.bands_bp, f"ladder {self.name!r}")
+
+
+@dataclass(frozen=True, slots=True)
+class Lane:
+    """One sample lane of a simulated gel; no band sizes draws an empty lane."""
+
+    label: str
+    bands_bp: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Refuse a non-positive band size."""
+        _check_bands(self.bands_bp, f"lane {self.label!r}")
+
+
+@dataclass(frozen=True, slots=True)
+class Gel:
+    """A simulated agarose gel: a ladder lane followed by sample lanes."""
+
+    ladder: Ladder
+    lanes: tuple[Lane, ...]
+    _: KW_ONLY
+    title: str = ""
+
+    def migration(self, bp: float) -> float:
+        """Return how far a band runs: 0 for the largest band on this gel, 1 for the smallest.
+
+        Linear in the logarithm of size, the usual approximation for agarose.
+        """
+        sizes = [*self.ladder.bands_bp, *(bp for lane in self.lanes for bp in lane.bands_bp)]
+        top, bottom = math.log10(max(sizes)), math.log10(min(sizes))
+        if top == bottom:
+            return 0.5
+        return (top - math.log10(bp)) / (top - bottom)
+
+
+@dataclass(frozen=True, slots=True)
+class Timer:
+    """A countdown the reader can start from the step."""
+
+    label: str
+    seconds: float
+
+    def __post_init__(self) -> None:
+        """Refuse a time that is not positive."""
+        _require(self.seconds > 0, f"timer {self.label!r}: seconds must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class Troubleshooting:
+    """A problem the reader may see at a step, and what to do about it."""
+
+    problem: str
+    solution: str
+
+
+@dataclass(frozen=True, slots=True)
+class Reference:
+    """A citation, with an optional http(s) link."""
+
+    text: str
+    _: KW_ONLY
+    url: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a link that is not http or https."""
+        _require(
+            not self.url or self.url.startswith(("http://", "https://")),
+            f"reference url must be http(s), got {self.url!r}",
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Step:
+    """One numbered step of a protocol.
+
+    Parameters
+    ----------
+    title
+        What the step achieves, such as ``"Run the thermocycler"``.
+    instructions
+        Ordered actions, one sentence each.
+    cautions, notes
+        Shown before and after the instructions.
+    tables, programs, timers
+        Reaction tables, thermocycler programs and countdowns the step uses.
+    gels, expected
+        What a successful step looks like.
+    troubleshooting
+        Problems the reader may see here.
+    """
+
+    title: str
+    _: KW_ONLY
+    instructions: tuple[str, ...] = ()
+    cautions: tuple[str, ...] = ()
+    notes: tuple[str, ...] = ()
+    tables: tuple[ReactionTable, ...] = ()
+    programs: tuple[ThermocyclerProgram, ...] = ()
+    timers: tuple[Timer, ...] = ()
+    gels: tuple[Gel, ...] = ()
+    expected: tuple[str, ...] = ()
+    troubleshooting: tuple[Troubleshooting, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Refuse an empty title."""
+        _require(bool(self.title.strip()), "a step needs a title")
+
+
+@dataclass(frozen=True, slots=True)
+class Protocol:
+    """A bench protocol.
+
+    Parameters
+    ----------
+    title
+        The page heading.
+    summary
+        One paragraph: what the protocol does.
+    overview
+        Key facts shown as label and value, in order.
+    materials, steps, references
+        In the order they are shown.
+    """
+
+    title: str
+    _: KW_ONLY
+    summary: str = ""
+    overview: Mapping[str, str] = field(default_factory=dict, hash=False)
+    materials: tuple[Material, ...] = ()
+    steps: tuple[Step, ...] = ()
+    references: tuple[Reference, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Refuse an empty title."""
+        _require(bool(self.title.strip()), "a protocol needs a title")
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Protocol":
+        """Build a protocol from parsed JSON; keys are the field names, lists become tuples.
+
+        Raises
+        ------
+        ValueError
+            On an unknown or missing key, naming where it is, or a value the model refuses.
+        """
+        return _PROTOCOL(data, "protocol")
+
+
+def read_protocol(path: str | os.PathLike[str]) -> Protocol:
+    """Read a protocol from a JSON file; see `Protocol.from_dict`."""
+    return Protocol.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+type _Convert = Callable[[Any, str], Any]
+
+
+def _object[T](cls: Callable[..., T], **nested: _Convert) -> Callable[[Any, str], T]:
+    """Return a converter from a JSON object to `cls`, checking its keys."""
+    spec = fields(cls)  # pyright: ignore[reportArgumentType]
+    names = {f.name for f in spec}
+    required = {f.name for f in spec if f.default is MISSING and f.default_factory is MISSING}
+
+    def convert(data: Any, where: str) -> T:
+        if not isinstance(data, Mapping):
+            raise ValueError(f"{where}: expected an object, got {type(data).__name__}")
+        if unknown := sorted(set(data) - names):
+            raise ValueError(f"{where}: unknown key(s) {', '.join(unknown)}")
+        if missing := sorted(required - set(data)):
+            raise ValueError(f"{where}: missing key(s) {', '.join(missing)}")
+        kwargs = {
+            key: nested[key](value, f"{where}.{key}") if key in nested else _plain(value)
+            for key, value in data.items()
+        }
+        return cls(**kwargs)
+
+    return convert
+
+
+def _list(item: _Convert) -> _Convert:
+    def convert(data: Any, where: str) -> tuple[Any, ...]:
+        if not isinstance(data, list):
+            raise ValueError(f"{where}: expected a list, got {type(data).__name__}")
+        return tuple(item(value, f"{where}[{i}]") for i, value in enumerate(data))
+
+    return convert
+
+
+def _plain(value: Any) -> Any:
+    return tuple(value) if isinstance(value, list) else value
+
+
+_STEP = _object(
+    Step,
+    tables=_list(_object(ReactionTable, components=_list(_object(Component)))),
+    programs=_list(
+        _object(
+            ThermocyclerProgram,
+            stages=_list(_object(Stage, incubations=_list(_object(Incubation)))),
+        )
+    ),
+    timers=_list(_object(Timer)),
+    gels=_list(_object(Gel, ladder=_object(Ladder), lanes=_list(_object(Lane)))),
+    troubleshooting=_list(_object(Troubleshooting)),
+)
+_PROTOCOL = _object(
+    Protocol,
+    materials=_list(_object(Material)),
+    steps=_list(_STEP),
+    references=_list(_object(Reference)),
+)
