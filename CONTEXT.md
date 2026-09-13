@@ -80,7 +80,8 @@ _Avoid_: PCR product, band
 
 ### Check
 
-One pass, warn or fail verdict on a primer or a pair, carrying the value it judged.
+One pass, warn or fail verdict on a primer, a pair or an assembled product, carrying the value
+it judged.
 _Avoid_: validation, rule, test
 
 ### Protocol
@@ -282,3 +283,30 @@ A site an enzyme reads inside a coding sequence, which a synonymous codon change
 away. A site outside a coding sequence is not one: removing it changes what the part spells,
 which is a decision for a human.
 _Avoid_: removable site, fixable site
+
+### Part
+
+One piece going into an assembly: a span of a template amplified with a tail at each end, so
+that the enzyme leaves the overhangs the design chose. The vector is a part like any other.
+_Avoid_: module, component, element
+
+### Linearised vector
+
+A circular vector opened by PCR with its primers facing outward from the span the assembly
+replaces, so the whole backbone amplifies. The plasmid that templated it is taken away with
+DpnI, which cuts only the methylated sites a Dam-positive host leaves, so the template cannot
+transform as itself and grow as background.
+_Avoid_: cut vector, destination, opened plasmid
+
+### Ligation
+
+Joining two fragment ends whose overhangs match. Golden Gate cuts and ligates in one tube, so a
+join that puts the recognition site back is cut again and only the intended ones last.
+_Avoid_: joining, annealing, sealing
+
+### Product
+
+The circular plasmid an assembly makes: every part's features carried to their new coordinates,
+its primers annotated where they anneal, and each junction marked. It keeps the vector's origin,
+so the vector's own coordinates still read true and no junction sits at base zero.
+_Avoid_: construct, output, final plasmid
