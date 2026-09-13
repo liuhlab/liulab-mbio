@@ -682,6 +682,22 @@ def find_priming_sites(
     return tuple(found)
 
 
+def amplicon_sizes(
+    forward: Primer,
+    reverse: Primer,
+    template: SequenceRecord,
+    *,
+    thresholds: Thresholds = THRESHOLDS,
+) -> tuple[int, ...]:
+    """Return the size of every amplicon a pair can make on a template, smallest first.
+
+    Tails count, as they do in `PairReport.amplicon_length`. A primer carrying binding sites is
+    taken to bind where they say, so asking about a template other than the one it was placed on
+    means clearing them first.
+    """
+    return tuple(_products(forward, reverse, template, thresholds))
+
+
 def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int:
     """Return how many bases of `probe` match the template from `index`, walking by `step`."""
     length = len(template)
