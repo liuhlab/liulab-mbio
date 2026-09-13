@@ -86,6 +86,20 @@ def test_a_designed_pair_flanks_both_junctions(
     assert all(report.status != "fail" for report in check.reports)
 
 
+def test_a_reverse_distance_of_its_own_gives_a_reversed_insert_bands_of_its_own(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> None:
+    check = colony_pcr_check(
+        product, junctions, vector=puc19, flank=60, reverse_flank=120, insert_primer=True
+    )
+    # 60 bases of vector before the first junction and 120 past the last, so the junction primer
+    # reaches the near flank in a correct clone and the far one in a reversed clone.
+    assert bands(check, "Correct clone") == (160, 897)
+    assert bands(check, "Reversed insert") == (220, 897)
+    assert bands(check, "Empty vector") == (237,)
+    assert check.tells_orientation
+
+
 def test_the_gel_carries_one_lane_per_clone_and_a_ladder_for_the_range(
     product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
 ) -> None:

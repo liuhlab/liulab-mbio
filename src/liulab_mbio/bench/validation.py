@@ -30,6 +30,11 @@ from liulab_mbio.sequence import Primer, SequenceRecord, Strand, reverse_complem
 #: the empty-vector band, and the note asks for every band to stay at 100 bp or more.
 COLONY_FLANK = 60
 
+#: Vector kept outside the last junction instead, bases, where the pair has to tell orientation.
+#: Deliberately not `COLONY_FLANK`: two primers the same distance from their junctions give a
+#: reversed insert the same bands as a correct one, so the gel could not tell them apart.
+REVERSE_FLANK = 2 * COLONY_FLANK
+
 #: How far into the insert a junction primer anneals, bases, for the same reason.
 JUNCTION_OFFSET = 100
 
@@ -115,6 +120,7 @@ def colony_pcr_check(
     primers: tuple[Primer, ...] | None = None,
     insert_primer: bool = False,
     flank: int = COLONY_FLANK,
+    reverse_flank: int | None = None,
     junction_offset: int = JUNCTION_OFFSET,
     polymerase: Polymerase = ONETAQ,
     thresholds: Thresholds = THRESHOLDS_FOR["colony PCR"],
@@ -123,7 +129,9 @@ def colony_pcr_check(
 
     An assembly of n inserts has n + 1 junctions and the inserts are the spans between them, so
     a product whose inserts cross the origin is rotated first. Without `primers`, a pair is
-    designed in the vector `flank` bases outside the first and the last junction;
+    designed in the vector `flank` bases outside the first junction and `reverse_flank` outside
+    the last, `flank` again where none is given -- `REVERSE_FLANK` is the distance that keeps a
+    reversed insert bands of its own, and `tells_orientation` says why one distance cannot.
     `insert_primer` adds one primer per insert, annealing `junction_offset` bases into it. Those
     are what tell a reversed insert apart and what put a band of their own on each junction.
     Each candidate plasmid is amplified on its own, so the bands are simulated rather than
@@ -142,7 +150,7 @@ def colony_pcr_check(
     chosen = (
         list(primers)
         if primers is not None
-        else list(_flanking_pair(product, start, end, flank, polymerase, thresholds))
+        else list(_flanking_pair(product, start, end, flank, reverse_flank, polymerase, thresholds))
     )
     if insert_primer:
         chosen.extend(
@@ -273,13 +281,14 @@ def _flanking_pair(
     start: int,
     end: int,
     flank: int,
+    reverse_flank: int | None,
     polymerase: Polymerase,
     thresholds: Thresholds,
 ) -> tuple[Primer, Primer]:
     return design_pair(
         product,
         start - flank,
-        end + flank,
+        end + (flank if reverse_flank is None else reverse_flank),
         forward_name="Colony PCR forward",
         reverse_name="Colony PCR reverse",
         polymerase=polymerase,
