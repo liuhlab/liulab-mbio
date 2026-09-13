@@ -1,4 +1,4 @@
-"""Where a primer anneals on a template, where else it can prime, and what a pair amplifies.
+"""Where a primer may anneal on a template, where it does, where else it primes, and amplicons.
 
 A site or an amplicon crosses the origin of a circular template, ending past its length.
 """
@@ -6,7 +6,64 @@ A site or an amplicon crosses the origin of a circular template, ending past its
 from dataclasses import dataclass
 
 from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
-from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import (
+    BindingSite,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class Placement:
+    """Where a primer's binding site may lie: the positions each of its two ends may take.
+
+    A tail fixes the 5' end, a target to read across bounds each end's distance from it, and a
+    region bounds the amplicon. A position is a boundary, 0-based and half-open as everywhere:
+    a forward site's 5' end is its start and its 3' end its end, and a reverse site's the other
+    way round, which is the position `design_primer` reads. A span runs past the length of a
+    circular template when it crosses the origin.
+
+    Parameters
+    ----------
+    five_prime
+        The positions its 5' end may take. `Segment(442, 463)` allows 442 to 462. ``None``
+        leaves it wherever a length puts it.
+    three_prime
+        The positions its 3' end may take, the same way.
+
+    Raises
+    ------
+    ValueError
+        If neither end is bounded, which would say nothing at all.
+
+    Examples
+    --------
+    >>> template = SequenceRecord("ACGT" * 12)
+    >>> anchored = Placement(five_prime=Segment(0, 1))
+    >>> anchored.allows(BindingSite(0, 20, Strand.FORWARD), template)
+    True
+    >>> anchored.allows(BindingSite(1, 21, Strand.FORWARD), template)
+    False
+    """
+
+    five_prime: Segment | None = None
+    three_prime: Segment | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a placement that bounds neither end."""
+        if self.five_prime is None and self.three_prime is None:
+            raise ValueError("a placement bounds at least one end of a binding site")
+
+    def allows(self, site: BindingSite, template: SequenceRecord) -> bool:
+        """Return whether both ends of a binding site lie where this placement puts them."""
+        ends = (site.start, site.end) if site.strand is Strand.FORWARD else (site.end, site.start)
+        return all(
+            span is None or _holds(span, position, template)
+            for span, position in zip((self.five_prime, self.three_prime), ends, strict=True)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,16 +135,24 @@ def find_priming_sites(
     circular = template.topology == "circular"
     top = template.sequence + (template.sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
-    window = thresholds.off_target_3prime_window
+    edge = min(size, thresholds.off_target_3prime_window)
     floor = primer3.calc_end_stability(dna, reverse).tm - thresholds.off_target_margin
+    ends = tuple(
+        _near(window, set(top), thresholds.off_target_3prime_mismatches)
+        for window in (dna[-edge:], reverse[:edge])
+    )
     found = []
     for start in range(length if circular else length - size + 1):
+        forward_end = ends[0] is None or top[start + size - edge : start + size] in ends[0]
+        reverse_end = ends[1] is None or top[start : start + edge] in ends[1]
+        if not (forward_end or reverse_end):
+            continue
         here = top[start : start + size]
-        for strand, probe, anchor, annealed in (
-            (Strand.FORWARD, dna, _mismatches(dna[-window:], here[-window:]), None),
-            (Strand.REVERSE, reverse, _mismatches(reverse[:window], here[:window]), here),
+        for strand, probe, anchored, annealed in (
+            (Strand.FORWARD, dna, forward_end, None),
+            (Strand.REVERSE, reverse, reverse_end, here),
         ):
-            if anchor > thresholds.off_target_3prime_mismatches:
+            if not anchored:
                 continue
             mismatches = _mismatches(probe, here)
             if mismatches > thresholds.off_target_mismatches:
@@ -131,6 +196,13 @@ def amplicon_sizes(
     return tuple(sorted(products))
 
 
+def _holds(span: Segment, position: int, template: SequenceRecord) -> bool:
+    """Return whether a span of positions holds one, counting round a circular template."""
+    if template.topology == "circular":
+        return (position - span.start) % len(template) < span.end - span.start
+    return span.start <= position < span.end
+
+
 def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int:
     """Return how many bases of `probe` match the template from `index`, walking by `step`."""
     length = len(template)
@@ -144,6 +216,26 @@ def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int
             break
         matched += 1
     return matched
+
+
+def _near(window: str, alphabet: set[str], mismatches: int) -> frozenset[str] | None:
+    """Return every string `mismatches` substitutions or fewer from `window`, over `alphabet`.
+
+    ``None`` stands for every string of that length, which is no filter at all. A template is
+    scanned once per base, so testing its 3' window against this set is what keeps a design's
+    search of every length affordable.
+    """
+    if mismatches >= len(window):
+        return None
+    near = {window}
+    for _ in range(mismatches):
+        near |= {
+            one[:index] + base + one[index + 1 :]
+            for one in near
+            for index in range(len(one))
+            for base in alphabet
+        }
+    return frozenset(near)
 
 
 def _mismatches(one: str, other: str) -> int:

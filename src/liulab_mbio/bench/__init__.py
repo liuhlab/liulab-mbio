@@ -77,11 +77,14 @@ from liulab_mbio.bench.steps import (
     transform_step,
 )
 from liulab_mbio.bench.validation import (
+    COLONY_ALLOWANCE,
     COLONY_FLANK,
     CORRECT_CLONE,
     EMPTY_CLONE,
     JUNCTION_OFFSET,
+    REVERSE_FLANK,
     REVERSED_CLONE,
+    SANGER_ALLOWANCE,
     SANGER_FLANK,
     Clone,
     ColonyCheck,
@@ -97,6 +100,7 @@ REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels
 __all__ = [
     "ASSEMBLY_UL",
     "CELLS_UL",
+    "COLONY_ALLOWANCE",
     "COLONY_FLANK",
     "COLONY_HOLD_CELSIUS",
     "COLONY_LYSIS_SECONDS",
@@ -128,6 +132,8 @@ __all__ = [
     "RECOVER_SECONDS",
     "REFERENCES",
     "REVERSED_CLONE",
+    "REVERSE_FLANK",
+    "SANGER_ALLOWANCE",
     "SANGER_FLANK",
     "SELECTION",
     "SEQUENCING_TITLE",

@@ -5,7 +5,7 @@ Every public name in its modules imports from here as well:
 - `polymerase`: a polymerase, the Tm in its buffer, its annealing and extension rules, and
   NEB's PCR for it.
 - `thresholds`: the bands a check is judged by, and the words it is printed in.
-- `placement`: where a primer anneals on a template, where else it primes, and amplicons.
+- `placement`: where a primer may anneal, where it does, where else it primes, and amplicons.
 - `evaluation`: judging a primer, or a pair on a template, and what a primer's length decides.
 - `design`: choosing the annealing region of a primer or a pair.
 """
@@ -17,8 +17,10 @@ from liulab_mbio.primers.evaluation import (
     annealing_checks,
     evaluate_pair,
     evaluate_primer,
+    pair_checks,
 )
 from liulab_mbio.primers.placement import (
+    Placement,
     PrimingSite,
     amplicon_sizes,
     find_binding_sites,
@@ -57,6 +59,7 @@ __all__ = [
     "Band",
     "PairReport",
     "PcrProfile",
+    "Placement",
     "Polymerase",
     "PrimerReport",
     "PrimerRole",
@@ -72,5 +75,6 @@ __all__ = [
     "find_binding_sites",
     "find_priming_sites",
     "melting_temperature",
+    "pair_checks",
     "reading",
 ]

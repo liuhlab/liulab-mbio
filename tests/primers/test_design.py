@@ -1,14 +1,29 @@
+import dataclasses
+
 import pytest
 
+from liulab_mbio.checks import STATUSES
 from liulab_mbio.primers import (
     THRESHOLDS,
     THRESHOLDS_FOR,
+    Band,
+    PairReport,
+    Placement,
+    PrimerReport,
     design_pair,
     design_primer,
+    evaluate_pair,
     evaluate_primer,
     melting_temperature,
 )
-from liulab_mbio.sequence import BindingSite, Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import (
+    BindingSite,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 
 from .sequences import MCS_FWD
 
@@ -30,16 +45,17 @@ def test_a_reverse_primer_reads_back_from_its_position(puc19) -> None:
     assert melting_temperature(primer.sequence) == pytest.approx(62.0, abs=2.0)
 
 
-def test_a_design_keeps_inside_the_length_band_it_is_judged_by(puc19) -> None:
-    # No region 18 bases or longer reaches the Tm band here; a 16-mer lands on the target.
-    for thresholds in (THRESHOLDS, THRESHOLDS_FOR["sequencing"]):
-        primer = design_primer(puc19, 32, Strand.FORWARD, thresholds=thresholds)
-        assert evaluate_primer(primer, thresholds=thresholds)["length"].status == "pass"
-    forward, reverse = design_pair(puc19, 32, 232)
-    assert [evaluate_primer(one)["length"].status for one in (forward, reverse)] == ["pass"] * 2
-    # A sequencing primer may be 16 bases, so it keeps that one.
-    sequencing = design_primer(puc19, 32, Strand.FORWARD, thresholds=THRESHOLDS_FOR["sequencing"])
-    assert sequencing.sequence == "TGACACATGCAGCTCC"
+def test_a_design_gives_up_the_length_band_to_warn_on_fewer_checks(puc19) -> None:
+    # Every region 18 bases or longer here warns on three checks or fails on Tm. The 16-mer
+    # warns on two, and the band a length passes on ranks below the count of warnings.
+    primer = design_primer(puc19, 32, Strand.FORWARD)
+    assert primer.sequence == "TGACACATGCAGCTCC"
+    assert warned(evaluate_primer(primer, puc19)) == ["length", "gc_clamp"]
+    # A sequencing primer may be 16 bases, so the same region is inside its band.
+    thresholds = THRESHOLDS_FOR["sequencing"]
+    sequencing = design_primer(puc19, 32, Strand.FORWARD, thresholds=thresholds)
+    report = evaluate_primer(sequencing, puc19, thresholds=thresholds)
+    assert (sequencing.sequence, report["length"].status) == (primer.sequence, "pass")
 
 
 def test_a_design_keeps_inside_the_bands_its_length_decides_where_a_length_can(puc19) -> None:
@@ -51,6 +67,51 @@ def test_a_design_keeps_inside_the_bands_its_length_decides_where_a_length_can(p
     forward, reverse = (evaluate_primer(one) for one in design_pair(puc19, 455, 395 + len(puc19)))
     assert [forward[name].status for name in decided] == ["pass"] * 4
     assert reverse.status == "warn"
+
+
+def test_a_design_weighs_a_check_that_a_length_does_not_decide(puc19) -> None:
+    # The 24-mer nearest the target Tm folds into a hairpin at 54 °C, which the four checks a
+    # length decides cannot see. A 22-mer at the same position passes every check.
+    assert warned(evaluate_primer(at(puc19, 2116, Strand.REVERSE, 24), puc19)) == ["hairpin"]
+    primer = design_primer(puc19, 2116, Strand.REVERSE)
+    assert primer.sequence == "CCATAACCATGAGTGATAACAC"
+    assert warned(evaluate_primer(primer, puc19)) == []
+
+
+def test_a_passing_primer_is_chosen_wherever_a_length_at_that_position_passes(puc19) -> None:
+    for position, strand in (
+        (452, Strand.FORWARD),
+        (2116, Strand.REVERSE),
+        (32, Strand.FORWARD),
+        (len(puc19) - 8, Strand.FORWARD),
+    ):
+        every = [evaluate_primer(at(puc19, position, strand, size), puc19) for size in SIZES]
+        chosen = evaluate_primer(design_primer(puc19, position, strand), puc19)
+        assert shape(chosen) == min(shape(one) for one in every), position
+
+
+def test_a_passing_pair_is_chosen_wherever_a_pair_of_lengths_passes(puc19) -> None:
+    # A narrow length band, so every pair of lengths can be judged here.
+    thresholds = dataclasses.replace(THRESHOLDS, length=Band(18, 24, 18, 24))
+    sizes = range(18, 25)
+    forward, reverse = design_pair(puc19, 378, 481, thresholds=thresholds)
+    chosen = evaluate_pair(forward, reverse, puc19, thresholds=thresholds)
+    every = [
+        evaluate_pair(
+            at(puc19, 378, Strand.FORWARD, one),
+            at(puc19, 481, Strand.REVERSE, other),
+            puc19,
+            thresholds=thresholds,
+        )
+        for one in sizes
+        for other in sizes
+    ]
+    assert shape(chosen) == min(shape(one) for one in every)
+
+
+def test_the_same_inputs_choose_the_same_primer(puc19) -> None:
+    assert design_primer(puc19, 452, Strand.FORWARD) == design_primer(puc19, 452, Strand.FORWARD)
+    assert design_pair(puc19, 378, 481) == design_pair(puc19, 378, 481)
 
 
 def test_a_tail_stays_outside_the_binding_site(puc19) -> None:
@@ -73,8 +134,9 @@ def test_a_pair_is_designed_with_matched_tms(puc19) -> None:
     forward, reverse = design_pair(puc19, 378, 481)
     assert forward.binding_sites[0].start == 378
     assert reverse.binding_sites[0].end == 481
-    tms = [melting_temperature(primer.sequence) for primer in (forward, reverse)]
-    assert abs(tms[0] - tms[1]) <= 2.0
+    report = evaluate_pair(forward, reverse, puc19)
+    assert report["tm_difference"].status == "pass"
+    assert report.status == "pass"
 
 
 def test_a_pair_may_amplify_across_the_origin(puc19) -> None:
@@ -87,3 +149,138 @@ def test_design_refuses_a_position_a_linear_template_cannot_hold() -> None:
     template = SequenceRecord("ACGT" * 10)
     with pytest.raises(ValueError, match="fit"):
         design_primer(template, 38, Strand.FORWARD)
+
+
+def test_an_anchored_placement_chooses_what_a_bare_position_does(puc19) -> None:
+    anchored = Placement(five_prime=Segment(452, 453))
+    primer = design_primer(puc19, 452, Strand.FORWARD, placement=anchored)
+    assert primer == design_primer(puc19, 452, Strand.FORWARD)
+    assert primer.binding_sites[0].start == 452
+
+
+def test_a_placement_near_a_target_chooses_the_best_primer_it_allows(puc19) -> None:
+    # A sequencing primer's 3' end, 100 to 130 bases outside a junction.
+    junction = 480
+    near = Placement(three_prime=Segment(junction - 130, junction - 99))
+    chosen = design_primer(puc19, junction - 130, Strand.FORWARD, placement=near, thresholds=NARROW)
+    assert 100 <= junction - chosen.binding_sites[0].end <= 130
+    assert best(chosen, puc19, near, Strand.FORWARD)
+
+
+def test_a_placement_in_a_region_chooses_the_best_pair_it_allows(puc19) -> None:
+    forward_region = Placement(five_prime=Segment(374, 378), three_prime=Segment(396, 402))
+    reverse_region = Placement(five_prime=Segment(479, 483), three_prime=Segment(456, 462))
+    forward, reverse = design_pair(
+        puc19,
+        378,
+        481,
+        forward_placement=forward_region,
+        reverse_placement=reverse_region,
+        thresholds=NARROW,
+    )
+    chosen = evaluate_pair(forward, reverse, puc19, thresholds=NARROW)
+    every = [
+        evaluate_pair(one, other, puc19, thresholds=NARROW)
+        for one in allowed(puc19, forward_region, Strand.FORWARD)
+        for other in allowed(puc19, reverse_region, Strand.REVERSE)
+    ]
+    assert shape(chosen) == min(shape(one) for one in every)
+
+
+def test_a_placement_may_cross_the_origin(puc19) -> None:
+    across = Placement(five_prime=Segment(len(puc19) - 6, len(puc19) + 7))
+    chosen = design_primer(puc19, len(puc19), Strand.FORWARD, placement=across, thresholds=NARROW)
+    every = list(allowed(puc19, across, Strand.FORWARD))
+    assert any(primer.binding_sites[0].end > len(puc19) for primer in every)
+    assert best(chosen, puc19, across, Strand.FORWARD)
+
+
+def test_the_option_nearest_the_position_asked_for_wins(puc19) -> None:
+    # Three copies of one stretch of pUC19, and a placement two copies wide, so every candidate
+    # has a twin 50 bases away spelling the same bases and scoring the same on every check.
+    # Only nearness to the position asked for tells the two apart.
+    unit = puc19.extract(Segment(452, 502))
+    template = SequenceRecord(unit * 3, topology="circular")
+    thresholds = dataclasses.replace(THRESHOLDS, length=Band(20, 20, 20, 20))
+    across = Placement(five_prime=Segment(0, 101))
+    chosen = design_primer(template, 40, Strand.FORWARD, placement=across, thresholds=thresholds)
+    twins = [
+        start
+        for start in range(101)
+        if template.extract(Segment(start, start + 20)) == chosen.sequence
+    ]
+    assert len(twins) >= 2
+    assert chosen.binding_sites[0].start == min(twins, key=lambda start: abs(start - 40))
+    # Equidistant from the two, and the lower position settles it.
+    middle = (twins[0] + twins[1]) // 2
+    tied = design_primer(template, middle, Strand.FORWARD, placement=across, thresholds=thresholds)
+    assert tied.binding_sites[0].start == twins[0]
+
+
+def test_a_placement_holding_no_annealing_region_is_refused(puc19) -> None:
+    # Its two ends lie 5 bases apart, shorter than any length the band allows.
+    placement = Placement(five_prime=Segment(452, 453), three_prime=Segment(457, 458))
+    with pytest.raises(ValueError, match="placement"):
+        design_primer(puc19, 452, Strand.FORWARD, placement=placement)
+
+
+def test_the_same_inputs_choose_the_same_primer_inside_a_placement(puc19) -> None:
+    placement = Placement(five_prime=Segment(448, 457))
+    first = design_primer(puc19, 452, Strand.FORWARD, placement=placement, thresholds=NARROW)
+    second = design_primer(puc19, 452, Strand.FORWARD, placement=placement, thresholds=NARROW)
+    assert first == second
+
+
+#: Every length a design considers, which is the band `Thresholds.length` does not fail on.
+SIZES = range(15, 36)
+
+#: A narrow band, so a placement's options stay few enough to judge every one of them.
+NARROW = dataclasses.replace(THRESHOLDS, length=Band(18, 24, 18, 24))
+
+
+def allowed(
+    template: SequenceRecord, placement: Placement, strand: Strand, sizes: range = range(18, 25)
+):
+    """Every primer a placement allows, which is what a design is choosing between."""
+    for start in range(len(template)):
+        for size in sizes:
+            site = BindingSite(start, start + size, strand)
+            if template.topology != "circular" and site.end > len(template):
+                continue
+            if placement.allows(site, template):
+                bases = template.extract(Segment(site.start, site.end))
+                sequence = bases if strand is Strand.FORWARD else reverse_complement(bases)
+                yield Primer("", sequence, binding_sites=(site,))
+
+
+def best(chosen: Primer, template: SequenceRecord, placement: Placement, strand: Strand) -> bool:
+    """Whether no primer the placement allows came out better than the one chosen."""
+    every = [
+        evaluate_primer(primer, template, thresholds=NARROW)
+        for primer in allowed(template, placement, strand)
+    ]
+    return shape(evaluate_primer(chosen, template, thresholds=NARROW)) == min(
+        shape(one) for one in every
+    )
+
+
+def at(template: SequenceRecord, position: int, strand: Strand, size: int) -> Primer:
+    """The primer a design considers at this position and length."""
+    start = (position if strand is Strand.FORWARD else position - size) % len(template)
+    bases = template.extract(Segment(start, start + size))
+    sequence = bases if strand is Strand.FORWARD else reverse_complement(bases)
+    return Primer("", sequence, binding_sites=(BindingSite(start, start + size, strand),))
+
+
+def warned(report: PrimerReport | PairReport) -> list[str]:
+    """The checks of a report that carried a verdict and did not pass."""
+    return [check.name for check in report.checks if check.status not in (None, "pass")]
+
+
+def shape(report: PrimerReport | PairReport) -> tuple[int, int]:
+    """How well a primer or a pair came out: its worst status, then what did not pass."""
+    if isinstance(report, PairReport):
+        left = warned(report.forward) + warned(report.reverse) + warned(report)
+    else:
+        left = warned(report)
+    return STATUSES.index(report.status), len(left)

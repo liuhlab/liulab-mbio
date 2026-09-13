@@ -110,6 +110,12 @@ It raises rather than guessing, and the message names the cause.
 - **The DNA does not fit the reaction.** Concentrate the fragments, or scale the reaction up.
 - **The parts do not chain.** The overhangs do not close the circle.
 
+## The primer side
+
+`primer-design` owns primer questions: which placement a task calls for, how a preference such as
+a maximum length goes in, and what a warning left on the order sheet means. The plan designs its
+own primers; go there for primers outside one.
+
 ## The protocol side
 
 `build-protocol` owns the page and the rules for changing it. When the user asks for what the
