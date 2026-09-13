@@ -337,3 +337,24 @@ Reading a plate by colour: an insertion interrupting the vector's lacZ fragment 
 white where an empty vector is blue. It reports nothing unless the host supplies the rest of
 lacZ, so the strain is part of the screen.
 _Avoid_: colour screen, X-gal screen
+
+### Fragment count
+
+How many parts one reaction joins, the vector counted among them. NEB's tables tier on it — the
+reaction volume, the enzyme dose and the cycling all step up as it rises — and the ligation
+fidelity of a set falls with it, every junction added being another chance to mis-ligate.
+_Avoid_: number of parts, complexity
+
+### Insert order
+
+The order the inserts are given in, which is the order they go round the product. Each insert's
+junction takes the bases that insert begins with, so the order chooses the overhangs and the
+overhangs hold the order in the tube.
+_Avoid_: part order, arrangement
+
+### Junction primer
+
+A colony PCR primer annealing inside one insert rather than in the vector either side. It gives
+its own junction a band, and it is what separates a reversed insert from a correct clone, which
+two flanking vector primers cannot do.
+_Avoid_: internal primer, screening primer
