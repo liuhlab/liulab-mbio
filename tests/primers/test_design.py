@@ -8,6 +8,7 @@ from liulab_mbio.primers import (
     THRESHOLDS_FOR,
     Band,
     PairReport,
+    Placement,
     PrimerReport,
     design_pair,
     design_primer,
@@ -150,8 +151,117 @@ def test_design_refuses_a_position_a_linear_template_cannot_hold() -> None:
         design_primer(template, 38, Strand.FORWARD)
 
 
+def test_an_anchored_placement_chooses_what_a_bare_position_does(puc19) -> None:
+    anchored = Placement(five_prime=Segment(452, 453))
+    primer = design_primer(puc19, 452, Strand.FORWARD, placement=anchored)
+    assert primer == design_primer(puc19, 452, Strand.FORWARD)
+    assert primer.binding_sites[0].start == 452
+
+
+def test_a_placement_near_a_target_chooses_the_best_primer_it_allows(puc19) -> None:
+    # A sequencing primer's 3' end, 100 to 130 bases outside a junction.
+    junction = 480
+    near = Placement(three_prime=Segment(junction - 130, junction - 99))
+    chosen = design_primer(puc19, junction - 130, Strand.FORWARD, placement=near, thresholds=NARROW)
+    assert 100 <= junction - chosen.binding_sites[0].end <= 130
+    assert best(chosen, puc19, near, Strand.FORWARD)
+
+
+def test_a_placement_in_a_region_chooses_the_best_pair_it_allows(puc19) -> None:
+    forward_region = Placement(five_prime=Segment(374, 378), three_prime=Segment(396, 402))
+    reverse_region = Placement(five_prime=Segment(479, 483), three_prime=Segment(456, 462))
+    forward, reverse = design_pair(
+        puc19,
+        378,
+        481,
+        forward_placement=forward_region,
+        reverse_placement=reverse_region,
+        thresholds=NARROW,
+    )
+    chosen = evaluate_pair(forward, reverse, puc19, thresholds=NARROW)
+    every = [
+        evaluate_pair(one, other, puc19, thresholds=NARROW)
+        for one in allowed(puc19, forward_region, Strand.FORWARD)
+        for other in allowed(puc19, reverse_region, Strand.REVERSE)
+    ]
+    assert shape(chosen) == min(shape(one) for one in every)
+
+
+def test_a_placement_may_cross_the_origin(puc19) -> None:
+    across = Placement(five_prime=Segment(len(puc19) - 6, len(puc19) + 7))
+    chosen = design_primer(puc19, len(puc19), Strand.FORWARD, placement=across, thresholds=NARROW)
+    every = list(allowed(puc19, across, Strand.FORWARD))
+    assert any(primer.binding_sites[0].end > len(puc19) for primer in every)
+    assert best(chosen, puc19, across, Strand.FORWARD)
+
+
+def test_the_option_nearest_the_position_asked_for_wins(puc19) -> None:
+    # Three copies of one stretch of pUC19, and a placement two copies wide, so every candidate
+    # has a twin 50 bases away spelling the same bases and scoring the same on every check.
+    # Only nearness to the position asked for tells the two apart.
+    unit = puc19.extract(Segment(452, 502))
+    template = SequenceRecord(unit * 3, topology="circular")
+    thresholds = dataclasses.replace(THRESHOLDS, length=Band(20, 20, 20, 20))
+    across = Placement(five_prime=Segment(0, 101))
+    chosen = design_primer(template, 40, Strand.FORWARD, placement=across, thresholds=thresholds)
+    twins = [
+        start
+        for start in range(101)
+        if template.extract(Segment(start, start + 20)) == chosen.sequence
+    ]
+    assert len(twins) >= 2
+    assert chosen.binding_sites[0].start == min(twins, key=lambda start: abs(start - 40))
+    # Equidistant from the two, and the lower position settles it.
+    middle = (twins[0] + twins[1]) // 2
+    tied = design_primer(template, middle, Strand.FORWARD, placement=across, thresholds=thresholds)
+    assert tied.binding_sites[0].start == twins[0]
+
+
+def test_a_placement_holding_no_annealing_region_is_refused(puc19) -> None:
+    # Its two ends lie 5 bases apart, shorter than any length the band allows.
+    placement = Placement(five_prime=Segment(452, 453), three_prime=Segment(457, 458))
+    with pytest.raises(ValueError, match="placement"):
+        design_primer(puc19, 452, Strand.FORWARD, placement=placement)
+
+
+def test_the_same_inputs_choose_the_same_primer_inside_a_placement(puc19) -> None:
+    placement = Placement(five_prime=Segment(448, 457))
+    first = design_primer(puc19, 452, Strand.FORWARD, placement=placement, thresholds=NARROW)
+    second = design_primer(puc19, 452, Strand.FORWARD, placement=placement, thresholds=NARROW)
+    assert first == second
+
+
 #: Every length a design considers, which is the band `Thresholds.length` does not fail on.
 SIZES = range(15, 36)
+
+#: A narrow band, so a placement's options stay few enough to judge every one of them.
+NARROW = dataclasses.replace(THRESHOLDS, length=Band(18, 24, 18, 24))
+
+
+def allowed(
+    template: SequenceRecord, placement: Placement, strand: Strand, sizes: range = range(18, 25)
+):
+    """Every primer a placement allows, which is what a design is choosing between."""
+    for start in range(len(template)):
+        for size in sizes:
+            site = BindingSite(start, start + size, strand)
+            if template.topology != "circular" and site.end > len(template):
+                continue
+            if placement.allows(site, template):
+                bases = template.extract(Segment(site.start, site.end))
+                sequence = bases if strand is Strand.FORWARD else reverse_complement(bases)
+                yield Primer("", sequence, binding_sites=(site,))
+
+
+def best(chosen: Primer, template: SequenceRecord, placement: Placement, strand: Strand) -> bool:
+    """Whether no primer the placement allows came out better than the one chosen."""
+    every = [
+        evaluate_primer(primer, template, thresholds=NARROW)
+        for primer in allowed(template, placement, strand)
+    ]
+    return shape(evaluate_primer(chosen, template, thresholds=NARROW)) == min(
+        shape(one) for one in every
+    )
 
 
 def at(template: SequenceRecord, position: int, strand: Strand, size: int) -> Primer:
