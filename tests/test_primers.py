@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.checks import Check
 from liulab_mbio.primers import (
     ONETAQ,
     PHUSION,
@@ -14,7 +15,6 @@ from liulab_mbio.primers import (
     TAQ,
     THRESHOLDS,
     Band,
-    Check,
     design_pair,
     design_primer,
     evaluate_pair,

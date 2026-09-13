@@ -14,11 +14,12 @@ translated, and how a plate reads -- is `Phenotype`, read off the product's own 
 import dataclasses
 import os
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.goldengate.bench import (
@@ -44,10 +45,8 @@ from liulab_mbio.primers import (
     ONETAQ,
     Q5,
     THRESHOLDS,
-    Check,
     Polymerase,
     PrimerReport,
-    Status,
     Thresholds,
     design_pair,
     evaluate_primer,
@@ -105,8 +104,6 @@ PROTOCOL_FILE = "protocol.html"
 
 #: The columns of the primer order sheet.
 SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")
-
-_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,7 +260,7 @@ class Plan:
             *self.assembly.checks,
             Check(
                 "primers",
-                _worst(report.status for report in self.reports),
+                worst(report.status for report in self.reports),
                 len(self.reports),
                 _primer_detail(self.reports, self.thresholds),
             ),
@@ -272,7 +269,7 @@ class Plan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return _worst(check.status for check in self.checks)
+        return worst(check.status for check in self.checks)
 
     def protocol(self) -> "Protocol":
         """Return the bench protocol for this plan."""
@@ -784,12 +781,3 @@ def _marker(vector: SequenceRecord) -> Feature | None:
         ),
         None,
     )
-
-
-def _worst(statuses: Iterable[Status | None]) -> Status:
-    """Return the worst of these statuses, passing over anything nothing judged."""
-    worst: Status = "pass"
-    for status in statuses:
-        if status is not None and _RANK[status] > _RANK[worst]:
-            worst = status
-    return worst

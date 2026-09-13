@@ -7,6 +7,7 @@ from html import escape
 from importlib.resources import files
 from pathlib import Path
 
+from liulab_mbio.checks import Status
 from liulab_mbio.protocol.model import (
     Check,
     Gel,
@@ -15,7 +16,6 @@ from liulab_mbio.protocol.model import (
     Protocol,
     ReactionTable,
     Reference,
-    Status,
     Step,
     ThermocyclerProgram,
     Timer,

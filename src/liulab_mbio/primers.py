@@ -19,10 +19,10 @@ Hairpins and dimers are structure Tms at primer3's own default conditions, which
 
 import itertools
 import math
-from collections.abc import Iterable
 from dataclasses import KW_ONLY, dataclass
-from typing import Literal, TypedDict
+from typing import TypedDict
 
+from liulab_mbio.checks import STATUSES, Check, Status, worst
 from liulab_mbio.sequence import (
     BindingSite,
     Primer,
@@ -31,10 +31,6 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-
-type Status = Literal["pass", "warn", "fail"]
-
-_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
 
 #: primer3 refuses a thermodynamic alignment on anything longer.
 _THERMO_MAX = 60
@@ -307,28 +303,6 @@ TARGET_TM = 62.0
 
 
 @dataclass(frozen=True, slots=True)
-class Check:
-    """One verdict on a primer or a pair, with the value it judged.
-
-    Parameters
-    ----------
-    name
-        What was measured, such as ``"gc_clamp"``.
-    status
-        ``"pass"``, ``"warn"`` or ``"fail"``, or ``None`` where no sourced threshold judges it.
-    value
-        The measurement, in the unit `Thresholds` documents for it.
-    detail
-        What a reader needs besides the number.
-    """
-
-    name: str
-    status: Status | None
-    value: float
-    detail: str = ""
-
-
-@dataclass(frozen=True, slots=True)
 class _Wording:
     """How one check is written for a reader."""
 
@@ -434,7 +408,7 @@ class PrimerReport:
     @property
     def status(self) -> Status:
         """Return the worst status of any check that was judged."""
-        return _worst(check.status for check in self.checks)
+        return worst(check.status for check in self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.
@@ -605,7 +579,7 @@ class PairReport:
     @property
     def status(self) -> Status:
         """Return the worst status of either primer or of any pair check that was judged."""
-        return _worst(
+        return worst(
             (self.forward.status, self.reverse.status, *(one.status for one in self.checks))
         )
 
@@ -877,23 +851,23 @@ def _annealing_options(
                 BindingSite(start, start + size, strand),
                 sequence,
                 tm,
-                _worst((thresholds.length.grade(size), thresholds.tm.grade(tm))),
+                worst((thresholds.length.grade(size), thresholds.tm.grade(tm))),
             )
         )
     return options
 
 
 def _option_score(option: _Option, target_tm: float) -> tuple[int, float, int]:
-    return _RANK[option.grade], abs(option.tm - target_tm), len(option.sequence)
+    return STATUSES.index(option.grade), abs(option.tm - target_tm), len(option.sequence)
 
 
 def _pair_score(
     forward: _Option, reverse: _Option, target_tm: float, thresholds: Thresholds
 ) -> tuple[int, float, int]:
     difference = abs(forward.tm - reverse.tm)
-    grade = _worst((forward.grade, reverse.grade, thresholds.tm_difference.grade(difference)))
+    grade = worst((forward.grade, reverse.grade, thresholds.tm_difference.grade(difference)))
     drift = max(abs(forward.tm - target_tm), abs(reverse.tm - target_tm))
-    return _RANK[grade], drift + difference, len(forward.sequence) + len(reverse.sequence)
+    return STATUSES.index(grade), drift + difference, len(forward.sequence) + len(reverse.sequence)
 
 
 def _finite(value: float, fallback: float) -> float:
@@ -941,22 +915,13 @@ def _graded(name: str, value: float, band: Band, detail: str = "") -> Check:
     return Check(name, band.grade(value), value, detail)
 
 
-def _worst(statuses: Iterable[Status | None]) -> Status:
-    """Return the worst of these, passing over anything nothing judged."""
-    worst: Status = "pass"
-    for status in statuses:
-        if status is not None and _RANK[status] > _RANK[worst]:
-            worst = status
-    return worst
-
-
 def _run_check(sequence: str, thresholds: Thresholds) -> Check:
     longest = _longest_run(sequence)
     guanines = _longest_run(sequence, "G")
     guanine_status = thresholds.guanine_run.grade(guanines)
     return Check(
         "mononucleotide_run",
-        _worst((thresholds.mononucleotide_run.grade(longest), guanine_status)),
+        worst((thresholds.mononucleotide_run.grade(longest), guanine_status)),
         longest,
         f"{guanines} Gs in a row" if guanine_status != "pass" else "",
     )

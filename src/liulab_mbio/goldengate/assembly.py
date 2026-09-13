@@ -22,15 +22,14 @@ import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers import (
     Q5,
     THRESHOLDS,
-    Check,
     PairReport,
     Polymerase,
-    Status,
     Thresholds,
     design_pair,
     evaluate_pair,
@@ -59,8 +58,6 @@ DAM_SITE = "GATC"
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
 JUNCTION_COLOR = "#ff9900"
-
-_RANK: dict[Status, int] = {"pass": 0, "warn": 1, "fail": 2}
 
 
 def dam_sites(record: SequenceRecord) -> int:
@@ -412,11 +409,7 @@ class Assembly:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        worst: Status = "pass"
-        for check in self.checks:
-            if check.status is not None and _RANK[check.status] > _RANK[worst]:
-                worst = check.status
-        return worst
+        return worst(check.status for check in self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.
