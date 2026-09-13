@@ -19,7 +19,7 @@ from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites, primer_tail
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 
 # Pryor 2020's worked example: the eleven overhangs the plant synthetic biology community
 # standardised on, which the paper scores at 81% with BsmBI-v2 and 42 C / 16 C cycling.

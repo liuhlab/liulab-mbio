@@ -351,7 +351,7 @@ pixi run python scripts/build_ligation_fidelity.py --from DIR # from files alrea
 `https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0238592.sNNN&type=supplementary`,
 redirecting to signed storage, which `urllib` follows. Nothing else is fetched.
 
-Tests never touch the network: `tests/test_build_ligation_fidelity.py` writes the three XML
+Tests never touch the network: `tests/scripts/test_build_ligation_fidelity.py` writes the three XML
 parts of a workbook itself and reads them back, which is also what makes the guards testable.
 
 ## 10. Open gaps

@@ -22,7 +22,7 @@ from liulab_mbio.protocol import (
     read_protocol,
 )
 
-EXAMPLE = Path(__file__).parent / "data" / "pcr-protocol.json"
+EXAMPLE = Path(__file__).parents[1] / "data" / "pcr-protocol.json"
 
 
 def test_an_unknown_key_is_refused_and_located() -> None:

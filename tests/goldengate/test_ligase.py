@@ -18,7 +18,7 @@ from liulab_mbio.goldengate.cli import LIGASE_MATRIX_ENV
 from liulab_mbio.goldengate.design import Junction, design_overhangs, fidelity, ligation_matrix
 from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, read_profile
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 
 #: Two Watson-Crick pairs seen often, and one cross pair seen rarely. A row pairs with the
 #: column spelling its reverse complement, so AAAA pairs with TTTT and GGAA with TTCC.

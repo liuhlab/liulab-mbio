@@ -30,7 +30,7 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import find_sites, has_site, insert_site
 from liulab_mbio.snapgene import read_dna, write_dna
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6

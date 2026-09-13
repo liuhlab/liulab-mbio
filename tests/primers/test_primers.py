@@ -40,7 +40,7 @@ from liulab_mbio.sequence import (
 def puc19() -> SequenceRecord:
     from Bio import SeqIO
 
-    record = SeqIO.read(Path(__file__).parent / "data" / "pUC19.dna", "snapgene")
+    record = SeqIO.read(Path(__file__).parents[1] / "data" / "pUC19.dna", "snapgene")
     return SequenceRecord(str(record.seq), topology="circular", name="pUC19")
 
 

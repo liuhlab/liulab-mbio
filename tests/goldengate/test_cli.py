@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 VECTOR = str(DATA / "pUC19.dna")
 INSERT = str(DATA / "GFP.dna")
 

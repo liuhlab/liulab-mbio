@@ -14,7 +14,7 @@ from liulab_mbio.io import read_record
 from liulab_mbio.primers import amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 
 #: The multiple cloning site of the fixture, 0-based and half-open, and the GFP that replaces it.
 MCS = (395, 452)

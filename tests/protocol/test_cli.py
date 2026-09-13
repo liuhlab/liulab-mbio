@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
 
-EXAMPLE = Path(__file__).parent / "data" / "pcr-protocol.json"
+EXAMPLE = Path(__file__).parents[1] / "data" / "pcr-protocol.json"
 
 
 def test_the_cli_renders_a_protocol_to_the_file_it_is_given(tmp_path: Path) -> None:

@@ -16,7 +16,7 @@ import pytest
 
 from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, column_index, read_workbook
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 
 def _script() -> ModuleType:

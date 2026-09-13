@@ -25,7 +25,7 @@ from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, rever
 from liulab_mbio.sites import find_sites
 from liulab_mbio.snapgene import read_dna
 
-DATA = Path(__file__).parent / "data"
+DATA = Path(__file__).parents[1] / "data"
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)

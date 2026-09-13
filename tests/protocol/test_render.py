@@ -16,7 +16,7 @@ from liulab_mbio.protocol import (
     write_html,
 )
 
-EXAMPLE = Path(__file__).parent / "data" / "pcr-protocol.json"
+EXAMPLE = Path(__file__).parents[1] / "data" / "pcr-protocol.json"
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "wbr"}
 
 
