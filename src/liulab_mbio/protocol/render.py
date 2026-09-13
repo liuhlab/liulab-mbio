@@ -11,6 +11,7 @@ from liulab_mbio.protocol.model import (
     Check,
     Gel,
     Material,
+    Oligo,
     Protocol,
     ReactionTable,
     Reference,
@@ -30,7 +31,8 @@ def render_html(protocol: Protocol) -> str:
     body = "".join(
         [
             _header(protocol),
-            _materials(protocol.materials),
+            _materials(protocol.materials, protocol.equipment),
+            _oligos(protocol.oligos),
             *(_step(n, step) for n, step in enumerate(protocol.steps, 1)),
             _references(protocol.references),
         ]
@@ -133,36 +135,75 @@ def _checks(checks: tuple[Check, ...]) -> str:
     return f'<ul class="checks" aria-label="Checks">{badges}</ul>\n{details}\n'
 
 
-def _materials(materials: tuple[Material, ...]) -> str:
-    if not materials:
+def _cell(tag: str, css: str, inner: str) -> str:
+    return f'<{tag} class="{css}">{inner}</{tag}>' if css else f"<{tag}>{inner}</{tag}>"
+
+
+def _materials(materials: tuple[Material, ...], equipment: tuple[str, ...]) -> str:
+    """Everything that is not an oligo, and the hardware as one light line under it."""
+    if not materials and not equipment:
         return ""
     columns: list[tuple[str, Callable[[Material], str]]] = [
-        ("Sequence (5'→3')", lambda m: m.sequence),
-        ("Source", lambda m: m.source),
+        ("Supplier", lambda m: m.supplier),
+        ("Catalogue", lambda m: m.catalog),
         ("Storage", lambda m: m.storage),
+        ("Per run", lambda m: m.amount),
         ("Note", lambda m: m.note),
     ]
     shown = [(label, get) for label, get in columns if any(get(m) for m in materials)]
-    head = "<th>Name</th>" + "".join(f"<th>{escape(label)}</th>" for label, _ in shown)
+    table = ""
+    if materials:
+        head = "<th>Name</th>" + "".join(f"<th>{escape(label)}</th>" for label, _ in shown)
+        rows = "".join(
+            f"<tr><td>{escape(material.name)}</td>"
+            + "".join(f"<td>{escape(get(material))}</td>" for _, get in shown)
+            + "</tr>"
+            for material in materials
+        )
+        table = (
+            f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
+            f"<tbody>{rows}</tbody></table></div>"
+        )
+    line = ""
+    if equipment:
+        line = (
+            f'<p class="equipment"><strong>Equipment:</strong> {escape(", ".join(equipment))}</p>'
+        )
+    return f'<section class="block materials">\n<h2>Materials</h2>\n{table}{line}\n</section>\n'
+
+
+def _oligos(oligos: tuple[Oligo, ...]) -> str:
+    """Render the order sheet: one row each, every sequence with a copy button."""
+    if not oligos:
+        return ""
+    columns: list[tuple[str, str, Callable[[Oligo], str]]] = [
+        # One decimal, so the column reads as one: `_num` prints 63 beside 63.1.
+        ("Tm (°C)", "num", lambda o: "" if o.tm_c is None else f"{o.tm_c:.1f}"),
+        ("For", "", lambda o: o.purpose),
+        ("Working stock", "", lambda o: o.stock),
+        ("Note", "", lambda o: o.note),
+    ]
+    shown = [(label, css, get) for label, css, get in columns if any(get(o) for o in oligos)]
+    written = escape("Sequence (5'→3')")
+    head = f'<th>Name</th><th>{written}</th><th class="num">Length</th>' + "".join(
+        _cell("th", css, escape(label)) for label, css, _ in shown
+    )
     rows = []
-    for material in materials:
-        cells = [f"<td>{escape(material.name)}</td>"]
-        for label, get in shown:
-            value = get(material)
-            if label.startswith("Sequence") and value:
-                cells.append(
-                    f'<td class="seq-cell"><code class="seq">{escape(value)}</code>{_copy(value)}</td>'
-                )
-            else:
-                cells.append(f"<td>{escape(value)}</td>")
+    for oligo in oligos:
+        cells = [
+            f"<td>{escape(oligo.name)}</td>",
+            f'<td class="seq-cell"><code class="seq">{escape(oligo.sequence)}</code>'
+            f"{_copy(oligo.sequence)}</td>",
+            f'<td class="num">{len(oligo.sequence)}</td>',
+            *(_cell("td", css, escape(get(oligo))) for _, css, get in shown),
+        ]
         rows.append(f"<tr>{''.join(cells)}</tr>")
-    oligos = [m for m in materials if m.sequence]
     copy_all = ""
     if len(oligos) > 1:
-        sheet = "\n".join(f"{m.name}\t{m.sequence}" for m in oligos)
+        sheet = "\n".join(f"{oligo.name}\t{oligo.sequence}" for oligo in oligos)
         copy_all = f"<p>{_copy(sheet, 'Copy all sequences')}</p>"
     return (
-        '<section class="block materials">\n<h2>Materials</h2>\n'
+        '<section class="block oligos">\n<h2>Oligos</h2>\n'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
         f"<tbody>{''.join(rows)}</tbody></table></div>{copy_all}\n</section>\n"
     )

@@ -5,13 +5,16 @@ every sentence about the phenotype is read off the product's own features. The c
 are the bench choices that no table of NEB's covers; each says where it comes from.
 """
 
+import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.goldengate.assembly import Part, dam_sites
 from liulab_mbio.goldengate.bench import (
+    COLONY_PCR_MASTER_MIX,
     DNA_VOLUME_UL,
+    DNTP_STOCK_MM,
     GOLDEN_GATE_PCR_CYCLES,
     PRIMER_STOCK_UM,
     REFERENCES,
@@ -26,13 +29,16 @@ from liulab_mbio.goldengate.bench import (
     pcr_program,
     pcr_reaction,
 )
+from liulab_mbio.goldengate.plan import DEFAULT_HOST
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
     Gel,
     Lane,
     Material,
+    Oligo,
     Protocol,
+    ReactionTable,
     Reference,
     Step,
     Timer,
@@ -73,6 +79,32 @@ IPTG_UM = 200
 #: plated (E1601 technical note, §5). An order-of-magnitude check, not a target.
 NEB_COLONIES = 687
 
+#: Who sells the products this protocol names. Every catalogue number it prints comes out of an
+#: enzyme record or a product name a supplier wrote; none is written here.
+SUPPLIER = "New England Biolabs"
+
+#: NEBridge Ligase Master Mix: as `assembly_reaction` names the line, and as NEB sells it.
+LIGASE_MIX = "NEBridge Ligase Master Mix"
+LIGASE_MIX_PRODUCT = f"{LIGASE_MIX} (M1100)"
+
+#: The steps an oligo's row points at, written once so a row and its step cannot drift.
+COLONY_STEP = "Screen colonies by PCR"
+SEQUENCING_STEP = "Confirm the clone by sequencing"
+
+#: The hardware a run needs, which no reagent table covers.
+EQUIPMENT: tuple[str, ...] = (
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
+    "Microcentrifuge",
+    "Spectrophotometer or fluorometer",
+    f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
+    f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
+)
+
+#: A catalogue number at the end of a product name, such as ``"(M1100)"``. A letter and then a
+#: digit, so a bracketed enzyme name is not read as one.
+_CATALOG_RE = re.compile(r"^(?P<name>.*?)\s*\((?P<catalog>[A-Z]\d[\w./-]*)\)$")
+
 
 def protocol(plan: "Plan") -> Protocol:
     """Return the bench protocol for `plan`, ready to render.
@@ -94,6 +126,8 @@ def protocol(plan: "Plan") -> Protocol:
         highlights=_highlights(plan),
         checks=_checks(plan),
         materials=_materials(plan),
+        oligos=_oligos(plan),
+        equipment=EQUIPMENT,
         steps=_steps(plan),
         references=_references(plan),
     )
@@ -189,33 +223,121 @@ def _checks(plan: "Plan") -> tuple[Check, ...]:
 
 
 def _materials(plan: "Plan") -> tuple[Material, ...]:
-    """Every reagent and oligo the protocol asks for."""
-    stock = f"{PRIMER_STOCK_UM:g} µM working stock"
-    items = [
-        Material(report.primer.name, sequence=report.primer.sequence, note=stock)
-        for report in plan.reports
-    ]
-    items += [
-        Material(f"{plan.vector.name} plasmid", note="PCR template", storage="-20 °C"),
+    """Every reagent and consumable the protocol asks for. The oligos are `_oligos`."""
+    enzyme = plan.enzyme
+    assembly = assembly_reaction(enzyme, plan.amounts)
+    ladders = dict.fromkeys(
+        (choose_ladder(tuple(part.length for part in plan.parts)).name, plan.colony.ladder.name)
+    )
+    return (
+        Material(f"{plan.vector.name} plasmid", storage="-20 °C", note="PCR template"),
         *(
-            Material(f"{name} template", note="PCR template", storage="-20 °C")
+            Material(f"{name} template", storage="-20 °C", note="PCR template")
             for name in _insert_names(plan)
         ),
-        Material(f"{plan.polymerase.name} DNA Polymerase and its buffer", storage="-20 °C"),
-        Material("dNTP mix", storage="-20 °C"),
-        Material("DpnI", storage="-20 °C", note="cuts the methylated plasmid template only"),
-        Material("PCR and gel cleanup columns"),
-        Material("NEBridge Ligase Master Mix (M1100)", storage="-20 °C"),
-        Material(_label(plan.enzyme), storage="-20 °C"),
-        Material(plan.host, storage="-80 °C", note=f"{CELLS_UL:g} µL per transformation"),
-        Material("SOC or NEB 10-beta/Stable Outgrowth Medium"),
-        Material(_plate(plan)),
-        Material("OneTaq Quick-Load 2X Master Mix (M0486)", storage="-20 °C"),
+        Material(
+            f"{plan.polymerase.name} DNA Polymerase and its reaction buffer",
+            supplier=SUPPLIER,
+            storage="-20 °C",
+        ),
+        Material("dNTP mix", storage="-20 °C", note=f"{DNTP_STOCK_MM:g} mM of each base"),
+        Material(
+            "DpnI",
+            supplier=SUPPLIER,
+            storage="-20 °C",
+            amount=f"{DPNI_UNITS} units per PCR",
+            note="cuts the methylated plasmid template only",
+        ),
+        Material("PCR and gel cleanup spin columns"),
+        _catalogued(
+            LIGASE_MIX_PRODUCT,
+            supplier=SUPPLIER,
+            storage="-20 °C",
+            amount=_per_reaction(assembly, LIGASE_MIX),
+        ),
+        Material(
+            enzyme.commercial_name or enzyme.name,
+            supplier=enzyme.supplier or "",
+            catalog=enzyme.catalog_number or "",
+            storage="-20 °C",
+            amount=_per_reaction(assembly, _label(enzyme)),
+        ),
+        _catalogued(
+            plan.host,
+            supplier=SUPPLIER if plan.host == DEFAULT_HOST else "",
+            storage="-80 °C",
+            amount=f"{CELLS_UL:g} µL per transformation",
+        ),
+        Material(
+            "SOC or NEB 10-beta/Stable Outgrowth Medium",
+            amount=f"{OUTGROWTH_UL:g} µL per transformation",
+        ),
+        Material(_plate(plan), amount="one plate per transformation"),
+        _catalogued(
+            COLONY_PCR_MASTER_MIX,
+            supplier=SUPPLIER,
+            storage="-20 °C",
+            amount=_per_reaction(colony_pcr_reaction(), COLONY_PCR_MASTER_MIX),
+        ),
         Material("Agarose and 1X TAE or TBE"),
-        Material(choose_ladder(tuple(part.length for part in plan.parts)).name),
-        Material(plan.colony.ladder.name),
-    ]
-    return tuple(items)
+        *(_catalogued(name, supplier=SUPPLIER) for name in ladders),
+    )
+
+
+def _catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str = "") -> Material:
+    """Return a material, taking the catalogue number out of a product name that carries one.
+
+    A name carrying none leaves the cell empty; nothing here invents one.
+
+    Examples
+    --------
+    >>> _catalogued("NEB 100 bp DNA Ladder (N3231)").catalog
+    'N3231'
+    >>> _catalogued("Agarose and 1X TAE or TBE").catalog
+    ''
+    """
+    found = _CATALOG_RE.match(name)
+    if found is None:
+        return Material(name, supplier=supplier, storage=storage, amount=amount)
+    return Material(
+        found["name"],
+        supplier=supplier,
+        catalog=found["catalog"],
+        storage=storage,
+        amount=amount,
+    )
+
+
+def _per_reaction(table: ReactionTable, name: str) -> str:
+    """Return what one reaction takes of a component, or nothing where no line names it."""
+    for component in table.components:
+        if component.name.startswith(name):
+            return f"{component.volume_ul:g} µL per reaction"
+    return ""
+
+
+def _oligos(plan: "Plan") -> tuple[Oligo, ...]:
+    """Every designed oligo, in the order the primer sheet lists them."""
+    stock = f"{PRIMER_STOCK_UM:g} µM"
+    return tuple(
+        Oligo(
+            report.primer.name,
+            report.primer.sequence,
+            purpose=purpose,
+            tm_c=round(report["tm"].value, 1),
+            stock=stock,
+        )
+        for report, purpose in zip(plan.reports, _purposes(plan), strict=True)
+    )
+
+
+def _purposes(plan: "Plan") -> tuple[str, ...]:
+    """Which step uses each oligo, in the order `Plan.reports` lists them."""
+    return (
+        *(f"Amplify {part.name}" for part in plan.parts for _ in ("forward", "reverse")),
+        *(COLONY_STEP for _ in plan.colony.reports),
+        *(SEQUENCING_STEP for _ in plan.reads),
+    )
 
 
 def _plate(plan: "Plan") -> str:
@@ -544,7 +666,7 @@ def _colony_step(plan: "Plan") -> Step:
         else "These primers cannot tell a reversed insert from a correct one."
     )
     return Step(
-        "Screen colonies by PCR",
+        COLONY_STEP,
         instructions=(
             "Touch a well-separated colony with a sterile toothpick and stir it into the "
             "tube until the liquid clouds.",
@@ -583,7 +705,7 @@ def _sequencing_step(plan: "Plan") -> Step:
         for read in plan.reads
     )
     return Step(
-        "Confirm the clone by sequencing",
+        SEQUENCING_STEP,
         instructions=(
             "Miniprep two or three colonies that read as correct.",
             "Send each with both sequencing primers.",

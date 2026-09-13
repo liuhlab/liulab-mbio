@@ -8,7 +8,7 @@ import pytest
 
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
-    Material,
+    Oligo,
     Protocol,
     Step,
     read_protocol,
@@ -103,7 +103,7 @@ def test_text_from_the_protocol_is_escaped() -> None:
     protocol = Protocol(
         '<script>alert("t")</script>',
         summary="A & B",
-        materials=(Material("oligo", sequence='AC"GT'),),
+        oligos=(Oligo("oligo", 'AC"GT'),),
         steps=(Step("<b>mix</b>", instructions=("5 µL < 10 µL",)),),
     )
     html = render_html(protocol)
@@ -146,6 +146,43 @@ def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
     assert [len(s.find_all("input", type="checkbox")) for s in steps] == [1 + 3, 1 + 1, 1 + 2]
     keys = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
     assert len(set(keys)) == len(keys)
+
+
+def test_an_oligo_is_an_order_sheet_row_and_never_a_material(page: Node) -> None:
+    materials = page.find_all("section", cls="materials")[0]
+    assert "M13 fwd" not in materials.text
+    assert "GTAAAACGACGGCCAGT" not in materials.text
+    oligos = page.find_all("section", cls="oligos")[0]
+    assert [th.text for th in oligos.find_all("th")] == [
+        "Name",
+        "Sequence (5'→3')",
+        "Length",
+        "Tm (°C)",
+        "For",
+        "Working stock",
+    ]
+    row = next(r for r in oligos.find_all("tr") if "M13 fwd" in r.text)
+    cells = [cell.text for cell in row.find_all("td")]
+    assert cells[0] == "M13 fwd"
+    assert cells[2] == str(len("GTAAAACGACGGCCAGT"))
+    assert cells[3:] == ["55.4", "Set up the PCR", "10 µM"]
+
+
+def test_a_material_with_no_catalogue_number_gets_an_empty_cell(page: Node) -> None:
+    materials = page.find_all("section", cls="materials")[0]
+    head = [th.text for th in materials.find_all("th")]
+    column = head.index("Catalogue")
+    rows = [r for r in materials.find_all("tr") if r.find_all("td")]
+    numbers = [r.find_all("td")[column].text for r in rows]
+    assert numbers[0] == "M0273"
+    # Nothing is invented for the rest.
+    assert numbers[1:] == ["", "", ""]
+
+
+def test_the_equipment_is_one_light_line_under_the_materials(page: Node) -> None:
+    line = page.find_all(cls="equipment")[0].text
+    assert line.startswith("Equipment:")
+    assert "Thermocycler with a heated lid" in line
 
 
 def test_each_oligo_sequence_has_a_copy_button(page: Node) -> None:

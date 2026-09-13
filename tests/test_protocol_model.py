@@ -11,6 +11,7 @@ from liulab_mbio.protocol import (
     Incubation,
     Ladder,
     Lane,
+    Oligo,
     Protocol,
     ReactionTable,
     Reference,
@@ -82,6 +83,7 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: Timer("x", 0),
         lambda: Ladder("marker", ()),
         lambda: Lane("sample", (0,)),
+        lambda: Oligo("M13 fwd", "  "),
         lambda: Reference("x", url="javascript:alert(1)"),
         lambda: Step(""),
         lambda: Protocol(""),
@@ -123,8 +125,15 @@ def test_a_protocol_reads_from_its_json_file() -> None:
         Check("primers", "pass", detail="2 designed, 0 with a warning"),
         Check("controls", "warn", detail="no positive control is set up"),
     )
-    assert [m.name for m in protocol.materials][3:5] == ["M13 fwd", "M13 rev"]
-    assert protocol.materials[3].sequence == "GTAAAACGACGGCCAGT"
+    # Oligos are their own list, and a material the file gives no catalogue number keeps none.
+    assert [m.name for m in protocol.materials][:1] == ["Taq DNA Polymerase"]
+    assert (protocol.materials[0].supplier, protocol.materials[0].catalog) == ("NEB", "M0273")
+    assert (protocol.materials[-1].supplier, protocol.materials[-1].catalog) == ("", "")
+    assert [o.name for o in protocol.oligos] == ["M13 fwd", "M13 rev"]
+    assert protocol.oligos[0] == Oligo(
+        "M13 fwd", "GTAAAACGACGGCCAGT", purpose="Set up the PCR", tm_c=55.4, stock="10 µM"
+    )
+    assert protocol.equipment[0] == "Thermocycler with a heated lid"
     assert [s.title for s in protocol.steps] == [
         "Set up the PCR",
         "Run the thermocycler",

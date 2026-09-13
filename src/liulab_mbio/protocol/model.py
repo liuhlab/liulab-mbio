@@ -31,25 +31,63 @@ def _require(ok: bool, message: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class Material:
-    """A reagent, oligo, kit or piece of equipment the protocol needs.
+    """A reagent, kit or consumable the protocol needs. An oligo is an `Oligo`.
 
     Parameters
     ----------
     name
         As it is labelled on the tube or shelf.
-    sequence
-        5' to 3', for an oligo; shown with a copy button.
-    source, storage, note
-        Free text, such as a supplier and catalogue number, ``"-20 °C"``, or a stock
-        concentration.
+    supplier, catalog
+        Who sells it and the number to order it by. Left empty where they are not known, and
+        never guessed: a catalogue number is ordered as written.
+    storage
+        Such as ``"-20 °C"``.
+    amount
+        What one run takes, such as ``"1 µL per reaction"``.
+    note
+        Anything else the bench needs, such as a stock concentration.
     """
 
     name: str
     _: KW_ONLY
-    sequence: str = ""
-    source: str = ""
+    supplier: str = ""
+    catalog: str = ""
     storage: str = ""
+    amount: str = ""
     note: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class Oligo:
+    """One synthetic DNA to order: a row of the order sheet, kept apart from the reagents.
+
+    Parameters
+    ----------
+    name
+        What to order it under, and what its tube is labelled.
+    sequence
+        5' to 3'. Shown with a copy button, and its length is counted from it.
+    purpose
+        What it is for, such as the title of the step that uses it.
+    tm_c
+        Of the part that anneals, °C, or ``None`` where none was computed.
+    stock
+        The working dilution, such as ``"10 µM"``.
+    note
+        Anything else, such as a modification or a purification.
+    """
+
+    name: str
+    sequence: str
+    _: KW_ONLY
+    purpose: str = ""
+    tm_c: float | None = None
+    stock: str = ""
+    note: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse an oligo with no sequence."""
+        _require(bool(self.sequence.strip()), f"oligo {self.name!r} has no sequence")
 
 
 @dataclass(frozen=True, slots=True)
@@ -362,7 +400,10 @@ class Protocol:
         has to read rather than scan goes here and not in `overview`.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
-    materials, steps, references
+    materials, oligos, equipment
+        The reagents, the oligos to order, and the hardware. Three lists and not one, because an
+        order sheet and a reagent list want different columns.
+    steps, references
         In the order they are shown.
     """
 
@@ -373,6 +414,8 @@ class Protocol:
     highlights: tuple[str, ...] = ()
     checks: tuple[Check, ...] = ()
     materials: tuple[Material, ...] = ()
+    oligos: tuple[Oligo, ...] = ()
+    equipment: tuple[str, ...] = ()
     steps: tuple[Step, ...] = ()
     references: tuple[Reference, ...] = ()
 
@@ -458,6 +501,7 @@ _PROTOCOL = _object(
     Protocol,
     checks=_list(_object(Check)),
     materials=_list(_object(Material)),
+    oligos=_list(_object(Oligo)),
     steps=_list(_STEP),
     references=_list(_object(Reference)),
 )

@@ -251,6 +251,43 @@ def test_the_primer_sheet_carries_every_oligo(plan):
         assert float(tm) == pytest.approx(report["tm"].value, abs=0.05)
 
 
+def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
+    oligos = plan.protocol().oligos
+    rows = primer_sheet(plan).splitlines()[1:]
+    for oligo, row in zip(oligos, rows, strict=True):
+        name, sequence, length, tm = row.split("\t")
+        assert (oligo.name, oligo.sequence) == (name, sequence)
+        assert len(oligo.sequence) == int(length)
+        assert oligo.tm_c == pytest.approx(float(tm), abs=0.05)
+
+
+def test_every_oligo_names_the_step_that_uses_it_and_is_no_material(plan):
+    protocol = plan.protocol()
+    titles = {step.title for step in protocol.steps}
+    listed = " ".join(material.name + material.note for material in protocol.materials)
+    for oligo in protocol.oligos:
+        assert oligo.purpose in titles
+        assert oligo.stock
+        assert oligo.name not in listed
+        assert oligo.sequence not in listed
+
+
+def test_a_material_carries_a_catalogue_number_only_where_the_package_knows_one(plan):
+    materials = {material.name: material for material in plan.protocol().materials}
+    enzyme = materials[plan.enzyme.commercial_name]
+    assert (enzyme.supplier, enzyme.catalog) == (plan.enzyme.supplier, plan.enzyme.catalog_number)
+    assert materials["NEBridge Ligase Master Mix"].catalog == "M1100"
+    # Nothing is invented for a reagent no product name names.
+    assert materials["Agarose and 1X TAE or TBE"].catalog == ""
+    assert materials["PCR and gel cleanup spin columns"].supplier == ""
+
+
+def test_the_equipment_is_named_apart_from_the_reagents(plan):
+    protocol = plan.protocol()
+    assert "Thermocycler with a heated lid" in protocol.equipment
+    assert not any(item in {m.name for m in protocol.materials} for item in protocol.equipment)
+
+
 def test_every_step_of_the_protocol_says_what_a_good_result_looks_like(plan):
     steps = plan.protocol().steps
     assert len(steps) >= 10
@@ -437,6 +474,8 @@ def _sentences(protocol) -> str:
     ]
     for material in protocol.materials:
         parts += [material.name, material.note]
+    for oligo in protocol.oligos:
+        parts += [oligo.name, oligo.purpose]
     for step in protocol.steps:
         parts += [step.title, *step.instructions, *step.cautions, *step.notes, *step.expected]
         for entry in step.troubleshooting:

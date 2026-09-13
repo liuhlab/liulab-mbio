@@ -14,12 +14,19 @@
     {"name": "controls", "status": "warn", "detail": "no positive control is set up"}
   ],
   "materials": [
-    {"name": "Taq DNA polymerase", "storage": "-20 °C"},
-    {"name": "10x standard Taq buffer", "storage": "-20 °C"},
-    {"name": "10 mM dNTPs", "storage": "-20 °C"},
-    {"name": "M13 fwd", "sequence": "GTAAAACGACGGCCAGT", "note": "10 µM working stock"},
-    {"name": "M13 rev", "sequence": "CAGGAAACAGCTATGAC", "note": "10 µM working stock"},
+    {"name": "Taq DNA Polymerase", "supplier": "NEB", "catalog": "M0273", "storage": "-20 °C", "amount": "0.125 µL per reaction"},
+    {"name": "10x standard Taq buffer", "storage": "-20 °C", "amount": "2.5 µL per reaction"},
+    {"name": "10 mM dNTPs", "storage": "-20 °C", "note": "10 mM of each base"},
     {"name": "1% agarose gel in 1x TAE"}
+  ],
+  "oligos": [
+    {"name": "M13 fwd", "sequence": "GTAAAACGACGGCCAGT", "purpose": "Set up the PCR", "tm_c": 55.4, "stock": "10 µM"},
+    {"name": "M13 rev", "sequence": "CAGGAAACAGCTATGAC", "purpose": "Set up the PCR", "tm_c": 52.8, "stock": "10 µM"}
+  ],
+  "equipment": [
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
+    "Microcentrifuge"
   ],
   "steps": [
     {
