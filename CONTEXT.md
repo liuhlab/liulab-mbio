@@ -110,3 +110,22 @@ The name a supplier sells an enzyme under, such as BsaI-HFv2 for BsaI. It carrie
 supplier's own incubation, heat-inactivation and methylation answers, which differ between
 products of one enzyme.
 _Avoid_: brand, product name
+
+### Packet
+
+One unit of a SnapGene `.dna` file: a type byte, a length, then the payload. A reader keeps the
+packets the sequence record does not hold, so that a writer can put them back unchanged.
+_Avoid_: block, chunk, section
+
+### Stale packet
+
+A packet describing bases that have since changed, such as SnapGene's cut-site cache or its
+history. The writer drops it rather than write it back, leaving SnapGene to rebuild it.
+_Avoid_: invalid packet, dirty cache
+
+### Edit report
+
+What an edit did to the features and primer binding sites it did not simply shift: **trimmed**
+ones lost bases, **dropped** ones lost all of them, and **changed** ones now span the new bases
+because the edit fell inside them.
+_Avoid_: diff, changelog, summary
