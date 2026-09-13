@@ -218,7 +218,23 @@ class Plan:
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
-        return protocol_for(self)
+        return protocol_for(
+            vector=self.vector,
+            span=self.span,
+            overhangs=self.overhangs,
+            linearised_vector=self.linearised_vector,
+            insert_parts=self.insert_parts,
+            assembly=self.assembly,
+            colony=self.colony,
+            reads=self.reads,
+            amounts=self.amounts,
+            phenotype=self.phenotype,
+            oligos=self.designed_oligos,
+            checks=self.checks,
+            host=self.host,
+            polymerase=self.polymerase,
+            thresholds=self.thresholds,
+        )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the primer sheet and the protocol into `directory`.

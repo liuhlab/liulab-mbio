@@ -3,9 +3,10 @@
 `plan_assembly` is the way in: it takes a vector and any number of inserts and runs the whole
 design, and `Plan.write` puts the product, the primer sheet and the bench protocol in one
 directory.
-The submodules are the steps it is made of -- `design`, `assembly`, `bench` and `steps` -- plus
-`ligase`, which reads a ligase fidelity matrix the user holds. `bench` is the assembly reaction
-and its cycling; what any pipeline shares is `liulab_mbio.bench`. `design` and `ligase` are not
+The submodules are the steps it is made of -- `design`, `assembly`, `bench`, `oligos` and
+`steps` -- plus `ligase`, which reads a ligase fidelity matrix the user holds. `bench` is the
+assembly reaction and its cycling, and `steps` the protocol's own steps and their order; what any
+pipeline shares is `liulab_mbio.bench`. `design` and `ligase` are not
 re-exported here: import them by module.
 """
 

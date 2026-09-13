@@ -1,4 +1,4 @@
-"""The bench numbers any cloning pipeline shares: reactions, programs and validation.
+"""The bench any cloning pipeline shares: reactions, programs, validation and protocol steps.
 
 Every public name in its modules imports from here as well. A module that cites a source keeps
 it as its own `REFERENCES`; `REFERENCES` here gathers them.
@@ -10,6 +10,8 @@ it as its own `REFERENCES`; `REFERENCES` here gathers them.
 - `inactivation`: an enzyme's heat inactivation.
 - `phenotype`: what a clone is expected to show, read off the product's own features.
 - `oligos`: the primer order sheet.
+- `steps`: the protocol steps any pipeline reuses, built from plain facts. Its two references
+  are cited only by a protocol that runs the step they belong to.
 
 Nothing here imports `liulab_mbio.goldengate`.
 """
@@ -40,6 +42,40 @@ from liulab_mbio.bench.pcr import (
     pcr_reaction,
 )
 from liulab_mbio.bench.phenotype import SELECTION, Phenotype, read_phenotype
+from liulab_mbio.bench.steps import (
+    ASSEMBLY_UL,
+    CELLS_UL,
+    COLONY_PCR_TITLE,
+    DPNI_CELSIUS,
+    DPNI_REFERENCE,
+    DPNI_SECONDS,
+    DPNI_UNITS,
+    HEAT_SHOCK_CELSIUS,
+    HEAT_SHOCK_SECONDS,
+    ICE_SECONDS,
+    IPTG_UM,
+    OUTGROWTH_CELSIUS,
+    OUTGROWTH_SECONDS,
+    OUTGROWTH_UL,
+    PLATE_DILUTION,
+    PLATE_REFERENCE,
+    PLATE_UL,
+    RECOVER_SECONDS,
+    SEQUENCING_TITLE,
+    THAW_SECONDS,
+    XGAL_UG_ML,
+    cleanup_step,
+    colony_pcr_step,
+    dpni_step,
+    gel_step,
+    listed,
+    pcr_step,
+    pcr_title,
+    phenotype_sentences,
+    quantify_step,
+    sequencing_step,
+    transform_step,
+)
 from liulab_mbio.bench.validation import (
     COLONY_FLANK,
     CORRECT_CLONE,
@@ -59,24 +95,45 @@ from liulab_mbio.protocol import Reference
 REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels.REFERENCES)
 
 __all__ = [
+    "ASSEMBLY_UL",
+    "CELLS_UL",
     "COLONY_FLANK",
     "COLONY_HOLD_CELSIUS",
     "COLONY_LYSIS_SECONDS",
     "COLONY_PCR_MASTER_MIX",
+    "COLONY_PCR_TITLE",
     "COLONY_PCR_VOLUME_UL",
     "CORRECT_CLONE",
     "DNA_VOLUME_UL",
     "DNTP_STOCK_MM",
+    "DPNI_CELSIUS",
+    "DPNI_REFERENCE",
+    "DPNI_SECONDS",
+    "DPNI_UNITS",
     "EMPTY_CLONE",
+    "HEAT_SHOCK_CELSIUS",
+    "HEAT_SHOCK_SECONDS",
+    "ICE_SECONDS",
+    "IPTG_UM",
     "JUNCTION_OFFSET",
     "LADDER_1_KB_PLUS",
     "LADDER_100_BP",
+    "OUTGROWTH_CELSIUS",
+    "OUTGROWTH_SECONDS",
+    "OUTGROWTH_UL",
+    "PLATE_DILUTION",
+    "PLATE_REFERENCE",
+    "PLATE_UL",
     "PRIMER_STOCK_UM",
+    "RECOVER_SECONDS",
     "REFERENCES",
     "REVERSED_CLONE",
     "SANGER_FLANK",
     "SELECTION",
+    "SEQUENCING_TITLE",
     "SHEET_COLUMNS",
+    "THAW_SECONDS",
+    "XGAL_UG_ML",
     "Amount",
     "Clone",
     "ColonyCheck",
@@ -84,19 +141,30 @@ __all__ = [
     "SangerRead",
     "agarose_percent",
     "choose_ladder",
+    "cleanup_step",
     "colony_pcr_check",
     "colony_pcr_master_mix_component",
     "colony_pcr_program",
     "colony_pcr_reaction",
+    "colony_pcr_step",
     "dna_amount",
+    "dpni_step",
+    "gel_step",
     "heat_inactivation",
+    "listed",
     "molecular_weight",
     "oligo_row",
     "pcr_program",
     "pcr_reaction",
+    "pcr_step",
+    "pcr_title",
+    "phenotype_sentences",
     "primer_sheet",
+    "quantify_step",
     "read_phenotype",
     "sanger_primers",
+    "sequencing_step",
     "to_nanograms",
     "to_pmol",
+    "transform_step",
 ]

@@ -22,7 +22,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | biology | `enzymes`, `sites`, `codons` | shipped enzyme data, cut sites, domestication |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
-| bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos` |
+| bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
 | pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
 
 `goldengate.plan_assembly` is the one way in, and `Plan.write` puts the product, the primer
