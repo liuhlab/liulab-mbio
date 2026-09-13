@@ -56,7 +56,8 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
   `conformance` holds that copy to the floor.
 - **hatchling + hatch-vcs**. The version comes from the newest git tag, CalVer `vYYYY.M.PATCH`.
   Never hand-edit a version.
-- Platforms: `osx-arm64` and `linux-64`. Dependencies: `typer`, `biopython`, `primer3-py`.
+- Platforms: `osx-arm64` and `linux-64`. Dependencies: `typer`, `biopython`, `primer3-py`, and
+  `ipcr` from bioconda, a pixi dependency only.
 
 ## Commands
 
