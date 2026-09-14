@@ -5,7 +5,8 @@ search:
 
 # Restriction enzyme data: sources, licences and conventions
 
-Research note for issue #7. Everything below was retrieved on **2026-09-12**. It records where
+Research note for issue #7. Everything below was retrieved on **2026-09-12** unless a section
+stamps its own date. It records where
 `src/liulab_mbio/data/enzymes.json` comes from, what each source allows, and which values are
 still unverified.
 
@@ -136,7 +137,7 @@ suppliers, and different heat-inactivation answers — so it raises rather than 
 
 Sixteen multiple-cloning-site enzymes (EcoRI, SacI, KpnI, SmaI, XmaI, BamHI, XbaI, SalI, PstI,
 SbfI, SphI, HindIII, NdeI, NcoI, XhoI, NotI) and ten Type IIS enzymes (BsaI, BsmBI, Esp3I,
-BbsI, BpiI, SapI, BspQI, PaqCI, AarI, BtgZI).
+BbsI, BpiI, SapI, BspQI, PaqCI, AarI, BtgZI). Section 8 adds SrfI and PmeI, which are neither.
 
 NEB returns HTTP 403 to scripts, so every NEB product page was read through a dated Wayback
 snapshot; the snapshot date is in the data file beside each source. The snapshots run from
@@ -208,9 +209,41 @@ The REBASE release is recorded in the data file as `rebase_version`; this build 
 REBASE updates daily, so a later run may move a cut offset or add an isoschizomer. That is the
 point of having the script.
 
+## 8. SrfI and PmeI: two blunt eight-base cutters
+
+Retrieved **2026-09-14**, for issue #60. The iterative library scheme names both by name, and
+neither was in the set above.
+
+| Enzyme | REBASE | `top_cut` | `bottom_cut` | `end` | Product page |
+| --- | --- | --- | --- | --- | --- |
+| SrfI | `GCCC^GGGC` | 4 | 4 | blunt | NEB #R0629, snapshot 2026-03-08 |
+| PmeI | `GTTT^AAAC` | 4 | 4 | blunt | NEB #R0560, snapshot 2026-02-01 |
+
+Each cuts the middle of its own eight-base palindrome, so both are Type II by the rule in
+section 3 and neither belongs in `GOLDEN_GATE_ENZYMES`. Both pages give 37 °C, heat inactivation
+at 65 °C for 20 minutes, and Dam and Dcm insensitivity. CpG is `blocked` for SrfI and
+`blocked by some combinations of overlapping` for PmeI. Neither has an unverified field.
+
+**Verdict: the rules in section 2 apply unchanged, and both enzymes ship.** REBASE supplies the
+site and both cut offsets under the open-database grant. The two NEB pages are cited and their
+handful of facts re-entered in `scripts/enzyme_properties.toml`, never mirrored.
+
+**SmaI is not a substitute for SrfI.** `CCCGGG` lies inside `GCCCGGGC`, so SmaI cuts every SrfI
+site and every other `CCCGGG` besides. An enzyme meant to destroy one fragment and spare the
+rest has to be the rarer one.
+
+PmeI's isoschizomer is MssI, which Thermo Fisher sells and which reads and cuts identically, so
+`get_enzyme` answers to that name too. REBASE lists no other enzyme of SrfI's specificity.
+
+Three readings agree with the offsets above, and none is a build input:
+
+- REBASE's EMBOSS export `emboss_e.609`: `SrfI GCCCGGGC 8 2 1 4 4 0 0`, and `PmeI` the same.
+- Biopython's `Bio.Restriction`: `SrfI` and `PmeI` both have `fst5 = 4` and report a blunt cut.
+- NEBcutter 3's enzyme table: `SrfI {"ct1": 4, "cb1": 4}`, `PmeI {"ct1": 4, "cb1": 4}`.
+
 ## Sources
 
-All read on 2026-09-12.
+All read on 2026-09-12, except the two product pages section 8 names.
 
 - REBASE, *withrefm* — all enzymes with references and isoschizomers, release 609:
   [rebase.neb.com](https://rebase.neb.com/rebase/link_withrefm)
@@ -223,8 +256,8 @@ All read on 2026-09-12.
   restriction and modification: enzymes, genes and genomes. *Nucleic Acids Res.* 51: D629–D630.
   [doi:10.1093/nar/gkac975](https://doi.org/10.1093/nar/gkac975)
 - NEB product pages for R3101, R3156, R3142, R0141, R0180, R3136, R0145, R3138, R3140, R3642,
-  R3182, R3104, R0111, R3193, R0146, R3189, R3733, R0739, R0734, R3539, R0569, R0712, R0745 and
-  R0703 — each via a dated `web.archive.org` snapshot, listed in the data file
+  R3182, R3104, R0111, R3193, R0146, R3189, R3733, R0739, R0734, R3539, R0569, R0712, R0745,
+  R0703, R0629 and R0560 — each via a dated `web.archive.org` snapshot, listed in the data file
 - NEB, *Heat Inactivation* chart — archived snapshot 2026-03-05:
   [web.archive.org](https://web.archive.org/web/20260305053645id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation)
 - NEB, *Terms of Use* — archived snapshot 2026-05-23:
