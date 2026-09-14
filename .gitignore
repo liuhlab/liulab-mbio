@@ -25,3 +25,4 @@ __pycache__/
 # needs another machine's copy.
 /.codex/
 /.gemini/
+reference_docs/
