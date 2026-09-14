@@ -4,11 +4,12 @@ import pytest
 
 from liulab_mbio.enzymes import Enzyme, enzymes, get_enzyme
 
-# The PoC set: the pUC19 multiple cloning site, plus the Type IIS enzymes used for Golden Gate.
+# The PoC set: the pUC19 multiple cloning site, the Type IIS enzymes used for Golden Gate, and
+# the two blunt eight-base cutters the iterative library scheme needs.
 EXPECTED = {
     "AarI", "BamHI", "BbsI", "BpiI", "BsaI", "BsmBI", "BspQI", "BtgZI", "EcoRI", "Esp3I",
-    "HindIII", "KpnI", "NcoI", "NdeI", "NotI", "PaqCI", "PstI", "SacI", "SalI", "SapI",
-    "SbfI", "SmaI", "SphI", "XbaI", "XhoI", "XmaI",
+    "HindIII", "KpnI", "NcoI", "NdeI", "NotI", "PaqCI", "PmeI", "PstI", "SacI", "SalI",
+    "SapI", "SbfI", "SmaI", "SphI", "SrfI", "XbaI", "XhoI", "XmaI",
 }  # fmt: skip
 
 
@@ -31,6 +32,16 @@ def test_sapi_leaves_the_three_base_overhang_golden_gate_designs_around() -> Non
     sapi = get_enzyme("SapI")
     assert (sapi.site, sapi.cut_offsets) == ("GCTCTTC", (8, 11))  # REBASE GCTCTTC(1/4)
     assert (sapi.end, sapi.overhang_length) == ("5'", 3)
+
+
+def test_the_two_blunt_eight_base_cutters_cut_inside_their_site() -> None:
+    srfi, pmei = get_enzyme("SrfI"), get_enzyme("PmeI")
+    assert (srfi.site, srfi.cut_offsets) == ("GCCCGGGC", (4, 4))  # REBASE GCCC^GGGC
+    assert (pmei.site, pmei.cut_offsets) == ("GTTTAAAC", (4, 4))  # REBASE GTTT^AAAC
+    assert (srfi.catalog_number, pmei.catalog_number) == ("R0629", "R0560")
+    for enzyme in (srfi, pmei):
+        assert (enzyme.type, enzyme.end, enzyme.overhang_length) == ("II", "blunt", 0)
+        assert enzyme.unverified == ()
 
 
 def test_a_neoschizomer_is_not_listed_as_an_isoschizomer() -> None:

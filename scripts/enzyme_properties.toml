@@ -134,6 +134,16 @@ title = "NEB BtgZI (NEB #R0703) product page"
 url = "https://www.neb.com/en-us/products/r0703-btgzi"
 archived = "2025-12-31"
 
+[sources.neb-r0629]
+title = "NEB SrfI (NEB #R0629) product page"
+url = "https://www.neb.com/en-us/products/r0629-srfi"
+archived = "2026-03-08"
+
+[sources.neb-r0560]
+title = "NEB PmeI (NEB #R0560) product page"
+url = "https://www.neb.com/en-us/products/r0560-pmei"
+archived = "2026-02-01"
+
 [sources.thermo-er1011]
 title = "Thermo Scientific BpiI (BbsI) (#ER1011) product page"
 url = "https://www.thermofisher.com/order/catalog/product/ER1011"
@@ -400,3 +410,24 @@ heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "impaired" }
 source = "neb-r0703"
+
+# Two blunt eight-base cutters. Both cut inside their site, so neither is a Golden Gate enzyme.
+[enzymes.SrfI]
+commercial_name = "SrfI"
+catalog_number = "R0629"
+supplier = "New England Biolabs"
+incubation_celsius = 37
+heat_inactivation_celsius = 65
+heat_inactivation_minutes = 20
+methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "blocked" }
+source = "neb-r0629"
+
+[enzymes.PmeI]
+commercial_name = "PmeI"
+catalog_number = "R0560"
+supplier = "New England Biolabs"
+incubation_celsius = 37
+heat_inactivation_celsius = 65
+heat_inactivation_minutes = 20
+methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "blocked by some combinations of overlapping" }
+source = "neb-r0560"

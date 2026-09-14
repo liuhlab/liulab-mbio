@@ -1,6 +1,6 @@
 {
   "rebase_version": "609",
-  "built": "2026-09-13",
+  "built": "2026-09-14",
   "sources": {
     "rebase": {
       "title": "REBASE, withrefm \u2014 all enzymes with references and isoschizomers",
@@ -126,6 +126,16 @@
       "title": "NEB BtgZI (NEB #R0703) product page",
       "url": "https://www.neb.com/en-us/products/r0703-btgzi",
       "archived": "2025-12-31"
+    },
+    "neb-r0629": {
+      "title": "NEB SrfI (NEB #R0629) product page",
+      "url": "https://www.neb.com/en-us/products/r0629-srfi",
+      "archived": "2026-03-08"
+    },
+    "neb-r0560": {
+      "title": "NEB PmeI (NEB #R0560) product page",
+      "url": "https://www.neb.com/en-us/products/r0560-pmei",
+      "archived": "2026-02-01"
     },
     "thermo-er1011": {
       "title": "Thermo Scientific BpiI (BbsI) (#ER1011) product page",
@@ -752,6 +762,44 @@
       }
     },
     {
+      "name": "PmeI",
+      "site": "GTTTAAAC",
+      "top_cut": 4,
+      "bottom_cut": 4,
+      "overhang_length": 0,
+      "end": "blunt",
+      "type": "II",
+      "isoschizomers": [
+        "MssI"
+      ],
+      "suppliers": "NS",
+      "commercial_name": "PmeI",
+      "catalog_number": "R0560",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked by some combinations of overlapping"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0560",
+        "catalog_number": "neb-r0560",
+        "supplier": "neb-r0560",
+        "incubation_celsius": "neb-r0560",
+        "heat_inactivation_celsius": "neb-r0560",
+        "heat_inactivation_minutes": "neb-r0560",
+        "methylation": "neb-r0560",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
       "name": "PstI",
       "site": "CTGCAG",
       "top_cut": 5,
@@ -1008,6 +1056,42 @@
         "heat_inactivation_celsius": "neb-r3182",
         "heat_inactivation_minutes": "neb-r3182",
         "methylation": "neb-r3182",
+        "site": "rebase",
+        "top_cut": "rebase",
+        "bottom_cut": "rebase",
+        "isoschizomers": "rebase"
+      }
+    },
+    {
+      "name": "SrfI",
+      "site": "GCCCGGGC",
+      "top_cut": 4,
+      "bottom_cut": 4,
+      "overhang_length": 0,
+      "end": "blunt",
+      "type": "II",
+      "isoschizomers": [],
+      "suppliers": "N",
+      "commercial_name": "SrfI",
+      "catalog_number": "R0629",
+      "supplier": "New England Biolabs",
+      "incubation_celsius": 37,
+      "heat_inactivation_celsius": 65,
+      "heat_inactivation_minutes": 20,
+      "methylation": {
+        "dam": "not sensitive",
+        "dcm": "not sensitive",
+        "cpg": "blocked"
+      },
+      "unverified": [],
+      "provenance": {
+        "commercial_name": "neb-r0629",
+        "catalog_number": "neb-r0629",
+        "supplier": "neb-r0629",
+        "incubation_celsius": "neb-r0629",
+        "heat_inactivation_celsius": "neb-r0629",
+        "heat_inactivation_minutes": "neb-r0629",
+        "methylation": "neb-r0629",
         "site": "rebase",
         "top_cut": "rebase",
         "bottom_cut": "rebase",
