@@ -1,0 +1,919 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/restriction-enzyme-data/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Restriction enzyme data: sources, licences and conventions - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#restriction-enzyme-data-sources-licences-and-conventions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Restriction enzyme data: sources, licences and conventions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-data-file-holds-and-who-supplied-each-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. What the data file holds, and who supplied each field
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Licences
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Licences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rebase-open-with-a-citation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        REBASE: open, with a citation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neb-cite-never-mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        NEB: cite, never mirror
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thermo-fisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Thermo Fisher
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cut-offsets-the-convention-and-how-rebases-notation-maps-onto-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Cut offsets: the convention, and how REBASE's notation maps onto it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-isoschizomers-the-rule-used-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Isoschizomers: the rule used here
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-enzymes-shipped-and-where-each-products-facts-came-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Enzymes shipped, and where each product's facts came from
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Enzymes shipped, and where each product&#x27;s facts came from">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unverified-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Unverified values
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cross-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Cross-checks
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-regenerating-the-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Regenerating the file
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-srfi-and-pmei-two-blunt-eight-base-cutters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. SrfI and PmeI: two blunt eight-base cutters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="restriction-enzyme-data-sources-licences-and-conventions">Restriction enzyme data: sources, licences and conventions<a class="headerlink" href="#restriction-enzyme-data-sources-licences-and-conventions" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #7. Everything below was retrieved on <strong>2026-09-12</strong> unless a section
+stamps its own date. It records where
+<code>src/liulab_mbio/data/enzymes.json</code> comes from, what each source allows, and which values are
+still unverified.</p>
+<h2 id="1-what-the-data-file-holds-and-who-supplied-each-field">1. What the data file holds, and who supplied each field<a class="headerlink" href="#1-what-the-data-file-holds-and-who-supplied-each-field" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site</code>, <code>top_cut</code>, <code>bottom_cut</code>, <code>isoschizomers</code>, <code>suppliers</code></td>
+<td>REBASE <code>withrefm</code></td>
+</tr>
+<tr>
+<td><code>overhang_length</code>, <code>end</code>, <code>type</code></td>
+<td>derived from the cut offsets by the build script</td>
+</tr>
+<tr>
+<td><code>commercial_name</code>, <code>catalog_number</code>, <code>supplier</code></td>
+<td>supplier product page</td>
+</tr>
+<tr>
+<td><code>incubation_celsius</code>, <code>heat_inactivation_celsius</code>, <code>heat_inactivation_minutes</code></td>
+<td>supplier product page</td>
+</tr>
+<tr>
+<td><code>methylation</code> (Dam, Dcm, CpG)</td>
+<td>supplier product page</td>
+</tr>
+</tbody>
+</table>
+<p>Every enzyme carries a <code>provenance</code> map naming the source of each value, and an <code>unverified</code>
+list naming fields no source stated. The sources themselves are listed in the file's <code>sources</code>
+table with their URL and the date read.</p>
+<h2 id="2-licences">2. Licences<a class="headerlink" href="#2-licences" title="Permanent link">&para;</a></h2>
+<h3 id="rebase-open-with-a-citation">REBASE: open, with a citation<a class="headerlink" href="#rebase-open-with-a-citation" title="Permanent link">&para;</a></h3>
+<p>REBASE states its own terms on its citation page:</p>
+<blockquote>
+<p>REBASE is an open database provided to benefit the scientific community. Adaptation or
+distribution of information from REBASE should also remain open and accessible to the
+public. If you include or otherwise utilize REBASE information in or for your work, please
+cite the latest review.</p>
+</blockquote>
+<p><strong>Verdict: REBASE-derived values ship.</strong> This repository is open and MIT-licensed, which is
+what "remain open and accessible" asks for, and the citation is carried in the data file and
+here:</p>
+<blockquote>
+<p>Roberts, R.J., Vincze, T., Posfai, J., Macelis, D. REBASE: a database for DNA restriction
+and modification: enzymes, genes and genomes. <em>Nucleic Acids Res.</em> 51: D629–D630 (2023).
+<a href="https://doi.org/10.1093/nar/gkac975">doi:10.1093/nar/gkac975</a></p>
+</blockquote>
+<p>The file header adds <code>Copyright (c) Dr. Richard J. Roberts, 2024. All rights reserved.</code> The
+copyright notice and the open-database statement sit together, so the citation page is read as
+the grant and the notice as the reservation of authorship. This closes the REBASE gap issue #4
+left open.</p>
+<h3 id="neb-cite-never-mirror">NEB: cite, never mirror<a class="headerlink" href="#neb-cite-never-mirror" title="Permanent link">&para;</a></h3>
+<p>NEB's terms of use, on the <code>Copyright and Use</code> heading:</p>
+<blockquote>
+<p>As between you and us, all Information contained on the Sites is copyright of NEB unless
+specifically identified otherwise. You may not use or copy the Content other than for
+non-commercial individual reference purposes with all copyright or other proprietary notices
+retained. Except as expressly provided above … you may not otherwise copy, display, download,
+install, use, compile, distribute, mirror on another server, transfer, license, lease, loan,
+sell, modify, reproduce, republish, retransmit … or create any derivative work based on such
+Information.</p>
+</blockquote>
+<p><strong>Verdict: no NEB file, page or table is redistributed.</strong> What ships is a handful of facts per
+enzyme — a temperature, a catalogue number, a sensitivity word — each read from a cited page
+and re-entered by hand in <code>scripts/enzyme_properties.toml</code>. This is the same line issue #4 drew
+("cite and paraphrase numbers, never redistribute the files"). It is also why the build script
+fetches REBASE and nothing else: an automated merge of an NEB dataset would be mirroring it.</p>
+<p>The same reading applies to <code>nc3.neb.com/NEBcutter/data/enzymes.json</code>, NEBcutter 3's enzyme
+table, which is reachable without a 403. It was read to confirm product names and reaction
+temperatures. It is <strong>not</strong> a build input and none of it is copied wholesale.</p>
+<h3 id="thermo-fisher">Thermo Fisher<a class="headerlink" href="#thermo-fisher" title="Permanent link">&para;</a></h3>
+<p>Thermo's product pages were read for BpiI and AarI, the two enzymes in the set NEB does not
+sell. The same rule applies: cited, re-entered, not mirrored.</p>
+<h2 id="3-cut-offsets-the-convention-and-how-rebases-notation-maps-onto-it">3. Cut offsets: the convention, and how REBASE's notation maps onto it<a class="headerlink" href="#3-cut-offsets-the-convention-and-how-rebases-notation-maps-onto-it" title="Permanent link">&para;</a></h2>
+<p>A cut offset is a <strong>0-based boundary counted from the first base of the recognition site as
+written 5' to 3'</strong>, like a Python slice point: offset <code>k</code> severs a strand between site bases
+<code>k - 1</code> and <code>k</code>. <code>top_cut</code> is the cut in the strand carrying the site; <code>bottom_cut</code> is the cut
+in the complementary strand, written in that same frame, so it says the bottom strand is cut
+between the partners of bases <code>k - 1</code> and <code>k</code>. This matches <code>docs/adr/0001-coordinates.md</code>:
+positions are 0-based, and a boundary is a slice point rather than a base.</p>
+<p>An offset outside <code>0 .. len(site)</code> is a cut outside the site, which is what makes an enzyme
+Type IIS. The build script derives <code>type</code> that way, rather than reading REBASE's subtype field.</p>
+<p>REBASE writes cuts two ways, and both are read by <code>parse_site</code>:</p>
+<table>
+<thead>
+<tr>
+<th>REBASE</th>
+<th>Means</th>
+<th><code>top_cut</code></th>
+<th><code>bottom_cut</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G^AATTC</code> (EcoRI)</td>
+<td>cut marked inside the site, same position on both strands</td>
+<td>1</td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>GGTAC^C</code> (KpnI)</td>
+<td>as above, leaving a 3' overhang</td>
+<td>5</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>CCC^GGG</code> (SmaI)</td>
+<td>as above, blunt</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>GGTCTC(1/5)</code> (BsaI)</td>
+<td>offsets past the 3' end of the site</td>
+<td>7</td>
+<td>11</td>
+</tr>
+<tr>
+<td><code>GCTCTTC(1/4)</code> (SapI)</td>
+<td>as above, three-base overhang</td>
+<td>8</td>
+<td>11</td>
+</tr>
+<tr>
+<td><code>AACTGG(-5/-1)</code></td>
+<td>negative offsets count back from the site's 3' end</td>
+<td>1</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p>The two worked examples issue #7 asks for:</p>
+<ul>
+<li><strong>BsaI <code>GGTCTC(1/5)</code></strong>: site length 6, so <code>top_cut = 6 + 1 = 7</code> and <code>bottom_cut = 6 + 5 = 11</code>.
+  On <code>GGTCTCN^NNNN</code>, the top strand is cut after one spacer base and the bottom strand four
+  bases further on, leaving a four-base 5' overhang.</li>
+<li><strong>SapI <code>GCTCTTC(1/4)</code></strong>: site length 7, so <code>top_cut = 8</code> and <code>bottom_cut = 11</code>, a three-base
+  5' overhang.</li>
+</ul>
+<p><code>end</code> is <code>5'</code> when <code>bottom_cut &gt; top_cut</code>, <code>3'</code> when it is smaller, and <code>blunt</code> when they are
+equal; <code>overhang_length</code> is the distance between them.</p>
+<p>A site found on the reverse strand is handled by <code>Enzyme.cut_positions</code>, which mirrors both
+offsets about the end of the matched span, so the returned pair is always (top strand, bottom
+strand) in the record's own coordinates.</p>
+<p>REBASE also writes a few enzymes with <strong>two</strong> pairs of offsets, one on each side of the site
+(BcgI, <code>(10/12)GCANNNNNNTCG(12/10)</code>). None is in this set, and <code>parse_site</code> refuses them rather
+than keeping half a record.</p>
+<h2 id="4-isoschizomers-the-rule-used-here">4. Isoschizomers: the rule used here<a class="headerlink" href="#4-isoschizomers-the-rule-used-here" title="Permanent link">&para;</a></h2>
+<p>REBASE's <code>&lt;2&gt;</code> field lists every enzyme of the same <strong>specificity</strong>, which includes
+neoschizomers — the same site cut in a different place — and hundreds of enzymes nobody sells.
+<code>isoschizomers</code> in the data file is narrower: an enzyme is an isoschizomer here when it shares
+both the site and both cut offsets, <strong>and</strong> REBASE lists at least one supplier for it.</p>
+<p>The difference is not cosmetic. SmaI (<code>CCC^GGG</code>, blunt) and XmaI (<code>C^CCGGG</code>, four-base 5'
+overhang) appear in each other's REBASE list; treating them as interchangeable would give a
+blunt vector a sticky end. Under the rule above SmaI's isoschizomer list is empty, which is the
+honest answer for the set we ship.</p>
+<p>This also decides lookup. <code>get_enzyme</code> resolves a name, then a commercial name, then an
+isoschizomer. <code>BstV2I</code> is an isoschizomer of both BbsI and BpiI — enzymes with different
+suppliers, and different heat-inactivation answers — so it raises rather than picking one.</p>
+<h2 id="5-enzymes-shipped-and-where-each-products-facts-came-from">5. Enzymes shipped, and where each product's facts came from<a class="headerlink" href="#5-enzymes-shipped-and-where-each-products-facts-came-from" title="Permanent link">&para;</a></h2>
+<p>Sixteen multiple-cloning-site enzymes (EcoRI, SacI, KpnI, SmaI, XmaI, BamHI, XbaI, SalI, PstI,
+SbfI, SphI, HindIII, NdeI, NcoI, XhoI, NotI) and ten Type IIS enzymes (BsaI, BsmBI, Esp3I,
+BbsI, BpiI, SapI, BspQI, PaqCI, AarI, BtgZI). Section 8 adds SrfI and PmeI, which are neither.</p>
+<p>NEB returns HTTP 403 to scripts, so every NEB product page was read through a dated Wayback
+snapshot; the snapshot date is in the data file beside each source. The snapshots run from
+2025-10-07 to 2026-08-14 — recorded per source rather than as one date, because that is what
+each value's age actually is.</p>
+<p>Values worth flagging:</p>
+<ul>
+<li><strong>BsmBI-v2 <code>incubation_celsius</code> is 55</strong>, the digestion optimum on NEB's product page. NEB's
+  Golden Gate programs cycle BsmBI-v2 at 42 °C. That is a protocol temperature and belongs to
+  the protocol, not to the enzyme record. BspQI is the same story: 50 °C here, 42 °C in NEB's
+  Ligase Master Mix table.</li>
+<li><strong>BsmBI-v2 Dam and Dcm are both "not sensitive"</strong>, and CpG is "blocked", read from the
+  2026-08-14 snapshot. Issue #4 left these two cells unread; this closes that gap.</li>
+<li><strong>BtgZI</strong>: a 2025-12-31 snapshot of the product page was found under
+  <code>neb.com/en-us/products/r0703-btgzi</code>, which #4 recorded as having no snapshot. Incubation is
+  60 °C, heat inactivation 80 °C for 20 minutes, CpG impaired.</li>
+<li><strong>KpnI-HF, BamHI-HF and PstI-HF</strong> say <code>Heat Inactivation: No</code>. Their
+  <code>heat_inactivation_celsius</code> is <code>null</code> and they are <em>not</em> listed as unverified: the supplier
+  answered, and the answer was "heat does not stop it".</li>
+</ul>
+<h3 id="unverified-values">Unverified values<a class="headerlink" href="#unverified-values" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>Field</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BpiI (ER1011)</td>
+<td><code>heat_inactivation_celsius</code>, <code>heat_inactivation_minutes</code></td>
+<td>Thermo's page says "Sensitive to Heat Inactivation: Yes" and gives no temperature</td>
+</tr>
+<tr>
+<td>AarI (ER1581)</td>
+<td><code>heat_inactivation_celsius</code>, <code>heat_inactivation_minutes</code></td>
+<td>as above</td>
+</tr>
+</tbody>
+</table>
+<p>Thermo's usual 65 °C for 20 minutes is <strong>not</strong> recorded, because the page does not say it.</p>
+<p>AarI's CpG value is Thermo's own coarser wording, <code>"sensitive"</code>, where NEB says
+<code>"impaired by overlapping"</code> for PaqCI, the same specificity. Both are kept as their supplier
+wrote them rather than normalised into one vocabulary that neither supplier uses.</p>
+<h2 id="6-cross-checks">6. Cross-checks<a class="headerlink" href="#6-cross-checks" title="Permanent link">&para;</a></h2>
+<p>Three independent readings agree with the shipped cut offsets, and none of them is a build
+input:</p>
+<ul>
+<li>REBASE's own EMBOSS export <code>emboss_e.609</code>, whose <code>c1</code>/<code>c2</code> columns are the same two
+  boundaries this note defines. BsaI reads <code>GGTCTC 6 2 0 7 11 0 0</code>; SapI reads
+  <code>GCTCTTC 7 2 0 8 11 0 0</code>.</li>
+<li>Biopython's <code>Bio.Restriction</code> dictionary, compiled from an older REBASE release:
+  <code>BsaI</code> has <code>fst5 = 7</code>, <code>SapI</code> has <code>fst5 = 8</code>.</li>
+<li>NEBcutter 3's enzyme table: <code>BsaI {"ct1": 7, "cb1": 11}</code>, <code>SapI {"ct1": 8, "cb1": 11}</code>.</li>
+</ul>
+<p>Heat-inactivation temperatures were also checked against NEB's <em>Heat Inactivation</em> chart
+(archived 2026-03-05), which agrees with every product page read: BsaI-HFv2 80 °C, Esp3I 65 °C,
+BspQI 80 °C, BtgZI 80 °C, SapI 65 °C, and <code>No</code> for BamHI-HF, KpnI-HF and PstI-HF.</p>
+<p>REBASE's methylation-sensitivity pages (<code>cgi-bin/msget</code> and <code>cgi-bin/damlist</code>) were read as
+well. They answer a different question — whether an overlapping Dam, Dcm or CpG site <em>can</em>
+occur and what was measured when it does — in a vocabulary of their own (<code>cut</code>, <code>blocked</code>,
+<code>variable</code>, <code>some impaired</code>). The data file carries the supplier's wording instead, because the
+supplier's wording is what a bench protocol quotes. REBASE's view is the place to look when a
+supplier says nothing.</p>
+<h2 id="7-regenerating-the-file">7. Regenerating the file<a class="headerlink" href="#7-regenerating-the-file" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_enzymes.py<span class="w">                    </span><span class="c1"># downloads REBASE withrefm</span>
+pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_enzymes.py<span class="w"> </span>--withrefm<span class="w"> </span>FILE<span class="w">    </span><span class="c1"># from a local copy</span>
+</code></pre></div>
+<p>The script fetches REBASE, merges <code>scripts/enzyme_properties.toml</code>, and writes
+<code>src/liulab_mbio/data/enzymes.json</code>. Tests never reach the network: they parse excerpts.</p>
+<p>The REBASE release is recorded in the data file as <code>rebase_version</code>; this build used <strong>609</strong>.
+REBASE updates daily, so a later run may move a cut offset or add an isoschizomer. That is the
+point of having the script.</p>
+<h2 id="8-srfi-and-pmei-two-blunt-eight-base-cutters">8. SrfI and PmeI: two blunt eight-base cutters<a class="headerlink" href="#8-srfi-and-pmei-two-blunt-eight-base-cutters" title="Permanent link">&para;</a></h2>
+<p>Retrieved <strong>2026-09-14</strong>, for issue #60. The iterative library scheme names both by name, and
+neither was in the set above.</p>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>REBASE</th>
+<th><code>top_cut</code></th>
+<th><code>bottom_cut</code></th>
+<th><code>end</code></th>
+<th>Product page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SrfI</td>
+<td><code>GCCC^GGGC</code></td>
+<td>4</td>
+<td>4</td>
+<td>blunt</td>
+<td>NEB #R0629, snapshot 2026-03-08</td>
+</tr>
+<tr>
+<td>PmeI</td>
+<td><code>GTTT^AAAC</code></td>
+<td>4</td>
+<td>4</td>
+<td>blunt</td>
+<td>NEB #R0560, snapshot 2026-02-01</td>
+</tr>
+</tbody>
+</table>
+<p>Each cuts the middle of its own eight-base palindrome, so both are Type II by the rule in
+section 3 and neither belongs in <code>GOLDEN_GATE_ENZYMES</code>. Both pages give 37 °C, heat inactivation
+at 65 °C for 20 minutes, and Dam and Dcm insensitivity. CpG is <code>blocked</code> for SrfI and
+<code>blocked by some combinations of overlapping</code> for PmeI. Neither has an unverified field.</p>
+<p><strong>Verdict: the rules in section 2 apply unchanged, and both enzymes ship.</strong> REBASE supplies the
+site and both cut offsets under the open-database grant. The two NEB pages are cited and their
+handful of facts re-entered in <code>scripts/enzyme_properties.toml</code>, never mirrored.</p>
+<p><strong>SmaI is not a substitute for SrfI.</strong> <code>CCCGGG</code> lies inside <code>GCCCGGGC</code>, so SmaI cuts every SrfI
+site and every other <code>CCCGGG</code> besides. An enzyme meant to destroy one fragment and spare the
+rest has to be the rarer one.</p>
+<p>PmeI's isoschizomer is MssI, which Thermo Fisher sells and which reads and cuts identically, so
+<code>get_enzyme</code> answers to that name too. REBASE lists no other enzyme of SrfI's specificity.</p>
+<p>Three readings agree with the offsets above, and none is a build input:</p>
+<ul>
+<li>REBASE's EMBOSS export <code>emboss_e.609</code>: <code>SrfI GCCCGGGC 8 2 1 4 4 0 0</code>, and <code>PmeI</code> the same.</li>
+<li>Biopython's <code>Bio.Restriction</code>: <code>SrfI</code> and <code>PmeI</code> both have <code>fst5 = 4</code> and report a blunt cut.</li>
+<li>NEBcutter 3's enzyme table: <code>SrfI {"ct1": 4, "cb1": 4}</code>, <code>PmeI {"ct1": 4, "cb1": 4}</code>.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All read on 2026-09-12, except the two product pages section 8 names.</p>
+<ul>
+<li>REBASE, <em>withrefm</em> — all enzymes with references and isoschizomers, release 609:
+  <a href="https://rebase.neb.com/rebase/link_withrefm">rebase.neb.com</a></li>
+<li>REBASE, EMBOSS exports <code>emboss_e.609</code> and <code>emboss_r.609</code>:
+  <a href="https://rebase.neb.com/rebase/rebase.f37.html">rebase.neb.com</a></li>
+<li>REBASE, <em>Citing REBASE</em>: <a href="https://rebase.neb.com/rebase/rebcit.html">rebcit.html</a></li>
+<li>REBASE per-enzyme pages, supplier pages (<code>cgi-bin/ecget</code>) and methylation sensitivity
+  (<code>cgi-bin/msget</code>, <code>cgi-bin/damlist</code>)</li>
+<li>Roberts, R.J., Vincze, T., Posfai, J., Macelis, D. (2023) REBASE: a database for DNA
+  restriction and modification: enzymes, genes and genomes. <em>Nucleic Acids Res.</em> 51: D629–D630.
+  <a href="https://doi.org/10.1093/nar/gkac975">doi:10.1093/nar/gkac975</a></li>
+<li>NEB product pages for R3101, R3156, R3142, R0141, R0180, R3136, R0145, R3138, R3140, R3642,
+  R3182, R3104, R0111, R3193, R0146, R3189, R3733, R0739, R0734, R3539, R0569, R0712, R0745,
+  R0703, R0629 and R0560 — each via a dated <code>web.archive.org</code> snapshot, listed in the data file</li>
+<li>NEB, <em>Heat Inactivation</em> chart — archived snapshot 2026-03-05:
+  <a href="https://web.archive.org/web/20260305053645id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation">web.archive.org</a></li>
+<li>NEB, <em>Terms of Use</em> — archived snapshot 2026-05-23:
+  <a href="https://web.archive.org/web/20260523091525id_/https://www.neb.com/en-us/terms-of-use">web.archive.org</a></li>
+<li>NEBcutter 3 enzyme table: <a href="https://nc3.neb.com/NEBcutter/data/enzymes.json">nc3.neb.com</a></li>
+<li>Thermo Scientific product pages for BpiI (#ER1011) and AarI (#ER1581) — archived snapshots
+  2026-08-02</li>
+<li><code>docs/research/golden-gate-assembly.md</code> (issue #4) for NEB's Golden Gate reaction
+  temperatures and its per-enzyme table</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

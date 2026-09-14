@@ -1,0 +1,1124 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/codon-usage/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Codon usage tables: sources, licences and what the shipped table is - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#codon-usage-tables-sources-licences-and-what-the-shipped-table-is" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Codon usage tables: sources, licences and what the shipped table is
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-the-data-file-holds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. What the data file holds
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-licences-source-by-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Licences, source by source
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Licences, source by source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-ncbi-genbank-no-restrictions-and-an-honest-caveat" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 NCBI GenBank: no restrictions, and an honest caveat
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-kazusa-cutg-no-licence-statement-anywhere-and-the-wrong-table-besides" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 Kazusa CUTG: no licence statement anywhere, and the wrong table besides
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-hive-cuts-the-article-is-cc-by-the-database-is-not-licensed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 HIVE-CUTs: the article is CC BY, the database is not licensed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-genscript-all-rights-reserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.4 GenScript: all rights reserved
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-the-rest" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.5 The rest
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-the-shipped-table-is-and-what-it-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. What the shipped table is, and what it is not
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-rebuilding-the-bacterial-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Rebuilding the bacterial table
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cross-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Cross-checks
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-mammal-tables-hg38-and-mm39-through-liulab-genome" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. The mammal tables: hg38 and mm39, through liulab-genome
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. The mammal tables: hg38 and mm39, through liulab-genome">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-one-coding-sequence-per-gene" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.1 One coding sequence per gene
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.2 Licences
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-rebuilding-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.3 Rebuilding them
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-cross-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.4 Cross-checks
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="codon-usage-tables-sources-licences-and-what-the-shipped-table-is">Codon usage tables: sources, licences and what the shipped table is<a class="headerlink" href="#codon-usage-tables-sources-licences-and-what-the-shipped-table-is" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #10. Sections 1 to 6 were read on <strong>2026-09-12</strong>, and section 7, on
+the human and mouse tables added afterwards, on <strong>2026-09-14</strong>. It records where
+<code>src/liulab_mbio/data/codon_usage.json</code> comes from, which published tables were rejected and
+why, and what the shipped tables are and are not.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<p><strong>Every shipped table is counted from a genome, not copied from a codon usage database.</strong></p>
+<p>Every published compilation that was checked either states no licence at all, reserves its
+rights, or carries a non-commercial clause that an MIT package cannot take. The primary
+sequence data does not have that problem: NCBI states it places no restrictions on the
+distribution of the sequence records, EMBL-EBI states the same of what it distributes, and a
+count computed over those records is this package's own measurement rather than a
+redistribution of anyone's table.</p>
+<p>That is also the better answer on the merits. The obvious table to reach for — Kazusa's
+<em>Escherichia coli</em> K-12 entry — turns out to be <strong>14 coding sequences</strong>, and one of its cells
+is zero. Counting the genome gives 4,317.</p>
+<p>Three tables ship. <em>E. coli</em> K-12 is fetched from NCBI as spliced coding sequences. Human and
+mouse are read from the genomes the lab already holds, through liulab-genome, and section 7
+covers them.</p>
+<h2 id="2-what-the-data-file-holds">2. What the data file holds<a class="headerlink" href="#2-what-the-data-file-holds" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>the short name <code>codon_usage()</code> is asked for: <code>e-coli-k12</code>, <code>human</code>, <code>mouse</code></td>
+</tr>
+<tr>
+<td><code>organism</code>, <code>taxid</code>, <code>accession</code></td>
+<td>the organism, its NCBI taxonomy identifier, and the record or assembly counted</td>
+</tr>
+<tr>
+<td><code>cds_count</code>, <code>codon_count</code></td>
+<td>how many coding sequences were counted, and how many codons they held</td>
+</tr>
+<tr>
+<td><code>counts</code></td>
+<td>all 64 codons, stop codons included</td>
+</tr>
+<tr>
+<td><code>note</code></td>
+<td>what the table is, and that it is not a highly expressed set</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Organism</th>
+<th>What was counted</th>
+<th>Coding sequences</th>
+<th>Codons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>e-coli-k12</code></td>
+<td><em>E. coli</em> str. K-12 substr. MG1655</td>
+<td><code>U00096.3</code>, every complete CDS</td>
+<td>4,317</td>
+<td>1,342,016</td>
+</tr>
+<tr>
+<td><code>human</code></td>
+<td><em>Homo sapiens</em></td>
+<td><code>GCF_000001405.40</code> (hg38), GENCODE v50 canonical</td>
+<td>19,597</td>
+<td>11,327,553</td>
+</tr>
+<tr>
+<td><code>mouse</code></td>
+<td><em>Mus musculus</em></td>
+<td><code>GCF_000001635.27</code> (mm39), GENCODE vM39 canonical</td>
+<td>21,479</td>
+<td>11,894,511</td>
+</tr>
+</tbody>
+</table>
+<p>A coding sequence is skipped, rather than counted in part, when its length is not a whole
+number of codons or when it carries a base outside <code>ACGT</code>: a partial or ambiguous record would
+bias the table by the codons it does spell. One of the 4,318 records NCBI returns for
+<em>E. coli</em> is skipped for that reason.</p>
+<p><strong>No cell is zero, in any of the three.</strong> The rarest cell is 306 (<code>TAG</code>) in <em>E. coli</em>, 4,390 in
+human and 4,884 in mouse, which matters because a fraction, a log ratio or a codon adaptation
+weight computed from a zero is undefined.</p>
+<h2 id="3-licences-source-by-source">3. Licences, source by source<a class="headerlink" href="#3-licences-source-by-source" title="Permanent link">&para;</a></h2>
+<h3 id="31-ncbi-genbank-no-restrictions-and-an-honest-caveat">3.1 NCBI GenBank: no restrictions, and an honest caveat<a class="headerlink" href="#31-ncbi-genbank-no-restrictions-and-an-honest-caveat" title="Permanent link">&para;</a></h3>
+<p>From NCBI's <em>Website and Data Usage Policies and Disclaimers</em>, under <strong>Molecular Data Usage</strong>
+(<code>https://www.ncbi.nlm.nih.gov/home/about/policies/</code>, read 2026-09-12):</p>
+<blockquote>
+<p>Databases of molecular data on the NCBI Web site include such examples as nucleotide
+sequences (GenBank), protein sequences, macromolecular structures, molecular variation, gene
+expression, and mapping data. They are designed to provide and encourage access within the
+scientific community to sources of current and comprehensive information. Therefore, NCBI
+itself places no restrictions on the use or distribution of the data contained therein. Nor
+do we accept data when the submitter has requested restrictions on reuse or redistribution.
+However, some submitters of the original data (or the country of origin of such data) may
+claim patent, copyright, or other intellectual property rights in all or a portion of the
+data (that has been submitted). NCBI is not in a position to assess the validity of such
+claims and since there is no transfer of rights from submitters to NCBI, NCBI has no rights
+to transfer to a third party. Therefore, NCBI cannot provide comment or unrestricted
+permission concerning the use, copying, or distribution of the information contained in the
+molecular databases.</p>
+</blockquote>
+<p>Read it as it is written. The first two sentences are strong — no restrictions, and NCBI
+refuses submissions that carry any. The last sentence is a disclaimer: NCBI is <strong>not</strong> issuing
+a licence. This is an absence of restrictions plus a refusal to accept restricted submissions,
+which is the best position available for genome sequence, and it is a much stronger position
+than redistributing a third party's compilation would be.</p>
+<p><strong>Verdict: the genome is counted, and the counts ship.</strong></p>
+<h3 id="32-kazusa-cutg-no-licence-statement-anywhere-and-the-wrong-table-besides">3.2 Kazusa CUTG: no licence statement anywhere, and the wrong table besides<a class="headerlink" href="#32-kazusa-cutg-no-licence-statement-anywhere-and-the-wrong-table-besides" title="Permanent link">&para;</a></h3>
+<p>The Codon Usage Database (<code>https://www.kazusa.or.jp/codon/</code>) states no licence, no terms of
+use and no redistribution permission. The front page, the readme and the institute privacy
+page were all read on 2026-09-12. The only normative statement is a citation request, from
+<code>https://www.kazusa.or.jp/codon/readme_codon.html</code> under the heading <strong>"Please cite"</strong>:</p>
+<blockquote>
+<p>Codon usage tabulated from the international DNA sequence databases: status for the year
+2000. Nakamura, Y., Gojobori, T. and Ikemura, T. (2000) Nucl. Acids Res. 28, 292.</p>
+</blockquote>
+<p>The same page gives its input as:</p>
+<blockquote>
+<p>NCBI-GenBank Flat File Release 160.0 [June 15 2007].</p>
+</blockquote>
+<p>The Integbio catalogue record (<code>https://catalog.integbio.jp/dbcatalog/en/record/nbdc00033</code>)
+shows no information under "Link(s) to Terms of use"; the CC0 shown there applies to the
+catalogue record, not to the database.</p>
+<p><strong>A citation request is not a copyright licence, and silence is not permission.</strong> Kazusa has
+granted nothing, so an MIT package cannot rely on it.</p>
+<p><strong>It is also the wrong table.</strong> Its own header for the K-12 entry reads
+<code>Escherichia coli K12 [gbbct]: 14 CDS's (5122 codons)</code> — fourteen coding sequences, about
+0.3% of the genome's codons — and its <code>UAG</code> cell is <code>0.00 0.0 (0)</code>. Kazusa's other <em>E. coli</em>
+entry, <code>species=37762</code>, counts 8,087 CDS and 2,330,943 codons, which <em>exceeds</em> one genome
+because CUTG counts redundant and partial GenBank entries rather than one annotated genome.
+No Kazusa entry corresponds to MG1655's coding sequences.</p>
+<p><strong>Verdict: not shipped, and not trusted as a cross-check without saying how small it is.</strong></p>
+<h3 id="33-hive-cuts-the-article-is-cc-by-the-database-is-not-licensed">3.3 HIVE-CUTs: the article is CC BY, the database is not licensed<a class="headerlink" href="#33-hive-cuts-the-article-is-cc-by-the-database-is-not-licensed" title="Permanent link">&para;</a></h3>
+<p><code>https://hive.biochemistry.gwu.edu/review/codon</code> redirects to
+<code>https://dnahive.fda.gov/dna.cgi?cmd=cuts_main</code> and is reachable (2026-09-12). The paper
+(Athey et al. 2017, <em>BMC Bioinformatics</em> 18:391) is open access:</p>
+<blockquote>
+<p>Open Access This article is distributed under the terms of the Creative Commons Attribution
+4.0 International License (<code>http://creativecommons.org/licenses/by/4.0/</code>), which permits
+unrestricted use, distribution, and reproduction in any medium, provided you give
+appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons license, and indicate if changes were made. The Creative Commons Public Domain
+Dedication waiver (<code>http://creativecommons.org/publicdomain/zero/1.0/</code>) applies to the data
+made available in this article, unless otherwise stated.</p>
+</blockquote>
+<p>That CC BY covers the article, and the CC0 sentence is scoped to "the data made available in
+this article" — what is printed in the paper, not the contents of the web resource. The
+availability statement says only:</p>
+<blockquote>
+<p>This database is available for use by all, including both academics and non-academics.</p>
+</blockquote>
+<p>That is an access policy, not a licence with defined redistribution terms. The site asserts no
+licence over the tables, and no scriptable download endpoint was confirmed: a probe of a
+plausible file URL returned the site's HTML shell rather than a data file.</p>
+<p>One point in its favour, which is not enough on its own: HIVE-CUTs is FDA-produced and
+FDA-hosted, and FDA's website policy
+(<code>https://www.fda.gov/about-fda/about-website/website-policies</code>) says:</p>
+<blockquote>
+<p>Unless otherwise noted, the contents of the FDA website (<code>www.fda.gov</code>) — both text and
+graphics — are not copyrighted. They are in the public domain and may be republished,
+reprinted and otherwise used freely by anyone without the need to obtain permission from FDA.</p>
+</blockquote>
+<p>Note the scope: that sentence names <code>www.fda.gov</code>, and HIVE-CUTs is served from
+<code>dnahive.fda.gov</code>. Suggestive, not dispositive.</p>
+<p><strong>Verdict: cite it, do not vendor it.</strong></p>
+<h3 id="34-genscript-all-rights-reserved">3.4 GenScript: all rights reserved<a class="headerlink" href="#34-genscript-all-rights-reserved" title="Permanent link">&para;</a></h3>
+<p>The codon frequency table page (<code>https://www.genscript.com/tools/codon-frequency-table</code>)
+carries <code>© 2002-2026 GenScript All rights reserved.</code> Its "Terms of Use and Privacy" link goes
+to a privacy policy with no content-reuse clause, and the Standard Terms and Conditions behind
+that are a services agreement about deliverables, not about website content. There is an
+express reservation, no permission, and no stated provenance for the table.</p>
+<p><strong>Verdict: not copied.</strong> This is the weakest source of the set — worse than Kazusa, which at
+least discloses where its numbers came from.</p>
+<h3 id="35-the-rest">3.5 The rest<a class="headerlink" href="#35-the-rest" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>What it says</th>
+<th>May this package ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codon Statistics Database (<code>codonstatsdb.unr.edu</code>)</td>
+<td>article is CC BY-<strong>NC</strong>; the download page asserts no licence over the data</td>
+<td><strong>No</strong> — non-commercial clashes with MIT</td>
+</tr>
+<tr>
+<td>CoCoPUTs (Alexaki et al. 2019, <em>JMB</em>)</td>
+<td>not open access; no licence found on the article or the site</td>
+<td><strong>No</strong> — nothing to rely on</td>
+</tr>
+<tr>
+<td>EMBOSS <code>Eecoli.cut</code>, <code>Eecoli_high.cut</code></td>
+<td>ship inside a <strong>GPL</strong> tarball, and their own headers name <code>CUTG146</code> and <code>TranstermMay1994</code> as their input</td>
+<td><strong>No</strong> — copyleft, and the provenance leads back to CUTG anyway</td>
+</tr>
+<tr>
+<td><code>python_codon_tables</code></td>
+<td>the package is <strong>CC0 1.0</strong>, but its README says "All tables are from kazusa.or.jp"</td>
+<td><strong>No</strong> — a downstream grant cannot convey rights the upstream never gave. Useful as precedent that others do this; not authority that it is allowed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-what-the-shipped-table-is-and-what-it-is-not">4. What the shipped table is, and what it is not<a class="headerlink" href="#4-what-the-shipped-table-is-and-what-it-is-not" title="Permanent link">&para;</a></h2>
+<p>A <strong>whole-genome</strong> table counts every coding sequence and describes the background the genome
+itself uses: mutational bias plus weak selection. A <strong>highly expressed</strong> table counts a small
+reference set — ribosomal proteins, elongation factors, glycolytic enzymes — where
+translational selection is strong and the bias is much sharper. They are different objects,
+and a reader will assume whichever they need, so the data file says which it is in its <code>note</code>.</p>
+<p>The distinction goes back to Ikemura's correlation of codon choice with tRNA abundance
+(<em>J. Mol. Biol.</em> 146:1-21 and 151:389-409, 1981) and to the codon adaptation index of Sharp
+and Li (<em>Nucleic Acids Res.</em> 15:1281-1295, 1987), whose abstract states:</p>
+<blockquote>
+<p>A simple, effective measure of synonymous codon usage bias, the Codon Adaptation Index, is
+detailed. The index uses a reference set of highly expressed genes from a species to assess
+the relative merits of each codon, and a score for a gene is calculated from the frequency of
+use of all codons in that gene.</p>
+</blockquote>
+<p>EMBOSS quantifies the gap between the two for <em>E. coli</em>: its whole-genome file records
+<code>#CdsCount: 5045</code> with GC3 55.80%, its highly expressed file <code>#CdsCount: 250</code> with GC3 57.41%,
+and <code>GAA</code> at 0.76 there against roughly 0.68 genome-wide.</p>
+<p><strong>The shipped table is the whole-genome one.</strong> It is the right table for domestication, which
+is what issue #10 needs it for: a synonymous swap should leave a codon the host uses readily,
+and the genomic background answers that. A highly expressed set is what a codon adaptation
+index would want, and shipping one is a separate decision with its own reference gene list.</p>
+<p>Amino acids are grouped with the <strong>standard</strong> genetic code (NCBI table 1), which is what every
+host shipped here spells its nuclear genes by. The bacterial table assigns the same amino
+acids and differs only in which codons may start a gene, which is not something a codon usage
+table is asked about.</p>
+<h2 id="5-rebuilding-the-bacterial-table">5. Rebuilding the bacterial table<a class="headerlink" href="#5-rebuilding-the-bacterial-table" title="Permanent link">&para;</a></h2>
+<p>The mammal tables are rebuilt another way, and section 7.3 covers it.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_codon_usage.py<span class="w">                 </span><span class="c1"># downloads from NCBI</span>
+pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_codon_usage.py<span class="w"> </span>--cds<span class="w"> </span>FILE<span class="w">      </span><span class="c1"># from a local fasta_cds_na file</span>
+</code></pre></div>
+<p>The script fetches the spliced coding sequences of one accession from NCBI's E-utilities:</p>
+<div class="highlight"><pre><span></span><code>https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi
+  ?db=nuccore&amp;id=U00096.3&amp;rettype=fasta_cds_na&amp;retmode=text&amp;tool=liulab-mbio
+</code></pre></div>
+<p><code>fasta_cds_na</code> is used rather than the full GenBank record because NCBI has already spliced
+the joins and reverse-complemented the coding sequences on the minus strand, which removes a
+whole class of parsing error from the build.</p>
+<p>Anonymous access works: no API key, no cookies, no browser. NCBI's usage guidance
+(<code>https://www.ncbi.nlm.nih.gov/books/NBK25497/</code>) is:</p>
+<blockquote>
+<p>In order not to overload the E-utility servers, NCBI recommends that users post no more than
+three URL requests per second and limit large jobs to either weekends or between 9:00 PM and
+5:00 AM Eastern time during weekdays. Failure to comply with this policy may result in an IP
+address being blocked from accessing NCBI.</p>
+</blockquote>
+<p>and, from the policies page:</p>
+<blockquote>
+<p>Use the URL parameter email, and tool for distributed software, so that we can track your
+project and contact you if there is a problem.</p>
+</blockquote>
+<p>The script sends <code>tool=liulab-mbio</code> and <strong>no</strong> address: a build script should not put whoever
+runs it on a mailing list they did not ask for. One fetch per rebuild is far inside the rate
+limit.</p>
+<p>Tests never reach the network or a genome. <code>tests/scripts/test_build_codon_usage.py</code> counts a
+four-record excerpt, and reads a GTF excerpt for the canonical rules.</p>
+<p><strong><code>U00096.3</code> is the accession, not <code>NC_000913.3</code>.</strong> Both fetch identically and both report
+4,318 coding sequences; U00096.3 is the INSDC record of record and RefSeq is derived from it.</p>
+<h2 id="6-cross-checks">6. Cross-checks<a class="headerlink" href="#6-cross-checks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Two independent counts agree.</strong> The table was counted twice from the same fetch by two
+  separate pieces of code written without sight of each other, and both report 4,317 usable
+  coding sequences and 1,342,016 codons, with the same per-codon numbers. Stop codons also
+  sanity-check: <code>TAA</code> 2,763 + <code>TGA</code> 1,253 + <code>TAG</code> 306 = 4,322, or about one stop per coding
+  sequence.</li>
+<li><strong>Against Kazusa's K-12 entry</strong> (14 CDS, 5,122 codons), the two agree on the commonest
+  codons and diverge widely elsewhere, which is the sampling noise five thousand codons buys:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Codon</th>
+<th>Kazusa, 14 CDS</th>
+<th>This table, 4,317 CDS</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AAA</code></td>
+<td>33.2</td>
+<td>33.7</td>
+<td>+1%</td>
+</tr>
+<tr>
+<td><code>GAA</code></td>
+<td>43.7</td>
+<td>39.7</td>
+<td>-9%</td>
+</tr>
+<tr>
+<td><code>CTG</code></td>
+<td>46.9</td>
+<td>53.1</td>
+<td>+13%</td>
+</tr>
+<tr>
+<td><code>CAC</code></td>
+<td>13.1</td>
+<td>9.7</td>
+<td>-26%</td>
+</tr>
+<tr>
+<td><code>AGG</code></td>
+<td>1.6</td>
+<td>1.1</td>
+<td>-32%</td>
+</tr>
+<tr>
+<td><code>TGG</code></td>
+<td>10.7</td>
+<td>15.2</td>
+<td>+42%</td>
+</tr>
+<tr>
+<td><code>TCT</code></td>
+<td>5.7</td>
+<td>8.4</td>
+<td>+48%</td>
+</tr>
+<tr>
+<td><code>TAG</code></td>
+<td><strong>0.0, count 0</strong></td>
+<td>0.23, count 306</td>
+<td>undefined</td>
+</tr>
+</tbody>
+</table>
+<p>Per thousand codons. The last row is the one that settles it: a table with a zero cell cannot
+  be used to choose a codon.</p>
+<h2 id="7-the-mammal-tables-hg38-and-mm39-through-liulab-genome">7. The mammal tables: hg38 and mm39, through liulab-genome<a class="headerlink" href="#7-the-mammal-tables-hg38-and-mm39-through-liulab-genome" title="Permanent link">&para;</a></h2>
+<p>Human and mouse are not fetched. The lab already holds both genomes, prepared with their
+GENCODE annotations, and liulab-genome is what hands them over: the assembly, its 2bit, the
+annotation's GTF path, and the NCBI assembly accession and taxonomy identifier recorded for
+each. Nothing is downloaded. The package gains no dependency on it either — the build script
+imports <code>genome</code> only when it counts a mammal, and what the package reads is the shipped data
+file.</p>
+<h3 id="71-one-coding-sequence-per-gene">7.1 One coding sequence per gene<a class="headerlink" href="#71-one-coding-sequence-per-gene" title="Permanent link">&para;</a></h3>
+<p>A bacterium has one coding sequence per gene, so counting every complete CDS counts every gene
+once. A mammal does not. GENCODE v50 annotates 253,359 protein-coding transcripts over 20,107
+protein-coding genes, so counting every transcript would weight a gene by how many isoforms it
+has been given, which is a fact about annotation effort rather than about the genome.</p>
+<p>So one transcript per gene is counted: the one GENCODE tags <code>Ensembl_canonical</code>. That tag is
+the annotation's own choice of representative, it is there for both species, and for human
+19,229 of the 19,736 canonical protein-coding transcripts are also MANE Select, the transcript
+NCBI and EMBL-EBI agree on.</p>
+<p>Four rules decide what is counted, and all four are in <code>canonical_cds</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tagged <code>Ensembl_canonical</code>, and <code>transcript_type "protein_coding"</code></td>
+<td>one representative per protein-coding gene</td>
+</tr>
+<tr>
+<td>the <code>CDS</code> rows, plus the <code>stop_codon</code> row</td>
+<td>GENCODE writes the stop codon on its own row, and a table carries stops</td>
+</tr>
+<tr>
+<td>not tagged <code>cds_start_NF</code> or <code>cds_end_NF</code></td>
+<td>the annotation itself says that coding sequence runs off an end</td>
+</tr>
+<tr>
+<td>not on <code>chrM</code></td>
+<td>the mitochondrion reads a different genetic code</td>
+</tr>
+</tbody>
+</table>
+<p>The whole-codon and <code>ACGT</code> rules then apply as they do for a bacterium. What survives is 19,597
+of 19,736 canonical human transcripts, and 21,479 of 21,557 mouse ones.</p>
+<p><strong>Eighteen human genes are counted twice.</strong> GENCODE annotates the pseudoautosomal genes on both
+chrX and chrY — <code>PLCXD1</code>, <code>CSF2RA</code>, <code>IL9R</code> and fifteen others — and both copies carry the
+canonical tag. That is 0.09% of the genes counted, spread over ordinary coding sequence, so it
+moves no cell of the table meaningfully and no rule is spent on it. Mouse has none.</p>
+<h3 id="72-licences">7.2 Licences<a class="headerlink" href="#72-licences" title="Permanent link">&para;</a></h3>
+<p>GENCODE's annotation is distributed by EMBL-EBI, whose <em>Terms of Use</em>
+(<code>https://www.ebi.ac.uk/about/terms-of-use</code>, revised 5 February 2024, read 2026-09-14) say:</p>
+<blockquote>
+<p>EMBL-EBI itself places no additional restrictions on the use or redistribution of the data
+available via its Data Resources and Tools other than those provided by the original data
+owners, unless otherwise specified in these Terms of Use.</p>
+</blockquote>
+<p>GENCODE's own data access page (<code>https://www.gencodegenes.org/pages/data_access.html</code>, read
+2026-09-14) states:</p>
+<blockquote>
+<p>All the GENCODE project data is open access and can be accessed by any of the following
+methods.</p>
+</blockquote>
+<p>The genome sequence comes from UCSC, whose <em>Conditions of Use</em>
+(<code>https://genome.ucsc.edu/conditions.html</code>, read 2026-09-14) say:</p>
+<blockquote>
+<p>The sequence and annotation data displayed in the Genome Browser are freely available for any
+use with the following conditions</p>
+</blockquote>
+<p>and whose <code>hg38</code> and <code>mm39</code> download directories carry the same statement NCBI makes of
+GenBank:</p>
+<blockquote>
+<p>Therefore, NCBI places no restrictions on the use or distribution of the GenBank data.</p>
+</blockquote>
+<p>The position is the one section 3.1 reaches: no restriction on the data, and what ships here is
+a count computed from it rather than anyone's compilation.</p>
+<h3 id="73-rebuilding-them">7.3 Rebuilding them<a class="headerlink" href="#73-rebuilding-them" title="Permanent link">&para;</a></h3>
+<p>A mammal table is read from a prepared genome, so the build runs where liulab-genome has <code>hg38</code>
+with <code>gencode_v50</code> and <code>mm39</code> with <code>gencode_vM39</code> registered, under an interpreter that imports
+<code>genome</code>:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/build_codon_usage.py<span class="w"> </span>--out<span class="w"> </span>codon_usage.json
+</code></pre></div>
+<p>It reads each GTF once and pulls every coding span out of the 2bit through
+<code>Genome.fetch_sequence</code>, which reverse-complements a minus-strand span itself, so no coordinate
+arithmetic is written here that liulab-genome already does. All three tables together take
+about a minute and a half.</p>
+<p>Registering an annotation is a download and a database build, and it belongs to the lab's
+genome store rather than to this package: <code>genome annotation register hg38 gencode_v50</code>.</p>
+<h3 id="74-cross-checks">7.4 Cross-checks<a class="headerlink" href="#74-cross-checks" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The bacterial table did not move.</strong> The rebuild that added the mammals reproduces <em>E. coli</em>
+  exactly: the same 4,317 coding sequences, the same 1,342,016 codons, and all 64 cells
+  unchanged. That is the control on the rewrite.</li>
+<li><strong>Human and mouse agree with each other</strong>, as two mammals should. Both favour <code>GAC</code> for
+  aspartate, <code>CTG</code> for leucine, <code>GCC</code> for alanine and <code>TGA</code> for the stop. The largest gap in any
+  codon's share of its amino acid is <code>GCT</code>: 0.261 in human against 0.295 in mouse.</li>
+<li><strong>They differ from <em>E. coli</em> where they should.</strong> Eleven amino acids have a different
+  favourite codon in human than in <em>E. coli</em>: aspartate is <code>GAT</code> there and <code>GAC</code> here, and the
+  commonest stop is <code>TAA</code> there and <code>TGA</code> here. Which host a table describes is exactly what
+  domestication turns on.</li>
+<li><strong>Kazusa is the wrong shape here too.</strong> Its <em>Homo sapiens</em> entry counts 93,487 CDS and
+  40,662,582 codons, and its <em>Mus musculus</em> entry 53,036 CDS and 24,533,776 codons (read
+  2026-09-14) — several times one genome's worth of genes, because CUTG counts redundant
+  GenBank entries rather than one annotated genome.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All read on 2026-09-12.</p>
+<ul>
+<li>NCBI, <em>Website and Data Usage Policies and Disclaimers</em>:
+  <a href="https://www.ncbi.nlm.nih.gov/home/about/policies/">ncbi.nlm.nih.gov</a></li>
+<li>NCBI, <em>A General Introduction to the E-utilities</em> (usage guidelines and rate limits):
+  <a href="https://www.ncbi.nlm.nih.gov/books/NBK25497/">NBK25497</a></li>
+<li>GenBank <code>U00096.3</code>, <em>Escherichia coli</em> str. K-12 substr. MG1655, complete genome
+  (Blattner, F.R. et al. (1997) <em>Science</em> 277, 1453-1462), and RefSeq <code>NC_000913.3</code></li>
+<li>Kazusa, <em>Codon Usage Database</em> and its readme:
+  <a href="https://www.kazusa.or.jp/codon/">kazusa.or.jp</a>,
+  <a href="https://www.kazusa.or.jp/codon/readme_codon.html">readme_codon.html</a>; K-12 table
+  <code>cgi-bin/showcodon.cgi?species=83333</code></li>
+<li>Nakamura, Y., Gojobori, T. and Ikemura, T. (2000) Codon usage tabulated from the
+  international DNA sequence databases: status for the year 2000. <em>Nucleic Acids Res.</em> 28, 292</li>
+<li>Athey, J. et al. (2017) A new and updated resource for codon usage tables.
+  <em>BMC Bioinformatics</em> 18, 391.
+  <a href="https://doi.org/10.1186/s12859-017-1793-7">doi:10.1186/s12859-017-1793-7</a> (CC BY 4.0), and
+  the HIVE-CUTs resource at <a href="https://dnahive.fda.gov/dna.cgi?cmd=cuts_main">dnahive.fda.gov</a></li>
+<li>FDA, <em>Website Policies</em>:
+  <a href="https://www.fda.gov/about-fda/about-website/website-policies">fda.gov</a></li>
+<li>GenScript, <em>Codon Frequency Table</em>:
+  <a href="https://www.genscript.com/tools/codon-frequency-table">genscript.com</a></li>
+<li>Subramanian, A. et al. (2022) Codon Statistics Database, at <code>codonstatsdb.unr.edu</code> (CC BY-NC)</li>
+<li>Alexaki, A. et al. (2019) Codon and Codon-Pair Usage Tables (CoCoPUTs). <em>J. Mol. Biol.</em> 431,
+  2434-2441</li>
+<li>EMBOSS, <em>Licence</em>: <a href="https://emboss.sourceforge.net/licence/">emboss.sourceforge.net</a>, and its
+  <code>Eecoli.cut</code> and <code>Eecoli_high.cut</code> data files</li>
+<li><code>python_codon_tables</code>, CC0 1.0, whose README names kazusa.or.jp as its input</li>
+<li>Ikemura, T. (1981) <em>J. Mol. Biol.</em> 146, 1-21 and 151, 389-409</li>
+<li>Sharp, P.M. and Li, W.H. (1987) The codon adaptation index. <em>Nucleic Acids Res.</em> 15,
+  1281-1295</li>
+<li><code>docs/research/restriction-enzyme-data.md</code> (issue #7) for the precedent this note follows:
+  ship only what the licence allows, cite and re-enter the rest, and record what is unverified</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

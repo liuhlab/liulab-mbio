@@ -1,0 +1,1358 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/protein-library-assembly/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Protein library assembly: the method, its numbers, its licence - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#protein-library-assembly-the-method-its-numbers-its-licence" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Protein library assembly: the method, its numbers, its licence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-licences-and-what-may-ship" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Licences, and what may ship
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-part-and-how-the-two-digests-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The part, and how the two digests work
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-overhang-standard-and-the-frame-arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The overhang standard, and the frame arithmetic
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The overhang standard, and the frame arithmetic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#barcodes-accumulate-backwards" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Barcodes accumulate backwards
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-barcode-is-11-bp" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the barcode is 11 bp
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-terminal-stuffer-prefix-is-6-bp-rather-than-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the terminal stuffer prefix is 6 bp rather than 4
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-frame-runs-through-four-neutral-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The frame runs through four neutral units
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-enzyme-discrepancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. The enzyme discrepancy
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-bench-numbers-and-where-each-is-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. The bench numbers, and where each is written
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-barcode-set-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. The barcode set, measured
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. The barcode set, measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-distance-rule-is-per-pool-and-the-paper-overstates-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The distance rule is per pool, and the paper overstates it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-gc-rule-and-no-homopolymer-rule-was-imposed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        No GC rule and no homopolymer rule was imposed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-where-this-note-contradicts-issue-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Where this note contradicts issue #55
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="protein-library-assembly-the-method-its-numbers-its-licence">Protein library assembly: the method, its numbers, its licence<a class="headerlink" href="#protein-library-assembly-the-method-its-numbers-its-licence" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #56. The paper, its supplement and Table S1 were read on
+<strong>2026-09-14</strong>, and every sequence measurement below was computed from Table S1 on that date.
+It records the method behind the library-assembly pipeline of issue #55: how the two digests
+work, the overhang standard and the frame arithmetic, the bench numbers with the place each
+one is written, a discrepancy between the paper's two accounts of which enzyme cuts what, and
+what the licence allows.</p>
+<p>The source is Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by
+domain recombination enhance CAR T cell antitumor function. <em>Cell</em> 189, 1-20,
+<a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a>, with its
+supplemental figures (<code>mmc1.pdf</code>, Figure S1A and its legend) and <code>Table S1.xlsx</code>.</p>
+<p>Table S1 is <strong>not</strong> in this repository and is not package data. The measurements here were
+computed from a local copy of the workbook and are reproducible from it. Where a number is
+measured rather than quoted, this note says so and says over what.</p>
+<h2 id="1-licences-and-what-may-ship">1. Licences, and what may ship<a class="headerlink" href="#1-licences-and-what-may-ship" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Licence</th>
+<th>Evidence</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The article, its text and figures</td>
+<td>CC BY 4.0</td>
+<td>licence line, p. 1</td>
+<td><strong>Yes</strong> — quote and reuse with attribution</td>
+</tr>
+<tr>
+<td>Figure S1A and its legend</td>
+<td>CC BY 4.0, through the article</td>
+<td>supplemental information to a CC BY article</td>
+<td><strong>Yes</strong> — with attribution</td>
+</tr>
+<tr>
+<td>Table S1 sequences</td>
+<td>CC BY 4.0, through the article</td>
+<td>no notice of its own; see below</td>
+<td><strong>Yes</strong> — with attribution and a link to the licence</td>
+</tr>
+<tr>
+<td>The plasmids themselves</td>
+<td>not a copyright question</td>
+<td>"Plasmid libraries are available on Addgene", p. 16</td>
+<td>n/a — a material transfer, not a licence</td>
+</tr>
+</tbody>
+</table>
+<p>The article's licence line, printed on p. 1 under the copyright:</p>
+<blockquote>
+<p>Cell 189, 1-20, September 17, 2026 (c) 2026 The Author(s). Published by Elsevier Inc.
+This is an open access article under the CC BY license
+(<code>http://creativecommons.org/licenses/by/4.0/</code>).</p>
+</blockquote>
+<p>Every page of the article carries an <code>OPEN ACCESS</code> rule in its running head. Under
+<em>Materials availability</em>, p. 16:</p>
+<blockquote>
+<p>All DNA sequences are available in supplemental tables. Plasmid libraries are available on
+Addgene. Please contact the lead contact for any other reagent requests.</p>
+</blockquote>
+<p>and under <em>Supplemental information</em>, p. 17:</p>
+<blockquote>
+<p>Supplemental information can be found online at <code>https://doi.org/10.1016/j.cell.2026.07.054</code>.</p>
+</blockquote>
+<p><strong>Verdict on the paper: it ships.</strong> CC BY 4.0 permits redistribution and adaptation of the
+whole article, including its figures, provided the source is credited and the licence named.
+That is the same grant <code>docs/research/ligation-fidelity.md</code> relied on for Pryor et al. 2020,
+and it is the strongest of the licences this repository has had to read.</p>
+<p><strong>Verdict on Table S1: its sequences may ship as a worked example, with attribution.</strong> The
+workbook carries no licence notice of its own — checked, and not merely assumed: no cell in
+any of its ten sheets contains the words licence, copyright, rights, reserved or permission,
+and its only file metadata is an author name and two timestamps. It is supplemental
+information to the article, the article's licence line is unqualified, and <em>Materials
+availability</em> names the supplemental tables as the place the DNA sequences are published.
+Nothing scopes the CC BY grant to the typeset article and away from the files distributed with
+it.</p>
+<p>Two further points both push the same way and neither is needed to reach the verdict. A short
+DNA sequence is a measurement of a molecule rather than creative expression, so the copyright
+question is weak in either direction. And the authors put the sequences in a supplemental
+table precisely so that others could build on them.</p>
+<p><strong>What the attribution has to carry</strong>, wherever a sequence from Table S1 appears in this
+repository: the citation above, the DOI, a link to
+<code>http://creativecommons.org/licenses/by/4.0/</code>, and a note of anything changed. This clears the
+later ticket that plans the paper's scheme as a worked example under <code>docs/</code>: it may ship, and
+the scheme may ship with real sequence in it rather than a placeholder.</p>
+<h2 id="2-the-part-and-how-the-two-digests-work">2. The part, and how the two digests work<a class="headerlink" href="#2-the-part-and-how-the-two-digests-work" title="Permanent link">&para;</a></h2>
+<p>Every part is one synthesised block. Lengths below are measured off Table S1; the three
+external-stuffer and internal-stuffer sequences are constant across all 24 rows of each sheet.</p>
+<div class="highlight"><pre><span></span><code>5' external stuffer │ domain CDS │ internal stuffer │ barcode │ 3' external stuffer
+       29 bp           27-1,046      56 or 58 bp        11 bp          29 bp
+   PmeI · BbsI                    BsaI · SrfI · BsaI               BbsI · PmeI
+</code></pre></div>
+<p>The constant regions, with every enzyme site in them located by search and the overhang each
+cut yields computed from the enzyme's own offsets:</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th>Length</th>
+<th>Sites in it</th>
+<th>Overhang it yields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5' external stuffer, N</td>
+<td>29</td>
+<td>PmeI at the outer edge, BbsI</td>
+<td><code>CTCC</code></td>
+</tr>
+<tr>
+<td>5' external stuffer, bZIP</td>
+<td>29</td>
+<td>PmeI at the outer edge, BbsI</td>
+<td><code>GGAG</code></td>
+</tr>
+<tr>
+<td>5' external stuffer, C</td>
+<td>29</td>
+<td>PmeI at the outer edge, BbsI</td>
+<td><code>CCGA</code></td>
+</tr>
+<tr>
+<td>internal stuffer, N</td>
+<td>56</td>
+<td>BsaI at each end, SrfI in the core</td>
+<td><code>GGAG</code> and <code>AGCG</code></td>
+</tr>
+<tr>
+<td>internal stuffer, bZIP</td>
+<td>56</td>
+<td>BsaI at each end, SrfI in the core</td>
+<td><code>CCGA</code> and <code>AGCG</code></td>
+</tr>
+<tr>
+<td>internal stuffer, C (terminal)</td>
+<td>58</td>
+<td>BsaI at each end, SrfI in the core</td>
+<td><code>CTCC</code> and <code>AGCG</code></td>
+</tr>
+<tr>
+<td>internal stuffer, CAR vector</td>
+<td>58</td>
+<td>BsaI at each end, SrfI in the core</td>
+<td><code>CTCC</code> and <code>AGCG</code></td>
+</tr>
+<tr>
+<td>3' external stuffer, all three</td>
+<td>29</td>
+<td>BbsI, PmeI at the outer edge</td>
+<td><code>AGCG</code></td>
+</tr>
+</tbody>
+</table>
+<p>The C domain's internal stuffer and the CAR vector's internal stuffer are the same 58-mer,
+<code>GGCTCCGGAGACCTATCAAGCCCGGGCAACAATGTGCGGACGGCGTTGGTCTCTAGCG</code>. A C-domain part also carries a
+constant 54-bp T2A between its CDS and its internal stuffer.</p>
+<p><strong>Two digests, two jobs.</strong></p>
+<ul>
+<li>The <strong>internal digest, BsaI + SrfI, opens the destination.</strong> BsaI's two sites flank the
+  internal stuffer and excise it, leaving the destination open on the next position's entry
+  overhang at one end and on <code>AGCG</code> at the other. SrfI's single site sits in the middle of the
+  stuffer, so the excised piece is cut again and cannot go back in.</li>
+<li>The <strong>external digest, BbsI + PmeI, releases the donor.</strong> BbsI's two sites, one in each
+  external stuffer, cut the part out. PmeI's two sites sit outside them, at the outer edge of
+  each external stuffer, so each remnant left behind on the donor backbone carries one — the
+  backbone is cut twice and cannot carry through.</li>
+</ul>
+<p>Measured over a whole synthesised block: BsaI 2 sites, BbsI 2, SrfI 1, PmeI 2. So the blunt
+enzymes destroy the piece nobody wants, but not symmetrically: <strong>SrfI cuts the excised internal
+stuffer once</strong> and <strong>PmeI cuts the released donor backbone twice</strong>.</p>
+<p><strong>The mechanism was simulated on the published sequences</strong>, cutting with each enzyme's real
+offsets and ligating only where both overhangs agree. All three rounds join, and the overhangs
+match at every one:</p>
+<table>
+<thead>
+<tr>
+<th>Round</th>
+<th>Destination, cut internally</th>
+<th>Donor, cut externally</th>
+<th>Match</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>N part, BsaI: <code>GGAG</code> / <code>AGCG</code></td>
+<td>bZIP part, BbsI: <code>GGAG</code> / <code>AGCG</code></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>2</td>
+<td>N+bZIP, BsaI: <code>CCGA</code> / <code>AGCG</code></td>
+<td>C part, BbsI: <code>CCGA</code> / <code>AGCG</code></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CAR vector, BsaI: <code>CTCC</code> / <code>AGCG</code></td>
+<td>assembled TF, BbsI: <code>CTCC</code> / <code>AGCG</code></td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>For JUN-JUN-JUN the assembled insert is 1,204 bp.</p>
+<p><strong>It is not one pot.</strong> Each round is digest, SPRI, ligate, SPRI, electroporate, grow, prep
+(METHOD DETAILS, pp. e4-e5). The product deliberately keeps both enzymes' sites, and that is
+what lets the next round happen.</p>
+<h2 id="3-the-overhang-standard-and-the-frame-arithmetic">3. The overhang standard, and the frame arithmetic<a class="headerlink" href="#3-the-overhang-standard-and-the-frame-arithmetic" title="Permanent link">&para;</a></h2>
+<p>Three positions plus the vector junction need four overhangs. Each is written twice — once as
+an internal-stuffer prefix and once at the end of a 5' external stuffer — and that redundancy
+is what encodes position:</p>
+<table>
+<thead>
+<tr>
+<th>Junction</th>
+<th>Overhang</th>
+<th>Written as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CAR vector to N</td>
+<td><code>CTCC</code></td>
+<td>vector internal stuffer prefix <code>GGCTCC</code>; N 5' external stuffer ends <code>CTCC</code></td>
+</tr>
+<tr>
+<td>N to bZIP</td>
+<td><code>GGAG</code></td>
+<td>N internal stuffer prefix <code>GGAG</code>; bZIP 5' external stuffer ends <code>GGAG</code></td>
+</tr>
+<tr>
+<td>bZIP to C</td>
+<td><code>CCGA</code></td>
+<td>bZIP internal stuffer prefix <code>CCGA</code>; C 5' external stuffer ends <code>CCGA</code></td>
+</tr>
+<tr>
+<td>every part's 3' end</td>
+<td><code>AGCG</code></td>
+<td>every internal stuffer ends <code>GGTCTCTAGCG</code>; every 3' external stuffer begins <code>AGCG</code></td>
+</tr>
+</tbody>
+</table>
+<p>A part's internal stuffer begins with the <strong>next</strong> position's entry overhang, so the N stuffer
+reads <code>GGAG</code> and only a bZIP part can follow it. Figure S1A prints the two internal junctions
+as duplexes, <code>GGAG</code> over <code>CCTC</code> and <code>CCGA</code> over <code>GGCT</code>, which agrees with the overhangs
+computed above.</p>
+<h3 id="barcodes-accumulate-backwards">Barcodes accumulate backwards<a class="headerlink" href="#barcodes-accumulate-backwards" title="Permanent link">&para;</a></h3>
+<p>Each round inserts its barcode upstream of those already there, joined by the <code>AGCG</code> scar, so
+the finished block reads C, then bZIP, then N — the reverse of the assembly order. Measured on
+the assembled product: 41 bp, <code>C │ AGCG │ bZIP │ AGCG │ N</code>. In the final knock-in construct a
+third scar and the vector's own 11-bp barcode follow, making 56 bp in all: <strong>four barcodes and
+three scars</strong>, not four of each.</p>
+<h3 id="why-the-barcode-is-11-bp">Why the barcode is 11 bp<a class="headerlink" href="#why-the-barcode-is-11-bp" title="Permanent link">&para;</a></h3>
+<p>The barcode-plus-scar unit is 11 + 4 = 15 bp, which is five codons, so appending one does not
+shift the frame. That is the whole of the argument, and it picks 11 out of its neighbours:
+10 + 4 = 14 and 12 + 4 = 16, neither a multiple of three. Eleven is the length that is both
+frame-neutral against a 4-bp scar and long enough to hold a distance rule.</p>
+<h3 id="why-the-terminal-stuffer-prefix-is-6-bp-rather-than-4">Why the terminal stuffer prefix is 6 bp rather than 4<a class="headerlink" href="#why-the-terminal-stuffer-prefix-is-6-bp-rather-than-4" title="Permanent link">&para;</a></h3>
+<p>The terminal position's internal stuffer is never excised — assembly stops there — so all
+58 bp of it stay in the product, ahead of the barcode block. Checked:</p>
+<ul>
+<li>with the 6-bp prefix <code>GGCTCC</code>: 58 + 56 = <strong>114</strong>, a multiple of three;</li>
+<li>with a 4-bp prefix the stuffer would be 56 bp: 56 + 56 = <strong>112</strong>, which is not.</li>
+</ul>
+<p>The two extra bases buy the frame back. The non-terminal stuffers are 56 bp with 4-bp prefixes
+(<code>GGAG</code>, <code>CCGA</code>) because they are excised and only their 4-bp overhang survives into the
+product.</p>
+<h3 id="the-frame-runs-through-four-neutral-units">The frame runs through four neutral units<a class="headerlink" href="#the-frame-runs-through-four-neutral-units" title="Permanent link">&para;</a></h3>
+<p>The reading frame is set upstream in the vector, at the tNGFR start codon; it is <strong>not</strong> the
+domain's own <code>ATG</code>, and assuming it is gives the wrong answer. Measured on the assembled
+JUN-JUN-JUN construct:</p>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Measured</th>
+<th>Multiple of three?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>N CDS + <code>GGAG</code> scar</td>
+<td>749 + 4 = 753</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>bZIP CDS + <code>CCGA</code> scar</td>
+<td>191 + 4 = 195</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>C insert + T2A</td>
+<td>45 + 54 = 99</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>terminal stuffer + barcode block</td>
+<td>58 + 56 = 114</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>total from the N domain's first base</td>
+<td>1,161 = 387 codons</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>This is not a property of JUN. Measured across all 72 parts: every N and bZIP CDS has a length
+congruent to 2 modulo 3, so CDS plus its 4-bp scar is always a multiple of three, and every C
+insert has a length divisible by three, so insert plus the constant 54-bp T2A always is too.
+That is the bookkeeping the fixed overhang standard charges to the proteins, and Figure S1A's
+legend is explicit about paying it:</p>
+<blockquote>
+<p>Domains were not separated by linker sequences so minor sequence modifications affecting one
+to two amino acids were made to standardize the four-bp overhangs (see Table S1).</p>
+</blockquote>
+<p>Measured in Table S1: of 24 N parts, <strong>15</strong> have a changed final pair of residues (ATF2 ED to
+EE, ATF4 EK to EE, ATF6 IA to ME, and so on), 9 are unchanged. Of 24 C parts, <strong>19</strong> have a
+changed first residue and 5 do not — every synthesised C domain begins with R, from eight
+different wild-type residues. The workbook records wild type beside synthesised in both
+sheets, which is the bookkeeping a pipeline has to reproduce.</p>
+<p>The barcode block begins <strong>one base into a codon</strong>, so barcodes are not codon-aligned; what is
+frame-neutral is the 15-bp unit, not the barcode on its own. In that frame, none of the 13,824
+published blocks carries an in-frame stop, and none of the 72 barcodes introduces one in its
+own slot.</p>
+<h2 id="4-the-enzyme-discrepancy">4. The enzyme discrepancy<a class="headerlink" href="#4-the-enzyme-discrepancy" title="Permanent link">&para;</a></h2>
+<p>The paper says which enzyme cuts which molecule twice, and the two statements disagree.</p>
+<p><strong>METHOD DETAILS, p. e4:</strong></p>
+<blockquote>
+<p>1 ug of plasmid pools containing TF domains were digested in two steps: first with 2.5 uL of
+BsaI restriction enzyme (New England Biolabs, NEB) in 50 uL total volume (with CutSmart
+Buffer, NEB) for 1 hour at 37 C and then 2.5uL of SrfI was added and incubation was continued
+for a second hour. The destination backbone plasmids were digested with BbsI and PmeI (NEB)
+using the same protocol.</p>
+</blockquote>
+<p><strong>Figure S1A legend:</strong></p>
+<blockquote>
+<p>To append the "bZIP" domain to the "N" domain, the "bZIP" domain was cleaved externally
+(BbsI), and the "N" domain was cleaved internally (BsaI) and then ligated. The "C" domain was
+then appended to the "N+bZIP" domain-pair analogously.</p>
+</blockquote>
+<p>Both agree on the <strong>pairing</strong> — BsaI with SrfI, BbsI with PmeI. They disagree on the
+<strong>assignment</strong>. METHOD DETAILS gives the domain pools, which are the donor, BsaI + SrfI, and
+gives the destination backbone BbsI + PmeI. The figure gives the donor the external enzyme and
+the destination the internal one, which is the opposite way round.</p>
+<p>Three things corroborate the figure, and none of them is a matter of taste.</p>
+<ol>
+<li><strong>The figure's own panel labels.</strong> <code>BsaI BsaI</code> is printed under the N domain plasmid
+   library's internal stuffer, and <code>BbsI</code> ... <code>BbsI</code> under the bZIP domain plasmid library's
+   two external stuffers. The panel and its legend agree with each other.</li>
+<li><strong>Where the sites actually are</strong> (section 2, measured). BsaI's two sites flank the internal
+   stuffer; BbsI's two sit in the external stuffers. SrfI lies inside the internal stuffer's
+   core, so it can only shred what BsaI excises. PmeI lies at the outer edge of each external
+   stuffer, so it can only shred what BbsI leaves behind. Each blunt enzyme is co-located with
+   the sticky enzyme it is paired with, and therefore acts on the same molecule.</li>
+<li><strong>Only the figure's assignment assembles.</strong> Simulated on the published sequences, internal
+   BsaI on the destination and external BbsI on the donor produce matching overhangs at every
+   round. Under the METHOD DETAILS assignment nothing ligates: cutting a donor part with BsaI
+   excises that part's own internal stuffer and never releases the domain, and cutting the
+   destination with BbsI cuts in its external stuffers, which is not where the destination has
+   to open.</li>
+</ol>
+<p><strong>Verdict: the package follows Figure S1A.</strong> The internal digest, BsaI + SrfI, opens the
+destination; the external digest, BbsI + PmeI, releases the donor. METHOD DETAILS has the donor
+and the destination swapped. This is a verdict on the evidence above rather than a preference
+between two sources: the figure's reading is the only one under which the paper's own published
+sequences assemble, and that is a measurement.</p>
+<p>What this does <strong>not</strong> change: the reagents, the volumes and the times in METHOD DETAILS are
+unaffected, because both digests use the same protocol. Only the label on each tube moves.</p>
+<h2 id="5-the-bench-numbers-and-where-each-is-written">5. The bench numbers, and where each is written<a class="headerlink" href="#5-the-bench-numbers-and-where-each-is-written" title="Permanent link">&para;</a></h2>
+<p>Every number is quoted from the paper. None of them is a default for this package: amounts are
+computed from the user's own fragment lengths, and these are recorded so that a computed number
+can be checked against a real experiment.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Number</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Digest input</td>
+<td>1 µg of pooled plasmid</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Digest volume and buffer</td>
+<td>50 µL total, CutSmart</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>First enzyme</td>
+<td>2.5 µL, 1 hour at 37 °C</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Second enzyme</td>
+<td>2.5 µL added, incubation continued a second hour</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>The other digest</td>
+<td>"using the same protocol"</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Clean-up after digest</td>
+<td>SPRI at <strong>2×</strong> volume ratio, eluted in H2O</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Ligase and buffer</td>
+<td>T7 ligase with StickTogether DNA Ligase Buffer</td>
+<td>METHOD DETAILS, p. e4; NEB M0318L, Key Resources Table, p. e2</td>
+</tr>
+<tr>
+<td>Molar ratio</td>
+<td>1:1</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Backbone per reaction</td>
+<td>20 ng digested backbone per 200 µL ligation</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Ligation</td>
+<td>30 minutes at room temperature</td>
+<td>METHOD DETAILS, p. e4</td>
+</tr>
+<tr>
+<td>Clean-up after ligation</td>
+<td>SPRI at <strong>1×</strong> volume ratio, eluted in H2O</td>
+<td>METHOD DETAILS, pp. e4-e5</td>
+</tr>
+<tr>
+<td>Electroporation input</td>
+<td>up to 100 ng of purified ligation product</td>
+<td>METHOD DETAILS, p. e5</td>
+</tr>
+<tr>
+<td>Strain</td>
+<td>Endura electrocompetent cells (Lucigen)</td>
+<td>METHOD DETAILS, p. e5; Cat#60242-2, Key Resources Table, p. e1</td>
+</tr>
+<tr>
+<td>Instrument</td>
+<td>Gene Pulser XCell (BioRad)</td>
+<td>METHOD DETAILS, p. e5</td>
+</tr>
+<tr>
+<td>Recovery</td>
+<td>1 hour at <strong>30 °C</strong> with shaking</td>
+<td>METHOD DETAILS, p. e5</td>
+</tr>
+<tr>
+<td>Outgrowth</td>
+<td>12-16 hours at <strong>30 °C</strong></td>
+<td>METHOD DETAILS, p. e5</td>
+</tr>
+<tr>
+<td>Plasmid prep</td>
+<td>ZymoPURE II</td>
+<td>METHOD DETAILS, p. e5</td>
+</tr>
+<tr>
+<td>Enzyme products</td>
+<td>BsaI-HF v2 R3733L, SrfI R0629L, BbsI-HF R3539L, PmeI R0560L</td>
+<td>Key Resources Table, p. e2</td>
+</tr>
+</tbody>
+</table>
+<p>Two of these are worth flagging because a pipeline would get them wrong by default.</p>
+<ul>
+<li><strong>Both growth steps are at 30 °C</strong>, not 37 °C. That is a library precaution, and a protocol
+  that defaulted to 37 °C would not be following this method.</li>
+<li><strong>The two SPRI ratios differ</strong>: 2× after the digest, 1× after the ligation. They are not one
+  number used twice.</li>
+</ul>
+<p>The method's own justification for building this way, p. 3:</p>
+<blockquote>
+<p>Compared with synthesizing individual genes, combinatorial construction reduced synthesis
+costs by ~100-fold.</p>
+</blockquote>
+<h2 id="6-the-barcode-set-measured">6. The barcode set, measured<a class="headerlink" href="#6-the-barcode-set-measured" title="Permanent link">&para;</a></h2>
+<p><strong>The metric is Hamming distance on equal-length barcodes.</strong> Every barcode in Table S1 is
+11 bp, so no alignment is involved and Hamming is well defined. Each row below says how many
+barcodes were compared and, where it is a minimum over pairs, how many pairs.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Measured</th>
+<th>Over</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Barcode length</td>
+<td>11 bp, every one</td>
+<td>every barcode in the workbook</td>
+</tr>
+<tr>
+<td>The three AP-1 domain pools</td>
+<td>24 + 24 + 24 = <strong>72</strong> distinct</td>
+<td>the N, bZIP and C sheets</td>
+</tr>
+<tr>
+<td>Unique 11-mers anywhere in Table S1</td>
+<td><strong>164</strong></td>
+<td>all ten sheets</td>
+</tr>
+<tr>
+<td>Assembled barcode block</td>
+<td><strong>41 bp</strong></td>
+<td>13,824 published blocks</td>
+</tr>
+<tr>
+<td>Scar at the first scar position</td>
+<td><code>AGCG</code>, 13,824 of 13,824</td>
+<td>positions 11-15</td>
+</tr>
+<tr>
+<td>Scar at the second scar position</td>
+<td><code>AGCG</code>, 13,824 of 13,824</td>
+<td>positions 26-30</td>
+</tr>
+<tr>
+<td>Distinct barcodes per slot</td>
+<td><strong>24</strong> in each of the three slots</td>
+<td>13,824 blocks</td>
+</tr>
+<tr>
+<td>Slot order</td>
+<td>slot 1 = C pool, slot 2 = bZIP, slot 3 = N, each matching its sheet exactly</td>
+<td>13,824 blocks</td>
+</tr>
+<tr>
+<td>Set completeness</td>
+<td>all 24³ = <strong>13,824</strong> combinations, each exactly once, no duplicates</td>
+<td>13,824 blocks</td>
+</tr>
+<tr>
+<td>Minimum Hamming, N pool</td>
+<td><strong>3</strong></td>
+<td>24 barcodes, 276 pairs</td>
+</tr>
+<tr>
+<td>Minimum Hamming, bZIP pool</td>
+<td><strong>4</strong></td>
+<td>24 barcodes, 276 pairs</td>
+</tr>
+<tr>
+<td>Minimum Hamming, C pool</td>
+<td><strong>4</strong></td>
+<td>24 barcodes, 276 pairs</td>
+</tr>
+<tr>
+<td>Minimum Hamming, the three pools together</td>
+<td><strong>2</strong></td>
+<td>72 barcodes, 2,556 pairs</td>
+</tr>
+<tr>
+<td>Minimum Hamming, every 11-mer in Table S1</td>
+<td><strong>2</strong></td>
+<td>164 barcodes, 13,366 pairs</td>
+</tr>
+<tr>
+<td>GC content</td>
+<td><strong>18.2% to 81.8%</strong> (2 of 11 to 9 of 11)</td>
+<td>the 72, and the 164, alike</td>
+</tr>
+<tr>
+<td>Longest homopolymer run</td>
+<td><strong>6</strong></td>
+<td>the 72, and the 164, alike</td>
+</tr>
+<tr>
+<td>BsaI, BbsI, SrfI or PmeI site in a bare barcode</td>
+<td><strong>none</strong></td>
+<td>the 72, and the 164</td>
+</tr>
+<tr>
+<td>A new enzyme site created in context</td>
+<td><strong>none</strong></td>
+<td>13,824 blocks with their real flanks</td>
+</tr>
+<tr>
+<td>In-frame stop codon</td>
+<td><strong>none</strong></td>
+<td>13,824 blocks, and the 72 in their own slots</td>
+</tr>
+</tbody>
+</table>
+<p>The 164 unique 11-mers break down as: 24 N, 24 bZIP, 24 C, 30 in the natural full-length AP-1
+sheet, 39 in the individually synthesised DESynR sheet, 37 control barcodes in the barcode
+reference sheet, 16 in the HA GD2 CAR sheet and 1 in the vector — a union of 164 after
+duplicates across sheets are removed.</p>
+<h3 id="the-distance-rule-is-per-pool-and-the-paper-overstates-it">The distance rule is per pool, and the paper overstates it<a class="headerlink" href="#the-distance-rule-is-per-pool-and-the-paper-overstates-it" title="Permanent link">&para;</a></h3>
+<p>METHOD DETAILS, p. e7:</p>
+<blockquote>
+<p>Each synthesized TF domain contains a unique domain barcode (BC), with a minimum Hamming
+distance of three between any two domain BCs.</p>
+</blockquote>
+<p>Measured, that holds <strong>within</strong> each pool — 3, 4 and 4 — but not <strong>across</strong> them. Two barcodes
+in different pools are 2 apart: <code>AACAAATTAGT</code> and <code>AACAGATTGGT</code>. So the paper's "any two domain
+BCs" is not met by the paper's own set, and the rule that the set actually satisfies is a
+per-pool one. This matters for the package: distance has to be checked inside a position's
+pool, which is also the only place it is needed, since two barcodes in different slots are
+never confusable.</p>
+<h3 id="no-gc-rule-and-no-homopolymer-rule-was-imposed">No GC rule and no homopolymer rule was imposed<a class="headerlink" href="#no-gc-rule-and-no-homopolymer-rule-was-imposed" title="Permanent link">&para;</a></h3>
+<p>GC spans 18% to 82% and a homopolymer run reaches 6, so no band and no cap was applied. The
+set still worked: the printed data labels in Figure S1B are 84.1% correct, 8.3% barcode
+mismatches, 1.0% missing domains, 4.5% missing barcode and 2.0% other, and Figure S1C is
+annotated "93% of library is &gt;80% correctly linked". The main text, p. 3, rounds these to:</p>
+<blockquote>
+<p>Of reads containing three valid BCs (~95%), nearly 90% of the library was correctly linked</p>
+</blockquote>
+<p>Note that the figure's own categories give 93.4% of reads with three barcodes, against the
+text's ~95%, and 91.0% correctly linked among them, against "nearly 90%". The two accounts are
+consistent to a point or two, and this note records both rather than picking one.</p>
+<p><strong>That loose worked is not evidence that loose is optimal</strong>, nor that the question was
+considered. Whether a GC band or a homopolymer cap is worth imposing is for issue #58 to settle
+from primary sources; nothing here should be read as a default.
+<code>docs/research/barcode-design.md</code> settles it: no GC band, a homopolymer cap of 5.</p>
+<h2 id="7-where-this-note-contradicts-issue-55">7. Where this note contradicts issue #55<a class="headerlink" href="#7-where-this-note-contradicts-issue-55" title="Permanent link">&para;</a></h2>
+<p>Issue #55 was written before these measurements existed. Most of it holds exactly; four things
+do not.</p>
+<table>
+<thead>
+<tr>
+<th>Issue #55 says</th>
+<th>Measured here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"the 148 unique 11-mer barcodes in Table S1"</td>
+<td><strong>164</strong> unique 11-mers across the workbook, of which <strong>72</strong> are the three AP-1 domain pools. 148 is neither</td>
+</tr>
+<tr>
+<td>"barcodes are at least 3 mismatches apart within a pool ... within a pool it is 3"</td>
+<td>true as a floor, but tight only in the N pool. The bZIP and C pools are both <strong>4</strong></td>
+</tr>
+<tr>
+<td>"Each digest cuts its unwanted piece twice"</td>
+<td>PmeI cuts the donor backbone <strong>twice</strong>; SrfI cuts the excised internal stuffer <strong>once</strong></td>
+</tr>
+<tr>
+<td>"the terminal part's stuffer prefix is six bases ... to correct the frame: 54 + 15 × 4 = 114"</td>
+<td>the total 114 is right, the decomposition is wrong. The unit is the 58-bp terminal stuffer plus the 56-bp barcode block. 54 is the T2A length, and the block is 56 bp — <strong>three</strong> scars, not four</td>
+</tr>
+<tr>
+<td>"Confirmed on all 13,824 rows: 41 bp, AGCG at both scar positions, 24 distinct barcodes per slot, slot order matching the C, bZIP and N sheets"</td>
+<td>confirmed exactly, and the set is the complete 24³ product with no duplicates</td>
+</tr>
+<tr>
+<td>"GC runs 18% to 82% and homopolymer runs reach 6"</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td>"free of stop codons in the construct's real frame"</td>
+<td>confirmed, in the frame measured in section 3</td>
+</tr>
+<tr>
+<td>"the measured minimum across all 148 barcodes is 2"</td>
+<td>the minimum across the three pools is <strong>2</strong>, and across all 164 it is also 2</td>
+</tr>
+<tr>
+<td>"23 N-, 27 ETS-" domains</td>
+<td>that is the ETS and FOX library, a different one. The AP-1 library is 24 / 24 / 24</td>
+</tr>
+</tbody>
+</table>
+<p>One number in the paper does not survive either: the main text, p. 3, gives the 72 domains as
+"50-1,000 bp", while the measured CDS lengths run <strong>44 to 1,046 bp</strong> (N 44-1,046, bZIP 191-263,
+C insert 27-942 before its constant T2A). The paper's range is a round summary, not a bound a
+designer can rely on.</p>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<p>Nothing in this section should be turned into a package default. Each is a value the paper does
+not state, or a claim it makes that its own data does not support.</p>
+<ul>
+<li><strong>Enzyme units are not given</strong>, only volumes: 2.5 µL of each. No stock concentration is
+  stated, so units per µg cannot be derived.</li>
+<li><strong>T7 ligase amount is not given</strong> — neither units nor volume, only the buffer and the 1:1
+  molar ratio.</li>
+<li><strong>What the 1:1 molar ratio is between</strong> is not said. Insert to backbone is the obvious
+  reading; the paper does not name the two species.</li>
+<li><strong>The destination digest's temperature is not restated.</strong> "Using the same protocol" implies
+  two hours at 37 °C for BbsI and PmeI as well, but it is an inference.</li>
+<li><strong>No heat inactivation is described</strong> at any step; the protocol goes digest straight to SPRI.</li>
+<li><strong>The SPRI bead product is not named</strong> in the cloning paragraph, only the volume ratios.</li>
+<li><strong>No electroporation settings</strong>: the instrument is named, the voltage, capacitance,
+  resistance and cuvette gap are not.</li>
+<li><strong>No colony count or coverage target per round.</strong> Figure S1G annotates coverage for the pilot
+  library as a schematic, and reading numbers off it is not a citation.</li>
+<li><strong>Why the barcode is 11 bp is never stated.</strong> The frame argument in section 3 is derived from
+  the sequences here, not quoted from the paper.</li>
+<li><strong>Whether a GC band or homopolymer cap was considered is not stated.</strong> Their absence from the
+  set is measured; the authors' intent is not recoverable.</li>
+<li><strong>The paper's minimum Hamming distance of three is not met across pools</strong> (measured 2), and
+  the paper does not say the rule is per pool.</li>
+<li><strong>The stated domain size range 50-1,000 bp does not match</strong> the measured 44-1,046 bp.</li>
+<li><strong>The donor backbone was not measured whole.</strong> Table S1 does not give the pTwist Kan vector
+  sequence, so "PmeI cuts the donor backbone twice" is counted on the two external-stuffer
+  remnants, which is where both sites lie, and not over the entire plasmid.</li>
+<li><strong>The pilot library cannot be separated from the main one.</strong> The barcode reference sheet is
+  labelled "Pilot + Big", and the pilot's 9 × 3 × 8 design is given only in Figure S1H.</li>
+<li><strong>Table S1 carries no licence notice of its own.</strong> The verdict in section 1 rests on the
+  article's CC BY grant covering its supplemental files, which is the ordinary reading but is
+  not stated inside the workbook.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>The paper, its supplement and Table S1 were read on 2026-09-14.</p>
+<ul>
+<li>Takacsi-Nagy, O., Kasinathan, S., Hartman, A., Yin, Y., Wu, L., Chen, A.Y., Moser, L.M.,
+  May, A.P., Reeder, G.C., Celallos Fuentes, E., Kernick, C., Lu, J., McClellan, A.K.,
+  Raposo, C.J., Terrall, B., Theberath, N.E., Yan, P.K., Xu, P., Sotillo, E., Eyquem, J.,
+  Mackall, C.L., Roth, T.L. and Satpathy, A.T. (2026) Synthetic transcription factors designed
+  by domain recombination enhance CAR T cell antitumor function. <em>Cell</em> 189, 1-20.
+  <a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a>. CC BY 4.0.</li>
+<li>The same paper's STAR Methods: Key Resources Table (pp. e1-e2), METHOD DETAILS, <em>DNA
+  Constructs and HDR Templates</em> (pp. e4-e5), <em>Barcode Abundance Analysis</em> (p. e7) and
+  <em>Long-Read Sequencing</em> (p. e9).</li>
+<li>The same paper's <em>Resource availability</em> and <em>Supplemental information</em> (pp. 16-17).</li>
+<li>Supplemental information <code>mmc1.pdf</code>: Figure S1, panel A and its legend.</li>
+<li><code>Table S1.xlsx</code>, ten sheets. The sequence and barcode measurements in sections 2, 3, 6 and 7
+  were computed from it; the workbook is not redistributed here.</li>
+<li>Creative Commons Attribution 4.0 International:
+  <a href="http://creativecommons.org/licenses/by/4.0/">creativecommons.org</a></li>
+<li><code>docs/research/ligation-fidelity.md</code> for the CC BY precedent this note follows, and
+  <code>docs/research/restriction-enzyme-data.md</code> (issue #7) for the cut-offset convention used to
+  compute every overhang above.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

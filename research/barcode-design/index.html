@@ -1,0 +1,1537 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/barcode-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Barcode design: does a set need a GC band and a homopolymer cap? - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#barcode-design-does-a-set-need-a-gc-band-and-a-homopolymer-cap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Barcode design: does a set need a GC band and a homopolymer cap?
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdicts-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdicts, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-licences-and-what-may-ship" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Licences, and what may ship
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-one-set-that-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The one set that was measured
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The one set that was measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-what-the-set-holds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 What the set holds
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-which-barcodes-sit-at-the-extremes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 Which barcodes sit at the extremes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-what-the-set-achieved-verified-against-the-paper" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 What the set achieved, verified against the paper
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-the-barcode-design-literature-recommends-and-what-it-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. What the barcode-design literature recommends, and what it measured
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. What the barcode-design literature recommends, and what it measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-40-60-band-traces-to-one-uncited-sentence" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.1 The 40-60% band traces to one uncited sentence
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-authors-themselves-call-the-filters-subjective" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.2 The authors themselves call the filters subjective
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-what-the-papers-did-measure" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.3 What the papers did measure
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-the-sequencing-platforms-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What the sequencing platforms document
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. What the sequencing platforms document">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-illumina-documents-no-gc-band-and-no-homopolymer-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 Illumina documents no GC band and no homopolymer limit
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-g-is-dark-but-the-rule-that-follows-is-narrower-than-it-is-usually-given" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.2 G is dark, but the rule that follows is narrower than it is usually given
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-pacbio-the-one-measured-mechanism-and-where-the-cap-comes-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 PacBio: the one measured mechanism, and where the cap comes from
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-does-an-11-mers-gc-measurably-bias-the-amplicon-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Does an 11-mer's GC measurably bias the amplicon PCR?
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Does an 11-mer&#x27;s GC measurably bias the amplicon PCR?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-what-has-actually-been-measured-at-this-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 What has actually been measured at this scale
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-the-rules-cost-the-11-mer-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. What the rules cost: the 11-mer space
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-what-each-rule-would-do-to-work-that-succeeded" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. What each rule would do to work that succeeded
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-construction-matters-more-than-either-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. The construction matters more than either rule
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="barcode-design-does-a-set-need-a-gc-band-and-a-homopolymer-cap">Barcode design: does a set need a GC band and a homopolymer cap?<a class="headerlink" href="#barcode-design-does-a-set-need-a-gc-band-and-a-homopolymer-cap" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #58. It settles one question for the barcode designer of issue #62:
+beyond a minimum distance <strong>within a part list</strong> and freedom from a forbidden enzyme site,
+should a barcode set also be constrained on GC content and on homopolymer run length?</p>
+<p>The question is not academic. Whatever this note concludes becomes the default dials of a
+designer that every later user inherits, so an unsourced default is worse than an absent one.</p>
+<p>Everything below was read or computed on <strong>2026-09-14</strong>. Every count over the published barcode
+set was computed from <code>Table S1.xlsx</code> on that date; every count over the 11-mer space was
+computed by the arithmetic in section 7, which names the construction that produced it.</p>
+<h2 id="1-the-verdicts-first">1. The verdicts, first<a class="headerlink" href="#1-the-verdicts-first" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Verdict</th>
+<th>The number</th>
+<th>Strength of the evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GC band</strong></td>
+<td><strong>Off by default</strong></td>
+<td>none</td>
+<td><strong>Convention</strong>, and one measurement against it</td>
+</tr>
+<tr>
+<td><strong>Homopolymer cap</strong></td>
+<td><strong>On by default</strong></td>
+<td>longest run <strong>≤ 5</strong></td>
+<td><strong>Measured mechanism</strong>; the threshold is a judgement</td>
+</tr>
+<tr>
+<td>Minimum distance</td>
+<td>On, unchanged</td>
+<td>Hamming <strong>3</strong> within a part list</td>
+<td>Measured on the published set</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The GC band is off because no measurement supports one at this length.</strong> Every numeric GC
+band in the barcode literature traces back to a single uncited sentence in Hamady et al. 2008.
+The one paper that imposed such a band and then measured its consequences, Xu et al. 2009,
+found GC was not the variable that mattered. The one direct measurement at a comparable tag
+length, Kebschull and Zador 2015, found amplification flat out to 80% GC. Illumina and PacBio
+document no GC band for a barcode at all. And the real, large GC bias that does exist, Aird
+et al. 2011, is a property of the whole fragment, which an 11-mer moves by one to five points.</p>
+<p><strong>The homopolymer cap is on because it covers a failure the distance rule cannot see.</strong> A
+minimum Hamming distance protects against substitutions only. The dominant residual error of
+PacBio HiFi reads, which is how this barcode block is actually read, is an <strong>indel inside a
+homopolymer</strong> — 92.0% of read discordances, one every 477 bp, measured by PacBio's own authors.
+A Hamming code offers no protection against that whatever its distance, so the cap and the
+distance rule guard different modes, and the cap is the only one of the two that touches this
+one. It also costs nothing measurable (section 7).</p>
+<p><strong>The cap is 5, not the conventional 2 or 3.</strong> The conventional value is 454-era, and the
+software that ships it says outright that it is unnecessary on Illumina. 5 is the one number
+here the evidence does not pin; section 5.3 says exactly how it was chosen and what argues
+against it.</p>
+<p><strong>A third finding matters more than either rule.</strong> Neither filter fixes the real failure of a
+naive designer. A greedy construction that walks the 11-mer space in lexicographic order emits
+<code>AAAAAAAAAAA</code> as its first barcode and a run of A-tailed, GC-poor sequences after it — and a
+homopolymer cap does <strong>not</strong> repair this, it merely caps the run. Drawing candidates in a
+seeded shuffled order does repair it, costs nothing, and keeps the result reproducible.
+Section 9 shows all three sets side by side. Issue #62 should take that as the default
+construction.</p>
+<h2 id="2-licences-and-what-may-ship">2. Licences, and what may ship<a class="headerlink" href="#2-licences-and-what-may-ship" title="Permanent link">&para;</a></h2>
+<p>Nothing in this note is copied into package data. What ships is a <strong>default value chosen by
+this repository</strong>, with the evidence recorded here; no vendor's or author's table is
+redistributed.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Licence</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Takacsi-Nagy et al. 2026, <em>Cell</em></td>
+<td>CC BY 4.0, verified in <code>protein-library-assembly.md</code></td>
+<td><strong>Yes</strong> — quote and reuse with attribution</td>
+</tr>
+<tr>
+<td>Faircloth &amp; Glenn 2012; Bystrykh 2012, <em>PLoS ONE</em></td>
+<td>CC BY</td>
+<td><strong>Yes</strong> — with attribution</td>
+</tr>
+<tr>
+<td>Buschmann &amp; Bystrykh 2013, <em>BMC Bioinformatics</em></td>
+<td>CC BY</td>
+<td><strong>Yes</strong> — with attribution</td>
+</tr>
+<tr>
+<td>Aird et al. 2011, <em>Genome Biology</em></td>
+<td>CC BY</td>
+<td><strong>Yes</strong> — with attribution</td>
+</tr>
+<tr>
+<td>Hamady et al. 2008, <em>Nat Methods</em>; Buschmann 2017, <em>Bioinformatics</em></td>
+<td>subscription; licence not verified here</td>
+<td><strong>Quote briefly and cite</strong>; do not vendor</td>
+</tr>
+<tr>
+<td>Wenger et al. 2019, <em>Nat Biotechnol</em>; Xu et al. 2009, <em>PNAS</em>; Kebschull &amp; Zador 2015, <em>NAR</em></td>
+<td>licence not verified here</td>
+<td><strong>Quote briefly and cite</strong>; do not vendor</td>
+</tr>
+<tr>
+<td>Illumina and PacBio documentation</td>
+<td>proprietary, all rights reserved</td>
+<td><strong>Quote briefly with attribution</strong>; never redistribute</td>
+</tr>
+<tr>
+<td>DNABarcodes R package</td>
+<td>GPL-2 (Bioconductor)</td>
+<td><strong>No code may be copied.</strong> Its defaults were read from source and are reported as fact, not reused</td>
+</tr>
+</tbody>
+</table>
+<p>The DNABarcodes row is the one that needs care. Reading a GPL package's source to learn what
+its defaults <strong>are</strong> is not copying it, and this note states those defaults as a fact about the
+software. No line of it may be translated into <code>src/</code>.</p>
+<h2 id="3-the-one-set-that-was-measured">3. The one set that was measured<a class="headerlink" href="#3-the-one-set-that-was-measured" title="Permanent link">&para;</a></h2>
+<p>The strongest single piece of evidence available is a published barcode set that holds to a
+distance rule and to nothing else, and that was then sequenced on two platforms. It bounds how
+bad loose can be. It does not show that loose is optimal, and it is not evidence that the
+authors considered the question — the paper never states that a GC or homopolymer rule was
+weighed and rejected.</p>
+<p>The source is Takacsi-Nagy, O. et al. (2026), <em>Cell</em> 189, 1-20,
+<a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a>, CC BY 4.0.
+<code>docs/research/protein-library-assembly.md</code> records the method; this note reuses its barcode
+measurements and adds the ones issue #58 needs.</p>
+<h3 id="31-what-the-set-holds">3.1 What the set holds<a class="headerlink" href="#31-what-the-set-holds" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>The three part lists (72)</th>
+<th>Every 11-mer in the workbook (164)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Barcode length</td>
+<td>11 bp</td>
+<td>11 bp</td>
+</tr>
+<tr>
+<td>GC content</td>
+<td>2 to 9 of 11, <strong>18.2% to 81.8%</strong></td>
+<td>2 to 9 of 11, <strong>18.2% to 81.8%</strong></td>
+</tr>
+<tr>
+<td>Longest homopolymer run</td>
+<td><strong>6</strong></td>
+<td><strong>6</strong></td>
+</tr>
+<tr>
+<td>Minimum Hamming, within a part list</td>
+<td><strong>3</strong> (N), <strong>4</strong> (bZIP), <strong>4</strong> (C)</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Minimum Hamming, across part lists</td>
+<td><strong>2</strong></td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>Carries a BsaI, BbsI, SrfI or PmeI site</td>
+<td>none</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>So the set satisfies a distance rule <strong>within a part list</strong> and site-freedom, and no GC band
+and no homopolymer cap was applied to it.</p>
+<p><strong>The distance rule is per part list, and the paper overstates it.</strong> METHOD DETAILS, p. e7,
+claims "a minimum Hamming distance of three between any two domain BCs". Measured, that holds
+within each part list but not across them: the minimum across the three lists is 2. Issue #62
+should check distance within a part list, which is also the only place it is needed.</p>
+<h3 id="32-which-barcodes-sit-at-the-extremes">3.2 Which barcodes sit at the extremes<a class="headerlink" href="#32-which-barcodes-sit-at-the-extremes" title="Permanent link">&para;</a></h3>
+<p>This matters more than the range does, because the identity of the extreme barcodes decides
+which vendor concern the set actually tested.</p>
+<table>
+<thead>
+<tr>
+<th>Barcode</th>
+<th>Part list</th>
+<th>Run</th>
+<th>Base</th>
+<th>GC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GCTTTTTTGGC</code></td>
+<td>bZIP</td>
+<td><strong>6</strong></td>
+<td>T</td>
+<td>5/11</td>
+</tr>
+<tr>
+<td><code>TCATTGGGGGC</code></td>
+<td>N</td>
+<td><strong>5</strong></td>
+<td>G</td>
+<td>7/11</td>
+</tr>
+<tr>
+<td><code>CACGGCAAAAT</code></td>
+<td>N</td>
+<td>4</td>
+<td>A</td>
+<td>5/11</td>
+</tr>
+<tr>
+<td><code>TCTGTGCCCCG</code></td>
+<td>N</td>
+<td>4</td>
+<td>C</td>
+<td>8/11</td>
+</tr>
+<tr>
+<td><code>ACGGCGTTTTA</code></td>
+<td>C</td>
+<td>4</td>
+<td>T</td>
+<td>5/11</td>
+</tr>
+<tr>
+<td><code>CCTATAAGGGG</code></td>
+<td>C</td>
+<td>4</td>
+<td>G</td>
+<td>6/11</td>
+</tr>
+<tr>
+<td><code>GAACCGAAAAG</code></td>
+<td>C</td>
+<td>4</td>
+<td>A</td>
+<td>5/11</td>
+</tr>
+<tr>
+<td><code>TGCGGGAAAAT</code></td>
+<td>C</td>
+<td>4</td>
+<td>A</td>
+<td>5/11</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The longest run in the set is six T, not six G.</strong> The longest G run anywhere in the 164 is
+<strong>5</strong>, in two barcodes. That is the number any argument from two-colour chemistry has to be
+measured against, and it is a weaker test than a set containing a longer G run would have been.</p>
+<p>The seven barcodes at the GC extremes are <code>AACAAATTAGT</code>, <code>AATTCTTATTC</code>, <code>CTAAATTAATG</code> and
+<code>TAATCACAAAT</code> at 2 of 11, and <code>CGAACCGGGCC</code>, <code>GAGGCACCGGG</code> and <code>TGGGCGGCCTG</code> at 9 of 11.</p>
+<h3 id="33-what-the-set-achieved-verified-against-the-paper">3.3 What the set achieved, verified against the paper<a class="headerlink" href="#33-what-the-set-achieved-verified-against-the-paper" title="Permanent link">&para;</a></h3>
+<p>Issue #58 quotes roughly 95% of reads with three valid barcodes and roughly 90% correct
+linkage. <strong>Both check out, with two wrinkles.</strong> The figures were read off the article and its
+supplement rather than repeated from the ticket.</p>
+<p>Main text, p. 3:</p>
+<blockquote>
+<p>Of reads containing three valid BCs (∼95%), nearly 90% of the library was correctly linked</p>
+</blockquote>
+<p>Figure S1B prints the read categories as 84.1% correct, 8.3% barcode mismatches, 1.0% missing
+domains, 4.5% missing barcode and 2.0% other. Its legend says only "Missing BC" and "Other" had
+fewer than three barcodes, so reads carrying three valid barcodes are 100 − 4.5 − 2.0 =
+<strong>93.5%</strong>, against the text's "∼95%". Among those, correct linkage is 84.1 / (84.1 + 8.3) =
+<strong>91.0%</strong>, against the text's "nearly 90%" — and the Figure S1D legend puts it the other way
+round:</p>
+<blockquote>
+<p>Over 90% of assembled DESynR AP-1 TFs had a correct linkage of BCs across all three domains.</p>
+</blockquote>
+<p>So "∼95%" is really 93.5%, and the main text's "nearly 90%" is conservative against its own
+supplement's "over 90%". Both accounts agree to a point or two, and the ticket's figures stand.</p>
+<p>Two further measurements bear on dropout, which is the failure a GC rule would be imposed to
+prevent:</p>
+<blockquote>
+<p>NGS of the plasmid library showed 99.8% of possible domain combinations were present and
+evenly distributed (∼89% within 1 log % of reads)</p>
+</blockquote>
+<p>and, separately on the same page:</p>
+<blockquote>
+<p>barcoding errors did not correlate with TF size or cause dropout: &gt;90% of the library
+maintained &gt;80% fidelity</p>
+</blockquote>
+<p><strong>The set was read on both platforms, which is why both vendors are in scope.</strong> Barcode
+abundance for the screens was counted from Illumina amplicons on "MiSeq or NextSeq instruments"
+(METHOD DETAILS, p. e7) — NextSeq is two-colour chemistry. The linkage fidelity above was
+measured on a PacBio <strong>Revio</strong> from HiFi reads (p. e9). So the 11-mers carrying a G5 and a T6
+went through both a two-colour instrument and a homopolymer-sensitive long-read instrument, and
+the aggregate result was 93.5% and 91.0%.</p>
+<p><strong>What this does not establish.</strong> The 8.3% barcode-mismatch rate is not nothing, and nothing
+here says whether those mismatches are spread evenly or concentrated in the GC-extreme and
+homopolymer-carrying barcodes. That is the measurement that would settle issue #58 outright,
+and it was not available — see <code>## Open gaps</code>.</p>
+<h2 id="4-what-the-barcode-design-literature-recommends-and-what-it-measured">4. What the barcode-design literature recommends, and what it measured<a class="headerlink" href="#4-what-the-barcode-design-literature-recommends-and-what-it-measured" title="Permanent link">&para;</a></h2>
+<p>Six primary sources were read in full text. <strong>Every one of them states its GC band and its
+homopolymer cap as convention.</strong> Not one measured either.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>GC band</th>
+<th>Homopolymer cap</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hamady et al. 2008</td>
+<td>40-60%</td>
+<td>no run of 3</td>
+<td><strong>Convention</strong>, one uncited sentence</td>
+</tr>
+<tr>
+<td>Faircloth &amp; Glenn 2012</td>
+<td>40-60%</td>
+<td>runs &gt; 2 excluded</td>
+<td><strong>Convention</strong>, self-described "subjective"</td>
+</tr>
+<tr>
+<td>Bystrykh 2012</td>
+<td>none set</td>
+<td>none set</td>
+<td>discusses; sets no cutoff</td>
+</tr>
+<tr>
+<td>Buschmann &amp; Bystrykh 2013</td>
+<td>40-60%</td>
+<td>≤ 2 repeats</td>
+<td><strong>Convention</strong>, cites only a general claim</td>
+</tr>
+<tr>
+<td>Buschmann 2017 / DNABarcodes</td>
+<td>40-60%, on by default</td>
+<td>no triplets, on by default</td>
+<td><strong>Convention</strong>, "advised in the available literature"</td>
+</tr>
+<tr>
+<td>Hawkins et al. 2018 (FREE)</td>
+<td>40-60%</td>
+<td>no triples</td>
+<td><strong>Convention</strong>, "experimental considerations"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="41-the-40-60-band-traces-to-one-uncited-sentence">4.1 The 40-60% band traces to one uncited sentence<a class="headerlink" href="#41-the-40-60-band-traces-to-one-uncited-sentence" title="Permanent link">&para;</a></h3>
+<p>Hamady et al. 2008 is where it starts. Their entire stated rationale:</p>
+<blockquote>
+<p>To pick our maximal set of 1544 codewords (Supplementary Data), we chose an encoding scheme
+for ATCG that resulted in the most valid 'candidate' codewords, then filtered these
+candidates to optimize PCR and sequencing performance based on GC content (40-60%), and
+eliminating consecutive triples of the same base and self-complementarity or complementarity
+to the primer.</p>
+</blockquote>
+<p>No reference marker, no data, no citation. "To optimize PCR and sequencing performance" is the
+whole of the argument. The band then reaches Bystrykh 2012, Buschmann and Bystrykh 2013,
+DNABarcodes and Hawkins et al. 2018 unchanged.</p>
+<p>Worth noting because it is often asserted otherwise: Hamady never names 454 homopolymer indels
+as the reason for the no-triples rule. Later authors supply that link.</p>
+<p><strong>On an 11-mer the inherited band is severe.</strong> 40-60% admits only 5 or 6 G/C out of 11 —
+4 of 11 is 36.4% and fails, 7 of 11 is 63.6% and fails. Applied to the published set it would
+reject 37 of the 72 part-list barcodes.</p>
+<h3 id="42-the-authors-themselves-call-the-filters-subjective">4.2 The authors themselves call the filters subjective<a class="headerlink" href="#42-the-authors-themselves-call-the-filters-subjective" title="Permanent link">&para;</a></h3>
+<p>Faircloth and Glenn 2012 state the rule:</p>
+<blockquote>
+<p>We did not include, in any set, sequence tags having &gt;2 homopolymers, GC content outside the
+range 40%&lt;GC&lt;60%, or perfect self-complementarity.</p>
+</blockquote>
+<p>and then describe the whole class of them:</p>
+<blockquote>
+<p>filtering tags based on subjective or platform-specific criteria</p>
+</blockquote>
+<p>In their software the filters are optional, not default. Bystrykh 2012 sets no numeric cutoff
+at all, treats GC as mainly a microarray concern, and says of homopolymers:</p>
+<blockquote>
+<p>Stringency of filtering depends on the application and sequencing chemistry. Roche 454
+pyrosequencing chemistry for instance, imposes serious restriction on this parameter. Solexa
+platforms and their recent upgrades seem to be very robust in reading homopolymers.</p>
+</blockquote>
+<p>DNABarcodes turns all three filters on by default — <code>filter.triplets</code>, <code>filter.gc</code> and
+<code>filter.self_complementary</code>, with GC kept inclusive between 0.4 and 0.6 — on the stated ground
+that "in the available literature, use of all three mentioned filters is advised and therefore
+enabled by default". Its own vignette then undercuts one of them:</p>
+<blockquote>
+<p>Some of these filters may be unnecessary on current or future platforms. For example, with
+the Illumina's Sequencing by Synthesis technology, the triplet filter is unnecessary.</p>
+</blockquote>
+<h3 id="43-what-the-papers-did-measure">4.3 What the papers did measure<a class="headerlink" href="#43-what-the-papers-did-measure" title="Permanent link">&para;</a></h3>
+<p>Where these authors measured tag performance, they found no GC effect — and in two cases found
+the bias lay somewhere else entirely.</p>
+<ul>
+<li><strong>Faircloth and Glenn 2012</strong>, 95 primers carrying 10-nt tags: "the average fold-difference of
+  read counts per sequence tagged primer did not differ from one ... suggesting that
+  incorporation of edit metric sequence tags to primers did not affect amplification or
+  sequencing." Their pooled <strong>adapters</strong> did vary, by over two orders of magnitude, which they
+  attribute to "differences in ligation efficiency among individual adapters" — not to
+  composition.</li>
+<li><strong>Xu et al. 2009</strong> imposed a 40-60% band on 240,000 probes, then measured which variable
+  separated good probes from bad. G+C% by performance group was 49.2 (good), 50.9 (bright),
+  50.4 (medium) and 46.4 (dim), and "the differences were rather small to account for the
+  disparity in their hybridization properties". What did matter was four-base runs — <code>CCCC</code>
+  enriched among cross-hybridising probes, <code>AAAA</code> among dim ones. This is hybridization, not
+  PCR or read counts, so it does not transfer; but it is the only paper that put its own GC
+  filter to the test, and the filter failed it.</li>
+<li><strong>Kebschull and Zador 2015</strong> is the closest measurement to this question's scale: 20-nt
+  barcodes across the full GC range to 80%, with amplification efficiency essentially flat,
+  slopes below 0.004.</li>
+<li><strong>Alon et al. 2011</strong> separates arrangement from composition. Barcodes introduced by ligation
+  before PCR gave "up to 100-fold differences in read counts"; barcodes carried on the PCR
+  primers gave none (R² = 0.9977 ± 0.0016).</li>
+<li><strong>Berry et al. 2011</strong> and <strong>O'Donnell et al. 2016</strong> both measured real barcoded-primer bias
+  and attributed it to primer-template interactions and mismatch, with GC held constant. Both
+  fixes are protocol changes — a two-step PCR — not barcode filters.</li>
+<li><strong>McGee et al. 2024</strong> is the one report of a GC correlation, and it is weak and
+  sample-dependent, with the extremes worst. That argues for avoiding extremes, not for a band.</li>
+</ul>
+<h2 id="5-what-the-sequencing-platforms-document">5. What the sequencing platforms document<a class="headerlink" href="#5-what-the-sequencing-platforms-document" title="Permanent link">&para;</a></h2>
+<h3 id="51-illumina-documents-no-gc-band-and-no-homopolymer-limit">5.1 Illumina documents no GC band and no homopolymer limit<a class="headerlink" href="#51-illumina-documents-no-gc-band-and-no-homopolymer-limit" title="Permanent link">&para;</a></h3>
+<p>Searched across Illumina's Knowledge Base, the Index Adapters Pooling Guide v17, the Illumina
+Adapter Sequences document and the Indexed Sequencing Overview Guide: <strong>no GC percentage
+requirement for an index or barcode is stated anywhere</strong>, and <strong>no maximum homopolymer length
+is stated anywhere</strong> — "homopolymer" and "poly-G" return no hits across the Knowledge Base.</p>
+<p>The widely repeated "25-75% GC, no runs of four" rule is real but it is <strong>patent claim
+language</strong>, not guidance: Illumina's US 11,028,436 B2 claims index sets where "each index
+sequence ... has a guanine/cytosine (GC) content between 25% and 75%" and which "excludes any
+homopolymers having four or more consecutive identical bases". A patent claim is not a
+recommendation to users, and this note does not treat it as one.</p>
+<h3 id="52-g-is-dark-but-the-rule-that-follows-is-narrower-than-it-is-usually-given">5.2 G is dark, but the rule that follows is narrower than it is usually given<a class="headerlink" href="#52-g-is-dark-but-the-rule-that-follows-is-narrower-than-it-is-usually-given" title="Permanent link">&para;</a></h3>
+<p>Illumina's two-colour model is confirmed in its own documentation, and G-is-dark is the
+invariant across every variant of the chemistry. The MiniSeq article is the bluntest:
+"Guanines (G) are permanently dark."</p>
+<p>The premise that "A = red, C = green, T = both, G = neither" is <strong>not</strong> what Illumina
+documents; the assignments differ between chemistries and only G-is-dark holds throughout. On
+NovaSeq 6000, NextSeq 500/550 and MiniSeq it is T green, C red, A both; under XLEAP-SBS it is
+T green, A blue, C both.</p>
+<p>The hard failure condition is documented for exactly one place — <strong>the first two cycles of the
+Index Read</strong>:</p>
+<blockquote>
+<p>either of the first two cycles of the Index Read must start with at least one base other
+than G ... If an Index Read starts with two G bases, signal intensity is not generated.</p>
+</blockquote>
+<p>Beyond those two cycles, colour balance is stated as a preference, and Illumina adds that
+"higher plexity pools are inherently color-balanced, so any index adapter combinations are
+acceptable."</p>
+<p><strong>This rule does not reach the barcodes in question.</strong> These barcodes are not indexes. They sit
+inside the amplicon and are read as template — the forward primer anneals in the internal
+stuffer directly upstream of the barcode block, the reverse primer in TRAC exon 1. The i5 and
+i7 indexes for these runs were "standard Illumina Nextera primers", which are Illumina's own
+and already balanced. So a G-run cap on a barcode of this kind cannot be justified from the
+index-read rule.</p>
+<p>The poly-G artefact is also not what it is often taken for. Illumina's DRAGEN documentation
+describes its cause:</p>
+<blockquote>
+<p>Poly-G artifacts appear on two-channel sequencing systems when the dark base G is called
+after synthesis has terminated. As a result, DRAGEN calls several erroneous high-confidence G
+bases on the ends of affected reads.</p>
+</blockquote>
+<p>That is a read-end artefact of synthesis stopping, not something a G homopolymer in the
+template provokes. Trimming for it is on by default. Nothing in Illumina's documentation says a
+template G run causes phasing failure or base-call confidence loss.</p>
+<h3 id="53-pacbio-the-one-measured-mechanism-and-where-the-cap-comes-from">5.3 PacBio: the one measured mechanism, and where the cap comes from<a class="headerlink" href="#53-pacbio-the-one-measured-mechanism-and-where-the-cap-comes-from" title="Permanent link">&para;</a></h3>
+<p>This is where a homopolymer cap earns its place. Wenger et al. 2019, written by PacBio authors,
+measured the residual error of HiFi reads:</p>
+<blockquote>
+<p>The large majority of CCS read discordances are indels in homopolymer contexts: 3.4% are
+mismatches, 4.6% are indels in non-homopolymer contexts, and 92.0% are indels in
+homopolymers.</p>
+</blockquote>
+<p>and, converting those proportions to rates:</p>
+<blockquote>
+<p>This equates to a mismatch every 13,048 bp in CCS reads, a non-homopolymer indel every
+9,669 bp, and a homopolymer indel every 477 bp.</p>
+</blockquote>
+<p>Two consequences follow for a barcode that will be read on HiFi, as this one was:</p>
+<ol>
+<li><strong>The error is an indel, and a Hamming-distance rule cannot see indels at all.</strong> Distance 3
+   corrects one substitution and does nothing for a deletion, which shifts every base after it.
+   So the distance rule and the homopolymer cap are not redundant with each other; the cap is
+   the only one of the two that addresses the dominant long-read error.</li>
+<li><strong>The rate is a function of run length.</strong> Longer runs are worse, monotonically.</li>
+</ol>
+<p>PacBio's own shipped barcodes were designed accordingly, though without a number:</p>
+<blockquote>
+<p>the PacBio barcodes were designed to have no homopolymer stretches, low pairwise sequence
+similarity ... and to be simultaneously distinguishable in both forward and
+reverse-complement orientations</p>
+</blockquote>
+<p>That is a prohibition with no threshold and no GC figure. PacBio documents no maximum
+homopolymer length and no GC band for barcodes anywhere. Oxford Nanopore documents none either.</p>
+<p><strong>How the cap of 5 was chosen, and what argues against it.</strong> No source sets a threshold. The
+conventional 2 or 3 is 454-era and is explicitly disclaimed for Illumina by the software that
+ships it. The only threshold measurement available, Johnson et al. 2023, puts severity much
+further out: indel error rises with run length and becomes severe past runs of about 10. Against that, the published set reached 6 and worked. A cap of 5 therefore rejects
+exactly one published barcode, <code>GCTTTTTTGGC</code>, which is the honest argument against it.</p>
+<p>It is chosen anyway, for three reasons. The error mechanism is measured and monotone in run
+length. The cost is nothing measurable (section 7). And "6 worked" is an aggregate claim only —
+the 8.3% mismatch fraction is unattributed, so no per-barcode result shows that this particular
+barcode was correct work. A cap of 6 would fire on nothing in the set and remains defensible;
+the difference between them is one barcode in 72 and no measurable space.</p>
+<h2 id="6-does-an-11-mers-gc-measurably-bias-the-amplicon-pcr">6. Does an 11-mer's GC measurably bias the amplicon PCR?<a class="headerlink" href="#6-does-an-11-mers-gc-measurably-bias-the-amplicon-pcr" title="Permanent link">&para;</a></h2>
+<p>Much of the GC-bias literature is about whole libraries or long fragments. An 11-mer is short
+enough that the extrapolation needs checking rather than assuming, and two structural facts say
+it does not carry over.</p>
+<p><strong>The barcode is not in a primer.</strong> In this scheme the forward primer anneals "directly upstream
+of the BC region within the 'Internal Stuffer'" and the reverse primer in TRAC exon 1
+(Figure S1G legend), so the barcode block lies <strong>inside</strong> the amplicon and in neither binding
+site. The PacBio amplicon likewise spans the barcodes internally. The mechanism behind
+barcode-driven amplification bias needs the barcode to be part of the primer, where it changes
+that primer's Tm and its annealing; a barcode interior to the amplicon cannot act that way.</p>
+<p><strong>An 11-mer barely moves the amplicon's GC.</strong> Computed: a single barcode swinging across the
+full measured range, 2 of 11 to 9 of 11, changes the GC content of the whole amplicon by</p>
+<table>
+<thead>
+<tr>
+<th>Amplicon</th>
+<th>Shift from one barcode at its extremes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>150 bp</td>
+<td>4.67 points</td>
+</tr>
+<tr>
+<td>250 bp</td>
+<td>2.80 points</td>
+</tr>
+<tr>
+<td>400 bp</td>
+<td>1.75 points</td>
+</tr>
+<tr>
+<td>600 bp</td>
+<td>1.17 points</td>
+</tr>
+</tbody>
+</table>
+<p>The finished barcode block carries three barcodes, so it is the larger unit. Computed over all
+24³ = 13,824 published blocks, the 41-bp block runs <strong>34.1% to 78.0%</strong> GC — a swing of 43.9
+points across the block, which is 7.20 points of a 250-bp amplicon, 4.50 of a 400-bp one and
+3.00 of a 600-bp one. The longest homopolymer run inside a whole block is still 6, so
+concatenation creates no longer run than its longest member already carries.</p>
+<h3 id="61-what-has-actually-been-measured-at-this-scale">6.1 What has actually been measured at this scale<a class="headerlink" href="#61-what-has-actually-been-measured-at-this-scale" title="Permanent link">&para;</a></h3>
+<p><strong>The large, real GC bias is a whole-fragment effect.</strong> Aird et al. 2011 is the standard
+measurement, and it is severe:</p>
+<blockquote>
+<p>as few as ten PCR cycles using the enzyme formulation (Phusion HF DNA polymerase) and
+thermocycling conditions prescribed in the standard Illumina protocol depleted loci with a GC
+content &gt; 65% to about a hundredth of the mid-GC reference loci. Amplicons &lt; 12% GC were
+diminished to approximately one-tenth</p>
+</blockquote>
+<p>That is a hundredfold, and it is why GC bands exist at all. But it was measured on whole
+amplicons of 50-69 bp inside libraries of 180-400 bp, and the paper's own conclusion about
+which composition drives it is the decisive sentence for an 11-mer:</p>
+<blockquote>
+<p>We found the %GC of a 250-bp window centered on the amplicons a better predictor of
+under-coverage than the %GC of the amplicons proper.</p>
+</blockquote>
+<p>Bias tracks the composition of the whole fragment, not of a short stretch inside it. The
+arithmetic above puts an 11-mer's contribution at one to five points of that figure, well
+inside the flat range — which Aird et al. also found widens with a slower thermocycler ramp,
+reaching "from 13% to 84% GC" on the slowest instrument they tried.</p>
+<p><strong>Verdict on this section: the extrapolation does not hold.</strong> The whole-library GC literature
+does not transfer to an 11-mer interior to an amplicon, by the measurement of the very paper
+that established the bias. Nothing measured supports a narrow GC band at this length, and the
+weak evidence that exists points only at the extremes.</p>
+<h2 id="7-what-the-rules-cost-the-11-mer-space">7. What the rules cost: the 11-mer space<a class="headerlink" href="#7-what-the-rules-cost-the-11-mer-space" title="Permanent link">&para;</a></h2>
+<p><strong>This is arithmetic run here, not a number cited.</strong> The construction is stated because the
+count depends on it.</p>
+<p>The space is 4¹¹ = <strong>4,194,304</strong> 11-mers. Counts of codewords below come from a <strong>greedy
+construction in lexicographic order</strong>: take allowed 11-mers in increasing index order, accept
+one whenever it is at least distance 3 from every codeword already accepted. That is a
+<strong>lower bound</strong> on the largest distance-3 code inside each filtered set, never the maximum. The
+sphere-packing bound puts the maximum for the unfiltered space at <strong>123,361</strong>, and the
+shortened quaternary Hamming code [11,8,3]₄ gives exactly 4⁸ = 65,536 by construction.</p>
+<table>
+<thead>
+<tr>
+<th>Filter</th>
+<th>11-mers allowed</th>
+<th>Greedy distance-3 code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none</td>
+<td>4,194,304</td>
+<td><strong>65,536</strong></td>
+</tr>
+<tr>
+<td>site-free only</td>
+<td>4,169,216</td>
+<td>46,692</td>
+</tr>
+<tr>
+<td>site-free + run ≤ 6</td>
+<td>4,165,122</td>
+<td>48,356</td>
+</tr>
+<tr>
+<td><strong>site-free + run ≤ 5 (the default)</strong></td>
+<td><strong>4,149,782</strong></td>
+<td><strong>48,267</strong></td>
+</tr>
+<tr>
+<td>site-free + run ≤ 4</td>
+<td>4,079,404</td>
+<td>48,155</td>
+</tr>
+<tr>
+<td>GC 3-8 of 11 only</td>
+<td>3,919,872</td>
+<td>47,556</td>
+</tr>
+<tr>
+<td>homopolymer run ≤ 3 only</td>
+<td>3,791,232</td>
+<td>46,164</td>
+</tr>
+<tr>
+<td>site-free + GC 3-8 + run ≤ 3</td>
+<td>3,570,354</td>
+<td>45,128</td>
+</tr>
+<tr>
+<td>site-free + GC 4-7 + run ≤ 3</td>
+<td>3,003,954</td>
+<td>41,858</td>
+</tr>
+<tr>
+<td>site-free + GC 5-6 + run ≤ 3</td>
+<td>1,779,682</td>
+<td>32,353</td>
+</tr>
+</tbody>
+</table>
+<p>Site-freedom is counted against BsaI, BbsI, SrfI and PmeI in both orientations; only 25,088 of
+the 4,194,304 11-mers carry any of those sites.</p>
+<p><strong>Two cautions, both of which the numbers force.</strong></p>
+<p>First, <strong>do not read the unfiltered 65,536 against the rest as the cost of a filter.</strong> That row
+is a perfectly structured linear code and greedy finds it exactly; once any filter perturbs the
+space the structure is gone and greedy settles near 46,000-48,000 whichever single filter is
+applied. That drop is the construction losing its structure, not the filter deleting codewords.</p>
+<p>Second, <strong>the homopolymer cap's cost is below the resolution of this method.</strong> Site-freedom
+alone yields 46,692 while site-freedom plus a cap of 6 yields 48,356 — <em>more</em> codewords from a
+<em>smaller</em> allowed set. A tighter filter cannot really raise capacity, so the spread across
+46,692, 48,356, 48,267 and 48,155 is noise in the greedy construction. The honest statement is
+that <strong>the homopolymer cap is free</strong>, not that it gains anything.</p>
+<p><strong>At realistic sizes none of this binds.</strong> A part list holds tens to a few hundred members, and
+even the strictest combination in the table leaves 32,353 — more than a thousand times what a
+24-member part list needs. The GC and homopolymer rules are cheap in space. The question is
+whether they are justified, not whether they are affordable, and the space argument settles
+nothing in either direction.</p>
+<p><strong>Under the chosen defaults</strong> — minimum Hamming distance 3, site-free, homopolymer run ≤ 5, no
+GC band — the surviving count is <strong>48,267</strong> by lexicographic greedy, and <strong>37,858</strong> by the
+seeded shuffled construction recommended in section 9. Both are lower bounds. The second is the
+operative number, because it is the construction issue #62 should use.</p>
+<h2 id="8-what-each-rule-would-do-to-work-that-succeeded">8. What each rule would do to work that succeeded<a class="headerlink" href="#8-what-each-rule-would-do-to-work-that-succeeded" title="Permanent link">&para;</a></h2>
+<p>House rule: a rule shown to fire on correct work is evidence against itself. The published set
+worked, in the aggregate sense measured in section 3.3. Computed, here is what each candidate
+rule would have rejected from it.</p>
+<table>
+<thead>
+<tr>
+<th>Candidate rule</th>
+<th>Rejects, of the 72 in part lists</th>
+<th>Rejects, of the 164</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GC band 3-8 of 11 (27%-73%)</td>
+<td>7 (9.7%)</td>
+<td>7 (4.3%)</td>
+</tr>
+<tr>
+<td>GC band 4-7 of 11 (36%-64%)</td>
+<td>18 (25.0%)</td>
+<td>19 (11.6%)</td>
+</tr>
+<tr>
+<td><strong>GC band 5-6 of 11 (the inherited 40-60%)</strong></td>
+<td><strong>37 (51.4%)</strong></td>
+<td>72 (43.9%)</td>
+</tr>
+<tr>
+<td>homopolymer cap ≤ 5 (the default)</td>
+<td><strong>1 (1.4%)</strong></td>
+<td>1 (0.6%)</td>
+</tr>
+<tr>
+<td>homopolymer cap ≤ 4</td>
+<td>2 (2.8%)</td>
+<td>2 (1.2%)</td>
+</tr>
+<tr>
+<td>homopolymer cap ≤ 3 (the inherited value)</td>
+<td>8 (11.1%)</td>
+<td>8 (4.9%)</td>
+</tr>
+<tr>
+<td>homopolymer cap ≤ 2</td>
+<td>29 (40.3%)</td>
+<td>59 (36.0%)</td>
+</tr>
+</tbody>
+</table>
+<p>The inherited pair is the damning row. A 40-60% GC band with no run of three would have thrown
+out <strong>more than half</strong> of a barcode set that returned 93.5% and 91.0% on two platforms. The
+chosen cap of 5 rejects one barcode; no GC band rejects none.</p>
+<p>One qualification keeps section 8 from being decisive on its own: "worked" means the set
+achieved those figures in aggregate, not that every individual barcode performed. If the 8.3%
+mismatch fraction were concentrated in exactly these extreme barcodes, the rules would be
+firing on the weakest members rather than on correct work. Nothing available here separates
+those two readings.</p>
+<p>The five other barcode sets in the same workbook are worth noting, because they are tighter
+than the part lists without anyone saying so: the natural AP-1 sheet (30), the barcode reference
+sheet (37), the individually synthesised DESynR sheet (39) and the HA GD2 CAR sheet (16) all
+sit inside GC 3-7 of 11 with a longest run of 3, and a GC 3-8 band with a cap of 3 rejects
+<strong>none</strong> of them. Only the three AP-1 part lists reach the extremes.</p>
+<h2 id="9-the-construction-matters-more-than-either-rule">9. The construction matters more than either rule<a class="headerlink" href="#9-the-construction-matters-more-than-either-rule" title="Permanent link">&para;</a></h2>
+<p>This is the finding issue #62 most needs, and no source states it. A greedy designer that walks
+the space in lexicographic order produces a degenerate set, and <strong>a homopolymer cap does not
+fix it</strong>.</p>
+<p>The first 24 codewords of an unfiltered lexicographic greedy, computed:</p>
+<div class="highlight"><pre><span></span><code>AAAAAAAAAAA  CCCAAAAAAAA  GGGAAAAAAAA  TTTAAAAAAAA  GCACAAAAAAA  TACCAAAAAAA
+ATGCAAAAAAA  CGTCAAAAAAA  TGAGAAAAAAA  GTCGAAAAAAA  CAGGAAAAAAA  ACTGAAAAAAA
+</code></pre></div>
+<p>GC runs 0 to 4 of 11 and the longest run 6 to 11. The very first barcode is <code>AAAAAAAAAAA</code>.</p>
+<p>Adding the homopolymer cap of 5 does <strong>not</strong> repair this. It caps the run and leaves everything
+else:</p>
+<div class="highlight"><pre><span></span><code>AAAAACAAAAA  CCCAACAAAAA  GGGAACAAAAA  TTTAACAAAAA  GCACACAAAAA  TACCACAAAAA
+</code></pre></div>
+<p>GC now runs 1 to 5 of 11, every sequence still ends in a tail of A, and every run is exactly
+the cap. A GC band would not repair it either; it would simply move the degeneracy to whatever
+the band allows.</p>
+<p>Drawing the same candidates in a <strong>seeded shuffled order</strong> repairs it completely, at no cost:</p>
+<div class="highlight"><pre><span></span><code>ACGGGAGCTCT  CCATGAGGTAG  AACACAAAATG  GACAGACACCA  GCACTATTGTG  ACGGCTCACAT
+AATCCCCAGGA  AAGGCTATCGT  TCAACGCCGCC  ATGGCGACCAC  GCAGGTACGGT  GAGGCATCTAG
+</code></pre></div>
+<p>GC runs 2 to 9 of 11 and the longest run is 4, with no filter on either. The whole code holds
+<strong>37,858</strong> codewords. A fixed seed keeps it reproducible, which issue #62 requires.</p>
+<p>So the composition of a barcode set is mostly a property of how candidates are drawn, not of
+what is filtered out afterwards. Recommend the seeded shuffle as the default construction and
+the filters stay nearly idle — which is the outcome restraint asks for.</p>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The decisive measurement was not available.</strong> Whether the 8.3% barcode-mismatch fraction is
+  enriched in the GC-extreme or homopolymer-carrying barcodes would settle this note's question
+  directly. Per-construct read counts are published as Tables S2-S7; three attempts to reach
+  them failed (the DOI and the Elsevier link return a redirect shell, and <code>cell.com</code> answers
+  403), so the correlation was not run. Only <code>Table S1.xlsx</code> was held locally.</li>
+<li><strong>The cap of 5 is a judgement, not a measurement.</strong> No source sets a threshold. 6 would fire
+  on nothing in the published set and is equally defensible; 4 and below start to look like the
+  inherited convention.</li>
+<li><strong>The set tests a G run of 5, not a longer one.</strong> Any conclusion drawn from it about
+  two-colour chemistry is bounded at that length.</li>
+<li><strong>Hamming distance does not protect against indels</strong>, which are the dominant HiFi error. A
+  Sequence-Levenshtein metric, as in Buschmann and Bystrykh 2013, would. This note keeps Hamming
+  because it is what the published set holds and what the paper's own one-mismatch matching
+  assumes, but the choice deserves its own ticket rather than being settled here by default.</li>
+<li><strong>Whether a GC band or homopolymer cap was considered by the paper's authors is not
+  recoverable.</strong> Their absence from the set is measured; intent is not.</li>
+<li><strong>The greedy counts in section 7 are lower bounds</strong>, not maxima, and differences of a few
+  percent between rows are construction noise rather than capacity.</li>
+<li><strong>Two vendor documents were reachable only as third-party mirrors or archives</strong>: the 2014
+  two-channel Technology Spotlight, the Illumina Adapter Sequences PDF, and the 2012 PacBio
+  barcode technical note, whose live URL now 404s.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All read on 2026-09-14.</p>
+<ul>
+<li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain
+  recombination enhance CAR T cell antitumor function. <em>Cell</em> 189, 1-20.
+  <a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a>. CC BY 4.0.
+  Main text p. 3; METHOD DETAILS pp. e7, e9; Figures S1B, S1C, S1D and S1G with their legends;
+  <code>Table S1.xlsx</code>, from which every measurement of the published set was computed.</li>
+<li>Hamady, M., Walker, J.J., Harris, J.K., Gold, N.J. and Knight, R. (2008) Error-correcting
+  barcoded primers for pyrosequencing hundreds of samples in multiplex. <em>Nat. Methods</em> 5,
+  235-237. <a href="https://doi.org/10.1038/nmeth.1184">doi:10.1038/nmeth.1184</a></li>
+<li>Faircloth, B.C. and Glenn, T.C. (2012) Not all sequence tags are created equal: designing and
+  validating sequence identification tags robust to indels. <em>PLoS ONE</em> 7, e42543.
+  <a href="https://doi.org/10.1371/journal.pone.0042543">doi:10.1371/journal.pone.0042543</a></li>
+<li>Bystrykh, L.V. (2012) Generalized DNA barcode design based on Hamming codes. <em>PLoS ONE</em> 7,
+  e36852. <a href="https://doi.org/10.1371/journal.pone.0036852">doi:10.1371/journal.pone.0036852</a></li>
+<li>Buschmann, T. and Bystrykh, L.V. (2013) Levenshtein error-correcting barcodes for multiplexed
+  DNA sequencing. <em>BMC Bioinformatics</em> 14, 272.
+  <a href="https://doi.org/10.1186/1471-2105-14-272">doi:10.1186/1471-2105-14-272</a></li>
+<li>Buschmann, T. (2017) DNABarcodes: an R package for the systematic construction of DNA sample
+  tags. <em>Bioinformatics</em> 33, 920-922.
+  <a href="https://doi.org/10.1093/bioinformatics/btw759">doi:10.1093/bioinformatics/btw759</a>, with the
+  Bioconductor vignette and the package source, from which the default filter values were read.</li>
+<li>Hawkins, J.A. et al. (2018) Indel-correcting DNA barcodes for high-throughput sequencing.
+  <em>PNAS</em> 115, E6217-E6226.
+  <a href="https://doi.org/10.1073/pnas.1802640115">doi:10.1073/pnas.1802640115</a></li>
+<li>Xu, Q., Schlabach, M.R., Hannon, G.J. and Elledge, S.J. (2009) Design of 240,000 orthogonal
+  25mer DNA barcode probes. <em>PNAS</em> 106, 2289-2294.
+  <a href="https://doi.org/10.1073/pnas.0812506106">doi:10.1073/pnas.0812506106</a></li>
+<li>Aird, D. et al. (2011) Analyzing and minimizing PCR amplification bias in Illumina sequencing
+  libraries. <em>Genome Biol.</em> 12, R18.
+  <a href="https://doi.org/10.1186/gb-2011-12-2-r18">doi:10.1186/gb-2011-12-2-r18</a></li>
+<li>Kebschull, J.M. and Zador, A.M. (2015) Sources of PCR-induced distortions in high-throughput
+  sequencing data sets. <em>Nucleic Acids Res.</em> 43, e143.
+  <a href="https://doi.org/10.1093/nar/gkv717">doi:10.1093/nar/gkv717</a></li>
+<li>Berry, D. et al. (2011) Barcoded primers used in multiplex amplicon pyrosequencing bias
+  amplification. <em>Appl. Environ. Microbiol.</em> 77, 7846-7849.
+  <a href="https://doi.org/10.1128/AEM.05220-11">doi:10.1128/AEM.05220-11</a></li>
+<li>Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA.
+  <em>Genome Res.</em> 21, 1506-1511.
+  <a href="https://doi.org/10.1101/gr.121715.111">doi:10.1101/gr.121715.111</a></li>
+<li>O'Donnell, J.L., Kelly, R.P., Lowell, N.C. et al. (2016) Indexed PCR primers induce
+  template-specific bias in large-scale DNA sequencing studies. <em>PLoS ONE</em> 11, e0148698.
+  <a href="https://doi.org/10.1371/journal.pone.0148698">doi:10.1371/journal.pone.0148698</a></li>
+<li>Johnson, M.S., Venkataram, S. and Kryazhimskiy, S. (2023) Best practices in designing,
+  sequencing, and identifying random DNA barcodes. <em>J. Mol. Evol.</em> 91, 263-280.
+  <a href="https://doi.org/10.1007/s00239-022-10083-z">doi:10.1007/s00239-022-10083-z</a> — the source for
+  the only homopolymer threshold measurement quoted here.</li>
+<li>McGee, R.S., Kinsler, G., Petrov, D. et al. (2024) Improving the accuracy of bulk fitness
+  assays by correcting barcode processing biases. <em>Mol. Biol. Evol.</em> 41, msae152.
+  <a href="https://doi.org/10.1093/molbev/msae152">doi:10.1093/molbev/msae152</a></li>
+<li>Wenger, A.M. et al. (2019) Accurate circular consensus long-read sequencing improves variant
+  detection and assembly of a human genome. <em>Nat. Biotechnol.</em> 37, 1155-1162.
+  <a href="https://doi.org/10.1038/s41587-019-0217-9">doi:10.1038/s41587-019-0217-9</a></li>
+<li>Illumina, <em>Index Adapters Pooling Guide</em>, document 1000000041074 v17 (July 2026), the
+  <em>Sequencing Chemistry</em> and <em>Color Balance</em> pages; <em>2-Channel SBS Technology</em>; the Knowledge
+  Base articles on nucleotide diversity (#1543), PhiX spike-in (#1527), low-diversity sequencing
+  (#2882), and chemistry and imaging on MiniSeq (#5628), NovaSeq X (#7970) and MiSeq i100
+  (#9348); and the DRAGEN <em>Read Trimming</em> documentation for the poly-G artefact.</li>
+<li>Illumina, US patent 11,028,436 B2, for the 25-75% GC and four-base homopolymer claim language.</li>
+<li>PacBio, <em>Multiplexing Targeted Sequencing using Barcodes</em>, PN 100-114-500-01 (2012), read from
+  an Internet Archive copy because the live URL returns 404; <em>Guidelines for Using PacBio
+  Barcodes for SMRT Sequencing</em>; the HiFi sequencing product pages and the Revio specification
+  sheet.</li>
+<li>Oxford Nanopore, the accuracy and basecalling platform pages.</li>
+<li><code>docs/research/protein-library-assembly.md</code> (issue #56) for the method, the licence verdict
+  and the measurements of the published set this note builds on.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>
