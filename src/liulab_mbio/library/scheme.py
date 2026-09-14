@@ -23,6 +23,7 @@ from liulab_mbio.sites import find_sites
 #: What a scheme checks on construction. A refusal leads with the name of the invariant it broke.
 type Invariant = Literal[
     "internal-stuffer-prefix",
+    "internal-stuffer-cuts",
     "external-stuffer-5",
     "external-stuffer-3",
     "barcode-frame",
@@ -307,7 +308,7 @@ class Scheme:
         )
 
     def _check_internal_stuffers(self) -> None:
-        """Check each prefix names the position it admits next, and that its enzyme leaves it."""
+        """Check each prefix names the position it admits next, and that both cuts are there."""
         for index, position in enumerate(self.positions):
             following = self.entry_overhang((index + 1) % self.position_count)
             prefix = position.internal_stuffer_prefix
@@ -325,6 +326,14 @@ class Scheme:
                     "internal-stuffer-prefix",
                     f"{self.internal.name} leaves {spells} in the internal stuffer of position "
                     f"{position.name!r}, and not the {following!r} the next part enters on",
+                )
+            if self.scar_overhang not in left:
+                spells = ", ".join(sorted(left)) or "no overhang at all"
+                _refuse(
+                    "internal-stuffer-cuts",
+                    f"{self.internal.name} leaves {spells} in the internal stuffer of position "
+                    f"{position.name!r}, and not the cloning scar {self.scar_overhang!r}: a "
+                    "stuffer carries both of the cuts that open it",
                 )
 
     def _check_terminal_frame(self) -> None:
