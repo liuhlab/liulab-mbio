@@ -14,7 +14,9 @@ import pytest
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.library.scheme import Position, Scheme, read_scheme
-from liulab_mbio.sequence import reverse_complement
+from liulab_mbio.library.vector import destination_vector
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from liulab_mbio.sites import digest
 
 #: The paper's scheme, as a user supplies one.
 EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
@@ -48,13 +50,25 @@ def external_3(scar: str, cutter: Enzyme, chopper: Enzyme) -> str:
     return scar + reach + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(3)
 
 
-def core(cutter: Enzyme, chopper: Enzyme) -> str:
-    """A shared internal stuffer core, cutting back into whatever prefix precedes it.
+def core(cutter: Enzyme, chopper: Enzyme, scar: str = SCAR) -> str:
+    """A shared internal stuffer core, carrying both of the cuts that open a stuffer.
 
-    Its length is chosen to leave the retained region a whole number of codons, which is what
-    the terminal position is held to.
+    Each cut is placed from `cutter`'s own offsets: one cuts back into whatever prefix precedes
+    the core, and one leaves `scar` as the stuffer's last bases. The filler length is what keeps
+    the retained region a whole number of codons.
     """
-    return pad(1) + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(4) + cutter.site
+    lead = cutter.bottom_cut - len(cutter.site) - cutter.overhang_length
+    reach = cutter.top_cut - len(cutter.site)
+    return (
+        pad(lead)
+        + reverse_complement(cutter.site)
+        + pad(3)
+        + chopper.site
+        + pad(5)
+        + cutter.site
+        + pad(reach)
+        + scar
+    )
 
 
 def positions(overhangs: Sequence[str] = MORE[:3], scar: str = SCAR) -> tuple[Position, ...]:
@@ -188,3 +202,25 @@ def test_a_scheme_missing_a_key_is_refused():
 
     with pytest.raises(ValueError, match="missing barcode_length"):
         Scheme.from_dict(data)
+
+
+def test_an_internal_stuffer_leaving_no_scar_overhang_is_refused():
+    whole = core(get_enzyme(INTERNAL), get_enzyme(CORE_CHOPPER))
+    without = whole[: -(len(SCAR) + 1)]
+
+    with pytest.raises(ValueError, match="internal-stuffer-cuts"):
+        scheme(internal_stuffer_core=without)
+
+
+def test_the_worked_example_opens_a_destination_vector():
+    made = read_scheme(EXAMPLE)
+    backbone = SequenceRecord(pad(600), topology="circular", name="backbone")
+
+    destination = destination_vector(backbone, made, site=(100, 140))
+
+    assert destination.edit is not None
+    assert len(destination.record) == len(backbone) + len(made.internal_stuffer(-1))
+    assert any(
+        piece.left_overhang == made.entry_overhang(0) and piece.right_overhang == made.scar_overhang
+        for piece in digest(destination.record, made.internal)
+    )

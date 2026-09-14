@@ -67,9 +67,8 @@ def destination_vector(
     ------
     ValueError
         If any of the scheme's enzymes reads a site outside the stuffer, if a stuffer has to be
-        put and none is named, if `site` names no feature or does not fit, if the stuffer is not
-        a whole number of codons where it would land inside a coding sequence, or if the scheme's
-        own stuffer does not carry both of the cuts that open a vector.
+        put and none is named, if `site` names no feature or does not fit, or if the stuffer is
+        not a whole number of codons where it would land inside a coding sequence.
     KeyError
         If the scheme names an enzyme this package does not ship.
     """
@@ -78,7 +77,6 @@ def destination_vector(
         _check_clean(vector, scheme, found)
         return Destination(vector, found)
     block = scheme.internal_stuffer(-1)
-    _check_block(scheme, block)
     at = _position(vector, scheme, site)
     _check_frame(vector, at, block)
     edited, report = insert(vector, at, block)
@@ -104,20 +102,6 @@ def _stuffer(record: SequenceRecord, scheme: Scheme) -> Segment | None:
         if piece.left_overhang == entry and piece.right_overhang == scar:
             return Segment(piece.start, piece.end)
     return None
-
-
-def _check_block(scheme: Scheme, block: str) -> None:
-    """Refuse a scheme whose own stuffer does not carry both of the cuts that open a vector."""
-    entry, scar = scheme.entry_overhang(0), scheme.scar_overhang
-    left = {site.overhang for site in find_sites(SequenceRecord(block), scheme.internal)}
-    if missing := [wanted for wanted in (entry, scar) if wanted not in left]:
-        spells = ", ".join(sorted(one for one in left if one)) or "no overhang at all"
-        raise ValueError(
-            f"the internal stuffer of position {scheme.positions[-1].name!r} leaves {spells} "
-            f"where {scheme.internal.name} cuts it, and not "
-            f"{' and '.join(repr(one) for one in missing)}: the stuffer a vector carries holds "
-            "both of the cuts that open it"
-        )
 
 
 def _position(vector: SequenceRecord, scheme: Scheme, site: Site | None) -> int:

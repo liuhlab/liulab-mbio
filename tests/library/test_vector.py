@@ -42,13 +42,12 @@ def pad(length: int) -> str:
     return ("TA" * length)[:length]
 
 
-def core(cutter: Enzyme, chopper: Enzyme, *, scar: str = SCAR, tail: bool = True) -> str:
+def core(cutter: Enzyme, chopper: Enzyme, *, scar: str = SCAR) -> str:
     """A shared internal stuffer core, carrying both of the cuts that open a vector.
 
     The reverse cut reaches back into the prefix and the forward one lands on `scar`, so the piece
     excised from a vector is bounded by the two overhangs a first-round part enters and leaves on.
-    Its length is chosen to leave the retained region a whole number of codons. Without `tail` the
-    forward cut runs off the end instead, which is a stuffer no vector can be opened by.
+    Its length is chosen to leave the retained region a whole number of codons.
     """
     reach = pad(cutter.top_cut - len(cutter.site))
     head = (
@@ -57,7 +56,7 @@ def core(cutter: Enzyme, chopper: Enzyme, *, scar: str = SCAR, tail: bool = True
         + pad(1)
         + chopper.site
     )
-    end = cutter.site + reach + scar if tail else cutter.site
+    end = cutter.site + reach + scar
     fill = (len(scar) - len(ENTRY[0]) - len(head) - len(end)) % 3
     return head + pad(fill) + end
 
@@ -74,7 +73,7 @@ def external_3(cutter: Enzyme, chopper: Enzyme) -> str:
     return SCAR + reach + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(3)
 
 
-def scheme(*, internal: str = INTERNAL, tail: bool = True, **changes: Any) -> Scheme:
+def scheme(*, internal: str = INTERNAL, **changes: Any) -> Scheme:
     """A valid scheme of three positions, with any field replaced."""
     cutter, chopper = get_enzyme(EXTERNAL), get_enzyme(FLANK_CHOPPER)
     positions = tuple(
@@ -91,7 +90,7 @@ def scheme(*, internal: str = INTERNAL, tail: bool = True, **changes: Any) -> Sc
         "internal_enzyme": internal,
         "external_enzyme": EXTERNAL,
         "blunt_enzymes": (CORE_CHOPPER, FLANK_CHOPPER),
-        "internal_stuffer_core": core(get_enzyme(internal), get_enzyme(CORE_CHOPPER), tail=tail),
+        "internal_stuffer_core": core(get_enzyme(internal), get_enzyme(CORE_CHOPPER)),
         "cloning_scar": SCAR,
         "barcode_length": 11,
     }
@@ -205,13 +204,6 @@ def test_an_enzyme_site_outside_the_stuffer_is_refused(puc19):
     # pUC19's own BsaI site is at 1765, and the stuffer put at 600 moved it along.
     with pytest.raises(ValueError, match="BsaI reads a site at 1796 on the reverse strand"):
         destination_vector(puc19, made, site=GAP)
-
-
-def test_a_stuffer_carrying_only_one_of_the_two_cuts_is_refused():
-    made = scheme(tail=False)
-
-    with pytest.raises(ValueError, match="both of the cuts that open it"):
-        destination_vector(SequenceRecord(pad(200), topology="circular"), made, site=(40, 50))
 
 
 def test_a_vector_with_no_stuffer_and_no_site_named_is_refused():
