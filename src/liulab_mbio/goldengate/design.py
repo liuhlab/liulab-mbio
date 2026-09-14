@@ -735,6 +735,37 @@ def _distance(one: str, other: str) -> int:
     return sum(a != b for a, b in zip(one, other, strict=True))
 
 
+def refusal(
+    candidate: str,
+    enzyme: EnzymeLike,
+    *,
+    taken: Iterable[str] = (),
+    avoid: Iterable[EnzymeLike] = (),
+    min_distance: int = MIN_DISTANCE,
+    allow_uniform: bool = False,
+) -> Rejection | None:
+    """Why `candidate` will not join `taken`, or ``None`` when it will.
+
+    The rules `design_overhangs` chooses by, for a caller searching for a set of its own and
+    needing to weigh one candidate against a partial set rather than design a whole one.
+
+    Examples
+    --------
+    >>> refusal("AGGT", "BsaI") is None
+    True
+    >>> refusal("AGGT", "BsaI", taken=["AGGT"]).rule
+    'repeat'
+    """
+    return _refuse(
+        candidate.upper(),
+        _type_iis(_one(enzyme)),
+        tuple(one.upper() for one in taken),
+        _resolve(avoid),
+        min_distance,
+        allow_uniform,
+    )
+
+
 def fidelity(
     overhangs: Iterable[str],
     enzyme: EnzymeLike,
