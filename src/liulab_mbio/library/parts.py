@@ -33,13 +33,16 @@ from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.library.standard import End, PartList, Standard, Terminus, junction_residues
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import CutSite, Domestication, domesticate, find_sites
-from liulab_mbio.translate import SiteNotRemovableError, reverse_translate
+from liulab_mbio.translate import SiteNotRemovableError, reverse_translate, translate
 
 #: The columns of the synthesis order sheet.
 SHEET_COLUMNS = ("name", "sequence", "length", "position", "barcode")
 
 #: The columns of the amino-acid change table, wild type beside synthesised.
 CHANGE_COLUMNS = ("part", "position", "end", "wild_type", "synthesised")
+
+#: The columns of the barcode table, which is what decodes the sequencing afterwards.
+BARCODE_COLUMNS = ("part", "position", "round", "slot", "barcode")
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,6 +131,7 @@ def design_parts(
     standard: Standard,
     *,
     host: str,
+    coding: Sequence[Mapping[str, str]] | None = None,
     rules: BarcodeRules | None = None,
     seed: int = SEED,
 ) -> tuple[Part, ...]:
@@ -148,6 +152,10 @@ def design_parts(
         `liulab_mbio.library.standard.design_standard` over these same part lists.
     host
         The name of the codon usage table the coding bases are written for.
+    coding
+        One mapping per position, naming the coding sequence a member is already coded in. Those
+        codons are kept rather than written again, and only a forbidden site moves one. A member
+        with no entry is written for `host`.
     rules
         What every barcode holds to. `barcode_rules` for this scheme by default.
     seed
@@ -157,9 +165,10 @@ def design_parts(
     ------
     ValueError
         If the part lists do not match the scheme, the standard was not designed for them, a
-        junction leaves a part no coding bases of its own, or a block spells a site the scheme
-        does not expect. `liulab_mbio.translate.SiteNotRemovableError` where that site lies in a
-        part's coding bases, naming the part and the site.
+        junction leaves a part no coding bases of its own, a given coding sequence does not spell
+        its part, or a block spells a site the scheme does not expect.
+        `liulab_mbio.translate.SiteNotRemovableError` where that site lies in a part's coding
+        bases, naming the part and the site.
     KeyError
         If no shipped codon usage table is called `host`, or the scheme names an enzyme this
         package does not ship.
@@ -175,6 +184,7 @@ def design_parts(
         host=host,
         enzymes=_enzymes(scheme),
         charged={(one.position, one.part, one.end): one for one in standard.termini},
+        coding=_given(scheme, coding),
     )
     held = rules if rules is not None else barcode_rules(scheme)
     made: list[Part] = []
@@ -215,6 +225,30 @@ def change_table(standard: Standard) -> str:
     return "\n".join(rows) + "\n"
 
 
+def barcode_table(parts: Sequence[Part], scheme: Scheme) -> str:
+    """Return which barcode names which part, and where it sits in the finished block.
+
+    The columns are `BARCODE_COLUMNS`. Every round inserts its barcode ahead of the ones already
+    there, so the block reads in the reverse of the order the rounds ran: a part joined at round
+    `r` of `n` sits at slot ``n - r + 1``, counting 5' to 3'. That is what turns a read of the
+    block back into the members it carries.
+    """
+    rows = ["\t".join(BARCODE_COLUMNS)]
+    rows.extend(
+        "\t".join(
+            (
+                part.name,
+                part.position,
+                str(part.index + 1),
+                str(scheme.position_count - part.index),
+                part.barcode,
+            )
+        )
+        for part in parts
+    )
+    return "\n".join(rows) + "\n"
+
+
 @dataclass(frozen=True, slots=True)
 class _Design:
     """What every part of one build is written from."""
@@ -226,6 +260,7 @@ class _Design:
     host: str
     enzymes: tuple[Enzyme, ...]
     charged: Mapping[tuple[str, str, End], Terminus]
+    coding: tuple[Mapping[str, str], ...]
 
 
 def _enzymes(scheme: Scheme) -> tuple[Enzyme, ...]:
@@ -244,6 +279,27 @@ def _check_lists(scheme: Scheme, part_lists: Sequence[PartList]) -> None:
     for name, parts in zip(names, part_lists, strict=True):
         if not parts:
             raise ValueError(f"the part list for position {name!r} holds no part")
+
+
+def _given(
+    scheme: Scheme, coding: Sequence[Mapping[str, str]] | None
+) -> tuple[Mapping[str, str], ...]:
+    """Return one coding-sequence mapping a position, empty where the caller gave none.
+
+    Raises
+    ------
+    ValueError
+        If there is not one mapping a position.
+    """
+    if coding is None:
+        return tuple({} for _ in scheme.positions)
+    given = tuple(coding)
+    if len(given) != scheme.position_count:
+        raise ValueError(
+            f"this scheme has {scheme.position_count} position(s) and {len(given)} coding "
+            "mapping(s) were given, one a position"
+        )
+    return given
 
 
 def _check_standard(scheme: Scheme, standard: Standard) -> None:
@@ -272,7 +328,17 @@ def _built(design: _Design, index: int, name: str, protein: str, barcode: str) -
     _check_charged(design, index, name, position.name, tail, donated)
     protein = protein.upper()
     synthesised = _synthesised(protein, head, tail)
-    coding = _coding(design, name, position.name, synthesised, head, tail, following, donated)
+    coding = _coding(
+        design,
+        name,
+        position.name,
+        synthesised,
+        head,
+        tail,
+        following,
+        donated,
+        design.coding[index].get(name),
+    )
     stuffer = position.internal_stuffer_prefix[: -len(following)] + following
     regions = (
         position.external_stuffer_5[: -len(entry)] + entry,
@@ -331,15 +397,21 @@ def _coding(
     tail: Terminus | None,
     following: str,
     donated: int,
+    given: str | None,
 ) -> str:
     """Return the coding bases a block carries: whole codons, then what the next junction takes.
 
     The amino acids a junction spells live in the stuffers either side, so they are not written
-    here. The last one the part still owns keeps only the bases the overhang does not supply.
+    here. The last one the part still owns keeps only the bases the overhang does not supply. A
+    part already coded keeps its own codons; only the one the next junction takes is written.
     """
     whole = _residues(synthesised, head, tail)
     first = len(head.wild_type) if head is not None else 0
-    bases = reverse_translate(synthesised[first : first + whole], host=design.host) if whole else ""
+    wanted = synthesised[first : first + whole]
+    if given is not None:
+        bases = _kept(name, position, given, first, wanted)
+    else:
+        bases = reverse_translate(wanted, host=design.host) if whole else ""
     if tail is not None and donated:
         codon = _junction_codon(
             design, name, position, synthesised[first + whole], following[: (3 - donated) % 3]
@@ -349,6 +421,24 @@ def _coding(
         raise ValueError(
             f"part {name!r} at position {position!r} keeps no coding bases of its own: the "
             f"junctions either side spell all {len(synthesised)} of its amino acids"
+        )
+    return bases
+
+
+def _kept(name: str, position: str, given: str, first: int, wanted: str) -> str:
+    """Return a part's own codons out of the coding sequence it came coded in, checked against it.
+
+    Raises
+    ------
+    ValueError
+        If those codons do not spell what the standard spells there.
+    """
+    bases = given[3 * first : 3 * (first + len(wanted))]
+    spelled = translate(bases) if bases else ""
+    if spelled != wanted:
+        raise ValueError(
+            f"part {name!r} at position {position!r} came coded as {spelled!r} where the standard "
+            f"spells {wanted!r}: the coding sequence and the part list disagree"
         )
     return bases
 

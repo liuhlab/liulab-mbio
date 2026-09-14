@@ -11,6 +11,7 @@ import typer
 
 from liulab_mbio import __version__ as _package_version
 from liulab_mbio.goldengate.cli import app as _goldengate_app
+from liulab_mbio.library.cli import app as _library_app
 from liulab_mbio.protocol.cli import app as _protocol_app
 from liulab_mbio.translate import (
     DEFAULT_NAME,
@@ -27,6 +28,7 @@ app = typer.Typer(
 )
 
 app.add_typer(_goldengate_app, name="goldengate")
+app.add_typer(_library_app, name="library")
 app.add_typer(_protocol_app, name="protocol")
 
 
