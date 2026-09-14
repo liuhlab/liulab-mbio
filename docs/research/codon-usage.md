@@ -5,41 +5,54 @@ search:
 
 # Codon usage tables: sources, licences and what the shipped table is
 
-Research note for issue #10. Everything below was read on **2026-09-12**. It records where
+Research note for issue #10. Sections 1 to 6 were read on **2026-09-12**, and section 7, on
+the human and mouse tables added afterwards, on **2026-09-14**. It records where
 `src/liulab_mbio/data/codon_usage.json` comes from, which published tables were rejected and
-why, and what the shipped table is and is not.
+why, and what the shipped tables are and are not.
 
 ## 1. The verdict, first
 
-**The shipped table is counted from a genome, not copied from a codon usage database.**
+**Every shipped table is counted from a genome, not copied from a codon usage database.**
 
 Every published compilation that was checked either states no licence at all, reserves its
 rights, or carries a non-commercial clause that an MIT package cannot take. The primary
 sequence data does not have that problem: NCBI states it places no restrictions on the
-distribution of the sequence records, and a count computed over those records is this
-package's own measurement rather than a redistribution of anyone's table.
+distribution of the sequence records, EMBL-EBI states the same of what it distributes, and a
+count computed over those records is this package's own measurement rather than a
+redistribution of anyone's table.
 
 That is also the better answer on the merits. The obvious table to reach for — Kazusa's
 *Escherichia coli* K-12 entry — turns out to be **14 coding sequences**, and one of its cells
 is zero. Counting the genome gives 4,317.
 
+Three tables ship. *E. coli* K-12 is fetched from NCBI as spliced coding sequences. Human and
+mouse are read from the genomes the lab already holds, through liulab-genome, and section 7
+covers them.
+
 ## 2. What the data file holds
 
 | Field | Meaning |
 | --- | --- |
-| `name` | the short name `codon_usage()` is asked for, `e-coli-k12` |
-| `organism`, `taxid`, `accession` | *Escherichia coli* str. K-12 substr. MG1655, 511145, `U00096.3` |
-| `cds_count`, `codon_count` | 4,317 coding sequences, 1,342,016 codons |
+| `name` | the short name `codon_usage()` is asked for: `e-coli-k12`, `human`, `mouse` |
+| `organism`, `taxid`, `accession` | the organism, its NCBI taxonomy identifier, and the record or assembly counted |
+| `cds_count`, `codon_count` | how many coding sequences were counted, and how many codons they held |
 | `counts` | all 64 codons, stop codons included |
-| `note` | that this is a whole-genome table and not a highly expressed set |
+| `note` | what the table is, and that it is not a highly expressed set |
+
+| Table | Organism | What was counted | Coding sequences | Codons |
+| --- | --- | --- | --- | --- |
+| `e-coli-k12` | *E. coli* str. K-12 substr. MG1655 | `U00096.3`, every complete CDS | 4,317 | 1,342,016 |
+| `human` | *Homo sapiens* | `GCF_000001405.40` (hg38), GENCODE v50 canonical | 19,597 | 11,327,553 |
+| `mouse` | *Mus musculus* | `GCF_000001635.27` (mm39), GENCODE vM39 canonical | 21,479 | 11,894,511 |
 
 A coding sequence is skipped, rather than counted in part, when its length is not a whole
 number of codons or when it carries a base outside `ACGT`: a partial or ambiguous record would
-bias the table by the codons it does spell. One of the 4,318 records NCBI returns is skipped
-for that reason.
+bias the table by the codons it does spell. One of the 4,318 records NCBI returns for
+*E. coli* is skipped for that reason.
 
-**No cell is zero.** The rarest codon in the genome is `TAG` at 306, which matters because a
-fraction, a log ratio or a codon adaptation weight computed from a zero is undefined.
+**No cell is zero, in any of the three.** The rarest cell is 306 (`TAG`) in *E. coli*, 4,390 in
+human and 4,884 in mouse, which matters because a fraction, a log ratio or a codon adaptation
+weight computed from a zero is undefined.
 
 ## 3. Licences, source by source
 
@@ -183,11 +196,14 @@ is what issue #10 needs it for: a synonymous swap should leave a codon the host 
 and the genomic background answers that. A highly expressed set is what a codon adaptation
 index would want, and shipping one is a separate decision with its own reference gene list.
 
-Amino acids are grouped with the **bacterial** genetic code (NCBI table 11). It assigns the
-same amino acids as the standard table and differs only in which codons may start a gene,
-which is not something a codon usage table is asked about.
+Amino acids are grouped with the **standard** genetic code (NCBI table 1), which is what every
+host shipped here spells its nuclear genes by. The bacterial table assigns the same amino
+acids and differs only in which codons may start a gene, which is not something a codon usage
+table is asked about.
 
-## 5. Rebuilding the file
+## 5. Rebuilding the bacterial table
+
+The mammal tables are rebuilt another way, and section 7.3 covers it.
 
 ```sh
 pixi run python scripts/build_codon_usage.py                 # downloads from NCBI
@@ -222,7 +238,8 @@ The script sends `tool=liulab-mbio` and **no** address: a build script should no
 runs it on a mailing list they did not ask for. One fetch per rebuild is far inside the rate
 limit.
 
-Tests never reach the network. `tests/scripts/test_build_codon_usage.py` counts a four-record excerpt.
+Tests never reach the network or a genome. `tests/scripts/test_build_codon_usage.py` counts a
+four-record excerpt, and reads a GTF excerpt for the canonical rules.
 
 **`U00096.3` is the accession, not `NC_000913.3`.** Both fetch identically and both report
 4,318 coding sequences; U00096.3 is the INSDC record of record and RefSeq is derived from it.
@@ -250,6 +267,108 @@ Tests never reach the network. `tests/scripts/test_build_codon_usage.py` counts 
 
   Per thousand codons. The last row is the one that settles it: a table with a zero cell cannot
   be used to choose a codon.
+
+## 7. The mammal tables: hg38 and mm39, through liulab-genome
+
+Human and mouse are not fetched. The lab already holds both genomes, prepared with their
+GENCODE annotations, and liulab-genome is what hands them over: the assembly, its 2bit, the
+annotation's GTF path, and the NCBI assembly accession and taxonomy identifier recorded for
+each. Nothing is downloaded. The package gains no dependency on it either — the build script
+imports `genome` only when it counts a mammal, and what the package reads is the shipped data
+file.
+
+### 7.1 One coding sequence per gene
+
+A bacterium has one coding sequence per gene, so counting every complete CDS counts every gene
+once. A mammal does not. GENCODE v50 annotates 253,359 protein-coding transcripts over 20,107
+protein-coding genes, so counting every transcript would weight a gene by how many isoforms it
+has been given, which is a fact about annotation effort rather than about the genome.
+
+So one transcript per gene is counted: the one GENCODE tags `Ensembl_canonical`. That tag is
+the annotation's own choice of representative, it is there for both species, and for human
+19,229 of the 19,736 canonical protein-coding transcripts are also MANE Select, the transcript
+NCBI and EMBL-EBI agree on.
+
+Four rules decide what is counted, and all four are in `canonical_cds`:
+
+| Rule | Why |
+| --- | --- |
+| tagged `Ensembl_canonical`, and `transcript_type "protein_coding"` | one representative per protein-coding gene |
+| the `CDS` rows, plus the `stop_codon` row | GENCODE writes the stop codon on its own row, and a table carries stops |
+| not tagged `cds_start_NF` or `cds_end_NF` | the annotation itself says that coding sequence runs off an end |
+| not on `chrM` | the mitochondrion reads a different genetic code |
+
+The whole-codon and `ACGT` rules then apply as they do for a bacterium. What survives is 19,597
+of 19,736 canonical human transcripts, and 21,479 of 21,557 mouse ones.
+
+**Eighteen human genes are counted twice.** GENCODE annotates the pseudoautosomal genes on both
+chrX and chrY — `PLCXD1`, `CSF2RA`, `IL9R` and fifteen others — and both copies carry the
+canonical tag. That is 0.09% of the genes counted, spread over ordinary coding sequence, so it
+moves no cell of the table meaningfully and no rule is spent on it. Mouse has none.
+
+### 7.2 Licences
+
+GENCODE's annotation is distributed by EMBL-EBI, whose *Terms of Use*
+(`https://www.ebi.ac.uk/about/terms-of-use`, revised 5 February 2024, read 2026-09-14) say:
+
+> EMBL-EBI itself places no additional restrictions on the use or redistribution of the data
+> available via its Data Resources and Tools other than those provided by the original data
+> owners, unless otherwise specified in these Terms of Use.
+
+GENCODE's own data access page (`https://www.gencodegenes.org/pages/data_access.html`, read
+2026-09-14) states:
+
+> All the GENCODE project data is open access and can be accessed by any of the following
+> methods.
+
+The genome sequence comes from UCSC, whose *Conditions of Use*
+(`https://genome.ucsc.edu/conditions.html`, read 2026-09-14) say:
+
+> The sequence and annotation data displayed in the Genome Browser are freely available for any
+> use with the following conditions
+
+and whose `hg38` and `mm39` download directories carry the same statement NCBI makes of
+GenBank:
+
+> Therefore, NCBI places no restrictions on the use or distribution of the GenBank data.
+
+The position is the one section 3.1 reaches: no restriction on the data, and what ships here is
+a count computed from it rather than anyone's compilation.
+
+### 7.3 Rebuilding them
+
+A mammal table is read from a prepared genome, so the build runs where liulab-genome has `hg38`
+with `gencode_v50` and `mm39` with `gencode_vM39` registered, under an interpreter that imports
+`genome`:
+
+```sh
+python scripts/build_codon_usage.py --out codon_usage.json
+```
+
+It reads each GTF once and pulls every coding span out of the 2bit through
+`Genome.fetch_sequence`, which reverse-complements a minus-strand span itself, so no coordinate
+arithmetic is written here that liulab-genome already does. All three tables together take
+about a minute and a half.
+
+Registering an annotation is a download and a database build, and it belongs to the lab's
+genome store rather than to this package: `genome annotation register hg38 gencode_v50`.
+
+### 7.4 Cross-checks
+
+- **The bacterial table did not move.** The rebuild that added the mammals reproduces *E. coli*
+  exactly: the same 4,317 coding sequences, the same 1,342,016 codons, and all 64 cells
+  unchanged. That is the control on the rewrite.
+- **Human and mouse agree with each other**, as two mammals should. Both favour `GAC` for
+  aspartate, `CTG` for leucine, `GCC` for alanine and `TGA` for the stop. The largest gap in any
+  codon's share of its amino acid is `GCT`: 0.261 in human against 0.295 in mouse.
+- **They differ from *E. coli* where they should.** Eleven amino acids have a different
+  favourite codon in human than in *E. coli*: aspartate is `GAT` there and `GAC` here, and the
+  commonest stop is `TAA` there and `TGA` here. Which host a table describes is exactly what
+  domestication turns on.
+- **Kazusa is the wrong shape here too.** Its *Homo sapiens* entry counts 93,487 CDS and
+  40,662,582 codons, and its *Mus musculus* entry 53,036 CDS and 24,533,776 codons (read
+  2026-09-14) — several times one genome's worth of genes, because CUTG counts redundant
+  GenBank entries rather than one annotated genome.
 
 ## Sources
 
