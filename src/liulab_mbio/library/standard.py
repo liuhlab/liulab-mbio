@@ -13,8 +13,11 @@ so it absorbs those codons and charges no protein for them.
 
 The overhang rules are `liulab_mbio.goldengate.design`'s, reached through its `refusal`: length,
 palindrome, one base class, repeat, near-duplicate, and a tail spelling no further site. That is
-the one edge `library/` has to that pipeline. An overhang spelling a stop where a coding sequence
-reads through it is no candidate at all, whichever part would own the codon.
+the one edge `library/` has to that pipeline. One rule is this module's own: an overhang spelling
+a stop where the product reads through it is refused as ``stop``, whichever part would own the
+codon. The first position's entry overhang is read twice — at the junction it admits a part on,
+and again at the end of the terminal stuffer, which is never excised and so is read in frame — so
+it is scored in both places.
 """
 
 from collections.abc import Mapping, Sequence
@@ -195,14 +198,14 @@ def design_standard(
     enzyme = scheme.internal
     avoid = (scheme.external, *scheme.blunt)
     codons = junction_residues(enzyme.overhang_length)[1]
-    sites = _sites(scheme, part_lists, pinned or {}, codons)
+    sites = _sites(scheme, part_lists, pinned or {}, codons, enzyme.overhang_length)
     pool = _pool(enzyme, avoid, min_distance, allow_uniform)
-    readings = [
+    options = [
         _readings(site, pool, table, enzyme, avoid, min_distance, allow_uniform) for site in sites
     ]
     order = sorted(range(len(sites)), key=lambda index: sites[index].pinned is None)
-    chosen = _settle(readings, order, sites, enzyme, avoid, min_distance, allow_uniform)
-    return _standard(sites, readings, order, chosen, enzyme, avoid, min_distance, allow_uniform)
+    chosen = _settle(options, order, sites, enzyme, avoid, min_distance, allow_uniform)
+    return _standard(sites, options, order, chosen, enzyme, avoid, min_distance, allow_uniform)
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,10 +219,15 @@ class _Site:
     downstream: PartList | None
     downstream_position: str
     pinned: str | None
+    retained: tuple[str, str] | None = None
 
 
 def _sites(
-    scheme: Scheme, part_lists: Sequence[PartList], pinned: Mapping[str, str], codons: int
+    scheme: Scheme,
+    part_lists: Sequence[PartList],
+    pinned: Mapping[str, str],
+    codons: int,
+    length: int,
 ) -> tuple[_Site, ...]:
     """Build one junction per position, plus the cloning scar, refusing part lists that do not fit.
 
@@ -239,6 +247,8 @@ def _sites(
         raise ValueError(f"pinned name(s) {', '.join(strange)} are not positions of this scheme")
     for name, parts in zip(names, part_lists, strict=True):
         _checked(name, parts, codons)
+    terminal = scheme.positions[-1].internal_stuffer_prefix
+    retained = (terminal[: len(terminal) - length], scheme.internal_stuffer_core)
     made = [
         _Site(
             name,
@@ -247,6 +257,7 @@ def _sites(
             downstream=part_lists[index],
             downstream_position=name,
             pinned=pinned.get(name),
+            retained=retained if index == 0 else None,
         )
         for index, name in enumerate(names)
     ]
@@ -318,6 +329,37 @@ class _Reading:
     cost: int
 
 
+@dataclass(frozen=True, slots=True)
+class _Options:
+    """Every overhang one junction could take: what each spells, and what a rule refused.
+
+    Parameters
+    ----------
+    readings
+        The candidates that spell something, cheapest first, which is the order to search in.
+    order
+        Every candidate tried, best ligating first, which is the order a trail reads in.
+    refused
+        The candidates no reading fits, by the rejection that says why.
+    """
+
+    readings: tuple[_Reading, ...]
+    order: tuple[str, ...]
+    refused: Mapping[str, Rejection]
+
+
+def _stuck(name: str, rejected: Sequence[Rejection]) -> ValueError:
+    """Return the error for a junction every candidate was refused for."""
+    if not rejected:
+        return ValueError(f"junction {name!r} has no candidate overhang at all")
+    last = rejected[-1]
+    rules = ", ".join(sorted({one.rule for one in rejected}))
+    return ValueError(
+        f"junction {name!r} has no overhang left: {rules} refused every candidate, "
+        f"the last being {last.overhang!r} because {last.detail}"
+    )
+
+
 def _readings(
     site: _Site,
     pool: Sequence[str],
@@ -326,8 +368,8 @@ def _readings(
     avoid: Sequence[Enzyme],
     min_distance: int,
     allow_uniform: bool,
-) -> tuple[_Reading, ...]:
-    """Every overhang this junction could take, cheapest first.
+) -> _Options:
+    """Every overhang this junction could take, and what a rule refused.
 
     A pinned overhang is the only candidate, and is held to the rules here so that a refusal
     names the rule rather than reporting an empty search.
@@ -335,7 +377,8 @@ def _readings(
     Raises
     ------
     ValueError
-        If a pinned overhang breaks a rule or spells a stop, or nothing at all can be spelled.
+        If a pinned overhang breaks a rule or spells a stop, or nothing at all can be spelled —
+        which names the rules and the last candidate refused.
     """
     if site.pinned is not None:
         broken = refusal(
@@ -353,30 +396,35 @@ def _readings(
         candidates: Sequence[str] = (site.pinned.upper(),)
     else:
         candidates = pool
-    made = [
-        reading
-        for reading in (_reading(site, one, usage) for one in candidates)
-        if reading is not None
-    ]
+    attempts = [(one, _attempt(site, one, usage)) for one in candidates]
+    made = [one for _, one in attempts if isinstance(one, _Reading)]
+    refused = {name: one for name, one in attempts if isinstance(one, Rejection)}
     if not made:
-        raise ValueError(
-            f"junction {site.name!r} has no overhang left: every candidate spells a stop where "
-            "the product reads through it"
-        )
-    return tuple(sorted(made, key=lambda one: one.cost))
+        raise _stuck(site.name, tuple(refused.values()))
+    return _Options(tuple(sorted(made, key=lambda one: one.cost)), tuple(candidates), refused)
 
 
-def _reading(site: _Site, overhang: str, usage: CodonUsage) -> _Reading | None:
-    """Return the cheapest way to read this overhang here, or ``None`` where only a stop fits.
+def _attempt(site: _Site, overhang: str, usage: CodonUsage) -> _Reading | Rejection:
+    """Return the cheapest way to read this overhang here, or why no reading of it will do.
 
     The whole codons an overhang spells may be owned by the part either side of it, and that
-    split is what is chosen: the same DNA, charged where it costs least.
+    split is what is chosen: the same DNA, charged where it costs least. A tie goes to the split
+    spelling fewer of the proteins' own residues, so a vector's padding takes what it can.
     """
+    if site.retained is not None:
+        held = _retained_stop(site.retained, overhang)
+        if held is not None:
+            return held
     if site.upstream is None and site.downstream is None:
         return _Reading(overhang, (), 0)
     suffix, codons = _spelling(overhang)
-    if any(amino_acid(one) == "*" for one in codons):
-        return None
+    for one in codons:
+        if amino_acid(one) == "*":
+            return Rejection(
+                overhang,
+                "stop",
+                f"it spells {one} at the junction, which the product reads through in frame",
+            )
     best: _Reading | None = None
     for split in range(len(codons) + 1):
         before = _termini(
@@ -387,9 +435,40 @@ def _reading(site: _Site, overhang: str, usage: CodonUsage) -> _Reading | None:
             continue
         termini = before + after
         cost = sum(one.changed_residues for one in termini)
-        if best is None or cost < best.cost:
+        if best is None or (cost, _charged(termini)) < (best.cost, _charged(best.termini)):
             best = _Reading(overhang, termini, cost)
+    if best is None:
+        return Rejection(
+            overhang, "stop", "no codon spelling it at this junction is anything but a stop"
+        )
     return best
+
+
+def _charged(termini: Sequence[Terminus]) -> int:
+    """How many of the part lists' own residues a reading spells."""
+    return sum(len(one.wild_type) for one in termini)
+
+
+def _retained_stop(retained: tuple[str, str], overhang: str) -> Rejection | None:
+    """Return why this entry overhang spells a stop in the retained terminal stuffer, or ``None``.
+
+    A terminal position's internal stuffer is never excised, so the product keeps it whole and
+    reads it in frame, and its prefix ends with the first position's entry overhang. Only the
+    codons that overhang's own bases fall in are its doing; what the stuffer spells elsewhere is
+    the scheme's.
+    """
+    head, tail = retained
+    stuffer = head + overhang + tail
+    for at in range((len(head) // 3) * 3, len(head) + len(overhang), 3):
+        codon = stuffer[at : at + 3]
+        if len(codon) == 3 and amino_acid(codon) == "*":
+            return Rejection(
+                overhang,
+                "stop",
+                f"it spells {codon} in the terminal stuffer the product retains and reads "
+                "through in frame",
+            )
+    return None
 
 
 def _spelling(overhang: str) -> tuple[str, tuple[str, ...]]:
@@ -471,7 +550,7 @@ def _codons_for() -> Mapping[str, tuple[str, ...]]:
 
 
 def _settle(
-    readings: Sequence[Sequence[_Reading]],
+    options: Sequence[_Options],
     order: Sequence[int],
     sites: Sequence[_Site],
     enzyme: Enzyme,
@@ -494,7 +573,7 @@ def _settle(
     joins = _joiner(enzyme, avoid, min_distance, allow_uniform)
     floor = [0] * (len(order) + 1)
     for at in reversed(range(len(order))):
-        floor[at] = floor[at + 1] + readings[order[at]][0].cost
+        floor[at] = floor[at + 1] + options[order[at]].readings[0].cost
     best: list[str] | None = None
     lowest = 0
 
@@ -505,7 +584,7 @@ def _settle(
         if at == len(order):
             best, lowest = list(taken), running
             return
-        for reading in readings[order[at]]:
+        for reading in options[order[at]].readings:
             if joins(reading.overhang, taken):
                 taken.append(reading.overhang)
                 walk(at + 1, taken, running + reading.cost)
@@ -517,7 +596,7 @@ def _settle(
             "no overhang standard satisfies the rules at every junction at once: "
             f"{', '.join(repr(sites[index].name) for index in order)} cannot be settled together"
         )
-    chosen = [""] * len(readings)
+    chosen = [""] * len(options)
     for at, index in enumerate(order):
         chosen[index] = best[at]
     return tuple(chosen)
@@ -551,7 +630,7 @@ def _joiner(enzyme: Enzyme, avoid: Sequence[Enzyme], min_distance: int, allow_un
 
 def _standard(
     sites: Sequence[_Site],
-    readings: Sequence[Sequence[_Reading]],
+    options: Sequence[_Options],
     order: Sequence[int],
     chosen: Sequence[str],
     enzyme: Enzyme,
@@ -564,11 +643,15 @@ def _standard(
     trails: dict[int, tuple[Rejection, ...]] = {}
     for index in order:
         rejected: list[Rejection] = []
-        for reading in readings[index]:
-            if reading.overhang == chosen[index]:
+        for candidate in options[index].order:
+            if candidate == chosen[index]:
                 break
+            held = options[index].refused.get(candidate)
+            if held is not None:
+                rejected.append(held)
+                continue
             broken = refusal(
-                reading.overhang,
+                candidate,
                 enzyme,
                 taken=taken,
                 avoid=avoid,
@@ -589,9 +672,9 @@ def _standard(
             else Junction(site.name)
         )
         choices.append(Choice(junction, chosen[index], 0, trails[index]))
-        taking = next(one for one in readings[index] if one.overhang == chosen[index])
+        taking = next(one for one in options[index].readings if one.overhang == chosen[index])
         termini.extend(taking.termini)
-        if readings[index][0].cost:
+        if options[index].readings[0].cost:
             forced.append(site.name)
     return Standard(
         tuple(chosen[: len(sites) - 1]),
