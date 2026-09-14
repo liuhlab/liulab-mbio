@@ -1,9 +1,9 @@
 """How often a host spells each codon, and the genetic code that groups them.
 
-A table here counts every codon over every complete coding sequence of one genome, so it is a
-measurement of that genome rather than a copy of a published compilation.
-`scripts/build_codon_usage.py` rebuilds it and `docs/research/codon-usage.md` says where the
-sequences came from.
+A table here counts codons over the complete coding sequences of one genome, one transcript per
+gene where a gene has several, so it is a measurement of that genome rather than a copy of a
+published compilation. `scripts/build_codon_usage.py` rebuilds it and
+`docs/research/codon-usage.md` says where the sequences came from.
 
 A whole-genome table is the background the genome itself uses. It is not a highly expressed
 reference set, which is what a codon adaptation index wants and is a different object.
@@ -26,11 +26,11 @@ class CodonUsage:
     Parameters
     ----------
     name
-        The short name this table is asked for by, such as ``"e-coli-k12"``.
+        The short name this table is asked for by, such as ``"e-coli-k12"`` or ``"human"``.
     organism
         The organism as its genome record names it.
     taxid, accession
-        The NCBI taxonomy identifier, and the sequence record counted.
+        The NCBI taxonomy identifier, and the sequence record or genome assembly counted.
     counts
         Codon to the number of times the coding sequences spell it. All 64 are present.
     cds_count, codon_count
@@ -75,13 +75,21 @@ class CodonUsage:
         --------
         >>> codon_usage().synonymous("GAC")
         ('GAT', 'GAC')
+        >>> codon_usage("human").synonymous("GAC")
+        ('GAC', 'GAT')
         """
         family = _families()[self.amino_acid(codon)]
         return tuple(sorted(family, key=lambda one: (-self.counts[one], one)))
 
 
 def codon_tables() -> tuple[str, ...]:
-    """Return the name of every codon usage table the package ships."""
+    """Return the name of every codon usage table the package ships.
+
+    Examples
+    --------
+    >>> codon_tables()
+    ('e-coli-k12', 'human', 'mouse')
+    """
     return tuple(_shipped())
 
 
@@ -106,14 +114,14 @@ def codon_usage(name: str = DEFAULT_TABLE) -> CodonUsage:
 
 @cache
 def _code() -> Mapping[str, str]:
-    """Return the genetic code, stops written ``"*"``.
+    """Return the standard genetic code, stops written ``"*"``.
 
-    The bacterial table assigns the same amino acids as the standard one and differs only in
-    which codons may start a gene, which is not what a codon usage table is asked about.
+    It serves bacterial hosts too: the bacterial table assigns the same amino acids and differs
+    only in which codons may start a gene, which is not what a codon usage table is asked about.
     """
     from Bio.Data.CodonTable import unambiguous_dna_by_id
 
-    table = unambiguous_dna_by_id[11]
+    table = unambiguous_dna_by_id[1]
     return {**table.forward_table, **dict.fromkeys(table.stop_codons, "*")}
 
 

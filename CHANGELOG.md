@@ -22,6 +22,9 @@ sets one.
   under one 0-based half-open coordinate model shared by every module.
 - Restriction enzyme, codon usage and ligation fidelity data, each rebuilt by a script in
   `scripts/` and sourced in a note under `docs/research/`.
+- Codon usage for human and mouse, beside *E. coli* K-12: `codon_usage("human")` and
+  `codon_usage("mouse")`. Each counts one coding sequence per protein-coding gene, the one
+  GENCODE marks as canonical, on hg38 and mm39.
 - Primer design and evaluation against NEB's published rules, per polymerase.
 - Fidelity scoring against a ligase matrix the user holds, by `--ligase-matrix` or
   `LIULAB_MBIO_LIGASE_MATRIX`. Nothing from that archive ships here.

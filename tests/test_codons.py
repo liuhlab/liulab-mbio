@@ -11,11 +11,27 @@ def test_the_shipped_table_counts_the_whole_e_coli_k12_genome() -> None:
     assert usage.codon_count == sum(usage.counts.values())
 
 
-def test_all_sixty_four_codons_are_used_somewhere_in_the_genome() -> None:
+def test_the_mammal_tables_count_one_coding_sequence_for_each_protein_coding_gene() -> None:
+    human, mouse = codon_usage("human"), codon_usage("mouse")
+    # GENCODE's canonical set, less the coding sequences it marks as running off an end.
+    assert (human.cds_count, human.codon_count) == (19597, 11327553)
+    assert (mouse.cds_count, mouse.codon_count) == (21479, 11894511)
+    assert (human.accession, mouse.accession) == ("GCF_000001405.40", "GCF_000001635.27")
+
+
+def test_all_sixty_four_codons_are_used_somewhere_in_every_genome_shipped() -> None:
     # A zero cell makes a fraction undefined, which is what sinks the small published tables.
-    counts = codon_usage().counts
-    assert len(counts) == 64
-    assert min(counts.values()) > 0
+    for name in codon_tables():
+        counts = codon_usage(name).counts
+        assert len(counts) == 64
+        assert min(counts.values()) > 0
+
+
+def test_which_synonymous_codon_is_favoured_depends_on_the_host() -> None:
+    # What domestication turns on: E. coli spells aspartate GAT, and a mammal spells it GAC.
+    assert codon_usage().synonymous("GAC")[0] == "GAT"
+    assert codon_usage("human").synonymous("GAC")[0] == "GAC"
+    assert codon_usage("mouse").synonymous("GAC")[0] == "GAC"
 
 
 def test_a_codon_reads_back_as_the_amino_acid_it_spells() -> None:

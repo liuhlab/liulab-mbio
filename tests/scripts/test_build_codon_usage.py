@@ -65,6 +65,59 @@ def test_every_codon_gets_a_cell_even_where_the_genome_never_spells_it() -> None
     assert (table["cds_count"], table["codon_count"]) == (2, 8)
 
 
+# A GENCODE excerpt: a canonical two-exon transcript on the minus strand with its stop codon on
+# its own row, another isoform of the same gene, a canonical CDS running off its start, and a
+# mitochondrial one.
+CANONICAL = ' tag "Ensembl_canonical";'
+
+
+def _attributes(transcript: str, extra: str = "") -> str:
+    return f'gene_id "G1"; transcript_id "{transcript}"; transcript_type "protein_coding";{extra}'
+
+
+GTF = "##description: excerpt\n" + "\n".join(
+    "\t".join(row)
+    for row in (
+        ("chr1", "HAVANA", "transcript", "8", "26", ".", "-", ".", _attributes("T1", CANONICAL)),
+        ("chr1", "HAVANA", "CDS", "21", "26", ".", "-", "0", _attributes("T1", CANONICAL)),
+        ("chr1", "HAVANA", "CDS", "11", "16", ".", "-", "0", _attributes("T1", CANONICAL)),
+        ("chr1", "HAVANA", "stop_codon", "8", "10", ".", "-", "0", _attributes("T1", CANONICAL)),
+        ("chr1", "HAVANA", "CDS", "11", "26", ".", "-", "0", _attributes("T2")),
+        (
+            "chr1",
+            "HAVANA",
+            "CDS",
+            "100",
+            "105",
+            ".",
+            "+",
+            "0",
+            _attributes("T3", CANONICAL + ' tag "cds_start_NF";'),
+        ),
+        ("chrM", "ENSEMBL", "CDS", "1", "6", ".", "+", "0", _attributes("T4", CANONICAL)),
+    )
+)
+
+# The plus strand under T1: the stop codon, the second exon, an intron, then the first exon.
+CHR1 = "CCCCCCC" + "TTA" + "GGGCAC" + "GGGG" + "TTTCAT" + "CCCC"
+
+
+def _fetch(chrom: str, start: int, end: int, strand: str) -> str:
+    bases = CHR1[start:end].lower()
+    return bases[::-1].translate(str.maketrans("acgt", "tgca")) if strand == "-" else bases
+
+
+def test_only_whole_canonical_nuclear_coding_sequences_are_read_from_a_gtf() -> None:
+    assert build.canonical_cds(GTF.splitlines()) == {
+        "T1": ("chr1", "-", [(20, 26), (10, 16), (7, 10)])
+    }
+
+
+def test_a_minus_strand_transcript_is_spliced_five_prime_to_three_prime() -> None:
+    _, _, spans = build.canonical_cds(GTF.splitlines())["T1"]
+    assert build.spliced(_fetch, "chr1", "-", spans) == "ATGAAAGTGCCCTAA"
+
+
 def test_the_built_table_names_the_genome_it_counted() -> None:
     built = build.build({host.name: CDS for host in build.HOSTS})
     assert built["tables"][0]["accession"] == "U00096.3"

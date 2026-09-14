@@ -204,8 +204,8 @@ _Avoid_: silent mutation, site removal
 
 ### Codon usage
 
-How often a host spells each of the 64 codons, counted over every complete coding sequence of
-its genome. A whole-genome table is the background the genome itself uses; a highly expressed
+How often a host spells each of the 64 codons, counted over the complete coding sequences of
+its genome, one transcript per gene where a gene has several. A whole-genome table is the background the genome itself uses; a highly expressed
 table counts a small reference set and is a different thing.
 _Avoid_: codon bias, codon frequency table
 
