@@ -17,6 +17,7 @@ from liulab_mbio.library.scheme import Position, Scheme, read_scheme
 from liulab_mbio.library.vector import destination_vector
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.sites import digest
+from liulab_mbio.translate import translate
 
 #: The paper's scheme, as a user supplies one.
 EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
@@ -31,6 +32,10 @@ FLANK_CHOPPER = "PmeI"
 MORE = ("CTCC", "GGAG", "CCGA", "TTAC")
 SCAR = "AGCG"
 BARCODE = 11
+
+#: The spacer before the reverse cut. It falls on a codon boundary of the retained stuffer, where
+#: `pad`'s T would spell a stop with the site that follows it.
+LEAD = "C"
 
 
 def pad(length: int) -> str:
@@ -60,7 +65,7 @@ def core(cutter: Enzyme, chopper: Enzyme, scar: str = SCAR) -> str:
     lead = cutter.bottom_cut - len(cutter.site) - cutter.overhang_length
     reach = cutter.top_cut - len(cutter.site)
     return (
-        pad(lead)
+        LEAD * lead
         + reverse_complement(cutter.site)
         + pad(3)
         + chopper.site
@@ -210,6 +215,15 @@ def test_an_internal_stuffer_leaving_no_scar_overhang_is_refused():
 
     with pytest.raises(ValueError, match="internal-stuffer-cuts"):
         scheme(internal_stuffer_core=without)
+
+
+def test_the_worked_example_spells_no_stop_in_its_retained_stuffer():
+    made = read_scheme(EXAMPLE)
+    # Only the terminal stuffer is read in the product. Every other one is excised by the round
+    # that opens it, which leaves nothing of it behind but the overhang at either end.
+    retained = made.internal_stuffer(-1)
+
+    assert "*" not in translate(retained[: len(retained) // 3 * 3])
 
 
 def test_the_worked_example_opens_a_destination_vector():
