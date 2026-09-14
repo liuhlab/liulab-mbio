@@ -1,0 +1,33 @@
+{
+  "name": "Three positions, one barcode each",
+  "source": "A worked example to copy and edit. Its stuffer bodies are synthetic: each lays the enzyme's site at the offset that enzyme's own cut offsets ask for, so the overhangs are read off the DNA rather than stated. The architecture is the one docs/research/protein-library-assembly.md describes.",
+  "internal_enzyme": "BsaI",
+  "external_enzyme": "BbsI",
+  "blunt_enzymes": [
+    "SrfI",
+    "PmeI"
+  ],
+  "internal_stuffer_core": "TGAGACCTATGCCCGGGCTATAGGTCTC",
+  "cloning_scar": "AGCG",
+  "barcode_length": 11,
+  "positions": [
+    {
+      "name": "N",
+      "internal_stuffer_prefix": "GGAG",
+      "external_stuffer_5": "TATGTTTAAACTATGAAGACTACTCC",
+      "external_stuffer_3": "AGCGTAGTCTTCTATGTTTAAACTAT"
+    },
+    {
+      "name": "bZIP",
+      "internal_stuffer_prefix": "CCGA",
+      "external_stuffer_5": "TATGTTTAAACTATGAAGACTAGGAG",
+      "external_stuffer_3": "AGCGTAGTCTTCTATGTTTAAACTAT"
+    },
+    {
+      "name": "C",
+      "internal_stuffer_prefix": "TACTCC",
+      "external_stuffer_5": "TATGTTTAAACTATGAAGACTACCGA",
+      "external_stuffer_3": "AGCGTAGTCTTCTATGTTTAAACTAT"
+    }
+  ]
+}
