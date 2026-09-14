@@ -9,6 +9,25 @@ sets one.
 
 ### Added
 
+- A barcoded library of protein combinations, built in rounds rather than one pot.
+  `liulab_mbio.library.plan_library` takes lists of proteins, or coding DNA, with a scheme and a
+  destination vector. It picks the overhang standard that costs the proteins fewest changed
+  residues, writes each part's synthesis sequence with its own barcode, fits a vector that cannot
+  be opened yet, simulates every round, and counts the colonies a round needs for the coverage
+  asked for. `LibraryPlan.write` puts the synthesis order sheet, the barcode table, the
+  amino-acid change table, a record for each round, the assembled product, the protocol as JSON
+  and the page rendered from it in one directory.
+- `liulab_mbio library plan` on the command line, and a repo-local `protein-assembly` skill that
+  calls it.
+- Writing DNA for a protein, and choosing its codons for a host while clearing sites it must not
+  spell (`liulab_mbio.translate`); and barcode sets held a set distance apart
+  (`liulab_mbio.barcodes`). Each has its own skill, `codon-optimize` and `barcode-design`,
+  because both are wanted outside a library build.
+- SrfI and PmeI join the shipped enzymes, rebuilt through the enzyme-data builder.
+- Two research notes: the library method with every number sourced to the paper it comes from,
+  and whether a barcode set needs limits on GC and on repeated bases. The second measured the
+  evidence rather than following custom, and the answer is a cap on repeated bases and no GC
+  band at all.
 - Golden Gate cloning, end to end. `liulab_mbio.goldengate.plan_assembly` takes a vector and
   any number of inserts, picks a Type IIS enzyme with no site in the parts, designs the whole
   overhang set, checks every primer, simulates the assembly, and designs the colony PCR and

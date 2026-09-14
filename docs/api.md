@@ -62,13 +62,15 @@ across the origin of a circular record ends past the record's length — see
 
 ::: liulab_mbio.edits
 
-## Enzymes, sites and codons
+## Enzymes, sites, codons and translation
 
 ::: liulab_mbio.enzymes
 
 ::: liulab_mbio.sites
 
 ::: liulab_mbio.codons
+
+::: liulab_mbio.translate
 
 ## Primers
 

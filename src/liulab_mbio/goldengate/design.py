@@ -79,8 +79,11 @@ _UNIFORM_PENALTY = 0.02
 
 _RULE_SOURCE = "rule-based estimate: no published ligation data covers this enzyme"
 
-#: Why a candidate overhang was refused.
-type RejectionRule = Literal["length", "palindrome", "uniform", "repeat", "near-duplicate", "site"]
+#: Why a candidate overhang was refused. `_refuse` returns every one but ``"stop"``, which belongs
+#: to a caller reading a candidate in frame, as `liulab_mbio.library.standard` does.
+type RejectionRule = Literal[
+    "length", "palindrome", "uniform", "repeat", "near-duplicate", "site", "stop"
+]
 
 #: What a set of overhangs is scored against: the enzyme's own matrix, or a ligase's profile.
 type Scoring = LigationMatrix | LigaseProfile
@@ -733,6 +736,37 @@ def _refuse(
 def _distance(one: str, other: str) -> int:
     """How many positions two overhangs of one length differ in."""
     return sum(a != b for a, b in zip(one, other, strict=True))
+
+
+def refusal(
+    candidate: str,
+    enzyme: EnzymeLike,
+    *,
+    taken: Iterable[str] = (),
+    avoid: Iterable[EnzymeLike] = (),
+    min_distance: int = MIN_DISTANCE,
+    allow_uniform: bool = False,
+) -> Rejection | None:
+    """Why `candidate` will not join `taken`, or ``None`` when it will.
+
+    The rules `design_overhangs` chooses by, for a caller searching for a set of its own and
+    needing to weigh one candidate against a partial set rather than design a whole one.
+
+    Examples
+    --------
+    >>> refusal("AGGT", "BsaI") is None
+    True
+    >>> refusal("AGGT", "BsaI", taken=["AGGT"]).rule
+    'repeat'
+    """
+    return _refuse(
+        candidate.upper(),
+        _type_iis(_one(enzyme)),
+        tuple(one.upper() for one in taken),
+        _resolve(avoid),
+        min_distance,
+        allow_uniform,
+    )
 
 
 def fidelity(

@@ -69,6 +69,19 @@ def test_a_palindromic_site_is_counted_once_and_reported_on_the_forward_strand()
     assert [(s.start, s.strand) for s in sites] == [(3, Strand.FORWARD)]
 
 
+def test_the_blunt_eight_base_cutters_are_found_at_their_own_offsets() -> None:
+    # Both sites are their own reverse complement, so each is reported once, on the forward
+    # strand, and each blunt cut leaves nothing single-stranded.
+    record = SequenceRecord("AAAA" + "GCCCGGGC" + "TTTT" + "GTTTAAAC" + "AAAA")
+    found = find_sites(record, ["SrfI", "PmeI"])
+    assert [(s.enzyme.name, s.start, s.top_cut, s.overhang) for s in found] == [
+        ("SrfI", 4, 8, ""),
+        ("PmeI", 16, 20, ""),
+    ]
+    # SmaI is no substitute for SrfI: CCCGGG lies inside GCCCGGGC, and it cuts elsewhere too.
+    assert [site.start for site in find_sites(record, "SmaI")] == [5]
+
+
 def test_an_iupac_code_in_the_site_matches_every_base_it_admits() -> None:
     (site,) = find_sites(SequenceRecord("AAGGACAAA"), FOOI)
     assert site.start == 2

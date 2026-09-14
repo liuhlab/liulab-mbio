@@ -316,8 +316,11 @@ _Avoid_: removable site, fixable site
 
 ### Part
 
-One piece going into an assembly: a span of a template amplified with a tail at each end, so
-that the enzyme leaves the overhangs the design chose. The vector is a part like any other.
+One piece going into an assembly: what it contributes to the product, its ends arranged so that
+the enzyme leaves the overhangs the design chose. How it is made is a separate question — a span
+amplified from a template with a tail at each end, or one synthesised block ordered whole with a
+stuffer at each end. The vector is a part like any other, and so is the product of an earlier
+round.
 _Avoid_: module, component, element
 
 ### Linearised vector
@@ -389,3 +392,91 @@ A colony PCR primer annealing inside one insert rather than in the vector either
 its own junction a band, and it is what separates a reversed insert from a correct clone, which
 two flanking vector primers cannot do.
 _Avoid_: internal primer, screening primer
+
+### Part list
+
+The members of one position of a scheme: the protein or coding sequences that may fill it, each
+named so that it says which position it belongs to. One round joins one part list to the library,
+so every member of a list carries the same entry overhangs and differs only in what it codes for
+and in its barcode.
+_Avoid_: pool, insert list, position list
+
+### Scheme
+
+What a library design is given rather than works out: the positions, the enzymes that cut
+internally, externally and bluntly, the stuffers, the cloning scar and the barcode length. It is
+one object the user supplies, checked as it is read, and any one scheme is an instance of the
+pattern rather than the only one. A part list is what fills one of its positions.
+_Avoid_: config, standard, design, layout
+
+### Entry overhang
+
+The overhang that admits a part at one position, so that a part enters only where the scheme meant
+it to. Each position has its own: a part's 5' external stuffer begins with its own entry overhang
+and its internal stuffer begins with the next position's, which is how a part carries its place.
+Every member of a part list shares them, which is what lets one round take a whole list.
+_Avoid_: fusion site, position tag, adapter
+
+### Internal stuffer
+
+The piece a part carries where the next part will go, which the internal enzyme excises to open
+it. It holds that enzyme's two sites facing inward and a blunt enzyme's site in its core, so the
+excised piece is cut again and cannot ligate back. Its first bases are the next position's entry
+overhang.
+_Avoid_: filler, spacer, placeholder, dummy insert
+
+### External stuffer
+
+The piece at each end of a synthesised part, outside what the part contributes to the product. The
+external enzyme cuts inside it to release the part as a digest fragment, and a blunt enzyme cuts
+further out so that what is left of the block cannot ligate back. The 5' one begins with the
+part's own entry overhang.
+_Avoid_: adapter, arm, flank, tail
+
+### Barcode
+
+A short stretch of DNA naming one part, so that sequencing a product says which member of each
+part list it carries. Its length is the scheme's, chosen with the cloning scar so that the two
+together are a whole number of codons, and the barcodes of one part list stand far enough apart in
+mismatches that no two read as one. It lies in the product's reading frame, so it spells no stop.
+_Avoid_: index, tag, UMI, identifier
+
+### Cloning scar
+
+The bases a ligation leaves at a junction that neither part spells there — the opposite of a
+scarless junction, which gains nothing. A scheme has one, shared at every part's 3' end, and it is
+what joins each round's barcode to the barcodes already there.
+_Avoid_: linker, junction sequence, spacer
+
+### Barcode block
+
+The run of barcodes a finished product carries, each separated from the last by the cloning scar.
+Every round inserts its barcode upstream of the ones already there, so the block reads in the
+reverse of the order the rounds added them. One primer pair reads the whole block, which is what
+links a product back to its parts.
+_Avoid_: barcode region, index block, tag array
+
+### Round
+
+One stage of an iterative assembly: the library built so far is cut internally to open it, that
+round's parts are cut externally to release them, the two ligate, and the product is transformed,
+grown and prepped to become the next round's destination. One round appends one part list and its
+barcode to every member of the library at once. The product keeps the internal enzyme's sites,
+which is what lets the next round open it.
+_Avoid_: cycle, iteration, step
+
+### Synthesis order sheet
+
+Every part one library design asks for, as a table to order synthesis from: the name each is
+ordered under, the whole synthesised block 5' to 3', its length, the position it fills and its
+barcode. The barcode stands on the same row, so the sheet ordered from is also what decodes the
+sequencing afterwards.
+_Avoid_: gene list, construct table, primer order sheet (the oligo one, and its own entry)
+
+### Library coverage
+
+How many times over a round's colonies hold every distinct product the round could make: the
+colonies counted against the number of those products. A round short of the coverage asked for
+loses members no later round can put back, so it is counted for each round and not once at the
+end.
+_Avoid_: complexity, depth, diversity, representation
