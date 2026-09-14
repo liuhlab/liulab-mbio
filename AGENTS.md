@@ -1,9 +1,10 @@
 # liulab-mbio
 
-Molecular biology design tools for DNA sequences, enzymes, primers and cloning. The package
-plans a Golden Gate experiment from a vector and its inserts: it picks a Type IIS enzyme,
-designs the overhangs and the primers, simulates the product, and writes a bench protocol
-someone can follow. A repo-local skill calls it; the lab uses both. Distribution name
+Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Two pipelines
+plan an experiment end to end: a Golden Gate assembly from a vector and its inserts, and a
+barcoded combinatorial library built from lists of proteins in rounds. Each picks its enzymes,
+designs the DNA, simulates the product, and writes a bench protocol someone can follow.
+Repo-local skills call them; the lab uses both. Distribution name
 **`liulab-mbio`**, import name **`liulab_mbio`**.
 
 **Easiest thing to get wrong: coordinates.** Every module is 0-based and half-open, and a span
@@ -24,14 +25,17 @@ One direction, bottom to top — nothing lower imports anything higher.
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
 | bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
 | pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
+| pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
 
-`goldengate.plan_assembly` is the one way in, and `Plan.write` puts four files in a directory:
-the product, the primer sheet, `protocol.json`, and the `protocol.html` page rendered from it.
+Each pipeline has one way in. `goldengate.plan_assembly` writes four files: the product, the
+primer sheet, `protocol.json` and the `protocol.html` rendered from it. `library.plan_library`
+writes the synthesis order sheet, the barcode and amino-acid change tables, a record per round,
+the product, and those same two protocol files.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
-`__init__.py` re-exports only `__version__`: `Check` and `Junction` each mean different things
-in two modules, so import by module path.
-`Check` is the judged check in `checks` and its displayed form in `protocol`.
+The top-level `__init__.py` re-exports only `__version__`, so import by module path: `Check`,
+`Junction`, `Part` and `Files` each mean different things in two modules. `library` is the one
+subpackage that re-exports its own way in.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
@@ -66,7 +70,8 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | the gate | `pixi run check` |
 | one test | `pixi run test -- tests/test_sites.py::test_name` |
 | the docs | `pixi install -e docs`, then `pixi run docs-build` |
-| the pipeline | `pixi run liulab_mbio goldengate plan VECTOR INSERT --out DIR` |
+| a Golden Gate plan | `pixi run liulab_mbio goldengate plan VECTOR INSERT --out DIR` |
+| a library plan | `pixi run liulab_mbio library plan PARTS --scheme S --vector V --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
 ## Layout
