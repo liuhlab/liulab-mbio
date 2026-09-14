@@ -10,12 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.codons import codon_usage
+from liulab_mbio.codons import amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.design import refusal
 from liulab_mbio.library.scheme import Position, Scheme, read_scheme
 from liulab_mbio.library.standard import (
-    _reading,
+    _attempt,
+    _Reading,
     _sites,
     design_standard,
     junction_residues,
@@ -114,6 +115,20 @@ def every_overhang(length: int) -> tuple[str, ...]:
     return tuple("".join(bases) for bases in product("ACGT", repeat=length))
 
 
+def retained_codons(made: Scheme, candidate: str) -> tuple[str, ...]:
+    """The codons a first entry overhang's own bases fall in, in the stuffer the product retains.
+
+    The terminal stuffer is never excised, so the product reads it in frame from its first base,
+    and the prefix ends with the overhang admitting position one.
+    """
+    prefix = made.positions[-1].internal_stuffer_prefix
+    head = prefix[: len(prefix) - len(candidate)]
+    stuffer = head + candidate + made.internal_stuffer_core
+    return tuple(
+        stuffer[at : at + 3] for at in range((len(head) // 3) * 3, len(head) + len(candidate), 3)
+    )
+
+
 def test_the_standard_returns_one_overhang_a_position_and_the_scheme_s_scar():
     made = scheme(MORE[:2])
 
@@ -180,6 +195,44 @@ def test_a_junction_no_overhang_spells_unchanged_is_reported():
     assert {one.part for one in standard.changes}
 
 
+def test_the_first_entry_overhang_spells_no_stop_in_the_retained_stuffer():
+    made = scheme(MORE[:2])
+
+    standard = design_standard(made, (FIRST, SECOND))
+
+    spelled = retained_codons(made, standard.entry_overhangs[0])
+    assert spelled
+    assert all(amino_acid(one) != "*" for one in spelled)
+
+
+def test_a_retained_stop_names_its_rule_in_the_trail():
+    made = scheme(MORE[:2])
+
+    standard = design_standard(made, (FIRST, SECOND))
+    refused = {one.overhang for one in standard.choices[0].rejected if one.rule == "stop"}
+
+    assert refused
+    for overhang in refused:
+        assert any(amino_acid(one) == "*" for one in retained_codons(made, overhang))
+
+
+def test_a_pinned_overhang_spelling_a_retained_stop_is_refused():
+    made = scheme(MORE[:2])
+
+    with pytest.raises(ValueError, match="stop"):
+        design_standard(made, (FIRST, SECOND), pinned={"p1": "AGGA"})
+
+
+def test_the_vector_junction_charges_no_part_list_its_5_terminus():
+    made = scheme(MORE[:2])
+    starts_with_s = {"a": "SKTD", "b": "SKTK"}
+
+    standard = design_standard(made, (starts_with_s, SECOND), pinned={"p1": "CTCC"})
+
+    assert standard.entry_overhangs[0] == "CTCC"
+    assert not [one for one in standard.termini if one.position == "p1" and one.end == "5'"]
+
+
 def test_no_cheaper_standard_is_available():
     """Price every set the rules allow, and show none beats what the designer returned.
 
@@ -192,14 +245,16 @@ def test_no_cheaper_standard_is_available():
     standard = design_standard(made, lists)
     enzyme, avoid = made.internal, (made.external, *made.blunt)
     usage = codon_usage()
-    sites = _sites(made, lists, {}, junction_residues(enzyme.overhang_length)[1])
+    sites = _sites(
+        made, lists, {}, junction_residues(enzyme.overhang_length)[1], enzyme.overhang_length
+    )
     pool = [
         one
         for one in every_overhang(enzyme.overhang_length)
         if refusal(one, enzyme, avoid=avoid) is None
     ]
     priced = [
-        {one: reading.cost for one in pool if (reading := _reading(site, one, usage)) is not None}
+        {one: read.cost for one in pool if isinstance(read := _attempt(site, one, usage), _Reading)}
         for site in sites[:-1]
     ]
 
@@ -224,9 +279,9 @@ def test_no_cheaper_standard_is_available():
 def test_a_pinned_overhang_is_kept():
     made = scheme(MORE[:2])
 
-    standard = design_standard(made, (FIRST, SECOND), pinned={"p1": "AGGT"})
+    standard = design_standard(made, (FIRST, SECOND), pinned={"p1": "CTCC"})
 
-    assert standard.entry_overhangs[0] == "AGGT"
+    assert standard.entry_overhangs[0] == "CTCC"
 
 
 def test_a_pinned_overhang_is_held_to_every_rule():
@@ -259,11 +314,11 @@ def test_a_protein_shorter_than_a_junction_spells_is_refused():
 
 def test_the_rejection_trail_names_the_rule_that_refused_a_candidate():
     made = scheme(MORE[:2])
-    wanted = design_standard(made, (FIRST, SECOND)).entry_overhangs[1]
+    wanted = design_standard(made, (FIRST, SECOND)).entry_overhangs[0]
 
-    # Pinning the first position to what the second would otherwise take leaves the second to
-    # refuse it as a repeat and say so.
-    standard = design_standard(made, (FIRST, SECOND), pinned={"p1": wanted})
+    # A pinned junction settles first, so pinning the second position to what the first would
+    # otherwise take leaves the first to refuse it as a repeat and say so.
+    standard = design_standard(made, (FIRST, SECOND), pinned={"p2": wanted})
     trail = [one for choice in standard.choices for one in choice.rejected]
 
     assert ("repeat", wanted) in {(one.rule, one.overhang) for one in trail}

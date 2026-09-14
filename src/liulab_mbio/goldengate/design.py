@@ -79,8 +79,11 @@ _UNIFORM_PENALTY = 0.02
 
 _RULE_SOURCE = "rule-based estimate: no published ligation data covers this enzyme"
 
-#: Why a candidate overhang was refused.
-type RejectionRule = Literal["length", "palindrome", "uniform", "repeat", "near-duplicate", "site"]
+#: Why a candidate overhang was refused. `_refuse` returns every one but ``"stop"``, which belongs
+#: to a caller reading a candidate in frame, as `liulab_mbio.library.standard` does.
+type RejectionRule = Literal[
+    "length", "palindrome", "uniform", "repeat", "near-duplicate", "site", "stop"
+]
 
 #: What a set of overhangs is scored against: the enzyme's own matrix, or a ligase's profile.
 type Scoring = LigationMatrix | LigaseProfile
