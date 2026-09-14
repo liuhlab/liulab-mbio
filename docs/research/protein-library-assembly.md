@@ -361,6 +361,7 @@ consistent to a point or two, and this note records both rather than picking one
 **That loose worked is not evidence that loose is optimal**, nor that the question was
 considered. Whether a GC band or a homopolymer cap is worth imposing is for issue #58 to settle
 from primary sources; nothing here should be read as a default.
+`docs/research/barcode-design.md` settles it: no GC band, a homopolymer cap of 5.
 
 ## 7. Where this note contradicts issue #55
 
