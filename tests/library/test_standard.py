@@ -63,9 +63,25 @@ def external_3(scar: str, cutter: Enzyme, chopper: Enzyme) -> str:
     return scar + reach + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(3)
 
 
-def core(cutter: Enzyme, chopper: Enzyme) -> str:
-    """A shared internal stuffer core, cutting back into whatever prefix precedes it."""
-    return pad(1) + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(4) + cutter.site
+def core(cutter: Enzyme, chopper: Enzyme, scar: str = SCAR) -> str:
+    """A shared internal stuffer core, carrying both of the cuts that open a stuffer.
+
+    Each cut is placed from `cutter`'s own offsets: one cuts back into whatever prefix precedes
+    the core, and one leaves `scar` as the stuffer's last bases. The filler length is what keeps
+    the retained region a whole number of codons.
+    """
+    lead = cutter.bottom_cut - len(cutter.site) - cutter.overhang_length
+    reach = cutter.top_cut - len(cutter.site)
+    return (
+        pad(lead)
+        + reverse_complement(cutter.site)
+        + pad(3)
+        + chopper.site
+        + pad(5)
+        + cutter.site
+        + pad(reach)
+        + scar
+    )
 
 
 def scheme(overhangs: Sequence[str] = MORE) -> Scheme:
