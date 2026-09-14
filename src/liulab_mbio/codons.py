@@ -57,7 +57,7 @@ class CodonUsage:
         KeyError
             If `codon` is not one of the 64.
         """
-        return _code()[_checked(codon)]
+        return amino_acid(codon)
 
     def fraction(self, codon: str) -> float:
         """Return this codon's share of the codons spelling the same amino acid, 0 to 1."""
@@ -102,6 +102,24 @@ def codon_usage(name: str = DEFAULT_TABLE) -> CodonUsage:
     if name not in shipped:
         raise KeyError(f"no shipped codon usage table is called {name!r}")
     return shipped[name]
+
+
+def amino_acid(codon: str) -> str:
+    """Return the amino acid this codon spells, or ``"*"`` for a stop.
+
+    The genetic code groups the codons every table counts, so this asks for no host.
+
+    Raises
+    ------
+    KeyError
+        If `codon` is not one of the 64.
+
+    Examples
+    --------
+    >>> amino_acid("atg")
+    'M'
+    """
+    return _code()[_checked(codon)]
 
 
 @cache
