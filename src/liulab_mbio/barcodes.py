@@ -24,10 +24,10 @@ from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import EnzymeLike, find_sites
 
-#: How the distance between two barcodes is counted. Hamming counts the positions two barcodes
-#: of one length differ in, and cannot see an insertion or a deletion. Sequence-Levenshtein
-#: (Buschmann & Bystrykh 2013) counts substitutions, insertions and deletions, bases a read runs on
-#: into included, so that a set standing three apart still decodes after one base is lost.
+#: How the distance between two barcodes is counted. Hamming counts the positions two barcodes of
+#: one length differ in, and cannot see an insertion or a deletion. Sequence-Levenshtein (Buschmann
+#: & Bystrykh 2013) counts substitutions, insertions and deletions, and charges nothing for the
+#: bases a read gains or loses past the barcode's end, which is what a lost base does to a read.
 type Metric = Literal["hamming", "sequence-levenshtein"]
 
 #: The fewest mismatches, or edits, two barcodes of one part list stand apart. Measured on the
@@ -287,14 +287,18 @@ def deletion_ambiguity(barcodes: Iterable[str]) -> float:
     >>> deletion_ambiguity(["ACGTT", "CGTTG"])
     0.2
     """
-    held = tuple(barcode.upper() for barcode in barcodes)
-    leaves: Counter[str] = Counter()
-    for barcode in held:
-        leaves.update({barcode[:at] + barcode[at + 1 :] for at in range(len(barcode))})
-    shortened = [barcode[:at] + barcode[at + 1 :] for barcode in held for at in range(len(barcode))]
-    if not shortened:
+    shortened = [
+        [barcode[:at] + barcode[at + 1 :] for at in range(len(barcode))]
+        for barcode in (one.upper() for one in barcodes)
+    ]
+    # How many barcodes leave each read, counting a barcode once however many of its bases leave
+    # that read: two deletions inside one run are one read, and it is other barcodes that make it
+    # ambiguous.
+    leaves = Counter(read for reads in shortened for read in set(reads))
+    every = [read for reads in shortened for read in reads]
+    if not every:
         return 0.0
-    return sum(leaves[one] > 1 for one in shortened) / len(shortened)
+    return sum(leaves[read] > 1 for read in every) / len(every)
 
 
 def _problem(
@@ -374,7 +378,10 @@ def _nearest(barcode: str, chosen: Iterable[str], rules: BarcodeRules) -> tuple[
 
 def _apart(apart: int, rules: BarcodeRules) -> str:
     """How two barcodes standing too close are described."""
-    return f"stand {apart} {_UNITS[rules.metric][0]} apart, under the {rules.distance} one part list needs"
+    return (
+        f"stand {apart} {_UNITS[rules.metric][0]} apart, "
+        f"under the {rules.distance} one part list needs"
+    )
 
 
 def _hamming(one: str, other: str) -> int:
@@ -427,12 +434,14 @@ def _resolve(forbidden: Iterable[EnzymeLike]) -> tuple[Enzyme, ...]:
     return tuple(one if isinstance(one, Enzyme) else get_enzyme(one) for one in forbidden)
 
 
-#: How each metric is counted, and what one unit of it is called, as few and as many.
-_METRICS: Mapping[str, Callable[[str, str], int]] = {
+#: What each metric counts with.
+_METRICS: Mapping[Metric, Callable[[str, str], int]] = {
     "hamming": _hamming,
     "sequence-levenshtein": _sequence_levenshtein,
 }
-_UNITS: Mapping[str, tuple[str, str]] = {
+
+#: What one unit of each metric is called, as one or several and as a plain plural.
+_UNITS: Mapping[Metric, tuple[str, str]] = {
     "hamming": ("mismatch(es)", "mismatches"),
     "sequence-levenshtein": ("edit(s)", "edits"),
 }
