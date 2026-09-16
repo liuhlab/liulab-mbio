@@ -108,7 +108,10 @@ def codon_usage(name: str = DEFAULT_TABLE) -> CodonUsage:
     """
     shipped = _shipped()
     if name not in shipped:
-        raise KeyError(f"no shipped codon usage table is called {name!r}")
+        raise KeyError(
+            f"no shipped codon usage table is called {name!r}; "
+            f"this package ships {', '.join(shipped)}"
+        )
     return shipped[name]
 
 

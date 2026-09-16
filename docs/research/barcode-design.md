@@ -12,9 +12,13 @@ should a barcode set also be constrained on GC content and on homopolymer run le
 The question is not academic. Whatever this note concludes becomes the default dials of a
 designer that every later user inherits, so an unsourced default is worse than an absent one.
 
-Everything below was read or computed on **2026-09-14**. Every count over the published barcode
-set was computed from `Table S1.xlsx` on that date; every count over the 11-mer space was
-computed by the arithmetic in section 7, which names the construction that produced it.
+Everything in sections 1 to 9 was read or computed on **2026-09-14**. Every count over the
+published barcode set was computed from `Table S1.xlsx` on that date; every count over the 11-mer
+space was computed by the arithmetic in section 7, which names the construction that produced it.
+
+Sections 10 and 11 answer issue #72, which asked the question section 9's last open gap left: a
+Hamming rule cannot see an indel, so should the designer count distance some other way? They were
+computed and read on **2026-09-16**, and section 10 names its own construction.
 
 ## 1. The verdicts, first
 
@@ -22,7 +26,8 @@ computed by the arithmetic in section 7, which names the construction that produ
 | --- | --- | --- | --- |
 | **GC band** | **Off by default** | none | **Convention**, and one measurement against it |
 | **Homopolymer cap** | **On by default** | longest run **≤ 5** | **Measured mechanism**; the threshold is a judgement |
-| Minimum distance | On, unchanged | Hamming **3** within a part list | Measured on the published set |
+| Minimum distance | On, unchanged | **3** within a part list | Measured on the published set |
+| **Distance metric** | **Sequence-Levenshtein** | Hamming kept as a dial | **Measured**, section 10 |
 
 **The GC band is off because no measurement supports one at this length.** Every numeric GC
 band in the barcode literature traces back to a single uncited sentence in Hamady et al. 2008.
@@ -44,6 +49,14 @@ one. It also costs nothing measurable (section 7).
 software that ships it says outright that it is unnecessary on Illumina. 5 is the one number
 here the evidence does not pin; section 5.3 says exactly how it was chosen and what argues
 against it.
+
+**The metric is indel-aware because the distance rule was guarding the wrong error.** A
+Hamming distance counts mismatches, and one deleted base shifts every base after it, so no
+Hamming distance sees a deletion at all. Measured over the 11-mer space, between 19% and 46% of
+the single deletions of a Hamming code land on a read another codeword could also leave, against
+none of a Sequence-Levenshtein code's. It costs about one base of barcode length at a given set
+size and nothing at the size a part list is, and the published set already holds it. Section 10
+is the measurement, and Hamming stays as a dial for a set that has to match one already in use.
 
 **A third finding matters more than either rule.** Neither filter fixes the real failure of a
 naive designer. A greedy construction that walks the 11-mer space in lexicographic order emits
@@ -256,9 +269,15 @@ the bias lay somewhere else entirely.
 - **Kebschull and Zador 2015** is the closest measurement to this question's scale: 20-nt
   barcodes across the full GC range to 80%, with amplification efficiency essentially flat,
   slopes below 0.004.
-- **Alon et al. 2011** separates arrangement from composition. Barcodes introduced by ligation
-  before PCR gave "up to 100-fold differences in read counts"; barcodes carried on the PCR
-  primers gave none (R² = 0.9977 ± 0.0016).
+- **Van Nieuwerburgh et al. 2011** separates arrangement from composition. Their pre-PCR
+  protocol, which barcodes 3 bp from the insert, gave "up to 100-fold differences in read counts
+  for the top 200 most abundantly expressed miRNAs", while TruSeq, which introduces the barcode
+  during the PCR 34 bp away, gave "R2 = 0.9977±0.0016". The paper offers the distance as one
+  candidate cause and names two others — no reverse transcription step after barcoding, and a
+  250 bp insert rather than 22 bp — so the comparison does not isolate distance.
+- **Alon et al. 2011** measures the same contrast on its own terms: ligation-introduced barcodes
+  gave "σ ∼ 0.7, or a typical multiplicative factor-2 bias", and barcodes introduced during the
+  PCR "σ ∼ 0.03, or a typical multiplicative bias factor of 1.03".
 - **Berry et al. 2011** and **O'Donnell et al. 2016** both measured real barcoded-primer bias
   and attributed it to primer-template interactions and mismatch, with GC held constant. Both
   fixes are protocol changes — a two-step PCR — not barcode filters.
@@ -413,6 +432,38 @@ arithmetic above puts an 11-mer's contribution at one to five points of that fig
 inside the flat range — which Aird et al. also found widens with a slower thermocycler ramp,
 reaching "from 13% to 84% GC" on the slowest instrument they tried.
 
+### 6.2 A second review reached the same verdict on other evidence
+
+A review run in parallel with this one, recorded in the comment on issue #72, read a different
+set of papers and returned the same answer. **Those papers were not re-read here**, so this
+subsection reports its findings rather than confirming them; the rest of this note stands on
+sources read in full.
+
+It found eight direct tests of a short variable window inside a constant amplicon, all null for
+GC:
+
+| Study | Design | Result |
+| --- | --- | --- |
+| Kebschull & Zador 2015, *NAR* 43:e143 | 20-nt barcodes, constant flanks, 25 cycles | slopes 0.0009 / 0.0011 / -0.0033, 95% CI < 0.008; a deliberate 80% GC pair amplified normally |
+| Deakin et al. 2014, doi:10.1093/nar/gku607 | 16 bp barcode in constant plasmid, 100 known | ~15-fold abundance spread, reproducible (r = 0.93), "did not correlate with GC content or MFE" |
+| Chen et al. 2020, *Nat Commun* 11:3264 | >10^6 payloads, UMI-tracked | across GC 25-75%, "slope of the linear fit was < 0.01" |
+| Best et al. 2015, doi:10.1038/srep14629 | 6/12-bp barcodes, constant TCR amplicon | 2 orders of magnitude spread, "no obvious relationship" with GC |
+| Thielecke et al. 2017 | constant flanks, ddPCR-verified equal input | reproducible bias, no GC correlation |
+| Gimpel et al. 2025, doi:10.1038/s41467-025-64221-4 | 12,000 inserts, fixed adapters, 90 cycles | GC classifier "close to a random classifier" |
+| Zhu et al. 2019 | short variable window, constant amplicon | null |
+| Berry et al. 2011 | 8-nt barcoded primers | significant bias (P < 0.0001) **with GC identical across all barcodes** |
+
+Its cleanest controlled test is Laursen et al. 2017 (doi:10.3389/fmicb.2017.01934): a 20-member
+mock community on a 180-200 bp V3 amplicon with the same primers throughout, spread ~50-fold,
+where amplicon-region GC gave rho = 0.034, P = 0.89 and whole-genome GC gave rho = -0.68,
+P = 0.002. That is a sharper statement of section 6.1's mechanism than "convention" was: **the GC
+that biases a PCR is the whole molecule's, not the short window's.**
+
+The one substantial positive it found, Nichols et al. 2018 (doi:10.1111/1755-0998.12895,
+R² = 0.474), reconciles with the rest: its variable region is 47 bp of an 83 bp amplicon spanning
+50 GC points, where an 11-mer inside a ~200 bp amplicon moves whole-amplicon GC by roughly 2.5
+points.
+
 **Verdict on this section: the extrapolation does not hold.** The whole-library GC literature
 does not transfer to an 11-mer interior to an amplicon, by the measurement of the very paper
 that established the bias. Nothing measured supports a narrow GC band at this length, and the
@@ -465,10 +516,26 @@ even the strictest combination in the table leaves 32,353 — more than a thousa
 whether they are justified, not whether they are affordable, and the space argument settles
 nothing in either direction.
 
-**Under the chosen defaults** — minimum Hamming distance 3, site-free, homopolymer run ≤ 5, no
-GC band — the surviving count is **48,267** by lexicographic greedy, and **37,858** by the
-seeded shuffled construction recommended in section 9. Both are lower bounds. The second is the
-operative number, because it is the construction issue #62 should use.
+**Under the chosen defaults** — minimum distance 3, site-free, homopolymer run ≤ 5, no GC band —
+the surviving count is **48,267** by lexicographic greedy, and **37,858** by the seeded shuffled
+construction recommended in section 9. Both are lower bounds. The second is the operative number,
+because it is the construction issue #62 should use.
+
+**Third, and it is the easiest mistake to make with this note: never read a bound against a
+realised count.** They measure different quantities, and the two sets of numbers in this note
+look comparable:
+
+| Quantity | Over the 11-mer space at distance 3 |
+| --- | --- |
+| Sphere-packing ceiling | ~123,361 |
+| Upper bound by enumeration, unconstrained | 65,536 |
+| Upper bound, run ≤ 4 and GC 27-73% | 60,920 |
+| Upper bound, adding stop-free | 52,928 |
+| Realised, lexicographic greedy | 48,267 |
+| Realised, the seeded shuffle | 37,858 |
+
+52,928 against 37,858 is not the cost of any rule; it is a bound against a construction. Compare
+realised with realised, which is what sections 9 and 10 do.
 
 ## 8. What each rule would do to work that succeeded
 
@@ -542,6 +609,183 @@ So the composition of a barcode set is mostly a property of how candidates are d
 what is filtered out afterwards. Recommend the seeded shuffle as the default construction and
 the filters stay nearly idle — which is the outcome restraint asks for.
 
+## 10. Which metric: a Hamming rule cannot see an indel
+
+Issue #58 left this open and issue #72 asked it: the distance rule was a Hamming rule because the
+published set is one, and a Hamming distance counts mismatches. A deletion shifts every base after
+it, so no Hamming distance, at any value, says anything about one.
+
+It is not a hypothetical error mode here. Section 5.3 has the measurement: 92.0% of the residual
+discordances of a HiFi read are indels in homopolymers, one every 477 bp, against one mismatch
+every 13,048 bp — and HiFi is how a barcode block is linked back to its part.
+
+### 10.1 The metric, and what it guarantees
+
+**Sequence-Levenshtein distance**, Buschmann and Bystrykh 2013. Plain edit distance is the wrong
+tool for a barcode because it assumes both ends are known: in a read the barcode is followed by
+whatever comes next, so a deletion pulls a base in from beyond the barcode and an insertion pushes
+one out. Their distance charges nothing for that shift. Their own worked example:
+
+> Delete second base "A" of "CAGG" to get "CGG" and substitute third base "G" with "T" to get
+> "CGT". In the worst case the remaining sample sequence will start with base "C", so that if we
+> elongate with "C" then get "CGTC".
+
+So `CAGG` and `CGTC` stand 3 substitutions apart and 2 edits apart, and a distance-3 Hamming code
+holding both would mis-decode a read that lost one base. Their correction guarantee is the usual
+one, on the right distance:
+
+> codes based on this distance can correct k substitutions and indels in DNA context if their
+> minimum distance is at least d SL min = 2 ∗ k + 1.
+
+**It is implemented here from that definition, in plain Python, with no new dependency.** The
+distance is the least entry on the last row or the last column of the edit-distance table rather
+than its corner, which is that definition rearranged: the last column is the read truncated back
+to length, the last row is the read run on past the end. `tests/test_barcodes.py` pins the paper's
+worked example and the size of the four-base code it publishes — it gives four barcodes for the
+correction of one error, and this package realises four and refuses a fifth. The enumeration used
+for the measurements below was checked against a brute force over every 6-mer pair. **No line of
+DNABarcodes was read or translated** (section 2 says why), and no distance was taken from it.
+
+Two properties matter for what follows. For two barcodes of one length,
+Sequence-Levenshtein ≤ Levenshtein ≤ Hamming, so **every Sequence-Levenshtein-3 set is also a
+Hamming-3 set** — choosing it takes nothing away from a decoder that matches on mismatches alone.
+And a set at Sequence-Levenshtein 3 has no pair within Levenshtein 2, so no single deletion of one
+of its barcodes can read as another.
+
+### 10.2 What a Hamming set leaves behind, measured
+
+Drop each base of each codeword in turn and ask whether another codeword could leave the same
+read. Two shares fall out of that: how many codewords have at least one ambiguous deletion, and
+how many of the deletions themselves are ambiguous. Both computed on 2026-09-16.
+
+| Distance-3 code over the 11-mer space | Codewords | Codewords ambiguous | Deletions ambiguous |
+| --- | --- | --- | --- |
+| Hamming, lexicographic greedy, no filters | 65,536 | **98.0%** | **45.9%** |
+| Hamming, lexicographic greedy, site-free and run ≤ 5 | 48,310 | 90.4% | 24.6% |
+| Hamming, seeded shuffle, site-free and run ≤ 5 | 37,747 | 83.7% | 18.9% |
+| Sequence-Levenshtein, any of the three | — | **0%** | **0%** |
+
+The first row is where issue #72's headline numbers come from: 98.0% of codewords ambiguous, and
+100 − 45.9 = 54.1% of single deletions landing on a uniquely decodable 10-mer. That row is the
+perfectly structured linear code of section 7, the densest packing of the space, so it is the
+worst case rather than the operative one. **The construction this package uses is the last row**,
+and its numbers are 83.7% and 18.9%. Density drives all of it; the composition filters move it
+only as far as they shrink the code.
+
+At the size a part list actually is, the same measure over sets this package designs at 11 bases
+under the scheme's own rules, drawn from seed 0:
+
+| Part list size | Hamming: codewords ambiguous | Hamming: deletions ambiguous | Sequence-Levenshtein |
+| --- | --- | --- | --- |
+| 24 | 0% | 0% | 0% |
+| 96 | 2.1% | 0.19% | 0% |
+| 384 | 2.1% | 0.24% | 0% |
+
+**So the honest statement of Hamming's cost is not 98%.** At 24 members the two metrics differ in
+nothing; from about a hundred members a Hamming set starts carrying barcodes a single deletion
+makes unassignable, at a couple of percent of the set. The 98% figure is what the metric costs a
+code that fills the space, which nothing here does.
+
+### 10.3 What the indel-aware metric costs, measured
+
+The construction is the same greedy walk in both columns: every n-mer in one seeded shuffled
+order, kept when it passes the filters and no kept codeword lies within distance 2 of it, with
+that neighbourhood marked in a bytearray so the walk is exact. The filters are site-freedom
+against BsaI, BbsI, SrfI and PmeI in both orientations and a homopolymer run of 5, and no GC band.
+Every count is a lower bound, as in section 7.
+
+It is not section 7's draw, so its Hamming counts sit a few tenths of a percent off that
+section's — 37,747 against 37,858 — which is the construction noise section 7 warns about. Both
+columns below come from the one walk, which is what makes them comparable with each other.
+
+| Barcode length | Hamming 3 | Sequence-Levenshtein 3 | Ratio |
+| --- | --- | --- | --- |
+| 4 | 12 | 4 | 3.0 |
+| 5 | 32 | 12 | 2.7 |
+| 6 | 95 | 29 | 3.3 |
+| 7 | 293 | 86 | 3.4 |
+| 8 | 975 | 272 | 3.6 |
+| 9 | 3,221 | 852 | 3.8 |
+| 10 | 10,970 | 2,818 | 3.9 |
+| 11 | 37,747 | 9,440 | 4.0 |
+
+Under the library's own rules at 11 bases — the cloning scar `AGCG` either side, the stop-codon
+rule at phase 1 — the two are **34,456** and **9,172**.
+
+**The cost is a factor of about four, which is one base.** Each base multiplies the space by
+four, so the same table read the other way gives the shortest barcode that reaches a given set
+size:
+
+| Set size | Shortest Hamming | Shortest Sequence-Levenshtein |
+| --- | --- | --- |
+| 24 | 5 | 6 |
+| 96 | 7 | 8 |
+| 384 | 8 | 9 |
+
+At the scheme's 11 bases neither binds: 9,172 is 380 times a 24-member part list. The metric
+binds only on a short barcode, and there the answer is one more base rather than a weaker rule.
+
+The other cost is time. Designing 24 barcodes of 11 bases takes about 0.01 s under either metric;
+384 takes 0.04 s under Hamming and 0.78 s under Sequence-Levenshtein, the distance being a table
+rather than a comparison. Over the gate, the whole test suite moved from 17.9 s to 18.1 s.
+
+### 10.4 The published set already holds it
+
+The house rule is that a rule firing on correct work is evidence against itself. Measured over
+`Table S1.xlsx`, the indel-aware rule fires on none of it:
+
+| Part list | Minimum Hamming | Minimum Sequence-Levenshtein | Pairs under 3 | Ambiguous deletions |
+| --- | --- | --- | --- | --- |
+| N | 3 | **3** | 0 of 276 | 0 |
+| bZIP | 4 | **3** | 0 of 276 | 0 |
+| C | 4 | **3** | 0 of 276 | 0 |
+
+No pair of any published part list stands under 3 edits apart, and no single deletion of any of
+the 72 barcodes reads as another — across the three lists as well as within them. So the change
+of metric rejects nothing that was published and costs nothing that was measured, which is the
+strongest argument for it and was not knowable before it was computed.
+
+### 10.5 The verdict, and when to turn the dial
+
+**Sequence-Levenshtein by default, Hamming as a dial.** The dominant error of the readout is an
+indel; the indel-aware metric is the only one of the two that sees it; at the sizes and lengths
+this package designs for, it costs nothing measurable and rejects nothing published; and because
+every one of its sets is also a Hamming set, nothing downstream that assumed mismatches breaks.
+
+Choose Hamming where a set has to sit beside one already in use and match how it was designed, or
+where the barcode is short enough that the factor of four bites and a longer barcode is not
+available. Say which was used when handing a set over: it is part of what decodes the sequencing
+afterwards.
+
+### 10.6 FREE barcodes, on paper
+
+Issue #72 named a second candidate, the FREE barcodes of Hawkins et al. 2018 — filled/reduced edit
+distance, decoded by lookup rather than by search. **Not implemented, and here is why.** Its
+advantage is decoding: a hash lookup replaces a scan over the code, which matters when millions of
+reads are assigned. Nothing in this package decodes a read; it designs sets and checks them, and
+for that a distance function is the whole interface, which Sequence-Levenshtein satisfies in a few
+lines and with no data. FREE would need its own construction and a filled ball built and held per code,
+for a benefit this package would not use. If read assignment moves in here, it is worth revisiting
+against real read counts rather than on this paragraph.
+
+## 11. Two things that matter more than any barcode rule
+
+Both are architecture rather than sequence, and both are larger in effect than every filter this
+note weighs. They are recorded here because a barcode rule is the wrong place to spend on them,
+and the library protocol carries them as one sentence where the block is read back.
+
+- **Keep the barcode away from where a primer anneals.** Van Nieuwerburgh et al. 2011 barcoded
+  3 bp from the insert and saw "up to 100-fold differences in read counts"; TruSeq, barcoding
+  34 bp away during the PCR, gave R² = 0.9977 ± 0.0016. The paper names two other differences
+  between the two protocols, so this is not a clean measurement of distance alone.
+- **Introduce a sample index during the PCR, not by ligation.** Alon et al. 2011: ligated
+  barcodes gave σ ∼ 0.7, "a typical multiplicative factor-2 bias", and the same barcodes carried
+  on a PCR primer gave σ ∼ 0.03. This one is clean, and it is the larger effect of the two.
+
+Neither reaches the barcodes this package designs, which sit inside the amplicon and are not in
+any primer (section 6). They reach whoever designs the readout amplicon, which is why they are a
+protocol note and not a rule.
+
 ## Open gaps
 
 - **The decisive measurement was not available.** Whether the 8.3% barcode-mismatch fraction is
@@ -554,10 +798,15 @@ the filters stay nearly idle — which is the outcome restraint asks for.
   inherited convention.
 - **The set tests a G run of 5, not a longer one.** Any conclusion drawn from it about
   two-colour chemistry is bounded at that length.
-- **Hamming distance does not protect against indels**, which are the dominant HiFi error. A
-  Sequence-Levenshtein metric, as in Buschmann and Bystrykh 2013, would. This note keeps Hamming
-  because it is what the published set holds and what the paper's own one-mismatch matching
-  assumes, but the choice deserves its own ticket rather than being settled here by default.
+- **Hamming distance does not protect against indels.** Closed by section 10: the default is now
+  Sequence-Levenshtein and Hamming is a dial. What is still open is downstream of the design —
+  nothing here decodes a read, so no measurement says how often a real HiFi read of this block
+  loses a base, only what a set would do if one did.
+- **The capacity counts of section 10.3 are one construction in one order.** Section 7's caution
+  applies to them unchanged: they are lower bounds, and a few percent between two rows is the
+  greedy walk rather than the space.
+- **FREE barcodes were weighed on paper only** (section 10.6). Nothing here measures their code
+  size or their decoding against Sequence-Levenshtein at these lengths.
 - **Whether a GC band or homopolymer cap was considered by the paper's authors is not
   recoverable.** Their absence from the set is measured; intent is not.
 - **The greedy counts in section 7 are lower bounds**, not maxima, and differences of a few
@@ -632,5 +881,12 @@ All read on 2026-09-14.
   Barcodes for SMRT Sequencing*; the HiFi sequencing product pages and the Revio specification
   sheet.
 - Oxford Nanopore, the accuracy and basecalling platform pages.
+- Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post
+  amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. *PLoS ONE*
+  6, e26969. [doi:10.1371/journal.pone.0026969](https://doi.org/10.1371/journal.pone.0026969) —
+  read in full on 2026-09-16 for section 11, and the source of the two figures section 4.3 had
+  attributed to Alon et al.
+- The comment on issue #72, for the eight null GC tests and the two controlled tests reported in
+  section 6.2. Those papers were not read here.
 - `docs/research/protein-library-assembly.md` (issue #56) for the method, the licence verdict
   and the measurements of the published set this note builds on.

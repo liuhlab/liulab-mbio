@@ -88,6 +88,14 @@ def test_the_cli_refuses_a_polymerase_the_package_does_not_ship(
     assert "this package ships Q5, Phusion, Taq, OneTaq" in result.output
 
 
+def test_the_cli_refuses_a_codon_table_the_package_does_not_ship(
+    vector_and_insert, tmp_path: Path
+) -> None:
+    result = run(*vector_and_insert, "--out", str(tmp_path / "run"), "--codon-table", "yeast")
+    assert result.exit_code == 1
+    assert "this package ships e-coli-k12, human, mouse" in result.output
+
+
 def test_the_cli_reads_a_polymerase_name_in_any_case(vector_and_insert, tmp_path: Path) -> None:
     result = run(*vector_and_insert, "--out", str(tmp_path / "run"), "--polymerase", "phusion")
     assert result.exit_code == 0, result.output

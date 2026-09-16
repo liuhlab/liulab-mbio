@@ -1,8 +1,8 @@
 ---
 name: barcode-design
 description: >-
-  Design a set of DNA barcodes with `liulab_mbio`: every pair of one part list far enough apart
-  in mismatches that no two read as one, no restriction or Type IIS site in either orientation,
+  Design a set of DNA barcodes with `liulab_mbio`: every pair of one part list far enough apart,
+  by the set's distance metric, that no two read as one, no restriction or Type IIS site in either orientation,
   the junction with the cloning scar included, and no stop codon where the construct translates
   the barcode. The set is reproducible from a seed, and a set someone already holds is checked
   by the same rules. Use whenever someone wants barcodes designed or checked: naming the members
@@ -57,11 +57,18 @@ two across, so a library-wide rule would be tighter than the work that succeeded
 
 | Dial | Default | Why |
 | --- | --- | --- |
-| `distance` | 3 mismatches | measured on the published set |
-| `max_homopolymer` | 5 | covers an indel no distance rule can see |
+| `distance` | 3 | measured on the published set |
+| `metric` | `sequence-levenshtein` | a Hamming rule cannot see a lost base |
+| `max_homopolymer` | 5 | the lost base is likeliest inside a run |
 | `gc_band` | none | convention, with one measurement against it |
 
-`docs/research/barcode-design.md` is the evidence for all three, and it is what to quote when a
+`metric="hamming"` counts mismatches instead, which is what a published set was designed to and
+what a short barcode may have to fall back on: the indel-aware metric costs about one base of
+length at a given set size. `deletion_ambiguity(barcodes)` is the other side of that choice — the
+share of one-base deletions that read as another barcode of the set — so report it with any set
+designed on mismatches.
+
+`docs/research/barcode-design.md` is the evidence for all four, and it is what to quote when a
 user asks why there is no GC band: every band in the literature descends from one uncited
 sentence, and the paper that imposed a band and then measured it found GC was not what
 mattered. The homopolymer cap of 5 is a judgement rather than a measurement — say so, and turn
@@ -88,7 +95,8 @@ name nothing ships.
 ## Before you hand it over
 
 Give the user the set, the rules it was designed to, and the seed — the same seed and rules
-return the same set, which is what lets them regenerate it. Say which dials were on. A barcode
-set is what decodes their sequencing later, so what it was designed to is part of the result.
+return the same set, which is what lets them regenerate it. Say which dials were on, the metric
+among them. A barcode set is what decodes their sequencing later, so what it was designed to
+is part of the result.
 
 `codon-optimize` writes the coding sequence a part carries; come here for the barcode naming it.

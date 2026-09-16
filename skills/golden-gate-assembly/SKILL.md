@@ -63,6 +63,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 | `--orientation` | `forward` or `reverse`. Give it once for all the inserts, or once per insert, in order |
 | `--in-frame` | Hold every insert's junction on a codon boundary, for a fusion |
 | `--enzyme` | Force one. Refused when it reads a site in any part |
+| `--codon-table` | Whose codon usage a proposed domestication picks its codons from, such as `human`. Not the strain |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
 | `--name` | What to call the product |

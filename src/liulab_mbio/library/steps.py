@@ -17,6 +17,7 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
+from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.steps import listed
@@ -478,10 +479,29 @@ def _materials(
 
 def _references(scheme: Scheme) -> tuple[Reference, ...]:
     """Where the numbers come from, and where the scheme itself came from."""
-    items = [*BENCH_REFERENCES, *COVERAGE_REFERENCES, *AMOUNT_REFERENCES]
+    items = [*BENCH_REFERENCES, *COVERAGE_REFERENCES, *AMOUNT_REFERENCES, *READOUT_REFERENCES]
     if scheme.source:
         items.append(Reference(f"The scheme this build was given: {scheme.source}"))
     return tuple(items)
+
+
+#: What the two readout cautions of the confirming step are measured by.
+READOUT_REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel "
+        "post amplification barcoding strategy for multiplexed DNA and small RNA deep "
+        "sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to "
+        "100-fold differences in read counts, where one introduced during the PCR 34 bp away "
+        "gave R2 = 0.9977",
+        url="https://doi.org/10.1371/journal.pone.0026969",
+    ),
+    Reference(
+        "Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of "
+        "miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about "
+        "twofold where the same barcodes introduced during the PCR did not",
+        url="https://doi.org/10.1101/gr.121715.111",
+    ),
+)
 
 
 def _steps(
@@ -499,7 +519,7 @@ def _steps(
     made = [_order_step(parts, sheet), _pool_step(scheme, part_lists)]
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
-    made.append(_confirm_step(scheme, rounds, barcodes))
+    made.append(_confirm_step(scheme, rounds, parts, barcodes))
     return tuple(made)
 
 
@@ -829,9 +849,15 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
     )
 
 
-def _confirm_step(scheme: Scheme, rounds: Sequence[Round], barcodes: str) -> Step:
+def _confirm_step(
+    scheme: Scheme, rounds: Sequence[Round], parts: Sequence[Part], barcodes: str
+) -> Step:
     """Read the barcode block back, which is what links a construct to its parts."""
     final = rounds[-1]
+    ambiguous = max(
+        deletion_ambiguity([one.barcode for one in parts if one.index == index])
+        for index in range(scheme.position_count)
+    )
     order = listed([one.position for one in reversed(rounds)])
     return Step(
         "Confirm the library",
@@ -851,6 +877,12 @@ def _confirm_step(scheme: Scheme, rounds: Sequence[Round], barcodes: str) -> Ste
             "The block reads in the reverse of the order the rounds ran: each round inserted its "
             "barcode ahead of the ones already there.",
             "This plan designs no sequencing primers.",
+            f"{ambiguous:.1%} of the single-base deletions a barcode can carry leave a read "
+            "another barcode of the same part list could leave, which no read can be assigned "
+            "through.",
+            "Where you amplify the block to read it, carry any sample index on a primer "
+            "rather than ligating it on, and keep the barcodes away from where a primer "
+            "anneals: both cost more read counts than what a barcode spells does.",
         ),
         troubleshooting=(
             Troubleshooting(

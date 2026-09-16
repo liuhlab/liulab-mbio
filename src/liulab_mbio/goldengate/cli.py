@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from liulab_mbio.codons import DEFAULT_TABLE
 from liulab_mbio.goldengate.plan import DEFAULT_HOST, Orientation, Site, plan_assembly
 from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
 
@@ -51,6 +52,13 @@ def plan(
     enzyme: Annotated[
         str, typer.Option(help="Type IIS enzyme to use; the best free one when not given.")
     ] = "",
+    codon_table: Annotated[
+        str,
+        typer.Option(
+            "--codon-table",
+            help="Whose codon usage a proposed domestication picks from; not the strain.",
+        ),
+    ] = DEFAULT_TABLE,
     ligase_matrix: Annotated[
         Path | None,
         typer.Option(
@@ -83,6 +91,7 @@ def plan(
             orientation=_orientations(orientation, len(inserts)),
             in_frame=in_frame,
             enzyme=enzyme or None,
+            codon_table=codon_table,
             profile=ligase_matrix,
             prefer_profile=prefer_ligase_matrix,
             polymerase=_polymerase(polymerase),

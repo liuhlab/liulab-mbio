@@ -9,6 +9,10 @@ sets one.
 
 ### Added
 
+- A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
+  `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
+  domestication names the codons it would move to. The strain the protocol transforms is still
+  `--host`, and still *E. coli*.
 - A barcoded library of protein combinations, built in rounds rather than one pot.
   `liulab_mbio.library.plan_library` takes lists of proteins, or coding DNA, with a scheme and a
   destination vector. It picks the overhang standard that costs the proteins fewest changed
@@ -52,6 +56,16 @@ sets one.
 
 ### Changed
 
+- Barcode sets are designed on an indel-aware distance by default. `liulab_mbio.barcodes` takes
+  the metric as a dial: `sequence-levenshtein`, which counts a lost or gained base, or `hamming`,
+  which counts mismatches and cannot see one. Measured over the 11-mer space, between 19% and
+  46% of the single deletions of a Hamming set read as another barcode of the same set, against
+  none of an indel-aware one; the indel-aware rule costs about one base of barcode length at a given set
+  size, rejects nothing in the published set, and every set it designs is a Hamming set too.
+  `deletion_ambiguity` reports that share for any set, and a library protocol now prints it where
+  the barcode block is read back. A library plan draws different barcodes than it did, the same
+  seed still returning the same ones. `docs/research/barcode-design.md` section 10 is the
+  measurement and the reasoning.
 - Each designed oligo is judged by what it is for, and `plan_assembly` takes its thresholds for
   each role. A sequencing primer passes from 16 bases, the length of Genewiz's own M13F primer,
   while a PCR primer still needs 18. A design picks the primer length that warns least on
