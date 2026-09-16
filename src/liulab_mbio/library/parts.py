@@ -22,9 +22,11 @@ from typing import NoReturn
 from liulab_mbio.barcodes import (
     GC_BAND,
     MAX_HOMOPOLYMER,
+    METRIC,
     MIN_DISTANCE,
     SEED,
     BarcodeRules,
+    Metric,
     design_barcodes,
 )
 from liulab_mbio.codons import CodonUsage, codon_usage
@@ -108,6 +110,7 @@ def barcode_rules(
     distance: int = MIN_DISTANCE,
     max_homopolymer: int | None = MAX_HOMOPOLYMER,
     gc_band: tuple[float, float] | None = GC_BAND,
+    metric: Metric = METRIC,
 ) -> BarcodeRules:
     """Return the rules this scheme's barcodes hold to, its phase read off its own geometry.
 
@@ -122,6 +125,7 @@ def barcode_rules(
         distance=distance,
         max_homopolymer=max_homopolymer,
         gc_band=gc_band,
+        metric=metric,
     )
 
 

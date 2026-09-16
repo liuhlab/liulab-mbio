@@ -1,3 +1,4 @@
+import dataclasses
 import json
 from itertools import combinations
 from pathlib import Path
@@ -7,10 +8,12 @@ import pytest
 from liulab_mbio.barcodes import (
     GC_BAND,
     MAX_HOMOPOLYMER,
+    METRIC,
     MIN_DISTANCE,
     BarcodeRules,
     SpaceExhaustedError,
     check_barcodes,
+    deletion_ambiguity,
     design_barcodes,
 )
 from liulab_mbio.sequence import SequenceRecord
@@ -98,13 +101,46 @@ def test_a_stop_only_the_cloning_scar_completes_is_found() -> None:
     assert check_barcodes([JUNCTION_STOP], BarcodeRules(len(JUNCTION_STOP), phase=None)) == ()
 
 
+def test_the_indel_aware_metric_reads_its_paper_s_worked_example_as_two_edits() -> None:
+    # Buschmann & Bystrykh 2013: CAGG and CGTC differ at three positions, but deleting the A and
+    # substituting one base leaves CGT, which a read running on into a C spells as CGTC.
+    rules = BarcodeRules(4, phase=None, max_homopolymer=None, metric="sequence-levenshtein")
+    assert check_barcodes(["CAGG", "CGTC"], rules) == (
+        "CAGG and CGTC stand 2 edit(s) apart, under the 3 one part list needs",
+    )
+    assert check_barcodes(["CAGG", "CGTC"], dataclasses.replace(rules, metric="hamming")) == ()
+
+
+def test_one_deletion_can_leave_two_barcodes_reading_alike_and_the_share_is_counted() -> None:
+    # Worked by hand: dropping the first base of ACGTT and the last of CGTTG both leave CGTT, so
+    # one deletion of each is ambiguous, of the ten two five-base barcodes hold between them.
+    assert deletion_ambiguity(["ACGTT", "CGTTG"]) == 0.2
+    assert deletion_ambiguity(["ACGTT"]) == 0.0
+
+
+def test_the_cost_of_each_metric_is_the_one_the_other_does_not_pay() -> None:
+    # A Hamming set leaves deletions that read as another barcode; the indel-aware set does not.
+    # It pays in space instead: at five bases it runs out where the Hamming rule still fills.
+    short = BarcodeRules(5, phase=None, metric="hamming")
+    indel = dataclasses.replace(short, metric="sequence-levenshtein")
+    assert deletion_ambiguity(design_barcodes(24, short)) > 0
+    assert deletion_ambiguity(design_barcodes(8, indel)) == 0
+    with pytest.raises(SpaceExhaustedError, match="24 barcodes of 5 bases"):
+        design_barcodes(24, indel)
+
+
+def test_a_metric_that_is_neither_is_refused_naming_both() -> None:
+    with pytest.raises(ValueError, match="'hamming' or 'sequence-levenshtein'"):
+        BarcodeRules(LENGTH, scar=SCAR, metric="levenshtein")  # type: ignore[arg-type]
+
+
 def test_a_barcode_and_scar_that_are_not_whole_codons_are_refused() -> None:
     with pytest.raises(ValueError, match="not a whole number of codons"):
         BarcodeRules(10, scar=SCAR)
 
 
 def test_the_dials_default_to_a_homopolymer_cap_and_to_no_gc_band() -> None:
-    assert (MIN_DISTANCE, MAX_HOMOPOLYMER, GC_BAND) == (3, 5, None)
+    assert (MIN_DISTANCE, MAX_HOMOPOLYMER, GC_BAND, METRIC) == (3, 5, None, "sequence-levenshtein")
     # A run over the cap is rejected by default, and turning the cap off accepts it.
     run = "AAAAAACGTCG"
     assert check_barcodes([run], RULES)[0].endswith("run of 6 A, over the cap of 5")
@@ -134,7 +170,7 @@ def test_a_set_bigger_than_the_space_is_refused_naming_the_rule_that_took_it() -
         design_barcodes(40, BarcodeRules(3))
     said = str(refusal.value)
     assert "40 barcodes of 3 bases were asked for" in said
-    assert "the distance rule (at least 3 mismatches within a part list) rejected" in said
+    assert "the distance rule (at least 3 edits within a part list) rejected" in said
     assert "the stop-codon rule rejected" in said
 
 
@@ -146,7 +182,12 @@ def test_the_published_set_holds_every_rule_this_module_designs_to(
     rules = BarcodeRules(LENGTH, scar=SCAR, phase=PHASE, forbidden=FORBIDDEN, max_homopolymer=None)
     for name, barcodes in published.items():
         assert len(barcodes) == 24, name
+        # Under both metrics. The set was designed on mismatches alone, and it stands three edits
+        # apart as well, so the indel-aware default rejects nothing that was published — and no
+        # deletion of one of its barcodes reads as another.
         assert check_barcodes(barcodes, rules) == (), name
+        assert check_barcodes(barcodes, dataclasses.replace(rules, metric="hamming")) == (), name
+        assert deletion_ambiguity(barcodes) == 0.0, name
 
 
 def test_the_published_part_lists_stand_further_apart_within_than_across(

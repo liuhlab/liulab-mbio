@@ -191,6 +191,16 @@ def test_the_protocol_carries_the_two_easy_traps(plan):
     assert "2 volumes here and 1 after the ligation" in said
 
 
+def test_the_confirm_step_says_what_one_base_lost_from_a_barcode_would_do_to_a_read(plan):
+    confirm = plan.protocol().steps[-1]
+
+    said = " ".join(confirm.notes)
+    # The designed set is indel-aware, so the share is nil — and it is printed rather than implied,
+    # because a set designed on mismatches alone leaves a share that is not.
+    assert "0.0% of the single-base deletions" in said
+    assert "keep the barcodes away from where a primer anneals" in said
+
+
 def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spells(
     plan, scheme, carrier
 ):

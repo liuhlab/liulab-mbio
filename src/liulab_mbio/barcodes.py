@@ -17,15 +17,28 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, dataclass
 from itertools import combinations, groupby
+from typing import Literal
 
 from liulab_mbio.codons import amino_acid
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import EnzymeLike, find_sites
 
-#: The fewest mismatches two barcodes of one part list stand apart. Measured on the published
-#: set in `docs/research/barcode-design.md`.
+#: How the distance between two barcodes is counted. Hamming counts the positions two barcodes
+#: of one length differ in, and cannot see an insertion or a deletion. Sequence-Levenshtein
+#: (Buschmann & Bystrykh 2013) counts substitutions, insertions and deletions, bases a read runs on
+#: into included, so that a set standing three apart still decodes after one base is lost.
+type Metric = Literal["hamming", "sequence-levenshtein"]
+
+#: The fewest mismatches, or edits, two barcodes of one part list stand apart. Measured on the
+#: published set in `docs/research/barcode-design.md`.
 MIN_DISTANCE = 3
+
+#: The metric a distance is counted in when the caller names none. Indel-aware, because the
+#: dominant error of the long reads a barcode block is read with is an indel, which a Hamming rule
+#: cannot see at any distance. It costs about one base of barcode length at a given set size, and
+#: nothing at the size a part list is: `docs/research/barcode-design.md` measures both.
+METRIC: Metric = "sequence-levenshtein"
 
 #: The longest run of one base a barcode may carry, and the one composition dial on by default:
 #: a homopolymer indel is the dominant error of the long reads a barcode block is read with, and
@@ -78,19 +91,23 @@ class BarcodeRules:
         Enzymes whose recognition sites no barcode may spell, on either strand. Each an
         `Enzyme` or a name `liulab_mbio.enzymes.get_enzyme` answers to.
     distance
-        The fewest mismatches two barcodes of one part list may stand apart.
+        The fewest mismatches, or edits, two barcodes of one part list may stand apart.
     max_homopolymer
         The longest run of one base a barcode may carry, or ``None`` for no cap.
     gc_band
         The share of G and C a barcode must hold, low and high inclusive, each 0 to 1. ``None``
         is no band at all, which is the default.
+    metric
+        How `distance` is counted: ``"hamming"`` in mismatches, or ``"sequence-levenshtein"`` in
+        substitutions, insertions and deletions.
 
     Raises
     ------
     ValueError
         Naming what cannot be designed under: a length or a distance that is not positive, a
         scar that is not definite bases, a phase outside 0 to 2, a barcode and scar that are not
-        a whole number of codons together, or a GC band outside 0 to 1.
+        a whole number of codons together, a GC band outside 0 to 1, or a metric that is
+        neither.
     KeyError
         If a forbidden enzyme is not one the package ships.
     """
@@ -103,6 +120,7 @@ class BarcodeRules:
     distance: int = MIN_DISTANCE
     max_homopolymer: int | None = MAX_HOMOPOLYMER
     gc_band: tuple[float, float] | None = GC_BAND
+    metric: Metric = METRIC
 
     def __post_init__(self) -> None:
         """Normalise the scar, then refuse rules no set could be designed under."""
@@ -111,7 +129,10 @@ class BarcodeRules:
         if self.length <= 0:
             raise ValueError(f"a barcode needs a positive length, got {self.length}")
         if self.distance < 1:
-            raise ValueError(f"two barcodes stand at least one mismatch apart, got {self.distance}")
+            raise ValueError(f"two barcodes stand at least one apart, got {self.distance}")
+        if self.metric not in _METRICS:
+            named = " or ".join(repr(one) for one in _METRICS)
+            raise ValueError(f"a metric is {named}, got {self.metric!r}")
         if bad := sorted(set(self.scar) - set(BASES)):
             raise ValueError(
                 f"a cloning scar needs definite bases, and {''.join(bad)} is not one of ACGT"
@@ -192,7 +213,7 @@ def design_barcodes(count: int, rules: BarcodeRules, *, seed: int = SEED) -> tup
     Examples
     --------
     >>> design_barcodes(3, BarcodeRules(6))
-    ('TACCAT', 'TCCTCC', 'ACCAGT')
+    ('TACCAT', 'GACAGC', 'TTGATA')
     >>> design_barcodes(3, BarcodeRules(6)) == design_barcodes(3, BarcodeRules(6))
     True
     """
@@ -214,7 +235,7 @@ def design_barcodes(count: int, rules: BarcodeRules, *, seed: int = SEED) -> tup
         drawn.add(index)
         barcode = _spell(index, rules.length)
         broken = _problem(barcode, rules, enzymes)
-        if broken is None and (near := _nearest(barcode, chosen, rules.distance)) is not None:
+        if broken is None and (near := _nearest(barcode, chosen, rules)) is not None:
             broken = near
         if broken is None:
             chosen.append(barcode)
@@ -233,7 +254,7 @@ def check_barcodes(barcodes: Iterable[str], rules: BarcodeRules) -> tuple[str, .
 
     Examples
     --------
-    >>> check_barcodes(["TACCAT", "TCCTCC"], BarcodeRules(6))
+    >>> check_barcodes(["TACCAT", "GACAGC"], BarcodeRules(6))
     ()
     >>> check_barcodes(["AAAAAA", "AAAAAC"], BarcodeRules(6))[0]
     'AAAAAA carries a run of 6 A, over the cap of 5'
@@ -245,12 +266,35 @@ def check_barcodes(barcodes: Iterable[str], rules: BarcodeRules) -> tuple[str, .
         for barcode in held
         if (broken := _problem(barcode, rules, enzymes)) is not None
     ]
+    measure = _METRICS[rules.metric]
     problems.extend(
-        f"{one} and {other} {_apart(_distance(one, other), rules.distance)}"
+        f"{one} and {other} {_apart(apart, rules)}"
         for one, other in combinations(held, 2)
-        if len(one) == len(other) and _distance(one, other) < rules.distance
+        if len(one) == len(other) and (apart := measure(one, other)) < rules.distance
     )
     return tuple(problems)
+
+
+def deletion_ambiguity(barcodes: Iterable[str]) -> float:
+    """Return the share of one-base deletions that leave a read another barcode could leave too.
+
+    Every base of every barcode is dropped in turn, and the shortened read counted as ambiguous
+    where dropping a base of another barcode leaves the same read. That is what a Hamming rule
+    cannot see at any distance, so it is the cost of choosing one, measured on the set in hand.
+
+    Examples
+    --------
+    >>> deletion_ambiguity(["ACGTT", "CGTTG"])
+    0.2
+    """
+    held = tuple(barcode.upper() for barcode in barcodes)
+    leaves: Counter[str] = Counter()
+    for barcode in held:
+        leaves.update({barcode[:at] + barcode[at + 1 :] for at in range(len(barcode))})
+    shortened = [barcode[:at] + barcode[at + 1 :] for barcode in held for at in range(len(barcode))]
+    if not shortened:
+        return 0.0
+    return sum(leaves[one] > 1 for one in shortened) / len(shortened)
 
 
 def _problem(
@@ -319,22 +363,47 @@ def _codons(barcode: str, rules: BarcodeRules) -> list[str]:
     return [unit[at : at + 3] for at in range(0, len(unit) - rules.phase, 3)]
 
 
-def _nearest(barcode: str, chosen: Iterable[str], distance: int) -> tuple[str, str] | None:
+def _nearest(barcode: str, chosen: Iterable[str], rules: BarcodeRules) -> tuple[str, str] | None:
     """Whether this barcode stands too close to one already chosen."""
+    measure = _METRICS[rules.metric]
     for other in chosen:
-        if (apart := _distance(barcode, other)) < distance:
-            return "distance", _apart(apart, distance)
+        if (apart := measure(barcode, other)) < rules.distance:
+            return "distance", _apart(apart, rules)
     return None
 
 
-def _apart(apart: int, distance: int) -> str:
+def _apart(apart: int, rules: BarcodeRules) -> str:
     """How two barcodes standing too close are described."""
-    return f"stand {apart} mismatch(es) apart, under the {distance} one part list needs"
+    return f"stand {apart} {_UNITS[rules.metric][0]} apart, under the {rules.distance} one part list needs"
 
 
-def _distance(one: str, other: str) -> int:
+def _hamming(one: str, other: str) -> int:
     """How many positions two barcodes of one length differ in."""
     return sum(a != b for a, b in zip(one, other, strict=True))
+
+
+def _sequence_levenshtein(one: str, other: str) -> int:
+    """Count the substitutions, insertions and deletions that make one barcode read as the other.
+
+    A read runs on past a barcode's end, so a base an edit pushes off that end, or pulls in from
+    beyond it, costs nothing: the distance is the least entry on the last row or the last column
+    of the edit-distance table rather than its corner.
+    """
+    previous = list(range(len(other) + 1))
+    least = previous[-1]
+    for row, base in enumerate(one, start=1):
+        current = [row]
+        for column, partner in enumerate(other, start=1):
+            current.append(
+                min(
+                    previous[column] + 1,
+                    current[column - 1] + 1,
+                    previous[column - 1] + (base != partner),
+                )
+            )
+        least = min(least, current[-1])
+        previous = current
+    return min(least, *previous)
 
 
 def _longest_run(barcode: str) -> tuple[str, int]:
@@ -358,10 +427,21 @@ def _resolve(forbidden: Iterable[EnzymeLike]) -> tuple[Enzyme, ...]:
     return tuple(one if isinstance(one, Enzyme) else get_enzyme(one) for one in forbidden)
 
 
+#: How each metric is counted, and what one unit of it is called, as few and as many.
+_METRICS: Mapping[str, Callable[[str, str], int]] = {
+    "hamming": _hamming,
+    "sequence-levenshtein": _sequence_levenshtein,
+}
+_UNITS: Mapping[str, tuple[str, str]] = {
+    "hamming": ("mismatch(es)", "mismatches"),
+    "sequence-levenshtein": ("edit(s)", "edits"),
+}
+
 #: How each rule is named in a refusal, so that whoever reads one knows which dial to turn.
 _WORDING: Mapping[str, Callable[[BarcodeRules], str]] = {
     "distance": lambda rules: (
-        f"the distance rule (at least {rules.distance} mismatches within a part list)"
+        f"the distance rule (at least {rules.distance} {_UNITS[rules.metric][1]} within a part "
+        "list)"
     ),
     "homopolymer": lambda rules: f"the homopolymer cap (no run over {rules.max_homopolymer})",
     "gc": lambda rules: (
