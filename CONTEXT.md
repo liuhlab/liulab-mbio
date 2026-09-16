@@ -437,9 +437,19 @@ _Avoid_: adapter, arm, flank, tail
 
 A short stretch of DNA naming one part, so that sequencing a product says which member of each
 part list it carries. Its length is the scheme's, chosen with the cloning scar so that the two
-together are a whole number of codons, and the barcodes of one part list stand far enough apart in
-mismatches that no two read as one. It lies in the product's reading frame, so it spells no stop.
+together are a whole number of codons, and the barcodes of one part list stand far enough apart,
+by the set's distance metric, that no two read as one. It lies in the product's reading frame, so
+it spells no stop.
 _Avoid_: index, tag, UMI, identifier
+
+### Distance metric
+
+How far apart two barcodes of one part list stand, counted one of two ways. **Hamming** counts the
+positions they differ in, and sees no insertion or deletion at any distance. **Sequence-Levenshtein**
+counts substitutions, insertions and deletions, charging nothing for the bases a read gains or
+loses past the barcode's end, which is what a lost base really does to a read. Every set at a
+Sequence-Levenshtein distance is at that Hamming distance as well.
+_Avoid_: edit distance, Levenshtein distance (the plain one, which is neither), similarity
 
 ### Cloning scar
 

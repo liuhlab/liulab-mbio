@@ -111,6 +111,15 @@ def test_the_indel_aware_metric_reads_its_paper_s_worked_example_as_two_edits() 
     assert check_barcodes(["CAGG", "CGTC"], dataclasses.replace(rules, metric="hamming")) == ()
 
 
+def test_a_four_base_indel_aware_code_is_the_size_its_paper_published() -> None:
+    # Buschmann & Bystrykh 2013 publish a four-base code correcting one error, and it holds four
+    # barcodes. This draw finds four others, and no fifth barcode exists to find.
+    rules = BarcodeRules(4, phase=None, max_homopolymer=None)
+    assert len(design_barcodes(4, rules)) == 4
+    with pytest.raises(SpaceExhaustedError, match="every one of the 256"):
+        design_barcodes(5, rules)
+
+
 def test_one_deletion_can_leave_two_barcodes_reading_alike_and_the_share_is_counted() -> None:
     # Worked by hand: dropping the first base of ACGTT and the last of CGTTG both leave CGTT, so
     # one deletion of each is ambiguous, of the ten two five-base barcodes hold between them.
