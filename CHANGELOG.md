@@ -9,6 +9,10 @@ sets one.
 
 ### Added
 
+- A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
+  `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
+  domestication names the codons it would move to. The strain the protocol transforms is still
+  `--host`, and still *E. coli*.
 - A barcoded library of protein combinations, built in rounds rather than one pot.
   `liulab_mbio.library.plan_library` takes lists of proteins, or coding DNA, with a scheme and a
   destination vector. It picks the overhang standard that costs the proteins fewest changed
