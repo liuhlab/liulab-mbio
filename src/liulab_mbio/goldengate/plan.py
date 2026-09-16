@@ -32,6 +32,7 @@ from liulab_mbio.bench import (
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.goldengate.bench import assembly_amounts
@@ -263,6 +264,7 @@ def plan_assembly(
     orientation: Orientation | Sequence[Orientation] = "forward",
     in_frame: bool | Sequence[bool] = False,
     enzyme: EnzymeLike | None = None,
+    codon_table: str = DEFAULT_TABLE,
     profile: LigaseProfile | str | os.PathLike[str] | None = None,
     prefer_profile: bool = False,
     polymerase: Polymerase = Q5,
@@ -295,6 +297,9 @@ def plan_assembly(
     enzyme
         The Type IIS enzyme to use. Chosen by `choose_enzyme` when not given, and refused
         either way if it reads a site in any part.
+    codon_table
+        Whose codon usage a proposed domestication picks its codons from, named as
+        `liulab_mbio.codons.codon_tables` lists them. Not the strain, which is `host`.
     profile
         A ligase fidelity matrix the caller holds, as a path or an already read `LigaseProfile`.
         It scores the overhangs where no shipped matrix covers the enzyme. The package ships
@@ -317,6 +322,8 @@ def plan_assembly(
 
     Raises
     ------
+    KeyError
+        If no shipped codon usage table is called `codon_table`.
     ValueError
         If no insert is given, if no insertion site is named and the vector annotates none, if
         the enzyme reads a site in a part, if no overhang passes every rule, if `profile` names
@@ -324,6 +331,7 @@ def plan_assembly(
     """
     if not inserts:
         raise ValueError("an assembly needs a vector and at least one insert")
+    usage = codon_usage(codon_table)
     one = _record(vector)
     ways = _orientations(orientation, len(inserts))
     frames = _frames(in_frame, len(inserts))
@@ -333,8 +341,8 @@ def plan_assembly(
     ]
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
     start, end = _span(one, site)
-    ranking = choose_enzyme([one, *going])
-    choice = _chosen(ranking, enzyme, (one, *going))
+    ranking = choose_enzyme([one, *going], usage=usage)
+    choice = _chosen(ranking, enzyme, (one, *going), usage)
     chosen = choice.enzyme
     designed = design_overhangs(
         (
@@ -598,6 +606,7 @@ def _chosen(
     ranking: tuple[EnzymeChoice, ...],
     enzyme: EnzymeLike | None,
     parts: tuple[SequenceRecord, ...],
+    usage: CodonUsage,
 ) -> EnzymeChoice:
     """Return the enzyme to use, refusing one that would cut the product open.
 
@@ -612,7 +621,7 @@ def _chosen(
         wanted = get_enzyme(enzyme) if isinstance(enzyme, str) else enzyme
         choice = next(
             (one for one in ranking if one.enzyme.name == wanted.name),
-            choose_enzyme(parts, enzymes=[wanted])[0],
+            choose_enzyme(parts, enzymes=[wanted], usage=usage)[0],
         )
     if choice.free:
         return choice
@@ -620,9 +629,13 @@ def _chosen(
     if free:
         rest = f"free here: {', '.join(free)}"
     else:
+        proposed = ", ".join(
+            f"{change.old_codon} -> {change.new_codon}" for change in choice.changes
+        )
         rest = (
             f"no candidate is free, and of this one's sites {len(choice.changes)} could go by a "
-            f"synonymous codon change and {len(choice.outside_cds)} lie outside a coding sequence"
+            f"synonymous codon change{f' ({proposed})' if proposed else ''} and "
+            f"{len(choice.outside_cds)} lie outside a coding sequence"
         )
     raise ValueError(
         f"{choice.enzyme.name} reads {choice.sites} site(s) in the parts, so it would cut the "

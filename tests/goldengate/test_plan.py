@@ -101,6 +101,22 @@ def test_an_enzyme_with_a_site_in_the_parts_is_refused(puc19, gfp):
         plan_assembly(puc19, gfp, enzyme="BsaI")
 
 
+def test_the_codon_table_chooses_the_codon_a_proposed_domestication_moves_to(puc19, gfp):
+    # Met-Glu-Asp-His-Leu-Leu: the Glu and Asp codons spell a BbsI site and the three after
+    # them a PaqCI one, so no candidate is free and each carries what it would change.
+    peptide = "ATGGAAGACCACCTGCTTTAA"
+    coding = SequenceRecord(
+        peptide,
+        name="Peptide",
+        features=(Feature("Peptide", "CDS", (Segment(0, len(peptide)),), strand=Strand.FORWARD),),
+    )
+
+    # E. coli spells aspartate GAT more often than glutamate GAG, and human the other way round.
+    for table, moved in (("e-coli-k12", "GAC -> GAT"), ("human", "GAA -> GAG")):
+        with pytest.raises(ValueError, match=moved):
+            plan_assembly(puc19, gfp, coding, codon_table=table)
+
+
 def test_the_insertion_site_is_read_from_a_feature_name_or_given_as_coordinates(puc19, gfp):
     named = plan_assembly(puc19, gfp, site="MCS")
     given = plan_assembly(puc19, gfp, site=MCS)
