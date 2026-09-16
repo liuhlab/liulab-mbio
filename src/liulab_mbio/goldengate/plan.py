@@ -632,10 +632,11 @@ def _chosen(
         proposed = ", ".join(
             f"{change.old_codon} -> {change.new_codon}" for change in choice.changes
         )
+        naming = f" ({proposed})" if proposed else ""
         rest = (
-            f"no candidate is free, and of this one's sites {len(choice.changes)} could go by a "
-            f"synonymous codon change{f' ({proposed})' if proposed else ''} and "
-            f"{len(choice.outside_cds)} lie outside a coding sequence"
+            f"no candidate is free, and of this one's sites {len(choice.changes)} could go by "
+            f"a synonymous codon change{naming} and {len(choice.outside_cds)} lie outside a "
+            "coding sequence"
         )
     raise ValueError(
         f"{choice.enzyme.name} reads {choice.sites} site(s) in the parts, so it would cut the "

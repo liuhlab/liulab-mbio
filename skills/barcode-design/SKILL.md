@@ -1,8 +1,8 @@
 ---
 name: barcode-design
 description: >-
-  Design a set of DNA barcodes with `liulab_mbio`: every pair of one part list far enough apart
-  in mismatches that no two read as one, no restriction or Type IIS site in either orientation,
+  Design a set of DNA barcodes with `liulab_mbio`: every pair of one part list far enough apart,
+  by the set's distance metric, that no two read as one, no restriction or Type IIS site in either orientation,
   the junction with the cloning scar included, and no stop codon where the construct translates
   the barcode. The set is reproducible from a seed, and a set someone already holds is checked
   by the same rules. Use whenever someone wants barcodes designed or checked: naming the members
@@ -96,7 +96,7 @@ name nothing ships.
 
 Give the user the set, the rules it was designed to, and the seed — the same seed and rules
 return the same set, which is what lets them regenerate it. Say which dials were on, the metric
-among them. A barcode
-set is what decodes their sequencing later, so what it was designed to is part of the result.
+among them. A barcode set is what decodes their sequencing later, so what it was designed to
+is part of the result.
 
 `codon-optimize` writes the coding sequence a part carries; come here for the barcode naming it.

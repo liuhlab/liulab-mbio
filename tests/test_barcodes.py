@@ -111,6 +111,20 @@ def test_the_indel_aware_metric_reads_its_paper_s_worked_example_as_two_edits() 
     assert check_barcodes(["CAGG", "CGTC"], dataclasses.replace(rules, metric="hamming")) == ()
 
 
+def test_a_held_set_of_two_lengths_is_checked_wherever_the_metric_can_count_it() -> None:
+    # A set someone brings may hold a barcode a base short of the rest. Its length is refused
+    # either way; the indel-aware metric also names the pair no read tells apart, ACGT being what
+    # a lost T leaves. A mismatch has no position to count that pair in, so Hamming says nothing.
+    rules = BarcodeRules(5, phase=None, max_homopolymer=None)
+    assert check_barcodes(["ACGTT", "ACGT"], rules) == (
+        "ACGT is 4 bases, not the 5 asked for",
+        "ACGTT and ACGT stand 0 edit(s) apart, under the 3 one part list needs",
+    )
+    assert check_barcodes(["ACGTT", "ACGT"], dataclasses.replace(rules, metric="hamming")) == (
+        "ACGT is 4 bases, not the 5 asked for",
+    )
+
+
 def test_a_four_base_indel_aware_code_is_the_size_its_paper_published() -> None:
     # Buschmann & Bystrykh 2013 publish a four-base code correcting one error, and it holds four
     # barcodes. This draw finds four others, and no fifth barcode exists to find.
