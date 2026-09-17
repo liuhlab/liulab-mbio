@@ -8,13 +8,23 @@ import re
 import struct
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import pypdf
 import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import Drawing, circular, convert, draw_map, linear, sequence_view, svg
+from liulab_mbio.plot import (
+    Drawing,
+    circular,
+    convert,
+    draw_map,
+    layers,
+    linear,
+    sequence_view,
+    svg,
+)
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.plot.labels import Box
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
@@ -32,6 +42,18 @@ def colour_test(data_dir: Path) -> Drawing:
 def _page(drawing: Drawing, path: Path) -> tuple[str, Node]:
     html = drawing.write(path).read_text(encoding="utf-8")
     return html, parse(html)
+
+
+def _shapes(page: Node) -> dict[str, Node]:
+    """The map in each shape the page carries, by shape, the one shown first first."""
+    shapes = page.find_all("div", cls="shape")
+    shapes.sort(key=lambda shape: "hidden" in shape.attrs)
+    return {shape.attrs["data-shape"]: shape for shape in shapes}
+
+
+def _map(page: Node) -> Node:
+    """The map the page shows first."""
+    return next(iter(_shapes(page).values()))
 
 
 def _items(page: Node, kind: str = "feature") -> dict[str, list[Node]]:
@@ -292,11 +314,11 @@ def test_the_page_stays_white_in_a_dark_colour_scheme(puc19_file: Path, tmp_path
 def test_the_centre_names_the_record_in_bold_over_its_length_inside_a_bp_scale(
     puc19_file: Path, tmp_path: Path
 ) -> None:
-    _, page = _page(draw_map(puc19_file), tmp_path / "map.html")
-    weights = {text.text: text.attrs["font-weight"] for text in page.find_all("text")}
+    shown = _map(_page(draw_map(puc19_file), tmp_path / "map.html")[1])
+    weights = {text.text: text.attrs["font-weight"] for text in shown.find_all("text")}
     assert weights["pUC19"] == "700"
     assert weights["2686 bp"] == "400"
-    [scale] = page.find_all("g", cls="scale")
+    [scale] = shown.find_all("g", cls="scale")
     assert [text.text for text in scale.find_all("text")] == ["500", "1000", "1500", "2000", "2500"]
 
 
@@ -313,14 +335,17 @@ def test_hovering_over_a_feature_shows_its_name_type_span_and_length_one_based(
     assert hover["split"]["span"] == "101 .. 160, 201 .. 260, 301 .. 360"
 
 
-def test_every_feature_but_source_is_drawn_with_its_name_on_its_arrow_or_boxed(
+def test_every_feature_is_drawn_with_its_name_on_its_arrow_or_boxed_and_source_switched_off(
     colour_test: Drawing, tmp_path: Path
 ) -> None:
     _, page = _page(colour_test, tmp_path / "map.html")
-    items = _items(page)
-    names = [f.name for f in colour_test.record.features if f.type != "source"]
-    assert sorted(items) == sorted(names)
-    assert not [g for g in page.find_all("g") if g.attrs.get("data-type") == "source"]
+    shown = _map(page)
+    [source] = [f.name for f in colour_test.record.features if f.type == "source"]
+    items = _items(shown)
+    assert sorted(items) == sorted(f.name for f in colour_test.record.features)
+    [arrow] = items.pop(source)
+    assert arrow.attrs["class"] == "feature off"
+    assert not [g for g in shown.find_all("g", cls="off") if g is not arrow]
     on_arrows = set()
     for name, (arrows, *boxed) in items.items():
         assert _fills(arrows)
@@ -432,7 +457,7 @@ def test_a_name_is_written_as_the_face_draws_it_and_hovers_as_written(tmp_path: 
     features = (Feature(name, "CDS", (Segment(0, 30),)), Feature(name, "CDS", (Segment(50, 51),)))
     record = SequenceRecord("A" * 100, topology="circular", features=features)
     _, page = _page(draw_map(record), tmp_path / "map.html")
-    groups = _items(page)[name]
+    groups = _items(_map(page))[name]
     assert {group.attrs["data-name"] for group in groups} == {name}
     assert not page.find_all("b")
     texts = [text.text for group in groups for text in group.find_all("text")]
@@ -443,7 +468,7 @@ def test_the_shipped_unique_cutters_are_labelled_where_snapgene_numbers_their_cu
     puc19_file: Path, tmp_path: Path
 ) -> None:
     _, page = _page(draw_map(puc19_file), tmp_path / "map.html")
-    labels = _labels(page, "cut_site")
+    labels = _labels(_map(page), "cut_site")
     # SnapGene Viewer's own map of this file numbers each of these cuts the same, BsaI's on the
     # bottom strand and SapI's outside its site included.
     assert ["".join(text for text, _ in label) for label in labels] == [
@@ -469,7 +494,7 @@ def test_named_enzymes_draw_every_cut_site_bold_only_for_one_that_cuts_once(
 ) -> None:
     drawing = draw_map(puc19, enzymes=["BsmBI", "EcoRI-HF", "EcoRI"])
     _, page = _page(drawing, tmp_path / "map.html")
-    assert _labels(page, "cut_site") == [
+    assert _labels(_map(page), "cut_site") == [
         [("BsmBI", "400"), (" (3)", "400")],
         [("BsmBI", "400"), (" (45)", "400")],
         [("EcoRI", "700"), (" (396)", "400")],
@@ -494,7 +519,7 @@ def test_each_primer_is_drawn_in_purple_at_every_binding_site_labelled_with_its_
         ),
         primers=(Primer("M13 fwd", "GTAAAACGACGGCCAGT", binding_sites=sites),),
     )
-    _, page = _page(draw_map(record), tmp_path / "map.html")
+    page = _map(_page(draw_map(record), tmp_path / "map.html")[1])
     [(across, reverse, *labels)] = _items(page, "primer").values()
     assert [group.attrs["data-span"] for group in (across, reverse)] == ["991 .. 10", "101 .. 120"]
     assert across.attrs["data-type"] == "primer"
@@ -514,20 +539,18 @@ def test_each_primer_is_drawn_in_purple_at_every_binding_site_labelled_with_its_
 
 
 @pytest.mark.parametrize(
-    ("switches", "drawn"),
+    ("switches", "off"),
     [
-        ({}, {"feature": {"CDS", "rep_origin"}, "primer": {"primer"}, "cut_site": {"cut site"}}),
-        ({"features": False}, {"primer": {"primer"}, "cut_site": {"cut site"}}),
-        ({"primers": False}, {"feature": {"CDS", "rep_origin"}, "cut_site": {"cut site"}}),
-        ({"cut_sites": False}, {"feature": {"CDS", "rep_origin"}, "primer": {"primer"}}),
-        (
-            {"hide_types": ["CDS"], "source": True},
-            {"feature": {"rep_origin", "source"}, "primer": {"primer"}, "cut_site": {"cut site"}},
-        ),
+        ({}, {"feature": {"source"}}),
+        ({"features": False}, {"feature": {"CDS", "rep_origin", "source"}}),
+        ({"primers": False}, {"feature": {"source"}, "primer": {"primer"}}),
+        ({"cut_sites": False}, {"feature": {"source"}, "cut_site": {"cut site"}}),
+        ({"hide_types": ["CDS"], "source": True}, {"feature": {"CDS"}}),
+        ({"hide_types": ["CDS", "source"], "source": True}, {"feature": {"CDS", "source"}}),
     ],
 )
-def test_each_layer_and_feature_type_is_drawn_only_when_asked_for(
-    puc19: SequenceRecord, tmp_path: Path, switches: dict, drawn: dict[str, set[str]]
+def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_asked(
+    puc19: SequenceRecord, tmp_path: Path, switches: dict, off: dict[str, set[str]]
 ) -> None:
     record = dataclasses.replace(
         puc19,
@@ -543,12 +566,83 @@ def test_each_layer_and_feature_type_is_drawn_only_when_asked_for(
             ),
         ),
     )
-    _, page = _page(draw_map(record, **switches), tmp_path / "map.html")
-    found: dict[str, set[str]] = {}
-    for group in page.find_all("g"):
-        if "data-kind" in group.attrs:
-            found.setdefault(group.attrs["data-kind"], set()).add(group.attrs["data-type"])
-    assert found == drawn
+    drawing = draw_map(record, **switches)
+    _, page = _page(drawing, tmp_path / "map.html")
+    everything = {
+        "feature": {"CDS", "rep_origin", "source"},
+        "primer": {"primer"},
+        "cut_site": {"cut site"},
+    }
+    for shown in _shapes(page).values():
+        found: dict[str, set[str]] = {}
+        switched: dict[str, set[str]] = {}
+        for group in shown.find_all("g"):
+            if "data-kind" in group.attrs:
+                kind, kind_type = group.attrs["data-kind"], group.attrs["data-type"]
+                found.setdefault(kind, set()).add(kind_type)
+                if "off" in group.attrs["class"].split():
+                    switched.setdefault(kind, set()).add(kind_type)
+        assert (found, switched) == (everything, off)
+    kinds = {"feature": "features", "primer": "primers", "cut_site": "cut_sites"}
+    types_off = {*switches.get("hide_types", ()), *(() if switches.get("source") else ["source"])}
+    assert {
+        (box.attrs["name"], box.attrs["value"]): "checked" in box.attrs
+        for box in page.find_all("input")
+        if box.attrs["type"] == "checkbox"
+    } == {
+        **{("kind", kind): switches.get(word, True) for kind, word in kinds.items()},
+        **{("type", one): one not in types_off for one in everything["feature"]},
+    }
+    # A PNG or a PDF draws only what shows.
+    layout = drawing.layout
+    drawn = {(one.item.kind, one.item.type) for one in (*layout.arrows, *layout.labels)}
+    assert drawn == {
+        (kind, kind_type)
+        for kind, types in everything.items()
+        for kind_type in types
+        if kind_type not in off.get(kind, ())
+    }
+
+
+@pytest.mark.parametrize(
+    ("switches", "counts"),
+    [
+        ({}, {"circular": 1, "linear": 1, "sequence_view": 1}),
+        ({"primers": False}, {"circular": 2, "linear": 1, "sequence_view": 2}),
+        ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 2}),
+        ({"region": "mcs"}, {"linear": 1, "sequence_view": 1}),
+        ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 2}),
+    ],
+)
+def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
+    puc19: SequenceRecord,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    switches: dict,
+    counts: dict[str, int],
+) -> None:
+    primer = Primer("M13 fwd", "GTAAAACG", binding_sites=(BindingSite(378, 395, Strand.FORWARD),))
+    record = dataclasses.replace(puc19, primers=(primer,))
+    counted: dict[str, int] = {}
+    for module in (circular, linear, sequence_view):
+
+        def lay_out(
+            *args: object, module: Any = module, real: Any = module.layout, **kwargs: object
+        ):
+            key = module.__name__.rsplit(".", 1)[-1]
+            counted[key] = counted.get(key, 0) + 1
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr(module, "layout", lay_out)
+    drawing = draw_map(record, sequence_view=True, bases_per_row=200, **switches)
+    assert counted == {}
+    drawing.write(tmp_path / "map.html")
+    for _ in range(2):
+        # What a PNG and a PDF draw, and the notice the command prints.
+        assert drawing.layout.extent
+        assert drawing.sequence_view is not None
+        assert drawing.hidden == ()
+    assert counted == counts
 
 
 def _texts(page: Node, cls: str = "") -> list[str]:
@@ -577,7 +671,34 @@ def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_
     drawing = draw_map(request.getfixturevalue(record), linear=opened, cut_sites=False)
     kind = linear.LinearMap if line else circular.CircularMap
     assert isinstance(drawing.layout, kind)
-    assert _dots(_page(drawing, tmp_path / "map.html")[1]) == dots
+    assert _dots(_map(_page(drawing, tmp_path / "map.html")[1])) == dots
+
+
+@pytest.mark.parametrize(
+    ("record", "switches", "shapes"),
+    [
+        ("puc19", {}, ["circle", "line"]),
+        ("puc19", {"linear": True}, ["line", "circle"]),
+        ("puc19", {"region": "mcs"}, ["line"]),
+        ("gfp", {}, ["line"]),
+    ],
+)
+def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_right(
+    request: pytest.FixtureRequest, tmp_path: Path, record: str, switches: dict, shapes: list[str]
+) -> None:
+    _, page = _page(draw_map(request.getfixturevalue(record), **switches), tmp_path / "map.html")
+    carried = _shapes(page)
+    assert list(carried) == shapes
+    assert [len(shape.find_all("svg")) for shape in carried.values()] == [1] * len(shapes)
+    radios = {
+        box.attrs["value"]: "checked" in box.attrs for box in page.find_all("input", name="shape")
+    }
+    if len(shapes) == 1:
+        assert not radios
+    else:
+        assert radios == {"circle": shapes[0] == "circle", "line": shapes[0] == "line"}
+        [bar] = page.find_all("form", cls="switches")
+        assert [one.attrs["class"] for one in bar.find_all("fieldset")][-1] == "shapes"
 
 
 def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
@@ -801,10 +922,12 @@ def test_a_crowded_map_hides_cut_sites_before_the_primer_among_them_and_says_wha
     cuts = [item.spans[0].start for item in hidden]
     assert cuts == sorted(cuts)
     assert set(cuts) < set(range(101, 500, 8))
-    _, page = _page(drawing, tmp_path / "map.html")
+    page = _map(_page(drawing, tmp_path / "map.html")[1])
     [notice] = page.find_all("g", cls="notice")
     assert notice.text == f"{len(hidden)} enzyme sites are hidden"
-    assert json.loads(notice.attrs["data-hidden"]) == [f"EcoRI ({cut})" for cut in cuts]
+    assert json.loads(notice.attrs["data-hidden"]) == [
+        {"label": f"EcoRI ({cut})", "kind": "cut_site", "type": "cut site"} for cut in cuts
+    ]
     shown = {
         kind: ["".join(text for text, _ in label) for label in _labels(page, kind)]
         for kind in ("cut_site", "primer")
@@ -813,6 +936,62 @@ def test_a_crowded_map_hides_cut_sites_before_the_primer_among_them_and_says_wha
     assert {"HindIII (1701)", "HindIII (2001)"} <= set(shown["cut_site"])
     assert len(shown["cut_site"]) + len(hidden) == 52
     assert shown["primer"] == ["among them (201 .. 220)"]
+
+
+def _placed(page: Node) -> list[tuple[str, str, str]]:
+    """Where each line of text the map draws starts, but for the notice's."""
+    notices = [id(text) for notice in page.find_all("g", cls="notice") for text in notice.iter()]
+    return [
+        (text.attrs["x"], text.attrs["y"], text.text)
+        for text in page.find_all("text")
+        if id(text) not in notices
+    ]
+
+
+@pytest.fixture(scope="module")
+def primed_crowd(tmp_path_factory: pytest.TempPathFactory) -> tuple[SequenceRecord, Node]:
+    """The EcoRI crowd with twenty primers among its sites, and the map its page shows whole."""
+    primers = tuple(
+        Primer(f"p{i}", "ACGT", binding_sites=(BindingSite(at, at + 20, Strand.FORWARD),))
+        for i, at in enumerate(range(150, 310, 8))
+    )
+    record = dataclasses.replace(crowds.ecori_crowd(), primers=primers)
+    path = tmp_path_factory.mktemp("crowd") / "map.html"
+    return record, _map(_page(draw_map(record, enzymes=["EcoRI", "HindIII"]), path)[1])
+
+
+@pytest.mark.parametrize(
+    ("switches", "on_the_page", "in_a_pdf"),
+    [
+        (
+            {},
+            "50 enzyme sites and 3 primers are hidden",
+            "50 enzyme sites and 3 primers are hidden",
+        ),
+        ({"primers": False}, "50 enzyme sites are hidden", "24 enzyme sites are hidden"),
+        ({"cut_sites": False}, "3 primers are hidden", "3 primers are hidden"),
+        ({"cut_sites": False, "primers": False}, "", ""),
+    ],
+)
+def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pdf_hid(
+    primed_crowd: tuple[SequenceRecord, Node],
+    tmp_path: Path,
+    switches: dict,
+    on_the_page: str,
+    in_a_pdf: str,
+) -> None:
+    record, whole = primed_crowd
+    drawing = draw_map(record, enzymes=["EcoRI", "HindIII"], **switches)
+    assert layers.notice(drawing.hidden) == in_a_pdf
+    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    [notice] = page.find_all("g", cls="notice")
+    assert ("off" in notice.attrs["class"].split()) == (not on_the_page)
+    if on_the_page:
+        assert notice.text == on_the_page
+    # The page lays out every label whatever shows, so none moves when a switch flips.
+    [listed] = whole.find_all("g", cls="notice")
+    assert notice.attrs["data-hidden"] == listed.attrs["data-hidden"]
+    assert _placed(page) == _placed(whole)
 
 
 def test_a_map_with_room_for_every_label_hides_none_and_says_nothing(

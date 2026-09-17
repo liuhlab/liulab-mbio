@@ -428,7 +428,7 @@ def _extent(reach: float, boxed: Sequence[Label]) -> Box:
 def _notice(hidden: Sequence[Item], extent: Box) -> list[Shape]:
     """Return what says how many labels hid, under the bottom right of `extent`, if any did.
 
-    It carries the hidden labels for a page to list.
+    It carries each hidden label, with its item's kind and type, for a page to list.
     """
     said = notice(hidden)
     if not said:
@@ -443,7 +443,10 @@ def _notice(hidden: Sequence[Item], extent: Box) -> list[Shape]:
         SMALL_SIZE,
         _INK,
     )
-    listed = json.dumps([item.label for item in hidden], ensure_ascii=False)
+    listed = json.dumps(
+        [{"label": item.label, "kind": item.kind, "type": item.type} for item in hidden],
+        ensure_ascii=False,
+    )
     return [Group((text,), classes=("notice",), data={"hidden": listed})]
 
 

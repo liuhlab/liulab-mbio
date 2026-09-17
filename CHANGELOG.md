@@ -49,6 +49,12 @@ sets one.
   an error that asks for a region or a PDF. A PDF has the map on its first page and the rows on
   the pages after, each page as many rows as fit, so a long record prints. `draw_map` takes
   `sequence_view`, `bases_per_row` and `both_strands`.
+- Switches on the page. Features, primers and cut sites each have one, and so does each feature
+  type. A switch shows or hides them where they are, so no label moves. `--no-features`,
+  `--hide-type`, `--source` and the others now set what the page shows first, and a PNG or PDF
+  still leaves out what they switch off. A circular record drawn whole flips between a circle
+  and a line at the top right, and `--linear` shows the line first. The notice of hidden labels
+  counts only those whose switches are on.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

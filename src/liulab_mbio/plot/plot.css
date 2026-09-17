@@ -43,9 +43,84 @@ body {
   stroke-width: 1.6;
 }
 
+.plot .off {
+  display: none;
+}
+
+.switches {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 24px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #d9d9d9;
+  background: #ffffff;
+  font: 13px/1.4 "Liulab Mbio Sans", sans-serif;
+}
+
+.switches fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.switches label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.switches input {
+  margin: 0;
+}
+
+.switches .shapes {
+  gap: 0;
+  margin-left: auto;
+}
+
+.switches .shapes label {
+  padding: 2px 10px;
+  border: 1px solid #7f7f7f;
+  cursor: pointer;
+}
+
+.switches .shapes label + label {
+  border-left: 0;
+}
+
+.switches .shapes label:has(:checked) {
+  background: #252525;
+  color: #ffffff;
+}
+
+.switches .shapes label:has(:focus-visible) {
+  outline: 2px solid #0077bb;
+}
+
+.switches .shapes input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media print {
+  .switches {
+    display: none;
+  }
+}
+
 .hover {
   position: fixed;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   max-width: 320px;
   padding: 5px 8px;

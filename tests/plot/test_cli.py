@@ -11,7 +11,7 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
-from liulab_mbio.plot import circular, draw_map
+from liulab_mbio.plot import circular, draw_map, linear
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 from liulab_mbio.snapgene import write_dna
 
@@ -19,10 +19,20 @@ from ..html import Node, parse
 from . import crowds
 
 
-def _groups(page: Path) -> list[Node]:
-    """What the page draws: each group a hover reads."""
+def _shown(page: Path) -> Node:
+    """The map a page shows first."""
     tree = parse(page.read_text(encoding="utf-8"))
-    return [group for group in tree.find_all("g") if "data-kind" in group.attrs]
+    [shown] = [shape for shape in tree.find_all("div", cls="shape") if "hidden" not in shape.attrs]
+    return shown
+
+
+def _groups(page: Path) -> list[Node]:
+    """What the page shows first: each group a hover reads, but those switched off."""
+    return [
+        group
+        for group in _shown(page).find_all("g")
+        if "data-kind" in group.attrs and "off" not in group.attrs["class"].split()
+    ]
 
 
 def _run(*arguments: str) -> tuple[int, list[str]]:
@@ -44,18 +54,21 @@ def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
     puc19_file: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     extent = draw_map(puc19_file).layout.extent
-    lay_out, layouts = circular.layout, []
+    layouts: dict[str, int] = {}
+    for module in (circular, linear):
+        lay_out = module.layout
 
-    def layout(*args: Any, **kwargs: Any) -> circular.CircularMap:
-        layouts.append(args)
-        return lay_out(*args, **kwargs)
+        def layout(*args: Any, lay_out: Any = lay_out, **kwargs: Any) -> Any:
+            layouts[lay_out.__module__] = layouts.get(lay_out.__module__, 0) + 1
+            return lay_out(*args, **kwargs)
 
-    monkeypatch.setattr(circular, "layout", layout)
+        monkeypatch.setattr(module, "layout", layout)
     outs = [tmp_path / name for name in ("pUC19.html", "pUC19.png", "pUC19.pdf")]
     code, lines = _run(str(puc19_file), *(f"--output={out}" for out in outs), "--dpi", "18")
     assert code == 0
     assert lines == [str(out) for out in outs]
-    assert len(layouts) == 1
+    # The page carries the line too; every item shows, so the circle is the PNG's and the PDF's.
+    assert layouts == {circular.__name__: 1, linear.__name__: 1}
     assert "<svg" in outs[0].read_text(encoding="utf-8")
     width = struct.unpack(">I", outs[1].read_bytes()[16:20])[0]
     assert width == pytest.approx(extent.width * 18 / 72, abs=1)
@@ -171,7 +184,7 @@ def test_the_command_draws_a_region_by_feature_or_one_based_span_and_opens_a_cir
     code, _ = _run(str(puc19_file), "-o", str(out), "--linear")
     assert code == 0
     assert "2686 bp" in _texts(out)
-    assert len(parse(out.read_text(encoding="utf-8")).find_all("circle")) == 6
+    assert len(_shown(out).find_all("circle")) == 6
 
 
 def test_the_command_refuses_a_region_off_the_record_or_naming_no_feature(

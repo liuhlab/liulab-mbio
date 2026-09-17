@@ -1,7 +1,7 @@
 """Draw a sequence record as a map.
 
-`draw_map` is the way in: it takes a record, or a file to read one from, and lays it out once;
-`Drawing.write` writes the result in the format a file's suffix names.
+`draw_map` is the way in: it takes a record, or a file to read one from; `Drawing.write` writes it
+in the format a file's suffix names, laying out each distinct layout once.
 
 The submodules are the stages it is made of. `layers` resolves what a record draws, with its
 names, colours and hover details; `circular` lays those items out as shapes round a circle,

@@ -45,7 +45,7 @@ def map_(
         ),
     ] = None,
     linear: Annotated[
-        bool, typer.Option("--linear", help="Draw a circular record opened as a line.")
+        bool, typer.Option("--linear", help="Show a circular record opened as a line first.")
     ] = False,
     sequence_view: Annotated[
         bool,
@@ -54,13 +54,13 @@ def map_(
         ),
     ] = False,
     no_features: Annotated[
-        bool, typer.Option("--no-features", help="Leave the features off.")
+        bool, typer.Option("--no-features", help="Switch the features off.")
     ] = False,
     no_primers: Annotated[
-        bool, typer.Option("--no-primers", help="Leave the primers off.")
+        bool, typer.Option("--no-primers", help="Switch the primers off.")
     ] = False,
     no_cut_sites: Annotated[
-        bool, typer.Option("--no-cut-sites", help="Leave the cut sites off.")
+        bool, typer.Option("--no-cut-sites", help="Switch the cut sites off.")
     ] = False,
     enzyme: Annotated[
         list[str] | None,
@@ -72,9 +72,9 @@ def map_(
     ] = None,
     hide_type: Annotated[
         list[str] | None,
-        typer.Option("--hide-type", help="A feature type to leave off; once per type."),
+        typer.Option("--hide-type", help="A feature type to switch off; once per type."),
     ] = None,
-    source: Annotated[bool, typer.Option("--source", help="Draw the source feature.")] = False,
+    source: Annotated[bool, typer.Option("--source", help="Switch the source feature on.")] = False,
     bases_per_row: Annotated[
         int, typer.Option(help="How many bases a row of the sequence view holds.")
     ] = 60,
@@ -86,6 +86,8 @@ def map_(
     """Draw RECORD as a map and write it to each file named, printing each file written.
 
     Then prints how many labels the map hid for want of room, if any did.
+
+    A PNG or PDF leaves out what is switched off, and a page keeps it behind its switches.
     """
     try:
         read = read_record(record)

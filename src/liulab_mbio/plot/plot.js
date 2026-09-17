@@ -1,12 +1,79 @@
-// Hovering over anything a map draws shows its details, read from its group's data attributes;
-// hovering over the notice of hidden labels lists them.
+// A drawing's page. Hovering over anything drawn shows its details, read from its group's data
+// attributes, and hovering over a notice of hidden labels lists those that show. The switches
+// show or hide each kind of item and each feature type in place, and flip the map's shape.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
 
+  // The page's state lives in its switches: each input by its value.
+  const switches = (name) =>
+    new Map(
+      [...document.querySelectorAll(`.switches input[name="${name}"]`)].map((input) => [
+        input.value,
+        input,
+      ]),
+    );
+  const kinds = switches("kind");
+  const types = switches("type");
+  const shapes = switches("shape");
+
+  // Whether an item shows: its kind's switch is on, and a feature's type's too.
+  const shows = ({ kind, type }) =>
+    kinds.get(kind)?.checked !== false &&
+    (kind !== "feature" || types.get(type)?.checked !== false);
+
+  // The hidden labels a notice lists that show, and what it says of them, as `layers.notice` does.
+  const listed = (notice) => JSON.parse(notice.dataset.hidden).filter(shows);
+  const words = [
+    ["cut_site", "enzyme site"],
+    ["primer", "primer"],
+    ["feature", "feature"],
+  ];
+  const said = (hidden) => {
+    const parts = words
+      .map(([kind, word]) => [hidden.filter((label) => label.kind === kind).length, word])
+      .filter(([count]) => count)
+      .map(([count, word]) => `${count} ${count === 1 ? word : `${word}s`}`);
+    if (!parts.length) return "";
+    const last = parts.pop();
+    const all = parts.length ? `${parts.join(", ")} and ${last}` : last;
+    return `${all} ${hidden.length === 1 ? "is" : "are"} hidden`;
+  };
+
+  const renotice = (notice) => {
+    const text = notice.querySelector("text");
+    const now = said(listed(notice));
+    notice.classList.toggle("off", !now);
+    if (!now || now === text.textContent) return;
+    if (text.hasAttribute("textLength")) {
+      // The words change length: keep their right edge where the map put it.
+      const right = Number(text.getAttribute("x")) + Number(text.getAttribute("textLength"));
+      text.setAttribute("x", String(right));
+      text.setAttribute("text-anchor", "end");
+      text.removeAttribute("textLength");
+    }
+    text.textContent = now;
+  };
+
+  const apply = () => {
+    for (const group of document.querySelectorAll(".plot [data-kind]")) {
+      group.classList.toggle("off", !shows(group.dataset));
+    }
+    document.querySelectorAll(".plot .notice").forEach(renotice);
+    const shape = [...shapes.values()].find((input) => input.checked)?.value;
+    if (shape) {
+      for (const map of document.querySelectorAll(".map [data-shape]")) {
+        map.hidden = map.dataset.shape !== shape;
+      }
+    }
+  };
+  document.querySelector(".switches")?.addEventListener("change", apply);
+  // A browser may restore switches as they were left, rather than as the page was written.
+  window.addEventListener("pageshow", apply);
+
   const details = (item) =>
     item.dataset.hidden
-      ? JSON.parse(item.dataset.hidden).map((label) => ["hidden", label])
+      ? listed(item).map((label) => ["hidden", label.label])
       : rows.filter((row) => item.dataset[row]).map((row) => [row, item.dataset[row]]);
 
   const place = (event) => {
@@ -24,7 +91,7 @@
   let shown = null;
   document.addEventListener("pointermove", (event) => {
     const item = event.target instanceof Element
-      ? event.target.closest("[data-kind], [data-hidden]")
+      ? event.target.closest(".plot [data-kind], .plot [data-hidden]")
       : null;
     if (!item) {
       tip.hidden = true;
