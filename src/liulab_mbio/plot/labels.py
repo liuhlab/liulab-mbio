@@ -13,6 +13,13 @@ No label can overlap the circle, since every label lies outside the ellipse and 
 it. A leader running to the point where its label touches the ellipse stays inside the ellipse,
 where no label is, so it crosses none; a leader meets its label nearer halfway up only where the
 part of it outside the ellipse crosses no other label either.
+
+`staircase` lays labels out in rows above a line, as SnapGene's linear map and sequence view do:
+panorama labelling. Each box hangs from a vertical leader to its anchor, and sits above every
+label whose anchor its own box reaches, so close neighbours rise in a staircase. No two boxes in a
+row meet, and no leader crosses another label, since any box lying across a leader reaches its
+anchor and so sits higher than the leader goes. `pack` puts bars in rows, each where it first fits
+in order of start, which uses the fewest rows.
 """
 
 import itertools
@@ -120,6 +127,73 @@ def columns(
         if not any(_enters(one.leader, radius) for one in placed.values()):
             return tuple(placed[i] for i in range(len(labels)))
         a *= GROWTH
+
+
+def staircase(labels: Sequence[Anchored], *, base: float, spacing: float) -> tuple[Placed, ...]:
+    """Place labels in rows above a line, each box hanging from a vertical leader.
+
+    Labels are placed from the right. A box hangs right from its anchor, just above every box
+    already placed that it meets, so it sits above each label whose anchor it reaches, and labels
+    at one anchor rise in the order given. It hangs left instead where that puts it lower and its
+    box reaches no other anchor, so a label beside a crowd is not lifted over it.
+
+    Parameters
+    ----------
+    labels
+        Each anchor lies at or below `base`.
+    base
+        Where the lowest boxes end.
+    spacing
+        The least distance between two boxes, side by side or one above the other.
+
+    Returns
+    -------
+    tuple[Placed, ...]
+        One placement for each label, in the order given, its leader running up from the anchor
+        to the bottom of its box.
+    """
+    xs = [label.anchor.x for label in labels]
+    placed: dict[int, tuple[float, float]] = {}
+
+    def bottom(left: float, width: float) -> float:
+        return min(
+            (
+                low - labels[j].height - spacing
+                for j, (low, other) in placed.items()
+                if other < left + width + spacing and left < other + labels[j].width + spacing
+            ),
+            default=base,
+        )
+
+    for i in sorted(range(len(labels)), key=lambda i: (-xs[i], i)):
+        width = labels[i].width
+        right = bottom(xs[i], width)
+        free = not any(xs[i] - width - spacing <= x <= xs[i] for j, x in enumerate(xs) if j != i)
+        left = bottom(xs[i] - width, width) if free else right
+        placed[i] = (left, xs[i] - width) if left > right else (right, xs[i])
+    result = []
+    for (low, x), label in zip((placed[i] for i in range(len(labels))), labels, strict=True):
+        box = Box(x, low - label.height, label.width, label.height)
+        result.append(Placed(box, (label.anchor, Point(label.anchor.x, low))))
+    return tuple(result)
+
+
+def pack(bars: Sequence[tuple[float, float]], *, spacing: float) -> tuple[int, ...]:
+    """Return the row each bar goes in, from 0: the first it fits, taking bars by earliest start.
+
+    Each bar is its start and end. A bar fits a row when it starts at least `spacing` past the end
+    of every bar already there, and no other rule uses fewer rows.
+    """
+    ends: list[float] = []
+    rows = [0] * len(bars)
+    for i in sorted(range(len(bars)), key=lambda i: (bars[i][0], i)):
+        start, end = bars[i]
+        row = next((row for row, last in enumerate(ends) if last + spacing <= start), len(ends))
+        if row == len(ends):
+            ends.append(end)
+        ends[row] = end
+        rows[i] = row
+    return tuple(rows)
 
 
 def _clockwise(point: Point) -> float:

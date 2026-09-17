@@ -19,7 +19,7 @@ from typing import Literal
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
-from liulab_mbio.sequence import BindingSite, Feature, Primer, SequenceRecord, Strand
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites
 
 #: What an item is: a feature, a primer at one binding site, or the enzymes cutting at one position.
@@ -184,6 +184,29 @@ class Item:
         return tuple(runs)
 
 
+@dataclass(frozen=True, slots=True)
+class Piece:
+    """What of an item lies in a stretch of a record: part of one of its spans, or of a gap.
+
+    Parameters
+    ----------
+    start, end
+        Counted as the stretch counts them, running past the record's length where the stretch
+        does. A cut site's piece is empty.
+    span
+        The span it is part of, or ``None`` for part of a gap a joined item leaves between two.
+    starts, ends
+        Whether the item itself starts at `start`, and ends at `end`, rather than the stretch
+        cutting it there.
+    """
+
+    start: int
+    end: int
+    span: Span | None
+    starts: bool
+    ends: bool
+
+
 def items(
     record: SequenceRecord,
     *,
@@ -307,7 +330,7 @@ def default_color(feature: Feature) -> str:
     return OTHER.lower()
 
 
-def unwrapped(spans: Sequence[Span], length: int) -> tuple[tuple[int, int], ...]:
+def unwrapped(spans: Sequence[Span | Segment], length: int) -> tuple[tuple[int, int], ...]:
     """Return each span's start and end, counted round a circular record from the first span.
 
     A span that starts before the one before it ends lies past the origin, so it moves on by the
@@ -320,6 +343,47 @@ def unwrapped(spans: Sequence[Span], length: int) -> tuple[tuple[int, int], ...]
             start += length
         counted.append((start, start + span.end - span.start))
     return tuple(counted)
+
+
+def pieces(item: Item, start: int, end: int, length: int, *, circular: bool) -> tuple[Piece, ...]:
+    """Return what of `item` lies in a stretch of a record `length` bases long, in order along it.
+
+    The stretch is 0-based and half-open, ending past `length` where it runs across the origin of
+    a circular record, and at most one turn long. An item it cuts, or one lying across where the
+    stretch opens a circular record, comes back in pieces. A cut site at either end of the stretch
+    lies in it. The two ends of a whole turn are one boundary, and a cut there lies at the end.
+
+    Examples
+    --------
+    A feature across the origin of a circular record opened there lies at both ends:
+
+    >>> ori = Item("feature", "ori", "rep_origin", Strand.FORWARD, (Span(90, 110, "#eedd88"),), "")
+    >>> opened = pieces(ori, 0, 100, 100, circular=True)
+    >>> [(one.start, one.end, one.starts, one.ends) for one in opened]
+    [(0, 10, False, True), (90, 100, True, False)]
+    """
+    counted = unwrapped(item.spans, length)
+    runs: list[tuple[int, int, Span | None]] = []
+    for index, (span, (low, high)) in enumerate(zip(item.spans, counted, strict=True)):
+        if index and low > counted[index - 1][1]:
+            runs.append((counted[index - 1][1], low, None))
+        runs.append((low, high, span))
+    first, last = counted[0][0], counted[-1][1]
+    whole = circular and end - start == length
+    found = []
+    for low, high, span in runs:
+        for shift in (-length, 0, length) if circular else (0,):
+            if low == high:
+                at = low + shift
+                if start <= at <= end and not (whole and at == start):
+                    found.append(Piece(at, at, span, starts=True, ends=True))
+                continue
+            clipped = max(low + shift, start), min(high + shift, end)
+            if clipped[0] < clipped[1]:
+                found.append(
+                    Piece(*clipped, span, clipped[0] == first + shift, clipped[1] == last + shift)
+                )
+    return tuple(sorted(found, key=lambda piece: (piece.start, piece.end)))
 
 
 def span_text(start: int, end: int, length: int) -> str:
