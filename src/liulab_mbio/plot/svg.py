@@ -116,12 +116,16 @@ class Group:
         ``data-`` attribute.
     rotate
         Degrees clockwise about the centre (0, 0), if the group is turned.
+    x, y
+        Where the group's (0, 0) is drawn, if the group is moved; it turns before it moves.
     """
 
     shapes: tuple["Shape", ...]
     classes: tuple[str, ...] = ()
     data: Mapping[str, str] = field(default_factory=dict, hash=False)
     rotate: float = 0.0
+    x: float = 0.0
+    y: float = 0.0
 
 
 type Shape = Path | Line | Circle | Rect | Text | Letters | Group
@@ -162,13 +166,15 @@ def _shape(shape: Shape, glyphs: dict[str, str] | None) -> str:
             return _text(shape) if glyphs is None else _outlined(shape, glyphs)
         case Letters():
             return _letters(shape) if glyphs is None else _outlined(shape, glyphs)
-        case Group(shapes, classes, data, rotate):
+        case Group(shapes, classes, data, rotate, x, y):
             attributes = f' class="{escape(" ".join(classes))}"' if classes else ""
             attributes += "".join(
                 f' data-{escape(key)}="{escape(value)}"' for key, value in data.items()
             )
-            if rotate:
-                attributes += f' transform="rotate({number(rotate)})"'
+            moves = [f"translate({number(x)} {number(y)})"] if x or y else []
+            moves += [f"rotate({number(rotate)})"] if rotate else []
+            if moves:
+                attributes += f' transform="{" ".join(moves)}"'
             return f"<g{attributes}>{''.join(_shape(one, glyphs) for one in shapes)}</g>"
 
 
