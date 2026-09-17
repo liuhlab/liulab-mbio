@@ -3,11 +3,16 @@
 import base64
 import dataclasses
 import re
+import struct
+from collections.abc import Iterable
 from pathlib import Path
 
+import pypdf
 import pytest
+import vl_convert
+from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import Drawing, draw_map
+from liulab_mbio.plot import Drawing, draw_map, svg
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
@@ -56,13 +61,87 @@ def test_a_record_or_any_file_the_pipelines_read_is_drawn(
         assert parse(written.read_text(encoding="utf-8")).find_all("svg")
 
 
-@pytest.mark.parametrize("name", ["map.png", "map.pdf", "map.svg", "map"])
+@pytest.mark.parametrize("name", ["map.svg", "map.jpg", "map"])
 def test_a_suffix_it_does_not_write_is_refused(
     puc19: SequenceRecord, tmp_path: Path, name: str
 ) -> None:
-    with pytest.raises(ValueError, match=r"the suffix must be \.html"):
+    with pytest.raises(ValueError, match=r"the suffix must be \.html, \.png, \.pdf"):
         draw_map(puc19).write(tmp_path / name)
     assert not (tmp_path / name).exists()
+
+
+@pytest.fixture(scope="module")
+def small() -> Drawing:
+    """The smallest map to convert: a short circular record with no features."""
+    return draw_map(SequenceRecord("ACGT" * 10, topology="circular", name="small"))
+
+
+def _png_size_and_dpi(path: Path) -> tuple[int, int, float]:
+    data = path.read_bytes()
+    assert data.startswith(b"\x89PNG\r\n\x1a\n")
+    width, height = struct.unpack(">II", data[16:24])
+    per_metre, _, unit = struct.unpack(">IIB", data[data.index(b"pHYs") + 4 :][:9])
+    assert unit == 1
+    return width, height, per_metre * 0.0254
+
+
+def test_a_png_is_drawn_at_300_dpi_unless_told_otherwise(small: Drawing, tmp_path: Path) -> None:
+    extent = small.layout.extent
+    written = {300: small.write(tmp_path / "300.png"), 36: small.write(tmp_path / "36.png", dpi=36)}
+    for dpi, path in written.items():
+        width, height, recorded = _png_size_and_dpi(path)
+        assert width == pytest.approx(extent.width * dpi / 72, abs=1)
+        assert height == pytest.approx(extent.height * dpi / 72, abs=1)
+        assert recorded == pytest.approx(dpi, abs=0.1)
+
+
+def _lines(shapes: Iterable[svg.Shape]) -> list[svg.Text | svg.Letters]:
+    """Every line of text among `shapes`, in groups or not."""
+    found: list[svg.Text | svg.Letters] = []
+    for shape in shapes:
+        if isinstance(shape, svg.Group):
+            found += _lines(shape.shapes)
+        elif isinstance(shape, svg.Text | svg.Letters):
+            found.append(shape)
+    return found
+
+
+def test_a_pdf_is_one_page_the_size_laid_out_every_letter_handed_over_as_its_outline(
+    colour_test: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    handed: list[str] = []
+    to_pdf = vl_convert.svg_to_pdf
+
+    def recorded(image: str) -> bytes:
+        handed.append(image)
+        return to_pdf(image)
+
+    monkeypatch.setattr(vl_convert, "svg_to_pdf", recorded)
+    # A dpi counts for a PNG alone.
+    [page] = pypdf.PdfReader(colour_test.write(tmp_path / "map.pdf", dpi=1)).pages
+    extent = colour_test.layout.extent
+    assert float(page.mediabox.width) == pytest.approx(extent.width, abs=0.01)
+    assert float(page.mediabox.height) == pytest.approx(extent.height, abs=0.01)
+    lines = _lines(colour_test.layout.shapes)
+    assert any(isinstance(line, svg.Letters) for line in lines), "no name on an arrow"
+    letters = [letter for line in lines for letter in line.font.letters(line.text, line.size)]
+    [image] = handed
+    assert not parse(image).find_all("text")
+    assert len(parse(image).find_all("use")) == len([one for one in letters if one.outline])
+    # No font to look up, and so no text to find.
+    resources = page["/Resources"].get_object()
+    assert isinstance(resources, DictionaryObject)
+    assert "/Font" not in resources
+    assert page.extract_text() == ""
+
+
+@pytest.mark.parametrize("dpi", [10**7, 0])
+def test_a_png_too_large_or_small_to_draw_is_refused(
+    small: Drawing, tmp_path: Path, dpi: float
+) -> None:
+    with pytest.raises(ValueError, match=r"can be drawn at .* dpi, and a PDF at any size"):
+        small.write(tmp_path / "map.png", dpi=dpi)
+    assert not (tmp_path / "map.png").exists()
 
 
 def test_a_record_with_no_bases_is_refused() -> None:

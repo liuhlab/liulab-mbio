@@ -1,12 +1,13 @@
 """Draw a record as a map, and write the drawing in the format its file name asks for."""
 
+import math
 import os
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
 from liulab_mbio.io import read_record
-from liulab_mbio.plot import circular, layers, page, svg
+from liulab_mbio.plot import circular, convert, layers, page, svg
 from liulab_mbio.sequence import SequenceRecord
 
 
@@ -25,20 +26,25 @@ class Drawing:
     record: SequenceRecord
     layout: circular.CircularMap
 
-    def write(self, path: str | os.PathLike[str]) -> Path:
+    def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
+
+        A ``.html`` page keeps its text as text. A ``.png`` at `dpi` and a ``.pdf`` draw every
+        letter as its outline, so they look the same on any machine; `dpi` counts for the PNG
+        alone.
 
         Raises
         ------
         ValueError
-            If the suffix names no format this writes: ``.html`` is the one.
+            If the suffix names no format this writes, or a PNG at `dpi` would be too large to
+            draw.
         """
         out = Path(path)
         writer = _WRITERS.get(out.suffix.lower())
         if writer is None:
             formats = ", ".join(_WRITERS)
             raise ValueError(f"cannot write a map as {out.name!r}: the suffix must be {formats}")
-        writer(self, out)
+        writer(self, out, dpi)
         return out
 
 
@@ -96,10 +102,38 @@ def draw_map(
     return Drawing(record, layout)
 
 
-def _html(drawing: Drawing, path: Path) -> None:
+def _html(drawing: Drawing, path: Path, dpi: float) -> None:
     image = svg.document(drawing.layout.shapes, drawing.layout.extent)
     path.write_text(page.render(image, title=drawing.record.name or path.stem), encoding="utf-8")
 
 
-#: Each suffix a drawing is written as, and what writes it.
-_WRITERS: dict[str, Callable[[Drawing, Path], None]] = {".html": _html}
+def _png(drawing: Drawing, path: Path, dpi: float) -> None:
+    extent = drawing.layout.extent
+    sides = (extent.width, extent.height)
+    least = convert.POINTS_PER_INCH / min(sides)
+    most = convert.PNG_SIDE * convert.POINTS_PER_INCH / max(sides)
+    if not least <= dpi <= most:
+        raise ValueError(
+            f"cannot draw {path.name!r} at {dpi:g} dpi: a PNG of this map can be drawn at "
+            f"{least:.3g} to {math.floor(most):,} dpi, and a PDF at any size"
+        )
+    path.write_bytes(convert.png(_outlined(drawing), dpi=dpi))
+
+
+def _pdf(drawing: Drawing, path: Path, dpi: float) -> None:
+    path.write_bytes(convert.pdf([_outlined(drawing)]))
+
+
+def _outlined(drawing: Drawing) -> str:
+    """Return the drawing as a PNG or a PDF draws it: on white, every letter an outline."""
+    extent = drawing.layout.extent
+    paper = svg.Rect(extent, "#ffffff", "none", 0)
+    return svg.document((paper, *drawing.layout.shapes), extent, outlines=True)
+
+
+#: Each suffix a drawing is written as, and what writes it at a dpi.
+_WRITERS: dict[str, Callable[[Drawing, Path, float], None]] = {
+    ".html": _html,
+    ".png": _png,
+    ".pdf": _pdf,
+}

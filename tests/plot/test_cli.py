@@ -35,9 +35,9 @@ def test_the_command_writes_the_page_and_prints_the_file_written(
 
 
 def test_the_command_refuses_a_format_it_does_not_write(puc19_file: Path, tmp_path: Path) -> None:
-    code, lines = _run(str(puc19_file), "--output", str(tmp_path / "pUC19.png"))
+    code, lines = _run(str(puc19_file), "--output", str(tmp_path / "pUC19.svg"))
     assert code == 1
-    assert lines[0].startswith("error: cannot write a map as 'pUC19.png'")
+    assert lines[0].startswith("error: cannot write a map as 'pUC19.svg'")
 
 
 def test_the_command_refuses_a_file_it_cannot_read(tmp_path: Path) -> None:
