@@ -1,0 +1,37 @@
+PROTOTYPE — throwaway, never merged. Ticket #80 on map #76. Measured 2026-09-16 on an M-series Mac
+(osx-arm64), pixi exec from conda-forge: Python 3.13, vl-convert-python 1.9.0, CairoSVG 2.9.1,
+pypdf 6.19.0, fontTools 4.65.0, uharfbuzz. One run each; times rank the routes, nothing more.
+
+Environment:
+  pixi exec -s python=3.13 -s "vl-convert-python=1.9.*" -s cairosvg -s fonttools -s pypdf \
+    -s pillow -s numpy -s uharfbuzz -s fontconfig -- python measure.py
+
+1. Font. "PinnedSans" is DejaVu Sans renamed, so no machine has it by name. Text rendered at 40 px,
+   compared by ink overlap (IoU) with the same text drawn as the file's own outlines, shaped by
+   HarfBuzz with and without kerning. font-check.png: outlines, vl-convert text, CairoSVG text.
+
+vl-convert, folder not registered   every variant: ink width 0 (no text drawn, no error)
+vl-convert, folder registered       family PinnedSans: IoU 1.000 kerned, 0.623 unkerned, width 871 (ref 871)
+                                    family "DejaVu Sans": width 0; @font-face embedded: width 0
+cairosvg, as is                     every variant: IoU 0.19, width 806 (Helvetica-like)
+cairosvg, FONTCONFIG_FILE with dir  every variant: IoU 0.19, width 806
+
+2. Where vl-convert's time goes (svg_to_pdf, font registered, ms):
+rect only 0 | one 5-char label 8-9 | page with text removed 1 | page, 231 text elements 2,577-2,589
+1 element of 3,000 chars 4,392 (2,978 with a 30 KB subset of the font) | 100 elements of 5 chars 894
+100 tspans in 1 element 815 | 100 elements, family missing 6
+vl-convert 2.0.0rc7: 5 chars 6 | 3,000 chars 2,995 (PDF), 3,004 (PNG)
+
+3. A sequence view page (7 rows of 60 bp, 231 text elements), text vs outlines:
+page SVG bytes: text 38,509, outlines 78,813
+outlines: vl-convert PDF 21 ms, PNG at 2x 50 ms; CairoSVG PDF 282 ms, PNG at 2x 274 ms
+text-vs-outlines.png: vl-convert, text above, outlines below (the translation row's spacing differs
+only because this script spreads stretched text crudely)
+
+4. Paged PDF, joined with pypdf: text-timing.log (text) and outline-scale.log (outlines).
+text, CairoSVG     10 kb: 24 pages 0.71 s | 100 kb: 239 pages 7.1 s, 3.8 MB (wrong font on macOS)
+text, vl-convert   10 kb: 24 pages 36.9 s | 100 kb: stopped; about 6 min at 1.5 s a page (computed)
+outlines, vl-conv  10 kb: 24 pages 0.6 s  | 100 kb: 239 pages 5.3 s, joined in 0.1 s, 15.3 MB
+
+5. One tall PNG, outlines, vl-convert: 10 kb at 2x 1190x33,520 px 1.3 s | 20 kb at 2x 1190x66,920
+2.6 s | 50 kb at 2x 1190x166,920 7.4 s, 81 MB | 100 kb at 1x 595x166,760 10.0 s, 63 MB. None failed.

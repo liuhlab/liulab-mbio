@@ -1,0 +1,12 @@
+== PDF pages
+cairosvg 10 kb {"pages": 24, "svg_MB": 0.92, "svg_s": 0.01, "convert_s": 0.71, "per_page_ms": 29, "merge_s": 0.02, "pdf_MB": 0.38, "pdf_text_selectable": true}
+vl-convert 10 kb {"pages": 24, "svg_MB": 0.92, "svg_s": 0.01, "convert_s": 36.86, "per_page_ms": 1536, "merge_s": 0.02, "pdf_MB": 0.65, "pdf_text_selectable": true}
+cairosvg 100 kb {"pages": 239, "svg_MB": 9.23, "svg_s": 0.07, "convert_s": 7.07, "per_page_ms": 30, "merge_s": 0.2, "pdf_MB": 3.79, "pdf_text_selectable": true}
+Traceback (most recent call last):
+  File "<string>", line 7, in <module>
+    print(conv, kb, 'kb', m.child('pages', conv, str(kb), timeout=1500), flush=True)
+                          ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-hanqing-src-liulab-mbio/b414624a-bcd7-44e2-ac67-df11c9e66f0c/scratchpad/proto/measure.py", line 322, in child
+    return done.stdout.strip() or ("FAILED: " + done.stderr.strip().splitlines()[-1][:200])
+                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^
+IndexError: list index out of range

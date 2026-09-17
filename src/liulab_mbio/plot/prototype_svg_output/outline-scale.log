@@ -1,0 +1,9 @@
+pdf 10 kb {"pages": 24, "svg_MB": 1.9, "svg_s": 0.0, "convert_s": 0.6, "per_page_ms": 25, "merge_s": 0.0, "pdf_MB": 1.5}
+pdf 100 kb {"pages": 239, "svg_MB": 19.4, "svg_s": 0.4, "convert_s": 5.3, "per_page_ms": 22, "merge_s": 0.1, "pdf_MB": 15.3}
+png 5 kb scale 2 FAILED (exit 1): ValueError: empty range in randrange(10, 10)
+png 10 kb scale 2 {"px": [1190, 33520], "s": 1.3, "png_MB": 15.9}
+png 20 kb scale 2 FAILED (exit 1): ValueError: empty range in randrange(10, 10)
+png 50 kb scale 2 FAILED (exit 1): ValueError: empty range in randrange(10, 10)
+png 100 kb scale 1 {"px": [595, 166760], "s": 10.0, "png_MB": 62.8}
+png 20 kb scale 2 {"px": [1190, 66920], "s": 2.6, "png_MB": 32.1}
+png 50 kb scale 2 {"px": [1190, 166920], "s": 7.4, "png_MB": 80.6}
