@@ -46,6 +46,12 @@ def map_(
     linear: Annotated[
         bool, typer.Option("--linear", help="Draw a circular record opened as a line.")
     ] = False,
+    sequence_view: Annotated[
+        bool,
+        typer.Option(
+            "--sequence-view", help="Draw the bases beside the map, at most 100,000 of them."
+        ),
+    ] = False,
     no_features: Annotated[
         bool, typer.Option("--no-features", help="Leave the features off.")
     ] = False,
@@ -68,6 +74,12 @@ def map_(
         typer.Option("--hide-type", help="A feature type to leave off; once per type."),
     ] = None,
     source: Annotated[bool, typer.Option("--source", help="Draw the source feature.")] = False,
+    bases_per_row: Annotated[
+        int, typer.Option(help="How many bases a row of the sequence view holds.")
+    ] = 60,
+    one_strand: Annotated[
+        bool, typer.Option("--one-strand", help="Draw only the top strand in the sequence view.")
+    ] = False,
     dpi: Annotated[float, typer.Option(help="Resolution of a PNG, in dots per inch.")] = 300,
 ) -> None:
     """Draw RECORD as a map and write it to each file named, printing each file written."""
@@ -77,12 +89,15 @@ def map_(
             read,
             region=_region(region, read),
             linear=linear,
+            sequence_view=sequence_view,
             features=not no_features,
             primers=not no_primers,
             cut_sites=not no_cut_sites,
             enzymes=enzyme,
             hide_types=hide_type or (),
             source=source,
+            bases_per_row=bases_per_row,
+            both_strands=not one_strand,
         )
         for out in output:
             typer.echo(str(drawing.write(out, dpi=dpi)))

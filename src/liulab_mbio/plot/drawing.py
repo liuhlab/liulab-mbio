@@ -9,6 +9,7 @@ from pathlib import Path
 from liulab_mbio.io import read_record
 from liulab_mbio.plot import circular, convert, layers, page, svg
 from liulab_mbio.plot import linear as line
+from liulab_mbio.plot import sequence_view as view
 from liulab_mbio.sequence import SequenceRecord
 
 #: A region of a record: a feature's name, or a 0-based, half-open span ending past the record's
@@ -25,18 +26,21 @@ class Drawing:
     record
         What is drawn.
     layout
-        Where everything went.
+        Where everything on the map went.
+    sequence_view
+        Where everything in the sequence view went, when it was asked for.
     """
 
     record: SequenceRecord
     layout: circular.CircularMap | line.LinearMap
+    sequence_view: view.SequenceView | None = None
 
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
-        A ``.html`` page keeps its text as text. A ``.png`` at `dpi` and a ``.pdf`` draw every
-        letter as its outline, so they look the same on any machine; `dpi` counts for the PNG
-        alone.
+        A ``.html`` page keeps its text as text, and shows the sequence view beside the map. A
+        ``.png`` at `dpi` and a ``.pdf`` draw the map alone, every letter as its outline, so they
+        look the same on any machine; `dpi` counts for the PNG alone.
 
         Raises
         ------
@@ -58,17 +62,21 @@ def draw_map(
     *,
     region: Region | None = None,
     linear: bool = False,
+    sequence_view: bool = False,
     features: bool = True,
     primers: bool = True,
     cut_sites: bool = True,
     enzymes: str | Iterable[str] | None = None,
     hide_types: Iterable[str] = (),
     source: bool = False,
+    bases_per_row: int = 60,
+    both_strands: bool = True,
 ) -> Drawing:
     """Lay out a record as a map of its features, primers and cut sites: a circle or a line.
 
     A circular record is drawn as a circle, and opened as a line when `linear`. A linear record,
-    and a region of any record, is always drawn as a line, numbered as the record is.
+    and a region of any record, is always drawn as a line, numbered as the record is. The sequence
+    view draws the same stretch base by base, as the map numbers it.
 
     Parameters
     ----------
@@ -81,6 +89,8 @@ def draw_map(
         record's order answers when several do. The whole record when ``None``.
     linear
         Whether a circular record drawn whole is opened as a line.
+    sequence_view
+        Whether the sequence view is drawn beside the map, at most `sequence_view.LIMIT` bases.
     features, primers, cut_sites
         Whether each is drawn.
     enzymes
@@ -90,14 +100,19 @@ def draw_map(
         The feature types left off.
     source
         Whether a `source` feature is drawn.
+    bases_per_row
+        How many bases each row of the sequence view holds.
+    both_strands
+        Whether the sequence view draws the bottom strand under the top one.
 
     Raises
     ------
     KeyError
         If no shipped enzyme answers to a name in `enzymes`.
     ValueError
-        If the file cannot be read as a record, the record has no bases, or `region` names no
-        feature or lies off the record.
+        If the file cannot be read as a record, the record has no bases, `region` names no
+        feature or lies off the record, `bases_per_row` is less than 1, or a sequence view would
+        draw more than `sequence_view.LIMIT` bases.
 
     Examples
     --------
@@ -107,7 +122,15 @@ def draw_map(
     record = record if isinstance(record, SequenceRecord) else read_record(record)
     if not len(record):
         raise ValueError(f"record {record.name!r} has no bases to draw")
+    if bases_per_row < 1:
+        raise ValueError(f"a row of the sequence view holds at least 1 base, not {bases_per_row}")
     span = None if region is None else _span(record, region)
+    start, end = span if span is not None else (0, len(record))
+    if sequence_view and end - start > view.LIMIT:
+        raise ValueError(
+            f"a sequence view draws at most {view.LIMIT:,} bases, and {record.name!r} would "
+            f"draw {end - start:,}: name a region to draw it"
+        )
     items = layers.items(
         record,
         features=features,
@@ -116,12 +139,26 @@ def draw_map(
         enzymes=enzymes,
         hide_types=hide_types,
         source=source,
+        translations=sequence_view,
     )
     circle = record.topology == "circular"
     if circle and span is None and not linear:
-        return Drawing(record, circular.layout(items, name=record.name, length=len(record)))
-    layout = line.layout(items, name=record.name, length=len(record), circular=circle, span=span)
-    return Drawing(record, layout)
+        layout = circular.layout(items, name=record.name, length=len(record))
+    else:
+        layout = line.layout(
+            items, name=record.name, length=len(record), circular=circle, span=span
+        )
+    rows = None
+    if sequence_view:
+        rows = view.layout(
+            items,
+            bases=record.sequence,
+            circular=circle,
+            span=span,
+            bases_per_row=bases_per_row,
+            both_strands=both_strands,
+        )
+    return Drawing(record, layout, rows)
 
 
 def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:
@@ -158,7 +195,10 @@ def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:
 
 def _html(drawing: Drawing, path: Path, dpi: float) -> None:
     image = svg.document(drawing.layout.shapes, drawing.layout.extent)
-    path.write_text(page.render(image, title=drawing.record.name or path.stem), encoding="utf-8")
+    rows = drawing.sequence_view
+    beside = None if rows is None else svg.document(rows.shapes, rows.extent)
+    title = drawing.record.name or path.stem
+    path.write_text(page.render(image, title=title, sequence_view=beside), encoding="utf-8")
 
 
 def _png(drawing: Drawing, path: Path, dpi: float) -> None:

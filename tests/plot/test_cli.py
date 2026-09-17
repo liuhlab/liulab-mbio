@@ -177,3 +177,22 @@ def test_the_command_refuses_a_region_off_the_record_or_naming_no_feature(
         assert code == 1
         assert lines[0].startswith(message)
         assert not out.exists()
+
+
+def test_the_command_draws_the_sequence_view_in_rows_of_the_bases_asked_for_on_one_strand(
+    gfp: SequenceRecord, gfp_file: Path, tmp_path: Path
+) -> None:
+    out = tmp_path / "map.html"
+    code, lines = _run(
+        str(gfp_file), "-o", str(out), "--sequence-view", "--bases-per-row", "100", "--one-strand"
+    )
+    assert (code, lines) == (0, [str(out)])
+    [view] = parse(out.read_text(encoding="utf-8")).find_all("figure", cls="sequence-view")
+    rows = view.find_all("g", cls="row")
+    assert [row.find_all("g", cls="top")[0].text for row in rows] == [
+        gfp.sequence[start : start + 100] for start in range(0, len(gfp), 100)
+    ]
+    assert not view.find_all("g", cls="bottom")
+    code, lines = _run(str(gfp_file), "-o", str(out), "--sequence-view", "--bases-per-row", "0")
+    assert code == 1
+    assert lines[0] == "error: a row of the sequence view holds at least 1 base, not 0"

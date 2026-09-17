@@ -33,6 +33,14 @@ sets one.
   the file `map.png` or `map.pdf`; `-o` takes several files in one run, and `--dpi` sets the
   PNG's resolution, 300 by default. The letters are drawn as shapes, so the text in them cannot
   be searched or copied.
+- The bases beside the map, as SnapGene's Sequence tab shows them. `--sequence-view` sets the
+  record out in rows of 60 bases, or as many as `--bases-per-row` says. Each row has a ruler, both
+  strands with a tick at every base between them, and the number of its last base at its right.
+  `--one-strand` leaves out the bottom strand. Features lie under the bases as bars, and every
+  coding sequence shows its protein under its bases in three-letter codes, with each stop in red.
+  A region keeps the record's numbering. The page shows this view up to 100,000 bases; past that,
+  name a region. A PNG or PDF still draws the map alone. `draw_map` takes `sequence_view`,
+  `bases_per_row` and `both_strands`.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

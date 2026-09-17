@@ -12,7 +12,7 @@ import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import Drawing, circular, draw_map, linear, svg
+from liulab_mbio.plot import Drawing, circular, draw_map, linear, sequence_view, svg
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
@@ -560,3 +560,126 @@ def test_a_region_naming_no_feature_or_lying_off_the_record_is_refused(
 ) -> None:
     with pytest.raises(ValueError, match=re.escape(message)):
         draw_map(request.getfixturevalue(record), region=region)
+
+
+def _rows(page: Node) -> list[Node]:
+    """The sequence view's rows, top to bottom."""
+    [view] = page.find_all("figure", cls="sequence-view")
+    return view.find_all("g", cls="row")
+
+
+def test_the_sequence_view_goes_beside_the_map_only_when_asked_for(
+    gfp: SequenceRecord, tmp_path: Path
+) -> None:
+    alone = draw_map(gfp)
+    assert alone.sequence_view is None
+    assert not _page(alone, tmp_path / "alone.html")[1].find_all("figure", cls="sequence-view")
+    _, page = _page(draw_map(gfp, sequence_view=True), tmp_path / "view.html")
+    [main] = page.find_all("main")
+    assert [figure.attrs["class"] for figure in main.find_all("figure")] == ["map", "sequence-view"]
+
+
+def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases_as_asked(
+    gfp: SequenceRecord, tmp_path: Path
+) -> None:
+    rows = _rows(
+        _page(draw_map(gfp, sequence_view=True, bases_per_row=100), tmp_path / "a.html")[1]
+    )
+    assert len(rows) == 8
+    top = gfp.sequence[:100]
+    assert _texts(rows[0], "top") == [top]
+    assert _texts(rows[0], "bottom") == [top.translate(str.maketrans("ACGT", "TGCA"))]
+    assert _texts(rows[0], "ruler") == ["10 20 30 40 50 60 70 80 90 100"]
+    assert _texts(rows[0], "position") == ["100"]
+    assert _texts(rows[-1], "top") == [gfp.sequence[700:]]
+    assert _texts(rows[-1], "ruler") == ["710"]
+    assert _texts(rows[-1], "position") == ["717"]
+    [bar] = rows[0].find_all("g", data_kind="feature")
+    assert (bar.attrs["data-name"], bar.attrs["data-span"]) == ("GFP", "1 .. 717")
+    one = _rows(
+        _page(draw_map(gfp, sequence_view=True, both_strands=False), tmp_path / "b.html")[1]
+    )
+    assert len(one) == 12
+    assert _texts(one[0], "top") == [gfp.sequence[:60]]
+    assert not [row for row in one if row.find_all("g", cls="bottom")]
+
+
+def _amino_acids(drawing: Drawing, name: str) -> list[str]:
+    """A feature's amino acids in the order the sequence view reads them along its strand."""
+    assert drawing.sequence_view is not None
+    found = []
+    for index, row in enumerate(drawing.sequence_view.rows):
+        lines = [
+            line
+            for translation in row.translations
+            if translation.item.name == name
+            for line in (translation.letters, translation.stops)
+            if line
+        ]
+        for line in lines:
+            at = 0
+            for word in line.text.split(" "):
+                found.append((index, line.places[at].x, word, line.fill))
+                at += len(word) + 1
+    [feature] = [one for one in drawing.record.features if one.name == name]
+    found.sort(reverse=feature.strand == Strand.REVERSE)
+    assert {fill for *_, word, fill in found if word == "Ter"} <= {sequence_view.STOP}
+    assert {fill for *_, word, fill in found if word != "Ter"} <= {"#252525"}
+    return [word for *_, word, _ in found]
+
+
+def _three_letters(protein: str) -> list[str]:
+    from Bio.SeqUtils import seq3
+
+    three = seq3(protein)
+    return [three[at : at + 3] for at in range(0, len(three), 3)]
+
+
+def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
+    puc19: SequenceRecord, colour_test: Drawing, tmp_path: Path
+) -> None:
+    drawing = draw_map(puc19, sequence_view=True)
+    for feature in (one for one in puc19.features if one.type == "CDS"):
+        # SnapGene marks where AmpR's segments join with a comma.
+        protein = str(feature.qualifiers["translation"][0]).replace(",", "")
+        assert _amino_acids(drawing, feature.name) == _three_letters(protein)
+    # Read across three joined segments, stops and all.
+    joined = draw_map(colour_test.record, sequence_view=True)
+    [split] = [one for one in colour_test.record.features if one.name == "split"]
+    assert _amino_acids(joined, "split") == _three_letters(str(split.qualifiers["translation"][0]))
+    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+    fills = {
+        text.attrs["fill"]
+        for group in view.find_all("g", cls="translation")
+        for text in group.find_all("text")
+    }
+    assert fills == {"#252525", sequence_view.STOP}
+
+
+def test_a_regions_sequence_view_keeps_the_records_numbering_across_the_origin(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    drawing = draw_map(puc19, region=(2679, 2696), sequence_view=True, bases_per_row=10)
+    rows = _rows(_page(drawing, tmp_path / "map.html")[1])
+    assert [_texts(row, "top") for row in rows] == [
+        [puc19.sequence[2679:] + puc19.sequence[:3]],
+        [puc19.sequence[3:10]],
+    ]
+    assert [_texts(row, "ruler") for row in rows] == [["2680"], ["10"]]
+    assert [_texts(row, "position") for row in rows] == [["3"], ["10"]]
+
+
+def test_a_sequence_view_past_100_kb_is_refused_asking_for_a_region_and_a_map_is_not() -> None:
+    record = SequenceRecord("ACGT" * 25_001, name="long")
+    with pytest.raises(ValueError, match=r"at most 100,000 bases.*100,004: name a region"):
+        draw_map(record, sequence_view=True)
+    assert isinstance(draw_map(record, cut_sites=False).layout, linear.LinearMap)
+    region = draw_map(record, region=(99_000, 99_060), sequence_view=True, cut_sites=False)
+    assert region.sequence_view is not None
+    assert [(row.start, row.end) for row in region.sequence_view.rows] == [(99_000, 99_060)]
+
+
+@pytest.mark.parametrize("bases_per_row", [0, -60])
+def test_a_row_of_no_bases_is_refused(gfp: SequenceRecord, bases_per_row: int) -> None:
+    with pytest.raises(ValueError, match="holds at least 1 base"):
+        draw_map(gfp, sequence_view=True, bases_per_row=bases_per_row)

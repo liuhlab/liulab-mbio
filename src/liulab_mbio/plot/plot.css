@@ -11,30 +11,34 @@ body {
 
 .plot {
   display: flex;
+  align-items: flex-start;
   justify-content: center;
+  gap: 16px;
   padding: 16px;
 }
 
-.map {
+.map,
+.sequence-view {
+  min-width: 0;
   margin: 0;
 }
 
-.map svg {
+.plot svg {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
-.map text {
+.plot text {
   white-space: pre;
 }
 
-.map [data-kind] {
+.plot [data-kind] {
   cursor: default;
 }
 
-.map [data-kind]:hover path,
-.map [data-kind]:hover rect {
+.plot [data-kind]:hover path,
+.plot [data-kind]:hover rect {
   stroke-width: 1.6;
 }
 

@@ -12,15 +12,21 @@ from importlib.resources import files
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS, Font
 
 
-def render(drawing: str, *, title: str) -> str:
-    """Return a page showing `drawing`, an SVG element, under `title`."""
+def render(drawing: str, *, title: str, sequence_view: str | None = None) -> str:
+    """Return a page showing `drawing`, an SVG element, under `title`, with `sequence_view` beside.
+
+    `sequence_view` is an SVG element too, or ``None`` for the map alone.
+    """
     fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
+    figures = f'<figure class="map">{drawing}</figure>\n'
+    if sequence_view is not None:
+        figures += f'<figure class="sequence-view">{sequence_view}</figure>\n'
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<meta name="color-scheme" content="light">\n'
         f"<title>{escape(title)}</title>\n<style>\n{fonts}{_asset('plot.css')}</style>\n"
-        f'</head>\n<body>\n<main class="plot">\n<figure class="map">{drawing}</figure>\n</main>\n'
+        f'</head>\n<body>\n<main class="plot">\n{figures}</main>\n'
         '<div class="hover" role="tooltip" hidden></div>\n'
         f"<script>\n{_asset('plot.js')}</script>\n</body>\n</html>\n"
     )

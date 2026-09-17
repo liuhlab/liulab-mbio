@@ -77,9 +77,10 @@ across the origin of a circular record ends past the record's length — see
 `draw_map` draws a sequence record as a map. `Drawing.write` writes it as one HTML page that
 opens offline, or as a PNG or a PDF. The modules under it are its steps. `layers` picks what a
 record draws, with its names and colours. `circular` places those items round a circle,
-`linear` along a line, and `labels` keeps their labels apart. `fonts` measures text in the faces the page embeds, `svg`
-writes the shapes, and `page` wraps them in the page. `convert` turns the shapes into a PNG or a
-PDF, with every letter drawn as its outline.
+`linear` along a line, and `sequence_view` base by base in rows beside the map. `labels` keeps
+their labels apart. `fonts` measures text in the faces the page embeds, `svg` writes the shapes,
+and `page` wraps them in the page. `convert` turns the shapes into a PNG or a PDF, with every
+letter drawn as its outline.
 
 ::: liulab_mbio.plot
     options:
@@ -92,6 +93,8 @@ PDF, with every letter drawn as its outline.
 ::: liulab_mbio.plot.circular
 
 ::: liulab_mbio.plot.linear
+
+::: liulab_mbio.plot.sequence_view
 
 ::: liulab_mbio.plot.labels
 
