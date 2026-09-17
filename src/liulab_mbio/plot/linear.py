@@ -12,9 +12,14 @@ A feature's name goes inside its arrow when it fits, underneath when nothing els
 there, and otherwise in a box above. Boxed names, primers and cut sites are labelled in the rows
 `labels.staircase` lays out above the drawing, each with a vertical leader down to where the item
 lies, so no label overlaps another label or the drawing, and no leader crosses another label.
+
+The rows rise above the drawing as far as `RISE`. Past it, labels hide in the order
+`layers.hiding` gives, and a notice at the bottom right says how many. A name inside or underneath
+a feature never hides.
 """
 
 import dataclasses
+import json
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -26,6 +31,8 @@ from liulab_mbio.plot.layers import (
     Item,
     Piece,
     Span,
+    hiding,
+    notice,
     outline_color,
     pieces,
     span_text,
@@ -47,6 +54,9 @@ from liulab_mbio.sequence import Strand
 
 #: The line's length, in points, however long the stretch it draws.
 WIDTH = 720.0
+
+#: How far above the drawing a label may reach, in points, before labels hide.
+RISE = 730.0
 
 #: The size of a label's text, in points.
 LABEL_SIZE = 11.5
@@ -165,6 +175,8 @@ class LinearMap:
         Every feature's name set inside or underneath its arrows, in the items' order.
     labels
         Every label, in the items' order.
+    hidden
+        The item of each label left out, in the order they hid.
     shapes
         Everything, in the order it is drawn.
     """
@@ -174,6 +186,7 @@ class LinearMap:
     arrows: tuple[Arrow, ...]
     names: tuple[Name, ...]
     labels: tuple[Label, ...]
+    hidden: tuple[Item, ...]
     shapes: tuple[Shape, ...]
 
 
@@ -250,10 +263,21 @@ def layout(
                 for piece in pieces(item, start, end, length, circular=circular)
             ]
         anchored.extend((item, _anchored(item, foot)) for foot in feet.get(id(item), ()))
-    placed = labels.staircase([one for _, one in anchored], base=top - _GAP, spacing=_SPACING)
-    boxes = tuple(
-        Label(item, one.box, one.leader) for (item, _), one in zip(anchored, placed, strict=True)
+    hides = sorted(range(len(anchored)), key=lambda i: hiding(anchored[i][0]))
+    left_out = labels.hide_in_staircase(
+        [one for _, one in anchored],
+        hides,
+        base=top - _GAP,
+        spacing=_SPACING,
+        ceiling=top - RISE,
     )
+    gone = set(left_out)
+    shown = [pair for i, pair in enumerate(anchored) if i not in gone]
+    placed = labels.staircase([one for _, one in shown], base=top - _GAP, spacing=_SPACING)
+    boxes = tuple(
+        Label(item, one.box, one.leader) for (item, _), one in zip(shown, placed, strict=True)
+    )
+    hidden = tuple({id(anchored[i][0]): anchored[i][0] for i in left_out}.values())
 
     order = {id(item): index for index, item in enumerate(items)}
     drawn = sorted((*features, *primers), key=lambda run: order[id(run.item)])
@@ -268,24 +292,25 @@ def layout(
         *(_label(label) for label in boxes),
         *title,
     )
-    extent = _extent(
-        [
-            Box(0.0, -_BACKBONE / 2, WIDTH, _STRANDS_APART + _BACKBONE),
-            *_boxes(ends),
-            *numbers,
-            *(_bounds(arrow) for run in drawn for arrow in arrows[id(run)]),
-            *(_letters_box(name_.letters) for name_ in names.values()),
-            *(label.box for label in boxes),
-            *_boxes(title),
-        ]
-    )
+    taken = [
+        Box(0.0, -_BACKBONE / 2, WIDTH, _STRANDS_APART + _BACKBONE),
+        *_boxes(ends),
+        *numbers,
+        *(_bounds(arrow) for run in drawn for arrow in arrows[id(run)]),
+        *(_letters_box(name_.letters) for name_ in names.values()),
+        *(label.box for label in boxes),
+        *_boxes(title),
+    ]
+    said = _notice(hidden, _extent(taken))
+    extent = _extent([*taken, *_boxes(said)])
     return LinearMap(
         extent,
         top,
         tuple(arrow for run in drawn for arrow in arrows[id(run)]),
         tuple(names[id(run)] for run in drawn if id(run) in names),
         boxes,
-        shapes,
+        hidden,
+        (*shapes, *said),
     )
 
 
@@ -596,6 +621,28 @@ def _title(name: str, length: int, span: tuple[int, int] | None, bottom: float) 
         shapes.append(Text(left, _baseline(font, size, top + height / 2), text, font, size))
         top += height
     return shapes
+
+
+def _notice(hidden: Sequence[Item], extent: Box) -> list[Shape]:
+    """Return what says how many labels hid, under the bottom right of `extent`, if any did.
+
+    It carries the hidden labels for a page to list.
+    """
+    said = notice(hidden)
+    if not said:
+        return []
+    width, height = SANS.width(said, SMALL_SIZE), _height(SANS, SMALL_SIZE)
+    middle = extent.y + extent.height - _EDGE + _GAP + height / 2
+    text = Text(
+        extent.x + extent.width - _EDGE - width,
+        _baseline(SANS, SMALL_SIZE, middle),
+        said,
+        SANS,
+        SMALL_SIZE,
+        _INK,
+    )
+    listed = json.dumps([item.label for item in hidden], ensure_ascii=False)
+    return [Group((text,), classes=("notice",), data={"hidden": listed})]
 
 
 def _boxes(shapes: Iterable[Shape]) -> list[Box]:

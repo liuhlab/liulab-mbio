@@ -10,9 +10,14 @@ A feature's name sits on its arrow when it fits, curved along the band and uprig
 half. Every other label is outside, in the columns `labels.columns` lays out, so no label overlaps
 another label or the drawing: a feature's name boxed in its colour, a primer's in purple, and a cut
 site's enzymes in black, joined to the backbone at the cut.
+
+The columns grow above and below the circle as far as `REACH`. Past it, labels hide in the order
+`layers.hiding` gives, and a notice at the bottom right says how many. A name on an arrow never
+hides.
 """
 
 import itertools
+import json
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -20,7 +25,15 @@ from dataclasses import dataclass
 from liulab_mbio.plot import labels
 from liulab_mbio.plot.fonts import BOLD, SANS, Font
 from liulab_mbio.plot.labels import Box, Point
-from liulab_mbio.plot.layers import Item, Span, outline_color, text_color, unwrapped
+from liulab_mbio.plot.layers import (
+    Item,
+    Span,
+    hiding,
+    notice,
+    outline_color,
+    text_color,
+    unwrapped,
+)
 from liulab_mbio.plot.svg import (
     Circle,
     Group,
@@ -37,6 +50,9 @@ from liulab_mbio.sequence import Strand
 
 #: The backbone's radius, in points. Everything else on the circle is laid out from it.
 RADIUS = 220.0
+
+#: How far above or below the centre a label may lie, in points, before labels hide.
+REACH = 390.0
 
 #: The size of a label's text, in points.
 LABEL_SIZE = 11.5
@@ -144,6 +160,8 @@ class CircularMap:
         Every feature's name set on its arrow, in the items' order.
     labels
         Every label, in the items' order.
+    hidden
+        The item of each label left out, in the order they hid.
     shapes
         Everything, in the order it is drawn.
     """
@@ -153,6 +171,7 @@ class CircularMap:
     arrows: tuple[Arrow, ...]
     names: tuple[Name, ...]
     labels: tuple[Label, ...]
+    hidden: tuple[Item, ...]
     shapes: tuple[Shape, ...]
 
 
@@ -174,7 +193,12 @@ def layout(items: Sequence[Item], *, name: str, length: int) -> CircularMap:
         for item in features
         if (on_arrow := _name(item, max(own[id(item)], key=_room)))
     }
-    boxed = _labels([item for item in items if id(item) not in names], length, drawing)
+    boxed, hidden = _labels([item for item in items if id(item) not in names], length, drawing)
+    extent = _extent(drawing + _ANCHOR, boxed)
+    said = _notice(hidden, extent)
+    if said:
+        below = _GAP + _height(SANS, SMALL_SIZE)
+        extent = Box(extent.x, extent.y, extent.width, extent.height + below)
     shapes = (
         *_backbone(length),
         *(
@@ -184,10 +208,9 @@ def layout(items: Sequence[Item], *, name: str, length: int) -> CircularMap:
         ),
         *(_label(label, backbone) for label in boxed),
         *_centre(name, length),
+        *said,
     )
-    return CircularMap(
-        _extent(drawing + _ANCHOR, boxed), drawing, arrows, tuple(names.values()), boxed, shapes
-    )
+    return CircularMap(extent, drawing, arrows, tuple(names.values()), boxed, hidden, shapes)
 
 
 def _angle(position: float, length: int) -> float:
@@ -363,7 +386,10 @@ def _name(item: Item, arrow: Arrow) -> Name | None:
     return Name(arrow, Letters(tuple(places), item.label, SANS, LABEL_SIZE, color))
 
 
-def _labels(items: Sequence[Item], length: int, drawing: float) -> tuple[Label, ...]:
+def _labels(
+    items: Sequence[Item], length: int, drawing: float
+) -> tuple[tuple[Label, ...], tuple[Item, ...]]:
+    """Return the labels placed in the columns, and the items whose labels hid, in that order."""
     named = [item for item in items if SANS.drawn(item.label)]
     anchored = []
     for item in named:
@@ -376,8 +402,19 @@ def _labels(items: Sequence[Item], length: int, drawing: float) -> tuple[Label, 
                 _point(drawing + _ANCHOR, _angle((start + end) / 2, length)),
             )
         )
-    placed = labels.columns(anchored, radius=drawing, gap=_GAP, spacing=_SPACING, margin=_MARGIN)
-    return tuple(Label(item, one.box, one.leader) for item, one in zip(named, placed, strict=True))
+    order = sorted(range(len(named)), key=lambda i: hiding(named[i]))
+    left_out = labels.hide_in_columns(
+        anchored, order, radius=drawing, gap=_GAP, spacing=_SPACING, reach=REACH
+    )
+    gone = set(left_out)
+    shown = [i for i in range(len(named)) if i not in gone]
+    placed = labels.columns(
+        [anchored[i] for i in shown], radius=drawing, gap=_GAP, spacing=_SPACING, margin=_MARGIN
+    )
+    boxed = tuple(
+        Label(named[i], one.box, one.leader) for i, one in zip(shown, placed, strict=True)
+    )
+    return boxed, tuple(named[i] for i in left_out)
 
 
 def _extent(reach: float, boxed: Sequence[Label]) -> Box:
@@ -386,6 +423,28 @@ def _extent(reach: float, boxed: Sequence[Label]) -> Box:
     top = min([-reach, *(label.box.y for label in boxed)]) - _EDGE
     bottom = max([reach, *(label.box.y + label.box.height for label in boxed)]) + _EDGE
     return Box(left, top, right - left, bottom - top)
+
+
+def _notice(hidden: Sequence[Item], extent: Box) -> list[Shape]:
+    """Return what says how many labels hid, under the bottom right of `extent`, if any did.
+
+    It carries the hidden labels for a page to list.
+    """
+    said = notice(hidden)
+    if not said:
+        return []
+    width, height = SANS.width(said, SMALL_SIZE), _height(SANS, SMALL_SIZE)
+    middle = extent.y + extent.height - _EDGE + _GAP + height / 2
+    text = Text(
+        extent.x + extent.width - _EDGE - width,
+        _baseline(SANS, SMALL_SIZE, middle),
+        said,
+        SANS,
+        SMALL_SIZE,
+        _INK,
+    )
+    listed = json.dumps([item.label for item in hidden], ensure_ascii=False)
+    return [Group((text,), classes=("notice",), data={"hidden": listed})]
 
 
 def _backbone(length: int) -> list[Shape]:

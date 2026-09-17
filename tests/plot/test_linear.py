@@ -1,6 +1,6 @@
 """The linear map laid out, items in and shapes out: arrows cut cleanly where the stretch drawn cuts
-them, names inside or underneath, and labels apart from each other and clear of the drawing, on
-crowded and seeded random records, whole and in regions."""
+them, names inside or underneath, and labels apart from each other and clear of the drawing, hiding
+past the cap, on crowded and seeded random records, whole and in regions."""
 
 import random
 from collections.abc import Callable
@@ -9,9 +9,11 @@ from itertools import combinations
 
 import pytest
 
-from liulab_mbio.plot import layers, linear
+from liulab_mbio.plot import layers, linear, svg
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+
+from . import crowds
 
 LENGTH = 3000
 #: How far two shapes may reach into each other and still count as touching.
@@ -25,6 +27,7 @@ class Given:
     items: tuple[layers.Item, ...]
     circular: bool = True
     span: tuple[int, int] | None = None
+    length: int = LENGTH
 
 
 def _feature(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> Feature:
@@ -49,7 +52,7 @@ def _items(
 
 def _laid(given: Given) -> linear.LinearMap:
     return linear.layout(
-        given.items, name="map", length=LENGTH, circular=given.circular, span=given.span
+        given.items, name="map", length=given.length, circular=given.circular, span=given.span
     )
 
 
@@ -141,6 +144,7 @@ RECORDS: dict[str, Callable[[], Given]] = {
     "crowded": lambda: Given(_crowded()),
     "crowded, across the origin": lambda: Given(_crowded(), span=(2700, 3500)),
     "crowded, a region": lambda: Given(_crowded(), span=(360, 700)),
+    "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), length=2686),
     **{f"random {seed}": lambda seed=seed: Given(_random(seed, True)) for seed in range(4)},
     **{
         f"random linear {seed}": lambda seed=seed: Given(_random(seed, False), circular=False)
@@ -251,6 +255,73 @@ def test_each_name_lies_inside_its_arrow_less_its_heads_or_underneath_clear_of_e
         else:
             assert box.y > body.y + body.height
             assert not [a.item.name for a in laid_out.arrows if _overlap(box, _band(a))]
+
+
+def test_every_label_lies_within_its_rise_above_the_drawing(laid_out: linear.LinearMap) -> None:
+    assert all(label.box.y >= laid_out.top - linear.RISE for label in laid_out.labels)
+
+
+def test_labels_hide_cut_sites_first_then_primers_then_features(
+    laid_out: linear.LinearMap,
+) -> None:
+    order = []
+    for item in laid_out.hidden:
+        cuts = min((cutter.cuts for cutter in item.cutters), default=0)
+        order.append((["cut_site", "primer", "feature"].index(item.kind), -cuts, -len(item.label)))
+    assert order == sorted(order)
+
+
+def test_a_notice_says_what_hid_at_the_bottom_right_clear_of_everything(
+    laid_out: linear.LinearMap,
+) -> None:
+    notices = [
+        shape
+        for shape in laid_out.shapes
+        if isinstance(shape, svg.Group) and "notice" in shape.classes
+    ]
+    if not laid_out.hidden:
+        assert not notices
+        return
+    [text] = [one for group in notices for one in group.shapes]
+    assert isinstance(text, svg.Text)
+    assert text.text == layers.notice(laid_out.hidden)
+    scale = text.size / text.font.units_per_em
+    top, right = text.y - text.font.ascender * scale, text.x + text.font.width(text.text, text.size)
+    drawn = [_band(arrow) for arrow in laid_out.arrows] + [_box(name) for name in laid_out.names]
+    assert top >= max(one.y + one.height for one in drawn)
+    boxes = [*drawn, *(label.box for label in laid_out.labels)]
+    assert right >= max(one.x + one.width for one in boxes) - TOUCH
+    extent = laid_out.extent
+    assert right <= extent.x + extent.width + TOUCH
+    assert text.y - text.font.descender * scale <= extent.y + extent.height + TOUCH
+
+
+def test_puc19_with_its_99_unique_6_cutters_hides_no_label() -> None:
+    laid = _laid(Given(crowds.puc19_crowded(), length=2686))
+    assert not laid.hidden
+    assert len(laid.labels) == 42
+
+
+def test_only_a_crowd_past_its_rise_hides_and_its_cut_sites_first() -> None:
+    # Cut sites a base apart crowd a primer and two boxed names; far along the line, an enzyme that
+    # cuts three times, earlier in the order than any of them, stands alone.
+    cuts = [(f"Crowd{'x' * (i % 5)}{i}", 100 + i) for i in range(60)]
+    cuts += [("Often", 2500), ("Often", 2600), ("Often", 2700)]
+    items = (
+        *_items(
+            _feature("crowded out", 110, 120),
+            _feature("its neighbour", 140, 150),
+            primers=(_primer("in the crowd", 120, 140),),
+        ),
+        *layers.merge_cuts(cuts, LENGTH),
+    )
+    laid = _laid(Given(items))
+    assert laid.hidden
+    assert {item.name for item in laid.hidden} < {name for name, _ in cuts[:60]}
+    lengths = [len(item.label) for item in laid.hidden]
+    assert lengths == sorted(lengths, reverse=True)
+    shown = {label.item.name for label in laid.labels}
+    assert {"Often", "crowded out", "its neighbour", "in the crowd"} <= shown
 
 
 def test_every_arrow_lies_along_the_line(laid_out: linear.LinearMap) -> None:

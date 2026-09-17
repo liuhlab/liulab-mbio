@@ -20,11 +20,15 @@ label whose anchor its own box reaches, so close neighbours rise in a staircase.
 row meet, and no leader crosses another label, since any box lying across a leader reaches its
 anchor and so sits higher than the leader goes. `pack` puts bars in rows, each where it first fits
 in order of start, which uses the fewest rows.
+
+Neither caps how far labels reach. `hide_in_columns` and `hide_in_staircase` say which labels to
+leave out so the rest stay within a cap: a crowd of labels that push one another past it hides its
+labels in a given order until it fits, and a label in no such crowd never hides.
 """
 
 import itertools
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from typing import NamedTuple
 
@@ -93,16 +97,11 @@ def columns(
     tuple[Placed, ...]
         One placement for each label, in the order given.
     """
-    angles = [_clockwise(label.anchor) for label in labels]
-    right = sorted((i for i, angle in enumerate(angles) if angle < math.pi), key=angles.__getitem__)
-    left = sorted(
-        (i for i, angle in enumerate(angles) if angle >= math.pi), key=lambda i: -angles[i]
-    )
+    right, left = _columns(labels)
     start = radius + gap
     middles: dict[int, float] = {}
     for column in (right, left):
-        targets = [-start * math.cos(angles[i]) for i in column]
-        spread = _spread(targets, [labels[i].height for i in column], spacing)
+        spread, _ = _spread(column, labels, start, spacing)
         middles.update(zip(column, spread, strict=True))
     nearest = {i: _nearest(labels[i], middle) for i, middle in middles.items()}
     a = b = start
@@ -127,6 +126,58 @@ def columns(
         if not any(_enters(one.leader, radius) for one in placed.values()):
             return tuple(placed[i] for i in range(len(labels)))
         a *= GROWTH
+
+
+def hide_in_columns(
+    labels: Sequence[Anchored],
+    order: Sequence[int],
+    *,
+    radius: float,
+    gap: float,
+    spacing: float,
+    reach: float,
+) -> tuple[int, ...]:
+    """Return the labels to leave out so `columns` places the rest within `reach` of the centre.
+
+    A crowd is a run of labels a column packs against one another. While a crowd reaches further
+    than `reach` above or below the centre, the first of its labels in `order` hides, and the
+    column is spread again. A crowd within `reach` hides nothing.
+
+    Parameters
+    ----------
+    labels
+        As `columns` takes them.
+    order
+        Every label's index once, the first to hide first.
+    radius, gap, spacing
+        As `columns` takes them.
+    reach
+        How far above or below the centre a box may reach.
+
+    Returns
+    -------
+    tuple[int, ...]
+        The labels hidden, in the order they hid.
+    """
+    rank = {index: position for position, index in enumerate(order)}
+    hidden: list[int] = []
+    for column in _columns(labels):
+        shown = column
+        while True:
+            middles, crowds = _spread(shown, labels, radius + gap, spacing)
+            at = dict(zip(shown, middles, strict=True))
+            over = [
+                i
+                for crowd in crowds
+                if any(abs(at[j]) + labels[j].height / 2 > reach for j in crowd)
+                for i in crowd
+            ]
+            if not over:
+                break
+            first = min(over, key=rank.__getitem__)
+            shown = [i for i in shown if i != first]
+            hidden.append(first)
+    return tuple(sorted(hidden, key=rank.__getitem__))
 
 
 def staircase(labels: Sequence[Anchored], *, base: float, spacing: float) -> tuple[Placed, ...]:
@@ -196,22 +247,97 @@ def pack(bars: Sequence[tuple[float, float]], *, spacing: float) -> tuple[int, .
     return tuple(rows)
 
 
+def hide_in_staircase(
+    labels: Sequence[Anchored],
+    order: Sequence[int],
+    *,
+    base: float,
+    spacing: float,
+    ceiling: float,
+) -> tuple[int, ...]:
+    """Return the labels to leave out so `staircase` places the rest no higher than `ceiling`.
+
+    Two labels can lift each other only when their anchors lie closer than their widths and
+    `spacing` added up, and a crowd is a run of labels linked so. While a crowd rises above
+    `ceiling`, its labels hide in `order`. A crowd below `ceiling` hides nothing.
+
+    Parameters
+    ----------
+    labels
+        As `staircase` takes them.
+    order
+        Every label's index once, the first to hide first.
+    base, spacing
+        As `staircase` takes them.
+    ceiling
+        The height no box's top may rise above.
+
+    Returns
+    -------
+    tuple[int, ...]
+        The labels hidden, in the order they hid.
+    """
+    rank = {index: position for position, index in enumerate(order)}
+    hidden: list[int] = []
+
+    def fits(indices: Sequence[int]) -> bool:
+        placed = staircase([labels[i] for i in indices], base=base, spacing=spacing)
+        return all(one.box.y >= ceiling for one in placed)
+
+    pending = _crowds(labels, range(len(labels)), spacing)
+    while pending:
+        crowd = pending.pop()
+        if fits(crowd):
+            continue
+        ranked = sorted(crowd, key=rank.__getitem__)
+
+        def rest(count: int, crowd: list[int] = crowd, ranked: list[int] = ranked) -> list[int]:
+            gone = set(ranked[:count])
+            return [i for i in crowd if i not in gone]
+
+        # Hiding more of a crowd almost never lifts the rest, so halving finds how many to hide;
+        # the count it finds always fits.
+        least = _least(0, len(ranked), lambda count: fits(rest(count)))
+        if len(_crowds(labels, rest(least - 1), spacing)) <= 1:
+            hidden.extend(ranked[:least])
+            continue
+        # The crowd breaks up before it fits: hide what it takes to break it, then each part alone.
+        breaks = _least(0, least - 1, lambda count: len(_crowds(labels, rest(count), spacing)) > 1)
+        hidden.extend(ranked[:breaks])
+        pending.extend(_crowds(labels, rest(breaks), spacing))
+    return tuple(sorted(hidden, key=rank.__getitem__))
+
+
+def _columns(labels: Sequence[Anchored]) -> tuple[list[int], list[int]]:
+    """Return the right column's labels and the left's, each from the top down."""
+    angles = [_clockwise(label.anchor) for label in labels]
+    right = sorted((i for i, angle in enumerate(angles) if angle < math.pi), key=angles.__getitem__)
+    left = sorted(
+        (i for i, angle in enumerate(angles) if angle >= math.pi), key=lambda i: -angles[i]
+    )
+    return right, left
+
+
 def _clockwise(point: Point) -> float:
     """Return the angle of `point` about the centre, clockwise from the top, in [0, 2π)."""
     return math.atan2(point.x, -point.y) % math.tau
 
 
-def _spread(targets: Sequence[float], heights: Sequence[float], spacing: float) -> list[float]:
-    """Return the middles nearest `targets`, in least squares, that keep boxes `spacing` apart.
+def _spread(
+    column: Sequence[int], labels: Sequence[Anchored], start: float, spacing: float
+) -> tuple[list[float], list[list[int]]]:
+    """Return the middles nearest their anchors' heights, in least squares, keeping boxes apart.
 
-    Subtracting each box's least offset from the first turns this into isotonic regression, which
-    pooling adjacent violators solves exactly.
+    Each box's target is its anchor's angle carried out to `start`. Subtracting each box's least
+    offset from the first turns this into isotonic regression, which pooling adjacent violators
+    solves exactly. The pools come back too, as the crowds of labels packed against one another.
     """
-    if not targets:
-        return []
+    if not column:
+        return [], []
+    targets = [-start * math.cos(_clockwise(labels[i].anchor)) for i in column]
     offsets = [0.0]
-    for above, below in itertools.pairwise(heights):
-        offsets.append(offsets[-1] + (above + below) / 2 + spacing)
+    for above, below in itertools.pairwise(column):
+        offsets.append(offsets[-1] + (labels[above].height + labels[below].height) / 2 + spacing)
     pools: list[list[float]] = []
     for target, offset in zip(targets, offsets, strict=True):
         pools.append([target - offset, 1.0])
@@ -220,7 +346,42 @@ def _spread(targets: Sequence[float], heights: Sequence[float], spacing: float) 
             pools[-1][0] += total
             pools[-1][1] += count
     fitted = [total / count for total, count in pools for _ in range(int(count))]
-    return [value + offset for value, offset in zip(fitted, offsets, strict=True)]
+    crowds, first = [], 0
+    for _, count in pools:
+        crowds.append(list(column[first : first + int(count)]))
+        first += int(count)
+    return [value + offset for value, offset in zip(fitted, offsets, strict=True)], crowds
+
+
+def _crowds(labels: Sequence[Anchored], indices: Iterable[int], spacing: float) -> list[list[int]]:
+    """Return `indices` split into crowds along the line, each crowd's indices in increasing order.
+
+    Each box hangs within its width of its anchor, so two labels whose anchors lie further apart
+    than their widths and `spacing` added up never meet.
+    """
+    reaches = sorted((labels[i].anchor.x - labels[i].width - spacing / 2, i) for i in indices)
+    crowds: list[list[int]] = []
+    end = -math.inf
+    for left, i in reaches:
+        if left >= end:
+            crowds.append([])
+        crowds[-1].append(i)
+        end = max(end, labels[i].anchor.x + labels[i].width + spacing / 2)
+    return [sorted(crowd) for crowd in crowds]
+
+
+def _least(low: int, high: int, holds: Callable[[int], bool]) -> int:
+    """Return the least count above `low`, and at most `high`, for which `holds` does.
+
+    `holds` fails at `low`, holds at `high`, and holds for every count above one it holds for.
+    """
+    while high - low > 1:
+        middle = (low + high) // 2
+        if holds(middle):
+            high = middle
+        else:
+            low = middle
+    return high
 
 
 def _nearest(label: Anchored, middle: float) -> float:

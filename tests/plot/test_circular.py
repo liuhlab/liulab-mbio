@@ -1,22 +1,35 @@
 """The circular map laid out, items in and shapes out: arrows as the record has them, names on the
-arrows they fit, and labels apart from each other and from the drawing, on crowded and seeded
-random records."""
+arrows they fit, and labels apart from each other and from the drawing, hiding past the cap, on
+crowded and seeded random records."""
 
 import math
 import random
 from collections import Counter
+from dataclasses import dataclass
 from itertools import combinations
 
 import pytest
 
-from liulab_mbio.plot import circular, layers
+from liulab_mbio.enzymes import enzymes
+from liulab_mbio.plot import circular, layers, svg
 from liulab_mbio.plot.fonts import SANS
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.sites import find_sites
+
+from . import crowds
 
 LENGTH = 3000
 #: How far two shapes may reach into each other and still count as touching.
 TOUCH = 1e-6
+
+
+@dataclass(frozen=True)
+class Given:
+    """Items to lay out, and the length of the record they lie on."""
+
+    items: tuple[layers.Item, ...]
+    length: int = LENGTH
 
 
 def _layout(record: SequenceRecord) -> circular.CircularMap:
@@ -124,20 +137,21 @@ def _near_fit() -> tuple[layers.Item, ...]:
 
 
 RECORDS = {
-    "crowded": _crowded,
-    "near fit": _near_fit,
-    **{f"random {seed}": lambda seed=seed: _random(seed) for seed in range(12)},
+    "crowded": lambda: Given(_crowded()),
+    "near fit": lambda: Given(_near_fit()),
+    "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), 2686),
+    **{f"random {seed}": lambda seed=seed: Given(_random(seed)) for seed in range(12)},
 }
 
 
 @pytest.fixture(scope="module", params=list(RECORDS))
-def given(request: pytest.FixtureRequest) -> tuple[layers.Item, ...]:
+def given(request: pytest.FixtureRequest) -> Given:
     return RECORDS[request.param]()
 
 
 @pytest.fixture(scope="module")
-def laid_out(given: tuple[layers.Item, ...]) -> circular.CircularMap:
-    return circular.layout(given, name="map", length=LENGTH)
+def laid_out(given: Given) -> circular.CircularMap:
+    return circular.layout(given.items, name="map", length=given.length)
 
 
 def _overlap(one: Box, other: Box) -> bool:
@@ -207,12 +221,107 @@ def _letter_boxes(name: circular.Name) -> list[list[Point]]:
     return boxes
 
 
-def test_every_item_is_named_once_on_its_arrow_or_labelled_once(
-    given: tuple[layers.Item, ...], laid_out: circular.CircularMap
+def test_every_item_is_named_on_its_arrow_labelled_or_hidden_once(
+    given: Given, laid_out: circular.CircularMap
 ) -> None:
     named = [id(name.arrow.item) for name in laid_out.names]
     labelled = [id(label.item) for label in laid_out.labels]
-    assert Counter(named + labelled) == Counter(map(id, given))
+    hidden = [id(item) for item in laid_out.hidden]
+    assert Counter(named + labelled + hidden) == Counter(map(id, given.items))
+
+
+def test_every_label_lies_within_reach_of_the_centre(laid_out: circular.CircularMap) -> None:
+    assert all(
+        label.box.y >= -circular.REACH and label.box.y + label.box.height <= circular.REACH
+        for label in laid_out.labels
+    )
+
+
+def _hides_before(item: layers.Item) -> tuple[int, int, int]:
+    """Cut sites first, cutting most often first; then primers; then features; longest first."""
+    cuts = min((cutter.cuts for cutter in item.cutters), default=0)
+    return ["cut_site", "primer", "feature"].index(item.kind), -cuts, -len(item.label)
+
+
+def test_labels_hide_cut_sites_first_then_primers_then_features(
+    laid_out: circular.CircularMap,
+) -> None:
+    order = [_hides_before(item) for item in laid_out.hidden]
+    assert order == sorted(order)
+
+
+def _notice(shapes: tuple[svg.Shape, ...]) -> list[tuple[str, Box]]:
+    """Each notice drawn, as its words and the box its text takes."""
+    found = []
+    for shape in shapes:
+        if isinstance(shape, svg.Group) and "notice" in shape.classes:
+            [text] = shape.shapes
+            assert isinstance(text, svg.Text)
+            scale = text.size / text.font.units_per_em
+            top = text.y - text.font.ascender * scale
+            height = (text.font.ascender - text.font.descender) * scale
+            found.append(
+                (text.text, Box(text.x, top, text.font.width(text.text, text.size), height))
+            )
+    return found
+
+
+def test_a_notice_says_what_hid_at_the_bottom_right_clear_of_everything(
+    laid_out: circular.CircularMap,
+) -> None:
+    notices = _notice(laid_out.shapes)
+    if not laid_out.hidden:
+        assert not notices
+        return
+    [(words, box)] = notices
+    assert words == layers.notice(laid_out.hidden)
+    boxes = [label.box for label in laid_out.labels]
+    assert box.y >= max([laid_out.radius, *(one.y + one.height for one in boxes)])
+    assert (
+        box.x + box.width >= max([laid_out.radius, *(one.x + one.width for one in boxes)]) - TOUCH
+    )
+    extent = laid_out.extent
+    assert extent.x <= box.x
+    assert box.x + box.width <= extent.x + extent.width + TOUCH
+    assert box.y + box.height <= extent.y + extent.height + TOUCH
+
+
+def test_puc19_with_its_99_unique_6_cutters_hides_no_label() -> None:
+    items = crowds.puc19_crowded()
+    laid = circular.layout(items, name="pUC19", length=2686)
+    assert sum(item.kind == "cut_site" for item in items) == 38
+    assert not laid.hidden
+    assert len(laid.labels) == 44
+
+
+def test_the_pinned_cutters_cut_where_the_shipped_enzymes_do() -> None:
+    pinned = dict(crowds.unique_6_cutters())
+    shipped = {site.enzyme.name: site.top_cut for site in find_sites(crowds.puc19(), enzymes())}
+    assert len(pinned) == 99
+    both = pinned.keys() & shipped.keys()
+    assert len(both) == 16
+    assert {name: pinned[name] for name in both} == {name: shipped[name] for name in both}
+
+
+def test_only_a_crowd_past_the_reach_hides_and_its_cut_sites_first() -> None:
+    # Near the top, cut sites crowd a primer and two boxed names; lower down the same column, an
+    # enzyme that cuts three times, earlier in the order than any of them, stands alone.
+    cuts = [(f"Crowd{'x' * (i % 5)}{i}", 60 + 2 * i) for i in range(30)]
+    cuts += [("Often", 1250), ("Often", 1260), ("Often", 1270)]
+    record = SequenceRecord(
+        "A" * LENGTH,
+        topology="circular",
+        features=(_feature("tiny", 70, 72), _feature("small", 100, 102)),
+        primers=(_primer("in the crowd", 80, 100),),
+    )
+    items = (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
+    laid = circular.layout(items, name="crowd", length=LENGTH)
+    assert laid.hidden
+    assert {item.name for item in laid.hidden} < {name for name, _ in cuts[:30]}
+    lengths = [len(item.label) for item in laid.hidden]
+    assert lengths == sorted(lengths, reverse=True)
+    shown = {label.item.name for label in laid.labels}
+    assert {"Often", "tiny", "small", "in the crowd"} <= shown
 
 
 def test_each_name_on_an_arrow_lies_inside_its_arrow_less_its_heads(

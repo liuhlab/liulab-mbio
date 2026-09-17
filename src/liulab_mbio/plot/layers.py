@@ -12,6 +12,9 @@ numbered as SnapGene numbers one: by the base after which its enzymes cut the to
 
 Asked for, a CDS carries its translation, read with the standard genetic code across its joined
 segments from its `/codon_start`, the whole feature through, stops included.
+
+Where labels crowd past what a map grows to, they hide in the order `hiding` sorts them, and
+`notice` says how many hid.
 """
 
 import re
@@ -120,6 +123,9 @@ SEPARATOR = " - "
 
 #: The `/regulatory_class` values that put a `regulatory` feature among the terminators.
 TERMINATING_CLASSES = frozenset({"terminator", "polyA_signal_sequence"})
+
+# The kinds in the order their labels hide.
+_HIDING: tuple[Kind, ...] = ("cut_site", "primer", "feature")
 
 
 @dataclass(frozen=True, slots=True)
@@ -356,6 +362,49 @@ def merge_cuts(cuts: Iterable[tuple[str, int]], length: int) -> tuple[Item, ...]
             )
         )
     return tuple(merged)
+
+
+def hiding(item: Item) -> tuple[int, int, int]:
+    """Return where an item's label comes in the order labels hide: sort by it, first to hide first.
+
+    Cut sites hide first, those whose enzymes cut most often before the rest, then primers, then
+    features, and within each the longest label first. A cut site naming several enzymes hides as
+    late as the one among them that cuts least often.
+
+    Examples
+    --------
+    >>> sites = merge_cuts([("EcoRI", 396), ("BsmBI", 3), ("BsmBI", 45)], 2686)
+    >>> [site.label for site in sorted(sites, key=hiding)]
+    ['BsmBI (45)', 'BsmBI (3)', 'EcoRI (396)']
+    """
+    kind = _HIDING.index(item.kind)
+    cuts = min((cutter.cuts for cutter in item.cutters), default=0)
+    return kind, -cuts, -len(item.label)
+
+
+def notice(hidden: Iterable[Item]) -> str:
+    """Return what a map says of the labels it hid, counting each kind, or nothing if none hid.
+
+    Examples
+    --------
+    >>> sites = merge_cuts([("EcoRI", 396), ("BamHI", 417), ("SacI", 406)], 2686)
+    >>> primer = Item("primer", "M13 fwd", "primer", Strand.FORWARD, (), "M13 fwd (378 .. 394)")
+    >>> notice([*sites, primer])
+    '3 enzyme sites and 1 primer are hidden'
+    >>> notice(sites[:1]), notice([])
+    ('1 enzyme site is hidden', '')
+    """
+    counts = Counter(item.kind for item in hidden)
+    parts = [
+        f"{counts[kind]} {word if counts[kind] == 1 else word + 's'}"
+        for kind, word in zip(_HIDING, ("enzyme site", "primer", "feature"), strict=True)
+        if counts[kind]
+    ]
+    if not parts:
+        return ""
+    listed = parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
+    verb = "is" if sum(counts.values()) == 1 else "are"
+    return f"{listed} {verb} hidden"
 
 
 def default_color(feature: Feature) -> str:
