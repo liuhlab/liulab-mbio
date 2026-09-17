@@ -9,6 +9,12 @@ sets one.
 
 ### Added
 
+- A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
+  map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
+  opens offline. A feature keeps the colour its file gives it. One with no colour takes a
+  default for its type that people with colour blindness can tell apart. Each feature's name sits
+  in a box outside the circle, and no two boxes overlap. Hovering over a feature shows its name,
+  type, span and length.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

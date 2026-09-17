@@ -490,3 +490,11 @@ colonies counted against the number of those products. A round short of the cove
 loses members no later round can put back, so it is counted for each round and not once at the
 end.
 _Avoid_: complexity, depth, diversity, representation
+
+### Map
+
+A drawing of a sequence record, whole or one region of it, as a circle or a line: features as
+arrows along their strand, cut sites and primers labelled outside. A region is always drawn as a
+line, numbered as the record is. No label overlaps another; one that cannot be placed is hidden,
+and the map says how many.
+_Avoid_: plasmid map (a linear record has one too), figure, plot

@@ -72,6 +72,32 @@ across the origin of a circular record ends past the record's length — see
 
 ::: liulab_mbio.translate
 
+## Maps
+
+`draw_map` draws a sequence record as a map, and `Drawing.write` writes it as one HTML page that
+opens offline. The modules under it are its steps. `layers` picks what a record draws, with its
+names and colours. `circular` places those items round a circle, and `labels` keeps their labels
+apart. `fonts` measures text in the faces the page embeds, `svg` writes the shapes, and `page`
+wraps them in the page.
+
+::: liulab_mbio.plot
+    options:
+      members: false
+
+::: liulab_mbio.plot.drawing
+
+::: liulab_mbio.plot.layers
+
+::: liulab_mbio.plot.circular
+
+::: liulab_mbio.plot.labels
+
+::: liulab_mbio.plot.fonts
+
+::: liulab_mbio.plot.svg
+
+::: liulab_mbio.plot.page
+
 ## Primers
 
 Every public name in the modules below imports from `liulab_mbio.primers` too:
@@ -172,3 +198,5 @@ The whole module, because typer makes every verb a plain function with a docstri
 ::: liulab_mbio.goldengate.cli
 
 ::: liulab_mbio.protocol.cli
+
+::: liulab_mbio.plot.cli
