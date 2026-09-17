@@ -55,6 +55,11 @@ sets one.
   still leaves out what they switch off. A circular record drawn whole flips between a circle
   and a line at the top right, and `--linear` shows the line first. A click on a feature, primer
   or cut site highlights it. The notice of hidden labels counts only those whose switches are on.
+- Primers and cut sites in the sequence view. Each primer is an arrow beside the strand it copies.
+  Its 5' tail bends away from the bases, and each base it does not pair with is marked in red. Each
+  cut is drawn through both strands, so you can see the overhang it leaves. The enzymes that cut
+  there are named above it, one name a line, in bold if they cut the record once. The view shows
+  the same enzymes, layers and feature types as the map.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

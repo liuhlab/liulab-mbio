@@ -894,6 +894,118 @@ def test_a_regions_sequence_view_keeps_the_records_numbering_across_the_origin(
     assert [_texts(row, "position") for row in rows] == [["3"], ["10"]]
 
 
+def _layered() -> SequenceRecord:
+    """A small circular record with a feature of two types, its source, a primer, and a site each
+    for two shipped enzymes that cut it once."""
+    bases = list("ACGT" * 75)
+    bases[100:106] = "GAATTC"
+    bases[200:206] = "AAGCTT"
+    return SequenceRecord(
+        "".join(bases),
+        topology="circular",
+        name="layered",
+        features=(
+            Feature("layered", "source", (Segment(0, 300),)),
+            Feature("coding", "CDS", (Segment(10, 70),), strand=Strand.FORWARD),
+            Feature("origin", "rep_origin", (Segment(150, 190),)),
+        ),
+        primers=(
+            Primer(
+                "forward",
+                "ACGTACGTACGTACGTAC",
+                binding_sites=(BindingSite(120, 138, Strand.FORWARD),),
+            ),
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("switches", "off"),
+    [
+        ({}, {"feature": {"layered"}}),
+        ({"features": False}, {"feature": {"coding", "origin", "layered"}}),
+        (
+            {"primers": False, "enzymes": ["HindIII"]},
+            {"feature": {"layered"}, "primer": {"forward"}},
+        ),
+        ({"cut_sites": False}, {"feature": {"layered"}, "cut_site": {"EcoRI", "HindIII"}}),
+        ({"hide_types": ["CDS"], "source": True}, {"feature": {"coding"}}),
+    ],
+)
+def test_the_sequence_view_takes_the_maps_enzymes_layers_and_feature_types(
+    tmp_path: Path, switches: dict, off: dict[str, set[str]]
+) -> None:
+    drawing = draw_map(_layered(), sequence_view=True, **switches)
+    everything = {
+        "feature": {"coding", "origin", "layered"},
+        "primer": {"forward"},
+        "cut_site": set(switches.get("enzymes", ["EcoRI", "HindIII"])),
+    }
+    page = _page(drawing, tmp_path / "map.html")[1]
+    [view] = page.find_all("figure", cls="sequence-view")
+    found: dict[str, set[str]] = {}
+    switched: dict[str, set[str]] = {}
+    for group in view.find_all("g"):
+        if "data-kind" in group.attrs:
+            kind, name = group.attrs["data-kind"], group.attrs["data-name"]
+            found.setdefault(kind, set()).add(name)
+            if "off" in group.attrs["class"].split():
+                switched.setdefault(kind, set()).add(name)
+    assert (found, switched) == (everything, off)
+    # Each item is known by the same details in both views, for a switch or a click to reach.
+    details = ["data-kind", "data-name", "data-type", "data-span", "data-length"]
+
+    def known(figure: Node) -> set[tuple[str | None, ...]]:
+        return {
+            tuple(group.attrs.get(one) for one in details)
+            for group in figure.find_all("g")
+            if "data-kind" in group.attrs
+        }
+
+    assert known(view) == known(_map(page))
+    # A PNG or a PDF draws only what shows.
+    assert drawing.sequence_view is not None
+    drawn = {
+        (one.item.kind, one.item.name)
+        for row in drawing.sequence_view.rows
+        for one in (*row.bars, *row.arrows, *row.cuts, *row.labels)
+    }
+    assert drawn == {
+        (kind, name)
+        for kind, names in everything.items()
+        for name in names
+        if name not in off.get(kind, ())
+    }
+
+
+def test_the_sequence_view_stacks_the_names_at_one_cut_bold_where_one_cuts_once(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    drawing = draw_map(
+        puc19, region=(660, 720), sequence_view=True, enzymes=["SapI", "BspQI", "BsaI"]
+    )
+    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+    assert _labels(view, "cut_site") == [[("BspQI", "700"), ("SapI", "700")]]
+
+
+def test_the_sequence_view_draws_each_primers_tail_and_mismatches_where_snapgene_binds_it(
+    data_dir: Path,
+) -> None:
+    drawing = draw_map(data_dir / "primer-test.dna", sequence_view=True, cut_sites=False)
+    assert drawing.sequence_view is not None
+    cell = sequence_view.CELL
+    tails: dict[str, tuple[float, float]] = {}
+    marks = set()
+    for row in drawing.sequence_view.rows:
+        for tail in row.tails:
+            ends = [row.start + point.x / cell for point in tail.points]
+            tails[tail.item.name] = (min(ends), max(ends))
+        marks |= {(mark.item.name, row.start + int(mark.box.x // cell)) for mark in row.mismatches}
+    # Each tail is 9 bases, 5' of the binding site on the primer's own strand.
+    assert tails == {"fwd-BsaI-tail": (21, 30), "rev-mismatch": (272, 281)}
+    assert marks == {("rev-mismatch", 263)}
+
+
 def test_a_sequence_view_past_100_kb_is_refused_asking_for_a_region_and_a_map_is_not() -> None:
     record = SequenceRecord("ACGT" * 25_001, name="long")
     with pytest.raises(ValueError, match=r"at most 100,000 bases.*100,004: name a region"):
