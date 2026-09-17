@@ -6,7 +6,7 @@ vl-convert draws nothing for text in a font it has not been given, and raises no
 """
 
 import io
-from collections.abc import Sequence
+from collections.abc import Iterable
 
 #: The longest side, in pixels, a PNG is drawn with. vl-convert's renderer places shapes in 32-bit
 #: floating point, which holds a position to the quarter pixel it anti-aliases at only below this
@@ -33,7 +33,7 @@ def png(document: str, *, dpi: float) -> bytes:
     return vl_convert.svg_to_png(document, ppi=dpi)  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def pdf(pages: Sequence[str]) -> bytes:
+def pdf(pages: Iterable[str]) -> bytes:
     """Return a PDF with each SVG document of `pages`, measured in points, on a page of its own."""
     import pypdf
     import vl_convert

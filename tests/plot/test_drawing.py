@@ -16,6 +16,7 @@ from pypdf.generic import DictionaryObject
 
 from liulab_mbio.plot import Drawing, circular, convert, draw_map, linear, sequence_view, svg
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
+from liulab_mbio.plot.labels import Box
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 from ..html import Node, parse
@@ -142,20 +143,111 @@ def test_a_pdf_is_one_page_the_size_laid_out_every_letter_handed_over_as_its_out
     assert page.extract_text() == ""
 
 
+@pytest.fixture(scope="module")
+def rows() -> Drawing:
+    """A short record's map and sequence view at ten bases a row, one row too tall for a page."""
+    stacked = tuple(Feature(f"f{n}", "misc_feature", (Segment(20, 30),)) for n in range(12))
+    record = SequenceRecord("ACGT" * 10, name="rows", features=stacked)
+    return draw_map(record, sequence_view=True, bases_per_row=10, cut_sites=False)
+
+
+def test_a_png_is_one_image_the_sequence_view_under_the_map(rows: Drawing, tmp_path: Path) -> None:
+    assert rows.sequence_view is not None
+    top, under = rows.layout.extent, rows.sequence_view.extent
+    width, height, _ = _png_size_and_dpi(rows.write(tmp_path / "rows.png", dpi=36))
+    assert width == pytest.approx(max(top.width, under.width) / 2, abs=1)
+    assert height == pytest.approx((top.height + under.height) / 2, abs=1)
+
+
+def test_a_pdf_has_the_map_then_as_many_whole_rows_to_a_page_as_fit(
+    rows: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    view = rows.sequence_view
+    assert view is not None
+    handed: list[str] = []
+    to_pdf = convert.pdf
+
+    def recorded(pages: Iterable[str]) -> bytes:
+        handed.extend(pages)
+        return to_pdf(handed)
+
+    monkeypatch.setattr(convert, "pdf", recorded)
+    pages = pypdf.PdfReader(rows.write(tmp_path / "rows.pdf")).pages
+    boxes = [
+        [float(one) for one in parse(page).find_all("svg")[0].attrs["viewbox"].split()]
+        for page in handed
+    ]
+    assert len(pages) == len(boxes)
+    for page, (_, _, width, height) in zip(pages, boxes, strict=True):
+        assert float(page.mediabox.width) == pytest.approx(width, abs=0.01)
+        assert float(page.mediabox.height) == pytest.approx(height, abs=0.01)
+    extent = rows.layout.extent
+    assert boxes[0] == pytest.approx([extent.x, extent.y, extent.width, extent.height], abs=0.01)
+    # Each row lies whole on one page after the map's, in order, on pages the view's width across.
+    tall = view.extent.width * math.sqrt(2)
+    on = [
+        [index for index, box in enumerate(boxes[1:]) if _inside(row.extent, box)]
+        for row in view.rows
+    ]
+    assert all(len(found) == 1 for found in on)
+    first = [found[0] for found in on]
+    assert first == sorted(first)
+    assert set(first) == set(range(len(boxes) - 1))
+    assert all(box[2] == pytest.approx(view.extent.width, abs=0.01) for box in boxes[1:])
+    assert all(box[3] >= tall - 0.01 for box in boxes[1:])
+    # A page ends only where the next row would not fit it, and a row that fits no page has one of
+    # its own, as tall as it needs.
+    margin = view.rows[0].extent.y - view.extent.y
+    for index, row in enumerate(view.rows[1:], start=1):
+        if first[index] != first[index - 1]:
+            top = boxes[1 + first[index - 1]][1]
+            assert row.extent.y + row.extent.height + margin > top + tall
+    assert all(
+        boxes[1 + page][3] == pytest.approx(tall, abs=0.01)
+        for page in first
+        if first.count(page) > 1
+    )
+    assert max(first.count(page) for page in first) > 1
+    assert any(box[3] > tall + 1 for box in boxes[1:])
+
+
+def _inside(inner: Box, outer: list[float]) -> bool:
+    x, y, width, height = outer
+    return (
+        x - 0.01 <= inner.x
+        and inner.x + inner.width <= x + width + 0.01
+        and y - 0.01 <= inner.y
+        and inner.y + inner.height <= y + height + 0.01
+    )
+
+
 @pytest.mark.parametrize(
-    "dpi", [10**7, 0, None], ids=["a side too long", "no pixels", "too many pixels"]
+    ("drawn", "dpi", "advice"),
+    [
+        ("small", 10**7, "and a PDF at any size"),
+        ("small", 0, "and a PDF at any size"),
+        ("small", None, "and a PDF at any size"),
+        ("rows", 10**7, "name a region to draw fewer bases, or write a PDF"),
+    ],
+    ids=["a side too long", "no pixels", "too many pixels", "with its sequence view"],
 )
 def test_a_png_too_large_or_small_to_draw_is_refused_before_it_is_drawn(
-    small: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, dpi: float | None
+    request: pytest.FixtureRequest,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    drawn: str,
+    dpi: float | None,
+    advice: str,
 ) -> None:
+    drawing: Drawing = request.getfixturevalue(drawn)
     if dpi is None:
         # More pixels than memory allows, though no side is too long.
-        extent = small.layout.extent
+        extent = drawing.layout.extent
         dpi = 1.01 * 72 * math.sqrt(convert.PNG_PIXELS / (extent.width * extent.height))
         assert max(extent.width, extent.height) * dpi / 72 < convert.PNG_SIDE
     monkeypatch.delattr(convert, "png")
-    with pytest.raises(ValueError, match=r"can be drawn at .* dpi, and a PDF at any size"):
-        small.write(tmp_path / "map.png", dpi=dpi)
+    with pytest.raises(ValueError, match=rf"can be drawn at .* dpi.*{advice}"):
+        drawing.write(tmp_path / "map.png", dpi=dpi)
     assert not (tmp_path / "map.png").exists()
 
 

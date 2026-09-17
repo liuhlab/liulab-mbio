@@ -2,7 +2,7 @@
 
 import math
 import os
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,11 +10,16 @@ from liulab_mbio.io import read_record
 from liulab_mbio.plot import circular, convert, layers, page, svg
 from liulab_mbio.plot import linear as line
 from liulab_mbio.plot import sequence_view as view
+from liulab_mbio.plot.labels import Box
 from liulab_mbio.sequence import SequenceRecord
 
 #: A region of a record: a feature's name, or a 0-based, half-open span ending past the record's
 #: length across the origin.
 type Region = str | tuple[int, int]
+
+#: How many times its width a PDF's page of sequence view rows is tall: the proportions of A4, so
+#: each page prints filling a sheet.
+_PAGE = math.sqrt(2)
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,8 +53,10 @@ class Drawing:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
         A ``.html`` page keeps its text as text, and shows the sequence view beside the map. A
-        ``.png`` at `dpi` and a ``.pdf`` draw the map alone, every letter as its outline, so they
-        look the same on any machine; `dpi` counts for the PNG alone.
+        ``.png`` at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on
+        any machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under
+        the map. The PDF has the map on its first page, and the sequence view's rows on the pages
+        after, as many to a page as fit whole.
 
         Raises
         ------
@@ -211,29 +218,82 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
 
 
 def _png(drawing: Drawing, path: Path, dpi: float) -> None:
-    extent = drawing.layout.extent
+    extent, shapes = _stacked(drawing)
     width, height = extent.width, extent.height
     least = convert.POINTS_PER_INCH / min(width, height)
     most = convert.POINTS_PER_INCH * min(
         convert.PNG_SIDE / max(width, height), math.sqrt(convert.PNG_PIXELS / (width * height))
     )
     if not least <= dpi <= most:
-        raise ValueError(
-            f"cannot draw {path.name!r} at {dpi:g} dpi: a PNG of this map can be drawn at "
-            f"{least:.3g} to {math.floor(most):,} dpi, and a PDF at any size"
-        )
-    path.write_bytes(convert.png(_outlined(drawing), dpi=dpi))
+        drawn = f"can be drawn at {least:.3g} to {math.floor(most):,} dpi"
+        if drawing.sequence_view is None:
+            reason = f"a PNG of this map {drawn}, and a PDF at any size"
+        else:
+            reason = (
+                f"a PNG of this map and its sequence view {drawn}; name a region to draw fewer "
+                "bases, or write a PDF, which draws at any size"
+            )
+        raise ValueError(f"cannot draw {path.name!r} at {dpi:g} dpi: {reason}")
+    path.write_bytes(convert.png(_outlined(shapes, extent), dpi=dpi))
 
 
 def _pdf(drawing: Drawing, path: Path, dpi: float) -> None:
-    path.write_bytes(convert.pdf([_outlined(drawing)]))
+    path.write_bytes(convert.pdf(_pages(drawing)))
 
 
-def _outlined(drawing: Drawing) -> str:
-    """Return the drawing as a PNG or a PDF draws it: on white, every letter an outline."""
-    extent = drawing.layout.extent
+def _stacked(drawing: Drawing) -> tuple[Box, tuple[svg.Shape, ...]]:
+    """Return the canvas and shapes of the map with the sequence view, if drawn, centred under it."""
+    top, rows = drawing.layout.extent, drawing.sequence_view
+    if rows is None:
+        return top, drawing.layout.shapes
+    under = rows.extent
+    width = max(top.width, under.width)
+    left = top.x - (width - top.width) / 2
+    moved = svg.Group(
+        rows.shapes,
+        x=left + (width - under.width) / 2 - under.x,
+        y=top.y + top.height - under.y,
+    )
+    return Box(left, top.y, width, top.height + under.height), (*drawing.layout.shapes, moved)
+
+
+def _pages(drawing: Drawing) -> Iterator[str]:
+    """Yield each page of a PDF: the map, then the sequence view's row blocks, none split.
+
+    A page of rows is as wide as the view and `_PAGE` times as tall, and holds as many blocks as
+    fit; a block too tall for a page has a page of its own, as tall as it needs.
+    """
+    yield _outlined(drawing.layout.shapes, drawing.layout.extent)
+    rows = drawing.sequence_view
+    if rows is None:
+        return
+    margin = rows.rows[0].extent.y - rows.extent.y
+    tall = rows.extent.width * _PAGE
+    page: list[view.Row] = []
+    for row in rows.rows:
+        if page and _bottom(row) + margin - (page[0].extent.y - margin) > tall:
+            yield _page(rows.extent, page, margin, tall)
+            page = []
+        page.append(row)
+    yield _page(rows.extent, page, margin, tall)
+
+
+def _page(extent: Box, page: Sequence[view.Row], margin: float, tall: float) -> str:
+    """Return a page of rows as wide as `extent`, `margin` clear round them and `tall` at least."""
+    top = page[0].extent.y - margin
+    bottom = max(top + tall, _bottom(page[-1]) + margin)
+    box = Box(extent.x, top, extent.width, bottom - top)
+    return _outlined([shape for row in page for shape in row.shapes], box)
+
+
+def _bottom(row: view.Row) -> float:
+    return row.extent.y + row.extent.height
+
+
+def _outlined(shapes: Iterable[svg.Shape], extent: Box) -> str:
+    """Return `shapes` as a PNG or a PDF draws them: on white, every letter an outline."""
     paper = svg.Rect(extent, "#ffffff", "none", 0)
-    return svg.document((paper, *drawing.layout.shapes), extent, outlines=True)
+    return svg.document((paper, *shapes), extent, outlines=True)
 
 
 #: Each suffix a drawing is written as, and what writes it at a dpi.

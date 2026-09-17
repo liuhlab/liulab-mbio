@@ -45,8 +45,10 @@ sets one.
   `--one-strand` leaves out the bottom strand. Features lie under the bases as bars, and every
   coding sequence shows its protein under its bases in three-letter codes, with each stop in red.
   A region keeps the record's numbering. The page shows this view up to 100,000 bases; past that,
-  name a region. A PNG or PDF still draws the map alone. `draw_map` takes `sequence_view`,
-  `bases_per_row` and `both_strands`.
+  name a region. A PNG is one image with this view under the map; one too big to make stops with
+  an error that asks for a region or a PDF. A PDF has the map on its first page and the rows on
+  the pages after, each page as many rows as fit, so a long record prints. `draw_map` takes
+  `sequence_view`, `bases_per_row` and `both_strands`.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still
