@@ -12,7 +12,7 @@ import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import Drawing, draw_map, svg
+from liulab_mbio.plot import Drawing, circular, draw_map, linear, svg
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
@@ -106,9 +106,12 @@ def _lines(shapes: Iterable[svg.Shape]) -> list[svg.Text | svg.Letters]:
     return found
 
 
+@pytest.mark.parametrize("opened", [False, True], ids=["circle", "line"])
 def test_a_pdf_is_one_page_the_size_laid_out_every_letter_handed_over_as_its_outline(
-    colour_test: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    colour_test: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, opened: bool
 ) -> None:
+    if opened:
+        colour_test = draw_map(colour_test.record, linear=True)
     handed: list[str] = []
     to_pdf = vl_convert.svg_to_pdf
 
@@ -442,3 +445,118 @@ def test_each_layer_and_feature_type_is_drawn_only_when_asked_for(
         if "data-kind" in group.attrs:
             found.setdefault(group.attrs["data-kind"], set()).add(group.attrs["data-type"])
     assert found == drawn
+
+
+def _texts(page: Node, cls: str = "") -> list[str]:
+    """Each line of text on the page, or in the groups of a class, in the order drawn."""
+    groups = page.find_all("g", cls=cls) if cls else [page]
+    return [text.text for group in groups for text in group.find_all("text")]
+
+
+def _dots(page: Node) -> int:
+    """How many dots mark the ends of a line the molecule carries on past."""
+    return sum(len(group.find_all("circle")) for group in page.find_all("g", cls="ends"))
+
+
+@pytest.mark.parametrize(
+    ("record", "opened", "line", "dots"),
+    [
+        ("puc19", False, False, 0),
+        ("puc19", True, True, 6),
+        ("gfp", False, True, 0),
+        ("gfp", True, True, 0),
+    ],
+)
+def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_each_end(
+    request: pytest.FixtureRequest, tmp_path: Path, record: str, opened: bool, line: bool, dots: int
+) -> None:
+    drawing = draw_map(request.getfixturevalue(record), linear=opened, cut_sites=False)
+    kind = linear.LinearMap if line else circular.CircularMap
+    assert isinstance(drawing.layout, kind)
+    assert _dots(_page(drawing, tmp_path / "map.html")[1]) == dots
+
+
+def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    drawing = draw_map(puc19, region="mcs")
+    assert isinstance(drawing.layout, linear.LinearMap)
+    _, page = _page(drawing, tmp_path / "map.html")
+    assert "396 .. 452 (57 bp)" in _texts(page)
+    assert _texts(page, "scale") == ["400", "410", "420", "430", "440", "450"]
+    assert ["".join(text for text, _ in label) for label in _labels(page, "cut_site")] == [
+        "EcoRI (396)",
+        "SacI (406)",
+        "KpnI - XmaI (412)",
+        "SmaI (414)",
+        "BamHI (417)",
+        "XbaI (423)",
+        "SalI (429)",
+        "PstI - SbfI (439)",
+        "SphI (445)",
+        "HindIII (447)",
+    ]
+    features = {name: groups[0].attrs["data-span"] for name, groups in _items(page).items()}
+    assert features == {"lacZ\N{GREEK SMALL LETTER ALPHA}": "146 .. 469", "MCS": "396 .. 452"}
+    # A region at the start of a linear record carries on past its end only.
+    line = draw_map(dataclasses.replace(puc19, topology="linear"), region=(0, 100))
+    assert _dots(_page(line, tmp_path / "line.html")[1]) == 3
+
+
+@pytest.mark.parametrize(
+    ("region", "title", "scale"),
+    [
+        ((2679, 2696), "2680 .. 10 (17 bp)", ["2680", "2682", "2684", "2", "4", "6", "8", "10"]),
+        ("across", "2601 .. 64 (150 bp)", ["2620", "2640", "2660", "2680", "20", "40", "60"]),
+    ],
+)
+def test_a_region_runs_across_the_origin_of_a_circular_record(
+    colour_test: Drawing,
+    tmp_path: Path,
+    region: tuple[int, int] | str,
+    title: str,
+    scale: list[str],
+) -> None:
+    _, page = _page(draw_map(colour_test.record, region=region), tmp_path / "map.html")
+    assert title in _texts(page)
+    assert _texts(page, "scale") == scale
+    assert _dots(page) == 6
+
+
+def test_a_region_a_feature_name_several_features_share_is_the_first_one(tmp_path: Path) -> None:
+    features = tuple(
+        Feature(name, "protein_bind", (Segment(start, start + 34),))
+        for name, start in (("loxP", 100), ("LoxP", 500))
+    )
+    record = SequenceRecord("A" * 1000, topology="circular", features=features)
+    _, page = _page(draw_map(record, region="LOXP"), tmp_path / "map.html")
+    assert "101 .. 134 (34 bp)" in _texts(page)
+
+
+def test_a_cutter_unique_in_a_region_but_not_in_the_record_is_not_bold_or_shown_by_default(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    # BsmBI cuts pUC19 after bases 3 and 45.
+    _, named = _page(draw_map(puc19, region=(0, 20), enzymes=["BsmBI"]), tmp_path / "named.html")
+    assert _labels(named, "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
+    _, shipped = _page(draw_map(puc19, region=(0, 20)), tmp_path / "shipped.html")
+    assert not _labels(shipped, "cut_site")
+
+
+@pytest.mark.parametrize(
+    ("record", "region", "message"),
+    [
+        ("gfp", "nothing", "record 'GFP' has no feature called 'nothing'"),
+        ("gfp", (0, 718), "does not lie on the linear record 'GFP' of 717 bases"),
+        ("gfp", (700, 10), "does not lie on the linear record"),
+        ("gfp", (-1, 10), "does not lie on the linear record"),
+        ("puc19", (2680, 10), "does not lie on the circular record 'pUC19' of 2686 bases"),
+        ("puc19", (2686, 2690), "does not lie on the circular record"),
+        ("puc19", (100, 2787), "does not lie on the circular record"),
+    ],
+)
+def test_a_region_naming_no_feature_or_lying_off_the_record_is_refused(
+    request: pytest.FixtureRequest, record: str, region: str | tuple[int, int], message: str
+) -> None:
+    with pytest.raises(ValueError, match=re.escape(message)):
+        draw_map(request.getfixturevalue(record), region=region)

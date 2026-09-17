@@ -8,7 +8,12 @@ from pathlib import Path
 
 from liulab_mbio.io import read_record
 from liulab_mbio.plot import circular, convert, layers, page, svg
+from liulab_mbio.plot import linear as line
 from liulab_mbio.sequence import SequenceRecord
+
+#: A region of a record: a feature's name, or a 0-based, half-open span ending past the record's
+#: length across the origin.
+type Region = str | tuple[int, int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,7 +29,7 @@ class Drawing:
     """
 
     record: SequenceRecord
-    layout: circular.CircularMap
+    layout: circular.CircularMap | line.LinearMap
 
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
@@ -51,6 +56,8 @@ class Drawing:
 def draw_map(
     record: SequenceRecord | str | os.PathLike[str],
     *,
+    region: Region | None = None,
+    linear: bool = False,
     features: bool = True,
     primers: bool = True,
     cut_sites: bool = True,
@@ -58,12 +65,22 @@ def draw_map(
     hide_types: Iterable[str] = (),
     source: bool = False,
 ) -> Drawing:
-    """Lay out a record as a circular map of its features, primers and cut sites.
+    """Lay out a record as a map of its features, primers and cut sites: a circle or a line.
+
+    A circular record is drawn as a circle, and opened as a line when `linear`. A linear record,
+    and a region of any record, is always drawn as a line, numbered as the record is.
 
     Parameters
     ----------
     record
         A record, or a ``.dna``, GenBank or FASTA file to read one from.
+    region
+        The stretch to draw: the name of a feature, whose first segment's start to its last's end
+        is drawn, or a ``(start, end)`` span, 0-based and half-open, ending past the record's
+        length across the origin. A name matches whatever its case, and the first feature in the
+        record's order answers when several do. The whole record when ``None``.
+    linear
+        Whether a circular record drawn whole is opened as a line.
     features, primers, cut_sites
         Whether each is drawn.
     enzymes
@@ -79,7 +96,8 @@ def draw_map(
     KeyError
         If no shipped enzyme answers to a name in `enzymes`.
     ValueError
-        If the file cannot be read as a record, or the record has no bases.
+        If the file cannot be read as a record, the record has no bases, or `region` names no
+        feature or lies off the record.
 
     Examples
     --------
@@ -89,6 +107,7 @@ def draw_map(
     record = record if isinstance(record, SequenceRecord) else read_record(record)
     if not len(record):
         raise ValueError(f"record {record.name!r} has no bases to draw")
+    span = None if region is None else _span(record, region)
     items = layers.items(
         record,
         features=features,
@@ -98,8 +117,43 @@ def draw_map(
         hide_types=hide_types,
         source=source,
     )
-    layout = circular.layout(items, name=record.name, length=len(record))
+    circle = record.topology == "circular"
+    if circle and span is None and not linear:
+        return Drawing(record, circular.layout(items, name=record.name, length=len(record)))
+    layout = line.layout(items, name=record.name, length=len(record), circular=circle, span=span)
     return Drawing(record, layout)
+
+
+def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:
+    """Return the span `region` names in `record`.
+
+    Raises
+    ------
+    ValueError
+        If `region` names no feature of the record, or is a span that does not lie on it.
+    """
+    length = len(record)
+    if isinstance(region, str):
+        feature = next(
+            (one for one in record.features if one.name.casefold() == region.casefold()), None
+        )
+        if feature is None:
+            raise ValueError(f"record {record.name!r} has no feature called {region!r} to draw")
+        counted = layers.unwrapped(feature.segments, length)
+        return counted[0][0], min(counted[-1][1], counted[0][0] + length)
+    start, end = region
+    if record.topology == "circular":
+        if not 0 <= start < length or not start < end <= start + length:
+            raise ValueError(
+                f"region {region} does not lie on the circular record {record.name!r} of "
+                f"{length} bases: it starts inside the record, and across the origin ends past "
+                "its length, at most one turn on"
+            )
+    elif not 0 <= start < end <= length:
+        raise ValueError(
+            f"region {region} does not lie on the linear record {record.name!r} of {length} bases"
+        )
+    return start, end
 
 
 def _html(drawing: Drawing, path: Path, dpi: float) -> None:

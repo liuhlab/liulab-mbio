@@ -126,3 +126,54 @@ def test_the_command_refuses_an_enzyme_no_shipped_enzyme_answers_to(
     assert lines[0].startswith("error: ")
     assert "EcoRJ" in lines[0]
     assert not (tmp_path / "map.html").exists()
+
+
+def _texts(page: Path) -> list[str]:
+    return [text.text for text in parse(page.read_text(encoding="utf-8")).find_all("text")]
+
+
+def test_the_command_draws_a_region_by_feature_or_one_based_span_and_opens_a_circle(
+    puc19: SequenceRecord, puc19_file: Path, tmp_path: Path
+) -> None:
+    out = tmp_path / "map.html"
+    for region, title in [
+        ("MCS", "396 .. 452 (57 bp)"),
+        ("396..452", "396 .. 452 (57 bp)"),
+        ("396 .. 452", "396 .. 452 (57 bp)"),
+        ("2680..10", "2680 .. 10 (17 bp)"),
+        ("11..10", "11 .. 10 (2686 bp)"),
+    ]:
+        code, _ = _run(str(puc19_file), "-o", str(out), "--region", region)
+        assert code == 0
+        assert title in _texts(out)
+    # Text of that form is a span, even where a feature is named so.
+    named = tmp_path / "named.dna"
+    write_dna(
+        dataclasses.replace(
+            puc19, features=(Feature("12..40", "misc_feature", (Segment(99, 200),)),)
+        ),
+        named,
+    )
+    code, _ = _run(str(named), "-o", str(out), "--region", "12..40")
+    assert code == 0
+    assert "12 .. 40 (29 bp)" in _texts(out)
+    code, _ = _run(str(puc19_file), "-o", str(out), "--linear")
+    assert code == 0
+    assert "2686 bp" in _texts(out)
+    assert len(parse(out.read_text(encoding="utf-8")).find_all("circle")) == 6
+
+
+def test_the_command_refuses_a_region_off_the_record_or_naming_no_feature(
+    puc19_file: Path, data_dir: Path, tmp_path: Path
+) -> None:
+    out = tmp_path / "map.html"
+    for record, region, message in [
+        (puc19_file, "0..10", "error: --region 0..10: a position runs from 1 to 2686"),
+        (puc19_file, "10..2687", "error: --region 10..2687: a position runs from 1 to 2686"),
+        (data_dir / "GFP.dna", "700..10", "error: --region 700..10 runs across the origin"),
+        (puc19_file, "lacZ", "error: record 'pUC19' has no feature called 'lacZ'"),
+    ]:
+        code, lines = _run(str(record), "-o", str(out), "--region", region)
+        assert code == 1
+        assert lines[0].startswith(message)
+        assert not out.exists()

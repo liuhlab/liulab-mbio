@@ -22,6 +22,13 @@ sets one.
   site each one cuts. `--no-features`, `--no-primers` and `--no-cut-sites` leave a layer off,
   `--hide-type` leaves out a feature type, and `--source` draws the `source` feature. `draw_map`
   takes the same choices.
+- A map as a line. A linear record, every FASTA file included, is always drawn as one, and
+  `--linear` opens a circular record into one, with `• • •` at each end. `--region` draws one
+  stretch of a record as a line: a feature's name, or `START..END` as the map numbers bases,
+  such as `2680..10` across the origin. The line keeps the record's numbering, and an enzyme is
+  bold only if it cuts the whole record once. Features lie under the line, named inside or
+  underneath, and the labels above rise in steps so none overlaps another. `draw_map` takes
+  `linear` and `region`.
 - A map as a PNG or a PDF, which looks the same on any computer, with no font installed. Name
   the file `map.png` or `map.pdf`; `-o` takes several files in one run, and `--dpi` sets the
   PNG's resolution, 300 by default. The letters are drawn as shapes, so the text in them cannot

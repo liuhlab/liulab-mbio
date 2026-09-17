@@ -1,11 +1,17 @@
 """The `plot` verbs, mounted on the package command line."""
 
+import re
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from liulab_mbio.plot.drawing import draw_map
+from liulab_mbio.io import read_record
+from liulab_mbio.plot.drawing import Region, draw_map
+from liulab_mbio.sequence import SequenceRecord
+
+#: A span as a person types it: `START..END`, 1-based and inclusive, as the map prints one.
+_SPAN = re.compile(r"\s*(\d+)\s*\.\.\s*(\d+)\s*")
 
 app = typer.Typer(help="Draw sequence records.", no_args_is_help=True)
 
@@ -30,6 +36,16 @@ def map_(
             help="File to write: .html, .png or .pdf. Repeat it to write several.",
         ),
     ],
+    region: Annotated[
+        str | None,
+        typer.Option(
+            help="A feature's name, or START..END counted from 1 with both ends included, to draw "
+            "as a line numbered as the record is. END before START runs across the origin.",
+        ),
+    ] = None,
+    linear: Annotated[
+        bool, typer.Option("--linear", help="Draw a circular record opened as a line.")
+    ] = False,
     no_features: Annotated[
         bool, typer.Option("--no-features", help="Leave the features off.")
     ] = False,
@@ -56,8 +72,11 @@ def map_(
 ) -> None:
     """Draw RECORD as a map and write it to each file named, printing each file written."""
     try:
+        read = read_record(record)
         drawing = draw_map(
-            record,
+            read,
+            region=_region(region, read),
+            linear=linear,
             features=not no_features,
             primers=not no_primers,
             cut_sites=not no_cut_sites,
@@ -70,3 +89,29 @@ def map_(
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
+
+
+def _region(text: str | None, record: SequenceRecord) -> Region | None:
+    """Read `--region`: a feature's name, or `START..END` as the span `draw_map` takes.
+
+    Text of that form is always a span, even where a feature is named so.
+
+    Raises
+    ------
+    ValueError
+        If a position lies off the record, or a span runs across the origin of a linear record.
+    """
+    match = None if text is None else _SPAN.fullmatch(text)
+    if match is None:
+        return text
+    first, last, length = int(match[1]), int(match[2]), len(record)
+    if not (1 <= first <= length and 1 <= last <= length):
+        raise ValueError(f"--region {text}: a position runs from 1 to {length}")
+    if last >= first:
+        return first - 1, last
+    if record.topology == "linear":
+        raise ValueError(
+            f"--region {text} runs across the origin, which the linear record {record.name!r} "
+            "does not have"
+        )
+    return first - 1, last + length
