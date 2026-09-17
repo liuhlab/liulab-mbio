@@ -68,6 +68,8 @@ sets one.
   over a base to see its position. Drag over bases to select them: the page shows the stretch as
   `start .. end (n bp)`, and copying, or the Copy button, puts the top strand's bases on the
   clipboard. Nothing on the page changes the record.
+- A repo-local `plot-map` skill that calls `plot map` and `draw_map`, so a coding agent asked to
+  show a record hands back a map.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still
