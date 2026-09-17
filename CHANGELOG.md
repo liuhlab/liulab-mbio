@@ -12,9 +12,10 @@ sets one.
 - A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
   map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
   opens offline. A feature keeps the colour its file gives it. One with no colour takes a
-  default for its type that people with colour blindness can tell apart. Each feature's name sits
-  in a box outside the circle, and no two boxes overlap. Hovering over a feature shows its name,
-  type, span and length.
+  default for its type that people with colour blindness can tell apart. A feature's name sits on
+  its arrow when it fits there, curved along the circle and upright at the bottom. Any other name
+  sits in a box outside the circle, and no two boxes overlap. Hovering over a feature shows its
+  name, type, span and length.
 - A map shows where each primer binds and where enzymes cut. A primer is drawn in purple and
   labelled with its span. By default the map names the shipped enzymes that cut the record once,
   in bold, each with the base it cuts after. `--enzyme` names others, and the map then shows every

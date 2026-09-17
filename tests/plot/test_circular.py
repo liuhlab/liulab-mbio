@@ -1,5 +1,6 @@
-"""The circular map laid out, items in and shapes out: arrows as the record has them, and labels
-apart from each other and from the drawing, on crowded and seeded random records."""
+"""The circular map laid out, items in and shapes out: arrows as the record has them, names on the
+arrows they fit, and labels apart from each other and from the drawing, on crowded and seeded
+random records."""
 
 import math
 import random
@@ -9,6 +10,7 @@ from itertools import combinations
 import pytest
 
 from liulab_mbio.plot import circular, layers
+from liulab_mbio.plot.fonts import SANS
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
@@ -27,6 +29,13 @@ def _feature(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -
 
 def _primer(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> Primer:
     return Primer(name, "ACGT", binding_sites=(BindingSite(start, end, strand),))
+
+
+def _one(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> circular.CircularMap:
+    """One feature laid out, which may cross the origin."""
+    feature = _feature(name, start % LENGTH, start % LENGTH + end - start, strand)
+    record = SequenceRecord("A" * LENGTH, topology="circular", features=(feature,))
+    return circular.layout(layers.items(record, cut_sites=False), name="one", length=LENGTH)
 
 
 def _crowded() -> tuple[layers.Item, ...]:
@@ -99,8 +108,24 @@ def _random(seed: int) -> tuple[layers.Item, ...]:
     return (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
 
 
+def _near_fit() -> tuple[layers.Item, ...]:
+    """Names all round the circle on arrows about as long as they are, five rings deep."""
+    rng = random.Random(1)
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -()αΔ"
+    features = []
+    for i in range(12):
+        for ring in range(5):
+            size = 240 - 10 * ring - rng.randint(0, 9)
+            name = "".join(rng.choice(letters) for _ in range(rng.randint(1, 10)))
+            start = (LENGTH * i // 12 - size // 2) % LENGTH
+            features.append(_feature(name, start, start + size, rng.choice(list(Strand))))
+    record = SequenceRecord("A" * LENGTH, topology="circular", features=tuple(features))
+    return layers.items(record)
+
+
 RECORDS = {
     "crowded": _crowded,
+    "near fit": _near_fit,
     **{f"random {seed}": lambda seed=seed: _random(seed) for seed in range(12)},
 }
 
@@ -157,10 +182,59 @@ def _crosses(leader: tuple[Point, Point], box: Box) -> bool:
     return low < high
 
 
-def test_every_item_is_labelled_once(
+def _letter_boxes(name: circular.Name) -> list[list[Point]]:
+    """Each letter's box as drawn, corner by corner: its advance along its turned baseline, and the
+    face's height across it."""
+    shape = name.letters
+    font, scale = shape.font, shape.size / shape.font.units_per_em
+    boxes = []
+    for letter, (x, y, rotate) in zip(
+        font.letters(shape.text, shape.size), shape.places, strict=True
+    ):
+        turn = math.radians(rotate)
+        along, up = (math.cos(turn), math.sin(turn)), (math.sin(turn), -math.cos(turn))
+        boxes.append(
+            [
+                Point(x + a * along[0] + h * up[0], y + a * along[1] + h * up[1])
+                for a, h in (
+                    (0.0, font.descender * scale),
+                    (letter.advance, font.descender * scale),
+                    (letter.advance, font.ascender * scale),
+                    (0.0, font.ascender * scale),
+                )
+            ]
+        )
+    return boxes
+
+
+def test_every_item_is_named_once_on_its_arrow_or_labelled_once(
     given: tuple[layers.Item, ...], laid_out: circular.CircularMap
 ) -> None:
-    assert Counter(id(label.item) for label in laid_out.labels) == Counter(map(id, given))
+    named = [id(name.arrow.item) for name in laid_out.names]
+    labelled = [id(label.item) for label in laid_out.labels]
+    assert Counter(named + labelled) == Counter(map(id, given))
+
+
+def test_each_name_on_an_arrow_lies_inside_its_arrow_less_its_heads(
+    laid_out: circular.CircularMap,
+) -> None:
+    outside = []
+    for name in laid_out.names:
+        arrow = name.arrow
+        first = arrow.start + arrow.head * arrow.head_start
+        last = arrow.end - arrow.head * arrow.head_end
+        for corners in _letter_boxes(name):
+            edges = list(zip(corners, corners[1:] + corners[:1], strict=True))
+            if (
+                max(math.hypot(x, y) for x, y in corners) > arrow.radius + arrow.width / 2 + TOUCH
+                or min(map(_closest_to_centre, edges)) < arrow.radius - arrow.width / 2 - TOUCH
+                or any(
+                    (math.atan2(x, -y) - first + TOUCH) % math.tau > last - first + 2 * TOUCH
+                    for x, y in corners
+                )
+            ):
+                outside.append(name.letters.text)
+    assert not outside
 
 
 def test_no_two_labels_overlap(laid_out: circular.CircularMap) -> None:
@@ -274,3 +348,60 @@ def test_a_cut_sites_leader_points_at_its_cut() -> None:
         "EcoRI (750)": pytest.approx(math.pi / 2),
         "BanII - SacI (2250)": pytest.approx(3 * math.pi / 2),
     }
+
+
+def test_a_name_fits_on_an_arrow_on_any_ring_and_one_that_does_not_is_boxed() -> None:
+    laid_out = circular.layout(_near_fit(), name="near fit", length=LENGTH)
+    assert {name.arrow.radius for name in laid_out.names} == {a.radius for a in laid_out.arrows}
+    assert laid_out.labels
+
+
+def test_a_name_goes_on_its_arrow_once_the_band_less_its_head_holds_it() -> None:
+    width = SANS.width("ori", circular.LABEL_SIZE)
+    on_arrow = []
+    for size in range(40, 140):
+        [arrow] = (laid_out := _one("ori", 1000, 1000 + size)).arrows
+        room = arrow.radius * (arrow.end - arrow.start - arrow.head)
+        # No size threshold: a name is boxed only while its band is short of the name and an em.
+        if laid_out.names:
+            assert width <= room
+        else:
+            assert room < width + circular.LABEL_SIZE
+        on_arrow.append(bool(laid_out.names))
+    assert on_arrow == sorted(on_arrow)
+    assert any(on_arrow)
+
+
+@pytest.mark.parametrize("degrees", [0, 60, 120, 180, 240, 300])
+def test_a_name_on_an_arrow_curves_along_its_band_and_reads_upright(degrees: int) -> None:
+    middle = LENGTH * degrees // 360
+    [name] = _one("ΔlacZ AVAW", middle - 150, middle + 150, Strand.NONE).names
+    shape, arrow = name.letters, name.arrow
+    letters = SANS.letters(shape.text, shape.size)
+    rise = (SANS.ascender + SANS.descender) / 2 / SANS.units_per_em * shape.size
+    middles, alongs = [], []
+    for letter, (x, y, rotate) in zip(letters, shape.places, strict=True):
+        # Upright: each letter's top points up the page.
+        assert abs(rotate) < 90
+        turn = math.radians(rotate)
+        along, up = (math.cos(turn), math.sin(turn)), (math.sin(turn), -math.cos(turn))
+        middles.append(
+            Point(
+                x + letter.advance / 2 * along[0] + rise * up[0],
+                y + letter.advance / 2 * along[1] + rise * up[1],
+            )
+        )
+        alongs.append(along)
+    # Each letter's middle lies on the band's middle, turned square to it.
+    for (x, y), along in zip(middles, alongs, strict=True):
+        assert math.hypot(x, y) == pytest.approx(arrow.radius)
+        assert x * along[0] + y * along[1] == pytest.approx(0, abs=1e-6)
+    # Letters follow on in reading order, as far apart round the band as the font tables set them.
+    for i in range(1, len(letters)):
+        (x0, y0), (x1, y1) = middles[i - 1], middles[i]
+        assert (x1 - x0) * alongs[i - 1][0] + (y1 - y0) * alongs[i - 1][1] > 0
+        apart = arrow.radius * math.acos(max(-1.0, min(1.0, (x0 * x1 + y0 * y1) / arrow.radius**2)))
+        spaced = (
+            letters[i].x + letters[i].advance / 2 - letters[i - 1].x - letters[i - 1].advance / 2
+        )
+        assert apart == pytest.approx(spaced)

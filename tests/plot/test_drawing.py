@@ -26,7 +26,7 @@ def _page(drawing: Drawing, path: Path) -> tuple[str, Node]:
 
 
 def _items(page: Node, kind: str = "feature") -> dict[str, list[Node]]:
-    """Each item's groups on the page, the arrows' first and the label's after, by name."""
+    """Each item's groups on the page, the arrows' first and any boxed label's after, by name."""
     groups: dict[str, list[Node]] = {}
     for group in page.find_all("g", data_kind=kind):
         groups.setdefault(group.attrs["data-name"], []).append(group)
@@ -127,7 +127,7 @@ def test_hovering_over_a_feature_shows_its_name_type_span_and_length_one_based(
     assert hover["split"]["span"] == "101 .. 160, 201 .. 260, 301 .. 360"
 
 
-def test_every_feature_but_source_is_drawn_with_its_name_boxed(
+def test_every_feature_but_source_is_drawn_with_its_name_on_its_arrow_or_boxed(
     colour_test: Drawing, tmp_path: Path
 ) -> None:
     _, page = _page(colour_test, tmp_path / "map.html")
@@ -135,12 +135,23 @@ def test_every_feature_but_source_is_drawn_with_its_name_boxed(
     names = [f.name for f in colour_test.record.features if f.type != "source"]
     assert sorted(items) == sorted(names)
     assert not [g for g in page.find_all("g") if g.attrs.get("data-type") == "source"]
-    for name, (arrows, label) in items.items():
+    on_arrows = set()
+    for name, (arrows, *boxed) in items.items():
+        assert _fills(arrows)
+        if texts := arrows.find_all("text"):
+            # One line of text, to search and copy, with each letter placed as it was laid out.
+            [text] = texts
+            assert (text.text, boxed) == (name, [])
+            assert {len(text.attrs[key].split()) for key in ("x", "y", "rotate")} == {len(name)}
+            on_arrows.add(name)
+            continue
+        [label] = boxed
         assert label.attrs["class"] == "feature label"
         assert [text.text for text in label.find_all("text")] == [name]
         assert len(label.find_all("rect")) == 1
         assert len(label.find_all("line")) == 1
-        assert _fills(arrows)
+    # The names SnapGene Viewer draws on arrows in its map of the same record.
+    assert on_arrows == {"AmpR", "across", "lacZ-alpha", "ori"}
 
 
 def test_features_draw_in_their_files_colours_segment_by_segment(
@@ -155,19 +166,48 @@ def test_features_draw_in_their_files_colours_segment_by_segment(
     assert _fills(items["uncoloured"][0]) == ["#a6acb3"]
 
 
-def test_every_arrow_is_outlined_and_its_label_text_contrasts_with_its_box(
+def test_every_arrow_is_outlined_and_every_name_contrasts_with_its_fill(
     colour_test: Drawing, tmp_path: Path
 ) -> None:
     _, page = _page(colour_test, tmp_path / "map.html")
     items = _items(page)
-    for arrows, _ in items.values():
+    for arrows, *_ in items.values():
         assert all(
             path.attrs["stroke"] not in ("none", path.attrs["fill"])
             for path in arrows.find_all("path")
             if path.attrs["fill"] != "none"
         )
-    assert items["white"][1].find_all("text")[0].attrs["fill"] == "#000000"
-    assert items["lacZ-alpha"][1].find_all("text")[0].attrs["fill"] == "#ffffff"
+    # The last group holds the name, on its arrow or boxed.
+    fills = {
+        name: [text.attrs["fill"] for text in groups[-1].find_all("text")]
+        for name, groups in items.items()
+    }
+    assert fills["white"] == fills["ori"] == ["#000000"]
+    assert fills["M13 rev"] == fills["lacZ-alpha"] == ["#ffffff"]
+
+
+def test_a_name_on_its_arrow_contrasts_with_the_segment_it_sits_on(tmp_path: Path) -> None:
+    white, dark = "#ffffff", "#1f3a93"
+    record = SequenceRecord(
+        "A" * 1000,
+        topology="circular",
+        features=(
+            Feature("white promoter", "promoter", (Segment(0, 300),), color=white),
+            Feature(
+                "dark where it fits",
+                "CDS",
+                (Segment(400, 420), Segment(500, 950, color=dark)),
+                strand=Strand.FORWARD,
+                color=white,
+            ),
+        ),
+    )
+    items = _items(_page(draw_map(record), tmp_path / "map.html")[1])
+    fills = {
+        name: [text.attrs["fill"] for text in groups[0].find_all("text")]
+        for name, groups in items.items()
+    }
+    assert fills == {"white promoter": ["#000000"], "dark where it fits": ["#ffffff"]}
 
 
 def test_a_feature_with_no_colour_takes_its_groups_colour(tmp_path: Path) -> None:
@@ -202,14 +242,15 @@ def test_a_feature_with_no_colour_takes_its_groups_colour(tmp_path: Path) -> Non
 
 def test_a_name_is_written_as_the_face_draws_it_and_hovers_as_written(tmp_path: Path) -> None:
     name = '<b>"lac" & ﻿Z</b>'
-    record = SequenceRecord(
-        "A" * 100, topology="circular", features=(Feature(name, "CDS", (Segment(0, 10),)),)
-    )
+    # One long enough to carry its name on its arrow, and one whose name is boxed.
+    features = (Feature(name, "CDS", (Segment(0, 30),)), Feature(name, "CDS", (Segment(50, 51),)))
+    record = SequenceRecord("A" * 100, topology="circular", features=features)
     _, page = _page(draw_map(record), tmp_path / "map.html")
-    [arrows, label] = _items(page)[name]
-    assert arrows.attrs["data-name"] == name
+    groups = _items(page)[name]
+    assert {group.attrs["data-name"] for group in groups} == {name}
     assert not page.find_all("b")
-    assert label.find_all("text")[0].text == '<b>"lac" & Z</b>'
+    texts = [text.text for group in groups for text in group.find_all("text")]
+    assert texts == ['<b>"lac" & Z</b>'] * 2
 
 
 def test_the_shipped_unique_cutters_are_labelled_where_snapgene_numbers_their_cuts(

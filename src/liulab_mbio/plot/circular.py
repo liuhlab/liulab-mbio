@@ -6,7 +6,8 @@ it has none, and a segment across the origin is one piece. Features that overlap
 further in, the longest outermost. Each primer is a thin arrow outside the backbone at each binding
 site, overlapping ones further out.
 
-Every item is labelled outside, in the columns `labels.columns` lays out, so no label overlaps
+A feature's name sits on its arrow when it fits, curved along the band and upright on the lower
+half. Every other label is outside, in the columns `labels.columns` lays out, so no label overlaps
 another label or the drawing: a feature's name boxed in its colour, a primer's in purple, and a cut
 site's enzymes in black, joined to the backbone at the cut.
 """
@@ -20,7 +21,18 @@ from liulab_mbio.plot import labels
 from liulab_mbio.plot.fonts import BOLD, SANS, Font
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.plot.layers import Item, Span, outline_color, text_color, unwrapped
-from liulab_mbio.plot.svg import Circle, Group, Line, Path, Rect, Shape, Text, number
+from liulab_mbio.plot.svg import (
+    Circle,
+    Group,
+    Letters,
+    Line,
+    Path,
+    Place,
+    Rect,
+    Shape,
+    Text,
+    number,
+)
 from liulab_mbio.sequence import Strand
 
 #: The backbone's radius, in points. Everything else on the circle is laid out from it.
@@ -83,6 +95,8 @@ class Arrow:
         The band's middle, and its thickness.
     head_start, head_end
         Whether an arrowhead's tip ends the arrow at `start`, or at `end`.
+    head
+        The angle each arrowhead takes along the band.
     """
 
     item: Item
@@ -93,6 +107,15 @@ class Arrow:
     width: float
     head_start: bool
     head_end: bool
+    head: float
+
+
+@dataclass(frozen=True, slots=True)
+class Name:
+    """An item's name set on one of its arrows, letter by letter along the band's middle."""
+
+    arrow: Arrow
+    letters: Letters
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +140,8 @@ class CircularMap:
     arrows
         Every segment of every feature and every binding site of every primer, in the items'
         order.
+    names
+        Every feature's name set on its arrow, in the items' order.
     labels
         Every label, in the items' order.
     shapes
@@ -126,6 +151,7 @@ class CircularMap:
     extent: Box
     radius: float
     arrows: tuple[Arrow, ...]
+    names: tuple[Name, ...]
     labels: tuple[Label, ...]
     shapes: tuple[Shape, ...]
 
@@ -142,18 +168,26 @@ def layout(items: Sequence[Item], *, name: str, length: int) -> CircularMap:
     arrows = tuple(
         sorted((*_arrows(features, length), *primers), key=lambda arrow: order[id(arrow.item)])
     )
-    boxed = _labels(items, length, drawing)
+    own = {id(item): [arrow for arrow in arrows if arrow.item is item] for item in items}
+    names = {
+        id(item): on_arrow
+        for item in features
+        if (on_arrow := _name(item, max(own[id(item)], key=_room)))
+    }
+    boxed = _labels([item for item in items if id(item) not in names], length, drawing)
     shapes = (
         *_backbone(length),
         *(
-            _feature(item, [arrow for arrow in arrows if arrow.item is item])
+            _feature(item, own[id(item)], names.get(id(item)))
             for item in items
             if item.kind != "cut_site"
         ),
         *(_label(label, backbone) for label in boxed),
         *_centre(name, length),
     )
-    return CircularMap(_extent(drawing + _ANCHOR, boxed), drawing, arrows, boxed, shapes)
+    return CircularMap(
+        _extent(drawing + _ANCHOR, boxed), drawing, arrows, tuple(names.values()), boxed, shapes
+    )
 
 
 def _angle(position: float, length: int) -> float:
@@ -224,19 +258,23 @@ def _arrows(items: Sequence[Item], length: int) -> tuple[Arrow, ...]:
     arrows: list[Arrow] = []
     for item, ring in zip(items, rings, strict=True):
         last = len(item.spans) - 1
+        radius = outer - ring * step
         for index, (span, (start, end)) in enumerate(
             zip(item.spans, unwrapped(item.spans, length), strict=True)
         ):
+            head_start = index == 0 and item.strand in (Strand.REVERSE, Strand.BOTH)
+            head_end = index == last and item.strand in (Strand.FORWARD, Strand.BOTH)
             arrows.append(
                 Arrow(
                     item,
                     span,
                     _angle(start, length),
                     _angle(end, length),
-                    outer - ring * step,
+                    radius,
                     width,
-                    head_start=index == 0 and item.strand in (Strand.REVERSE, Strand.BOTH),
-                    head_end=index == last and item.strand in (Strand.FORWARD, Strand.BOTH),
+                    head_start,
+                    head_end,
+                    _head(radius, _angle(end - start, length), head_start + head_end),
                 )
             )
     return tuple(arrows)
@@ -250,24 +288,79 @@ def _primers(items: Sequence[Item], length: int, backbone: float) -> list[Arrow]
     arrows = []
     for item, ring in zip(items, _rings(items, length), strict=True):
         (span,) = item.spans
+        radius = first + ring * step
+        head_start, head_end = item.strand == Strand.REVERSE, item.strand == Strand.FORWARD
         arrows.append(
             Arrow(
                 item,
                 span,
                 _angle(span.start, length),
                 _angle(span.end, length),
-                first + ring * step,
+                radius,
                 _PRIMER_BAND,
-                head_start=item.strand == Strand.REVERSE,
-                head_end=item.strand == Strand.FORWARD,
+                head_start,
+                head_end,
+                _head(radius, _angle(span.end - span.start, length), head_start + head_end),
             )
         )
     return arrows
 
 
+def _head(radius: float, turn: float, heads: int) -> float:
+    """Return the angle each of `heads` arrowheads takes along a band `turn` radians long."""
+    return min(_HEAD / radius, turn / heads) if heads else 0.0
+
+
 def _reach(width: float) -> float:
     """Return how far the heads of an arrow `width` thick reach beyond its band."""
     return width * _OVERHANG / _BAND
+
+
+def _room(arrow: Arrow) -> float:
+    """Return the angle an arrow's band runs, less its arrowheads."""
+    return arrow.end - arrow.start - arrow.head * (arrow.head_start + arrow.head_end)
+
+
+def _name(item: Item, arrow: Arrow) -> Name | None:
+    """Return an item's name set along the middle of `arrow`'s band, or `None` if it does not fit.
+
+    Each letter's box is as wide as its advance and as tall as the face, centred on the band's
+    middle and turned square to it. The name fits when its width, padded at each end as a boxed
+    label is, spans no more of the band's middle than the arrowheads leave, and no letter's corner
+    reaches past the band's outer edge. The padding also holds the end letters' inner corners,
+    which reach a little further round than their middles.
+    """
+    letters = SANS.letters(item.label, LABEL_SIZE)
+    if not letters:
+        return None
+    radius = arrow.radius
+    width = letters[-1].x + letters[-1].advance
+    widest = max(letter.advance for letter in letters)
+    if (
+        width + 2 * _PADDING[0] > radius * _room(arrow)
+        or math.hypot(radius + _height(SANS, LABEL_SIZE) / 2, widest / 2) > radius + arrow.width / 2
+    ):
+        return None
+    middle = arrow.start + arrow.head * arrow.head_start + _room(arrow) / 2
+    upright = math.cos(middle) >= 0
+    rise = _baseline(SANS, LABEL_SIZE, 0.0)
+    places = []
+    for letter in letters:
+        along = letter.x + letter.advance / 2 - width / 2
+        angle = middle + along / radius if upright else middle - along / radius
+        turn = angle if upright else angle + math.pi
+        centre = _point(radius, angle)
+        # From the letter's middle back half its advance along the baseline, and down to it.
+        back = letter.advance / 2
+        places.append(
+            Place(
+                centre.x - back * math.cos(turn) - rise * math.sin(turn),
+                centre.y - back * math.sin(turn) + rise * math.cos(turn),
+                (math.degrees(turn) + 180) % 360 - 180,
+            )
+        )
+    color = text_color(arrow.span.color)
+    return Name(arrow, Letters(tuple(places), item.label, SANS, LABEL_SIZE, color))
 
 
 def _labels(items: Sequence[Item], length: int, drawing: float) -> tuple[Label, ...]:
@@ -333,8 +426,11 @@ def _step(length: int) -> int:
         power *= 10
 
 
-def _feature(item: Item, arrows: Sequence[Arrow]) -> Group:
-    """Return an item's arrows, each segment joined to the next by a thin arc across any gap."""
+def _feature(item: Item, arrows: Sequence[Arrow], name: Name | None) -> Group:
+    """Return an item's arrows, each segment joined to the next by a thin arc across any gap.
+
+    A name set on one of them is drawn over it.
+    """
     shapes: list[Shape] = []
     for before, after in itertools.pairwise(arrows):
         if after.start > before.end:
@@ -344,6 +440,8 @@ def _feature(item: Item, arrows: Sequence[Arrow]) -> Group:
         Path(_outline(arrow), arrow.span.color, outline_color(arrow.span.color), 0.8)
         for arrow in arrows
     )
+    if name:
+        shapes.append(name.letters)
     return Group(tuple(shapes), classes=(item.kind,), data={"kind": item.kind, **item.hover})
 
 
@@ -395,10 +493,8 @@ def _outline(arrow: Arrow) -> str:
     """Return an arrow's outline as path data: its band, with a head at each end it points to."""
     radius, half = arrow.radius, arrow.width / 2
     reach = arrow.width * _OVERHANG / _BAND
-    heads = arrow.head_start + arrow.head_end
-    head = min(_HEAD / radius, (arrow.end - arrow.start) / heads) if heads else 0.0
-    first = arrow.start + head * arrow.head_start
-    last = arrow.end - head * arrow.head_end
+    first = arrow.start + arrow.head * arrow.head_start
+    last = arrow.end - arrow.head * arrow.head_end
     outer, inner = radius + half, radius - half
     if arrow.head_start:
         path = _move(radius, arrow.start) + _to(outer + reach, first) + _to(outer, first)
