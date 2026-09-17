@@ -9,6 +9,67 @@ sets one.
 
 ### Added
 
+- A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
+  map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
+  opens offline. A feature keeps the colour its file gives it. One with no colour takes a
+  default for its type that people with colour blindness can tell apart. A feature's name sits on
+  its arrow when it fits there, curved along the circle and upright at the bottom. Any other name
+  sits in a box outside the circle, and no two boxes overlap. Hovering over a feature shows its
+  name, type, span and length.
+- A map shows where each primer binds and where enzymes cut. A primer is drawn in purple and
+  labelled with its span. By default the map names the shipped enzymes that cut the record once,
+  in bold, each with the base it cuts after. `--enzyme` names others, and the map then shows every
+  site each one cuts. `--no-features`, `--no-primers` and `--no-cut-sites` leave a layer off,
+  `--hide-type` leaves out a feature type, and `--source` draws the `source` feature. `draw_map`
+  takes the same choices.
+- A map as a line. A linear record, every FASTA file included, is always drawn as one, and
+  `--linear` opens a circular record into one, with `• • •` at each end. `--region` draws one
+  stretch of a record as a line: a feature's name, or `START..END` as the map numbers bases,
+  such as `2680..10` across the origin. The line keeps the record's numbering, and an enzyme is
+  bold only if it cuts the whole record once. Features lie under the line, named inside or
+  underneath, and the labels above rise in steps so none overlaps another. `draw_map` takes
+  `linear` and `region`.
+- A crowded map grows before it hides a label: pUC19 with all 99 of its unique 6+ cutters still
+  shows every label. Past that size, enzyme sites hide first, then primers, then boxed feature
+  names, and only where labels crowd one another. A name on its feature never hides. The map says
+  what it hid at its bottom right, such as `3 enzyme sites and 1 primer are hidden`, and the page
+  lists the names when you hover over it. `plot map` prints the same words after the files it
+  wrote, and `Drawing.hidden` gives each hidden label.
+- A map as a PNG or a PDF, which looks the same on any computer, with no font installed. Name
+  the file `map.png` or `map.pdf`; `-o` takes several files in one run, and `--dpi` sets the
+  PNG's resolution, 300 by default. The letters are drawn as shapes, so the text in them cannot
+  be searched or copied.
+- The bases beside the map, as SnapGene's Sequence tab shows them. `--sequence-view` sets the
+  record out in rows of 60 bases, or as many as `--bases-per-row` says. Each row has a ruler, both
+  strands with a tick at every base between them, and the number of its last base at its right.
+  `--one-strand` leaves out the bottom strand. Features lie under the bases as bars, and every
+  coding sequence shows its protein under its bases in three-letter codes, with each stop in red.
+  A region keeps the record's numbering. The page shows this view up to 100,000 bases; past that,
+  name a region. A PNG is one image with this view under the map; one too big to make stops with
+  an error that asks for a region or a PDF. A PDF has the map on its first page and the rows on
+  the pages after, each page as many rows as fit, so a long record prints. `draw_map` takes
+  `sequence_view`, `bases_per_row` and `both_strands`.
+- Switches on the page. Features, primers and cut sites each have one, and so does each feature
+  type. A switch shows or hides them where they are, so no label moves. `--no-features`,
+  `--hide-type`, `--source` and the others now set what the page shows first, and a PNG or PDF
+  still leaves out what they switch off. A circular record drawn whole flips between a circle
+  and a line at the top right, and `--linear` shows the line first. A click on a feature, primer
+  or cut site highlights it. The notice of hidden labels counts only those whose switches are on.
+- Primers and cut sites in the sequence view. Each primer is an arrow beside the strand it copies.
+  Its 5' tail bends away from the bases, and each base it does not pair with is marked in red. Each
+  cut is drawn through both strands, so you can see the overhang it leaves. The enzymes that cut
+  there are named above it, one name a line, in bold if they cut the record once. The view shows
+  the same enzymes, layers and feature types as the map.
+- The map and the sequence view work together on the page. The page carries the sequence view of
+  up to 100,000 bases behind a Sequence switch at the top right, and `--sequence-view` turns it on
+  from the start. Each view scrolls on its own. A click on a feature, primer or cut site in one
+  view highlights it in both, and scrolls the other view to it. Both strands shows or hides the
+  bottom strand without moving anything else, and `--one-strand` hides it from the start. Hover
+  over a base to see its position. Drag over bases to select them: the page shows the stretch as
+  `start .. end (n bp)`, and copying, or the Copy button, puts the top strand's bases on the
+  clipboard. Nothing on the page changes the record.
+- A repo-local `plot-map` skill that calls `plot map` and `draw_map`, so a coding agent asked to
+  show a record hands back a map.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

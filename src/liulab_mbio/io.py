@@ -1,6 +1,8 @@
 """Read a sequence file, or one region of an indexed FASTA, into the shared model."""
 
 import os
+import re
+from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -25,10 +27,20 @@ _STRANDS = {1: Strand.FORWARD, -1: Strand.REVERSE}
 _NAMING = ("label", "gene", "product", "locus_tag")
 #: What Biopython calls a record that names itself nowhere.
 _UNKNOWN = ("<unknown name>", "<unknown id>", "")
+#: SnapGene's colour note on a feature of one segment, which some types give a direction.
+_COLOR_NOTE = re.compile(r"color: (#[0-9a-fA-F]{6})(?:; direction: (?:LEFT|RIGHT))?")
+#: SnapGene's note on a feature of several segments, as the file wraps it: a segment a line.
+_SEGMENT_LIST = re.compile(r'/note="(This [^"\n]* segments:\n[^"]*)"')
+_LIST_HEADER = re.compile(r"This (?:\w+ )*feature has (\d+) segments:")
+#: One listed segment: its 1-based inclusive range, its colour, and its name if it has one.
+_LISTED_SEGMENT = re.compile(r"\d+: (\d+) \.\. (\d+) / (#[0-9a-fA-F]{6})(?: / (.+))?")
 
 
 def read_record(path: str | os.PathLike[str]) -> SequenceRecord:
     """Read a ``.dna``, GenBank or FASTA file holding one sequence.
+
+    The colours SnapGene writes into a GenBank file's notes become `Feature.color` and
+    `Segment.color`, and those notes leave the qualifiers.
 
     Raises
     ------
@@ -44,7 +56,8 @@ def read_record(path: str | os.PathLike[str]) -> SequenceRecord:
         raise ValueError(f"no reader for a '{suffix.lstrip('.')}' file: {os.fspath(path)}")
     from Bio import SeqIO
 
-    return _converted(SeqIO.read(os.fspath(path), fmt))
+    text = Path(path).read_text()
+    return _converted(SeqIO.read(StringIO(text), fmt), _segment_lists(text))
 
 
 def read_region(
@@ -105,7 +118,19 @@ def _byte(position: int, bases_per_line: int, bytes_per_line: int) -> int:
     return position // bases_per_line * bytes_per_line + position % bases_per_line
 
 
-def _converted(record: "SeqRecord") -> SequenceRecord:
+def _segment_lists(text: str) -> dict[str, list[str]]:
+    """Map each segment list, as Biopython joins its lines, to the lines themselves.
+
+    Only the line breaks tell a last segment's name from text SnapGene adds after the list.
+    """
+    lists = {}
+    for match in _SEGMENT_LIST.finditer(text):
+        lines = [line.strip() for line in match[1].splitlines() if line.strip()]
+        lists[" ".join(lines)] = lines
+    return lists
+
+
+def _converted(record: "SeqRecord", lists: dict[str, list[str]]) -> SequenceRecord:
     sequence = str(record.seq)
     topology: Topology = (
         "circular" if record.annotations.get("topology") == "circular" else "linear"
@@ -116,12 +141,16 @@ def _converted(record: "SeqRecord") -> SequenceRecord:
         sequence,
         topology=topology,
         name=name,
-        features=tuple(_feature(feature, len(sequence), topology) for feature in record.features),
+        features=tuple(
+            _feature(feature, len(sequence), topology, lists) for feature in record.features
+        ),
         notes={"Description": description} if description != name else {},
     )
 
 
-def _feature(feature: "SeqFeature", length: int, topology: Topology) -> Feature:
+def _feature(
+    feature: "SeqFeature", length: int, topology: Topology, lists: dict[str, list[str]]
+) -> Feature:
     qualifiers = {key: tuple(values) for key, values in feature.qualifiers.items()}
     name = ""
     for key in _NAMING:
@@ -130,17 +159,61 @@ def _feature(feature: "SeqFeature", length: int, topology: Topology) -> Feature:
             if key == "label":
                 del qualifiers[key]
             break
+    plain = _segments(feature, length, topology)
+    segments, color, notes = plain, None, []
+    for note in map(str, qualifiers.get("note", ())):
+        if match := _COLOR_NOTE.fullmatch(note):
+            segments, color = plain, match[1]
+        elif (listed := _listed(lists.get(note, []), plain, length)) is not None:
+            color, segments, rest = listed
+            if rest:
+                notes.append(rest)
+        else:
+            notes.append(note)
+    if notes:
+        qualifiers["note"] = tuple(notes)
+    else:
+        qualifiers.pop("note", None)
     strand = feature.location.strand if feature.location is not None else None
     return Feature(
         name,
         feature.type,
-        _segments(feature, length, topology),
+        segments,
         strand=_STRANDS.get(strand or 0, Strand.NONE),
         qualifiers={
             key: tuple(int(value) if str(value).isdigit() else str(value) for value in values)
             for key, values in qualifiers.items()
         },
+        color=color,
     )
+
+
+def _listed(
+    lines: list[str], segments: tuple[Segment, ...], length: int
+) -> tuple[str, tuple[Segment, ...], str] | None:
+    """Read a segment list into colours and names, as the ``.dna`` reader holds them.
+
+    Returns the feature's colour, its segments, and the text after the list; `None` unless the
+    list names every segment, and nothing else, each with a ``#rrggbb`` colour.
+    """
+    if not lines or (header := _LIST_HEADER.fullmatch(lines[0])) is None:
+        return None
+    count = int(header[1])
+    listed: dict[tuple[int, int], tuple[str, str]] = {}
+    for line in lines[1 : count + 1]:
+        if (entry := _LISTED_SEGMENT.fullmatch(line)) is None:
+            return None
+        start, end = int(entry[1]) - 1, int(entry[2])
+        listed[start, end if end > start else end + length] = entry[3], entry[4] or ""
+    if sorted(listed) != [(segment.start, segment.end) for segment in segments]:
+        return None
+    first, coloured = next(iter(listed.values()))[0], []
+    for segment in segments:
+        color, name = listed[segment.start, segment.end]
+        coloured.append(
+            Segment(segment.start, segment.end, name=name, color=None if color == first else color)
+        )
+    return first, tuple(coloured), " ".join(lines[count + 1 :])
 
 
 def _segments(feature: "SeqFeature", length: int, topology: Topology) -> tuple[Segment, ...]:

@@ -1,0 +1,217 @@
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: #ffffff;
+  color: #000000;
+}
+
+/* The switches on top, and under them each view scrolling on its own. */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.plot {
+  display: flex;
+  flex: 1 1 0;
+  justify-content: center;
+  gap: 16px;
+  min-height: 0;
+  padding: 0 16px;
+}
+
+.map,
+.sequence-view {
+  min-width: 0;
+  margin: 0;
+  padding: 16px 0;
+  overflow: auto;
+}
+
+.plot svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.plot text {
+  white-space: pre;
+}
+
+.plot [data-kind] {
+  cursor: pointer;
+}
+
+.plot [data-hidden] {
+  cursor: default;
+}
+
+.plot [data-kind]:hover path,
+.plot [data-kind]:hover rect {
+  stroke-width: 1.6;
+}
+
+.plot .off {
+  display: none;
+}
+
+.plot .selected {
+  filter: drop-shadow(0 0 1.5px #0077bb) drop-shadow(0 0 1.5px #0077bb);
+}
+
+.plot .selected path,
+.plot .selected rect,
+.plot .selected line {
+  stroke: #0077bb;
+  stroke-width: 1.6;
+}
+
+.sequence-view.one-strand .bottom {
+  display: none;
+}
+
+.sequence-view .chosen {
+  fill: #bbddf5;
+  pointer-events: none;
+}
+
+.sequence-view figcaption {
+  position: sticky;
+  top: -16px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 24px;
+  margin-top: -16px;
+  padding: 8px 0 4px;
+  background: #ffffff;
+  font: 13px/1.4 "Liulab Mbio Sans", sans-serif;
+}
+
+.sequence-view figcaption label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sequence-view figcaption input,
+.sequence-view figcaption button {
+  margin: 0;
+  font: inherit;
+}
+
+.sequence-view figcaption button[hidden] {
+  display: none;
+}
+
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 24px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #d9d9d9;
+  background: #ffffff;
+  font: 13px/1.4 "Liulab Mbio Sans", sans-serif;
+}
+
+.switches fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.switches label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.switches input {
+  margin: 0;
+}
+
+.switches .shapes {
+  gap: 0;
+  margin-left: auto;
+}
+
+.switches .shapes label {
+  padding: 2px 10px;
+  border: 1px solid #7f7f7f;
+  cursor: pointer;
+}
+
+.switches .shapes label + label {
+  border-left: 0;
+}
+
+.switches .shapes label:has([name="view"]) {
+  margin-left: 10px;
+  border-left: 1px solid #7f7f7f;
+}
+
+.switches .shapes label:has(:checked) {
+  background: #252525;
+  color: #ffffff;
+}
+
+.switches .shapes label:has(:focus-visible) {
+  outline: 2px solid #0077bb;
+}
+
+.switches .shapes input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media print {
+  .switches,
+  .sequence-view figcaption {
+    display: none;
+  }
+
+  html,
+  body {
+    display: block;
+    height: auto;
+  }
+
+  .map,
+  .sequence-view {
+    overflow: visible;
+  }
+}
+
+.hover {
+  position: fixed;
+  z-index: 2;
+  pointer-events: none;
+  max-width: 320px;
+  padding: 5px 8px;
+  border: 1px solid #7f7f7f;
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
+  font: 12px/1.4 "Liulab Mbio Sans", sans-serif;
+}
+
+.hover[hidden] {
+  display: none;
+}
+
+.hover .name {
+  font-weight: 700;
+}

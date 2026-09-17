@@ -14,6 +14,16 @@ A segment across the origin of a circular record keeps `start < end` and lets `e
 record's length. On a 2686 bp plasmid, a 6 bp site starting at index 2683 is
 `Segment(2683, 2689)`. Length is always `end - start`, and no segment is empty.
 
+A position a person reads, such as a map's label or hover text, is 1-based and inclusive, as
+SnapGene and GenBank print it, and runs across the origin as it reads: that site is `2684 .. 3`.
+It converts where the text is written, as a file format converts where it is read.
+
+A position a person types takes the same form. `plot map --region 2684..3` names that site as
+the map prints it, `END` before `START` running across the origin, and the command converts it
+to `(2683, 2689)` where it reads the text. Text of that form is always a span, even where a
+feature is named so. `goldengate plan --site START-END` differs: it passes its numbers on
+unconverted, 0-based and half-open, and cannot run across the origin.
+
 ## Considered options
 
 - **`end < start` for a wrapping span**, as SnapGene writes it. Every length and containment
