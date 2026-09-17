@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.io import read_record, read_region
-from liulab_mbio.sequence import Segment, Strand
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.snapgene import write_dna
 
 from .fasta import write_fasta
 
@@ -46,6 +47,95 @@ def test_read_record_reads_genbank_topology_and_features(tmp_path: Path) -> None
     )
     assert reverse.qualifiers == {"codon_start": (1,)}
     assert record.notes["Description"] == "a tiny circular record"
+
+
+def _named(record: SequenceRecord, name: str) -> Feature:
+    (feature,) = (f for f in record.features if f.name == name)
+    return feature
+
+
+def test_read_record_reads_the_colours_snapgene_exports_to_genbank(data_dir: Path) -> None:
+    record = read_record(data_dir / "colour-test-snapgene.gbk")
+    colours = {feature.name: (feature.color, feature.segments) for feature in record.features}
+    assert colours["split"] == (
+        "#ff0000",
+        (Segment(100, 160), Segment(200, 260, color="#00ff00"), Segment(300, 360, color="#0000ff")),
+    )
+    assert colours["split-same-first"] == (
+        "#ffcc00",
+        (Segment(400, 420), Segment(440, 460, color="#123abc")),
+    )
+    assert colours["lac promoter"] == (
+        "#ffffff",
+        (Segment(512, 519, name="-10"), Segment(519, 537), Segment(537, 543, name="-35")),
+    )
+    assert colours["across"] == ("#993366", (Segment(2600, 2750),))
+    assert (colours["white"][0], colours["M13 fwd"][0]) == ("#ffffff", "#a020f0")
+    assert record.features[0].color is None  # the source feature, which has no colour note
+    amp = _named(record, "AmpR")
+    assert (amp.color, amp.segments) == (
+        "#ccffcc",
+        (Segment(1625, 2417), Segment(2417, 2486, name="signal sequence")),
+    )
+    assert amp.qualifiers["note"] == (
+        "confers resistance to ampicillin, carbenicillin, and related antibiotics",
+        "Cleavage site after base 2417",
+    )
+    assert _named(record, "ori").qualifiers["direction"] == ("LEFT",)
+    assert not [
+        note
+        for feature in record.features
+        for note in feature.qualifiers.get("note", ())
+        if "#" in str(note)
+    ]
+
+
+def test_a_dna_file_written_from_the_export_keeps_its_colours_and_no_colour_note(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    record = read_record(data_dir / "colour-test-snapgene.gbk")
+    path = tmp_path / "colour-test.dna"
+    write_dna(record, path)
+    # All but the source feature, which has no colour until the writer gives it SnapGene's grey.
+    assert read_record(path).features[1:] == record.features[1:]
+    assert b"color:" not in path.read_bytes()
+    assert b"segments:" not in path.read_bytes()
+
+
+#: Colour notes SnapGene would not write, beside the colour qualifiers of other tools.
+NOTED = """LOCUS       noted                     12 bp    DNA     circular SYN 01-JAN-2020
+FEATURES             Location/Qualifiers
+     misc_feature    1..4
+                     /note="color: #FFCC00"
+                     /note="color: black"
+                     /note="its color: #123456 was chosen by hand"
+                     /note="color: #12ab3C"
+     misc_feature    join(5..6,9..10)
+                     /note="This feature has 2 segments:
+                        1: 5 .. 6 / #ff0000
+                        2: 9 .. 10 / black"
+                     /ApEinfo_fwdcolor="#ff0000"
+                     /ApEinfo_revcolor="#00ff00"
+                     /color="#0000ff"
+ORIGIN
+        1 aaaaccccgggg
+//
+"""
+
+
+def test_read_record_reads_only_a_whole_colour_note_of_hex_colours(tmp_path: Path) -> None:
+    path = tmp_path / "noted.gb"
+    path.write_text(NOTED)
+    noted, listed = read_record(path).features
+    assert noted.color == "#12ab3C"
+    assert noted.qualifiers == {"note": ("color: black", "its color: #123456 was chosen by hand")}
+    assert listed.color is None
+    assert listed.qualifiers == {
+        "note": ("This feature has 2 segments: 1: 5 .. 6 / #ff0000 2: 9 .. 10 / black",),
+        "ApEinfo_fwdcolor": ("#ff0000",),
+        "ApEinfo_revcolor": ("#00ff00",),
+        "color": ("#0000ff",),
+    }
 
 
 def test_read_record_reads_fasta_as_a_linear_record(tmp_path: Path) -> None:
