@@ -1,6 +1,7 @@
 """A record drawn through `draw_map` and written as a page: what the page carries, and refusals."""
 
 import base64
+import dataclasses
 import re
 from pathlib import Path
 
@@ -8,7 +9,7 @@ import pytest
 
 from liulab_mbio.plot import Drawing, draw_map
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 from ..html import Node, parse
 
@@ -24,13 +25,20 @@ def _page(drawing: Drawing, path: Path) -> tuple[str, Node]:
     return html, parse(html)
 
 
-def _items(page: Node) -> dict[str, list[Node]]:
+def _items(page: Node, kind: str = "feature") -> dict[str, list[Node]]:
     """Each item's groups on the page, the arrows' first and the label's after, by name."""
     groups: dict[str, list[Node]] = {}
-    for group in page.find_all("g"):
-        if "data-kind" in group.attrs:
-            groups.setdefault(group.attrs["data-name"], []).append(group)
+    for group in page.find_all("g", data_kind=kind):
+        groups.setdefault(group.attrs["data-name"], []).append(group)
     return groups
+
+
+def _labels(page: Node, kind: str) -> list[list[tuple[str, str]]]:
+    """Each label of a kind, as its stretches of text, each with its font weight."""
+    return [
+        [(str(text.children[0]), text.attrs["font-weight"]) for text in group.find_all("text")]
+        for group in page.find_all("g", cls="label", data_kind=kind)
+    ]
 
 
 def _fills(group: Node) -> list[str]:
@@ -202,3 +210,115 @@ def test_a_name_is_written_as_the_face_draws_it_and_hovers_as_written(tmp_path: 
     assert arrows.attrs["data-name"] == name
     assert not page.find_all("b")
     assert label.find_all("text")[0].text == '<b>"lac" & Z</b>'
+
+
+def test_the_shipped_unique_cutters_are_labelled_where_snapgene_numbers_their_cuts(
+    puc19_file: Path, tmp_path: Path
+) -> None:
+    _, page = _page(draw_map(puc19_file), tmp_path / "map.html")
+    labels = _labels(page, "cut_site")
+    # SnapGene Viewer's own map of this file numbers each of these cuts the same, BsaI's on the
+    # bottom strand and SapI's outside its site included.
+    assert ["".join(text for text, _ in label) for label in labels] == [
+        "NdeI (184)",
+        "EcoRI (396)",
+        "SacI (406)",
+        "KpnI - XmaI (412)",
+        "SmaI (414)",
+        "BamHI (417)",
+        "XbaI (423)",
+        "SalI (429)",
+        "PstI - SbfI (439)",
+        "SphI (445)",
+        "HindIII (447)",
+        "BspQI - SapI (690)",
+        "BsaI (1760)",
+    ]
+    assert labels[3] == [("KpnI", "700"), (" - ", "400"), ("XmaI", "700"), (" (412)", "400")]
+
+
+def test_named_enzymes_draw_every_cut_site_bold_only_for_one_that_cuts_once(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    drawing = draw_map(puc19, enzymes=["BsmBI", "EcoRI-HF", "EcoRI"])
+    _, page = _page(drawing, tmp_path / "map.html")
+    assert _labels(page, "cut_site") == [
+        [("BsmBI", "400"), (" (3)", "400")],
+        [("BsmBI", "400"), (" (45)", "400")],
+        [("EcoRI", "700"), (" (396)", "400")],
+    ]
+
+
+def test_an_enzyme_no_shipped_enzyme_answers_to_is_refused(puc19: SequenceRecord) -> None:
+    with pytest.raises(KeyError, match="EcoRJ"):
+        draw_map(puc19, enzymes=["EcoRI", "EcoRJ"])
+
+
+def test_each_primer_is_drawn_in_purple_at_every_binding_site_labelled_with_its_span(
+    tmp_path: Path,
+) -> None:
+    sites = (BindingSite(990, 1010, Strand.FORWARD), BindingSite(100, 120, Strand.REVERSE))
+    record = SequenceRecord(
+        "A" * 1000,
+        topology="circular",
+        features=(
+            Feature("uncoloured", "primer_bind", (Segment(300, 320),)),
+            Feature("coloured", "primer_bind", (Segment(400, 420),), color="#a020f0"),
+        ),
+        primers=(Primer("M13 fwd", "GTAAAACGACGGCCAGT", binding_sites=sites),),
+    )
+    _, page = _page(draw_map(record), tmp_path / "map.html")
+    [(across, reverse, *labels)] = _items(page, "primer").values()
+    assert [group.attrs["data-span"] for group in (across, reverse)] == ["991 .. 10", "101 .. 120"]
+    assert across.attrs["data-type"] == "primer"
+    assert across.attrs["data-length"] == "20 bp"
+    assert _fills(across) == _fills(reverse) == ["#aa3377"]
+    assert [[text.attrs["fill"] for text in label.find_all("text")] for label in labels] == [
+        ["#aa3377"],
+        ["#aa3377"],
+    ]
+    assert sorted(label.find_all("text")[0].text for label in labels) == [
+        "M13 fwd (101 .. 120)",
+        "M13 fwd (991 .. 10)",
+    ]
+    features = _items(page)
+    assert _fills(features["uncoloured"][0]) == ["#aa3377"]
+    assert _fills(features["coloured"][0]) == ["#a020f0"]
+
+
+@pytest.mark.parametrize(
+    ("switches", "drawn"),
+    [
+        ({}, {"feature": {"CDS", "rep_origin"}, "primer": {"primer"}, "cut_site": {"cut site"}}),
+        ({"features": False}, {"primer": {"primer"}, "cut_site": {"cut site"}}),
+        ({"primers": False}, {"feature": {"CDS", "rep_origin"}, "cut_site": {"cut site"}}),
+        ({"cut_sites": False}, {"feature": {"CDS", "rep_origin"}, "primer": {"primer"}}),
+        (
+            {"hide_types": ["CDS"], "source": True},
+            {"feature": {"rep_origin", "source"}, "primer": {"primer"}, "cut_site": {"cut site"}},
+        ),
+    ],
+)
+def test_each_layer_and_feature_type_is_drawn_only_when_asked_for(
+    puc19: SequenceRecord, tmp_path: Path, switches: dict, drawn: dict[str, set[str]]
+) -> None:
+    record = dataclasses.replace(
+        puc19,
+        features=(
+            Feature("pUC19", "source", (Segment(0, len(puc19)),)),
+            *(feature for feature in puc19.features if feature.type in ("CDS", "rep_origin")),
+        ),
+        primers=(
+            Primer(
+                "M13 fwd",
+                "GTAAAACGACGGCCAGT",
+                binding_sites=(BindingSite(378, 395, Strand.FORWARD),),
+            ),
+        ),
+    )
+    _, page = _page(draw_map(record, **switches), tmp_path / "map.html")
+    found: dict[str, set[str]] = {}
+    for group in page.find_all("g"):
+        if "data-kind" in group.attrs:
+            found.setdefault(group.attrs["data-kind"], set()).add(group.attrs["data-type"])
+    assert found == drawn

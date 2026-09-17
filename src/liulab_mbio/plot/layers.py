@@ -1,20 +1,29 @@
 """What a map draws from a record: its items, with their names, colours and hover details.
 
-A view takes these items and never the record. A feature draws in its file's colour, and a
-segment in its own where that differs. One the file gives no colour takes Paul Tol's light scheme
-by the group its type falls in, and pale grey for a type in none. Positions a person reads, as in
-the hover details, are 1-based and inclusive.
+A view takes these items and never the record. A map draws a record's features, each primer at
+its binding sites, and the cut sites of the shipped unique cutters or of the enzymes named.
+
+A feature draws in its file's colour, and a segment in its own where that differs. One the file
+gives no colour takes Paul Tol's light scheme by the group its type falls in, and pale grey for a
+type in none. Primers are purple and enzyme names black.
+
+Positions a person reads, in labels and hover details, are 1-based and inclusive. A cut site is
+numbered as SnapGene numbers one: by the base after which its enzymes cut the top strand.
 """
 
 import re
-from collections.abc import Mapping, Sequence
+from collections import Counter
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
-from liulab_mbio.sequence import Feature, SequenceRecord, Strand
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.enzymes import enzymes as shipped
+from liulab_mbio.sequence import BindingSite, Feature, Primer, SequenceRecord, Strand
+from liulab_mbio.sites import find_sites
 
-#: What an item is. A map draws features.
-type Kind = Literal["feature"]
+#: What an item is: a feature, a primer at one binding site, or the enzymes cutting at one position.
+type Kind = Literal["feature", "primer", "cut_site"]
 
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -87,6 +96,15 @@ GROUPS: Mapping[str, tuple[str, frozenset[str]]] = {
 #: Pale grey, for a type in no group.
 OTHER = "#DDDDDD"
 
+#: Tol bright purple, for primers and for a `primer_bind` feature the file gives no colour.
+PRIMER = "#AA3377"
+
+#: The colour of an enzyme's name.
+ENZYME = "#000000"
+
+#: What joins the names of the enzymes cutting at one position.
+SEPARATOR = " - "
+
 #: The `/regulatory_class` values that put a `regulatory` feature among the terminators.
 TERMINATING_CLASSES = frozenset({"terminator", "polyA_signal_sequence"})
 
@@ -101,6 +119,19 @@ class Span:
 
 
 @dataclass(frozen=True, slots=True)
+class Cutter:
+    """An enzyme a cut site names, and how many times it cuts the whole record."""
+
+    name: str
+    cuts: int
+
+    @property
+    def unique(self) -> bool:
+        """Whether it cuts the record once, which is what makes its name bold."""
+        return self.cuts == 1
+
+
+@dataclass(frozen=True, slots=True)
 class Item:
     """One thing a map draws.
 
@@ -109,17 +140,20 @@ class Item:
     kind
         What it is.
     name
-        As the file writes it.
+        As the file writes it; for a cut site, its enzymes' names joined as its label joins them.
     type
-        The feature type.
+        The feature type; ``primer`` or ``cut site`` for the other kinds.
     strand
         The strand it reads along.
     spans
-        In top-strand order, as the feature's segments are.
+        In top-strand order, as the feature's segments are. A primer's is its binding site. A cut
+        site's is empty, at the boundary where its enzymes cut the top strand.
     label
         The text a map labels it with.
     hover
         What hovering over it shows: its name, type, span and length, as a person reads them.
+    cutters
+        A cut site's enzymes, in the order its label names them.
     """
 
     kind: Kind
@@ -129,25 +163,131 @@ class Item:
     spans: tuple[Span, ...]
     label: str
     hover: Mapping[str, str] = field(default_factory=dict, hash=False)
+    cutters: tuple[Cutter, ...] = ()
 
     @property
     def color(self) -> str:
-        """The colour its label is boxed in: its first span's."""
+        """The colour of its label: its first span's."""
         return self.spans[0].color
 
+    @property
+    def runs(self) -> tuple[tuple[str, bool], ...]:
+        """Its label in stretches of text, each marked bold or not: a unique cutter's name is."""
+        if not self.cutters:
+            return ((self.label, False),)
+        runs: list[tuple[str, bool]] = []
+        for cutter in self.cutters:
+            if runs:
+                runs.append((SEPARATOR, False))
+            runs.append((cutter.name, cutter.unique))
+        runs.append((self.label.removeprefix(self.name), False))
+        return tuple(runs)
 
-def items(record: SequenceRecord) -> tuple[Item, ...]:
-    """Return what a map of `record` draws: every feature but `source`, in the record's order."""
-    return tuple(
-        _feature(feature, len(record)) for feature in record.features if feature.type != "source"
-    )
+
+def items(
+    record: SequenceRecord,
+    *,
+    features: bool = True,
+    primers: bool = True,
+    cut_sites: bool = True,
+    enzymes: str | Iterable[str] | None = None,
+    hide_types: Iterable[str] = (),
+    source: bool = False,
+) -> tuple[Item, ...]:
+    """Return what a map of `record` draws: its features, its primers, then its cut sites.
+
+    Parameters
+    ----------
+    record
+        What is drawn.
+    features, primers, cut_sites
+        Whether each is drawn.
+    enzymes
+        The names of the enzymes whose every cut site is drawn; the shipped unique cutters when
+        ``None``. How many times an enzyme cuts is counted over the whole record.
+    hide_types
+        The feature types left off.
+    source
+        Whether a `source` feature is drawn.
+
+    Raises
+    ------
+    KeyError
+        If no shipped enzyme answers to a name in `enzymes`, as `sites.find_sites` raises.
+    """
+    length = len(record)
+    chosen = None if enzymes is None else _chosen(enzymes)
+    left_off = set(hide_types) if source else {*hide_types, "source"}
+    drawn = []
+    if features:
+        drawn.extend(
+            _feature(feature, length) for feature in record.features if feature.type not in left_off
+        )
+    if primers:
+        drawn.extend(
+            _primer(primer, site, length)
+            for primer in record.primers
+            for site in primer.binding_sites
+        )
+    if cut_sites:
+        drawn.extend(_cut_sites(record, chosen))
+    return tuple(drawn)
+
+
+def merge_cuts(cuts: Iterable[tuple[str, int]], length: int) -> tuple[Item, ...]:
+    """Return a cut site for each position cut, naming every enzyme that cuts there.
+
+    Parameters
+    ----------
+    cuts
+        Each cut as an enzyme's name and the 0-based boundary where it cuts the top strand, one
+        for every site, so a name given twice cuts twice.
+    length
+        The record's.
+
+    Returns
+    -------
+    tuple[Item, ...]
+        In order of position, each naming its enzymes alphabetically, as SnapGene merges them.
+
+    Examples
+    --------
+    >>> [site.label for site in merge_cuts([("SacI", 406), ("BanII", 406), ("EcoRI", 396)], 2686)]
+    ['EcoRI (396)', 'BanII - SacI (406)']
+    """
+    listed = list(cuts)
+    counts = Counter(name for name, _ in listed)
+    at: dict[int, set[str]] = {}
+    for name, position in listed:
+        at.setdefault(position % length, set()).add(name)
+    merged = []
+    for position, names in sorted(at.items()):
+        cutters = tuple(
+            Cutter(one, counts[one]) for one in sorted(names, key=lambda one: (one.casefold(), one))
+        )
+        name = SEPARATOR.join(cutter.name for cutter in cutters)
+        shown = str((position - 1) % length + 1)
+        merged.append(
+            Item(
+                "cut_site",
+                name,
+                "cut site",
+                Strand.NONE,
+                (Span(position, position, ENZYME),),
+                f"{name} ({shown})",
+                {"name": name, "type": "cut site", "span": shown},
+                cutters,
+            )
+        )
+    return tuple(merged)
 
 
 def default_color(feature: Feature) -> str:
     """Return the colour a feature with none of its own takes, by the group its type falls in.
 
-    A `regulatory` feature is grouped by its `/regulatory_class`: a terminator's or a polyA
-    signal's among the terminators, any other among the promoters and enhancers.
+    A `primer_bind` feature takes the primers' purple instead. A `regulatory` feature is grouped
+    by its `/regulatory_class`: a terminator's or a polyA signal's among the terminators, any other
+    among the promoters and enhancers.
 
     Examples
     --------
@@ -155,6 +295,8 @@ def default_color(feature: Feature) -> str:
     >>> default_color(Feature("ori", "rep_origin", (Segment(0, 10),)))
     '#eedd88'
     """
+    if feature.type == "primer_bind":
+        return PRIMER.lower()
     if feature.type == "regulatory" and TERMINATING_CLASSES & set(
         map(str, feature.qualifiers.get("regulatory_class", ()))
     ):
@@ -233,6 +375,48 @@ def _feature(feature: Feature, length: int) -> Item:
         "length": f"{bases} bp",
     }
     return Item("feature", feature.name, feature.type, feature.strand, spans, feature.name, hover)
+
+
+def _primer(primer: Primer, site: BindingSite, length: int) -> Item:
+    span = span_text(site.start, site.end, length)
+    hover = {
+        "name": primer.name,
+        "type": "primer",
+        "span": span,
+        "length": f"{site.end - site.start} bp",
+    }
+    return Item(
+        "primer",
+        primer.name,
+        "primer",
+        site.strand,
+        (Span(site.start, site.end, PRIMER.lower()),),
+        f"{primer.name} ({span})",
+        hover,
+    )
+
+
+def _chosen(names: str | Iterable[str]) -> tuple[Enzyme, ...]:
+    """Return the shipped enzymes `names` answer to, each once however many names it has."""
+    named = (names,) if isinstance(names, str) else names
+    return tuple({enzyme.name: enzyme for enzyme in map(get_enzyme, named)}.values())
+
+
+def _cut_sites(record: SequenceRecord, chosen: tuple[Enzyme, ...] | None) -> tuple[Item, ...]:
+    """Return the cut sites of `chosen`, or of the shipped unique cutters when that is ``None``."""
+    # A site whose cut falls off a linear record cuts nothing there.
+    found = [
+        site for site in find_sites(record, shipped() if chosen is None else chosen) if site.cuts
+    ]
+    counts = Counter(site.enzyme.name for site in found)
+    return merge_cuts(
+        (
+            (site.enzyme.name, site.top_cut)
+            for site in found
+            if chosen is not None or counts[site.enzyme.name] == 1
+        ),
+        len(record),
+    )
 
 
 def _given(color: str | None) -> str | None:

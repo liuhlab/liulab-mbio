@@ -1,11 +1,22 @@
 """The `plot map` command: the file it writes, what it prints, and how it refuses bad input."""
 
+import dataclasses
 import re
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.snapgene import write_dna
+
+from ..html import Node, parse
+
+
+def _groups(page: Path) -> list[Node]:
+    """What the page draws: each group a hover reads."""
+    tree = parse(page.read_text(encoding="utf-8"))
+    return [group for group in tree.find_all("g") if "data-kind" in group.attrs]
 
 
 def _run(*arguments: str) -> tuple[int, list[str]]:
@@ -40,4 +51,51 @@ def test_the_command_refuses_a_file_it_cannot_read(tmp_path: Path) -> None:
 def test_the_command_refuses_a_record_that_is_not_there(tmp_path: Path) -> None:
     code, _ = _run(str(tmp_path / "absent.dna"), "-o", str(tmp_path / "map.html"))
     assert code != 0
+    assert not (tmp_path / "map.html").exists()
+
+
+def test_the_command_switches_layers_and_feature_types_and_names_enzymes(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    record = tmp_path / "primed.dna"
+    write_dna(
+        dataclasses.replace(
+            puc19,
+            features=(*puc19.features, Feature("pUC19", "source", (Segment(0, len(puc19)),))),
+            primers=(
+                Primer(
+                    "M13 fwd",
+                    "GTAAAACGACGGCCAGT",
+                    binding_sites=(BindingSite(378, 395, Strand.FORWARD),),
+                ),
+            ),
+        ),
+        record,
+    )
+    out = tmp_path / "map.html"
+    code, _ = _run(
+        str(record), "-o", str(out), "--enzyme", "BamHI", "--enzyme", "EcoRI", "--hide-type",
+        "CDS", "--hide-type", "promoter", "--source", "--no-primers",
+    )  # fmt: skip
+    assert code == 0
+    groups = _groups(out)
+    types = {group.attrs["data-type"] for group in groups}
+    assert "source" in types
+    assert not types & {"CDS", "promoter", "primer"}
+    assert [g.attrs["data-name"] for g in groups if g.attrs["data-kind"] == "cut_site"] == [
+        "EcoRI",
+        "BamHI",
+    ]
+    code, _ = _run(str(record), "-o", str(out), "--no-features", "--no-cut-sites")
+    assert code == 0
+    assert {group.attrs["data-kind"] for group in _groups(out)} == {"primer"}
+
+
+def test_the_command_refuses_an_enzyme_no_shipped_enzyme_answers_to(
+    puc19_file: Path, tmp_path: Path
+) -> None:
+    code, lines = _run(str(puc19_file), "-o", str(tmp_path / "map.html"), "--enzyme", "EcoRJ")
+    assert code == 1
+    assert lines[0].startswith("error: ")
+    assert "EcoRJ" in lines[0]
     assert not (tmp_path / "map.html").exists()

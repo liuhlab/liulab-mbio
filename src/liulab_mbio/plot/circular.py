@@ -3,8 +3,12 @@
 The backbone is two concentric lines, with a bp scale inside them and the record's name and length
 in the centre. Each feature is drawn segment by segment as an arrow along its strand, or a box when
 it has none, and a segment across the origin is one piece. Features that overlap go on rings
-further in, the longest outermost. Each feature's name is boxed outside, in the columns
-`labels.columns` lays out, so no label overlaps another label or the drawing.
+further in, the longest outermost. Each primer is a thin arrow outside the backbone at each binding
+site, overlapping ones further out.
+
+Every item is labelled outside, in the columns `labels.columns` lays out, so no label overlaps
+another label or the drawing: a feature's name boxed in its colour, a primer's in purple, and a cut
+site's enzymes in black, joined to the backbone at the cut.
 """
 
 import itertools
@@ -50,6 +54,10 @@ _RING_STEP = 25.0
 _CENTRE = 0.4 * RADIUS
 _RING_PADDING = 3.0
 
+# A primer's arrow outside the backbone: its thickness, and the room either side of it.
+_PRIMER_BAND = 4.0
+_PRIMER_GAP = 2.0
+
 # The labels: padding inside a box, where leaders start and the ellipse begins beyond the
 # drawing, the space between boxes in a column and between the columns, and the canvas's margin.
 _PADDING = (3.0, 1.0)
@@ -89,7 +97,7 @@ class Arrow:
 
 @dataclass(frozen=True, slots=True)
 class Label:
-    """An item's name boxed outside the circle, and its leader from the circle to the box."""
+    """An item's label outside the circle, and its leader from the circle to the label's box."""
 
     item: Item
     box: Box
@@ -107,9 +115,10 @@ class CircularMap:
     radius
         How far from the centre the drawing reaches. Only labels and their leaders lie further.
     arrows
-        Every segment of every item, in the items' order.
+        Every segment of every feature and every binding site of every primer, in the items'
+        order.
     labels
-        Every boxed name, in the items' order.
+        Every label, in the items' order.
     shapes
         Everything, in the order it is drawn.
     """
@@ -123,13 +132,25 @@ class CircularMap:
 
 def layout(items: Sequence[Item], *, name: str, length: int) -> CircularMap:
     """Lay out `items` as a circular map of a record called `name`, `length` bases long."""
-    drawing = RADIUS + _BACKBONE / 2
-    arrows = _arrows(items, length)
+    backbone = RADIUS + _BACKBONE / 2
+    features = [item for item in items if item.kind == "feature"]
+    primers = _primers([item for item in items if item.kind == "primer"], length, backbone)
+    drawing = max(
+        [backbone, *(arrow.radius + arrow.width / 2 + _reach(arrow.width) for arrow in primers)]
+    )
+    order = {id(item): index for index, item in enumerate(items)}
+    arrows = tuple(
+        sorted((*_arrows(features, length), *primers), key=lambda arrow: order[id(arrow.item)])
+    )
     boxed = _labels(items, length, drawing)
     shapes = (
         *_backbone(length),
-        *(_feature(item, [arrow for arrow in arrows if arrow.item is item]) for item in items),
-        *(_label(label) for label in boxed),
+        *(
+            _feature(item, [arrow for arrow in arrows if arrow.item is item])
+            for item in items
+            if item.kind != "cut_site"
+        ),
+        *(_label(label, backbone) for label in boxed),
         *_centre(name, length),
     )
     return CircularMap(_extent(drawing + _ANCHOR, boxed), drawing, arrows, boxed, shapes)
@@ -221,6 +242,34 @@ def _arrows(items: Sequence[Item], length: int) -> tuple[Arrow, ...]:
     return tuple(arrows)
 
 
+def _primers(items: Sequence[Item], length: int, backbone: float) -> list[Arrow]:
+    """Return each primer's arrow outside the backbone, overlapping ones on rings further out."""
+    reach = _reach(_PRIMER_BAND)
+    step = _PRIMER_BAND + 2 * reach + _PRIMER_GAP
+    first = backbone + _PRIMER_GAP + reach + _PRIMER_BAND / 2
+    arrows = []
+    for item, ring in zip(items, _rings(items, length), strict=True):
+        (span,) = item.spans
+        arrows.append(
+            Arrow(
+                item,
+                span,
+                _angle(span.start, length),
+                _angle(span.end, length),
+                first + ring * step,
+                _PRIMER_BAND,
+                head_start=item.strand == Strand.REVERSE,
+                head_end=item.strand == Strand.FORWARD,
+            )
+        )
+    return arrows
+
+
+def _reach(width: float) -> float:
+    """Return how far the heads of an arrow `width` thick reach beyond its band."""
+    return width * _OVERHANG / _BAND
+
+
 def _labels(items: Sequence[Item], length: int, drawing: float) -> tuple[Label, ...]:
     named = [item for item in items if SANS.drawn(item.label)]
     anchored = []
@@ -228,7 +277,8 @@ def _labels(items: Sequence[Item], length: int, drawing: float) -> tuple[Label, 
         start, end = _hull(item, length)
         anchored.append(
             labels.Anchored(
-                SANS.width(item.label, LABEL_SIZE) + 2 * _PADDING[0],
+                sum(_font(bold).width(text, LABEL_SIZE) for text, bold in item.runs)
+                + 2 * _PADDING[0],
                 _height(SANS, LABEL_SIZE) + 2 * _PADDING[1],
                 _point(drawing + _ANCHOR, _angle((start + end) / 2, length)),
             )
@@ -297,23 +347,33 @@ def _feature(item: Item, arrows: Sequence[Arrow]) -> Group:
     return Group(tuple(shapes), classes=(item.kind,), data={"kind": item.kind, **item.hover})
 
 
-def _label(label: Label) -> Group:
+def _font(bold: bool) -> Font:
+    return BOLD if bold else SANS
+
+
+def _label(label: Label, backbone: float) -> Group:
+    """Return a label: a feature's name boxed in its colour, any other label's text unboxed.
+
+    A cut site's leader carries on to the backbone, so it points at the cut.
+    """
     box, item = label.box, label.item
     (x1, y1), (x2, y2) = label.leader
-    text = Text(
-        box.x + _PADDING[0],
-        _baseline(SANS, LABEL_SIZE, box.y + box.height / 2),
-        item.label,
-        SANS,
-        LABEL_SIZE,
-        text_color(item.color),
+    shapes: list[Shape] = [Line(x1, y1, x2, y2, _LEADER, 0.8)]
+    if item.kind == "cut_site":
+        inward = backbone / math.hypot(x1, y1)
+        shapes.append(Line(x1 * inward, y1 * inward, x1, y1, _LEADER, 0.8))
+    fill = item.color
+    if item.kind == "feature":
+        shapes.append(Rect(box, item.color, outline_color(item.color), 0.8, corner=2.0))
+        fill = text_color(item.color)
+    x = box.x + _PADDING[0]
+    baseline = _baseline(SANS, LABEL_SIZE, box.y + box.height / 2)
+    for text, bold in item.runs:
+        shapes.append(Text(x, baseline, text, _font(bold), LABEL_SIZE, fill))
+        x += _font(bold).width(text, LABEL_SIZE)
+    return Group(
+        tuple(shapes), classes=(item.kind, "label"), data={"kind": item.kind, **item.hover}
     )
-    shapes = (
-        Line(x1, y1, x2, y2, _LEADER, 0.8),
-        Rect(box, item.color, outline_color(item.color), 0.8, corner=2.0),
-        text,
-    )
-    return Group(shapes, classes=(item.kind, "label"), data={"kind": item.kind, **item.hover})
 
 
 def _centre(name: str, length: int) -> list[Shape]:

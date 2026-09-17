@@ -1,7 +1,7 @@
 """Draw a record as a map, and write the drawing in the format its file name asks for."""
 
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -42,16 +42,36 @@ class Drawing:
         return out
 
 
-def draw_map(record: SequenceRecord | str | os.PathLike[str]) -> Drawing:
-    """Lay out a record as a circular map of its features.
+def draw_map(
+    record: SequenceRecord | str | os.PathLike[str],
+    *,
+    features: bool = True,
+    primers: bool = True,
+    cut_sites: bool = True,
+    enzymes: str | Iterable[str] | None = None,
+    hide_types: Iterable[str] = (),
+    source: bool = False,
+) -> Drawing:
+    """Lay out a record as a circular map of its features, primers and cut sites.
 
     Parameters
     ----------
     record
         A record, or a ``.dna``, GenBank or FASTA file to read one from.
+    features, primers, cut_sites
+        Whether each is drawn.
+    enzymes
+        The names of the enzymes whose every cut site is drawn; the shipped unique cutters when
+        ``None``.
+    hide_types
+        The feature types left off.
+    source
+        Whether a `source` feature is drawn.
 
     Raises
     ------
+    KeyError
+        If no shipped enzyme answers to a name in `enzymes`.
     ValueError
         If the file cannot be read as a record, or the record has no bases.
 
@@ -63,7 +83,16 @@ def draw_map(record: SequenceRecord | str | os.PathLike[str]) -> Drawing:
     record = record if isinstance(record, SequenceRecord) else read_record(record)
     if not len(record):
         raise ValueError(f"record {record.name!r} has no bases to draw")
-    layout = circular.layout(layers.items(record), name=record.name, length=len(record))
+    items = layers.items(
+        record,
+        features=features,
+        primers=primers,
+        cut_sites=cut_sites,
+        enzymes=enzymes,
+        hide_types=hide_types,
+        source=source,
+    )
+    layout = circular.layout(items, name=record.name, length=len(record))
     return Drawing(record, layout)
 
 

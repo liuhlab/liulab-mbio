@@ -3,13 +3,14 @@ apart from each other and from the drawing, on crowded and seeded random records
 
 import math
 import random
+from collections import Counter
 from itertools import combinations
 
 import pytest
 
 from liulab_mbio.plot import circular, layers
 from liulab_mbio.plot.labels import Box, Point
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 LENGTH = 3000
 #: How far two shapes may reach into each other and still count as touching.
@@ -24,8 +25,15 @@ def _feature(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -
     return Feature(name, "misc_feature", (Segment(start, end),), strand=strand)
 
 
-def _crowded() -> SequenceRecord:
-    """Names crowding one stretch, the origin, the bottom and the sides, over features on rings."""
+def _primer(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> Primer:
+    return Primer(name, "ACGT", binding_sites=(BindingSite(start, end, strand),))
+
+
+def _crowded() -> tuple[layers.Item, ...]:
+    """Labels crowding one stretch, the origin, the bottom and the sides, over features on rings.
+
+    Primers overlap one another, and enzymes cut at the same positions.
+    """
     features = [_feature(f"crowded name {i:02d}", 380 + 6 * i, 390 + 6 * i) for i in range(40)]
     features += [
         _feature(f"origin {i}", (2990 + 4 * i) % LENGTH, (2990 + 4 * i) % LENGTH + 6)
@@ -40,29 +48,55 @@ def _crowded() -> SequenceRecord:
     features += [_feature(f"long {i}", 100 * i, 100 * i + 1200, Strand.REVERSE) for i in range(6)]
     features.append(_feature("dead on top", 2994, 3006))
     features.append(_feature("dead on the bottom", 1494, 1506))
-    return SequenceRecord(
-        "A" * LENGTH, topology="circular", name="crowded", features=tuple(features)
+    primers = [_primer(f"primer {i}", 370 + 5 * i, 390 + 5 * i) for i in range(10)]
+    primers += [_primer(f"across {i}", 2990 - i, 3010 - i, Strand.REVERSE) for i in range(3)]
+    cuts = [
+        (name, 385 + 3 * i) for i in range(30) for name in (f"Cutter{i}", f"Also{i}")[: i % 2 + 1]
+    ]
+    cuts += [("AtTheOrigin", 0), ("BeforeIt", 2999), ("AtTheBottom", 1500), ("AtTheBottom", 400)]
+    record = SequenceRecord(
+        "A" * LENGTH,
+        topology="circular",
+        name="crowded",
+        features=tuple(features),
+        primers=tuple(primers),
     )
+    return (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
 
 
-def _random(seed: int) -> SequenceRecord:
-    """Up to a hundred features of random names, half of them clustered, some across the origin."""
+def _random(seed: int) -> tuple[layers.Item, ...]:
+    """Features, primers and cut sites with random names, half clustered, some across the origin."""
     rng = random.Random(seed)
     letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -()"
     centres = [rng.randrange(LENGTH) for _ in range(3)]
+
+    def position() -> int:
+        if rng.random() < 0.5:
+            return (rng.choice(centres) + rng.randint(-60, 60)) % LENGTH
+        return rng.randrange(LENGTH)
+
+    def name() -> str:
+        return "".join(rng.choice(letters) for _ in range(rng.randint(1, 30)))
+
     features = []
     for i in range(rng.randint(10, 100)):
-        start = (
-            (rng.choice(centres) + rng.randint(-60, 60)) % LENGTH
-            if rng.random() < 0.5
-            else rng.randrange(LENGTH)
-        )
+        start = position()
         size = rng.choice([rng.randint(1, 30), rng.randint(30, 900)])
-        name = "".join(rng.choice(letters) for _ in range(rng.randint(1, 30)))
-        features.append(_feature(f"{i}{name}", start, start + size, rng.choice(list(Strand))))
-    return SequenceRecord(
-        "A" * LENGTH, topology="circular", name=f"random {seed}", features=tuple(features)
+        features.append(_feature(f"{i}{name()}", start, start + size, rng.choice(list(Strand))))
+    primers = []
+    for i in range(rng.randint(0, 10)):
+        start = position()
+        strand = rng.choice([Strand.FORWARD, Strand.REVERSE])
+        primers.append(_primer(f"{i}{name()}", start, start + rng.randint(15, 40), strand))
+    cuts = [(f"{i}{name()}", position()) for i in range(rng.randint(0, 30))]
+    record = SequenceRecord(
+        "A" * LENGTH,
+        topology="circular",
+        name=f"random {seed}",
+        features=tuple(features),
+        primers=tuple(primers),
     )
+    return (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
 
 
 RECORDS = {
@@ -72,8 +106,13 @@ RECORDS = {
 
 
 @pytest.fixture(scope="module", params=list(RECORDS))
-def laid_out(request: pytest.FixtureRequest) -> circular.CircularMap:
-    return _layout(RECORDS[request.param]())
+def given(request: pytest.FixtureRequest) -> tuple[layers.Item, ...]:
+    return RECORDS[request.param]()
+
+
+@pytest.fixture(scope="module")
+def laid_out(given: tuple[layers.Item, ...]) -> circular.CircularMap:
+    return circular.layout(given, name="map", length=LENGTH)
 
 
 def _overlap(one: Box, other: Box) -> bool:
@@ -118,9 +157,10 @@ def _crosses(leader: tuple[Point, Point], box: Box) -> bool:
     return low < high
 
 
-def test_every_item_is_labelled_once(laid_out: circular.CircularMap) -> None:
-    drawn = {id(arrow.item) for arrow in laid_out.arrows}
-    assert sorted(id(label.item) for label in laid_out.labels) == sorted(drawn)
+def test_every_item_is_labelled_once(
+    given: tuple[layers.Item, ...], laid_out: circular.CircularMap
+) -> None:
+    assert Counter(id(label.item) for label in laid_out.labels) == Counter(map(id, given))
 
 
 def test_no_two_labels_overlap(laid_out: circular.CircularMap) -> None:
@@ -204,3 +244,33 @@ def test_features_that_overlap_go_on_rings_further_in_the_longest_outermost() ->
     )
     radii = {arrow.item.name: arrow.radius for arrow in _layout(record).arrows}
     assert radii["long"] == radii["apart"] > radii["short"]
+
+
+def test_a_primer_is_an_arrow_outside_the_backbone_at_each_binding_site() -> None:
+    sites = (BindingSite(2950, 3010, Strand.FORWARD), BindingSite(100, 130, Strand.REVERSE))
+    record = SequenceRecord(
+        "A" * LENGTH,
+        topology="circular",
+        primers=(Primer("both", "ACGT", binding_sites=sites), _primer("over", 110, 140)),
+    )
+    laid = _layout(record)
+    arrows = {(arrow.item.name, arrow.span.start): arrow for arrow in laid.arrows}
+    across, reverse, over = arrows["both", 2950], arrows["both", 100], arrows["over", 110]
+    assert across.start < math.tau < across.end
+    assert (across.head_start, across.head_end) == (False, True)
+    assert (reverse.head_start, reverse.head_end) == (True, False)
+    assert circular.RADIUS < across.radius == reverse.radius < over.radius
+    assert over.radius + over.width / 2 < laid.radius
+
+
+def test_a_cut_sites_leader_points_at_its_cut() -> None:
+    items = layers.merge_cuts([("EcoRI", 750), ("BanII", 2250), ("SacI", 2250)], LENGTH)
+    laid = circular.layout(items, name="cuts", length=LENGTH)
+    angles = {
+        label.item.label: math.atan2(label.leader[0].x, -label.leader[0].y) % math.tau
+        for label in laid.labels
+    }
+    assert angles == {
+        "EcoRI (750)": pytest.approx(math.pi / 2),
+        "BanII - SacI (2250)": pytest.approx(3 * math.pi / 2),
+    }
