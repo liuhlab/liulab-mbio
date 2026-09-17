@@ -11,6 +11,7 @@ the map between its shapes at top right. A click on an item highlights it.
 import base64
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from functools import cache
 from html import escape
 from importlib.resources import files
 from typing import Literal
@@ -112,6 +113,7 @@ def _input(kind: str, name: str, value: str, text: str, on: bool) -> str:
     )
 
 
+@cache
 def _font_face(font: Font) -> str:
     data = base64.b64encode(font.woff2()).decode("ascii")
     weight = 700 if font.style == "Bold" else 400
@@ -121,5 +123,6 @@ def _font_face(font: Font) -> str:
     )
 
 
+@cache
 def _asset(name: str) -> str:
     return files("liulab_mbio.plot").joinpath(name).read_text(encoding="utf-8")

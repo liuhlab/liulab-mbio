@@ -44,6 +44,18 @@ def _page(drawing: Drawing, path: Path) -> tuple[str, Node]:
     return html, parse(html)
 
 
+@pytest.fixture(scope="module")
+def colour_test_page(colour_test: Drawing, tmp_path_factory: pytest.TempPathFactory) -> Node:
+    """The colour test's page, written once."""
+    return _page(colour_test, tmp_path_factory.mktemp("colour-test") / "map.html")[1]
+
+
+@pytest.fixture(scope="module")
+def puc19_page(puc19_file: Path, tmp_path_factory: pytest.TempPathFactory) -> tuple[str, Node]:
+    """pUC19's page with nothing asked for, written once."""
+    return _page(draw_map(puc19_file), tmp_path_factory.mktemp("puc19") / "map.html")
+
+
 def _shapes(page: Node) -> dict[str, Node]:
     """The map in each shape the page carries, by shape, the one shown first first."""
     shapes = page.find_all("div", cls="shape")
@@ -285,8 +297,8 @@ def test_a_file_no_reader_reads_is_refused(tmp_path: Path) -> None:
         draw_map(notes)
 
 
-def test_the_page_loads_nothing_over_the_network(puc19_file: Path, tmp_path: Path) -> None:
-    html, page = _page(draw_map(puc19_file), tmp_path / "map.html")
+def test_the_page_loads_nothing_over_the_network(puc19_page: tuple[str, Node]) -> None:
+    html, page = puc19_page
     assert not page.find_all("link")
     assert not [node for node in page.iter() if {"src", "href", "xlink:href"} & set(node.attrs)]
     assert "@import" not in html
@@ -295,26 +307,24 @@ def test_the_page_loads_nothing_over_the_network(puc19_file: Path, tmp_path: Pat
     assert set(re.findall(r"https?://[^\s\"'<>]+", html)) == {"http://www.w3.org/2000/svg"}
 
 
-def test_the_page_embeds_the_font_subsets_it_measures_with(
-    puc19_file: Path, tmp_path: Path
-) -> None:
-    html, _ = _page(draw_map(puc19_file), tmp_path / "map.html")
+def test_the_page_embeds_the_font_subsets_it_measures_with(puc19_page: tuple[str, Node]) -> None:
+    html, _ = puc19_page
     embedded = re.findall(r"url\(data:font/woff2;base64,([A-Za-z0-9+/=]+)\)", html)
     assert [base64.b64decode(data) for data in embedded] == [
         font.woff2() for font in (SANS, BOLD, MONO)
     ]
 
 
-def test_the_page_stays_white_in_a_dark_colour_scheme(puc19_file: Path, tmp_path: Path) -> None:
-    _, page = _page(draw_map(puc19_file), tmp_path / "map.html")
+def test_the_page_stays_white_in_a_dark_colour_scheme(puc19_page: tuple[str, Node]) -> None:
+    _, page = puc19_page
     [scheme] = [meta for meta in page.find_all("meta") if meta.attrs.get("name") == "color-scheme"]
     assert scheme.attrs["content"] == "light"
 
 
 def test_the_centre_names_the_record_in_bold_over_its_length_inside_a_bp_scale(
-    puc19_file: Path, tmp_path: Path
+    puc19_page: tuple[str, Node],
 ) -> None:
-    shown = _map(_page(draw_map(puc19_file), tmp_path / "map.html")[1])
+    shown = _map(puc19_page[1])
     weights = {text.text: text.attrs["font-weight"] for text in shown.find_all("text")}
     assert weights["pUC19"] == "700"
     assert weights["2686 bp"] == "400"
@@ -323,9 +333,9 @@ def test_the_centre_names_the_record_in_bold_over_its_length_inside_a_bp_scale(
 
 
 def test_hovering_over_a_feature_shows_its_name_type_span_and_length_one_based(
-    colour_test: Drawing, tmp_path: Path
+    colour_test_page: Node,
 ) -> None:
-    _, page = _page(colour_test, tmp_path / "map.html")
+    page = colour_test_page
     hover = {
         name: {key: groups[0].attrs[f"data-{key}"] for key in ("type", "span", "length")}
         for name, groups in _items(page).items()
@@ -336,9 +346,9 @@ def test_hovering_over_a_feature_shows_its_name_type_span_and_length_one_based(
 
 
 def test_every_feature_is_drawn_with_its_name_on_its_arrow_or_boxed_and_source_switched_off(
-    colour_test: Drawing, tmp_path: Path
+    colour_test: Drawing, colour_test_page: Node
 ) -> None:
-    _, page = _page(colour_test, tmp_path / "map.html")
+    page = colour_test_page
     shown = _map(page)
     [source] = [f.name for f in colour_test.record.features if f.type == "source"]
     items = _items(shown)
@@ -366,9 +376,9 @@ def test_every_feature_is_drawn_with_its_name_on_its_arrow_or_boxed_and_source_s
 
 
 def test_features_draw_in_their_files_colours_segment_by_segment(
-    colour_test: Drawing, tmp_path: Path
+    colour_test_page: Node,
 ) -> None:
-    _, page = _page(colour_test, tmp_path / "map.html")
+    page = colour_test_page
     items = _items(page)
     assert _fills(items["split"][0]) == ["#ff0000", "#00ff00", "#0000ff"]
     assert _fills(items["split-same-first"][0]) == ["#ffcc00", "#123abc"]
@@ -378,9 +388,9 @@ def test_features_draw_in_their_files_colours_segment_by_segment(
 
 
 def test_every_arrow_is_outlined_and_every_name_contrasts_with_its_fill(
-    colour_test: Drawing, tmp_path: Path
+    colour_test_page: Node,
 ) -> None:
-    _, page = _page(colour_test, tmp_path / "map.html")
+    page = colour_test_page
     items = _items(page)
     for arrows, *_ in items.values():
         assert all(
@@ -465,9 +475,9 @@ def test_a_name_is_written_as_the_face_draws_it_and_hovers_as_written(tmp_path: 
 
 
 def test_the_shipped_unique_cutters_are_labelled_where_snapgene_numbers_their_cuts(
-    puc19_file: Path, tmp_path: Path
+    puc19_page: tuple[str, Node],
 ) -> None:
-    _, page = _page(draw_map(puc19_file), tmp_path / "map.html")
+    _, page = puc19_page
     labels = _labels(_map(page), "cut_site")
     # SnapGene Viewer's own map of this file numbers each of these cuts the same, BsaI's on the
     # bottom strand and SapI's outside its site included.
@@ -550,23 +560,9 @@ def test_each_primer_is_drawn_in_purple_at_every_binding_site_labelled_with_its_
     ],
 )
 def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_asked(
-    puc19: SequenceRecord, tmp_path: Path, switches: dict, off: dict[str, set[str]]
+    tmp_path: Path, switches: dict, off: dict[str, set[str]]
 ) -> None:
-    record = dataclasses.replace(
-        puc19,
-        features=(
-            Feature("pUC19", "source", (Segment(0, len(puc19)),)),
-            *(feature for feature in puc19.features if feature.type in ("CDS", "rep_origin")),
-        ),
-        primers=(
-            Primer(
-                "M13 fwd",
-                "GTAAAACGACGGCCAGT",
-                binding_sites=(BindingSite(378, 395, Strand.FORWARD),),
-            ),
-        ),
-    )
-    drawing = draw_map(record, **switches)
+    drawing = draw_map(_layered(), **switches)
     _, page = _page(drawing, tmp_path / "map.html")
     everything = {
         "feature": {"CDS", "rep_origin", "source"},
@@ -1107,9 +1103,8 @@ def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pd
 
 
 def test_a_map_with_room_for_every_label_hides_none_and_says_nothing(
-    puc19_file: Path, tmp_path: Path
+    puc19_file: Path, puc19_page: tuple[str, Node]
 ) -> None:
-    drawing = draw_map(puc19_file)
-    assert drawing.hidden == ()
-    _, page = _page(drawing, tmp_path / "map.html")
+    assert draw_map(puc19_file).hidden == ()
+    _, page = puc19_page
     assert not page.find_all("g", cls="notice")

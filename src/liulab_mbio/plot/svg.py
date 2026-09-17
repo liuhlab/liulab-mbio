@@ -11,6 +11,7 @@ to look up.
 import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from functools import lru_cache
 from html import escape
 from typing import NamedTuple
 
@@ -264,6 +265,8 @@ def _attributes(**values: float) -> str:
     return "".join(f' {name.replace("_", "-")}="{number(value)}"' for name, value in values.items())
 
 
+# A drawing repeats its coordinates row after row.
+@lru_cache(maxsize=1 << 16)
 def number(value: float) -> str:
     """Return a coordinate as the SVG writes it: to a hundredth of a point, no trailing zeros."""
     text = f"{value:.2f}".rstrip("0").rstrip(".")

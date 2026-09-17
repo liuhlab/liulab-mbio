@@ -72,6 +72,12 @@ _CONNECTOR = "#666666"
 _RULER_GAP = 2.0
 _RAIL_GAP = 2.0
 _TICKS = (1.5, 2.5, 3.5)
+# Each tick after a row's first, on from the foot of the tick before, by how far the two reach.
+_STEPS = {
+    (before, reach): f"m{number(CELL)} {number(-before - reach)}v{number(2 * reach)}"
+    for before in _TICKS
+    for reach in _TICKS
+}
 _NUMBER_GAP = 14.0
 
 # A feature's bar: its thickness, how far its point runs along it, the room between bars in a
@@ -1007,8 +1013,7 @@ def _ruler(first: int, last: int, length: int, top: float, rail: float) -> tuple
         if position == first:
             ticks.append(f"M{number(x)} {number(rail - reach)}v{number(2 * reach)}")
         else:
-            # On from the foot of the tick before.
-            ticks.append(f"m{number(CELL)} {number(-before - reach)}v{number(2 * reach)}")
+            ticks.append(_STEPS[before, reach])
         if shown % 10 == 0:
             numbers.append((x, str(shown)))
     shapes: list[Shape] = [
@@ -1109,10 +1114,11 @@ def _text_box(text: Text) -> Box:
 def _letters_box(letters: Letters) -> Box:
     """Return the box a line of letters takes, from its first letter's start to its last's end."""
     font, size = letters.font, letters.size
-    drawn = font.letters(letters.text, size)
+    # A lone letter's width is its advance.
+    last = font.width(font.drawn(letters.text)[-1], size)
     left, baseline = letters.places[0].x, letters.places[0].y
     top = baseline - font.ascender / font.units_per_em * size
-    return Box(left, top, letters.places[-1].x + drawn[-1].advance - left, _height(font, size))
+    return Box(left, top, letters.places[-1].x + last - left, _height(font, size))
 
 
 def _line_box(points: Sequence[Point]) -> Box:

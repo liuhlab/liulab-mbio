@@ -14,7 +14,7 @@ import json
 import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass
-from functools import cache
+from functools import cache, lru_cache
 from importlib.resources import files
 from typing import NamedTuple
 
@@ -113,6 +113,9 @@ class Font:
 
         Invisible characters are dropped, and any other the face lacks becomes `REPLACEMENT`.
         """
+        if text.isascii() and text.isprintable():
+            # Each face draws every printable ASCII character.
+            return text
         advances = _table(self.name).advances
         return "".join(
             char if char in advances else REPLACEMENT
@@ -125,6 +128,9 @@ class Font:
         letters = self.letters(text, size)
         return letters[-1].x + letters[-1].advance if letters else 0.0
 
+    # Text repeats, as an amino acid or a ruler's number does. The faces live as long as the
+    # module, so the cache keeps nothing alive that would otherwise go.
+    @lru_cache(maxsize=1 << 14)  # noqa: B019
     def letters(self, text: str, size: float) -> tuple[Letter, ...]:
         """Return each letter `text` is drawn with at `size`, placed as `width` measures it."""
         table = _table(self.name)
