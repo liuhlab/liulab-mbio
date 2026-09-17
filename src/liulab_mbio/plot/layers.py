@@ -1,7 +1,9 @@
 """What a map draws from a record: its items, with their names, colours and hover details.
 
 A view takes these items and never the record. A map draws a record's features, each primer at
-its binding sites, and the cut sites of the shipped unique cutters or of the enzymes named.
+its binding sites, and the cut sites of the shipped unique cutters or of the enzymes named. A
+primer carries its 5' tail and the bases it does not pair with, found by comparing it with the
+record, and each enzyme at a cut site how its cuts in the two strands stagger.
 
 A feature draws in its file's colour, and a segment in its own where that differs. One the file
 gives no colour takes Paul Tol's light scheme by the group its type falls in, and pale grey for a
@@ -139,10 +141,22 @@ class Span:
 
 @dataclass(frozen=True, slots=True)
 class Cutter:
-    """An enzyme a cut site names, and how many times it cuts the whole record."""
+    """An enzyme a cut site names.
+
+    Parameters
+    ----------
+    name
+        The enzyme's.
+    cuts
+        How many times it cuts the whole record.
+    stagger
+        How many bases past its cut in the top strand it cuts the bottom strand: more than 0 where
+        it leaves a 5' overhang, less than 0 where it leaves a 3' one, and 0 where it cuts blunt.
+    """
 
     name: str
     cuts: int
+    stagger: int = 0
 
     @property
     def unique(self) -> bool:
@@ -207,6 +221,12 @@ class Item:
         A cut site's enzymes, in the order its label names them.
     translation
         A CDS's codons in the order they are read, when translations were asked for.
+    tail
+        How many of a primer's bases lie 5' of its binding site, pairing with nothing there.
+    mismatches
+        Where a primer's base does not pair with the record's in its binding site, found by
+        comparing the two: 0-based positions less than the record's length, in order along the
+        site.
     """
 
     kind: Kind
@@ -218,6 +238,8 @@ class Item:
     hover: Mapping[str, str] = field(default_factory=dict, hash=False)
     cutters: tuple[Cutter, ...] = ()
     translation: tuple[Codon, ...] = field(default=(), hash=False)
+    tail: int = 0
+    mismatches: tuple[int, ...] = ()
 
     @property
     def color(self) -> str:
@@ -295,7 +317,6 @@ def items(
     KeyError
         If no shipped enzyme answers to a name in `enzymes`, as `sites.find_sites` raises.
     """
-    length = len(record)
     chosen = None if enzymes is None else _chosen(enzymes)
     left_off = set(hide_types) if source else {*hide_types, "source"}
     drawn = []
@@ -307,7 +328,7 @@ def items(
         )
     if primers:
         drawn.extend(
-            _primer(primer, site, length)
+            _primer(primer, site, record)
             for primer in record.primers
             for site in primer.binding_sites
         )
@@ -316,7 +337,9 @@ def items(
     return tuple(drawn)
 
 
-def merge_cuts(cuts: Iterable[tuple[str, int]], length: int) -> tuple[Item, ...]:
+def merge_cuts(
+    cuts: Iterable[tuple[str, int]], length: int, *, staggers: Mapping[str, int] | None = None
+) -> tuple[Item, ...]:
     """Return a cut site for each position cut, naming every enzyme that cuts there.
 
     Parameters
@@ -326,6 +349,8 @@ def merge_cuts(cuts: Iterable[tuple[str, int]], length: int) -> tuple[Item, ...]
         for every site, so a name given twice cuts twice.
     length
         The record's.
+    staggers
+        Each enzyme's `Cutter.stagger`, by name; 0 for a name it does not give.
 
     Returns
     -------
@@ -345,7 +370,8 @@ def merge_cuts(cuts: Iterable[tuple[str, int]], length: int) -> tuple[Item, ...]
     merged = []
     for position, names in sorted(at.items()):
         cutters = tuple(
-            Cutter(one, counts[one]) for one in sorted(names, key=lambda one: (one.casefold(), one))
+            Cutter(one, counts[one], (staggers or {}).get(one, 0))
+            for one in sorted(names, key=lambda one: (one.casefold(), one))
         )
         name = SEPARATOR.join(cutter.name for cutter in cutters)
         shown = str((position - 1) % length + 1)
@@ -610,7 +636,8 @@ def _feature(feature: Feature, record: SequenceRecord, translations: bool) -> It
     )
 
 
-def _primer(primer: Primer, site: BindingSite, length: int) -> Item:
+def _primer(primer: Primer, site: BindingSite, record: SequenceRecord) -> Item:
+    length = len(record)
     span = span_text(site.start, site.end, length)
     hover = {
         "name": primer.name,
@@ -626,6 +653,27 @@ def _primer(primer: Primer, site: BindingSite, length: int) -> Item:
         (Span(site.start, site.end, PRIMER.lower()),),
         f"{primer.name} ({span})",
         hover,
+        tail=max(0, len(primer.sequence) - (site.end - site.start)),
+        mismatches=_mismatches(primer, site, record),
+    )
+
+
+def _mismatches(primer: Primer, site: BindingSite, record: SequenceRecord) -> tuple[int, ...]:
+    """Return where a primer's bases differ from the record's they pair with at `site`.
+
+    The primer's 3' end pairs with the site's 3' end on the primer's strand, and each base 5' of it
+    with the site's base as far from that end, as far as the site or the primer runs.
+    """
+    length = len(record)
+    pairing = primer.sequence[-(site.end - site.start) :]
+    if site.strand == Strand.REVERSE:
+        reads, first = reverse_complement(pairing), site.start
+    else:
+        reads, first = pairing, site.end - len(pairing)
+    return tuple(
+        (first + index) % length
+        for index, base in enumerate(reads)
+        if base != record.sequence[(first + index) % length]
     )
 
 
@@ -649,6 +697,7 @@ def _cut_sites(record: SequenceRecord, chosen: tuple[Enzyme, ...] | None) -> tup
             if chosen is not None or counts[site.enzyme.name] == 1
         ),
         len(record),
+        staggers={site.enzyme.name: site.enzyme.bottom_cut - site.enzyme.top_cut for site in found},
     )
 
 
