@@ -184,11 +184,20 @@ def _text(text: Text) -> str:
 
 
 def _letters(letters: Letters) -> str:
-    """Write one text element placing each letter, so the whole line stays text in a page."""
-    places = "".join(
-        f' {name}="{" ".join(number(place[index]) for place in letters.places)}"'
-        for index, name in enumerate(Place._fields)
-    )
+    """Write one text element placing each letter, so the whole line stays text in a page.
+
+    A baseline the letters share is written once, and their turns only where one turns: a letter
+    given no baseline keeps the one before it, and one given no turn is not turned.
+    """
+    xs = [place.x for place in letters.places]
+    ys = {place.y for place in letters.places}
+    places = f' x="{" ".join(map(number, xs))}"'
+    if len(ys) == 1:
+        places += f' y="{number(ys.pop())}"'
+    else:
+        places += f' y="{" ".join(number(place.y) for place in letters.places)}"'
+    if any(place.rotate for place in letters.places):
+        places += f' rotate="{" ".join(number(place.rotate) for place in letters.places)}"'
     weight = "700" if letters.font.style == "Bold" else "400"
     return (
         f"<text{places}{_attributes(font_size=letters.size)}"
