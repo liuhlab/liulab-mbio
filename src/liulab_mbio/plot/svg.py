@@ -2,12 +2,14 @@
 
 A view computes every shape in points, x to the right and y down; this module knows no view. Text
 is written as text in the face it was measured in, pinned to its measured width with
-`textLength`, so a browser draws it the width it was laid out.
+`textLength`, or letter by letter at the places it was laid out, so a browser draws it where it
+was measured and it stays text to search and copy.
 """
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from html import escape
+from typing import NamedTuple
 
 from liulab_mbio.plot.fonts import Font
 from liulab_mbio.plot.labels import Box
@@ -69,6 +71,33 @@ class Text:
     fill: str = "#000000"
 
 
+class Place(NamedTuple):
+    """Where a letter starts on its baseline, and how many degrees clockwise it turns about it."""
+
+    x: float
+    y: float
+    rotate: float
+
+
+@dataclass(frozen=True, slots=True)
+class Letters:
+    """A line of text set letter by letter, each letter at its own place, as a name on an arc is.
+
+    Parameters
+    ----------
+    places
+        One for each letter ``font.letters(text, size)`` draws, in order.
+    text, font, size, fill
+        As a `Text` has them.
+    """
+
+    places: tuple[Place, ...]
+    text: str
+    font: Font
+    size: float
+    fill: str = "#000000"
+
+
 @dataclass(frozen=True, slots=True)
 class Group:
     """Shapes drawn together.
@@ -92,7 +121,7 @@ class Group:
     rotate: float = 0.0
 
 
-type Shape = Path | Line | Circle | Rect | Text | Group
+type Shape = Path | Line | Circle | Rect | Text | Letters | Group
 
 
 def document(shapes: Iterable[Shape], extent: Box) -> str:
@@ -119,6 +148,8 @@ def _shape(shape: Shape) -> str:
             return f"<rect{place}{_paint(fill, stroke, width)}/>"
         case Text():
             return _text(shape)
+        case Letters():
+            return _letters(shape)
         case Group(shapes, classes, data, rotate):
             attributes = f' class="{escape(" ".join(classes))}"' if classes else ""
             attributes += "".join(
@@ -137,6 +168,20 @@ def _text(text: Text) -> str:
     return (
         f'<text{attributes} font-family="\'{escape(text.font.family)}\'" font-weight="{weight}"'
         f' fill="{escape(text.fill)}">{escape(text.font.drawn(text.text))}</text>'
+    )
+
+
+def _letters(letters: Letters) -> str:
+    """Write one text element placing each letter, so the whole line stays text in a page."""
+    places = "".join(
+        f' {name}="{" ".join(number(place[index]) for place in letters.places)}"'
+        for index, name in enumerate(Place._fields)
+    )
+    weight = "700" if letters.font.style == "Bold" else "400"
+    return (
+        f"<text{places}{_attributes(font_size=letters.size)}"
+        f' font-family="\'{escape(letters.font.family)}\'" font-weight="{weight}"'
+        f' fill="{escape(letters.fill)}">{escape(letters.font.drawn(letters.text))}</text>'
     )
 
 
