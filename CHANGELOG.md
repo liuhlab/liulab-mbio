@@ -15,6 +15,12 @@ sets one.
   default for its type that people with colour blindness can tell apart. Each feature's name sits
   in a box outside the circle, and no two boxes overlap. Hovering over a feature shows its name,
   type, span and length.
+- A map shows where each primer binds and where enzymes cut. A primer is drawn in purple and
+  labelled with its span. By default the map names the shipped enzymes that cut the record once,
+  in bold, each with the base it cuts after. `--enzyme` names others, and the map then shows every
+  site each one cuts. `--no-features`, `--no-primers` and `--no-cut-sites` leave a layer off,
+  `--hide-type` leaves out a feature type, and `--source` draws the `source` feature. `draw_map`
+  takes the same choices.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

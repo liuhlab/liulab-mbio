@@ -498,3 +498,10 @@ arrows along their strand, cut sites and primers labelled outside. A region is a
 line, numbered as the record is. No label overlaps another; one that cannot be placed is hidden,
 and the map says how many.
 _Avoid_: plasmid map (a linear record has one too), figure, plot
+
+### Unique cutter
+
+An enzyme with one cut site in a sequence record, counted over the whole record even when a map
+draws only a region of it, since that one cut is what opens the record for cloning. A map shows
+the shipped unique cutters unless told which enzymes to show.
+_Avoid_: single cutter, unique site
