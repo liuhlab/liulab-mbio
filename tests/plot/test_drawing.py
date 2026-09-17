@@ -3,6 +3,7 @@
 import base64
 import dataclasses
 import json
+import math
 import re
 import struct
 from collections.abc import Iterable
@@ -13,7 +14,7 @@ import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import Drawing, circular, draw_map, linear, sequence_view, svg
+from liulab_mbio.plot import Drawing, circular, convert, draw_map, linear, sequence_view, svg
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
@@ -141,10 +142,18 @@ def test_a_pdf_is_one_page_the_size_laid_out_every_letter_handed_over_as_its_out
     assert page.extract_text() == ""
 
 
-@pytest.mark.parametrize("dpi", [10**7, 0])
-def test_a_png_too_large_or_small_to_draw_is_refused(
-    small: Drawing, tmp_path: Path, dpi: float
+@pytest.mark.parametrize(
+    "dpi", [10**7, 0, None], ids=["a side too long", "no pixels", "too many pixels"]
+)
+def test_a_png_too_large_or_small_to_draw_is_refused_before_it_is_drawn(
+    small: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, dpi: float | None
 ) -> None:
+    if dpi is None:
+        # More pixels than memory allows, though no side is too long.
+        extent = small.layout.extent
+        dpi = 1.01 * 72 * math.sqrt(convert.PNG_PIXELS / (extent.width * extent.height))
+        assert max(extent.width, extent.height) * dpi / 72 < convert.PNG_SIDE
+    monkeypatch.delattr(convert, "png")
     with pytest.raises(ValueError, match=r"can be drawn at .* dpi, and a PDF at any size"):
         small.write(tmp_path / "map.png", dpi=dpi)
     assert not (tmp_path / "map.png").exists()

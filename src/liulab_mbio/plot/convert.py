@@ -13,6 +13,10 @@ from collections.abc import Sequence
 #: size; past it, shapes drift from where they were laid out.
 PNG_SIDE = 2**22
 
+#: The most pixels a PNG is drawn with. The renderer holds every pixel in memory, and more while it
+#: writes the file, so past this a PNG could take more memory than a laptop has to spare.
+PNG_PIXELS = 2**28
+
 #: Points to the inch. A drawing is laid out in points.
 POINTS_PER_INCH = 72
 

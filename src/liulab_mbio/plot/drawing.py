@@ -55,7 +55,7 @@ class Drawing:
         ------
         ValueError
             If the suffix names no format this writes, or a PNG at `dpi` would be too large to
-            draw.
+            draw: past `convert.PNG_SIDE` pixels a side, or `convert.PNG_PIXELS` in all.
         """
         out = Path(path)
         writer = _WRITERS.get(out.suffix.lower())
@@ -212,9 +212,11 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
 
 def _png(drawing: Drawing, path: Path, dpi: float) -> None:
     extent = drawing.layout.extent
-    sides = (extent.width, extent.height)
-    least = convert.POINTS_PER_INCH / min(sides)
-    most = convert.PNG_SIDE * convert.POINTS_PER_INCH / max(sides)
+    width, height = extent.width, extent.height
+    least = convert.POINTS_PER_INCH / min(width, height)
+    most = convert.POINTS_PER_INCH * min(
+        convert.PNG_SIDE / max(width, height), math.sqrt(convert.PNG_PIXELS / (width * height))
+    )
     if not least <= dpi <= most:
         raise ValueError(
             f"cannot draw {path.name!r} at {dpi:g} dpi: a PNG of this map can be drawn at "
