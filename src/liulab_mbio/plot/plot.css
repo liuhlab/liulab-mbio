@@ -33,7 +33,8 @@ body {
   white-space: pre;
 }
 
-.plot [data-kind] {
+.plot [data-kind],
+.plot [data-hidden] {
   cursor: default;
 }
 

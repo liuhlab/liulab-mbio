@@ -29,6 +29,12 @@ sets one.
   bold only if it cuts the whole record once. Features lie under the line, named inside or
   underneath, and the labels above rise in steps so none overlaps another. `draw_map` takes
   `linear` and `region`.
+- A crowded map grows before it hides a label: pUC19 with all 99 of its unique 6+ cutters still
+  shows every label. Past that size, enzyme sites hide first, then primers, then boxed feature
+  names, and only where labels crowd one another. A name on its feature never hides. The map says
+  what it hid at its bottom right, such as `3 enzyme sites and 1 primer are hidden`, and the page
+  lists the names when you hover over it. `plot map` prints the same words after the files it
+  wrote, and `Drawing.hidden` gives each hidden label.
 - A map as a PNG or a PDF, which looks the same on any computer, with no font installed. Name
   the file `map.png` or `map.pdf`; `-o` takes several files in one run, and `--dpi` sets the
   PNG's resolution, 300 by default. The letters are drawn as shapes, so the text in them cannot

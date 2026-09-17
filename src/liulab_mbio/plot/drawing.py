@@ -35,6 +35,15 @@ class Drawing:
     layout: circular.CircularMap | line.LinearMap
     sequence_view: view.SequenceView | None = None
 
+    @property
+    def hidden(self) -> tuple[layers.Item, ...]:
+        """The item of each label the map left out for want of room, in the order they hid.
+
+        Each gives its kind, its name and the spans where it lies. `layers.notice` words them as
+        the map does.
+        """
+        return self.layout.hidden
+
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 

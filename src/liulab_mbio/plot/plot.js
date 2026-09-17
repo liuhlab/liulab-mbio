@@ -1,7 +1,13 @@
-// Hovering over anything a map draws shows its details, read from its group's data attributes.
+// Hovering over anything a map draws shows its details, read from its group's data attributes;
+// hovering over the notice of hidden labels lists them.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
+
+  const details = (item) =>
+    item.dataset.hidden
+      ? JSON.parse(item.dataset.hidden).map((label) => ["hidden", label])
+      : rows.filter((row) => item.dataset[row]).map((row) => [row, item.dataset[row]]);
 
   const place = (event) => {
     const gap = 14;
@@ -17,7 +23,9 @@
 
   let shown = null;
   document.addEventListener("pointermove", (event) => {
-    const item = event.target instanceof Element ? event.target.closest("[data-kind]") : null;
+    const item = event.target instanceof Element
+      ? event.target.closest("[data-kind], [data-hidden]")
+      : null;
     if (!item) {
       tip.hidden = true;
       shown = null;
@@ -25,14 +33,12 @@
     }
     if (item !== shown) {
       tip.replaceChildren(
-        ...rows
-          .filter((row) => item.dataset[row])
-          .map((row) => {
-            const line = document.createElement("div");
-            line.className = row;
-            line.textContent = item.dataset[row];
-            return line;
-          }),
+        ...details(item).map(([row, text]) => {
+          const line = document.createElement("div");
+          line.className = row;
+          line.textContent = text;
+          return line;
+        }),
       );
       shown = item;
     }

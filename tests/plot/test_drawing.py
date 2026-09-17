@@ -2,6 +2,7 @@
 
 import base64
 import dataclasses
+import json
 import re
 import struct
 from collections.abc import Iterable
@@ -17,6 +18,7 @@ from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 from ..html import Node, parse
+from . import crowds
 
 
 @pytest.fixture(scope="module")
@@ -683,3 +685,38 @@ def test_a_sequence_view_past_100_kb_is_refused_asking_for_a_region_and_a_map_is
 def test_a_row_of_no_bases_is_refused(gfp: SequenceRecord, bases_per_row: int) -> None:
     with pytest.raises(ValueError, match="holds at least 1 base"):
         draw_map(gfp, sequence_view=True, bases_per_row=bases_per_row)
+
+
+@pytest.mark.parametrize("opened", [False, True], ids=["circle", "line"])
+def test_a_crowded_map_hides_cut_sites_before_the_primer_among_them_and_says_what_it_hid(
+    tmp_path: Path, opened: bool
+) -> None:
+    drawing = draw_map(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"], linear=opened)
+    hidden = drawing.hidden
+    assert hidden
+    assert {(item.kind, item.name) for item in hidden} == {("cut_site", "EcoRI")}
+    # Labels of one length hide in the record's order.
+    cuts = [item.spans[0].start for item in hidden]
+    assert cuts == sorted(cuts)
+    assert set(cuts) < set(range(101, 500, 8))
+    _, page = _page(drawing, tmp_path / "map.html")
+    [notice] = page.find_all("g", cls="notice")
+    assert notice.text == f"{len(hidden)} enzyme sites are hidden"
+    assert json.loads(notice.attrs["data-hidden"]) == [f"EcoRI ({cut})" for cut in cuts]
+    shown = {
+        kind: ["".join(text for text, _ in label) for label in _labels(page, kind)]
+        for kind in ("cut_site", "primer")
+    }
+    # The HindIII sites lie apart from the crowd, so they stay however often HindIII cuts.
+    assert {"HindIII (1701)", "HindIII (2001)"} <= set(shown["cut_site"])
+    assert len(shown["cut_site"]) + len(hidden) == 52
+    assert shown["primer"] == ["among them (201 .. 220)"]
+
+
+def test_a_map_with_room_for_every_label_hides_none_and_says_nothing(
+    puc19_file: Path, tmp_path: Path
+) -> None:
+    drawing = draw_map(puc19_file)
+    assert drawing.hidden == ()
+    _, page = _page(drawing, tmp_path / "map.html")
+    assert not page.find_all("g", cls="notice")

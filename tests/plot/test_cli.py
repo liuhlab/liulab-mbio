@@ -16,6 +16,7 @@ from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, Sequence
 from liulab_mbio.snapgene import write_dna
 
 from ..html import Node, parse
+from . import crowds
 
 
 def _groups(page: Path) -> list[Node]:
@@ -59,6 +60,16 @@ def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
     width = struct.unpack(">I", outs[1].read_bytes()[16:20])[0]
     assert width == pytest.approx(extent.width * 18 / 72, abs=1)
     assert len(pypdf.PdfReader(outs[2]).pages) == 1
+
+
+def test_the_command_prints_what_the_map_hid_after_the_files_written(tmp_path: Path) -> None:
+    record, out = tmp_path / "crowd.dna", tmp_path / "crowd.html"
+    write_dna(crowds.ecori_crowd(), record)
+    code, lines = _run(str(record), "-o", str(out), "--enzyme", "EcoRI", "--enzyme", "HindIII")
+    assert code == 0
+    [written, notice] = lines
+    assert written == str(out)
+    assert re.fullmatch(r"\d+ enzyme sites are hidden", notice)
 
 
 def test_the_command_refuses_a_format_it_does_not_write(puc19_file: Path, tmp_path: Path) -> None:

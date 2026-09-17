@@ -8,6 +8,7 @@ import typer
 
 from liulab_mbio.io import read_record
 from liulab_mbio.plot.drawing import Region, draw_map
+from liulab_mbio.plot.layers import notice
 from liulab_mbio.sequence import SequenceRecord
 
 #: A span as a person types it: `START..END`, 1-based and inclusive, as the map prints one.
@@ -82,7 +83,10 @@ def map_(
     ] = False,
     dpi: Annotated[float, typer.Option(help="Resolution of a PNG, in dots per inch.")] = 300,
 ) -> None:
-    """Draw RECORD as a map and write it to each file named, printing each file written."""
+    """Draw RECORD as a map and write it to each file named, printing each file written.
+
+    Then prints how many labels the map hid for want of room, if any did.
+    """
     try:
         read = read_record(record)
         drawing = draw_map(
@@ -101,6 +105,8 @@ def map_(
         )
         for out in output:
             typer.echo(str(drawing.write(out, dpi=dpi)))
+        if said := notice(drawing.hidden):
+            typer.echo(said)
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
