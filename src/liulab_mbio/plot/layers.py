@@ -9,17 +9,30 @@ type in none. Primers are purple and enzyme names black.
 
 Positions a person reads, in labels and hover details, are 1-based and inclusive. A cut site is
 numbered as SnapGene numbers one: by the base after which its enzymes cut the top strand.
+
+Asked for, a CDS carries its translation, read with the standard genetic code across its joined
+segments from its `/codon_start`, the whole feature through, stops included.
 """
 
 import re
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import cache
 from typing import Literal
 
+from liulab_mbio.codons import amino_acid
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 from liulab_mbio.sites import find_sites
 
 #: What an item is: a feature, a primer at one binding site, or the enzymes cutting at one position.
@@ -132,6 +145,38 @@ class Cutter:
 
 
 @dataclass(frozen=True, slots=True)
+class Codon:
+    """One codon of a CDS's translation: where its middle base lies, and what it spells.
+
+    Parameters
+    ----------
+    middle
+        The 0-based position of its middle base, less than the record's length.
+    amino_acid
+        One letter, ``"*"`` for a stop and ``"X"`` for a codon holding a base other than ACGT.
+    """
+
+    middle: int
+    amino_acid: str
+
+    @property
+    def name(self) -> str:
+        """The amino acid's three-letter code, ``Ter`` for a stop.
+
+        Examples
+        --------
+        >>> Codon(1, "M").name, Codon(4, "*").name
+        ('Met', 'Ter')
+        """
+        return _three_letters()[self.amino_acid]
+
+    @property
+    def stop(self) -> bool:
+        """Whether it is a stop codon."""
+        return self.amino_acid == "*"
+
+
+@dataclass(frozen=True, slots=True)
 class Item:
     """One thing a map draws.
 
@@ -154,6 +199,8 @@ class Item:
         What hovering over it shows: its name, type, span and length, as a person reads them.
     cutters
         A cut site's enzymes, in the order its label names them.
+    translation
+        A CDS's codons in the order they are read, when translations were asked for.
     """
 
     kind: Kind
@@ -164,6 +211,7 @@ class Item:
     label: str
     hover: Mapping[str, str] = field(default_factory=dict, hash=False)
     cutters: tuple[Cutter, ...] = ()
+    translation: tuple[Codon, ...] = field(default=(), hash=False)
 
     @property
     def color(self) -> str:
@@ -216,6 +264,7 @@ def items(
     enzymes: str | Iterable[str] | None = None,
     hide_types: Iterable[str] = (),
     source: bool = False,
+    translations: bool = False,
 ) -> tuple[Item, ...]:
     """Return what a map of `record` draws: its features, its primers, then its cut sites.
 
@@ -232,6 +281,8 @@ def items(
         The feature types left off.
     source
         Whether a `source` feature is drawn.
+    translations
+        Whether each CDS carries its translation, as a sequence view draws it.
 
     Raises
     ------
@@ -244,7 +295,9 @@ def items(
     drawn = []
     if features:
         drawn.extend(
-            _feature(feature, length) for feature in record.features if feature.type not in left_off
+            _feature(feature, record, translations)
+            for feature in record.features
+            if feature.type not in left_off
         )
     if primers:
         drawn.extend(
@@ -418,7 +471,64 @@ def outline_color(fill: str) -> str:
     return "#{:02x}{:02x}{:02x}".format(*(round(0.45 * channel) for channel in (red, green, blue)))
 
 
-def _feature(feature: Feature, length: int) -> Item:
+def translation(feature: Feature, record: SequenceRecord) -> tuple[Codon, ...]:
+    """Return the codons a feature of `record` reads as a CDS, in the order they are read.
+
+    The feature's segments are joined, on its strand, and read from its `/codon_start`, the first
+    base when it gives none; bases left over at the end make no codon.
+
+    Examples
+    --------
+    Read from its second base, across the origin:
+
+    >>> record = SequenceRecord("TAAATGC", topology="circular")
+    >>> cds = Feature("orf", "CDS", (Segment(3, 10),), qualifiers={"codon_start": (2,)})
+    >>> [(codon.middle, codon.name) for codon in translation(cds, record)]
+    [(5, 'Cys'), (1, 'Ter')]
+    """
+    length = len(record)
+    positions = [
+        at % length
+        for start, end in unwrapped(feature.segments, length)
+        for at in range(start, end)
+    ]
+    bases = "".join(record.sequence[at] for at in positions)
+    if feature.strand == Strand.REVERSE:
+        positions.reverse()
+        bases = reverse_complement(bases)
+    first = _codon_start(feature) - 1
+    return tuple(
+        Codon(positions[at + 1], _amino_acid(bases[at : at + 3]))
+        for at in range(first, len(bases) - 2, 3)
+    )
+
+
+def _codon_start(feature: Feature) -> int:
+    """Return the base, 1 to 3, a feature's `/codon_start` reads from: 1 when it gives none."""
+    try:
+        start = int(feature.qualifiers.get("codon_start", (1,))[0])
+    except (IndexError, ValueError):
+        return 1
+    return start if start in (1, 2, 3) else 1
+
+
+def _amino_acid(codon: str) -> str:
+    try:
+        return amino_acid(codon)
+    except KeyError:
+        return "X"
+
+
+@cache
+def _three_letters() -> Mapping[str, str]:
+    """Each amino acid's one letter and three, Biopython's, with ``Ter`` for a stop."""
+    from Bio.Data.IUPACData import protein_letters_1to3_extended
+
+    return {**protein_letters_1to3_extended, "*": "Ter"}
+
+
+def _feature(feature: Feature, record: SequenceRecord, translations: bool) -> Item:
+    length = len(record)
     own = _given(feature.color)
     default = default_color(feature)
     spans = tuple(
@@ -438,7 +548,17 @@ def _feature(feature: Feature, length: int) -> Item:
         "span": ", ".join(span_text(start, end, length) for start, end in runs),
         "length": f"{bases} bp",
     }
-    return Item("feature", feature.name, feature.type, feature.strand, spans, feature.name, hover)
+    codons = translation(feature, record) if translations and feature.type == "CDS" else ()
+    return Item(
+        "feature",
+        feature.name,
+        feature.type,
+        feature.strand,
+        spans,
+        feature.name,
+        hover,
+        translation=codons,
+    )
 
 
 def _primer(primer: Primer, site: BindingSite, length: int) -> Item:
