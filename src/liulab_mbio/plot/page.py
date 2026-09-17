@@ -5,7 +5,7 @@ font subsets the drawing was measured in, so text draws at its laid-out width an
 search and copy. It keeps a white background whatever the browser's colour scheme.
 
 Switches above the drawing show or hide each kind of item and each feature type in place, and flip
-the map between its shapes at top right.
+the map between its shapes at top right. A click on an item highlights it.
 """
 
 import base64

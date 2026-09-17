@@ -33,7 +33,10 @@ body {
   white-space: pre;
 }
 
-.plot [data-kind],
+.plot [data-kind] {
+  cursor: pointer;
+}
+
 .plot [data-hidden] {
   cursor: default;
 }
@@ -45,6 +48,17 @@ body {
 
 .plot .off {
   display: none;
+}
+
+.plot .selected {
+  filter: drop-shadow(0 0 1.5px #0077bb) drop-shadow(0 0 1.5px #0077bb);
+}
+
+.plot .selected path,
+.plot .selected rect,
+.plot .selected line {
+  stroke: #0077bb;
+  stroke-width: 1.6;
 }
 
 .switches {

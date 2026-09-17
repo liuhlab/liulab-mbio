@@ -1,6 +1,7 @@
 // A drawing's page. Hovering over anything drawn shows its details, read from its group's data
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
-// show or hide each kind of item and each feature type in place, and flip the map's shape.
+// show or hide each kind of item and each feature type in place, and flip the map's shape. A click
+// on an item highlights it wherever it is drawn.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
@@ -70,6 +71,21 @@
   document.querySelector(".switches")?.addEventListener("change", apply);
   // A browser may restore switches as they were left, rather than as the page was written.
   window.addEventListener("pageshow", apply);
+
+  // An item is known by what hovering over it shows, wherever it is drawn.
+  const key = (group) => JSON.stringify([group.dataset.kind, ...rows.map((row) => group.dataset[row])]);
+  let selected = null;
+  const select = (chosen) => {
+    selected = chosen;
+    for (const group of document.querySelectorAll(".plot [data-kind]")) {
+      group.classList.toggle("selected", key(group) === chosen);
+    }
+  };
+  document.querySelector(".plot").addEventListener("click", (event) => {
+    const item = event.target instanceof Element ? event.target.closest("[data-kind]") : null;
+    const chosen = item ? key(item) : null;
+    select(chosen === selected ? null : chosen);
+  });
 
   const details = (item) =>
     item.dataset.hidden
