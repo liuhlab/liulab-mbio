@@ -4,8 +4,10 @@ The page holds the drawing's SVG inline, its styles and script beside this modul
 font subsets the drawing was measured in, so text draws at its laid-out width and stays text to
 search and copy. It keeps a white background whatever the browser's colour scheme.
 
-Switches above the drawing show or hide each kind of item and each feature type in place, and flip
-the map between its shapes at top right. A click on an item highlights it.
+Switches above the drawing show or hide each kind of item and each feature type in place, flip
+the map between its shapes at top right, and show the sequence view beside it. A click on an item
+highlights it in both views, and scrolls the other view to it. In the sequence view, a toggle shows
+one strand or both, hovering over a base shows its position, and a drag selects bases to copy.
 """
 
 import base64
@@ -48,12 +50,16 @@ def render(
     shown: str,
     switches: Sequence[Switch] = (),
     sequence_view: str | None = None,
+    sequence_shown: bool = False,
+    both_strands: bool = True,
 ) -> str:
     """Return a page showing a map under `title`, with `sequence_view` beside it.
 
     `maps` holds the map as an SVG element in each shape it is drawn in, such as ``"circle"``
     and ``"line"``. The shape `shown` names shows first, and a switch flips between them when
-    there are two. `sequence_view` is an SVG element too, or ``None`` for the map alone.
+    there are two. `sequence_view` is an SVG element too, as `sequence_view.layout` draws one with
+    both strands, or ``None`` for the map alone. A switch shows it, first when `sequence_shown`,
+    and a toggle in it shows its bottom strand, first when `both_strands`.
     """
     fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
     shapes = "".join(
@@ -63,21 +69,27 @@ def render(
     )
     figures = f'<figure class="map">\n{shapes}</figure>\n'
     if sequence_view is not None:
-        figures += f'<figure class="sequence-view">{sequence_view}</figure>\n'
+        figures += _sequence_view(sequence_view, sequence_shown, both_strands)
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<meta name="color-scheme" content="light">\n'
         f"<title>{escape(title)}</title>\n<style>\n{fonts}{_asset('plot.css')}</style>\n"
-        f"</head>\n<body>\n{_switches(switches, list(maps), shown)}"
+        f"</head>\n<body>\n{_switches(switches, list(maps), shown, sequence_view, sequence_shown)}"
         f'<main class="plot">\n{figures}</main>\n'
         '<div class="hover" role="tooltip" hidden></div>\n'
         f"<script>\n{_asset('plot.js')}</script>\n</body>\n</html>\n"
     )
 
 
-def _switches(switches: Sequence[Switch], shapes: Sequence[str], shown: str) -> str:
-    """Return the bar of switches: kinds, then feature types, then the shapes at the right."""
+def _switches(
+    switches: Sequence[Switch],
+    shapes: Sequence[str],
+    shown: str,
+    sequence_view: str | None,
+    sequence_shown: bool,
+) -> str:
+    """Return the bar of switches: kinds, then feature types, then the views at the right."""
     sets = [
         _fieldset(
             f"{by}s",
@@ -90,13 +102,27 @@ def _switches(switches: Sequence[Switch], shapes: Sequence[str], shown: str) -> 
         )
         for by, words in (("kind", "Layers"), ("type", "Feature types"))
     ]
+    inputs = []
     if len(shapes) > 1:
         inputs = [
             _input("radio", "shape", shape, shape.capitalize(), shape == shown) for shape in shapes
         ]
-        sets.append(_fieldset("shapes", "Shape", inputs))
+    if sequence_view is not None:
+        inputs.append(_input("checkbox", "view", "sequence", "Sequence", sequence_shown))
+    sets.append(_fieldset("shapes", "Views", inputs))
     body = "".join(sets)
     return f'<form class="switches" autocomplete="off">\n{body}</form>\n' if body else ""
+
+
+def _sequence_view(image: str, shown: bool, both_strands: bool) -> str:
+    """Return the sequence view's figure: its toggle, what is selected and a button to copy it."""
+    classes = "sequence-view" if both_strands else "sequence-view one-strand"
+    return (
+        f'<figure class="{classes}"{"" if shown else " hidden"}>'
+        f"<figcaption>{_input('checkbox', 'strands', 'both', 'Both strands', both_strands)}"
+        '<output class="selection"></output><button type="button" class="copy" hidden>Copy'
+        f"</button></figcaption>{image}</figure>\n"
+    )
 
 
 def _fieldset(name: str, words: str, inputs: Sequence[str]) -> str:

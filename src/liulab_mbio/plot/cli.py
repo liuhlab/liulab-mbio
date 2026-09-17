@@ -50,7 +50,7 @@ def map_(
     sequence_view: Annotated[
         bool,
         typer.Option(
-            "--sequence-view", help="Draw the bases beside the map, at most 100,000 of them."
+            "--sequence-view", help="Switch the bases beside the map on, at most 100,000 of them."
         ),
     ] = False,
     no_features: Annotated[
@@ -79,7 +79,7 @@ def map_(
         int, typer.Option(help="How many bases a row of the sequence view holds.")
     ] = 60,
     one_strand: Annotated[
-        bool, typer.Option("--one-strand", help="Draw only the top strand in the sequence view.")
+        bool, typer.Option("--one-strand", help="Switch the sequence view's bottom strand off.")
     ] = False,
     dpi: Annotated[float, typer.Option(help="Resolution of a PNG, in dots per inch.")] = 300,
 ) -> None:

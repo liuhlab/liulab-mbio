@@ -55,9 +55,11 @@ class Switches:
 class Drawing:
     """A record to lay out as a map, to write once per format without laying it out again.
 
-    A PNG or a PDF draws only the items that show. A page carries every item the record draws,
-    laid out together, shows first those that show, and switches each kind and feature type in
-    place. Each distinct layout runs when it is first needed, and is kept.
+    A PNG or a PDF draws only the items that show, and the sequence view only when it is switched
+    on. A page carries every item the record draws, laid out together, and the sequence view of
+    any stretch up to `sequence_view.LIMIT` bases with both its strands; it shows first what is
+    switched on, and switches the rest in place. Each distinct layout runs when it is first
+    needed, and is kept.
 
     Parameters
     ----------
@@ -73,10 +75,12 @@ class Drawing:
         origin; the whole record when ``None``.
     linear
         Whether a circular record drawn whole is opened as a line.
+    with_sequence_view
+        Whether the sequence view is switched on.
     bases_per_row
-        How many bases each row of the sequence view holds, or ``None`` for no sequence view.
+        How many bases each row of the sequence view holds.
     both_strands
-        Whether the sequence view draws the bottom strand under the top one.
+        Whether the sequence view's bottom strand, under the top one, is switched on.
     """
 
     record: SequenceRecord
@@ -84,7 +88,8 @@ class Drawing:
     enzymes: str | tuple[str, ...] | None
     span: tuple[int, int] | None
     linear: bool
-    bases_per_row: int | None
+    with_sequence_view: bool
+    bases_per_row: int
     both_strands: bool
     _kept: dict[tuple[object, ...], object] = field(default_factory=dict, init=False, repr=False)
 
@@ -98,8 +103,10 @@ class Drawing:
 
     @property
     def sequence_view(self) -> view.SequenceView | None:
-        """Where everything that shows went in the sequence view, when it was asked for."""
-        return None if self.bases_per_row is None else _rows(self, _shown(self))
+        """Where everything that shows went in the sequence view, when it is switched on."""
+        if not self.with_sequence_view:
+            return None
+        return _rows(self, _shown(self), both_strands=self.both_strands)
 
     @property
     def hidden(self) -> tuple[layers.Item, ...]:
@@ -113,14 +120,15 @@ class Drawing:
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
-        A ``.html`` page keeps its text as text, and shows the sequence view beside the map. A
+        A ``.html`` page keeps its text as text, and puts the sequence view beside the map. A
         ``.png`` at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on
         any machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under
         the map. The PDF has the map on its first page, and the sequence view's rows on the pages
         after, as many to a page as fit whole.
 
-        A page carries every item behind its switches, and a circular record drawn whole both as
-        a circle and as a line. A PNG and a PDF draw only the items that show.
+        A page carries every item behind its switches, a circular record drawn whole both as a
+        circle and as a line, and the sequence view of a stretch up to `sequence_view.LIMIT`
+        bases. A PNG and a PDF draw only what is switched on.
 
         Raises
         ------
@@ -158,8 +166,9 @@ def draw_map(
     and a region of any record, is always drawn as a line, numbered as the record is. The sequence
     view draws the same stretch base by base, as the map numbers it.
 
-    The layers and feature types switched off are left out of a PNG or a PDF, and a page keeps
-    them behind its switches, shown first as asked. Nothing is laid out until it is needed.
+    What is switched off is left out of a PNG or a PDF, and a page keeps it behind its switches,
+    shown first as asked: the layers, the feature types, the sequence view of a stretch up to
+    `sequence_view.LIMIT` bases, and its bottom strand. Nothing is laid out until it is needed.
 
     Parameters
     ----------
@@ -173,7 +182,8 @@ def draw_map(
     linear
         Whether a circular record drawn whole is opened as a line.
     sequence_view
-        Whether the sequence view is drawn beside the map, at most `sequence_view.LIMIT` bases.
+        Whether the sequence view beside the map is switched on, at most `sequence_view.LIMIT`
+        bases.
     features, primers, cut_sites
         Whether each is switched on.
     enzymes
@@ -186,7 +196,7 @@ def draw_map(
     bases_per_row
         How many bases each row of the sequence view holds.
     both_strands
-        Whether the sequence view draws the bottom strand under the top one.
+        Whether the sequence view's bottom strand, under the top one, is switched on.
 
     Raises
     ------
@@ -228,7 +238,8 @@ def draw_map(
         named,
         span,
         linear,
-        bases_per_row if sequence_view else None,
+        sequence_view,
+        bases_per_row,
         both_strands,
     )
 
@@ -269,6 +280,12 @@ def _whole_circle(drawing: Drawing) -> bool:
     return drawing.record.topology == "circular" and drawing.span is None
 
 
+def _carries_sequence_view(drawing: Drawing) -> bool:
+    """Whether a page carries the sequence view: of a stretch up to `sequence_view.LIMIT` bases."""
+    start, end = drawing.span or (0, len(drawing.record))
+    return end - start <= view.LIMIT
+
+
 def _kept[T](drawing: Drawing, key: tuple[object, ...], make: Callable[[], T]) -> T:
     """Return what `make` gives, made the first time `key` is asked for and kept."""
     if key not in drawing._kept:
@@ -285,7 +302,7 @@ def _uncut(drawing: Drawing) -> tuple[layers.Item, ...]:
             drawing.record,
             cut_sites=False,
             source=True,
-            translations=drawing.bases_per_row is not None,
+            translations=_carries_sequence_view(drawing),
         ),
     )
 
@@ -335,19 +352,20 @@ def _line(drawing: Drawing, items: tuple[layers.Item, ...]) -> line.LinearMap:
     )
 
 
-def _rows(drawing: Drawing, items: tuple[layers.Item, ...]) -> view.SequenceView:
-    record, bases_per_row = drawing.record, drawing.bases_per_row
-    assert bases_per_row is not None
+def _rows(
+    drawing: Drawing, items: tuple[layers.Item, ...], *, both_strands: bool
+) -> view.SequenceView:
+    record = drawing.record
     return _kept(
         drawing,
-        ("rows", items),
+        ("rows", items, both_strands),
         lambda: view.layout(
             items,
             bases=record.sequence,
             circular=record.topology == "circular",
             span=drawing.span,
-            bases_per_row=bases_per_row,
-            both_strands=drawing.both_strands,
+            bases_per_row=drawing.bases_per_row,
+            both_strands=both_strands,
         ),
     )
 
@@ -432,8 +450,9 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         for shape, one in layouts.items()
     }
     beside = None
-    if drawing.bases_per_row is not None:
-        rows = _rows(drawing, everything)
+    if _carries_sequence_view(drawing):
+        # Both strands, so hiding the bottom one moves nothing.
+        rows = _rows(drawing, everything, both_strands=True)
         beside = svg.document(_first_shown(rows.shapes, switches), rows.extent)
     shown = "circle" if "circle" in layouts and not drawing.linear else "line"
     html = page.render(
@@ -442,6 +461,8 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         shown=shown,
         switches=_switches(switches, layouts["line"]),
         sequence_view=beside,
+        sequence_shown=drawing.with_sequence_view,
+        both_strands=drawing.both_strands,
     )
     path.write_text(html, encoding="utf-8")
 

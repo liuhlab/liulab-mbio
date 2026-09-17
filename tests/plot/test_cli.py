@@ -216,7 +216,8 @@ def test_the_command_draws_the_sequence_view_in_rows_of_the_bases_asked_for_on_o
     assert [row.find_all("g", cls="top")[0].text for row in rows] == [
         gfp.sequence[start : start + 100] for start in range(0, len(gfp), 100)
     ]
-    assert not view.find_all("g", cls="bottom")
+    [toggle] = view.find_all("input", name="strands")
+    assert "checked" not in toggle.attrs
     code, lines = _run(str(gfp_file), "-o", str(out), "--sequence-view", "--bases-per-row", "0")
     assert code == 1
     assert lines[0] == "error: a row of the sequence view holds at least 1 base, not 0"

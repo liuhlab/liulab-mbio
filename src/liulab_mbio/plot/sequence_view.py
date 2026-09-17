@@ -262,6 +262,10 @@ class Row:
         The box everything the row draws takes, its labels included.
     bases
         The box its ruler, strands, rail and primers take.
+    strands
+        The box its strands and the rail take.
+    rail
+        The height of its rail.
     bars, names, translations, arrows, tails, mismatches, cuts, labels
         What it draws of each item, in order along the row.
     shapes
@@ -272,6 +276,8 @@ class Row:
     end: int
     extent: Box
     bases: Box
+    strands: Box
+    rail: float
     bars: tuple[Bar, ...]
     names: tuple[Name, ...]
     translations: tuple[Translation, ...]
@@ -294,7 +300,10 @@ class SequenceView:
     rows
         Each row block, in order down the view, none reaching into the next.
     shapes
-        Each row's shapes, grouped by row.
+        One group of every row's shapes, grouped by row. What a page reads to find the base under
+        a pointer is written on them: on the whole, the record's length and a base's width, and on
+        each row, its `Row.start`, `Row.end` and `Row.rail`, and the top and bottom of its
+        `Row.strands`.
     """
 
     extent: Box
@@ -425,8 +434,22 @@ def layout(
         rows.append(row)
         top = row.extent.y + row.extent.height + _ROW_GAP
     extent = _extent([row.extent for row in rows], margin=_EDGE)
-    shapes = tuple(Group(row.shapes, classes=("row",)) for row in rows)
-    return SequenceView(extent, tuple(rows), shapes)
+    grouped = tuple(
+        Group(
+            row.shapes,
+            classes=("row",),
+            data={
+                "start": str(row.start),
+                "end": str(row.end),
+                "top": number(row.strands.y),
+                "rail": number(row.rail),
+                "bottom": number(row.strands.y + row.strands.height),
+            },
+        )
+        for row in rows
+    )
+    whole = Group(grouped, classes=("rows",), data={"length": str(length), "cell": number(CELL)})
+    return SequenceView(extent, tuple(rows), (whole,))
 
 
 def _within(position: int, start: int, end: int, length: int) -> list[int]:
@@ -627,12 +650,16 @@ def _row(
 
     cuts: list[Cut] = []
     for item, position, _ in found.cuts:
-        lines = _cut(item, position, first, last, down, shift, both_strands)
-        if not lines:
+        through, under = _cut(item, position, first, last, down, shift, both_strands)
+        if not through + under:
             continue
-        cuts.append(Cut(item, lines))
+        cuts.append(Cut(item, through + under))
         _, shapes = groups.setdefault(id(item), (item, []))
-        shapes.extend(Line(x1, y1, x2, y2, _INK, _CUT) for (x1, y1), (x2, y2) in lines)
+        shapes.extend(Line(x1, y1, x2, y2, _INK, _CUT) for (x1, y1), (x2, y2) in through)
+        if under:
+            # Grouped as the bottom strand is, for a page to hide with it.
+            below = tuple(Line(x1, y1, x2, y2, _INK, _CUT) for (x1, y1), (x2, y2) in under)
+            shapes.append(Group(below, classes=("bottom",)))
 
     placed = tuple(
         Label(
@@ -669,6 +696,8 @@ def _row(
         last,
         _extent(boxes, margin=0.0),
         Box(0.0, shift, at(last), down.bases),
+        Box(0.0, down.strand + shift, at(last), down.strands - down.strand),
+        down.rail + shift,
         tuple(bars),
         tuple(names),
         tuple(translations),
@@ -707,8 +736,8 @@ class _Down(NamedTuple):
     ----------
     forwards
         Each forward primer track's middle, the first nearest the top strand.
-    strand, rail, complement
-        The top strand's top, the rail, and the bottom strand's top.
+    strand, rail, complement, strands
+        The top strand's top, the rail, the bottom strand's top, and where the strands end.
     reverses
         Each reverse primer track's middle, the first nearest the bottom strand.
     bases
@@ -723,6 +752,7 @@ class _Down(NamedTuple):
     strand: float
     rail: float
     complement: float
+    strands: float
     reverses: dict[int, float]
     bases: float
     residues: dict[int, float]
@@ -753,7 +783,7 @@ def _down(
     strand = y
     rail = strand + _height(MONO, BASE_SIZE) + _RAIL_GAP + _TICKS[-1]
     complement = rail + _TICKS[-1] + _RAIL_GAP
-    y = complement + _height(MONO, BASE_SIZE) if both_strands else rail + _TICKS[-1]
+    y = strands = complement + _height(MONO, BASE_SIZE) if both_strands else rail + _TICKS[-1]
     reverses: dict[int, float] = {}
     for track in range(reverse):
         reverses[track] = y + _PRIMER_GAP + near
@@ -773,7 +803,7 @@ def _down(
         y += _BAR
         if track in named:
             y += _PADDING[1] + _height(SANS, LABEL_SIZE)
-    return _Down(forwards, strand, rail, complement, reverses, bases, residues, middles, y)
+    return _Down(forwards, strand, rail, complement, strands, reverses, bases, residues, middles, y)
 
 
 def _bases_drawn(
@@ -890,25 +920,30 @@ def _tail(run: _Primed, middle: float, away: float) -> tuple[Point, ...]:
 
 def _cut(
     item: Item, position: int, first: int, last: int, down: _Down, shift: float, both_strands: bool
-) -> tuple[tuple[Point, Point], ...]:
-    """Return the lines a cut site draws in a row, as `Cut.lines` gives them."""
+) -> tuple[tuple[tuple[Point, Point], ...], tuple[tuple[Point, Point], ...]]:
+    """Return the lines a cut site draws in a row, as `Cut.lines` gives them, in two parts.
+
+    The first goes through the top strand, and the second along the rail and through the bottom
+    strand.
+    """
     width = (last - first) * CELL
     x = (position - first) * CELL
     rail = down.rail + shift
-    lines = []
+    through = []
     if first <= position <= last:
-        lines.append((Point(x, down.strand + shift), Point(x, rail)))
+        through.append((Point(x, down.strand + shift), Point(x, rail)))
     if not both_strands:
-        return tuple(lines)
+        return tuple(through), ()
+    under = []
     bottom = down.complement + _height(MONO, BASE_SIZE) + shift
     for stagger in sorted({cutter.stagger for cutter in item.cutters} or {0}):
         cut = (position + stagger - first) * CELL
         low, high = max(min(x, cut), 0.0), min(max(x, cut), width)
         if low < high:
-            lines.append((Point(low, rail), Point(high, rail)))
+            under.append((Point(low, rail), Point(high, rail)))
         if 0.0 <= cut <= width:
-            lines.append((Point(cut, rail), Point(cut, bottom)))
-    return tuple(lines)
+            under.append((Point(cut, rail), Point(cut, bottom)))
+    return tuple(through), tuple(under)
 
 
 def _bar(item: Item, piece: Piece, span: Span, at: Callable[[float], float]) -> Bar:

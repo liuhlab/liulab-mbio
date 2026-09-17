@@ -7,6 +7,7 @@ import math
 import re
 import struct
 from collections.abc import Iterable
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +67,12 @@ def _shapes(page: Node) -> dict[str, Node]:
 def _map(page: Node) -> Node:
     """The map the page shows first."""
     return next(iter(_shapes(page).values()))
+
+
+def _maps(page: Node) -> Node:
+    """The page's map, in each shape it carries."""
+    [figure] = page.find_all("figure", cls="map")
+    return figure
 
 
 def _items(page: Node, kind: str = "feature") -> dict[str, list[Node]]:
@@ -391,7 +398,7 @@ def test_every_arrow_is_outlined_and_every_name_contrasts_with_its_fill(
     colour_test_page: Node,
 ) -> None:
     page = colour_test_page
-    items = _items(page)
+    items = _items(_maps(page))
     for arrows, *_ in items.values():
         assert all(
             path.attrs["stroke"] not in ("none", path.attrs["fill"])
@@ -588,6 +595,8 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
     } == {
         **{("kind", kind): switches.get(word, True) for kind, word in kinds.items()},
         **{("type", one): one not in types_off for one in everything["feature"]},
+        ("view", "sequence"): False,
+        ("strands", "both"): True,
     }
     # A PNG or a PDF draws only what shows.
     layout = drawing.layout
@@ -608,6 +617,8 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
         ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 2}),
         ({"region": "mcs"}, {"linear": 1, "sequence_view": 1}),
         ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 2}),
+        # The page lays out both strands, to hide the bottom one in place.
+        ({"both_strands": False}, {"circular": 1, "linear": 1, "sequence_view": 2}),
     ],
 )
 def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
@@ -693,8 +704,13 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
         assert not radios
     else:
         assert radios == {"circle": shapes[0] == "circle", "line": shapes[0] == "line"}
-        [bar] = page.find_all("form", cls="switches")
-        assert [one.attrs["class"] for one in bar.find_all("fieldset")][-1] == "shapes"
+    # At top right, beside the shapes, the sequence view's switch.
+    [bar] = page.find_all("form", cls="switches")
+    views = bar.find_all("fieldset")[-1]
+    assert views.attrs["class"] == "shapes"
+    assert [box.attrs["name"] for box in views.find_all("input")] == ["shape"] * len(radios) + [
+        "view"
+    ]
 
 
 def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
@@ -702,7 +718,7 @@ def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
 ) -> None:
     drawing = draw_map(puc19, region="mcs")
     assert isinstance(drawing.layout, linear.LinearMap)
-    _, page = _page(drawing, tmp_path / "map.html")
+    page = _maps(_page(drawing, tmp_path / "map.html")[1])
     assert "396 .. 452 (57 bp)" in _texts(page)
     assert _texts(page, "scale") == ["400", "410", "420", "430", "440", "450"]
     assert ["".join(text for text, _ in label) for label in _labels(page, "cut_site")] == [
@@ -759,9 +775,9 @@ def test_a_cutter_unique_in_a_region_but_not_in_the_record_is_not_bold_or_shown_
 ) -> None:
     # BsmBI cuts pUC19 after bases 3 and 45.
     _, named = _page(draw_map(puc19, region=(0, 20), enzymes=["BsmBI"]), tmp_path / "named.html")
-    assert _labels(named, "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
+    assert _labels(_maps(named), "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
     _, shipped = _page(draw_map(puc19, region=(0, 20)), tmp_path / "shipped.html")
-    assert not _labels(shipped, "cut_site")
+    assert not _labels(_maps(shipped), "cut_site")
 
 
 @pytest.mark.parametrize(
@@ -789,15 +805,117 @@ def _rows(page: Node) -> list[Node]:
     return view.find_all("g", cls="row")
 
 
-def test_the_sequence_view_goes_beside_the_map_only_when_asked_for(
-    gfp: SequenceRecord, tmp_path: Path
+@pytest.mark.parametrize(
+    ("switches", "shown", "both"),
+    [
+        ({}, False, True),
+        ({"sequence_view": True}, True, True),
+        ({"sequence_view": True, "both_strands": False}, True, False),
+        ({"both_strands": False}, False, False),
+    ],
+)
+def test_the_page_carries_the_sequence_view_beside_the_map_shown_first_as_asked(
+    gfp: SequenceRecord, tmp_path: Path, switches: dict, shown: bool, both: bool
 ) -> None:
-    alone = draw_map(gfp)
-    assert alone.sequence_view is None
-    assert not _page(alone, tmp_path / "alone.html")[1].find_all("figure", cls="sequence-view")
-    _, page = _page(draw_map(gfp, sequence_view=True), tmp_path / "view.html")
+    drawing = draw_map(gfp, **switches)
+    # A PNG or a PDF draws it only when it is switched on.
+    assert (drawing.sequence_view is not None) == shown
+    _, page = _page(drawing, tmp_path / "map.html")
     [main] = page.find_all("main")
-    assert [figure.attrs["class"] for figure in main.find_all("figure")] == ["map", "sequence-view"]
+    [_, view] = main.find_all("figure")
+    assert view.attrs["class"].split() == ["sequence-view"] + ([] if both else ["one-strand"])
+    assert ("hidden" not in view.attrs) == shown
+    [switch] = page.find_all("input", name="view")
+    assert ("checked" in switch.attrs) == shown
+    [toggle] = view.find_all("input", name="strands")
+    assert ("checked" in toggle.attrs) == both
+
+
+def test_the_strand_toggle_hides_the_bottom_strand_and_the_cuts_through_it_in_place(
+    puc19: SequenceRecord, tmp_path: Path
+) -> None:
+    def view(both_strands: bool) -> Node:
+        drawing = draw_map(puc19, region="mcs", sequence_view=True, both_strands=both_strands)
+        [figure] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+        [image] = figure.find_all("svg")
+        return image
+
+    # Nothing moves: the page lays out both strands either way.
+    image = view(both_strands=False)
+    assert image == view(both_strands=True)
+    hidden = shown = 0
+    for row in image.find_all("g", cls="row"):
+        rail = float(row.attrs["data-rail"])
+        for cut in row.find_all("g", cls="cut_site"):
+            if "label" in cut.attrs["class"].split():
+                continue
+            under = {id(line) for group in cut.find_all("g", cls="bottom") for line in group.iter()}
+            for line in cut.find_all("line"):
+                ys = float(line.attrs["y1"]), float(line.attrs["y2"])
+                if id(line) in under:
+                    assert min(ys) >= rail
+                    hidden += 1
+                else:
+                    assert max(ys) <= rail
+                    shown += 1
+    assert hidden
+    assert shown
+
+
+@pytest.mark.parametrize(("region", "carried"), [((0, 60), True), ((0, 61), False), (None, False)])
+def test_past_its_limit_a_page_leaves_out_the_sequence_view_and_its_switch(
+    gfp: SequenceRecord,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    region: tuple[int, int] | None,
+    carried: bool,
+) -> None:
+    monkeypatch.setattr(sequence_view, "LIMIT", 60)
+    _, page = _page(draw_map(gfp, region=region, cut_sites=False), tmp_path / "map.html")
+    assert bool(page.find_all("figure", cls="sequence-view")) == carried
+    assert bool(page.find_all("input", name="view")) == carried
+    # The line is the one shape, so no switch stands at top right.
+    assert bool(page.find_all("fieldset", cls="shapes")) == carried
+
+
+@pytest.mark.parametrize(
+    ("record", "region", "bases_per_row"), [("gfp", None, 60), ("puc19", (2679, 2696), 10)]
+)
+def test_each_row_says_which_bases_it_holds_and_where_its_strands_lie(
+    request: pytest.FixtureRequest,
+    tmp_path: Path,
+    record: str,
+    region: tuple[int, int] | None,
+    bases_per_row: int,
+) -> None:
+    drawn: SequenceRecord = request.getfixturevalue(record)
+    drawing = draw_map(drawn, region=region, sequence_view=True, bases_per_row=bases_per_row)
+    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+    [whole] = view.find_all("g", cls="rows")
+    length, cell = int(whole.attrs["data-length"]), float(whole.attrs["data-cell"])
+    assert (length, cell) == (len(drawn), sequence_view.CELL)
+    rows = whole.find_all("g", cls="row")
+    held = [(int(row.attrs["data-start"]), int(row.attrs["data-end"])) for row in rows]
+    assert (held[0][0], held[-1][1]) == (region or (0, len(drawn)))
+    assert all(before[1] == after[0] for before, after in pairwise(held))
+    for row, (first, last) in zip(rows, held, strict=True):
+        [top] = row.find_all("g", cls="top")
+        [bases] = top.find_all("text")
+        assert bases.text == "".join(drawn.sequence[at % length] for at in range(first, last))
+        # Each base lies in the cell its index along the row counts to.
+        places = [float(x) for x in bases.attrs["x"].split()]
+        assert [int(x // cell) for x in places] == list(range(last - first))
+        # Its last base is numbered as the page reads a position.
+        assert _texts(row, "position") == [str((last - 1) % length + 1)]
+        [bottom] = [group for group in row.find_all("g", cls="strand") if group is not top]
+        [complement] = bottom.find_all("text")
+        assert (
+            float(row.attrs["data-top"])
+            < float(bases.attrs["y"])
+            < float(row.attrs["data-rail"])
+            < float(complement.attrs["y"])
+            <= float(row.attrs["data-bottom"])
+        )
 
 
 def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases_as_asked(
@@ -817,12 +935,19 @@ def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases
     assert _texts(rows[-1], "position") == ["717"]
     [bar] = rows[0].find_all("g", data_kind="feature")
     assert (bar.attrs["data-name"], bar.attrs["data-span"]) == ("GFP", "1 .. 717")
-    one = _rows(
-        _page(draw_map(gfp, sequence_view=True, both_strands=False), tmp_path / "b.html")[1]
-    )
+    drawing = draw_map(gfp, sequence_view=True, both_strands=False)
+    one = _rows(_page(drawing, tmp_path / "b.html")[1])
     assert len(one) == 12
     assert _texts(one[0], "top") == [gfp.sequence[:60]]
-    assert not [row for row in one if row.find_all("g", cls="bottom")]
+    # The page carries the bottom strand for its toggle to show, and a PNG or a PDF leaves it out.
+    assert all(row.find_all("g", cls="bottom") for row in one)
+    assert drawing.sequence_view is not None
+    assert not [
+        shape
+        for row in drawing.sequence_view.rows
+        for shape in row.shapes
+        if isinstance(shape, svg.Group) and "bottom" in shape.classes
+    ]
 
 
 def _amino_acids(drawing: Drawing, name: str) -> list[str]:

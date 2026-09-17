@@ -60,6 +60,14 @@ sets one.
   cut is drawn through both strands, so you can see the overhang it leaves. The enzymes that cut
   there are named above it, one name a line, in bold if they cut the record once. The view shows
   the same enzymes, layers and feature types as the map.
+- The map and the sequence view work together on the page. The page carries the sequence view of
+  up to 100,000 bases behind a Sequence switch at the top right, and `--sequence-view` turns it on
+  from the start. Each view scrolls on its own. A click on a feature, primer or cut site in one
+  view highlights it in both, and scrolls the other view to it. Both strands shows or hides the
+  bottom strand without moving anything else, and `--one-strand` hides it from the start. Hover
+  over a base to see its position. Drag over bases to select them: the page shows the stretch as
+  `start .. end (n bp)`, and copying, or the Copy button, puts the top strand's bases on the
+  clipboard. Nothing on the page changes the record.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still
