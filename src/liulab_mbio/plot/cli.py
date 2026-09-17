@@ -22,8 +22,13 @@ def map_(
         ),
     ],
     output: Annotated[
-        Path,
-        typer.Option("--output", "-o", dir_okay=False, help="File to write: .html."),
+        list[Path],
+        typer.Option(
+            "--output",
+            "-o",
+            dir_okay=False,
+            help="File to write: .html, .png or .pdf. Repeat it to write several.",
+        ),
     ],
     no_features: Annotated[
         bool, typer.Option("--no-features", help="Leave the features off.")
@@ -47,8 +52,9 @@ def map_(
         typer.Option("--hide-type", help="A feature type to leave off; once per type."),
     ] = None,
     source: Annotated[bool, typer.Option("--source", help="Draw the source feature.")] = False,
+    dpi: Annotated[float, typer.Option(help="Resolution of a PNG, in dots per inch.")] = 300,
 ) -> None:
-    """Draw RECORD as a map and write it to the file named, printing the file written."""
+    """Draw RECORD as a map and write it to each file named, printing each file written."""
     try:
         drawing = draw_map(
             record,
@@ -59,8 +65,8 @@ def map_(
             hide_types=hide_type or (),
             source=source,
         )
-        written = drawing.write(output)
+        for out in output:
+            typer.echo(str(drawing.write(out, dpi=dpi)))
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
-    typer.echo(str(written))

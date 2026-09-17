@@ -22,6 +22,10 @@ sets one.
   site each one cuts. `--no-features`, `--no-primers` and `--no-cut-sites` leave a layer off,
   `--hide-type` leaves out a feature type, and `--source` draws the `source` feature. `draw_map`
   takes the same choices.
+- A map as a PNG or a PDF, which looks the same on any computer, with no font installed. Name
+  the file `map.png` or `map.pdf`; `-o` takes several files in one run, and `--dpi` sets the
+  PNG's resolution, 300 by default. The letters are drawn as shapes, so the text in them cannot
+  be searched or copied.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes
   `codon_table`, `goldengate plan` takes `--codon-table`, and a plan that has to propose
   domestication names the codons it would move to. The strain the protocol transforms is still

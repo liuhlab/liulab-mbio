@@ -2,11 +2,16 @@
 
 import dataclasses
 import re
+import struct
 from pathlib import Path
+from typing import Any
 
+import pypdf
+import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
+from liulab_mbio.plot import circular, draw_map
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 from liulab_mbio.snapgene import write_dna
 
@@ -32,6 +37,28 @@ def test_the_command_writes_the_page_and_prints_the_file_written(
     assert code == 0
     assert lines == [str(out)]
     assert "<svg" in out.read_text(encoding="utf-8")
+
+
+def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
+    puc19_file: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    extent = draw_map(puc19_file).layout.extent
+    lay_out, layouts = circular.layout, []
+
+    def layout(*args: Any, **kwargs: Any) -> circular.CircularMap:
+        layouts.append(args)
+        return lay_out(*args, **kwargs)
+
+    monkeypatch.setattr(circular, "layout", layout)
+    outs = [tmp_path / name for name in ("pUC19.html", "pUC19.png", "pUC19.pdf")]
+    code, lines = _run(str(puc19_file), *(f"--output={out}" for out in outs), "--dpi", "18")
+    assert code == 0
+    assert lines == [str(out) for out in outs]
+    assert len(layouts) == 1
+    assert "<svg" in outs[0].read_text(encoding="utf-8")
+    width = struct.unpack(">I", outs[1].read_bytes()[16:20])[0]
+    assert width == pytest.approx(extent.width * 18 / 72, abs=1)
+    assert len(pypdf.PdfReader(outs[2]).pages) == 1
 
 
 def test_the_command_refuses_a_format_it_does_not_write(puc19_file: Path, tmp_path: Path) -> None:
