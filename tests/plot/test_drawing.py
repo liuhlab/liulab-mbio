@@ -115,7 +115,8 @@ def test_a_pdf_is_one_page_the_size_laid_out_every_letter_handed_over_as_its_out
     if opened:
         colour_test = draw_map(colour_test.record, linear=True)
     handed: list[str] = []
-    to_pdf = vl_convert.svg_to_pdf
+    # vl-convert's linux-64 conda build ships no type stub, so pyright there sees no functions.
+    to_pdf = vl_convert.svg_to_pdf  # pyright: ignore[reportAttributeAccessIssue]
 
     def recorded(image: str) -> bytes:
         handed.append(image)

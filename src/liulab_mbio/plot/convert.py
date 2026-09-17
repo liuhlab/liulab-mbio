@@ -25,7 +25,8 @@ def png(document: str, *, dpi: float) -> bytes:
     """
     import vl_convert
 
-    return vl_convert.svg_to_png(document, ppi=dpi)
+    # vl-convert's linux-64 conda build ships no type stub, so pyright there sees no functions.
+    return vl_convert.svg_to_png(document, ppi=dpi)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def pdf(pages: Sequence[str]) -> bytes:
@@ -35,7 +36,8 @@ def pdf(pages: Sequence[str]) -> bytes:
 
     joined = pypdf.PdfWriter()
     for page in pages:
-        joined.append(pypdf.PdfReader(io.BytesIO(vl_convert.svg_to_pdf(page))))
+        # No type stub on linux-64, as in `png`.
+        joined.append(pypdf.PdfReader(io.BytesIO(vl_convert.svg_to_pdf(page))))  # pyright: ignore[reportAttributeAccessIssue]
     out = io.BytesIO()
     joined.write(out)
     return out.getvalue()
