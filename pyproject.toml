@@ -88,12 +88,23 @@ mkdocstrings-python = ">=2.0.7,<3"
 docs = "zensical serve"
 docs-build = "zensical build --clean --strict"
 
+# Only `scripts/build_fonts.py` reads a font file. The package reads the tables it writes and
+# imports neither, so a rebuild is the one thing that installs these.
+[tool.pixi.feature.fonts.dependencies]
+fonttools = "*"
+brotli-python = "*"
+
+[tool.pixi.feature.fonts.tasks]
+build-fonts = "python scripts/build_fonts.py"
+
 # `default` takes `test` so pyright can resolve pytest, and not `docs`, which exists so that
-# exactly one CI job installs it.
+# exactly one CI job installs it, nor `fonts`, which no CI job installs.
 [tool.pixi.environments]
 default = { features = ["test"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
+# Out of the solve group, so a rebuild's packages never move a version the gate runs.
+fonts = { features = ["fonts"] }
 
 [tool.pixi.tasks]
 lint = "ruff check ."
