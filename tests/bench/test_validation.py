@@ -9,7 +9,10 @@ from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
 from liulab_mbio.bench.validation import (
     COLONY_ALLOWANCE,
+    CORRECT_CLONE,
+    EMPTY_CLONE,
     JUNCTION_OFFSET,
+    REVERSED_CLONE,
     SANGER_ALLOWANCE,
     SANGER_FLANK,
     ColonyCheck,
@@ -67,6 +70,19 @@ def test_two_flanking_primers_cannot_tell_the_insert_round_the_other_way(
     check = colony_pcr_check(product, junctions, vector=puc19, primers=(M13_FORWARD, M13_REVERSE))
     assert bands(check, "Reversed insert") == bands(check, "Correct clone")
     assert not check.tells_orientation
+
+
+def test_a_clone_that_cannot_turn_round_simulates_no_reversed_insert(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> None:
+    pair = (M13_FORWARD, M13_REVERSE)
+    every = colony_pcr_check(product, junctions, vector=puc19, primers=pair)
+    directional = colony_pcr_check(product, junctions, vector=puc19, primers=pair, reversible=False)
+
+    assert [clone.name for clone in every.clones] == [CORRECT_CLONE, EMPTY_CLONE, REVERSED_CLONE]
+    assert directional.clones == every.clones[:2]
+    assert not directional.reversed_clones
+    assert [lane.label for lane in directional.gel.lanes] == [CORRECT_CLONE, EMPTY_CLONE]
 
 
 def test_a_junction_primer_tells_orientation_when_the_flanks_differ(

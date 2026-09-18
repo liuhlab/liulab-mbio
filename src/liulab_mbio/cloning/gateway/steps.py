@@ -3,28 +3,39 @@
 The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around each
 recombination and adds what only Gateway has to say. A plan that runs BP reads as two staged
 reactions: BP, its plate, the miniprep that purifies the entry clone, then LR and its own
-plate, with the attB PCR and its cleanup in front of them where one was designed. Every number
-is computed by `liulab_mbio.cloning.gateway.plan` or is one
-`liulab_mbio.cloning.gateway.bench` cites.
+plate, with the attB PCR and its cleanup in front of them where one was designed, and the
+colony PCR and the sequencing that confirm the expression clone after them. Every number is
+computed by `liulab_mbio.cloning.gateway.plan` or is one `liulab_mbio.cloning.gateway.bench`
+cites.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.bench.oligos import oligo_row
-from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
+from liulab_mbio.bench.pcr import (
+    COLONY_PCR_MASTER_MIX,
+    PRIMER_STOCK_UM,
+    colony_pcr_master_mix_component,
+)
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
+    COLONY_PCR_TITLE,
+    SEQUENCING_TITLE,
     badges,
     card,
+    catalogued,
     cleanup_step,
+    colony_pcr_step,
     listed,
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    sequencing_step,
     transform_step,
 )
+from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.gateway.att import REGION_BP
 from liulab_mbio.cloning.gateway.bench import (
     BP_CELSIUS,
@@ -44,6 +55,7 @@ from liulab_mbio.cloning.gateway.bench import (
     CELL_EFFICIENCY_CFU_UG,
     CHLORAMPHENICOL_UG_ML,
     DESTINATION_NG,
+    DIMER_ENTRY_BP,
     ENTRY_MIN_NG,
     ENTRY_NG,
     LR_CELSIUS,
@@ -56,11 +68,15 @@ from liulab_mbio.cloning.gateway.bench import (
     LR_SECONDS,
     LR_TRANSFORMATION,
     LR_VOLUME_UL,
+    M13_VECTOR_BP,
     ONE_TUBE_YIELD,
     PROPAGATION_HOST,
     PROTEINASE_K_UG_UL,
     PROTEINASE_K_UL,
     REFERENCES,
+    SEQUENCING_MAX_PMOL,
+    SEQUENCING_MIN_PMOL,
+    SEQUENCING_NG,
     STOP_CELSIUS,
     STOP_SECONDS,
     SUPPLIER,
@@ -68,26 +84,27 @@ from liulab_mbio.cloning.gateway.bench import (
     bp_reaction,
     lr_reaction,
 )
-from liulab_mbio.cloning.gateway.design import SPACER, Amplicon
+from liulab_mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
+from liulab_mbio.cloning.gateway.oligos import DesignedOligo
 from liulab_mbio.cloning.gateway.recombination import Junction, PlannedReaction
+from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Material, Oligo, Protocol, Step, Timer, Troubleshooting
 from liulab_mbio.sequence import SequenceRecord
 
-#: The hardware a run needs, which no reagent table covers.
+#: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
+#: PCR, so the thermocycler and the gel rig are here rather than beside the attB PCR.
 EQUIPMENT: tuple[str, ...] = (
     f"Water bath or heat block at {LR_CELSIUS:g} °C",
     f"Water bath or heat block at {STOP_CELSIUS:g} °C",
     f"Heat block or water bath at {LR_TRANSFORMATION.heat_shock_celsius:g} °C",
     f"Shaking incubator and a plate incubator at {LR_TRANSFORMATION.outgrowth_celsius:g} °C",
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
     "Microcentrifuge",
 )
 
 #: What a run amplifying its own insert needs on top of `EQUIPMENT`.
-PCR_EQUIPMENT: tuple[str, ...] = (
-    "Thermocycler with a heated lid",
-    "Agarose gel rig and power supply",
-    "Spectrophotometer or fluorometer",
-)
+PCR_EQUIPMENT: tuple[str, ...] = ("Spectrophotometer or fluorometer",)
 
 
 def protocol(
@@ -95,16 +112,21 @@ def protocol(
     lr: PlannedReaction,
     bp: PlannedReaction | None,
     amplicon: Amplicon | None = None,
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
+    oligos: Sequence[DesignedOligo],
     checks: Sequence[judged.Check],
     host: str,
+    fusion: Fusion = "none",
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Protocol:
     """Return the bench protocol for one planned Gateway experiment, ready to render.
 
     Each argument is the `liulab_mbio.cloning.gateway.plan.Plan` field or property of that name.
     The steps run in the order someone does them, one reaction at a time: set it up, run it,
     stop it with proteinase K, transform and plate. A planned BP reaction puts its own four
-    steps and the miniprep that follows them in front of LR's, and an attB PCR puts its own
-    two in front of those.
+    steps and the miniprep that follows them in front of LR's, an attB PCR puts its own two in
+    front of those, and the colony PCR and the sequencing that confirm the clone come last.
     """
     return Protocol(
         _title(lr, bp),
@@ -112,13 +134,14 @@ def protocol(
         overview=_overview(lr, bp, amplicon),
         highlights=_highlights(lr, bp, amplicon),
         checks=badges(checks),
-        materials=_materials(lr=lr, bp=bp, amplicon=amplicon, host=host),
-        oligos=_oligos(amplicon),
+        materials=_materials(lr=lr, bp=bp, amplicon=amplicon, colony=colony, host=host),
+        oligos=_oligos(oligos, amplicon, thresholds),
         equipment=EQUIPMENT if amplicon is None else (*PCR_EQUIPMENT, *EQUIPMENT),
         steps=(
             *_pcr_steps(amplicon),
             *_bp_steps(bp, host=host, entry=_carrier(lr)),
             *_lr_steps(lr, host=host),
+            *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
         references=(*REFERENCES, *BENCH_REFERENCES),
     )
@@ -230,6 +253,7 @@ def _materials(
     lr: PlannedReaction,
     bp: PlannedReaction | None,
     amplicon: Amplicon | None,
+    colony: ColonyCheck,
     host: str,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for, the first reaction's first."""
@@ -252,7 +276,6 @@ def _materials(
                     "hot-start enzyme, so use one",
                 ),
                 Material("PCR and gel cleanup spin columns"),
-                Material("Agarose and 1X TAE or TBE"),
             )
         )
     if bp is not None:
@@ -273,7 +296,6 @@ def _materials(
                 ),
                 _clonase(BP_CLONASE, BP_CLONASE_CATALOG, BP_CLONASE_UL),
                 Material(_plate(bp.phenotype, "donor"), amount="one plate per transformation"),
-                Material("Plasmid miniprep kit", note="for the entry clone the LR reaction takes"),
             )
         )
     materials.extend(
@@ -312,6 +334,20 @@ def _materials(
                 amount=f"{LR_TRANSFORMATION.outgrowth_ul:g} µL per transformation",
             ),
             Material(_plate(lr.phenotype, "destination"), amount="one plate per transformation"),
+            catalogued(
+                COLONY_PCR_MASTER_MIX,
+                storage="-20 °C",
+                amount=f"{colony_pcr_master_mix_component().volume_ul:g} µL per reaction",
+            ),
+            Material("Agarose, 1X TAE or TBE, and a DNA stain"),
+            catalogued(colony.ladder.name),
+            Material(
+                "Plasmid miniprep kit",
+                note="for the clones that go to sequencing"
+                if bp is None
+                else "for the entry clone the LR reaction takes, and for the clones that go to "
+                "sequencing",
+            ),
         )
     )
     return tuple(materials)
@@ -340,14 +376,23 @@ def _plate(phenotype: Phenotype, vector: str) -> str:
     return f"{phenotype.medium} agar plates with {antibiotic}"
 
 
-def _oligos(amplicon: Amplicon | None) -> tuple[Oligo, ...]:
+def _oligos(
+    oligos: Sequence[DesignedOligo],
+    amplicon: Amplicon | None,
+    thresholds: Mapping[PrimerRole, Thresholds],
+) -> tuple[Oligo, ...]:
     """Return the order sheet the page prints, which is the sheet the plan writes."""
-    if amplicon is None:
-        return ()
     return tuple(
-        oligo_row(report, purpose=pcr_title(amplicon.name), thresholds=amplicon.thresholds)
-        for report in amplicon.reports
+        oligo_row(one.report, purpose=_purpose(one, amplicon), thresholds=thresholds[one.role])
+        for one in oligos
     )
+
+
+def _purpose(oligo: DesignedOligo, amplicon: Amplicon | None) -> str:
+    """Return the title of the step that uses this oligo."""
+    if oligo.role == "amplification":
+        return pcr_title(amplicon.name) if amplicon is not None else ""
+    return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
 def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
@@ -379,8 +424,8 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
                 "The BP reaction takes purified attB DNA: gel-purifying the product is the "
                 "manual's fix for few or no colonies, and it takes the attB primers and their "
                 "dimers away.",
-                "An entry clone running as a 2.2 kb supercoiled plasmid is a BP reaction that "
-                "cloned attB primer-dimers instead.",
+                f"An entry clone running as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid "
+                "is a BP reaction that cloned attB primer-dimers instead.",
             )
         ),
     )
@@ -487,6 +532,12 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
                 "The prep is too dilute for the reaction",
                 "Concentrate it, or pipette more of it and less TE buffer.",
             ),
+            Troubleshooting(
+                f"The prep runs as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid",
+                "That size is the manual's signature for a BP reaction that cloned attB "
+                "primer-dimers. Gel-purify the attB DNA and amplify it with a hot-start "
+                "polymerase before running BP again.",
+            ),
         ),
     )
 
@@ -558,6 +609,65 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 f"Small colonies beside large ones are usually unreacted "
                 f"{_carrier(lr).name} co-transforming; restreak them on the entry clone's own "
                 "antibiotic to tell.",
+            ),
+        ),
+    )
+
+
+def _validation_steps(
+    lr: PlannedReaction,
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
+    *,
+    host: str,
+    fusion: Fusion,
+) -> tuple[Step, ...]:
+    """Return what tells a correct expression clone from the plate's other colonies.
+
+    Both are read on the LR product: the attB junctions are what a colony PCR crosses and what
+    a sequencing read has to cover, and neither exists until LR has run.
+    """
+    entry, insert = _carrier(lr).name, lr.recombination.moved.name or "the insert"
+    return (
+        colony_pcr_step(
+            colony,
+            junctions=len(lr.junctions),
+            notes=(
+                "Both primers sit in the destination vector's backbone, so one product crosses "
+                "both attB junctions and an unrecombined vector gives a band of its own.",
+                f"An unrecombined destination vector still carries ccdB, which kills {host}, so "
+                "its lane is what a strain supplying ccdA or a damaged ccdB gene would put on "
+                "the plate.",
+                "The manual asks for a restriction digest alongside the first time this is run: "
+                "mispriming and contaminating template both give artefacts.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "The plate carries large colonies and small ones",
+                    f"The small ones are usually unreacted {entry} co-transforming. It carries "
+                    "neither of these primers, so it adds no band here; restreak on the entry "
+                    "clone's own antibiotic to tell.",
+                ),
+            ),
+        ),
+        sequencing_step(
+            reads,
+            junctions=[one.bases for one in lr.junctions],
+            inserts=[insert],
+            notes=(
+                f"No vendor primer reads these junctions: GW1 and GW2 are suitable for "
+                f"pCR8/GW/TOPO alone, and an M13 primer crosses at least {M13_VECTOR_BP} bp of "
+                "vector first. Both primers above are designed against this record.",
+                f"Send at least {SEQUENCING_NG:g} ng of plasmid with "
+                f"{SEQUENCING_MIN_PMOL:g}-{SEQUENCING_MAX_PMOL:g} pmol of each primer.",
+                *(
+                    ()
+                    if fusion == "none"
+                    else (
+                        f"This is a {fusion} fusion, so read the att junction it runs through "
+                        "and check the frame the plan judged is the frame on the trace.",
+                    )
+                ),
             ),
         ),
     )

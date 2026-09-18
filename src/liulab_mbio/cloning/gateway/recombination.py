@@ -137,6 +137,16 @@ class Recombination:
     junctions: tuple[Junction, Junction]
 
     @property
+    def boundaries(self) -> tuple[int, int]:
+        """Where the backbone gives way to the moved segment and back, which validation reads across.
+
+        Not the junctions' own edges: the first `CROSSOVER` bases of each att region are the
+        acceptor's, so the segment starts inside the first region and ends inside the second.
+        """
+        first, second = self.junctions
+        return first.start + CROSSOVER, second.end - CROSSOVER
+
+    @property
     def cassette(self) -> tuple[int, int]:
         """The acceptor bases the reaction throws away, in the acceptor's own coordinates.
 

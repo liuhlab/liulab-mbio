@@ -8,8 +8,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from liulab_mbio.bench.gels import agarose_percent
+from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE
+from liulab_mbio.bench.validation import CORRECT_CLONE, EMPTY_CLONE, SANGER_FLANK
 from liulab_mbio.cloning.gateway import plan_gateway
-from liulab_mbio.cloning.gateway.att import REGIONS, find_att_sites
+from liulab_mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
 from liulab_mbio.cloning.gateway.bench import (
     BP_CELSIUS,
     BP_VOLUME_UL,
@@ -34,13 +37,14 @@ if TYPE_CHECKING:
     from liulab_mbio.cloning.gateway import Plan
 
 
-def test_the_plan_writes_the_product_and_the_protocol_pair(
+def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
     gateway_plan: Plan, tmp_path: Path
 ) -> None:
     written = gateway_plan.write(tmp_path / "run")
 
     assert [path.name for path in written.paths] == [
         "product.dna",
+        "primers.tsv",
         "protocol.json",
         "protocol.html",
     ]
@@ -61,6 +65,7 @@ def test_the_same_inputs_write_the_same_bytes(
 
 def test_the_status_is_the_worst_of_the_checks_it_carries(gateway_plan: Plan) -> None:
     assert {check.name for check in gateway_plan.checks} == {
+        "primers",
         "LR junctions",
         "LR att sites",
         "insert att sites",
@@ -160,6 +165,8 @@ def test_the_protocol_carries_the_reaction_its_incubation_its_stop_and_the_plati
         "Run the LR reaction",
         "Stop the LR reaction with proteinase K",
         "Transform and plate the LR reaction",
+        COLONY_PCR_TITLE,
+        SEQUENCING_TITLE,
     ]
     table = protocol.steps[0].tables[0]
     assert sum(component.volume_ul for component in table.components) == LR_VOLUME_UL
@@ -268,6 +275,7 @@ def test_the_bp_route_writes_the_entry_clone_as_a_file_of_its_own(
     assert [path.name for path in written.paths] == [
         "entry-clone.dna",
         "product.dna",
+        "primers.tsv",
         "protocol.json",
         "protocol.html",
     ]
@@ -322,6 +330,7 @@ def test_lr_gives_back_the_attb_sites_the_insert_carried_in(
 
 def test_each_reaction_carries_its_own_verdicts_and_the_plan_its_own(staged_plan: Plan) -> None:
     assert [check.name for check in staged_plan.checks] == [
+        "primers",
         "BP junctions",
         "BP att sites",
         "LR junctions",
@@ -350,6 +359,8 @@ def test_the_protocol_reads_as_two_staged_reactions_with_a_miniprep_between_them
         "Run the LR reaction",
         "Stop the LR reaction with proteinase K",
         "Transform and plate the LR reaction",
+        COLONY_PCR_TITLE,
+        SEQUENCING_TITLE,
     ]
     table = steps["Set up the BP reaction"].tables[0]
     assert table.title == "BP reaction"
@@ -442,7 +453,7 @@ def test_the_primers_are_judged_and_warn_only_where_nothing_allowed_does_better(
     assert first.name == "primers"
     assert amplified_plan.status == "warn"
     assert all(report.status != "fail" for report in amplified_plan.reports)
-    assert verdict.value == 2
+    assert verdict.value == 6
 
 
 def test_the_protocol_carries_the_pcr_step_its_program_and_its_expected_band(
@@ -479,3 +490,89 @@ def test_amplifying_an_insert_without_a_donor_vector_is_refused(
 ) -> None:
     with pytest.raises(ValueError, match="needs a donor vector as well"):
         plan_gateway(gfp, destination, amplify=True)
+
+
+def test_the_colony_pcr_reads_from_the_part_boundary_not_the_att_region_edge(
+    gateway_plan: Plan,
+) -> None:
+    made = gateway_plan.lr.recombination
+    first, second = gateway_plan.junctions
+    start, end = made.boundaries
+
+    assert (start, end) == (first.start + CROSSOVER, second.end - CROSSOVER)
+    assert gateway_plan.product.extract(Segment(start, end)) == made.moved.bases
+
+
+def test_the_colony_pcr_crosses_both_attb_junctions_and_sits_outside_them(
+    gateway_plan: Plan,
+) -> None:
+    colony = gateway_plan.colony
+    first, second = gateway_plan.junctions
+    forward, reverse = (primer.binding_sites[0] for primer in colony.primers)
+
+    assert [primer.name for primer in colony.primers] == [
+        "Colony PCR forward",
+        "Colony PCR reverse",
+    ]
+    assert forward.end <= first.start
+    assert reverse.start >= second.end
+    assert all(report.status != "fail" for report in colony.reports)
+
+
+def test_the_gel_carries_a_ladder_a_lane_per_candidate_and_no_reversed_insert(
+    gateway_plan: Plan,
+) -> None:
+    colony = gateway_plan.colony
+    correct, empty = colony.clones
+    made = gateway_plan.lr.recombination
+    cassette = made.cassette[1] - made.cassette[0]
+
+    assert [lane.label for lane in colony.gel.lanes] == [CORRECT_CLONE, EMPTY_CLONE]
+    assert colony.gel.ladder.bands_bp
+    assert colony.agarose_percent == agarose_percent(correct.bands_bp + empty.bands_bp)
+    assert correct.bands_bp[0] - empty.bands_bp[0] == made.moved.length - cassette
+
+
+def test_the_sequencing_primers_read_in_from_outside_each_junction(gateway_plan: Plan) -> None:
+    first, second = gateway_plan.junctions
+    across = range(first.start, second.end)
+
+    for read in gateway_plan.reads:
+        site = read.primer.binding_sites[0]
+        assert site.start not in across
+        assert site.end not in across
+        assert read.distance_bp >= SANGER_FLANK
+        assert read.read_bp >= second.end - first.start
+
+
+def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequencing(
+    gateway_plan: Plan,
+) -> None:
+    steps = {step.title: step for step in gateway_plan.protocol().steps}
+    screen, confirm = steps[COLONY_PCR_TITLE], steps[SEQUENCING_TITLE]
+
+    assert screen.programs
+    assert screen.tables
+    assert [lane.label for lane in screen.gels[0].lanes] == [CORRECT_CLONE, EMPTY_CLONE]
+    assert f"{gateway_plan.colony.agarose_percent:g}% gel" in " ".join(screen.instructions)
+    assert not any("reversed" in line.lower() for line in screen.expected)
+    assert any("pCR8/GW/TOPO" in note for note in confirm.notes)
+    assert REGIONS["attB1"] in " ".join(confirm.expected)
+
+
+def test_both_sets_of_oligos_reach_the_order_sheet_with_what_each_is_for(
+    amplified_plan: Plan,
+) -> None:
+    purposes = {oligo.name: oligo.purpose for oligo in amplified_plan.protocol().oligos}
+
+    assert [one.role for one in amplified_plan.designed_oligos] == [
+        "amplification",
+        "amplification",
+        "colony PCR",
+        "colony PCR",
+        "sequencing",
+        "sequencing",
+    ]
+    assert purposes["Colony PCR forward"] == COLONY_PCR_TITLE
+    assert purposes["Sequencing reverse"] == SEQUENCING_TITLE
+    assert purposes[amplified_plan.designed_oligos[0].report.primer.name].startswith("Amplify")

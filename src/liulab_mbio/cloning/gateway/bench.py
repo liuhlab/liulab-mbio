@@ -124,6 +124,25 @@ HOSTS: Mapping[str, str] = {
 #: (MAN0000223 page 5; note §13).
 CHLORAMPHENICOL_UG_ML = 30
 
+#: What an entry clone made of attB primer-dimers runs at, base pairs: "Entry clones migrate as
+#: 2.2 kb supercoiled plasmids" is the signature of that failure and of no other (MAN0000470
+#: page 44; note §15, §16).
+DIMER_ENTRY_BP = 2200
+
+#: How much vector an M13 primer reads before it reaches an entry clone's insert, bases: the
+#: sites are "located upstream and downstream of the attL1 and attL2 sites, respectively,
+#: requiring that at least 130 base pairs of vector-encoded DNA be read before reaching the
+#: insert DNA" (MAN0000437 page 3). That, and GW1 and GW2 being "only suitable for use in
+#: sequencing inserts cloned into pCR8/GW/TOPO" (page 13), are why a plan designs its
+#: sequencing primers against the record it is given (note §15).
+M13_VECTOR_BP = 130
+
+#: What a sequencing reaction takes: nanograms of plasmid, and the picomoles of primer to send
+#: with it (MAN0000470 page 28; note §15).
+SEQUENCING_NG = 500.0
+SEQUENCING_MIN_PMOL = 5.0
+SEQUENCING_MAX_PMOL = 50.0
+
 #: Invitrogen's transformation, which is not NEB's, and which is one protocol for both
 #: reactions (MAN0000470 page 26; note §14, §17). No manual in the set states a thaw time, so
 #: the step prints none rather than another kit's.
@@ -158,7 +177,11 @@ REFERENCES: tuple[Reference, ...] = (
     ),
     Reference(
         "Invitrogen, Gateway pDONR Vectors, MAN0000291, revised 29 March 2012, for what an "
-        "entry clone is selected on and grown up from"
+        "entry clone is selected on and grown up from, and for the colony PCR it describes"
+    ),
+    Reference(
+        "Invitrogen, pCR8/GW/TOPO TA Cloning Kit, MAN0000437, for the vendor's own sequencing "
+        "primers and what each of them reads"
     ),
     Reference(
         "Invitrogen, Gateway Technology with Clonase II, MAN0000470, revised 2 April 2012, for "

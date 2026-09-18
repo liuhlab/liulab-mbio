@@ -2,30 +2,38 @@
 
 `plan_gateway` runs the whole design: design the attB primers where an insert needs them, find
 the att sites in every record, simulate the recombinations, work out what each reaction takes,
-and read what each product says about itself. Given an entry clone it plans the LR reaction
-alone; given an attB-flanked insert and a donor vector it plans BP first and feeds the entry
-clone that makes into LR; given a plain insert it amplifies that insert onto attB ends first.
+read what each product says about itself, and design the colony PCR and the sequencing that
+confirm the clone. Given an entry clone it plans the LR reaction alone; given an attB-flanked
+insert and a donor vector it plans BP first and feeds the entry clone that makes into LR; given
+a plain insert it amplifies that insert onto attB ends first.
 
-`Plan.write` puts three files in one directory -- the annotated expression clone, the protocol
-as JSON data, and the interactive HTML page rendered from that data -- the entry clone where BP
-was planned, and the oligo order sheet where any oligo was designed.
+`Plan.write` puts four files in one directory -- the annotated expression clone, the oligo order
+sheet, the protocol as JSON data and the interactive HTML page rendered from that data -- and
+the entry clone as a fifth where BP was planned.
 
 Every number the protocol prints is computed here or is one `liulab_mbio.cloning.gateway.bench`
 cites from `docs/research/gateway-cloning.md`.
 """
 
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import read_phenotype
+from liulab_mbio.bench.validation import (
+    ColonyCheck,
+    SangerRead,
+    colony_pcr_check,
+    sanger_primers,
+)
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.gateway.bench import DEFAULT_HOST, bp_amounts, lr_amounts
 from liulab_mbio.cloning.gateway.checks import plan_checks
 from liulab_mbio.cloning.gateway.design import Amplicon, Fusion, amplify_attb
+from liulab_mbio.cloning.gateway.oligos import DesignedOligo
 from liulab_mbio.cloning.gateway.recombination import (
     Junction,
     PlannedReaction,
@@ -41,8 +49,8 @@ from liulab_mbio.cloning.plan import (
     status,
     write_protocol_files,
 )
-from liulab_mbio.primers.evaluation import PrimerReport
-from liulab_mbio.primers.polymerase import Q5, Polymerase
+from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
@@ -65,8 +73,7 @@ class Files:
     product
         The annotated expression clone, the same way.
     primers
-        Every designed oligo, as a tab-separated sheet to order from, or ``None`` where the
-        plan designed none.
+        Every designed oligo, as a tab-separated sheet to order from.
     protocol_data
         The bench protocol as JSON, which ``protocol render`` turns back into a page.
     protocol
@@ -76,7 +83,7 @@ class Files:
 
     entry: Path | None
     product: Path
-    primers: Path | None
+    primers: Path
     protocol_data: Path
     protocol: Path
 
@@ -99,19 +106,34 @@ class Plan:
         The BP reaction before it, or ``None`` where an entry clone was given.
     host
         The strain the protocol names for selecting each clone.
+    colony
+        The colony PCR reading across both attB junctions, and the lanes it should give: the
+        correct clone and the destination vector that never recombined.
+    reads
+        A sequencing primer reading in from outside the first attB junction and the last.
+    designed_oligos
+        Every oligo the plan designs and what it is for, in the order the sheet lists them: the
+        attB pair where there is one, then the colony PCR, then the sequencing.
     amplicon
         The attB PCR that made the DNA BP takes, or ``None`` where the insert already carried
         its att sites.
     fusion
         Which tag the insert is read into, which is what says where a fusion reads through an
         att junction and so where the reading frame is judged.
+    thresholds
+        What the oligos were designed and judged by, for each role, so a page prints the band
+        beside the value.
     """
 
     lr: PlannedReaction
     bp: PlannedReaction | None
     host: str
+    colony: ColonyCheck
+    reads: tuple[SangerRead, SangerRead]
+    designed_oligos: tuple[DesignedOligo, ...]
     amplicon: Amplicon | None = None
     fusion: Fusion = "none"
+    thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
     def product(self) -> SequenceRecord:
@@ -136,7 +158,7 @@ class Plan:
     @property
     def reports(self) -> tuple[PrimerReport, ...]:
         """Every designed oligo's evaluation, in the order the sheet lists them."""
-        return () if self.amplicon is None else self.amplicon.reports
+        return tuple(one.report for one in self.designed_oligos)
 
     @property
     def donor(self) -> SequenceRecord | None:
@@ -161,10 +183,9 @@ class Plan:
         the insert, the host, the markers and the frame. One of those carries no verdict,
         because the sources judge no threshold for it.
         """
-        oligos = (primer_check(self.reports),) if self.reports else ()
         earlier = () if self.bp is None else self.bp.recombination.checks
         return (
-            *oligos,
+            primer_check(self.reports),
             *earlier,
             *self.lr.recombination.checks,
             *plan_checks(lr=self.lr, bp=self.bp, host=self.host, fusion=self.fusion),
@@ -178,16 +199,25 @@ class Plan:
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
         return protocol_for(
-            lr=self.lr, bp=self.bp, amplicon=self.amplicon, checks=self.checks, host=self.host
+            lr=self.lr,
+            bp=self.bp,
+            amplicon=self.amplicon,
+            colony=self.colony,
+            reads=self.reads,
+            oligos=self.designed_oligos,
+            checks=self.checks,
+            host=self.host,
+            fusion=self.fusion,
+            thresholds=self.thresholds,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the clones, the oligo sheet, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The entry clone is written only where BP
-        was planned, under `ENTRY_FILE`, and the sheet only where an oligo was designed; the
-        rest are named by `PRODUCT_FILE` and by `liulab_mbio.cloning.plan` for the protocol
-        pair. A second run over the same inputs writes the same bytes.
+        was planned, under `ENTRY_FILE`; the rest are named by `PRODUCT_FILE`, `PRIMER_FILE` and
+        by `liulab_mbio.cloning.plan` for the protocol pair. A second run over the same inputs
+        writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -197,10 +227,8 @@ class Plan:
             write_dna(self.bp.product, entry)
         product = out / PRODUCT_FILE
         write_dna(self.product, product)
-        sheet = None
-        if self.reports:
-            sheet = out / PRIMER_FILE
-            sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
+        sheet = out / PRIMER_FILE
+        sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_protocol_files(self.protocol(), out)
         return Files(entry, product, sheet, written.data, written.page)
 
@@ -296,7 +324,42 @@ def plan_gateway(
         recombine(one, other, reaction="LR", name=name or _named(other.name, start.name)),
         lr_amounts((one.name, len(one)), (other.name, len(other))),
     )
-    return Plan(lr, bp, host, made, fusion)
+    boundaries = lr.recombination.boundaries
+    colony = colony_pcr_check(
+        lr.product,
+        boundaries,
+        vector=lr.recombination.backbone.record,
+        reversible=False,
+        polymerase=ONETAQ,
+        thresholds=thresholds["colony PCR"],
+    )
+    reads = sanger_primers(lr.product, boundaries, thresholds=thresholds["sequencing"])
+    designed = _designed(made, colony, reads, lr.product, thresholds)
+    return Plan(lr, bp, host, colony, reads, designed, made, fusion, thresholds)
+
+
+def _designed(
+    amplicon: Amplicon | None,
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
+    product: SequenceRecord,
+    thresholds: Mapping[PrimerRole, Thresholds],
+) -> tuple[DesignedOligo, ...]:
+    """Return every oligo the plan orders, in the order the bench uses them."""
+    return (
+        *(
+            DesignedOligo(report, "amplification")
+            for report in (() if amplicon is None else amplicon.reports)
+        ),
+        *(DesignedOligo(report, "colony PCR") for report in colony.reports),
+        *(
+            DesignedOligo(
+                evaluate_primer(read.primer, product, thresholds=thresholds["sequencing"]),
+                "sequencing",
+            )
+            for read in reads
+        ),
+    )
 
 
 def _planned(made: Recombination, amounts: tuple[Amount, Amount]) -> PlannedReaction:

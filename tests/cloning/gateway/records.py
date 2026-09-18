@@ -34,8 +34,11 @@ ATTP = {
 _REGION_AT = 75
 _ARM_BP = 100
 
-#: Filler standing in for a backbone: no att overlap reads in it, on either strand.
+#: Filler standing in for a backbone: no att overlap reads in either, on either strand. A
+#: destination vector's second stretch differs from its first, because the expression clone
+#: keeps both and a colony PCR primer designed in one has to bind one place.
 _BACKBONE = "TTGACCGCTTAAGGCTAACGTCAGTTGCATGCCTTAAGGCTTGACCAATGCGTTCAGGCT"
+_FAR_BACKBONE = "GCATCGTAGCCTATGACGATCAGTCCATGAACTGCTAAGGTCATCAGGCTATCGGATCAA"
 
 #: A stand-in for the ccdB and chloramphenicol genes a destination vector carries between its
 #: att sites, and which the reaction throws away.
@@ -143,7 +146,7 @@ def destination_vector(
     coding = "ATGAGCGGC" if tag else ""
     left, right = att_site("attR1"), reverse_complement(att_site("attR2"))
     lead = _BACKBONE + promoter + site + coding
-    bases = lead + left + _CASSETTE + right + _BACKBONE
+    bases = lead + left + _CASSETTE + right + _FAR_BACKBONE
     at = len(lead) - len(coding)
     tagged = (Feature(tag, "CDS", (Segment(at, len(lead)),), strand=Strand.FORWARD),) if tag else ()
     return SequenceRecord(

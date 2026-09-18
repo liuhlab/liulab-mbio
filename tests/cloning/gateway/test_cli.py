@@ -31,7 +31,7 @@ def test_the_cli_writes_the_outputs_into_the_directory_and_prints_their_paths(
 
     assert result.exit_code == 0, result.output
     summary, *paths = re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
-    names = ["entry-clone.dna", "product.dna", "protocol.json", "protocol.html"]
+    names = ["entry-clone.dna", "product.dna", "primers.tsv", "protocol.json", "protocol.html"]
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     assert "BP then LR" in summary
