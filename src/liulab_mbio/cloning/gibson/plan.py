@@ -24,7 +24,6 @@ from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.oligos import OrderedOligo, primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.bench.validation import (
-    REVERSE_FLANK,
     ColonyCheck,
     SangerRead,
     colony_pcr_check,
@@ -137,8 +136,8 @@ class Plan:
     assembly
         The simulated plasmid, the parts and the junctions.
     colony
-        The colony PCR that reads every junction and tells a correct clone from an empty vector
-        or from one carrying an insert the other way round.
+        The colony PCR that reads every junction and tells a correct clone from an empty vector.
+        No insert can go in the other way round, so there is no lane for one.
     reads
         A sequencing primer reading in from outside the first junction and the last.
     amounts
@@ -406,7 +405,6 @@ def plan_gibson(
         built.product,
         boundaries,
         vector=one,
-        reverse_flank=REVERSE_FLANK,
         insert_primer=True,
         polymerase=ONETAQ,
         thresholds=thresholds["colony PCR"],

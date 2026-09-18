@@ -54,6 +54,7 @@ from liulab_mbio.cloning.restriction.digest import (
     resolve,
     reversible,
     self_closing,
+    turned,
 )
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation, ligate
 from liulab_mbio.cloning.restriction.oligos import DesignedOligo
@@ -380,13 +381,14 @@ def plan_restriction(
     span = _replaced(backbone, len(into))
     junctions = built.junction_positions
     either_way = reversible(backbone, released)
+    backwards = (ligate(backbone, turned(released)).product,) if either_way else ()
     colony = colony_pcr_check(
         built.product,
         junctions,
         vector=into,
         insert_primer=either_way,
         reverse_flank=REVERSE_FLANK if either_way else None,
-        reversible=either_way,
+        reversed_inserts=backwards,
         polymerase=ONETAQ,
         thresholds=thresholds["colony PCR"],
     )

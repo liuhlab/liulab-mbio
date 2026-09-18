@@ -88,10 +88,10 @@ there so you do not do that arithmetic yourself.
 **The incubation** is 50 °C for 15 minutes with two fragments. It grows to an hour with four or
 more. The number is the kit's own, and it changes when you name another kit.
 
-**The screening step** is the one to read twice. A correct clone gives two bands, 160 and 879 bp.
-An empty vector gives one band at 219 bp. A clone with GFP the wrong way round gives 220 and
-879 bp. Read the big band first: only the two lanes that hold GFP carry it. The empty vector and
-the flipped insert are 1 bp apart, so the small band alone will not tell them apart.
+**The screening step** is the one to read twice. A correct clone gives two bands, 160 and 837 bp.
+An empty vector gives one band at 177 bp. There is no third lane. GFP shares its bases with the
+vector one way round only, so it cannot go in backwards. Read the big band first: only a clone
+that holds GFP carries it.
 
 ## Name the kit on your bench
 

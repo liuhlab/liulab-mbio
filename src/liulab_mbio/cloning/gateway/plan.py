@@ -329,7 +329,6 @@ def plan_gateway(
         lr.product,
         boundaries,
         vector=lr.recombination.backbone.record,
-        reversible=False,
         polymerase=ONETAQ,
         thresholds=thresholds["colony PCR"],
     )

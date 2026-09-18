@@ -303,6 +303,17 @@ def reversible(backbone: Piece, insert: Piece) -> bool:
     return compatible(backbone.right_end, left) and compatible(right, backbone.left_end)
 
 
+def turned(insert: Piece) -> Piece:
+    """Return `insert` turned over: the same piece, cut from the other strand of its source.
+
+    A cohesive end's two strands stop at different bases, so which bases turn over and where
+    they land both move with the overhang. It is cut with the enzymes that cut its own two ends.
+    """
+    enzymes = tuple(dict.fromkeys((insert.left_enzyme, insert.right_enzyme)))
+    pieces = cut(flipped(insert.source), enzymes)
+    return dataclasses.replace(min(pieces, key=lambda piece: piece.length), name=insert.name)
+
+
 def _not_annealing(tried: Sequence[tuple[Piece, Piece]]) -> str:
     """Say which join refused, on the strand that came closest."""
     backbone, insert = tried[0]

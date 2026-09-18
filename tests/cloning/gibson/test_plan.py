@@ -149,12 +149,12 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_clones_give(made, gfp):
     # Where the three primers landed inside their placements, which is what the bands count off.
     ahead, behind, into = start - forward.start, reverse.end - end, junction.end - start
     assert forward.end <= start < junction.end <= end <= reverse.start
-    # The junction primer reaches the near vector primer in a correct clone and the far one in a
-    # reversed clone; the two vector primers span the insert whichever way round it sits.
-    assert bands["Correct clone"] == (ahead + into, ahead + len(gfp) + behind)
-    assert bands["Reversed insert"] == (behind + into, ahead + len(gfp) + behind)
-    assert bands["Empty vector"] == (ahead + removed + behind,)
-    assert made.colony.tells_orientation
+    # The junction primer reaches the near vector primer and the two vector primers span the
+    # insert. A turned insert shares no overlap with the vector, so there is no lane for one.
+    assert bands == {
+        "Correct clone": (ahead + into, ahead + len(gfp) + behind),
+        "Empty vector": (ahead + removed + behind,),
+    }
     assert {lane.label: lane.bands_bp for lane in made.colony.gel.lanes} == bands
 
 
@@ -545,7 +545,6 @@ def test_the_product_and_the_validation_are_the_same_whichever_route_made_a_part
     assert [one.bands_bp for one in routed.colony.clones] == [
         one.bands_bp for one in several.colony.clones
     ]
-    assert routed.colony.tells_orientation == several.colony.tells_orientation
     assert [one.read_bp for one in routed.reads] == [one.read_bp for one in several.reads]
 
 
