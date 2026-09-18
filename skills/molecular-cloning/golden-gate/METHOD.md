@@ -1,21 +1,11 @@
----
-name: golden-gate-assembly
-description: >-
-  Plan a Golden Gate cloning experiment end to end from a vector and one or more insert
-  sequence files (SnapGene .dna, GenBank or FASTA): pick a Type IIS enzyme with no site in the
-  parts, design and score the whole overhang set, check the PCR primers, simulate the assembly,
-  design the colony PCR that validates every junction, and write an interactive HTML bench
-  protocol with expected results. Use when the user wants to clone, insert, subclone or join
-  sequences into a plasmid by Golden Gate, asks for primers with BsaI, BsmBI, BbsI, PaqCI or
-  SapI tails, or wants a ready-to-run cloning protocol from sequence files.
----
-
 # Golden Gate assembly
 
-`liulab_mbio` does the design. This skill is the way in: one command turns a vector and its
-inserts into a product map, a primer order sheet and a bench protocol. Never invent a primer, an
-overhang, a band size or any other number the package computes: it works each one out from the
-sequences and checks it, and nothing checks a number you made up.
+Read this once `SKILL.md` has chosen Golden Gate.
+
+`liulab_mbio` does the design, and one command turns a vector and its inserts into a product
+map, a primer order sheet and a bench protocol. Never invent a primer, an overhang, a band size
+or any other number the package computes: it works each one out from the sequences and checks
+it, and nothing checks a number you made up.
 
 ## Run it
 
