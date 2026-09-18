@@ -1,0 +1,249 @@
+"""The whole pipeline, run on the fixtures with no agent.
+
+`tests/data/pUC19.dna` is the vector; the source plasmid is the same record carrying
+`tests/data/GFP.dna` between its own EcoRI and BamHI sites, which is what a lab member
+subcloning out of one plasmid into another actually holds. Nothing about the fixtures is
+hard-coded in the package; the numbers below are read off the records and pinned here.
+"""
+
+import dataclasses
+
+import pytest
+
+from liulab_mbio.cloning.restriction import Plan, plan_restriction
+from liulab_mbio.cloning.restriction.bench import shared_buffer
+from liulab_mbio.edits import carried, flipped, replace
+from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from liulab_mbio.sites import find_sites
+from liulab_mbio.snapgene import read_dna
+
+#: Where pUC19's own EcoRI and BamHI sites begin, and the bases the two cuts leave between them.
+ECORI, BAMHI, STUFFER = 395, 416, 21
+
+#: Bases that spell no site of any enzyme the refusal tests name, for padding a made-up plasmid.
+FILLER = "ACGT" * 5
+
+
+def plasmid(sequence: str, name: str) -> SequenceRecord:
+    """A circular record written in code, for a refusal that needs no real plasmid."""
+    return SequenceRecord(sequence, topology="circular", name=name)
+
+
+def carrying(vector: SequenceRecord, insert: SequenceRecord, name: str) -> SequenceRecord:
+    """The vector with `insert` put between its own EcoRI and BamHI sites, both sites kept.
+
+    What the insert annotates comes with it, as it would in a plasmid someone built.
+    """
+    first, second = sorted(find_sites(vector, ["EcoRI", "BamHI"]), key=lambda site: site.start)
+    built, _ = replace(vector, first.end, second.start, insert.sequence)
+    features, primers = carried(insert, 0, len(insert), offset=first.end)
+    return dataclasses.replace(
+        built,
+        name=name,
+        features=(*built.features, *features),
+        primers=(*built.primers, *primers),
+    )
+
+
+@pytest.fixture(scope="module")
+def source(puc19: SequenceRecord, gfp: SequenceRecord) -> SequenceRecord:
+    """The plasmid GFP is cut out of."""
+    return carrying(puc19, gfp, "pTrc-GFP")
+
+
+@pytest.fixture(scope="module")
+def made(puc19: SequenceRecord, source: SequenceRecord) -> Plan:
+    """GFP cut out of its own plasmid and ligated into pUC19, every option left at its default."""
+    return plan_restriction(puc19, source, enzymes=["EcoRI", "BamHI"])
+
+
+def test_the_digest_keeps_the_backbone_and_the_insert_and_names_what_it_drops(made, gfp, puc19):
+    assert [(one.name, one.length) for one in made.vector_pieces] == [
+        ("pUC19 backbone", len(puc19) - STUFFER),
+        ("pUC19 offcut", STUFFER),
+    ]
+    assert made.insert.name == "pTrc-GFP insert"
+    # The insert is GFP plus the bases the two cuts leave either side of it.
+    assert gfp.sequence in made.insert.bases
+    assert (made.insert.left_enzyme.name, made.insert.right_enzyme.name) == ("EcoRI", "BamHI")
+    assert made.span == (ECORI + 1, BAMHI + 1)
+
+
+def test_the_product_carries_the_insert_once_with_its_features_at_their_new_coordinates(made, gfp):
+    product = made.product
+    assert len(product) == len(made.backbone.bases) + len(made.insert.bases)
+    assert product.sequence.count(made.insert.bases) == 1
+    coding = next(one for one in product.features if one.name == gfp.name)
+    assert product.extract(coding.segments[0]) == gfp.sequence
+    assert made.ligation.status == "pass"
+
+
+def test_every_designed_oligo_is_annotated_where_it_binds_on_the_product(made):
+    placed = {primer.name: primer for primer in made.product.primers}
+    for report in made.reports:
+        primer = report.primer
+        assert primer.name in placed, primer.name
+        site = placed[primer.name].binding_sites[0]
+        read = made.product.extract(site)
+        assert read == (primer.sequence if site.strand > 0 else reverse_complement(primer.sequence))
+    # What the vector annotates came with it: the fixture draws its M13 sites as features.
+    assert {"M13 fwd", "M13 rev"} <= {one.name for one in made.product.features}
+
+
+def test_each_junction_is_marked_and_spells_the_site_its_two_ends_came_from(made):
+    assert [(one.start, one.spells, one.enzyme) for one in made.junctions] == [
+        (396, "GAATTC", "EcoRI"),
+        (1119, "GGATCC", "BamHI"),
+    ]
+    drawn = {one.name: one for one in made.product.features if one.name.endswith("junction")}
+    assert set(drawn) == {"GAATTC junction", "GGATCC junction"}
+    for one in made.junctions:
+        feature = drawn[f"{one.spells} junction"]
+        assert made.product.extract(feature.segments[0]) == one.spells
+        assert made.product.extract(one.span) == one.overhang
+
+
+def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_wrote_it_on(
+    puc19, source
+):
+    turned = plan_restriction(puc19, flipped(source), enzymes=["EcoRI", "BamHI"])
+    made = plan_restriction(puc19, source, enzymes=["EcoRI", "BamHI"])
+    assert turned.product.sequence == made.product.sequence
+
+
+def test_a_pair_whose_ends_do_not_anneal_is_refused_naming_the_two_ends():
+    # BsaI cuts outside its own site, so the bases it leaves are whatever the plasmid holds
+    # there: AAAA in one of these and GGGG in the other, which cannot pair.
+    vector = plasmid("GGTCTCAAAAA" + FILLER * 8 + "GAATTC" + FILLER * 2, "pBsaI-A")
+    holder = plasmid("GGTCTCAGGGG" + FILLER * 2 + "GAATTC" + FILLER * 8, "pBsaI-G")
+    with pytest.raises(ValueError, match=r"do not anneal.*(AAAA|GGGG)"):
+        plan_restriction(vector, holder, enzymes=["BsaI", "EcoRI"])
+
+
+def test_an_enzyme_with_a_site_inside_the_insert_is_refused_naming_the_site(puc19, gfp, source):
+    inside = carrying(puc19, gfp, "pTrc-GFP")
+    sites = find_sites(inside, "BsaI")
+    assert len(sites) == 2
+    with pytest.raises(ValueError, match=rf"BsaI cuts .* at {sites[0].start}, {sites[1].start}"):
+        plan_restriction(puc19, inside, enzymes=["BsaI", "EcoRI"])
+
+
+def test_a_vector_that_would_close_on_itself_is_refused(puc19, source):
+    with pytest.raises(ValueError, match="anneal to each other"):
+        plan_restriction(puc19, source, enzymes=["EcoRI"])
+
+
+def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
+    outputs = made.write(tmp_path / "run")
+    assert [(path.parent, path.name) for path in outputs.paths] == [
+        (tmp_path / "run", "product.dna"),
+        (tmp_path / "run", "primers.tsv"),
+        (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "protocol.html"),
+    ]
+    assert all(path.stat().st_size > 0 for path in outputs.paths)
+    assert read_dna(outputs.product) == made.product
+    assert read_protocol(outputs.protocol_data) == made.protocol()
+    assert outputs.protocol.read_text(encoding="utf-8") == render_html(
+        read_protocol(outputs.protocol_data)
+    )
+
+
+def test_the_same_inputs_write_the_same_bytes(made, puc19, source, tmp_path):
+    first = made.write(tmp_path / "one")
+    again = plan_restriction(puc19, source, enzymes=["EcoRI", "BamHI"]).write(tmp_path / "two")
+    for one, other in zip(first.paths, again.paths, strict=True):
+        assert one.read_bytes() == other.read_bytes()
+
+
+def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
+    protocol = made.protocol()
+    assert [step.title for step in protocol.steps] == [
+        "Digest pUC19 with EcoRI and BamHI",
+        "Digest pTrc-GFP with EcoRI and BamHI",
+        "Separate the digests on a gel and recover the two fragments",
+        "Measure every concentration",
+        "Ligate the insert into the backbone",
+        "Transform and plate",
+        "Screen colonies by PCR",
+        "Confirm the clone by sequencing",
+    ]
+    for step in protocol.steps:
+        assert step.expected, step.title
+    tables = {table.title for step in protocol.steps for table in step.tables}
+    assert tables == {
+        "pUC19 digest",
+        "pTrc-GFP digest",
+        "Ligation, T4 DNA Ligase (NEB #M0202)",
+        "Colony PCR",
+    }
+    lanes = {
+        lane.label: lane.bands_bp
+        for step in protocol.steps
+        for gel in step.gels
+        for lane in gel.lanes
+    }
+    assert lanes["pUC19"] == (made.backbone.length, STUFFER)
+    assert lanes["pTrc-GFP"] == (made.insert.length, made.source_pieces[1].length)
+
+
+def test_the_protocol_carries_the_numbers_the_note_states_and_none_it_does_not(made):
+    protocol = made.protocol()
+    steps = {step.title: step for step in protocol.steps}
+    digest = steps["Digest pUC19 with EcoRI and BamHI"]
+    table = {component.name: component for component in digest.tables[0].components}
+    # NEB's typical digest: 10 units of each enzyme, 5 µL of 10X buffer, 1 µg of DNA, 50 µL.
+    assert table["EcoRI-HF (R3101)"].final == "10 units"
+    assert table["10X rCutSmart Buffer"].volume_ul == 5.0
+    assert table["pUC19"].final.endswith("(1000 ng)")
+    assert sum(one.volume_ul for one in digest.tables[0].components) == 50.0
+    ligation = steps["Ligate the insert into the backbone"]
+    ligate, kill = (one for stage in ligation.programs[0].stages for one in stage.incubations)
+    assert (ligate.temperature_c, ligate.seconds) == (25.0, 600)
+    assert (kill.temperature_c, kill.seconds) == (65.0, 600)
+    # The 1:3 in NEB's table is an example for a 4 kb vector and a 1 kb insert, so the ratio is
+    # taken in picomoles and the masses fall out of the fragments' own lengths.
+    backbone, insert = made.amounts
+    assert (backbone.pmol, insert.pmol) == (0.02, 0.06)
+    assert insert.nanograms < backbone.nanograms
+    plate = " ".join(steps["Transform and plate"].expected)
+    assert "No supplier states a colony count" in plate
+    assert "under 1% of the colonies the uncut vector gave" in plate
+
+
+def test_the_buffer_is_named_only_where_both_records_are_supplied_in_one(made):
+    assert shared_buffer([get_enzyme("EcoRI"), get_enzyme("BamHI")]) == "rCutSmart Buffer"
+    assert shared_buffer([get_enzyme("EcoRI"), get_enzyme("BsmBI")]) is None
+    said = " ".join(note for step in made.protocol().steps for note in step.notes)
+    assert "Both enzymes are supplied in rCutSmart Buffer" in said
+
+
+def test_the_page_says_what_each_junction_now_spells(made):
+    protocol = made.protocol()
+    assert protocol.overview["Junctions"] == "GAATTC and GGATCC"
+    assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
+    prose = " ".join(protocol.highlights)
+    assert "not scarless" in prose
+    assert "GAATTC at 396 (EcoRI)" in prose
+    assert "GGATCC at 1119 (BamHI)" in prose
+
+
+def test_the_plan_status_is_the_worst_of_its_checks(made):
+    assert [check.name for check in made.checks] == [
+        "pUC19 backbone",
+        "pTrc-GFP insert",
+        "junctions",
+        "primers",
+    ]
+    assert made.status == "pass"
+    assert [one.status for one in made.protocol().checks] == [one.status for one in made.checks]
+
+
+def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
+    citations = " ".join(reference.text for reference in made.protocol().references)
+    assert "Optimizing Restriction Endonuclease Reactions" in citations
+    assert "T4 DNA Ligase" in citations
+    assert "Monarch Spin DNA Gel Extraction Kit" in citations
+    assert "Troubleshooting Guide for Cloning" in citations

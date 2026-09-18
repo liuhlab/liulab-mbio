@@ -371,7 +371,13 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
 
 
 def transform_step(
-    host: str, phenotype: Phenotype, *, inserts: Sequence[str], colonies: str
+    host: str,
+    phenotype: Phenotype,
+    *,
+    inserts: Sequence[str],
+    colonies: str,
+    expected: Sequence[str] = (),
+    notes: Sequence[str] = (),
 ) -> Step:
     """Return the transformation and plating, with the colour the plate should show.
 
@@ -385,21 +391,25 @@ def transform_step(
         What the inserts are called, for a product that annotates no coding sequence among them.
     colonies
         How many colonies to expect, as a sentence: a count belongs to the pipeline's reaction.
+    expected, notes
+        The caller's own, after the step's.
     """
-    expected = [colonies]
+    results = [colonies]
     if phenotype.blue_white and phenotype.reporter is not None:
-        expected.append(
+        results.append(
             f"Correct clones are white and empty vector is blue: the insertion interrupts "
             f"{phenotype.reporter.name}, which is then not there to complete the host's own."
         )
-    notes = [
+    results.extend(expected)
+    said = [
         f"The plate reads colour only with an alpha-complementing host, such as {host}. "
         "A host that cannot complement gives white colonies whatever the clone carries."
         if phenotype.blue_white
         else "Colour does not report this insertion; screen every colony by PCR.",
     ]
     if not phenotype.expressed:
-        notes.append(_expression_note(phenotype, inserts))
+        said.append(_expression_note(phenotype, inserts))
+    said.extend(notes)
     return Step(
         "Transform and plate",
         instructions=(
@@ -419,8 +429,8 @@ def transform_step(
             Timer("Heat shock", HEAT_SHOCK_SECONDS),
             Timer("Outgrowth", OUTGROWTH_SECONDS),
         ),
-        expected=tuple(expected),
-        notes=tuple(notes),
+        expected=tuple(results),
+        notes=tuple(said),
         troubleshooting=(
             Troubleshooting(
                 "No colonies",

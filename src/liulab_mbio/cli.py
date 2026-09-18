@@ -15,6 +15,7 @@ from liulab_mbio import __version__ as _package_version
 from liulab_mbio.cloning.cli import app as _cloning_app
 from liulab_mbio.cloning.gibson.cli import app as _gibson_app
 from liulab_mbio.cloning.goldengate.cli import app as _goldengate_app
+from liulab_mbio.cloning.restriction.cli import app as _restriction_app
 from liulab_mbio.library.cli import app as _library_app
 from liulab_mbio.plot.cli import app as _plot_app
 from liulab_mbio.protocol.cli import app as _protocol_app
@@ -34,6 +35,7 @@ app = typer.Typer(
 
 _cloning_app.add_typer(_gibson_app, name="gibson")
 _cloning_app.add_typer(_goldengate_app, name="goldengate")
+_cloning_app.add_typer(_restriction_app, name="restriction")
 
 app.add_typer(_cloning_app, name="cloning")
 app.add_typer(_library_app, name="library")
