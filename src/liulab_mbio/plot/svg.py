@@ -168,9 +168,9 @@ def _shape(shape: Shape, glyphs: dict[str, str] | None) -> str:
         case Letters():
             return _letters(shape) if glyphs is None else _outlined(shape, glyphs)
         case Group(shapes, classes, data, rotate, x, y):
-            attributes = f' class="{escape(" ".join(classes))}"' if classes else ""
+            attributes = f' class="{_escaped(" ".join(classes))}"' if classes else ""
             attributes += "".join(
-                f' data-{escape(key)}="{escape(value)}"' for key, value in data.items()
+                f' data-{_escaped(key)}="{_escaped(value)}"' for key, value in data.items()
             )
             moves = [f"translate({number(x)} {number(y)})"] if x or y else []
             moves += [f"rotate({number(rotate)})"] if rotate else []
@@ -185,8 +185,8 @@ def _text(text: Text) -> str:
         x=text.x, y=text.y, font_size=text.size, textLength=text.font.width(text.text, text.size)
     )
     return (
-        f'<text{attributes} font-family="\'{escape(text.font.family)}\'" font-weight="{weight}"'
-        f' fill="{escape(text.fill)}">{escape(text.font.drawn(text.text))}</text>'
+        f'<text{attributes} font-family="\'{_escaped(text.font.family)}\'" font-weight="{weight}"'
+        f' fill="{_escaped(text.fill)}">{escape(text.font.drawn(text.text))}</text>'
     )
 
 
@@ -196,20 +196,19 @@ def _letters(letters: Letters) -> str:
     A baseline the letters share is written once, and their turns only where one turns: a letter
     given no baseline keeps the one before it, and one given no turn is not turned.
     """
-    xs = [place.x for place in letters.places]
-    ys = {place.y for place in letters.places}
+    xs, ys, turns = zip(*letters.places, strict=True) if letters.places else ((), (), ())
     places = f' x="{" ".join(map(number, xs))}"'
-    if len(ys) == 1:
-        places += f' y="{number(ys.pop())}"'
+    if len(shared := set(ys)) == 1:
+        places += f' y="{number(shared.pop())}"'
     else:
-        places += f' y="{" ".join(number(place.y) for place in letters.places)}"'
-    if any(place.rotate for place in letters.places):
-        places += f' rotate="{" ".join(number(place.rotate) for place in letters.places)}"'
+        places += f' y="{" ".join(map(number, ys))}"'
+    if any(turns):
+        places += f' rotate="{" ".join(map(number, turns))}"'
     weight = "700" if letters.font.style == "Bold" else "400"
     return (
         f"<text{places}{_attributes(font_size=letters.size)}"
-        f' font-family="\'{escape(letters.font.family)}\'" font-weight="{weight}"'
-        f' fill="{escape(letters.fill)}">{escape(letters.font.drawn(letters.text))}</text>'
+        f' font-family="\'{_escaped(letters.font.family)}\'" font-weight="{weight}"'
+        f' fill="{_escaped(letters.fill)}">{escape(letters.font.drawn(letters.text))}</text>'
     )
 
 
@@ -257,12 +256,17 @@ def _matrix(scale: float, rotate: float, x: float, y: float) -> str:
     return f"matrix({a:.9g} {b:.9g} {b:.9g} {-a:.9g} {number(x)} {number(y)})"
 
 
+@lru_cache(maxsize=1 << 10)
 def _paint(fill: str, stroke: str, width: float) -> str:
     return f' fill="{escape(fill)}" stroke="{escape(stroke)}" stroke-width="{number(width)}"'
 
 
 def _attributes(**values: float) -> str:
     return "".join(f' {name.replace("_", "-")}="{number(value)}"' for name, value in values.items())
+
+
+#: `escape`, for words a drawing repeats shape after shape: classes, keys, colours and faces.
+_escaped = lru_cache(maxsize=1 << 12)(escape)
 
 
 # A drawing repeats its coordinates row after row.

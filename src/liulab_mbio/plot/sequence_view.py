@@ -25,6 +25,8 @@ hidden.
 import dataclasses
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import cache
+from itertools import repeat
 from typing import NamedTuple
 
 from liulab_mbio.plot import labels
@@ -1064,9 +1066,15 @@ def _ruler(first: int, last: int, length: int, top: float, rail: float) -> tuple
 def _strand(text: str, top: float) -> Letters:
     """Return a strand's bases set one to a cell, its top at `top`."""
     baseline = _baseline(MONO, BASE_SIZE, top + _height(MONO, BASE_SIZE) / 2)
-    offset = (CELL - MONO.width("A", BASE_SIZE)) / 2
-    places = tuple(Place(index * CELL + offset, baseline, 0.0) for index in range(len(text)))
+    places = tuple(map(Place, _cells(len(text)), repeat(baseline), repeat(0.0)))
     return Letters(places, text, MONO, BASE_SIZE, _INK)
+
+
+@cache
+def _cells(count: int) -> tuple[float, ...]:
+    """Return where each of `count` bases starts along a row, centred in its cell."""
+    offset = (CELL - MONO.width("A", BASE_SIZE)) / 2
+    return tuple(index * CELL + offset for index in range(count))
 
 
 def _bases(bases: str, first: int, last: int) -> str:

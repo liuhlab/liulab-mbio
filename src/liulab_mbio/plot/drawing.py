@@ -2,6 +2,7 @@
 
 import dataclasses
 import math
+import operator
 import os
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -389,10 +390,11 @@ def _first_shown_one(
         return _notice(shape, [item for item in hidden if switches.show(item.kind, item.type)])
     data = shape.data
     off = "kind" in data and not switches.show(data["kind"], data.get("type", ""))
+    shapes = _first_shown(shape.shapes, switches, hidden)
+    if not off and all(map(operator.is_, shapes, shape.shapes)):
+        return shape
     return dataclasses.replace(
-        shape,
-        shapes=_first_shown(shape.shapes, switches, hidden),
-        classes=(*shape.classes, "off") if off else shape.classes,
+        shape, shapes=shapes, classes=(*shape.classes, "off") if off else shape.classes
     )
 
 
