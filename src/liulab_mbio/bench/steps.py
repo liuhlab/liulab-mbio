@@ -518,6 +518,7 @@ def colony_pcr_step(
     check: ColonyCheck,
     *,
     junctions: int,
+    notes: Sequence[str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
     """Return the colony PCR screen, saying which band means what.
@@ -528,8 +529,9 @@ def colony_pcr_step(
         The colony PCR, its expected clones included.
     junctions
         How many junctions it reads.
-    troubleshooting
-        The caller's own, after the step's.
+    notes, troubleshooting
+        The caller's own, after the step's. How many colonies read correct is one of them: it
+        is the method's own measurement and not this builder's.
     """
     sizes = tuple(bp for clone in check.clones for bp in clone.bands_bp)
     expected = [
@@ -563,7 +565,10 @@ def colony_pcr_step(
         ),
         gels=(check.gel,),
         expected=tuple(expected),
-        notes=("The long first step at 94 °C lyses the cells; there is no purified template.",),
+        notes=(
+            "The long first step at 94 °C lyses the cells; there is no purified template.",
+            *notes,
+        ),
         troubleshooting=(
             Troubleshooting(
                 "No band in any lane",
@@ -575,7 +580,11 @@ def colony_pcr_step(
 
 
 def sequencing_step(
-    reads: Sequence[SangerRead], *, junctions: Sequence[str], inserts: Sequence[str]
+    reads: Sequence[SangerRead],
+    *,
+    junctions: Sequence[str],
+    inserts: Sequence[str],
+    notes: Sequence[str] = (),
 ) -> Step:
     """Return the sequencing that confirms the junctions, which is the only thing that settles it.
 
@@ -587,6 +596,8 @@ def sequencing_step(
         The bases each junction spells.
     inserts
         What the inserts are called.
+    notes
+        The caller's own, after the step's, such as how often its method misjoins a junction.
     """
     lengths = tuple(
         f"{read.primer.name} anneals {read.distance_bp} bp from its own junction and has to "
@@ -609,6 +620,7 @@ def sequencing_step(
             "whatever the screen said.",
             "A provider whose read is shorter than the lengths above needs a further primer "
             "inside the inserts.",
+            *notes,
         ),
         troubleshooting=(
             Troubleshooting(
