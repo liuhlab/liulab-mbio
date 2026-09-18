@@ -9,6 +9,30 @@ sets one.
 
 ### Added
 
+- Classical restriction and ligation cloning, end to end.
+  `liulab_mbio.cloning.restriction.plan_restriction` takes a vector and an insert, plans both
+  digests and the gel that separates their fragments, works the ligation out in picomoles, and
+  designs the colony PCR, the diagnostic digest and the sequencing that confirm the clone. It
+  says what each junction now reads, because this method's join puts the enzyme's own site back,
+  and it says whether those extra bases hold your reading frame. `Plan.write` writes the same
+  four files every cloning plan writes. The second record may be the insert itself or the
+  plasmid it is cut out of. One already carrying both sites is cut out and taken off a gel. One
+  carrying neither is amplified first, with a spacer and the site on each primer tail.
+- `liulab_mbio cloning restriction plan` on the command line, and a `restriction-ligation`
+  method file behind the `molecular-cloning` skill, which now sends a job to this method instead
+  of calling it unsupported.
+- The enzyme pair is chosen for you when you name none. Every pair of the 18 shipped enzymes
+  that cut inside their own site is weighed, and each rejected pair is kept with the one
+  sentence that rejected it: no site in the vector, a site inside the insert, a cut vector that
+  closes on itself, or a digest that throws away more of the vector than it keeps. What survives
+  is ranked on the buffer, the temperature, the heat step and the host's own methylation first,
+  then on how much of the vector it gives up and how much of the insert it carries whole. Name
+  one or two enzymes and that pair is planned, or refused in the same words.
+- One enzyme at both ends, and blunt ends, are planned rather than refused. The cut vector can
+  then close on itself, so the plan adds a phosphatase step before the ligation. The insert can
+  also go in either way round, so the colony PCR reads out of the insert itself and draws a lane
+  for the reversed clone. Where the two ends cannot pair, that lane is left off: it was a lane
+  for a plasmid that cannot exist.
 - Gibson assembly, end to end. `liulab_mbio.cloning.gibson.plan_gibson` and `liulab_mbio cloning
   gibson plan` take a vector and up to five inserts, in the order they go round the product and
   either way round. Nothing is cut, so a part that reads a site for every Type IIS enzyme still
@@ -151,6 +175,13 @@ sets one.
 
 ### Changed
 
+- A check on a protocol page may now carry no verdict, and the page shows it as `not judged`.
+  A check with no verdict used to be dropped from the page, which read as though nobody had
+  asked the question. It now gets a badge of its own, in a muted colour, with the reason and
+  what to go and look up beneath it. This holds for any protocol, not only a cloning one. The
+  first check to use it asks whether two restriction enzymes can share one tube: the package
+  knows the buffer each is sold in, and where those differ, answering needs figures for how much
+  activity each keeps in the other's buffer, which nothing this package may ship states.
 - An insert with no room for a junction primer no longer stops a colony PCR being designed. A
   junction primer anneals 100 bases inside the insert, so a linker or a tag is too short to hold
   one. `liulab_mbio.bench.validation.colony_pcr_check` used to refuse; it now leaves that primer

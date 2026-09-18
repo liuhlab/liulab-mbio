@@ -21,6 +21,7 @@ nav:
   - Put GFP into pUC19: golden-gate.md
   - Example plan: examples/pUC19-GFP/index.md
   - Join GFP into pUC19 by Gibson: gibson.md
+  - Clone GFP into pUC19 with two enzymes: restriction-ligation.md
   - Check primers on a genome: genome-check.md
   - API reference: api.md
 

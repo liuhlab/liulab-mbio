@@ -25,20 +25,21 @@ One direction, bottom to top — nothing lower imports anything higher.
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, and `render`, its self-contained HTML page |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
-| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers |
+| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: those modules again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair |
 | pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: the root app mounts one sub-app per feature, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
 product, the primer sheet, `protocol.json` and the `protocol.html` rendered from it.
-`cloning.gibson.plan_gibson` writes the same four.
+`cloning.gibson.plan_gibson` and `cloning.restriction.plan_restriction` write the same four.
 `library.plan_library` writes the synthesis order sheet, the barcode and amino-acid change
 tables, a record per round, the product, and those same two protocol files.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 A subpackage re-exports its own way in, for callers outside it. Inside the package, import a
 name from the module that owns it; the top-level `__init__.py` re-exports only `__version__`,
-and `Check`, `Junction`, `Part` and `Files` each mean different things in two modules.
+and `Check`, `Junction`, `Part` and `Files` each mean different things in every module that
+defines one — a `Junction` and a `Files` belong to the cloning method that defines them.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
@@ -75,6 +76,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | the docs | `pixi install -e docs`, then `pixi run docs-build` |
 | a Golden Gate plan | `pixi run liulab_mbio cloning goldengate plan VECTOR INSERT --out DIR` |
 | a Gibson plan | `pixi run liulab_mbio cloning gibson plan VECTOR INSERT --out DIR` |
+| a restriction and ligation plan | `pixi run liulab_mbio cloning restriction plan VECTOR INSERT --out DIR` |
 | a library plan | `pixi run liulab_mbio library plan PARTS --scheme S --vector V --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 

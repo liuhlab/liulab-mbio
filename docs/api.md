@@ -12,12 +12,13 @@ from liulab_mbio.io import read_record
 from liulab_mbio.cloning.goldengate import plan_assembly
 ```
 
-Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
-something different in the two modules that define them. A
+A few names are spelled more than once across the package on purpose. `Check`, `Junction`,
+`Part` and `Files` each mean something different in every module that defines one. A
 `liulab_mbio.checks.Check` is the judged check, with the value it measured. A
-`liulab_mbio.protocol.Check` is how a protocol page shows one. A flat re-export would have to
-rename one of each pair, and would import every dependency the moment you imported the package.
-So the module path is the name.
+`liulab_mbio.protocol.Check` is how a protocol page shows one. A `Junction` or a `Files` belongs
+to the cloning method that defines it. A flat re-export would have to rename one of each, and
+would import every dependency the moment you imported the package. So the module path is the
+name.
 
 `liulab_mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
 `design` is **not** re-exported: reach it at `liulab_mbio.cloning.goldengate.design`.
@@ -255,6 +256,44 @@ reaction, the incubation and the fragment count. The plasmid the assembly makes 
 
 ::: liulab_mbio.cloning.gibson.steps
 
+## Restriction and ligation
+
+`plan_restriction` is the way in, and `Plan.write` puts the same four files in one directory.
+The second record it takes is the insert, or the plasmid the insert is cut out of, and what that
+record carries is what picks the route: a record holding a site for each enzyme is cut, and one
+holding neither is amplified with the sites on its primer tails. The modules under it are its
+steps. `design` chooses the enzyme pair and says why every other pair was refused, `digest` cuts
+a record and says which enzyme left each end, and `amplify` is the route through a PCR.
+`ligation` joins the pieces and reads off what each junction now spells. `oligos` says what each
+designed oligo is for, `bench` holds this method's own numbers with the source of each, and
+`verdicts` the checks a plan carries — including the one nothing sourced can judge, which comes
+back with no verdict rather than a pass. `steps` writes the protocol.
+
+Nothing here is re-exported above the method, and only `plan_restriction` and its result types
+are re-exported from `liulab_mbio.cloning.restriction` itself.
+
+::: liulab_mbio.cloning.restriction
+    options:
+      members: false
+
+::: liulab_mbio.cloning.restriction.plan
+
+::: liulab_mbio.cloning.restriction.design
+
+::: liulab_mbio.cloning.restriction.digest
+
+::: liulab_mbio.cloning.restriction.amplify
+
+::: liulab_mbio.cloning.restriction.ligation
+
+::: liulab_mbio.cloning.restriction.oligos
+
+::: liulab_mbio.cloning.restriction.bench
+
+::: liulab_mbio.cloning.restriction.verdicts
+
+::: liulab_mbio.cloning.restriction.steps
+
 ## Libraries
 
 `plan_library` is the way in. It builds a barcoded library of every combination of the part
@@ -304,6 +343,8 @@ spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.goldengate.cli
 
 ::: liulab_mbio.cloning.gibson.cli
+
+::: liulab_mbio.cloning.restriction.cli
 
 ::: liulab_mbio.library.cli
 

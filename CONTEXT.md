@@ -210,6 +210,24 @@ each end. Its length is the top strand's, which is what a gel measures. An uncut
 record leaves none, nothing having been cut; an uncut linear one is a single fragment already.
 _Avoid_: band, piece
 
+### Double digest
+
+Cutting one record with two enzymes in the same tube rather than in two rounds, which saves an
+afternoon and a clean-up between them. It holds only where both enzymes keep enough activity in
+one buffer and want the same temperature. This package judges the buffer from the one each
+supplier sells that product in: the same buffer for both is an answer, and anything else carries
+no verdict rather than a pass, because how much activity an enzyme keeps in another's buffer is
+a measurement nothing shippable states.
+_Avoid_: dual digest, two-enzyme digest
+
+### Diagnostic digest
+
+A digest run on a miniprep to say whether it carries the insert, read as band sizes on a gel
+rather than as sequence. It is the check before sequencing rather than a substitute for it, and
+it is worth running only where a correct clone and the plasmid it could have come from give
+bands a gel can tell apart.
+_Avoid_: test digest, check digest, analytical digest
+
 ### Domestication
 
 Taking a recognition site out of a coding sequence by changing one codon for another spelling
@@ -249,8 +267,8 @@ _Avoid_: diff, changelog, summary
 How an experiment joins its fragments into one plasmid: the mechanism, the enzymes it needs, and
 what it leaves at each junction. It is chosen for a job — how many fragments join, whether the
 junction may gain bases, what the parts already carry, speed and cost — rather than preferred in
-general. Golden Gate and Gibson assembly are the ones this package plans; a library built in
-rounds is a pipeline over a method, not a method of its own.
+general. Golden Gate, Gibson assembly and classical restriction and ligation are the ones this
+package plans; a library built in rounds is a pipeline over a method, not a method of its own.
 _Avoid_: cloning strategy, technique, approach
 
 ### Molar ratio
@@ -263,8 +281,9 @@ _Avoid_: insert ratio, stoichiometry
 ### Junction
 
 Where two fragments meet in an assembled product: in Golden Gate the four bases, three for SapI,
-that one overhang paired with its match; in Gibson assembly the overlap the two share.
-Validation reads across it.
+that one overhang paired with its match; in Gibson assembly the overlap the two share; in
+restriction and ligation the recognition site the two cut ends came from, which the join puts
+back. Validation reads across it.
 _Avoid_: joint, seam, fusion site
 
 ### Overlap
