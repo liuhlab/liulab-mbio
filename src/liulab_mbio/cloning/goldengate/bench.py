@@ -16,7 +16,7 @@ from typing import Literal
 from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.protocol import (
+from liulab_mbio.protocol.model import (
     Component,
     Incubation,
     ReactionTable,

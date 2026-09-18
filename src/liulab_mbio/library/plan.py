@@ -43,7 +43,7 @@ from liulab_mbio.library.steps import RoundBench
 from liulab_mbio.library.steps import protocol as protocol_for
 from liulab_mbio.library.vector import Destination, Site, destination_vector
 from liulab_mbio.overhangs import MIN_DISTANCE
-from liulab_mbio.protocol import Protocol
+from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate

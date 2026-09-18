@@ -6,8 +6,9 @@
 from collections.abc import Sequence
 
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
-from liulab_mbio.primers import PrimerReport, Thresholds, reading
-from liulab_mbio.protocol import Check, Oligo
+from liulab_mbio.primers.evaluation import PrimerReport
+from liulab_mbio.primers.thresholds import Thresholds, reading
+from liulab_mbio.protocol.model import Check, Oligo
 
 #: The columns of the primer order sheet.
 SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")

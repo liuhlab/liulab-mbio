@@ -20,16 +20,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from liulab_mbio.bench import (
+from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
+from liulab_mbio.bench.validation import (
     REVERSE_FLANK,
-    Amount,
     ColonyCheck,
     SangerRead,
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.cloning.goldengate.bench import assembly_amounts
@@ -48,18 +48,10 @@ from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import Junction
-from liulab_mbio.primers import (
-    ONETAQ,
-    Q5,
-    THRESHOLDS_FOR,
-    Polymerase,
-    PrimerReport,
-    PrimerRole,
-    Thresholds,
-    evaluate_primer,
-    reading,
-)
-from liulab_mbio.protocol import Protocol
+from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
+from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds, reading
+from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import Feature, Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna

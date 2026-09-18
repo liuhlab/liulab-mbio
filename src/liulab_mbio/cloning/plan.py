@@ -17,7 +17,8 @@ from pathlib import Path
 
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.io import read_record
-from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
+from liulab_mbio.protocol.model import Protocol, read_protocol, write_protocol
+from liulab_mbio.protocol.render import write_html
 from liulab_mbio.sequence import SequenceRecord
 
 #: What a plan calls the product it writes: the annotated plasmid the design makes.

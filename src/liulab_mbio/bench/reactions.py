@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.steps import listed
-from liulab_mbio.protocol import Component, ReactionTable
+from liulab_mbio.protocol.model import Component, ReactionTable
 
 #: What fills a reaction to volume, where the method names nothing of its own to go in with it.
 WATER = "Nuclease-free water"

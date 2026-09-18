@@ -14,7 +14,7 @@ from liulab_mbio.cloning.goldengate.plan import (
     plan_assembly,
 )
 from liulab_mbio.codons import DEFAULT_TABLE
-from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
 

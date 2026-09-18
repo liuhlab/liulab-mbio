@@ -25,15 +25,10 @@ from dataclasses import dataclass
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.primers import (
-    Q5,
-    THRESHOLDS,
-    PairReport,
-    Polymerase,
-    Thresholds,
-    design_pair,
-    evaluate_pair,
-)
+from liulab_mbio.primers.design import design_pair
+from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
+from liulab_mbio.primers.polymerase import Q5, Polymerase
+from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,

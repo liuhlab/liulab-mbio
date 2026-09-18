@@ -98,7 +98,7 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.protocol import Reference
+from liulab_mbio.protocol.model import Reference
 
 #: Every source the modules cite, in the order a protocol lists them.
 REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels.REFERENCES)

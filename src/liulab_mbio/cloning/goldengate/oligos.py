@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 
 from liulab_mbio.cloning.goldengate.assembly import Part
-from liulab_mbio.primers import PrimerReport, PrimerRole
+from liulab_mbio.primers.evaluation import PrimerReport
+from liulab_mbio.primers.thresholds import PrimerRole
 
 
 @dataclass(frozen=True, slots=True)

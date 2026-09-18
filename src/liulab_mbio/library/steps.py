@@ -47,7 +47,7 @@ from liulab_mbio.library.rounds import Round
 from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.library.standard import PartList, Standard
 from liulab_mbio.library.vector import Destination
-from liulab_mbio.protocol import (
+from liulab_mbio.protocol.model import (
     Component,
     Incubation,
     Material,

@@ -12,7 +12,7 @@ import math
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
-from liulab_mbio.protocol import Reference
+from liulab_mbio.protocol.model import Reference
 
 
 def _positive(products: int) -> None:

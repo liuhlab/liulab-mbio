@@ -10,11 +10,20 @@ import re
 from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
-from liulab_mbio.bench import (
-    CELLS_UL,
+from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
+from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.oligos import oligo_row
+from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
-    COLONY_PCR_TITLE,
     DNTP_STOCK_MM,
+    colony_pcr_master_mix_component,
+)
+from liulab_mbio.bench.phenotype import Phenotype
+from liulab_mbio.bench.steps import (
+    CELLS_UL,
+    COLONY_PCR_TITLE,
     DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
@@ -24,22 +33,14 @@ from liulab_mbio.bench import (
     PLATE_REFERENCE,
     SEQUENCING_TITLE,
     XGAL_UG_ML,
-    Amount,
-    ColonyCheck,
-    Phenotype,
-    SangerRead,
     badges,
     card,
-    choose_ladder,
     cleanup_step,
-    colony_pcr_master_mix_component,
     colony_pcr_step,
     dpni_step,
     enzyme_material,
     gel_step,
-    heat_inactivation,
     listed,
-    oligo_row,
     pcr_step,
     pcr_title,
     phenotype_sentences,
@@ -47,7 +48,7 @@ from liulab_mbio.bench import (
     sequencing_step,
     transform_step,
 )
-from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
+from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part, dam_sites
 from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
@@ -61,8 +62,9 @@ from liulab_mbio.cloning.goldengate.bench import (
 from liulab_mbio.cloning.goldengate.design import OverhangSet
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers import Polymerase, PrimerRole, Thresholds
-from liulab_mbio.protocol import (
+from liulab_mbio.primers.polymerase import Polymerase
+from liulab_mbio.primers.thresholds import PrimerRole, Thresholds
+from liulab_mbio.protocol.model import (
     Component,
     Material,
     Protocol,

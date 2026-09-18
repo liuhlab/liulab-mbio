@@ -15,8 +15,8 @@ from liulab_mbio.bench.pcr import colony_pcr_program, colony_pcr_reaction, pcr_p
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers import Polymerase
-from liulab_mbio.protocol import (
+from liulab_mbio.primers.polymerase import Polymerase
+from liulab_mbio.protocol.model import (
     OVERVIEW_CHARS,
     Check,
     Gel,

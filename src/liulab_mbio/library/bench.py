@@ -14,7 +14,7 @@ and the enzymes a round uses belong to the scheme.
 
 from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
 from liulab_mbio.bench.reactions import fits
-from liulab_mbio.protocol import Reference
+from liulab_mbio.protocol.model import Reference
 
 #: DNA into one digest, ng, and the volume it is cut in, with CutSmart buffer, µL.
 #: METHOD DETAILS p. e4.

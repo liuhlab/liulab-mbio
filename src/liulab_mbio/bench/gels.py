@@ -3,7 +3,7 @@
 Both are NEB's, through ``docs/research/primer-design-and-pcr.md``.
 """
 
-from liulab_mbio.protocol import Ladder, Reference
+from liulab_mbio.protocol.model import Ladder, Reference
 
 #: NEB's two ladders, each with 500 and 517 counted as the one band NEB counts them as.
 LADDER_100_BP = Ladder(
