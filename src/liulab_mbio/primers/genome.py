@@ -15,7 +15,7 @@ from itertools import islice
 from pathlib import Path
 from typing import Any, Literal
 
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.io import read_region
 from liulab_mbio.primers.design import ranked_pairs
 from liulab_mbio.primers.evaluation import PairReport
@@ -118,7 +118,7 @@ class GenomeReport:
     @property
     def status(self) -> Status:
         """Return the worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.

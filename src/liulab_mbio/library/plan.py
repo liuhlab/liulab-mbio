@@ -24,7 +24,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import SEED, BarcodeRules
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.goldengate.design import MIN_DISTANCE
 from liulab_mbio.io import read_record
@@ -174,7 +174,7 @@ class LibraryPlan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan, covering every round as one experiment."""

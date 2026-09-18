@@ -51,3 +51,8 @@ def worst(statuses: Iterable[Status | None]) -> Status:
         if status is not None and STATUSES.index(status) > STATUSES.index(result):
             result = status
     return result
+
+
+def worst_of(checks: Iterable[Check]) -> Status:
+    """Return the worst verdict these checks carry, by the rule `worst` states."""
+    return worst(check.status for check in checks)

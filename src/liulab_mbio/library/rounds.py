@@ -25,7 +25,7 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 from pathlib import Path
 
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import EditReport, replace
 from liulab_mbio.library.parts import Part
 from liulab_mbio.library.scheme import Scheme
@@ -145,7 +145,7 @@ class Round:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.

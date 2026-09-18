@@ -31,7 +31,7 @@ from liulab_mbio.bench import (
 )
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
@@ -217,7 +217,7 @@ class Plan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
