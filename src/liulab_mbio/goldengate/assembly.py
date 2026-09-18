@@ -308,7 +308,7 @@ def open_vector(
 
 @dataclass(frozen=True, slots=True)
 class Junction:
-    """Where two parts meet in the product: the bases their two overhangs paired on.
+    """A junction as it came out: the bases two parts' overhangs paired on in the product.
 
     Parameters
     ----------

@@ -20,8 +20,7 @@ rename one of each pair, and would import every dependency the moment you import
 So the module path is the name.
 
 `liulab_mbio.goldengate` re-exports the pipeline's entry point and its result types.
-`design` and `ligase` are **not** re-exported: reach them at
-`liulab_mbio.goldengate.design` and `liulab_mbio.goldengate.ligase`.
+`design` is **not** re-exported: reach it at `liulab_mbio.goldengate.design`.
 
 ## The examples are tests
 
@@ -71,6 +70,17 @@ across the origin of a circular record ends past the record's length — see
 ::: liulab_mbio.codons
 
 ::: liulab_mbio.translate
+
+## Overhangs and ligation
+
+The rules a set of Type IIS overhangs is held to, and how well the set should ligate. Every
+cloning method that cuts with such an enzyme reads them here. `ligase` reads a fidelity matrix
+the user holds on their own disk: that archive's licence forbids redistribution, so none of it
+ships with the package.
+
+::: liulab_mbio.overhangs
+
+::: liulab_mbio.ligase
 
 ## Maps
 
@@ -189,8 +199,6 @@ because one reaction joins as many inserts as the overhangs allow.
 ::: liulab_mbio.goldengate.assembly
 
 ::: liulab_mbio.goldengate.bench
-
-::: liulab_mbio.goldengate.ligase
 
 ::: liulab_mbio.goldengate.oligos
 

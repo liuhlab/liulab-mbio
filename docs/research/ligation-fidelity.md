@@ -16,7 +16,7 @@ against the paper's own published numbers.
 ## 1. What the data file holds
 
 One file, `ligation_fidelity.json`, read with `importlib.resources` by
-`liulab_mbio.goldengate.design`. It holds five count matrices, one per enzyme, plus the
+`liulab_mbio.overhangs`. It holds five count matrices, one per enzyme, plus the
 attribution every copy of the data has to carry.
 
 | Field | Meaning |
@@ -59,7 +59,7 @@ The article's own permissions block, from the JATS XML at `journals.plos.org`:
 The licence is `http://creativecommons.org/licenses/by/4.0/` and the copyright line is
 `Copyright (c) 2020 Pryor et al`. Attribution is the only condition, and it is met three times
 over: in the data file's `source` block, in the module docstring of
-`liulab_mbio/goldengate/design.py`, and here.
+`liulab_mbio/overhangs.py`, and here.
 
 > Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020)
 > Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized
@@ -291,7 +291,7 @@ not overhangs.
 
 ```python
 from liulab_mbio.goldengate import plan_assembly
-from liulab_mbio.goldengate.ligase import read_profile
+from liulab_mbio.ligase import read_profile
 
 profile = read_profile("~/potapov/FileS03_T4_18h_25C.xlsx")
 plan_assembly(vector, insert, enzyme="PaqCI", profile=profile)
@@ -308,7 +308,7 @@ liulab_mbio goldengate plan vector.dna insert.dna --out run
 ```
 
 Both shapes load with the standard library alone. An `.xlsx` is read by the same `zipfile` and
-`xml.etree` code the build script uses, which moved into `liulab_mbio.goldengate.ligase` so that
+`xml.etree` code the build script uses, which moved into `liulab_mbio.ligase` so that
 the package and the script share one reader; a `.csv` is read by `csv`. **No dependency was
 added.** A file that is not a count matrix is refused with a message saying what one is, rather
 than a stack trace: a header row of overhang labels, the same labels down the first column, and

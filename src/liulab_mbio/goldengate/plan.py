@@ -38,16 +38,16 @@ from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, o
 from liulab_mbio.goldengate.bench import assembly_amounts
 from liulab_mbio.goldengate.design import (
     EnzymeChoice,
-    Junction,
     OverhangSet,
     choose_enzyme,
     design_overhangs,
 )
-from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
 from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.goldengate.steps import DEFAULT_HOST
 from liulab_mbio.goldengate.steps import protocol as protocol_for
 from liulab_mbio.io import read_record
+from liulab_mbio.ligase import LigaseProfile, read_profile
+from liulab_mbio.overhangs import Junction
 from liulab_mbio.primers import (
     ONETAQ,
     Q5,
@@ -295,7 +295,7 @@ def plan_assembly(
     profile
         A ligase fidelity matrix the caller holds, as a path or an already read `LigaseProfile`.
         It scores the overhangs where no shipped matrix covers the enzyme. The package ships
-        none: see `liulab_mbio.goldengate.ligase`.
+        none: see `liulab_mbio.ligase`.
     prefer_profile
         Use it even where a shipped matrix covers the enzyme.
     polymerase

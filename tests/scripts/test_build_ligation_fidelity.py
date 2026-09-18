@@ -1,6 +1,6 @@
 """The ligation fidelity build script, on a workbook built here rather than fetched.
 
-The workbook reader it calls is the package's, `liulab_mbio.goldengate.ligase`.
+The workbook reader it calls is the package's, `liulab_mbio.ligase`.
 """
 
 import importlib.util
@@ -14,7 +14,7 @@ from types import ModuleType
 
 import pytest
 
-from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, column_index, read_workbook
+from liulab_mbio.ligase import SPREADSHEET_NS, column_index, read_workbook
 
 REPO = Path(__file__).resolve().parents[2]
 

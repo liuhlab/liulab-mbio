@@ -26,7 +26,6 @@ from liulab_mbio.barcodes import SEED, BarcodeRules
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.codons import codon_usage
-from liulab_mbio.goldengate.design import MIN_DISTANCE
 from liulab_mbio.io import read_record
 from liulab_mbio.library.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_mbio.library.coverage import RoundCoverage, constructs, plan_coverage
@@ -43,6 +42,7 @@ from liulab_mbio.library.standard import PartList, Standard, design_standard
 from liulab_mbio.library.steps import RoundBench
 from liulab_mbio.library.steps import protocol as protocol_for
 from liulab_mbio.library.vector import Destination, Site, destination_vector
+from liulab_mbio.overhangs import MIN_DISTANCE
 from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest

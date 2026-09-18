@@ -11,13 +11,12 @@ part either side may own: that split is chosen with the overhang, for the fewest
 first position has the vector upstream rather than a part list, and a vector's stuffer is padding,
 so it absorbs those codons and charges no protein for them.
 
-The overhang rules are `liulab_mbio.goldengate.design`'s, reached through its `refusal`: length,
-palindrome, one base class, repeat, near-duplicate, and a tail spelling no further site. That is
-the one edge `library/` has to that pipeline. One rule is this module's own: an overhang spelling
-a stop where the product reads through it is refused as ``stop``, whichever part would own the
-codon. The first position's entry overhang is read twice — at the junction it admits a part on,
-and again at the end of the terminal stuffer, which is never excised and so is read in frame — so
-it is scored in both places.
+The overhang rules are `liulab_mbio.overhangs`', reached through its `refusal`: length,
+palindrome, one base class, repeat, near-duplicate, and a tail spelling no further site. One rule
+is this module's own: an overhang spelling a stop where the product reads through it is refused
+as ``stop``, whichever part would own the codon. The first position's entry overhang is read
+twice — at the junction it admits a part on, and again at the end of the terminal stuffer, which
+is never excised and so is read in frame — so it is scored in both places.
 """
 
 from collections.abc import Mapping, Sequence
@@ -28,7 +27,8 @@ from typing import Literal
 
 from liulab_mbio.codons import CodonUsage, amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.goldengate.design import (
+from liulab_mbio.library.scheme import Scheme
+from liulab_mbio.overhangs import (
     MIN_DISTANCE,
     Choice,
     Junction,
@@ -36,7 +36,6 @@ from liulab_mbio.goldengate.design import (
     ligation_matrix,
     refusal,
 )
-from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.sequence import reverse_complement
 
 #: One part list: the name each member is ordered under, and the protein it codes for.

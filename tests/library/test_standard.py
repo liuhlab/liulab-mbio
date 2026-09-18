@@ -12,7 +12,6 @@ import pytest
 
 from liulab_mbio.codons import amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.goldengate.design import refusal
 from liulab_mbio.library.scheme import Position, Scheme, read_scheme
 from liulab_mbio.library.standard import (
     _attempt,
@@ -21,6 +20,7 @@ from liulab_mbio.library.standard import (
     design_standard,
     junction_residues,
 )
+from liulab_mbio.overhangs import refusal
 from liulab_mbio.sequence import reverse_complement
 
 #: The paper's scheme, as a user supplies one.

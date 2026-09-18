@@ -20,12 +20,12 @@ One direction, bottom to top — nothing lower imports anything higher.
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans |
-| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets |
+| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets; the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds |
 | plot | `plot/` | a record drawn as a map: `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
 | bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
-| pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
+| pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by `plan` |
 | pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
 
 Each pipeline has one way in. `goldengate.plan_assembly` writes four files: the product, the

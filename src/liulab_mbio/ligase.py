@@ -6,7 +6,7 @@ it is in this package**: `read_profile` reads a copy from the user's own disk an
 redistributed. `docs/research/ligation-fidelity.md` says where the archive is and what it holds.
 
 A profile belongs to the ligase and the conditions it was measured under, not to the Type IIS
-enzyme, and `liulab_mbio.goldengate.design.fidelity` says so in the report it returns.
+enzyme, and `liulab_mbio.overhangs.fidelity` says so in the report it returns.
 
 The two shapes the archive uses are both read here with the standard library alone: an `.xlsx`
 is a zip of XML, so `zipfile` and `xml.etree` are enough, and a `.csv` is read by `csv`.
