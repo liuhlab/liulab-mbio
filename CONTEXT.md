@@ -241,8 +241,8 @@ _Avoid_: diff, changelog, summary
 How an experiment joins its fragments into one plasmid: the mechanism, the enzymes it needs, and
 what it leaves at each junction. It is chosen for a job — how many fragments join, whether the
 junction may gain bases, what the parts already carry, speed and cost — rather than preferred in
-general. Golden Gate is the one this package plans; a library built in rounds is a pipeline over
-a method, not a method of its own.
+general. Golden Gate and Gibson assembly are the ones this package plans; a library built in
+rounds is a pipeline over a method, not a method of its own.
 _Avoid_: cloning strategy, technique, approach
 
 ### Molar ratio
@@ -254,9 +254,25 @@ _Avoid_: insert ratio, stoichiometry
 
 ### Junction
 
-Where two fragments meet in an assembled product: the four bases, three for SapI, that one
-overhang paired with its match. Validation reads across it.
+Where two fragments meet in an assembled product: in Golden Gate the four bases, three for SapI,
+that one overhang paired with its match; in Gibson assembly the overlap the two share.
+Validation reads across it.
 _Avoid_: joint, seam, fusion site
+
+### Overlap
+
+The bases two fragments both spell at a Gibson junction. One of the two already spells them and
+the other carries them as a primer tail, so the junction adds nothing. Its length is set per
+assembly product and per fragment count, never per fragment length, and it is lengthened inside
+that band until its melting temperature reaches the product's floor.
+_Avoid_: homology arm, overhang, homology region
+
+### Assembly product
+
+The kit a Gibson reaction is run with, such as NEBuilder HiFi. It is the row of data that
+carries the overlap band, the reaction, the incubation, the molar ratio and the fragment-count
+limit, each with the citation it came from. Not the **product**, which is the plasmid.
+_Avoid_: master mix, kit, enzyme mix
 
 ### End soak
 

@@ -1,0 +1,41 @@
+"""Every oligo a Gibson plan orders, and what it is for."""
+
+from dataclasses import dataclass
+
+from liulab_mbio.cloning.gibson.assembly import Part
+from liulab_mbio.primers.evaluation import PrimerReport
+from liulab_mbio.primers.thresholds import PrimerRole
+
+
+@dataclass(frozen=True, slots=True)
+class DesignedOligo:
+    """One oligo a plan orders, and what it is for.
+
+    Parameters
+    ----------
+    report
+        What it scored, the primer included. A part's primer carries its overlap as a tail, so
+        the melting temperature here is of the annealing region and the structure checks are of
+        the whole oligo.
+    role
+        What it is for. It chooses the thresholds the oligo is designed and judged by.
+    part
+        The part it amplifies, given for an amplification primer and for nothing else.
+
+    Raises
+    ------
+    ValueError
+        If a part is given for any role but amplification, or not given for amplification.
+    """
+
+    report: PrimerReport
+    role: PrimerRole
+    part: Part | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a part on anything but an amplification primer, and one missing from it."""
+        if (self.role == "amplification") != (self.part is not None):
+            raise ValueError(
+                f"oligo {self.report.primer.name!r}: an amplification primer names its part, "
+                "and no other role does"
+            )
