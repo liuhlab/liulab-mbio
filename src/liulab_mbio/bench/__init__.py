@@ -29,7 +29,13 @@ from liulab_mbio.bench.amounts import (
 )
 from liulab_mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
 from liulab_mbio.bench.inactivation import heat_inactivation
-from liulab_mbio.bench.oligos import SHEET_COLUMNS, oligo_row, primer_sheet
+from liulab_mbio.bench.oligos import (
+    SHEET_COLUMNS,
+    OrderedOligo,
+    oligo_row,
+    ordered_row,
+    primer_sheet,
+)
 from liulab_mbio.bench.pcr import (
     COLONY_HOLD_CELSIUS,
     COLONY_LYSIS_SECONDS,
@@ -164,6 +170,7 @@ __all__ = [
     "Amount",
     "Clone",
     "ColonyCheck",
+    "OrderedOligo",
     "Phenotype",
     "SangerRead",
     "Transformation",
@@ -189,6 +196,7 @@ __all__ = [
     "listed",
     "molecular_weight",
     "oligo_row",
+    "ordered_row",
     "pcr_program",
     "pcr_reaction",
     "pcr_step",
