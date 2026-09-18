@@ -177,6 +177,55 @@ def digest_reaction(
 
 
 # --------------------------------------------------------------------------------------
+# The dephosphorylation
+# --------------------------------------------------------------------------------------
+
+#: The phosphatase, as its supplier sells it. It goes straight into the digest, being active in
+#: every NEB restriction enzyme buffer. Antarctic Phosphatase takes five times the units for the
+#: same ends and a hotter stop, which is why this is the one named. §6.
+PHOSPHATASE = "Shrimp Alkaline Phosphatase (rSAP) (M0371)"
+
+#: Units of rSAP per picomole of DNA ends, and the ends one cut fragment carries. NEB's dose is
+#: one unit for every pmol of ends, which its own note puts at about 1 µg of a 3 kb plasmid. §6.
+PHOSPHATASE_UNITS_PMOL = 1.0
+FRAGMENT_ENDS = 2
+
+#: How the dephosphorylation runs and how it is stopped, °C and seconds. The heat step takes the
+#: restriction enzymes with it, which is what NEB asks for. §6.
+PHOSPHATASE_CELSIUS = 37.0
+PHOSPHATASE_SECONDS = 1800
+PHOSPHATASE_KILL_CELSIUS = 65.0
+PHOSPHATASE_KILL_SECONDS = 300
+
+#: What a protocol cites when it dephosphorylates the backbone.
+PHOSPHATASE_REFERENCE = Reference(
+    "NEB, Protocol for Dephosphorylation of 5' ends of DNA using rSAP (NEB #M0371), for the "
+    "phosphatase, its dose and how it is stopped",
+    url="https://www.neb.com/en-us/protocols/protocol-for-dephosphorylation-of-5-ends-of-dna-neb-m0371",
+)
+
+
+def phosphatase_units(amount: Amount) -> float:
+    """Return the units of rSAP one digest takes, from the picomoles of ends it offers.
+
+    Every cut fragment has two ends, so a digest of `amount` picomoles offers twice as many.
+
+    Raises
+    ------
+    ValueError
+        If the amount carries no DNA.
+
+    Examples
+    --------
+    >>> phosphatase_units(digest_amount(("a 3 kb plasmid", 3000)))
+    1.08
+    """
+    if amount.pmol <= 0:
+        raise ValueError(f"{amount.name}: a dephosphorylation needs DNA, got {amount.pmol} pmol")
+    return round(FRAGMENT_ENDS * amount.pmol * PHOSPHATASE_UNITS_PMOL, 2)
+
+
+# --------------------------------------------------------------------------------------
 # The ligation
 # --------------------------------------------------------------------------------------
 
@@ -186,8 +235,10 @@ LIGATION_VOLUME_UL = 20.0
 LIGATION_BUFFER_UL = 2.0
 LIGASE_UL = 1.0
 
-#: T4 DNA Ligase as NEB sells it, units per µL. §7; the concentrate is five times this.
+#: T4 DNA Ligase as NEB sells it, units per µL, and the concentrate NEB's own table offers as
+#: the other answer to a blunt ligation: the same ten minutes with five times the ligase. §7, §8.
 LIGASE_UNITS_UL = 400.0
+HIGH_LIGASE_UNITS_UL = 2000.0
 
 #: Vector into one ligation, femtomoles. NEB recommends 20-30 fmol (§7); the low end is this
 #: package's pick inside that range.

@@ -26,7 +26,16 @@ from itertools import combinations
 from typing import Literal
 
 from liulab_mbio.bench.steps import listed
-from liulab_mbio.cloning.restriction.digest import Piece, cut, excised, opened, resolve
+from liulab_mbio.cloning.restriction.digest import (
+    MAX_CUTS,
+    Piece,
+    cut,
+    excised,
+    opened,
+    resolve,
+    said_ends,
+    self_closing,
+)
 from liulab_mbio.cloning.restriction.verdicts import (
     buffer_check,
     cleanup_check,
@@ -146,7 +155,7 @@ def choose_pair(
     refused: list[Refusal] = []
     ranked: list[tuple[tuple[int, ...], str, tuple[Enzyme, ...]]] = []
     for pair in combinations(pool, 2):
-        weighed = weighing.weigh(pair)
+        weighed = weighing.weigh(pair, choosing=True)
         if isinstance(weighed, Refusal):
             refused.append(weighed)
         else:
@@ -158,12 +167,18 @@ def choose_pair(
 
 
 def refusal(
-    vector: SequenceRecord, source: SequenceRecord, enzymes: Sequence[Enzyme]
+    vector: SequenceRecord,
+    source: SequenceRecord,
+    enzymes: Sequence[Enzyme],
+    *,
+    choosing: bool = False,
 ) -> Refusal | None:
     """Why this pair will not cut `vector` and `source`, or ``None`` when it will.
 
     The rules are the plan's own, run in the order it runs them, so a pair a user names is
-    refused in the same words the chooser refuses it in.
+    refused in the same words the chooser refuses it in. `choosing` adds the one rule that is
+    the chooser's alone: it passes over a backbone that closes on itself where another pair will
+    do, and a pair a user names is planned with a dephosphorylation instead.
 
     Examples
     --------
@@ -172,7 +187,7 @@ def refusal(
     >>> refusal(plasmid, plasmid, [get_enzyme("BamHI")]).rule
     'vector site'
     """
-    weighed = _Weighing(vector, source).weigh(tuple(enzymes))
+    weighed = _Weighing(vector, source).weigh(tuple(enzymes), choosing=choosing)
     return weighed if isinstance(weighed, Refusal) else None
 
 
@@ -189,11 +204,14 @@ class _Weighing:
     blocked: dict[str, Refusal | None] = field(default_factory=dict, hash=False)
     reports: dict[str, DomesticationReport] = field(default_factory=dict, hash=False)
 
-    def weigh(self, enzymes: tuple[Enzyme, ...]) -> tuple[Piece, Piece | None] | Refusal:
+    def weigh(
+        self, enzymes: tuple[Enzyme, ...], *, choosing: bool = False
+    ) -> tuple[Piece, Piece | None] | Refusal:
         """Return the backbone and the insert this pair leaves, or why it will not do.
 
         The insert is ``None`` where the record reads no site of either enzyme, because it is
         amplified with the sites on its primer tails and no digest of it is designed here.
+        `choosing` adds the backbone that closes on itself, which only the chooser passes over.
         """
         for one in enzymes:
             if (found := self._vector_refusal(one)) is not None:
@@ -204,6 +222,8 @@ class _Weighing:
             backbone = opened(self.vector, enzymes)[0]
         except ValueError as error:
             return Refusal(enzymes, "backbone", str(error))
+        if choosing and self_closing(backbone):
+            return Refusal(enzymes, "backbone", _religates(backbone))
         if not _reads_a_site(self.source, enzymes):
             return backbone, None
         try:
@@ -224,13 +244,14 @@ class _Weighing:
     def _insert_refusal(self, enzymes: tuple[Enzyme, ...]) -> Refusal | None:
         """Refuse an insert record neither route can get to two cut ends.
 
-        One site of each enzyme is cut out and goes in as it is; none of either is amplified with
-        the sites on its primer tails. Anything between is neither, and the refusal says what a
-        synonymous codon change could do about the sites in the way.
+        `MAX_CUTS` cuts, each enzyme making at least one, are cut out and go in as it is; no
+        site of either is amplified with the sites on its primer tails. Anything between is
+        neither, and the refusal says what a synonymous codon change could do about the sites in
+        the way.
         """
         found = {one.name: _cut_sites(self.source, one) for one in enzymes}
-        counts = {len(sites) for sites in found.values()}
-        if counts <= {0} or counts == {1}:
+        cuts = sum(len(sites) for sites in found.values())
+        if cuts == 0 or (cuts == MAX_CUTS and all(found.values())):
             return None
         said = listed([_reads(name, sites) for name, sites in found.items()])
         what = self.source.name or "the insert"
@@ -238,9 +259,10 @@ class _Weighing:
             Refusal(
                 enzymes,
                 "insert site",
-                f"{what} reads {said}; this method cuts the insert out between one site of each "
-                "enzyme, and a record reading none of them is amplified with the sites on its "
-                "primer tails instead, so neither route reaches two cut ends",
+                f"{what} reads {said}; this method cuts the insert out between two cuts -- one "
+                "site of each enzyme, or two of one -- and a record reading none of them is "
+                "amplified with the sites on its primer tails instead, so neither route reaches "
+                "two cut ends",
             ),
             self._report(enzymes),
         )
@@ -259,6 +281,15 @@ class _Weighing:
             tuple(site for one in enzymes for site in self.reports[one.name].outside_cds),
             tuple(site for one in enzymes for site in self.reports[one.name].unchanged),
         )
+
+
+def _religates(backbone: Piece) -> str:
+    """Say why the chooser passes over a pair whose backbone closes on itself."""
+    return (
+        f"the backbone's two ends anneal to each other ({said_ends(backbone)}), so it closes on "
+        "itself and the insert could go in either way round; the chooser passes over such a "
+        "pair, and naming it plans it with a dephosphorylation instead"
+    )
 
 
 def _with_domestication(refused: Refusal, report: DomesticationReport) -> Refusal:

@@ -6,12 +6,18 @@ and a 3' overhang spelling the same bases run the wrong way for each other -- an
 enzyme record carries the end type. So a `Piece` is a fragment with its two enzymes, and
 `liulab_mbio.overhangs.compatible` is the rule every join here is held to.
 
-This method needs one site of each enzyme in the record the insert comes out of: that is what
-makes the piece between them the insert. A vector is held to less, because a further site there
-only shortens what the gel drops -- until it drops more than it keeps, which is when the longest
-piece is no longer a backbone. Anything else is refused, naming the sites that refused it.
-`diagnostic` is the one digest held to no such rule: it cuts a finished miniprep to say whether
-the insert is in it, so it reads whatever bands the record gives.
+This method's digest makes at most two cuts in the record the insert comes out of, and the piece
+between them is what goes in: one site of each enzyme, or two sites of one. A vector is held to
+less, because a further site there only shortens what the gel drops -- until it drops more than
+it keeps, which is when the longest piece is no longer a backbone. Anything else is refused,
+naming the sites that refused it. `diagnostic` is the one digest held to no such rule: it cuts a
+finished miniprep to say whether the insert is in it, so it reads whatever bands the record
+gives.
+
+Two ends this method leaves may anneal to each other. `self_closing` says the backbone can shut
+with nothing in it, and `reversible` says the insert goes in either way round; neither is refused
+here, because a dephosphorylation answers the first and a colony PCR reading out of the insert
+answers the second.
 
 Coordinates are the model's, 0-based and half-open, and a piece across the origin of a circular
 record ends past the record's length.
@@ -25,12 +31,16 @@ from liulab_mbio.bench.steps import listed
 from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.overhangs import End, compatible
-from liulab_mbio.sequence import Segment, SequenceRecord
+from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite, EnzymeLike, Fragment, digest, find_sites
 
 #: How many enzymes one digest of this method uses. Two of them cut the insert out
-#: directionally; `self_closing` is what refuses a pair that leaves the vector free to rejoin.
+#: directionally; one cuts both of its ends, and then the insert goes in either way round.
 MAX_ENZYMES = 2
+
+#: How many cuts one digest makes. A piece comes out between two of them, whether two enzymes
+#: make one cut each or one enzyme makes both; a third cut falls inside that piece.
+MAX_CUTS = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,9 +101,11 @@ def cut(
 ) -> tuple[Piece, ...]:
     """Digest `record` with every one of `enzymes` and return the pieces, in top-strand order.
 
-    Each enzyme must read exactly one site: this method cuts a piece out between one site of
-    each, so a second site of either cuts that piece in two. `unique` drops that to one site at
-    least, which is what a vector is held to.
+    Every enzyme must cut, and where `unique` they cut no more than `MAX_CUTS` times between
+    them: this method cuts a piece out between two cuts, so a further cut falls inside that piece
+    and cuts it in two. One site of each enzyme and two sites of one are the two ways to make
+    those cuts. `unique` set aside drops that to one site at least, which is what a vector is
+    held to.
 
     A linear record also has the two ends it came with. No enzyme made them and nothing ligates
     to them, so the pieces carrying them are left out and what is returned is what the digest
@@ -112,7 +124,8 @@ def cut(
     ------
     ValueError
         If no enzyme is given or more than `MAX_ENZYMES`, if an enzyme reads no site or, where
-        `unique`, more than one, or if no piece has an enzyme at both of its ends.
+        `unique`, the enzymes read more than `MAX_CUTS` between them, or if no piece has an
+        enzyme at both of its ends.
     """
     if not 1 <= len(enzymes) <= MAX_ENZYMES:
         raise ValueError(
@@ -149,14 +162,15 @@ def opened(vector: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ..
     The backbone is the longest piece the digest gives; the rest is what the cloning site
     releases, and a gel is how the backbone is separated from it. A further site of either enzyme
     is allowed here and only lengthens what the gel drops, until the drop outweighs the backbone
-    -- past that the longest piece is a piece of the vector rather than its backbone.
+    -- past that the longest piece is a piece of the vector rather than its backbone. A backbone
+    `self_closing` calls true is opened all the same: it closes on itself with no insert, and a
+    dephosphorylation is what stops it.
 
     Raises
     ------
     ValueError
-        If the vector is not circular, for any reason `cut` refuses, if the digest drops as much
-        as it keeps, or if the backbone's two ends anneal to each other, which leaves it free to
-        close on itself with no insert.
+        If the vector is not circular, for any reason `cut` refuses, or if the digest drops as
+        much as it keeps.
     """
     if vector.topology != "circular":
         raise ValueError("a vector is cut open and closed again, so it must be circular")
@@ -169,12 +183,6 @@ def opened(vector: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ..
             f"{len(pieces)} pieces, the longest {backbone.length} bp against {dropped} bp "
             "dropped, so what the gel keeps is not a backbone; a further site of one of them "
             "lies outside the cloning site"
-        )
-    if self_closing(backbone):
-        raise ValueError(
-            f"the backbone's two ends anneal to each other ({_said(backbone.left_end)} and "
-            f"{_said(backbone.right_end)}), so it closes on itself and the insert could go in "
-            "either way round; name two enzymes leaving ends that do not"
         )
     return _named(vector, backbone, pieces, "backbone")
 
@@ -283,6 +291,18 @@ def self_closing(piece: Piece) -> bool:
     return compatible(piece.right_end, piece.left_end)
 
 
+def reversible(backbone: Piece, insert: Piece) -> bool:
+    """Whether `insert` also closes `backbone` turned the other way round.
+
+    One enzyme at both ends, two enzymes leaving compatible ends, and blunt ends all leave an
+    insert that goes in either way. Turning a piece over swaps its two ends and writes each
+    overhang as the other strand reads it, which is its reverse complement.
+    """
+    left = End.cut_by(insert.right_enzyme, reverse_complement(insert.fragment.right_overhang))
+    right = End.cut_by(insert.left_enzyme, reverse_complement(insert.fragment.left_overhang))
+    return compatible(backbone.right_end, left) and compatible(right, backbone.left_end)
+
+
 def _not_annealing(tried: Sequence[tuple[Piece, Piece]]) -> str:
     """Say which join refused, on the strand that came closest."""
     backbone, insert = tried[0]
@@ -291,38 +311,59 @@ def _not_annealing(tried: Sequence[tuple[Piece, Piece]]) -> str:
     else:
         one, other, where = backbone.right_end, insert.left_end, "where the insert goes in"
     return (
-        f"the ends do not anneal {where}: {_said(one)} meets {_said(other)}, on either strand "
+        f"the ends do not anneal {where}: {said_end(one)} meets {said_end(other)}, on either strand "
         "of the insert"
     )
 
 
-def _said(end: End) -> str:
-    """Name one end the way a refusal reads it."""
+def said_end(end: End) -> str:
+    """Name one cut end the way a refusal or a verdict reads it."""
     return "a blunt end" if end.end_type == "blunt" else f"a {end.end_type} {end.overhang}"
+
+
+def said_ends(piece: Piece) -> str:
+    """Name a piece's two ends the same way, in one phrase where they read alike."""
+    left, right = piece.left_end, piece.right_end
+    if left != right:
+        return f"{said_end(left)} and {said_end(right)}"
+    if left.end_type == "blunt":
+        return "two blunt ends"
+    return f"two {left.end_type} {left.overhang} ends"
 
 
 def _sites_each(
     record: SequenceRecord, enzymes: Iterable[Enzyme], what: str, *, unique: bool
 ) -> None:
-    """Refuse an enzyme reading too few sites in `record`, or too many, naming the ones it reads.
+    """Refuse an enzyme reading no site in `record`, or the enzymes too many, naming what it read.
+
+    Every enzyme has to cut. Where `unique` they cut no more than `MAX_CUTS` times between them,
+    which is one site of each enzyme or two sites of one; a vector is held only to the first
+    rule, a further site there lengthening what the gel drops rather than cutting the piece.
 
     Raises
     ------
     ValueError
-        If an enzyme reads no site, or, where `unique`, more than one.
+        If an enzyme reads no site, or, where `unique`, the enzymes read more than `MAX_CUTS`
+        between them, which is reported against the one that read most.
     """
-    for enzyme in enzymes:
-        found = [site for site in find_sites(record, enzyme) if site.cuts]
-        if len(found) == 1 or (found and not unique):
-            continue
-        why = (
-            "cuts a piece out between one site of each enzyme, so a second site of either "
-            "cuts that piece in two"
-            if unique
-            else "opens a plasmid between one site of each enzyme, so it needs one of each"
-        )
+    found = [
+        (enzyme.name, [site for site in find_sites(record, enzyme) if site.cuts])
+        for enzyme in enzymes
+    ]
+    for name, sites in found:
+        if not sites:
+            why = (
+                "cuts a piece out between two cuts, so every enzyme named has to make one"
+                if unique
+                else "opens a plasmid between one site of each enzyme, so it needs one of each"
+            )
+            raise ValueError(f"{name} cuts {what} 0 time(s); this method {why}")
+    if unique and sum(len(sites) for _, sites in found) > MAX_CUTS:
+        name, sites = max(found, key=lambda one: len(one[1]))
         raise ValueError(
-            f"{enzyme.name} cuts {what} {len(found)} time(s){_where(found)}; this method {why}"
+            f"{name} cuts {what} {len(sites)} time(s){_where(sites)}; this method cuts a piece "
+            f"out between {MAX_CUTS} cuts, so a further cut falls inside that piece and cuts it "
+            "in two"
         )
 
 

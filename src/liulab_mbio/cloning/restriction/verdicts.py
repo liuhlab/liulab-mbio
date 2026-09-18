@@ -21,10 +21,11 @@ from liulab_mbio.checks import Check
 from liulab_mbio.cloning.restriction.bench import (
     BUFFER_FINDER,
     METHYLATION_FREE_HOST,
+    PHOSPHATASE,
     RATIO_RANGE,
     shared_buffer,
 )
-from liulab_mbio.cloning.restriction.digest import Diagnostic
+from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from liulab_mbio.cloning.restriction.ligation import Junction
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.sequence import Segment, SequenceRecord
@@ -156,6 +157,33 @@ def methylation_check(enzymes: Sequence[Enzyme], records: Sequence[SequenceRecor
         len(blocked),
         f"{listed(blocked)}; prepare that DNA from {METHYLATION_FREE_HOST} before this digest, "
         "and transform the ligation itself into the ordinary host",
+    )
+
+
+def self_ligation_check(backbone: Piece) -> Check:
+    """Whether the backbone can close on itself with no insert, and what stops it. §6.
+
+    Two ends that anneal to each other let the vector religate empty, and the plate fills with
+    it. NEB's answer is to take the 5' phosphates off, which every plan that meets the case does,
+    so the verdict is a pass either way and the detail says which case this is. A pair leaving
+    ends that cannot meet needs no phosphatase at all.
+    """
+    ends = said_ends(backbone)
+    if not self_closing(backbone):
+        return Check(
+            "self-ligation",
+            "pass",
+            0,
+            f"{backbone.name} is cut to {ends}, which do not anneal, so it cannot close on "
+            "itself and needs no phosphatase",
+        )
+    return Check(
+        "self-ligation",
+        "pass",
+        1,
+        f"{backbone.name} is cut to {ends}, which anneal to each other, so it closes on itself "
+        f"with no insert; {PHOSPHATASE} takes its 5' phosphates off in the digest, and the "
+        "vector-only ligation control is what says whether that worked",
     )
 
 

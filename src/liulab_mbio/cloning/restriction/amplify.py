@@ -135,13 +135,13 @@ def amplified(
         left_enzyme,
         _wanted(left_enzyme, into.right_end),
         spacer_length=spacer_length,
-        avoid=(right_enzyme,),
+        avoid=_besides(left_enzyme, right_enzyme),
     )
     reverse_tail = primer_tail(
         right_enzyme,
         _wanted(right_enzyme, into.left_end, flip=True),
         spacer_length=spacer_length,
-        avoid=(left_enzyme,),
+        avoid=_besides(right_enzyme, left_enzyme),
     )
     right = reverse_complement(reverse_tail)
     called = name or insert.name or "insert"
@@ -176,6 +176,14 @@ def amplified(
             forward_primer, reverse_primer, insert, polymerase=polymerase, thresholds=thresholds
         ),
     )
+
+
+def _besides(enzyme: Enzyme, other: Enzyme) -> tuple[Enzyme, ...]:
+    """Return the other end's enzyme, and nothing where it is the same one.
+
+    A tail spells its own enzyme's site by design, so that enzyme is never its own avoid.
+    """
+    return () if other == enzyme else (other,)
 
 
 def _wanted(enzyme: Enzyme, end: End, *, flip: bool = False) -> str:

@@ -26,7 +26,13 @@ from pathlib import Path
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
-from liulab_mbio.bench.validation import ColonyCheck, SangerRead, colony_pcr_check, sanger_primers
+from liulab_mbio.bench.validation import (
+    REVERSE_FLANK,
+    ColonyCheck,
+    SangerRead,
+    colony_pcr_check,
+    sanger_primers,
+)
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import (
     PRIMER_FILE,
@@ -46,6 +52,8 @@ from liulab_mbio.cloning.restriction.digest import (
     excised,
     opened,
     resolve,
+    reversible,
+    self_closing,
 )
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation, ligate
 from liulab_mbio.cloning.restriction.oligos import DesignedOligo
@@ -58,6 +66,7 @@ from liulab_mbio.cloning.restriction.verdicts import (
     frame_check,
     methylation_check,
     ratio_check,
+    self_ligation_check,
     temperature_check,
 )
 from liulab_mbio.enzymes import Enzyme
@@ -183,6 +192,15 @@ class Plan:
         return self.source if self.amplicon is None else self.amplicon.record
 
     @property
+    def dephosphorylates(self) -> bool:
+        """Whether the plan takes the backbone's 5' phosphates off before the ligation.
+
+        A backbone whose two ends anneal to each other closes on itself with no insert, and
+        `liulab_mbio.cloning.restriction.bench.PHOSPHATASE` is what stops it.
+        """
+        return self_closing(self.backbone)
+
+    @property
     def product(self) -> SequenceRecord:
         """The circular plasmid the ligation makes."""
         return self.ligation.product
@@ -206,7 +224,7 @@ class Plan:
     def checks(self) -> tuple[Check, ...]:
         """Every verdict the plan carries, in the order the bench meets them.
 
-        The digest's four first, then the product's own, then what the ligation takes and what
+        The digest's five first, then the product's own, then what the ligation takes and what
         confirms it. `liulab_mbio.cloning.restriction.verdicts` is where each one's threshold and
         its source are written down, and the buffer is the one nothing sourced can judge.
         """
@@ -215,6 +233,7 @@ class Plan:
             temperature_check(self.enzymes),
             cleanup_check(self.enzymes),
             methylation_check(self.enzymes, (self.vector, self.digested)),
+            self_ligation_check(self.backbone),
             *self.ligation.checks,
             frame_check(self.product, self.junctions),
             ratio_check(*self.amounts),
@@ -297,6 +316,12 @@ def plan_restriction(
     puts that site back, so the product gains those bases and `Plan.junctions` says what each one
     spells.
 
+    Where the backbone's two ends anneal to each other -- one enzyme cutting both, two enzymes
+    leaving compatible ends, or blunt ends -- the vector closes on itself with no insert and the
+    insert goes in either way round. Neither is refused: the plan dephosphorylates the backbone,
+    and its colony PCR reads out of the insert itself, which is what tells a reversed clone from
+    a correct one.
+
     Parameters
     ----------
     vector, insert
@@ -304,8 +329,9 @@ def plan_restriction(
         circular plasmid; `insert` is the insert, or the plasmid it is cut out of.
     enzymes
         One or two enzymes, each an `liulab_mbio.enzymes.Enzyme` or a name the package ships.
-        Each must read a site in the vector, and one in whatever is cut for the insert. Chosen
-        for the caller where none is named.
+        Each must read a site in the vector, and the two of them no more than twice in
+        whatever is cut for the insert: one enzyme reading two sites cuts it out on its own.
+        Chosen for the caller where none is named.
     polymerase
         For the insert's PCR, where one is run.
     host, name
@@ -324,9 +350,9 @@ def plan_restriction(
     KeyError
         If a name is not one the package ships.
     ValueError
-        If the vector is not circular, if an enzyme reads anything but one site in what is cut,
-        if the backbone's two ends anneal to each other, if no tail spells one site, if the
-        insert's ends do not anneal to the backbone's, or if no pair can be chosen at all.
+        If the vector is not circular, if an enzyme does not cut what is cut or the enzymes cut
+        it too often, if no tail spells one site, if the insert's ends do not anneal to the
+        backbone's, or if no pair can be chosen at all.
     """
     into = as_record(vector)
     holder = as_record(insert)
@@ -353,10 +379,14 @@ def plan_restriction(
     )
     span = _replaced(backbone, len(into))
     junctions = built.junction_positions
+    either_way = reversible(backbone, released)
     colony = colony_pcr_check(
         built.product,
         junctions,
         vector=into,
+        insert_primer=either_way,
+        reverse_flank=REVERSE_FLANK if either_way else None,
+        reversible=either_way,
         polymerase=ONETAQ,
         thresholds=thresholds["colony PCR"],
     )

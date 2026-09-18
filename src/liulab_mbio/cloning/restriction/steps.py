@@ -67,9 +67,17 @@ from liulab_mbio.cloning.restriction.bench import (
     COLUMN_REFERENCE,
     CONTROLS,
     DIGEST_SECONDS,
+    HIGH_LIGASE_UNITS_UL,
+    LIGASE_UNITS_UL,
     LIGATION_NG_UL,
     MAX_DNA_FRACTION,
     OVERNIGHT_CELSIUS,
+    PHOSPHATASE,
+    PHOSPHATASE_CELSIUS,
+    PHOSPHATASE_KILL_CELSIUS,
+    PHOSPHATASE_KILL_SECONDS,
+    PHOSPHATASE_REFERENCE,
+    PHOSPHATASE_SECONDS,
     REFERENCES,
     ROOM_CELSIUS,
     STAR_ACTIVITY,
@@ -79,10 +87,11 @@ from liulab_mbio.cloning.restriction.bench import (
     gel_recovery,
     ligation_program,
     ligation_reaction,
+    phosphatase_units,
     shared_buffer,
 )
 from liulab_mbio.cloning.restriction.design import Refusal
-from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece
+from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation
 from liulab_mbio.cloning.restriction.oligos import DesignedOligo
 from liulab_mbio.enzymes import Enzyme
@@ -154,6 +163,7 @@ def protocol(
     backbone, insert = ligation.pieces
     named = listed([enzyme.name for enzyme in enzymes])
     digested = source if amplicon is None else amplicon.record
+    dephosphorylate = self_closing(backbone)
     return Protocol(
         f"Restriction and ligation: {insert.name} into {vector.name}",
         summary=(
@@ -162,7 +172,9 @@ def protocol(
             "ligate them, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(vector, source, enzymes, amplicon, ligation, phenotype),
-        highlights=_highlights(amplicon, enzymes, ligation, phenotype, refusals),
+        highlights=_highlights(
+            amplicon, enzymes, ligation, phenotype, refusals, dephosphorylate=dephosphorylate
+        ),
         checks=badges(checks),
         materials=_materials(
             vector=vector,
@@ -174,6 +186,7 @@ def protocol(
             polymerase=polymerase,
             phenotype=phenotype,
             sizes=_sizes(vector_pieces, source_pieces),
+            dephosphorylate=dephosphorylate,
         ),
         oligos=tuple(
             oligo_row(one.report, purpose=_purpose(one, amplicon), thresholds=thresholds[one.role])
@@ -196,8 +209,9 @@ def protocol(
             phenotype=phenotype,
             host=host,
             polymerase=polymerase,
+            dephosphorylate=dephosphorylate,
         ),
-        references=_references(amplicon, phenotype),
+        references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
     )
 
 
@@ -263,6 +277,8 @@ def _highlights(
     ligation: Ligation,
     phenotype: Phenotype,
     refusals: Sequence[Refusal],
+    *,
+    dephosphorylate: bool,
 ) -> tuple[str, ...]:
     """Return what the facts mean, a sentence each: the junctions first, then the phenotype."""
     backbone, insert = ligation.pieces
@@ -272,6 +288,7 @@ def _highlights(
         *_chosen(enzymes, refusals),
         *_tailed(amplicon),
         f"This method's junction is not scarless: {_spelled(ligation.junctions)}",
+        *_closes_on_itself(backbone, dephosphorylate=dephosphorylate),
         *phenotype_sentences(phenotype, [insert.name]),
     )
 
@@ -290,6 +307,19 @@ def _chosen(enzymes: Sequence[Enzyme], refusals: Sequence[Refusal]) -> tuple[str
         f"No enzyme was named, so the pair was chosen: {listed([one.name for one in enzymes])}. "
         f"{len(refusals)} other pairs were refused, {rules}. The pair that got furthest was "
         f"{nearest.names}, and {nearest.detail}.",
+    )
+
+
+def _closes_on_itself(backbone: Piece, *, dephosphorylate: bool) -> tuple[str, ...]:
+    """Say that the vector can religate empty, and what the plan does about it."""
+    if not dephosphorylate:
+        return ()
+    return (
+        f"The backbone is cut to {said_ends(backbone)}, which anneal to each other: the vector "
+        "closes on itself with no insert, and the insert goes in either way round. So the "
+        f"backbone is dephosphorylated with {PHOSPHATASE} before the ligation, and the colony "
+        "PCR reads out of the insert itself, which is what tells a reversed clone from a "
+        "correct one.",
     )
 
 
@@ -340,6 +370,7 @@ def _materials(
     polymerase: Polymerase,
     phenotype: Phenotype,
     sizes: tuple[int, ...],
+    dephosphorylate: bool,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     ladders = dict.fromkeys((choose_ladder(sizes).name, colony.ladder.name))
@@ -351,13 +382,20 @@ def _materials(
             note="cut to release the insert" if amplicon is None else "template for the PCR",
         ),
         *_pcr_materials(amplicon, polymerase),
-        *(
-            enzyme_material(
-                enzyme, note=f"cuts the vector and the insert once each, leaving {_left(enzyme)}"
-            )
-            for enzyme in enzymes
-        ),
+        *(enzyme_material(enzyme, note=_cuts(enzymes, enzyme)) for enzyme in enzymes),
         _buffer_material(enzymes),
+        *(
+            (
+                catalogued(
+                    PHOSPHATASE,
+                    supplier=SUPPLIER,
+                    storage="-20 °C",
+                    note="takes the backbone's 5' phosphates off, so it cannot close on itself",
+                ),
+            )
+            if dephosphorylate
+            else ()
+        ),
         Material(
             "T4 DNA Ligase and its 10X reaction buffer",
             supplier=SUPPLIER,
@@ -425,6 +463,13 @@ def _left(enzyme: Enzyme) -> str:
     return "a blunt end" if enzyme.end == "blunt" else f"a {enzyme.end} overhang"
 
 
+def _cuts(enzymes: Sequence[Enzyme], enzyme: Enzyme) -> str:
+    """Say what one enzyme is there to cut, which a single enzyme does at every end itself."""
+    if len(enzymes) == 1:
+        return f"opens the vector and cuts the insert out on its own, leaving {_left(enzyme)}"
+    return f"cuts the vector and the insert once each, leaving {_left(enzyme)}"
+
+
 def _buffer_material(enzymes: Sequence[Enzyme]) -> Material:
     """Return the digest's buffer as a material, named only where the records name one."""
     buffer = shared_buffer(enzymes)
@@ -471,12 +516,14 @@ def _steps(
     phenotype: Phenotype,
     host: str,
     polymerase: Polymerase,
+    dephosphorylate: bool,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes."""
     backbone, insert = ligation.pieces
     return (
         *_amplify_steps(amplicon, polymerase),
         _digest_step(vector, enzymes, vector_pieces, digests[0], keeping=backbone),
+        *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
         _digest_step(
             digested,
             enzymes,
@@ -496,7 +543,7 @@ def _steps(
             "below and read the plate against them rather than against a number.",
             expected=CONTROLS,
         ),
-        colony_pcr_step(colony, junctions=len(ligation.junctions)),
+        colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
         _diagnostic_step(diagnostic, product=ligation.product),
         sequencing_step(
             reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
@@ -548,6 +595,67 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
                 "One band, at the plasmid's full length",
                 "Only one site cut. Check the enzymes' methylation sensitivity against the "
                 "strain the miniprep was grown in.",
+            ),
+        ),
+    )
+
+
+def _one_way(colony: ColonyCheck) -> tuple[str, ...]:
+    """Say why no reversed lane is drawn, where the insert cannot go in the other way round."""
+    if colony.reversed_clones:
+        return ()
+    return (
+        "The insert's two ends do not anneal to each other, so it cannot go in the other way "
+        "round and there is no reversed lane to read.",
+    )
+
+
+def _phosphatase_steps(
+    vector: SequenceRecord, backbone: Piece, amount: Amount, *, dephosphorylate: bool
+) -> tuple[Step, ...]:
+    """Take the backbone's 5' phosphates off, and nothing at all where its ends cannot meet."""
+    if not dephosphorylate:
+        return ()
+    units = phosphatase_units(amount)
+    return (
+        Step(
+            f"Dephosphorylate the cut {vector.name}",
+            instructions=(
+                f"Add {units:g} units of rSAP straight into the {vector.name} digest and mix.",
+                f"Incubate at {PHOSPHATASE_CELSIUS:g} °C for {PHOSPHATASE_SECONDS // 60} minutes.",
+                f"Hold at {PHOSPHATASE_KILL_CELSIUS:g} °C for "
+                f"{PHOSPHATASE_KILL_SECONDS // 60} minutes, which stops the phosphatase for good.",
+            ),
+            timers=(
+                Timer("Dephosphorylation", PHOSPHATASE_SECONDS),
+                Timer("Phosphatase heat inactivation", PHOSPHATASE_KILL_SECONDS),
+            ),
+            expected=(
+                "Nothing visible. It shows later as a vector-only ligation giving no more "
+                "colonies than the cut-vector control beside it.",
+            ),
+            notes=(
+                f"{backbone.name} is cut to {said_ends(backbone)}, which anneal to each other, "
+                "so without this the vector closes on itself and the plate fills with empty "
+                "vector.",
+                "rSAP is active in every restriction enzyme buffer, so it goes into the digest "
+                "as it stands; one unit takes the phosphates off one picomole of DNA ends.",
+                "The heat step takes the restriction enzymes with it, which is what NEB asks "
+                "for; the gel purification is what stops any of them heat does not.",
+                "Only the vector is dephosphorylated: the insert keeps its own 5' phosphates, "
+                "and those are what the ligase seals.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Empty vector all over the plate",
+                    "The dephosphorylation was incomplete: use fresh rSAP and give it the whole "
+                    "incubation before the heat step.",
+                ),
+                Troubleshooting(
+                    "No colonies at all",
+                    "A phosphatase still working takes the insert's phosphates too. Check the "
+                    "heat step ran, or clean the digest up on a column before the ligase.",
+                ),
             ),
         ),
     )
@@ -832,6 +940,7 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             "fragment weighs less at the same ratio.",
             f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
             "fragment closes on itself instead of joining its partner.",
+            *_blunt_cost(ligation),
             "Junction positions are 0-based, on the product.",
         ),
         troubleshooting=(
@@ -849,9 +958,30 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
     )
 
 
-def _references(amplicon: Amplicon | None, phenotype: Phenotype) -> tuple[Reference, ...]:
+def _blunt_cost(ligation: Ligation) -> tuple[str, ...]:
+    """Say what a blunt ligation costs against a cohesive one, in the terms a supplier states.
+
+    That cost is the incubation and nothing else: no source read gives a ratio of colonies or a
+    yield between the two, so none is printed.
+    """
+    if not ligation.blunt:
+        return ()
+    return (
+        f"A blunt join is the same reaction held longer: NEB's table gives "
+        f"{BLUNT_SECONDS // 60} minutes at {ROOM_CELSIUS:g} °C where cohesive ends take "
+        f"{COHESIVE_SECONDS // 60}, or those {COHESIVE_SECONDS // 60} minutes with the "
+        f"{HIGH_LIGASE_UNITS_UL:g} U/µL ligase in place of the {LIGASE_UNITS_UL:g} U/µL one. "
+        "The time is the only cost any supplier states for it.",
+    )
+
+
+def _references(
+    amplicon: Amplicon | None, phenotype: Phenotype, *, dephosphorylate: bool
+) -> tuple[Reference, ...]:
     """Where the numbers come from."""
     items = [*REFERENCES, *BENCH_REFERENCES]
+    if dephosphorylate:
+        items.append(PHOSPHATASE_REFERENCE)
     if amplicon is not None:
         items.extend((CLEAVAGE_REFERENCE, COLUMN_REFERENCE))
         if amplicon.dpni:

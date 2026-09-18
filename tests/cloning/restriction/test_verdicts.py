@@ -10,7 +10,7 @@ import dataclasses
 import pytest
 
 from liulab_mbio.bench.amounts import dna_amount
-from liulab_mbio.cloning.restriction.digest import Diagnostic
+from liulab_mbio.cloning.restriction.digest import Diagnostic, opened, resolve
 from liulab_mbio.cloning.restriction.ligation import Junction
 from liulab_mbio.cloning.restriction.verdicts import (
     buffer_check,
@@ -19,6 +19,7 @@ from liulab_mbio.cloning.restriction.verdicts import (
     frame_check,
     methylation_check,
     ratio_check,
+    self_ligation_check,
     temperature_check,
 )
 from liulab_mbio.enzymes import get_enzyme
@@ -31,6 +32,32 @@ FILLER = "ACGT" * 6
 def plasmid(sequence: str, name: str) -> SequenceRecord:
     """A circular record written in code."""
     return SequenceRecord(sequence, topology="circular", name=name)
+
+
+def test_a_backbone_that_closes_on_itself_names_the_phosphatase_and_says_which_ends_meet():
+    """One enzyme at both ends and two leaving compatible ends are read the same way."""
+    for enzymes, record, said in (
+        (["EcoRI"], FILLER * 2 + "GAATTC" + FILLER * 8, "two 5' AATT ends"),
+        (
+            ["SalI", "XhoI"],
+            FILLER * 2 + "GTCGAC" + FILLER * 8 + "CTCGAG" + FILLER * 2,
+            "two 5' TCGA ends",
+        ),
+    ):
+        backbone = opened(plasmid(record, "pClosing"), resolve(enzymes))[0]
+        verdict = self_ligation_check(backbone)
+        assert (verdict.status, verdict.value) == ("pass", 1)
+        assert said in verdict.detail
+        assert "anneal to each other" in verdict.detail
+        assert "rSAP" in verdict.detail
+
+
+def test_a_backbone_whose_ends_cannot_meet_needs_no_phosphatase():
+    vector = plasmid(FILLER * 2 + "GAATTC" + FILLER * 8 + "GGATCC" + FILLER * 2, "pEcoBam")
+    verdict = self_ligation_check(opened(vector, resolve(["EcoRI", "BamHI"]))[0])
+    assert (verdict.status, verdict.value) == ("pass", 0)
+    assert "which do not anneal" in verdict.detail
+    assert "needs no phosphatase" in verdict.detail
 
 
 def test_a_pair_supplied_in_one_buffer_passes_and_a_mixed_pair_carries_no_verdict():

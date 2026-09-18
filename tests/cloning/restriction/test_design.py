@@ -114,10 +114,13 @@ def test_a_backbone_that_closes_on_itself_and_ends_that_do_not_anneal_name_their
     # SalI and XhoI both leave a 5' TCGA, so the backbone they open closes again with nothing in.
     into = plasmid(FILLER * 6 + "GTCGAC" + FILLER + "CTCGAG" + FILLER * 6, "pTcga")
     holder = plasmid(FILLER * 4 + "GTCGAC" + FILLER * 2 + "CTCGAG" + FILLER * 4, "pTcgaIns")
-    closed = refusal(into, holder, [get_enzyme("SalI"), get_enzyme("XhoI")])
+    pair = [get_enzyme("SalI"), get_enzyme("XhoI")]
+    closed = refusal(into, holder, pair, choosing=True)
     assert closed is not None
     assert closed.rule == "backbone"
     assert "anneal to each other" in closed.detail
+    # The rule is the chooser's alone: naming that pair plans it, with a dephosphorylation.
+    assert refusal(into, holder, pair) is None
 
     # BsaI cuts outside its own site, so what it leaves is whatever the record spells there.
     apart = refusal(

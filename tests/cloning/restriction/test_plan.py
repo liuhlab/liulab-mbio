@@ -12,10 +12,22 @@ import dataclasses
 import pytest
 
 from liulab_mbio.cloning.restriction import Plan, plan_restriction
-from liulab_mbio.cloning.restriction.bench import shared_buffer
+from liulab_mbio.cloning.restriction.amplify import amplified
+from liulab_mbio.cloning.restriction.bench import (
+    BLUNT_SECONDS,
+    COHESIVE_SECONDS,
+    HIGH_LIGASE_UNITS_UL,
+    LIGASE_UNITS_UL,
+    PHOSPHATASE_KILL_SECONDS,
+    PHOSPHATASE_SECONDS,
+    ROOM_CELSIUS,
+    phosphatase_units,
+    shared_buffer,
+)
 from liulab_mbio.cloning.restriction.design import refusal
-from liulab_mbio.cloning.restriction.digest import resolve
+from liulab_mbio.cloning.restriction.digest import opened, resolve
 from liulab_mbio.edits import carried, flipped, replace
+from liulab_mbio.edits import insert as added
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.primers.evaluation import evaluate_primer
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
@@ -51,10 +63,29 @@ def carrying(vector: SequenceRecord, insert: SequenceRecord, name: str) -> Seque
     )
 
 
+def padded(record: SequenceRecord, bases: str) -> SequenceRecord:
+    """The record with `bases` added at each end, what it annotates carried along."""
+    one, _ = added(record, len(record), bases)
+    one, _ = added(one, 0, bases)
+    return one
+
+
 @pytest.fixture(scope="module")
 def source(puc19: SequenceRecord, gfp: SequenceRecord) -> SequenceRecord:
     """The plasmid GFP is cut out of."""
     return carrying(puc19, gfp, "pTrc-GFP")
+
+
+@pytest.fixture(scope="module")
+def blunt(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
+    """GFP cut out and put back with SmaI alone: one enzyme, blunt ends, both ways round.
+
+    pUC19 reads one SmaI site, so the whole plasmid is the backbone; the plasmid GFP comes out
+    of carries a SmaI site either side of it, which is the two cuts that release it.
+    """
+    return plan_restriction(
+        puc19, carrying(puc19, padded(gfp, "CCCGGG"), "pSmaI-GFP"), enzymes=["SmaI"]
+    )
 
 
 @pytest.fixture(scope="module")
@@ -106,6 +137,7 @@ def test_each_junction_is_marked_and_spells_the_site_its_two_ends_came_from(made
     for one in made.junctions:
         feature = drawn[f"{one.spells} junction"]
         assert made.product.extract(feature.segments[0]) == one.spells
+        assert one.span is not None
         assert made.product.extract(one.span) == one.overhang
 
 
@@ -163,9 +195,74 @@ def test_naming_an_unusable_pair_refuses_in_the_choosers_own_words(puc19, source
     assert chosen.detail == str(named.value)
 
 
-def test_a_vector_that_would_close_on_itself_is_refused(puc19, source):
-    with pytest.raises(ValueError, match="anneal to each other"):
-        plan_restriction(puc19, source, enzymes=["EcoRI"])
+def test_one_enzyme_opens_the_vector_and_cuts_the_insert_out_on_its_own(blunt, puc19, gfp):
+    assert [one.name for one in blunt.enzymes] == ["SmaI"]
+    # One site opens the vector, so the whole plasmid is the backbone and the gel drops nothing.
+    assert [(one.name, one.length) for one in blunt.vector_pieces] == [
+        ("pUC19 backbone", len(puc19))
+    ]
+    assert gfp.sequence in blunt.insert.bases
+    assert [(one.spells, one.enzyme) for one in blunt.junctions] == [
+        ("CCCGGG", "SmaI"),
+        ("CCCGGG", "SmaI"),
+    ]
+    assert blunt.status == "pass"
+
+
+def test_a_vector_that_closes_on_itself_is_dephosphorylated_rather_than_refused(blunt):
+    assert blunt.dephosphorylates
+    verdict = next(one for one in blunt.checks if one.name == "self-ligation")
+    assert verdict.status == "pass"
+    assert "two blunt ends" in verdict.detail
+    assert "anneal to each other" in verdict.detail
+    protocol = blunt.protocol()
+    assert "Shrimp Alkaline Phosphatase (rSAP)" in [one.name for one in protocol.materials]
+    step = next(one for one in protocol.steps if one.title == "Dephosphorylate the cut pUC19")
+    assert f"{phosphatase_units(blunt.digests[0]):g} units of rSAP" in step.instructions[0]
+    assert [timer.seconds for timer in step.timers] == [
+        PHOSPHATASE_SECONDS,
+        PHOSPHATASE_KILL_SECONDS,
+    ]
+    assert any("rSAP" in one.text for one in protocol.references)
+    # The page says the risk plainly, not only in the badge.
+    assert "closes on itself with no insert" in " ".join(protocol.highlights)
+
+
+def test_a_blunt_ligation_is_held_longer_and_the_page_says_what_that_costs(blunt):
+    assert blunt.ligation.blunt
+    step = next(one for one in blunt.protocol().steps if one.title.startswith("Ligate"))
+    hold = step.programs[0].stages[0].incubations[0]
+    assert (hold.temperature_c, hold.seconds) == (ROOM_CELSIUS, BLUNT_SECONDS)
+    said = " ".join(step.notes)
+    # The cost against a cohesive ligation is the incubation, which is all NEB states: the
+    # longer hold, or the same short one with five times the ligase.
+    assert (
+        f"{BLUNT_SECONDS // 60} minutes at {ROOM_CELSIUS:g} °C where cohesive ends take "
+        f"{COHESIVE_SECONDS // 60}" in said
+    )
+    assert f"{HIGH_LIGASE_UNITS_UL:g} U/µL ligase in place of the {LIGASE_UNITS_UL:g} U/µL" in said
+
+
+def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one_where_one_can_exist(blunt):
+    lanes = {clone.name: clone.bands_bp for clone in blunt.colony.clones}
+    assert set(lanes) == {"Correct clone", "Empty vector", "Reversed insert"}
+    assert lanes["Reversed insert"] != lanes["Correct clone"]
+    assert blunt.colony.tells_orientation
+    # Two flanking vector primers cannot tell them apart; one reading out of the insert can.
+    assert "Junction reverse" in [one.name for one in blunt.colony.primers]
+    step = next(one for one in blunt.protocol().steps if one.title == "Screen colonies by PCR")
+    said = " ".join(step.expected)
+    for name, bands in lanes.items():
+        assert f"{name}: {', '.join(f'{bp} bp' for bp in bands)}." in said
+
+
+def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(made):
+    assert not made.colony.reversed_clones
+    assert [clone.name for clone in made.colony.clones] == ["Correct clone", "Empty vector"]
+    step = next(one for one in made.protocol().steps if one.title == "Screen colonies by PCR")
+    said = " ".join((*step.expected, *step.notes))
+    assert "cannot go in the other way round" in said
+    assert "Reversed insert" not in said
 
 
 def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
@@ -271,6 +368,7 @@ def test_the_plan_status_is_the_worst_of_its_checks(made):
         "digest temperature",
         "digest clean-up",
         "methylation",
+        "self-ligation",
         "pUC19 backbone",
         "pTrc-GFP insert",
         "junctions",
@@ -381,6 +479,13 @@ def test_a_plasmid_template_is_taken_away_with_dpni(puc19, gfp):
     assert amplicon.dpni
     titles = [step.title for step in made.protocol().steps]
     assert "Digest the plasmid template with DpnI" in titles
+
+
+def test_one_enzyme_puts_its_own_site_on_both_tails(puc19, gfp):
+    # A tail spells its own enzyme's site by design, so that enzyme is not its own avoid.
+    amplicon = amplified(gfp, into=opened(puc19, resolve(["SmaI"]))[0])
+    assert amplicon.left_enzyme.name == amplicon.right_enzyme.name == "SmaI"
+    assert len([site for site in find_sites(amplicon.record, "SmaI") if site.cuts]) == 2
 
 
 def test_a_tail_spelling_a_second_site_against_the_insert_is_refused_naming_the_enzyme(puc19, gfp):

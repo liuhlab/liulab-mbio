@@ -168,6 +168,14 @@ same bases run the wrong way for each other. So an end is its overhang and its e
 together, and the end type comes from the enzyme that made the cut.
 _Avoid_: matching ends, compatible overhangs
 
+### Dephosphorylation
+
+Taking the 5' phosphates off a cut vector so it cannot close on itself. A ligase seals a join
+only where one of the two ends carries a phosphate, so a backbone whose own two ends are
+compatible religates empty unless its phosphates are taken away; the insert keeps its own, and
+those are what the ligase seals. It is needed only where those two ends can meet.
+_Avoid_: phosphatase treatment, vector prep, CIP
+
 ### Type IIS
 
 A restriction enzyme that cuts outside its recognition site, so the overhang it leaves is

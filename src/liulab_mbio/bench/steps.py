@@ -210,7 +210,9 @@ def enzyme_material(enzyme: Enzyme, *, amount: str = "", note: str = "") -> Mate
 _CATALOG_RE = re.compile(r"^(?P<name>.*?)\s*\((?P<catalog>[A-Z]\d[\w./-]*)\)$")
 
 
-def catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str = "") -> Material:
+def catalogued(
+    name: str, *, supplier: str = "", storage: str = "", amount: str = "", note: str = ""
+) -> Material:
     """Return one product as a material, taking the catalogue number out of a name carrying one.
 
     A name carrying none leaves the cell empty; nothing here invents one.
@@ -224,13 +226,14 @@ def catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str 
     """
     found = _CATALOG_RE.match(name)
     if found is None:
-        return Material(name, supplier=supplier, storage=storage, amount=amount)
+        return Material(name, supplier=supplier, storage=storage, amount=amount, note=note)
     return Material(
         found["name"],
         supplier=supplier,
         catalog=found["catalog"],
         storage=storage,
         amount=amount,
+        note=note,
     )
 
 
@@ -563,12 +566,13 @@ def colony_pcr_step(
             for clone in check.clones
         ),
     ]
-    expected.append(
-        "A reversed insert is told from a correct one, because the two vector primers sit at "
-        "different distances from their own junctions."
-        if check.tells_orientation
-        else "These primers cannot tell a reversed insert from a correct one."
-    )
+    if check.reversed_clones:
+        expected.append(
+            "A reversed insert is told from a correct one, because the two vector primers sit at "
+            "different distances from their own junctions."
+            if check.tells_orientation
+            else "These primers cannot tell a reversed insert from a correct one."
+        )
     return Step(
         COLONY_PCR_TITLE,
         instructions=(

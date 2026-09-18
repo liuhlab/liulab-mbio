@@ -37,7 +37,8 @@ class Junction:
     start
         0-based index in the product of the first base the two overhangs paired on.
     overhang
-        What they spell, written on the top strand, and ``""`` for a blunt join.
+        What they spell, written on the top strand, and ``""`` for a blunt join, which pairs on
+        no base at all.
     before, after
         The pieces either side, named as they were cut.
     spells
@@ -63,9 +64,9 @@ class Junction:
         return self.start + len(self.overhang)
 
     @property
-    def span(self) -> Segment:
-        """Those bases, as a segment of the product."""
-        return Segment(self.start, self.end)
+    def span(self) -> Segment | None:
+        """Those bases as a segment of the product, and ``None`` where a blunt join paired on none."""
+        return Segment(self.start, self.end) if self.overhang else None
 
     @property
     def marked(self) -> Segment:
@@ -75,7 +76,7 @@ class Junction:
         """
         if self.site is not None:
             return self.site
-        return self.span if self.overhang else Segment(self.start, self.start + 1)
+        return self.span or Segment(self.start, self.start + 1)
 
     @property
     def label(self) -> str:
@@ -117,7 +118,7 @@ class Ligation:
         """Judge the product, as data a protocol can print.
 
         One check per piece counting the whole copies of it the product holds, then how many
-        junctions spell the overhang they claim. A piece is counted from what the digest
+        junctions read across the join what they claim. A piece is counted from what the digest
         released and not from the product's own construction, so the count answers for the
         ligation rather than repeating it.
         """
@@ -133,7 +134,7 @@ class Ligation:
             for piece in self.pieces
             for copies in (_copies(self.product, piece.bases),)
         ]
-        matched = sum(self.product.extract(one.span) == one.overhang for one in self.junctions)
+        matched = sum(_spells(self.product, one) for one in self.junctions)
         checks.append(
             Check(
                 "junctions",
@@ -197,6 +198,14 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
         turned, features=(*turned.features, *(_junction_feature(one) for one in junctions))
     )
     return Ligation(ordered(marked), pieces, junctions)
+
+
+def _spells(product: SequenceRecord, junction: Junction) -> bool:
+    """Whether the product reads across the join what the two overhangs paired on.
+
+    A blunt join pairs on no base at all, so there is nothing to read and nothing to contradict.
+    """
+    return junction.span is None or product.extract(junction.span) == junction.overhang
 
 
 def _junction(start: int, before: Piece, after: Piece, product: SequenceRecord) -> Junction:
