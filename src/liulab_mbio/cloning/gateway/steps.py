@@ -1,23 +1,37 @@
 """The Gateway bench protocol: its own reaction steps, its own notes, and the step order.
 
-The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around the LR
-reaction and adds what only Gateway has to say. Every number is computed by
-`liulab_mbio.cloning.gateway.plan` or is one `liulab_mbio.cloning.gateway.bench` cites.
+The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around each
+recombination and adds what only Gateway has to say. A plan that runs BP reads as two staged
+reactions: BP, its plate, the miniprep that purifies the entry clone, then LR and its own
+plate. Every number is computed by `liulab_mbio.cloning.gateway.plan` or is one
+`liulab_mbio.cloning.gateway.bench` cites.
 """
 
 from collections.abc import Sequence
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
-from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import badges, card, listed, phenotype_sentences, transform_step
 from liulab_mbio.cloning.gateway.bench import (
+    BP_CELSIUS,
+    BP_CLONASE,
+    BP_CLONASE_CATALOG,
+    BP_CLONASE_UL,
+    BP_COLONIES,
+    BP_DONOR_MAX_NG,
+    BP_LONG_BP,
+    BP_LONG_SECONDS,
+    BP_PMOL,
+    BP_SECONDS,
+    BP_SUBSTRATE_MIN_PMOL,
+    BP_TOTAL_MAX_NG,
+    BP_TRANSFORMATION,
+    BP_VOLUME_UL,
     CELL_EFFICIENCY_CFU_UG,
     DESTINATION_NG,
     ENTRY_MIN_NG,
     ENTRY_NG,
-    GATEWAY_TRANSFORMATION,
     LR_CELSIUS,
     LR_CLONASE,
     LR_CLONASE_CATALOG,
@@ -26,7 +40,9 @@ from liulab_mbio.cloning.gateway.bench import (
     LR_LONG_BP,
     LR_LONG_SECONDS,
     LR_SECONDS,
+    LR_TRANSFORMATION,
     LR_VOLUME_UL,
+    ONE_TUBE_YIELD,
     PROTEINASE_K_UG_UL,
     PROTEINASE_K_UL,
     REFERENCES,
@@ -34,9 +50,10 @@ from liulab_mbio.cloning.gateway.bench import (
     STOP_SECONDS,
     SUPPLIER,
     TE_BUFFER,
+    bp_reaction,
     lr_reaction,
 )
-from liulab_mbio.cloning.gateway.recombination import Junction, Recombination
+from liulab_mbio.cloning.gateway.recombination import Junction, PlannedReaction
 from liulab_mbio.protocol.model import Material, Protocol, Step, Timer, Troubleshooting
 from liulab_mbio.sequence import SequenceRecord
 
@@ -44,256 +61,423 @@ from liulab_mbio.sequence import SequenceRecord
 EQUIPMENT: tuple[str, ...] = (
     f"Water bath or heat block at {LR_CELSIUS:g} °C",
     f"Water bath or heat block at {STOP_CELSIUS:g} °C",
-    f"Heat block or water bath at {GATEWAY_TRANSFORMATION.heat_shock_celsius:g} °C",
-    f"Shaking incubator and a plate incubator at {GATEWAY_TRANSFORMATION.outgrowth_celsius:g} °C",
+    f"Heat block or water bath at {LR_TRANSFORMATION.heat_shock_celsius:g} °C",
+    f"Shaking incubator and a plate incubator at {LR_TRANSFORMATION.outgrowth_celsius:g} °C",
     "Microcentrifuge",
 )
 
 
 def protocol(
     *,
-    entry: SequenceRecord,
-    destination: SequenceRecord,
-    recombination: Recombination,
-    amounts: Sequence[Amount],
-    phenotype: Phenotype,
+    lr: PlannedReaction,
+    bp: PlannedReaction | None,
     checks: Sequence[judged.Check],
     host: str,
 ) -> Protocol:
-    """Return the bench protocol for one planned LR reaction, ready to render.
+    """Return the bench protocol for one planned Gateway experiment, ready to render.
 
     Each argument is the `liulab_mbio.cloning.gateway.plan.Plan` field or property of that name.
-    The steps run in the order someone does them: set the reaction up, run it, stop it with
-    proteinase K, then transform and plate.
+    The steps run in the order someone does them, one reaction at a time: set it up, run it,
+    stop it with proteinase K, transform and plate. A planned BP reaction puts its own four
+    steps and the miniprep that follows them in front of LR's.
     """
-    insert = recombination.moved
     return Protocol(
-        f"Gateway LR: {entry.name} into {destination.name}",
-        summary=(
-            f"Recombine the {insert.length} bp segment between {entry.name}'s attL sites into "
-            f"{destination.name}, in one LR reaction, and select the expression clone on the "
-            "destination vector's own marker."
-        ),
-        overview=_overview(entry, destination, recombination, phenotype),
-        highlights=_highlights(recombination, phenotype),
+        _title(lr, bp),
+        summary=_summary(lr, bp),
+        overview=_overview(lr, bp),
+        highlights=_highlights(lr, bp),
         checks=badges(checks),
-        materials=_materials(entry=entry, destination=destination, host=host, phenotype=phenotype),
+        materials=_materials(lr=lr, bp=bp, host=host),
         equipment=EQUIPMENT,
-        steps=_steps(
-            recombination=recombination,
-            amounts=amounts,
-            phenotype=phenotype,
-            entry=entry,
-            host=host,
-        ),
+        steps=(*_bp_steps(bp, host=host, entry=_carrier(lr)), *_lr_steps(lr, host=host)),
         references=(*REFERENCES, *BENCH_REFERENCES),
     )
 
 
-def _overview(
-    entry: SequenceRecord,
-    destination: SequenceRecord,
-    recombination: Recombination,
-    phenotype: Phenotype,
-) -> dict[str, str]:
+def _carrier(reaction: PlannedReaction) -> SequenceRecord:
+    """Return the record whose segment moved."""
+    return reaction.recombination.moved.record
+
+
+def _acceptor(reaction: PlannedReaction) -> SequenceRecord:
+    """Return the vector whose backbone took it."""
+    return reaction.recombination.backbone.record
+
+
+def _title(lr: PlannedReaction, bp: PlannedReaction | None) -> str:
+    """Name the experiment by what goes in and what it ends in."""
+    start = _carrier(lr) if bp is None else _carrier(bp)
+    return f"Gateway {'LR' if bp is None else 'BP then LR'}: {start.name} into {_acceptor(lr).name}"
+
+
+def _summary(lr: PlannedReaction, bp: PlannedReaction | None) -> str:
+    """One paragraph: what is recombined into what, and in how many stages."""
+    entry, destination = _carrier(lr), _acceptor(lr)
+    if bp is None:
+        return (
+            f"Recombine the {lr.recombination.moved.length} bp segment between {entry.name}'s "
+            f"attL sites into {destination.name}, in one LR reaction, and select the expression "
+            "clone on the destination vector's own marker."
+        )
+    return (
+        f"Recombine the {bp.recombination.moved.length} bp between {_carrier(bp).name}'s attB "
+        f"sites into {_acceptor(bp).name}, giving the entry clone {entry.name}; grow that up "
+        f"and recombine it into {destination.name}. Two staged reactions, each with its own "
+        "incubation, stop, transformation and plate."
+    )
+
+
+def _overview(lr: PlannedReaction, bp: PlannedReaction | None) -> dict[str, str]:
     """Return the facts to check before starting, each short enough to be a card."""
-    product = recombination.product
-    facts = {
-        "Entry clone": f"{entry.name}, {len(entry)} bp",
-        "Destination vector": f"{destination.name}, {len(destination)} bp",
-        "Reaction": f"{LR_CLONASE}, {LR_VOLUME_UL:g} µL at {LR_CELSIUS:g} °C",
-        "Insert": f"{recombination.moved.length} bp between the att sites",
-        "Junctions": card(listed([one.name for one in recombination.junctions]), "two att sites"),
-        "Product": f"{product.name}, {len(product)} bp",
-    }
-    if phenotype.antibiotic:
-        facts["Selection"] = phenotype.antibiotic
-    elif phenotype.marker is not None:
-        facts["Selection"] = f"{phenotype.marker.name} marker"
+    entry, product = _carrier(lr), lr.product
+    facts = {}
+    if bp is not None:
+        facts["attB DNA"] = f"{_carrier(bp).name}, {bp.recombination.moved.length} bp insert"
+        facts["Donor vector"] = f"{_acceptor(bp).name}, {len(_acceptor(bp))} bp"
+    facts["Entry clone"] = f"{entry.name}, {len(entry)} bp"
+    facts["Destination vector"] = f"{_acceptor(lr).name}, {len(_acceptor(lr))} bp"
+    facts["Reaction"] = (
+        f"{LR_CLONASE}, {LR_VOLUME_UL:g} µL at {LR_CELSIUS:g} °C"
+        if bp is None
+        else f"BP then LR, {LR_VOLUME_UL:g} µL each at {LR_CELSIUS:g} °C"
+    )
+    facts["Insert"] = f"{lr.recombination.moved.length} bp between the att sites"
+    facts["Junctions"] = card(listed([one.name for one in lr.junctions]), "two att sites")
+    facts["Product"] = f"{product.name}, {len(product)} bp"
+    if lr.phenotype.antibiotic:
+        facts["Selection"] = lr.phenotype.antibiotic
+    elif lr.phenotype.marker is not None:
+        facts["Selection"] = f"{lr.phenotype.marker.name} marker"
     return facts
 
 
-def _highlights(recombination: Recombination, phenotype: Phenotype) -> tuple[str, ...]:
+def _highlights(lr: PlannedReaction, bp: PlannedReaction | None) -> tuple[str, ...]:
     """Return what the facts mean, a sentence each: what moves, what the scar is, what grows."""
-    junctions = recombination.junctions
-    return (
-        f"One reaction moves the {recombination.moved.length} bp between the entry clone's att "
-        f"sites into the {recombination.backbone.length} bp of destination vector outside its "
-        "own, and the ccdB cassette leaves with the by-product.",
+    junctions = lr.junctions
+    said = []
+    if bp is not None:
+        said.append(
+            f"BP runs first: the {bp.recombination.moved.length} bp between the attB sites move "
+            f"into {_acceptor(bp).name}, making {_carrier(lr).name}, which is picked, grown up "
+            "and purified before LR takes it."
+        )
+    said.append(
+        f"{'LR then moves' if bp is not None else 'One reaction moves'} the "
+        f"{lr.recombination.moved.length} bp between the entry clone's att sites into the "
+        f"{lr.recombination.backbone.length} bp of destination vector outside its own, and the "
+        "ccdB cassette leaves with the by-product."
+    )
+    said.append(
         f"The junction is not scarless: the clone gains a whole att site at each end of the "
         f"insert, {junctions[0].name} spelling {junctions[0].bases} and {junctions[1].name} "
-        f"spelling {junctions[1].bases}. A fusion reads through both.",
-        *phenotype_sentences(phenotype, [recombination.moved.name or "the insert"]),
+        f"spelling {junctions[1].bases}. A fusion reads through both."
     )
+    said.extend(phenotype_sentences(lr.phenotype, [lr.recombination.moved.name or "the insert"]))
+    return tuple(said)
 
 
 def _materials(
-    *,
-    entry: SequenceRecord,
-    destination: SequenceRecord,
-    host: str,
-    phenotype: Phenotype,
+    *, lr: PlannedReaction, bp: PlannedReaction | None, host: str
 ) -> tuple[Material, ...]:
-    """Every reagent and consumable the protocol asks for."""
-    return (
-        Material(
-            f"{entry.name} entry clone",
-            storage="-20 °C",
-            amount=f"{ENTRY_NG:g} ng per reaction",
-            note="supercoiled, which is the substrate the manual calls most efficient",
-        ),
-        Material(
-            f"{destination.name} destination vector",
-            storage="-20 °C",
-            amount=f"{DESTINATION_NG:g} ng per reaction",
-            note="grown in a ccdB-resistant strain, which is the only kind it grows in",
-        ),
-        Material(
-            LR_CLONASE,
-            supplier=SUPPLIER,
-            catalog=LR_CLONASE_CATALOG,
-            storage="-20 °C",
-            amount=f"{LR_CLONASE_UL:g} µL per reaction",
-            note="thaw on ice and return it to the freezer at once",
-        ),
-        Material(TE_BUFFER, amount=f"to {LR_VOLUME_UL - LR_CLONASE_UL:g} µL per reaction"),
-        Material(
-            "Proteinase K solution",
-            supplier=SUPPLIER,
-            storage="-20 °C",
-            amount=f"{PROTEINASE_K_UL:g} µL per reaction",
-            note=f"{PROTEINASE_K_UG_UL:g} µg/µL, supplied with the enzyme mix",
-        ),
-        Material(
-            host,
-            storage="-80 °C",
-            amount=f"{GATEWAY_TRANSFORMATION.cells_ul:g} µL per transformation",
-            note=f"{CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better, and no F' episome",
-        ),
-        Material(
-            "S.O.C. medium",
-            amount=f"{GATEWAY_TRANSFORMATION.outgrowth_ul:g} µL per transformation",
-        ),
-        Material(_plate(phenotype), amount="one plate per transformation"),
+    """Every reagent and consumable the protocol asks for, the first reaction's first."""
+    entry, destination = _carrier(lr), _acceptor(lr)
+    materials: list[Material] = []
+    if bp is not None:
+        substrate, donor = bp.amounts
+        materials.extend(
+            (
+                Material(
+                    f"{_carrier(bp).name} attB DNA",
+                    storage="-20 °C",
+                    amount=f"{substrate.pmol:g} pmol ({substrate.nanograms:g} ng) per reaction",
+                    note="purified, which is what takes the attB primers and their dimers away",
+                ),
+                Material(
+                    f"{_acceptor(bp).name} donor vector",
+                    storage="-20 °C",
+                    amount=f"{donor.pmol:g} pmol ({donor.nanograms:g} ng) per reaction",
+                    note="supercoiled, and grown in a ccdB-resistant strain",
+                ),
+                _clonase(BP_CLONASE, BP_CLONASE_CATALOG, BP_CLONASE_UL),
+                Material(_plate(bp.phenotype, "donor"), amount="one plate per transformation"),
+                Material("Plasmid miniprep kit", note="for the entry clone the LR reaction takes"),
+            )
+        )
+    materials.extend(
+        (
+            Material(
+                f"{entry.name} entry clone",
+                storage="-20 °C",
+                amount=f"{ENTRY_NG:g} ng per reaction",
+                note="supercoiled, which is the substrate the manual calls most efficient"
+                if bp is None
+                else "the miniprep from the BP plate, which is what this reaction takes",
+            ),
+            Material(
+                f"{destination.name} destination vector",
+                storage="-20 °C",
+                amount=f"{DESTINATION_NG:g} ng per reaction",
+                note="grown in a ccdB-resistant strain, which is the only kind it grows in",
+            ),
+            _clonase(LR_CLONASE, LR_CLONASE_CATALOG, LR_CLONASE_UL),
+            Material(TE_BUFFER, amount=f"to {LR_VOLUME_UL - LR_CLONASE_UL:g} µL per reaction"),
+            Material(
+                "Proteinase K solution",
+                supplier=SUPPLIER,
+                storage="-20 °C",
+                amount=f"{PROTEINASE_K_UL:g} µL per reaction",
+                note=f"{PROTEINASE_K_UG_UL:g} µg/µL, supplied with the enzyme mix",
+            ),
+            Material(
+                host,
+                storage="-80 °C",
+                amount=f"{LR_TRANSFORMATION.cells_ul:g} µL per transformation",
+                note=f"{CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better, and no F' episome",
+            ),
+            Material(
+                "S.O.C. medium",
+                amount=f"{LR_TRANSFORMATION.outgrowth_ul:g} µL per transformation",
+            ),
+            Material(_plate(lr.phenotype, "destination"), amount="one plate per transformation"),
+        )
+    )
+    return tuple(materials)
+
+
+def _clonase(name: str, catalog: str, volume_ul: float) -> Material:
+    """Return one enzyme mix as a material."""
+    return Material(
+        name,
+        supplier=SUPPLIER,
+        catalog=catalog,
+        storage="-20 °C",
+        amount=f"{volume_ul:g} µL per reaction",
+        note="thaw on ice and return it to the freezer at once",
     )
 
 
-def _plate(phenotype: Phenotype) -> str:
-    """Return what to pour the selection plates with."""
-    antibiotic = phenotype.antibiotic or "the destination vector's own antibiotic"
+def _plate(phenotype: Phenotype, vector: str) -> str:
+    """Return what to pour the selection plates with, named from the vector's own marker."""
+    if phenotype.antibiotic:
+        antibiotic = phenotype.antibiotic
+    elif phenotype.marker is not None:
+        antibiotic = f"the antibiotic {phenotype.marker.name} selects"
+    else:
+        antibiotic = f"the {vector} vector's own antibiotic"
     return f"LB agar plates with {antibiotic}"
 
 
-def _steps(
-    *,
-    recombination: Recombination,
-    amounts: Sequence[Amount],
-    phenotype: Phenotype,
-    entry: SequenceRecord,
-    host: str,
-) -> tuple[Step, ...]:
-    """Return the steps in the order they happen."""
+def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -> tuple[Step, ...]:
+    """Return the first stage, or nothing where an entry clone was given."""
+    if bp is None:
+        return ()
     return (
-        _reaction_step(amounts),
-        _incubation_step(recombination),
-        _stop_step(),
+        Step(
+            "Set up the BP reaction",
+            instructions=(
+                "Thaw the enzyme mix on ice and vortex it briefly twice.",
+                "Pipette the attB DNA, the donor vector and the TE buffer into a tube at room "
+                "temperature.",
+                f"Add {BP_CLONASE_UL:g} µL of {BP_CLONASE}, mix well and spin down.",
+            ),
+            tables=(bp_reaction(bp.amounts),),
+            expected=(f"A {BP_VOLUME_UL:g} µL reaction holding both DNAs.",),
+            notes=(
+                _pipetting_note("picomoles"),
+                f"The manual fixes the picomoles and not the weight: {BP_PMOL * 1000:g} fmol of "
+                f"each, the attB DNA down to {BP_SUBSTRATE_MIN_PMOL * 1000:g} fmol, weighed "
+                "here from each record's own length.",
+                f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or "
+                f"{BP_TOTAL_MAX_NG:g} ng of DNA altogether: excess DNA inhibits the reaction.",
+                "A linear attB product and a supercoiled donor vector are the substrates the "
+                "manual calls most efficient for BP.",
+            ),
+            troubleshooting=(_volume_trouble(),),
+        ),
+        Step(
+            "Run the BP reaction",
+            instructions=(f"Incubate at {BP_CELSIUS:g} °C for {BP_SECONDS // 3600} hour.",),
+            timers=(Timer("BP incubation", BP_SECONDS),),
+            expected=(
+                "Nothing visible: the reaction is a recombination, not a digest.",
+                *(_junction_sentence(one, "entry clone") for one in bp.junctions),
+            ),
+            notes=(
+                f"An attB substrate of {BP_LONG_BP:,} bp or more runs up to "
+                f"{BP_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
+                "longer.",
+                "Junction positions are 0-based, on the entry clone.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Few or no colonies later, though the transformation control worked",
+                    "Use an attB substrate with a donor vector (attP): the BP reaction takes "
+                    "those and no others. Do not freeze and thaw the enzyme mix more than ten "
+                    "times.",
+                ),
+            ),
+        ),
+        _stop_step("BP"),
         transform_step(
             host,
-            phenotype,
-            inserts=[recombination.moved.name or "the insert"],
+            bp.phenotype,
+            title="Transform and plate the BP reaction",
+            inserts=[bp.recombination.moved.name or "the insert"],
+            colonies=(
+                f"More than {BP_COLONIES:,} colonies where the whole reaction is transformed "
+                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
+                "fraction of them is correct is not published; Hartley 2000 counted 195 of 197."
+            ),
+            protocol=BP_TRANSFORMATION,
+            notes=(
+                "Unreacted donor vector and the by-product both keep the ccdB gene, which "
+                f"kills {host}, so they do not grow. A strain carrying F' would supply ccdA "
+                "and cancel that.",
+                "Two sizes of colony here mean the donor vector's ccdB gene has mutated or "
+                "been deleted; the negative control then gives a similar count.",
+            ),
+        ),
+        _miniprep_step(entry),
+    )
+
+
+def _miniprep_step(entry: SequenceRecord) -> Step:
+    """Grow one colony up and purify it, because that is what the LR reaction takes."""
+    return Step(
+        "Pick and miniprep the entry clone",
+        instructions=(
+            "Pick single colonies into overnight cultures on the plate's own antibiotic.",
+            "Miniprep each culture and measure what it yielded.",
+            f"Take {ENTRY_MIN_NG:g}-{ENTRY_NG:g} ng of one prep into the LR reaction below.",
+        ),
+        expected=(
+            f"Supercoiled {entry.name}, concentrated enough to weigh {ENTRY_NG:g} ng into the "
+            "volume the LR table leaves for it.",
+        ),
+        notes=(
+            "The LR reaction takes purified entry clone and not the stopped BP reaction: "
+            f"{ENTRY_MIN_NG:g}-{ENTRY_NG:g} ng is a weight of miniprep DNA, and no plan can "
+            "weigh a yield nobody has measured yet.",
+            "Supercoiled miniprep DNA is the substrate the manual calls most efficient for LR.",
+            f"The vendor's one-tube protocol chains the two reactions without this step and "
+            f"gives {ONE_TUBE_YIELD}, each of which it says to sequence. It runs on its own "
+            "timings and is not the protocol below.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "The prep is too dilute for the reaction",
+                "Concentrate it, or pipette more of it and less TE buffer.",
+            ),
+        ),
+    )
+
+
+def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
+    """Return the LR stage, which every plan runs."""
+    return (
+        Step(
+            "Set up the LR reaction",
+            instructions=(
+                "Thaw the enzyme mix on ice and vortex it briefly twice.",
+                "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
+                f"Add {LR_CLONASE_UL:g} µL of {LR_CLONASE}, mix well and spin down.",
+            ),
+            tables=(lr_reaction(lr.amounts),),
+            expected=(f"A {LR_VOLUME_UL:g} µL reaction holding both plasmids.",),
+            notes=(
+                _pipetting_note("nanograms"),
+                f"Do not go over {ENTRY_NG:g} ng of entry clone: the manual reports colonies "
+                f"carrying several molecules above it, and fewer colonies below "
+                f"{ENTRY_MIN_NG:g} ng.",
+                "Supercoiled plasmids are the substrates the manual calls most efficient for LR.",
+            ),
+            troubleshooting=(_volume_trouble(),),
+        ),
+        Step(
+            "Run the LR reaction",
+            instructions=(f"Incubate at {LR_CELSIUS:g} °C for {LR_SECONDS // 3600} hour.",),
+            timers=(Timer("LR incubation", LR_SECONDS),),
+            expected=(
+                "Nothing visible: the reaction is a recombination, not a digest.",
+                *(_junction_sentence(one, "expression clone") for one in lr.junctions),
+            ),
+            notes=(
+                f"A plasmid of {LR_LONG_BP:,} bp or more runs up to "
+                f"{LR_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
+                "longer.",
+                "Junction positions are 0-based, on the expression clone.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Few or no colonies later, though the transformation control worked",
+                    "Use an entry clone (attL) with a destination vector (attR): the LR "
+                    "reaction takes those and no others. Do not freeze and thaw the enzyme mix "
+                    "more than ten times.",
+                ),
+            ),
+        ),
+        _stop_step("LR"),
+        transform_step(
+            host,
+            lr.phenotype,
+            title="Transform and plate the LR reaction",
+            inserts=[lr.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {LR_COLONIES:,} colonies where the whole reaction is transformed "
                 f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
                 "fraction of them is correct is not published; Hartley 2000 counted 96 of 102."
             ),
-            protocol=GATEWAY_TRANSFORMATION,
+            protocol=LR_TRANSFORMATION,
             notes=(
                 "Unreacted destination vector and the by-product both keep the ccdB gene, "
                 f"which kills {host}, so they do not grow. A strain carrying F' would supply "
                 "ccdA and cancel that.",
-                f"Small colonies beside large ones are usually unreacted {entry.name} "
-                "co-transforming; restreak them on the entry clone's own antibiotic to tell.",
+                f"Small colonies beside large ones are usually unreacted "
+                f"{_carrier(lr).name} co-transforming; restreak them on the entry clone's own "
+                "antibiotic to tell.",
             ),
         ),
     )
 
 
-def _reaction_step(amounts: Sequence[Amount]) -> Step:
-    """Set the one-tube recombination up."""
+def _stop_step(reaction: str) -> Step:
+    """End one reaction, which the manual requires before transforming."""
     return Step(
-        "Set up the LR reaction",
-        instructions=(
-            "Thaw the enzyme mix on ice and vortex it briefly twice.",
-            "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
-            f"Add {LR_CLONASE_UL:g} µL of {LR_CLONASE}, mix well and spin down.",
-        ),
-        tables=(lr_reaction(amounts),),
-        expected=(f"A {LR_VOLUME_UL:g} µL reaction holding both plasmids.",),
-        notes=(
-            f"The volumes above take each plasmid at the concentration the manual's own table "
-            f"assumes; pipette what your prep needs for the nanograms and make the difference "
-            f"up with {TE_BUFFER}.",
-            f"Do not go over {ENTRY_NG:g} ng of entry clone: the manual reports colonies "
-            f"carrying several molecules above it, and fewer colonies below {ENTRY_MIN_NG:g} ng.",
-            "Supercoiled plasmids are the substrates the manual calls most efficient for LR.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "The DNA does not fit the reaction volume",
-                "Concentrate either plasmid, or scale the whole reaction up keeping the enzyme "
-                "mix at its stated fraction of the volume.",
-            ),
-        ),
-    )
-
-
-def _incubation_step(recombination: Recombination) -> Step:
-    """Run it, and say what the product carries when it is done."""
-    return Step(
-        "Run the LR reaction",
-        instructions=(f"Incubate at {LR_CELSIUS:g} °C for {LR_SECONDS // 3600} hour.",),
-        timers=(Timer("LR incubation", LR_SECONDS),),
-        expected=(
-            "Nothing visible: the reaction is a recombination, not a digest.",
-            *(_junction_sentence(one) for one in recombination.junctions),
-        ),
-        notes=(
-            f"A plasmid of {LR_LONG_BP:,} bp or more runs up to "
-            f"{LR_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets longer.",
-            "Junction positions are 0-based, on the product.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "Few or no colonies later, though the transformation control worked",
-                "Use an entry clone (attL) with a destination vector (attR): the LR reaction "
-                "takes those and no others. Do not freeze and thaw the enzyme mix more than "
-                "ten times.",
-            ),
-        ),
-    )
-
-
-def _junction_sentence(junction: Junction) -> str:
-    """Say what one junction spells and which record gave which side of it."""
-    return (
-        f"The expression clone carries {junction.name} at {junction.start}, spelling "
-        f"{junction.bases}: its first bases from {junction.before} and the rest from "
-        f"{junction.after}."
-    )
-
-
-def _stop_step() -> Step:
-    """End the reaction, which the manual requires before transforming."""
-    return Step(
-        "Stop the reaction with proteinase K",
+        f"Stop the {reaction} reaction with proteinase K",
         instructions=(
             f"Add {PROTEINASE_K_UL:g} µL of proteinase K at {PROTEINASE_K_UG_UL:g} µg/µL.",
             f"Incubate at {STOP_CELSIUS:g} °C for {STOP_SECONDS // 60} minutes.",
         ),
-        timers=(Timer("Proteinase K", STOP_SECONDS),),
+        timers=(Timer(f"Proteinase K, {reaction}", STOP_SECONDS),),
         expected=("A reaction that can go straight into competent cells.",),
         notes=(
             "The manual lists an untreated reaction as a cause of few or no colonies, so this "
             "step is not optional.",
         ),
+    )
+
+
+def _pipetting_note(units: str) -> str:
+    """Say that the table's volumes assume the manual's own concentrations."""
+    return (
+        f"The volumes above take each DNA at the concentration the manual's own table assumes; "
+        f"pipette what your prep needs for the {units} and make the difference up with "
+        f"{TE_BUFFER}."
+    )
+
+
+def _volume_trouble() -> Troubleshooting:
+    """Return what to do when the DNA will not fit the reaction."""
+    return Troubleshooting(
+        "The DNA does not fit the reaction volume",
+        "Concentrate either DNA, or scale the whole reaction up keeping the enzyme mix at its "
+        "stated fraction of the volume.",
+    )
+
+
+def _junction_sentence(junction: Junction, clone: str) -> str:
+    """Say what one junction spells and which record gave which side of it."""
+    return (
+        f"The {clone} carries {junction.name} at {junction.start}, spelling {junction.bases}: "
+        f"its first bases from {junction.before} and the rest from {junction.after}."
     )

@@ -3,7 +3,8 @@
 Both reactions have one shape. One record carries the segment that moves, between its two att
 sites; the other is a circular vector whose backbone outside its own two sites takes it. LR
 moves an entry clone's insert into a destination vector; BP moves an attB substrate into a
-donor vector. What each junction spells afterwards is `liulab_mbio.cloning.gateway.att`.
+donor vector. What each junction spells afterwards is `liulab_mbio.cloning.gateway.att`, and a
+`PlannedReaction` is one of these with the bench numbers a plan works out beside it.
 
 The product is built rather than asserted: every feature of both records is carried to its new
 coordinates, each primer is kept where it still anneals, and each att junction is marked. The
@@ -16,6 +17,8 @@ record ends past the record's length.
 
 from dataclasses import dataclass
 
+from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.gateway.att import (
     CROSSOVER,
@@ -151,6 +154,7 @@ class Recombination:
         Both are read off the product's own bases rather than off the arithmetic that built it:
         that each junction reads as the att site it is named for, and that the product carries
         those two att sites and no other. A third site would recombine where nobody meant it to.
+        Each carries the reaction's name, so a plan running both keeps its verdicts apart.
         """
         spelled = sum(identify(one.bases) == one.name for one in self.junctions)
         found = find_att_sites(self.product)
@@ -158,13 +162,13 @@ class Recombination:
         extra = [one for one in found if (one.start, one.name) not in places]
         return (
             Check(
-                "junctions",
+                f"{self.reaction} junctions",
                 "pass" if spelled == len(self.junctions) else "fail",
                 spelled,
                 ", ".join(f"{one.name} at {one.start}" for one in self.junctions),
             ),
             Check(
-                "att sites",
+                f"{self.reaction} att sites",
                 "pass" if len(found) == len(self.junctions) and not extra else "fail",
                 len(found),
                 "the two the reaction wrote, and no other"
@@ -177,6 +181,35 @@ class Recombination:
     def status(self) -> Status:
         """The worst status of any check."""
         return worst_of(self.checks)
+
+
+@dataclass(frozen=True, slots=True)
+class PlannedReaction:
+    """One recombination as a plan holds it: what it makes, what it takes, and what grows.
+
+    Parameters
+    ----------
+    recombination
+        The simulated reaction.
+    amounts
+        What to put in it, the record whose segment moves first.
+    phenotype
+        What the product says about itself.
+    """
+
+    recombination: Recombination
+    amounts: tuple[Amount, ...]
+    phenotype: Phenotype
+
+    @property
+    def product(self) -> SequenceRecord:
+        """The plasmid the reaction makes."""
+        return self.recombination.product
+
+    @property
+    def junctions(self) -> tuple[Junction, Junction]:
+        """The two att sites it wrote, site 1 first."""
+        return self.recombination.junctions
 
 
 def recombine(

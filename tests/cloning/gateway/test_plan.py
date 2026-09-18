@@ -10,7 +10,13 @@ import pytest
 
 from liulab_mbio.cloning.gateway import plan_gateway
 from liulab_mbio.cloning.gateway.att import REGIONS, find_att_sites
-from liulab_mbio.cloning.gateway.bench import ENTRY_NG, LR_CELSIUS, LR_VOLUME_UL
+from liulab_mbio.cloning.gateway.bench import (
+    BP_CELSIUS,
+    BP_VOLUME_UL,
+    ENTRY_NG,
+    LR_CELSIUS,
+    LR_VOLUME_UL,
+)
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import (
     BindingSite,
@@ -38,6 +44,7 @@ def test_the_plan_writes_the_product_and_the_protocol_pair(
         "protocol.html",
     ]
     assert all(path.exists() for path in written.paths)
+    assert written.entry is None
     assert read_record(written.product).sequence == gateway_plan.product.sequence
 
 
@@ -52,7 +59,7 @@ def test_the_same_inputs_write_the_same_bytes(
 
 
 def test_the_status_is_the_worst_of_the_checks_it_carries(gateway_plan: Plan) -> None:
-    assert {check.name for check in gateway_plan.checks} == {"junctions", "att sites"}
+    assert {check.name for check in gateway_plan.checks} == {"LR junctions", "LR att sites"}
     assert gateway_plan.status == "pass"
     assert all(check.status == "pass" for check in gateway_plan.checks)
 
@@ -82,7 +89,7 @@ def test_the_product_carries_the_insert_between_the_two_att_sites(
 def test_the_expression_clone_is_the_backbone_and_the_insert_and_nothing_else(
     gateway_plan: Plan, destination: SequenceRecord
 ) -> None:
-    made = gateway_plan.recombination
+    made = gateway_plan.lr.recombination
     dropped = destination.extract(Segment(*made.cassette))
 
     assert len(gateway_plan.product) == made.backbone.length + made.moved.length
@@ -143,8 +150,8 @@ def test_the_protocol_carries_the_reaction_its_incubation_its_stop_and_the_plati
     assert titles == [
         "Set up the LR reaction",
         "Run the LR reaction",
-        "Stop the reaction with proteinase K",
-        "Transform and plate",
+        "Stop the LR reaction with proteinase K",
+        "Transform and plate the LR reaction",
     ]
     table = protocol.steps[0].tables[0]
     assert sum(component.volume_ul for component in table.components) == LR_VOLUME_UL
@@ -243,3 +250,129 @@ def test_a_destination_vector_with_a_drifted_flank_is_still_recognised(
     assert made.junctions[0].bases == "T" + REGIONS["attB1"][1:]
     assert made.status == "pass"
     assert gfp.sequence in made.product.sequence
+
+
+def test_the_bp_route_writes_the_entry_clone_as_a_file_of_its_own(
+    staged_plan: Plan, tmp_path: Path
+) -> None:
+    written = staged_plan.write(tmp_path / "run")
+
+    assert [path.name for path in written.paths] == [
+        "entry-clone.dna",
+        "product.dna",
+        "protocol.json",
+        "protocol.html",
+    ]
+    assert written.entry is not None
+    assert read_record(written.entry).sequence == staged_plan.entry.sequence
+
+
+def test_the_route_names_which_reactions_were_planned(
+    gateway_plan: Plan, staged_plan: Plan
+) -> None:
+    assert (gateway_plan.route, staged_plan.route) == ("LR", "BP then LR")
+
+
+def test_the_staged_inputs_write_the_same_bytes(
+    insert: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord, tmp_path: Path
+) -> None:
+    first = plan_gateway(insert, destination, donor=donor).write(tmp_path / "one")
+    second = plan_gateway(insert, destination, donor=donor).write(tmp_path / "two")
+
+    for one, other in zip(first.paths, second.paths, strict=True):
+        assert one.read_bytes() == other.read_bytes()
+
+
+def test_bp_writes_an_entry_clone_carrying_the_insert_between_its_attl_sites(
+    staged_plan: Plan, gfp: SequenceRecord
+) -> None:
+    bp = staged_plan.bp
+    assert bp is not None
+    first, second = bp.junctions
+
+    assert (first.name, second.name) == ("attL1", "attL2")
+    assert first.bases == REGIONS["attL1"]
+    assert second.bases == REGIONS["attL2"]
+    assert bp.product.topology == "circular"
+    assert bp.product.extract(Segment(first.end, second.start)) == gfp.sequence
+    assert [one.name for one in find_att_sites(bp.product)] == ["attL1", "attL2"]
+    assert "GGGG" + REGIONS["attB1"] not in bp.product.sequence
+
+
+def test_lr_gives_back_the_attb_sites_the_insert_carried_in(
+    staged_plan: Plan, gfp: SequenceRecord
+) -> None:
+    product = staged_plan.product
+    first, second = staged_plan.junctions
+
+    assert (first.name, second.name) == ("attB1", "attB2")
+    assert product.extract(first.span) == REGIONS["attB1"]
+    assert reverse_complement(product.extract(second.span)) == REGIONS["attB2"]
+    assert product.extract(Segment(first.end, second.start)) == gfp.sequence
+    assert "ccdB" not in {feature.name for feature in product.features}
+
+
+def test_each_reaction_carries_its_own_verdicts(staged_plan: Plan) -> None:
+    assert [check.name for check in staged_plan.checks] == [
+        "BP junctions",
+        "BP att sites",
+        "LR junctions",
+        "LR att sites",
+    ]
+    assert staged_plan.status == "pass"
+
+
+def test_the_protocol_reads_as_two_staged_reactions_with_a_miniprep_between_them(
+    staged_plan: Plan,
+) -> None:
+    protocol = staged_plan.protocol()
+    steps = {step.title: step for step in protocol.steps}
+
+    assert [step.title for step in protocol.steps] == [
+        "Set up the BP reaction",
+        "Run the BP reaction",
+        "Stop the BP reaction with proteinase K",
+        "Transform and plate the BP reaction",
+        "Pick and miniprep the entry clone",
+        "Set up the LR reaction",
+        "Run the LR reaction",
+        "Stop the LR reaction with proteinase K",
+        "Transform and plate the LR reaction",
+    ]
+    table = steps["Set up the BP reaction"].tables[0]
+    assert table.title == "BP reaction"
+    assert sum(component.volume_ul for component in table.components) == BP_VOLUME_UL
+    assert [component.name for component in table.components][-2:] == [
+        "TE buffer, pH 8.0",
+        "Gateway BP Clonase II enzyme mix",
+    ]
+    assert f"{BP_CELSIUS:g} °C for 1 hour" in " ".join(steps["Run the BP reaction"].instructions)
+    stop = " ".join(steps["Stop the BP reaction with proteinase K"].instructions)
+    assert "37 °C for 10 minutes" in stop
+    assert any(
+        "not the stopped BP reaction" in note
+        for note in steps["Pick and miniprep the entry clone"].notes
+    )
+
+
+def test_a_donor_vector_carrying_no_att_site_is_refused(
+    insert: SequenceRecord, destination: SequenceRecord, puc19: SequenceRecord
+) -> None:
+    with pytest.raises(ValueError, match="looked for attP1 and attP2 on either strand"):
+        plan_gateway(insert, destination, donor=puc19)
+
+
+def test_an_insert_carrying_no_attb_end_is_refused(
+    gfp: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord
+) -> None:
+    with pytest.raises(ValueError, match="looked for attB1 and attB2 on either strand"):
+        plan_gateway(gfp, destination, donor=donor)
+
+
+def test_a_linear_donor_vector_is_refused(
+    insert: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord
+) -> None:
+    opened = SequenceRecord(donor.sequence, name=donor.name)
+
+    with pytest.raises(ValueError, match="must be circular"):
+        plan_gateway(insert, destination, donor=opened)

@@ -432,6 +432,7 @@ def transform_step(
     inserts: Sequence[str],
     colonies: str,
     protocol: Transformation = NEB_TRANSFORMATION,
+    title: str = "Transform and plate",
     expected: Sequence[str] = (),
     notes: Sequence[str] = (),
 ) -> Step:
@@ -449,6 +450,8 @@ def transform_step(
         How many colonies to expect, as a sentence: a count belongs to the pipeline's reaction.
     protocol
         The volumes and times to run it by, which are the kit manufacturer's.
+    title
+        The step's, for a method that transforms more than once and has to tell them apart.
     expected, notes
         The caller's own, after the step's.
     """
@@ -469,7 +472,7 @@ def transform_step(
         said.append(_expression_note(phenotype, inserts))
     said.extend(notes)
     return Step(
-        "Transform and plate",
+        title,
         instructions=(
             f"Thaw {protocol.cells_ul:g} µL of {host} on ice"
             + (
