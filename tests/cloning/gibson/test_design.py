@@ -7,15 +7,26 @@ NEBuilder bands of §3, the tiers of §7 and §9, and the amounts and ratios of 
 import pytest
 
 from liulab_mbio.cloning.gibson.bench import (
+    ASSEMBLY_PRODUCTS,
+    GIBSON_MASTER_MIX,
+    IN_FUSION,
     NEBUILDER_HIFI,
     AssemblyProduct,
     OverlapRule,
     Tier,
     assembly_amounts,
+    assembly_dna_check,
+    assembly_product,
     assembly_program,
     assembly_reaction,
+    fragment_check,
 )
-from liulab_mbio.cloning.gibson.design import overlap_after, overlap_before, wallace_tm
+from liulab_mbio.cloning.gibson.design import (
+    overlap_after,
+    overlap_before,
+    overlap_checks,
+    wallace_tm,
+)
 from liulab_mbio.sequence import SequenceRecord
 
 #: The band and floor NEBuilder HiFi documents for two or three fragments.
@@ -81,25 +92,23 @@ def test_the_tier_steps_with_the_fragment_count():
 
 
 def test_the_vector_goes_in_at_nebs_fifty_nanograms_and_the_insert_at_the_tiers_ratio():
-    vector, insert = assembly_amounts(
-        ("backbone", 2629), [("insert", 717)], tier=NEBUILDER_HIFI.tiers[0]
-    )
+    vector, insert = assembly_amounts(("backbone", 2629), [("insert", 717)], product=NEBUILDER_HIFI)
     assert vector.nanograms == pytest.approx(50.0, abs=0.1)
     assert insert.pmol == pytest.approx(2.0 * vector.pmol, rel=1e-3)
     # The picomoles stay inside the total NEB's table takes for two or three fragments.
-    low, high = NEBUILDER_HIFI.tiers[0].total_pmol
+    band = NEBUILDER_HIFI.tiers[0].total_pmol
+    assert band is not None
+    low, high = band
     assert low <= vector.pmol + insert.pmol <= high
 
 
 def test_an_insert_under_two_hundred_bases_goes_in_at_a_fivefold_excess():
-    vector, short = assembly_amounts(
-        ("backbone", 2629), [("linker", 120)], tier=NEBUILDER_HIFI.tiers[0]
-    )
+    vector, short = assembly_amounts(("backbone", 2629), [("linker", 120)], product=NEBUILDER_HIFI)
     assert short.pmol == pytest.approx(5.0 * vector.pmol, rel=1e-3)
 
 
 def test_the_reaction_is_twenty_microlitres_of_which_half_is_master_mix():
-    amounts = assembly_amounts(("backbone", 2629), [("insert", 717)], tier=NEBUILDER_HIFI.tiers[0])
+    amounts = assembly_amounts(("backbone", 2629), [("insert", 717)], product=NEBUILDER_HIFI)
     table = assembly_reaction(NEBUILDER_HIFI, amounts)
     volumes = {one.name: one.volume_ul for one in table.components}
     assert sum(volumes.values()) == pytest.approx(NEBUILDER_HIFI.reaction_ul)
@@ -126,3 +135,108 @@ def test_the_default_product_cites_the_documents_its_numbers_came_from():
     assert "E2621" in citations
     assert "CC BY" in citations
     assert all(isinstance(tier, Tier) for tier in NEBUILDER_HIFI.tiers)
+
+
+def test_each_product_carries_its_own_rules_and_in_fusion_inherits_none_of_nebs():
+    # Note §3, §6, §7 and §8: the bands, the reaction and the totals differ by product.
+    neb, gibson, takara = (product.tiers for product in ASSEMBLY_PRODUCTS)
+    assert [(one.overlap.shortest, one.overlap.longest) for one in neb] == [(15, 20), (20, 30)]
+    assert [(one.overlap.shortest, one.overlap.longest) for one in gibson] == [(15, 25), (20, 40)]
+    assert [one.total_pmol for one in gibson] == [(0.02, 0.5), (0.2, 1.0)]
+    # In-Fusion states one length for one insert and another above two fragments, no melting
+    # temperature for either, and the same incubation whatever the fragment count.
+    assert [(one.overlap.shortest, one.overlap.longest) for one in takara] == [(15, 15), (20, 20)]
+    assert {one.overlap.tm_floor for one in takara} == {None}
+    assert {one.incubation_seconds for one in takara} == {900}
+    assert {one.total_pmol for one in takara} == {None}
+    assert IN_FUSION.tier(2) is takara[0]
+    assert IN_FUSION.tier(3) is takara[1]
+    # Its reaction is 10 µL of which 2 µL is a 5X mix, and it documents no unpurified allowance.
+    assert (IN_FUSION.reaction_ul, IN_FUSION.master_mix_ul, IN_FUSION.master_mix_fold) == (
+        10.0,
+        2.0,
+        "5X",
+    )
+    assert IN_FUSION.unpurified_fraction is None
+    assert IN_FUSION.unpurified_ul is None
+    assert IN_FUSION.supplier == "Takara Bio"
+    assert all(product.inserts_limit == 5 for product in ASSEMBLY_PRODUCTS)
+    for product in ASSEMBLY_PRODUCTS:
+        assert product.references
+        assert all(one.url for one in product.references)
+
+
+def test_a_product_is_named_by_the_beginning_of_its_name():
+    assert assembly_product("nebuilder") is NEBUILDER_HIFI
+    assert assembly_product("Gibson") is GIBSON_MASTER_MIX
+    assert assembly_product("in-fusion") is IN_FUSION
+    with pytest.raises(ValueError, match="no assembly product"):
+        assembly_product("KLD")
+
+
+def test_more_inserts_than_the_product_documents_warns_and_names_the_limit():
+    assert fragment_check(NEBUILDER_HIFI, 5).status == "pass"
+    over = fragment_check(NEBUILDER_HIFI, 6)
+    assert (over.status, over.value) == ("warn", 6)
+    assert "5 or fewer" in over.detail
+    assert NEBUILDER_HIFI.supplier in over.detail
+
+
+def test_the_dna_is_judged_only_where_the_supplier_gives_a_picomole_band():
+    amounts = assembly_amounts(("backbone", 2629), [("insert", 717)], product=NEBUILDER_HIFI)
+    judged = assembly_dna_check(NEBUILDER_HIFI, amounts)
+    assert (judged.status, judged.value) == ("pass", 0.0927)
+    assert "0.03-0.2 pmol" in judged.detail
+    # Takara states a mass and no band, so nothing judges the same DNA.
+    unjudged = assembly_dna_check(IN_FUSION, amounts)
+    assert unjudged.status is None
+    assert "no picomole band" in unjudged.detail
+
+
+def test_every_overlap_is_judged_on_the_length_and_melting_temperature_the_product_states():
+    named = (("one", "TAAAACGACGGCCAGT"), ("two", "GGCGTAATCATGGTCA"))
+    judged = {one.name: one for one in overlap_checks(named, NEBUILDER_HIFI)}
+    assert judged["overlap length"].status == "pass"
+    assert "15-20 bp" in judged["overlap length"].detail
+    assert judged["overlap tm"].status == "pass"
+    # Below the band warns; below the shortest overlap the product documents at all fails.
+    short = overlap_checks((("one", "ACGTACGTACGTAC"), ("two", "GGCGTAATCATGGTCA")), NEBUILDER_HIFI)
+    assert next(one for one in short if one.name == "overlap length").status == "warn"
+    tiny = overlap_checks((("one", "ACGTACGTACG"), ("two", "GGCGTAATCATGGTCA")), NEBUILDER_HIFI)
+    assert next(one for one in tiny if one.name == "overlap length").status == "fail"
+    # A junction too cool for NEB's floor warns and is named.
+    cool = overlap_checks(
+        (("one", "ATATATATATATATAT"), ("two", "GGCGTAATCATGGTCA")), NEBUILDER_HIFI
+    )
+    assert next(one for one in cool if one.name == "overlap tm").status == "warn"
+    # In-Fusion states no floor, so nothing judges the same overlaps.
+    assert (
+        next(one for one in overlap_checks(named, IN_FUSION) if one.name == "overlap tm").status
+        is None
+    )
+
+
+def test_a_repeat_or_a_palindrome_at_a_junction_is_reported_and_names_it():
+    named = (("his tag", "CACCACCACCACGTTA"), ("clean", "GGCGTAATCATGGTCA"))
+    judged = {one.name: one for one in overlap_checks(named, NEBUILDER_HIFI)}
+    assert judged["overlap repeat"].status == "warn"
+    assert "his tag 12 bp" in judged["overlap repeat"].detail
+    assert "clean 0 bp" in judged["overlap repeat"].detail
+    folded = (("hairpin", "TTGCGGCCGCAAGGTA"), ("clean", "GGCGTAATCATGGTCA"))
+    assert {one.name: one.status for one in overlap_checks(folded, NEBUILDER_HIFI)}[
+        "overlap hairpin"
+    ] == "warn"
+    assert judged["overlap hairpin"].status == "pass"
+
+
+def test_two_overlaps_alike_are_reported_and_judged_by_nothing():
+    same = (("one", "GGCGTAATCATGGTCA"), ("two", "GGCGTAATCATGGTCA"))
+    judged = {one.name: one for one in overlap_checks(same, NEBUILDER_HIFI)}
+    alike = judged["overlap similarity"]
+    assert alike.status is None
+    assert alike.value == 16
+    assert "one and two" in alike.detail
+    assert "nobody quantifies" in alike.detail
+    # GC is measured for every junction and judged by nothing either.
+    assert judged["overlap gc"].status is None
+    assert "no source quantifies a GC band" in judged["overlap gc"].detail

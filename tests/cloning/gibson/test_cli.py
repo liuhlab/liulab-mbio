@@ -36,12 +36,14 @@ def test_the_cli_writes_the_four_outputs_and_prints_what_it_planned(
             "cloning",
             "gibson",
             "plan",
-            str(gfp_file),
+            str(puc19_file),
             str(gfp_file),
             "--out",
             str(tmp_path / "refused"),
+            "--product",
+            "KLD",
         ],
     )
     assert refused.exit_code == 1
-    assert "linear" in re.sub(r"\x1b\[[0-9;]*m", "", refused.output)
+    assert "no assembly product" in re.sub(r"\x1b\[[0-9;]*m", "", refused.output)
     assert not (tmp_path / "refused" / "product.dna").exists()

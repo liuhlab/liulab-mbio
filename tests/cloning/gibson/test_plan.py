@@ -11,7 +11,7 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify_step
 from liulab_mbio.bench.validation import SANGER_ALLOWANCE, SANGER_FLANK, ColonyCheck, SangerRead
 from liulab_mbio.cloning.gibson import Plan, plan_gibson
-from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
+from liulab_mbio.cloning.gibson.bench import IN_FUSION, NEBUILDER_HIFI
 from liulab_mbio.cloning.gibson.design import wallace_tm
 from liulab_mbio.cloning.gibson.steps import (
     CLEANUP_FRAGMENTS,
@@ -20,11 +20,20 @@ from liulab_mbio.cloning.gibson.steps import (
     SCREENED_COLONIES,
 )
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits.
 MCS = (395, 452)
+
+#: A flexible glycine-serine linker to go in beside GFP, written here rather than read from a
+#: file. It is long enough for the colony PCR to put a primer inside it.
+LINKER = SequenceRecord(
+    "AACGGTTCAGGTGGATCTGGCGGTTCTGGAGGCAGCGGTTCAGGAGGTTCTGGCGGATCA"
+    "GGTGGTTCAGGAGGCTCAGGTTCTGGAGGATCTGGCGGTTCAGGAGGTTCTGGATCAGGT"
+    "TCTGGAGGCAGCGGTTCAGGAGGATCTGGT",
+    name="linker",
+)
 
 
 @pytest.fixture(scope="module")
@@ -205,11 +214,29 @@ def test_the_screening_steps_are_the_shared_builders_and_not_a_second_copy(made)
 
 def test_the_plans_status_is_the_worst_of_its_checks(made):
     names = [one.name for one in made.checks]
-    assert names == ["pUC19 backbone", "GFP", "junctions", "primers"]
+    assert names == [
+        "pUC19 backbone",
+        "GFP",
+        "junctions",
+        "overlap length",
+        "overlap tm",
+        "overlap gc",
+        "overlap hairpin",
+        "overlap repeat",
+        "overlap similarity",
+        "fragment count",
+        "assembly DNA",
+        "primers",
+    ]
     assert made.assembly.status == "pass"
     # Both AT-rich ends of GFP warn on GC wherever their placement allows, and nothing fails.
     assert made.status == "warn"
-    assert {one.status for one in made.checks} == {"pass", "warn"}
+    assert {one.status for one in made.checks} == {"pass", "warn", None}
+    # The two nobody has measured carry no verdict at all rather than a pass.
+    assert [one.name for one in made.checks if one.status is None] == [
+        "overlap gc",
+        "overlap similarity",
+    ]
 
 
 def test_the_reaction_and_the_incubation_come_from_the_products_own_tier(made):
@@ -279,9 +306,14 @@ def test_the_protocol_is_enough_to_run_the_experiment(made):
     for step in protocol.steps:
         assert step.expected, step.title
     assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
+    # A badge is a verdict, so the checks carrying none are printed where the overlaps anneal.
     assert [(one.name, one.status) for one in protocol.checks] == [
-        (one.name, one.status) for one in made.checks
+        (one.name, one.status) for one in made.checks if one.status is not None
     ]
+    notes = " ".join(next(one for one in protocol.steps if one.title.endswith("assembly")).notes)
+    for one in made.checks:
+        if one.status is None:
+            assert f"Nothing judges {one.name}" in notes
 
 
 def test_the_dpni_digest_prints_nebs_own_dose_and_its_heat_inactivation(made):
@@ -300,15 +332,50 @@ def test_the_protocol_cites_the_documents_behind_its_numbers(made):
     assert "REBASE" in citations
 
 
-@pytest.mark.parametrize("count", [0, 2])
-def test_a_plan_takes_exactly_one_insert(puc19, gfp, count):
-    with pytest.raises(ValueError, match="one insert"):
-        plan_gibson(puc19, *((gfp,) * count))
+def test_a_plan_needs_at_least_one_insert(puc19):
+    with pytest.raises(ValueError, match="at least one insert"):
+        plan_gibson(puc19)
 
 
-def test_a_linear_vector_is_refused_and_says_why(gfp):
-    with pytest.raises(ValueError, match="linear"):
-        plan_gibson(gfp, gfp)
+def test_there_is_one_orientation_for_each_insert(puc19, gfp):
+    with pytest.raises(ValueError, match="2 values for 1 insert"):
+        plan_gibson(puc19, gfp, orientation=["forward", "reverse"])
+
+
+@pytest.fixture(scope="module")
+def handed_in(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
+    """GFP into a backbone that was cut last week, handed in as it is."""
+    cut = SequenceRecord(puc19.sequence[452:] + puc19.sequence[:395], name="pUC19 cut")
+    return plan_gibson(cut, gfp)
+
+
+def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, gfp):
+    backbone = handed_in.linearised_vector
+    # No PCR opens it, so it has no primers, nothing to run on the gel and no template to cut.
+    assert not backbone.amplified
+    assert (backbone.forward, backbone.reverse, backbone.report) == (None, None, None)
+    assert not backbone.dpni
+    designed = [one.primer.name for one in handed_in.reports]
+    assert designed[:2] == ["GFP forward", "GFP reverse"]
+    assert not any(name.startswith("pUC19 cut backbone") for name in designed)
+    titles = [step.title for step in handed_in.protocol().steps]
+    assert titles[:2] == ["Amplify GFP", "Check the PCRs on a gel"]
+    assert not any(title.endswith("DpnI") for title in titles)
+    # It still assembles into the same plasmid, with its two ends spelling the two overlaps.
+    assert (
+        len(handed_in.plasmid)
+        == len(handed_in.vector) + len(gfp)
+        == len(puc19) - (MCS[1] - MCS[0]) + len(gfp)
+    )
+    assert handed_in.span == (len(handed_in.vector), len(handed_in.vector))
+    assert {one.taken_from for one in handed_in.assembly.junctions} == {backbone.name}
+    # The inserts run from the end of the vector's own bases, across the origin.
+    assert handed_in.assembly.insert_span == (len(handed_in.vector), len(handed_in.plasmid))
+
+
+def test_a_site_is_refused_for_a_vector_that_is_already_linear(gfp):
+    with pytest.raises(ValueError, match="already linear"):
+        plan_gibson(gfp, gfp, site="MCS")
 
 
 def test_a_vector_with_no_multiple_cloning_site_asks_where_to_put_the_insert(gfp):
@@ -326,3 +393,70 @@ def test_the_insertion_site_is_read_from_a_feature_name_or_given_as_coordinates(
 
 def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file):
     assert plan_gibson(puc19_file, gfp_file).plasmid.name == "pUC19-GFP"
+
+
+@pytest.fixture(scope="module")
+def several(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
+    """GFP and a linker into the same site, the linker on the other strand."""
+    return plan_gibson(puc19, gfp, LINKER, orientation=["forward", "reverse"])
+
+
+def test_the_inserts_go_round_the_product_in_the_order_they_are_given(several, puc19, gfp):
+    assert [part.name for part in several.parts] == ["pUC19 backbone", "GFP", "linker"]
+    assert len(several.plasmid) == len(puc19) - (MCS[1] - MCS[0]) + len(gfp) + len(LINKER)
+    # Each junction takes its own overlap, and every one of the three is a different length.
+    joined = [(one.before, one.after, one.taken_from) for one in several.assembly.junctions]
+    assert joined == [
+        ("pUC19 backbone", "GFP", "pUC19 backbone"),
+        ("GFP", "linker", "GFP"),
+        ("linker", "pUC19 backbone", "pUC19 backbone"),
+    ]
+    # The two outer junctions are the vector's own bases, as NEB asks for a reusable backbone;
+    # the inner one is the bases of the insert before it, which the linker's primer tails.
+    first, inner, last = several.assembly.junctions
+    assert first.overlap == puc19.sequence[MCS[0] - first.length : MCS[0]]
+    assert last.overlap == puc19.sequence[MCS[1] : MCS[1] + last.length]
+    assert inner.overlap == gfp.sequence[-inner.length :]
+    assert several.insert_parts[1].forward.sequence.startswith(inner.overlap)
+    assert several.linearised_vector.left_tail == several.linearised_vector.right_tail == ""
+
+
+def test_an_insert_goes_in_on_the_strand_it_is_given_for(several):
+    linker = several.inserts[1]
+    assert linker.sequence == reverse_complement(LINKER.sequence)
+    assert linker.sequence in several.plasmid.sequence
+    assert LINKER.sequence not in several.plasmid.sequence
+
+
+def test_the_product_names_every_junction_and_the_reaction_counts_every_fragment(several):
+    marks = sorted(one.name for one in several.plasmid.features if one.name.endswith("overlap"))
+    assert marks == [
+        "GFP-linker overlap",
+        "linker-pUC19 backbone overlap",
+        "pUC19 backbone-GFP overlap",
+    ]
+    assert [one.name for one in several.amounts] == [part.name for part in several.parts]
+    judged = {one.name: one for one in several.checks}
+    assert judged["fragment count"].value == 2
+    assert judged["overlap similarity"].status is None
+
+
+def test_the_assembly_product_the_caller_names_sets_the_design_and_the_reaction(puc19, gfp):
+    made = plan_gibson(puc19, gfp, product=IN_FUSION)
+    assert made.product is IN_FUSION
+    # Takara's own overlap: 15 bp for one insert, and no melting temperature judges it.
+    assert [len(one) for one in made.overlaps] == [15, 15]
+    judged = {one.name: one for one in made.checks}
+    assert judged["overlap tm"].status is None
+    assert judged["assembly DNA"].status is None
+    table = next(
+        one for step in made.protocol().steps for one in step.tables if "reaction" in one.title
+    )
+    volumes = {one.name: one.volume_ul for one in table.components}
+    assert sum(volumes.values()) == pytest.approx(10.0)
+    assert volumes[IN_FUSION.name] == 2.0
+    # Its picomoles and its weight are both printed, at the ratio Takara asks for.
+    insert = next(one for one in table.components if one.name == "GFP")
+    assert "pmol" in insert.final
+    assert "ng" in insert.final
+    assert made.amounts[1].pmol == pytest.approx(2.0 * made.amounts[0].pmol, rel=1e-3)

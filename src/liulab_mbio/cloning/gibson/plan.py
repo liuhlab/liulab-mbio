@@ -1,7 +1,7 @@
-"""One Gibson experiment, planned from a vector and the insert that goes into it.
+"""One Gibson experiment, planned from a vector and the inserts that go round it.
 
-`plan_gibson` runs the whole design: open the vector by PCR across the span the insert
-replaces, choose the overlap at each junction, design the primers that carry it, simulate the
+`plan_gibson` runs the whole design: open the vector by PCR across the span the inserts
+replace, choose the overlap at each junction, design the primers that carry it, simulate the
 product, work out what the assembly reaction takes, and design the colony PCR and the
 sequencing that say whether the clone is the one the design asked for. `Plan.write` puts four
 files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
@@ -14,7 +14,7 @@ supplier's number behind them is `liulab_mbio.cloning.gibson.bench`, through
 """
 
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,26 +29,43 @@ from liulab_mbio.bench.validation import (
     sanger_primers,
 )
 from liulab_mbio.checks import Check, Status
-from liulab_mbio.cloning.gibson.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.cloning.gibson.assembly import (
+    Assembly,
+    Part,
+    amplify,
+    assemble,
+    given_vector,
+    open_vector,
+)
 from liulab_mbio.cloning.gibson.bench import (
     NEBUILDER_HIFI,
     AssemblyProduct,
+    OverlapRule,
     assembly_amounts,
+    assembly_dna_check,
+    fragment_check,
 )
-from liulab_mbio.cloning.gibson.design import overlap_after, overlap_before
+from liulab_mbio.cloning.gibson.design import (
+    overlap_after,
+    overlap_before,
+    overlap_checks,
+)
 from liulab_mbio.cloning.gibson.oligos import DesignedOligo
 from liulab_mbio.cloning.gibson.steps import DEFAULT_HOST
 from liulab_mbio.cloning.gibson.steps import protocol as protocol_for
 from liulab_mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    Orientation,
     Site,
     as_record,
     insertion_span,
+    orientations,
     primer_check,
     status,
     write_protocol_files,
 )
+from liulab_mbio.edits import flipped
 from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
@@ -92,9 +109,10 @@ class Plan:
     Parameters
     ----------
     vector, inserts
-        The records the plan was made from.
+        The records the plan was made from, each insert on the strand that goes in.
     span
-        The vector bases the insert replaces.
+        The vector bases the inserts replace. Empty, at the vector's end, where the vector was
+        handed in linear and nothing was taken out of it.
     product
         The assembly product on the bench, which sets the overlap rule, the reaction and the
         incubation.
@@ -158,6 +176,11 @@ class Plan:
         return tuple(one.overlap for one in self.assembly.junctions)
 
     @property
+    def junction_names(self) -> tuple[tuple[str, str], ...]:
+        """Each junction's name and the bases it spells, in the product's own order."""
+        return tuple((f"{one.before}-{one.after}", one.overlap) for one in self.assembly.junctions)
+
+    @property
     def oligos(self) -> tuple[Primer, ...]:
         """Every oligo the plan designs, in the order the sheet lists them."""
         return tuple(report.primer for report in self.reports)
@@ -169,8 +192,18 @@ class Plan:
 
     @property
     def checks(self) -> tuple[Check, ...]:
-        """The plasmid's checks, with one more for the oligos."""
-        return (*self.assembly.checks, primer_check(self.reports))
+        """What the plan is judged on: the plasmid, every overlap, the reaction and the oligos.
+
+        The ones no sourced threshold judges carry no verdict, and say in their detail that
+        nothing measured them.
+        """
+        return (
+            *self.assembly.checks,
+            *overlap_checks(self.junction_names, self.product),
+            fragment_check(self.product, len(self.insert_parts)),
+            assembly_dna_check(self.product, self.amounts),
+            primer_check(self.reports),
+        )
 
     @property
     def status(self) -> Status:
@@ -217,6 +250,7 @@ def plan_gibson(
     vector: SequenceRecord | str | os.PathLike[str],
     *inserts: SequenceRecord | str | os.PathLike[str],
     site: Site = None,
+    orientation: Orientation | Sequence[Orientation] = "forward",
     product: AssemblyProduct = NEBUILDER_HIFI,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
@@ -225,11 +259,15 @@ def plan_gibson(
 ) -> Plan:
     """Plan one Gibson experiment putting `inserts` into `vector`.
 
-    The vector is opened by PCR across the span the insert replaces, and each of the two
-    junctions takes its overlap from the vector's own bases there -- the length and melting
-    temperature `product` documents, by the rules
-    `liulab_mbio.cloning.gibson.design` states. The insert's primers carry those bases as 5'
-    tails, so the junctions add nothing and the vector's PCR needs no tail at all.
+    The inserts go round the product in the order they are given. A circular vector is opened
+    by PCR across the span they replace; one that is already linear is taken as the opened part
+    as it is. Every junction takes its overlap at the length and melting temperature `product`
+    documents, by the rules `liulab_mbio.cloning.gibson.design` states, and the part on the
+    other side carries those bases as a 5' tail, so the junction adds nothing.
+
+    **Which side the bases come from** is the note's vector rule: a junction with the vector on
+    either side takes the vector's own bases, so the opened backbone needs no tail and can be
+    made once and reused. Every other junction takes the bases of the insert before it.
 
     A colony PCR and two sequencing primers are then designed over
     `liulab_mbio.cloning.gibson.assembly.Assembly.boundaries`, where one part gives way to the
@@ -238,14 +276,18 @@ def plan_gibson(
     Parameters
     ----------
     vector, inserts
-        A record, or a path to a ``.dna``, GenBank or FASTA file holding one. One insert; a
-        circular vector.
+        A record, or a path to a ``.dna``, GenBank or FASTA file holding one. At least one
+        insert, in the order they go round the product.
     site
-        Where the insert goes: a feature name, a ``(start, end)`` span of the vector, or
-        ``None`` to use the vector's own `liulab_mbio.cloning.plan.MCS_FEATURE` feature.
+        Where the inserts go: a feature name, a ``(start, end)`` span of the vector, or
+        ``None`` to use the vector's own `liulab_mbio.cloning.plan.MCS_FEATURE` feature. A
+        vector handed in linear replaces nothing, so it takes no site.
+    orientation
+        ``"reverse"`` puts the other strand of an insert into the product. One value covers
+        every insert; a sequence gives one for each.
     product
         The assembly product on the bench, which sets the overlap rule, the reaction, the
-        incubation and the molar ratio.
+        incubation, the molar ratio and the fragment count it is documented for.
     polymerase
         For the PCRs.
     host, name
@@ -261,33 +303,42 @@ def plan_gibson(
     Raises
     ------
     ValueError
-        If no insert is given or more than one, if the vector is not circular, if no insertion
-        site is named and the vector annotates none, if the vector is too short to take an
-        overlap from, or if no annealing region fits a part's end.
+        If no insert is given, if an orientation is neither ``forward`` nor ``reverse`` or
+        there is not one per insert, if a site is named for a vector that is already linear, if
+        no insertion site is named and a circular vector annotates none, if a part is too short
+        to take an overlap from, or if no annealing region fits a part's end.
     """
-    if len(inserts) != 1:
-        raise ValueError(
-            f"a Gibson plan takes a vector and one insert, got {len(inserts)}: several inserts "
-            "are not designed yet"
-        )
+    if not inserts:
+        raise ValueError("a Gibson plan needs a vector and at least one insert")
     one = as_record(vector)
-    if one.topology != "circular":
+    linear = one.topology == "linear"
+    if linear and site is not None:
         raise ValueError(
-            f"{one.name or 'the vector'} is linear, and a Gibson plan opens a circular vector "
-            "by PCR; a backbone that is already linear is not taken yet"
+            f"{one.name or 'the vector'} is already linear, so it is used as it is and there "
+            "is no span to replace; drop the site"
         )
-    going = tuple(as_record(record) for record in inserts)
+    ways = orientations(orientation, len(inserts))
+    going = tuple(
+        flipped(read) if way == "reverse" else read
+        for read, way in (
+            (as_record(record), way) for record, way in zip(inserts, ways, strict=True)
+        )
+    )
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
-    start, end = insertion_span(one, site)
+    span = (len(one), len(one)) if linear else insertion_span(one, site)
+    opened = (0, len(one)) if linear else (span[1], span[0] + len(one))
     rule = product.tier(len(going) + 1).overlap
-    left, right = overlap_before(one, start, rule), overlap_after(one, end, rule)
-    linearised_vector = open_vector(
-        one,
-        start,
-        end,
-        name=f"{one.name} backbone".strip(),
-        polymerase=polymerase,
-        thresholds=thresholds["amplification"],
+    tails = _tails(one, going, opened, rule)
+    linearised_vector = (
+        given_vector(one, name=f"{one.name} backbone".strip())
+        if linear
+        else open_vector(
+            one,
+            *span,
+            name=f"{one.name} backbone".strip(),
+            polymerase=polymerase,
+            thresholds=thresholds["amplification"],
+        )
     )
     insert_parts = tuple(
         amplify(
@@ -300,7 +351,7 @@ def plan_gibson(
             polymerase=polymerase,
             thresholds=thresholds["amplification"],
         )
-        for label, record in zip(labels, going, strict=True)
+        for label, record, (left, right) in zip(labels, going, tails, strict=True)
     )
     parts = (linearised_vector, *insert_parts)
     built = assemble(parts, name=name or "-".join([one.name, *labels]).strip("-"))
@@ -318,7 +369,7 @@ def plan_gibson(
     return Plan(
         one,
         going,
-        (start, end),
+        span,
         product,
         linearised_vector,
         insert_parts,
@@ -328,13 +379,14 @@ def plan_gibson(
         assembly_amounts(
             (linearised_vector.name, linearised_vector.fragment_length),
             tuple((part.name, part.fragment_length) for part in insert_parts),
-            tier=product.tier(len(parts)),
+            product=product,
         ),
-        read_phenotype(built.product, built.insert_span, vector=one, span=(start, end)),
+        read_phenotype(built.product, built.insert_span, vector=one, span=span),
         (
             *(
                 DesignedOligo(report, "amplification", part)
                 for part in parts
+                if part.report is not None
                 for report in (part.report.forward, part.report.reverse)
             ),
             *(DesignedOligo(report, "colony PCR") for report in colony.reports),
@@ -352,3 +404,24 @@ def plan_gibson(
         polymerase,
         thresholds,
     )
+
+
+def _tails(
+    vector: SequenceRecord,
+    inserts: Sequence[SequenceRecord],
+    opened: tuple[int, int],
+    rule: OverlapRule,
+) -> tuple[tuple[str, str], ...]:
+    """Return the two tails each insert's primers carry, in insert order.
+
+    `opened` is the vector span that reaches the product, so the outer junctions read the
+    vector's bases at its two ends whether it was opened by PCR or handed in linear. An inner
+    junction reads the last bases of the insert before it, and the insert after it tails them,
+    so exactly one side of every junction carries the bases and neither the vector nor the last
+    insert is asked for a tail it cannot spell.
+    """
+    first, last = opened
+    before = [overlap_before(record, len(record), rule) for record in inserts[:-1]]
+    lefts = [overlap_before(vector, last, rule), *before]
+    rights = [*([""] * (len(inserts) - 1)), overlap_after(vector, first, rule)]
+    return tuple(zip(lefts, rights, strict=True))

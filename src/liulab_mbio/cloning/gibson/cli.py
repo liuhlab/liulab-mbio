@@ -5,7 +5,8 @@ from typing import Annotated
 
 import typer
 
-from liulab_mbio.cloning.cli import plan_command
+from liulab_mbio.cloning.cli import plan_command, read_orientations
+from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI, assembly_product
 from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Plan, plan_gibson
 from liulab_mbio.cloning.plan import Site
 from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
@@ -21,7 +22,12 @@ def plan(
     ],
     inserts: Annotated[
         list[Path],
-        typer.Argument(exists=True, dir_okay=False, readable=True, help="Insert sequence file."),
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Insert sequence files, in the order they go round the product.",
+        ),
     ],
     out: Annotated[
         Path,
@@ -30,8 +36,15 @@ def plan(
         ),
     ],
     site: Annotated[
-        str, typer.Option(help="Feature name, or START-END, that the insert replaces.")
+        str, typer.Option(help="Feature name, or START-END, that the inserts replace.")
     ] = "",
+    orientation: Annotated[
+        list[str] | None,
+        typer.Option(help="Which way round an insert goes: forward or reverse; once per insert."),
+    ] = None,
+    product: Annotated[
+        str, typer.Option(help="Assembly product on the bench.")
+    ] = NEBUILDER_HIFI.name,
     polymerase: Annotated[str, typer.Option(help="Polymerase for the PCRs.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
@@ -42,6 +55,8 @@ def plan(
             vector,
             *inserts,
             site=_site(site),
+            orientation=read_orientations(orientation, len(inserts)),
+            product=assembly_product(product),
             polymerase=_polymerase(polymerase),
             host=host,
             name=name,

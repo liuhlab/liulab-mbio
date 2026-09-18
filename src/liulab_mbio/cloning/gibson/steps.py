@@ -151,12 +151,17 @@ def protocol(
     parts = (linearised_vector, *insert_parts)
     names = tuple(part.name for part in insert_parts)
     inserts = listed(names)
+    opening = (
+        f"Open {vector.name} by PCR across {span[0]}-{span[1]}"
+        if linearised_vector.amplified
+        else f"Take {vector.name}, which is already linear, as the backbone"
+    )
     return Protocol(
         f"Gibson assembly: {inserts} into {vector.name}",
         summary=(
-            f"Open {vector.name} by PCR across {span[0]}-{span[1]}, amplify {inserts} with "
-            f"overlaps to the backbone at each end, join the {len(parts)} fragments in one "
-            f"{product.name} reaction, and confirm the clone by colony PCR and sequencing."
+            f"{opening}, amplify {inserts} with the overlap at each junction carried as a "
+            f"primer tail, join the {len(parts)} fragments in one {product.name} reaction, and "
+            "confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(vector, insert_parts, assembly, product, phenotype),
         highlights=_highlights(parts, assembly, phenotype, names),
@@ -185,6 +190,7 @@ def protocol(
             colony=colony,
             reads=reads,
             phenotype=phenotype,
+            checks=checks,
             host=host,
             polymerase=polymerase,
         ),
@@ -270,10 +276,17 @@ def _materials(
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     ladders = dict.fromkeys(
-        (choose_ladder(tuple(part.length for part in parts)).name, colony.ladder.name)
+        (
+            choose_ladder(tuple(part.length for part in parts if part.amplified)).name,
+            colony.ladder.name,
+        )
     )
     return (
-        Material(f"{vector.name} plasmid", storage="-20 °C", note="PCR template"),
+        Material(
+            f"{vector.name} plasmid" if parts[0].amplified else vector.name,
+            storage="-20 °C",
+            note="PCR template" if parts[0].amplified else "the opened backbone, used as given",
+        ),
         *(Material(f"{name} template", storage="-20 °C", note="PCR template") for name in inserts),
         Material(
             f"{polymerase.name} DNA Polymerase and its reaction buffer",
@@ -343,13 +356,19 @@ def _steps(
     colony: ColonyCheck,
     reads: Sequence[SangerRead],
     phenotype: Phenotype,
+    checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
 ) -> tuple[Step, ...]:
-    """Return the steps in the order they happen, the shared ones carrying this method's notes."""
+    """Return the steps in the order they happen, the shared ones carrying this method's notes.
+
+    A part handed in ready to assemble has no PCR and nothing to run on the gel, so neither
+    step names it.
+    """
     cut = [part for part in parts if part.dpni]
-    steps = [_pcr_step(part, assembly, polymerase) for part in parts]
-    steps.append(gel_step([(part.name, part.length) for part in parts]))
+    made = [part for part in parts if part.amplified]
+    steps = [_pcr_step(part, assembly, polymerase) for part in made]
+    steps.append(gel_step([(part.name, part.length) for part in made]))
     if cut:
         steps.append(
             dpni_step(
@@ -380,7 +399,7 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(product, amounts))
-    steps.append(_incubation_step(product, assembly.junctions, len(parts)))
+    steps.append(_incubation_step(product, assembly.junctions, len(parts), checks))
     steps.append(
         transform_step(
             host,
@@ -388,7 +407,7 @@ def _steps(
             inserts=inserts,
             colonies=f"Hundreds of colonies. NEB's own lot test asks for more than "
             f"{RELEASE_COLONIES} from a six-fragment assembly with a tenth of the outgrowth "
-            "plated, and a two-fragment assembly is the easier job.",
+            f"plated; this reaction joins {len(parts)}.",
         )
     )
     steps.append(_colony_pcr_step(colony, assembly))
@@ -408,7 +427,15 @@ def _steps(
 
 
 def _pcr_step(part: Part, assembly: Assembly, polymerase: Polymerase) -> Step:
-    """Amplify one part, with whatever overlaps its primers carry."""
+    """Amplify one part, with whatever overlaps its primers carry.
+
+    Raises
+    ------
+    ValueError
+        If the part was handed in ready to assemble, so no PCR makes it.
+    """
+    if part.report is None:
+        raise ValueError(f"{part.name or 'this part'} is not amplified, so it has no PCR step")
     tails = [
         f"{len(tail)} bp of {_neighbour(assembly, part, before=first)} on the {end} primer"
         for tail, first, end in (
@@ -450,9 +477,24 @@ def _neighbour(assembly: Assembly, part: Part, *, before: bool) -> str:
 
 
 def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Step:
-    """Set the one-tube assembly up."""
+    """Set the one-tube assembly up, at the molar ratio this product asks for."""
     table = assembly_reaction(product, amounts)
+    tier = product.tier(len(amounts))
     total = sum(component.volume_ul for component in table.components)
+    ratio = (
+        f"Each insert goes in at {tier.insert_ratio:g} times the vector's moles, and any insert "
+        f"under {product.short_insert_bp} bp at {product.short_insert_ratio:g} times, which is "
+        f"what {product.supplier} asks for at this fragment count. The table gives each in "
+        "picomoles and in nanograms, so it can be pipetted at whatever concentration it is."
+    )
+    unpurified = (
+        f"{product.supplier} takes unpurified PCR product straight from the tube for up to "
+        f"{product.unpurified_fraction:.0%} of the reaction, which is {product.unpurified_ul:g} "
+        "µL here, as long as the product is a single band."
+        if product.unpurified_fraction is not None
+        else f"{product.supplier} asks for purified PCR product and documents no allowance for "
+        "unpurified DNA in the reaction."
+    )
     return Step(
         f"Set up the {product.name} reaction",
         instructions=(
@@ -463,11 +505,10 @@ def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Ste
         tables=(table,),
         expected=(f"A {total:g} µL reaction holding every fragment.",),
         notes=(
+            ratio,
             "The volumes above assume each fragment is concentrated enough to carry its "
             "picomoles in the microlitre the table gives; make the difference up with water.",
-            f"NEB takes unpurified PCR product straight from the tube for up to "
-            f"{product.unpurified_fraction:.0%} of the reaction, which is "
-            f"{product.unpurified_ul:g} µL here, as long as the product is a single band.",
+            unpurified,
         ),
         troubleshooting=(
             Troubleshooting(
@@ -485,9 +526,16 @@ def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Ste
 
 
 def _incubation_step(
-    product: AssemblyProduct, junctions: Sequence[Junction], fragments: int
+    product: AssemblyProduct,
+    junctions: Sequence[Junction],
+    fragments: int,
+    checks: Sequence[judged.Check],
 ) -> Step:
-    """Run the one isothermal incubation, which is the whole reaction."""
+    """Run the one isothermal incubation, which is the whole reaction.
+
+    This is where the overlaps anneal, so it is where what was measured about them and left
+    unjudged is printed: a badge is a verdict, and these carry none.
+    """
     tier = product.tier(fragments)
     return Step(
         "Incubate the assembly",
@@ -507,9 +555,10 @@ def _incubation_step(
             ),
         ),
         notes=(
-            f"{tier.incubation_seconds // 60} minutes is what NEB asks for at this fragment "
-            "count. Longer does not help past a few hours, and overnight is refused.",
+            f"{tier.incubation_seconds // 60} minutes is what {product.supplier} asks for at "
+            f"this fragment count. {product.incubation_note}",
             "Junction positions are 0-based, on the product.",
+            *(f"Nothing judges {one.name}: {one.detail}." for one in checks if one.status is None),
         ),
         troubleshooting=(
             Troubleshooting(

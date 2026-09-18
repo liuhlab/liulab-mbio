@@ -1,10 +1,11 @@
 """Simulate a Gibson assembly: amplify each part with its overlaps, and join them on those.
 
-Every part reaches the reaction as a PCR product. What a part contributes to the product is its
+Most parts reach the reaction as a PCR product. What a part contributes to the product is its
 own span; the overlaps at its two ends are the neighbours' bases, carried as 5' tails so that
 the two fragments spell the same thing where they meet and the reaction anneals them there.
 `open_vector` points a circular vector's primers outward from the span the inserts replace, so
-the whole backbone amplifies and DpnI takes the plasmid that templated it away.
+the whole backbone amplifies and DpnI takes the plasmid that templated it away. A backbone that
+is already linear needs none of that and goes in as it is: `given_vector` makes the part.
 
 Two rules run through the module:
 
@@ -75,10 +76,10 @@ class Part:
         The template bases it contributes to the product, 0-based and half-open. `end` passes
         the template's length when the span runs across the origin.
     forward, reverse
-        The primers, tails included.
+        The primers, tails included, or ``None`` for a part handed in ready to assemble.
     amplicon
         What the PCR makes: both tails, the span, and the template's features and primers
-        carried to their new coordinates.
+        carried to their new coordinates. The record itself, for a part that is not amplified.
     left_tail, right_tail
         The overlaps this part carries, which belong to the part before it and the part after
         it round the product. Either is empty where that neighbour carries the overlap instead.
@@ -86,19 +87,19 @@ class Part:
         Whether DpnI should be used to take the template away afterwards.
     report
         What the pair scored on the template, carrying the annealing temperature and the
-        extension time the PCR needs.
+        extension time the PCR needs, or ``None`` for a part that is not amplified.
     """
 
     name: str
     template: SequenceRecord
     span: tuple[int, int]
-    forward: Primer
-    reverse: Primer
+    forward: Primer | None
+    reverse: Primer | None
     amplicon: SequenceRecord
     left_tail: str
     right_tail: str
     dpni: bool
-    report: PairReport
+    report: PairReport | None
 
     @property
     def length(self) -> int:
@@ -114,6 +115,11 @@ class Part:
     def bases(self) -> str:
         """What this part puts into the product, its neighbours' overlaps left off."""
         return self.template.extract(Segment(*self.span))
+
+    @property
+    def amplified(self) -> bool:
+        """Whether a PCR makes this part, or it was handed in ready to assemble."""
+        return self.report is not None
 
 
 def amplify(
@@ -252,6 +258,37 @@ def open_vector(
     )
 
 
+def given_vector(vector: SequenceRecord, *, name: str = "") -> Part:
+    """Take a vector that is already linear as the opened part, with no PCR at all.
+
+    A backbone cut or amplified last week goes in as it is: it spells what it spells, so it
+    carries no tail and its neighbours' primers carry its bases instead, and there is no
+    template behind it for DpnI to take away.
+
+    Raises
+    ------
+    ValueError
+        If `vector` is circular, which is opened by `open_vector` instead.
+    """
+    if vector.topology != "linear":
+        raise ValueError(
+            f"{vector.name or 'this vector'} is circular, so it is opened by PCR rather than "
+            "taken as the opened part"
+        )
+    return Part(
+        name or vector.name,
+        vector,
+        (0, len(vector)),
+        None,
+        None,
+        vector,
+        "",
+        "",
+        False,
+        None,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class Junction:
     """A junction as it came out: the bases two parts both spell where they meet.
@@ -328,8 +365,21 @@ class Assembly:
 
     @property
     def insert_span(self) -> tuple[int, int]:
-        """The product bases the inserts own, between the first boundary and the last."""
-        return self.boundaries[0], self.boundaries[-1]
+        """The product bases the inserts own: everything the first part does not.
+
+        From the boundary the first part gives way at to the one it takes over at. The span
+        ends past the product's length where it runs across the origin, which it does whenever
+        the first part is not itself split there.
+        """
+        opened = self.parts[0].name
+        boundaries = self.boundaries
+        start = next(
+            at for at, one in zip(boundaries, self.junctions, strict=True) if one.before == opened
+        )
+        end = next(
+            at for at, one in zip(boundaries, self.junctions, strict=True) if one.after == opened
+        )
+        return start, end if end > start else end + len(self.product)
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -422,8 +472,9 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
         over, kept = carried(part.template, *part.span, offset=at - part.span[0])
         features.extend(over)
         primers.extend(kept)
-        primers.append(annealed(part.forward, at, Strand.FORWARD))
-        primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
+        if part.forward is not None and part.reverse is not None:
+            primers.append(annealed(part.forward, at, Strand.FORWARD))
+            primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
     length = len(bases)
     joins = [
         _junction(parts[index - 1], part, starts[index], length) for index, part in enumerate(parts)
