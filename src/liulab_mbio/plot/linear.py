@@ -52,7 +52,7 @@ from liulab_mbio.plot.svg import (
 )
 from liulab_mbio.sequence import Strand
 
-#: The line's length, in points, however long the stretch it draws.
+#: The line's length by default, in points, however long the stretch it draws.
 WIDTH = 720.0
 
 #: How far above the drawing a label may reach, in points, before labels hide.
@@ -208,6 +208,7 @@ def layout(
     length: int,
     circular: bool = False,
     span: tuple[int, int] | None = None,
+    width: float = WIDTH,
 ) -> LinearMap:
     """Lay out `items` along a line, as a map of a record called `name`, `length` bases long.
 
@@ -223,19 +224,22 @@ def layout(
     span
         The stretch drawn, 0-based and half-open, ending past `length` across the origin; the
         whole record when ``None``.
+    width
+        The line's length, in points. Along a longer line, text, labels and each arrow's band and
+        head keep their size, and the scale numbers more positions.
     """
     start, end = span if span is not None else (0, length)
-    scale = WIDTH / (end - start)
+    scale = width / (end - start)
 
     def at(position: float) -> float:
         return (position - start) * scale
 
-    def runs(kind: str, width: float) -> list[_Run]:
+    def runs(kind: str, band: float) -> list[_Run]:
         return [
             run
             for item in items
             if item.kind == kind
-            for run in _runs(item, pieces(item, start, end, length, circular=circular), at, width)
+            for run in _runs(item, pieces(item, start, end, length, circular=circular), at, band)
         ]
 
     features = runs("feature", _BAND)
@@ -281,11 +285,11 @@ def layout(
 
     order = {id(item): index for index, item in enumerate(items)}
     drawn = sorted((*features, *primers), key=lambda run: order[id(run.item)])
-    scale_shapes, numbers = _scale(start, end, length, circular, at)
-    ends = _ends(circular or start > 0, circular or end < length)
-    title = _title(name, length, span, bottom)
+    scale_shapes, numbers = _scale(start, end, length, circular, at, width)
+    ends = _ends(circular or start > 0, circular or end < length, width)
+    title = _title(name, length, span, bottom, width)
     shapes = (
-        *_backbone(),
+        *_backbone(width),
         *ends,
         *scale_shapes,
         *_items(drawn, arrows, names),
@@ -293,7 +297,7 @@ def layout(
         *title,
     )
     taken = [
-        Box(0.0, -_BACKBONE / 2, WIDTH, _STRANDS_APART + _BACKBONE),
+        Box(0.0, -_BACKBONE / 2, width, _STRANDS_APART + _BACKBONE),
         *_boxes(ends),
         *numbers,
         *(_bounds(arrow) for run in drawn for arrow in arrows[id(run)]),
@@ -502,26 +506,26 @@ def _font(bold: bool) -> Font:
     return BOLD if bold else SANS
 
 
-def _backbone() -> list[Shape]:
+def _backbone(width: float) -> list[Shape]:
     return [
-        Line(0.0, 0.0, WIDTH, 0.0, _INK, _BACKBONE),
-        Line(0.0, _STRANDS_APART, WIDTH, _STRANDS_APART, _INK, _BACKBONE),
+        Line(0.0, 0.0, width, 0.0, _INK, _BACKBONE),
+        Line(0.0, _STRANDS_APART, width, _STRANDS_APART, _INK, _BACKBONE),
     ]
 
 
-def _ends(left: bool, right: bool) -> list[Shape]:
+def _ends(left: bool, right: bool, width: float) -> list[Shape]:
     """Return `• • •` beyond each end of the line the molecule carries on past."""
     middle = _STRANDS_APART / 2
     offsets = [_DOT_START + index * _DOT_STEP for index in range(3)]
     dots = [
         *(Circle(-offset, middle, _DOT, _INK, 2 * _DOT) for offset in offsets if left),
-        *(Circle(WIDTH + offset, middle, _DOT, _INK, 2 * _DOT) for offset in offsets if right),
+        *(Circle(width + offset, middle, _DOT, _INK, 2 * _DOT) for offset in offsets if right),
     ]
     return [Group(tuple(dots), classes=("ends",))] if dots else []
 
 
 def _scale(
-    start: int, end: int, length: int, circular: bool, at: Callable[[float], float]
+    start: int, end: int, length: int, circular: bool, at: Callable[[float], float], width: float
 ) -> tuple[list[Shape], list[Box]]:
     """Return the ticks and numbers under the backbone, and the boxes the numbers take.
 
@@ -535,7 +539,7 @@ def _scale(
     boxes: list[Box] = []
     if origin is not None:
         shapes.append(Line(origin, below, origin, below + _ORIGIN_TICK, _INK, 2.4))
-    step = _step(end - start)
+    step = _step(end - start, width)
     right = float("-inf")
     for lap in (0, 1) if circular else (0,):
         offset = lap * length
@@ -556,12 +560,16 @@ def _scale(
     return [Group(tuple(shapes), classes=("scale",))], boxes
 
 
-def _step(bases: int) -> int:
-    """Return the least interval of 1, 2 or 5 times a power of ten marking at most ten numbers."""
+def _step(bases: int, width: float) -> int:
+    """Return the least interval of 1, 2 or 5 times a power of ten that keeps numbers apart.
+
+    It marks at most ten numbers along each `WIDTH` points of a line `width` long that draws
+    `bases`, so a longer line numbers the same bases more often.
+    """
     power = 1
     while True:
         for factor in (1, 2, 5):
-            if factor * power * 10 >= bases:
+            if factor * power * 10 * width >= bases * WIDTH:
                 return factor * power
         power *= 10
 
@@ -606,7 +614,9 @@ def _label(label: Label) -> Group:
     )
 
 
-def _title(name: str, length: int, span: tuple[int, int] | None, bottom: float) -> list[Shape]:
+def _title(
+    name: str, length: int, span: tuple[int, int] | None, bottom: float, width: float
+) -> list[Shape]:
     """Return the record's name in bold over its length, or the region drawn, under the drawing."""
     lines = [(name, BOLD, NAME_SIZE)] if BOLD.drawn(name) else []
     if span is None:
@@ -617,7 +627,7 @@ def _title(name: str, length: int, span: tuple[int, int] | None, bottom: float) 
     shapes: list[Shape] = []
     for text, font, size in lines:
         height = _height(font, size)
-        left = (WIDTH - font.width(text, size)) / 2
+        left = (width - font.width(text, size)) / 2
         shapes.append(Text(left, _baseline(font, size, top + height / 2), text, font, size))
         top += height
     return shapes
