@@ -89,10 +89,14 @@ def cut(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ...]:
     Each enzyme must read exactly one site: this method cuts a piece out between one site of
     each, so a second site of either cuts that piece in two.
 
+    A linear record also has the two ends it came with. No enzyme made them and nothing ligates
+    to them, so the pieces carrying them are left out and what is returned is what the digest
+    released.
+
     Parameters
     ----------
     record
-        The circular plasmid to cut.
+        The plasmid or fragment to cut.
     enzymes
         One or two enzymes, which go in the same reaction.
 
@@ -100,26 +104,34 @@ def cut(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ...]:
     ------
     ValueError
         If no enzyme is given or more than `MAX_ENZYMES`, if an enzyme reads anything but one
-        site, or if a cut leaves an end no enzyme made.
+        site, or if no piece has an enzyme at both of its ends.
     """
     if not 1 <= len(enzymes) <= MAX_ENZYMES:
         raise ValueError(
             f"this method digests with one or two enzymes, got {len(enzymes)}: "
             f"{', '.join(one.name for one in enzymes) or 'none'}"
         )
-    _one_site_each(record, enzymes, record.name or "the record")
+    what = record.name or "the record"
+    _one_site_each(record, enzymes, what)
     length = len(record)
     at: dict[int, Enzyme] = {}
     for site in find_sites(record, enzymes):
         if site.cuts:
             at.setdefault(site.top_cut % length, site.enzyme)
-    pieces = digest(record, enzymes)
-    labels = _labels(f"{record.name} fragment".strip(), len(pieces))
-    return tuple(
-        Piece(
-            label, record, fragment, _at(at, fragment.start, length), _at(at, fragment.end, length)
+    released: list[tuple[Fragment, Enzyme, Enzyme]] = []
+    for fragment in digest(record, enzymes):
+        left, right = at.get(fragment.start % length), at.get(fragment.end % length)
+        if left is not None and right is not None:
+            released.append((fragment, left, right))
+    if not released:
+        raise ValueError(
+            f"the digest of {what} releases nothing with an enzyme at both ends; a linear "
+            "fragment is cut out between one site of each enzyme, so it needs both of them"
         )
-        for label, fragment in zip(labels, pieces, strict=True)
+    labels = _labels(f"{record.name} fragment".strip(), len(released))
+    return tuple(
+        Piece(label, record, fragment, left, right)
+        for label, (fragment, left, right) in zip(labels, released, strict=True)
     )
 
 
@@ -291,20 +303,6 @@ def _one_site_each(record: SequenceRecord, enzymes: Iterable[Enzyme], what: str)
 def _where(found: Sequence[CutSite]) -> str:
     """Name where those sites are, or nothing at all when there are none."""
     return f", at {', '.join(str(site.start) for site in found)}" if found else ""
-
-
-def _at(found: dict[int, Enzyme], position: int, length: int) -> Enzyme:
-    """Return the enzyme that cut at `position`.
-
-    Raises
-    ------
-    ValueError
-        If no enzyme cut there, which is the end of a linear record rather than a cut.
-    """
-    enzyme = found.get(position % length)
-    if enzyme is None:
-        raise ValueError(f"the end at {position} is not a cut, so nothing can be ligated to it")
-    return enzyme
 
 
 def _labels(name: str, count: int) -> tuple[str, ...]:

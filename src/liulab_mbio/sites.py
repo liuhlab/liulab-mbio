@@ -34,9 +34,9 @@ SPACER_LENGTH = 6
 #: affects it is held to the rule; `Enzyme.methylation` carries that answer.
 DCM_SITE = "CCWGG"
 
-#: Dam methylates the adenine of this site, on the same terms. A method that reads it to tell a
-#: plasmid from a fresh amplicon keeps its own copy, DpnI being the question there and not
-#: whether an enzyme still cuts.
+#: Dam methylates the adenine of this site, on the same terms. `liulab_mbio.bench.steps` keeps
+#: its own copy for DpnI, that being a question about a plasmid against a fresh amplicon and not
+#: about whether an enzyme still cuts.
 DAM_SITE = "GATC"
 
 #: How many candidate spacers or fillers to try before giving up on an overhang.

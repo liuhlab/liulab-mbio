@@ -1,9 +1,10 @@
 """The whole pipeline, run on the fixtures with no agent.
 
-`tests/data/pUC19.dna` is the vector; the source plasmid is the same record carrying
-`tests/data/GFP.dna` between its own EcoRI and BamHI sites, which is what a lab member
-subcloning out of one plasmid into another actually holds. Nothing about the fixtures is
-hard-coded in the package; the numbers below are read off the records and pinned here.
+`tests/data/pUC19.dna` is the vector. The insert reaches it by both routes: cut out of the same
+record carrying `tests/data/GFP.dna` between its own EcoRI and BamHI sites, which is what a lab
+member subcloning out of one plasmid into another holds, and amplified from the GFP record
+itself, which carries neither site. Nothing about the fixtures is hard-coded in the package; the
+numbers below are read off the records and pinned here.
 """
 
 import dataclasses
@@ -14,9 +15,10 @@ from liulab_mbio.cloning.restriction import Plan, plan_restriction
 from liulab_mbio.cloning.restriction.bench import shared_buffer
 from liulab_mbio.edits import carried, flipped, replace
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.primers.evaluation import evaluate_primer
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
-from liulab_mbio.sites import find_sites
+from liulab_mbio.sequence import Primer, SequenceRecord, reverse_complement
+from liulab_mbio.sites import SPACER_LENGTH, find_sites
 from liulab_mbio.snapgene import read_dna
 
 #: Where pUC19's own EcoRI and BamHI sites begin, and the bases the two cuts leave between them.
@@ -268,3 +270,91 @@ def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
     assert "T4 DNA Ligase" in citations
     assert "Monarch Spin DNA Gel Extraction Kit" in citations
     assert "Troubleshooting Guide for Cloning" in citations
+
+
+@pytest.fixture(scope="module")
+def tailed(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
+    """GFP amplified with a site on each tail, no plasmid holding it between two of them."""
+    return plan_restriction(puc19, gfp, enzymes=["EcoRI", "BamHI"])
+
+
+def test_an_insert_no_plasmid_holds_is_amplified_with_a_tailed_primer_at_each_end(tailed, gfp):
+    amplicon = tailed.amplicon
+    assert amplicon is not None
+    forward, reverse = amplicon.primers
+    assert forward.sequence.startswith(amplicon.left_tail)
+    assert reverse.sequence.startswith(reverse_complement(amplicon.right_tail))
+    assert amplicon.record.sequence == amplicon.left_tail + gfp.sequence + amplicon.right_tail
+    # Each tail is the spacer the note asks for and then the site, and the plan says which
+    # enzyme each end is for.
+    for _, tail, enzyme in amplicon.ends:
+        assert enzyme.site in tail
+        assert len(tail) - len(enzyme.site) == SPACER_LENGTH
+    ends = (amplicon.left_enzyme.name, amplicon.right_enzyme.name)
+    assert ends == ("EcoRI", "BamHI")
+    assert (tailed.insert.left_enzyme.name, tailed.insert.right_enzyme.name) == ends
+    # The two tails spell one site of each enzyme and no more, so the amplicon cuts cleanly.
+    found = [site for site in find_sites(amplicon.record, ["EcoRI", "BamHI"]) if site.cuts]
+    assert sorted(site.enzyme.name for site in found) == ["BamHI", "EcoRI"]
+
+
+def test_both_routes_to_the_insert_reach_the_same_product(tailed, made):
+    assert tailed.product.sequence == made.product.sequence
+
+
+def test_a_fragment_already_carrying_the_sites_is_taken_as_it_is(tailed, puc19):
+    given = plan_restriction(puc19, tailed.amplicon.record, enzymes=["EcoRI", "BamHI"])
+    assert given.amplicon is None
+    assert given.product.sequence == tailed.product.sequence
+
+
+def test_the_tm_is_the_annealing_region_and_the_structures_are_the_whole_oligo(tailed):
+    designed = [one for one in tailed.designed_oligos if one.role == "amplification"]
+    assert [one.report.primer.name for one in designed] == ["GFP forward", "GFP reverse"]
+    for report in (one.report for one in designed):
+        primer = report.primer
+        alone = evaluate_primer(Primer(primer.name, primer.sequence))
+        assert report["tm"].value != alone["tm"].value
+        assert report["tm_full"].value == alone["tm"].value
+        assert report["hairpin"].value == alone["hairpin"].value
+        assert report["self_dimer"].value == alone["self_dimer"].value
+
+
+def test_the_protocol_gains_the_pcr_its_program_the_amplicon_gel_and_the_template_removal(tailed):
+    protocol = tailed.protocol()
+    pcr, gel, cleanup, *rest = protocol.steps
+    assert [pcr.title, gel.title, cleanup.title] == [
+        "Amplify GFP",
+        "Check the PCRs on a gel",
+        "Purify every amplicon",
+    ]
+    assert rest[0].title == "Digest pUC19 with EcoRI and BamHI"
+    assert [stage.incubations[0].label for stage in pcr.programs[0].stages]
+    assert [lane.bands_bp for lane in gel.gels[0].lanes] == [(tailed.amplicon.length,)]
+    # A linear template neither transforms nor ligates, so the column is what takes it away.
+    assert "take GFP away" in " ".join(cleanup.notes)
+    assert [row.purpose for row in protocol.oligos][:2] == ["Amplify GFP"] * 2
+    said = " ".join(protocol.highlights)
+    assert "forward primer, 6 spacer bases and the EcoRI site" in said
+    assert "reverse primer, 6 spacer bases and the BamHI site" in said
+
+
+def test_a_plasmid_template_is_taken_away_with_dpni(puc19, gfp):
+    made = plan_restriction(
+        puc19,
+        SequenceRecord(gfp.sequence, topology="circular", name="pGFP"),
+        enzymes=["EcoRI", "BamHI"],
+    )
+    amplicon = made.amplicon
+    assert amplicon is not None
+    assert amplicon.dpni
+    titles = [step.title for step in made.protocol().steps]
+    assert "Digest the plasmid template with DpnI" in titles
+
+
+def test_a_tail_spelling_a_second_site_against_the_insert_is_refused_naming_the_enzyme(puc19, gfp):
+    # An EcoRI tail ends GAATTC, and an insert beginning TAGA completes TCTAGA across the join:
+    # an XbaI site no spacer can be moved off, because the spacer sits the other side of it.
+    edge = SequenceRecord("TAGA" + gfp.sequence, name="GFP")
+    with pytest.raises(ValueError, match=r"XbaI cuts GFP amplicon 2 time"):
+        plan_restriction(puc19, edge, enzymes=["EcoRI", "XbaI"])

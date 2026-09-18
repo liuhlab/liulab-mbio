@@ -22,6 +22,7 @@ import dataclasses
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from liulab_mbio.bench.steps import dam_sites
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import annealed, carried, ordered, rotate
 from liulab_mbio.primers.design import design_pair
@@ -37,29 +38,9 @@ from liulab_mbio.sequence import (
     reverse_complement,
 )
 
-#: Dam methylates the adenine of this site, and DpnI cuts only where it has.
-DAM_SITE = "GATC"
-
 #: What an overlap is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
 OVERLAP_COLOR = "#ff9900"
-
-
-def dam_sites(record: SequenceRecord) -> int:
-    """Count the sites in `record` that DpnI can cut once Dam has methylated them.
-
-    A plasmid grown in a Dam-positive host carries them methylated and a PCR product does not,
-    which is what lets DpnI take the template away and leave the amplicon.
-
-    Examples
-    --------
-    >>> dam_sites(SequenceRecord("AAGATCAA"))
-    1
-    """
-    haystack = record.sequence
-    if record.topology == "circular":
-        haystack += record.sequence[: len(DAM_SITE) - 1]
-    return haystack.count(DAM_SITE)
 
 
 @dataclass(frozen=True, slots=True)

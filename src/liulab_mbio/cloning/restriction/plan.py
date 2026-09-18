@@ -1,10 +1,15 @@
-"""One restriction and ligation cloning, planned from a vector and the plasmid the insert is in.
+"""One restriction and ligation cloning, planned from a vector and where the insert comes from.
 
-`plan_restriction` runs the whole design: cut both plasmids with the enzymes named, take the
-backbone out of one and the insert out of the other, check the two ends anneal, simulate the
-ligation, and design the colony PCR and the sequencing that confirm the clone. `Plan.write` puts
-four files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
-data, and the interactive HTML page rendered from that data.
+`plan_restriction` runs the whole design: open the vector with the enzymes named, get the insert
+to the same two ends, check they anneal, simulate the ligation, and design the colony PCR and
+the sequencing that confirm the clone. `Plan.write` puts four files in one directory -- the
+annotated product, an oligo order sheet, the protocol as JSON data, and the interactive HTML page
+rendered from that data.
+
+There are two routes to the insert and the record handed in picks one. A record already carrying
+the enzymes' sites is cut and the piece between them goes in. A record carrying none is amplified
+first, with a spacer and a recognition site on each primer's 5' tail, and the amplicon is cut
+instead -- `liulab_mbio.cloning.restriction.amplify` is that route.
 
 Every number the protocol prints is computed here or by the modules this one calls, and
 `liulab_mbio.cloning.restriction.bench` is where each bench number's source is written down.
@@ -31,6 +36,7 @@ from liulab_mbio.cloning.plan import (
     status,
     write_protocol_files,
 )
+from liulab_mbio.cloning.restriction.amplify import Amplicon, amplified
 from liulab_mbio.cloning.restriction.bench import digest_amount, ligation_amounts
 from liulab_mbio.cloning.restriction.digest import (
     Diagnostic,
@@ -41,6 +47,7 @@ from liulab_mbio.cloning.restriction.digest import (
     resolve,
 )
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation, ligate
+from liulab_mbio.cloning.restriction.oligos import DesignedOligo
 from liulab_mbio.cloning.restriction.steps import DEFAULT_HOST
 from liulab_mbio.cloning.restriction.steps import protocol as protocol_for
 from liulab_mbio.cloning.restriction.verdicts import (
@@ -54,11 +61,11 @@ from liulab_mbio.cloning.restriction.verdicts import (
 )
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
-from liulab_mbio.primers.polymerase import ONETAQ
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import Primer, SequenceRecord
-from liulab_mbio.sites import EnzymeLike
+from liulab_mbio.sites import EnzymeLike, find_sites
 from liulab_mbio.snapgene import write_dna
 
 
@@ -98,12 +105,15 @@ class Plan:
     ----------
     vector, source
         The records the plan was made from: the plasmid the backbone comes out of, and the one
-        the insert is cut out of.
+        the insert comes from -- the plasmid it is cut out of, or the insert itself.
     enzymes
         The enzymes both digests use, in the order they were named.
     vector_pieces, source_pieces
         Every piece each digest leaves, the one that goes on first. The rest is what the gel
         separates it from.
+    amplicon
+        The PCR that put a site on each end of the insert, or ``None`` where `source` already
+        carried them and the insert was cut out of it.
     ligation
         The simulated product, the pieces and the junctions.
     span
@@ -118,12 +128,13 @@ class Plan:
         The colony PCR that reads both junctions and tells a correct clone from an empty vector.
     reads
         A sequencing primer reading in from outside the first junction and the last.
-    read_reports
-        What each of those two scored on the product.
+    designed_oligos
+        Every oligo the plan designs and what it is for, in the order the sheet lists them: the
+        amplification pair where there is one, then the colony PCR, then the sequencing.
     phenotype
         What the product says about itself.
-    host
-        The competent strain the protocol names.
+    host, polymerase
+        The competent strain the protocol names, and what the insert is amplified with.
     thresholds
         What the oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -134,6 +145,7 @@ class Plan:
     enzymes: tuple[Enzyme, ...]
     vector_pieces: tuple[Piece, ...]
     source_pieces: tuple[Piece, ...]
+    amplicon: Amplicon | None
     ligation: Ligation
     span: tuple[int, int]
     digests: tuple[Amount, Amount]
@@ -141,9 +153,10 @@ class Plan:
     diagnostic: Diagnostic
     colony: ColonyCheck
     reads: tuple[SangerRead, SangerRead]
-    read_reports: tuple[PrimerReport, ...]
+    designed_oligos: tuple[DesignedOligo, ...]
     phenotype: Phenotype
     host: str
+    polymerase: Polymerase
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
@@ -155,6 +168,14 @@ class Plan:
     def insert(self) -> Piece:
         """The source piece that goes in."""
         return self.source_pieces[0]
+
+    @property
+    def digested(self) -> SequenceRecord:
+        """The record the insert's own digest cuts: the amplicon, or `source` where there is none.
+
+        An amplicon carries no methylation, whatever the plasmid that templated it carried.
+        """
+        return self.source if self.amplicon is None else self.amplicon.record
 
     @property
     def product(self) -> SequenceRecord:
@@ -169,7 +190,7 @@ class Plan:
     @property
     def reports(self) -> tuple[PrimerReport, ...]:
         """Every designed oligo's evaluation, in the order the sheet lists them."""
-        return (*self.colony.reports, *self.read_reports)
+        return tuple(oligo.report for oligo in self.designed_oligos)
 
     @property
     def oligos(self) -> tuple[Primer, ...]:
@@ -188,7 +209,7 @@ class Plan:
             buffer_check(self.enzymes),
             temperature_check(self.enzymes),
             cleanup_check(self.enzymes),
-            methylation_check(self.enzymes, (self.vector, self.source)),
+            methylation_check(self.enzymes, (self.vector, self.digested)),
             *self.ligation.checks,
             frame_check(self.product, self.junctions),
             ratio_check(*self.amounts),
@@ -209,16 +230,18 @@ class Plan:
             enzymes=self.enzymes,
             vector_pieces=self.vector_pieces,
             source_pieces=self.source_pieces,
+            amplicon=self.amplicon,
             ligation=self.ligation,
             digests=self.digests,
             amounts=self.amounts,
             diagnostic=self.diagnostic,
             colony=self.colony,
             reads=self.reads,
-            read_reports=self.read_reports,
+            oligos=self.designed_oligos,
             phenotype=self.phenotype,
             checks=self.checks,
             host=self.host,
+            polymerase=self.polymerase,
             thresholds=self.thresholds,
         )
 
@@ -243,16 +266,22 @@ def plan_restriction(
     insert: SequenceRecord | str | os.PathLike[str],
     *,
     enzymes: Sequence[EnzymeLike],
+    polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
     name: str = "",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
-    """Plan cutting an insert out of one plasmid and ligating it into another.
+    """Plan getting an insert to two cut ends and ligating it into `vector`.
 
-    Both plasmids are cut with the same enzymes in one reaction. The longest piece of the vector
-    is its backbone and the shortest piece of `insert` is what goes in; each is gel-purified from
-    what the same digest leaves beside it. The insert is written on whichever strand closes the
-    circle, so which way round it lay in its own plasmid does not matter.
+    The vector is cut with the enzymes named and its longest piece is the backbone, gel-purified
+    from what the same digest leaves beside it.
+
+    `insert` reaches the same two ends by one of two routes, and what it carries picks one. A
+    record already reading a site of either enzyme is cut, and the piece between the two sites is
+    what goes in -- a plasmid the insert already sits in, or a fragment ordered with the sites on
+    it. A record reading no site of either is amplified first: each primer carries a spacer and a
+    recognition site as a 5' tail, and the amplicon is cut instead. Either way the insert is
+    written on whichever strand closes the circle, so which way round it lay does not matter.
 
     The junction is not scarless. The two ends came from a recognition site and ligating them
     puts that site back, so the product gains those bases and `Plan.junctions` says what each one
@@ -261,11 +290,13 @@ def plan_restriction(
     Parameters
     ----------
     vector, insert
-        A record, or a path to a ``.dna``, GenBank or FASTA file holding one. Both are circular
-        plasmids: the vector the insert goes into, and the plasmid it is cut out of.
+        A record, or a path to a ``.dna``, GenBank or FASTA file holding one. The vector is a
+        circular plasmid; `insert` is the insert, or the plasmid it is cut out of.
     enzymes
         One or two enzymes, each an `liulab_mbio.enzymes.Enzyme` or a name the package ships.
-        Each must read exactly one site in each plasmid.
+        Each must read exactly one site in the vector, and one in whatever is cut for the insert.
+    polymerase
+        For the insert's PCR, where one is run.
     host, name
         The competent strain the protocol names, and what to call the product. The colony PCR
         uses OneTaq, which is what NEB's protocol asks for.
@@ -282,16 +313,28 @@ def plan_restriction(
     KeyError
         If a name is not one the package ships.
     ValueError
-        If either plasmid is not circular, if an enzyme reads anything but one site in either,
-        if the backbone's two ends anneal to each other, or if the insert's ends do not anneal
-        to the backbone's.
+        If the vector is not circular, if an enzyme reads anything but one site in what is cut,
+        if the backbone's two ends anneal to each other, if no tail spells one site, or if the
+        insert's ends do not anneal to the backbone's.
     """
     into = as_record(vector)
     holder = as_record(insert)
     chosen = resolve(enzymes)
     vector_pieces = opened(into, chosen)
-    source_pieces = excised(holder, chosen, into=vector_pieces[0])
-    backbone, released = vector_pieces[0], source_pieces[0]
+    backbone = vector_pieces[0]
+    amplicon = (
+        None
+        if _carries_a_site(holder, chosen)
+        else amplified(
+            holder,
+            into=backbone,
+            polymerase=polymerase,
+            thresholds=thresholds["amplification"],
+        )
+    )
+    digested = holder if amplicon is None else amplicon.record
+    source_pieces = excised(digested, chosen, into=backbone)
+    released = source_pieces[0]
     built = ligate(
         backbone,
         released,
@@ -314,20 +357,50 @@ def plan_restriction(
         chosen,
         vector_pieces,
         source_pieces,
+        amplicon,
         built,
         span,
-        (digest_amount((into.name, len(into))), digest_amount((holder.name, len(holder)))),
+        (digest_amount((into.name, len(into))), digest_amount((digested.name, len(digested)))),
         ligation_amounts((backbone.name, backbone.length), (released.name, released.length)),
         diagnostic(built.product, into, chosen),
         colony,
         reads,
-        tuple(
-            evaluate_primer(read.primer, built.product, thresholds=thresholds["sequencing"])
-            for read in reads
-        ),
+        _designed(amplicon, colony, reads, built.product, thresholds),
         read_phenotype(built.product, (junctions[0], junctions[-1]), vector=into, span=span),
         host,
+        polymerase,
         thresholds,
+    )
+
+
+def _carries_a_site(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> bool:
+    """Whether any of these enzymes cuts `record`, which is what decides the route.
+
+    A record reading a site is cut as it is, and refused where the count is wrong. One reading
+    none of them has the sites put on its two ends by PCR instead.
+    """
+    return any(site.cuts for site in find_sites(record, enzymes))
+
+
+def _designed(
+    amplicon: Amplicon | None,
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
+    product: SequenceRecord,
+    thresholds: Mapping[PrimerRole, Thresholds],
+) -> tuple[DesignedOligo, ...]:
+    """Return every oligo the plan orders, in the order the bench uses them."""
+    pair = () if amplicon is None else (amplicon.report.forward, amplicon.report.reverse)
+    return (
+        *(DesignedOligo(report, "amplification") for report in pair),
+        *(DesignedOligo(report, "colony PCR") for report in colony.reports),
+        *(
+            DesignedOligo(
+                evaluate_primer(read.primer, product, thresholds=thresholds["sequencing"]),
+                "sequencing",
+            )
+            for read in reads
+        ),
     )
 
 

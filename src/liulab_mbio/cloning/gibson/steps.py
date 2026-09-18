@@ -36,6 +36,7 @@ from liulab_mbio.bench.steps import (
     catalogued,
     cleanup_step,
     colony_pcr_step,
+    dam_sites,
     dpni_step,
     gel_step,
     listed,
@@ -47,7 +48,7 @@ from liulab_mbio.bench.steps import (
     transform_step,
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
-from liulab_mbio.cloning.gibson.assembly import Assembly, Junction, Part, dam_sites
+from liulab_mbio.cloning.gibson.assembly import Assembly, Junction, Part
 from liulab_mbio.cloning.gibson.bench import (
     AssemblyProduct,
     assembly_program,

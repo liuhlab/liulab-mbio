@@ -7,6 +7,7 @@ import typer
 
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.cloning.restriction.plan import DEFAULT_HOST, Plan, plan_restriction
+from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan restriction and ligation cloning.", no_args_is_help=True)
 
@@ -23,7 +24,7 @@ def plan(
             exists=True,
             dir_okay=False,
             readable=True,
-            help="The plasmid the insert is cut out of.",
+            help="The insert, or the plasmid it is cut out of.",
         ),
     ],
     out: Annotated[
@@ -36,15 +37,19 @@ def plan(
         list[str] | None,
         typer.Option(help="An enzyme both digests use; once per enzyme, at most twice."),
     ] = None,
+    polymerase: Annotated[
+        str, typer.Option(help="Polymerase for the insert's PCR, where one is run.")
+    ] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
-    """Cut an insert out of one plasmid, ligate it into another, and write the plan into OUT."""
+    """Ligate an insert into a vector between two sites, and write the plan into OUT."""
     plan_command(
         lambda: plan_restriction(
             vector,
             insert,
             enzymes=_enzymes(enzyme),
+            polymerase=_polymerase(polymerase),
             host=host,
             name=name,
         ),
@@ -75,3 +80,18 @@ def _enzymes(given: list[str] | None) -> tuple[str, ...]:
     if not given:
         raise ValueError("name the enzymes to cut with, once each: --enzyme EcoRI --enzyme BamHI")
     return tuple(given)
+
+
+def _polymerase(name: str) -> Polymerase:
+    """Read one of the polymerases this package ships, whatever the case of its name.
+
+    Raises
+    ------
+    ValueError
+        If it ships no polymerase of that name.
+    """
+    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
+    if found is None:
+        shipped = ", ".join(one.name for one in POLYMERASES)
+        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
+    return found

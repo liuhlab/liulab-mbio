@@ -1,7 +1,8 @@
 """The restriction and ligation bench protocol: its own steps, its own notes, and their order.
 
 The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around the two
-digests, the gel purification and the ligation, and adds what only this method has to say. Every
+digests, the gel purification and the ligation, adds the insert's own PCR where it is amplified
+rather than cut out, and says what only this method has to say. Every
 number is computed by `liulab_mbio.cloning.restriction.plan` or by the modules it calls, and
 `liulab_mbio.cloning.restriction.bench` is where each one's source is written down.
 
@@ -19,11 +20,17 @@ from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
 from liulab_mbio.bench.inactivation import heat_inactivation
 from liulab_mbio.bench.oligos import oligo_row
-from liulab_mbio.bench.pcr import COLONY_PCR_MASTER_MIX, colony_pcr_master_mix_component
+from liulab_mbio.bench.pcr import (
+    COLONY_PCR_MASTER_MIX,
+    DNTP_STOCK_MM,
+    colony_pcr_master_mix_component,
+)
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     CELLS_UL,
     COLONY_PCR_TITLE,
+    DPNI_REFERENCE,
+    DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
     IPTG_UM,
     OUTGROWTH_CELSIUS,
@@ -34,19 +41,29 @@ from liulab_mbio.bench.steps import (
     badges,
     card,
     catalogued,
+    cleanup_step,
     colony_pcr_step,
+    dam_sites,
+    dpni_step,
     enzyme_material,
+    gel_step,
     listed,
+    pcr_step,
+    pcr_title,
     phenotype_sentences,
     quantify_step,
     sequencing_step,
     transform_step,
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
+from liulab_mbio.cloning.restriction.amplify import Amplicon
 from liulab_mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     BUFFER_FINDER,
+    CLEAVAGE_REFERENCE,
     COHESIVE_SECONDS,
+    COLUMN_RECOVERY,
+    COLUMN_REFERENCE,
     CONTROLS,
     DIGEST_SECONDS,
     LIGATION_NG_UL,
@@ -65,8 +82,9 @@ from liulab_mbio.cloning.restriction.bench import (
 )
 from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation
+from liulab_mbio.cloning.restriction.oligos import DesignedOligo
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers.evaluation import PrimerReport
+from liulab_mbio.primers.polymerase import Polymerase
 from liulab_mbio.primers.thresholds import PrimerRole, Thresholds
 from liulab_mbio.protocol.model import (
     Gel,
@@ -108,63 +126,64 @@ def protocol(
     enzymes: Sequence[Enzyme],
     vector_pieces: Sequence[Piece],
     source_pieces: Sequence[Piece],
+    amplicon: Amplicon | None,
     ligation: Ligation,
     digests: Sequence[Amount],
     amounts: Sequence[Amount],
     diagnostic: Diagnostic,
     colony: ColonyCheck,
     reads: Sequence[SangerRead],
-    read_reports: Sequence[PrimerReport],
+    oligos: Sequence[DesignedOligo],
     phenotype: Phenotype,
     checks: Sequence[judged.Check],
     host: str,
+    polymerase: Polymerase,
     thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned cloning, ready to render.
 
     Each argument is the `liulab_mbio.cloning.restriction.plan.Plan` field or property of that
-    name. The steps run in the order someone does them: the two digests, the gel that separates
-    the pieces and the extraction that recovers them, quantification, the ligation, the
-    transformation and plating, the colony PCR and the sequencing.
+    name, and `oligos` is `Plan.designed_oligos`. The steps run in the order someone does them:
+    the insert's PCR where there is one, then the two digests, the gel that separates the pieces
+    and the extraction that recovers them, quantification, the ligation, the transformation and
+    plating, the colony PCR and the sequencing.
     """
     backbone, insert = ligation.pieces
     named = listed([enzyme.name for enzyme in enzymes])
+    digested = source if amplicon is None else amplicon.record
     return Protocol(
         f"Restriction and ligation: {insert.name} into {vector.name}",
         summary=(
-            f"Cut {vector.name} and {source.name} with {named}, gel-purify the "
-            f"{backbone.length} bp backbone and the {insert.length} bp insert, ligate them, and "
-            "confirm the clone by colony PCR and sequencing."
+            f"{_first(amplicon, source)}Cut {vector.name} and {digested.name} with {named}, "
+            f"gel-purify the {backbone.length} bp backbone and the {insert.length} bp insert, "
+            "ligate them, and confirm the clone by colony PCR and sequencing."
         ),
-        overview=_overview(vector, source, enzymes, ligation, phenotype),
-        highlights=_highlights(ligation, phenotype),
+        overview=_overview(vector, source, enzymes, amplicon, ligation, phenotype),
+        highlights=_highlights(amplicon, ligation, phenotype),
         checks=badges(checks),
         materials=_materials(
             vector=vector,
             source=source,
             enzymes=enzymes,
+            amplicon=amplicon,
             colony=colony,
             host=host,
+            polymerase=polymerase,
             phenotype=phenotype,
             sizes=_sizes(vector_pieces, source_pieces),
         ),
-        oligos=(
-            *(
-                oligo_row(report, purpose=COLONY_PCR_TITLE, thresholds=thresholds["colony PCR"])
-                for report in colony.reports
-            ),
-            *(
-                oligo_row(report, purpose=SEQUENCING_TITLE, thresholds=thresholds["sequencing"])
-                for report in read_reports
-            ),
+        oligos=tuple(
+            oligo_row(one.report, purpose=_purpose(one, amplicon), thresholds=thresholds[one.role])
+            for one in oligos
         ),
         equipment=EQUIPMENT,
         steps=_steps(
             vector=vector,
-            source=source,
+            digested=digested,
             enzymes=enzymes,
             vector_pieces=vector_pieces,
             source_pieces=source_pieces,
+            amplicon=amplicon,
             ligation=ligation,
             digests=digests,
             amounts=amounts,
@@ -173,23 +192,45 @@ def protocol(
             reads=reads,
             phenotype=phenotype,
             host=host,
+            polymerase=polymerase,
         ),
-        references=_references(phenotype),
+        references=_references(amplicon, phenotype),
     )
+
+
+def _first(amplicon: Amplicon | None, source: SequenceRecord) -> str:
+    """Say what happens before the digests, where the insert has to be amplified first."""
+    if amplicon is None:
+        return ""
+    out_of = "" if amplicon.name == source.name else f" from {source.name}"
+    return f"Amplify {amplicon.name}{out_of} with a recognition site on each primer's 5' tail. "
+
+
+def _purpose(oligo: DesignedOligo, amplicon: Amplicon | None) -> str:
+    """Return the title of the step that uses this oligo."""
+    if oligo.role == "amplification":
+        return pcr_title(amplicon.name) if amplicon is not None else ""
+    return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
 def _overview(
     vector: SequenceRecord,
     source: SequenceRecord,
     enzymes: Sequence[Enzyme],
+    amplicon: Amplicon | None,
     ligation: Ligation,
     phenotype: Phenotype,
 ) -> dict[str, str]:
     """Return the facts to check before starting, each short enough to be a card."""
     backbone, insert = ligation.pieces
+    said = (
+        f"{insert.name}, {insert.length} bp from {source.name}"
+        if amplicon is None
+        else f"{amplicon.name}, {insert.length} bp, amplified"
+    )
     facts = {
         "Vector": f"{vector.name}, {len(vector)} bp",
-        "Insert": f"{insert.name}, {insert.length} bp from {source.name}",
+        "Insert": card(said, f"{insert.length} bp"),
         "Enzymes": card(
             listed([enzyme.supplier_label for enzyme in enzymes]), f"{len(enzymes)} enzymes"
         ),
@@ -213,14 +254,32 @@ def _selection(phenotype: Phenotype) -> str:
     return f"{phenotype.marker.name} marker" if phenotype.marker is not None else ""
 
 
-def _highlights(ligation: Ligation, phenotype: Phenotype) -> tuple[str, ...]:
+def _highlights(
+    amplicon: Amplicon | None, ligation: Ligation, phenotype: Phenotype
+) -> tuple[str, ...]:
     """Return what the facts mean, a sentence each: the junctions first, then the phenotype."""
     backbone, insert = ligation.pieces
     return (
         f"One ligation joins two fragments: {backbone.name} ({backbone.length} bp) and "
         f"{insert.name} ({insert.length} bp).",
+        *_tailed(amplicon),
         f"This method's junction is not scarless: {_spelled(ligation.junctions)}",
         *phenotype_sentences(phenotype, [insert.name]),
+    )
+
+
+def _tailed(amplicon: Amplicon | None) -> tuple[str, ...]:
+    """Say what each primer's tail carries and which enzyme cuts the end it makes."""
+    if amplicon is None:
+        return ()
+    ends = "; ".join(
+        f"{which} primer, {len(tail) - len(enzyme.site)} spacer bases and the {enzyme.name} site"
+        for which, tail, enzyme in amplicon.ends
+    )
+    return (
+        "The insert is amplified rather than cut out, so its two ends come from its primers -- "
+        f"{ends}. The spacer is what lets an enzyme cut a site that close to the end of a "
+        f"fragment, and the {amplicon.length} bp amplicon is digested in place of a plasmid.",
     )
 
 
@@ -250,8 +309,10 @@ def _materials(
     vector: SequenceRecord,
     source: SequenceRecord,
     enzymes: Sequence[Enzyme],
+    amplicon: Amplicon | None,
     colony: ColonyCheck,
     host: str,
+    polymerase: Polymerase,
     phenotype: Phenotype,
     sizes: tuple[int, ...],
 ) -> tuple[Material, ...]:
@@ -259,9 +320,16 @@ def _materials(
     ladders = dict.fromkeys((choose_ladder(sizes).name, colony.ladder.name))
     return (
         Material(f"{vector.name} plasmid", storage="-20 °C", note="cut to make the backbone"),
-        Material(f"{source.name} plasmid", storage="-20 °C", note="cut to release the insert"),
+        Material(
+            f"{source.name} {'plasmid' if source.topology == 'circular' else 'fragment'}",
+            storage="-20 °C",
+            note="cut to release the insert" if amplicon is None else "template for the PCR",
+        ),
+        *_pcr_materials(amplicon, polymerase),
         *(
-            enzyme_material(enzyme, note=f"cuts both plasmids once, leaving {_left(enzyme)}")
+            enzyme_material(
+                enzyme, note=f"cuts the vector and the insert once each, leaving {_left(enzyme)}"
+            )
             for enzyme in enzymes
         ),
         _buffer_material(enzymes),
@@ -275,6 +343,11 @@ def _materials(
         Material("Agarose, 1X TAE or TBE, and a DNA stain"),
         *(catalogued(name, supplier=SUPPLIER) for name in ladders),
         Material("Gel extraction spin columns", supplier=SUPPLIER, catalog="T1120"),
+        *(
+            ()
+            if amplicon is None
+            else (Material("PCR cleanup spin columns", supplier=SUPPLIER, catalog="T1130"),)
+        ),
         Material(
             host,
             supplier=SUPPLIER if host == DEFAULT_HOST else "",
@@ -291,6 +364,33 @@ def _materials(
             supplier=SUPPLIER,
             storage="-20 °C",
             amount=f"{colony_pcr_master_mix_component().volume_ul:g} µL per reaction",
+        ),
+    )
+
+
+def _pcr_materials(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[Material, ...]:
+    """Return what the insert's PCR takes, and nothing at all where no PCR is run."""
+    if amplicon is None:
+        return ()
+    return (
+        Material(
+            f"{polymerase.name} DNA Polymerase and its reaction buffer",
+            supplier=SUPPLIER,
+            storage="-20 °C",
+        ),
+        Material("dNTP mix", storage="-20 °C", note=f"{DNTP_STOCK_MM:g} mM of each base"),
+        *(
+            (
+                Material(
+                    "DpnI",
+                    supplier=SUPPLIER,
+                    storage="-20 °C",
+                    amount=f"{DPNI_UNITS} units per PCR",
+                    note="cuts the methylated plasmid template only",
+                ),
+            )
+            if amplicon.dpni
+            else ()
         ),
     )
 
@@ -329,10 +429,11 @@ def _plate(phenotype: Phenotype) -> str:
 def _steps(
     *,
     vector: SequenceRecord,
-    source: SequenceRecord,
+    digested: SequenceRecord,
     enzymes: Sequence[Enzyme],
     vector_pieces: Sequence[Piece],
     source_pieces: Sequence[Piece],
+    amplicon: Amplicon | None,
     ligation: Ligation,
     digests: Sequence[Amount],
     amounts: Sequence[Amount],
@@ -341,13 +442,22 @@ def _steps(
     reads: Sequence[SangerRead],
     phenotype: Phenotype,
     host: str,
+    polymerase: Polymerase,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes."""
     backbone, insert = ligation.pieces
     return (
+        *_amplify_steps(amplicon, polymerase),
         _digest_step(vector, enzymes, vector_pieces, digests[0], keeping=backbone),
-        _digest_step(source, enzymes, source_pieces, digests[1], keeping=insert),
-        _purify_step(vector, source, vector_pieces, source_pieces, keeping=(backbone, insert)),
+        _digest_step(
+            digested,
+            enzymes,
+            source_pieces,
+            digests[1],
+            keeping=insert,
+            notes=_stubs(amplicon, insert),
+        ),
+        _purify_step(vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)),
         quantify_step(amounts),
         _ligation_step(ligation, amounts),
         transform_step(
@@ -415,6 +525,83 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
     )
 
 
+def _stubs(amplicon: Amplicon | None, insert: Piece) -> tuple[str, ...]:
+    """Say what the two tails come off as, where the record cut is an amplicon."""
+    if amplicon is None:
+        return ()
+    return (
+        f"The two tails come off as {insert.start} and {amplicon.length - insert.end} bp ends. "
+        "They run off the bottom of the gel and neither can close the circle, so the insert is "
+        "the only band to cut out.",
+    )
+
+
+def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[Step, ...]:
+    """Make the insert by PCR, check it, take the template away, and clean it up for the digest.
+
+    Nothing at all where the insert was cut out of a plasmid instead.
+    """
+    if amplicon is None:
+        return ()
+    report = amplicon.report
+    low, high = COLUMN_RECOVERY
+    ends = listed([f"{enzyme.name} on the {which} end" for which, _, enzyme in amplicon.ends])
+    return (
+        pcr_step(
+            amplicon.name,
+            amplicon.template.name,
+            amplicon.length,
+            polymerase=polymerase,
+            annealing_temperature=report.annealing_temperature,
+            extension_seconds=report.extension_seconds,
+            notes=(
+                f"Each primer's 5' tail is a spacer and a recognition site, {ends}. The tail is "
+                "not on the template, so it does not anneal in the first cycles and the "
+                "annealing temperature above is read from the annealing regions alone.",
+                "The spacer is what lets the enzyme cut a site this close to the end of a "
+                "fragment; NEB measures cleavage at one to five bases and answers six for an "
+                "enzyme it does not list.",
+            ),
+        ),
+        gel_step([(amplicon.name, amplicon.length)]),
+        *(
+            (
+                dpni_step(
+                    [amplicon.name],
+                    [(amplicon.template.name, dam_sites(amplicon.template))],
+                    notes=(
+                        "The template carries the insert too, so any of it left over reaches "
+                        "the ligation as a competitor.",
+                    ),
+                ),
+            )
+            if amplicon.dpni
+            else ()
+        ),
+        cleanup_step(
+            notes=(
+                f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
+                "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon "
+                "and nothing else.",
+                f"Its eluate carries salt, so keep it under {MAX_DNA_FRACTION:.0%} of the "
+                "digest below.",
+                *_template_note(amplicon),
+            )
+        ),
+    )
+
+
+def _template_note(amplicon: Amplicon) -> tuple[str, ...]:
+    """Say what takes the template away, where no DpnI digest is worth a step of its own."""
+    if amplicon.dpni:
+        return ()
+    return (
+        f"Nothing further has to take {amplicon.template.name} away: it reads neither enzyme's "
+        "site, so its ends cannot join the backbone. A DpnI digest earns a step only against a "
+        "Dam-methylated plasmid template.",
+    )
+
+
 def _digest_step(
     record: SequenceRecord,
     enzymes: Sequence[Enzyme],
@@ -422,8 +609,9 @@ def _digest_step(
     amount: Amount,
     *,
     keeping: Piece,
+    notes: Sequence[str] = (),
 ) -> Step:
-    """Cut one plasmid with both enzymes in one tube."""
+    """Cut one record with both enzymes in one tube, carrying the caller's own notes."""
     named = listed([enzyme.name for enzyme in enzymes])
     room = f"{MAX_DNA_FRACTION:.0%}"
     return Step(
@@ -448,6 +636,7 @@ def _digest_step(
             _buffer_note(enzymes),
             f"Keep the DNA solution under {room} of the reaction; a column eluate carries salt, "
             "and salt leaves the digest incomplete.",
+            *notes,
             *STAR_ACTIVITY,
         ),
         troubleshooting=(
@@ -492,7 +681,7 @@ def _celsius(enzymes: Sequence[Enzyme]) -> str:
 
 def _purify_step(
     vector: SequenceRecord,
-    source: SequenceRecord,
+    digested: SequenceRecord,
     vector_pieces: Sequence[Piece],
     source_pieces: Sequence[Piece],
     *,
@@ -522,14 +711,14 @@ def _purify_step(
                 ladder,
                 (
                     Lane(vector.name, tuple(piece.length for piece in vector_pieces)),
-                    Lane(source.name, tuple(piece.length for piece in source_pieces)),
+                    Lane(digested.name, tuple(piece.length for piece in source_pieces)),
                 ),
                 title="Digests",
             ),
         ),
         expected=(
             f"{vector.name}: {_bands(_sizes(vector_pieces))}.",
-            f"{source.name}: {_bands(_sizes(source_pieces))}.",
+            f"{digested.name}: {_bands(_sizes(source_pieces))}.",
             f"Each slice recovers {low:.0%} to {high:.0%} of the DNA that was in it.",
             *_off_the_gel(sizes, ladder),
         ),
@@ -632,9 +821,13 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
     )
 
 
-def _references(phenotype: Phenotype) -> tuple[Reference, ...]:
+def _references(amplicon: Amplicon | None, phenotype: Phenotype) -> tuple[Reference, ...]:
     """Where the numbers come from."""
     items = [*REFERENCES, *BENCH_REFERENCES]
+    if amplicon is not None:
+        items.extend((CLEAVAGE_REFERENCE, COLUMN_REFERENCE))
+        if amplicon.dpni:
+            items.append(DPNI_REFERENCE)
     if phenotype.blue_white:
         items.append(PLATE_REFERENCE)
     return tuple(items)

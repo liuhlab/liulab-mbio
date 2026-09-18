@@ -31,6 +31,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Troubleshooting,
 )
+from liulab_mbio.sequence import SequenceRecord
 
 #: The DpnI digest that takes the plasmid template away. No supplier's table sets these, so they
 #: are this package's choices; `docs/research/golden-gate-assembly.md` §3 justifies the digest
@@ -38,6 +39,9 @@ from liulab_mbio.protocol.model import (
 DPNI_UNITS = 20
 DPNI_CELSIUS = 37.0
 DPNI_SECONDS = 3600
+
+#: Dam methylates the adenine of this site, and DpnI cuts only where it has.
+DAM_SITE = "GATC"
 
 #: Transformation and plating, from the NEB #E1601 and #E1602 manuals (§5 of the same note):
 #: microlitres, degrees Celsius and seconds.
@@ -134,6 +138,23 @@ NEB_TRANSFORMATION = Transformation(
     plate_ul=PLATE_UL,
     dilution=PLATE_DILUTION,
 )
+
+
+def dam_sites(record: SequenceRecord) -> int:
+    """Count the sites in `record` that DpnI can cut once Dam has methylated them.
+
+    A plasmid grown in a Dam-positive host carries them methylated and a PCR product does not,
+    which is what lets DpnI take the template away and leave the amplicon.
+
+    Examples
+    --------
+    >>> dam_sites(SequenceRecord("AAGATCAA"))
+    1
+    """
+    haystack = record.sequence
+    if record.topology == "circular":
+        haystack += record.sequence[: len(DAM_SITE) - 1]
+    return haystack.count(DAM_SITE)
 
 
 def listed(items: Sequence[str]) -> str:

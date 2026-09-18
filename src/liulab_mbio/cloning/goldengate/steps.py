@@ -37,6 +37,7 @@ from liulab_mbio.bench.steps import (
     catalogued,
     cleanup_step,
     colony_pcr_step,
+    dam_sites,
     dpni_step,
     enzyme_material,
     gel_step,
@@ -49,7 +50,7 @@ from liulab_mbio.bench.steps import (
     transform_step,
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
-from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part, dam_sites
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
     REFERENCES,

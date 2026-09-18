@@ -61,6 +61,15 @@ MAX_ENZYME_FRACTION = 0.1
 #: carries salt, and salt inhibits the digest. Technical Guide, §2.
 MAX_DNA_FRACTION = 0.25
 
+#: What NEB asks for between a recognition site and the end of a PCR product, and what its own
+#: per-enzyme table measures: at one or two spacer bases most of these enzymes cut poorly, and
+#: only SmaI and XmaI cut well at one. §2, and the value is `liulab_mbio.sites.SPACER_LENGTH`.
+CLEAVAGE_REFERENCE = Reference(
+    "NEB, Cleavage Close to the End of DNA Fragments, for the bases a site needs 5' of it to be "
+    "cut on a PCR product",
+    url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
+)
+
 #: The conditions NEB names as contributing to star activity, each with its own countermeasure.
 #: Printed, never predicted: NEB's own caveat is that their weight varies from enzyme to enzyme.
 #: §2.
@@ -333,6 +342,19 @@ def gel_recovery(length_bp: int) -> tuple[float, float]:
     if length_bp <= 0:
         raise ValueError(f"a fragment is at least one base pair, got {length_bp}")
     return LARGE_GEL_RECOVERY if length_bp >= LARGE_FRAGMENT_BP else GEL_RECOVERY
+
+
+#: What a spin column recovers of a finished reaction, as a fraction. It is the route from a PCR
+#: to the digest that follows it, and it leaves salt behind, which is why the digest holds the
+#: DNA solution under `MAX_DNA_FRACTION`. Monarch Spin PCR & DNA Cleanup Kit (NEB #T1130), §10.
+COLUMN_RECOVERY = (0.70, 0.90)
+
+#: What a protocol cites when it cleans a reaction up on a column.
+COLUMN_REFERENCE = Reference(
+    "NEB, Monarch Spin PCR & DNA Cleanup Kit instruction manual, NEB #T1130, version 1.0 06.24, "
+    "for what a spin column recovers",
+    url="https://www.neb.com/-/media/nebus/files/manuals/manualt1130.pdf",
+)
 
 
 #: NEB's four transformation controls and what each should give relative to the others. No
