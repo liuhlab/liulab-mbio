@@ -1,9 +1,10 @@
 // A drawing's page. Hovering over anything drawn shows its details, read from its group's data
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
 // show or hide each kind of item and each feature type in place, flip the map's shape, and show
-// the sequence view. A click on an item highlights it in both views and scrolls the other to it.
-// In the sequence view, hovering over a base shows its position, and a drag selects bases to copy,
-// scrolling the view while the pointer lies past its top or bottom.
+// the sequence view, beside the map or under it as the page's width allows. A click on an item
+// highlights it in both views and scrolls the other to it. In the sequence view, hovering over a
+// base shows its position, and a drag selects bases to copy, scrolling the view while the pointer
+// lies past its top or bottom.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
@@ -79,10 +80,39 @@
       view.classList.toggle("one-strand", !strands.checked);
       if (chosen) choose(chosen);
     }
+    arrange();
   };
   document.addEventListener("change", apply);
   // A browser may restore switches as they were left, rather than as the page was written.
   window.addEventListener("pageshow", apply);
+
+  // Where the sequence view stands: the first of these arrangements that fits the page's own
+  // width, given each drawing's natural width, its SVG's `width`.
+  const plot = document.querySelector(".plot");
+  const least = 320; // The narrowest the map goes beside the rows.
+  const arrangements = [
+    // Beside the map, the rows at their natural width.
+    {
+      under: false,
+      fits: (width) => width.rows + width.gap + Math.min(width.map, least) <= width.room,
+    },
+    // Under the map, the rows scaled down where they do not fit.
+    { under: true, fits: () => true },
+  ];
+  const natural = (svg) => Number(svg.getAttribute("width"));
+  const arrange = () => {
+    if (!view) return;
+    const style = getComputedStyle(plot);
+    const width = {
+      room: plot.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      gap: parseFloat(style.columnGap),
+      map: natural(map.querySelector("[data-shape]:not([hidden]) svg")),
+      rows: natural(view.querySelector("svg")),
+    };
+    const { under } = arrangements.find((one) => one.fits(width));
+    plot.classList.toggle("under", under && !view.hidden);
+  };
+  new ResizeObserver(arrange).observe(plot);
 
   // The sequence view's rows: the bases each holds, counted as the stretch drawn counts them, and
   // how far down its strands and rail lie. Read when first needed.

@@ -5,10 +5,11 @@ font subsets the drawing was measured in, so text draws at its laid-out width an
 search and copy. It keeps a white background whatever the browser's colour scheme.
 
 Switches above the drawing show or hide each kind of item and each feature type in place, flip
-the map between its shapes at top right, and show the sequence view beside it. A click on an item
-highlights it in both views, and scrolls the other view to it. In the sequence view, a toggle shows
-one strand or both, hovering over a base shows its position, and a drag selects bases to copy,
-scrolling the view while it passes the view's top or bottom.
+the map between its shapes at top right, and show the sequence view with it: beside the map while
+the page is wide enough for both, under it otherwise. A click on an item highlights it in both
+views, and scrolls the other view to it. In the sequence view, a toggle shows one strand or both,
+hovering over a base shows its position, and a drag selects bases to copy, scrolling the view
+while it passes the view's top or bottom.
 """
 
 import base64
@@ -54,7 +55,7 @@ def render(
     sequence_shown: bool = False,
     both_strands: bool = True,
 ) -> str:
-    """Return a page showing a map under `title`, with `sequence_view` beside it.
+    """Return a page showing a map under `title`, with `sequence_view`.
 
     `maps` holds the map as an SVG element in each shape it is drawn in, such as ``"circle"``
     and ``"line"``. The shape `shown` names shows first, and a switch flips between them when

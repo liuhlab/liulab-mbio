@@ -120,11 +120,11 @@ class Drawing:
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
-        A ``.html`` page keeps its text as text, and puts the sequence view beside the map. A
-        ``.png`` at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on
-        any machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under
-        the map. The PDF has the map on its first page, and the sequence view's rows on the pages
-        after, as many to a page as fit whole.
+        A ``.html`` page keeps its text as text, and puts the sequence view beside the map, or
+        under it on a narrow page. A ``.png`` at `dpi` and a ``.pdf`` draw every letter as its
+        outline, so they look the same on any machine; `dpi` counts for the PNG alone. The PNG is
+        one image, the sequence view under the map. The PDF has the map on its first page, and the
+        sequence view's rows on the pages after, as many to a page as fit whole.
 
         A page carries every item behind its switches, a circular record drawn whole both as a
         circle and as a line, and the sequence view of a stretch up to `sequence_view.LIMIT`
@@ -182,8 +182,7 @@ def draw_map(
     linear
         Whether a circular record drawn whole is opened as a line.
     sequence_view
-        Whether the sequence view beside the map is switched on, at most `sequence_view.LIMIT`
-        bases.
+        Whether the sequence view is switched on, at most `sequence_view.LIMIT` bases.
     features, primers, cut_sites
         Whether each is switched on.
     enzymes

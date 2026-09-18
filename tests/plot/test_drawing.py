@@ -814,7 +814,7 @@ def _rows(page: Node) -> list[Node]:
         ({"both_strands": False}, False, False),
     ],
 )
-def test_the_page_carries_the_sequence_view_beside_the_map_shown_first_as_asked(
+def test_the_page_carries_the_sequence_view_with_the_map_shown_first_as_asked(
     gfp: SequenceRecord, tmp_path: Path, switches: dict, shown: bool, both: bool
 ) -> None:
     drawing = draw_map(gfp, **switches)

@@ -3,7 +3,7 @@ name: plot-map
 description: >-
   Draw a sequence record as a map with `liulab_mbio`, as SnapGene Viewer's Map and Sequence tabs
   show it: a circle or a line, the whole record or one region, its features, primers and enzyme
-  cut sites labelled so no label overlaps another, and the bases beside it on request. Writes one
+  cut sites labelled so no label overlaps another, and the bases with it on request. Writes one
   offline HTML page to explore, or a PNG or PDF figure. Use whenever someone wants a record drawn
   or shown: a plasmid map, a map of a `.dna`, GenBank or FASTA file, a region or insert drawn as
   a line, the sequence view of a construct, where a feature, primer or cut site lies, a figure of
@@ -30,9 +30,9 @@ The suffix picks the format, and `-o` repeats to write several from one layout. 
 file written, then a notice if the map hid any label. `--help` lists every switch.
 
 - **`.html`** is one page that opens offline: details on hover, a switch for each layer and
-  feature type, a circle or line flip, the sequence view beside the map, a click that finds an
-  item in both views, and a drag that selects bases to copy. The command's switches set only
-  what it shows first. Hand it to someone who wants to explore.
+  feature type, a circle or line flip, the sequence view beside the map or under it on a narrow
+  page, a click that finds an item in both views, and a drag that selects bases to copy. The
+  command's switches set only what it shows first. Hand it to someone who wants to explore.
 - **`.png`** and **`.pdf`** look the same on any machine and leave out what is switched off, the
   sequence view unless `--sequence-view`. The PNG is one image, the sequence view under the map,
   at `--dpi`. The PDF puts the sequence view's rows on the pages after the map.

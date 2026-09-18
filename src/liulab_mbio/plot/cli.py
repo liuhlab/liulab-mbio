@@ -50,7 +50,7 @@ def map_(
     sequence_view: Annotated[
         bool,
         typer.Option(
-            "--sequence-view", help="Switch the bases beside the map on, at most 100,000 of them."
+            "--sequence-view", help="Switch the bases on, with the map, at most 100,000 of them."
         ),
     ] = False,
     no_features: Annotated[

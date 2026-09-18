@@ -39,6 +39,35 @@ body {
   height: auto;
 }
 
+/* The script sets the sequence view beside the map while its rows keep their natural width, and
+   under the map otherwise, where the map fits in at most 40% of the page's height, less its pane's
+   padding. Print keeps them side by side. */
+@media screen {
+  .plot:not(.under) > .sequence-view {
+    flex-shrink: 0;
+  }
+
+  .plot.under {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0;
+  }
+
+  .plot.under > .map {
+    flex: none;
+  }
+
+  .plot.under > .map svg {
+    width: auto;
+    max-height: calc(40vh - 32px);
+  }
+
+  .plot.under > .sequence-view {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+}
+
 .plot text {
   white-space: pre;
 }
