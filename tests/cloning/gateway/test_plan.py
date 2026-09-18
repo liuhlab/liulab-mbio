@@ -556,6 +556,8 @@ def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequenc
     assert [lane.label for lane in screen.gels[0].lanes] == [CORRECT_CLONE, EMPTY_CLONE]
     assert f"{gateway_plan.colony.agarose_percent:g}% gel" in " ".join(screen.instructions)
     assert not any("reversed" in line.lower() for line in screen.expected)
+    # Gateway asks for no junction primer, so the line saying where one stops is left out.
+    assert not any("junction primer" in line for line in screen.expected)
     assert any("pCR8/GW/TOPO" in note for note in confirm.notes)
     assert REGIONS["attB1"] in " ".join(confirm.expected)
 

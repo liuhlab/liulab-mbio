@@ -89,6 +89,8 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .is-warn .verdict { color: var(--caution); }
 .is-fail { background: var(--fail-soft); border-color: var(--fail); }
 .is-fail .verdict { color: var(--fail); }
+.is-none { border-style: dashed; }
+.is-none .verdict { color: var(--muted); }
 .check-detail { font-size: 0.9rem; color: var(--muted); margin: 0 0 0.3rem; }
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0; }
@@ -225,7 +227,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="8743eeed410b142b">
+<body data-protocol="4e993a98f7f707a8">
 <main class="page">
 <header class="intro">
 <h1>Golden Gate assembly: GFP into pUC19</h1>
@@ -341,7 +343,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-11-1"><span>Miniprep two or three colonies that read as correct.</span></label></li><li><label><input type="checkbox" data-key="step-11-2"><span>Send each with both sequencing primers.</span></label></li><li><label><input type="checkbox" data-key="step-11-3"><span>Check the read across every junction and the whole of each insert.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.</li><li>Sequencing reverse anneals 119 bp from its own junction and has to read 836 bp to cover the far one.</li><li>The junctions read as ATGA and TGGC, and the parts match GFP.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The read starts too close to the junction</dt><dd>Move the primer further out; the first bases after a primer are unreadable.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>NEB asks for the assembly to be confirmed by sequencing across the junctions whatever the screen said.</li><li>A provider whose read is shorter than the lengths above needs a further primer inside the inserts.</li></ul></div>
+<div class="notes"><h3>Notes</h3><ul><li>Only a read across the junctions confirms the assembly, whatever the screen said.</li><li>A provider whose read is shorter than the lengths above needs a further primer inside the inserts.</li></ul></div>
 </section>
 <section class="block references">
 <h2>References</h2>

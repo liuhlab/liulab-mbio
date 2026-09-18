@@ -1,7 +1,11 @@
 """The shared protocol steps, each built from plain facts with no assembly plan."""
 
-from liulab_mbio.bench.steps import dpni_step, pcr_step
+import pytest
+
+from liulab_mbio.bench.phenotype import Phenotype
+from liulab_mbio.bench.steps import dpni_step, pcr_step, phenotype_sentences
 from liulab_mbio.primers import Q5
+from liulab_mbio.sequence import Feature, Segment, Strand
 
 
 def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
@@ -56,3 +60,20 @@ def test_a_callers_note_sits_after_the_steps_own() -> None:
         "leaves the PCR product, which carries no methylation.",
         "This pipeline's own reason for the digest.",
     )
+
+
+@pytest.mark.parametrize(
+    ("annotated", "sentence"),
+    [
+        (True, "There is a ribosome binding site annotated ahead of GFP, so the clone may make "),
+        (False, "There is no ribosome binding site annotated ahead of GFP, so the clone is not "),
+    ],
+)
+def test_the_ribosome_binding_site_reads_as_english_either_way(
+    annotated: bool, sentence: str
+) -> None:
+    coding = Feature("GFP", "CDS", (Segment(100, 800),), strand=Strand.FORWARD)
+    promoter = Feature("lac promoter", "promoter", (Segment(0, 50),), strand=Strand.FORWARD)
+    phenotype = Phenotype((100, 800), coding, promoter, 50, True, annotated, None, None)
+
+    assert phenotype_sentences(phenotype, ["GFP"])[1].startswith(sentence)

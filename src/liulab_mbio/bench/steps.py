@@ -558,9 +558,12 @@ def colony_pcr_step(
         is the method's own measurement and not this builder's.
     """
     sizes = tuple(bp for clone in check.clones for bp in clone.bands_bp)
+    crossings = "the flanking pair crosses them all"
+    # The flanking pair comes first, so any primer past it is a junction primer.
+    if len(check.primers) > 2:
+        crossings += ", and each junction primer stops inside its own insert"
     expected = [
-        f"Each of the {junctions} junctions is read: the flanking pair crosses them all, and "
-        "each junction primer stops inside its own insert.",
+        f"Each of the {junctions} junctions is read: {crossings}.",
         *(
             f"{clone.name}: {', '.join(f'{bp} bp' for bp in clone.bands_bp) or 'no band'}."
             for clone in check.clones
@@ -641,8 +644,7 @@ def sequencing_step(
             f"The junctions read as {listed(junctions)}, and the parts match {listed(inserts)}.",
         ),
         notes=(
-            "NEB asks for the assembly to be confirmed by sequencing across the junctions "
-            "whatever the screen said.",
+            "Only a read across the junctions confirms the assembly, whatever the screen said.",
             "A provider whose read is shorter than the lengths above needs a further primer "
             "inside the inserts.",
             *notes,
@@ -674,7 +676,7 @@ def phenotype_sentences(phenotype: Phenotype, inserts: Sequence[str]) -> tuple[s
             )
         )
         lines.append(f"{coding} {way}.")
-    site = "is" if phenotype.ribosome_binding_site else "is no"
+    site = "is a" if phenotype.ribosome_binding_site else "is no"
     lines.append(
         f"There {site} ribosome binding site annotated ahead of {coding}, so the clone "
         f"{'may make' if phenotype.expressed else 'is not expected to make'} its protein."
