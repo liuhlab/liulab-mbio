@@ -39,9 +39,9 @@ body {
   height: auto;
 }
 
-/* The script sets the sequence view beside the map while its rows keep their natural width, and
-   under the map otherwise, where the map fits in at most 40% of the page's height, less its pane's
-   padding and caption. Print keeps them side by side. */
+/* The script sets the sequence view beside the map while its rows, full or narrow, keep their
+   natural width, and under the map otherwise, where the map fits in at most 40% of the page's
+   height, less its pane's padding and caption. Print keeps them side by side, in full rows. */
 @media screen {
   .plot:not(.under) > .sequence-view {
     flex-shrink: 0;
@@ -254,6 +254,15 @@ body {
   .map,
   .sequence-view {
     overflow: visible;
+  }
+
+  /* The full rows, whichever rows the page's width shows. */
+  .sequence-view .row-width {
+    display: block;
+  }
+
+  .sequence-view .row-width ~ .row-width {
+    display: none;
   }
 }
 

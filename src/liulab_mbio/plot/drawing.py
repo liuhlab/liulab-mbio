@@ -58,9 +58,9 @@ class Drawing:
 
     A PNG or a PDF draws only the items that show, and the sequence view only when it is switched
     on. A page carries every item the record draws, laid out together, and the sequence view of
-    any stretch up to `sequence_view.LIMIT` bases with both its strands; it shows first what is
-    switched on, and switches the rest in place. Each distinct layout runs when it is first
-    needed, and is kept.
+    any stretch up to `sequence_view.LIMIT` bases with both its strands, at `bases_per_row` and at
+    half of it for a narrow page; it shows first what is switched on, and switches the rest in
+    place. Each distinct layout runs when it is first needed, and is kept.
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ class Drawing:
         """Where everything that shows went in the sequence view, when it is switched on."""
         if not self.with_sequence_view:
             return None
-        return _rows(self, _shown(self), both_strands=self.both_strands)
+        return _rows(self, _shown(self), self.bases_per_row, both_strands=self.both_strands)
 
     @property
     def hidden(self) -> tuple[layers.Item, ...]:
@@ -122,10 +122,11 @@ class Drawing:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
         A ``.html`` page keeps its text as text, and puts the sequence view beside the map, or
-        under it on a narrow page. A ``.png`` at `dpi` and a ``.pdf`` draw every letter as its
-        outline, so they look the same on any machine; `dpi` counts for the PNG alone. The PNG is
-        one image, the sequence view under the map. The PDF has the map on its first page, and the
-        sequence view's rows on the pages after, as many to a page as fit whole.
+        under it on a narrow page, in rows half as long where full ones would shrink. A ``.png``
+        at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on any
+        machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under the
+        map. The PDF has the map on its first page, and the sequence view's rows on the pages
+        after, as many to a page as fit whole.
 
         A page carries every item behind its switches, a circular record drawn whole both as a
         circle and as a line, and the sequence view of a stretch up to `sequence_view.LIMIT`
@@ -194,7 +195,8 @@ def draw_map(
     source
         Whether a `source` feature is switched on.
     bases_per_row
-        How many bases each row of the sequence view holds.
+        How many bases each row of the sequence view holds; a page also carries rows of half as
+        many, rounded up, for a narrow page.
     both_strands
         Whether the sequence view's bottom strand, under the top one, is switched on.
 
@@ -353,18 +355,18 @@ def _line(drawing: Drawing, items: tuple[layers.Item, ...]) -> line.LinearMap:
 
 
 def _rows(
-    drawing: Drawing, items: tuple[layers.Item, ...], *, both_strands: bool
+    drawing: Drawing, items: tuple[layers.Item, ...], bases_per_row: int, *, both_strands: bool
 ) -> view.SequenceView:
     record = drawing.record
     return _kept(
         drawing,
-        ("rows", items, both_strands),
+        ("rows", items, bases_per_row, both_strands),
         lambda: view.layout(
             items,
             bases=record.sequence,
             circular=record.topology == "circular",
             span=drawing.span,
-            bases_per_row=drawing.bases_per_row,
+            bases_per_row=bases_per_row,
             both_strands=both_strands,
         ),
     )
@@ -450,11 +452,14 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         shape: svg.document(_first_shown(one.shapes, switches, one.hidden), one.extent)
         for shape, one in layouts.items()
     }
-    beside = None
+    views: dict[int, str] = {}
     if _carries_sequence_view(drawing):
-        # Both strands, so hiding the bottom one moves nothing.
-        rows = _rows(drawing, everything, both_strands=True)
-        beside = svg.document(_first_shown(rows.shapes, switches), rows.extent)
+        # Both strands, so hiding the bottom one moves nothing; and rows half as long, rounded up,
+        # for a page too narrow for full ones.
+        full = drawing.bases_per_row
+        for bases_per_row in sorted({full, math.ceil(full / 2)}, reverse=True):
+            rows = _rows(drawing, everything, bases_per_row, both_strands=True)
+            views[bases_per_row] = svg.document(_first_shown(rows.shapes, switches), rows.extent)
     shown = "circle" if "circle" in layouts and not drawing.linear else "line"
     html = page.render(
         maps,
@@ -462,7 +467,7 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         shown=shown,
         zooms=[shape for shape in layouts if shape == "circle"],
         switches=_switches(switches, layouts["line"]),
-        sequence_view=beside,
+        sequence_view=views,
         sequence_shown=drawing.with_sequence_view,
         both_strands=drawing.both_strands,
     )

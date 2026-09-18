@@ -212,7 +212,8 @@ def test_the_command_draws_the_sequence_view_in_rows_of_the_bases_asked_for_on_o
     )
     assert (code, lines) == (0, [str(out)])
     [view] = parse(out.read_text(encoding="utf-8")).find_all("figure", cls="sequence-view")
-    rows = view.find_all("g", cls="row")
+    [shown] = [one for one in view.find_all("div", cls="row-width") if "hidden" not in one.attrs]
+    rows = shown.find_all("g", cls="row")
     assert [row.find_all("g", cls="top")[0].text for row in rows] == [
         gfp.sequence[start : start + 100] for start in range(0, len(gfp), 100)
     ]

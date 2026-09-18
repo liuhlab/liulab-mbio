@@ -620,13 +620,14 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
 @pytest.mark.parametrize(
     ("switches", "counts"),
     [
-        ({}, {"circular": 1, "linear": 1, "sequence_view": 1}),
-        ({"primers": False}, {"circular": 2, "linear": 1, "sequence_view": 2}),
-        ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 2}),
-        ({"region": "mcs"}, {"linear": 1, "sequence_view": 1}),
-        ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 2}),
+        # The page lays out the sequence view at two row widths, and a PNG or a PDF the first.
+        ({}, {"circular": 1, "linear": 1, "sequence_view": 2}),
+        ({"primers": False}, {"circular": 2, "linear": 1, "sequence_view": 3}),
+        ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 3}),
+        ({"region": "mcs"}, {"linear": 1, "sequence_view": 2}),
+        ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 3}),
         # The page lays out both strands, to hide the bottom one in place.
-        ({"both_strands": False}, {"circular": 1, "linear": 1, "sequence_view": 2}),
+        ({"both_strands": False}, {"circular": 1, "linear": 1, "sequence_view": 3}),
     ],
 )
 def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
@@ -833,10 +834,18 @@ def test_a_region_naming_no_feature_or_lying_off_the_record_is_refused(
         draw_map(request.getfixturevalue(record), region=region)
 
 
-def _rows(page: Node) -> list[Node]:
-    """The sequence view's rows, top to bottom."""
+def _views(page: Node) -> dict[int, Node]:
+    """The sequence view at each row width the page carries, by bases a row holds, the one shown
+    first first."""
     [view] = page.find_all("figure", cls="sequence-view")
-    return view.find_all("g", cls="row")
+    widths = view.find_all("div", cls="row-width")
+    widths.sort(key=lambda width: "hidden" in width.attrs)
+    return {int(width.attrs["data-bases-per-row"]): width for width in widths}
+
+
+def _rows(page: Node) -> list[Node]:
+    """The rows of the sequence view shown first, top to bottom."""
+    return next(iter(_views(page).values())).find_all("g", cls="row")
 
 
 @pytest.mark.parametrize(
@@ -868,17 +877,16 @@ def test_the_page_carries_the_sequence_view_with_the_map_shown_first_as_asked(
 def test_the_strand_toggle_hides_the_bottom_strand_and_the_cuts_through_it_in_place(
     puc19: SequenceRecord, tmp_path: Path
 ) -> None:
-    def view(both_strands: bool) -> Node:
+    def view(both_strands: bool) -> list[Node]:
         drawing = draw_map(puc19, region="mcs", sequence_view=True, both_strands=both_strands)
         [figure] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-        [image] = figure.find_all("svg")
-        return image
+        return figure.find_all("svg")
 
-    # Nothing moves: the page lays out both strands either way.
-    image = view(both_strands=False)
-    assert image == view(both_strands=True)
+    # Nothing moves: the page lays out both strands either way, at each row width.
+    images = view(both_strands=False)
+    assert images == view(both_strands=True)
     hidden = shown = 0
-    for row in image.find_all("g", cls="row"):
+    for row in (row for image in images for row in image.find_all("g", cls="row")):
         rail = float(row.attrs["data-rail"])
         for cut in row.find_all("g", cls="cut_site"):
             if "label" in cut.attrs["class"].split():
@@ -913,43 +921,54 @@ def test_past_its_limit_a_page_leaves_out_the_sequence_view_and_its_switch(
 
 
 @pytest.mark.parametrize(
-    ("record", "region", "bases_per_row"), [("gfp", None, 60), ("puc19", (2679, 2696), 10)]
+    ("record", "region", "widths"),
+    [
+        ("gfp", None, [60, 30]),
+        ("puc19", (2679, 2696), [10, 5]),
+        ("gfp", (0, 100), [45, 23]),
+        ("puc19", (2679, 2696), [1]),
+    ],
 )
-def test_each_row_says_which_bases_it_holds_and_where_its_strands_lie(
+def test_each_row_at_either_width_says_which_bases_it_holds_and_where_its_strands_lie(
     request: pytest.FixtureRequest,
     tmp_path: Path,
     record: str,
     region: tuple[int, int] | None,
-    bases_per_row: int,
+    widths: list[int],
 ) -> None:
     drawn: SequenceRecord = request.getfixturevalue(record)
-    drawing = draw_map(drawn, region=region, sequence_view=True, bases_per_row=bases_per_row)
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-    [whole] = view.find_all("g", cls="rows")
-    length, cell = int(whole.attrs["data-length"]), float(whole.attrs["data-cell"])
-    assert (length, cell) == (len(drawn), sequence_view.CELL)
-    rows = whole.find_all("g", cls="row")
-    held = [(int(row.attrs["data-start"]), int(row.attrs["data-end"])) for row in rows]
-    assert (held[0][0], held[-1][1]) == (region or (0, len(drawn)))
-    assert all(before[1] == after[0] for before, after in pairwise(held))
-    for row, (first, last) in zip(rows, held, strict=True):
-        [top] = row.find_all("g", cls="top")
-        [bases] = top.find_all("text")
-        assert bases.text == "".join(drawn.sequence[at % length] for at in range(first, last))
-        # Each base lies in the cell its index along the row counts to.
-        places = [float(x) for x in bases.attrs["x"].split()]
-        assert [int(x // cell) for x in places] == list(range(last - first))
-        # Its last base is numbered as the page reads a position.
-        assert _texts(row, "position") == [str((last - 1) % length + 1)]
-        [bottom] = [group for group in row.find_all("g", cls="strand") if group is not top]
-        [complement] = bottom.find_all("text")
-        assert (
-            float(row.attrs["data-top"])
-            < float(bases.attrs["y"])
-            < float(row.attrs["data-rail"])
-            < float(complement.attrs["y"])
-            <= float(row.attrs["data-bottom"])
-        )
+    drawing = draw_map(drawn, region=region, sequence_view=True, bases_per_row=widths[0])
+    views = _views(_page(drawing, tmp_path / "map.html")[1])
+    # Full rows show first; rows half as long, rounded up, hide until a page is too narrow for them.
+    assert list(views) == widths
+    assert ["hidden" in view.attrs for view in views.values()] == [False, True][: len(widths)]
+    for bases_per_row, view in views.items():
+        [whole] = view.find_all("g", cls="rows")
+        length, cell = int(whole.attrs["data-length"]), float(whole.attrs["data-cell"])
+        assert (length, cell) == (len(drawn), sequence_view.CELL)
+        rows = whole.find_all("g", cls="row")
+        held = [(int(row.attrs["data-start"]), int(row.attrs["data-end"])) for row in rows]
+        assert (held[0][0], held[-1][1]) == (region or (0, len(drawn)))
+        assert all(before[1] == after[0] for before, after in pairwise(held))
+        assert all(last - first == bases_per_row for first, last in held[:-1])
+        for row, (first, last) in zip(rows, held, strict=True):
+            [top] = row.find_all("g", cls="top")
+            [bases] = top.find_all("text")
+            assert bases.text == "".join(drawn.sequence[at % length] for at in range(first, last))
+            # Each base lies in the cell its index along the row counts to.
+            places = [float(x) for x in bases.attrs["x"].split()]
+            assert [int(x // cell) for x in places] == list(range(last - first))
+            # Its last base is numbered as the page reads a position.
+            assert _texts(row, "position") == [str((last - 1) % length + 1)]
+            [bottom] = [group for group in row.find_all("g", cls="strand") if group is not top]
+            [complement] = bottom.find_all("text")
+            assert (
+                float(row.attrs["data-top"])
+                < float(bases.attrs["y"])
+                < float(row.attrs["data-rail"])
+                < float(complement.attrs["y"])
+                <= float(row.attrs["data-bottom"])
+            )
 
 
 def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases_as_asked(
@@ -1016,7 +1035,7 @@ def _three_letters(protein: str) -> list[str]:
 
 
 def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
-    puc19: SequenceRecord, colour_test: Drawing, tmp_path: Path
+    puc19: SequenceRecord, colour_test: Drawing, puc19_page: tuple[str, Node]
 ) -> None:
     drawing = draw_map(puc19, sequence_view=True)
     for feature in (one for one in puc19.features if one.type == "CDS"):
@@ -1027,7 +1046,8 @@ def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
     joined = draw_map(colour_test.record, sequence_view=True)
     [split] = [one for one in colour_test.record.features if one.name == "split"]
     assert _amino_acids(joined, "split") == _three_letters(str(split.qualifiers["translation"][0]))
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+    # The page carries the view whether or not it shows first.
+    [view] = puc19_page[1].find_all("figure", cls="sequence-view")
     fills = {
         text.attrs["fill"]
         for group in view.find_all("g", cls="translation")
@@ -1097,17 +1117,8 @@ def test_the_sequence_view_takes_the_maps_enzymes_layers_and_feature_types(
         "cut_site": set(switches.get("enzymes", ["EcoRI", "HindIII"])),
     }
     page = _page(drawing, tmp_path / "map.html")[1]
-    [view] = page.find_all("figure", cls="sequence-view")
-    found: dict[str, set[str]] = {}
-    switched: dict[str, set[str]] = {}
-    for group in view.find_all("g"):
-        if "data-kind" in group.attrs:
-            kind, name = group.attrs["data-kind"], group.attrs["data-name"]
-            found.setdefault(kind, set()).add(name)
-            if "off" in group.attrs["class"].split():
-                switched.setdefault(kind, set()).add(name)
-    assert (found, switched) == (everything, off)
-    # Each item is known by the same details in both views, for a switch or a click to reach.
+    # Each item is known by the same details in both views, and at each row width, for a switch or
+    # a click to reach.
     details = ["data-kind", "data-name", "data-type", "data-span", "data-length"]
 
     def known(figure: Node) -> set[tuple[str | None, ...]]:
@@ -1117,7 +1128,19 @@ def test_the_sequence_view_takes_the_maps_enzymes_layers_and_feature_types(
             if "data-kind" in group.attrs
         }
 
-    assert known(view) == known(_map(page))
+    views = _views(page)
+    assert len(views) == 2
+    for view in views.values():
+        found: dict[str, set[str]] = {}
+        switched: dict[str, set[str]] = {}
+        for group in view.find_all("g"):
+            if "data-kind" in group.attrs:
+                kind, name = group.attrs["data-kind"], group.attrs["data-name"]
+                found.setdefault(kind, set()).add(name)
+                if "off" in group.attrs["class"].split():
+                    switched.setdefault(kind, set()).add(name)
+        assert (found, switched) == (everything, off)
+        assert known(view) == known(_map(page))
     # A PNG or a PDF draws only what shows.
     assert drawing.sequence_view is not None
     drawn = {
@@ -1139,8 +1162,8 @@ def test_the_sequence_view_stacks_the_names_at_one_cut_bold_where_one_cuts_once(
     drawing = draw_map(
         puc19, region=(660, 720), sequence_view=True, enzymes=["SapI", "BspQI", "BsaI"]
     )
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-    assert _labels(view, "cut_site") == [[("BspQI", "700"), ("SapI", "700")]]
+    for view in _views(_page(drawing, tmp_path / "map.html")[1]).values():
+        assert _labels(view, "cut_site") == [[("BspQI", "700"), ("SapI", "700")]]
 
 
 def test_the_sequence_view_draws_each_primers_tail_and_mismatches_where_snapgene_binds_it(
@@ -1250,7 +1273,8 @@ def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pd
     record, whole = primed_crowd
     drawing = draw_map(record, enzymes=["EcoRI", "HindIII"], **switches)
     assert layers.notice(drawing.hidden) == in_a_pdf
-    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    # With every switch on, the page is the one the fixture wrote.
+    page = _map(_page(drawing, tmp_path / "map.html")[1]) if switches else whole
     [notice] = page.find_all("g", cls="notice")
     assert ("off" in notice.attrs["class"].split()) == (not on_the_page)
     if on_the_page:

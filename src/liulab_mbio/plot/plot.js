@@ -1,16 +1,19 @@
 // A drawing's page. Hovering over anything drawn shows its details, read from its group's data
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
 // show or hide each kind of item and each feature type in place, flip the map's shape, and show
-// the sequence view, beside the map or under it as the page's width allows. The map's caption
-// zooms the shape shown, when it zooms, and a drag pans it. A click on an item highlights it in
-// both views and scrolls the other to it. In the sequence view, hovering over a base shows its
-// position, and a drag selects bases to copy, scrolling the view while the pointer lies past its
-// top or bottom.
+// the sequence view, beside the map or under it, in full rows or narrow ones, as the page's width
+// allows. The map's caption zooms the shape shown, when it zooms, and a drag pans it. A click on
+// an item highlights it in both views and scrolls the other to it. In the sequence view, hovering
+// over a base shows its position, and a drag selects bases to copy, scrolling the view while the
+// pointer lies past its top or bottom.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
   const map = document.querySelector(".map");
   const view = document.querySelector(".sequence-view");
+  // The sequence view's drawing at each row width, full rows first, and the one shown.
+  const drawings = view ? [...view.querySelectorAll("[data-bases-per-row]")] : [];
+  let drawn = drawings[0];
   const zoomer = map.querySelector("figcaption");
   const slider = zoomer?.querySelector('[name="zoom"]');
 
@@ -114,95 +117,123 @@
   // A browser may restore switches as they were left, rather than as the page was written.
   window.addEventListener("pageshow", apply);
 
-  // Where the sequence view stands: the first of these arrangements that fits the page's own
-  // width, given each drawing's natural width, its SVG's `width`.
+  // Where the sequence view stands, and in which rows: the first of these arrangements that fits
+  // the page's own width, given each drawing's natural width, its SVG's `width`.
   const plot = document.querySelector(".plot");
   const least = 320; // The narrowest the map goes beside the rows.
+  const beside = (rows, width) => rows + width.gap + Math.min(width.map, least) <= width.room;
   const arrangements = [
-    // Beside the map, the rows at their natural width.
-    {
-      under: false,
-      fits: (width) => width.rows + width.gap + Math.min(width.map, least) <= width.room,
-    },
-    // Under the map, the rows scaled down where they do not fit.
-    { under: true, fits: () => true },
+    // Beside the map, full rows at their natural width, or else narrow ones.
+    { under: false, narrow: false, fits: (width) => beside(width.full, width) },
+    { under: false, narrow: true, fits: (width) => beside(width.narrow, width) },
+    // Under the map, full rows at their natural width, or else narrow ones, scaled down where
+    // they do not fit.
+    { under: true, narrow: false, fits: (width) => width.full <= width.room },
+    { under: true, narrow: true, fits: () => true },
   ];
-  const natural = (svg) => Number(svg.getAttribute("width"));
+  const natural = (drawing) => Number(drawing.querySelector("svg").getAttribute("width"));
   const arrange = () => {
     if (!view) return;
     const style = getComputedStyle(plot);
     const width = {
       room: plot.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
       gap: parseFloat(style.columnGap),
-      map: natural(map.querySelector("[data-shape]:not([hidden]) svg")),
-      rows: natural(view.querySelector("svg")),
+      map: natural(map.querySelector("[data-shape]:not([hidden])")),
+      full: natural(drawings[0]),
+      narrow: natural(drawings.at(-1)),
     };
-    const { under } = arrangements.find((one) => one.fits(width));
+    const { under, narrow } = arrangements.find((one) => one.fits(width));
     plot.classList.toggle("under", under && !view.hidden);
+    drawn = narrow ? drawings.at(-1) : drawings[0];
+    for (const one of drawings) one.hidden = one !== drawn;
+    if (!view.hidden) keep();
   };
   new ResizeObserver(arrange).observe(plot);
 
-  // The sequence view's rows: the bases each holds, counted as the stretch drawn counts them, and
-  // how far down its strands and rail lie. Read when first needed.
+  // Each drawing's rows: the bases each holds, counted as the stretch drawn counts them, and how
+  // far down its strands and rail lie. Read when first needed.
   const whole = view?.querySelector(".rows");
   const length = Number(whole?.dataset.length);
   const cell = Number(whole?.dataset.cell);
-  let found = null;
-  const blocks = () =>
-    (found ??= [...view.querySelectorAll(".row")].map((row) => ({
-      row,
-      start: Number(row.dataset.start),
-      end: Number(row.dataset.end),
-      top: Number(row.dataset.top),
-      rail: Number(row.dataset.rail),
-      bottom: Number(row.dataset.bottom),
-    })));
+  const found = new Map();
+  const blocks = (drawing = drawn) => {
+    if (!found.has(drawing)) {
+      found.set(
+        drawing,
+        [...drawing.querySelectorAll(".row")].map((row) => ({
+          row,
+          start: Number(row.dataset.start),
+          end: Number(row.dataset.end),
+          top: Number(row.dataset.top),
+          rail: Number(row.dataset.rail),
+          bottom: Number(row.dataset.bottom),
+        })),
+      );
+    }
+    return found.get(drawing);
+  };
   // Where a row's bases end: under the bottom strand, or at the rail when it hides.
   const foot = (block) => (view.classList.contains("one-strand") ? block.rail : block.bottom);
   // A position as a person reads it, from one counted along the stretch.
   const read = (at) => (at % length) + 1;
+  // How many of the rows shown, from the first, `before` holds for: it holds for every row before
+  // one it does not hold for.
+  const leading = (before) => {
+    const all = blocks();
+    let low = 0;
+    let high = all.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if (before(all[middle])) low = middle + 1;
+      else high = middle;
+    }
+    return low;
+  };
+  // The row shown at an index, or the nearest there is.
+  const blockAt = (index) => blocks()[Math.min(Math.max(index, 0), blocks().length - 1)];
+  // A client point in the rows shown, in the points they are laid out in.
+  const inRows = (clientX, clientY) =>
+    new DOMPoint(clientX, clientY).matrixTransform(
+      drawn.querySelector("svg").getScreenCTM().inverse(),
+    );
 
   // The base under a pointer, or with `near` the nearest base to it, or null off the strands.
   const baseAt = (event, near) => {
-    const svg = view.querySelector("svg");
-    const { x, y } = new DOMPoint(event.clientX, event.clientY).matrixTransform(
-      svg.getScreenCTM().inverse(),
-    );
-    const all = blocks();
-    let low = 0;
-    let high = all.length - 1;
-    while (low < high) {
-      const middle = (low + high + 1) >> 1;
-      if (all[middle].top <= y) low = middle;
-      else high = middle - 1;
-    }
-    const block = all[low];
+    const { x, y } = inRows(event.clientX, event.clientY);
+    // The last row starting above the pointer, or the first.
+    const block = blockAt(leading((one) => one.top <= y) - 1);
     const index = Math.floor(x / cell);
     const count = block.end - block.start;
     if (!near && (y < block.top || y > foot(block) || index < 0 || index >= count)) return null;
     return block.start + Math.min(Math.max(index, 0), count - 1);
   };
 
-  // The selected bases, first and past the last, drawn under the rows and said in the caption.
+  // The selected bases, first and past the last, drawn under each drawing's rows and said in the
+  // caption.
   let chosen = null;
   let anchor = null;
-  const marked = whole && document.createElementNS("http://www.w3.org/2000/svg", "path");
-  if (marked) {
-    marked.setAttribute("class", "chosen");
-    whole.before(marked);
-  }
-  const overlapping = ([first, last]) =>
-    blocks().filter((block) => block.start < last && first < block.end);
+  const marks = new Map(
+    drawings.map((drawing) => {
+      const marked = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      marked.setAttribute("class", "chosen");
+      drawing.querySelector(".rows").before(marked);
+      return [drawing, marked];
+    }),
+  );
+  const overlapping = ([first, last], drawing = drawn) =>
+    blocks(drawing).filter((block) => block.start < last && first < block.end);
   const choose = (range) => {
     chosen = range;
-    const parts = range
-      ? overlapping(range).map((block) => {
-          const left = (Math.max(range[0], block.start) - block.start) * cell;
-          const right = (Math.min(range[1], block.end) - block.start) * cell;
-          return `M${left} ${block.top}H${right}V${foot(block)}H${left}Z`;
-        })
-      : [];
-    marked.setAttribute("d", parts.join(""));
+    for (const [drawing, marked] of marks) {
+      const parts = range
+        ? overlapping(range, drawing).map((block) => {
+            const left = (Math.max(range[0], block.start) - block.start) * cell;
+            const right = (Math.min(range[1], block.end) - block.start) * cell;
+            return `M${left} ${block.top}H${right}V${foot(block)}H${left}Z`;
+          })
+        : [];
+      marked.setAttribute("d", parts.join(""));
+    }
     const [first, last] = range ?? [0, 0];
     view.querySelector(".selection").textContent = range
       ? `${read(first)} .. ${read(last - 1)} (${last - first} bp)`
@@ -231,6 +262,24 @@
       left: frame.left,
       right: frame.left + figure.clientWidth,
     };
+  };
+
+  // The first base of the top row in sight, as scrolling last left it, for a change of rows to keep
+  // at the top.
+  let heading = null;
+  // The top row in sight: the first whose bases reach below the caption.
+  const topmost = () => {
+    const { left, top } = sight(view);
+    const { y } = inRows(left, top);
+    return blockAt(leading((block) => foot(block) <= y));
+  };
+  const holds = (block, at) => block.start <= at && at < block.end;
+  // Scrolls the row holding that base to the top, unless the top row in sight holds it.
+  const keep = () => {
+    if (heading === null || holds(topmost(), heading)) return;
+    const block = blockAt(leading((one) => one.end <= heading));
+    if (block === blocks()[0]) view.scrollTop = 0;
+    else scroll(view, block.row.getBoundingClientRect(), true);
   };
 
   // While a drag lasts: where the pointer last was, and the frame loop scrolling the view.
@@ -278,7 +327,7 @@
     onBase = true;
     anchor = at;
     pointer = event;
-    view.querySelector("svg").setPointerCapture(event.pointerId);
+    drawn.querySelector("svg").setPointerCapture(event.pointerId);
     document.getSelection()?.removeAllRanges();
     choose([at, at + 1]);
     cancelAnimationFrame(loop);
@@ -289,8 +338,10 @@
     pointer = event;
     extend();
   });
-  // A scroll under a still pointer, by the wheel or otherwise, moves the bases under it too.
   view?.addEventListener("scroll", () => {
+    const block = topmost();
+    if (heading === null || !holds(block, heading)) heading = block.start;
+    // And a scroll under a still pointer, by the wheel or otherwise, moves the bases under it too.
     if (anchor !== null) extend();
   });
   const release = () => {

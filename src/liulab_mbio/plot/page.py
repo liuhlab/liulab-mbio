@@ -6,11 +6,11 @@ search and copy. It keeps a white background whatever the browser's colour schem
 
 Switches above the drawing show or hide each kind of item and each feature type in place, flip
 the map between its shapes at top right, and show the sequence view with it: beside the map while
-the page is wide enough for both, under it otherwise. A caption on the map zooms a shape that
-zooms, and a drag pans it. A click on an item highlights it in both views, and scrolls the other
-view to it. In the sequence view, a toggle shows one strand or both, hovering over a base shows
-its position, and a drag selects bases to copy, scrolling the view while it passes the view's top
-or bottom.
+the page is wide enough for both, under it otherwise, and in rows half as long where full ones
+would shrink. A caption on the map zooms a shape that zooms, and a drag pans it. A click on an
+item highlights it in both views, and scrolls the other view to it. In the sequence view, a toggle
+shows one strand or both, hovering over a base shows its position, and a drag selects bases to
+copy, scrolling the view while it passes the view's top or bottom.
 """
 
 import base64
@@ -57,7 +57,7 @@ def render(
     shown: str,
     zooms: Collection[str] = (),
     switches: Sequence[Switch] = (),
-    sequence_view: str | None = None,
+    sequence_view: Mapping[int, str] | None = None,
     sequence_shown: bool = False,
     both_strands: bool = True,
 ) -> str:
@@ -66,10 +66,11 @@ def render(
     `maps` holds the map as an SVG element in each shape it is drawn in, such as ``"circle"``
     and ``"line"``. The shape `shown` names shows first, and a switch flips between them when
     there are two. Each shape `zooms` names zooms in up to eight times by scaling its drawing,
-    from a caption on the map that shows while it does. `sequence_view` is an SVG element too, as
-    `sequence_view.layout` draws one with both strands, or ``None`` for the map alone. A switch
-    shows it, first when `sequence_shown`, and a toggle in it shows its bottom strand, first when
-    `both_strands`.
+    from a caption on the map that shows while it does. `sequence_view` holds the sequence view as
+    an SVG element too, as `sequence_view.layout` draws one with both strands, at each row width it
+    is drawn at, keyed by how many bases a row holds; none for the map alone. The first shows
+    first, and the page shows the one that fits it. A switch shows the view, first when
+    `sequence_shown`, and a toggle in it shows its bottom strand, first when `both_strands`.
     """
     fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
     shapes = "".join(
@@ -77,7 +78,7 @@ def render(
     )
     caption = _zoom(shown in zooms) if zooms else ""
     figures = f'<figure class="map">{caption}\n{shapes}</figure>\n'
-    if sequence_view is not None:
+    if sequence_view:
         figures += _sequence_view(sequence_view, sequence_shown, both_strands)
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
@@ -95,7 +96,7 @@ def _switches(
     switches: Sequence[Switch],
     shapes: Sequence[str],
     shown: str,
-    sequence_view: str | None,
+    sequence_view: Mapping[int, str] | None,
     sequence_shown: bool,
 ) -> str:
     """Return the bar of switches: kinds, then feature types, then the views at the right."""
@@ -116,21 +117,29 @@ def _switches(
         inputs = [
             _input("radio", "shape", shape, shape.capitalize(), shape == shown) for shape in shapes
         ]
-    if sequence_view is not None:
+    if sequence_view:
         inputs.append(_input("checkbox", "view", "sequence", "Sequence", sequence_shown))
     sets.append(_fieldset("shapes", "Views", inputs))
     body = "".join(sets)
     return f'<form class="switches" autocomplete="off">\n{body}</form>\n' if body else ""
 
 
-def _sequence_view(image: str, shown: bool, both_strands: bool) -> str:
-    """Return the sequence view's figure: its toggle, what is selected and a button to copy it."""
+def _sequence_view(images: Mapping[int, str], shown: bool, both_strands: bool) -> str:
+    """Return the sequence view's figure: its toggle, what is selected and a button to copy it.
+
+    Under them lies the view at each row width, the first shown.
+    """
     classes = "sequence-view" if both_strands else "sequence-view one-strand"
+    widths = "".join(
+        f'<div class="row-width" data-bases-per-row="{bases}"{" hidden" if index else ""}>'
+        f"{image}</div>"
+        for index, (bases, image) in enumerate(images.items())
+    )
     return (
         f'<figure class="{classes}"{"" if shown else " hidden"}>'
         f"<figcaption>{_input('checkbox', 'strands', 'both', 'Both strands', both_strands)}"
         '<output class="selection"></output><button type="button" class="copy" hidden>Copy'
-        f"</button></figcaption>{image}</figure>\n"
+        f"</button></figcaption>{widths}</figure>\n"
     )
 
 
