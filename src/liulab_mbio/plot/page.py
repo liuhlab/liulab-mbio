@@ -7,7 +7,8 @@ search and copy. It keeps a white background whatever the browser's colour schem
 Switches above the drawing show or hide each kind of item and each feature type in place, flip
 the map between its shapes at top right, and show the sequence view beside it. A click on an item
 highlights it in both views, and scrolls the other view to it. In the sequence view, a toggle shows
-one strand or both, hovering over a base shows its position, and a drag selects bases to copy.
+one strand or both, hovering over a base shows its position, and a drag selects bases to copy,
+scrolling the view while it passes the view's top or bottom.
 """
 
 import base64

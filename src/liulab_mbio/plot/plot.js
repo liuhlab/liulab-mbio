@@ -2,7 +2,8 @@
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
 // show or hide each kind of item and each feature type in place, flip the map's shape, and show
 // the sequence view. A click on an item highlights it in both views and scrolls the other to it.
-// In the sequence view, hovering over a base shows its position, and a drag selects bases to copy.
+// In the sequence view, hovering over a base shows its position, and a drag selects bases to copy,
+// scrolling the view while the pointer lies past its top or bottom.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
@@ -163,6 +164,46 @@
       )
       .join("");
 
+  // The part of a view in sight: under its caption, which covers what scrolls beneath it.
+  const sight = (figure) => {
+    const frame = figure.getBoundingClientRect();
+    return {
+      top: frame.top + (figure.querySelector("figcaption")?.offsetHeight ?? 0),
+      bottom: frame.top + figure.clientHeight,
+      left: frame.left,
+      right: frame.left + figure.clientWidth,
+    };
+  };
+
+  // While a drag lasts: where the pointer last was, and the frame loop scrolling the view.
+  let pointer = null;
+  let loop = 0;
+  // Extends the selection from its anchor to the nearest base in sight at the pointer.
+  const extend = () => {
+    const { top, bottom } = sight(view);
+    const clientY = Math.min(Math.max(pointer.clientY, top), bottom);
+    const at = baseAt({ clientX: pointer.clientX, clientY }, true);
+    const range = [Math.min(anchor, at), Math.max(anchor, at) + 1];
+    if (range[0] !== chosen?.[0] || range[1] !== chosen?.[1]) choose(range);
+  };
+  // Each second, a pointer past the rows in sight scrolls the view this many times as far.
+  const pace = 20;
+  const glide = (then, owed) => {
+    loop = requestAnimationFrame((now) => {
+      const { top, bottom } = sight(view);
+      const y = pointer.clientY;
+      const past = y < top ? y - top : Math.max(y - bottom, 0);
+      // Whole pixels only, so a slow scroll is not lost to rounding.
+      const due = past ? owed + (past * pace * (now - (then ?? now))) / 1000 : 0;
+      const step = Math.trunc(due);
+      if (step) {
+        view.scrollTop += step;
+        extend();
+      }
+      glide(now, due - step);
+    });
+  };
+
   let onBase = false;
   document.addEventListener("pointerdown", (event) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -178,17 +219,25 @@
     }
     onBase = true;
     anchor = at;
+    pointer = event;
     view.querySelector("svg").setPointerCapture(event.pointerId);
     document.getSelection()?.removeAllRanges();
     choose([at, at + 1]);
+    cancelAnimationFrame(loop);
+    glide(null, 0);
   });
   document.addEventListener("pointermove", (event) => {
     if (anchor === null) return;
-    const at = baseAt(event, true);
-    choose([Math.min(anchor, at), Math.max(anchor, at) + 1]);
+    pointer = event;
+    extend();
+  });
+  // A scroll under a still pointer, by the wheel or otherwise, moves the bases under it too.
+  view?.addEventListener("scroll", () => {
+    if (anchor !== null) extend();
   });
   const release = () => {
     anchor = null;
+    cancelAnimationFrame(loop);
   };
   document.addEventListener("pointerup", release);
   document.addEventListener("pointercancel", release);
@@ -228,16 +277,13 @@
 
   // Scrolls a view so `box` shows: at its top, or when `start` is false, centred if it does not.
   const scroll = (figure, box, start) => {
-    const frame = figure.getBoundingClientRect();
-    const top = frame.top + (figure.querySelector("figcaption")?.offsetHeight ?? 0);
-    const bottom = frame.top + figure.clientHeight;
+    const { top, bottom, left, right } = sight(figure);
     if (start || box.top < top || box.bottom > bottom) {
       const offset = start ? box.top - top : (box.top + box.bottom - top - bottom) / 2;
       figure.scrollTop += offset;
     }
-    const right = frame.left + figure.clientWidth;
-    if (box.left < frame.left || box.right > right) {
-      figure.scrollLeft += (box.left + box.right - frame.left - right) / 2;
+    if (box.left < left || box.right > right) {
+      figure.scrollLeft += (box.left + box.right - left - right) / 2;
     }
   };
 
