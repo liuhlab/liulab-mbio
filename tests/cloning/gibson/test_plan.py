@@ -26,14 +26,9 @@ from liulab_mbio.snapgene import read_dna
 #: Where the fixture's own MCS feature sits.
 MCS = (395, 452)
 
-#: A flexible glycine-serine linker to go in beside GFP, written here rather than read from a
-#: file. It is long enough for the colony PCR to put a primer inside it.
-LINKER = SequenceRecord(
-    "AACGGTTCAGGTGGATCTGGCGGTTCTGGAGGCAGCGGTTCAGGAGGTTCTGGCGGATCA"
-    "GGTGGTTCAGGAGGCTCAGGTTCTGGAGGATCTGGCGGTTCAGGAGGTTCTGGATCAGGT"
-    "TCTGGAGGCAGCGGTTCAGGAGGATCTGGT",
-    name="linker",
-)
+#: Where GFP is cut in two, to be amplified and assembled as two inserts. Off any repeat and
+#: far enough from either end for a primer.
+SPLIT = 360
 
 
 @pytest.fixture(scope="module")
@@ -344,9 +339,13 @@ def test_there_is_one_orientation_for_each_insert(puc19, gfp):
 
 @pytest.fixture(scope="module")
 def handed_in(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    """GFP into a backbone that was cut last week, handed in as it is."""
-    cut = SequenceRecord(puc19.sequence[452:] + puc19.sequence[:395], name="pUC19 cut")
-    return plan_gibson(cut, gfp)
+    """GFP the other way round, into a backbone that was cut last week and handed in as it is.
+
+    Two things that do not touch each other, designed once: a plan whose product is new to the
+    suite pays a second of primer design, and this is the only one here that has to.
+    """
+    cut = SequenceRecord(puc19.sequence[MCS[1] :] + puc19.sequence[: MCS[0]], name="pUC19 cut")
+    return plan_gibson(cut, gfp, orientation="reverse")
 
 
 def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, gfp):
@@ -374,6 +373,12 @@ def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, g
     assert handed_in.assembly.insert_span == (len(handed_in.vector), len(handed_in.plasmid))
 
 
+def test_an_insert_goes_in_on_the_strand_it_is_given_for(handed_in, gfp):
+    assert handed_in.inserts[0].sequence == reverse_complement(gfp.sequence)
+    assert handed_in.inserts[0].sequence in handed_in.plasmid.sequence
+    assert gfp.sequence not in handed_in.plasmid.sequence
+
+
 def test_a_site_is_refused_for_a_vector_that_is_already_linear(gfp):
     with pytest.raises(ValueError, match="already linear"):
         plan_gibson(gfp, gfp, site="MCS")
@@ -398,43 +403,40 @@ def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file)
 
 @pytest.fixture(scope="module")
 def several(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    """GFP and a linker into the same site, the linker on the other strand."""
-    return plan_gibson(puc19, gfp, LINKER, orientation=["forward", "reverse"])
+    """The same GFP in two pieces, which is the commonest reason to join more than one insert."""
+    halves = (
+        SequenceRecord(gfp.sequence[:SPLIT], name="GFP 5'"),
+        SequenceRecord(gfp.sequence[SPLIT:], name="GFP 3'"),
+    )
+    return plan_gibson(puc19, *halves)
 
 
-def test_the_inserts_go_round_the_product_in_the_order_they_are_given(several, puc19, gfp):
-    assert [part.name for part in several.parts] == ["pUC19 backbone", "GFP", "linker"]
-    assert len(several.plasmid) == len(puc19) - (MCS[1] - MCS[0]) + len(gfp) + len(LINKER)
-    # Each junction takes its own overlap, and every one of the three is a different length.
+def test_the_inserts_go_round_the_product_in_the_order_they_are_given(several, made, puc19, gfp):
+    assert [part.name for part in several.parts] == ["pUC19 backbone", "GFP 5'", "GFP 3'"]
+    # Two inserts in the order given spell what the one they were cut from spells.
+    assert several.plasmid.sequence == made.plasmid.sequence
     joined = [(one.before, one.after, one.taken_from) for one in several.assembly.junctions]
     assert joined == [
-        ("pUC19 backbone", "GFP", "pUC19 backbone"),
-        ("GFP", "linker", "GFP"),
-        ("linker", "pUC19 backbone", "pUC19 backbone"),
+        ("pUC19 backbone", "GFP 5'", "pUC19 backbone"),
+        ("GFP 5'", "GFP 3'", "GFP 5'"),
+        ("GFP 3'", "pUC19 backbone", "pUC19 backbone"),
     ]
     # The two outer junctions are the vector's own bases, as NEB asks for a reusable backbone;
-    # the inner one is the bases of the insert before it, which the linker's primer tails.
+    # the inner one is the bases of the insert before it, which the next insert's primer tails.
     first, inner, last = several.assembly.junctions
     assert first.overlap == puc19.sequence[MCS[0] - first.length : MCS[0]]
     assert last.overlap == puc19.sequence[MCS[1] : MCS[1] + last.length]
-    assert inner.overlap == gfp.sequence[-inner.length :]
+    assert inner.overlap == gfp.sequence[SPLIT - inner.length : SPLIT]
     assert several.insert_parts[1].forward.sequence.startswith(inner.overlap)
     assert several.linearised_vector.left_tail == several.linearised_vector.right_tail == ""
-
-
-def test_an_insert_goes_in_on_the_strand_it_is_given_for(several):
-    linker = several.inserts[1]
-    assert linker.sequence == reverse_complement(LINKER.sequence)
-    assert linker.sequence in several.plasmid.sequence
-    assert LINKER.sequence not in several.plasmid.sequence
 
 
 def test_the_product_names_every_junction_and_the_reaction_counts_every_fragment(several):
     marks = sorted(one.name for one in several.plasmid.features if one.name.endswith("overlap"))
     assert marks == [
-        "GFP-linker overlap",
-        "linker-pUC19 backbone overlap",
-        "pUC19 backbone-GFP overlap",
+        "GFP 3'-pUC19 backbone overlap",
+        "GFP 5'-GFP 3' overlap",
+        "pUC19 backbone-GFP 5' overlap",
     ]
     assert [one.name for one in several.amounts] == [part.name for part in several.parts]
     judged = {one.name: one for one in several.checks}
