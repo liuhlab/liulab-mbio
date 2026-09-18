@@ -23,14 +23,13 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import rotate
+from liulab_mbio.edits import annealed, carried, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
 from liulab_mbio.primers.polymerase import Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
 from liulab_mbio.sequence import (
-    BindingSite,
     Feature,
     Primer,
     Segment,
@@ -212,10 +211,10 @@ def amplify(
         thresholds=thresholds,
     )
     bases = tails[0] + template.extract(Segment(anneal, end)) + reverse_complement(tails[1])
-    features, carried = _carried(template, start, end, len(tails[0]) - len(left) - start)
+    features, kept = carried(template, start, end, offset=len(tails[0]) - len(left) - start)
     placed = (
-        _placed(forward, len(tails[0]), Strand.FORWARD),
-        _placed(reverse, len(bases) - len(tails[1]), Strand.REVERSE),
+        annealed(forward, len(tails[0]), Strand.FORWARD),
+        annealed(reverse, len(bases) - len(tails[1]), Strand.REVERSE),
     )
     return Part(
         name,
@@ -227,7 +226,7 @@ def amplify(
             bases,
             name=name or template.name,
             features=features,
-            primers=carried + placed,
+            primers=kept + placed,
         ),
         left,
         right,
@@ -460,11 +459,11 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
         part, piece = parts[index], _cut(parts[index], one)
         at = len(bases)
         bases += part.amplicon.extract(Segment(piece.start, piece.end))
-        carried, kept = _carried(part.template, *part.span, at - part.span[0])
-        features.extend(carried)
+        over, kept = carried(part.template, *part.span, offset=at - part.span[0])
+        features.extend(over)
         primers.extend(kept)
-        primers.append(_placed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
-        primers.append(_placed(part.reverse, at + part.fragment_length, Strand.REVERSE))
+        primers.append(annealed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
+        primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
         joins.append((at, parts[order[place - 1]], part))
     features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
     origin = _origin(parts[order[0]])
@@ -492,63 +491,6 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
 def _enzyme(enzyme: EnzymeLike) -> Enzyme:
     """Read one enzyme by name or by record."""
     return get_enzyme(enzyme) if isinstance(enzyme, str) else enzyme
-
-
-def _placed(primer: Primer, edge: int, strand: Strand) -> Primer:
-    """Put `primer` where it anneals on a record whose copy of it ends, or begins, at `edge`."""
-    annealed = primer.binding_sites[0]
-    length = annealed.end - annealed.start
-    start = edge if strand is Strand.FORWARD else edge - length
-    return dataclasses.replace(primer, binding_sites=(BindingSite(start, start + length, strand),))
-
-
-def _pieces(
-    start: int, end: int, low: int, high: int, record: SequenceRecord
-) -> list[tuple[int, int]]:
-    """Return where ``[start, end)`` of `record` falls inside the window ``[low, high)``.
-
-    A span of a circular record is tried a turn either way, so one meeting the window twice —
-    as a feature either side of the span an outward PCR drops does — gives a piece for each.
-    """
-    turns = (0, len(record), -len(record)) if record.topology == "circular" else (0,)
-    found = []
-    for turn in turns:
-        first, last = max(start + turn, low), min(end + turn, high)
-        if first < last:
-            found.append((first, last))
-    return sorted(found)
-
-
-def _carried(
-    record: SequenceRecord, start: int, end: int, offset: int
-) -> tuple[tuple[Feature, ...], tuple[Primer, ...]]:
-    """Carry what `record` annotates over ``[start, end)`` into a record `offset` bases along.
-
-    A feature reaching outside the span is cut down to it, and one meeting it in two places
-    keeps a segment for each. A primer is kept only where a whole binding site survives, having
-    nowhere to anneal otherwise.
-    """
-    features = []
-    for feature in record.features:
-        kept = [
-            dataclasses.replace(segment, start=first + offset, end=last + offset)
-            for segment in feature.segments
-            for first, last in _pieces(segment.start, segment.end, start, end, record)
-        ]
-        if kept:
-            kept.sort(key=lambda segment: (segment.start, segment.end))
-            features.append(dataclasses.replace(feature, segments=tuple(kept)))
-    primers = []
-    for primer in record.primers:
-        sites = [
-            BindingSite(first + offset, last + offset, site.strand)
-            for site in primer.binding_sites
-            for first, last in _pieces(site.start, site.end, start, end, record)
-            if last - first == site.end - site.start
-        ]
-        if sites:
-            primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
-    return tuple(features), tuple(primers)
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:

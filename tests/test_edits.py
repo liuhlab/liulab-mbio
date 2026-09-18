@@ -1,6 +1,15 @@
 import pytest
 
-from liulab_mbio.edits import EditReport, delete, flipped, insert, replace, rotate
+from liulab_mbio.edits import (
+    EditReport,
+    annealed,
+    carried,
+    delete,
+    flipped,
+    insert,
+    replace,
+    rotate,
+)
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 
@@ -118,3 +127,33 @@ def test_flipped_refuses_a_span_across_the_origin() -> None:
     record = SequenceRecord(BASES, topology="circular", features=(_feature("across", (10, 14)),))
     with pytest.raises(ValueError, match="across its origin"):
         flipped(record)
+
+
+def test_carried_cuts_a_feature_down_to_the_span_and_shifts_it_by_the_offset() -> None:
+    features, primers = carried(RECORD, 2, 10, offset=-2)
+    assert features == (_feature("a", (0, 2)), _feature("c", (2, 6)), _feature("g", (6, 8)))
+    assert primers == ()
+
+
+def test_a_feature_meeting_a_span_across_the_origin_twice_keeps_a_segment_for_each() -> None:
+    record = SequenceRecord(BASES, topology="circular", features=(_feature("split", (4, 10)),))
+    features, _ = carried(record, 8, 18, offset=-8)
+    assert features == (_feature("split", (0, 2), (8, 10)),)
+
+
+def test_carried_keeps_a_primer_only_where_a_whole_binding_site_survives() -> None:
+    whole = Primer("whole", "AAAA", binding_sites=(BindingSite(0, 4, Strand.FORWARD),))
+    cut = Primer("cut", "CCCC", binding_sites=(BindingSite(6, 10, Strand.REVERSE),))
+    record = SequenceRecord(BASES, topology="circular", primers=(whole, cut))
+    _, primers = carried(record, 8, 18, offset=-8)
+    # "cut" annealed across the edge of the span, so it has nowhere left to sit.
+    assert [one.name for one in primers] == ["whole"]
+    assert primers[0].binding_sites == (BindingSite(4, 8, Strand.FORWARD),)
+
+
+def test_annealed_puts_a_primer_at_the_edge_its_strand_reads_from() -> None:
+    primer = Primer("p", "GGGGAACCGG", binding_sites=(BindingSite(0, 6, Strand.FORWARD),))
+    forward = annealed(primer, 4, Strand.FORWARD)
+    reverse = annealed(primer, 20, Strand.REVERSE)
+    assert forward.binding_sites == (BindingSite(4, 10, Strand.FORWARD),)
+    assert reverse.binding_sites == (BindingSite(14, 20, Strand.REVERSE),)
