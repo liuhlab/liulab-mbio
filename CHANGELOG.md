@@ -9,6 +9,10 @@ sets one.
 
 ### Added
 
+- Each shipped enzyme now names the buffer its supplier sells it in, as `Enzyme.supplied_buffer`.
+  All sixteen multiple cloning site enzymes read `rCutSmart Buffer`, so any pair of them can be
+  cut in one tube; BsmBI-v2 and BspQI read `NEBuffer r3.1`. The buffer belongs to the product
+  rather than to the enzyme name, and each one was read from that product's own page.
 - A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
   map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
   opens offline. A feature keeps the colour its file gives it. One with no colour takes a

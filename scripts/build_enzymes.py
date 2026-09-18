@@ -5,7 +5,8 @@
 
 REBASE's `withrefm` file gives the recognition site, the cut offsets, who sells each enzyme,
 and which enzymes share a specificity. Everything a supplier states about its own product —
-commercial name, incubation and heat-inactivation temperature, methylation sensitivity — is in
+commercial name, reaction buffer, incubation and heat-inactivation temperature, methylation
+sensitivity — is in
 `enzyme_properties.toml` beside this script, with a cited source per value: NEB's terms of use
 forbid redistributing their pages, so those facts are read, cited and re-entered, never mirrored.
 
@@ -39,6 +40,7 @@ SUPPLIER_FIELDS = (
     "commercial_name",
     "catalog_number",
     "supplier",
+    "supplied_buffer",
     "incubation_celsius",
     "heat_inactivation_celsius",
     "heat_inactivation_minutes",

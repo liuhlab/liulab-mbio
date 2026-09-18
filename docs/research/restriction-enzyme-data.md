@@ -17,12 +17,14 @@ still unverified.
 | `site`, `top_cut`, `bottom_cut`, `isoschizomers`, `suppliers` | REBASE `withrefm` |
 | `overhang_length`, `end`, `type` | derived from the cut offsets by the build script |
 | `commercial_name`, `catalog_number`, `supplier` | supplier product page |
+| `supplied_buffer` | supplier product page, under "Reaction Conditions" |
 | `incubation_celsius`, `heat_inactivation_celsius`, `heat_inactivation_minutes` | supplier product page |
 | `methylation` (Dam, Dcm, CpG) | supplier product page |
 
 Every enzyme carries a `provenance` map naming the source of each value, and an `unverified`
 list naming fields no source stated. The sources themselves are listed in the file's `sources`
-table with their URL and the date read.
+table with their URL and the date read: `archived` is a snapshot, `retrieved` a live page. A
+source carrying both was read twice, and section 6 records that the two readings agree.
 
 ## 2. Licences
 
@@ -69,6 +71,14 @@ fetches REBASE and nothing else: an automated merge of an NEB dataset would be m
 The same reading applies to `nc3.neb.com/NEBcutter/data/enzymes.json`, NEBcutter 3's enzyme
 table, which is reachable without a 403. It was read to confirm product names and reaction
 temperatures. It is **not** a build input and none of it is copied wholesale.
+
+`supplied_buffer` was added for issue #134 under this same rule. Every product page prints the
+buffer under "Reaction Conditions", beside the incubation temperature already re-entered from
+it, so one word per product is read and typed in. NEB publishes the same values twice more, as
+the *Performance Chart for Restriction Enzymes* and in NEBcutter's table; both are compiled
+tables, neither is republished here and neither is a build input.
+`docs/research/restriction-ligation.md` §4 argues that line for issue #120 and reaches the same
+verdict.
 
 ### Thermo Fisher
 
@@ -139,10 +149,12 @@ Sixteen multiple-cloning-site enzymes (EcoRI, SacI, KpnI, SmaI, XmaI, BamHI, Xba
 SbfI, SphI, HindIII, NdeI, NcoI, XhoI, NotI) and ten Type IIS enzymes (BsaI, BsmBI, Esp3I,
 BbsI, BpiI, SapI, BspQI, PaqCI, AarI, BtgZI). Section 8 adds SrfI and PmeI, which are neither.
 
-NEB returns HTTP 403 to scripts, so every NEB product page was read through a dated Wayback
+NEB returns HTTP 403 to scripts, so every NEB product page was first read through a dated Wayback
 snapshot; the snapshot date is in the data file beside each source. The snapshots run from
 2025-10-07 to 2026-08-14 — recorded per source rather than as one date, because that is what
-each value's age actually is.
+each value's age actually is. All 28 pages were read again, live, on **2026-09-18** through the
+`r.jina.ai` route `docs/research/restriction-ligation.md` records, which is where
+`supplied_buffer` comes from; each source carries that date as `retrieved`.
 
 Values worth flagging:
 
@@ -158,6 +170,15 @@ Values worth flagging:
 - **KpnI-HF, BamHI-HF and PstI-HF** say `Heat Inactivation: No`. Their
   `heat_inactivation_celsius` is `null` and they are *not* listed as unverified: the supplier
   answered, and the answer was "heat does not stop it".
+- **`supplied_buffer` is a property of the product, not of the enzyme name.** Twenty-four of the
+  twenty-six NEB products ship in `rCutSmart Buffer`, including all sixteen multiple cloning site
+  enzymes; BsmBI-v2 and BspQI ship in `NEBuffer r3.1`. The two Thermo products carry Thermo's own
+  answer from the "Compatible Buffer" row of their pages — `Buffer G` for BpiI and the unique
+  `Buffer AarI` for AarI — so no pair crossing the two suppliers reads as sharing a buffer.
+  PaqCI's page gives `rCutSmart Buffer` and asks for the PaqCI Activator on top of it; the
+  activator is not a buffer and `cloning.goldengate.bench` already adds it.
+- **The concentration is not part of the name.** The pages write `1X rCutSmart™ Buffer` and
+  `10X Buffer G`; the field holds the buffer.
 
 ### Unverified values
 
@@ -183,6 +204,14 @@ input:
 - Biopython's `Bio.Restriction` dictionary, compiled from an older REBASE release:
   `BsaI` has `fst5 = 7`, `SapI` has `fst5 = 8`.
 - NEBcutter 3's enzyme table: `BsaI {"ct1": 7, "cb1": 11}`, `SapI {"ct1": 8, "cb1": 11}`.
+
+One more cross-check, on **2026-09-18**, is over the supplier values rather than the cut offsets.
+Every one already shipped — incubation temperature, heat inactivation and all three methylation
+words — was compared against the live page it is cited to, for all 28 records, and agreed. So the
+snapshot dates above understate how fresh these values are rather than overstating it, and
+nothing in the file needed correcting when `supplied_buffer` was read from the same pages. Worth
+saying plainly, because two values look wrong and are not: **SmaI incubates at 37 °C**, not the
+25 °C of older literature, and KpnI-HF's `Heat Inactivation: No` is still an answer.
 
 Heat-inactivation temperatures were also checked against NEB's *Heat Inactivation* chart
 (archived 2026-03-05), which agrees with every product page read: BsaI-HFv2 80 °C, Esp3I 65 °C,
@@ -243,7 +272,8 @@ Three readings agree with the offsets above, and none is a build input:
 
 ## Sources
 
-All read on 2026-09-12, except the two product pages section 8 names.
+All read on 2026-09-12, except the two product pages section 8 names and the live re-read of
+every product page on 2026-09-18.
 
 - REBASE, *withrefm* — all enzymes with references and isoschizomers, release 609:
   [rebase.neb.com](https://rebase.neb.com/rebase/link_withrefm)
@@ -257,13 +287,15 @@ All read on 2026-09-12, except the two product pages section 8 names.
   [doi:10.1093/nar/gkac975](https://doi.org/10.1093/nar/gkac975)
 - NEB product pages for R3101, R3156, R3142, R0141, R0180, R3136, R0145, R3138, R3140, R3642,
   R3182, R3104, R0111, R3193, R0146, R3189, R3733, R0739, R0734, R3539, R0569, R0712, R0745,
-  R0703, R0629 and R0560 — each via a dated `web.archive.org` snapshot, listed in the data file
+  R0703, R0629 and R0560 — each via a dated `web.archive.org` snapshot, listed in the data file,
+  and each read again live on 2026-09-18 through `r.jina.ai`, the route
+  `docs/research/restriction-ligation.md` records for pages `neb.com` 403s
 - NEB, *Heat Inactivation* chart — archived snapshot 2026-03-05:
   [web.archive.org](https://web.archive.org/web/20260305053645id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation)
 - NEB, *Terms of Use* — archived snapshot 2026-05-23:
   [web.archive.org](https://web.archive.org/web/20260523091525id_/https://www.neb.com/en-us/terms-of-use)
 - NEBcutter 3 enzyme table: [nc3.neb.com](https://nc3.neb.com/NEBcutter/data/enzymes.json)
 - Thermo Scientific product pages for BpiI (#ER1011) and AarI (#ER1581) — archived snapshots
-  2026-08-02
+  2026-08-02, read again live on 2026-09-18
 - `docs/research/golden-gate-assembly.md` (issue #4) for NEB's Golden Gate reaction
   temperatures and its per-enzyme table
