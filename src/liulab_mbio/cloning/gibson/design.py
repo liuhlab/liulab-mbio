@@ -40,16 +40,16 @@ WALLACE_AT = 2.0
 WALLACE_GC = 4.0
 
 #: Bases of self-complementary sequence that make an overlap "highly palindromic", which NEB
-#: asks for and costs up to a tenfold loss of colonies (§10). NEB quantifies the loss and not
-#: the trigger, so the floor is this package's: half of the shortest overlap anyone documents,
-#: which leaves a single six-base restriction site inside an overlap unremarked.
-PALINDROME_BASES = 8
+#: asks a design to avoid and puts at up to a tenfold loss of colonies (§10). NEB quantifies the
+#: loss and not the trigger, so the floor is this package's: five pairs of stem. Lower fires on
+#: the single restriction site an overlap may legitimately carry.
+PALINDROME_BASES = 10
 
 #: What counts as a repeating sequence at an overlap's end, which both NEB manuals refuse: bases
-#: covered by a tandem repeat of a unit this long. The unit band and the six-base floor are this
-#: package's reading of NEB's own example, a His-tag of repeated codons (§10).
+#: covered by a tandem repeat of a unit this long. NEB's own example is a His-tag, three copies
+#: of a codon, and the floor is that example in bases (§10); the unit band is this package's.
 REPEAT_UNIT_BP = (2, 6)
-REPEAT_BASES = 6
+REPEAT_BASES = 9
 
 #: Bases NEB asks to be left outside such a repeat at each end: "you must flank the His-tag
 #: sequence on both sides with at least 2 nucleotides that are not part of the His-tag repeating
