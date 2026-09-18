@@ -294,6 +294,47 @@ are re-exported from `liulab_mbio.cloning.restriction` itself.
 
 ::: liulab_mbio.cloning.restriction.steps
 
+## Gateway
+
+`plan_gateway` is the way in, and `Plan.write` puts the expression clone, the oligo sheet and
+the protocol in one directory, with the entry clone beside them where a BP reaction was planned.
+So a plan writes four files, or five where BP ran. The first record it takes is an entry clone,
+or an insert carrying att ends when `donor` is given, or a plain insert when `amplify` is set as
+well. Nothing is cut and nothing is ligated here: two att sites recombine, and the reaction
+rewrites the sites themselves.
+
+The modules under it are its steps. `att` owns the eight att sequences, which one pairs with
+which, and the arithmetic a junction follows. It is not `liulab_mbio.sites`, which means enzyme
+cut sites. `design` owns the attB primer tail and the PCR that puts it on an insert.
+`recombination` simulates one reaction on two records. `checks` holds the verdicts that span
+both reactions — including the one nothing sourced can judge, which comes back with no verdict
+rather than a pass. `oligos` says what each designed oligo is for, `bench` holds this method's
+own numbers with the source of each, and `steps` writes the protocol.
+
+Two names here repay a second look. A `Junction` is the att site one reaction wrote. Its 25
+bases straddle the boundary between the two records that made the product, so where the moved
+DNA starts and stops is `Recombination.boundaries` rather than the junction's own span.
+
+::: liulab_mbio.cloning.gateway
+    options:
+      members: false
+
+::: liulab_mbio.cloning.gateway.plan
+
+::: liulab_mbio.cloning.gateway.att
+
+::: liulab_mbio.cloning.gateway.design
+
+::: liulab_mbio.cloning.gateway.recombination
+
+::: liulab_mbio.cloning.gateway.checks
+
+::: liulab_mbio.cloning.gateway.oligos
+
+::: liulab_mbio.cloning.gateway.bench
+
+::: liulab_mbio.cloning.gateway.steps
+
 ## Libraries
 
 `plan_library` is the way in. It builds a barcoded library of every combination of the part
@@ -345,6 +386,8 @@ spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.gibson.cli
 
 ::: liulab_mbio.cloning.restriction.cli
+
+::: liulab_mbio.cloning.gateway.cli
 
 ::: liulab_mbio.library.cli
 

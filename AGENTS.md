@@ -25,13 +25,15 @@ One direction, bottom to top — nothing lower imports anything higher.
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, and `render`, its self-contained HTML page |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
-| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: those modules again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair |
+| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: those modules again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
 | pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: the root app mounts one sub-app per feature, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
 product, the primer sheet, `protocol.json` and the `protocol.html` rendered from it.
 `cloning.gibson.plan_gibson` and `cloning.restriction.plan_restriction` write the same four.
+`cloning.gateway.plan_gateway` writes those four, and the entry clone as a fifth where it
+planned a BP reaction.
 `library.plan_library` writes the synthesis order sheet, the barcode and amino-acid change
 tables, a record per round, the product, and those same two protocol files.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
@@ -77,6 +79,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | a Golden Gate plan | `pixi run liulab_mbio cloning goldengate plan VECTOR INSERT --out DIR` |
 | a Gibson plan | `pixi run liulab_mbio cloning gibson plan VECTOR INSERT --out DIR` |
 | a restriction and ligation plan | `pixi run liulab_mbio cloning restriction plan VECTOR INSERT --out DIR` |
+| a Gateway plan | `pixi run liulab_mbio cloning gateway plan CARRIER DESTINATION --out DIR` |
 | a library plan | `pixi run liulab_mbio library plan PARTS --scheme S --vector V --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 

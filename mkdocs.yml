@@ -22,6 +22,7 @@ nav:
   - Example plan: examples/pUC19-GFP/index.md
   - Join GFP into pUC19 by Gibson: gibson.md
   - Clone GFP into pUC19 with two enzymes: restriction-ligation.md
+  - Move a gene into an expression vector with Gateway: gateway.md
   - Check primers on a genome: genome-check.md
   - API reference: api.md
 

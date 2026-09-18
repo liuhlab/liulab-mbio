@@ -267,8 +267,9 @@ _Avoid_: diff, changelog, summary
 How an experiment joins its fragments into one plasmid: the mechanism, the enzymes it needs, and
 what it leaves at each junction. It is chosen for a job — how many fragments join, whether the
 junction may gain bases, what the parts already carry, speed and cost — rather than preferred in
-general. Golden Gate, Gibson assembly and classical restriction and ligation are the ones this
-package plans; a library built in rounds is a pipeline over a method, not a method of its own.
+general. Golden Gate, Gibson assembly, classical restriction and ligation and Gateway are the
+ones this package plans, the last of them joining nothing — its att sites recombine; a library
+built in rounds is a pipeline over a method, not a method of its own.
 _Avoid_: cloning strategy, technique, approach
 
 ### Molar ratio
@@ -283,7 +284,8 @@ _Avoid_: insert ratio, stoichiometry
 Where two fragments meet in an assembled product: in Golden Gate the four bases, three for SapI,
 that one overhang paired with its match; in Gibson assembly the overlap the two share; in
 restriction and ligation the recognition site the two cut ends came from, which the join puts
-back. Validation reads across it.
+back; in Gateway the whole att site the recombination wrote, whose 25 bases straddle the
+boundary, so where the insert starts is not where the junction does. Validation reads across it.
 _Avoid_: joint, seam, fusion site
 
 ### Overlap
@@ -337,6 +339,55 @@ A clone carrying its insert the other way round. Two vector primers flanking the
 the same band as the correct clone, so a gel separates the two only with a third primer inside
 the insert.
 _Avoid_: flipped clone, wrong orientation
+
+### att site
+
+One of the eight sites Gateway recombines: attB, attP, attL or attR, each numbered 1 or 2.
+Twenty-five bases recombine, and the 7 bp overlap inside them is what decides which site pairs
+with which. A reaction rewrites the pair it consumes — attB with attP gives attL and attR, attL
+with attR gives back attB and attP — so the sites are the mechanism and not a scar left by it.
+One is found in a record by searching for it, never by matching a shipped sequence, because a
+vendor's own sites drift between products.
+_Avoid_: recombination site, att sequence, recombination region
+
+### Entry clone
+
+The plasmid carrying an insert between attL1 and attL2: what a BP reaction makes, and what an LR
+reaction spends. It is the record a Gateway job reuses, because one entry clone feeds every
+destination vector after it. A plan given one plans no BP reaction; a plan that makes one writes
+it as a file of its own.
+_Avoid_: donor clone, middle vector, pENTR
+
+### Destination vector
+
+The plasmid an LR reaction moves an insert into: attR1 and attR2 around a ccdB cassette, with
+the promoter, tag and marker the finished clone is wanted for. It is the user's own file. This
+package ships no vector catalogue, and reads a vector's sites out of the bases it is handed.
+_Avoid_: expression vector, target vector, pDEST
+
+### BP reaction
+
+The reaction making an entry clone: an insert with an att site on each end recombines with a
+donor vector, the plasmid holding attP1 and attP2 around a ccdB cassette. The insert gains attL
+sites and the cassette leaves in the by-product. Its entry clone is grown up and purified before
+an LR reaction takes it, never chained straight on.
+_Avoid_: BP cloning, entry reaction, donor reaction
+
+### LR reaction
+
+The reaction making the expression clone: an entry clone recombines with a destination vector,
+the insert gains attB sites, and that vector's ccdB cassette leaves in the by-product. Every
+Gateway plan runs one, and the BP reaction before it only where no entry clone was handed in.
+_Avoid_: LR cloning, expression reaction, destination reaction
+
+### ccdB counter-selection
+
+What keeps a Gateway plate clean. A donor or destination vector carries ccdB, which kills an
+ordinary strain, so only a clone that has traded the cassette away grows. It decides two strains
+rather than one: the vectors are grown in a strain resistant to CcdB, and the clone is selected
+in a strain CcdB kills. A strain carrying F′ cancels the whole thing, because the episome's
+ccdA neutralises CcdB.
+_Avoid_: negative selection, ccdB selection, suicide gene
 
 ### Overhang set
 

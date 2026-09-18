@@ -9,6 +9,36 @@ sets one.
 
 ### Added
 
+- Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
+  cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
+  is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the
+  sites themselves. So there is no enzyme to pick and no overhang to score. There are three
+  routes, and your files choose one. An entry clone you already hold plans the LR reaction
+  alone. A fragment that already carries att ends plans the BP reaction first, and its entry
+  clone feeds LR. `--amplify` designs the two attB primers for a plain gene and amplifies it
+  onto those ends. `Plan.write` writes the four files every cloning plan writes, plus the entry
+  clone as a fifth where the BP reaction ran.
+- Both vectors are your own files. No vector list ships with this package, and none is planned.
+  A vector is recognised by searching its bases for att sites, allowing one base to differ
+  outside the core of a site and none inside the seven that decide which site it is. The
+  supplier's own sites drift between products, so a stored copy would turn a working vector
+  away. A record carrying no site is refused, and the message names every site it looked for.
+- The junction is not clean, and the plan says what it costs. A whole att site lands at each end
+  of the insert, so the clone gains 25 bases there. Where a tag is read through one of them,
+  `--fusion` says which end, and the frame is judged there: two more bases at the front end, one
+  at the back. The tail an attB primer carries is four G residues, the 25 bp site and those
+  frame bases. Those G residues leave with the BP by-product, so the entry clone reads the same
+  whichever route made it.
+- The protocol names both strains, and it screens what it made. A donor and a destination vector
+  carry ccdB, so each is grown in a strain that resists it, while the clone is selected in a
+  strain it kills. A strain carrying F′ fails that check by name, because its `ccdA` cancels the
+  selection. Whether a reaction plated on a resistant strain still counter-selects is stated
+  nowhere, so that check carries no verdict rather than a pass. Every plan then screens colonies
+  across both joins and designs sequencing primers reading in from outside each. There are two
+  lanes and not three: the two att sites differ, so the insert cannot go in backwards.
+- A `gateway/METHOD.md` behind the `molecular-cloning` skill, which now chooses between four
+  methods on the same five things, with a `variants.md` beside it for the published routes this
+  command does not plan. A docs page follows one Gateway job end to end.
 - Classical restriction and ligation cloning, end to end.
   `liulab_mbio.cloning.restriction.plan_restriction` takes a vector and an insert, plans both
   digests and the gel that separates their fragments, works the ligation out in picomoles, and
@@ -175,6 +205,12 @@ sets one.
 
 ### Changed
 
+- A plate step now names the medium the drug needs, and reads a marker the table does not know.
+  `liulab_mbio.bench.phenotype` gained the markers Gateway's vectors carry: kanamycin, Zeocin
+  and spectinomycin. Zeocin only works in low-salt medium, so `Phenotype.medium` sits beside the
+  antibiotic and every method's plate step reads it. A resistance gene the table cannot name is
+  now found anyway and named on the plate, rather than left out. A marker inside the piece a
+  reaction throws away is skipped, because it is not what the plate selects.
 - A check on a protocol page may now carry no verdict, and the page shows it as `not judged`.
   A check with no verdict used to be dropped from the page, which read as though nobody had
   asked the question. It now gets a badge of its own, in a muted colour, with the reason and
