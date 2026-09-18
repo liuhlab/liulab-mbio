@@ -84,6 +84,7 @@ tests/            pytest, mirroring src/
 docs/             the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
 skills/           repo-local agent skills
 scripts/          the gate runner, and the package-data builders
+reference_docs/   reference material downloaded for a method — papers, manuals; git-ignored
 CONTEXT.md        the glossary — the words this repo uses
 ```
 

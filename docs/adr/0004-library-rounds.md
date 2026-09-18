@@ -41,4 +41,5 @@ Rounds are what the method costs: a transformation, a growth and a prep each, an
 loss carries into the next, so library coverage is counted per round and not once at the end. A
 plan records every round's intermediate product, and the protocol covers every round. The product
 reports cut sites for the scheme's own enzymes, which is the design working rather than a defect.
-`library/` imports `goldengate` only for `design`'s overhang rules.
+`library/` imports no cloning method: the overhang rules both need sit below every pipeline, per
+`docs/adr/0007-cloning-methods.md`.

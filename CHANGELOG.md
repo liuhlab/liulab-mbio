@@ -117,6 +117,12 @@ sets one.
 
 ### Changed
 
+- The cloning methods are grouped under one verb. `liulab_mbio goldengate plan` is now
+  `liulab_mbio cloning goldengate plan`, and `liulab_mbio cloning --help` lists the methods this
+  package plans. `liulab_mbio library plan` is unchanged. The import path moves with the verb:
+  `liulab_mbio.cloning.goldengate.plan_assembly`. The plan writes the same four files, with the
+  same names and the same bytes. The `golden-gate-assembly` skill is now `molecular-cloning`,
+  which picks the method for the job and reads `golden-gate/METHOD.md` once it has.
 - Barcode sets are designed on an indel-aware distance by default. `liulab_mbio.barcodes` takes
   the metric as a dial: `sequence-levenshtein`, which counts a lost or gained base, or `hamming`,
   which counts mismatches and cannot see one. Measured over the 11-mer space, between 19% and

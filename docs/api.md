@@ -71,6 +71,14 @@ across the origin of a circular record ends past the record's length — see
 
 ::: liulab_mbio.translate
 
+## Barcodes
+
+A barcode names one part, so that reading a product says which part it carries. This module
+draws a set whose members stand far enough apart that no two read as one, and checks a set
+someone already holds by the same rules. The same seed draws the same set again.
+
+::: liulab_mbio.barcodes
+
 ## Overhangs and ligation
 
 The rules a set of Type IIS overhangs is held to, and how well the set should ligate. Every
@@ -218,6 +226,41 @@ because one reaction joins as many inserts as the overhangs allow.
 
 ::: liulab_mbio.cloning.goldengate.steps
 
+## Libraries
+
+`plan_library` is the way in. It builds a barcoded library of every combination of the part
+lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
+barcode and amino-acid change tables, a record for each round, the product and the protocol pair
+in one directory. The modules under it are its steps. `scheme` holds the design the user
+supplies, `standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
+takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the
+colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps.
+
+A library is a pipeline over Golden Gate rather than a cloning method of its own — see
+[the library rounds decision](adr/0004-library-rounds.md).
+
+::: liulab_mbio.library
+    options:
+      members: false
+
+::: liulab_mbio.library.plan
+
+::: liulab_mbio.library.scheme
+
+::: liulab_mbio.library.standard
+
+::: liulab_mbio.library.parts
+
+::: liulab_mbio.library.vector
+
+::: liulab_mbio.library.rounds
+
+::: liulab_mbio.library.coverage
+
+::: liulab_mbio.library.bench
+
+::: liulab_mbio.library.steps
+
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
@@ -230,6 +273,8 @@ spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.cli
 
 ::: liulab_mbio.cloning.goldengate.cli
+
+::: liulab_mbio.library.cli
 
 ::: liulab_mbio.protocol.cli
 

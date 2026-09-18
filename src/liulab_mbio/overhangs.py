@@ -1,7 +1,7 @@
 """The rules a set of Type IIS overhangs is held to, and how well the set should ligate.
 
 Any method that cuts with a Type IIS enzyme asks the same two questions, so they sit here below
-the pipelines rather than inside one of them:
+the pipelines rather than inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
 
 - **Which overhangs a set may hold.** A palindrome would let a fragment ligate to itself, a
   repeat would let two junctions swap, and a near-duplicate is what mis-ligates. `refusal`
