@@ -2,10 +2,10 @@
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
 // show or hide each kind of item and each feature type in place, flip the map's shape, and show
 // the sequence view, beside the map or under it, in full rows or narrow ones, as the page's width
-// allows. The map's caption zooms the shape shown, when it zooms, and a drag pans it. A click on
-// an item highlights it in both views and scrolls the other to it. In the sequence view, hovering
-// over a base shows its position, and a drag selects bases to copy, scrolling the view while the
-// pointer lies past its top or bottom.
+// allows. The map's caption zooms the shape shown, the circle freely and the line in steps, and a
+// drag pans it. A click on an item highlights it in both views and scrolls the other to it. In the
+// sequence view, hovering over a base shows its position, and a drag selects bases to copy,
+// scrolling the view while the pointer lies past its top or bottom.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
@@ -17,15 +17,29 @@
   const zoomer = map.querySelector("figcaption");
   const slider = zoomer?.querySelector('[name="zoom"]');
 
-  // The map's shape shown, and whether it zooms. Each shape keeps its zoom, in doublings, and
-  // where its pane was scrolled.
+  // The map's shape shown, and whether it zooms: freely, or in steps between its drawings, each
+  // laid out along a line twice as long as the last. Each shape keeps its zoom, in doublings, the
+  // zoom a pinch last asked for, and where its pane was scrolled.
   const showing = () => map.querySelector(".shape:not([hidden])");
-  const zooms = (shape) => shape?.dataset.zoom === "free";
+  const zooms = (shape) => Boolean(shape?.dataset.zoom);
+  const steps = (shape) => [...shape.querySelectorAll(":scope > .step")];
+  const image = (shape) =>
+    (shape.querySelector(":scope > .step:not([hidden])") ?? shape).querySelector("svg");
   const kept = new Map();
   const held = (shape) => {
-    if (!kept.has(shape)) kept.set(shape, { level: 0, left: 0, top: 0 });
+    if (!kept.has(shape)) kept.set(shape, { level: 0, aim: 0, left: 0, top: 0 });
     return kept.get(shape);
   };
+  // Each step's drawing is shown at the scale its first is: as many times its first's width and
+  // height as its view box is.
+  const extent = (step) => step.querySelector("svg").viewBox.baseVal;
+  for (const shape of map.querySelectorAll('[data-zoom="steps"]')) {
+    const [first] = steps(shape).map(extent);
+    for (const step of steps(shape)) {
+      step.style.setProperty("--across", String(extent(step).width / first.width));
+      step.style.setProperty("--down", String(extent(step).height / first.height));
+    }
+  }
   // A press on the map, which pans it once it moves more than a few pixels.
   let press = null;
   let panned = false;
@@ -106,6 +120,7 @@
     const now = showing();
     if (zoomer) {
       zoomer.hidden = !zooms(now);
+      slider.step = steps(now).length ? "1" : "any";
       slider.value = String(held(now).level);
     }
     if (now !== was) map.scrollTo(held(now).left, held(now).top);
@@ -448,12 +463,16 @@
     shape.style.setProperty("--below", `${Math.max(map.scrollHeight - below, 0)}px`);
     return box;
   };
-  // Measures a zoomed shape again, and scales where the pane was scrolled by how much it changed.
+  // Measures a zoomed shape again, at its first step when it steps, and scales where the pane was
+  // scrolled by how much it changed.
   const fit = (shape) => {
     if (!shape.classList.contains("zoomed")) return;
     const by = 1 / parseFloat(shape.style.getPropertyValue("--width"));
+    const [first, shown] = [steps(shape)[0], steps(shape)[held(shape).level]];
     shape.classList.remove("zoomed");
+    if (shown) [shown.hidden, first.hidden] = [true, false];
     const { width } = pin(shape);
+    if (shown) [first.hidden, shown.hidden] = [true, false];
     shape.classList.add("zoomed");
     map.scrollTo(held(shape).left * width * by, held(shape).top * width * by);
   };
@@ -462,27 +481,51 @@
   // Where the last zoom scrolled the pane, before the pane rounded it to whole pixels, so that
   // zooming step by step does not add up the rounding.
   let wanted = null;
-  // Zooms the shape shown to `level` doublings, keeping the point at (x, y) where it is: the
-  // drawing grows from its top left, and the pane scrolls over it.
+  // Zooms the shape shown to `level` doublings, a whole step for a shape that steps, keeping the
+  // point at (x, y) where it is. The drawing grows from its top left, or is swapped for the step's,
+  // and the pane scrolls over it.
   const zoom = (level, x, y) => {
     const shape = showing();
     if (!zooms(shape)) return;
-    const to = Math.min(Math.max(level, Number(slider.min)), Number(slider.max));
+    const all = steps(shape);
+    const most = all.length ? all.length - 1 : Number(slider.max);
+    const to = Math.min(Math.max(all.length ? Math.round(level) : level, 0), most);
     const by = 2 ** (to - held(shape).level);
-    const box = held(shape).level ? shape.querySelector("svg").getBoundingClientRect() : pin(shape);
+    const was = image(shape);
+    const box = held(shape).level ? was.getBoundingClientRect() : pin(shape);
     const { scrollLeft, scrollTop } = map;
     const near = (one, other) => Math.abs(one - other) < 1;
     const [left, top] =
       wanted?.shape === shape && near(wanted.left, scrollLeft) && near(wanted.top, scrollTop)
         ? [wanted.left, wanted.top]
         : [scrollLeft, scrollTop];
-    // The drawing's top left had the pane scrolled to exactly `left` and `top`.
-    const [dx, dy] = [box.left + scrollLeft - left, box.top + scrollTop - top];
+    // How far the point lies from the drawing's top left, had the pane been scrolled to exactly
+    // `left` and `top`, and how far it will.
+    const at = [x - box.left - scrollLeft + left, y - box.top - scrollTop + top];
+    let then = at.map((one) => one * by);
+    if (all.length) {
+      // Each step's line runs from x = 0 twice as far as the last's, its text the same size: the
+      // point moves along with the line, and stays as high above it.
+      const scale = parseFloat(shape.style.getPropertyValue("--width")) / extent(all[0]).width;
+      const [from, into] = [was.viewBox.baseVal, extent(all[to])];
+      const [u, v] = [at[0] / scale + from.x, at[1] / scale + from.y];
+      then = [(u * by - into.x) * scale, (v - into.y) * scale];
+      all.forEach((step, index) => {
+        step.hidden = index !== to;
+      });
+    }
     shape.style.setProperty("--zoom", String(2 ** to));
     shape.classList.toggle("zoomed", to > 0);
-    wanted = { shape, left: left + (x - dx) * (by - 1), top: top + (y - dy) * (by - 1) };
-    map.scrollTo(wanted.left, wanted.top);
-    held(shape).level = to;
+    const [goal, fall] = [left + then[0] - at[0], top + then[1] - at[1]];
+    map.scrollTo(goal, fall);
+    // As far as the pane scrolls, so that an end it stopped at is not taken for rounding.
+    const within = (one, room) => Math.min(Math.max(one, 0), room);
+    wanted = {
+      shape,
+      left: within(goal, map.scrollWidth - map.clientWidth),
+      top: within(fall, map.scrollHeight - map.clientHeight),
+    };
+    held(shape).level = held(shape).aim = to;
     slider.value = String(to);
   };
 
@@ -490,7 +533,7 @@
   // trackpad's pinch sends it, about the pointer. A plain wheel scrolls.
   slider?.addEventListener("input", () => {
     const { top, bottom, left, right } = sight(map);
-    const box = showing().querySelector("svg").getBoundingClientRect();
+    const box = image(showing()).getBoundingClientRect();
     const x = (Math.max(left, box.left) + Math.min(right, box.right)) / 2;
     const y = (Math.max(top, box.top) + Math.min(bottom, box.bottom)) / 2;
     zoom(Number(slider.value), x, y);
@@ -502,13 +545,23 @@
   map.addEventListener(
     "wheel",
     (event) => {
-      if (!(event.ctrlKey || event.metaKey) || !zooms(showing())) return;
+      const shape = showing();
+      if (!(event.ctrlKey || event.metaKey) || !zooms(shape)) return;
       event.preventDefault();
       // A pinch sends 100 × ln(its scale); a wheel's notch zooms at most half a doubling.
       const lines = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? map.clientHeight : 1;
-      const by = -(event.deltaY * lines) / 100 / Math.LN2;
-      const level = held(showing()).level + Math.min(Math.max(by, -0.5), 0.5);
-      zoom(level, event.clientX, event.clientY);
+      const by = Math.min(Math.max(-(event.deltaY * lines) / 100 / Math.LN2, -0.5), 0.5);
+      const hold = held(shape);
+      if (!steps(shape).length) {
+        zoom(hold.level + by, event.clientX, event.clientY);
+        return;
+      }
+      // On a shape that steps, a notch steps once. A pinch's many small steps add up, and the step
+      // nearest their sum shows, a tie going the way they moved.
+      const asked = Math.abs(by) === 0.5 ? hold.level + Math.sign(by) : hold.aim + by;
+      const aim = Math.min(Math.max(asked, 0), Number(slider.max));
+      zoom(by > 0 ? Math.floor(aim + 0.5) : Math.ceil(aim - 0.5), event.clientX, event.clientY);
+      hold.aim = aim;
     },
     { passive: false },
   );

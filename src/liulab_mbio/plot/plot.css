@@ -83,6 +83,12 @@ body {
     max-height: none;
     padding: 0 var(--right) var(--below) 0;
   }
+
+  /* A shape that zooms in steps shows the step's drawing at the scale its first takes. */
+  .plot .map .zoomed .step svg {
+    width: calc(var(--across) * var(--width));
+    height: calc(var(--down) * var(--height));
+  }
 }
 
 .plot text {
@@ -256,12 +262,14 @@ body {
     overflow: visible;
   }
 
-  /* The full rows, whichever rows the page's width shows. */
-  .sequence-view .row-width {
+  /* The full rows, whichever rows the page's width shows, and the line at its first step. */
+  .sequence-view .row-width,
+  .map .step {
     display: block;
   }
 
-  .sequence-view .row-width ~ .row-width {
+  .sequence-view .row-width ~ .row-width,
+  .map .step ~ .step {
     display: none;
   }
 }

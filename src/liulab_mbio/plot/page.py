@@ -7,10 +7,11 @@ search and copy. It keeps a white background whatever the browser's colour schem
 Switches above the drawing show or hide each kind of item and each feature type in place, flip
 the map between its shapes at top right, and show the sequence view with it: beside the map while
 the page is wide enough for both, under it otherwise, and in rows half as long where full ones
-would shrink. A caption on the map zooms a shape that zooms, and a drag pans it. A click on an
-item highlights it in both views, and scrolls the other view to it. In the sequence view, a toggle
-shows one strand or both, hovering over a base shows its position, and a drag selects bases to
-copy, scrolling the view while it passes the view's top or bottom.
+would shrink. A caption on the map zooms the shape shown, the circle by scaling it and the line in
+steps laid out again at each, and a drag pans it. A click on an item highlights it in both views,
+and scrolls the other view to it. In the sequence view, a toggle shows one strand or both,
+hovering over a base shows its position, and a drag selects bases to copy, scrolling the view
+while it passes the view's top or bottom.
 """
 
 import base64
@@ -51,7 +52,7 @@ class Switch:
 
 
 def render(
-    maps: Mapping[str, str],
+    maps: Mapping[str, Sequence[str]],
     *,
     title: str,
     shown: str,
@@ -63,20 +64,27 @@ def render(
 ) -> str:
     """Return a page showing a map under `title`, with `sequence_view`.
 
-    `maps` holds the map as an SVG element in each shape it is drawn in, such as ``"circle"``
-    and ``"line"``. The shape `shown` names shows first, and a switch flips between them when
-    there are two. Each shape `zooms` names zooms in up to eight times by scaling its drawing,
-    from a caption on the map that shows while it does. `sequence_view` holds the sequence view as
-    an SVG element too, as `sequence_view.layout` draws one with both strands, at each row width it
-    is drawn at, keyed by how many bases a row holds; none for the map alone. The first shows
+    `maps` holds the map in each shape it is drawn in, such as ``"circle"`` and ``"line"``, as
+    that shape's SVG elements in zoom order. The shape `shown` names shows first, and a switch
+    flips between them when there are two. A shape drawn more than once zooms in steps between its
+    drawings, each laid out along a line twice as long as the last from the same start; each
+    shape `zooms` names zooms in up to eight times by scaling its one drawing. Either zooms from a
+    caption on the map that shows while such a shape does. `sequence_view` holds the sequence view
+    as an SVG element too, as `sequence_view.layout` draws one with both strands, at each row width
+    it is drawn at, keyed by how many bases a row holds; none for the map alone. The first shows
     first, and the page shows the one that fits it. A switch shows the view, first when
     `sequence_shown`, and a toggle in it shows its bottom strand, first when `both_strands`.
     """
     fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
+    zoom = {
+        shape: "steps" if len(images) > 1 else "free"
+        for shape, images in maps.items()
+        if len(images) > 1 or shape in zooms
+    }
     shapes = "".join(
-        _shape(shape, image, shape == shown, shape in zooms) for shape, image in maps.items()
+        _shape(shape, images, shape == shown, zoom.get(shape)) for shape, images in maps.items()
     )
-    caption = _zoom(shown in zooms) if zooms else ""
+    caption = _zoom(zoom.get(shown)) if zoom else ""
     figures = f'<figure class="map">{caption}\n{shapes}</figure>\n'
     if sequence_view:
         figures += _sequence_view(sequence_view, sequence_shown, both_strands)
@@ -143,16 +151,29 @@ def _sequence_view(images: Mapping[int, str], shown: bool, both_strands: bool) -
     )
 
 
-def _shape(shape: str, image: str, shown: bool, zooms: bool) -> str:
-    zoom = ' data-zoom="free"' if zooms else ""
+def _shape(shape: str, images: Sequence[str], shown: bool, zoom: str | None) -> str:
+    """Return a shape's drawing, or each of its steps with all but the first hidden."""
+    if len(images) > 1:
+        body = "".join(
+            f'<div class="step"{" hidden" if index else ""}>{image}</div>'
+            for index, image in enumerate(images)
+        )
+    else:
+        [body] = images
+    zooms = f' data-zoom="{zoom}"' if zoom else ""
     hidden = "" if shown else " hidden"
-    return f'<div class="shape" data-shape="{escape(shape)}"{zoom}{hidden}>{image}</div>\n'
+    return f'<div class="shape" data-shape="{escape(shape)}"{zooms}{hidden}>{body}</div>\n'
 
 
-def _zoom(shown: bool) -> str:
-    """Return the map's caption: a zoom slider counting doublings, and a button to reset it."""
+def _zoom(shown: str | None) -> str:
+    """Return the map's caption: a zoom slider counting doublings, and a button to reset it.
+
+    It shows while the shape `shown` zooms, freely or in steps.
+    """
+    step = "1" if shown == "steps" else "any"
     slider = (
-        f'<input type="range" name="zoom" min="0" max="{math.log2(_ZOOM):g}" step="any" value="0">'
+        f'<input type="range" name="zoom" min="0" max="{math.log2(_ZOOM):g}" step="{step}" '
+        'value="0">'
     )
     return (
         f"<figcaption{'' if shown else ' hidden'}><label>Zoom {slider}</label>"

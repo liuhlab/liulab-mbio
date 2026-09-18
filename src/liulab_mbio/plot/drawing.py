@@ -24,6 +24,10 @@ type Region = str | tuple[int, int]
 #: each page prints filling a sheet.
 _PAGE = math.sqrt(2)
 
+#: How many times `linear.WIDTH` long a page lays out the line, a step of its zoom each, each twice
+#: as long as the last, as `page.render` takes them.
+_STEPS = (1, 2, 4, 8)
+
 #: What a page's switch for each kind of item says, in the order the switches stand.
 _KINDS: dict[layers.Kind, str] = {
     "feature": "Features",
@@ -129,8 +133,9 @@ class Drawing:
         after, as many to a page as fit whole.
 
         A page carries every item behind its switches, a circular record drawn whole both as a
-        circle and as a line, and the sequence view of a stretch up to `sequence_view.LIMIT`
-        bases. A PNG and a PDF draw only what is switched on.
+        circle and as a line, the line laid out again at two, four and eight times its length to
+        zoom in steps, and the sequence view of a stretch up to `sequence_view.LIMIT` bases. A PNG
+        and a PDF draw only what is switched on, the line at its one length.
 
         Raises
         ------
@@ -339,17 +344,20 @@ def _circle(drawing: Drawing, items: tuple[layers.Item, ...]) -> circular.Circul
     )
 
 
-def _line(drawing: Drawing, items: tuple[layers.Item, ...]) -> line.LinearMap:
+def _line(
+    drawing: Drawing, items: tuple[layers.Item, ...], width: float = line.WIDTH
+) -> line.LinearMap:
     record = drawing.record
     return _kept(
         drawing,
-        ("line", items),
+        ("line", items, width),
         lambda: line.layout(
             items,
             name=record.name,
             length=len(record),
             circular=record.topology == "circular",
             span=drawing.span,
+            width=width,
         ),
     )
 
@@ -443,14 +451,17 @@ def _switches(switches: Switches, drawn: line.LinearMap) -> list[page.Switch]:
 
 def _html(drawing: Drawing, path: Path, dpi: float) -> None:
     everything = _everything(drawing)
-    layouts: dict[str, circular.CircularMap | line.LinearMap] = {}
+    layouts: dict[str, list[circular.CircularMap | line.LinearMap]] = {}
     if _whole_circle(drawing):
-        layouts["circle"] = _circle(drawing, everything)
-    layouts["line"] = _line(drawing, everything)
+        layouts["circle"] = [_circle(drawing, everything)]
+    layouts["line"] = [_line(drawing, everything, times * line.WIDTH) for times in _STEPS]
     switches = drawing.switches
     maps = {
-        shape: svg.document(_first_shown(one.shapes, switches, one.hidden), one.extent)
-        for shape, one in layouts.items()
+        shape: [
+            svg.document(_first_shown(one.shapes, switches, one.hidden), one.extent)
+            for one in drawn
+        ]
+        for shape, drawn in layouts.items()
     }
     views: dict[int, str] = {}
     if _carries_sequence_view(drawing):
@@ -466,7 +477,7 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         title=drawing.record.name or path.stem,
         shown=shown,
         zooms=[shape for shape in layouts if shape == "circle"],
-        switches=_switches(switches, layouts["line"]),
+        switches=_switches(switches, _line(drawing, everything)),
         sequence_view=views,
         sequence_shown=drawing.with_sequence_view,
         both_strands=drawing.both_strands,

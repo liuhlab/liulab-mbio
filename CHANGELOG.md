@@ -156,6 +156,18 @@ sets one.
   over a base to see its position. Drag over bases to select them: the page shows the stretch as
   `start .. end (n bp)`, and copying, or the Copy button, puts the top strand's bases on the
   clipboard. Nothing on the page changes the record.
+- The page fits its width. Where full rows of the sequence view would shrink beside the map, the
+  page shows rows half as long. On a narrower page the view goes under the map, which then takes
+  at most 40% of the height, and the rows scroll below it. The bases keep their size either way.
+- The map zooms. Use the Zoom slider above the map, or Ctrl or ⌘ with the wheel, which is also
+  how a trackpad pinch reaches the page. The circle grows up to eight times about the pointer,
+  text and all. The line is drawn again at two, four and eight times its length, so its text
+  keeps its size, labels hidden for want of room come back, and the scale numbers more often.
+  Each step's notice says what that step hid. Drag to move around a zoomed map, and Reset shows
+  it whole. The circle and the line each keep their own zoom, and a printout shows the whole map,
+  unzoomed. A PNG and a PDF are the same as before.
+- Dragging across bases past the top or bottom of the sequence view scrolls it, faster the further
+  past you go, and the selection follows.
 - A repo-local `plot-map` skill that calls `plot map` and `draw_map`, so a coding agent asked to
   show a record hands back a map.
 - A Golden Gate plan picks the codons of the host the part is for: `plan_assembly` takes

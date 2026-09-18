@@ -20,10 +20,10 @@ from . import crowds
 
 
 def _shown(page: Path) -> Node:
-    """The map a page shows first."""
+    """The map a page shows first: the shape shown first, unzoomed."""
     tree = parse(page.read_text(encoding="utf-8"))
     [shown] = [shape for shape in tree.find_all("div", cls="shape") if "hidden" not in shape.attrs]
-    return shown
+    return shown.find_all("svg")[0]
 
 
 def _groups(page: Path) -> list[Node]:
@@ -67,8 +67,9 @@ def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
     code, lines = _run(str(puc19_file), *(f"--output={out}" for out in outs), "--dpi", "18")
     assert code == 0
     assert lines == [str(out) for out in outs]
-    # The page carries the line too; every item shows, so the circle is the PNG's and the PDF's.
-    assert layouts == {circular.__name__: 1, linear.__name__: 1}
+    # The page carries the line too, at each step of its zoom; every item shows, so the circle is
+    # the PNG's and the PDF's.
+    assert layouts == {circular.__name__: 1, linear.__name__: 4}
     assert "<svg" in outs[0].read_text(encoding="utf-8")
     width = struct.unpack(">I", outs[1].read_bytes()[16:20])[0]
     assert width == pytest.approx(extent.width * 18 / 72, abs=1)

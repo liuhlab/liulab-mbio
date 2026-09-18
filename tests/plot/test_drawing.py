@@ -73,12 +73,17 @@ def _shapes(page: Node) -> dict[str, Node]:
 
 
 def _map(page: Node) -> Node:
-    """The map the page shows first."""
-    return next(iter(_shapes(page).values()))
+    """The map the page shows first: the shape shown first, unzoomed."""
+    return next(iter(_shapes(page).values())).find_all("svg")[0]
 
 
 def _maps(page: Node) -> Node:
-    """The page's map, in each shape it carries."""
+    """The page's map unzoomed, in each shape it carries."""
+    return Node("maps", {}, [shape.find_all("svg")[0] for shape in _shapes(page).values()])
+
+
+def _figure(page: Node) -> Node:
+    """The page's map, with its caption, in each shape and at each step it carries."""
     [figure] = page.find_all("figure", cls="map")
     return figure
 
@@ -584,7 +589,8 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
         "primer": {"primer"},
         "cut_site": {"cut site"},
     }
-    for shown in _shapes(page).values():
+    # In each shape, and each step of the line's zoom.
+    for shown in _figure(page).find_all("svg"):
         found: dict[str, set[str]] = {}
         switched: dict[str, set[str]] = {}
         for group in shown.find_all("g"):
@@ -642,10 +648,10 @@ def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
     counted: dict[str, int] = {}
     for module in (circular, linear, sequence_view):
 
-        def lay_out(
-            *args: object, module: Any = module, real: Any = module.layout, **kwargs: object
-        ):
+        def lay_out(*args: object, module: Any = module, real: Any = module.layout, **kwargs: Any):
             key = module.__name__.rsplit(".", 1)[-1]
+            times = kwargs.get("width", linear.WIDTH) / linear.WIDTH
+            key += f" {times:g}x" if times != 1 else ""
             counted[key] = counted.get(key, 0) + 1
             return real(*args, **kwargs)
 
@@ -658,7 +664,9 @@ def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
         assert drawing.layout.extent
         assert drawing.sequence_view is not None
         assert drawing.hidden == ()
-    assert counted == counts
+    # The page's line at each longer step of its zoom, which only the page draws.
+    steps = {"linear 2x": 1, "linear 4x": 1, "linear 8x": 1}
+    assert counted == counts | steps
 
 
 def _texts(page: Node, cls: str = "") -> list[str]:
@@ -705,7 +713,10 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
     _, page = _page(draw_map(request.getfixturevalue(record), **switches), tmp_path / "map.html")
     carried = _shapes(page)
     assert list(carried) == shapes
-    assert [len(shape.find_all("svg")) for shape in carried.values()] == [1] * len(shapes)
+    # The line at each step of its zoom.
+    assert [len(shape.find_all("svg")) for shape in carried.values()] == [
+        1 if shape == "circle" else 4 for shape in shapes
+    ]
     radios = {
         box.attrs["value"]: "checked" in box.attrs for box in page.find_all("input", name="shape")
     }
@@ -725,27 +736,49 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
 @pytest.mark.parametrize(
     ("topology", "opened"), [("circular", False), ("circular", True), ("linear", False)]
 )
-def test_the_circle_zooms_one_to_eight_times_from_a_caption_on_the_map_shown_with_it(
+def test_the_map_zooms_one_to_eight_times_from_a_caption_the_circle_freely_the_line_in_steps(
     tmp_path: Path, topology: Topology, opened: bool
 ) -> None:
     record = SequenceRecord("ACGT" * 10, topology=topology, name="small")
     _, page = _page(draw_map(record, linear=opened), tmp_path / "map.html")
     carried = _shapes(page)
     assert {shape: one.attrs.get("data-zoom") for shape, one in carried.items()} == {
-        shape: "free" if shape == "circle" else None for shape in carried
+        shape: "free" if shape == "circle" else "steps" for shape in carried
     }
-    captions = _maps(page).find_all("figcaption")
-    if "circle" not in carried:
-        assert not captions
-        return
-    [caption] = captions
-    assert ("hidden" in caption.attrs) == (next(iter(carried)) != "circle")
-    # The slider counts doublings, continuously.
+    [caption] = _figure(page).find_all("figcaption")
+    assert "hidden" not in caption.attrs
+    # The slider counts doublings: continuously on the circle, a step at a time on the line.
     [slider] = caption.find_all("input", name="zoom")
     assert slider.attrs["type"] == "range"
     assert (2 ** float(slider.attrs["min"]), 2 ** float(slider.attrs["max"])) == (1, 8)
-    assert (slider.attrs["step"], slider.attrs["value"]) == ("any", "0")
+    step = "any" if next(iter(carried)) == "circle" else "1"
+    assert (slider.attrs["step"], slider.attrs["value"]) == (step, "0")
     assert [button.text for button in caption.find_all("button")] == ["Reset"]
+
+
+def test_the_page_carries_the_line_at_1_2_4_and_8_times_its_length_each_saying_what_it_hid(
+    tmp_path: Path,
+) -> None:
+    drawing = draw_map(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"], linear=True)
+    steps = _shapes(_page(drawing, tmp_path / "map.html")[1])["line"].find_all("div", cls="step")
+    assert ["hidden" in step.attrs for step in steps] == [False, True, True, True]
+    labels = {f"EcoRI ({cut})" for cut in range(101, 500, 8)} | {"HindIII (1701)", "HindIII (2001)"}
+    hid = []
+    for times, step in zip([1, 2, 4, 8], steps, strict=True):
+        [drawn] = step.find_all("svg")
+        backbone = [one for one in drawn.children if isinstance(one, Node) and one.tag == "line"]
+        assert [(one.attrs["x1"], one.attrs["x2"]) for one in backbone] == [
+            ("0", svg.number(times * linear.WIDTH))
+        ] * 2
+        # Each step's notice lists the labels that step left out, and those alone.
+        [notice] = drawn.find_all("g", cls="notice")
+        listed = [one["label"] for one in json.loads(notice.attrs["data-hidden"])]
+        shown = ["".join(text for text, _ in label) for label in _labels(drawn, "cut_site")]
+        assert sorted([*shown, *listed]) == sorted(labels)
+        assert notice.text == f"{len(listed)} enzyme sites are hidden"
+        hid.append(len(listed))
+    # A longer line has room for more of the crowd.
+    assert hid[-1] < hid[0]
 
 
 def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
@@ -753,7 +786,7 @@ def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
 ) -> None:
     drawing = draw_map(puc19, region="mcs")
     assert isinstance(drawing.layout, linear.LinearMap)
-    page = _maps(_page(drawing, tmp_path / "map.html")[1])
+    page = _map(_page(drawing, tmp_path / "map.html")[1])
     assert "396 .. 452 (57 bp)" in _texts(page)
     assert _texts(page, "scale") == ["400", "410", "420", "430", "440", "450"]
     assert ["".join(text for text, _ in label) for label in _labels(page, "cut_site")] == [
@@ -772,7 +805,7 @@ def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
     assert features == {"lacZ\N{GREEK SMALL LETTER ALPHA}": "146 .. 469", "MCS": "396 .. 452"}
     # A region at the start of a linear record carries on past its end only.
     line = draw_map(dataclasses.replace(puc19, topology="linear"), region=(0, 100))
-    assert _dots(_page(line, tmp_path / "line.html")[1]) == 3
+    assert _dots(_map(_page(line, tmp_path / "line.html")[1])) == 3
 
 
 @pytest.mark.parametrize(
@@ -789,7 +822,7 @@ def test_a_region_runs_across_the_origin_of_a_circular_record(
     title: str,
     scale: list[str],
 ) -> None:
-    _, page = _page(draw_map(colour_test.record, region=region), tmp_path / "map.html")
+    page = _map(_page(draw_map(colour_test.record, region=region), tmp_path / "map.html")[1])
     assert title in _texts(page)
     assert _texts(page, "scale") == scale
     assert _dots(page) == 6
@@ -810,9 +843,9 @@ def test_a_cutter_unique_in_a_region_but_not_in_the_record_is_not_bold_or_shown_
 ) -> None:
     # BsmBI cuts pUC19 after bases 3 and 45.
     _, named = _page(draw_map(puc19, region=(0, 20), enzymes=["BsmBI"]), tmp_path / "named.html")
-    assert _labels(_maps(named), "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
+    assert _labels(_map(named), "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
     _, shipped = _page(draw_map(puc19, region=(0, 20)), tmp_path / "shipped.html")
-    assert not _labels(_maps(shipped), "cut_site")
+    assert not _labels(_map(shipped), "cut_site")
 
 
 @pytest.mark.parametrize(
