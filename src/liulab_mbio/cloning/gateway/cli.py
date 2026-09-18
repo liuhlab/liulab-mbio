@@ -6,7 +6,9 @@ from typing import Annotated
 import typer
 
 from liulab_mbio.cloning.cli import plan_command
+from liulab_mbio.cloning.gateway.design import FUSIONS, Fusion
 from liulab_mbio.cloning.gateway.plan import DEFAULT_HOST, Plan, plan_gateway
+from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Gateway cloning.", no_args_is_help=True)
 
@@ -19,7 +21,7 @@ def plan(
             exists=True,
             dir_okay=False,
             readable=True,
-            help="Entry clone, or an attB-flanked insert when --donor is given.",
+            help="Entry clone, or the insert when --donor is given.",
         ),
     ],
     destination: Annotated[
@@ -41,12 +43,32 @@ def plan(
             help="Donor vector, to plan the BP reaction that makes the entry clone.",
         ),
     ] = None,
+    amplify: Annotated[
+        bool,
+        typer.Option(
+            "--amplify/--no-amplify",
+            help="Design attB primers for an insert carrying no att site, and amplify it.",
+        ),
+    ] = False,
+    fusion: Annotated[
+        str, typer.Option(help=f"Tag the insert is read into: {', '.join(FUSIONS)}.")
+    ] = "none",
+    polymerase: Annotated[str, typer.Option(help="Polymerase for the attB PCR.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Plan the Gateway reactions and write the clones and the protocol into OUT."""
     plan_command(
-        lambda: plan_gateway(carrier, destination, donor=donor, host=host, name=name),
+        lambda: plan_gateway(
+            carrier,
+            destination,
+            donor=donor,
+            amplify=amplify,
+            fusion=_fusion(fusion),
+            polymerase=_polymerase(polymerase),
+            host=host,
+            name=name,
+        ),
         out,
         _summary,
     )
@@ -60,3 +82,32 @@ def _summary(made: Plan) -> str:
         f"{made.lr.recombination.moved.length} bp insert, junctions {junctions}, "
         f"checks {made.status}"
     )
+
+
+def _fusion(text: str) -> Fusion:
+    """Read which tag the insert is read into, whatever the case of the name.
+
+    Raises
+    ------
+    ValueError
+        If it names no fusion this method plans.
+    """
+    for one in FUSIONS:
+        if one.lower() == text.lower():
+            return one
+    raise ValueError(f"no fusion called {text!r}; name one of {', '.join(FUSIONS)}")
+
+
+def _polymerase(name: str) -> Polymerase:
+    """Read one of the polymerases this package ships, whatever the case of its name.
+
+    Raises
+    ------
+    ValueError
+        If it ships no polymerase of that name.
+    """
+    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
+    if found is None:
+        shipped = ", ".join(one.name for one in POLYMERASES)
+        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
+    return found

@@ -3,7 +3,8 @@
 The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around each
 recombination and adds what only Gateway has to say. A plan that runs BP reads as two staged
 reactions: BP, its plate, the miniprep that purifies the entry clone, then LR and its own
-plate. Every number is computed by `liulab_mbio.cloning.gateway.plan` or is one
+plate, with the attB PCR and its cleanup in front of them where one was designed. Every number
+is computed by `liulab_mbio.cloning.gateway.plan` or is one
 `liulab_mbio.cloning.gateway.bench` cites.
 """
 
@@ -11,8 +12,20 @@ from collections.abc import Sequence
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
+from liulab_mbio.bench.oligos import oligo_row
+from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.bench.phenotype import Phenotype
-from liulab_mbio.bench.steps import badges, card, listed, phenotype_sentences, transform_step
+from liulab_mbio.bench.steps import (
+    badges,
+    card,
+    cleanup_step,
+    listed,
+    pcr_step,
+    pcr_title,
+    phenotype_sentences,
+    transform_step,
+)
+from liulab_mbio.cloning.gateway.att import REGION_BP
 from liulab_mbio.cloning.gateway.bench import (
     BP_CELSIUS,
     BP_CLONASE,
@@ -53,8 +66,9 @@ from liulab_mbio.cloning.gateway.bench import (
     bp_reaction,
     lr_reaction,
 )
+from liulab_mbio.cloning.gateway.design import SPACER, Amplicon
 from liulab_mbio.cloning.gateway.recombination import Junction, PlannedReaction
-from liulab_mbio.protocol.model import Material, Protocol, Step, Timer, Troubleshooting
+from liulab_mbio.protocol.model import Material, Oligo, Protocol, Step, Timer, Troubleshooting
 from liulab_mbio.sequence import SequenceRecord
 
 #: The hardware a run needs, which no reagent table covers.
@@ -66,11 +80,19 @@ EQUIPMENT: tuple[str, ...] = (
     "Microcentrifuge",
 )
 
+#: What a run amplifying its own insert needs on top of `EQUIPMENT`.
+PCR_EQUIPMENT: tuple[str, ...] = (
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
+    "Spectrophotometer or fluorometer",
+)
+
 
 def protocol(
     *,
     lr: PlannedReaction,
     bp: PlannedReaction | None,
+    amplicon: Amplicon | None = None,
     checks: Sequence[judged.Check],
     host: str,
 ) -> Protocol:
@@ -79,17 +101,23 @@ def protocol(
     Each argument is the `liulab_mbio.cloning.gateway.plan.Plan` field or property of that name.
     The steps run in the order someone does them, one reaction at a time: set it up, run it,
     stop it with proteinase K, transform and plate. A planned BP reaction puts its own four
-    steps and the miniprep that follows them in front of LR's.
+    steps and the miniprep that follows them in front of LR's, and an attB PCR puts its own
+    two in front of those.
     """
     return Protocol(
         _title(lr, bp),
         summary=_summary(lr, bp),
-        overview=_overview(lr, bp),
-        highlights=_highlights(lr, bp),
+        overview=_overview(lr, bp, amplicon),
+        highlights=_highlights(lr, bp, amplicon),
         checks=badges(checks),
-        materials=_materials(lr=lr, bp=bp, host=host),
-        equipment=EQUIPMENT,
-        steps=(*_bp_steps(bp, host=host, entry=_carrier(lr)), *_lr_steps(lr, host=host)),
+        materials=_materials(lr=lr, bp=bp, amplicon=amplicon, host=host),
+        oligos=_oligos(amplicon),
+        equipment=EQUIPMENT if amplicon is None else (*PCR_EQUIPMENT, *EQUIPMENT),
+        steps=(
+            *_pcr_steps(amplicon),
+            *_bp_steps(bp, host=host, entry=_carrier(lr)),
+            *_lr_steps(lr, host=host),
+        ),
         references=(*REFERENCES, *BENCH_REFERENCES),
     )
 
@@ -127,10 +155,17 @@ def _summary(lr: PlannedReaction, bp: PlannedReaction | None) -> str:
     )
 
 
-def _overview(lr: PlannedReaction, bp: PlannedReaction | None) -> dict[str, str]:
+def _overview(
+    lr: PlannedReaction, bp: PlannedReaction | None, amplicon: Amplicon | None
+) -> dict[str, str]:
     """Return the facts to check before starting, each short enough to be a card."""
     entry, product = _carrier(lr), lr.product
     facts = {}
+    if amplicon is not None:
+        forward, reverse = amplicon.tails
+        facts["attB PCR"] = (
+            f"{amplicon.length} bp product, {len(forward)} and {len(reverse)} bp tails"
+        )
     if bp is not None:
         facts["attB DNA"] = f"{_carrier(bp).name}, {bp.recombination.moved.length} bp insert"
         facts["Donor vector"] = f"{_acceptor(bp).name}, {len(_acceptor(bp))} bp"
@@ -151,10 +186,22 @@ def _overview(lr: PlannedReaction, bp: PlannedReaction | None) -> dict[str, str]
     return facts
 
 
-def _highlights(lr: PlannedReaction, bp: PlannedReaction | None) -> tuple[str, ...]:
+def _highlights(
+    lr: PlannedReaction, bp: PlannedReaction | None, amplicon: Amplicon | None
+) -> tuple[str, ...]:
     """Return what the facts mean, a sentence each: what moves, what the scar is, what grows."""
     junctions = lr.junctions
     said = []
+    if amplicon is not None:
+        forward, reverse = amplicon.tails
+        said.append(
+            f"{amplicon.template.name or 'The insert'} carries no att site, so it is amplified "
+            f"onto attB ends first: each primer is a whole tail -- {len(SPACER)} G residues, "
+            f"the {REGION_BP} bp att site and the frame bases this fusion needs, {len(forward)} "
+            f"bases forward and {len(reverse)} reverse -- over an annealing region read off the "
+            "insert's own end. The G residues leave with the BP by-product, so the entry clone "
+            "is the same record as one made from an insert that arrived attB-flanked."
+        )
     if bp is not None:
         said.append(
             f"BP runs first: the {bp.recombination.moved.length} bp between the attB sites move "
@@ -177,11 +224,35 @@ def _highlights(lr: PlannedReaction, bp: PlannedReaction | None) -> tuple[str, .
 
 
 def _materials(
-    *, lr: PlannedReaction, bp: PlannedReaction | None, host: str
+    *,
+    lr: PlannedReaction,
+    bp: PlannedReaction | None,
+    amplicon: Amplicon | None,
+    host: str,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for, the first reaction's first."""
     entry, destination = _carrier(lr), _acceptor(lr)
     materials: list[Material] = []
+    if amplicon is not None:
+        materials.extend(
+            (
+                Material(
+                    f"{amplicon.name} primers",
+                    storage="-20 °C",
+                    amount=f"{PRIMER_STOCK_UM:g} µM each",
+                    note="ordered off the sheet below; the manual asks for HPLC- or "
+                    "PAGE-purified oligos where colonies are few",
+                ),
+                Material(
+                    f"{amplicon.polymerase.name} DNA Polymerase",
+                    storage="-20 °C",
+                    note="the manual's answer to an entry clone made of primer-dimers is a "
+                    "hot-start enzyme, so use one",
+                ),
+                Material("PCR and gel cleanup spin columns"),
+                Material("Agarose and 1X TAE or TBE"),
+            )
+        )
     if bp is not None:
         substrate, donor = bp.amounts
         materials.extend(
@@ -265,6 +336,52 @@ def _plate(phenotype: Phenotype, vector: str) -> str:
     else:
         antibiotic = f"the {vector} vector's own antibiotic"
     return f"LB agar plates with {antibiotic}"
+
+
+def _oligos(amplicon: Amplicon | None) -> tuple[Oligo, ...]:
+    """Return the order sheet the page prints, which is the sheet the plan writes."""
+    if amplicon is None:
+        return ()
+    return tuple(
+        oligo_row(report, purpose=pcr_title(amplicon.name), thresholds=amplicon.thresholds)
+        for report in amplicon.reports
+    )
+
+
+def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
+    """Return the attB PCR and its cleanup, or nothing where the insert arrived attB-flanked."""
+    if amplicon is None:
+        return ()
+    forward, reverse = amplicon.tails
+    return (
+        pcr_step(
+            amplicon.name,
+            amplicon.template.name or "the insert",
+            amplicon.length,
+            polymerase=amplicon.polymerase,
+            annealing_temperature=amplicon.report.annealing_temperature,
+            extension_seconds=amplicon.report.extension_seconds,
+            notes=(
+                f"Each primer carries a whole attB tail: {len(SPACER)} G residues, the "
+                f"{REGION_BP} bp att site and the frame bases the fusion needs, {len(forward)} "
+                f"bases forward and {len(reverse)} reverse. The manual's own cause of few or no "
+                "colonies is a tail short of that.",
+                "The annealing temperature above is read from the annealing regions alone; a "
+                "tail pairs with nothing on the template in the first cycles.",
+                "Over 70 bp of primer the manual switches to a two-step adapter PCR, which "
+                "installs the same whole tail in two rounds and is not planned here.",
+            ),
+        ),
+        cleanup_step(
+            notes=(
+                "The BP reaction takes purified attB DNA: gel-purifying the product is the "
+                "manual's fix for few or no colonies, and it takes the attB primers and their "
+                "dimers away.",
+                "An entry clone running as a 2.2 kb supercoiled plasmid is a BP reaction that "
+                "cloned attB primer-dimers instead.",
+            )
+        ),
+    )
 
 
 def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -> tuple[Step, ...]:

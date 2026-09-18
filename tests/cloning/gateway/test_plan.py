@@ -17,6 +17,7 @@ from liulab_mbio.cloning.gateway.bench import (
     LR_CELSIUS,
     LR_VOLUME_UL,
 )
+from liulab_mbio.cloning.gateway.design import attb_tails
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import (
     BindingSite,
@@ -376,3 +377,94 @@ def test_a_linear_donor_vector_is_refused(
 
     with pytest.raises(ValueError, match="must be circular"):
         plan_gateway(insert, destination, donor=opened)
+
+
+def test_a_plain_insert_is_amplified_onto_attb_ends_and_the_sheet_is_written(
+    amplified_plan: Plan, gfp: SequenceRecord, tmp_path: Path
+) -> None:
+    made = amplified_plan.amplicon
+    assert made is not None
+    written = amplified_plan.write(tmp_path / "run")
+
+    assert [path.name for path in written.paths] == [
+        "entry-clone.dna",
+        "product.dna",
+        "primers.tsv",
+        "protocol.json",
+        "protocol.html",
+    ]
+    assert written.primers is not None
+    assert made.record.sequence.startswith(attb_tails()[0] + gfp.sequence)
+    assert [one.name for one in find_att_sites(made.record)] == ["attB1", "attB2"]
+
+
+def test_the_entry_clone_is_the_same_whether_the_insert_arrived_attb_flanked_or_plain(
+    amplified_plan: Plan, staged_plan: Plan
+) -> None:
+    assert amplified_plan.entry.sequence == staged_plan.entry.sequence
+    assert amplified_plan.product.sequence == staged_plan.product.sequence
+    assert "GGGG" + REGIONS["attB1"] not in amplified_plan.entry.sequence
+
+
+def test_the_order_sheet_carries_the_name_sequence_length_and_tm_of_every_oligo(
+    amplified_plan: Plan, tmp_path: Path
+) -> None:
+    written = amplified_plan.write(tmp_path / "run")
+    assert written.primers is not None
+
+    header, *rows = written.primers.read_text(encoding="utf-8").splitlines()
+    assert header.split("\t") == ["name", "sequence", "length", "tm_c"]
+    assert len(rows) == len(amplified_plan.reports)
+    for row, report in zip(rows, amplified_plan.reports, strict=True):
+        name, sequence, length, tm = row.split("\t")
+        assert (name, sequence) == (report.primer.name, report.primer.sequence)
+        assert int(length) == len(sequence)
+        assert float(tm) == pytest.approx(report["tm"].value, abs=0.05)
+
+
+def test_the_primers_are_judged_and_warn_only_where_nothing_allowed_does_better(
+    amplified_plan: Plan,
+) -> None:
+    first, *_ = amplified_plan.checks
+    verdict = next(check for check in amplified_plan.checks if check.name == "primers")
+
+    assert first.name == "primers"
+    assert amplified_plan.status == "warn"
+    assert all(report.status != "fail" for report in amplified_plan.reports)
+    assert verdict.value == 2
+
+
+def test_the_protocol_carries_the_pcr_step_its_program_and_its_expected_band(
+    amplified_plan: Plan,
+) -> None:
+    made = amplified_plan.amplicon
+    assert made is not None
+    protocol = amplified_plan.protocol()
+
+    assert [step.title for step in protocol.steps][:2] == [
+        f"Amplify {made.name}",
+        "Purify every amplicon",
+    ]
+    step = protocol.steps[0]
+    assert step.programs[0].title == f"{made.name} PCR"
+    assert f"One band at {made.length} bp" in " ".join(step.expected)
+    assert any(made.polymerase.name in component.name for component in step.tables[0].components)
+    assert [oligo.name for oligo in protocol.oligos] == [
+        report.primer.name for report in amplified_plan.reports
+    ]
+
+
+def test_an_insert_no_primer_can_be_placed_on_is_refused(
+    destination: SequenceRecord, donor: SequenceRecord
+) -> None:
+    with pytest.raises(ValueError, match="takes no attB primer"):
+        plan_gateway(
+            SequenceRecord("ATGCATGCATGC", name="tiny"), destination, donor=donor, amplify=True
+        )
+
+
+def test_amplifying_an_insert_without_a_donor_vector_is_refused(
+    gfp: SequenceRecord, destination: SequenceRecord
+) -> None:
+    with pytest.raises(ValueError, match="needs a donor vector as well"):
+        plan_gateway(gfp, destination, amplify=True)

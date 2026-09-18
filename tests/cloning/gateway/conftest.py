@@ -9,7 +9,7 @@ import pytest
 from .records import attb_insert, destination_vector, donor_vector, entry_clone
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway import Plan
+    from liulab_mbio.cloning.gateway import Amplicon, Plan
     from liulab_mbio.sequence import SequenceRecord
 
 
@@ -51,3 +51,19 @@ def staged_plan(insert: SequenceRecord, destination: SequenceRecord, donor: Sequ
     from liulab_mbio.cloning.gateway import plan_gateway
 
     return plan_gateway(insert, destination, donor=donor)
+
+
+@pytest.fixture(scope="session")
+def amplicon(gfp: SequenceRecord) -> Amplicon:
+    """The attB PCR that puts an att site on each end of the plain GFP record."""
+    from liulab_mbio.cloning.gateway.design import amplify_attb
+
+    return amplify_attb(gfp)
+
+
+@pytest.fixture(scope="session")
+def amplified_plan(gfp: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord) -> Plan:
+    """That plain GFP amplified onto attB ends, then through BP and LR."""
+    from liulab_mbio.cloning.gateway import plan_gateway
+
+    return plan_gateway(gfp, destination, donor=donor, amplify=True)
