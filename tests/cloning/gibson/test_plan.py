@@ -361,6 +361,7 @@ def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, g
     titles = [step.title for step in handed_in.protocol().steps]
     assert titles[:2] == ["Amplify GFP", "Check the PCRs on a gel"]
     assert not any(title.endswith("DpnI") for title in titles)
+    assert "DpnI" not in [one.name for one in handed_in.protocol().materials]
     # It still assembles into the same plasmid, with its two ends spelling the two overlaps.
     assert (
         len(handed_in.plasmid)

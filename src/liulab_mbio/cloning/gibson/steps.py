@@ -294,12 +294,18 @@ def _materials(
             storage="-20 °C",
         ),
         Material("dNTP mix", storage="-20 °C", note=f"{DNTP_STOCK_MM:g} mM of each base"),
-        Material(
-            "DpnI",
-            supplier=product.supplier,
-            storage="-20 °C",
-            amount=f"{DPNI_UNITS} units per PCR",
-            note="cuts the methylated plasmid template only",
+        *(
+            (
+                Material(
+                    "DpnI",
+                    supplier=product.supplier,
+                    storage="-20 °C",
+                    amount=f"{DPNI_UNITS} units per PCR",
+                    note="cuts the methylated plasmid template only",
+                ),
+            )
+            if any(part.dpni for part in parts)
+            else ()
         ),
         Material("PCR and gel cleanup spin columns"),
         Material(
