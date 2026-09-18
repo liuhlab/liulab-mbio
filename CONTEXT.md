@@ -335,9 +335,11 @@ _Avoid_: screening PCR, colony screen
 
 ### Reversed insert
 
-A clone carrying its insert the other way round. Two vector primers flanking the insert give it
-the same band as the correct clone, so a gel separates the two only with a third primer inside
-the insert.
+A clone carrying its insert the other way round. Only a join whose two ends pair either way
+round makes one — one enzyme cutting both, two leaving compatible ends, or blunt ends — and
+the method that joins them is what builds the plasmid to measure. Two vector primers flanking
+the insert give it the same band as the correct clone, so a gel separates the two only with a
+third primer inside the insert.
 _Avoid_: flipped clone, wrong orientation
 
 ### att site

@@ -14,8 +14,11 @@ from liulab_mbio.cloning.restriction.digest import (
     resolve,
     reversible,
     self_closing,
+    turned,
 )
+from liulab_mbio.cloning.restriction.ligation import ligate
 from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sites import find_sites
 
 #: Bases spelling no site of any enzyme named below, for padding a record written in code.
 FILLER = "ACGT" * 6
@@ -59,6 +62,27 @@ def test_a_directional_pair_neither_closes_on_itself_nor_reverses():
     insert = excised(holder, chosen, into=backbone)[0]
     assert not self_closing(backbone)
     assert not reversible(backbone, insert)
+
+
+def test_an_insert_turned_over_is_cut_again_and_ligates_in_with_both_sites_put_back():
+    enzymes, vector, _ = ONE_ENZYME
+    chosen = resolve(enzymes)
+    backbone = opened(vector, chosen)[0]
+    body = "AAACCCTTT"
+    holder = plasmid(FILLER * 2 + "GAATTC" + body + "GAATTC" + FILLER * 2, "pLopsided")
+    insert = excised(holder, chosen, into=backbone)[0]
+    over = turned(insert)
+    assert insert.bases == "AATTC" + body + "G"
+    # The bottom strand read 5' to 3' keeps its own AATT at the front, where reversing the top
+    # strand in place would put it at the back and leave neither site whole.
+    assert over.bases == "AATTC" + "AAAGGGTTT" + "G"
+    assert (over.name, over.left_end, over.right_end) == (
+        insert.name,
+        insert.left_end,
+        insert.right_end,
+    )
+    back = ligate(backbone, over).product
+    assert [site.start for site in find_sites(back, chosen)] == [48, 63]
 
 
 def test_one_enzyme_cuts_the_insert_out_on_its_own_and_a_further_cut_is_refused():

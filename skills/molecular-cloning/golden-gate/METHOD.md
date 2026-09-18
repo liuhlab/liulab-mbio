@@ -39,8 +39,8 @@ The command prints a summary line and the four paths. The same inputs write the 
   say whether it was measured or estimated.
 - **The reaction and the cycling follow the count.** NEB's tables step up at three fragments, at
   seven and at fourteen, and the amounts cover every part.
-- **Validation covers every junction**: a colony PCR band that reads each one, and a
-  wrong-orientation lane for each insert.
+- **Validation covers every junction**: a colony PCR band that reads each one. No overhang is
+  another's reverse complement, so no insert turns round and no lane is drawn for one.
 - **The steps stay per experiment.** More parts add one PCR step each, not a protocol per pair.
 
 ## Ask only for what the files do not settle

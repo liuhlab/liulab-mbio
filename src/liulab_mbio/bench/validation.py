@@ -9,7 +9,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 
-from liulab_mbio import edits
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
 from liulab_mbio.primers.design import design_pair, design_primer
 from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
@@ -17,7 +16,7 @@ from liulab_mbio.primers.placement import Placement, amplicon_sizes
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, Thresholds
 from liulab_mbio.protocol.model import Gel, Ladder, Lane
-from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand
 
 #: Vector kept either side of the junctions by a designed colony PCR pair, bases. Twice this is
 #: the empty-vector band, and the note asks for every band to stay at 100 bp or more.
@@ -73,8 +72,8 @@ class ColonyCheck:
     reports
         What each primer scored on the assembled plasmid.
     clones
-        The candidates a colony can hold: the correct one, the empty vector, and one carrying
-        each insert the other way round.
+        The candidates a colony can hold: the correct one, the empty vector, and every plasmid
+        the method joining the ends says could carry an insert the other way round.
     annealing_temperature
         By the polymerase's rule over the two lowest Tms of the set, °C.
     extension_seconds
@@ -132,7 +131,7 @@ def colony_pcr_check(
     vector: SequenceRecord,
     primers: tuple[Primer, ...] | None = None,
     insert_primer: bool = False,
-    reversible: bool = True,
+    reversed_inserts: Sequence[SequenceRecord] = (),
     flank: int = COLONY_FLANK,
     reverse_flank: int | None = None,
     junction_offset: int = JUNCTION_OFFSET,
@@ -158,10 +157,11 @@ def colony_pcr_check(
     that is a fact about its length rather than about how it was made. The flanking pair still
     reads across it, and `tells_orientation` then says the gel cannot tell it turned round.
 
-    `reversible` is a different question: whether an insert can go in the other way round at all,
-    which only the method joining the ends knows. Where it cannot -- a directional clone whose
-    two ends differ -- no reversed candidate is built, because that plasmid cannot exist and a
-    lane for it would be a band nobody can see.
+    `reversed_inserts` is a different question: the plasmids carrying an insert the other way
+    round, which only the method joining the ends can build. It knows whether one can exist at
+    all, and where a cohesive end's bases land once the insert turns over. Each gets a lane,
+    numbered in the order given where there is more than one. None is given for a directional
+    clone whose two ends differ, and then no lane is drawn for a plasmid that cannot exist.
 
     Raises
     ------
@@ -181,19 +181,18 @@ def colony_pcr_check(
         chosen.extend(
             _junction_primer(product, first, last, junction_offset, polymerase, thresholds, name)
             for name, (first, last) in zip(
-                _numbered(_JUNCTION_PRIMER, inserts), inserts, strict=True
+                _numbered(_JUNCTION_PRIMER, len(inserts)), inserts, strict=True
             )
             if last - first > junction_offset + COLONY_ALLOWANCE
         )
     if len(chosen) < 2:
         raise ValueError("a colony PCR needs at least two primers")
     placed = tuple(chosen)
-    candidates = [(CORRECT_CLONE, product), (EMPTY_CLONE, vector)]
-    if reversible:
-        candidates += [
-            (name, _reversed_insert(product, first, last))
-            for name, (first, last) in zip(_numbered(REVERSED_CLONE, inserts), inserts, strict=True)
-        ]
+    candidates = [
+        (CORRECT_CLONE, product),
+        (EMPTY_CLONE, vector),
+        *zip(_numbered(REVERSED_CLONE, len(reversed_inserts)), reversed_inserts, strict=True),
+    ]
     clones = tuple(Clone(name, _bands(placed, record, thresholds)) for name, record in candidates)
     sizes = tuple(sorted({bp for clone in clones for bp in clone.bands_bp}))
     if not sizes:
@@ -301,11 +300,11 @@ def _junction_span(junctions: Sequence[int], length: int) -> tuple[int, ...]:
     return places
 
 
-def _numbered(label: str, inserts: Sequence[tuple[int, int]]) -> tuple[str, ...]:
-    """Label one thing per insert, numbered only where there is more than one to tell apart."""
-    if len(inserts) == 1:
+def _numbered(label: str, count: int) -> tuple[str, ...]:
+    """Label `count` things, numbered only where there is more than one to tell apart."""
+    if count == 1:
         return (label,)
-    return tuple(f"{label} {number}" for number in range(1, len(inserts) + 1))
+    return tuple(f"{label} {number}" for number in range(1, count + 1))
 
 
 def _span(start: int, width: int, product: SequenceRecord) -> Segment:
@@ -369,11 +368,6 @@ def _junction_primer(
         polymerase=polymerase,
         thresholds=thresholds,
     )
-
-
-def _reversed_insert(product: SequenceRecord, start: int, end: int) -> SequenceRecord:
-    flipped, _ = edits.replace(product, start, end, reverse_complement(product.sequence[start:end]))
-    return flipped
 
 
 def _bands(

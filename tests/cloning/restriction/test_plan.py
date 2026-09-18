@@ -246,6 +246,9 @@ def test_a_blunt_ligation_is_held_longer_and_the_page_says_what_that_costs(blunt
 def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one_where_one_can_exist(blunt):
     lanes = {clone.name: clone.bands_bp for clone in blunt.colony.clones}
     assert set(lanes) == {"Correct clone", "Empty vector", "Reversed insert"}
+    # A blunt end's two strands stop at the same base, so turning the product's own top strand
+    # in place gives these bands too.
+    assert lanes["Reversed insert"] == (213, 907)
     assert lanes["Reversed insert"] != lanes["Correct clone"]
     assert blunt.colony.tells_orientation
     # Two flanking vector primers cannot tell them apart; one reading out of the insert can.
@@ -254,6 +257,15 @@ def test_the_colony_pcr_tells_a_reversed_insert_from_a_correct_one_where_one_can
     said = " ".join(step.expected)
     for name, bands in lanes.items():
         assert f"{name}: {', '.join(f'{bp} bp' for bp in bands)}." in said
+
+
+def test_a_reversed_insert_is_the_plasmid_its_own_ligation_makes_turned_over(puc19, gfp):
+    cohesive = plan_restriction(puc19, gfp, enzymes=["EcoRI"])
+    lanes = {clone.name: clone.bands_bp for clone in cohesive.colony.clones}
+    # GFP turned over and ligated back into the same EcoRI ends, both sites put back. Turning
+    # the product's own top strand over in place instead moves the four-base overhang to the
+    # far side of each junction, restores neither site, and reads 231 bp here.
+    assert lanes["Reversed insert"] == (227, 905)
 
 
 def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(made):

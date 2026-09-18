@@ -231,9 +231,9 @@
     },
     {
       "name": "Colony PCR reverse",
-      "sequence": "TCATTAGGCACCCCAGGCTTTACA",
+      "sequence": "CGTATGTTGTGTGGAATTGTGAGCGGAT",
       "purpose": "Screen colonies by PCR",
-      "tm_c": 61.8,
+      "tm_c": 62.2,
       "stock": "10 µM",
       "note": "",
       "status": "pass",
@@ -975,7 +975,7 @@
                 },
                 {
                   "label": "Anneal",
-                  "temperature_c": 56.8,
+                  "temperature_c": 56.9,
                   "seconds": 30
                 },
                 {
@@ -1036,20 +1036,13 @@
               "label": "Correct clone",
               "bands_bp": [
                 160,
-                878
+                838
               ]
             },
             {
               "label": "Empty vector",
               "bands_bp": [
-                217
-              ]
-            },
-            {
-              "label": "Reversed insert",
-              "bands_bp": [
-                219,
-                878
+                177
               ]
             }
           ],
@@ -1058,10 +1051,8 @@
       ],
       "expected": [
         "Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.",
-        "Correct clone: 160 bp, 878 bp.",
-        "Empty vector: 217 bp.",
-        "Reversed insert: 219 bp, 878 bp.",
-        "A reversed insert is told from a correct one, because the two vector primers sit at different distances from their own junctions."
+        "Correct clone: 160 bp, 838 bp.",
+        "Empty vector: 177 bp."
       ],
       "troubleshooting": [
         {

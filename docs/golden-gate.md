@@ -98,10 +98,9 @@ Reaction tables rescale when you change the number of reactions at the top of th
 you do not do that arithmetic yourself. Gel steps draw the bands to expect.
 
 **The screening step** is the one to read twice. A correct clone gives two bands, 160 and
-878 bp. An empty vector gives one band at 217 bp. A clone with GFP the wrong way round gives
-219 and 878 bp. Read the big band first: only the two lanes that hold GFP carry it, and 160
-against 219 then tells those two apart. The empty vector and the flipped insert are 2 bp
-apart, so the small band on its own will not separate them.
+838 bp. An empty vector gives one band at 177 bp. There is no third lane. Each end of GFP
+pairs with one end of the vector and no other, so it cannot go in the wrong way round. Read
+the big band first: only a clone that holds GFP carries it.
 
 ## The finished example
 

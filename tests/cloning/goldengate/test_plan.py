@@ -24,7 +24,6 @@ from liulab_mbio.bench import (
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.cloning.goldengate import Plan, plan_assembly
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
-from liulab_mbio.cloning.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
@@ -175,11 +174,13 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     # Where the three primers landed inside their placements, which is what the bands count off.
     ahead, behind, into = start - forward.start, reverse.end - end, junction.end - start
     assert insert_bp == len(gfp)
-    # The junction primer reaches the near vector primer in a correct clone and the far one in
-    # a reversed clone, and the two vector primers span the insert whichever way it sits.
-    assert bands["Correct clone"] == (ahead + into, ahead + insert_bp + behind)
-    assert bands["Reversed insert"] == (behind + into, ahead + insert_bp + behind)
-    assert bands["Empty vector"] == (ahead + removed + behind,)
+    # The junction primer reaches the near vector primer and the two vector primers span the
+    # insert. No overhang is another's reverse complement, so the insert cannot turn round and
+    # there is no lane for it.
+    assert bands == {
+        "Correct clone": (ahead + into, ahead + insert_bp + behind),
+        "Empty vector": (ahead + removed + behind,),
+    }
 
 
 def test_the_four_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
@@ -369,9 +370,8 @@ def test_one_insert_plans_exactly_what_it_did_before(plan):
     assert plan.enzyme.name == "BbsI"
     assert (len(plan.product), plan.assembly.junction_positions) == (3347, (395, 1112))
     assert {clone.name: clone.bands_bp for clone in plan.colony.clones} == {
-        "Correct clone": (160, 878),
-        "Empty vector": (217,),
-        "Reversed insert": (219, 878),
+        "Correct clone": (160, 838),
+        "Empty vector": (177,),
     }
     # Each part primer stays anchored where its junction put it; only validation primers move.
     assert [
@@ -494,30 +494,20 @@ def test_every_validation_primer_lies_where_its_placement_allows(plan, four):
         forward, reverse, *inserts = (primer.binding_sites[0] for primer in made.colony.primers)
         ahead, behind = start - forward.start, reverse.end - end
         assert abs(ahead - COLONY_FLANK) <= COLONY_ALLOWANCE
-        assert abs(behind - REVERSE_FLANK) <= COLONY_ALLOWANCE
-        # Far enough apart that the junction band of a reversed insert is not the correct one's.
-        assert behind - ahead >= REVERSE_FLANK - COLONY_FLANK - 2 * COLONY_ALLOWANCE
+        assert abs(behind - COLONY_FLANK) <= COLONY_ALLOWANCE
         for site, (first, last) in zip(inserts, pairwise(junctions), strict=True):
             assert abs((site.end - first) - JUNCTION_OFFSET) <= COLONY_ALLOWANCE
             assert first <= site.start < site.end <= last
         for read in made.reads:
             assert SANGER_FLANK <= read.distance_bp <= SANGER_FLANK + SANGER_ALLOWANCE
-        assert made.colony.tells_orientation
 
 
-def test_the_colony_pcr_reads_every_junction_and_turns_every_insert(four):
+def test_the_colony_pcr_reads_every_junction(four):
     check = four.colony
     assert len(check.primers) == 5
-    assert [clone.name for clone in check.clones] == [
-        "Correct clone",
-        "Empty vector",
-        "Reversed insert 1",
-        "Reversed insert 2",
-        "Reversed insert 3",
-    ]
+    assert [clone.name for clone in check.clones] == ["Correct clone", "Empty vector"]
     correct = next(clone.bands_bp for clone in check.clones if clone.name == "Correct clone")
     assert len(correct) == 4
-    assert check.tells_orientation
 
 
 def test_the_protocol_names_every_part_and_every_junction(four):

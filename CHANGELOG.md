@@ -249,3 +249,16 @@ sets one.
 ### Removed
 
 - The template's placeholder `greet()`, its CLI verb and its test.
+
+### Fixed
+
+- The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane
+  used to come from the product with its insert turned over in place. At an end with an
+  that put the overhang's bases on the wrong side of the join. The band was then off by the
+  overhang, 231 bp where the real clone gives 227 with EcoRI. Now restriction and ligation turns
+  the cut insert over and ligates it in, as the bench does.
+- Golden Gate and Gibson no longer draw a lane for an insert the wrong way round. Neither can
+  make one: no overhang in a Golden Gate set pairs with another backwards, and a Gibson insert
+  shares its bases with the vector one way round only. With no orientation to tell, the colony
+  PCR's reverse primer sits as close to its junction as the forward one, so both plans' bands
+  are shorter than before.
