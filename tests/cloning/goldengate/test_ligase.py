@@ -312,6 +312,7 @@ def _run(
     return CliRunner().invoke(
         app,
         [
+            "cloning",
             "goldengate",
             "plan",
             str(vector),

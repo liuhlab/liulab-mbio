@@ -92,6 +92,18 @@ class Files:
     protocol_data: Path
     protocol: Path
 
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Every file, in the order they were written: the sheets, the records, the protocol."""
+        return (
+            self.parts,
+            self.barcodes,
+            self.changes,
+            *self.records,
+            self.protocol_data,
+            self.protocol,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class LibraryPlan:

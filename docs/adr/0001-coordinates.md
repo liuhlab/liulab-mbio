@@ -21,7 +21,7 @@ It converts where the text is written, as a file format converts where it is rea
 A position a person types takes the same form. `plot map --region 2684..3` names that site as
 the map prints it, `END` before `START` running across the origin, and the command converts it
 to `(2683, 2689)` where it reads the text. Text of that form is always a span, even where a
-feature is named so. `goldengate plan --site START-END` differs: it passes its numbers on
+feature is named so. `cloning goldengate plan --site START-END` differs: it passes its numbers on
 unconverted, 0-based and half-open, and cannot run across the origin.
 
 ## Considered options

@@ -27,7 +27,7 @@ def vector_and_insert(puc19_file: Path, gfp_file: Path) -> tuple[str, str]:
 
 def run(*arguments: str):
     """Invoke the command line with these arguments."""
-    return CliRunner().invoke(app, ["goldengate", "plan", *arguments])
+    return CliRunner().invoke(app, ["cloning", "goldengate", "plan", *arguments])
 
 
 def test_the_cli_writes_the_four_outputs_into_the_directory_and_prints_their_paths(

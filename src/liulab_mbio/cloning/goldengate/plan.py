@@ -103,6 +103,11 @@ class Files:
     protocol_data: Path
     protocol: Path
 
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """The four, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, self.protocol)
+
 
 @dataclass(frozen=True, slots=True)
 class Plan:

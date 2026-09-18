@@ -221,9 +221,13 @@ because one reaction joins as many inserts as the overhangs allow.
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
-`liulab_mbio.cli:app` — the object `[project.scripts]` registers — is built from them.
+`liulab_mbio.cli:app` — the object `[project.scripts]` registers — is built from them. One
+cloning method is one sub-app under the `cloning` group, and every plan verb is the same
+spine: plan, write, and report what was written.
 
 ::: liulab_mbio.cli
+
+::: liulab_mbio.cloning.cli
 
 ::: liulab_mbio.cloning.goldengate.cli
 

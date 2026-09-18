@@ -1,14 +1,16 @@
 """What every cloning plan is: the files it writes, its status, and the records it was made from.
 
 A method's own plan module holds its design, its `Plan` and the file set it writes. What every
-one of them repeats is here: the names of the files any plan writes, the protocol pair, the
-worst-of rule a plan's status follows, and taking a record the caller already read.
+one of them repeats is here: the shape a plan and its written files take, the names of the files
+any plan writes, the protocol pair, the worst-of rule a plan's status follows, and taking a
+record the caller already read.
 
 The library pipeline is not a cloning method -- `docs/adr/0004-library-rounds.md` says why --
 but its plan writes the same protocol pair, so it uses this module too.
 """
 
 import os
+import typing  # Spelled out: `Protocol` here is the bench protocol imported below.
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +26,27 @@ PRODUCT_FILE = "product.dna"
 #: What a plan calls its protocol, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
 PROTOCOL_FILE = "protocol.html"
+
+
+class Written(typing.Protocol):
+    """The files one plan wrote, as anything reporting them reads that record.
+
+    A pipeline's own `Files` names each file it writes as a field. `paths` is the order those
+    files are reported in, which is the order they were written.
+    """
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Every file the plan wrote, the first written first."""
+        ...
+
+
+class Planned(typing.Protocol):
+    """What every pipeline's plan promises: it writes its files into one directory."""
+
+    def write(self, directory: str | os.PathLike[str], /) -> Written:
+        """Write every file into `directory`, and say where each one went."""
+        ...
 
 
 @dataclass(frozen=True, slots=True)

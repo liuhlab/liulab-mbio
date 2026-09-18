@@ -300,11 +300,11 @@ plan_assembly(vector, insert, enzyme="PaqCI", profile=profile)
 On the command line, as an option or as an environment variable:
 
 ```sh
-liulab_mbio goldengate plan vector.dna insert.dna --out run \
+liulab_mbio cloning goldengate plan vector.dna insert.dna --out run \
     --ligase-matrix ~/potapov/FileS03_T4_18h_25C.xlsx
 
 export LIULAB_MBIO_LIGASE_MATRIX=~/potapov/FileS03_T4_18h_25C.xlsx
-liulab_mbio goldengate plan vector.dna insert.dna --out run
+liulab_mbio cloning goldengate plan vector.dna insert.dna --out run
 ```
 
 Both shapes load with the standard library alone. An `.xlsx` is read by the same `zipfile` and

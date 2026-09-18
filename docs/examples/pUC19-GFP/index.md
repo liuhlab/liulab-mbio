@@ -4,7 +4,7 @@ Every file on this page was written by the command below, from the two sequence 
 `tests/data/`. Nothing here is edited by hand.
 
 ```bash
-pixi run liulab_mbio goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out docs/examples/pUC19-GFP
+pixi run liulab_mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out docs/examples/pUC19-GFP
 ```
 
 To change what these files say, change the code and run that command again. The same inputs

@@ -19,7 +19,7 @@ same versions the tests ran on.
 Plan a Golden Gate cloning job from a vector file and an insert file:
 
 ```bash
-pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
+pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
 ```
 
 Four files land in `plan/`. `product.dna` is the assembled plasmid, with its features and

@@ -8,7 +8,7 @@ Both sequence files ship with the repo, under `tests/data/`.
 ## Run it
 
 ```bash
-pixi run liulab_mbio goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out docs/examples/pUC19-GFP
+pixi run liulab_mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out docs/examples/pUC19-GFP
 ```
 
 It prints one summary line, then the four paths it wrote:
@@ -121,7 +121,7 @@ archive is not ours to ship, so nothing from it is in this package. Point the co
 own copy instead:
 
 ```bash
-pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/ \
+pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/ \
     --ligase-matrix ~/potapov/FileS03_T4_18h_25C.xlsx
 ```
 
@@ -153,6 +153,6 @@ nobody has made; it does not replace one somebody has. Without such a file nothi
 - Check that the product map holds what you meant to clone.
 - Check the three screening lanes can still be told apart.
 
-`pixi run liulab_mbio goldengate plan --help` lists the rest of the options: where to put the
-insert, which way round it goes, holding a join in frame, forcing an enzyme, and which
+`pixi run liulab_mbio cloning goldengate plan --help` lists the rest of the options: where to
+put the insert, which way round it goes, holding a join in frame, forcing an enzyme, and which
 polymerase and strain the protocol should name.

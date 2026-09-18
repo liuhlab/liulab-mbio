@@ -2,7 +2,9 @@
 
 Typer, because every lab repo that ships a command line uses it: one `typer.Typer` named
 `app`, `no_args_is_help=True` so a bare invocation prints help instead of nothing, and a
-`version` command. A verb over a pipeline is mounted as a sub-app with `app.add_typer`.
+`version` command. A verb over a pipeline is mounted as a sub-app with `app.add_typer`, and
+one cloning method is mounted under the `cloning` group, so `cloning --help` lists the methods
+that exist.
 """
 
 from typing import Annotated
@@ -10,6 +12,7 @@ from typing import Annotated
 import typer
 
 from liulab_mbio import __version__ as _package_version
+from liulab_mbio.cloning.cli import app as _cloning_app
 from liulab_mbio.cloning.goldengate.cli import app as _goldengate_app
 from liulab_mbio.library.cli import app as _library_app
 from liulab_mbio.plot.cli import app as _plot_app
@@ -28,7 +31,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-app.add_typer(_goldengate_app, name="goldengate")
+_cloning_app.add_typer(_goldengate_app, name="goldengate")
+
+app.add_typer(_cloning_app, name="cloning")
 app.add_typer(_library_app, name="library")
 app.add_typer(_protocol_app, name="protocol")
 app.add_typer(_plot_app, name="plot")

@@ -20,8 +20,8 @@ sequences and checks it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
-pixi run liulab_mbio goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
+pixi run liulab_mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
 ```
 
 One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
@@ -124,5 +124,5 @@ plan did not anticipate — skip the DpnI digest, add a gel purification, add a 
 `protocol.json` as it says and render it again.
 
 A change to what the plan computes — the enzyme, the polymerase, the inserts or their
-orientation — goes back through `goldengate plan`, which writes `protocol.json` afresh. Within
-the session, reapply the changes the user asked for to the new protocol.
+orientation — goes back through `cloning goldengate plan`, which writes `protocol.json`
+afresh. Within the session, reapply the changes the user asked for to the new protocol.

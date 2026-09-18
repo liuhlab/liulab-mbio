@@ -71,7 +71,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | the gate | `pixi run check` |
 | one test | `pixi run test -- tests/test_sites.py::test_name` |
 | the docs | `pixi install -e docs`, then `pixi run docs-build` |
-| a Golden Gate plan | `pixi run liulab_mbio goldengate plan VECTOR INSERT --out DIR` |
+| a Golden Gate plan | `pixi run liulab_mbio cloning goldengate plan VECTOR INSERT --out DIR` |
 | a library plan | `pixi run liulab_mbio library plan PARTS --scheme S --vector V --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
