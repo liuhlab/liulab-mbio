@@ -11,20 +11,12 @@ from itertools import pairwise
 
 from liulab_mbio import edits
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
-from liulab_mbio.primers import (
-    ONETAQ,
-    Q5,
-    THRESHOLDS_FOR,
-    Placement,
-    Polymerase,
-    PrimerReport,
-    Thresholds,
-    amplicon_sizes,
-    design_pair,
-    design_primer,
-    evaluate_primer,
-)
-from liulab_mbio.protocol import Gel, Ladder, Lane
+from liulab_mbio.primers.design import design_pair, design_primer
+from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
+from liulab_mbio.primers.placement import Placement, amplicon_sizes
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
+from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, Thresholds
+from liulab_mbio.protocol.model import Gel, Ladder, Lane
 from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand, reverse_complement
 
 #: Vector kept either side of the junctions by a designed colony PCR pair, bases. Twice this is

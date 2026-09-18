@@ -5,7 +5,7 @@ The conversion is NEBioCalculator's, through ``docs/research/primer-design-and-p
 
 from dataclasses import KW_ONLY, dataclass
 
-from liulab_mbio.protocol import Reference
+from liulab_mbio.protocol.model import Reference
 
 #: NEBioCalculator's double-stranded DNA weight, g/mol: `_DUPLEX_ENDS + bp * _BASE_PAIR`. NEB's
 #: manuals use 650 Da per base pair instead, which differs by about 5%, so a protocol says which.

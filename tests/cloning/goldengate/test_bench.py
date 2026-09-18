@@ -6,8 +6,7 @@ The source is `docs/research/golden-gate-assembly.md` for the reactions and cycl
 import pytest
 
 from liulab_mbio.bench.amounts import Amount, dna_amount
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.cloning.goldengate.bench import (
     FRAGMENT_PMOL,
     KIT,
     assembly_amounts,
@@ -17,8 +16,9 @@ from liulab_mbio.goldengate.bench import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
+from liulab_mbio.enzymes import get_enzyme
 
-from ..reactions import total, volumes
+from ...reactions import total, volumes
 
 
 def two_fragments() -> tuple[Amount, ...]:

@@ -4,16 +4,18 @@ Every public name in its modules imports from here as well. A module that cites 
 it as its own `REFERENCES`; `REFERENCES` here gathers them.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
+- `reactions`: one reaction table, filled to volume, and what it refuses.
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
 - `inactivation`: an enzyme's heat inactivation.
 - `phenotype`: what a clone is expected to show, read off the product's own features.
 - `oligos`: the primer order sheet.
-- `steps`: the protocol steps any pipeline reuses, built from plain facts. Its two references
-  are cited only by a protocol that runs the step they belong to.
+- `steps`: the protocol steps any pipeline reuses, built from plain facts, and the smaller
+  pieces both pipelines shape the same way. Its two references are cited only by a protocol
+  that runs the step they belong to.
 
-Nothing here imports `liulab_mbio.goldengate`.
+Nothing here imports `liulab_mbio.cloning`.
 """
 
 from liulab_mbio.bench import amounts, gels, pcr
@@ -42,6 +44,7 @@ from liulab_mbio.bench.pcr import (
     pcr_reaction,
 )
 from liulab_mbio.bench.phenotype import SELECTION, Phenotype, read_phenotype
+from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
 from liulab_mbio.bench.steps import (
     ASSEMBLY_UL,
     CELLS_UL,
@@ -64,9 +67,12 @@ from liulab_mbio.bench.steps import (
     SEQUENCING_TITLE,
     THAW_SECONDS,
     XGAL_UG_ML,
+    badges,
+    card,
     cleanup_step,
     colony_pcr_step,
     dpni_step,
+    enzyme_material,
     gel_step,
     listed,
     pcr_step,
@@ -92,7 +98,7 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.protocol import Reference
+from liulab_mbio.protocol.model import Reference
 
 #: Every source the modules cite, in the order a protocol lists them.
 REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels.REFERENCES)
@@ -139,6 +145,7 @@ __all__ = [
     "SEQUENCING_TITLE",
     "SHEET_COLUMNS",
     "THAW_SECONDS",
+    "WATER",
     "XGAL_UG_ML",
     "Amount",
     "Clone",
@@ -146,6 +153,8 @@ __all__ = [
     "Phenotype",
     "SangerRead",
     "agarose_percent",
+    "badges",
+    "card",
     "choose_ladder",
     "cleanup_step",
     "colony_pcr_check",
@@ -154,7 +163,10 @@ __all__ = [
     "colony_pcr_reaction",
     "colony_pcr_step",
     "dna_amount",
+    "dna_components",
     "dpni_step",
+    "enzyme_material",
+    "fits",
     "gel_step",
     "heat_inactivation",
     "listed",
@@ -167,6 +179,7 @@ __all__ = [
     "phenotype_sentences",
     "primer_sheet",
     "quantify_step",
+    "reaction_table",
     "read_phenotype",
     "sanger_primers",
     "sequencing_step",

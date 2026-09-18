@@ -20,23 +20,24 @@ One direction, bottom to top — nothing lower imports anything higher.
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans |
-| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets |
-| plot | `plot/` | a record drawn as a map: `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF |
+| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets; the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds |
+| plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
-| protocol | `protocol/` | the protocol model, and its self-contained HTML render |
-| bench | `bench/` | what any pipeline shares: `amounts`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
-| pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `ligase`, `oligos`, `steps`, joined by `plan` |
+| protocol | `protocol/` | `model`, read from and written to JSON, and `render`, its self-contained HTML page |
+| bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
+| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan` |
 | pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
+| command line | `cli`, and each feature's own `cli` | the verbs: the root app mounts one sub-app per feature, `cloning/cli` one per method and the spine they share |
 
-Each pipeline has one way in. `goldengate.plan_assembly` writes four files: the product, the
-primer sheet, `protocol.json` and the `protocol.html` rendered from it. `library.plan_library`
-writes the synthesis order sheet, the barcode and amino-acid change tables, a record per round,
-the product, and those same two protocol files.
+Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
+product, the primer sheet, `protocol.json` and the `protocol.html` rendered from it.
+`library.plan_library` writes the synthesis order sheet, the barcode and amino-acid change
+tables, a record per round, the product, and those same two protocol files.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
-The top-level `__init__.py` re-exports only `__version__`, so import by module path: `Check`,
-`Junction`, `Part` and `Files` each mean different things in two modules. `library` is the one
-subpackage that re-exports its own way in.
+A subpackage re-exports its own way in, for callers outside it. Inside the package, import a
+name from the module that owns it; the top-level `__init__.py` re-exports only `__version__`,
+and `Check`, `Junction`, `Part` and `Files` each mean different things in two modules.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
@@ -71,7 +72,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | the gate | `pixi run check` |
 | one test | `pixi run test -- tests/test_sites.py::test_name` |
 | the docs | `pixi install -e docs`, then `pixi run docs-build` |
-| a Golden Gate plan | `pixi run liulab_mbio goldengate plan VECTOR INSERT --out DIR` |
+| a Golden Gate plan | `pixi run liulab_mbio cloning goldengate plan VECTOR INSERT --out DIR` |
 | a library plan | `pixi run liulab_mbio library plan PARTS --scheme S --vector V --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
@@ -83,6 +84,7 @@ tests/            pytest, mirroring src/
 docs/             the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
 skills/           repo-local agent skills
 scripts/          the gate runner, and the package-data builders
+reference_docs/   reference material downloaded for a method — papers, manuals; git-ignored
 CONTEXT.md        the glossary — the words this repo uses
 ```
 

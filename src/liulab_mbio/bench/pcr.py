@@ -6,8 +6,8 @@ them unchanged.
 """
 
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL
-from liulab_mbio.primers import ONETAQ, Q5, Polymerase
-from liulab_mbio.protocol import (
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
+from liulab_mbio.protocol.model import (
     Component,
     Incubation,
     ReactionTable,

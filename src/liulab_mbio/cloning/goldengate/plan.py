@@ -13,7 +13,6 @@ translated, and how a plate reads -- is `liulab_mbio.bench.phenotype`, read off 
 own features.
 """
 
-import dataclasses
 import os
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -21,54 +20,39 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from liulab_mbio.bench import (
+from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
+from liulab_mbio.bench.validation import (
     REVERSE_FLANK,
-    Amount,
     ColonyCheck,
     SangerRead,
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.checks import Check, Status, worst
-from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.goldengate.bench import assembly_amounts
-from liulab_mbio.goldengate.design import (
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.cloning.goldengate.bench import assembly_amounts
+from liulab_mbio.cloning.goldengate.design import (
     EnzymeChoice,
-    Junction,
     OverhangSet,
     choose_enzyme,
     design_overhangs,
 )
-from liulab_mbio.goldengate.ligase import LigaseProfile, read_profile
-from liulab_mbio.goldengate.oligos import DesignedOligo
-from liulab_mbio.goldengate.steps import DEFAULT_HOST
-from liulab_mbio.goldengate.steps import protocol as protocol_for
-from liulab_mbio.io import read_record
-from liulab_mbio.primers import (
-    ONETAQ,
-    Q5,
-    THRESHOLDS_FOR,
-    Polymerase,
-    PrimerReport,
-    PrimerRole,
-    Thresholds,
-    evaluate_primer,
-    reading,
-)
-from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
-from liulab_mbio.sequence import (
-    BindingSite,
-    Feature,
-    Primer,
-    Segment,
-    SequenceRecord,
-    Strand,
-    reverse_complement,
-)
+from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.cloning.goldengate.steps import DEFAULT_HOST
+from liulab_mbio.cloning.goldengate.steps import protocol as protocol_for
+from liulab_mbio.cloning.plan import PRODUCT_FILE, as_record, status, write_protocol_files
+from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
+from liulab_mbio.edits import flipped
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.ligase import LigaseProfile, read_profile
+from liulab_mbio.overhangs import Junction
+from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
+from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds, reading
+from liulab_mbio.protocol.model import Protocol
+from liulab_mbio.sequence import Feature, Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
 
@@ -85,11 +69,8 @@ MCS_FEATURE = "MCS"
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
 VECTOR_WINDOW = 6
 
-#: What `Plan.write` calls the four files it writes.
-PRODUCT_FILE = "product.dna"
+#: What `Plan.write` calls the primer sheet. The other three are `liulab_mbio.cloning.plan`'s.
 PRIMER_FILE = "primers.tsv"
-PROTOCOL_DATA_FILE = "protocol.json"
-PROTOCOL_FILE = "protocol.html"
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +94,11 @@ class Files:
     primers: Path
     protocol_data: Path
     protocol: Path
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """The four, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,7 +203,7 @@ class Plan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return status(self.checks)
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
@@ -242,10 +228,9 @@ class Plan:
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the primer sheet, the protocol data and its page into `directory`.
 
-        The directory is made when it is not there. The four files are named by
-        `PRODUCT_FILE`, `PRIMER_FILE`, `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`, and a second
-        run over the same inputs writes the same bytes. The page is rendered from the data as
-        written, so the two cannot disagree.
+        The directory is made when it is not there. The four files are named by `PRODUCT_FILE`
+        and `PRIMER_FILE`, and by `liulab_mbio.cloning.plan` for the protocol pair, and a
+        second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -253,8 +238,8 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        data = write_protocol(self.protocol(), out / PROTOCOL_DATA_FILE)
-        return Files(product, sheet, data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+        written = write_protocol_files(self.protocol(), out)
+        return Files(product, sheet, written.data, written.page)
 
 
 def plan_assembly(
@@ -303,7 +288,7 @@ def plan_assembly(
     profile
         A ligase fidelity matrix the caller holds, as a path or an already read `LigaseProfile`.
         It scores the overhangs where no shipped matrix covers the enzyme. The package ships
-        none: see `liulab_mbio.goldengate.ligase`.
+        none: see `liulab_mbio.ligase`.
     prefer_profile
         Use it even where a shipped matrix covers the enzyme.
     polymerase
@@ -332,12 +317,14 @@ def plan_assembly(
     if not inserts:
         raise ValueError("an assembly needs a vector and at least one insert")
     usage = codon_usage(codon_table)
-    one = _record(vector)
+    one = as_record(vector)
     ways = _orientations(orientation, len(inserts))
     frames = _frames(in_frame, len(inserts))
     going = [
         flipped(read) if way == "reverse" else read
-        for read, way in ((_record(record), way) for record, way in zip(inserts, ways, strict=True))
+        for read, way in (
+            (as_record(record), way) for record, way in zip(inserts, ways, strict=True)
+        )
     ]
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
     start, end = _span(one, site)
@@ -495,73 +482,6 @@ def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
     if len(given) != count:
         raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
     return given
-
-
-def flipped(record: SequenceRecord) -> SequenceRecord:
-    """Return `record` read from the other strand, features and binding sites turned with it.
-
-    Raises
-    ------
-    ValueError
-        If a span runs across the origin, which has no place on the other strand of a record
-        this turns end for end.
-
-    Examples
-    --------
-    >>> flipped(SequenceRecord("AAAACCCG")).sequence
-    'CGGGTTTT'
-    """
-    length = len(record)
-    other = {Strand.FORWARD: Strand.REVERSE, Strand.REVERSE: Strand.FORWARD}
-    spans = [
-        (segment.start, segment.end) for feature in record.features for segment in feature.segments
-    ]
-    spans += [(site.start, site.end) for primer in record.primers for site in primer.binding_sites]
-    if any(end > length for _, end in spans):
-        raise ValueError("a record with a span across its origin cannot be turned end for end")
-    features = tuple(
-        dataclasses.replace(
-            feature,
-            segments=tuple(
-                sorted(
-                    (
-                        Segment(
-                            length - segment.end,
-                            length - segment.start,
-                            name=segment.name,
-                            color=segment.color,
-                        )
-                        for segment in feature.segments
-                    ),
-                    key=lambda segment: (segment.start, segment.end),
-                )
-            ),
-            strand=other.get(feature.strand, feature.strand),
-        )
-        for feature in record.features
-    )
-    primers = tuple(
-        dataclasses.replace(
-            primer,
-            binding_sites=tuple(
-                BindingSite(length - site.end, length - site.start, other[site.strand])
-                for site in primer.binding_sites
-            ),
-        )
-        for primer in record.primers
-    )
-    return dataclasses.replace(
-        record,
-        sequence=reverse_complement(record.sequence),
-        features=features,
-        primers=primers,
-        extras={},
-    )
-
-
-def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
-    """Read a record, or take one already read."""
-    return value if isinstance(value, SequenceRecord) else read_record(value)
 
 
 def _profile(value: LigaseProfile | str | os.PathLike[str] | None) -> LigaseProfile | None:

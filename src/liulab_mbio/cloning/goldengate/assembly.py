@@ -22,18 +22,13 @@ import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.primers import (
-    Q5,
-    THRESHOLDS,
-    PairReport,
-    Polymerase,
-    Thresholds,
-    design_pair,
-    evaluate_pair,
-)
+from liulab_mbio.primers.design import design_pair
+from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
+from liulab_mbio.primers.polymerase import Q5, Polymerase
+from liulab_mbio.primers.thresholds import THRESHOLDS, Thresholds
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -308,7 +303,7 @@ def open_vector(
 
 @dataclass(frozen=True, slots=True)
 class Junction:
-    """Where two parts meet in the product: the bases their two overhangs paired on.
+    """A junction as it came out: the bases two parts' overhangs paired on in the product.
 
     Parameters
     ----------
@@ -409,7 +404,7 @@ class Assembly:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.

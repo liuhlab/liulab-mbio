@@ -10,7 +10,7 @@ import dataclasses
 import pytest
 
 from liulab_mbio import edits
-from liulab_mbio.goldengate.assembly import (
+from liulab_mbio.cloning.goldengate.assembly import (
     JUNCTION_COLOR,
     amplify,
     assemble,

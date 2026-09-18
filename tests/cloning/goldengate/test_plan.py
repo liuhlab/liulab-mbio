@@ -22,9 +22,9 @@ from liulab_mbio.bench import (
     SANGER_FLANK,
 )
 from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.goldengate import Plan, plan_assembly
-from liulab_mbio.goldengate.oligos import DesignedOligo
-from liulab_mbio.goldengate.plan import REVERSE_FLANK
+from liulab_mbio.cloning.goldengate import Plan, plan_assembly
+from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.cloning.goldengate.plan import REVERSE_FLANK
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna

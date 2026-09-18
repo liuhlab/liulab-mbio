@@ -13,10 +13,11 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
-from liulab_mbio.goldengate import plan_assembly
-from liulab_mbio.goldengate.cli import LIGASE_MATRIX_ENV
-from liulab_mbio.goldengate.design import Junction, design_overhangs, fidelity, ligation_matrix
-from liulab_mbio.goldengate.ligase import SPREADSHEET_NS, read_profile
+from liulab_mbio.cloning.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate.cli import LIGASE_MATRIX_ENV
+from liulab_mbio.cloning.goldengate.design import design_overhangs
+from liulab_mbio.ligase import SPREADSHEET_NS, read_profile
+from liulab_mbio.overhangs import Junction, fidelity, ligation_matrix
 
 #: Two Watson-Crick pairs seen often, and one cross pair seen rarely. A row pairs with the
 #: column spelling its reverse complement, so AAAA pairs with TTTT and GGAA with TTCC.
@@ -311,6 +312,7 @@ def _run(
     return CliRunner().invoke(
         app,
         [
+            "cloning",
             "goldengate",
             "plan",
             str(vector),

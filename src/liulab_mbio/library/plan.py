@@ -24,10 +24,9 @@ from typing import Literal
 
 from liulab_mbio.barcodes import SEED, BarcodeRules
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status
+from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
 from liulab_mbio.codons import codon_usage
-from liulab_mbio.goldengate.design import MIN_DISTANCE
-from liulab_mbio.io import read_record
 from liulab_mbio.library.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_mbio.library.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_mbio.library.parts import (
@@ -43,7 +42,8 @@ from liulab_mbio.library.standard import PartList, Standard, design_standard
 from liulab_mbio.library.steps import RoundBench
 from liulab_mbio.library.steps import protocol as protocol_for
 from liulab_mbio.library.vector import Destination, Site, destination_vector
-from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
+from liulab_mbio.overhangs import MIN_DISTANCE
+from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
@@ -56,13 +56,12 @@ type Kind = Literal["protein", "dna"]
 #: ``N`` and ``C_NFAT`` does not. A caller whose names read another way passes another pattern.
 NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 
-#: What `LibraryPlan.write` calls the files it writes. The records are named by
-#: `liulab_mbio.library.rounds`, which writes one for each round and the product for the last.
+#: What `LibraryPlan.write` calls the sheets it writes. The records are named by
+#: `liulab_mbio.library.rounds`, which writes one for each round and the product for the
+#: last, and the protocol pair by `liulab_mbio.cloning.plan`.
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
-PROTOCOL_DATA_FILE = "protocol.json"
-PROTOCOL_FILE = "protocol.html"
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +91,18 @@ class Files:
     records: tuple[Path, ...]
     protocol_data: Path
     protocol: Path
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Every file, in the order they were written: the sheets, the records, the protocol."""
+        return (
+            self.parts,
+            self.barcodes,
+            self.changes,
+            *self.records,
+            self.protocol_data,
+            self.protocol,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,7 +185,7 @@ class LibraryPlan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return status(self.checks)
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan, covering every round as one experiment."""
@@ -198,10 +209,9 @@ class LibraryPlan:
         """Write the sheets, the records, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
-        `BARCODE_FILE`, `CHANGE_FILE`, `liulab_mbio.library.rounds.ROUND_FILE` and
-        `PRODUCT_FILE`, `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`, and a second run over the same
-        inputs writes the same bytes. The page is rendered from the data as written, so the two
-        cannot disagree.
+        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_mbio.library.rounds` for the records
+        and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run over the
+        same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -212,9 +222,8 @@ class LibraryPlan:
         changes = out / CHANGE_FILE
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
-        data = write_protocol(self.protocol(), out / PROTOCOL_DATA_FILE)
-        page = write_html(read_protocol(data), out / PROTOCOL_FILE)
-        return Files(sheet, barcodes, changes, records, data, page)
+        written = write_protocol_files(self.protocol(), out)
+        return Files(sheet, barcodes, changes, records, written.data, written.page)
 
 
 def plan_library(
@@ -296,7 +305,7 @@ def plan_library(
     >>> plan.write("library/")  # doctest: +SKIP
     """
     design = _scheme(scheme)
-    one = _record(vector)
+    one = as_record(vector)
     if isinstance(parts, str | os.PathLike):
         given: Sequence[Mapping[str, str]] = read_part_lists(parts, design, pattern=pattern)
     else:
@@ -581,8 +590,3 @@ def _ligation(destination: str, opened: int, donor: str, released: int) -> tuple
 def _scheme(value: Scheme | str | os.PathLike[str]) -> Scheme:
     """Read a scheme, or take one already read."""
     return value if isinstance(value, Scheme) else read_scheme(value)
-
-
-def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
-    """Read a record, or take one already read."""
-    return value if isinstance(value, SequenceRecord) else read_record(value)

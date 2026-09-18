@@ -2,7 +2,7 @@
 
 The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around the
 assembly and its cycling and adds what only Golden Gate has to say. Every number is computed by
-`liulab_mbio.goldengate.plan` or by the modules it calls; the constants below are the choices no
+`liulab_mbio.cloning.goldengate.plan` or by the modules it calls; the constants below are the choices no
 table of NEB's covers, and each says where it comes from.
 """
 
@@ -10,11 +10,20 @@ import re
 from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
-from liulab_mbio.bench import (
-    CELLS_UL,
+from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
+from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.oligos import oligo_row
+from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
-    COLONY_PCR_TITLE,
     DNTP_STOCK_MM,
+    colony_pcr_master_mix_component,
+)
+from liulab_mbio.bench.phenotype import Phenotype
+from liulab_mbio.bench.steps import (
+    CELLS_UL,
+    COLONY_PCR_TITLE,
     DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
@@ -24,19 +33,14 @@ from liulab_mbio.bench import (
     PLATE_REFERENCE,
     SEQUENCING_TITLE,
     XGAL_UG_ML,
-    Amount,
-    ColonyCheck,
-    Phenotype,
-    SangerRead,
-    choose_ladder,
+    badges,
+    card,
     cleanup_step,
-    colony_pcr_master_mix_component,
     colony_pcr_step,
     dpni_step,
+    enzyme_material,
     gel_step,
-    heat_inactivation,
     listed,
-    oligo_row,
     pcr_step,
     pcr_title,
     phenotype_sentences,
@@ -44,10 +48,9 @@ from liulab_mbio.bench import (
     sequencing_step,
     transform_step,
 )
-from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
-from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Junction, Part, dam_sites
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.bench.validation import ColonyCheck, SangerRead
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part, dam_sites
+from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
     REFERENCES,
     assembly_program,
@@ -56,12 +59,12 @@ from liulab_mbio.goldengate.bench import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from liulab_mbio.goldengate.design import OverhangSet
-from liulab_mbio.goldengate.oligos import DesignedOligo
-from liulab_mbio.primers import Polymerase, PrimerRole, Thresholds
-from liulab_mbio.protocol import (
-    OVERVIEW_CHARS,
-    Check,
+from liulab_mbio.cloning.goldengate.design import OverhangSet
+from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.primers.polymerase import Polymerase
+from liulab_mbio.primers.thresholds import PrimerRole, Thresholds
+from liulab_mbio.protocol.model import (
     Component,
     Material,
     Protocol,
@@ -122,7 +125,7 @@ def protocol(
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
 
-    Each argument is the `liulab_mbio.goldengate.plan.Plan` field or property of that name, and
+    Each argument is the `liulab_mbio.cloning.goldengate.plan.Plan` field or property of that name, and
     `oligos` is `Plan.designed_oligos`. The steps run in the order someone does them: one PCR
     per part, the gel that checks them, the DpnI digest and cleanup, quantification, the
     assembly, transformation and plating, colony PCR, and sequencing. Every step is per
@@ -141,7 +144,7 @@ def protocol(
         ),
         overview=_overview(vector, insert_parts, assembly, overhangs, phenotype),
         highlights=_highlights(parts, phenotype, names),
-        checks=_checks(checks),
+        checks=badges(checks),
         materials=_materials(
             vector=vector,
             parts=parts,
@@ -220,8 +223,7 @@ def _brief(items: Sequence[str], noun: str) -> str:
     >>> _brief(("ATGA", "TGGC"), "junctions")
     'ATGA and TGGC'
     """
-    text = listed(items)
-    return text if len(text) <= OVERVIEW_CHARS else f"{len(items)} {noun}"
+    return card(listed(items), f"{len(items)} {noun}")
 
 
 def _highlights(
@@ -232,18 +234,6 @@ def _highlights(
     return (
         f"One reaction joins {len(parts)} fragments: {joined}.",
         *phenotype_sentences(phenotype, inserts),
-    )
-
-
-def _checks(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
-    """Return the plan's verdicts, one badge each, so a warning is seen and not read.
-
-    A badge is a verdict, so a check carrying none has none to show.
-    """
-    return tuple(
-        Check(check.name, check.status, detail=check.detail)
-        for check in checks
-        if check.status is not None
     )
 
 
@@ -288,13 +278,7 @@ def _materials(
             storage="-20 °C",
             amount=_per_reaction(mix),
         ),
-        Material(
-            enzyme.commercial_name or enzyme.name,
-            supplier=enzyme.supplier or "",
-            catalog=enzyme.catalog_number or "",
-            storage="-20 °C",
-            amount=_per_reaction(enzyme_component(enzyme, fragments)),
-        ),
+        enzyme_material(enzyme, amount=_per_reaction(enzyme_component(enzyme, fragments))),
         _catalogued(
             host,
             supplier=SUPPLIER if host == DEFAULT_HOST else "",

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.goldengate import Plan
+from liulab_mbio.cloning.goldengate import Plan
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,

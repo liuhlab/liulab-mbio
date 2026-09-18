@@ -26,7 +26,7 @@ def test_a_bare_invocation_prints_help_rather_than_nothing() -> None:
 
 
 def test_every_pipeline_is_mounted() -> None:
-    for verb in ("goldengate", "library", "protocol", "plot"):
+    for verb in ("cloning", "library", "protocol", "plot"):
         result = CliRunner().invoke(app, [verb])
         # `no_args_is_help` on the sub-app, so it prints its own help and exits non-zero.
         assert result.exit_code != 0

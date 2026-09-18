@@ -19,7 +19,7 @@ says what belongs in one and where each fact lives when it does not.
 
 | Files | Cap |
 | --- | --- |
-| `AGENTS.md`, `docs/agents/*`, `skills/*/SKILL.md` | 1000 (`Lab.LengthDoc`) |
+| `AGENTS.md`, `docs/agents/*`, every `.md` under `skills/` | 1000 (`Lab.LengthDoc`) |
 | `docs/adr/*` | 400 (`Lab.LengthAdr`) |
 | `CONTEXT.md` | 200 words per glossary entry, checked by `conformance` |
 | `docs/research/*` | none — research notes are long by nature |

@@ -1,6 +1,6 @@
 import pytest
 
-from liulab_mbio.edits import EditReport, delete, insert, replace, rotate
+from liulab_mbio.edits import EditReport, delete, flipped, insert, replace, rotate
 from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 
@@ -100,3 +100,21 @@ def test_an_edit_drops_only_the_segment_it_removes_from_a_multi_segment_feature(
     assert edited.sequence == "AAAACCCC"
     assert edited.features == (_feature("m", (0, 4)),)
     assert report == EditReport(trimmed=(record.features[0],))
+
+
+def test_flipped_turns_every_span_and_strand_end_for_end() -> None:
+    primer = Primer("p", "CCCC", binding_sites=(BindingSite(4, 8, Strand.FORWARD),))
+    record = SequenceRecord(
+        BASES, features=(_feature("m", (0, 4), (8, 12), strand=Strand.REVERSE),), primers=(primer,)
+    )
+    turned = flipped(record)
+    assert turned.sequence == "CCCCGGGGTTTT"
+    assert turned.features == (_feature("m", (0, 4), (8, 12), strand=Strand.FORWARD),)
+    assert turned.primers[0].binding_sites == (BindingSite(4, 8, Strand.REVERSE),)
+    assert flipped(turned) == record
+
+
+def test_flipped_refuses_a_span_across_the_origin() -> None:
+    record = SequenceRecord(BASES, topology="circular", features=(_feature("across", (10, 14)),))
+    with pytest.raises(ValueError, match="across its origin"):
+        flipped(record)

@@ -1,27 +1,17 @@
----
-name: golden-gate-assembly
-description: >-
-  Plan a Golden Gate cloning experiment end to end from a vector and one or more insert
-  sequence files (SnapGene .dna, GenBank or FASTA): pick a Type IIS enzyme with no site in the
-  parts, design and score the whole overhang set, check the PCR primers, simulate the assembly,
-  design the colony PCR that validates every junction, and write an interactive HTML bench
-  protocol with expected results. Use when the user wants to clone, insert, subclone or join
-  sequences into a plasmid by Golden Gate, asks for primers with BsaI, BsmBI, BbsI, PaqCI or
-  SapI tails, or wants a ready-to-run cloning protocol from sequence files.
----
-
 # Golden Gate assembly
 
-`liulab_mbio` does the design. This skill is the way in: one command turns a vector and its
-inserts into a product map, a primer order sheet and a bench protocol. Never invent a primer, an
-overhang, a band size or any other number the package computes: it works each one out from the
-sequences and checks it, and nothing checks a number you made up.
+Read this once `SKILL.md` has chosen Golden Gate.
+
+`liulab_mbio` does the design, and one command turns a vector and its inserts into a product
+map, a primer order sheet and a bench protocol. Never invent a primer, an overhang, a band size
+or any other number the package computes: it works each one out from the sequences and checks
+it, and nothing checks a number you made up.
 
 ## Run it
 
 ```bash
-pixi run liulab_mbio goldengate plan vector.dna insert.dna --out plan/
-pixi run liulab_mbio goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
+pixi run liulab_mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
 ```
 
 One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
@@ -73,7 +63,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 When you need the numbers rather than the files:
 
 ```python
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
@@ -86,7 +76,7 @@ candidate clone, and `plan.phenotype` what the product says about itself — wha
 inserts, whether anything should be translated, and how a plate reads.
 
 A value the user gives goes in here. For another amount of DNA, replace `plan.amounts` with
-`liulab_mbio.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
+`liulab_mbio.cloning.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
 and write the plan again.
 
 ## Before you hand it over
@@ -124,5 +114,5 @@ plan did not anticipate — skip the DpnI digest, add a gel purification, add a 
 `protocol.json` as it says and render it again.
 
 A change to what the plan computes — the enzyme, the polymerase, the inserts or their
-orientation — goes back through `goldengate plan`, which writes `protocol.json` afresh. Within
-the session, reapply the changes the user asked for to the new protocol.
+orientation — goes back through `cloning goldengate plan`, which writes `protocol.json`
+afresh. Within the session, reapply the changes the user asked for to the new protocol.

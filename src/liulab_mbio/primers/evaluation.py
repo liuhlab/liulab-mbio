@@ -9,7 +9,7 @@ import itertools
 from dataclasses import dataclass
 from functools import lru_cache
 
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.primers.placement import amplicon_sizes, find_binding_sites, find_priming_sites
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
 from liulab_mbio.primers.thresholds import THRESHOLDS, Band, Thresholds
@@ -49,7 +49,7 @@ class PrimerReport:
     @property
     def status(self) -> Status:
         """Return the worst status of any check that was judged."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.

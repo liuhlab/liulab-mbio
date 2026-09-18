@@ -11,19 +11,18 @@ from typing import cast
 import pytest
 
 from liulab_mbio.checks import worst
+from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.library.parts import BARCODE_COLUMNS
 from liulab_mbio.library.plan import (
     BARCODE_FILE,
     CHANGE_FILE,
     PARTS_FILE,
-    PROTOCOL_DATA_FILE,
-    PROTOCOL_FILE,
     Kind,
     plan_library,
     read_part_lists,
 )
-from liulab_mbio.library.rounds import PRODUCT_FILE, ROUND_FILE
+from liulab_mbio.library.rounds import ROUND_FILE
 from liulab_mbio.library.scheme import read_scheme
 from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import Segment, SequenceRecord

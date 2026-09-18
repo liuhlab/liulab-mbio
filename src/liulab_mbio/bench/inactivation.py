@@ -1,7 +1,7 @@
 """An enzyme's heat inactivation, as its supplier gives it."""
 
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.protocol import Incubation, Stage, ThermocyclerProgram
+from liulab_mbio.protocol.model import Incubation, Stage, ThermocyclerProgram
 
 
 def heat_inactivation(enzyme: Enzyme) -> ThermocyclerProgram | None:

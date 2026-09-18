@@ -88,5 +88,5 @@ Tell the user the host, the enzymes the sequence is free of, and every codon tha
 codon, new codon, and the amino acid, which is the same either side by construction. Someone
 paying a vendor for a gene should see what was done to it.
 
-`golden-gate-assembly` plans a cloning reaction from sequences that already exist; come here to
+`molecular-cloning` plans a cloning reaction from sequences that already exist; come here to
 write the sequence itself.

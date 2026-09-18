@@ -8,7 +8,15 @@ import dataclasses
 from dataclasses import dataclass
 from enum import IntEnum
 
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 
 
 class _Fate(IntEnum):
@@ -109,6 +117,68 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
             primers=tuple(_turned_primer(primer, start, length) for primer in record.primers),
         )
     raise ValueError("only a circular record has an origin to rotate")
+
+
+def flipped(record: SequenceRecord) -> SequenceRecord:
+    """Return `record` read from the other strand, features and binding sites turned with it.
+
+    Raises
+    ------
+    ValueError
+        If a span runs across the origin, which has no place on the other strand of a record
+        this turns end for end.
+
+    Examples
+    --------
+    >>> flipped(SequenceRecord("AAAACCCG")).sequence
+    'CGGGTTTT'
+    """
+    length = len(record)
+    other = {Strand.FORWARD: Strand.REVERSE, Strand.REVERSE: Strand.FORWARD}
+    spans = [
+        (segment.start, segment.end) for feature in record.features for segment in feature.segments
+    ]
+    spans += [(site.start, site.end) for primer in record.primers for site in primer.binding_sites]
+    if any(end > length for _, end in spans):
+        raise ValueError("a record with a span across its origin cannot be turned end for end")
+    features = tuple(
+        dataclasses.replace(
+            feature,
+            segments=tuple(
+                sorted(
+                    (
+                        Segment(
+                            length - segment.end,
+                            length - segment.start,
+                            name=segment.name,
+                            color=segment.color,
+                        )
+                        for segment in feature.segments
+                    ),
+                    key=lambda segment: (segment.start, segment.end),
+                )
+            ),
+            strand=other.get(feature.strand, feature.strand),
+        )
+        for feature in record.features
+    )
+    primers = tuple(
+        dataclasses.replace(
+            primer,
+            binding_sites=tuple(
+                BindingSite(length - site.end, length - site.start, other[site.strand])
+                for site in primer.binding_sites
+            ),
+        )
+        for primer in record.primers
+    )
+    return dataclasses.replace(
+        record,
+        sequence=reverse_complement(record.sequence),
+        features=features,
+        primers=primers,
+        extras={},
+    )
 
 
 def _check_span(record: SequenceRecord, start: int, end: int) -> None:

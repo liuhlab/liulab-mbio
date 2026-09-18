@@ -228,6 +228,15 @@ ones lost bases, **dropped** ones lost all of them, and **changed** ones now spa
 because the edit fell inside them.
 _Avoid_: diff, changelog, summary
 
+### Cloning method
+
+How an experiment joins its fragments into one plasmid: the mechanism, the enzymes it needs, and
+what it leaves at each junction. It is chosen for a job — how many fragments join, whether the
+junction may gain bases, what the parts already carry, speed and cost — rather than preferred in
+general. Golden Gate is the one this package plans; a library built in rounds is a pipeline over
+a method, not a method of its own.
+_Avoid_: cloning strategy, technique, approach
+
 ### Molar ratio
 
 How many molecules of insert an assembly gets for each molecule of vector. Counted in moles and

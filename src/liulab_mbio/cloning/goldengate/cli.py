@@ -1,13 +1,20 @@
-"""The `goldengate` verbs, mounted on the package command line."""
+"""The `goldengate` verbs, mounted under the `cloning` group on the package command line."""
 
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from liulab_mbio.cloning.cli import plan_command
+from liulab_mbio.cloning.goldengate.plan import (
+    DEFAULT_HOST,
+    Orientation,
+    Plan,
+    Site,
+    plan_assembly,
+)
 from liulab_mbio.codons import DEFAULT_TABLE
-from liulab_mbio.goldengate.plan import DEFAULT_HOST, Orientation, Site, plan_assembly
-from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
 
@@ -83,8 +90,8 @@ def plan(
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Plan an assembly and write the product, the primer sheet and the protocol into OUT."""
-    try:
-        made = plan_assembly(
+    plan_command(
+        lambda: plan_assembly(
             vector,
             *inserts,
             site=_site(site),
@@ -97,19 +104,20 @@ def plan(
             polymerase=_polymerase(polymerase),
             host=host,
             name=name,
-        )
-        outputs = made.write(out)
-    except (KeyError, ValueError) as error:
-        typer.echo(f"error: {error}", err=True)
-        raise typer.Exit(1) from error
+        ),
+        out,
+        _summary,
+    )
+
+
+def _summary(made: Plan) -> str:
+    """Report the assembly in one line: what it makes, and how well its set should ligate."""
     scored = made.overhangs.fidelity
-    typer.echo(
+    return (
         f"{made.product.name}: {len(made.product)} bp, {made.enzyme.name}, "
         f"{len(made.parts)} fragments, overhangs {', '.join(made.overhangs.overhangs)}, "
         f"fidelity {scored.value:.0%} ({scored.label}), checks {made.status}"
     )
-    for path in (outputs.product, outputs.primers, outputs.protocol_data, outputs.protocol):
-        typer.echo(str(path))
 
 
 def _site(text: str) -> Site:

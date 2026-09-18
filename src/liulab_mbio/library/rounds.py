@@ -4,7 +4,7 @@ One round is two digests and a ligation: the internal enzyme excises the interna
 library built so far, the external enzyme releases a part from its synthesised block, and the two
 ligate on the same pair of overhangs. The product becomes the next round's destination, and it
 keeps the internal enzyme's sites, which is what lets the next round open it.
-``docs/adr/0004-library-rounds.md`` says why none of this is `liulab_mbio.goldengate`.
+``docs/adr/0004-library-rounds.md`` says why none of this is `liulab_mbio.cloning.goldengate`.
 
 Every overhang is read off a digest rather than stated, so a round joins what the ordered DNA will
 join, and ends that do not match are refused naming both. The product is the destination with its
@@ -25,7 +25,8 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 from pathlib import Path
 
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status, worst_of
+from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.edits import EditReport, replace
 from liulab_mbio.library.parts import Part
 from liulab_mbio.library.scheme import Scheme
@@ -37,9 +38,6 @@ from liulab_mbio.translate import translate
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
 JUNCTION_COLOR = "#ff9900"
-
-#: What the representative construct is called in a directory of records.
-PRODUCT_FILE = "product.dna"
 
 #: What each earlier round's intermediate is called there.
 ROUND_FILE = "round-{number}.dna"
@@ -145,7 +143,7 @@ class Round:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst(check.status for check in self.checks)
+        return worst_of(self.checks)
 
     def __getitem__(self, name: str) -> Check:
         """Return the check of that name.
@@ -381,9 +379,9 @@ def representative(parts: Sequence[Part], scheme: Scheme) -> tuple[Part, ...]:
 def write_records(rounds: Sequence[Round], directory: Path) -> tuple[Path, ...]:
     """Write every round's record into `directory` as SnapGene ``.dna``, and return the paths.
 
-    Each round before the last is written as `ROUND_FILE`, so a round can be checked before the
-    next is run, and the last round's product as `PRODUCT_FILE`, which is the representative
-    construct. The same rounds write the same bytes.
+    Each round before the last is written as `ROUND_FILE`, so a round can be checked before
+    the next is run, and the last round's product as `liulab_mbio.cloning.plan.PRODUCT_FILE`,
+    which is the representative construct. The same rounds write the same bytes.
 
     Raises
     ------

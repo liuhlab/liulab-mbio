@@ -6,7 +6,8 @@ from typing import Annotated
 import typer
 
 from liulab_mbio.barcodes import SEED
-from liulab_mbio.library.plan import NAME_PATTERN, Kind, plan_library
+from liulab_mbio.cloning.cli import plan_command
+from liulab_mbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
 from liulab_mbio.library.vector import Site
 
 app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=True)
@@ -73,8 +74,8 @@ def plan(
     name: Annotated[str, typer.Option("--name", help="What to call each round's product.")] = "",
 ) -> None:
     """Plan a library and write the sheets, the records and the protocol into OUT."""
-    try:
-        made = plan_library(
+    plan_command(
+        lambda: plan_library(
             parts,
             scheme,
             vector,
@@ -85,27 +86,21 @@ def plan(
             pattern=pattern,
             seed=seed,
             name=name,
-        )
-        outputs = made.write(out)
-    except (KeyError, ValueError) as error:
-        typer.echo(f"error: {error}", err=True)
-        raise typer.Exit(1) from error
-    typer.echo(
+        ),
+        out,
+        _summary,
+    )
+
+
+def _summary(made: LibraryPlan) -> str:
+    """Report the library in one line: what it makes, what it costs, and how it is judged."""
+    return (
         f"{made.product.name}: {len(made.product)} bp, {len(made.parts)} part(s) in "
         f"{len(made.part_lists)} list(s), {made.constructs} construct(s), "
         f"{len(made.rounds)} round(s), entry overhangs "
         f"{', '.join(made.standard.entry_overhangs)}, scar {made.standard.scar_overhang}, "
         f"{made.standard.cost} amino acid change(s), checks {made.status}"
     )
-    for path in (
-        outputs.parts,
-        outputs.barcodes,
-        outputs.changes,
-        *outputs.records,
-        outputs.protocol_data,
-        outputs.protocol,
-    ):
-        typer.echo(str(path))
 
 
 def _kind(text: str) -> Kind:

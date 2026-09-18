@@ -9,7 +9,7 @@ Write the docstring; this page follows.
 
 ```python
 from liulab_mbio.io import read_record
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 ```
 
 Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
@@ -19,9 +19,8 @@ something different in the two modules that define them. A
 rename one of each pair, and would import every dependency the moment you imported the package.
 So the module path is the name.
 
-`liulab_mbio.goldengate` re-exports the pipeline's entry point and its result types.
-`design` and `ligase` are **not** re-exported: reach them at
-`liulab_mbio.goldengate.design` and `liulab_mbio.goldengate.ligase`.
+`liulab_mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
+`design` is **not** re-exported: reach it at `liulab_mbio.cloning.goldengate.design`.
 
 ## The examples are tests
 
@@ -71,6 +70,25 @@ across the origin of a circular record ends past the record's length — see
 ::: liulab_mbio.codons
 
 ::: liulab_mbio.translate
+
+## Barcodes
+
+A barcode names one part, so that reading a product says which part it carries. This module
+draws a set whose members stand far enough apart that no two read as one, and checks a set
+someone already holds by the same rules. The same seed draws the same set again.
+
+::: liulab_mbio.barcodes
+
+## Overhangs and ligation
+
+The rules a set of Type IIS overhangs is held to, and how well the set should ligate. Every
+cloning method that cuts with such an enzyme reads them here. `ligase` reads a fidelity matrix
+the user holds on their own disk: that archive's licence forbids redistribution, so none of it
+ships with the package.
+
+::: liulab_mbio.overhangs
+
+::: liulab_mbio.ligase
 
 ## Maps
 
@@ -145,18 +163,21 @@ refused rather than truncated.
 
 ## Bench
 
-The numbers any cloning pipeline shares: DNA amounts, PCR and colony PCR, gels, the checks
-that confirm a clone, heat inactivation, the phenotype a clone should show, the primer order
-sheet, and the protocol steps any pipeline reuses. Every public name in the modules below imports
-from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERENCES`, and
-`liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the one exception: a protocol cites
-its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the step they belong to.
+The numbers any cloning pipeline shares: DNA amounts, the reaction table filled to volume, PCR
+and colony PCR, gels, the checks that confirm a clone, heat inactivation, the phenotype a clone
+should show, the primer order sheet, and the protocol steps any pipeline reuses. Every public
+name in the modules below imports from `liulab_mbio.bench` too. A module that cites a source
+keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the
+one exception: a protocol cites its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the
+step they belong to.
 
 ::: liulab_mbio.bench
     options:
       members: false
 
 ::: liulab_mbio.bench.amounts
+
+::: liulab_mbio.bench.reactions
 
 ::: liulab_mbio.bench.pcr
 
@@ -172,38 +193,88 @@ its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the step they belon
 
 ::: liulab_mbio.bench.steps
 
+## Cloning
+
+A cloning method is a package under `liulab_mbio.cloning`, and `plan` is what every method's
+plan shares: the files any plan writes, its status, and taking a record already read.
+
+::: liulab_mbio.cloning
+    options:
+      members: false
+
+::: liulab_mbio.cloning.plan
+
 ## Golden Gate
 
 `plan_assembly` is the way in, and `Plan.write` puts the product, the primer sheet and the
 protocol in one directory. The inserts are varargs, so `Plan.inserts` is a tuple — plural,
 because one reaction joins as many inserts as the overhangs allow.
 
-::: liulab_mbio.goldengate
+::: liulab_mbio.cloning.goldengate
     options:
       members: false
 
-::: liulab_mbio.goldengate.plan
+::: liulab_mbio.cloning.goldengate.plan
 
-::: liulab_mbio.goldengate.design
+::: liulab_mbio.cloning.goldengate.design
 
-::: liulab_mbio.goldengate.assembly
+::: liulab_mbio.cloning.goldengate.assembly
 
-::: liulab_mbio.goldengate.bench
+::: liulab_mbio.cloning.goldengate.bench
 
-::: liulab_mbio.goldengate.ligase
+::: liulab_mbio.cloning.goldengate.oligos
 
-::: liulab_mbio.goldengate.oligos
+::: liulab_mbio.cloning.goldengate.steps
 
-::: liulab_mbio.goldengate.steps
+## Libraries
+
+`plan_library` is the way in. It builds a barcoded library of every combination of the part
+lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
+barcode and amino-acid change tables, a record for each round, the product and the protocol pair
+in one directory. The modules under it are its steps. `scheme` holds the design the user
+supplies, `standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
+takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the
+colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps.
+
+A library is a pipeline over Golden Gate rather than a cloning method of its own — see
+[the library rounds decision](adr/0004-library-rounds.md).
+
+::: liulab_mbio.library
+    options:
+      members: false
+
+::: liulab_mbio.library.plan
+
+::: liulab_mbio.library.scheme
+
+::: liulab_mbio.library.standard
+
+::: liulab_mbio.library.parts
+
+::: liulab_mbio.library.vector
+
+::: liulab_mbio.library.rounds
+
+::: liulab_mbio.library.coverage
+
+::: liulab_mbio.library.bench
+
+::: liulab_mbio.library.steps
 
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
-`liulab_mbio.cli:app` — the object `[project.scripts]` registers — is built from them.
+`liulab_mbio.cli:app` — the object `[project.scripts]` registers — is built from them. One
+cloning method is one sub-app under the `cloning` group, and every plan verb is the same
+spine: plan, write, and report what was written.
 
 ::: liulab_mbio.cli
 
-::: liulab_mbio.goldengate.cli
+::: liulab_mbio.cloning.cli
+
+::: liulab_mbio.cloning.goldengate.cli
+
+::: liulab_mbio.library.cli
 
 ::: liulab_mbio.protocol.cli
 

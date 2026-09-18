@@ -155,5 +155,5 @@ naming its fix.
 
 ## A whole cloning experiment
 
-A Golden Gate plan designs, checks and orders its own primers; `golden-gate-assembly` runs it.
-Come here for primers outside a plan, or to explain a warning one left.
+A cloning plan designs, checks and orders its own primers; `molecular-cloning` chooses the
+method and runs it. Come here for primers outside a plan, or to explain a warning one left.

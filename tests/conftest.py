@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from liulab_mbio.goldengate import Plan
+    from liulab_mbio.cloning.goldengate import Plan
     from liulab_mbio.sequence import SequenceRecord
 
 
@@ -57,6 +57,6 @@ def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
     A plan and its records are frozen, so a test wanting another builds it, with
     `dataclasses.replace` or `plan_assembly`.
     """
-    from liulab_mbio.goldengate import plan_assembly
+    from liulab_mbio.cloning.goldengate import plan_assembly
 
     return plan_assembly(puc19, gfp)
