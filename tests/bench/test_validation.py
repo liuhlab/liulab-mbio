@@ -8,6 +8,8 @@ import pytest
 from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
 from liulab_mbio.bench.validation import (
+    COLONY_ALLOWANCE,
+    JUNCTION_OFFSET,
     SANGER_ALLOWANCE,
     SANGER_FLANK,
     ColonyCheck,
@@ -187,3 +189,21 @@ def test_sanger_primers_read_from_outside_the_whole_inserted_span(
     forward, reverse = sanger_primers(product, three_junctions)
     assert forward.read_bp == forward.distance_bp + len(gfp)
     assert reverse.read_bp == reverse.distance_bp + len(gfp)
+
+
+def test_an_insert_too_short_for_a_junction_primer_loses_it_rather_than_refusing_the_check(
+    product: SequenceRecord, puc19: SequenceRecord
+) -> None:
+    # A linker or a tag has no room to anneal a primer 100 bases inside it, whatever made it.
+    short = (MCS[0], MCS[0] + JUNCTION_OFFSET - COLONY_ALLOWANCE, MCS[0] + 717)
+    check = colony_pcr_check(product, short, vector=puc19, flank=60, insert_primer=True)
+    assert [primer.name for primer in check.primers] == [
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse 2",
+    ]
+    # The flanking pair still reads across it, and the gel says plainly that it cannot tell it
+    # turned round rather than claiming a lane it does not have.
+    assert bands(check, "Correct clone") == bands(check, "Reversed insert 1")
+    assert bands(check, "Reversed insert 2") != bands(check, "Correct clone")
+    assert not check.tells_orientation

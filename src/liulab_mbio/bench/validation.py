@@ -142,12 +142,16 @@ def colony_pcr_check(
     Each candidate plasmid is amplified on its own, so the bands are simulated rather than
     derived.
 
+    **An insert with fewer bases than the offset and the allowance together has no room for a
+    junction primer**, and gets none: a linker or a tag is too short to anneal one inside, and
+    that is a fact about its length rather than about how it was made. The flanking pair still
+    reads across it, and `tells_orientation` then says the gel cannot tell it turned round.
+
     Raises
     ------
     ValueError
         If the junctions are not two or more separate positions inside the product, if fewer
-        than two primers are given, if an insert is too short for a junction primer, or if the
-        primers amplify nothing at all.
+        than two primers are given, or if the primers amplify nothing at all.
     """
     places = _junction_span(junctions, len(product))
     start, end = places[0], places[-1]
@@ -163,6 +167,7 @@ def colony_pcr_check(
             for name, (first, last) in zip(
                 _numbered(_JUNCTION_PRIMER, inserts), inserts, strict=True
             )
+            if last - first > junction_offset + COLONY_ALLOWANCE
         )
     if len(chosen) < 2:
         raise ValueError("a colony PCR needs at least two primers")
@@ -335,9 +340,6 @@ def _junction_primer(
     thresholds: Thresholds,
     name: str = _JUNCTION_PRIMER,
 ) -> Primer:
-    needed = offset + COLONY_ALLOWANCE
-    if end - start <= needed:
-        raise ValueError(f"an insert is shorter than the {needed} bases a junction primer needs")
     return design_primer(
         product,
         start + offset,
