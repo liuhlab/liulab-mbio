@@ -56,26 +56,27 @@ class Material:
 
 @dataclass(frozen=True, slots=True)
 class Check:
-    """One pass, warn or fail verdict on the work, shown in the header as a badge.
+    """One verdict on the work, shown in the header as a badge.
 
     Parameters
     ----------
     name
         What was judged, such as ``"junctions"``.
     status
-        One of `STATUSES`.
+        One of `STATUSES`, or ``None`` where no sourced threshold judges it. A badge with no
+        verdict says so rather than reading as a pass.
     detail
-        What a reader needs besides the verdict, shown only where the verdict is not a pass.
+        What a reader needs besides the verdict, shown wherever the verdict is not a pass.
     """
 
     name: str
-    status: Status
+    status: Status | None
     detail: str = ""
 
     def __post_init__(self) -> None:
-        """Refuse a verdict that is not one of the three."""
+        """Refuse a verdict that is neither one of the three nor none at all."""
         _require(
-            self.status in STATUSES,
+            self.status is None or self.status in STATUSES,
             f"check {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
         )
 
@@ -125,8 +126,11 @@ class Oligo:
         )
         for check in self.checks:
             _require(
-                self.status is not None
-                and STATUSES.index(self.status) >= STATUSES.index(check.status),
+                check.status is None
+                or (
+                    self.status is not None
+                    and STATUSES.index(self.status) >= STATUSES.index(check.status)
+                ),
                 f"oligo {self.name!r}: {check.name} is {check.status!r} and the row says "
                 f"{self.status!r}",
             )

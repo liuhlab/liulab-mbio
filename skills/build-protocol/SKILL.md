@@ -57,7 +57,8 @@ anything. Everything they need to decide what to do next is on the page, or it d
   of cards and the model refuses a value too long for one. `highlights` is the two or three
   sentences saying what those facts mean, and it is where a statement goes instead.
 - **`checks` for verdicts**, one `pass`, `warn` or `fail` each, rendered as badges, so a warning
-  is seen rather than read.
+  is seen rather than read. Null where nothing sourced judges one, and its badge says so rather
+  than reading as a pass.
 - **Materials, oligos and equipment are three lists.** `materials` is every reagent and
   consumable, with supplier, catalogue number, storage and what one run takes — leave a cell
   empty rather than guess a catalogue number, because it is ordered as written. `oligos` is the

@@ -21,6 +21,9 @@ from liulab_mbio.protocol.model import (
     Timer,
 )
 
+#: What the page reads where a check carries no verdict, so it is never taken for a pass.
+NO_VERDICT = "not judged"
+
 
 def render_html(protocol: Protocol) -> str:
     """Return `protocol` as one HTML page with its styles and script inline.
@@ -119,21 +122,31 @@ def _header(protocol: Protocol) -> str:
 
 
 def _checks(checks: tuple[Check, ...]) -> str:
-    """One badge per verdict, and the detail of every verdict that is not a pass."""
+    """One badge per verdict, and the detail of every verdict that is not a pass.
+
+    A check no sourced threshold judges carries no verdict, and its badge says so rather than
+    reading as a pass.
+    """
     if not checks:
         return ""
     badges = "".join(
-        f'<li class="check is-{check.status}"><span class="check-name">{escape(check.name)}</span>'
-        f'<span class="verdict">{escape(check.status)}</span></li>'
+        f'<li class="check is-{check.status or "none"}">'
+        f'<span class="check-name">{escape(check.name)}</span>'
+        f'<span class="verdict">{escape(_word(check.status))}</span></li>'
         for check in checks
     )
     details = "".join(
-        f'<p class="check-detail"><strong>{escape(check.name)} {escape(check.status)}:</strong> '
-        f"{escape(check.detail)}</p>"
+        f'<p class="check-detail"><strong>{escape(check.name)} '
+        f"{escape(_word(check.status))}:</strong> {escape(check.detail)}</p>"
         for check in checks
         if check.status != "pass" and check.detail
     )
     return f'<ul class="checks" aria-label="Checks">{badges}</ul>\n{details}\n'
+
+
+def _word(status: Status | None) -> str:
+    """Return what a badge reads: the verdict, or that there is none."""
+    return status if status is not None else NO_VERDICT
 
 
 def _cell(tag: str, css: str, inner: str) -> str:
@@ -219,7 +232,7 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
 def _verdict(status: Status | None) -> str:
     """One row's verdict, as a word: the fill is never what carries it."""
     if status is None:
-        return '<span class="muted">not judged</span>'
+        return f'<span class="muted">{NO_VERDICT}</span>'
     return f'<span class="check is-{status}"><span class="verdict">{escape(status)}</span></span>'
 
 

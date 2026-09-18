@@ -152,13 +152,10 @@ def listed(items: Sequence[str]) -> str:
 def badges(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
     """Return a plan's verdicts, one badge each, so a warning is seen and not read.
 
-    A badge is a verdict, so a check carrying none has none to show.
+    A check no sourced threshold judges keeps its badge and shows no verdict on it, which is
+    what stops it being read as a pass.
     """
-    return tuple(
-        Check(check.name, check.status, detail=check.detail)
-        for check in checks
-        if check.status is not None
-    )
+    return tuple(Check(check.name, check.status, detail=check.detail) for check in checks)
 
 
 def card(value: str, short: str) -> str:
