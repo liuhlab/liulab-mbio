@@ -13,10 +13,15 @@ from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import choose_ladder
 from liulab_mbio.bench.oligos import oligo_row
-from liulab_mbio.bench.pcr import DNTP_STOCK_MM
+from liulab_mbio.bench.pcr import (
+    COLONY_PCR_MASTER_MIX,
+    DNTP_STOCK_MM,
+    colony_pcr_master_mix_component,
+)
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     CELLS_UL,
+    COLONY_PCR_TITLE,
     DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
@@ -24,18 +29,24 @@ from liulab_mbio.bench.steps import (
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
     PLATE_REFERENCE,
+    SEQUENCING_TITLE,
     XGAL_UG_ML,
     badges,
     card,
     catalogued,
+    cleanup_step,
+    colony_pcr_step,
     dpni_step,
     gel_step,
     listed,
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    quantify_step,
+    sequencing_step,
     transform_step,
 )
+from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.gibson.assembly import Assembly, Junction, Part, dam_sites
 from liulab_mbio.cloning.gibson.bench import (
     AssemblyProduct,
@@ -70,6 +81,36 @@ DPNI_INACTIVATION = Incubation("Heat-inactivate DpnI", 80.0, 1200)
 #: (note §16). An order-of-magnitude check, not a target.
 RELEASE_COLONIES = 100
 
+#: Where NEB stops calling a column optional: this many PCR fragments, or a fragment this many
+#: kilobases long, at which it puts the gain at two- to tenfold (note §11).
+CLEANUP_FRAGMENTS = 3
+CLEANUP_KB = 5
+
+#: Colonies to screen, and what Takara read of that many across its In-Fusion series: all of
+#: them correct at two fragments, falling to `CORRECT_AT_FIVE` at five. The only source that
+#: measures the fall with fragment count, and In-Fusion's number and not NEB's (note §16).
+SCREENED_COLONIES = 10
+CORRECT_AT_FIVE = 4
+
+#: What Gibson 2009 found of the junctions it sequenced: about one error per this many molecules
+#: joined, which is why a clone is sequenced whatever the screen said (note §16).
+MOLECULES_PER_ERROR = 50
+
+#: What a protocol cites for how many screened colonies read correct and for how often a
+#: junction is misjoined (note §16). Every plan screens and sequences, so both are always cited.
+SCREENING_REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Takara Bio, In-Fusion Cloning FAQs, for the correct clones out of ten screened from "
+        "two to five fragments",
+        url="https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
+    ),
+    Reference(
+        "Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several hundred "
+        "kilobases. Nat. Methods 6, 343-345, for the junction error rate",
+        url="https://doi.org/10.1038/nmeth.1318",
+    ),
+)
+
 #: The hardware a run needs, which no reagent table covers.
 EQUIPMENT: tuple[str, ...] = (
     "Thermocycler with a heated lid",
@@ -89,6 +130,8 @@ def protocol(
     linearised_vector: Part,
     insert_parts: Sequence[Part],
     assembly: Assembly,
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
     amounts: tuple[Amount, ...],
     phenotype: Phenotype,
     oligos: Sequence[DesignedOligo],
@@ -101,8 +144,9 @@ def protocol(
 
     Each argument is the `liulab_mbio.cloning.gibson.plan.Plan` field or property of that name,
     and `oligos` is `Plan.designed_oligos`. The steps run in the order someone does them: one
-    PCR per part, the gel that checks them, the DpnI digest, the assembly and its incubation,
-    then the transformation. Every step is per experiment, however many parts there are.
+    PCR per part, the gel that checks them, the DpnI digest, the cleanup and the quantification,
+    the assembly and its incubation, the transformation, then the colony PCR and the sequencing
+    that settle it. Every step is per experiment, however many parts there are.
     """
     parts = (linearised_vector, *insert_parts)
     names = tuple(part.name for part in insert_parts)
@@ -111,8 +155,8 @@ def protocol(
         f"Gibson assembly: {inserts} into {vector.name}",
         summary=(
             f"Open {vector.name} by PCR across {span[0]}-{span[1]}, amplify {inserts} with "
-            f"overlaps to the backbone at each end, and join the {len(parts)} fragments in one "
-            f"{product.name} reaction."
+            f"overlaps to the backbone at each end, join the {len(parts)} fragments in one "
+            f"{product.name} reaction, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(vector, insert_parts, assembly, product, phenotype),
         highlights=_highlights(parts, assembly, phenotype, names),
@@ -122,6 +166,7 @@ def protocol(
             parts=parts,
             inserts=names,
             product=product,
+            colony=colony,
             host=host,
             polymerase=polymerase,
             phenotype=phenotype,
@@ -137,6 +182,8 @@ def protocol(
             assembly=assembly,
             product=product,
             amounts=amounts,
+            colony=colony,
+            reads=reads,
             phenotype=phenotype,
             host=host,
             polymerase=polymerase,
@@ -216,11 +263,15 @@ def _materials(
     parts: Sequence[Part],
     inserts: Sequence[str],
     product: AssemblyProduct,
+    colony: ColonyCheck,
     host: str,
     polymerase: Polymerase,
     phenotype: Phenotype,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
+    ladders = dict.fromkeys(
+        (choose_ladder(tuple(part.length for part in parts)).name, colony.ladder.name)
+    )
     return (
         Material(f"{vector.name} plasmid", storage="-20 °C", note="PCR template"),
         *(Material(f"{name} template", storage="-20 °C", note="PCR template") for name in inserts),
@@ -256,16 +307,22 @@ def _materials(
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
         Material(_plate(phenotype), amount="one plate per transformation"),
-        Material("Agarose and 1X TAE or TBE"),
         catalogued(
-            choose_ladder(tuple(part.length for part in parts)).name, supplier=product.supplier
+            COLONY_PCR_MASTER_MIX,
+            supplier=product.supplier,
+            storage="-20 °C",
+            amount=f"{colony_pcr_master_mix_component().volume_ul:g} µL per reaction",
         ),
+        Material("Agarose and 1X TAE or TBE"),
+        *(catalogued(name, supplier=product.supplier) for name in ladders),
     )
 
 
 def _purpose(oligo: DesignedOligo) -> str:
     """Return the title of the step that uses this oligo."""
-    return pcr_title(oligo.part.name) if oligo.part is not None else ""
+    if oligo.part is not None:
+        return pcr_title(oligo.part.name)
+    return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
 def _plate(phenotype: Phenotype) -> str:
@@ -283,6 +340,8 @@ def _steps(
     assembly: Assembly,
     product: AssemblyProduct,
     amounts: tuple[Amount, ...],
+    colony: ColonyCheck,
+    reads: Sequence[SangerRead],
     phenotype: Phenotype,
     host: str,
     polymerase: Polymerase,
@@ -306,6 +365,20 @@ def _steps(
                 ),
             )
         )
+    steps.append(
+        cleanup_step(
+            notes=(
+                f"NEB calls a column optional below {CLEANUP_FRAGMENTS} PCR fragments: a "
+                "product more than 90% pure goes into the reaction unpurified, within the "
+                "fraction the assembly step gives.",
+                f"At {CLEANUP_FRAGMENTS} fragments or more, or a fragment over {CLEANUP_KB} kb, "
+                "NEB calls it highly recommended and puts the gain in assembly and "
+                "transformation at two- to tenfold. A PCR showing anything but one band is "
+                "gel-purified whatever the count.",
+            )
+        )
+    )
+    steps.append(quantify_step(amounts))
     steps.append(_assembly_step(product, amounts))
     steps.append(_incubation_step(product, assembly.junctions, len(parts)))
     steps.append(
@@ -316,6 +389,19 @@ def _steps(
             colonies=f"Hundreds of colonies. NEB's own lot test asks for more than "
             f"{RELEASE_COLONIES} from a six-fragment assembly with a tenth of the outgrowth "
             "plated, and a two-fragment assembly is the easier job.",
+        )
+    )
+    steps.append(_colony_pcr_step(colony, assembly))
+    steps.append(
+        sequencing_step(
+            reads,
+            junctions=[one.overlap for one in assembly.junctions],
+            inserts=inserts,
+            notes=(
+                f"Gibson 2009 sequenced 210 repaired junctions and found about one error per "
+                f"{MOLECULES_PER_ERROR} molecules joined, so a gel that reads right is not the "
+                "same as a junction that is right.",
+            ),
         )
     )
     return tuple(steps)
@@ -440,11 +526,40 @@ def _incubation_step(
     )
 
 
+def _colony_pcr_step(colony: ColonyCheck, assembly: Assembly) -> Step:
+    """Screen the colonies, with what the note measured of how many should read correct."""
+    return colony_pcr_step(
+        colony,
+        junctions=len(assembly.junctions),
+        notes=(
+            f"Pick {SCREENED_COLONIES}. Takara's In-Fusion series is the only one that measures "
+            f"how the correct fraction falls with fragment count: {SCREENED_COLONIES} of "
+            f"{SCREENED_COLONIES} correct at two fragments, {CORRECT_AT_FIVE} of "
+            f"{SCREENED_COLONIES} at five. That is In-Fusion's number and not this product's.",
+            "Where nothing grew at all, NEB asks for the same PCR on the assembly reaction "
+            "itself, with primers flanking the assembled product.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "Every colony reads as empty vector",
+                "NEB's answer is the template: a PCR-generated vector carries uncut plasmid "
+                "through, so digest it with DpnI again or gel-purify the backbone.",
+            ),
+            Troubleshooting(
+                "A colony gives a band of the wrong size",
+                "The PCR that made a part was not a single band; gel-purify it and assemble "
+                "again. NEB suggests NEB Stable Competent E. coli (#C3040) for an insert "
+                "carrying repeats.",
+            ),
+        ),
+    )
+
+
 def _references(
     parts: Sequence[Part], product: AssemblyProduct, phenotype: Phenotype
 ) -> tuple[Reference, ...]:
     """Where the numbers come from."""
-    items = [*product.references, *BENCH_REFERENCES]
+    items = [*product.references, *SCREENING_REFERENCES, *BENCH_REFERENCES]
     if any(part.dpni for part in parts):
         items.append(DPNI_REFERENCE)
     if phenotype.blue_white:

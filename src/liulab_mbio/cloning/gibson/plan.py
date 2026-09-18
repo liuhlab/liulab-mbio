@@ -2,9 +2,10 @@
 
 `plan_gibson` runs the whole design: open the vector by PCR across the span the insert
 replaces, choose the overlap at each junction, design the primers that carry it, simulate the
-product and work out what the assembly reaction takes. `Plan.write` puts four files in one
-directory -- the annotated product, an oligo order sheet, the protocol as JSON data, and the
-interactive HTML page rendered from that data.
+product, work out what the assembly reaction takes, and design the colony PCR and the
+sequencing that say whether the clone is the one the design asked for. `Plan.write` puts four
+files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
+data, and the interactive HTML page rendered from that data.
 
 Every number the protocol prints is computed here or by the modules this one calls, and every
 supplier's number behind them is `liulab_mbio.cloning.gibson.bench`, through
@@ -20,6 +21,13 @@ from pathlib import Path
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
+from liulab_mbio.bench.validation import (
+    REVERSE_FLANK,
+    ColonyCheck,
+    SangerRead,
+    colony_pcr_check,
+    sanger_primers,
+)
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.gibson.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.cloning.gibson.bench import (
@@ -41,8 +49,8 @@ from liulab_mbio.cloning.plan import (
     status,
     write_protocol_files,
 )
-from liulab_mbio.primers.evaluation import PrimerReport
-from liulab_mbio.primers.polymerase import Q5, Polymerase
+from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
+from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import Primer, SequenceRecord
@@ -96,13 +104,18 @@ class Plan:
         The part each insert is amplified into, in insert order.
     assembly
         The simulated plasmid, the parts and the junctions.
+    colony
+        The colony PCR that reads every junction and tells a correct clone from an empty vector
+        or from one carrying an insert the other way round.
+    reads
+        A sequencing primer reading in from outside the first junction and the last.
     amounts
         What to put in the assembly reaction, vector first.
     phenotype
         What the plasmid says about itself.
     designed_oligos
         Every designed oligo and what it is for, in order: each part's forward and reverse
-        primer.
+        primer, the colony PCR, the reads.
     host, polymerase
         The choices the protocol names.
     thresholds
@@ -117,6 +130,8 @@ class Plan:
     linearised_vector: Part
     insert_parts: tuple[Part, ...]
     assembly: Assembly
+    colony: ColonyCheck
+    reads: tuple[SangerRead, SangerRead]
     amounts: tuple[Amount, ...]
     phenotype: Phenotype
     designed_oligos: tuple[DesignedOligo, ...]
@@ -171,6 +186,8 @@ class Plan:
             linearised_vector=self.linearised_vector,
             insert_parts=self.insert_parts,
             assembly=self.assembly,
+            colony=self.colony,
+            reads=self.reads,
             amounts=self.amounts,
             phenotype=self.phenotype,
             oligos=self.designed_oligos,
@@ -213,6 +230,10 @@ def plan_gibson(
     temperature `product` documents, by the rules
     `liulab_mbio.cloning.gibson.design` states. The insert's primers carry those bases as 5'
     tails, so the junctions add nothing and the vector's PCR needs no tail at all.
+
+    A colony PCR and two sequencing primers are then designed over
+    `liulab_mbio.cloning.gibson.assembly.Assembly.boundaries`, where one part gives way to the
+    next: the overlap is one part's own bases, so the boundary is not where the junction begins.
 
     Parameters
     ----------
@@ -283,6 +304,17 @@ def plan_gibson(
     )
     parts = (linearised_vector, *insert_parts)
     built = assemble(parts, name=name or "-".join([one.name, *labels]).strip("-"))
+    boundaries = built.boundaries
+    colony = colony_pcr_check(
+        built.product,
+        boundaries,
+        vector=one,
+        reverse_flank=REVERSE_FLANK,
+        insert_primer=True,
+        polymerase=ONETAQ,
+        thresholds=thresholds["colony PCR"],
+    )
+    reads = sanger_primers(built.product, boundaries, thresholds=thresholds["sequencing"])
     return Plan(
         one,
         going,
@@ -291,16 +323,30 @@ def plan_gibson(
         linearised_vector,
         insert_parts,
         built,
+        colony,
+        reads,
         assembly_amounts(
             (linearised_vector.name, linearised_vector.fragment_length),
             tuple((part.name, part.fragment_length) for part in insert_parts),
             tier=product.tier(len(parts)),
         ),
         read_phenotype(built.product, built.insert_span, vector=one, span=(start, end)),
-        tuple(
-            DesignedOligo(report, "amplification", part)
-            for part in parts
-            for report in (part.report.forward, part.report.reverse)
+        (
+            *(
+                DesignedOligo(report, "amplification", part)
+                for part in parts
+                for report in (part.report.forward, part.report.reverse)
+            ),
+            *(DesignedOligo(report, "colony PCR") for report in colony.reports),
+            *(
+                DesignedOligo(
+                    evaluate_primer(
+                        read.primer, built.product, thresholds=thresholds["sequencing"]
+                    ),
+                    "sequencing",
+                )
+                for read in reads
+            ),
         ),
         host,
         polymerase,

@@ -8,9 +8,17 @@ read off the records and pinned here.
 import pytest
 
 from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify_step
+from liulab_mbio.bench.validation import SANGER_ALLOWANCE, SANGER_FLANK, ColonyCheck, SangerRead
 from liulab_mbio.cloning.gibson import Plan, plan_gibson
 from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
 from liulab_mbio.cloning.gibson.design import wallace_tm
+from liulab_mbio.cloning.gibson.steps import (
+    CLEANUP_FRAGMENTS,
+    CORRECT_AT_FIVE,
+    MOLECULES_PER_ERROR,
+    SCREENED_COLONIES,
+)
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import read_dna
@@ -98,7 +106,9 @@ def test_each_junction_is_marked_and_says_which_part_the_bases_came_from(made):
 
 def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
     placed = {one.name: one.binding_sites[0] for one in made.plasmid.primers}
-    designed = [one.primer.name for one in made.reports]
+    designed = [
+        one.report.primer.name for one in made.designed_oligos if one.role == "amplification"
+    ]
     assert designed == [
         "pUC19 backbone forward",
         "pUC19 backbone reverse",
@@ -120,6 +130,77 @@ def test_a_part_gives_way_where_the_shared_bases_end_and_not_where_they_begin(ma
     assert made.assembly.junction_positions == (first.start, last.start)
     assert made.assembly.boundaries == (first.end, last.start)
     assert made.assembly.boundaries == made.assembly.insert_span == (MCS[0], MCS[0] + len(gfp))
+
+
+def test_the_colony_pcr_sizes_are_the_ones_the_simulated_clones_give(made, gfp):
+    bands = {clone.name: clone.bands_bp for clone in made.colony.clones}
+    start, end = made.assembly.boundaries
+    removed = made.span[1] - made.span[0]
+    forward, reverse, junction = (one.binding_sites[0] for one in made.colony.primers)
+    # Where the three primers landed inside their placements, which is what the bands count off.
+    ahead, behind, into = start - forward.start, reverse.end - end, junction.end - start
+    assert forward.end <= start < junction.end <= end <= reverse.start
+    # The junction primer reaches the near vector primer in a correct clone and the far one in a
+    # reversed clone; the two vector primers span the insert whichever way round it sits.
+    assert bands["Correct clone"] == (ahead + into, ahead + len(gfp) + behind)
+    assert bands["Reversed insert"] == (behind + into, ahead + len(gfp) + behind)
+    assert bands["Empty vector"] == (ahead + removed + behind,)
+    assert made.colony.tells_orientation
+    assert {lane.label: lane.bands_bp for lane in made.colony.gel.lanes} == bands
+
+
+def test_the_sequencing_primers_read_in_from_outside_the_first_and_the_last_junction(made):
+    first, last = made.assembly.junctions
+    start, end = made.assembly.boundaries
+    forward, reverse = made.reads
+    ahead, behind = (read.primer.binding_sites[0] for read in made.reads)
+    assert ahead.end <= first.start
+    assert behind.start >= last.end
+    for read in made.reads:
+        assert SANGER_FLANK <= read.distance_bp <= SANGER_FLANK + SANGER_ALLOWANCE
+    # Each has to carry as far as the other's junction for one read to confirm both.
+    assert (forward.read_bp, reverse.read_bp) == (end - ahead.end, behind.start - start)
+
+
+def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_features(made):
+    protocol = made.protocol()
+    phenotype = made.phenotype
+    assert phenotype.reporter is not None
+    assert protocol.overview["Selection"] == phenotype.antibiotic
+    assert phenotype.reporter.name in " ".join(protocol.highlights)
+    plating = next(step for step in protocol.steps if step.title == "Transform and plate")
+    told = " ".join((*plating.expected, *plating.notes))
+    assert "white" in told
+    assert "blue" in told
+    # The lac promoter reads the other way and no ribosome binding site is annotated.
+    assert not phenotype.expressed
+    assert "not expected to make GFP" in told
+
+
+def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_from(made):
+    protocol = made.protocol()
+    steps = {step.title: step for step in protocol.steps}
+    purify = " ".join(steps["Purify every amplicon"].notes)
+    assert f"below {CLEANUP_FRAGMENTS} PCR fragments" in purify
+    assert steps[COLONY_PCR_TITLE].gels == (made.colony.gel,)
+    screen = " ".join(steps[COLONY_PCR_TITLE].notes)
+    assert f"{SCREENED_COLONIES} of {SCREENED_COLONIES} correct at two fragments" in screen
+    assert f"{CORRECT_AT_FIVE} of {SCREENED_COLONIES} at five" in screen
+    confirm = " ".join(steps[SEQUENCING_TITLE].notes)
+    assert f"one error per {MOLECULES_PER_ERROR} molecules" in confirm
+    citations = " ".join(one.text for one in protocol.references)
+    assert "In-Fusion Cloning FAQs" in citations
+    assert "Gibson, D.G." in citations
+    for title in (COLONY_PCR_TITLE, SEQUENCING_TITLE):
+        assert steps[title].troubleshooting
+
+
+def test_the_screening_steps_are_the_shared_builders_and_not_a_second_copy(made):
+    # `liulab_mbio.bench` is the only place these are built; this method is its second consumer.
+    assert isinstance(made.colony, ColonyCheck)
+    assert all(isinstance(read, SangerRead) for read in made.reads)
+    steps = {step.title: step for step in made.protocol().steps}
+    assert steps["Measure every concentration"] == quantify_step(made.amounts)
 
 
 def test_the_plans_status_is_the_worst_of_its_checks(made):
@@ -170,13 +251,14 @@ def test_the_same_inputs_write_the_same_bytes(made, puc19, gfp, tmp_path):
 def test_the_primer_sheet_carries_every_oligo_and_the_page_lists_the_same_rows(made):
     rows = primer_sheet(made.reports).splitlines()
     assert rows[0].split("\t") == ["name", "sequence", "length", "tm_c"]
-    assert len(rows) == 1 + len(made.reports) == 5
+    # Four amplification primers, three colony PCR primers and two sequencing primers.
+    assert len(rows) == 1 + len(made.reports) == 10
     for row, oligo in zip(rows[1:], made.protocol().oligos, strict=True):
         name, sequence, length, tm = row.split("\t")
         assert (oligo.name, oligo.sequence) == (name, sequence)
         assert len(oligo.sequence) == int(length)
         assert oligo.tm_c == pytest.approx(float(tm), abs=0.05)
-        assert oligo.purpose.startswith("Amplify")
+        assert oligo.purpose
 
 
 def test_the_protocol_is_enough_to_run_the_experiment(made):
@@ -186,9 +268,13 @@ def test_the_protocol_is_enough_to_run_the_experiment(made):
         "Amplify GFP",
         "Check the PCRs on a gel",
         "Digest the plasmid template with DpnI",
+        "Purify every amplicon",
+        "Measure every concentration",
         "Set up the NEBuilder HiFi DNA Assembly Master Mix reaction",
         "Incubate the assembly",
         "Transform and plate",
+        "Screen colonies by PCR",
+        "Confirm the clone by sequencing",
     ]
     for step in protocol.steps:
         assert step.expected, step.title
