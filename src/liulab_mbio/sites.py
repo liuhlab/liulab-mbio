@@ -116,8 +116,9 @@ class Fragment:
     left_overhang, right_overhang
         The single-stranded bases at each end, written as the TOP strand reads them 5' to 3',
         and ``""`` for a blunt end. Written that way whether the overhang is 5' or 3', and
-        whether it sits on the top strand of this fragment or the bottom, so two ends anneal
-        exactly when the two strings are equal.
+        whether it sits on the top strand of this fragment or the bottom. The string is half of
+        what says whether two ends anneal; the other half is the end type, which a caller reads
+        off the enzyme that made the cut. `liulab_mbio.overhangs.compatible` is the rule.
     """
 
     start: int

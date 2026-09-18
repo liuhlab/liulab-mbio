@@ -160,6 +160,14 @@ further along than the top, 3' when it is cut nearer, and blunt when neither str
 Golden Gate joins two fragments by matching overhangs.
 _Avoid_: sticky end, extension
 
+### Compatible ends
+
+Two cut ends a ligase can join: both blunt, or overhangs spelling the same bases on the same
+strand. The bases alone do not decide it, because a 5' overhang and a 3' overhang spelling the
+same bases run the wrong way for each other. So an end is its overhang and its end type
+together, and the end type comes from the enzyme that made the cut.
+_Avoid_: matching ends, compatible overhangs
+
 ### Type IIS
 
 A restriction enzyme that cuts outside its recognition site, so the overhang it leaves is

@@ -20,7 +20,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans, and carrying what a record annotates into another one |
-| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets; the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds |
+| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase` | shipped enzyme data, cut sites, domestication; reverse translation and whole-sequence codon choice; distance-separated barcode sets; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds |
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, and `render`, its self-contained HTML page |

@@ -81,10 +81,10 @@ someone already holds by the same rules. The same seed draws the same set again.
 
 ## Overhangs and ligation
 
-The rules a set of Type IIS overhangs is held to, and how well the set should ligate. Every
-cloning method that cuts with such an enzyme reads them here. `ligase` reads a fidelity matrix
-the user holds on their own disk: that archive's licence forbids redistribution, so none of it
-ships with the package.
+Whether two cut ends anneal, the rules a set of Type IIS overhangs is held to, and how well the
+set should ligate. Every cloning method reads them here. `ligase` reads a fidelity matrix the
+user holds on their own disk: that archive's licence forbids redistribution, so none of it ships
+with the package.
 
 ::: liulab_mbio.overhangs
 
