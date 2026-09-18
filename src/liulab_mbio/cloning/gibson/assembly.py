@@ -7,12 +7,19 @@ the two fragments spell the same thing where they meet and the reaction anneals 
 the whole backbone amplifies and DpnI takes the plasmid that templated it away. A backbone that
 is already linear needs none of that and goes in as it is: `given_vector` makes the part.
 
+Two more parts reach it without a PCR. A part short enough is **stitched** -- ordered as
+overlapping oligos tiling both strands and assembled in the same reaction -- which `stitch`
+makes from the oligos `liulab_mbio.cloning.gibson.design` lays out. And where two neighbours
+share no homology at all, one **bridging oligo** carrying homology to both ends joins them, so
+neither carries a tail: that is `Bridge`, and `Part.bridge` is where it sits.
+
 Two rules run through the module:
 
 - **A tail is the neighbour's sequence, never the part's own.** So a part's amplicon is longer
   than what it puts into the product, and the junction's bases are counted once.
-- **Exactly one side of a junction carries it.** The other side already spells it, and that is
-  the side the bases are taken from, which is what `taken_from` records.
+- **Exactly one molecule carries a junction.** The part that does not already spell the bases
+  carries them as a primer tail, or a bridging oligo carries them and neither part does.
+  `taken_from` records which part already spelt them and `bridge` which oligo carries them.
 
 Coordinates are the model's, 0-based and half-open, and a span across the origin of a circular
 record ends past the record's length.
@@ -44,6 +51,53 @@ OVERLAP_COLOR = "#ff9900"
 
 
 @dataclass(frozen=True, slots=True)
+class StitchOligo:
+    """One oligo of the set that tiles a stitched part, on the strand it is written for.
+
+    Parameters
+    ----------
+    name
+        What to order it under.
+    sequence
+        Its bases 5' to 3', so a reverse-strand oligo reads the complement of the part.
+    strand
+        Which strand of the part it lies on. Neighbours alternate, so the set tiles both.
+    start
+        Where it begins on the part's own molecule, tails included, 0-based.
+    """
+
+    name: str
+    sequence: str
+    strand: Strand
+    start: int
+
+    @property
+    def end(self) -> int:
+        """Where it ends on that molecule."""
+        return self.start + len(self.sequence)
+
+
+@dataclass(frozen=True, slots=True)
+class Bridge:
+    """One oligo joining two parts that share no homology, so neither needs a tail.
+
+    Parameters
+    ----------
+    name
+        What to order it under.
+    sequence
+        Its bases 5' to 3': the last `homology_bp` of the part before, then the first
+        `homology_bp` of the part after.
+    homology_bp
+        Bases it shares with each of the two.
+    """
+
+    name: str
+    sequence: str
+    homology_bp: int
+
+
+@dataclass(frozen=True, slots=True)
 class Part:
     """One fragment of an assembly: the PCR that makes it, and the overlaps it is tailed with.
 
@@ -69,6 +123,12 @@ class Part:
     report
         What the pair scored on the template, carrying the annealing temperature and the
         extension time the PCR needs, or ``None`` for a part that is not amplified.
+    oligos
+        The oligos that tile this part where it is stitched rather than amplified, in the order
+        they run along it. Empty for every other part.
+    bridge
+        The oligo joining this part to the one before it round the product, where the two share
+        no homology. ``None`` where a primer tail carries that junction instead.
     """
 
     name: str
@@ -81,6 +141,8 @@ class Part:
     right_tail: str
     dpni: bool
     report: PairReport | None
+    oligos: tuple[StitchOligo, ...] = ()
+    bridge: Bridge | None = None
 
     @property
     def length(self) -> int:
@@ -101,6 +163,11 @@ class Part:
     def amplified(self) -> bool:
         """Whether a PCR makes this part, or it was handed in ready to assemble."""
         return self.report is not None
+
+    @property
+    def stitched(self) -> bool:
+        """Whether oligos tiling both strands make this part rather than a PCR."""
+        return bool(self.oligos)
 
 
 def amplify(
@@ -183,6 +250,53 @@ def amplify(
         right,
         (template.topology == "circular" and dam_sites(template) > 0) if dpni is None else dpni,
         evaluate_pair(forward, reverse, template, polymerase=polymerase, thresholds=thresholds),
+    )
+
+
+def stitch(
+    record: SequenceRecord,
+    oligos: Sequence[StitchOligo],
+    *,
+    left_tail: str = "",
+    right_tail: str = "",
+    name: str = "",
+) -> Part:
+    """Make one part out of `oligos` tiling it, rather than out of a PCR.
+
+    The oligos assemble into ``left_tail + record + right_tail`` in the same reaction as
+    everything else, so the part they make is the part an amplicon would have made: it puts the
+    same bases into the product and carries the same two overlaps. There is no template behind
+    it for DpnI to take away, and no primer to judge.
+    `liulab_mbio.cloning.gibson.design.stitch_oligos` lays the oligos out.
+
+    Raises
+    ------
+    ValueError
+        If `record` is circular, which is opened rather than stitched, or if no oligo is given.
+    """
+    if record.topology != "linear":
+        raise ValueError(f"{record.name or 'this part'} is circular, so it cannot be stitched")
+    if not oligos:
+        raise ValueError(f"{record.name or 'a stitched part'} needs the oligos that tile it")
+    left, right = left_tail.upper(), right_tail.upper()
+    features, kept = carried(record, 0, len(record), offset=len(left))
+    return Part(
+        name or record.name,
+        record,
+        (0, len(record)),
+        None,
+        None,
+        SequenceRecord(
+            left + record.sequence + right,
+            name=name or record.name,
+            features=features,
+            primers=kept,
+        ),
+        left,
+        right,
+        False,
+        None,
+        tuple(oligos),
     )
 
 
@@ -272,7 +386,12 @@ def given_vector(vector: SequenceRecord, *, name: str = "") -> Part:
 
 @dataclass(frozen=True, slots=True)
 class Junction:
-    """A junction as it came out: the bases two parts both spell where they meet.
+    """A junction as it came out: the bases the part before it spells where the two meet.
+
+    They are the bases something else has to anneal to. Where a primer tail carries them the
+    part after spells them too, which is the overlap the two share; where a bridging oligo
+    carries them it spells them and as many again of the part after, and the two parts share
+    nothing.
 
     Parameters
     ----------
@@ -283,7 +402,11 @@ class Junction:
     before, after
         The parts either side, named as they were given.
     taken_from
-        Which of the two already spelt them; the other carried them as a primer tail.
+        Which of the two already spelt them.
+    bridge
+        The oligo carrying them, where neither part does: it spells these bases and as many
+        again of the part after, so the two parts share nothing. Empty where the part that did
+        not spell them carries them as a primer tail instead.
     """
 
     start: int
@@ -291,6 +414,7 @@ class Junction:
     before: str
     after: str
     taken_from: str
+    bridge: str = ""
 
     @property
     def end(self) -> int:
@@ -298,8 +422,18 @@ class Junction:
         return self.start + len(self.overlap)
 
     @property
+    def boundary(self) -> int:
+        """Where the part before gives way to the part after, which is not where the bases begin.
+
+        The bases belong to one of the two parts, so they lie on that part's side of the
+        boundary: `end` where the part before them spells them, `start` where the part after
+        does. A bridged junction is the first case, the oligo reaching as far again past it.
+        """
+        return self.end if self.taken_from == self.before else self.start
+
+    @property
     def length(self) -> int:
-        """Bases the two parts share here."""
+        """Bases carried here, which is what a bridging oligo takes from each side."""
         return len(self.overlap)
 
     @property
@@ -336,13 +470,9 @@ class Assembly:
     def boundaries(self) -> tuple[int, ...]:
         """Where each part gives way to the next, which is what a validation design reads across.
 
-        A junction's bases belong to one of the two parts, so they lie on that part's side of
-        the boundary: `Junction.end` where the part before them spells them, and
-        `Junction.start` where the part after does.
+        `Junction.boundary` is the rule.
         """
-        return tuple(
-            one.end if one.taken_from == one.before else one.start for one in self.junctions
-        )
+        return tuple(one.boundary for one in self.junctions)
 
     @property
     def insert_span(self) -> tuple[int, int]:
@@ -389,7 +519,8 @@ class Assembly:
                 "pass" if matched == len(self.junctions) else "fail",
                 matched,
                 ", ".join(
-                    f"{one.length} bp at {one.start}, from {one.taken_from}"
+                    f"{one.length} bp at {one.start}, "
+                    + (f"bridged by {one.bridge}" if one.bridge else f"from {one.taken_from}")
                     for one in self.junctions
                 ),
             )
@@ -483,8 +614,19 @@ def _junction(before: Part, after: Part, at: int, length: int) -> Junction:
     Raises
     ------
     ValueError
-        If neither part carries an overlap there, so nothing anneals the two.
+        If neither part carries an overlap there and no oligo bridges it, so nothing anneals
+        the two.
     """
+    if after.bridge is not None:
+        homology = after.bridge.homology_bp
+        return Junction(
+            (at - homology) % length,
+            before.bases[-homology:],
+            before.name,
+            after.name,
+            before.name,
+            after.bridge.name,
+        )
     if after.left_tail:
         return Junction(
             (at - len(after.left_tail)) % length,
@@ -497,12 +639,26 @@ def _junction(before: Part, after: Part, at: int, length: int) -> Junction:
         return Junction(at, before.right_tail, before.name, after.name, after.name)
     raise ValueError(
         f"{before.name or 'a part'} and {after.name or 'the next'} share no overlap, so nothing "
-        "joins them: one of the two has to carry the other's bases as a primer tail"
+        "joins them: one of the two has to carry the other's bases as a primer tail, or a "
+        "bridging oligo has to span them"
     )
 
 
 def _overlap_feature(junction: Junction) -> Feature:
-    """Draw the overlap the two parts share, so a map shows where the junction is."""
+    """Draw what carries the junction, so a map shows where it is and what holds it together."""
+    if junction.bridge:
+        return Feature(
+            f"{junction.before}-{junction.after} bridge",
+            "misc_feature",
+            (Segment(junction.start, junction.end + junction.length),),
+            color=OVERLAP_COLOR,
+            qualifiers={
+                "note": (
+                    f"{junction.bridge}, {junction.length} bp of {junction.before} and as many "
+                    f"of {junction.after}; neither carries a tail",
+                )
+            },
+        )
     return Feature(
         f"{junction.before}-{junction.after} overlap",
         "misc_feature",

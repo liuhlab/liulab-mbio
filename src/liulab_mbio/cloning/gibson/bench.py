@@ -108,6 +108,9 @@ class AssemblyProduct:
     unpurified_fraction
         How much of the reaction unpurified PCR product may be, or ``None`` where the supplier
         asks for purified DNA and documents no such allowance.
+    single_stranded_oligos
+        Whether the supplier documents single-stranded oligos going into the reaction. Both
+        oligo routes need them, so a product answering ``False`` supports neither.
     references
         Where the numbers above come from.
     """
@@ -126,6 +129,7 @@ class AssemblyProduct:
     short_insert_bp: int
     short_insert_ratio: float
     unpurified_fraction: float | None
+    single_stranded_oligos: bool
     references: tuple[Reference, ...]
 
     def tier(self, fragments: int) -> Tier:
@@ -168,8 +172,8 @@ NEBUILDER_REFERENCES: tuple[Reference, ...] = (
 
 #: NEBuilder HiFi, the product a plan assumes. Its two tiers are the two columns of the manual's
 #: reaction table: overlap bands from note §3, incubations from §7, totals and ratios from §8,
-#: the 48 °C Wallace floor from §4, the five-insert ceiling from §9, and the 20% cap on
-#: unpurified PCR product from §11.
+#: the 48 °C Wallace floor from §4, the five-insert ceiling from §9, the 20% cap on unpurified
+#: PCR product from §11, and single-stranded oligos in the reaction from §14.
 NEBUILDER_HIFI = AssemblyProduct(
     "NEBuilder HiFi DNA Assembly Master Mix",
     "New England Biolabs",
@@ -189,6 +193,7 @@ NEBUILDER_HIFI = AssemblyProduct(
     200,
     5.0,
     0.2,
+    True,
     NEBUILDER_REFERENCES,
 )
 
@@ -208,8 +213,9 @@ GIBSON_REFERENCES: tuple[Reference, ...] = (
 
 #: The Gibson Assembly Master Mix, which takes more insert than NEBuilder at low fragment counts
 #: and a longer overlap at high ones: bands from §3, incubations from §7, totals and ratios from
-#: §8. Its 40 bp ceiling is FAQ 6's, the figure tied to the exonuclease quantity; the same
-#: manual's FAQ 23 says 80 nt, and §3 says not to average the two.
+#: §8, and single-stranded oligos in the reaction from §14. Its 40 bp ceiling is FAQ 6's, the
+#: figure tied to the exonuclease quantity; the same manual's FAQ 23 says 80 nt, and §3 says not
+#: to average the two.
 GIBSON_MASTER_MIX = AssemblyProduct(
     "Gibson Assembly Master Mix",
     "New England Biolabs",
@@ -229,6 +235,7 @@ GIBSON_MASTER_MIX = AssemblyProduct(
     200,
     5.0,
     0.2,
+    True,
     GIBSON_REFERENCES,
 )
 
@@ -248,7 +255,8 @@ IN_FUSION_REFERENCES: tuple[Reference, ...] = (
 #: states one overlap length for one insert and another above two fragments rather than a band
 #: (§3), no melting temperature for it at all (§4), a 10 µL reaction of which 2 µL is a 5X mix
 #: (§6), one incubation whatever the fragment count (§7), a 2:1 molar ratio with its own
-#: small-fragment exception (§8), five inserts (§9) and purified PCR product only (§6).
+#: small-fragment exception (§8), five inserts (§9), purified PCR product only (§6) and a
+#: double-stranded insert only, which is why it supports neither oligo route (§14, §15).
 IN_FUSION = AssemblyProduct(
     "In-Fusion Snap Assembly Master Mix",
     "Takara Bio",
@@ -268,6 +276,7 @@ IN_FUSION = AssemblyProduct(
     350,
     3.0,
     None,
+    False,
     IN_FUSION_REFERENCES,
 )
 

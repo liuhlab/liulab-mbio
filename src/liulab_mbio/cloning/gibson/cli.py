@@ -1,5 +1,7 @@
 """The `gibson` verbs, mounted under the `cloning` group on the package command line."""
 
+import typing
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated
 
@@ -7,7 +9,7 @@ import typer
 
 from liulab_mbio.cloning.cli import plan_command, read_orientations
 from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI, assembly_product
-from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Plan, plan_gibson
+from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Plan, Route, plan_gibson
 from liulab_mbio.cloning.plan import Site
 from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
@@ -42,6 +44,14 @@ def plan(
         list[str] | None,
         typer.Option(help="Which way round an insert goes: forward or reverse; once per insert."),
     ] = None,
+    route: Annotated[
+        list[str] | None,
+        typer.Option(help="How an insert is made: amplify or stitch; once per insert."),
+    ] = None,
+    bridge: Annotated[
+        list[str] | None,
+        typer.Option(help="A junction joined by one oligo, as BEFORE:AFTER; once per junction."),
+    ] = None,
     product: Annotated[
         str, typer.Option(help="Assembly product on the bench.")
     ] = NEBUILDER_HIFI.name,
@@ -56,6 +66,8 @@ def plan(
             *inserts,
             site=_site(site),
             orientation=read_orientations(orientation, len(inserts)),
+            route=_routes(route, len(inserts)),
+            bridge=_bridges(bridge),
             product=assembly_product(product),
             polymerase=_polymerase(polymerase),
             host=host,
@@ -83,6 +95,51 @@ def _site(text: str) -> Site:
     if sep and start.strip().isdigit() and end.strip().isdigit():
         return int(start), int(end)
     return text
+
+
+def _routes(given: Sequence[str] | None, count: int) -> tuple[Route, ...]:
+    """Read one route per insert, spreading a single value over them all.
+
+    Raises
+    ------
+    ValueError
+        If there is more than one and not one per insert. `plan_gibson` refuses an unknown one.
+
+    Examples
+    --------
+    >>> _routes(["stitch"], 2)
+    ('stitch', 'stitch')
+    """
+    values = list(given) if given else ["amplify"]
+    if len(values) == 1:
+        values = values * count
+    if len(values) != count:
+        raise ValueError(f"--route given {len(values)} times for {count} insert(s)")
+    return tuple(typing.cast("Route", text.strip().lower()) for text in values)
+
+
+def _bridges(given: Sequence[str] | None) -> tuple[tuple[str, str], ...]:
+    """Read each bridged junction, written as the two parts it joins with a colon between.
+
+    Raises
+    ------
+    ValueError
+        If one does not name two parts. `plan_gibson` refuses a junction it has not got.
+
+    Examples
+    --------
+    >>> _bridges(["GFP:pUC19 backbone"])
+    (('GFP', 'pUC19 backbone'),)
+    """
+    pairs = []
+    for text in given or ():
+        before, sep, after = text.partition(":")
+        if not (sep and before.strip() and after.strip()):
+            raise ValueError(
+                f"--bridge names the two parts a junction joins, as BEFORE:AFTER, got {text!r}"
+            )
+        pairs.append((before.strip(), after.strip()))
+    return tuple(pairs)
 
 
 def _polymerase(name: str) -> Polymerase:

@@ -12,7 +12,7 @@ from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import choose_ladder
-from liulab_mbio.bench.oligos import oligo_row
+from liulab_mbio.bench.oligos import OrderedOligo, oligo_row, ordered_row
 from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
     DNTP_STOCK_MM,
@@ -53,6 +53,11 @@ from liulab_mbio.cloning.gibson.bench import (
     AssemblyProduct,
     assembly_program,
     assembly_reaction,
+)
+from liulab_mbio.cloning.gibson.design import (
+    BRIDGE_OLIGO_PMOL,
+    STITCH_OLIGO_NM,
+    STITCH_OVERLAP_BP,
 )
 from liulab_mbio.cloning.gibson.oligos import DesignedOligo
 from liulab_mbio.primers.polymerase import Polymerase
@@ -136,6 +141,7 @@ def protocol(
     amounts: tuple[Amount, ...],
     phenotype: Phenotype,
     oligos: Sequence[DesignedOligo],
+    ordered: Sequence[OrderedOligo] = (),
     checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
@@ -144,10 +150,11 @@ def protocol(
     """Return the bench protocol for one planned assembly, ready to render.
 
     Each argument is the `liulab_mbio.cloning.gibson.plan.Plan` field or property of that name,
-    and `oligos` is `Plan.designed_oligos`. The steps run in the order someone does them: one
-    PCR per part, the gel that checks them, the DpnI digest, the cleanup and the quantification,
-    the assembly and its incubation, the transformation, then the colony PCR and the sequencing
-    that settle it. Every step is per experiment, however many parts there are.
+    `oligos` is `Plan.designed_oligos` and `ordered` is `Plan.ordered_oligos`. The steps run in
+    the order someone does them: one PCR per part, the gel that checks them, the DpnI digest,
+    the cleanup and the quantification, the assembly and its incubation, the transformation,
+    then the colony PCR and the sequencing that settle it. Every step is per experiment, however
+    many parts there are.
     """
     parts = (linearised_vector, *insert_parts)
     names = tuple(part.name for part in insert_parts)
@@ -157,12 +164,17 @@ def protocol(
         if linearised_vector.amplified
         else f"Take {vector.name}, which is already linear, as the backbone"
     )
+    making = "amplify" if all(part.amplified for part in insert_parts) else "make"
+    joining = (
+        "with every junction carried by a primer tail or by a bridging oligo"
+        if any(one.bridge for one in assembly.junctions)
+        else "with the overlap at each junction carried as a primer tail"
+    )
     return Protocol(
         f"Gibson assembly: {inserts} into {vector.name}",
         summary=(
-            f"{opening}, amplify {inserts} with the overlap at each junction carried as a "
-            f"primer tail, join the {len(parts)} fragments in one {product.name} reaction, and "
-            "confirm the clone by colony PCR and sequencing."
+            f"{opening}, {making} {inserts} {joining}, join the {len(parts)} fragments in one "
+            f"{product.name} reaction, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(vector, insert_parts, assembly, product, phenotype),
         highlights=_highlights(parts, assembly, phenotype, names),
@@ -177,9 +189,12 @@ def protocol(
             polymerase=polymerase,
             phenotype=phenotype,
         ),
-        oligos=tuple(
-            oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=thresholds[oligo.role])
-            for oligo in oligos
+        oligos=(
+            *(
+                oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=thresholds[oligo.role])
+                for oligo in oligos
+            ),
+            *(ordered_row(oligo) for oligo in ordered),
         ),
         equipment=EQUIPMENT,
         steps=_steps(
@@ -254,12 +269,27 @@ def _highlights(
     joined = listed([f"{part.name} ({part.fragment_length} bp)" for part in parts])
     return (
         f"One reaction joins {len(parts)} fragments: {joined}.",
+        *(_junction_sentence(one) for one in assembly.junctions),
         *(
-            f"{one.before} and {one.after} share {one.length} bp at {one.start}, taken from "
-            f"{one.taken_from} and carried by the other as a primer tail."
-            for one in assembly.junctions
+            f"{part.name} is not amplified: {len(part.oligos)} oligos overlapping by "
+            f"{STITCH_OVERLAP_BP} bp tile both its strands and assemble it in the same reaction."
+            for part in parts
+            if part.stitched
         ),
         *phenotype_sentences(phenotype, inserts),
+    )
+
+
+def _junction_sentence(junction: Junction) -> str:
+    """Say what holds one junction together: a primer tail, or an oligo bridging both ends."""
+    if junction.bridge:
+        return (
+            f"{junction.before} and {junction.after} share nothing: {junction.bridge} carries "
+            f"{junction.length} bp of each, so neither needs a tailed primer."
+        )
+    return (
+        f"{junction.before} and {junction.after} share {junction.length} bp at {junction.start}, "
+        f"taken from {junction.taken_from} and carried by the other as a primer tail."
     )
 
 
@@ -275,12 +305,8 @@ def _materials(
     phenotype: Phenotype,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
-    ladders = dict.fromkeys(
-        (
-            choose_ladder(tuple(part.length for part in parts if part.amplified)).name,
-            colony.ladder.name,
-        )
-    )
+    made = tuple(part.length for part in parts if part.amplified)
+    ladders = dict.fromkeys(((choose_ladder(made).name,) if made else ()) + (colony.ladder.name,))
     return (
         Material(
             f"{vector.name} plasmid" if parts[0].amplified else vector.name,
@@ -370,13 +396,14 @@ def _steps(
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes.
 
-    A part handed in ready to assemble has no PCR and nothing to run on the gel, so neither
-    step names it.
+    A part handed in ready to assemble, or stitched out of oligos, has no PCR and nothing to run
+    on the gel, so neither step names it and neither happens at all where no part is amplified.
     """
     cut = [part for part in parts if part.dpni]
     made = [part for part in parts if part.amplified]
     steps = [_pcr_step(part, assembly, polymerase) for part in made]
-    steps.append(gel_step([(part.name, part.length) for part in made]))
+    if made:
+        steps.append(gel_step([(part.name, part.length) for part in made]))
     if cut:
         steps.append(
             dpni_step(
@@ -406,7 +433,7 @@ def _steps(
         )
     )
     steps.append(quantify_step(amounts))
-    steps.append(_assembly_step(product, amounts))
+    steps.append(_assembly_step(product, amounts, parts, assembly.junctions))
     steps.append(_incubation_step(product, assembly.junctions, len(parts)))
     steps.append(
         transform_step(
@@ -456,8 +483,7 @@ def _pcr_step(part: Part, assembly: Assembly, polymerase: Polymerase) -> Step:
         f"Its 5' tails are {listed(tails)}, so the amplicon already spells what its neighbours "
         "spell where they meet."
         if tails
-        else "Its primers carry no tail: both its junctions take their overlap from this "
-        "fragment, and the neighbours' primers carry it."
+        else "Its primers carry no tail: neither of its junctions is this fragment's to carry."
     )
     return pcr_step(
         part.name,
@@ -484,8 +510,17 @@ def _neighbour(assembly: Assembly, part: Part, *, before: bool) -> str:
     return "its neighbour"
 
 
-def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Step:
-    """Set the one-tube assembly up, at the molar ratio this product asks for."""
+def _assembly_step(
+    product: AssemblyProduct,
+    amounts: tuple[Amount, ...],
+    parts: Sequence[Part],
+    junctions: Sequence[Junction],
+) -> Step:
+    """Set the one-tube assembly up, at the molar ratio this product asks for.
+
+    A stitched part and a bridging oligo go into this same tube, each at the dose its own source
+    states rather than at the picomoles the table gives a fragment.
+    """
     table = assembly_reaction(product, amounts)
     tier = product.tier(len(amounts))
     total = sum(component.volume_ul for component in table.components)
@@ -517,6 +552,21 @@ def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Ste
             "The volumes above assume each fragment is concentrated enough to carry its "
             "picomoles in the microlitre the table gives; make the difference up with water.",
             unpurified,
+            *(
+                f"{part.name} goes in as its {len(part.oligos)} oligos rather than as an "
+                f"amplicon: {product.supplier} asks for {STITCH_OLIGO_NM:g} nM of each in the "
+                "reaction, and they assemble into the fragment the table gives picomoles for. "
+                "There is no separate annealing step."
+                for part in parts
+                if part.stitched
+            ),
+            *(
+                f"{one.bridge} goes in at {BRIDGE_OLIGO_PMOL:g} pmol, which is the dose "
+                f"{product.supplier} publishes for this route: 5 µL of a 0.2 µM preparation "
+                "against 30 ng of linearised vector."
+                for one in junctions
+                if one.bridge
+            ),
         ),
         troubleshooting=(
             Troubleshooting(

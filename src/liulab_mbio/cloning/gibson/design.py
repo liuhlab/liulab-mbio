@@ -26,13 +26,20 @@ answer and not this module's: length and melting temperature are the supplier's 
 palindrome and a repeat at an overlap's end are rules both NEB manuals state, and GC content and
 two overlaps being alike are measured and left unjudged because nobody quantifies either (§10,
 §18).
+
+Two jobs deserve neither a synthesis order nor a PCR, and this module lays out the oligos for
+both. `stitch_oligos` tiles a short part with overlapping oligos on both strands, and
+`bridging_oligo` joins two parts sharing no homology at all. Each takes single-stranded oligos
+into the reaction, which only some assembly products document (§14, §15), so each refuses a
+product whose supplier does not.
 """
 
 from collections.abc import Iterator, Sequence
 
 from liulab_mbio.checks import Check
-from liulab_mbio.cloning.gibson.bench import AssemblyProduct, OverlapRule
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from liulab_mbio.cloning.gibson.assembly import Bridge, Part, StitchOligo
+from liulab_mbio.cloning.gibson.bench import ASSEMBLY_PRODUCTS, AssemblyProduct, OverlapRule
+from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
 
 #: The Wallace rule's degrees per base pair, which is the only way either NEB manual names for
 #: an overlap's melting temperature: "AT pair = 2 C and GC pair = 4 C" (note §4).
@@ -55,6 +62,48 @@ REPEAT_BASES = 9
 #: sequence on both sides with at least 2 nucleotides that are not part of the His-tag repeating
 #: sequence" (§10).
 REPEAT_FLANK = 2
+
+#: Gibson 2011's own stitching oligos: 60 bases each, neighbours overlapping by 20 bp (§14). An
+#: oligo is shortened where the part cannot be tiled evenly by full-length ones; the overlap is
+#: not.
+STITCH_OLIGO_BASES = 60
+STITCH_OVERLAP_BP = 20
+
+#: The most oligos Gibson 2011 puts in one reaction: "only eight to twelve 60-base oligos are
+#: assembled at one time", for the error rate of chemical synthesis rather than for chemistry
+#: (§14). NEB's own FAQ allows the same twelve.
+STITCH_OLIGOS = 12
+
+#: The part sizes Addgene puts this route between: "too long to include on overlapping PCR
+#: primers (>60 bp) but too short to make its own part (<150 bp)" (§14). The only size window
+#: any source states, and a recommendation rather than a limit, so it warns and does not refuse.
+STITCH_WINDOW_BP = (60, 150)
+
+#: What NEB asks for of each oligo in the reaction: "45 nM of each oligonucleotide that is less
+#: than or equal to twelve 60-base oligonucleotides containing 30-base overlaps" (§14).
+STITCH_OLIGO_NM = 45.0
+
+#: Bases a bridging oligo takes from each side. De Saeger measured 20 bp a side at 80-100%
+#: correct clones and the Addgene protocol uses the same; NEB's own protocol uses 25 and
+#: Thermo's 15, and nothing below 15 is recommended by anyone (§15).
+BRIDGE_HOMOLOGY_BP = 20
+
+#: What NEB's own bridging protocol puts in one reaction: 5 µL of the oligo at 0.2 µM, which is
+#: this many picomoles against 30 ng of linearised vector (§15).
+BRIDGE_OLIGO_PMOL = 1.0
+
+#: What either route's oligos are held to. Both suppliers say the same: "Standard, desalted
+#: primers may be used" (NEB), "Gel or HPLC purification of oligonucleotides is not required"
+#: (Takara) (§14, §18).
+OLIGO_PURITY = "Standard desalted; no gel or HPLC purification is needed."
+
+#: Why such an oligo's sheet row carries no verdict: no source gives one a melting
+#: temperature, a hairpin or a dimer threshold, and the three roles
+#: `liulab_mbio.primers.thresholds` knows are a primer's (§18).
+NO_VERDICT = (
+    "It primes nothing, so none of the thresholds a primer is judged by measures it and this "
+    "row carries no verdict."
+)
 
 
 def wallace_tm(bases: str) -> float:
@@ -157,6 +206,194 @@ def _chosen(candidates: Iterator[str], rule: OverlapRule) -> str:
         if rule.tm_floor is None or wallace_tm(bases) >= rule.tm_floor:
             return bases
     return taken
+
+
+def stitch_limit_bp(
+    *, oligo_bases: int = STITCH_OLIGO_BASES, overlap_bp: int = STITCH_OVERLAP_BP
+) -> int:
+    """Return the longest part `STITCH_OLIGOS` oligos of that shape tile.
+
+    *n* oligos of length *L* overlapping by *v* tile *n*(*L*-*v*) + *v* bases, the arithmetic
+    that reproduces Gibson's worked 340 bp from eight 60-mers at 20 bp (§14).
+
+    Examples
+    --------
+    >>> stitch_limit_bp()
+    500
+    """
+    return STITCH_OLIGOS * (oligo_bases - overlap_bp) + overlap_bp
+
+
+def stitch_oligos(
+    bases: str,
+    *,
+    name: str = "",
+    product: AssemblyProduct,
+    oligo_bases: int = STITCH_OLIGO_BASES,
+    overlap_bp: int = STITCH_OVERLAP_BP,
+) -> tuple[StitchOligo, ...]:
+    """Lay `bases` out as overlapping oligos tiling both strands, to assemble rather than amplify.
+
+    Neighbours alternate strands and overlap by exactly `overlap_bp`, so the set anneals into
+    the whole molecule in the same isothermal reaction as everything else -- Gibson 2011 anneals
+    them in no separate step (§14). As few oligos as will do it are used, and none is longer
+    than `oligo_bases`; where they cannot all be that long the length is spread evenly, because
+    the overlap is the number the sources state and the length is the number they round.
+
+    Parameters
+    ----------
+    bases
+        The whole molecule the oligos make, the junction overlaps at its two ends included.
+    name
+        What the part is called; each oligo is numbered after it.
+    product
+        The assembly product on the bench, which has to take single-stranded oligos at all.
+    oligo_bases, overlap_bp
+        The note's oligo shape, for a caller holding a supplier that states another.
+
+    Returns
+    -------
+    tuple[StitchOligo, ...]
+        Two or more, in the order they run along the molecule.
+
+    Raises
+    ------
+    ValueError
+        If `product` documents no single-stranded oligo in its reaction, if `bases` is no longer
+        than one overlap, or if tiling it would take more than `STITCH_OLIGOS` oligos.
+
+    Examples
+    --------
+    >>> from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
+    >>> [one.strand.name for one in stitch_oligos("AT" * 75, product=NEBUILDER_HIFI)]
+    ['FORWARD', 'REVERSE', 'FORWARD', 'REVERSE']
+    """
+    requires_oligos(product, "stitch a part out of overlapping oligos")
+    if len(bases) <= overlap_bp:
+        raise ValueError(
+            f"{name or 'a stitched part'} is {len(bases)} bases, which is no longer than the "
+            f"{overlap_bp} bp its oligos overlap by"
+        )
+    count = max(2, -(-(len(bases) - overlap_bp) // (oligo_bases - overlap_bp)))
+    if count > STITCH_OLIGOS:
+        limit = stitch_limit_bp(oligo_bases=oligo_bases, overlap_bp=overlap_bp)
+        raise ValueError(
+            f"{name or 'this part'} is {len(bases)} bases, too long to stitch: Gibson 2011 "
+            f"assembles at most {STITCH_OLIGOS} {oligo_bases}-base oligos at one time, which "
+            f"tile {limit} bases at a {overlap_bp} bp overlap. Amplify it instead"
+        )
+    spread = len(bases) + (count - 1) * overlap_bp
+    lengths = [spread // count + (1 if index < spread % count else 0) for index in range(count)]
+    oligos = []
+    at = 0
+    for index, length in enumerate(lengths):
+        piece = bases[at : at + length]
+        forward = index % 2 == 0
+        oligos.append(
+            StitchOligo(
+                f"{name} oligo {index + 1}".strip(),
+                piece if forward else reverse_complement(piece),
+                Strand.FORWARD if forward else Strand.REVERSE,
+                at,
+            )
+        )
+        at += length - overlap_bp
+    return tuple(oligos)
+
+
+def stitch_checks(parts: Sequence[Part]) -> tuple[Check, ...]:
+    """Judge every stitched part's size against the window Addgene puts this route between.
+
+    Nothing is returned where no part is stitched. Addgene states the window as a
+    recommendation, so a part outside it warns and is not refused: below it a primer tail
+    carries the bases, above it a PCR or a synthesis order is cheaper (§14).
+    """
+    sized = [(part.name, part.fragment_length) for part in parts if part.stitched]
+    if not sized:
+        return ()
+    low, high = STITCH_WINDOW_BP
+    outside = [label for label, size in sized if not low <= size <= high]
+    return (
+        Check(
+            "stitched size",
+            "warn" if outside else "pass",
+            len(sized),
+            _said(
+                sized,
+                " bp",
+                f"Addgene uses this route between {low} and {high} bp, above a primer tail and "
+                "below a part of its own",
+            ),
+        ),
+    )
+
+
+def bridging_oligo(
+    before: str,
+    after: str,
+    *,
+    name: str = "",
+    product: AssemblyProduct,
+    homology_bp: int = BRIDGE_HOMOLOGY_BP,
+) -> Bridge:
+    """Design one oligo joining two fragments that share no homology, so neither needs a tail.
+
+    It takes `homology_bp` bases from the end of `before` and as many from the start of `after`
+    and spells them end to end, so the exonuclease leaves each fragment an end the oligo anneals
+    to and the two are joined with nothing between them. Which strand it is written on does not
+    matter: De Saeger measured both and found no difference (§15).
+
+    Parameters
+    ----------
+    before, after
+        The bases of the two fragments, in the order they go round the product.
+    name
+        What to order the oligo under.
+    product
+        The assembly product on the bench, which has to take single-stranded oligos at all.
+    homology_bp
+        Bases taken from each side.
+
+    Raises
+    ------
+    ValueError
+        If `product` documents no single-stranded oligo in its reaction, or if either fragment
+        holds fewer bases than the homology asked for.
+
+    Examples
+    --------
+    >>> from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
+    >>> bridging_oligo("AAAACCCC", "GGGGTTTT", product=NEBUILDER_HIFI, homology_bp=4).sequence
+    'CCCCGGGG'
+    """
+    requires_oligos(product, "join two fragments with a bridging oligo")
+    for label, bases in (("before", before), ("after", after)):
+        if len(bases) < homology_bp:
+            raise ValueError(
+                f"the fragment {label} this junction is {len(bases)} bases, too short for the "
+                f"{homology_bp} bp of homology a bridging oligo takes from each side"
+            )
+    return Bridge(name or "bridge", before[-homology_bp:] + after[:homology_bp], homology_bp)
+
+
+def requires_oligos(product: AssemblyProduct, route: str) -> None:
+    """Refuse a route on a product whose supplier documents no single-stranded oligo in it.
+
+    Both oligo routes need one. Where a supplier documents none the answer is the note's --
+    the route is not supported -- rather than another supplier's numbers under this label.
+
+    Raises
+    ------
+    ValueError
+        Whenever it does not, naming the products that do.
+    """
+    if product.single_stranded_oligos:
+        return
+    supported = ", ".join(one.name for one in ASSEMBLY_PRODUCTS if one.single_stranded_oligos)
+    raise ValueError(
+        f"{product.supplier} documents no single-stranded oligo in the {product.name} reaction, "
+        f"so it cannot {route}; {supported} can"
+    )
 
 
 def gc_percent(bases: str) -> float:

@@ -274,6 +274,24 @@ carries the overlap band, the reaction, the incubation, the molar ratio and the 
 limit, each with the citation it came from. Not the **product**, which is the plasmid.
 _Avoid_: master mix, kit, enzyme mix
 
+### Oligo stitching
+
+Making a short part out of overlapping oligos that tile both its strands, assembled in the same
+reaction rather than amplified or ordered from a synthesis vendor. It suits a linker, a tag or a
+short promoter. The oligo count, the oligo length and the overlap between neighbours are the
+research note's, and a part too long for the oligos the note allows is refused rather than
+stitched out of more.
+_Avoid_: oligo annealing, oligo assembly, gene synthesis
+
+### Bridging oligo
+
+One oligo joining two fragments that share no homology at all, carrying homology to the end of
+each, so neither needs a tailed primer. An amplicon made for something else goes in as it is.
+It primes nothing, so no primer threshold judges it and its row on the order sheet carries no
+verdict.
+_Avoid_: splint, stitching oligonucleotide (a vendor's word for this, not for **oligo
+stitching**)
+
 ### End soak
 
 The 60 °C step every Golden Gate program ends with. It is a digest and not heat inactivation: it

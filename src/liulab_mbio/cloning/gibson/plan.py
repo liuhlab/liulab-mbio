@@ -13,13 +13,15 @@ supplier's number behind them is `liulab_mbio.cloning.gibson.bench`, through
 `liulab_mbio.bench.phenotype`, read off the product's own features.
 """
 
+import dataclasses
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.bench.oligos import primer_sheet
+from liulab_mbio.bench.oligos import OrderedOligo, primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.bench.validation import (
     REVERSE_FLANK,
@@ -36,6 +38,7 @@ from liulab_mbio.cloning.gibson.assembly import (
     assemble,
     given_vector,
     open_vector,
+    stitch,
 )
 from liulab_mbio.cloning.gibson.bench import (
     NEBUILDER_HIFI,
@@ -46,9 +49,17 @@ from liulab_mbio.cloning.gibson.bench import (
     fragment_check,
 )
 from liulab_mbio.cloning.gibson.design import (
+    BRIDGE_OLIGO_PMOL,
+    NO_VERDICT,
+    OLIGO_PURITY,
+    STITCH_OLIGO_NM,
+    bridging_oligo,
     overlap_after,
     overlap_before,
     overlap_checks,
+    requires_oligos,
+    stitch_checks,
+    stitch_oligos,
 )
 from liulab_mbio.cloning.gibson.oligos import DesignedOligo
 from liulab_mbio.cloning.gibson.steps import DEFAULT_HOST
@@ -72,6 +83,9 @@ from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Threshold
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import Primer, SequenceRecord
 from liulab_mbio.snapgene import write_dna
+
+#: How a part reaches the reaction: amplified by PCR, or stitched out of overlapping oligos.
+type Route = Literal["amplify", "stitch"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +148,9 @@ class Plan:
     designed_oligos
         Every designed oligo and what it is for, in order: each part's forward and reverse
         primer, the colony PCR, the reads.
+    ordered_oligos
+        Every oligo the plan orders that primes nothing: a stitched part's, then any bridging
+        oligo. Nothing measures one, so its row carries no verdict.
     host, polymerase
         The choices the protocol names.
     thresholds
@@ -153,6 +170,7 @@ class Plan:
     amounts: tuple[Amount, ...]
     phenotype: Phenotype
     designed_oligos: tuple[DesignedOligo, ...]
+    ordered_oligos: tuple[OrderedOligo, ...]
     host: str
     polymerase: Polymerase
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
@@ -172,12 +190,15 @@ class Plan:
 
     @property
     def overlaps(self) -> tuple[str, ...]:
-        """The bases shared at each junction, in the product's own order."""
+        """The bases carried at each junction, in the product's own order.
+
+        `liulab_mbio.cloning.gibson.assembly.Junction` says which molecule carries them.
+        """
         return tuple(one.overlap for one in self.assembly.junctions)
 
     @property
     def junction_names(self) -> tuple[tuple[str, str], ...]:
-        """Each junction's name and the bases it spells, in the product's own order."""
+        """Each junction's name and the bases carried there, in the product's own order."""
         return tuple((f"{one.before}-{one.after}", one.overlap) for one in self.assembly.junctions)
 
     @property
@@ -200,6 +221,7 @@ class Plan:
         return (
             *self.assembly.checks,
             *overlap_checks(self.junction_names, self.product),
+            *stitch_checks(self.parts),
             fragment_check(self.product, len(self.insert_parts)),
             assembly_dna_check(self.product, self.amounts),
             primer_check(self.reports),
@@ -224,6 +246,7 @@ class Plan:
             amounts=self.amounts,
             phenotype=self.phenotype,
             oligos=self.designed_oligos,
+            ordered=self.ordered_oligos,
             checks=self.checks,
             host=self.host,
             polymerase=self.polymerase,
@@ -241,7 +264,7 @@ class Plan:
         plasmid = out / PRODUCT_FILE
         write_dna(self.plasmid, plasmid)
         sheet = out / PRIMER_FILE
-        sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
+        sheet.write_text(primer_sheet(self.reports, oligos=self.ordered_oligos), encoding="utf-8")
         written = write_protocol_files(self.protocol(), out)
         return Files(plasmid, sheet, written.data, written.page)
 
@@ -251,6 +274,8 @@ def plan_gibson(
     *inserts: SequenceRecord | str | os.PathLike[str],
     site: Site = None,
     orientation: Orientation | Sequence[Orientation] = "forward",
+    route: Route | Sequence[Route] = "amplify",
+    bridge: Sequence[tuple[str, str]] = (),
     product: AssemblyProduct = NEBUILDER_HIFI,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
@@ -285,6 +310,14 @@ def plan_gibson(
     orientation
         ``"reverse"`` puts the other strand of an insert into the product. One value covers
         every insert; a sequence gives one for each.
+    route
+        ``"stitch"`` makes an insert out of overlapping oligos tiling both strands instead of
+        out of a PCR, which suits a linker, a tag or a short promoter. One value covers every
+        insert; a sequence gives one for each.
+    bridge
+        Junctions joined by one oligo carrying homology to both ends, each named by the two
+        parts it joins in the order they go round the product. Neither of the two then carries
+        a tail, so a fragment amplified for something else goes in as it is.
     product
         The assembly product on the bench, which sets the overlap rule, the reaction, the
         incubation, the molar ratio and the fragment count it is documented for.
@@ -303,10 +336,13 @@ def plan_gibson(
     Raises
     ------
     ValueError
-        If no insert is given, if an orientation is neither ``forward`` nor ``reverse`` or
-        there is not one per insert, if a site is named for a vector that is already linear, if
-        no insertion site is named and a circular vector annotates none, if a part is too short
-        to take an overlap from, or if no annealing region fits a part's end.
+        If no insert is given, if an orientation is neither ``forward`` nor ``reverse`` or a
+        route neither ``amplify`` nor ``stitch``, or there is not one per insert, if a bridge
+        names a junction this assembly does not have, if a site is named for a vector that is
+        already linear, if no insertion site is named and a circular vector annotates none, if
+        `product` documents no single-stranded oligo and either oligo route is asked for, if a
+        part is too long to stitch or too short to take an overlap from, or if no annealing
+        region fits a part's end.
     """
     if not inserts:
         raise ValueError("a Gibson plan needs a vector and at least one insert")
@@ -325,35 +361,45 @@ def plan_gibson(
         )
     )
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
+    routes = _routes(route, len(going))
     span = (len(one), len(one)) if linear else insertion_span(one, site)
     opened = (0, len(one)) if linear else (span[1], span[0] + len(one))
+    backbone = f"{one.name} backbone".strip()
+    joins = tuple(zip((backbone, *labels), (*labels, backbone), strict=True))
+    bridged = _bridged(bridge, joins)
+    if "stitch" in routes:
+        requires_oligos(product, "stitch a part out of overlapping oligos")
+    if bridged:
+        requires_oligos(product, "join two fragments with a bridging oligo")
     rule = product.tier(len(going) + 1).overlap
-    tails = _tails(one, going, opened, rule)
+    tails = _tails(one, going, opened, rule, bridged)
     linearised_vector = (
-        given_vector(one, name=f"{one.name} backbone".strip())
+        given_vector(one, name=backbone)
         if linear
         else open_vector(
             one,
             *span,
-            name=f"{one.name} backbone".strip(),
+            name=backbone,
             polymerase=polymerase,
             thresholds=thresholds["amplification"],
         )
     )
     insert_parts = tuple(
-        amplify(
+        _insert_part(
             record,
-            0,
-            len(record),
-            left_tail=left,
-            right_tail=right,
-            name=label,
+            label,
+            way,
+            (left, right),
+            product=product,
             polymerase=polymerase,
             thresholds=thresholds["amplification"],
         )
-        for label, record, (left, right) in zip(labels, going, tails, strict=True)
+        for label, record, way, (left, right) in zip(labels, going, routes, tails, strict=True)
     )
-    parts = (linearised_vector, *insert_parts)
+    parts, bridges = _bridge_parts(
+        [linearised_vector, *insert_parts], joins, bridged, product=product
+    )
+    linearised_vector, insert_parts = parts[0], tuple(parts[1:])
     built = assemble(parts, name=name or "-".join([one.name, *labels]).strip("-"))
     boundaries = built.boundaries
     colony = colony_pcr_check(
@@ -400,10 +446,51 @@ def plan_gibson(
                 for read in reads
             ),
         ),
+        _ordered_oligos(parts, bridges),
         host,
         polymerase,
         thresholds,
     )
+
+
+def _routes(route: Route | Sequence[Route], count: int) -> tuple[Route, ...]:
+    """Spread one route over every insert, or take the one given for each.
+
+    Raises
+    ------
+    ValueError
+        If a value is neither ``amplify`` nor ``stitch``, or there is not one per insert.
+    """
+    given = (route,) * count if isinstance(route, str) else tuple(route)
+    if len(given) != count:
+        raise ValueError(f"route has {len(given)} values for {count} insert(s)")
+    for one in given:
+        if one not in ("amplify", "stitch"):
+            raise ValueError(f"route is 'amplify' or 'stitch', got {one!r}")
+    return given
+
+
+def _bridged(
+    bridge: Sequence[tuple[str, str]], joins: Sequence[tuple[str, str]]
+) -> tuple[int, ...]:
+    """Return which junction each named pair of parts is, in the order the product runs.
+
+    Raises
+    ------
+    ValueError
+        If a pair does not name two parts that meet.
+    """
+    found = []
+    for pair in bridge:
+        named = tuple(pair)
+        if named not in joins:
+            meeting = ", ".join(f"{before}-{after}" for before, after in joins)
+            raise ValueError(
+                f"no junction joins {' to '.join(str(one) for one in named)}; this assembly "
+                f"joins {meeting}"
+            )
+        found.append(joins.index(named))
+    return tuple(sorted(set(found)))
 
 
 def _tails(
@@ -411,17 +498,115 @@ def _tails(
     inserts: Sequence[SequenceRecord],
     opened: tuple[int, int],
     rule: OverlapRule,
+    bridged: Sequence[int],
 ) -> tuple[tuple[str, str], ...]:
-    """Return the two tails each insert's primers carry, in insert order.
+    """Return the two tails each insert carries, in insert order.
 
     `opened` is the vector span that reaches the product, so the outer junctions read the
     vector's bases at its two ends whether it was opened by PCR or handed in linear. An inner
     junction reads the last bases of the insert before it, and the insert after it tails them,
     so exactly one side of every junction carries the bases and neither the vector nor the last
-    insert is asked for a tail it cannot spell.
+    insert is asked for a tail it cannot spell. A bridged junction leaves both sides bare: its
+    oligo carries the bases instead.
     """
     first, last = opened
-    before = [overlap_before(record, len(record), rule) for record in inserts[:-1]]
-    lefts = [overlap_before(vector, last, rule), *before]
-    rights = [*([""] * (len(inserts) - 1)), overlap_after(vector, first, rule)]
+    lefts = ["" if 0 in bridged else overlap_before(vector, last, rule)]
+    lefts += [
+        "" if index in bridged else overlap_before(record, len(record), rule)
+        for index, record in enumerate(inserts[:-1], start=1)
+    ]
+    rights = [""] * (len(inserts) - 1)
+    rights.append("" if len(inserts) in bridged else overlap_after(vector, first, rule))
     return tuple(zip(lefts, rights, strict=True))
+
+
+def _insert_part(
+    record: SequenceRecord,
+    label: str,
+    route: Route,
+    tails: tuple[str, str],
+    *,
+    product: AssemblyProduct,
+    polymerase: Polymerase,
+    thresholds: Thresholds,
+) -> Part:
+    """Make one insert the way it was asked for: out of a PCR, or out of overlapping oligos."""
+    left, right = tails
+    if route == "stitch":
+        molecule = left + record.sequence + right
+        return stitch(
+            record,
+            stitch_oligos(molecule, name=label, product=product),
+            left_tail=left,
+            right_tail=right,
+            name=label,
+        )
+    return amplify(
+        record,
+        0,
+        len(record),
+        left_tail=left,
+        right_tail=right,
+        name=label,
+        polymerase=polymerase,
+        thresholds=thresholds,
+    )
+
+
+def _bridge_parts(
+    parts: list[Part],
+    joins: Sequence[tuple[str, str]],
+    bridged: Sequence[int],
+    *,
+    product: AssemblyProduct,
+) -> tuple[list[Part], tuple[tuple[str, str, str], ...]]:
+    """Design an oligo for every bridged junction and hang it on the part that follows it.
+
+    Returns the parts and, for each bridge, the two parts it joins and its sequence.
+    """
+    designed = []
+    for index in bridged:
+        before, after = joins[index]
+        following = (index + 1) % len(parts)
+        oligo = bridging_oligo(
+            parts[index].bases,
+            parts[following].bases,
+            name=f"{before}-{after} bridge",
+            product=product,
+        )
+        parts[following] = dataclasses.replace(parts[following], bridge=oligo)
+        designed.append((before, after, oligo.sequence))
+    return parts, tuple(designed)
+
+
+def _ordered_oligos(
+    parts: Sequence[Part], bridges: Sequence[tuple[str, str, str]]
+) -> tuple[OrderedOligo, ...]:
+    """Return every oligo the plan orders that primes nothing, with what it is for.
+
+    A stitched part's oligos come first, then any bridging oligo. None of them anneals to a
+    template, so each row carries its concentration and its purity and no verdict at all.
+    """
+    return (
+        *(
+            OrderedOligo(
+                oligo.name,
+                oligo.sequence,
+                purpose=f"Stitch {part.name}",
+                stock=f"{STITCH_OLIGO_NM:g} nM of each in the assembly",
+                note=f"{OLIGO_PURITY} {NO_VERDICT}",
+            )
+            for part in parts
+            for oligo in part.oligos
+        ),
+        *(
+            OrderedOligo(
+                f"{before}-{after} bridge",
+                sequence,
+                purpose=f"Bridge {before} to {after}",
+                stock=f"{BRIDGE_OLIGO_PMOL:g} pmol in the assembly",
+                note=f"{OLIGO_PURITY} {NO_VERDICT}",
+            )
+            for before, after, sequence in bridges
+        ),
+    )

@@ -8,12 +8,13 @@ incubation built from them, and `steps` the protocol's own steps and their order
 pipeline shares is `liulab_mbio.bench`. `design` is not re-exported here: import it by module.
 """
 
-from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Files, Plan, Site, plan_gibson
+from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Files, Plan, Route, Site, plan_gibson
 
 __all__ = [
     "DEFAULT_HOST",
     "Files",
     "Plan",
+    "Route",
     "Site",
     "plan_gibson",
 ]

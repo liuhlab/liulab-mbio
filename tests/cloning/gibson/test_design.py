@@ -1,11 +1,15 @@
-"""The overlap rule, as units, against the numbers `docs/research/gibson-assembly.md` states.
+"""The overlap rule and the two oligo routes, as units, against the numbers the note states.
 
-These are the fast tests, and the ones carrying the note's values: the Wallace rule of §4, the
-NEBuilder bands of §3, the tiers of §7 and §9, and the amounts and ratios of §8.
+These are the fast tests, and the ones carrying the values of `docs/research/gibson-assembly.md`:
+the Wallace rule of §4, the NEBuilder bands of §3, the tiers of §7 and §9, the amounts and ratios
+of §8, the stitching shape of §14 and the bridging homology of §15.
 """
+
+from itertools import pairwise
 
 import pytest
 
+from liulab_mbio.cloning.gibson.assembly import Part, stitch
 from liulab_mbio.cloning.gibson.bench import (
     ASSEMBLY_PRODUCTS,
     GIBSON_MASTER_MIX,
@@ -22,12 +26,22 @@ from liulab_mbio.cloning.gibson.bench import (
     fragment_check,
 )
 from liulab_mbio.cloning.gibson.design import (
+    BRIDGE_HOMOLOGY_BP,
+    STITCH_OLIGO_BASES,
+    STITCH_OLIGOS,
+    STITCH_OVERLAP_BP,
+    STITCH_WINDOW_BP,
+    bridging_oligo,
     overlap_after,
     overlap_before,
     overlap_checks,
+    requires_oligos,
+    stitch_checks,
+    stitch_limit_bp,
+    stitch_oligos,
     wallace_tm,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
 
 #: The band and floor NEBuilder HiFi documents for two or three fragments.
 NEB_RULE = NEBUILDER_HIFI.tiers[0].overlap
@@ -240,3 +254,94 @@ def test_two_overlaps_alike_are_reported_and_judged_by_nothing():
     # GC is measured for every junction and judged by nothing either.
     assert judged["overlap gc"].status is None
     assert "no source quantifies a GC band" in judged["overlap gc"].detail
+
+
+def test_stitching_oligos_tile_both_strands_at_the_shape_the_note_states():
+    part = "".join("ACGTTGCA"[index % 8] for index in range(150))
+    oligos = stitch_oligos(part, name="linker", product=NEBUILDER_HIFI)
+    # n oligos of length L overlapping by v tile n(L-v) + v bases, so 150 takes four 60-mers.
+    assert len(oligos) == 4
+    assert [one.name for one in oligos] == [f"linker oligo {number}" for number in (1, 2, 3, 4)]
+    assert [one.strand for one in oligos] == [
+        Strand.FORWARD,
+        Strand.REVERSE,
+        Strand.FORWARD,
+        Strand.REVERSE,
+    ]
+    assert max(len(one.sequence) for one in oligos) <= STITCH_OLIGO_BASES
+    # Every neighbour overlaps by exactly the note's 20 bp, and the set tiles the whole part.
+    assert [one.end - other.start for one, other in pairwise(oligos)] == [STITCH_OVERLAP_BP] * 3
+    assert (oligos[0].start, oligos[-1].end) == (0, len(part))
+    for one in oligos:
+        written = one.sequence if one.strand == Strand.FORWARD else reverse_complement(one.sequence)
+        assert written == part[one.start : one.end]
+
+
+def test_a_short_part_takes_two_oligos_so_the_set_still_tiles_both_strands():
+    oligos = stitch_oligos("AT" * 30, product=NEBUILDER_HIFI)
+    assert [one.strand for one in oligos] == [Strand.FORWARD, Strand.REVERSE]
+
+
+def test_a_part_too_long_to_stitch_is_refused_with_the_ceiling_and_its_source():
+    assert stitch_limit_bp() == STITCH_OLIGOS * (STITCH_OLIGO_BASES - STITCH_OVERLAP_BP) + (
+        STITCH_OVERLAP_BP
+    )
+    assert len(stitch_oligos("A" * stitch_limit_bp(), product=NEBUILDER_HIFI)) == STITCH_OLIGOS
+    with pytest.raises(ValueError, match="too long to stitch") as raised:
+        stitch_oligos("A" * (stitch_limit_bp() + 1), name="promoter", product=NEBUILDER_HIFI)
+    said = str(raised.value)
+    assert f"at most {STITCH_OLIGOS} {STITCH_OLIGO_BASES}-base oligos" in said
+    assert f"tile {stitch_limit_bp()} bases" in said
+    assert "Gibson 2011" in said
+
+
+def test_a_part_no_longer_than_one_overlap_cannot_be_tiled():
+    with pytest.raises(ValueError, match="no longer than"):
+        stitch_oligos("A" * STITCH_OVERLAP_BP, product=NEBUILDER_HIFI)
+
+
+def test_a_bridging_oligo_takes_its_homology_from_the_end_of_each_fragment():
+    before, after = "AAAACCCCGGGGTTTTACGT" * 2, "TTTTGGGGCCCCAAAATGCA" * 2
+    oligo = bridging_oligo(before, after, name="bridge", product=NEBUILDER_HIFI)
+    assert oligo.homology_bp == BRIDGE_HOMOLOGY_BP == 20
+    assert oligo.sequence == before[-20:] + after[:20]
+    assert len(oligo.sequence) == 2 * BRIDGE_HOMOLOGY_BP
+
+
+def test_a_fragment_too_short_for_the_homology_is_refused():
+    with pytest.raises(ValueError, match="too short for the 20 bp of homology"):
+        bridging_oligo("ACGT", "T" * 40, product=NEBUILDER_HIFI)
+
+
+@pytest.mark.parametrize("product", [NEBUILDER_HIFI, GIBSON_MASTER_MIX])
+def test_both_neb_products_document_single_stranded_oligos_in_the_reaction(product):
+    assert product.single_stranded_oligos
+    requires_oligos(product, "stitch")
+
+
+def test_in_fusion_supports_neither_route_and_says_which_products_do():
+    assert not IN_FUSION.single_stranded_oligos
+    for call in (
+        lambda: stitch_oligos("AT" * 40, product=IN_FUSION),
+        lambda: bridging_oligo("A" * 40, "C" * 40, product=IN_FUSION),
+    ):
+        with pytest.raises(ValueError, match="no single-stranded oligo") as raised:
+            call()
+        said = str(raised.value)
+        assert IN_FUSION.name in said
+        assert NEBUILDER_HIFI.name in said
+        assert GIBSON_MASTER_MIX.name in said
+
+
+def test_a_stitched_part_outside_addgenes_window_is_told_and_not_refused():
+    def sized(bases: int) -> Part:
+        record = SequenceRecord("AC" * bases, name="part")
+        return stitch(record, stitch_oligos(record.sequence, product=NEBUILDER_HIFI))
+
+    low, high = STITCH_WINDOW_BP
+    assert stitch_checks([sized(low // 2), sized(high // 2)])[0].status == "pass"
+    outside = stitch_checks([sized((high + 2) // 2)])[0]
+    assert outside.status == "warn"
+    assert f"between {low} and {high} bp" in outside.detail
+    # Nothing stitched, nothing to judge.
+    assert stitch_checks([]) == ()

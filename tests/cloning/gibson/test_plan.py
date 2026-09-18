@@ -12,7 +12,12 @@ from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify
 from liulab_mbio.bench.validation import SANGER_ALLOWANCE, SANGER_FLANK, ColonyCheck, SangerRead
 from liulab_mbio.cloning.gibson import Plan, plan_gibson
 from liulab_mbio.cloning.gibson.bench import IN_FUSION, NEBUILDER_HIFI
-from liulab_mbio.cloning.gibson.design import wallace_tm
+from liulab_mbio.cloning.gibson.design import (
+    BRIDGE_HOMOLOGY_BP,
+    STITCH_OLIGO_BASES,
+    STITCH_OVERLAP_BP,
+    wallace_tm,
+)
 from liulab_mbio.cloning.gibson.steps import (
     CLEANUP_FRAGMENTS,
     CORRECT_AT_FIVE,
@@ -20,7 +25,7 @@ from liulab_mbio.cloning.gibson.steps import (
     SCREENED_COLONIES,
 )
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits.
@@ -402,12 +407,17 @@ def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file)
 
 
 @pytest.fixture(scope="module")
-def several(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    """The same GFP in two pieces, which is the commonest reason to join more than one insert."""
-    halves = (
+def halves(gfp: SequenceRecord) -> tuple[SequenceRecord, SequenceRecord]:
+    """GFP cut in two at `SPLIT`, to go in as two inserts."""
+    return (
         SequenceRecord(gfp.sequence[:SPLIT], name="GFP 5'"),
         SequenceRecord(gfp.sequence[SPLIT:], name="GFP 3'"),
     )
+
+
+@pytest.fixture(scope="module")
+def several(puc19: SequenceRecord, halves: tuple[SequenceRecord, ...]) -> Plan:
+    """The same GFP in two pieces, which is the commonest reason to join more than one insert."""
     return plan_gibson(puc19, *halves)
 
 
@@ -463,3 +473,142 @@ def test_the_assembly_product_the_caller_names_sets_the_design_and_the_reaction(
     assert "pmol" in insert.final
     assert "ng" in insert.final
     assert made.amounts[1].pmol == pytest.approx(2.0 * made.amounts[0].pmol, rel=1e-3)
+
+
+@pytest.fixture(scope="module")
+def routed(puc19: SequenceRecord, halves: tuple[SequenceRecord, ...]) -> Plan:
+    """The two inserts of `several`, the second stitched and the junction between them bridged.
+
+    Every sequence is one that plan has already primed, so the two differ in route and in
+    nothing else.
+    """
+    return plan_gibson(puc19, *halves, route=["amplify", "stitch"], bridge=[("GFP 5'", "GFP 3'")])
+
+
+def test_a_stitched_part_is_oligos_tiling_both_strands_rather_than_a_pcr(routed):
+    stitched = routed.insert_parts[1]
+    assert stitched.stitched
+    assert not stitched.amplified
+    assert (stitched.forward, stitched.reverse, stitched.report, stitched.dpni) == (
+        None,
+        None,
+        None,
+        False,
+    )
+    # As few oligos as tile the whole molecule the reaction assembles, none longer than the
+    # note's 60 bases, neighbours overlapping by exactly its 20 bp, and the strands alternating.
+    tiled = stitched.length - STITCH_OVERLAP_BP
+    step = STITCH_OLIGO_BASES - STITCH_OVERLAP_BP
+    assert len(stitched.oligos) == -(-tiled // step)
+    assert max(len(one.sequence) for one in stitched.oligos) <= STITCH_OLIGO_BASES
+    assert [one.strand for one in stitched.oligos] == [Strand.FORWARD, Strand.REVERSE] * (
+        len(stitched.oligos) // 2
+    ) + [Strand.FORWARD] * (len(stitched.oligos) % 2)
+    assert (stitched.oligos[0].start, stitched.oligos[-1].end) == (0, stitched.length)
+    for one in stitched.oligos:
+        written = one.sequence if one.strand == Strand.FORWARD else reverse_complement(one.sequence)
+        assert written == stitched.amplicon.sequence[one.start : one.end]
+    # Nothing amplifies it, so no PCR step and no gel lane names it.
+    steps = {step.title: step for step in routed.protocol().steps}
+    assert f"Amplify {stitched.name}" not in steps
+    assert stitched.name not in [
+        lane.label for gel in steps["Check the PCRs on a gel"].gels for lane in gel.lanes
+    ]
+
+
+def test_a_bridging_oligo_joins_two_fragments_and_neither_carries_a_tail(routed):
+    first, second = routed.insert_parts
+    bridged = next(one for one in routed.assembly.junctions if one.bridge)
+    assert (bridged.before, bridged.after) == (first.name, second.name)
+    assert (first.right_tail, second.left_tail) == ("", "")
+    # It spells the end of one fragment and the start of the next, and nothing goes between them.
+    oligo = next(one for one in routed.ordered_oligos if one.name == bridged.bridge)
+    assert oligo.sequence == first.bases[-BRIDGE_HOMOLOGY_BP:] + second.bases[:BRIDGE_HOMOLOGY_BP]
+    assert routed.plasmid.sequence.count(oligo.sequence) == 1
+    # A map marks it as a bridge rather than as an overlap the two share.
+    mark = next(
+        one for one in routed.plasmid.features if one.name == f"{first.name}-{second.name} bridge"
+    )
+    assert (mark.segments[0].start, mark.segments[0].end) == (
+        bridged.start,
+        bridged.end + BRIDGE_HOMOLOGY_BP,
+    )
+
+
+def test_the_product_and_the_validation_are_the_same_whichever_route_made_a_part(routed, several):
+    assert routed.plasmid.sequence == several.plasmid.sequence
+    assert [(one.before, one.after) for one in routed.assembly.junctions] == [
+        (one.before, one.after) for one in several.assembly.junctions
+    ]
+    assert routed.assembly.boundaries == several.assembly.boundaries
+    assert routed.assembly.insert_span == several.assembly.insert_span
+    assert [one.bands_bp for one in routed.colony.clones] == [
+        one.bands_bp for one in several.colony.clones
+    ]
+    assert routed.colony.tells_orientation == several.colony.tells_orientation
+    assert [one.read_bp for one in routed.reads] == [one.read_bp for one in several.reads]
+
+
+def test_both_routes_put_their_oligos_on_the_one_sheet_with_no_verdict_and_why(routed):
+    rows = primer_sheet(routed.reports, oligos=routed.ordered_oligos).splitlines()
+    assert len(rows) == 1 + len(routed.reports) + len(routed.ordered_oligos)
+    page = routed.protocol().oligos
+    assert [one.name for one in page] == [row.split("\t")[0] for row in rows[1:]]
+    ordered = page[len(routed.reports) :]
+    assert [one.purpose for one in ordered] == ["Stitch GFP 3'"] * (len(ordered) - 1) + [
+        "Bridge GFP 5' to GFP 3'"
+    ]
+    for oligo, row in zip(ordered, rows[1 + len(routed.reports) :], strict=True):
+        assert row.split("\t") == [oligo.name, oligo.sequence, str(len(oligo.sequence)), ""]
+        # Nothing measures an oligo that primes nothing, so the row says so and carries no verdict.
+        assert (oligo.status, oligo.tm_c, oligo.checks) == (None, None, ())
+        assert "carries no verdict" in oligo.note
+        assert "desalted" in oligo.note
+        assert oligo.stock
+
+
+def test_an_oligo_with_no_verdict_survives_the_protocol_being_written_and_read_again(
+    routed, tmp_path
+):
+    written = routed.write(tmp_path / "routed")
+    assert read_protocol(written.protocol_data) == routed.protocol()
+    rows = written.primers.read_text(encoding="utf-8").splitlines()
+    assert rows[-1].split("\t")[0].endswith("bridge")
+
+
+def test_the_assembly_step_doses_each_route_the_way_its_own_source_does(routed):
+    step = next(one for one in routed.protocol().steps if one.title.startswith("Set up"))
+    said = " ".join(step.notes)
+    assert "45 nM of each" in said
+    assert "no separate annealing step" in said.lower()
+    assert "1 pmol" in said
+    # The stitched part is still one of the fragments the table gives picomoles for.
+    assert [one.name for one in routed.amounts] == [part.name for part in routed.parts]
+
+
+def test_a_part_above_addgenes_window_is_told_and_still_stitched(routed):
+    judged = {one.name: one for one in routed.checks}
+    # Refused only above the oligo count Gibson states; above Addgene's window it is only told.
+    assert judged["stitched size"].status == "warn"
+    assert f"GFP 3' {routed.insert_parts[1].fragment_length} bp" in judged["stitched size"].detail
+    assert "Addgene uses this route between 60 and 150 bp" in judged["stitched size"].detail
+
+
+def test_a_product_supporting_neither_oligo_route_refuses_both_and_says_which_do(puc19, gfp):
+    for asked in (
+        lambda: plan_gibson(puc19, gfp, product=IN_FUSION, route="stitch"),
+        lambda: plan_gibson(puc19, gfp, product=IN_FUSION, bridge=[("GFP", "pUC19 backbone")]),
+    ):
+        with pytest.raises(ValueError, match="no single-stranded oligo") as raised:
+            asked()
+        assert NEBUILDER_HIFI.name in str(raised.value)
+
+
+def test_a_bridge_naming_a_junction_this_assembly_has_not_got_is_refused(puc19, gfp):
+    with pytest.raises(ValueError, match="no junction joins"):
+        plan_gibson(puc19, gfp, bridge=[("GFP", "linker")])
+
+
+def test_there_is_one_route_for_each_insert(puc19, gfp):
+    with pytest.raises(ValueError, match="2 values for 1 insert"):
+        plan_gibson(puc19, gfp, route=["amplify", "stitch"])
