@@ -365,6 +365,14 @@ the promoter, tag and marker the finished clone is wanted for. It is the user's 
 package ships no vector catalogue, and reads a vector's sites out of the bases it is handed.
 _Avoid_: expression vector, target vector, pDEST
 
+### Donor vector
+
+The plasmid a BP reaction moves an insert into: attP1 and attP2 around a ccdB cassette, and the
+backbone the entry clone then carries. It is the user's own file, read for its sites the way a
+destination vector is. A plan takes one only where it was handed an insert rather than an entry
+clone, because a plan given an entry clone runs no BP reaction.
+_Avoid_: entry vector, BP vector, pDONR
+
 ### BP reaction
 
 The reaction making an entry clone: an insert with an att site on each end recombines with a
