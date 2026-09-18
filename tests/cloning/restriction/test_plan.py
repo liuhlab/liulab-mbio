@@ -31,7 +31,7 @@ from liulab_mbio.edits import insert as added
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.primers.evaluation import evaluate_primer
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.sequence import Primer, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import Feature, Primer, Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import SPACER_LENGTH, find_sites
 from liulab_mbio.snapgene import read_dna
 
@@ -147,6 +147,15 @@ def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_
     turned = plan_restriction(puc19, flipped(source), enzymes=["EcoRI", "BamHI"])
     made = plan_restriction(puc19, source, enzymes=["EcoRI", "BamHI"])
     assert turned.product.sequence == made.product.sequence
+
+
+def test_a_feature_across_the_origin_of_the_plasmid_the_insert_is_cut_from_changes_nothing(
+    puc19, source, made
+):
+    across = Feature("across", "misc_feature", (Segment(len(source) - 10, len(source) + 10),))
+    annotated = dataclasses.replace(source, features=(*source.features, across))
+    plan = plan_restriction(puc19, annotated, enzymes=["EcoRI", "BamHI"])
+    assert plan.product == made.product
 
 
 def test_a_pair_whose_ends_do_not_anneal_is_refused_naming_the_two_ends():

@@ -126,11 +126,7 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
 def flipped(record: SequenceRecord) -> SequenceRecord:
     """Return `record` read from the other strand, features and binding sites turned with it.
 
-    Raises
-    ------
-    ValueError
-        If a span runs across the origin, which has no place on the other strand of a record
-        this turns end for end.
+    A span across the origin of a circular record lands across it again.
 
     Examples
     --------
@@ -139,12 +135,11 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
     """
     length = len(record)
     other = {Strand.FORWARD: Strand.REVERSE, Strand.REVERSE: Strand.FORWARD}
-    spans = [
-        (segment.start, segment.end) for feature in record.features for segment in feature.segments
-    ]
-    spans += [(site.start, site.end) for primer in record.primers for site in primer.binding_sites]
-    if any(end > length for _, end in spans):
-        raise ValueError("a record with a span across its origin cannot be turned end for end")
+
+    def mirrored(start: int, end: int) -> tuple[int, int]:
+        begins = (length - end) % length
+        return begins, begins + end - start
+
     features = tuple(
         dataclasses.replace(
             feature,
@@ -152,8 +147,7 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
                 sorted(
                     (
                         Segment(
-                            length - segment.end,
-                            length - segment.start,
+                            *mirrored(segment.start, segment.end),
                             name=segment.name,
                             color=segment.color,
                         )
@@ -170,7 +164,7 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
         dataclasses.replace(
             primer,
             binding_sites=tuple(
-                BindingSite(length - site.end, length - site.start, other[site.strand])
+                BindingSite(*mirrored(site.start, site.end), other[site.strand])
                 for site in primer.binding_sites
             ),
         )

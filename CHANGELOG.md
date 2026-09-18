@@ -262,3 +262,8 @@ sets one.
   shares its bases with the vector one way round only. With no orientation to tell, the colony
   PCR's reverse primer sits as close to its junction as the forward one, so both plans' bands
   are shorter than before.
+- A plan no longer refuses a record that has a feature or primer across its origin when it has
+  to read that record from the other strand. SnapGene often writes such a feature. Restriction
+  and ligation refused any plasmid like this that an insert was cut from. Golden Gate and Gibson
+  refused one given as an insert in reverse, and Gateway refused one whose first att site reads
+  backwards. On the other strand, the feature still runs across the origin.
