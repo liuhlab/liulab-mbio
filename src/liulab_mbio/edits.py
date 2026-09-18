@@ -2,7 +2,7 @@
 
 An edit shifts the features and binding sites it does not remove. `carried` and `annealed`
 put them on a different record instead, which is how a simulated product keeps the annotations
-of the templates it was built from.
+of the templates it was built from, and `ordered` sorts what a product ends up with.
 
 The functions here know no file format. Coordinates are the model's: 0-based, half-open, and a
 span across the origin of a circular record ends past the record's length.
@@ -227,6 +227,29 @@ def carried(
         if sites:
             primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
     return tuple(features), tuple(primers)
+
+
+def ordered(record: SequenceRecord) -> SequenceRecord:
+    """Return `record` with its features in position order, each one's segments in base order.
+
+    A product is built part by part and then turned to its vector's origin, and neither step
+    reorders what it moves, so the record it leaves is sorted here before anyone reads it.
+
+    Examples
+    --------
+    >>> late = Feature("b", "misc_feature", (Segment(4, 6),))
+    >>> early = Feature("a", "misc_feature", (Segment(0, 2),))
+    >>> [one.name for one in ordered(SequenceRecord("AACCGG", features=(late, early))).features]
+    ['a', 'b']
+    """
+    features = [
+        dataclasses.replace(
+            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
+        )
+        for feature in record.features
+    ]
+    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
+    return dataclasses.replace(record, features=tuple(features))
 
 
 def annealed(primer: Primer, edge: int, strand: Strand) -> Primer:

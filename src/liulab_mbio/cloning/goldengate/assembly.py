@@ -18,12 +18,11 @@ Coordinates are the model's, 0-based and half-open, and a span across the origin
 record ends past the record's length.
 """
 
-import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import annealed, carried, rotate
+from liulab_mbio.edits import annealed, carried, ordered, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
@@ -471,7 +470,7 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
         bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
     )
     return Assembly(
-        _ordered(rotate(product, origin) if origin else product),
+        ordered(rotate(product, origin) if origin else product),
         tuple(parts),
         tuple(
             sorted(
@@ -509,22 +508,6 @@ def _occurrences(haystack: str, needle: str) -> int:
     while at >= 0:
         found, at = found + 1, haystack.find(needle, at + 1)
     return found
-
-
-def _ordered(record: SequenceRecord) -> SequenceRecord:
-    """Put `record`'s features in position order, each one's segments in top-strand order.
-
-    Turning a record moves its segments without reordering them, and parts are joined in the
-    order they ligate rather than the order they end up in.
-    """
-    features = [
-        dataclasses.replace(
-            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
-        )
-        for feature in record.features
-    ]
-    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
-    return dataclasses.replace(record, features=tuple(features))
 
 
 def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Feature:
