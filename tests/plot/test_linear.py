@@ -1,11 +1,11 @@
 """The linear map laid out, items in and shapes out: arrows cut cleanly where the stretch drawn cuts
 them, names inside or underneath, and labels apart from each other and clear of the drawing, hiding
-past the cap, on crowded and seeded random records, whole and in regions."""
+past the cap, on crowded and seeded random records, whole and in regions, and along longer lines."""
 
 import random
 from collections.abc import Callable
-from dataclasses import dataclass
-from itertools import combinations
+from dataclasses import dataclass, replace
+from itertools import combinations, pairwise
 
 import pytest
 
@@ -28,6 +28,7 @@ class Given:
     circular: bool = True
     span: tuple[int, int] | None = None
     length: int = LENGTH
+    width: float = linear.WIDTH
 
 
 def _feature(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> Feature:
@@ -52,7 +53,12 @@ def _items(
 
 def _laid(given: Given) -> linear.LinearMap:
     return linear.layout(
-        given.items, name="map", length=given.length, circular=given.circular, span=given.span
+        given.items,
+        name="map",
+        length=given.length,
+        circular=given.circular,
+        span=given.span,
+        width=given.width,
     )
 
 
@@ -140,23 +146,43 @@ def _random_region(seed: int) -> Given:
     return Given(_random(seed, circular=True), span=(start, start + rng.randint(40, LENGTH)))
 
 
+#: The records of `crowds`, which `RECORDS` lays out along longer lines too.
+CROWDS: dict[str, Callable[[], Given]] = {
+    "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), length=2686),
+    "fifty EcoRI sites": lambda: Given(
+        layers.items(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"])
+    ),
+}
+
 RECORDS: dict[str, Callable[[], Given]] = {
     "crowded": lambda: Given(_crowded()),
     "crowded, across the origin": lambda: Given(_crowded(), span=(2700, 3500)),
     "crowded, a region": lambda: Given(_crowded(), span=(360, 700)),
-    "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), length=2686),
+    "pUC19 and its unique 6+ cutters": CROWDS["pUC19 and its unique 6+ cutters"],
     **{f"random {seed}": lambda seed=seed: Given(_random(seed, True)) for seed in range(4)},
     **{
         f"random linear {seed}": lambda seed=seed: Given(_random(seed, False), circular=False)
         for seed in range(4, 8)
     },
     **{f"random region {seed}": lambda seed=seed: _random_region(seed) for seed in range(8, 12)},
+    **{
+        f"{name}, {times} times as long": lambda crowd=crowd, times=times: replace(
+            crowd(), width=times * linear.WIDTH
+        )
+        for name, crowd in CROWDS.items()
+        for times in (2, 4, 8)
+    },
 }
 
 
 @pytest.fixture(scope="module", params=list(RECORDS))
-def laid_out(request: pytest.FixtureRequest) -> linear.LinearMap:
-    return _laid(RECORDS[request.param]())
+def given(request: pytest.FixtureRequest) -> Given:
+    return RECORDS[request.param]()
+
+
+@pytest.fixture(scope="module")
+def laid_out(given: Given) -> linear.LinearMap:
+    return _laid(given)
 
 
 def _overlap(one: Box, other: Box) -> bool:
@@ -231,12 +257,12 @@ def test_no_leader_crosses_a_label_other_than_its_own(laid_out: linear.LinearMap
 
 
 def test_each_leader_runs_straight_up_from_the_line_to_its_label(
-    laid_out: linear.LinearMap,
+    given: Given, laid_out: linear.LinearMap
 ) -> None:
     for label in laid_out.labels:
         (x0, y0), (x1, y1) = label.leader
         assert x0 == x1
-        assert 0 <= x0 <= linear.WIDTH
+        assert 0 <= x0 <= given.width
         assert laid_out.top <= y0 < 0
         assert y1 == pytest.approx(label.box.y + label.box.height)
         assert label.box.x - TOUCH <= x1 <= label.box.x + label.box.width + TOUCH
@@ -324,8 +350,32 @@ def test_only_a_crowd_past_its_rise_hides_and_its_cut_sites_first() -> None:
     assert {"Often", "crowded out", "its neighbour", "in the crowd"} <= shown
 
 
-def test_every_arrow_lies_along_the_line(laid_out: linear.LinearMap) -> None:
-    assert all(0 <= arrow.start < arrow.end <= linear.WIDTH for arrow in laid_out.arrows)
+def test_every_arrow_lies_along_the_line(given: Given, laid_out: linear.LinearMap) -> None:
+    assert all(0 <= arrow.start < arrow.end <= given.width for arrow in laid_out.arrows)
+
+
+def test_a_label_hidden_for_lack_of_room_shows_along_a_line_8_times_as_long() -> None:
+    items = _crowded()
+    hidden = _laid(Given(items)).hidden
+    shown = {id(label.item) for label in _laid(Given(items, width=8 * linear.WIDTH)).labels}
+    assert [item for item in hidden if id(item) in shown]
+
+
+def test_a_longer_line_numbers_more_positions_as_often_as_its_points_per_base_allow() -> None:
+    def numbers(length: int, times: int) -> list[str]:
+        laid = linear.layout((), name="map", length=length, width=times * linear.WIDTH)
+        [scale] = [
+            shape
+            for shape in laid.shapes
+            if isinstance(shape, svg.Group) and "scale" in shape.classes
+        ]
+        return [shape.text for shape in scale.shapes if isinstance(shape, svg.Text)]
+
+    counts = [len(numbers(LENGTH, times)) for times in (1, 2, 4, 8)]
+    assert all(fewer < more for fewer, more in pairwise(counts))
+    # As many points to a base, as often numbered.
+    short = numbers(LENGTH // 8, 1)
+    assert numbers(LENGTH, 8)[: len(short)] == short
 
 
 def test_features_pack_in_rows_by_earliest_start() -> None:
