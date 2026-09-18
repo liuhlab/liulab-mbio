@@ -306,14 +306,14 @@ def test_the_protocol_is_enough_to_run_the_experiment(made):
     for step in protocol.steps:
         assert step.expected, step.title
     assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
-    # A badge is a verdict, so the checks carrying none are printed where the overlaps anneal.
-    assert [(one.name, one.status) for one in protocol.checks] == [
-        (one.name, one.status) for one in made.checks if one.status is not None
+    # Every check reaches the page, the ones nothing judges included, with their detail.
+    assert [(one.name, one.status, one.detail) for one in protocol.checks] == [
+        (one.name, one.status, one.detail) for one in made.checks
     ]
-    notes = " ".join(next(one for one in protocol.steps if one.title.endswith("assembly")).notes)
-    for one in made.checks:
-        if one.status is None:
-            assert f"Nothing judges {one.name}" in notes
+    assert [one.name for one in protocol.checks if one.status is None] == [
+        "overlap gc",
+        "overlap similarity",
+    ]
 
 
 def test_the_dpni_digest_prints_nebs_own_dose_and_its_heat_inactivation(made):

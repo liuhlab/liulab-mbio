@@ -190,7 +190,6 @@ def protocol(
             colony=colony,
             reads=reads,
             phenotype=phenotype,
-            checks=checks,
             host=host,
             polymerase=polymerase,
         ),
@@ -362,7 +361,6 @@ def _steps(
     colony: ColonyCheck,
     reads: Sequence[SangerRead],
     phenotype: Phenotype,
-    checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
 ) -> tuple[Step, ...]:
@@ -405,7 +403,7 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(product, amounts))
-    steps.append(_incubation_step(product, assembly.junctions, len(parts), checks))
+    steps.append(_incubation_step(product, assembly.junctions, len(parts)))
     steps.append(
         transform_step(
             host,
@@ -532,16 +530,9 @@ def _assembly_step(product: AssemblyProduct, amounts: tuple[Amount, ...]) -> Ste
 
 
 def _incubation_step(
-    product: AssemblyProduct,
-    junctions: Sequence[Junction],
-    fragments: int,
-    checks: Sequence[judged.Check],
+    product: AssemblyProduct, junctions: Sequence[Junction], fragments: int
 ) -> Step:
-    """Run the one isothermal incubation, which is the whole reaction.
-
-    This is where the overlaps anneal, so it is where what was measured about them and left
-    unjudged is printed: a badge is a verdict, and these carry none.
-    """
+    """Run the one isothermal incubation, which is the whole reaction."""
     tier = product.tier(fragments)
     return Step(
         "Incubate the assembly",
@@ -564,7 +555,6 @@ def _incubation_step(
             f"{tier.incubation_seconds // 60} minutes is what {product.supplier} asks for at "
             f"this fragment count. {product.incubation_note}",
             "Junction positions are 0-based, on the product.",
-            *(f"Nothing judges {one.name}: {one.detail}." for one in checks if one.status is None),
         ),
         troubleshooting=(
             Troubleshooting(
