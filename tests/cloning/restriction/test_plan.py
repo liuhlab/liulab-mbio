@@ -13,6 +13,8 @@ import pytest
 
 from liulab_mbio.cloning.restriction import Plan, plan_restriction
 from liulab_mbio.cloning.restriction.bench import shared_buffer
+from liulab_mbio.cloning.restriction.design import refusal
+from liulab_mbio.cloning.restriction.digest import resolve
 from liulab_mbio.edits import carried, flipped, replace
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.primers.evaluation import evaluate_primer
@@ -128,8 +130,37 @@ def test_an_enzyme_with_a_site_inside_the_insert_is_refused_naming_the_site(puc1
     inside = carrying(puc19, gfp, "pTrc-GFP")
     sites = find_sites(inside, "BsaI")
     assert len(sites) == 2
-    with pytest.raises(ValueError, match=rf"BsaI cuts .* at {sites[0].start}, {sites[1].start}"):
+    with pytest.raises(
+        ValueError, match=rf"2 BsaI sites \(at {sites[0].start} and {sites[1].start}\)"
+    ):
         plan_restriction(puc19, inside, enzymes=["BsaI", "EcoRI"])
+
+
+def test_with_no_enzymes_named_the_plan_chooses_the_pair_and_the_protocol_names_it(puc19, source):
+    picked = plan_restriction(puc19, source)
+    assert [one.name for one in picked.enzymes] == ["BamHI", "EcoRI"]
+    assert (
+        picked.product.sequence
+        == plan_restriction(puc19, source, enzymes=["EcoRI", "BamHI"]).product.sequence
+    )
+    # Every pair refused is on the plan with the rule that refused it.
+    assert {one.rule for one in picked.refusals} == {"vector site", "insert site", "backbone"}
+    assert all(len(one.enzymes) == 2 for one in picked.refusals)
+    said = " ".join(picked.protocol().highlights)
+    assert "the pair was chosen: BamHI and EcoRI" in said
+    assert "on the vector site rule" in said
+    # A site a synonymous codon change could take away is reported as that, not as a flat no.
+    domesticable = [one for one in picked.refusals if one.domesticable]
+    assert domesticable
+    assert all(one.rule == "insert site" for one in domesticable)
+
+
+def test_naming_an_unusable_pair_refuses_in_the_choosers_own_words(puc19, source):
+    with pytest.raises(ValueError, match="XhoI cuts pUC19 0 time") as named:
+        plan_restriction(puc19, source, enzymes=["XhoI", "EcoRI"])
+    chosen = refusal(puc19, source, resolve(["XhoI", "EcoRI"]))
+    assert chosen is not None
+    assert chosen.detail == str(named.value)
 
 
 def test_a_vector_that_would_close_on_itself_is_refused(puc19, source):

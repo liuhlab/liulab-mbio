@@ -35,7 +35,10 @@ def plan(
     ],
     enzyme: Annotated[
         list[str] | None,
-        typer.Option(help="An enzyme both digests use; once per enzyme, at most twice."),
+        typer.Option(
+            help="An enzyme both digests use; once per enzyme, at most twice. "
+            "Chosen for you when you name none."
+        ),
     ] = None,
     polymerase: Annotated[
         str, typer.Option(help="Polymerase for the insert's PCR, where one is run.")
@@ -48,7 +51,7 @@ def plan(
         lambda: plan_restriction(
             vector,
             insert,
-            enzymes=_enzymes(enzyme),
+            enzymes=tuple(enzyme or ()),
             polymerase=_polymerase(polymerase),
             host=host,
             name=name,
@@ -61,25 +64,14 @@ def plan(
 def _summary(made: Plan) -> str:
     """Report the cloning in one line: what it cuts, what it makes, and what each junction spells."""
     junctions = ", ".join(f"{one.label} at {one.start}" for one in made.junctions)
+    named = ", ".join(one.name for one in made.enzymes)
+    weighed = f" chosen over {len(made.refusals)} refused pairs" if made.refusals else ""
     return (
         f"{made.product.name}: {len(made.product)} bp, "
-        f"{', '.join(one.name for one in made.enzymes)}, "
+        f"{named}{weighed}, "
         f"{made.insert.length} bp insert into a {made.backbone.length} bp backbone, "
         f"junctions {junctions}, checks {made.status}"
     )
-
-
-def _enzymes(given: list[str] | None) -> tuple[str, ...]:
-    """Read the enzymes named, refusing a run with none.
-
-    Raises
-    ------
-    ValueError
-        If no enzyme was named.
-    """
-    if not given:
-        raise ValueError("name the enzymes to cut with, once each: --enzyme EcoRI --enzyme BamHI")
-    return tuple(given)
 
 
 def _polymerase(name: str) -> Polymerase:

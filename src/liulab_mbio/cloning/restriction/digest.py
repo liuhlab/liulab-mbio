@@ -6,8 +6,10 @@ and a 3' overhang spelling the same bases run the wrong way for each other -- an
 enzyme record carries the end type. So a `Piece` is a fragment with its two enzymes, and
 `liulab_mbio.overhangs.compatible` is the rule every join here is held to.
 
-This method needs one site of each enzyme in the record it cuts: that is what makes the pieces
-the backbone and what it releases. Anything else is refused, naming the sites that refused it.
+This method needs one site of each enzyme in the record the insert comes out of: that is what
+makes the piece between them the insert. A vector is held to less, because a further site there
+only shortens what the gel drops -- until it drops more than it keeps, which is when the longest
+piece is no longer a backbone. Anything else is refused, naming the sites that refused it.
 `diagnostic` is the one digest held to no such rule: it cuts a finished miniprep to say whether
 the insert is in it, so it reads whatever bands the record gives.
 
@@ -19,6 +21,7 @@ import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from liulab_mbio.bench.steps import listed
 from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.overhangs import End, compatible
@@ -83,11 +86,14 @@ class Piece:
         return End.cut_by(self.right_enzyme, self.fragment.right_overhang)
 
 
-def cut(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ...]:
+def cut(
+    record: SequenceRecord, enzymes: Sequence[Enzyme], *, unique: bool = True
+) -> tuple[Piece, ...]:
     """Digest `record` with every one of `enzymes` and return the pieces, in top-strand order.
 
     Each enzyme must read exactly one site: this method cuts a piece out between one site of
-    each, so a second site of either cuts that piece in two.
+    each, so a second site of either cuts that piece in two. `unique` drops that to one site at
+    least, which is what a vector is held to.
 
     A linear record also has the two ends it came with. No enzyme made them and nothing ligates
     to them, so the pieces carrying them are left out and what is returned is what the digest
@@ -99,12 +105,14 @@ def cut(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ...]:
         The plasmid or fragment to cut.
     enzymes
         One or two enzymes, which go in the same reaction.
+    unique
+        Refuse an enzyme reading more than one site. `opened` is what sets it aside.
 
     Raises
     ------
     ValueError
-        If no enzyme is given or more than `MAX_ENZYMES`, if an enzyme reads anything but one
-        site, or if no piece has an enzyme at both of its ends.
+        If no enzyme is given or more than `MAX_ENZYMES`, if an enzyme reads no site or, where
+        `unique`, more than one, or if no piece has an enzyme at both of its ends.
     """
     if not 1 <= len(enzymes) <= MAX_ENZYMES:
         raise ValueError(
@@ -112,7 +120,7 @@ def cut(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ...]:
             f"{', '.join(one.name for one in enzymes) or 'none'}"
         )
     what = record.name or "the record"
-    _one_site_each(record, enzymes, what)
+    _sites_each(record, enzymes, what, unique=unique)
     length = len(record)
     at: dict[int, Enzyme] = {}
     for site in find_sites(record, enzymes):
@@ -139,18 +147,29 @@ def opened(vector: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[Piece, ..
     """Return what `enzymes` leave of `vector`, its backbone first.
 
     The backbone is the longest piece the digest gives; the rest is what the cloning site
-    releases, and a gel is how the backbone is separated from it.
+    releases, and a gel is how the backbone is separated from it. A further site of either enzyme
+    is allowed here and only lengthens what the gel drops, until the drop outweighs the backbone
+    -- past that the longest piece is a piece of the vector rather than its backbone.
 
     Raises
     ------
     ValueError
-        If the vector is not circular, for any reason `cut` refuses, or if the backbone's two
-        ends anneal to each other, which leaves it free to close on itself with no insert.
+        If the vector is not circular, for any reason `cut` refuses, if the digest drops as much
+        as it keeps, or if the backbone's two ends anneal to each other, which leaves it free to
+        close on itself with no insert.
     """
     if vector.topology != "circular":
         raise ValueError("a vector is cut open and closed again, so it must be circular")
-    pieces = cut(vector, enzymes)
+    pieces = cut(vector, enzymes, unique=False)
     backbone = max(pieces, key=lambda piece: piece.length)
+    dropped = sum(piece.length for piece in pieces if piece is not backbone)
+    if dropped >= backbone.length:
+        raise ValueError(
+            f"{listed([one.name for one in enzymes])} cut {vector.name or 'the vector'} into "
+            f"{len(pieces)} pieces, the longest {backbone.length} bp against {dropped} bp "
+            "dropped, so what the gel keeps is not a backbone; a further site of one of them "
+            "lies outside the cloning site"
+        )
     if self_closing(backbone):
         raise ValueError(
             f"the backbone's two ends anneal to each other ({_said(backbone.left_end)} and "
@@ -282,22 +301,29 @@ def _said(end: End) -> str:
     return "a blunt end" if end.end_type == "blunt" else f"a {end.end_type} {end.overhang}"
 
 
-def _one_site_each(record: SequenceRecord, enzymes: Iterable[Enzyme], what: str) -> None:
-    """Refuse an enzyme reading anything but one site in `record`, naming the sites it reads.
+def _sites_each(
+    record: SequenceRecord, enzymes: Iterable[Enzyme], what: str, *, unique: bool
+) -> None:
+    """Refuse an enzyme reading too few sites in `record`, or too many, naming the ones it reads.
 
     Raises
     ------
     ValueError
-        If an enzyme reads no site, or more than one.
+        If an enzyme reads no site, or, where `unique`, more than one.
     """
     for enzyme in enzymes:
         found = [site for site in find_sites(record, enzyme) if site.cuts]
-        if len(found) != 1:
-            raise ValueError(
-                f"{enzyme.name} cuts {what} {len(found)} time(s){_where(found)}; this method "
-                "cuts a piece out between one site of each enzyme, so a second site of either "
-                "cuts that piece in two"
-            )
+        if len(found) == 1 or (found and not unique):
+            continue
+        why = (
+            "cuts a piece out between one site of each enzyme, so a second site of either "
+            "cuts that piece in two"
+            if unique
+            else "opens a plasmid between one site of each enzyme, so it needs one of each"
+        )
+        raise ValueError(
+            f"{enzyme.name} cuts {what} {len(found)} time(s){_where(found)}; this method {why}"
+        )
 
 
 def _where(found: Sequence[CutSite]) -> str:

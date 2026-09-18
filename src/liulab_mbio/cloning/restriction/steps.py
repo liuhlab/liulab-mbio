@@ -12,6 +12,7 @@ each junction spells. And no supplier states a colony count for it, so the plate
 NEB's four controls and their ratios rather than by a number.
 """
 
+from collections import Counter
 from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
@@ -80,6 +81,7 @@ from liulab_mbio.cloning.restriction.bench import (
     ligation_reaction,
     shared_buffer,
 )
+from liulab_mbio.cloning.restriction.design import Refusal
 from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation
 from liulab_mbio.cloning.restriction.oligos import DesignedOligo
@@ -136,6 +138,7 @@ def protocol(
     oligos: Sequence[DesignedOligo],
     phenotype: Phenotype,
     checks: Sequence[judged.Check],
+    refusals: Sequence[Refusal],
     host: str,
     polymerase: Polymerase,
     thresholds: Mapping[PrimerRole, Thresholds],
@@ -159,7 +162,7 @@ def protocol(
             "ligate them, and confirm the clone by colony PCR and sequencing."
         ),
         overview=_overview(vector, source, enzymes, amplicon, ligation, phenotype),
-        highlights=_highlights(amplicon, ligation, phenotype),
+        highlights=_highlights(amplicon, enzymes, ligation, phenotype, refusals),
         checks=badges(checks),
         materials=_materials(
             vector=vector,
@@ -255,16 +258,38 @@ def _selection(phenotype: Phenotype) -> str:
 
 
 def _highlights(
-    amplicon: Amplicon | None, ligation: Ligation, phenotype: Phenotype
+    amplicon: Amplicon | None,
+    enzymes: Sequence[Enzyme],
+    ligation: Ligation,
+    phenotype: Phenotype,
+    refusals: Sequence[Refusal],
 ) -> tuple[str, ...]:
     """Return what the facts mean, a sentence each: the junctions first, then the phenotype."""
     backbone, insert = ligation.pieces
     return (
         f"One ligation joins two fragments: {backbone.name} ({backbone.length} bp) and "
         f"{insert.name} ({insert.length} bp).",
+        *_chosen(enzymes, refusals),
         *_tailed(amplicon),
         f"This method's junction is not scarless: {_spelled(ligation.junctions)}",
         *phenotype_sentences(phenotype, [insert.name]),
+    )
+
+
+def _chosen(enzymes: Sequence[Enzyme], refusals: Sequence[Refusal]) -> tuple[str, ...]:
+    """Say that the pair was chosen rather than named, and what refused the pairs that were not.
+
+    Nothing at all where the caller named the enzymes: then no pair was weighed against them.
+    """
+    if not refusals:
+        return ()
+    counted = Counter(one.rule for one in refusals)
+    rules = listed([f"{count} on the {rule} rule" for rule, count in counted.most_common()])
+    nearest = refusals[0]
+    return (
+        f"No enzyme was named, so the pair was chosen: {listed([one.name for one in enzymes])}. "
+        f"{len(refusals)} other pairs were refused, {rules}. The pair that got furthest was "
+        f"{nearest.names}, and {nearest.detail}.",
     )
 
 

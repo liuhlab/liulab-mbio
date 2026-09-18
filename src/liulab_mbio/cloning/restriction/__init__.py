@@ -1,10 +1,12 @@
 """Restriction and ligation cloning: two digests, a gel, and a ligase.
 
 `plan_restriction` is the way in: it takes the vector, the insert or the plasmid it is cut out
-of, and the enzymes to cut both with, and runs the whole design, and `Plan.write` puts the
-product, the oligo sheet and the bench protocol in one directory.
-The submodules are the steps it is made of -- `digest`, `amplify`, `ligation`, `oligos`, `bench`,
-`verdicts` and `steps`. `digest` cuts a record and says which enzyme left each end, `amplify`
+of, and the enzymes to cut both with where the caller has a preference, and runs the whole
+design, and `Plan.write` puts the product, the oligo sheet and the bench protocol in one
+directory.
+The submodules are the steps it is made of -- `design`, `digest`, `amplify`, `ligation`,
+`oligos`, `bench`, `verdicts` and `steps`. `design` chooses the enzyme pair and says why the
+others were refused, `digest` cuts a record and says which enzyme left each end, `amplify`
 puts a site on each end of an insert no plasmid holds, `ligation` joins two pieces into a circle
 and reads off what each junction spells, `oligos` says what each designed oligo is for, `bench`
 is the method's own documented numbers and the reactions built from them, `verdicts` the checks

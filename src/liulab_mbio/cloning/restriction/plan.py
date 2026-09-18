@@ -38,6 +38,7 @@ from liulab_mbio.cloning.plan import (
 )
 from liulab_mbio.cloning.restriction.amplify import Amplicon, amplified
 from liulab_mbio.cloning.restriction.bench import digest_amount, ligation_amounts
+from liulab_mbio.cloning.restriction.design import Refusal, choose_pair, refusal
 from liulab_mbio.cloning.restriction.digest import (
     Diagnostic,
     Piece,
@@ -138,6 +139,9 @@ class Plan:
     thresholds
         What the oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
+    refusals
+        Every pair the chooser weighed and refused, with the rule that refused each. Empty where
+        the enzymes were named, because then nothing was weighed against them.
     """
 
     vector: SequenceRecord
@@ -158,6 +162,7 @@ class Plan:
     host: str
     polymerase: Polymerase
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
+    refusals: tuple[Refusal, ...] = ()
 
     @property
     def backbone(self) -> Piece:
@@ -240,6 +245,7 @@ class Plan:
             oligos=self.designed_oligos,
             phenotype=self.phenotype,
             checks=self.checks,
+            refusals=self.refusals,
             host=self.host,
             polymerase=self.polymerase,
             thresholds=self.thresholds,
@@ -265,7 +271,7 @@ def plan_restriction(
     vector: SequenceRecord | str | os.PathLike[str],
     insert: SequenceRecord | str | os.PathLike[str],
     *,
-    enzymes: Sequence[EnzymeLike],
+    enzymes: Sequence[EnzymeLike] = (),
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
     name: str = "",
@@ -283,6 +289,10 @@ def plan_restriction(
     recognition site as a 5' tail, and the amplicon is cut instead. Either way the insert is
     written on whichever strand closes the circle, so which way round it lay does not matter.
 
+    Naming no enzyme hands the choice to `liulab_mbio.cloning.restriction.design.choose_pair`,
+    which weighs every pair the package ships and leaves `Plan.refusals` saying what refused the
+    rest. Naming enzymes wins over it, and an unusable pair is refused in the chooser's own words.
+
     The junction is not scarless. The two ends came from a recognition site and ligating them
     puts that site back, so the product gains those bases and `Plan.junctions` says what each one
     spells.
@@ -294,7 +304,8 @@ def plan_restriction(
         circular plasmid; `insert` is the insert, or the plasmid it is cut out of.
     enzymes
         One or two enzymes, each an `liulab_mbio.enzymes.Enzyme` or a name the package ships.
-        Each must read exactly one site in the vector, and one in whatever is cut for the insert.
+        Each must read a site in the vector, and one in whatever is cut for the insert. Chosen
+        for the caller where none is named.
     polymerase
         For the insert's PCR, where one is run.
     host, name
@@ -314,12 +325,12 @@ def plan_restriction(
         If a name is not one the package ships.
     ValueError
         If the vector is not circular, if an enzyme reads anything but one site in what is cut,
-        if the backbone's two ends anneal to each other, if no tail spells one site, or if the
-        insert's ends do not anneal to the backbone's.
+        if the backbone's two ends anneal to each other, if no tail spells one site, if the
+        insert's ends do not anneal to the backbone's, or if no pair can be chosen at all.
     """
     into = as_record(vector)
     holder = as_record(insert)
-    chosen = resolve(enzymes)
+    chosen, refusals = _pair(into, holder, enzymes)
     vector_pieces = opened(into, chosen)
     backbone = vector_pieces[0]
     amplicon = (
@@ -370,7 +381,30 @@ def plan_restriction(
         host,
         polymerase,
         thresholds,
+        refusals,
     )
+
+
+def _pair(
+    vector: SequenceRecord, source: SequenceRecord, enzymes: Sequence[EnzymeLike]
+) -> tuple[tuple[Enzyme, ...], tuple[Refusal, ...]]:
+    """Return the pair to cut with, and what the chooser refused where it was the one choosing.
+
+    The freezer beats the chooser: enzymes the caller names are used, and refused in the
+    chooser's own words where they will not do.
+
+    Raises
+    ------
+    ValueError
+        If the named pair will not do, or if no pair can be chosen.
+    """
+    if not enzymes:
+        picked = choose_pair(vector, source)
+        return picked.enzymes, picked.refusals
+    named = resolve(enzymes)
+    if (found := refusal(vector, source, named)) is not None:
+        raise ValueError(found.detail)
+    return named, ()
 
 
 def _carries_a_site(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> bool:

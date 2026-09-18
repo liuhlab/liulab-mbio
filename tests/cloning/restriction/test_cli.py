@@ -44,5 +44,5 @@ def test_the_cli_writes_the_four_outputs_and_refuses_an_enzyme_that_cuts_twice(
         *vector_and_source, "--out", str(tmp_path / "no"), "--enzyme", "BsaI", "--enzyme", "EcoRI"
     )
     assert refused.exit_code == 1
-    assert "BsaI cuts" in re.sub(r"\x1b\[[0-9;]*m", "", refused.output)
+    assert "2 BsaI sites" in re.sub(r"\x1b\[[0-9;]*m", "", refused.output)
     assert not (tmp_path / "no" / "product.dna").exists()
