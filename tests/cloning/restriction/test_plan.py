@@ -168,6 +168,7 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
         "Ligate the insert into the backbone",
         "Transform and plate",
         "Screen colonies by PCR",
+        "Check a miniprep by digesting it with EcoRI and BamHI",
         "Confirm the clone by sequencing",
     ]
     for step in protocol.steps:
@@ -178,6 +179,7 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
         "pTrc-GFP digest",
         "Ligation, T4 DNA Ligase (NEB #M0202)",
         "Colony PCR",
+        "Diagnostic digest",
     }
     lanes = {
         lane.label: lane.bands_bp
@@ -232,13 +234,32 @@ def test_the_page_says_what_each_junction_now_spells(made):
 
 def test_the_plan_status_is_the_worst_of_its_checks(made):
     assert [check.name for check in made.checks] == [
+        "buffer",
+        "digest temperature",
+        "digest clean-up",
+        "methylation",
         "pUC19 backbone",
         "pTrc-GFP insert",
         "junctions",
+        "reading frame",
+        "ligation ratio",
+        "diagnostic digest",
         "primers",
     ]
     assert made.status == "pass"
+    # Every check reaches the page, the ones carrying no verdict with it.
     assert [one.status for one in made.protocol().checks] == [one.status for one in made.checks]
+
+
+def test_the_diagnostic_digest_tells_a_correct_clone_from_the_vector_it_went_into(made, puc19):
+    assert made.diagnostic.clone == (made.backbone.length, made.insert.length)
+    assert made.diagnostic.empty == (len(puc19) - STUFFER, STUFFER)
+    step = next(one for one in made.protocol().steps if "miniprep" in one.title)
+    lanes = {lane.label: lane.bands_bp for gel in step.gels for lane in gel.lanes}
+    assert lanes == {
+        made.product.name: made.diagnostic.clone,
+        "pUC19": made.diagnostic.empty,
+    }
 
 
 def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):

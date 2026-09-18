@@ -49,6 +49,10 @@ UNNAMED_BUFFER = "restriction enzyme buffer"
 #: Where to look up a pair nothing here can judge. §3, §4.
 BUFFER_FINDER = "NEBcloner or NEB's Double Digest Finder"
 
+#: Where to grow a plasmid whose digest the host's own methylation blocks. Only for preparing
+#: that DNA: NEB's own page says a dam⁻ strain is not a host for the ligation itself. §11.
+METHYLATION_FREE_HOST = "dam⁻/dcm⁻ Competent E. coli (NEB #C2925)"
+
 #: What the enzymes' own volume may not pass, as a fraction of the reaction. More than this is
 #: over 5% glycerol, which is one of the conditions that contributes to star activity. §2, §3.
 MAX_ENZYME_FRACTION = 0.1
@@ -183,6 +187,9 @@ VECTOR_FMOL = 20.0
 #: Insert to vector molar ratio. NEB calls 1:1 to 1:10 optimal for a single insertion (§7); 3 is
 #: this package's pick inside that range, and the ratio NEB's own worked example uses.
 INSERT_RATIO = 3.0
+
+#: The range that ratio is optimal in, insert to vector. §7.
+RATIO_RANGE = (1.0, 10.0)
 
 #: What the vector and insert together should reach, ng/µL: below the floor a fragment closes on
 #: itself instead of joining its partner. §7, printed rather than computed -- a plan does not
@@ -363,6 +370,11 @@ REFERENCES: tuple[Reference, ...] = (
     Reference(
         "NEB, Heat Inactivation, for stopping a digest and for the enzymes heat does not stop",
         url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation",
+    ),
+    Reference(
+        "NEB, Restriction Endonuclease Technical Guide, version 5.0 - 7/17, for what Dam and Dcm "
+        "methylate and for the strain to grow a blocked plasmid in",
+        url="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
     ),
     Reference(
         "NEB, Troubleshooting Guide for Cloning, for the four transformation controls",

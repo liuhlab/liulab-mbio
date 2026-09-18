@@ -32,10 +32,26 @@ from liulab_mbio.cloning.plan import (
     write_protocol_files,
 )
 from liulab_mbio.cloning.restriction.bench import digest_amount, ligation_amounts
-from liulab_mbio.cloning.restriction.digest import Piece, excised, opened, resolve
+from liulab_mbio.cloning.restriction.digest import (
+    Diagnostic,
+    Piece,
+    diagnostic,
+    excised,
+    opened,
+    resolve,
+)
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation, ligate
 from liulab_mbio.cloning.restriction.steps import DEFAULT_HOST
 from liulab_mbio.cloning.restriction.steps import protocol as protocol_for
+from liulab_mbio.cloning.restriction.verdicts import (
+    buffer_check,
+    cleanup_check,
+    diagnostic_check,
+    frame_check,
+    methylation_check,
+    ratio_check,
+    temperature_check,
+)
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
 from liulab_mbio.primers.polymerase import ONETAQ
@@ -96,6 +112,8 @@ class Plan:
         What each digest takes, the vector's first.
     amounts
         What to put in the ligation, the backbone first.
+    diagnostic
+        The digest that says a miniprep carries the insert, and the bands it should give.
     colony
         The colony PCR that reads both junctions and tells a correct clone from an empty vector.
     reads
@@ -120,6 +138,7 @@ class Plan:
     span: tuple[int, int]
     digests: tuple[Amount, Amount]
     amounts: tuple[Amount, Amount]
+    diagnostic: Diagnostic
     colony: ColonyCheck
     reads: tuple[SangerRead, SangerRead]
     read_reports: tuple[PrimerReport, ...]
@@ -159,8 +178,23 @@ class Plan:
 
     @property
     def checks(self) -> tuple[Check, ...]:
-        """The product's checks, with one more for the oligos."""
-        return (*self.ligation.checks, primer_check(self.reports))
+        """Every verdict the plan carries, in the order the bench meets them.
+
+        The digest's four first, then the product's own, then what the ligation takes and what
+        confirms it. `liulab_mbio.cloning.restriction.verdicts` is where each one's threshold and
+        its source are written down, and the buffer is the one nothing sourced can judge.
+        """
+        return (
+            buffer_check(self.enzymes),
+            temperature_check(self.enzymes),
+            cleanup_check(self.enzymes),
+            methylation_check(self.enzymes, (self.vector, self.source)),
+            *self.ligation.checks,
+            frame_check(self.product, self.junctions),
+            ratio_check(*self.amounts),
+            diagnostic_check(self.diagnostic),
+            primer_check(self.reports),
+        )
 
     @property
     def status(self) -> Status:
@@ -178,6 +212,7 @@ class Plan:
             ligation=self.ligation,
             digests=self.digests,
             amounts=self.amounts,
+            diagnostic=self.diagnostic,
             colony=self.colony,
             reads=self.reads,
             read_reports=self.read_reports,
@@ -283,6 +318,7 @@ def plan_restriction(
         span,
         (digest_amount((into.name, len(into))), digest_amount((holder.name, len(holder)))),
         ligation_amounts((backbone.name, backbone.length), (released.name, released.length)),
+        diagnostic(built.product, into, chosen),
         colony,
         reads,
         tuple(

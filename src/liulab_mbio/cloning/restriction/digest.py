@@ -8,6 +8,8 @@ enzyme record carries the end type. So a `Piece` is a fragment with its two enzy
 
 This method needs one site of each enzyme in the record it cuts: that is what makes the pieces
 the backbone and what it releases. Anything else is refused, naming the sites that refused it.
+`diagnostic` is the one digest held to no such rule: it cuts a finished miniprep to say whether
+the insert is in it, so it reads whatever bands the record gives.
 
 Coordinates are the model's, 0-based and half-open, and a piece across the origin of a circular
 record ends past the record's length.
@@ -167,6 +169,60 @@ def excised(source: SequenceRecord, enzymes: Sequence[Enzyme], *, into: Piece) -
             return _named(source, insert, pieces, "insert")
         tried.append((into, insert))
     raise ValueError(_not_annealing(tried))
+
+
+@dataclass(frozen=True, slots=True)
+class Diagnostic:
+    """The digest that says a miniprep carries the insert, and the bands it should give.
+
+    The enzymes are the cloning pair itself: they cut their own sites back out of the product,
+    so a correct clone drops the insert and a colony carrying the vector it went into gives what
+    that plasmid gives. Nothing else has to be chosen, and no band is a number this package
+    invented.
+
+    Parameters
+    ----------
+    enzymes
+        What the miniprep is cut with.
+    clone, empty
+        The bands a correct clone gives and the bands the vector gives, largest first as a gel
+        reads them.
+    names
+        What each of those two lanes is labelled.
+    """
+
+    enzymes: tuple[Enzyme, ...]
+    clone: tuple[int, ...]
+    empty: tuple[int, ...]
+    names: tuple[str, str]
+
+    @property
+    def tells_them_apart(self) -> bool:
+        """Whether the two lanes differ at all, which is the whole point of running it."""
+        return self.clone != self.empty
+
+    @property
+    def bands(self) -> tuple[int, ...]:
+        """Every band on the gel, which is what a ladder and an agarose percentage are chosen for."""
+        return (*self.clone, *self.empty)
+
+
+def diagnostic(
+    product: SequenceRecord, vector: SequenceRecord, enzymes: Sequence[Enzyme]
+) -> Diagnostic:
+    """Return the diagnostic digest of `product` against the `vector` it went into."""
+    return Diagnostic(
+        tuple(enzymes),
+        _bands(product, enzymes),
+        _bands(vector, enzymes),
+        (product.name or "clone", vector.name or "vector"),
+    )
+
+
+def _bands(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> tuple[int, ...]:
+    """Return the bands one digest gives, largest first; a record nothing cuts runs as one."""
+    pieces = digest(record, enzymes)
+    return tuple(sorted((piece.length for piece in pieces), reverse=True)) or (len(record),)
 
 
 def _named(

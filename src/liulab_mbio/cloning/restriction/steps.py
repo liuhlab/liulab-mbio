@@ -56,13 +56,14 @@ from liulab_mbio.cloning.restriction.bench import (
     ROOM_CELSIUS,
     STAR_ACTIVITY,
     TRANSFORM_UL,
+    digest_amount,
     digest_reaction,
     gel_recovery,
     ligation_program,
     ligation_reaction,
     shared_buffer,
 )
-from liulab_mbio.cloning.restriction.digest import Piece
+from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece
 from liulab_mbio.cloning.restriction.ligation import Junction, Ligation
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers.evaluation import PrimerReport
@@ -110,6 +111,7 @@ def protocol(
     ligation: Ligation,
     digests: Sequence[Amount],
     amounts: Sequence[Amount],
+    diagnostic: Diagnostic,
     colony: ColonyCheck,
     reads: Sequence[SangerRead],
     read_reports: Sequence[PrimerReport],
@@ -166,6 +168,7 @@ def protocol(
             ligation=ligation,
             digests=digests,
             amounts=amounts,
+            diagnostic=diagnostic,
             colony=colony,
             reads=reads,
             phenotype=phenotype,
@@ -333,6 +336,7 @@ def _steps(
     ligation: Ligation,
     digests: Sequence[Amount],
     amounts: Sequence[Amount],
+    diagnostic: Diagnostic,
     colony: ColonyCheck,
     reads: Sequence[SangerRead],
     phenotype: Phenotype,
@@ -355,8 +359,58 @@ def _steps(
             expected=CONTROLS,
         ),
         colony_pcr_step(colony, junctions=len(ligation.junctions)),
+        _diagnostic_step(diagnostic, product=ligation.product),
         sequencing_step(
             reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+        ),
+    )
+
+
+def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step:
+    """Cut a miniprep with the cloning pair, which drops the insert back out of a correct clone."""
+    clone, empty = diagnostic.names
+    named = listed([enzyme.name for enzyme in diagnostic.enzymes])
+    ladder = choose_ladder(diagnostic.bands)
+    percent = agarose_percent(diagnostic.bands)
+    amount = digest_amount((clone, len(product)))
+    return Step(
+        f"Check a miniprep by digesting it with {named}",
+        instructions=(
+            "Miniprep two or three of the colonies the PCR called correct.",
+            f"Mix the reaction below, {amount.nanograms:g} ng of miniprep first.",
+            f"Incubate at {_celsius(diagnostic.enzymes)} for {DIGEST_SECONDS // 60} minutes.",
+            f"Run the whole digest on a {percent:g}% agarose gel beside the ladder.",
+        ),
+        tables=(digest_reaction(diagnostic.enzymes, amount, title="Diagnostic digest"),),
+        timers=(Timer("Diagnostic digest", DIGEST_SECONDS),),
+        gels=(
+            Gel(
+                ladder,
+                (Lane(clone, diagnostic.clone), Lane(empty, diagnostic.empty)),
+                title="Diagnostic digest",
+            ),
+        ),
+        expected=(
+            f"A correct clone: {_bands(diagnostic.clone)}.",
+            f"A colony carrying {empty} instead: {_bands(diagnostic.empty)}.",
+            *_off_the_gel(diagnostic.bands, ladder),
+        ),
+        notes=(
+            "The junctions put both recognition sites back, so the pair that made the clone is "
+            "what cuts the insert out of it again.",
+            "Sequence only a miniprep that gives the clone's bands.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "Every miniprep gives the vector's bands",
+                "The background is uncut or religated vector; run the controls under the "
+                "transformation to find which.",
+            ),
+            Troubleshooting(
+                "One band, at the plasmid's full length",
+                "Only one site cut. Check the enzymes' methylation sensitivity against the "
+                "strain the miniprep was grown in.",
+            ),
         ),
     )
 
@@ -474,8 +528,8 @@ def _purify_step(
             ),
         ),
         expected=(
-            f"{vector.name}: {_bands(vector_pieces)}.",
-            f"{source.name}: {_bands(source_pieces)}.",
+            f"{vector.name}: {_bands(_sizes(vector_pieces))}.",
+            f"{source.name}: {_bands(_sizes(source_pieces))}.",
             f"Each slice recovers {low:.0%} to {high:.0%} of the DNA that was in it.",
             *_off_the_gel(sizes, ladder),
         ),
@@ -505,12 +559,12 @@ def _off_the_gel(sizes: tuple[int, ...], ladder: Ladder) -> tuple[str, ...]:
     if not lost:
         return ()
     named = listed([f"{size} bp" for size in lost])
-    return (f"{named} runs past the bottom of this ladder; it is not what you cut out.",)
+    return (f"{named} runs past the bottom of this ladder.",)
 
 
-def _bands(pieces: Sequence[Piece]) -> str:
-    """Name the bands one digest gives, largest first as a gel reads them."""
-    return listed([f"{piece.length} bp" for piece in sorted(pieces, key=lambda one: -one.length)])
+def _bands(sizes: Sequence[int]) -> str:
+    """Name the bands one lane gives, largest first as a gel reads them."""
+    return listed([f"{size} bp" for size in sorted(sizes, reverse=True)])
 
 
 def _heat(*digests: Sequence[Piece]) -> str:
