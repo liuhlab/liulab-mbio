@@ -33,6 +33,14 @@ def test_every_pipeline_is_mounted() -> None:
         assert result.output.strip()
 
 
+def test_the_cloning_group_lists_every_method_it_mounts() -> None:
+    result = CliRunner().invoke(app, ["cloning", "--help"])
+    # Typer prints the help through rich, which styles it; the names are what is asserted.
+    listed = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    for method in ("gateway", "gibson", "goldengate", "restriction"):
+        assert method in listed
+
+
 def test_the_codon_optimize_verb_writes_a_protein_as_dna() -> None:
     result = CliRunner().invoke(
         app, ["codon-optimize", "MW*", "--kind", "protein", "--host", "e-coli-k12"]

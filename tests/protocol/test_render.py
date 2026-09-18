@@ -5,6 +5,7 @@ import pytest
 
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
+    Check,
     Oligo,
     Protocol,
     Step,
@@ -77,6 +78,15 @@ def test_each_check_is_a_badge_and_a_warn_shows_without_being_read(page: Node) -
     assert details[0].startswith("primers warn: 2 designed, 2 with a warning")
     assert "0 failing: length on 2" in details[0]
     assert details[1] == "controls warn: no positive control is set up"
+
+
+def test_a_check_no_threshold_judges_shows_as_unjudged_and_never_as_a_pass() -> None:
+    protocol = Protocol("Plan", checks=(Check("buffer", None, detail="look the pair up"),))
+    page = parse(render_html(protocol))
+    badge = page.find_all("li", cls="check")[0]
+    assert badge.attrs["class"] == "check is-none"
+    assert badge.find_all(cls="verdict")[0].text == "not judged"
+    assert page.find_all(cls="check-detail")[0].text == "buffer not judged: look the pair up"
 
 
 def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:

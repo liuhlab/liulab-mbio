@@ -12,6 +12,12 @@ EXPECTED = {
     "SapI", "SbfI", "SmaI", "SphI", "SrfI", "XbaI", "XhoI", "XmaI",
 }  # fmt: skip
 
+# The multiple cloning site enzymes a restriction and ligation pair is drawn from.
+MULTIPLE_CLONING_SITE = {
+    "EcoRI", "SacI", "KpnI", "SmaI", "XmaI", "BamHI", "XbaI", "SalI",
+    "PstI", "SbfI", "SphI", "HindIII", "NdeI", "NcoI", "XhoI", "NotI",
+}  # fmt: skip
+
 
 def test_the_data_file_ships_the_whole_poc_set() -> None:
     assert {enzyme.name for enzyme in enzymes()} == EXPECTED
@@ -86,6 +92,18 @@ def test_an_enzyme_with_no_stated_heat_inactivation_says_so() -> None:
     assert get_enzyme("KpnI").heat_inactivation_celsius is None
     assert "heat_inactivation_celsius" not in get_enzyme("KpnI").unverified
     assert "heat_inactivation_celsius" in get_enzyme("AarI").unverified
+
+
+def test_every_shipped_product_names_the_buffer_it_is_supplied_in() -> None:
+    assert all(enzyme.supplied_buffer for enzyme in enzymes())
+
+
+def test_a_pair_from_the_multiple_cloning_site_shares_a_buffer_and_a_mixed_pair_does_not() -> None:
+    supplied = {get_enzyme(name).supplied_buffer for name in MULTIPLE_CLONING_SITE}
+    assert supplied == {"rCutSmart Buffer"}
+    assert get_enzyme("BsmBI").supplied_buffer == "NEBuffer r3.1"
+    # Thermo sells this one, so no NEB buffer answers for it.
+    assert get_enzyme("BpiI").supplied_buffer == "Buffer G"
 
 
 def test_every_record_is_self_consistent() -> None:

@@ -6,7 +6,6 @@ assembly and its cycling and adds what only Golden Gate has to say. Every number
 table of NEB's covers, and each says where it comes from.
 """
 
-import re
 from collections.abc import Mapping, Sequence
 
 from liulab_mbio import checks as judged
@@ -35,8 +34,10 @@ from liulab_mbio.bench.steps import (
     XGAL_UG_ML,
     badges,
     card,
+    catalogued,
     cleanup_step,
     colony_pcr_step,
+    dam_sites,
     dpni_step,
     enzyme_material,
     gel_step,
@@ -49,7 +50,7 @@ from liulab_mbio.bench.steps import (
     transform_step,
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
-from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part, dam_sites
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
     REFERENCES,
@@ -99,10 +100,6 @@ EQUIPMENT: tuple[str, ...] = (
     f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
     f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
 )
-
-#: A catalogue number at the end of a product name, such as ``"(M1100)"``. A letter and then a
-#: digit, so a bracketed enzyme name is not read as one.
-_CATALOG_RE = re.compile(r"^(?P<name>.*?)\s*\((?P<catalog>[A-Z]\d[\w./-]*)\)$")
 
 
 def protocol(
@@ -279,7 +276,7 @@ def _materials(
             amount=_per_reaction(mix),
         ),
         enzyme_material(enzyme, amount=_per_reaction(enzyme_component(enzyme, fragments))),
-        _catalogued(
+        catalogued(
             host,
             supplier=SUPPLIER if host == DEFAULT_HOST else "",
             storage="-80 °C",
@@ -290,38 +287,14 @@ def _materials(
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
         Material(_plate(phenotype), amount="one plate per transformation"),
-        _catalogued(
+        catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=SUPPLIER,
             storage="-20 °C",
             amount=_per_reaction(colony_pcr_master_mix_component()),
         ),
         Material("Agarose and 1X TAE or TBE"),
-        *(_catalogued(name, supplier=SUPPLIER) for name in ladders),
-    )
-
-
-def _catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str = "") -> Material:
-    """Return a material, taking the catalogue number out of a product name that carries one.
-
-    A name carrying none leaves the cell empty; nothing here invents one.
-
-    Examples
-    --------
-    >>> _catalogued("NEB 100 bp DNA Ladder (N3231)").catalog
-    'N3231'
-    >>> _catalogued("Agarose and 1X TAE or TBE").catalog
-    ''
-    """
-    found = _CATALOG_RE.match(name)
-    if found is None:
-        return Material(name, supplier=supplier, storage=storage, amount=amount)
-    return Material(
-        found["name"],
-        supplier=supplier,
-        catalog=found["catalog"],
-        storage=storage,
-        amount=amount,
+        *(catalogued(name, supplier=SUPPLIER) for name in ladders),
     )
 
 
@@ -341,8 +314,11 @@ def _plate(phenotype: Phenotype) -> str:
     """Return what to pour the selection plates with."""
     antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
     if phenotype.blue_white:
-        return f"LB agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal and {IPTG_UM} µM IPTG"
-    return f"LB agar plates with {antibiotic}"
+        return (
+            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
+            f"and {IPTG_UM} µM IPTG"
+        )
+    return f"{phenotype.medium} agar plates with {antibiotic}"
 
 
 def _steps(

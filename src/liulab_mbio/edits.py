@@ -1,4 +1,8 @@
-"""Insert, delete and replace spans of a `SequenceRecord`, shifting what it annotates.
+"""Edit a `SequenceRecord`, and carry what it annotates into another one.
+
+An edit shifts the features and binding sites it does not remove. `carried` and `annealed`
+put them on a different record instead, which is how a simulated product keeps the annotations
+of the templates it was built from, and `ordered` sorts what a product ends up with.
 
 The functions here know no file format. Coordinates are the model's: 0-based, half-open, and a
 span across the origin of a circular record ends past the record's length.
@@ -179,6 +183,110 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
         primers=primers,
         extras={},
     )
+
+
+def carried(
+    record: SequenceRecord, start: int, end: int, *, offset: int
+) -> tuple[tuple[Feature, ...], tuple[Primer, ...]]:
+    """Carry what `record` annotates over ``[start, end)`` into a record `offset` bases along.
+
+    A base at index `index` of `record` stands at ``index + offset`` in that record, so a span
+    lifted to the front of one takes a negative `offset`.
+
+    A feature reaching outside the span is cut down to it, and one meeting it in two places
+    keeps a segment for each. A primer is kept only where a whole binding site survives, having
+    nowhere to anneal otherwise.
+
+    `end` passes `record`'s length where the span runs across the origin of a circular one.
+
+    Examples
+    --------
+    >>> feature = Feature("p", "promoter", (Segment(2, 8),))
+    >>> features, primers = carried(SequenceRecord("AACCGGTT", features=(feature,)), 4, 8, offset=6)
+    >>> features[0].segments
+    (Segment(start=10, end=14, name='', color=None),)
+    """
+    features = []
+    for feature in record.features:
+        kept = [
+            dataclasses.replace(segment, start=first + offset, end=last + offset)
+            for segment in feature.segments
+            for first, last in _pieces(segment.start, segment.end, start, end, record)
+        ]
+        if kept:
+            kept.sort(key=lambda segment: (segment.start, segment.end))
+            features.append(dataclasses.replace(feature, segments=tuple(kept)))
+    primers = []
+    for primer in record.primers:
+        sites = [
+            BindingSite(first + offset, last + offset, site.strand)
+            for site in primer.binding_sites
+            for first, last in _pieces(site.start, site.end, start, end, record)
+            if last - first == site.end - site.start
+        ]
+        if sites:
+            primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
+    return tuple(features), tuple(primers)
+
+
+def ordered(record: SequenceRecord) -> SequenceRecord:
+    """Return `record` with its features in position order, each one's segments in base order.
+
+    A product is built part by part and then turned to its vector's origin, and neither step
+    reorders what it moves, so the record it leaves is sorted here before anyone reads it.
+
+    Examples
+    --------
+    >>> late = Feature("b", "misc_feature", (Segment(4, 6),))
+    >>> early = Feature("a", "misc_feature", (Segment(0, 2),))
+    >>> [one.name for one in ordered(SequenceRecord("AACCGG", features=(late, early))).features]
+    ['a', 'b']
+    """
+    features = [
+        dataclasses.replace(
+            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
+        )
+        for feature in record.features
+    ]
+    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
+    return dataclasses.replace(record, features=tuple(features))
+
+
+def annealed(primer: Primer, edge: int, strand: Strand) -> Primer:
+    """Return `primer` annotated where it anneals on a record it primed.
+
+    A designed primer carries the length of its annealing region but not the coordinates of a
+    record it has not been used on yet. `edge` is where that region meets the rest: on the
+    forward strand it begins there, on the reverse strand it ends there.
+
+    Examples
+    --------
+    >>> primer = Primer("p", "GGGGAACCGG", binding_sites=(BindingSite(0, 6, Strand.FORWARD),))
+    >>> site = annealed(primer, 4, Strand.FORWARD).binding_sites[0]
+    >>> site.start, site.end
+    (4, 10)
+    """
+    site = primer.binding_sites[0]
+    length = site.end - site.start
+    start = edge if strand is Strand.FORWARD else edge - length
+    return dataclasses.replace(primer, binding_sites=(BindingSite(start, start + length, strand),))
+
+
+def _pieces(
+    start: int, end: int, low: int, high: int, record: SequenceRecord
+) -> list[tuple[int, int]]:
+    """Return where ``[start, end)`` of `record` falls inside the window ``[low, high)``.
+
+    A span of a circular record is tried a turn either way, so one meeting the window twice —
+    as a feature either side of the span an outward PCR drops does — gives a piece for each.
+    """
+    turns = (0, len(record), -len(record)) if record.topology == "circular" else (0,)
+    found = []
+    for turn in turns:
+        first, last = max(start + turn, low), min(end + turn, high)
+        if first < last:
+            found.append((first, last))
+    return sorted(found)
 
 
 def _check_span(record: SequenceRecord, start: int, end: int) -> None:

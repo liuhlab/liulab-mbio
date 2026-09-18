@@ -27,7 +27,7 @@ from pathlib import Path
 
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.plan import PRODUCT_FILE
-from liulab_mbio.edits import EditReport, replace
+from liulab_mbio.edits import EditReport, ordered, replace
 from liulab_mbio.library.parts import Part
 from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
@@ -298,7 +298,7 @@ def assemble_round(
         part,
         scheme=scheme,
         destination=destination,
-        product=_ordered(
+        product=ordered(
             dataclasses.replace(product, name=titled, features=(*product.features, *drawn, *joins))
         ),
         released=released,
@@ -579,15 +579,3 @@ def _joins(part: Part, number: int, *, entry: Segment, scar: Segment) -> tuple[F
             },
         ),
     )
-
-
-def _ordered(record: SequenceRecord) -> SequenceRecord:
-    """Put a record's features in position order, each one's segments in top-strand order."""
-    features = [
-        dataclasses.replace(
-            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
-        )
-        for feature in record.features
-    ]
-    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
-    return dataclasses.replace(record, features=tuple(features))

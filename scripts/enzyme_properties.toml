@@ -5,6 +5,12 @@
 # field, and `unverified` lists the fields no source stated. Methylation wording is the
 # supplier's own, lower-cased. `heat_inactivation_celsius` is absent where the supplier says the
 # enzyme is not inactivated by heat; where the supplier is silent it is absent AND unverified.
+# `supplied_buffer` is the buffer the supplier sells this product in, named without its
+# concentration: it is a property of the product, not of the enzyme name.
+#
+# A source carries `archived` when a value was read from a snapshot and `retrieved` when the
+# live page was read. A block with both was read twice; the two readings agree, which
+# `docs/research/restriction-enzyme-data.md` records.
 #
 # NEB pages are cited, never mirrored: their terms of use allow non-commercial individual
 # reference only. `docs/research/restriction-enzyme-data.md` records that verdict.
@@ -18,146 +24,175 @@ retrieved = "2026-09-12"
 title = "NEB EcoRI-HF (NEB #R3101) product page"
 url = "https://www.neb.com/en-us/products/r3101-ecori-hf"
 archived = "2025-12-30"
+retrieved = "2026-09-18"
 
 [sources.neb-r3156]
 title = "NEB SacI-HF (NEB #R3156) product page"
 url = "https://www.neb.com/en-us/products/r3156-saci-hf"
 archived = "2026-02-13"
+retrieved = "2026-09-18"
 
 [sources.neb-r3142]
 title = "NEB KpnI-HF (NEB #R3142) product page"
 url = "https://www.neb.com/en-us/products/r3142-kpni-hf"
 archived = "2025-12-31"
+retrieved = "2026-09-18"
 
 [sources.neb-r0141]
 title = "NEB SmaI (NEB #R0141) product page"
 url = "https://www.neb.com/en-us/products/r0141-smai"
 archived = "2025-10-07"
+retrieved = "2026-09-18"
 
 [sources.neb-r0180]
 title = "NEB XmaI (NEB #R0180) product page"
 url = "https://www.neb.com/en-us/products/r0180-xmai"
 archived = "2026-01-05"
+retrieved = "2026-09-18"
 
 [sources.neb-r3136]
 title = "NEB BamHI-HF (NEB #R3136) product page"
 url = "https://www.neb.com/en-us/products/r3136-bamhi-hf"
 archived = "2026-01-03"
+retrieved = "2026-09-18"
 
 [sources.neb-r0145]
 title = "NEB XbaI (NEB #R0145) product page"
 url = "https://www.neb.com/en-us/products/r0145-xbai"
 archived = "2026-02-21"
+retrieved = "2026-09-18"
 
 [sources.neb-r3138]
 title = "NEB SalI-HF (NEB #R3138) product page"
 url = "https://www.neb.com/en-us/products/r3138-sali-hf"
 archived = "2026-01-16"
+retrieved = "2026-09-18"
 
 [sources.neb-r3140]
 title = "NEB PstI-HF (NEB #R3140) product page"
 url = "https://www.neb.com/en-us/products/r3140-psti-hf"
 archived = "2026-01-12"
+retrieved = "2026-09-18"
 
 [sources.neb-r3642]
 title = "NEB SbfI-HF (NEB #R3642) product page"
 url = "https://www.neb.com/en-us/products/r3642-sbfi-hf"
 archived = "2026-02-15"
+retrieved = "2026-09-18"
 
 [sources.neb-r3182]
 title = "NEB SphI-HF (NEB #R3182) product page"
 url = "https://www.neb.com/en-us/products/r3182-sphi-hf"
 archived = "2026-01-13"
+retrieved = "2026-09-18"
 
 [sources.neb-r3104]
 title = "NEB HindIII-HF (NEB #R3104) product page"
 url = "https://www.neb.com/en-us/products/r3104-hindiii-hf"
 archived = "2026-01-09"
+retrieved = "2026-09-18"
 
 [sources.neb-r0111]
 title = "NEB NdeI (NEB #R0111) product page"
 url = "https://www.neb.com/en-us/products/r0111-ndei"
 archived = "2026-02-02"
+retrieved = "2026-09-18"
 
 [sources.neb-r3193]
 title = "NEB NcoI-HF (NEB #R3193) product page"
 url = "https://www.neb.com/en-us/products/r3193-ncoi-hf"
 archived = "2025-12-29"
+retrieved = "2026-09-18"
 
 [sources.neb-r0146]
 title = "NEB XhoI (NEB #R0146) product page"
 url = "https://www.neb.com/en-us/products/r0146-xhoi"
 archived = "2026-02-26"
+retrieved = "2026-09-18"
 
 [sources.neb-r3189]
 title = "NEB NotI-HF (NEB #R3189) product page"
 url = "https://www.neb.com/en-us/products/r3189-noti-hf"
 archived = "2026-01-07"
+retrieved = "2026-09-18"
 
 [sources.neb-r3733]
 title = "NEB BsaI-HFv2 (NEB #R3733) product page"
 url = "https://www.neb.com/en-us/products/r3733-bsai-hf-v2"
 archived = "2026-02-21"
+retrieved = "2026-09-18"
 
 [sources.neb-r0739]
 title = "NEB BsmBI-v2 (NEB #R0739) product page"
 url = "https://www.neb.com/en-us/products/r0739-bsmbi-v2"
 archived = "2026-08-14"
+retrieved = "2026-09-18"
 
 [sources.neb-r0734]
 title = "NEB Esp3I (NEB #R0734) product page"
 url = "https://www.neb.com/en-us/products/r0734-esp3i"
 archived = "2026-01-11"
+retrieved = "2026-09-18"
 
 [sources.neb-r3539]
 title = "NEB BbsI-HF (NEB #R3539) product page"
 url = "https://www.neb.com/en-us/products/r3539-bbsi-hf"
 archived = "2026-01-10"
+retrieved = "2026-09-18"
 
 [sources.neb-r0569]
 title = "NEB SapI (NEB #R0569) product page"
 url = "https://www.neb.com/en-us/products/r0569-sapi"
 archived = "2025-12-31"
+retrieved = "2026-09-18"
 
 [sources.neb-r0712]
 title = "NEB BspQI (NEB #R0712) product page"
 url = "https://www.neb.com/en-us/products/r0712-bspqi"
 archived = "2026-01-03"
+retrieved = "2026-09-18"
 
 [sources.neb-r0745]
 title = "NEB PaqCI (NEB #R0745) product page"
 url = "https://www.neb.com/en-us/products/r0745-paqci"
 archived = "2026-02-23"
+retrieved = "2026-09-18"
 
 [sources.neb-r0703]
 title = "NEB BtgZI (NEB #R0703) product page"
 url = "https://www.neb.com/en-us/products/r0703-btgzi"
 archived = "2025-12-31"
+retrieved = "2026-09-18"
 
 [sources.neb-r0629]
 title = "NEB SrfI (NEB #R0629) product page"
 url = "https://www.neb.com/en-us/products/r0629-srfi"
 archived = "2026-03-08"
+retrieved = "2026-09-18"
 
 [sources.neb-r0560]
 title = "NEB PmeI (NEB #R0560) product page"
 url = "https://www.neb.com/en-us/products/r0560-pmei"
 archived = "2026-02-01"
+retrieved = "2026-09-18"
 
 [sources.thermo-er1011]
 title = "Thermo Scientific BpiI (BbsI) (#ER1011) product page"
 url = "https://www.thermofisher.com/order/catalog/product/ER1011"
 archived = "2026-08-02"
+retrieved = "2026-09-18"
 
 [sources.thermo-er1581]
 title = "Thermo Scientific AarI (#ER1581) product page"
 url = "https://www.thermofisher.com/order/catalog/product/ER1581"
 archived = "2026-08-02"
+retrieved = "2026-09-18"
 
 [enzymes.EcoRI]
 commercial_name = "EcoRI-HF"
 catalog_number = "R3101"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -168,6 +203,7 @@ source = "neb-r3101"
 commercial_name = "SacI-HF"
 catalog_number = "R3156"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -179,6 +215,7 @@ source = "neb-r3156"
 commercial_name = "KpnI-HF"
 catalog_number = "R3142"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensitive" }
 source = "neb-r3142"
@@ -187,6 +224,7 @@ source = "neb-r3142"
 commercial_name = "SmaI"
 catalog_number = "R0141"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -197,6 +235,7 @@ source = "neb-r0141"
 commercial_name = "XmaI"
 catalog_number = "R0180"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -207,6 +246,7 @@ source = "neb-r0180"
 commercial_name = "BamHI-HF"
 catalog_number = "R3136"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensitive" }
 source = "neb-r3136"
@@ -215,6 +255,7 @@ source = "neb-r3136"
 commercial_name = "XbaI"
 catalog_number = "R0145"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -225,6 +266,7 @@ source = "neb-r0145"
 commercial_name = "SalI-HF"
 catalog_number = "R3138"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -235,6 +277,7 @@ source = "neb-r3138"
 commercial_name = "PstI-HF"
 catalog_number = "R3140"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensitive" }
 source = "neb-r3140"
@@ -243,6 +286,7 @@ source = "neb-r3140"
 commercial_name = "SbfI-HF"
 catalog_number = "R3642"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -253,6 +297,7 @@ source = "neb-r3642"
 commercial_name = "SphI-HF"
 catalog_number = "R3182"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -263,6 +308,7 @@ source = "neb-r3182"
 commercial_name = "HindIII-HF"
 catalog_number = "R3104"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -273,6 +319,7 @@ source = "neb-r3104"
 commercial_name = "NdeI"
 catalog_number = "R0111"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -283,6 +330,7 @@ source = "neb-r0111"
 commercial_name = "NcoI-HF"
 catalog_number = "R3193"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -293,6 +341,7 @@ source = "neb-r3193"
 commercial_name = "XhoI"
 catalog_number = "R0146"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -303,6 +352,7 @@ source = "neb-r0146"
 commercial_name = "NotI-HF"
 catalog_number = "R3189"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -313,6 +363,7 @@ source = "neb-r3189"
 commercial_name = "BsaI-HFv2"
 catalog_number = "R3733"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -325,6 +376,7 @@ source = "neb-r3733"
 commercial_name = "BsmBI-v2"
 catalog_number = "R0739"
 supplier = "New England Biolabs"
+supplied_buffer = "NEBuffer r3.1"
 incubation_celsius = 55
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -335,6 +387,7 @@ source = "neb-r0739"
 commercial_name = "Esp3I"
 catalog_number = "R0734"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -345,6 +398,7 @@ source = "neb-r0734"
 commercial_name = "BbsI-HF"
 catalog_number = "R3539"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -356,6 +410,7 @@ source = "neb-r3539"
 commercial_name = "BpiI"
 catalog_number = "ER1011"
 supplier = "Thermo Fisher Scientific"
+supplied_buffer = "Buffer G"
 incubation_celsius = 37
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensitive" }
 source = "thermo-er1011"
@@ -365,6 +420,7 @@ unverified = ["heat_inactivation_celsius", "heat_inactivation_minutes"]
 commercial_name = "SapI"
 catalog_number = "R0569"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -375,16 +431,20 @@ source = "neb-r0569"
 commercial_name = "BspQI"
 catalog_number = "R0712"
 supplier = "New England Biolabs"
+supplied_buffer = "NEBuffer r3.1"
 incubation_celsius = 50
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensitive" }
 source = "neb-r0712"
 
+# The page supplies PaqCI in rCutSmart and asks for the activator on top of it, which
+# `cloning.goldengate.bench` adds. The buffer is the buffer; the activator is not.
 [enzymes.PaqCI]
 commercial_name = "PaqCI"
 catalog_number = "R0745"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -396,6 +456,7 @@ source = "neb-r0745"
 commercial_name = "AarI"
 catalog_number = "ER1581"
 supplier = "Thermo Fisher Scientific"
+supplied_buffer = "Buffer AarI"
 incubation_celsius = 37
 methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "sensitive" }
 source = "thermo-er1581"
@@ -405,6 +466,7 @@ unverified = ["heat_inactivation_celsius", "heat_inactivation_minutes"]
 commercial_name = "BtgZI"
 catalog_number = "R0703"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 60
 heat_inactivation_celsius = 80
 heat_inactivation_minutes = 20
@@ -416,6 +478,7 @@ source = "neb-r0703"
 commercial_name = "SrfI"
 catalog_number = "R0629"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20
@@ -426,6 +489,7 @@ source = "neb-r0629"
 commercial_name = "PmeI"
 catalog_number = "R0560"
 supplier = "New England Biolabs"
+supplied_buffer = "rCutSmart Buffer"
 incubation_celsius = 37
 heat_inactivation_celsius = 65
 heat_inactivation_minutes = 20

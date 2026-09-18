@@ -1,8 +1,12 @@
-"""The rules a set of Type IIS overhangs is held to, and how well the set should ligate.
+"""The rules a method's cut ends are held to, and how well a set of overhangs should ligate.
 
-Any method that cuts with a Type IIS enzyme asks the same two questions, so they sit here below
-the pipelines rather than inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
+Every method that cuts DNA and joins it again asks the first question, and every method cutting
+with a Type IIS enzyme asks the other two, so all three sit here below the pipelines rather than
+inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
 
+- **Whether two ends anneal.** An end is its overhang and its end type together, which is what
+  `End` holds and `compatible` weighs. The bases alone do not decide it: a 5' overhang and a 3'
+  overhang spelling the same bases run the wrong way for each other.
 - **Which overhangs a set may hold.** A palindrome would let a fragment ligate to itself, a
   repeat would let two junctions swap, and a near-duplicate is what mis-ligates. `refusal`
   weighs one candidate against the set so far and names the rule that refuses it.
@@ -25,7 +29,7 @@ from functools import cache
 from importlib.resources import files
 from typing import Literal
 
-from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.sites import EnzymeLike, primer_tail
@@ -59,6 +63,75 @@ type RejectionRule = Literal[
 
 #: What a set of overhangs is scored against: the enzyme's own matrix, or a ligase's profile.
 type Scoring = LigationMatrix | LigaseProfile
+
+
+@dataclass(frozen=True, slots=True)
+class End:
+    """One cut end, as the rule joining two of them sees it.
+
+    Parameters
+    ----------
+    overhang
+        The bases the cut left single-stranded, written as the top strand reads them 5' to 3',
+        and ``""`` for a blunt end. `liulab_mbio.sites.Fragment` writes both of its ends that
+        way, so two ends that meet are compared as they are written. Stored upper-case.
+    end_type
+        Which strand carries those bases, or ``"blunt"``. `cut_by` reads it off the enzyme.
+
+    Raises
+    ------
+    ValueError
+        If a blunt end carries bases, or an overhanging one carries none.
+    """
+
+    overhang: str
+    end_type: EndType
+
+    def __post_init__(self) -> None:
+        """Upper-case the overhang and refuse an end type its own bases contradict."""
+        object.__setattr__(self, "overhang", self.overhang.upper())
+        if bool(self.overhang) == (self.end_type == "blunt"):
+            raise ValueError(
+                f"a {self.end_type} end cannot leave {self.overhang!r} single-stranded"
+            )
+
+    @classmethod
+    def cut_by(cls, enzyme: EnzymeLike, overhang: str) -> "End":
+        """Return the end `enzyme` leaves where its cut left `overhang` single-stranded.
+
+        Raises
+        ------
+        ValueError
+            If the overhang is not as long as the one this enzyme leaves.
+
+        Examples
+        --------
+        >>> End.cut_by("EcoRI", "AATT")
+        End(overhang='AATT', end_type="5'")
+        """
+        one = _one(enzyme)
+        if len(overhang) != one.overhang_length:
+            raise ValueError(
+                f"{one.name} leaves a {one.overhang_length}-base overhang, "
+                f"and {overhang!r} is {len(overhang)}"
+            )
+        return cls(overhang, one.end)
+
+
+def compatible(one: End, other: End) -> bool:
+    """Whether two cut ends anneal, so a ligase can seal them into one molecule.
+
+    Two blunt ends anneal. Two overhangs anneal when they spell the same bases and sit on the
+    same strand, which is why an end is its overhang and its end type together.
+
+    Examples
+    --------
+    >>> compatible(End.cut_by("SalI", "TCGA"), End.cut_by("XhoI", "TCGA"))
+    True
+    >>> compatible(End.cut_by("HindIII", "AGCT"), End.cut_by("SacI", "AGCT"))
+    False
+    """
+    return one.end_type == other.end_type and one.overhang == other.overhang
 
 
 @dataclass(frozen=True, slots=True)

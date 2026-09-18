@@ -12,12 +12,13 @@ from liulab_mbio.io import read_record
 from liulab_mbio.cloning.goldengate import plan_assembly
 ```
 
-Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
-something different in the two modules that define them. A
+A few names are spelled more than once across the package on purpose. `Check`, `Junction`,
+`Part` and `Files` each mean something different in every module that defines one. A
 `liulab_mbio.checks.Check` is the judged check, with the value it measured. A
-`liulab_mbio.protocol.Check` is how a protocol page shows one. A flat re-export would have to
-rename one of each pair, and would import every dependency the moment you imported the package.
-So the module path is the name.
+`liulab_mbio.protocol.Check` is how a protocol page shows one. A `Junction` or a `Files` belongs
+to the cloning method that defines it. A flat re-export would have to rename one of each, and
+would import every dependency the moment you imported the package. So the module path is the
+name.
 
 `liulab_mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
 `design` is **not** re-exported: reach it at `liulab_mbio.cloning.goldengate.design`.
@@ -81,10 +82,10 @@ someone already holds by the same rules. The same seed draws the same set again.
 
 ## Overhangs and ligation
 
-The rules a set of Type IIS overhangs is held to, and how well the set should ligate. Every
-cloning method that cuts with such an enzyme reads them here. `ligase` reads a fidelity matrix
-the user holds on their own disk: that archive's licence forbids redistribution, so none of it
-ships with the package.
+Whether two cut ends anneal, the rules a set of Type IIS overhangs is held to, and how well the
+set should ligate. Every cloning method reads them here. `ligase` reads a fidelity matrix the
+user holds on their own disk: that archive's licence forbids redistribution, so none of it ships
+with the package.
 
 ::: liulab_mbio.overhangs
 
@@ -226,6 +227,114 @@ because one reaction joins as many inserts as the overhangs allow.
 
 ::: liulab_mbio.cloning.goldengate.steps
 
+## Gibson assembly
+
+`plan_gibson` is the way in, and `Plan.write` puts the plasmid, the oligo sheet and the protocol
+in one directory. `design` chooses each junction's overlap and lays out the oligos that stitch a
+short part or bridge two fragments; `assembly` makes the parts and joins them; `bench` is every
+assembly product's own documented numbers, the reaction and the incubation; `oligos` and `steps`
+carry what the sheet and the protocol need.
+
+One name means two things in a plan here, so read it carefully. `Plan.product` is the
+**assembly product** — the kit the reaction is run with, which sets the overlap rule, the
+reaction, the incubation and the fragment count. The plasmid the assembly makes is
+`Plan.plasmid`. Golden Gate's `Plan.product` is the record, so the two plans differ here.
+
+::: liulab_mbio.cloning.gibson
+    options:
+      members: false
+
+::: liulab_mbio.cloning.gibson.plan
+
+::: liulab_mbio.cloning.gibson.design
+
+::: liulab_mbio.cloning.gibson.assembly
+
+::: liulab_mbio.cloning.gibson.bench
+
+::: liulab_mbio.cloning.gibson.oligos
+
+::: liulab_mbio.cloning.gibson.steps
+
+## Restriction and ligation
+
+`plan_restriction` is the way in, and `Plan.write` puts the same four files in one directory.
+The second record it takes is the insert, or the plasmid the insert is cut out of, and what that
+record carries is what picks the route: a record holding a site for each enzyme is cut, and one
+holding neither is amplified with the sites on its primer tails. The modules under it are its
+steps. `design` chooses the enzyme pair and says why every other pair was refused, `digest` cuts
+a record and says which enzyme left each end, and `amplify` is the route through a PCR.
+`ligation` joins the pieces and reads off what each junction now spells. `oligos` says what each
+designed oligo is for, `bench` holds this method's own numbers with the source of each, and
+`verdicts` the checks a plan carries — including the one nothing sourced can judge, which comes
+back with no verdict rather than a pass. `steps` writes the protocol.
+
+Nothing here is re-exported above the method, and only `plan_restriction` and its result types
+are re-exported from `liulab_mbio.cloning.restriction` itself.
+
+::: liulab_mbio.cloning.restriction
+    options:
+      members: false
+
+::: liulab_mbio.cloning.restriction.plan
+
+::: liulab_mbio.cloning.restriction.design
+
+::: liulab_mbio.cloning.restriction.digest
+
+::: liulab_mbio.cloning.restriction.amplify
+
+::: liulab_mbio.cloning.restriction.ligation
+
+::: liulab_mbio.cloning.restriction.oligos
+
+::: liulab_mbio.cloning.restriction.bench
+
+::: liulab_mbio.cloning.restriction.verdicts
+
+::: liulab_mbio.cloning.restriction.steps
+
+## Gateway
+
+`plan_gateway` is the way in, and `Plan.write` puts the expression clone, the oligo sheet and
+the protocol in one directory, with the entry clone beside them where a BP reaction was planned.
+So a plan writes four files, or five where BP ran. The first record it takes is an entry clone,
+or an insert carrying att ends when `donor` is given, or a plain insert when `amplify` is set as
+well. Nothing is cut and nothing is ligated here: two att sites recombine, and the reaction
+rewrites the sites themselves.
+
+The modules under it are its steps. `att` owns the eight att sequences, which one pairs with
+which, and the arithmetic a junction follows. It is not `liulab_mbio.sites`, which means enzyme
+cut sites. `design` owns the attB primer tail and the PCR that puts it on an insert.
+`recombination` simulates one reaction on two records. `checks` holds the verdicts that span
+both reactions — including the one nothing sourced can judge, which comes back with no verdict
+rather than a pass. `oligos` says what each designed oligo is for, `bench` holds this method's
+own numbers with the source of each, and `steps` writes the protocol.
+
+Two names here repay a second look. A `Junction` is the att site one reaction wrote. Its 25
+bases straddle the boundary between the two records that made the product, so where the moved
+DNA starts and stops is `Recombination.boundaries` rather than the junction's own span.
+
+::: liulab_mbio.cloning.gateway
+    options:
+      members: false
+
+::: liulab_mbio.cloning.gateway.plan
+
+::: liulab_mbio.cloning.gateway.att
+
+::: liulab_mbio.cloning.gateway.design
+
+::: liulab_mbio.cloning.gateway.recombination
+
+::: liulab_mbio.cloning.gateway.checks
+
+::: liulab_mbio.cloning.gateway.oligos
+
+::: liulab_mbio.cloning.gateway.bench
+
+::: liulab_mbio.cloning.gateway.steps
+
 ## Libraries
 
 `plan_library` is the way in. It builds a barcoded library of every combination of the part
@@ -273,6 +382,12 @@ spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.cli
 
 ::: liulab_mbio.cloning.goldengate.cli
+
+::: liulab_mbio.cloning.gibson.cli
+
+::: liulab_mbio.cloning.restriction.cli
+
+::: liulab_mbio.cloning.gateway.cli
 
 ::: liulab_mbio.library.cli
 

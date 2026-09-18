@@ -82,6 +82,8 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .is-warn .verdict { color: var(--caution); }
 .is-fail { background: var(--fail-soft); border-color: var(--fail); }
 .is-fail .verdict { color: var(--fail); }
+.is-none { border-style: dashed; }
+.is-none .verdict { color: var(--muted); }
 .check-detail { font-size: 0.9rem; color: var(--muted); margin: 0 0 0.3rem; }
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0; }

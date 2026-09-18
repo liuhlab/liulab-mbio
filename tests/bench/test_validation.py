@@ -8,6 +8,11 @@ import pytest
 from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
 from liulab_mbio.bench.validation import (
+    COLONY_ALLOWANCE,
+    CORRECT_CLONE,
+    EMPTY_CLONE,
+    JUNCTION_OFFSET,
+    REVERSED_CLONE,
     SANGER_ALLOWANCE,
     SANGER_FLANK,
     ColonyCheck,
@@ -65,6 +70,19 @@ def test_two_flanking_primers_cannot_tell_the_insert_round_the_other_way(
     check = colony_pcr_check(product, junctions, vector=puc19, primers=(M13_FORWARD, M13_REVERSE))
     assert bands(check, "Reversed insert") == bands(check, "Correct clone")
     assert not check.tells_orientation
+
+
+def test_a_clone_that_cannot_turn_round_simulates_no_reversed_insert(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> None:
+    pair = (M13_FORWARD, M13_REVERSE)
+    every = colony_pcr_check(product, junctions, vector=puc19, primers=pair)
+    directional = colony_pcr_check(product, junctions, vector=puc19, primers=pair, reversible=False)
+
+    assert [clone.name for clone in every.clones] == [CORRECT_CLONE, EMPTY_CLONE, REVERSED_CLONE]
+    assert directional.clones == every.clones[:2]
+    assert not directional.reversed_clones
+    assert [lane.label for lane in directional.gel.lanes] == [CORRECT_CLONE, EMPTY_CLONE]
 
 
 def test_a_junction_primer_tells_orientation_when_the_flanks_differ(
@@ -187,3 +205,21 @@ def test_sanger_primers_read_from_outside_the_whole_inserted_span(
     forward, reverse = sanger_primers(product, three_junctions)
     assert forward.read_bp == forward.distance_bp + len(gfp)
     assert reverse.read_bp == reverse.distance_bp + len(gfp)
+
+
+def test_an_insert_too_short_for_a_junction_primer_loses_it_rather_than_refusing_the_check(
+    product: SequenceRecord, puc19: SequenceRecord
+) -> None:
+    # A linker or a tag has no room to anneal a primer 100 bases inside it, whatever made it.
+    short = (MCS[0], MCS[0] + JUNCTION_OFFSET - COLONY_ALLOWANCE, MCS[0] + 717)
+    check = colony_pcr_check(product, short, vector=puc19, flank=60, insert_primer=True)
+    assert [primer.name for primer in check.primers] == [
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse 2",
+    ]
+    # The flanking pair still reads across it, and the gel says plainly that it cannot tell it
+    # turned round rather than claiming a lane it does not have.
+    assert bands(check, "Correct clone") == bands(check, "Reversed insert 1")
+    assert bands(check, "Reversed insert 2") != bands(check, "Correct clone")
+    assert not check.tells_orientation

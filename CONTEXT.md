@@ -160,6 +160,22 @@ further along than the top, 3' when it is cut nearer, and blunt when neither str
 Golden Gate joins two fragments by matching overhangs.
 _Avoid_: sticky end, extension
 
+### Compatible ends
+
+Two cut ends a ligase can join: both blunt, or overhangs spelling the same bases on the same
+strand. The bases alone do not decide it, because a 5' overhang and a 3' overhang spelling the
+same bases run the wrong way for each other. So an end is its overhang and its end type
+together, and the end type comes from the enzyme that made the cut.
+_Avoid_: matching ends, compatible overhangs
+
+### Dephosphorylation
+
+Taking the 5' phosphates off a cut vector so it cannot close on itself. A ligase seals a join
+only where one of the two ends carries a phosphate, so a backbone whose own two ends are
+compatible religates empty unless its phosphates are taken away; the insert keeps its own, and
+those are what the ligase seals. It is needed only where those two ends can meet.
+_Avoid_: phosphatase treatment, vector prep, CIP
+
 ### Type IIS
 
 A restriction enzyme that cuts outside its recognition site, so the overhang it leaves is
@@ -193,6 +209,24 @@ One piece a digest leaves, bounded by two cuts in the top strand and carrying an
 each end. Its length is the top strand's, which is what a gel measures. An uncut circular
 record leaves none, nothing having been cut; an uncut linear one is a single fragment already.
 _Avoid_: band, piece
+
+### Double digest
+
+Cutting one record with two enzymes in the same tube rather than in two rounds, which saves an
+afternoon and a clean-up between them. It holds only where both enzymes keep enough activity in
+one buffer and want the same temperature. This package judges the buffer from the one each
+supplier sells that product in: the same buffer for both is an answer, and anything else carries
+no verdict rather than a pass, because how much activity an enzyme keeps in another's buffer is
+a measurement nothing shippable states.
+_Avoid_: dual digest, two-enzyme digest
+
+### Diagnostic digest
+
+A digest run on a miniprep to say whether it carries the insert, read as band sizes on a gel
+rather than as sequence. It is the check before sequencing rather than a substitute for it, and
+it is worth running only where a correct clone and the plasmid it could have come from give
+bands a gel can tell apart.
+_Avoid_: test digest, check digest, analytical digest
 
 ### Domestication
 
@@ -233,8 +267,9 @@ _Avoid_: diff, changelog, summary
 How an experiment joins its fragments into one plasmid: the mechanism, the enzymes it needs, and
 what it leaves at each junction. It is chosen for a job — how many fragments join, whether the
 junction may gain bases, what the parts already carry, speed and cost — rather than preferred in
-general. Golden Gate is the one this package plans; a library built in rounds is a pipeline over
-a method, not a method of its own.
+general. Golden Gate, Gibson assembly, classical restriction and ligation and Gateway are the
+ones this package plans, the last of them joining nothing — its att sites recombine; a library
+built in rounds is a pipeline over a method, not a method of its own.
 _Avoid_: cloning strategy, technique, approach
 
 ### Molar ratio
@@ -246,9 +281,45 @@ _Avoid_: insert ratio, stoichiometry
 
 ### Junction
 
-Where two fragments meet in an assembled product: the four bases, three for SapI, that one
-overhang paired with its match. Validation reads across it.
+Where two fragments meet in an assembled product: in Golden Gate the four bases, three for SapI,
+that one overhang paired with its match; in Gibson assembly the overlap the two share; in
+restriction and ligation the recognition site the two cut ends came from, which the join puts
+back; in Gateway the whole att site the recombination wrote, whose 25 bases straddle the
+boundary, so where the insert starts is not where the junction does. Validation reads across it.
 _Avoid_: joint, seam, fusion site
+
+### Overlap
+
+The bases two fragments both spell at a Gibson junction. One of the two already spells them and
+the other carries them as a primer tail, so the junction adds nothing. Its length is set per
+assembly product and per fragment count, never per fragment length, and it is lengthened inside
+that band until its melting temperature reaches the product's floor.
+_Avoid_: homology arm, overhang, homology region
+
+### Assembly product
+
+The kit a Gibson reaction is run with, such as NEBuilder HiFi. It is the row of data that
+carries the overlap band, the reaction, the incubation, the molar ratio and the fragment-count
+limit, each with the citation it came from. Not the **product**, which is the plasmid.
+_Avoid_: master mix, kit, enzyme mix
+
+### Oligo stitching
+
+Making a short part out of overlapping oligos that tile both its strands, assembled in the same
+reaction rather than amplified or ordered from a synthesis vendor. It suits a linker, a tag or a
+short promoter. The oligo count, the oligo length and the overlap between neighbours are the
+research note's, and a part too long for the oligos the note allows is refused rather than
+stitched out of more.
+_Avoid_: oligo annealing, oligo assembly, gene synthesis
+
+### Bridging oligo
+
+One oligo joining two fragments that share no homology at all, carrying homology to the end of
+each, so neither needs a tailed primer. An amplicon made for something else goes in as it is.
+It primes nothing, so no primer threshold judges it and its row on the order sheet carries no
+verdict.
+_Avoid_: splint, stitching oligonucleotide (a vendor's word for this, not for **oligo
+stitching**)
 
 ### End soak
 
@@ -268,6 +339,63 @@ A clone carrying its insert the other way round. Two vector primers flanking the
 the same band as the correct clone, so a gel separates the two only with a third primer inside
 the insert.
 _Avoid_: flipped clone, wrong orientation
+
+### att site
+
+One of the eight sites Gateway recombines: attB, attP, attL or attR, each numbered 1 or 2.
+Twenty-five bases recombine, and the 7 bp overlap inside them is what decides which site pairs
+with which. A reaction rewrites the pair it consumes — attB with attP gives attL and attR, attL
+with attR gives back attB and attP — so the sites are the mechanism and not a scar left by it.
+One is found in a record by searching for it, never by matching a shipped sequence, because a
+vendor's own sites drift between products.
+_Avoid_: recombination site, att sequence, recombination region
+
+### Entry clone
+
+The plasmid carrying an insert between attL1 and attL2: what a BP reaction makes, and what an LR
+reaction spends. It is the record a Gateway job reuses, because one entry clone feeds every
+destination vector after it. A plan given one plans no BP reaction; a plan that makes one writes
+it as a file of its own.
+_Avoid_: donor clone, middle vector, pENTR
+
+### Destination vector
+
+The plasmid an LR reaction moves an insert into: attR1 and attR2 around a ccdB cassette, with
+the promoter, tag and marker the finished clone is wanted for. It is the user's own file. This
+package ships no vector catalogue, and reads a vector's sites out of the bases it is handed.
+_Avoid_: expression vector, target vector, pDEST
+
+### Donor vector
+
+The plasmid a BP reaction moves an insert into: attP1 and attP2 around a ccdB cassette, and the
+backbone the entry clone then carries. It is the user's own file, read for its sites the way a
+destination vector is. A plan takes one only where it was handed an insert rather than an entry
+clone, because a plan given an entry clone runs no BP reaction.
+_Avoid_: entry vector, BP vector, pDONR
+
+### BP reaction
+
+The reaction making an entry clone: an insert with an att site on each end recombines with a
+donor vector, the plasmid holding attP1 and attP2 around a ccdB cassette. The insert gains attL
+sites and the cassette leaves in the by-product. Its entry clone is grown up and purified before
+an LR reaction takes it, never chained straight on.
+_Avoid_: BP cloning, entry reaction, donor reaction
+
+### LR reaction
+
+The reaction making the expression clone: an entry clone recombines with a destination vector,
+the insert gains attB sites, and that vector's ccdB cassette leaves in the by-product. Every
+Gateway plan runs one, and the BP reaction before it only where no entry clone was handed in.
+_Avoid_: LR cloning, expression reaction, destination reaction
+
+### ccdB counter-selection
+
+What keeps a Gateway plate clean. A donor or destination vector carries ccdB, which kills an
+ordinary strain, so only a clone that has traded the cassette away grows. It decides two strains
+rather than one: the vectors are grown in a strain resistant to CcdB, and the clone is selected
+in a strain CcdB kills. A strain carrying F′ cancels the whole thing, because the episome's
+ccdA neutralises CcdB.
+_Avoid_: negative selection, ccdB selection, suicide gene
 
 ### Overhang set
 
@@ -350,7 +478,8 @@ _Avoid_: joining, annealing, sealing
 
 The circular plasmid an assembly makes: every part's features carried to their new coordinates,
 its primers annotated where they anneal, and each junction marked. It keeps the vector's origin,
-so the vector's own coordinates still read true and no junction sits at base zero.
+so the vector's own coordinates still read true and no junction sits at base zero. A Gibson plan
+holds it as `Plan.plasmid`, because `Plan.product` there is the **assembly product**.
 _Avoid_: construct, output, final plasmid
 
 ### Assembly plan

@@ -43,6 +43,9 @@ class Enzyme:
         site cut elsewhere, as XmaI cuts SmaI's — are not among them.
     commercial_name, catalog_number, supplier
         The product the other supplier fields describe, such as ``"BsaI-HFv2"``, ``"R3733"``.
+    supplied_buffer
+        The buffer that product is sold in, such as ``"rCutSmart Buffer"``. A property of the
+        product: two products of one enzyme may differ. ``None`` where no source states one.
     incubation_celsius
         The supplier's digestion temperature, which is not always a protocol's temperature.
     heat_inactivation_celsius, heat_inactivation_minutes
@@ -68,6 +71,7 @@ class Enzyme:
     commercial_name: str | None = None
     catalog_number: str | None = None
     supplier: str | None = None
+    supplied_buffer: str | None = None
     incubation_celsius: int | None = None
     heat_inactivation_celsius: int | None = None
     heat_inactivation_minutes: int | None = None
@@ -190,6 +194,7 @@ def _shipped() -> tuple[tuple[Enzyme, ...], Mapping[str, tuple[Enzyme, ...]]]:
             commercial_name=entry["commercial_name"],
             catalog_number=entry["catalog_number"],
             supplier=entry["supplier"],
+            supplied_buffer=entry["supplied_buffer"],
             incubation_celsius=entry["incubation_celsius"],
             heat_inactivation_celsius=entry["heat_inactivation_celsius"],
             heat_inactivation_minutes=entry["heat_inactivation_minutes"],

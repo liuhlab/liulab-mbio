@@ -101,17 +101,27 @@ class ColonyCheck:
         )
 
     @property
+    def reversed_clones(self) -> tuple[Clone, ...]:
+        """The candidates carrying an insert the other way round, where any can exist.
+
+        None at all where the ends the inserts came from cannot let one turn round, and then
+        orientation is not a question this screen has to answer.
+        """
+        return tuple(clone for clone in self.clones if clone.name.startswith(REVERSED_CLONE))
+
+    @property
     def tells_orientation(self) -> bool:
         """Whether the gel separates every reversed insert from the correct clone.
 
         Two vector primers flanking the inserts never do: they amplify them whichever way round
         they sit. A junction primer does, unless the two vector primers happen to lie the same
-        distance from their own junctions.
+        distance from their own junctions. False where there is no reversed candidate at all;
+        `reversed_clones` is what to ask whether one could exist.
         """
         correct = next(
             (clone.bands_bp for clone in self.clones if clone.name == CORRECT_CLONE), None
         )
-        turned = [clone.bands_bp for clone in self.clones if clone.name.startswith(REVERSED_CLONE)]
+        turned = [clone.bands_bp for clone in self.reversed_clones]
         return bool(turned) and all(lane != correct for lane in turned)
 
 
@@ -122,6 +132,7 @@ def colony_pcr_check(
     vector: SequenceRecord,
     primers: tuple[Primer, ...] | None = None,
     insert_primer: bool = False,
+    reversible: bool = True,
     flank: int = COLONY_FLANK,
     reverse_flank: int | None = None,
     junction_offset: int = JUNCTION_OFFSET,
@@ -142,12 +153,21 @@ def colony_pcr_check(
     Each candidate plasmid is amplified on its own, so the bands are simulated rather than
     derived.
 
+    **An insert with fewer bases than the offset and the allowance together has no room for a
+    junction primer**, and gets none: a linker or a tag is too short to anneal one inside, and
+    that is a fact about its length rather than about how it was made. The flanking pair still
+    reads across it, and `tells_orientation` then says the gel cannot tell it turned round.
+
+    `reversible` is a different question: whether an insert can go in the other way round at all,
+    which only the method joining the ends knows. Where it cannot -- a directional clone whose
+    two ends differ -- no reversed candidate is built, because that plasmid cannot exist and a
+    lane for it would be a band nobody can see.
+
     Raises
     ------
     ValueError
         If the junctions are not two or more separate positions inside the product, if fewer
-        than two primers are given, if an insert is too short for a junction primer, or if the
-        primers amplify nothing at all.
+        than two primers are given, or if the primers amplify nothing at all.
     """
     places = _junction_span(junctions, len(product))
     start, end = places[0], places[-1]
@@ -163,15 +183,17 @@ def colony_pcr_check(
             for name, (first, last) in zip(
                 _numbered(_JUNCTION_PRIMER, inserts), inserts, strict=True
             )
+            if last - first > junction_offset + COLONY_ALLOWANCE
         )
     if len(chosen) < 2:
         raise ValueError("a colony PCR needs at least two primers")
     placed = tuple(chosen)
     candidates = [(CORRECT_CLONE, product), (EMPTY_CLONE, vector)]
-    candidates += [
-        (name, _reversed_insert(product, first, last))
-        for name, (first, last) in zip(_numbered(REVERSED_CLONE, inserts), inserts, strict=True)
-    ]
+    if reversible:
+        candidates += [
+            (name, _reversed_insert(product, first, last))
+            for name, (first, last) in zip(_numbered(REVERSED_CLONE, inserts), inserts, strict=True)
+        ]
     clones = tuple(Clone(name, _bands(placed, record, thresholds)) for name, record in candidates)
     sizes = tuple(sorted({bp for clone in clones for bp in clone.bands_bp}))
     if not sizes:
@@ -335,9 +357,6 @@ def _junction_primer(
     thresholds: Thresholds,
     name: str = _JUNCTION_PRIMER,
 ) -> Primer:
-    needed = offset + COLONY_ALLOWANCE
-    if end - start <= needed:
-        raise ValueError(f"an insert is shorter than the {needed} bases a junction primer needs")
     return design_primer(
         product,
         start + offset,

@@ -3,13 +3,15 @@ name: molecular-cloning
 description: >-
   Choose the cloning method a job calls for and plan it with `liulab_mbio`, weighing how many
   fragments are joined, whether the junction may gain bases, what the parts already carry, and
-  what the method costs in time and money. Golden Gate is planned end to end from a vector and
-  its insert sequence files: the Type IIS enzyme, the whole overhang set, the PCR primers, the
-  simulated product, the colony PCR that validates every junction, and an interactive HTML bench
-  protocol. Use when someone wants to clone, insert, subclone or join sequences into a plasmid,
-  asks which cloning method fits their fragments, asks for primers with BsaI, BsmBI, BbsI, PaqCI
-  or SapI tails, wants a ready-to-run cloning protocol from sequence files, or names a method
-  such as Gibson, Gateway, TOPO, ligation-independent or restriction and ligation.
+  what the method costs in time and money. Golden Gate, Gibson assembly, classical restriction
+  and ligation and Gateway cloning are planned end to end from the user's own sequence files:
+  the enzyme, the pair, the kit or the att sites, every junction's overhang, overlap, restored
+  site or recombined site, the PCR primers, the simulated product, the colony PCR that validates
+  every junction, and an interactive HTML bench protocol. Use when someone wants to clone,
+  insert, subclone or join sequences into a plasmid, asks which cloning method fits their
+  fragments, asks for primers with BsaI, BsmBI, BbsI, PaqCI or SapI tails, wants a ready-to-run
+  cloning protocol from sequence files, or names a method such as Gibson, Gateway, TOPO,
+  ligation-independent or restriction and ligation.
 ---
 
 # Molecular cloning
@@ -23,37 +25,39 @@ the detail, and you read it only after the choice is made.
 pixi run liulab_mbio cloning --help
 ```
 
-That list is the supported set. Read it off the command rather than off prose, which ages.
-Today it holds one method:
+That list is the supported set. Read it off the command rather than off prose, which ages. Each
+method planned here has its own file, read only once you have chosen it:
 
 | Method | Read next |
 | --- | --- |
 | Golden Gate | `golden-gate/METHOD.md` |
+| Gibson assembly | `gibson/METHOD.md` |
+| Restriction and ligation | `restriction-ligation/METHOD.md` |
+| Gateway | `gateway/METHOD.md` |
 
 ## Choosing
 
-Five things decide a cloning method. Ask the user only the ones their files do not answer.
+Five things decide a cloning method, one column each. Ask the user only the ones their files do
+not answer.
 
-| What decides it | Golden Gate fits when |
-| --- | --- |
-| **How many fragments** join | one insert or several, joined in one reaction in the order you give them |
-| **Whether the junction may gain bases** | the junction can spell its own overhang, so the product reads as the user wrote it. `--in-frame` holds every junction on a codon boundary for a fusion |
-| **What the parts carry** | one Type IIS enzyme reads no site in any part. When none is free, the plan reports which sites a synonymous codon change could reach |
-| **Speed** | one pot, one day: amplify the parts, cut and ligate together, transform |
-| **Cost** | one tailed primer pair per part, one enzyme and a ligase — no kit and no synthesised homology arms |
+| Method | How many fragments | Whether the junction may gain bases | What the parts carry | Speed | Cost |
+| --- | --- | --- | --- | --- | --- |
+| **Golden Gate** | one insert or several, in one reaction in the order you give them | the junction spells its own overhang, so the product reads as the user wrote it; `--in-frame` holds every junction on a codon boundary for a fusion | one Type IIS enzyme has to read no site in any part. Where none is free, the plan reports which sites a synonymous codon change could reach | one pot, one day: amplify the parts, cut and ligate together, transform | one tailed primer pair per part, one enzyme and a ligase — no kit |
+| **Gibson assembly** | one to five inserts, in one reaction in the order you give them; above the kit's documented count it warns | the junction spells only what the two parts spell, so nothing is added and a fusion stays in whatever frame the parts are in | nothing is cut, so a part carrying a site for every Type IIS enzyme still goes in as it is | one pot, one day: amplify the parts, one 15 to 60 minute incubation, transform | one kit and one tailed primer pair per part; a short part can be stitched from oligos instead |
+| **Restriction and ligation** | one insert into one vector | the junction spells the recognition site the two ends came from, so the product gains those bases; the plan says whether they hold the reading frame | the vector has to carry the two sites where the insert goes, and neither enzyme may read a site inside the insert. Where none is free, the plan reports which sites a synonymous codon change could reach | two days: cut both, gel purify, ligate, transform | one enzyme pair and a ligase — no kit, and no primer at all where the insert is cut out of a plasmid |
+| **Gateway** | one insert into one destination vector; more than one fragment is MultiSite Gateway and is not planned | each junction gains a whole 25 bp att site, and a fusion reads through it, so `--fusion` judges the frame at that end | nothing is cut, so a part carrying any enzyme's site goes in as it is; an att site inside the insert is refused, and the donor and destination vectors are the user's own files, recognised by the att sites found in them | about four days: BP, plate, miniprep the entry clone, LR, plate — one reaction and one plate where the entry clone is already in hand | both vectors and two enzyme mixes, which you buy; no primer at all where the insert already carries its att sites, and one entry clone feeds every destination after it |
 
-Where the answers rule Golden Gate out, stop rather than reaching for another mechanism.
+Where the answers rule out every row, stop rather than reaching for another mechanism.
 
 ## Say so and stop, rather than improvise
 
-TOPO cloning, ligation-independent cloning, yeast-mediated assembly, Gibson assembly, Gateway
-cloning and classical restriction and ligation are all real methods this package does not plan.
-Nothing here designs their junctions, sizes their reactions or checks their products, so a
-protocol written for one would be prose that nothing measured — which is the one thing a plan
-from this package is not.
+TOPO cloning, ligation-independent cloning, yeast-mediated assembly and MultiSite Gateway are all
+real methods this package does not plan. Nothing here designs their junctions, sizes their
+reactions or checks their products, so a protocol written for one would be prose that nothing
+measured — which is the one thing a plan from this package is not.
 
-Tell the user which method they asked for, that it is not supported here, and what is. Where
-Golden Gate would do the same job, offer it and say what changes for them.
+Tell the user which method they asked for, that it is not supported here, and what is. Where a
+method in the table above would do the same job, offer it and say what changes for them.
 
 ## Every combination of two or more lists is a library
 

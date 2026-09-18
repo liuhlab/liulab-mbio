@@ -1,9 +1,14 @@
 """The primer order sheet: every oligo a design asks for, as a table to order from.
 
-`primer_sheet` writes it as a file, and `oligo_row` makes one row of a protocol's own sheet.
+`primer_sheet` writes it as a file, and `oligo_row` and `ordered_row` make one row of a
+protocol's own sheet. Not every oligo a design asks for is a primer: one that anneals to another
+fragment rather than to a template primes nothing, so no threshold in
+`liulab_mbio.primers.thresholds` judges it. `OrderedOligo` is that oligo, and its row carries no
+verdict rather than a pass nothing measured.
 """
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.primers.evaluation import PrimerReport
@@ -14,11 +19,35 @@ from liulab_mbio.protocol.model import Check, Oligo
 SHEET_COLUMNS = ("name", "sequence", "length", "tm_c")
 
 
-def primer_sheet(reports: Sequence[PrimerReport]) -> str:
+@dataclass(frozen=True, slots=True)
+class OrderedOligo:
+    """One oligo to order that primes nothing, so no sourced threshold judges it.
+
+    Parameters
+    ----------
+    name, sequence
+        What to order it under, and its bases 5' to 3'.
+    purpose
+        What it is for.
+    stock
+        The concentration its source asks for it at.
+    note
+        Its purity, and why the row carries no verdict.
+    """
+
+    name: str
+    sequence: str
+    purpose: str = ""
+    stock: str = ""
+    note: str = ""
+
+
+def primer_sheet(reports: Sequence[PrimerReport], *, oligos: Sequence[OrderedOligo] = ()) -> str:
     """Return these oligos as a tab-separated sheet, one row each, in the order given.
 
     The columns are `SHEET_COLUMNS`: the name to order it under, the sequence 5' to 3', its
-    length, and the Tm of the part that anneals.
+    length, and the Tm of the part that anneals. `oligos` are the ones that prime nothing, and
+    they follow the primers with their melting temperature column left empty.
     """
     rows = ["\t".join(SHEET_COLUMNS)]
     for report in reports:
@@ -33,6 +62,9 @@ def primer_sheet(reports: Sequence[PrimerReport]) -> str:
                 )
             )
         )
+    rows.extend(
+        "\t".join((oligo.name, oligo.sequence, str(len(oligo.sequence)), "")) for oligo in oligos
+    )
     return "\n".join(rows) + "\n"
 
 
@@ -56,6 +88,21 @@ def oligo_row(report: PrimerReport, *, purpose: str, thresholds: Thresholds) -> 
         stock=f"{PRIMER_STOCK_UM:g} µM",
         status=report.status,
         checks=_fired(report, thresholds),
+    )
+
+
+def ordered_row(oligo: OrderedOligo) -> Oligo:
+    """Return one oligo that primes nothing as a row of a protocol's order sheet.
+
+    The row carries no verdict and says in its note why, so a silence is never read as a pass.
+    """
+    return Oligo(
+        oligo.name,
+        oligo.sequence,
+        purpose=oligo.purpose,
+        stock=oligo.stock,
+        note=oligo.note,
+        status=None,
     )
 
 

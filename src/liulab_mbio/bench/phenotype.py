@@ -4,18 +4,38 @@ What drives the inserts, whether anything should be translated, and how a plate 
 protocol states these from the features rather than a person asserting them.
 """
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
 from liulab_mbio.sequence import Feature, SequenceRecord, Strand
 
-#: Selection markers this package can name an antibiotic for, keyed by the feature name lowered.
-#: pUC19's is the one `docs/research/golden-gate-assembly.md` §8 states a plate recipe for; a
-#: marker absent from here is named rather than translated.
+#: Selection markers this package can name an antibiotic for, keyed by the feature name lowered,
+#: each from the guide that states what its own vectors are plated on. A marker absent from here
+#: is named rather than translated.
 SELECTION: Mapping[str, str] = {
+    # `docs/research/golden-gate-assembly.md` §8, which states pUC19's plate recipe.
     "ampr": "ampicillin or carbenicillin",
     "bla": "ampicillin or carbenicillin",
+    # `docs/research/gateway-cloning.md` §13: MAN0000291 page 8 for the donor vectors'
+    # kanamycin and Zeocin, MAN0000470 page 33 for pCR8/GW/TOPO's spectinomycin.
+    "kanr": "kanamycin",
+    "zeor": "Zeocin",
+    "bleor": "Zeocin",
+    "specr": "spectinomycin",
+    "smr": "spectinomycin or streptomycin",
 }
+
+#: What a plate is poured on where LB is not what the antibiotic needs, keyed by what `SELECTION`
+#: names. Zeocin is the one: "for Zeocin to be active, the salt concentration of the bacterial
+#: medium must remain low (<90 mM) and the pH must be 7.5" (MAN0000291 page 8;
+#: `docs/research/gateway-cloning.md` §13).
+MEDIUM: Mapping[str, str] = {"Zeocin": "Low Salt LB"}
+
+#: What a resistance gene is called where `SELECTION` does not know it: a drug and an ``R``, the
+#: way SnapGene's common features name every one of them. A marker matching this is named on the
+#: page rather than translated into a drug nobody cited.
+_MARKER_RE = re.compile(r"^[a-z]{2,6}r$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +59,8 @@ class Phenotype:
     reporter
         The vector coding sequence the insertion interrupts, or ``None``.
     marker
-        The vector's selection marker, or ``None`` when it annotates none this package knows.
+        The vector's selection marker, outside the span the reaction replaces, or ``None`` when
+        it annotates none.
     """
 
     insert: tuple[int, int]
@@ -71,6 +92,11 @@ class Phenotype:
         if self.marker is None:
             return ""
         return SELECTION.get(self.marker.name.lower(), "")
+
+    @property
+    def medium(self) -> str:
+        """What to pour the plate on, which is LB unless the antibiotic needs another."""
+        return MEDIUM.get(self.antibiotic, "LB")
 
 
 def read_phenotype(
@@ -104,8 +130,36 @@ def read_phenotype(
         promoter is not None and coding is not None and promoter.strand == coding.strand,
         _ribosome_binding_site(product, promoter, first, last),
         _interrupted(vector, span),
-        _marker(vector),
+        selection_marker(vector, outside=span),
     )
+
+
+def selection_marker(
+    record: SequenceRecord, *, outside: tuple[int, int] | None = None
+) -> Feature | None:
+    """Return the record's selection marker, or ``None`` when it annotates none.
+
+    A coding sequence `SELECTION` knows, or one named for a resistance gene the way SnapGene's
+    common features are. A marker inside `outside` is passed over: a cassette the reaction
+    throws away carries its own, and that is not what a plate selects.
+    """
+    start, end = outside if outside is not None else (0, 0)
+    return next(
+        (
+            feature
+            for feature in record.features
+            if feature.type == "CDS"
+            and _is_marker(feature.name)
+            and not any(segment.start < end and start < segment.end for segment in feature.segments)
+        ),
+        None,
+    )
+
+
+def _is_marker(name: str) -> bool:
+    """Whether a coding sequence of this name is a selection marker."""
+    lowered = name.lower()
+    return lowered in SELECTION or _MARKER_RE.match(lowered) is not None
 
 
 def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
@@ -170,18 +224,6 @@ def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | Non
             for feature in vector.features
             if feature.type == "CDS"
             and any(segment.start < end and start < segment.end for segment in feature.segments)
-        ),
-        None,
-    )
-
-
-def _marker(vector: SequenceRecord) -> Feature | None:
-    """Return the vector's selection marker, or ``None`` when it annotates none."""
-    return next(
-        (
-            feature
-            for feature in vector.features
-            if feature.type == "CDS" and feature.name.lower() in SELECTION
         ),
         None,
     )

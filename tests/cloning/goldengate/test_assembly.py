@@ -10,11 +10,11 @@ import dataclasses
 import pytest
 
 from liulab_mbio import edits
+from liulab_mbio.bench.steps import dam_sites
 from liulab_mbio.cloning.goldengate.assembly import (
     JUNCTION_COLOR,
     amplify,
     assemble,
-    dam_sites,
     open_vector,
 )
 from liulab_mbio.sequence import (

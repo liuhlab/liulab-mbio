@@ -1083,7 +1083,7 @@
       ],
       "cautions": [],
       "notes": [
-        "NEB asks for the assembly to be confirmed by sequencing across the junctions whatever the screen said.",
+        "Only a read across the junctions confirms the assembly, whatever the screen said.",
         "A provider whose read is shorter than the lengths above needs a further primer inside the inserts."
       ],
       "tables": [],

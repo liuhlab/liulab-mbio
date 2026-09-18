@@ -9,6 +9,94 @@ sets one.
 
 ### Added
 
+- Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
+  cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
+  is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the
+  sites themselves. So there is no enzyme to pick and no overhang to score. There are three
+  routes, and your files choose one. An entry clone you already hold plans the LR reaction
+  alone. A fragment that already carries att ends plans the BP reaction first, and its entry
+  clone feeds LR. `--amplify` designs the two attB primers for a plain gene and amplifies it
+  onto those ends. `Plan.write` writes the four files every cloning plan writes, plus the entry
+  clone as a fifth where the BP reaction ran.
+- Both vectors are your own files. No vector list ships with this package, and none is planned.
+  A vector is recognised by searching its bases for att sites, allowing one base to differ
+  outside the core of a site and none inside the seven that decide which site it is. The
+  supplier's own sites drift between products, so a stored copy would turn a working vector
+  away. A record carrying no site is refused, and the message names every site it looked for.
+- The junction is not clean, and the plan says what it costs. A whole att site lands at each end
+  of the insert, so the clone gains 25 bases there. Where a tag is read through one of them,
+  `--fusion` says which end, and the frame is judged there: two more bases at the front end, one
+  at the back. The tail an attB primer carries is four G residues, the 25 bp site and those
+  frame bases. Those G residues leave with the BP by-product, so the entry clone reads the same
+  whichever route made it.
+- The protocol names both strains, and it screens what it made. A donor and a destination vector
+  carry ccdB, so each is grown in a strain that resists it, while the clone is selected in a
+  strain it kills. A strain carrying F′ fails that check by name, because its `ccdA` cancels the
+  selection. Whether a reaction plated on a resistant strain still counter-selects is stated
+  nowhere, so that check carries no verdict rather than a pass. Every plan then screens colonies
+  across both joins and designs sequencing primers reading in from outside each. There are two
+  lanes and not three: the two att sites differ, so the insert cannot go in backwards.
+- A `gateway/METHOD.md` behind the `molecular-cloning` skill, which now chooses between four
+  methods on the same five things, with a `variants.md` beside it for the published routes this
+  command does not plan. A docs page follows one Gateway job end to end.
+- Classical restriction and ligation cloning, end to end.
+  `liulab_mbio.cloning.restriction.plan_restriction` takes a vector and an insert, plans both
+  digests and the gel that separates their fragments, works the ligation out in picomoles, and
+  designs the colony PCR, the diagnostic digest and the sequencing that confirm the clone. It
+  says what each junction now reads, because this method's join puts the enzyme's own site back,
+  and it says whether those extra bases hold your reading frame. `Plan.write` writes the same
+  four files every cloning plan writes. The second record may be the insert itself or the
+  plasmid it is cut out of. One already carrying both sites is cut out and taken off a gel. One
+  carrying neither is amplified first, with a spacer and the site on each primer tail.
+- `liulab_mbio cloning restriction plan` on the command line, and a `restriction-ligation`
+  method file behind the `molecular-cloning` skill, which now sends a job to this method instead
+  of calling it unsupported.
+- The enzyme pair is chosen for you when you name none. Every pair of the 18 shipped enzymes
+  that cut inside their own site is weighed, and each rejected pair is kept with the one
+  sentence that rejected it: no site in the vector, a site inside the insert, a cut vector that
+  closes on itself, or a digest that throws away more of the vector than it keeps. What survives
+  is ranked on the buffer, the temperature, the heat step and the host's own methylation first,
+  then on how much of the vector it gives up and how much of the insert it carries whole. Name
+  one or two enzymes and that pair is planned, or refused in the same words.
+- One enzyme at both ends, and blunt ends, are planned rather than refused. The cut vector can
+  then close on itself, so the plan adds a phosphatase step before the ligation. The insert can
+  also go in either way round, so the colony PCR reads out of the insert itself and draws a lane
+  for the reversed clone. Where the two ends cannot pair, that lane is left off: it was a lane
+  for a plasmid that cannot exist.
+- Gibson assembly, end to end. `liulab_mbio.cloning.gibson.plan_gibson` and `liulab_mbio cloning
+  gibson plan` take a vector and up to five inserts, in the order they go round the product and
+  either way round. Nothing is cut, so a part that reads a site for every Type IIS enzyme still
+  goes in as it is. The vector is opened by PCR across the span the inserts replace, or handed in
+  already linear. Each junction gets an overlap of the length and melting temperature the kit
+  documents, carried as a primer tail by the part on the other side, so the junction spells only
+  what the parts spell. `Plan.write` writes the same four files a Golden Gate plan writes. The
+  protocol runs from the two PCRs through the DpnI digest, a column cleanup, a reading of each
+  concentration, the assembly and the plate, and ends at the sequencing rather than at the
+  transformation.
+- The kit is yours to name, and it sets the numbers. `--product` takes NEBuilder HiFi, the Gibson
+  Assembly Master Mix or In-Fusion, and the start of a name is enough. Each carries its own
+  overlap rule, reaction, incubation, molar ratio and documented fragment count, read from that
+  supplier's own manual. Nothing is borrowed from one supplier to fill a gap in another: where
+  Takara publishes no melting temperature for an overlap and no picomole band, those checks say
+  so instead of passing. So do an overlap's GC and how alike two overlaps are, which nobody
+  quantifies for any kit.
+- A short part can be built from oligos instead of amplified. `--route stitch` lays a linker, a
+  tag or a short promoter out as oligos that overlap each other and tile both strands, assembled
+  in the same tube. Two ceilings, and they differ: above 500 bases the plan refuses, because
+  twelve 60-base oligos are the most the method allows; outside 60 to 150 bp it warns, the window
+  the route is worth using in.
+- Two fragments that share nothing can be joined by one oligo. `--bridge BEFORE:AFTER` designs an
+  oligo carrying bases from each end, so neither fragment needs a tailed primer and an amplicon
+  made for something else goes in as it is. Both kinds of oligo are rows of the one order sheet,
+  with the job each does. Neither primes anything, so no threshold judges it and its row carries
+  no verdict rather than a pass nothing measured. In-Fusion takes no single-stranded oligo, so it
+  refuses both routes and names the kits that can.
+- A `gibson/METHOD.md` behind the `molecular-cloning` skill, which now chooses between two
+  methods on the same five things, and a docs page following one Gibson job end to end.
+- Each shipped enzyme now names the buffer its supplier sells it in, as `Enzyme.supplied_buffer`.
+  All sixteen multiple cloning site enzymes read `rCutSmart Buffer`, so any pair of them can be
+  cut in one tube; BsmBI-v2 and BspQI read `NEBuffer r3.1`. The buffer belongs to the product
+  rather than to the enzyme name, and each one was read from that product's own page.
 - A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
   map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
   opens offline. A feature keeps the colour its file gives it. One with no colour takes a
@@ -117,6 +205,25 @@ sets one.
 
 ### Changed
 
+- A plate step now names the medium the drug needs, and reads a marker the table does not know.
+  `liulab_mbio.bench.phenotype` gained the markers Gateway's vectors carry: kanamycin, Zeocin
+  and spectinomycin. Zeocin only works in low-salt medium, so `Phenotype.medium` sits beside the
+  antibiotic and every method's plate step reads it. A resistance gene the table cannot name is
+  now found anyway and named on the plate, rather than left out. A marker inside the piece a
+  reaction throws away is skipped, because it is not what the plate selects.
+- A check on a protocol page may now carry no verdict, and the page shows it as `not judged`.
+  A check with no verdict used to be dropped from the page, which read as though nobody had
+  asked the question. It now gets a badge of its own, in a muted colour, with the reason and
+  what to go and look up beneath it. This holds for any protocol, not only a cloning one. The
+  first check to use it asks whether two restriction enzymes can share one tube: the package
+  knows the buffer each is sold in, and where those differ, answering needs figures for how much
+  activity each keeps in the other's buffer, which nothing this package may ship states.
+- An insert with no room for a junction primer no longer stops a colony PCR being designed. A
+  junction primer anneals 100 bases inside the insert, so a linker or a tag is too short to hold
+  one. `liulab_mbio.bench.validation.colony_pcr_check` used to refuse; it now leaves that primer
+  off, keeps the flanking pair that reads across the junction, and says the gel cannot tell an
+  insert that short from one the wrong way round. Golden Gate plans of a short insert are
+  designed rather than refused for the same reason.
 - The cloning methods are grouped under one verb. `liulab_mbio goldengate plan` is now
   `liulab_mbio cloning goldengate plan`, and `liulab_mbio cloning --help` lists the methods this
   package plans. `liulab_mbio library plan` is unchanged. The import path moves with the verb:

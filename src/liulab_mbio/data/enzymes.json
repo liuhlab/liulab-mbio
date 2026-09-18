@@ -1,6 +1,6 @@
 {
   "rebase_version": "609",
-  "built": "2026-09-14",
+  "built": "2026-09-18",
   "sources": {
     "rebase": {
       "title": "REBASE, withrefm \u2014 all enzymes with references and isoschizomers",
@@ -10,142 +10,170 @@
     "neb-r3101": {
       "title": "NEB EcoRI-HF (NEB #R3101) product page",
       "url": "https://www.neb.com/en-us/products/r3101-ecori-hf",
-      "archived": "2025-12-30"
+      "archived": "2025-12-30",
+      "retrieved": "2026-09-18"
     },
     "neb-r3156": {
       "title": "NEB SacI-HF (NEB #R3156) product page",
       "url": "https://www.neb.com/en-us/products/r3156-saci-hf",
-      "archived": "2026-02-13"
+      "archived": "2026-02-13",
+      "retrieved": "2026-09-18"
     },
     "neb-r3142": {
       "title": "NEB KpnI-HF (NEB #R3142) product page",
       "url": "https://www.neb.com/en-us/products/r3142-kpni-hf",
-      "archived": "2025-12-31"
+      "archived": "2025-12-31",
+      "retrieved": "2026-09-18"
     },
     "neb-r0141": {
       "title": "NEB SmaI (NEB #R0141) product page",
       "url": "https://www.neb.com/en-us/products/r0141-smai",
-      "archived": "2025-10-07"
+      "archived": "2025-10-07",
+      "retrieved": "2026-09-18"
     },
     "neb-r0180": {
       "title": "NEB XmaI (NEB #R0180) product page",
       "url": "https://www.neb.com/en-us/products/r0180-xmai",
-      "archived": "2026-01-05"
+      "archived": "2026-01-05",
+      "retrieved": "2026-09-18"
     },
     "neb-r3136": {
       "title": "NEB BamHI-HF (NEB #R3136) product page",
       "url": "https://www.neb.com/en-us/products/r3136-bamhi-hf",
-      "archived": "2026-01-03"
+      "archived": "2026-01-03",
+      "retrieved": "2026-09-18"
     },
     "neb-r0145": {
       "title": "NEB XbaI (NEB #R0145) product page",
       "url": "https://www.neb.com/en-us/products/r0145-xbai",
-      "archived": "2026-02-21"
+      "archived": "2026-02-21",
+      "retrieved": "2026-09-18"
     },
     "neb-r3138": {
       "title": "NEB SalI-HF (NEB #R3138) product page",
       "url": "https://www.neb.com/en-us/products/r3138-sali-hf",
-      "archived": "2026-01-16"
+      "archived": "2026-01-16",
+      "retrieved": "2026-09-18"
     },
     "neb-r3140": {
       "title": "NEB PstI-HF (NEB #R3140) product page",
       "url": "https://www.neb.com/en-us/products/r3140-psti-hf",
-      "archived": "2026-01-12"
+      "archived": "2026-01-12",
+      "retrieved": "2026-09-18"
     },
     "neb-r3642": {
       "title": "NEB SbfI-HF (NEB #R3642) product page",
       "url": "https://www.neb.com/en-us/products/r3642-sbfi-hf",
-      "archived": "2026-02-15"
+      "archived": "2026-02-15",
+      "retrieved": "2026-09-18"
     },
     "neb-r3182": {
       "title": "NEB SphI-HF (NEB #R3182) product page",
       "url": "https://www.neb.com/en-us/products/r3182-sphi-hf",
-      "archived": "2026-01-13"
+      "archived": "2026-01-13",
+      "retrieved": "2026-09-18"
     },
     "neb-r3104": {
       "title": "NEB HindIII-HF (NEB #R3104) product page",
       "url": "https://www.neb.com/en-us/products/r3104-hindiii-hf",
-      "archived": "2026-01-09"
+      "archived": "2026-01-09",
+      "retrieved": "2026-09-18"
     },
     "neb-r0111": {
       "title": "NEB NdeI (NEB #R0111) product page",
       "url": "https://www.neb.com/en-us/products/r0111-ndei",
-      "archived": "2026-02-02"
+      "archived": "2026-02-02",
+      "retrieved": "2026-09-18"
     },
     "neb-r3193": {
       "title": "NEB NcoI-HF (NEB #R3193) product page",
       "url": "https://www.neb.com/en-us/products/r3193-ncoi-hf",
-      "archived": "2025-12-29"
+      "archived": "2025-12-29",
+      "retrieved": "2026-09-18"
     },
     "neb-r0146": {
       "title": "NEB XhoI (NEB #R0146) product page",
       "url": "https://www.neb.com/en-us/products/r0146-xhoi",
-      "archived": "2026-02-26"
+      "archived": "2026-02-26",
+      "retrieved": "2026-09-18"
     },
     "neb-r3189": {
       "title": "NEB NotI-HF (NEB #R3189) product page",
       "url": "https://www.neb.com/en-us/products/r3189-noti-hf",
-      "archived": "2026-01-07"
+      "archived": "2026-01-07",
+      "retrieved": "2026-09-18"
     },
     "neb-r3733": {
       "title": "NEB BsaI-HFv2 (NEB #R3733) product page",
       "url": "https://www.neb.com/en-us/products/r3733-bsai-hf-v2",
-      "archived": "2026-02-21"
+      "archived": "2026-02-21",
+      "retrieved": "2026-09-18"
     },
     "neb-r0739": {
       "title": "NEB BsmBI-v2 (NEB #R0739) product page",
       "url": "https://www.neb.com/en-us/products/r0739-bsmbi-v2",
-      "archived": "2026-08-14"
+      "archived": "2026-08-14",
+      "retrieved": "2026-09-18"
     },
     "neb-r0734": {
       "title": "NEB Esp3I (NEB #R0734) product page",
       "url": "https://www.neb.com/en-us/products/r0734-esp3i",
-      "archived": "2026-01-11"
+      "archived": "2026-01-11",
+      "retrieved": "2026-09-18"
     },
     "neb-r3539": {
       "title": "NEB BbsI-HF (NEB #R3539) product page",
       "url": "https://www.neb.com/en-us/products/r3539-bbsi-hf",
-      "archived": "2026-01-10"
+      "archived": "2026-01-10",
+      "retrieved": "2026-09-18"
     },
     "neb-r0569": {
       "title": "NEB SapI (NEB #R0569) product page",
       "url": "https://www.neb.com/en-us/products/r0569-sapi",
-      "archived": "2025-12-31"
+      "archived": "2025-12-31",
+      "retrieved": "2026-09-18"
     },
     "neb-r0712": {
       "title": "NEB BspQI (NEB #R0712) product page",
       "url": "https://www.neb.com/en-us/products/r0712-bspqi",
-      "archived": "2026-01-03"
+      "archived": "2026-01-03",
+      "retrieved": "2026-09-18"
     },
     "neb-r0745": {
       "title": "NEB PaqCI (NEB #R0745) product page",
       "url": "https://www.neb.com/en-us/products/r0745-paqci",
-      "archived": "2026-02-23"
+      "archived": "2026-02-23",
+      "retrieved": "2026-09-18"
     },
     "neb-r0703": {
       "title": "NEB BtgZI (NEB #R0703) product page",
       "url": "https://www.neb.com/en-us/products/r0703-btgzi",
-      "archived": "2025-12-31"
+      "archived": "2025-12-31",
+      "retrieved": "2026-09-18"
     },
     "neb-r0629": {
       "title": "NEB SrfI (NEB #R0629) product page",
       "url": "https://www.neb.com/en-us/products/r0629-srfi",
-      "archived": "2026-03-08"
+      "archived": "2026-03-08",
+      "retrieved": "2026-09-18"
     },
     "neb-r0560": {
       "title": "NEB PmeI (NEB #R0560) product page",
       "url": "https://www.neb.com/en-us/products/r0560-pmei",
-      "archived": "2026-02-01"
+      "archived": "2026-02-01",
+      "retrieved": "2026-09-18"
     },
     "thermo-er1011": {
       "title": "Thermo Scientific BpiI (BbsI) (#ER1011) product page",
       "url": "https://www.thermofisher.com/order/catalog/product/ER1011",
-      "archived": "2026-08-02"
+      "archived": "2026-08-02",
+      "retrieved": "2026-09-18"
     },
     "thermo-er1581": {
       "title": "Thermo Scientific AarI (#ER1581) product page",
       "url": "https://www.thermofisher.com/order/catalog/product/ER1581",
-      "archived": "2026-08-02"
+      "archived": "2026-08-02",
+      "retrieved": "2026-09-18"
     }
   },
   "enzymes": [
@@ -164,6 +192,7 @@
       "commercial_name": "AarI",
       "catalog_number": "ER1581",
       "supplier": "Thermo Fisher Scientific",
+      "supplied_buffer": "Buffer AarI",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": null,
       "heat_inactivation_minutes": null,
@@ -180,6 +209,7 @@
         "commercial_name": "thermo-er1581",
         "catalog_number": "thermo-er1581",
         "supplier": "thermo-er1581",
+        "supplied_buffer": "thermo-er1581",
         "incubation_celsius": "thermo-er1581",
         "heat_inactivation_celsius": "thermo-er1581",
         "heat_inactivation_minutes": "thermo-er1581",
@@ -203,6 +233,7 @@
       "commercial_name": "BamHI-HF",
       "catalog_number": "R3136",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": null,
       "heat_inactivation_minutes": null,
@@ -216,6 +247,7 @@
         "commercial_name": "neb-r3136",
         "catalog_number": "neb-r3136",
         "supplier": "neb-r3136",
+        "supplied_buffer": "neb-r3136",
         "incubation_celsius": "neb-r3136",
         "heat_inactivation_celsius": "neb-r3136",
         "heat_inactivation_minutes": "neb-r3136",
@@ -242,6 +274,7 @@
       "commercial_name": "BbsI-HF",
       "catalog_number": "R3539",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -255,6 +288,7 @@
         "commercial_name": "neb-r3539",
         "catalog_number": "neb-r3539",
         "supplier": "neb-r3539",
+        "supplied_buffer": "neb-r3539",
         "incubation_celsius": "neb-r3539",
         "heat_inactivation_celsius": "neb-r3539",
         "heat_inactivation_minutes": "neb-r3539",
@@ -281,6 +315,7 @@
       "commercial_name": "BpiI",
       "catalog_number": "ER1011",
       "supplier": "Thermo Fisher Scientific",
+      "supplied_buffer": "Buffer G",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": null,
       "heat_inactivation_minutes": null,
@@ -297,6 +332,7 @@
         "commercial_name": "thermo-er1011",
         "catalog_number": "thermo-er1011",
         "supplier": "thermo-er1011",
+        "supplied_buffer": "thermo-er1011",
         "incubation_celsius": "thermo-er1011",
         "heat_inactivation_celsius": "thermo-er1011",
         "heat_inactivation_minutes": "thermo-er1011",
@@ -324,6 +360,7 @@
       "commercial_name": "BsaI-HFv2",
       "catalog_number": "R3733",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -337,6 +374,7 @@
         "commercial_name": "neb-r3733",
         "catalog_number": "neb-r3733",
         "supplier": "neb-r3733",
+        "supplied_buffer": "neb-r3733",
         "incubation_celsius": "neb-r3733",
         "heat_inactivation_celsius": "neb-r3733",
         "heat_inactivation_minutes": "neb-r3733",
@@ -362,6 +400,7 @@
       "commercial_name": "BsmBI-v2",
       "catalog_number": "R0739",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "NEBuffer r3.1",
       "incubation_celsius": 55,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -375,6 +414,7 @@
         "commercial_name": "neb-r0739",
         "catalog_number": "neb-r0739",
         "supplier": "neb-r0739",
+        "supplied_buffer": "neb-r0739",
         "incubation_celsius": "neb-r0739",
         "heat_inactivation_celsius": "neb-r0739",
         "heat_inactivation_minutes": "neb-r0739",
@@ -402,6 +442,7 @@
       "commercial_name": "BspQI",
       "catalog_number": "R0712",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "NEBuffer r3.1",
       "incubation_celsius": 50,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -415,6 +456,7 @@
         "commercial_name": "neb-r0712",
         "catalog_number": "neb-r0712",
         "supplier": "neb-r0712",
+        "supplied_buffer": "neb-r0712",
         "incubation_celsius": "neb-r0712",
         "heat_inactivation_celsius": "neb-r0712",
         "heat_inactivation_minutes": "neb-r0712",
@@ -438,6 +480,7 @@
       "commercial_name": "BtgZI",
       "catalog_number": "R0703",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 60,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -451,6 +494,7 @@
         "commercial_name": "neb-r0703",
         "catalog_number": "neb-r0703",
         "supplier": "neb-r0703",
+        "supplied_buffer": "neb-r0703",
         "incubation_celsius": "neb-r0703",
         "heat_inactivation_celsius": "neb-r0703",
         "heat_inactivation_minutes": "neb-r0703",
@@ -474,6 +518,7 @@
       "commercial_name": "EcoRI-HF",
       "catalog_number": "R3101",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -487,6 +532,7 @@
         "commercial_name": "neb-r3101",
         "catalog_number": "neb-r3101",
         "supplier": "neb-r3101",
+        "supplied_buffer": "neb-r3101",
         "incubation_celsius": "neb-r3101",
         "heat_inactivation_celsius": "neb-r3101",
         "heat_inactivation_minutes": "neb-r3101",
@@ -512,6 +558,7 @@
       "commercial_name": "Esp3I",
       "catalog_number": "R0734",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -525,6 +572,7 @@
         "commercial_name": "neb-r0734",
         "catalog_number": "neb-r0734",
         "supplier": "neb-r0734",
+        "supplied_buffer": "neb-r0734",
         "incubation_celsius": "neb-r0734",
         "heat_inactivation_celsius": "neb-r0734",
         "heat_inactivation_minutes": "neb-r0734",
@@ -550,6 +598,7 @@
       "commercial_name": "HindIII-HF",
       "catalog_number": "R3104",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -563,6 +612,7 @@
         "commercial_name": "neb-r3104",
         "catalog_number": "neb-r3104",
         "supplier": "neb-r3104",
+        "supplied_buffer": "neb-r3104",
         "incubation_celsius": "neb-r3104",
         "heat_inactivation_celsius": "neb-r3104",
         "heat_inactivation_minutes": "neb-r3104",
@@ -586,6 +636,7 @@
       "commercial_name": "KpnI-HF",
       "catalog_number": "R3142",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": null,
       "heat_inactivation_minutes": null,
@@ -599,6 +650,7 @@
         "commercial_name": "neb-r3142",
         "catalog_number": "neb-r3142",
         "supplier": "neb-r3142",
+        "supplied_buffer": "neb-r3142",
         "incubation_celsius": "neb-r3142",
         "heat_inactivation_celsius": "neb-r3142",
         "heat_inactivation_minutes": "neb-r3142",
@@ -624,6 +676,7 @@
       "commercial_name": "NcoI-HF",
       "catalog_number": "R3193",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -637,6 +690,7 @@
         "commercial_name": "neb-r3193",
         "catalog_number": "neb-r3193",
         "supplier": "neb-r3193",
+        "supplied_buffer": "neb-r3193",
         "incubation_celsius": "neb-r3193",
         "heat_inactivation_celsius": "neb-r3193",
         "heat_inactivation_minutes": "neb-r3193",
@@ -662,6 +716,7 @@
       "commercial_name": "NdeI",
       "catalog_number": "R0111",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -675,6 +730,7 @@
         "commercial_name": "neb-r0111",
         "catalog_number": "neb-r0111",
         "supplier": "neb-r0111",
+        "supplied_buffer": "neb-r0111",
         "incubation_celsius": "neb-r0111",
         "heat_inactivation_celsius": "neb-r0111",
         "heat_inactivation_minutes": "neb-r0111",
@@ -700,6 +756,7 @@
       "commercial_name": "NotI-HF",
       "catalog_number": "R3189",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -713,6 +770,7 @@
         "commercial_name": "neb-r3189",
         "catalog_number": "neb-r3189",
         "supplier": "neb-r3189",
+        "supplied_buffer": "neb-r3189",
         "incubation_celsius": "neb-r3189",
         "heat_inactivation_celsius": "neb-r3189",
         "heat_inactivation_minutes": "neb-r3189",
@@ -738,6 +796,7 @@
       "commercial_name": "PaqCI",
       "catalog_number": "R0745",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -751,6 +810,7 @@
         "commercial_name": "neb-r0745",
         "catalog_number": "neb-r0745",
         "supplier": "neb-r0745",
+        "supplied_buffer": "neb-r0745",
         "incubation_celsius": "neb-r0745",
         "heat_inactivation_celsius": "neb-r0745",
         "heat_inactivation_minutes": "neb-r0745",
@@ -776,6 +836,7 @@
       "commercial_name": "PmeI",
       "catalog_number": "R0560",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -789,6 +850,7 @@
         "commercial_name": "neb-r0560",
         "catalog_number": "neb-r0560",
         "supplier": "neb-r0560",
+        "supplied_buffer": "neb-r0560",
         "incubation_celsius": "neb-r0560",
         "heat_inactivation_celsius": "neb-r0560",
         "heat_inactivation_minutes": "neb-r0560",
@@ -812,6 +874,7 @@
       "commercial_name": "PstI-HF",
       "catalog_number": "R3140",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": null,
       "heat_inactivation_minutes": null,
@@ -825,6 +888,7 @@
         "commercial_name": "neb-r3140",
         "catalog_number": "neb-r3140",
         "supplier": "neb-r3140",
+        "supplied_buffer": "neb-r3140",
         "incubation_celsius": "neb-r3140",
         "heat_inactivation_celsius": "neb-r3140",
         "heat_inactivation_minutes": "neb-r3140",
@@ -850,6 +914,7 @@
       "commercial_name": "SacI-HF",
       "catalog_number": "R3156",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -863,6 +928,7 @@
         "commercial_name": "neb-r3156",
         "catalog_number": "neb-r3156",
         "supplier": "neb-r3156",
+        "supplied_buffer": "neb-r3156",
         "incubation_celsius": "neb-r3156",
         "heat_inactivation_celsius": "neb-r3156",
         "heat_inactivation_minutes": "neb-r3156",
@@ -886,6 +952,7 @@
       "commercial_name": "SalI-HF",
       "catalog_number": "R3138",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -899,6 +966,7 @@
         "commercial_name": "neb-r3138",
         "catalog_number": "neb-r3138",
         "supplier": "neb-r3138",
+        "supplied_buffer": "neb-r3138",
         "incubation_celsius": "neb-r3138",
         "heat_inactivation_celsius": "neb-r3138",
         "heat_inactivation_minutes": "neb-r3138",
@@ -926,6 +994,7 @@
       "commercial_name": "SapI",
       "catalog_number": "R0569",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -939,6 +1008,7 @@
         "commercial_name": "neb-r0569",
         "catalog_number": "neb-r0569",
         "supplier": "neb-r0569",
+        "supplied_buffer": "neb-r0569",
         "incubation_celsius": "neb-r0569",
         "heat_inactivation_celsius": "neb-r0569",
         "heat_inactivation_minutes": "neb-r0569",
@@ -964,6 +1034,7 @@
       "commercial_name": "SbfI-HF",
       "catalog_number": "R3642",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 80,
       "heat_inactivation_minutes": 20,
@@ -977,6 +1048,7 @@
         "commercial_name": "neb-r3642",
         "catalog_number": "neb-r3642",
         "supplier": "neb-r3642",
+        "supplied_buffer": "neb-r3642",
         "incubation_celsius": "neb-r3642",
         "heat_inactivation_celsius": "neb-r3642",
         "heat_inactivation_minutes": "neb-r3642",
@@ -1000,6 +1072,7 @@
       "commercial_name": "SmaI",
       "catalog_number": "R0141",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1013,6 +1086,7 @@
         "commercial_name": "neb-r0141",
         "catalog_number": "neb-r0141",
         "supplier": "neb-r0141",
+        "supplied_buffer": "neb-r0141",
         "incubation_celsius": "neb-r0141",
         "heat_inactivation_celsius": "neb-r0141",
         "heat_inactivation_minutes": "neb-r0141",
@@ -1039,6 +1113,7 @@
       "commercial_name": "SphI-HF",
       "catalog_number": "R3182",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1052,6 +1127,7 @@
         "commercial_name": "neb-r3182",
         "catalog_number": "neb-r3182",
         "supplier": "neb-r3182",
+        "supplied_buffer": "neb-r3182",
         "incubation_celsius": "neb-r3182",
         "heat_inactivation_celsius": "neb-r3182",
         "heat_inactivation_minutes": "neb-r3182",
@@ -1075,6 +1151,7 @@
       "commercial_name": "SrfI",
       "catalog_number": "R0629",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1088,6 +1165,7 @@
         "commercial_name": "neb-r0629",
         "catalog_number": "neb-r0629",
         "supplier": "neb-r0629",
+        "supplied_buffer": "neb-r0629",
         "incubation_celsius": "neb-r0629",
         "heat_inactivation_celsius": "neb-r0629",
         "heat_inactivation_minutes": "neb-r0629",
@@ -1111,6 +1189,7 @@
       "commercial_name": "XbaI",
       "catalog_number": "R0145",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1124,6 +1203,7 @@
         "commercial_name": "neb-r0145",
         "catalog_number": "neb-r0145",
         "supplier": "neb-r0145",
+        "supplied_buffer": "neb-r0145",
         "incubation_celsius": "neb-r0145",
         "heat_inactivation_celsius": "neb-r0145",
         "heat_inactivation_minutes": "neb-r0145",
@@ -1150,6 +1230,7 @@
       "commercial_name": "XhoI",
       "catalog_number": "R0146",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1163,6 +1244,7 @@
         "commercial_name": "neb-r0146",
         "catalog_number": "neb-r0146",
         "supplier": "neb-r0146",
+        "supplied_buffer": "neb-r0146",
         "incubation_celsius": "neb-r0146",
         "heat_inactivation_celsius": "neb-r0146",
         "heat_inactivation_minutes": "neb-r0146",
@@ -1190,6 +1272,7 @@
       "commercial_name": "XmaI",
       "catalog_number": "R0180",
       "supplier": "New England Biolabs",
+      "supplied_buffer": "rCutSmart Buffer",
       "incubation_celsius": 37,
       "heat_inactivation_celsius": 65,
       "heat_inactivation_minutes": 20,
@@ -1203,6 +1286,7 @@
         "commercial_name": "neb-r0180",
         "catalog_number": "neb-r0180",
         "supplier": "neb-r0180",
+        "supplied_buffer": "neb-r0180",
         "incubation_celsius": "neb-r0180",
         "heat_inactivation_celsius": "neb-r0180",
         "heat_inactivation_minutes": "neb-r0180",

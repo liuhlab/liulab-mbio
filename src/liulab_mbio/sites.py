@@ -34,6 +34,11 @@ SPACER_LENGTH = 6
 #: affects it is held to the rule; `Enzyme.methylation` carries that answer.
 DCM_SITE = "CCWGG"
 
+#: Dam methylates the adenine of this site, on the same terms. `liulab_mbio.bench.steps` keeps
+#: its own copy for DpnI, that being a question about a plasmid against a fresh amplicon and not
+#: about whether an enzyme still cuts.
+DAM_SITE = "GATC"
+
 #: How many candidate spacers or fillers to try before giving up on an overhang.
 _TRIES = 4096
 
@@ -116,8 +121,9 @@ class Fragment:
     left_overhang, right_overhang
         The single-stranded bases at each end, written as the TOP strand reads them 5' to 3',
         and ``""`` for a blunt end. Written that way whether the overhang is 5' or 3', and
-        whether it sits on the top strand of this fragment or the bottom, so two ends anneal
-        exactly when the two strings are equal.
+        whether it sits on the top strand of this fragment or the bottom. The string is half of
+        what says whether two ends anneal; the other half is the end type, which a caller reads
+        off the enzyme that made the cut. `liulab_mbio.overhangs.compatible` is the rule.
     """
 
     start: int

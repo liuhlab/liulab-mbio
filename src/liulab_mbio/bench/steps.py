@@ -2,11 +2,14 @@
 
 A pipeline runs these in its own order around its own steps, and passes its own notes where it
 has something of its own to say; they follow the step's. Every sentence about the phenotype is
-read off `liulab_mbio.bench.phenotype`. The smaller pieces both pipelines shape the same way --
-a verdict's badge, an overview card and an enzyme's material row -- are here too.
+read off `liulab_mbio.bench.phenotype`. The smaller pieces every pipeline shapes the same way --
+a verdict's badge, an overview card and a material row for an enzyme or a catalogued product --
+are here too.
 """
 
+import re
 from collections.abc import Sequence
+from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
@@ -20,6 +23,7 @@ from liulab_mbio.protocol.model import (
     OVERVIEW_CHARS,
     Check,
     Gel,
+    Incubation,
     Lane,
     Material,
     Reference,
@@ -27,6 +31,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Troubleshooting,
 )
+from liulab_mbio.sequence import SequenceRecord
 
 #: The DpnI digest that takes the plasmid template away. No supplier's table sets these, so they
 #: are this package's choices; `docs/research/golden-gate-assembly.md` §3 justifies the digest
@@ -34,6 +39,9 @@ from liulab_mbio.protocol.model import (
 DPNI_UNITS = 20
 DPNI_CELSIUS = 37.0
 DPNI_SECONDS = 3600
+
+#: Dam methylates the adenine of this site, and DpnI cuts only where it has.
+DAM_SITE = "GATC"
 
 #: Transformation and plating, from the NEB #E1601 and #E1602 manuals (§5 of the same note):
 #: microlitres, degrees Celsius and seconds.
@@ -75,6 +83,80 @@ PLATE_REFERENCE = Reference(
 )
 
 
+@dataclass(frozen=True, slots=True)
+class Transformation:
+    """One supplier's heat-shock protocol, which no two of them state the same way.
+
+    A method brings the numbers its own kit's manual gives; `NEB_TRANSFORMATION` is the one
+    `transform_step` uses where a method names none.
+
+    Parameters
+    ----------
+    cells_ul, reaction_ul
+        Competent cells per tube, and how much of the reaction goes into them.
+    source
+        What the step calls that reaction, such as ``"the assembly"``.
+    thaw_seconds, ice_seconds, heat_shock_celsius, heat_shock_seconds, recover_seconds
+        Thawing the cells, and the shock itself. `thaw_seconds` is ``None`` where the kit's
+        manual states no time, and the step then asks for a thaw without one.
+    outgrowth_ul, outgrowth_celsius, outgrowth_seconds
+        The medium and the recovery.
+    plate_ul, dilution
+        What is spread on one plate, and the dilution it is spread from.
+    """
+
+    _: KW_ONLY
+    cells_ul: float
+    reaction_ul: float
+    source: str
+    thaw_seconds: int | None
+    ice_seconds: int
+    heat_shock_celsius: float
+    heat_shock_seconds: int
+    recover_seconds: int
+    outgrowth_ul: float
+    outgrowth_celsius: float
+    outgrowth_seconds: int
+    plate_ul: float
+    dilution: int
+
+
+#: What `transform_step` asks for where a method names no protocol of its own: the constants
+#: above, which are NEB's.
+NEB_TRANSFORMATION = Transformation(
+    cells_ul=CELLS_UL,
+    reaction_ul=ASSEMBLY_UL,
+    source="the assembly",
+    thaw_seconds=THAW_SECONDS,
+    ice_seconds=ICE_SECONDS,
+    heat_shock_celsius=HEAT_SHOCK_CELSIUS,
+    heat_shock_seconds=HEAT_SHOCK_SECONDS,
+    recover_seconds=RECOVER_SECONDS,
+    outgrowth_ul=OUTGROWTH_UL,
+    outgrowth_celsius=OUTGROWTH_CELSIUS,
+    outgrowth_seconds=OUTGROWTH_SECONDS,
+    plate_ul=PLATE_UL,
+    dilution=PLATE_DILUTION,
+)
+
+
+def dam_sites(record: SequenceRecord) -> int:
+    """Count the sites in `record` that DpnI can cut once Dam has methylated them.
+
+    A plasmid grown in a Dam-positive host carries them methylated and a PCR product does not,
+    which is what lets DpnI take the template away and leave the amplicon.
+
+    Examples
+    --------
+    >>> dam_sites(SequenceRecord("AAGATCAA"))
+    1
+    """
+    haystack = record.sequence
+    if record.topology == "circular":
+        haystack += record.sequence[: len(DAM_SITE) - 1]
+    return haystack.count(DAM_SITE)
+
+
 def listed(items: Sequence[str]) -> str:
     """Join names the way a sentence does, with `and` before the last.
 
@@ -91,13 +173,10 @@ def listed(items: Sequence[str]) -> str:
 def badges(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
     """Return a plan's verdicts, one badge each, so a warning is seen and not read.
 
-    A badge is a verdict, so a check carrying none has none to show.
+    A check no sourced threshold judges keeps its badge and shows no verdict on it, which is
+    what stops it being read as a pass.
     """
-    return tuple(
-        Check(check.name, check.status, detail=check.detail)
-        for check in checks
-        if check.status is not None
-    )
+    return tuple(Check(check.name, check.status, detail=check.detail) for check in checks)
 
 
 def card(value: str, short: str) -> str:
@@ -121,6 +200,38 @@ def enzyme_material(enzyme: Enzyme, *, amount: str = "", note: str = "") -> Mate
         supplier=enzyme.supplier or "",
         catalog=enzyme.catalog_number or "",
         storage="-20 °C",
+        amount=amount,
+        note=note,
+    )
+
+
+#: A catalogue number at the end of a product name, such as ``"(M1100)"``. A letter and then a
+#: digit, so a bracketed enzyme name is not read as one.
+_CATALOG_RE = re.compile(r"^(?P<name>.*?)\s*\((?P<catalog>[A-Z]\d[\w./-]*)\)$")
+
+
+def catalogued(
+    name: str, *, supplier: str = "", storage: str = "", amount: str = "", note: str = ""
+) -> Material:
+    """Return one product as a material, taking the catalogue number out of a name carrying one.
+
+    A name carrying none leaves the cell empty; nothing here invents one.
+
+    Examples
+    --------
+    >>> catalogued("NEB 100 bp DNA Ladder (N3231)").catalog
+    'N3231'
+    >>> catalogued("Agarose and 1X TAE or TBE").catalog
+    ''
+    """
+    found = _CATALOG_RE.match(name)
+    if found is None:
+        return Material(name, supplier=supplier, storage=storage, amount=amount, note=note)
+    return Material(
+        found["name"],
+        supplier=supplier,
+        catalog=found["catalog"],
+        storage=storage,
         amount=amount,
         note=note,
     )
@@ -230,6 +341,8 @@ def dpni_step(
     pcrs: Sequence[str],
     templates: Sequence[tuple[str, int]],
     *,
+    seconds: int = DPNI_SECONDS,
+    inactivation: Incubation | None = None,
     notes: Sequence[str] = (),
 ) -> Step:
     """Return the DpnI digest that takes the plasmid template away, so it cannot transform.
@@ -240,17 +353,38 @@ def dpni_step(
         The PCRs to digest, by name.
     templates
         The plasmid each was amplified from, and the Dam sites it carries.
+    seconds
+        How long to digest. `DPNI_SECONDS` is this package's own choice; a method whose
+        supplier prescribes the digest passes that supplier's time instead.
+    inactivation
+        The heat inactivation the supplier asks for after it, where one is prescribed.
     notes
         The caller's own, after the step's.
     """
     counted = ", ".join(f"{name} ({sites} Dam sites)" for name, sites in templates)
+    kill = (
+        ()
+        if inactivation is None
+        else (
+            f"{inactivation.label} at {inactivation.temperature_c:g} °C for "
+            f"{(inactivation.seconds or 0) // 60:g} minutes.",
+        )
+    )
     return Step(
         "Digest the plasmid template with DpnI",
         instructions=(
             *(f"Add {DPNI_UNITS} units of DpnI to the {name} PCR and mix." for name in pcrs),
-            f"Incubate at {DPNI_CELSIUS:g} °C for {DPNI_SECONDS // 60} minutes.",
+            f"Incubate at {DPNI_CELSIUS:g} °C for {seconds // 60} minutes.",
+            *kill,
         ),
-        timers=(Timer("DpnI digest", DPNI_SECONDS),),
+        timers=(
+            Timer("DpnI digest", seconds),
+            *(
+                ()
+                if inactivation is None or inactivation.seconds is None
+                else (Timer(inactivation.label, inactivation.seconds),)
+            ),
+        ),
         expected=(
             "Nothing visible. The digest shows up later as fewer colonies carrying the "
             "template plasmid.",
@@ -316,7 +450,15 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
 
 
 def transform_step(
-    host: str, phenotype: Phenotype, *, inserts: Sequence[str], colonies: str
+    host: str,
+    phenotype: Phenotype,
+    *,
+    inserts: Sequence[str],
+    colonies: str,
+    protocol: Transformation = NEB_TRANSFORMATION,
+    title: str = "Transform and plate",
+    expected: Sequence[str] = (),
+    notes: Sequence[str] = (),
 ) -> Step:
     """Return the transformation and plating, with the colour the plate should show.
 
@@ -330,42 +472,58 @@ def transform_step(
         What the inserts are called, for a product that annotates no coding sequence among them.
     colonies
         How many colonies to expect, as a sentence: a count belongs to the pipeline's reaction.
+    protocol
+        The volumes and times to run it by, which are the kit manufacturer's.
+    title
+        The step's, for a method that transforms more than once and has to tell them apart.
+    expected, notes
+        The caller's own, after the step's.
     """
-    expected = [colonies]
+    results = [colonies]
     if phenotype.blue_white and phenotype.reporter is not None:
-        expected.append(
+        results.append(
             f"Correct clones are white and empty vector is blue: the insertion interrupts "
             f"{phenotype.reporter.name}, which is then not there to complete the host's own."
         )
-    notes = [
+    results.extend(expected)
+    said = [
         f"The plate reads colour only with an alpha-complementing host, such as {host}. "
         "A host that cannot complement gives white colonies whatever the clone carries."
         if phenotype.blue_white
         else "Colour does not report this insertion; screen every colony by PCR.",
     ]
     if not phenotype.expressed:
-        notes.append(_expression_note(phenotype, inserts))
+        said.append(_expression_note(phenotype, inserts))
+    said.extend(notes)
     return Step(
-        "Transform and plate",
+        title,
         instructions=(
-            f"Thaw {CELLS_UL:g} µL of {host} on ice for {THAW_SECONDS // 60} minutes.",
-            f"Add {ASSEMBLY_UL:g} µL of the assembly and flick the tube four or five times.",
-            f"Hold on ice for {ICE_SECONDS // 60} minutes.",
-            f"Heat shock at {HEAT_SHOCK_CELSIUS:g} °C for {HEAT_SHOCK_SECONDS} seconds.",
-            f"Return to ice for {RECOVER_SECONDS // 60} minutes.",
-            f"Add {OUTGROWTH_UL:g} µL of outgrowth medium and shake at "
-            f"{OUTGROWTH_CELSIUS:g} °C for {OUTGROWTH_SECONDS // 60} minutes at 250 rpm.",
-            f"Spread {PLATE_UL:g} µL of a 1:{PLATE_DILUTION} dilution on a warmed plate and "
-            "grow overnight at 37 °C.",
+            f"Thaw {protocol.cells_ul:g} µL of {host} on ice"
+            + (
+                "."
+                if protocol.thaw_seconds is None
+                else f" for {protocol.thaw_seconds // 60} minutes."
+            ),
+            f"Add {protocol.reaction_ul:g} µL of {protocol.source} and flick the tube four or "
+            "five times.",
+            f"Hold on ice for {protocol.ice_seconds // 60} minutes.",
+            f"Heat shock at {protocol.heat_shock_celsius:g} °C for "
+            f"{protocol.heat_shock_seconds} seconds.",
+            f"Return to ice for {protocol.recover_seconds // 60} minutes.",
+            f"Add {protocol.outgrowth_ul:g} µL of outgrowth medium and shake at "
+            f"{protocol.outgrowth_celsius:g} °C for {protocol.outgrowth_seconds // 60} minutes "
+            "at 250 rpm.",
+            f"Spread {protocol.plate_ul:g} µL of a 1:{protocol.dilution} dilution on a warmed "
+            "plate and grow overnight at 37 °C.",
         ),
         cautions=("Competent cells die if they warm up; keep them on ice until the shock.",),
         timers=(
-            Timer("On ice", ICE_SECONDS),
-            Timer("Heat shock", HEAT_SHOCK_SECONDS),
-            Timer("Outgrowth", OUTGROWTH_SECONDS),
+            Timer("On ice", protocol.ice_seconds),
+            Timer("Heat shock", protocol.heat_shock_seconds),
+            Timer("Outgrowth", protocol.outgrowth_seconds),
         ),
-        expected=tuple(expected),
-        notes=tuple(notes),
+        expected=tuple(results),
+        notes=tuple(said),
         troubleshooting=(
             Troubleshooting(
                 "No colonies",
@@ -384,6 +542,7 @@ def colony_pcr_step(
     check: ColonyCheck,
     *,
     junctions: int,
+    notes: Sequence[str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
     """Return the colony PCR screen, saying which band means what.
@@ -394,24 +553,29 @@ def colony_pcr_step(
         The colony PCR, its expected clones included.
     junctions
         How many junctions it reads.
-    troubleshooting
-        The caller's own, after the step's.
+    notes, troubleshooting
+        The caller's own, after the step's. How many colonies read correct is one of them: it
+        is the method's own measurement and not this builder's.
     """
     sizes = tuple(bp for clone in check.clones for bp in clone.bands_bp)
+    crossings = "the flanking pair crosses them all"
+    # The flanking pair comes first, so any primer past it is a junction primer.
+    if len(check.primers) > 2:
+        crossings += ", and each junction primer stops inside its own insert"
     expected = [
-        f"Each of the {junctions} junctions is read: the flanking pair crosses them all, and "
-        "each junction primer stops inside its own insert.",
+        f"Each of the {junctions} junctions is read: {crossings}.",
         *(
             f"{clone.name}: {', '.join(f'{bp} bp' for bp in clone.bands_bp) or 'no band'}."
             for clone in check.clones
         ),
     ]
-    expected.append(
-        "A reversed insert is told from a correct one, because the two vector primers sit at "
-        "different distances from their own junctions."
-        if check.tells_orientation
-        else "These primers cannot tell a reversed insert from a correct one."
-    )
+    if check.reversed_clones:
+        expected.append(
+            "A reversed insert is told from a correct one, because the two vector primers sit at "
+            "different distances from their own junctions."
+            if check.tells_orientation
+            else "These primers cannot tell a reversed insert from a correct one."
+        )
     return Step(
         COLONY_PCR_TITLE,
         instructions=(
@@ -429,7 +593,10 @@ def colony_pcr_step(
         ),
         gels=(check.gel,),
         expected=tuple(expected),
-        notes=("The long first step at 94 °C lyses the cells; there is no purified template.",),
+        notes=(
+            "The long first step at 94 °C lyses the cells; there is no purified template.",
+            *notes,
+        ),
         troubleshooting=(
             Troubleshooting(
                 "No band in any lane",
@@ -441,7 +608,11 @@ def colony_pcr_step(
 
 
 def sequencing_step(
-    reads: Sequence[SangerRead], *, junctions: Sequence[str], inserts: Sequence[str]
+    reads: Sequence[SangerRead],
+    *,
+    junctions: Sequence[str],
+    inserts: Sequence[str],
+    notes: Sequence[str] = (),
 ) -> Step:
     """Return the sequencing that confirms the junctions, which is the only thing that settles it.
 
@@ -453,6 +624,8 @@ def sequencing_step(
         The bases each junction spells.
     inserts
         What the inserts are called.
+    notes
+        The caller's own, after the step's, such as how often its method misjoins a junction.
     """
     lengths = tuple(
         f"{read.primer.name} anneals {read.distance_bp} bp from its own junction and has to "
@@ -471,10 +644,10 @@ def sequencing_step(
             f"The junctions read as {listed(junctions)}, and the parts match {listed(inserts)}.",
         ),
         notes=(
-            "NEB asks for the assembly to be confirmed by sequencing across the junctions "
-            "whatever the screen said.",
+            "Only a read across the junctions confirms the assembly, whatever the screen said.",
             "A provider whose read is shorter than the lengths above needs a further primer "
             "inside the inserts.",
+            *notes,
         ),
         troubleshooting=(
             Troubleshooting(
@@ -503,7 +676,7 @@ def phenotype_sentences(phenotype: Phenotype, inserts: Sequence[str]) -> tuple[s
             )
         )
         lines.append(f"{coding} {way}.")
-    site = "is" if phenotype.ribosome_binding_site else "is no"
+    site = "is a" if phenotype.ribosome_binding_site else "is no"
     lines.append(
         f"There {site} ribosome binding site annotated ahead of {coding}, so the clone "
         f"{'may make' if phenotype.expressed else 'is not expected to make'} its protein."
