@@ -112,6 +112,16 @@ def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
     assert (placed["GFP forward"].start, placed["GFP forward"].end) == (395, 421)
 
 
+def test_a_part_gives_way_where_the_shared_bases_end_and_not_where_they_begin(made, gfp):
+    # Both overlaps are the vector's own bases: the first sits at the end of the backbone's
+    # share and the last at the start of it. Reading the junction starts as boundaries instead
+    # would put a screening primer 16 bases out and turn vector bases round with the insert.
+    first, last = made.assembly.junctions
+    assert made.assembly.junction_positions == (first.start, last.start)
+    assert made.assembly.boundaries == (first.end, last.start)
+    assert made.assembly.boundaries == made.assembly.insert_span == (MCS[0], MCS[0] + len(gfp))
+
+
 def test_the_plans_status_is_the_worst_of_its_checks(made):
     names = [one.name for one in made.checks]
     assert names == ["pUC19 backbone", "GFP", "junctions", "primers"]

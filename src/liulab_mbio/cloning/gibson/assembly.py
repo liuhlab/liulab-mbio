@@ -311,13 +311,25 @@ class Assembly:
 
     @property
     def junction_positions(self) -> tuple[int, ...]:
-        """Where each junction begins, which is what a validation design reads across."""
+        """Where each junction's shared bases begin, which is not where a part gives way."""
         return tuple(one.start for one in self.junctions)
 
     @property
+    def boundaries(self) -> tuple[int, ...]:
+        """Where each part gives way to the next, which is what a validation design reads across.
+
+        A junction's bases belong to one of the two parts, so they lie on that part's side of
+        the boundary: `Junction.end` where the part before them spells them, and
+        `Junction.start` where the part after does.
+        """
+        return tuple(
+            one.end if one.taken_from == one.before else one.start for one in self.junctions
+        )
+
+    @property
     def insert_span(self) -> tuple[int, int]:
-        """The product bases the inserts own, between the first junction and the last."""
-        return self.junctions[0].end, self.junctions[-1].start
+        """The product bases the inserts own, between the first boundary and the last."""
+        return self.boundaries[0], self.boundaries[-1]
 
     @property
     def checks(self) -> tuple[Check, ...]:
