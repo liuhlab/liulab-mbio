@@ -13,6 +13,7 @@ import typer
 
 from liulab_mbio import __version__ as _package_version
 from liulab_mbio.cloning.cli import app as _cloning_app
+from liulab_mbio.cloning.gateway.cli import app as _gateway_app
 from liulab_mbio.cloning.gibson.cli import app as _gibson_app
 from liulab_mbio.cloning.goldengate.cli import app as _goldengate_app
 from liulab_mbio.cloning.restriction.cli import app as _restriction_app
@@ -33,6 +34,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+_cloning_app.add_typer(_gateway_app, name="gateway")
 _cloning_app.add_typer(_gibson_app, name="gibson")
 _cloning_app.add_typer(_goldengate_app, name="goldengate")
 _cloning_app.add_typer(_restriction_app, name="restriction")
