@@ -9,6 +9,7 @@ are here too.
 
 import re
 from collections.abc import Sequence
+from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
@@ -75,6 +76,63 @@ PLATE_REFERENCE = Reference(
     "T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal "
     "and IPTG plate",
     url="https://doi.org/10.1021/acssynbio.8b00333",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class Transformation:
+    """One supplier's heat-shock protocol, which no two of them state the same way.
+
+    A method brings the numbers its own kit's manual gives; `NEB_TRANSFORMATION` is the one
+    `transform_step` uses where a method names none.
+
+    Parameters
+    ----------
+    cells_ul, reaction_ul
+        Competent cells per tube, and how much of the reaction goes into them.
+    source
+        What the step calls that reaction, such as ``"the assembly"``.
+    thaw_seconds, ice_seconds, heat_shock_celsius, heat_shock_seconds, recover_seconds
+        Thawing the cells, and the shock itself. `thaw_seconds` is ``None`` where the kit's
+        manual states no time, and the step then asks for a thaw without one.
+    outgrowth_ul, outgrowth_celsius, outgrowth_seconds
+        The medium and the recovery.
+    plate_ul, dilution
+        What is spread on one plate, and the dilution it is spread from.
+    """
+
+    _: KW_ONLY
+    cells_ul: float
+    reaction_ul: float
+    source: str
+    thaw_seconds: int | None
+    ice_seconds: int
+    heat_shock_celsius: float
+    heat_shock_seconds: int
+    recover_seconds: int
+    outgrowth_ul: float
+    outgrowth_celsius: float
+    outgrowth_seconds: int
+    plate_ul: float
+    dilution: int
+
+
+#: What `transform_step` asks for where a method names no protocol of its own: the constants
+#: above, which are NEB's.
+NEB_TRANSFORMATION = Transformation(
+    cells_ul=CELLS_UL,
+    reaction_ul=ASSEMBLY_UL,
+    source="the assembly",
+    thaw_seconds=THAW_SECONDS,
+    ice_seconds=ICE_SECONDS,
+    heat_shock_celsius=HEAT_SHOCK_CELSIUS,
+    heat_shock_seconds=HEAT_SHOCK_SECONDS,
+    recover_seconds=RECOVER_SECONDS,
+    outgrowth_ul=OUTGROWTH_UL,
+    outgrowth_celsius=OUTGROWTH_CELSIUS,
+    outgrowth_seconds=OUTGROWTH_SECONDS,
+    plate_ul=PLATE_UL,
+    dilution=PLATE_DILUTION,
 )
 
 
@@ -376,6 +434,7 @@ def transform_step(
     *,
     inserts: Sequence[str],
     colonies: str,
+    protocol: Transformation = NEB_TRANSFORMATION,
     expected: Sequence[str] = (),
     notes: Sequence[str] = (),
 ) -> Step:
@@ -391,6 +450,8 @@ def transform_step(
         What the inserts are called, for a product that annotates no coding sequence among them.
     colonies
         How many colonies to expect, as a sentence: a count belongs to the pipeline's reaction.
+    protocol
+        The volumes and times to run it by, which are the kit manufacturer's.
     expected, notes
         The caller's own, after the step's.
     """
@@ -413,21 +474,29 @@ def transform_step(
     return Step(
         "Transform and plate",
         instructions=(
-            f"Thaw {CELLS_UL:g} µL of {host} on ice for {THAW_SECONDS // 60} minutes.",
-            f"Add {ASSEMBLY_UL:g} µL of the assembly and flick the tube four or five times.",
-            f"Hold on ice for {ICE_SECONDS // 60} minutes.",
-            f"Heat shock at {HEAT_SHOCK_CELSIUS:g} °C for {HEAT_SHOCK_SECONDS} seconds.",
-            f"Return to ice for {RECOVER_SECONDS // 60} minutes.",
-            f"Add {OUTGROWTH_UL:g} µL of outgrowth medium and shake at "
-            f"{OUTGROWTH_CELSIUS:g} °C for {OUTGROWTH_SECONDS // 60} minutes at 250 rpm.",
-            f"Spread {PLATE_UL:g} µL of a 1:{PLATE_DILUTION} dilution on a warmed plate and "
-            "grow overnight at 37 °C.",
+            f"Thaw {protocol.cells_ul:g} µL of {host} on ice"
+            + (
+                "."
+                if protocol.thaw_seconds is None
+                else f" for {protocol.thaw_seconds // 60} minutes."
+            ),
+            f"Add {protocol.reaction_ul:g} µL of {protocol.source} and flick the tube four or "
+            "five times.",
+            f"Hold on ice for {protocol.ice_seconds // 60} minutes.",
+            f"Heat shock at {protocol.heat_shock_celsius:g} °C for "
+            f"{protocol.heat_shock_seconds} seconds.",
+            f"Return to ice for {protocol.recover_seconds // 60} minutes.",
+            f"Add {protocol.outgrowth_ul:g} µL of outgrowth medium and shake at "
+            f"{protocol.outgrowth_celsius:g} °C for {protocol.outgrowth_seconds // 60} minutes "
+            "at 250 rpm.",
+            f"Spread {protocol.plate_ul:g} µL of a 1:{protocol.dilution} dilution on a warmed "
+            "plate and grow overnight at 37 °C.",
         ),
         cautions=("Competent cells die if they warm up; keep them on ice until the shock.",),
         timers=(
-            Timer("On ice", ICE_SECONDS),
-            Timer("Heat shock", HEAT_SHOCK_SECONDS),
-            Timer("Outgrowth", OUTGROWTH_SECONDS),
+            Timer("On ice", protocol.ice_seconds),
+            Timer("Heat shock", protocol.heat_shock_seconds),
+            Timer("Outgrowth", protocol.outgrowth_seconds),
         ),
         expected=tuple(results),
         notes=tuple(said),
