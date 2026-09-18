@@ -14,7 +14,6 @@ own features.
 """
 
 import os
-from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,7 +29,7 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.cloning.goldengate.bench import assembly_amounts
 from liulab_mbio.cloning.goldengate.design import (
@@ -42,7 +41,16 @@ from liulab_mbio.cloning.goldengate.design import (
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.cloning.goldengate.steps import DEFAULT_HOST
 from liulab_mbio.cloning.goldengate.steps import protocol as protocol_for
-from liulab_mbio.cloning.plan import PRODUCT_FILE, as_record, status, write_protocol_files
+from liulab_mbio.cloning.plan import (
+    PRIMER_FILE,
+    PRODUCT_FILE,
+    Site,
+    as_record,
+    insertion_span,
+    primer_check,
+    status,
+    write_protocol_files,
+)
 from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
 from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
@@ -50,27 +58,18 @@ from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import Junction
 from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
-from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds, reading
+from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Protocol
-from liulab_mbio.sequence import Feature, Primer, SequenceRecord
+from liulab_mbio.sequence import Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
 
 #: Which way round an insert goes into the vector.
 type Orientation = Literal["forward", "reverse"]
 
-#: Where the inserts go: a feature name, a span, or `None` to look for `MCS_FEATURE`.
-type Site = str | tuple[int, int] | None
-
-#: The feature a vector names its cloning site with, looked for when the caller names none.
-MCS_FEATURE = "MCS"
-
 #: How far the vector junction may slide to get past an overhang rule. It moves where the vector
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
 VECTOR_WINDOW = 6
-
-#: What `Plan.write` calls the primer sheet. The other three are `liulab_mbio.cloning.plan`'s.
-PRIMER_FILE = "primers.tsv"
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,15 +189,7 @@ class Plan:
     @property
     def checks(self) -> tuple[Check, ...]:
         """The product's checks, with one more for the oligos."""
-        return (
-            *self.assembly.checks,
-            Check(
-                "primers",
-                worst(report.status for report in self.reports),
-                len(self.reports),
-                _primer_detail(self.reports),
-            ),
-        )
+        return (*self.assembly.checks, primer_check(self.reports))
 
     @property
     def status(self) -> Status:
@@ -272,7 +263,7 @@ def plan_assembly(
         A record, or a path to a ``.dna``, GenBank or FASTA file holding one.
     site
         Where the inserts go: a feature name, a ``(start, end)`` span of the vector, or
-        ``None`` to use the vector's own `MCS_FEATURE` feature.
+        ``None`` to use the vector's own `liulab_mbio.cloning.plan.MCS_FEATURE` feature.
     orientation
         ``"reverse"`` puts the other strand of an insert into the product. One value covers
         every insert; a sequence gives one for each.
@@ -327,7 +318,7 @@ def plan_assembly(
         )
     ]
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
-    start, end = _span(one, site)
+    start, end = insertion_span(one, site)
     ranking = choose_enzyme([one, *going], usage=usage)
     choice = _chosen(ranking, enzyme, (one, *going), usage)
     chosen = choice.enzyme
@@ -422,35 +413,6 @@ def plan_assembly(
     )
 
 
-def _primer_detail(reports: tuple[PrimerReport, ...]) -> str:
-    """Return what the oligos' verdicts say: the counts, the kinds, and what nothing judged.
-
-    A count alone cannot be acted on, so each kind that fired is named with the rows it covers.
-    """
-    warned = sum(1 for report in reports if report.status == "warn")
-    failed = sum(1 for report in reports if report.status == "fail")
-    counted = Counter(
-        reading(check).label
-        for report in reports
-        for check in report.checks
-        if check.status not in (None, "pass")
-    )
-    unjudged = dict.fromkeys(
-        reading(check).label
-        for report in reports
-        for check in report.checks
-        if check.status is None
-    )
-    said = f"{len(reports)} designed, {warned} with a warning, {failed} failing"
-    if counted:
-        kinds = ", ".join(
-            f"{label} on {rows}"
-            for label, rows in sorted(counted.items(), key=lambda one: (-one[1], one[0]))
-        )
-        said += f": {kinds}"
-    return f"{said}; not judged: {', '.join(unjudged)}" if unjudged else said
-
-
 def _orientations(
     orientation: Orientation | Sequence[Orientation], count: int
 ) -> tuple[Orientation, ...]:
@@ -489,37 +451,6 @@ def _profile(value: LigaseProfile | str | os.PathLike[str] | None) -> LigaseProf
     if value is None or isinstance(value, LigaseProfile):
         return value
     return read_profile(value)
-
-
-def _span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
-    """Return the vector bases the assembly replaces."""
-    if isinstance(site, tuple):
-        start, end = site
-    else:
-        if site is None:
-            found = _named(vector, MCS_FEATURE)
-            if found is None:
-                raise ValueError(
-                    f"name the insertion site: this vector annotates no {MCS_FEATURE!r} "
-                    "feature. Pass a feature name or a (start, end) span"
-                )
-        else:
-            found = _named(vector, site)
-            if found is None:
-                raise ValueError(f"this vector annotates no feature called {site!r}")
-        start, end = found.segments[0].start, found.segments[-1].end
-    if not 0 <= start < end <= len(vector):
-        raise ValueError(
-            f"the insertion site {start}-{end} does not lie inside {len(vector)} bases"
-        )
-    return start, end
-
-
-def _named(record: SequenceRecord, name: str) -> Feature | None:
-    """Return the first feature of that name, whatever its case."""
-    return next(
-        (feature for feature in record.features if feature.name.lower() == name.lower()), None
-    )
 
 
 def _chosen(
