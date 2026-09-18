@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from liulab_mbio.goldengate.assembly import Part
+from liulab_mbio.cloning.goldengate.assembly import Part
 from liulab_mbio.primers import PrimerReport, PrimerRole
 
 

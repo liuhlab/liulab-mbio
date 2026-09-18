@@ -10,7 +10,7 @@ set is held to are `liulab_mbio.overhangs`. `design` is not re-exported here: im
 module.
 """
 
-from liulab_mbio.goldengate.plan import (
+from liulab_mbio.cloning.goldengate.plan import (
     DEFAULT_HOST,
     Files,
     Orientation,

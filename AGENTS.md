@@ -25,13 +25,13 @@ One direction, bottom to top — nothing lower imports anything higher.
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | the protocol model, and its self-contained HTML render |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps` |
-| pipeline | `goldengate/` | `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by `plan` |
+| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan` |
 | pipeline | `library/` | `scheme`, `standard`, `parts`, `vector`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
 
-Each pipeline has one way in. `goldengate.plan_assembly` writes four files: the product, the
-primer sheet, `protocol.json` and the `protocol.html` rendered from it. `library.plan_library`
-writes the synthesis order sheet, the barcode and amino-acid change tables, a record per round,
-the product, and those same two protocol files.
+Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
+product, the primer sheet, `protocol.json` and the `protocol.html` rendered from it.
+`library.plan_library` writes the synthesis order sheet, the barcode and amino-acid change
+tables, a record per round, the product, and those same two protocol files.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 The top-level `__init__.py` re-exports only `__version__`, so import by module path: `Check`,

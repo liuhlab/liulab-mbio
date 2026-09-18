@@ -30,22 +30,22 @@ from liulab_mbio.bench import (
 )
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
-from liulab_mbio.checks import Check, Status, worst, worst_of
-from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
-from liulab_mbio.edits import flipped
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.goldengate.bench import assembly_amounts
-from liulab_mbio.goldengate.design import (
+from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
+from liulab_mbio.cloning.goldengate.bench import assembly_amounts
+from liulab_mbio.cloning.goldengate.design import (
     EnzymeChoice,
     OverhangSet,
     choose_enzyme,
     design_overhangs,
 )
-from liulab_mbio.goldengate.oligos import DesignedOligo
-from liulab_mbio.goldengate.steps import DEFAULT_HOST
-from liulab_mbio.goldengate.steps import protocol as protocol_for
-from liulab_mbio.io import read_record
+from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.cloning.goldengate.steps import DEFAULT_HOST
+from liulab_mbio.cloning.goldengate.steps import protocol as protocol_for
+from liulab_mbio.cloning.plan import PRODUCT_FILE, as_record, status, write_protocol_files
+from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
+from liulab_mbio.edits import flipped
+from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import Junction
 from liulab_mbio.primers import (
@@ -59,7 +59,7 @@ from liulab_mbio.primers import (
     evaluate_primer,
     reading,
 )
-from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
+from liulab_mbio.protocol import Protocol
 from liulab_mbio.sequence import Feature, Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
@@ -77,11 +77,8 @@ MCS_FEATURE = "MCS"
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
 VECTOR_WINDOW = 6
 
-#: What `Plan.write` calls the four files it writes.
-PRODUCT_FILE = "product.dna"
+#: What `Plan.write` calls the primer sheet. The other three are `liulab_mbio.cloning.plan`'s.
 PRIMER_FILE = "primers.tsv"
-PROTOCOL_DATA_FILE = "protocol.json"
-PROTOCOL_FILE = "protocol.html"
 
 
 @dataclass(frozen=True, slots=True)
@@ -209,7 +206,7 @@ class Plan:
     @property
     def status(self) -> Status:
         """The worst status of any check."""
-        return worst_of(self.checks)
+        return status(self.checks)
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
@@ -234,10 +231,9 @@ class Plan:
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the primer sheet, the protocol data and its page into `directory`.
 
-        The directory is made when it is not there. The four files are named by
-        `PRODUCT_FILE`, `PRIMER_FILE`, `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`, and a second
-        run over the same inputs writes the same bytes. The page is rendered from the data as
-        written, so the two cannot disagree.
+        The directory is made when it is not there. The four files are named by `PRODUCT_FILE`
+        and `PRIMER_FILE`, and by `liulab_mbio.cloning.plan` for the protocol pair, and a
+        second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -245,8 +241,8 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        data = write_protocol(self.protocol(), out / PROTOCOL_DATA_FILE)
-        return Files(product, sheet, data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+        written = write_protocol_files(self.protocol(), out)
+        return Files(product, sheet, written.data, written.page)
 
 
 def plan_assembly(
@@ -324,12 +320,14 @@ def plan_assembly(
     if not inserts:
         raise ValueError("an assembly needs a vector and at least one insert")
     usage = codon_usage(codon_table)
-    one = _record(vector)
+    one = as_record(vector)
     ways = _orientations(orientation, len(inserts))
     frames = _frames(in_frame, len(inserts))
     going = [
         flipped(read) if way == "reverse" else read
-        for read, way in ((_record(record), way) for record, way in zip(inserts, ways, strict=True))
+        for read, way in (
+            (as_record(record), way) for record, way in zip(inserts, ways, strict=True)
+        )
     ]
     labels = [record.name or f"insert {number}" for number, record in enumerate(going, start=1)]
     start, end = _span(one, site)
@@ -487,11 +485,6 @@ def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
     if len(given) != count:
         raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
     return given
-
-
-def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
-    """Read a record, or take one already read."""
-    return value if isinstance(value, SequenceRecord) else read_record(value)
 
 
 def _profile(value: LigaseProfile | str | os.PathLike[str] | None) -> LigaseProfile | None:

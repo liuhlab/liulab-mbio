@@ -5,8 +5,8 @@ from typing import Annotated
 
 import typer
 
+from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Orientation, Site, plan_assembly
 from liulab_mbio.codons import DEFAULT_TABLE
-from liulab_mbio.goldengate.plan import DEFAULT_HOST, Orientation, Site, plan_assembly
 from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)

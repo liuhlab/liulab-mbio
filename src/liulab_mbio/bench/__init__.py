@@ -15,7 +15,7 @@ it as its own `REFERENCES`; `REFERENCES` here gathers them.
   pieces both pipelines shape the same way. Its two references are cited only by a protocol
   that runs the step they belong to.
 
-Nothing here imports `liulab_mbio.goldengate`.
+Nothing here imports `liulab_mbio.cloning`.
 """
 
 from liulab_mbio.bench import amounts, gels, pcr

@@ -13,9 +13,9 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
-from liulab_mbio.goldengate import plan_assembly
-from liulab_mbio.goldengate.cli import LIGASE_MATRIX_ENV
-from liulab_mbio.goldengate.design import design_overhangs
+from liulab_mbio.cloning.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate.cli import LIGASE_MATRIX_ENV
+from liulab_mbio.cloning.goldengate.design import design_overhangs
 from liulab_mbio.ligase import SPREADSHEET_NS, read_profile
 from liulab_mbio.overhangs import Junction, fidelity, ligation_matrix
 

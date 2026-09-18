@@ -10,7 +10,7 @@ from typing import Annotated
 import typer
 
 from liulab_mbio import __version__ as _package_version
-from liulab_mbio.goldengate.cli import app as _goldengate_app
+from liulab_mbio.cloning.goldengate.cli import app as _goldengate_app
 from liulab_mbio.library.cli import app as _library_app
 from liulab_mbio.plot.cli import app as _plot_app
 from liulab_mbio.protocol.cli import app as _protocol_app

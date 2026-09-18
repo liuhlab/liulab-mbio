@@ -9,7 +9,7 @@ Write the docstring; this page follows.
 
 ```python
 from liulab_mbio.io import read_record
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 ```
 
 Two names are spelled twice across the package on purpose — `Check` and `Junction` each mean
@@ -19,8 +19,8 @@ something different in the two modules that define them. A
 rename one of each pair, and would import every dependency the moment you imported the package.
 So the module path is the name.
 
-`liulab_mbio.goldengate` re-exports the pipeline's entry point and its result types.
-`design` is **not** re-exported: reach it at `liulab_mbio.goldengate.design`.
+`liulab_mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
+`design` is **not** re-exported: reach it at `liulab_mbio.cloning.goldengate.design`.
 
 ## The examples are tests
 
@@ -185,27 +185,38 @@ step they belong to.
 
 ::: liulab_mbio.bench.steps
 
+## Cloning
+
+A cloning method is a package under `liulab_mbio.cloning`, and `plan` is what every method's
+plan shares: the files any plan writes, its status, and taking a record already read.
+
+::: liulab_mbio.cloning
+    options:
+      members: false
+
+::: liulab_mbio.cloning.plan
+
 ## Golden Gate
 
 `plan_assembly` is the way in, and `Plan.write` puts the product, the primer sheet and the
 protocol in one directory. The inserts are varargs, so `Plan.inserts` is a tuple — plural,
 because one reaction joins as many inserts as the overhangs allow.
 
-::: liulab_mbio.goldengate
+::: liulab_mbio.cloning.goldengate
     options:
       members: false
 
-::: liulab_mbio.goldengate.plan
+::: liulab_mbio.cloning.goldengate.plan
 
-::: liulab_mbio.goldengate.design
+::: liulab_mbio.cloning.goldengate.design
 
-::: liulab_mbio.goldengate.assembly
+::: liulab_mbio.cloning.goldengate.assembly
 
-::: liulab_mbio.goldengate.bench
+::: liulab_mbio.cloning.goldengate.bench
 
-::: liulab_mbio.goldengate.oligos
+::: liulab_mbio.cloning.goldengate.oligos
 
-::: liulab_mbio.goldengate.steps
+::: liulab_mbio.cloning.goldengate.steps
 
 ## The command line
 
@@ -214,7 +225,7 @@ The whole module, because typer makes every verb a plain function with a docstri
 
 ::: liulab_mbio.cli
 
-::: liulab_mbio.goldengate.cli
+::: liulab_mbio.cloning.goldengate.cli
 
 ::: liulab_mbio.protocol.cli
 

@@ -2,13 +2,13 @@
 
 import pytest
 
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.goldengate.design import (
+from liulab_mbio.cloning.goldengate.design import (
     GOLDEN_GATE_ENZYMES,
     LAST_RESORT,
     choose_enzyme,
     design_overhangs,
 )
+from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.overhangs import Junction, ligation_matrix
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites, primer_tail

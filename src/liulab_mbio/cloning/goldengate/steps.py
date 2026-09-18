@@ -2,7 +2,7 @@
 
 The steps any bench shares are `liulab_mbio.bench.steps`. This module runs them around the
 assembly and its cycling and adds what only Golden Gate has to say. Every number is computed by
-`liulab_mbio.goldengate.plan` or by the modules it calls; the constants below are the choices no
+`liulab_mbio.cloning.goldengate.plan` or by the modules it calls; the constants below are the choices no
 table of NEB's covers, and each says where it comes from.
 """
 
@@ -48,9 +48,8 @@ from liulab_mbio.bench import (
     transform_step,
 )
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
-from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.goldengate.assembly import Assembly, Junction, Part, dam_sites
-from liulab_mbio.goldengate.bench import (
+from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part, dam_sites
+from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
     REFERENCES,
     assembly_program,
@@ -59,8 +58,9 @@ from liulab_mbio.goldengate.bench import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from liulab_mbio.goldengate.design import OverhangSet
-from liulab_mbio.goldengate.oligos import DesignedOligo
+from liulab_mbio.cloning.goldengate.design import OverhangSet
+from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers import Polymerase, PrimerRole, Thresholds
 from liulab_mbio.protocol import (
     Component,
@@ -123,7 +123,7 @@ def protocol(
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
 
-    Each argument is the `liulab_mbio.goldengate.plan.Plan` field or property of that name, and
+    Each argument is the `liulab_mbio.cloning.goldengate.plan.Plan` field or property of that name, and
     `oligos` is `Plan.designed_oligos`. The steps run in the order someone does them: one PCR
     per part, the gel that checks them, the DpnI digest and cleanup, quantification, the
     assembly, transformation and plating, colony PCR, and sequencing. Every step is per

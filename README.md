@@ -33,7 +33,7 @@ pixi run liulab_mbio protocol render plan/protocol.json
 The same thing from Python:
 
 ```python
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "insert.dna")
 plan.write("plan/")

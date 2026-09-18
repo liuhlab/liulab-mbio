@@ -14,11 +14,11 @@ masses into amounts at the design's real lengths, and `steps` the protocol's own
 
 A library is assembled in rounds and not in one pot, because the product keeps the internal
 enzyme's sites and that is what lets the next round open it -- `docs/adr/0004-library-rounds.md`
-says why `liulab_mbio.goldengate` does not generalise to one. The scheme is data the user
+says why `liulab_mbio.cloning.goldengate` does not generalise to one. The scheme is data the user
 supplies, per `docs/adr/0005-scheme-data.md`.
 
 Only the way in and the scheme's own types are re-exported. Everything else is imported by
-module, as `liulab_mbio.goldengate.design` is.
+module, as `liulab_mbio.cloning.goldengate.design` is.
 """
 
 from liulab_mbio.library.plan import Files, LibraryPlan, plan_library

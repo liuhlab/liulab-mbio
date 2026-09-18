@@ -290,7 +290,7 @@ not overhangs.
 ### Pointing the tool at a copy
 
 ```python
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 from liulab_mbio.ligase import read_profile
 
 profile = read_profile("~/potapov/FileS03_T4_18h_25C.xlsx")

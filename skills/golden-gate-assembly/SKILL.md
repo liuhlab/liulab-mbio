@@ -73,7 +73,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 When you need the numbers rather than the files:
 
 ```python
-from liulab_mbio.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
@@ -86,7 +86,7 @@ candidate clone, and `plan.phenotype` what the product says about itself — wha
 inserts, whether anything should be translated, and how a plate reads.
 
 A value the user gives goes in here. For another amount of DNA, replace `plan.amounts` with
-`liulab_mbio.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
+`liulab_mbio.cloning.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
 and write the plan again.
 
 ## Before you hand it over
