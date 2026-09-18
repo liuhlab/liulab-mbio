@@ -2,18 +2,31 @@
 
 A pipeline runs these in its own order around its own steps, and passes its own notes where it
 has something of its own to say; they follow the step's. Every sentence about the phenotype is
-read off `liulab_mbio.bench.phenotype`.
+read off `liulab_mbio.bench.phenotype`. The smaller pieces both pipelines shape the same way --
+a verdict's badge, an overview card and an enzyme's material row -- are here too.
 """
 
 from collections.abc import Sequence
 
+from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
 from liulab_mbio.bench.pcr import colony_pcr_program, colony_pcr_reaction, pcr_program, pcr_reaction
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
+from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers import Polymerase
-from liulab_mbio.protocol import Gel, Lane, Reference, Step, Timer, Troubleshooting
+from liulab_mbio.protocol import (
+    OVERVIEW_CHARS,
+    Check,
+    Gel,
+    Lane,
+    Material,
+    Reference,
+    Step,
+    Timer,
+    Troubleshooting,
+)
 
 #: The DpnI digest that takes the plasmid template away. No supplier's table sets these, so they
 #: are this package's choices; `docs/research/golden-gate-assembly.md` §3 justifies the digest
@@ -73,6 +86,44 @@ def listed(items: Sequence[str]) -> str:
     if len(items) < 3:
         return " and ".join(items)
     return f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def badges(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
+    """Return a plan's verdicts, one badge each, so a warning is seen and not read.
+
+    A badge is a verdict, so a check carrying none has none to show.
+    """
+    return tuple(
+        Check(check.name, check.status, detail=check.detail)
+        for check in checks
+        if check.status is not None
+    )
+
+
+def card(value: str, short: str) -> str:
+    """Return the fact where an overview card holds it, and `short` where it does not.
+
+    Examples
+    --------
+    >>> card("2 positions", "shorter")
+    '2 positions'
+    """
+    return value if len(value) <= OVERVIEW_CHARS else short
+
+
+def enzyme_material(enzyme: Enzyme, *, amount: str = "", note: str = "") -> Material:
+    """Return one enzyme as a material, its own record carrying the supplier and catalogue number.
+
+    `amount` is what one reaction takes of it, and `note` what it is there to cut.
+    """
+    return Material(
+        enzyme.commercial_name or enzyme.name,
+        supplier=enzyme.supplier or "",
+        catalog=enzyme.catalog_number or "",
+        storage="-20 °C",
+        amount=amount,
+        note=note,
+    )
 
 
 def pcr_title(name: str) -> str:

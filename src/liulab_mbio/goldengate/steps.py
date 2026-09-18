@@ -28,11 +28,14 @@ from liulab_mbio.bench import (
     ColonyCheck,
     Phenotype,
     SangerRead,
+    badges,
+    card,
     choose_ladder,
     cleanup_step,
     colony_pcr_master_mix_component,
     colony_pcr_step,
     dpni_step,
+    enzyme_material,
     gel_step,
     heat_inactivation,
     listed,
@@ -60,8 +63,6 @@ from liulab_mbio.goldengate.design import OverhangSet
 from liulab_mbio.goldengate.oligos import DesignedOligo
 from liulab_mbio.primers import Polymerase, PrimerRole, Thresholds
 from liulab_mbio.protocol import (
-    OVERVIEW_CHARS,
-    Check,
     Component,
     Material,
     Protocol,
@@ -141,7 +142,7 @@ def protocol(
         ),
         overview=_overview(vector, insert_parts, assembly, overhangs, phenotype),
         highlights=_highlights(parts, phenotype, names),
-        checks=_checks(checks),
+        checks=badges(checks),
         materials=_materials(
             vector=vector,
             parts=parts,
@@ -220,8 +221,7 @@ def _brief(items: Sequence[str], noun: str) -> str:
     >>> _brief(("ATGA", "TGGC"), "junctions")
     'ATGA and TGGC'
     """
-    text = listed(items)
-    return text if len(text) <= OVERVIEW_CHARS else f"{len(items)} {noun}"
+    return card(listed(items), f"{len(items)} {noun}")
 
 
 def _highlights(
@@ -232,18 +232,6 @@ def _highlights(
     return (
         f"One reaction joins {len(parts)} fragments: {joined}.",
         *phenotype_sentences(phenotype, inserts),
-    )
-
-
-def _checks(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
-    """Return the plan's verdicts, one badge each, so a warning is seen and not read.
-
-    A badge is a verdict, so a check carrying none has none to show.
-    """
-    return tuple(
-        Check(check.name, check.status, detail=check.detail)
-        for check in checks
-        if check.status is not None
     )
 
 
@@ -288,13 +276,7 @@ def _materials(
             storage="-20 °C",
             amount=_per_reaction(mix),
         ),
-        Material(
-            enzyme.commercial_name or enzyme.name,
-            supplier=enzyme.supplier or "",
-            catalog=enzyme.catalog_number or "",
-            storage="-20 °C",
-            amount=_per_reaction(enzyme_component(enzyme, fragments)),
-        ),
+        enzyme_material(enzyme, amount=_per_reaction(enzyme_component(enzyme, fragments))),
         _catalogued(
             host,
             supplier=SUPPLIER if host == DEFAULT_HOST else "",

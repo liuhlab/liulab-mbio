@@ -9,8 +9,9 @@ sourced in ``docs/research/protein-library-assembly.md``, or from the design the
 What the method leaves unpublished -- the ligase's units, the buffer's strength, the
 electroporation settings -- is one line saying so rather than a number invented here.
 
-The shared builders in `liulab_mbio.bench.steps` are shaped for a PCR, a gel and a heat-shock
-transformation, and this method runs none of the three, so only `listed` is reused.
+The shared step builders in `liulab_mbio.bench.steps` are shaped for a PCR, a gel and a
+heat-shock transformation, and this method runs none of the three. What it does share is the
+reaction table and the smaller pieces of a protocol.
 """
 
 from collections.abc import Sequence
@@ -20,7 +21,8 @@ from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.bench.steps import listed
+from liulab_mbio.bench.reactions import reaction_table
+from liulab_mbio.bench.steps import badges, card, enzyme_material, listed
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.library.bench import (
     DIGEST_CELSIUS,
@@ -46,8 +48,6 @@ from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.library.standard import PartList, Standard
 from liulab_mbio.library.vector import Destination
 from liulab_mbio.protocol import (
-    OVERVIEW_CHARS,
-    Check,
     Component,
     Incubation,
     Material,
@@ -153,31 +153,12 @@ def digest_reaction(
     ValueError
         If the DNA and the enzymes do not fit `volume_ul`.
     """
-    components = [
-        Component(
-            dna.name,
-            dna.volume_ul,
-            final=f"{dna.pmol:g} pmol ({dna.nanograms:g} ng)",
-            master_mix=False,
-        ),
-        *(Component(one.supplier_label, ENZYME_UL) for one in enzymes),
-    ]
-    used = sum(component.volume_ul for component in components)
-    if used >= volume_ul:
-        raise ValueError(
-            f"the DNA and enzymes take {used:g} µL of a {volume_ul:g} µL digest; "
-            "concentrate the DNA or scale the digest up"
-        )
-    components.append(
-        Component(
-            f"{CUTSMART} and nuclease-free water",
-            round(volume_ul - used, 2),
-            final=f"to {volume_ul:g} µL",
-        )
-    )
-    return ReactionTable(
-        tuple(components),
+    return reaction_table(
+        (dna,),
+        tuple(Component(one.supplier_label, ENZYME_UL) for one in enzymes),
+        volume_ul=volume_ul,
         title=f"Digest with {listed([one.name for one in enzymes])}",
+        filler=f"{CUTSMART} and nuclease-free water",
         reactions=reactions,
     )
 
@@ -212,29 +193,13 @@ def ligation_reaction(
     ValueError
         If the two fragments do not fit `volume_ul`.
     """
-    components = [
-        Component(
-            one.name,
-            one.volume_ul,
-            final=f"{one.pmol:g} pmol ({one.nanograms:g} ng)",
-            master_mix=False,
-        )
-        for one in amounts
-    ]
-    used = sum(component.volume_ul for component in components)
-    if used >= volume_ul:
-        raise ValueError(
-            f"the two fragments take {used:g} µL of a {volume_ul:g} µL ligation; "
-            "concentrate them or scale the ligation up"
-        )
-    components.append(
-        Component(
-            f"{LIGASE} in {LIGASE_BUFFER}, and nuclease-free water",
-            round(volume_ul - used, 2),
-            final=f"to {volume_ul:g} µL",
-        )
+    return reaction_table(
+        amounts,
+        volume_ul=volume_ul,
+        title="Ligation",
+        filler=f"{LIGASE} in {LIGASE_BUFFER}, and nuclease-free water",
+        reactions=reactions,
     )
-    return ReactionTable(tuple(components), title="Ligation", reactions=reactions)
 
 
 def growth_program() -> ThermocyclerProgram:
@@ -285,17 +250,12 @@ def protocol(
         ),
         overview=_overview(scheme, standard, rounds, bench, constructs, part_lists, host),
         highlights=_highlights(scheme, destination, standard, rounds, bench, constructs, barcodes),
-        checks=_checks(checks),
+        checks=badges(checks),
         materials=_materials(scheme, part_lists, vector, sheet),
         equipment=EQUIPMENT,
         steps=_steps(scheme, parts, part_lists, rounds, bench, inside, outside, sheet, barcodes),
         references=_references(scheme),
     )
-
-
-def _card(value: str, short: str) -> str:
-    """Return the fact where a card holds it, and the shorter form where it does not."""
-    return value if len(value) <= OVERVIEW_CHARS else short
 
 
 def _overview(
@@ -315,19 +275,19 @@ def _overview(
         for position, parts in zip(scheme.positions, part_lists, strict=True)
     )
     return {
-        "Scheme": _card(scheme.name, f"{scheme.position_count} positions"),
-        "Part lists": _card(sizes, f"{len(part_lists)} lists"),
+        "Scheme": card(scheme.name, f"{scheme.position_count} positions"),
+        "Part lists": card(sizes, f"{len(part_lists)} lists"),
         "Parts": f"{sum(len(one) for one in part_lists)} synthesised blocks",
         "Constructs": f"{constructs:,} distinct",
         "Rounds": f"{len(rounds)}, one a part list",
         "Opened with": scheme.internal.supplier_label,
         "Released with": scheme.external.supplier_label,
         "Blunt enzymes": listed([one.name for one in scheme.blunt]),
-        "Entry overhangs": _card(listed(standard.entry_overhangs), "one a position"),
+        "Entry overhangs": card(listed(standard.entry_overhangs), "one a position"),
         "Cloning scar": standard.scar_overhang,
         "Barcode": f"{scheme.barcode_length} bp, block {scheme.barcode_block_length} bp",
         "Codon usage": host,
-        "Product": _card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
+        "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
         "Coverage": f"{last.coverage.coverage:g}x, {last.coverage.colonies:,} colonies at the end",
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
     }
@@ -386,25 +346,9 @@ def _highlights(
     return tuple(said)
 
 
-def _checks(checks: Sequence[judged.Check]) -> tuple[Check, ...]:
-    """Return the plan's verdicts, one badge each, so a warning is seen and not read."""
-    return tuple(
-        Check(check.name, check.status, detail=check.detail)
-        for check in checks
-        if check.status is not None
-    )
-
-
 def _enzyme_material(enzyme: Enzyme, note: str) -> Material:
-    """Return one enzyme as a material, its own record carrying the catalogue number."""
-    return Material(
-        enzyme.commercial_name or enzyme.name,
-        supplier=enzyme.supplier or "",
-        catalog=enzyme.catalog_number or "",
-        storage="-20 °C",
-        amount=f"{ENZYME_UL:g} µL per digest",
-        note=note,
-    )
+    """Return one enzyme as a material, carrying what every digest takes of it."""
+    return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
 
 
 def _materials(

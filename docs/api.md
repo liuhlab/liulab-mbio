@@ -155,18 +155,21 @@ refused rather than truncated.
 
 ## Bench
 
-The numbers any cloning pipeline shares: DNA amounts, PCR and colony PCR, gels, the checks
-that confirm a clone, heat inactivation, the phenotype a clone should show, the primer order
-sheet, and the protocol steps any pipeline reuses. Every public name in the modules below imports
-from `liulab_mbio.bench` too. A module that cites a source keeps its own `REFERENCES`, and
-`liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the one exception: a protocol cites
-its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the step they belong to.
+The numbers any cloning pipeline shares: DNA amounts, the reaction table filled to volume, PCR
+and colony PCR, gels, the checks that confirm a clone, heat inactivation, the phenotype a clone
+should show, the primer order sheet, and the protocol steps any pipeline reuses. Every public
+name in the modules below imports from `liulab_mbio.bench` too. A module that cites a source
+keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the
+one exception: a protocol cites its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the
+step they belong to.
 
 ::: liulab_mbio.bench
     options:
       members: false
 
 ::: liulab_mbio.bench.amounts
+
+::: liulab_mbio.bench.reactions
 
 ::: liulab_mbio.bench.pcr
 

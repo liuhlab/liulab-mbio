@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from liulab_mbio.bench.amounts import Amount, dna_amount
+from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol import (
     Component,
@@ -174,22 +175,18 @@ def assembly_reaction(
     if len(amounts) < 2:
         raise ValueError("a Golden Gate reaction joins at least two fragments")
     golden_gate_temperature(enzyme)
+    fragments = len(amounts)
     total, components = (
-        _kit_components(enzyme, amounts)
+        _kit_components(enzyme, fragments)
         if system == KIT
-        else _master_mix_components(enzyme, amounts)
+        else _master_mix_components(enzyme, fragments)
     )
-    used = sum(component.volume_ul for component in components)
-    if used >= total:
-        raise ValueError(
-            f"the DNA and enzyme take {used:g} µL of a {total:g} µL reaction; "
-            "concentrate the fragments or scale the reaction up"
-        )
-    components.append(
-        Component("Nuclease-free water", round(total - used, 2), final=f"to {total:g} µL")
-    )
-    return ReactionTable(
-        tuple(components), title=_reaction_title(enzyme, system), reactions=reactions
+    return reaction_table(
+        amounts,
+        components,
+        volume_ul=total,
+        title=_reaction_title(enzyme, system),
+        reactions=reactions,
     )
 
 
@@ -199,27 +196,10 @@ def _reaction_title(enzyme: Enzyme, system: System) -> str:
     return "Golden Gate assembly, NEBridge Ligase Master Mix (M1100)"
 
 
-def _dna_components(amounts: tuple[Amount, ...]) -> list[Component]:
-    return [
-        Component(
-            amount.name,
-            amount.volume_ul,
-            final=f"{amount.pmol:g} pmol ({amount.nanograms:g} ng)",
-            master_mix=False,
-        )
-        for amount in amounts
-    ]
-
-
-def _master_mix_components(
-    enzyme: Enzyme, amounts: tuple[Amount, ...]
-) -> tuple[float, list[Component]]:
-    fragments = len(amounts)
+def _master_mix_components(enzyme: Enzyme, fragments: int) -> tuple[float, list[Component]]:
     total, _ = _master_mix_volumes(fragments)
     tier = _dose_tier(fragments)
-    components = _dna_components(amounts)
-    components.append(ligase_master_mix_component(fragments))
-    components.append(enzyme_component(enzyme, fragments))
+    components = [ligase_master_mix_component(fragments), enzyme_component(enzyme, fragments)]
     if enzyme.name in _NEEDS_ACTIVATOR:
         components.append(
             Component(
@@ -261,14 +241,13 @@ def _master_mix_volumes(fragments: int) -> tuple[float, float]:
     return _MASTER_MIX_VOLUMES[1 if fragments >= 7 else 0]
 
 
-def _kit_components(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> tuple[float, list[Component]]:
+def _kit_components(enzyme: Enzyme, fragments: int) -> tuple[float, list[Component]]:
     if enzyme.name not in _KIT_CATALOG:
         raise ValueError(f"no NEBridge kit carries {enzyme.name}; use the Ligase Master Mix system")
-    components = _dna_components(amounts)
-    components.append(Component("T4 DNA Ligase Buffer", _KIT_BUFFER_UL, stock="10X", final="1X"))
-    components.append(
-        Component("NEBridge Golden Gate Enzyme Mix", 1.0 if len(amounts) - 1 <= 10 else 2.0)
-    )
+    components = [
+        Component("T4 DNA Ligase Buffer", _KIT_BUFFER_UL, stock="10X", final="1X"),
+        Component("NEBridge Golden Gate Enzyme Mix", 1.0 if fragments - 1 <= 10 else 2.0),
+    ]
     return _KIT_VOLUME_UL, components
 
 

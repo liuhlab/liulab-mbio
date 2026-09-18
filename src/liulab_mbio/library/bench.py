@@ -12,10 +12,8 @@ No reaction table is built here. The method publishes neither the ligase's units
 and the enzymes a round uses belong to the scheme.
 """
 
-from collections.abc import Sequence
-
 from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
-from liulab_mbio.bench.steps import listed
+from liulab_mbio.bench.reactions import fits
 from liulab_mbio.protocol import Reference
 
 #: DNA into one digest, ng, and the volume it is cut in, with CutSmart buffer, µL.
@@ -59,30 +57,6 @@ OUTGROWTH_SECONDS: tuple[int, int] = (43200, 57600)
 GROWTH_CELSIUS = 30.0
 
 
-def _fit(
-    what: str,
-    amounts: Sequence[Amount],
-    *,
-    volume_ul: float,
-    taken_ul: float = 0.0,
-    taken_by: str = "",
-) -> None:
-    """Refuse DNA that does not fit its reaction, naming what to concentrate or scale."""
-    dna_ul = sum(amount.volume_ul for amount in amounts)
-    if dna_ul + taken_ul <= volume_ul:
-        return
-    also = f" and {taken_ul:g} µL of {taken_by}" if taken_ul else ""
-    fix = "scale the reaction up"
-    room = volume_ul - taken_ul
-    if room > 0:
-        needed = sum(amount.nanograms for amount in amounts) / room
-        names = listed([amount.name for amount in amounts])
-        fix = f"concentrate {names} to {needed:.3g} ng/µL or more, or {fix}"
-    raise ValueError(
-        f"{what}: {dna_ul:g} µL of DNA{also} exceeds the {volume_ul:g} µL reaction; {fix}"
-    )
-
-
 def digest_amount(
     dna: tuple[str, int],
     *,
@@ -114,13 +88,7 @@ def digest_amount(
         pmol=to_pmol(nanograms, length_bp),
         concentration_ng_ul=concentration_ng_ul,
     )
-    _fit(
-        f"digest of {name}",
-        (amount,),
-        volume_ul=volume_ul,
-        taken_ul=2 * ENZYME_UL,
-        taken_by="the two enzymes",
-    )
+    fits((amount,), volume_ul=volume_ul, taken_ul=2 * ENZYME_UL, what=f"digest of {name}")
     return amount
 
 
@@ -165,10 +133,10 @@ def ligation_amounts(
         destination_name, destination_bp, pmol=pmol, concentration_ng_ul=destination_ng_ul
     )
     released = dna_amount(donor_name, donor_bp, pmol=pmol * ratio, concentration_ng_ul=donor_ng_ul)
-    _fit(
-        f"ligation of {donor_name} into {destination_name}",
+    fits(
         (opened, released),
         volume_ul=volume_ul,
+        what=f"ligation of {donor_name} into {destination_name}",
     )
     return opened, released
 
