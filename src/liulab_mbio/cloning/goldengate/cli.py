@@ -5,14 +5,8 @@ from typing import Annotated
 
 import typer
 
-from liulab_mbio.cloning.cli import plan_command
-from liulab_mbio.cloning.goldengate.plan import (
-    DEFAULT_HOST,
-    Orientation,
-    Plan,
-    Site,
-    plan_assembly,
-)
+from liulab_mbio.cloning.cli import plan_command, read_orientations
+from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, Site, plan_assembly
 from liulab_mbio.codons import DEFAULT_TABLE
 from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
@@ -95,7 +89,7 @@ def plan(
             vector,
             *inserts,
             site=_site(site),
-            orientation=_orientations(orientation, len(inserts)),
+            orientation=read_orientations(orientation, len(inserts)),
             in_frame=in_frame,
             enzyme=enzyme or None,
             codon_table=codon_table,
@@ -128,38 +122,6 @@ def _site(text: str) -> Site:
     if sep and start.strip().isdigit() and end.strip().isdigit():
         return int(start), int(end)
     return text
-
-
-def _orientations(given: list[str] | None, count: int) -> tuple[Orientation, ...]:
-    """Read one orientation per insert, spreading a single value over them all.
-
-    Raises
-    ------
-    ValueError
-        If a value is neither ``forward`` nor ``reverse``, or there is more than one and not
-        one per insert.
-    """
-    values = given or ["forward"]
-    if len(values) == 1:
-        values = values * count
-    if len(values) != count:
-        raise ValueError(f"--orientation given {len(values)} times for {count} insert(s)")
-    return tuple(_orientation(text) for text in values)
-
-
-def _orientation(text: str) -> Orientation:
-    """Read the orientation, refusing anything else.
-
-    Raises
-    ------
-    ValueError
-        If it is neither ``forward`` nor ``reverse``.
-    """
-    if text == "forward":
-        return "forward"
-    if text == "reverse":
-        return "reverse"
-    raise ValueError(f"orientation is 'forward' or 'reverse', got {text!r}")
 
 
 def _polymerase(name: str) -> Polymerase:

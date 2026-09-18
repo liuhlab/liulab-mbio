@@ -3,7 +3,8 @@
 A method's own plan module holds its design, its `Plan` and the file set it writes. What every
 one of them repeats is here: the shape a plan and its written files take, the names of the files
 any plan writes, the protocol pair, the worst-of rule a plan's status follows, where a method
-puts its inserts, how its oligos are judged as one, and taking a record the caller already read.
+puts its inserts and which way round they go, how its oligos are judged as one, and taking a
+record the caller already read.
 
 The library pipeline is not a cloning method -- `docs/adr/0004-library-rounds.md` says why --
 but its plan writes the same protocol pair, so it uses this module too.
@@ -15,6 +16,7 @@ from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.io import read_record
@@ -39,6 +41,9 @@ type Site = str | tuple[int, int] | None
 
 #: The feature a vector names its cloning site with, looked for when the caller names none.
 MCS_FEATURE = "MCS"
+
+#: Which way round an insert goes into the vector.
+type Orientation = Literal["forward", "reverse"]
 
 
 class Written(typing.Protocol):
@@ -132,6 +137,30 @@ def insertion_span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
             f"the insertion site {start}-{end} does not lie inside {len(vector)} bases"
         )
     return start, end
+
+
+def orientations(
+    orientation: Orientation | Sequence[Orientation], count: int
+) -> tuple[Orientation, ...]:
+    """Spread one orientation over every insert, or take the one given for each.
+
+    Raises
+    ------
+    ValueError
+        If a value is neither ``forward`` nor ``reverse``, or there is not one per insert.
+
+    Examples
+    --------
+    >>> orientations("reverse", 2)
+    ('reverse', 'reverse')
+    """
+    given = (orientation,) * count if isinstance(orientation, str) else tuple(orientation)
+    if len(given) != count:
+        raise ValueError(f"orientation has {len(given)} values for {count} insert(s)")
+    for one in given:
+        if one not in ("forward", "reverse"):
+            raise ValueError(f"orientation is 'forward' or 'reverse', got {one!r}")
+    return given
 
 
 def _named(record: SequenceRecord, name: str) -> Feature | None:

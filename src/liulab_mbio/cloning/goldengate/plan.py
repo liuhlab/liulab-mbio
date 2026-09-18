@@ -17,7 +17,6 @@ import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.oligos import primer_sheet
@@ -44,9 +43,11 @@ from liulab_mbio.cloning.goldengate.steps import protocol as protocol_for
 from liulab_mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    Orientation,
     Site,
     as_record,
     insertion_span,
+    orientations,
     primer_check,
     status,
     write_protocol_files,
@@ -63,9 +64,6 @@ from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
-
-#: Which way round an insert goes into the vector.
-type Orientation = Literal["forward", "reverse"]
 
 #: How far the vector junction may slide to get past an overhang rule. It moves where the vector
 #: is cut inside the span the assembly replaces, so the product keeps a base or two more of it.
@@ -309,7 +307,7 @@ def plan_assembly(
         raise ValueError("an assembly needs a vector and at least one insert")
     usage = codon_usage(codon_table)
     one = as_record(vector)
-    ways = _orientations(orientation, len(inserts))
+    ways = orientations(orientation, len(inserts))
     frames = _frames(in_frame, len(inserts))
     going = [
         flipped(read) if way == "reverse" else read
@@ -411,25 +409,6 @@ def plan_assembly(
         polymerase,
         thresholds,
     )
-
-
-def _orientations(
-    orientation: Orientation | Sequence[Orientation], count: int
-) -> tuple[Orientation, ...]:
-    """Spread one orientation over every insert, or take the one given for each.
-
-    Raises
-    ------
-    ValueError
-        If a value is neither ``forward`` nor ``reverse``, or there is not one per insert.
-    """
-    given = (orientation,) * count if isinstance(orientation, str) else tuple(orientation)
-    if len(given) != count:
-        raise ValueError(f"orientation has {len(given)} values for {count} insert(s)")
-    for one in given:
-        if one not in ("forward", "reverse"):
-            raise ValueError(f"orientation is 'forward' or 'reverse', got {one!r}")
-    return given
 
 
 def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
