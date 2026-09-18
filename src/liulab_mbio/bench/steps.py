@@ -2,10 +2,12 @@
 
 A pipeline runs these in its own order around its own steps, and passes its own notes where it
 has something of its own to say; they follow the step's. Every sentence about the phenotype is
-read off `liulab_mbio.bench.phenotype`. The smaller pieces both pipelines shape the same way --
-a verdict's badge, an overview card and an enzyme's material row -- are here too.
+read off `liulab_mbio.bench.phenotype`. The smaller pieces every pipeline shapes the same way --
+a verdict's badge, an overview card and a material row for an enzyme or a catalogued product --
+are here too.
 """
 
+import re
 from collections.abc import Sequence
 
 from liulab_mbio import checks as judged
@@ -20,6 +22,7 @@ from liulab_mbio.protocol.model import (
     OVERVIEW_CHARS,
     Check,
     Gel,
+    Incubation,
     Lane,
     Material,
     Reference,
@@ -123,6 +126,35 @@ def enzyme_material(enzyme: Enzyme, *, amount: str = "", note: str = "") -> Mate
         storage="-20 °C",
         amount=amount,
         note=note,
+    )
+
+
+#: A catalogue number at the end of a product name, such as ``"(M1100)"``. A letter and then a
+#: digit, so a bracketed enzyme name is not read as one.
+_CATALOG_RE = re.compile(r"^(?P<name>.*?)\s*\((?P<catalog>[A-Z]\d[\w./-]*)\)$")
+
+
+def catalogued(name: str, *, supplier: str = "", storage: str = "", amount: str = "") -> Material:
+    """Return one product as a material, taking the catalogue number out of a name carrying one.
+
+    A name carrying none leaves the cell empty; nothing here invents one.
+
+    Examples
+    --------
+    >>> catalogued("NEB 100 bp DNA Ladder (N3231)").catalog
+    'N3231'
+    >>> catalogued("Agarose and 1X TAE or TBE").catalog
+    ''
+    """
+    found = _CATALOG_RE.match(name)
+    if found is None:
+        return Material(name, supplier=supplier, storage=storage, amount=amount)
+    return Material(
+        found["name"],
+        supplier=supplier,
+        catalog=found["catalog"],
+        storage=storage,
+        amount=amount,
     )
 
 
@@ -230,6 +262,8 @@ def dpni_step(
     pcrs: Sequence[str],
     templates: Sequence[tuple[str, int]],
     *,
+    seconds: int = DPNI_SECONDS,
+    inactivation: Incubation | None = None,
     notes: Sequence[str] = (),
 ) -> Step:
     """Return the DpnI digest that takes the plasmid template away, so it cannot transform.
@@ -240,17 +274,38 @@ def dpni_step(
         The PCRs to digest, by name.
     templates
         The plasmid each was amplified from, and the Dam sites it carries.
+    seconds
+        How long to digest. `DPNI_SECONDS` is this package's own choice; a method whose
+        supplier prescribes the digest passes that supplier's time instead.
+    inactivation
+        The heat inactivation the supplier asks for after it, where one is prescribed.
     notes
         The caller's own, after the step's.
     """
     counted = ", ".join(f"{name} ({sites} Dam sites)" for name, sites in templates)
+    kill = (
+        ()
+        if inactivation is None
+        else (
+            f"{inactivation.label} at {inactivation.temperature_c:g} °C for "
+            f"{(inactivation.seconds or 0) // 60:g} minutes.",
+        )
+    )
     return Step(
         "Digest the plasmid template with DpnI",
         instructions=(
             *(f"Add {DPNI_UNITS} units of DpnI to the {name} PCR and mix." for name in pcrs),
-            f"Incubate at {DPNI_CELSIUS:g} °C for {DPNI_SECONDS // 60} minutes.",
+            f"Incubate at {DPNI_CELSIUS:g} °C for {seconds // 60} minutes.",
+            *kill,
         ),
-        timers=(Timer("DpnI digest", DPNI_SECONDS),),
+        timers=(
+            Timer("DpnI digest", seconds),
+            *(
+                ()
+                if inactivation is None or inactivation.seconds is None
+                else (Timer(inactivation.label, inactivation.seconds),)
+            ),
+        ),
         expected=(
             "Nothing visible. The digest shows up later as fewer colonies carrying the "
             "template plasmid.",
