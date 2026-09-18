@@ -42,6 +42,7 @@ from liulab_mbio.cloning.gateway.bench import (
     BP_TRANSFORMATION,
     BP_VOLUME_UL,
     CELL_EFFICIENCY_CFU_UG,
+    CHLORAMPHENICOL_UG_ML,
     DESTINATION_NG,
     ENTRY_MIN_NG,
     ENTRY_NG,
@@ -56,6 +57,7 @@ from liulab_mbio.cloning.gateway.bench import (
     LR_TRANSFORMATION,
     LR_VOLUME_UL,
     ONE_TUBE_YIELD,
+    PROPAGATION_HOST,
     PROTEINASE_K_UG_UL,
     PROTEINASE_K_UL,
     REFERENCES,
@@ -267,7 +269,7 @@ def _materials(
                     f"{_acceptor(bp).name} donor vector",
                     storage="-20 °C",
                     amount=f"{donor.pmol:g} pmol ({donor.nanograms:g} ng) per reaction",
-                    note="supercoiled, and grown in a ccdB-resistant strain",
+                    note=f"supercoiled, and grown in {PROPAGATION_HOST}",
                 ),
                 _clonase(BP_CLONASE, BP_CLONASE_CATALOG, BP_CLONASE_UL),
                 Material(_plate(bp.phenotype, "donor"), amount="one plate per transformation"),
@@ -288,7 +290,7 @@ def _materials(
                 f"{destination.name} destination vector",
                 storage="-20 °C",
                 amount=f"{DESTINATION_NG:g} ng per reaction",
-                note="grown in a ccdB-resistant strain, which is the only kind it grows in",
+                note=f"grown in {PROPAGATION_HOST}, which is the only kind of strain it grows in",
             ),
             _clonase(LR_CLONASE, LR_CLONASE_CATALOG, LR_CLONASE_UL),
             Material(TE_BUFFER, amount=f"to {LR_VOLUME_UL - LR_CLONASE_UL:g} µL per reaction"),
@@ -335,7 +337,7 @@ def _plate(phenotype: Phenotype, vector: str) -> str:
         antibiotic = f"the antibiotic {phenotype.marker.name} selects"
     else:
         antibiotic = f"the {vector} vector's own antibiotic"
-    return f"LB agar plates with {antibiotic}"
+    return f"{phenotype.medium} agar plates with {antibiotic}"
 
 
 def _oligos(amplicon: Amplicon | None) -> tuple[Oligo, ...]:
@@ -549,6 +551,10 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 "Unreacted destination vector and the by-product both keep the ccdB gene, "
                 f"which kills {host}, so they do not grow. A strain carrying F' would supply "
                 "ccdA and cancel that.",
+                f"The expression clone lost the chloramphenicol cassette with the by-product, so "
+                f"restreaking a colony on {CHLORAMPHENICOL_UG_ML} µg/mL chloramphenicol "
+                "confirms it: a true expression clone does not grow there, and one carrying a "
+                "mutated ccdB gene does.",
                 f"Small colonies beside large ones are usually unreacted "
                 f"{_carrier(lr).name} co-transforming; restreak them on the entry clone's own "
                 "antibiotic to tell.",

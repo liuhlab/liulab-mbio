@@ -6,7 +6,7 @@ transformation Invitrogen's manual prescribes, which is not the one NEB's does. 
 the same table filled from two manuals. Every number cites `docs/research/gateway-cloning.md`.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount, dna_amount, to_pmol
@@ -96,6 +96,33 @@ ONE_TUBE_YIELD = "at least 10-20% of the expression clones the staged route give
 #: do not grow. Never one carrying F', whose ccdA cancels that (MAN0000470 pages 24 and 31;
 #: note §9).
 DEFAULT_HOST = "TOP10 chemically competent E. coli"
+
+#: The strain a donor or destination vector is grown in, because it is the only kind that grows
+#: one: "To propagate and maintain your destination vector, you must use ccdB Survival T1R
+#: E. coli" (MAN0000470 page 36). What is sold for it now is ccdB Survival 2 T1R, A10460
+#: (MAN0000761 revision 2.0; note §9).
+PROPAGATION_HOST = "One Shot ccdB Survival 2 T1R"
+
+#: What the manuals say about each strain note §9 names, keyed by the name to look for in the
+#: host a plan is given. ``"f-prime"`` is the one prohibition the sources carry: "Do not use
+#: E. coli strains that contain the F' episome (e.g. TOP10F') for transformation. These strains
+#: contain the ccdA gene and will prevent negative selection with the ccdB gene" (MAN0000470
+#: pages 24 and 31). ``"sensitive"`` is a strain the vendor names for plating a BP or LR
+#: reaction; ``"resistant"`` is one a ccdB vector is propagated in, which no manual forbids
+#: plating on -- that the selection would be lost there is an inference the note marks as one.
+HOSTS: Mapping[str, str] = {
+    "TOP10F'": "f-prime",
+    "ccdB Survival": "resistant",
+    "DB3.1": "resistant",
+    "TOP10": "sensitive",
+    "DH5": "sensitive",
+    "OmniMAX 2": "sensitive",
+}
+
+#: The counter-screen the lost cassette allows, µg/mL: the expression clone no longer carries
+#: CmR, and "A true expression clone will not grow in the presence of chloramphenicol"
+#: (MAN0000223 page 5; note §13).
+CHLORAMPHENICOL_UG_ML = 30
 
 #: Invitrogen's transformation, which is not NEB's, and which is one protocol for both
 #: reactions (MAN0000470 page 26; note §14, §17). No manual in the set states a thaw time, so

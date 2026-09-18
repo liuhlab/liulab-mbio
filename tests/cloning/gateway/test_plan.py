@@ -60,9 +60,16 @@ def test_the_same_inputs_write_the_same_bytes(
 
 
 def test_the_status_is_the_worst_of_the_checks_it_carries(gateway_plan: Plan) -> None:
-    assert {check.name for check in gateway_plan.checks} == {"LR junctions", "LR att sites"}
+    assert {check.name for check in gateway_plan.checks} == {
+        "LR junctions",
+        "LR att sites",
+        "insert att sites",
+        "ccdB host",
+        "ccdB vector host",
+        "LR markers",
+    }
     assert gateway_plan.status == "pass"
-    assert all(check.status == "pass" for check in gateway_plan.checks)
+    assert all(check.status in ("pass", None) for check in gateway_plan.checks)
 
 
 def test_each_junction_spells_the_att_site_the_arithmetic_names(gateway_plan: Plan) -> None:
@@ -313,12 +320,16 @@ def test_lr_gives_back_the_attb_sites_the_insert_carried_in(
     assert "ccdB" not in {feature.name for feature in product.features}
 
 
-def test_each_reaction_carries_its_own_verdicts(staged_plan: Plan) -> None:
+def test_each_reaction_carries_its_own_verdicts_and_the_plan_its_own(staged_plan: Plan) -> None:
     assert [check.name for check in staged_plan.checks] == [
         "BP junctions",
         "BP att sites",
         "LR junctions",
         "LR att sites",
+        "insert att sites",
+        "ccdB host",
+        "ccdB vector host",
+        "LR markers",
     ]
     assert staged_plan.status == "pass"
 

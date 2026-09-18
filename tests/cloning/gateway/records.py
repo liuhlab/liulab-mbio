@@ -99,13 +99,25 @@ def donor_vector(*, name: str = "pDONR-test", marker: str = "KanR") -> SequenceR
     )
 
 
-def entry_clone(insert: str, *, name: str = "pENTR-GFP", marker: str = "KanR") -> SequenceRecord:
-    """Return an entry clone carrying `insert` between attL1 and attL2, with a backbone marker."""
+def entry_clone(
+    insert: str,
+    *,
+    name: str = "pENTR-GFP",
+    marker: str = "KanR",
+    added: tuple[str, str] = ("", ""),
+) -> SequenceRecord:
+    """Return an entry clone carrying `insert` between attL1 and attL2, with a backbone marker.
+
+    `added` is what a fusion primer put between each att site and the insert, read on the top
+    strand: two bases at the N terminus and one at the C, as `docs/research/gateway-cloning.md`
+    §8 counts them.
+    """
     from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
+    before, after = added
     left, right = att_site("attL1"), reverse_complement(att_site("attL2"))
-    bases = _BACKBONE + left + insert + right + _BACKBONE
-    at = len(_BACKBONE) + len(left)
+    bases = _BACKBONE + left + before + insert + after + right + _BACKBONE
+    at = len(_BACKBONE) + len(left) + len(before)
     return SequenceRecord(
         bases,
         topology="circular",
@@ -117,20 +129,30 @@ def entry_clone(insert: str, *, name: str = "pENTR-GFP", marker: str = "KanR") -
     )
 
 
-def destination_vector(*, name: str = "pDEST-test", marker: str = "AmpR") -> SequenceRecord:
-    """Return a destination vector: a ccdB cassette between attR1 and attR2, and a marker."""
+def destination_vector(
+    *, name: str = "pDEST-test", marker: str = "AmpR", tag: str = ""
+) -> SequenceRecord:
+    """Return a destination vector: a ccdB cassette between attR1 and attR2, and a marker.
+
+    `tag` names an N-terminal fusion tag, annotated as the three codons that run straight into
+    attR1, which is the frame a fusion has to keep.
+    """
     from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
     promoter, site = "TAATACGACTCACTATAGGG", "AAGGAGAT"
+    coding = "ATGAGCGGC" if tag else ""
     left, right = att_site("attR1"), reverse_complement(att_site("attR2"))
-    lead = _BACKBONE + promoter + site
+    lead = _BACKBONE + promoter + site + coding
     bases = lead + left + _CASSETTE + right + _BACKBONE
+    at = len(lead) - len(coding)
+    tagged = (Feature(tag, "CDS", (Segment(at, len(lead)),), strand=Strand.FORWARD),) if tag else ()
     return SequenceRecord(
         bases,
         topology="circular",
         name=name,
         features=(
             Feature(marker, "CDS", (Segment(0, len(_BACKBONE)),), strand=Strand.FORWARD),
+            *tagged,
             Feature(
                 "T7 promoter",
                 "promoter",
@@ -140,7 +162,7 @@ def destination_vector(*, name: str = "pDEST-test", marker: str = "AmpR") -> Seq
             Feature(
                 "RBS",
                 "RBS",
-                (Segment(len(lead) - len(site), len(lead)),),
+                (Segment(at - len(site), at),),
                 strand=Strand.FORWARD,
             ),
             Feature(

@@ -24,6 +24,7 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import read_phenotype
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.gateway.bench import DEFAULT_HOST, bp_amounts, lr_amounts
+from liulab_mbio.cloning.gateway.checks import plan_checks
 from liulab_mbio.cloning.gateway.design import Amplicon, Fusion, amplify_attb
 from liulab_mbio.cloning.gateway.recombination import (
     Junction,
@@ -101,12 +102,16 @@ class Plan:
     amplicon
         The attB PCR that made the DNA BP takes, or ``None`` where the insert already carried
         its att sites.
+    fusion
+        Which tag the insert is read into, which is what says where a fusion reads through an
+        att junction and so where the reading frame is judged.
     """
 
     lr: PlannedReaction
     bp: PlannedReaction | None
     host: str
     amplicon: Amplicon | None = None
+    fusion: Fusion = "none"
 
     @property
     def product(self) -> SequenceRecord:
@@ -150,10 +155,20 @@ class Plan:
 
     @property
     def checks(self) -> tuple[Check, ...]:
-        """Every verdict the plan carries, in the order the bench meets them."""
+        """Every verdict the plan carries, in the order the bench meets them.
+
+        The oligos come first, then each reaction's own, then the plan's, which span both --
+        the insert, the host, the markers and the frame. One of those carries no verdict,
+        because the sources judge no threshold for it.
+        """
         oligos = (primer_check(self.reports),) if self.reports else ()
         earlier = () if self.bp is None else self.bp.recombination.checks
-        return (*oligos, *earlier, *self.lr.recombination.checks)
+        return (
+            *oligos,
+            *earlier,
+            *self.lr.recombination.checks,
+            *plan_checks(lr=self.lr, bp=self.bp, host=self.host, fusion=self.fusion),
+        )
 
     @property
     def status(self) -> Status:
@@ -232,7 +247,8 @@ def plan_gateway(
         Design attB-tailed primers for the carrier and amplify it, for an insert carrying no
         att site of its own.
     fusion
-        Which tag the insert is read into, which decides the frame bases the tails carry.
+        Which tag the insert is read into: it decides the frame bases the tails carry, and
+        which att junctions the reading frame is judged at.
     polymerase
         For the attB PCR.
     host
@@ -280,7 +296,7 @@ def plan_gateway(
         recombine(one, other, reaction="LR", name=name or _named(other.name, start.name)),
         lr_amounts((one.name, len(one)), (other.name, len(other))),
     )
-    return Plan(lr, bp, host, made)
+    return Plan(lr, bp, host, made, fusion)
 
 
 def _planned(made: Recombination, amounts: tuple[Amount, Amount]) -> PlannedReaction:
