@@ -13,7 +13,6 @@ translated, and how a plate reads -- is `liulab_mbio.bench.phenotype`, read off 
 own features.
 """
 
-import dataclasses
 import os
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -33,6 +32,7 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
+from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
 from liulab_mbio.goldengate.bench import assembly_amounts
@@ -60,15 +60,7 @@ from liulab_mbio.primers import (
     reading,
 )
 from liulab_mbio.protocol import Protocol, read_protocol, write_html, write_protocol
-from liulab_mbio.sequence import (
-    BindingSite,
-    Feature,
-    Primer,
-    Segment,
-    SequenceRecord,
-    Strand,
-    reverse_complement,
-)
+from liulab_mbio.sequence import Feature, Primer, SequenceRecord
 from liulab_mbio.sites import EnzymeLike
 from liulab_mbio.snapgene import write_dna
 
@@ -495,68 +487,6 @@ def _frames(in_frame: bool | Sequence[bool], count: int) -> tuple[bool, ...]:
     if len(given) != count:
         raise ValueError(f"in_frame has {len(given)} values for {count} insert(s)")
     return given
-
-
-def flipped(record: SequenceRecord) -> SequenceRecord:
-    """Return `record` read from the other strand, features and binding sites turned with it.
-
-    Raises
-    ------
-    ValueError
-        If a span runs across the origin, which has no place on the other strand of a record
-        this turns end for end.
-
-    Examples
-    --------
-    >>> flipped(SequenceRecord("AAAACCCG")).sequence
-    'CGGGTTTT'
-    """
-    length = len(record)
-    other = {Strand.FORWARD: Strand.REVERSE, Strand.REVERSE: Strand.FORWARD}
-    spans = [
-        (segment.start, segment.end) for feature in record.features for segment in feature.segments
-    ]
-    spans += [(site.start, site.end) for primer in record.primers for site in primer.binding_sites]
-    if any(end > length for _, end in spans):
-        raise ValueError("a record with a span across its origin cannot be turned end for end")
-    features = tuple(
-        dataclasses.replace(
-            feature,
-            segments=tuple(
-                sorted(
-                    (
-                        Segment(
-                            length - segment.end,
-                            length - segment.start,
-                            name=segment.name,
-                            color=segment.color,
-                        )
-                        for segment in feature.segments
-                    ),
-                    key=lambda segment: (segment.start, segment.end),
-                )
-            ),
-            strand=other.get(feature.strand, feature.strand),
-        )
-        for feature in record.features
-    )
-    primers = tuple(
-        dataclasses.replace(
-            primer,
-            binding_sites=tuple(
-                BindingSite(length - site.end, length - site.start, other[site.strand])
-                for site in primer.binding_sites
-            ),
-        )
-        for primer in record.primers
-    )
-    return dataclasses.replace(
-        record,
-        sequence=reverse_complement(record.sequence),
-        features=features,
-        primers=primers,
-        extras={},
-    )
 
 
 def _record(value: SequenceRecord | str | os.PathLike[str]) -> SequenceRecord:
