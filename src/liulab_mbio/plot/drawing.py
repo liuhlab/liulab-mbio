@@ -458,6 +458,7 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
         maps,
         title=drawing.record.name or path.stem,
         shown=shown,
+        zooms=[shape for shape in layouts if shape == "circle"],
         switches=_switches(switches, layouts["line"]),
         sequence_view=beside,
         sequence_shown=drawing.with_sequence_view,

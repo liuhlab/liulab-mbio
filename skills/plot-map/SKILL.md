@@ -30,9 +30,10 @@ The suffix picks the format, and `-o` repeats to write several from one layout. 
 file written, then a notice if the map hid any label. `--help` lists every switch.
 
 - **`.html`** is one page that opens offline: details on hover, a switch for each layer and
-  feature type, a circle or line flip, the sequence view beside the map or under it on a narrow
-  page, a click that finds an item in both views, and a drag that selects bases to copy. The
-  command's switches set only what it shows first. Hand it to someone who wants to explore.
+  feature type, a circle or line flip, a circle to zoom and pan, the sequence view beside the map
+  or under it on a narrow page, a click that finds an item in both views, and a drag that selects
+  bases to copy. The command's switches set only what it shows first. Hand it to someone who
+  wants to explore.
 - **`.png`** and **`.pdf`** look the same on any machine and leave out what is switched off, the
   sequence view unless `--sequence-view`. The PNG is one image, the sequence view under the map,
   at `--dpi`. The PDF puts the sequence view's rows on the pages after the map.

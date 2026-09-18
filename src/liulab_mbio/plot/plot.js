@@ -1,15 +1,31 @@
 // A drawing's page. Hovering over anything drawn shows its details, read from its group's data
 // attributes, and hovering over a notice of hidden labels lists those that show. The switches
 // show or hide each kind of item and each feature type in place, flip the map's shape, and show
-// the sequence view, beside the map or under it as the page's width allows. A click on an item
-// highlights it in both views and scrolls the other to it. In the sequence view, hovering over a
-// base shows its position, and a drag selects bases to copy, scrolling the view while the pointer
-// lies past its top or bottom.
+// the sequence view, beside the map or under it as the page's width allows. The map's caption
+// zooms the shape shown, when it zooms, and a drag pans it. A click on an item highlights it in
+// both views and scrolls the other to it. In the sequence view, hovering over a base shows its
+// position, and a drag selects bases to copy, scrolling the view while the pointer lies past its
+// top or bottom.
 (() => {
   const tip = document.querySelector(".hover");
   const rows = ["name", "type", "span", "length"];
   const map = document.querySelector(".map");
   const view = document.querySelector(".sequence-view");
+  const zoomer = map.querySelector("figcaption");
+  const slider = zoomer?.querySelector('[name="zoom"]');
+
+  // The map's shape shown, and whether it zooms. Each shape keeps its zoom, in doublings, and
+  // where its pane was scrolled.
+  const showing = () => map.querySelector(".shape:not([hidden])");
+  const zooms = (shape) => shape?.dataset.zoom === "free";
+  const kept = new Map();
+  const held = (shape) => {
+    if (!kept.has(shape)) kept.set(shape, { level: 0, left: 0, top: 0 });
+    return kept.get(shape);
+  };
+  // A press on the map, which pans it once it moves more than a few pixels.
+  let press = null;
+  let panned = false;
 
   // The page's state lives in its switches: each input by its value.
   const switches = (name) =>
@@ -64,6 +80,9 @@
   };
 
   const apply = () => {
+    const was = showing();
+    held(was).left = map.scrollLeft;
+    held(was).top = map.scrollTop;
     for (const group of document.querySelectorAll(".plot [data-kind]")) {
       group.classList.toggle("off", !shows(group.dataset));
     }
@@ -81,8 +100,17 @@
       if (chosen) choose(chosen);
     }
     arrange();
+    const now = showing();
+    if (zoomer) {
+      zoomer.hidden = !zooms(now);
+      slider.value = String(held(now).level);
+    }
+    if (now !== was) map.scrollTo(held(now).left, held(now).top);
+    fit(now);
   };
-  document.addEventListener("change", apply);
+  document.addEventListener("change", (event) => {
+    if (event.target !== slider) apply();
+  });
   // A browser may restore switches as they were left, rather than as the page was written.
   window.addEventListener("pageshow", apply);
 
@@ -238,7 +266,7 @@
   document.addEventListener("pointerdown", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     onBase = false;
-    if (!view || !target?.closest(".plot svg")) return;
+    if (!view || !target?.closest(".sequence-view svg")) return;
     const at =
       event.button === 0 && target.closest(".sequence-view") && !target.closest("[data-kind]")
         ? baseAt(event, false)
@@ -273,7 +301,7 @@
   document.addEventListener("pointercancel", release);
   // A drag over the bases selects them, not the text they are set in.
   document.addEventListener("selectstart", (event) => {
-    if (anchor !== null) event.preventDefault();
+    if (anchor !== null || press) event.preventDefault();
   });
 
   // Copying puts the selected bases on the clipboard, unless text is selected, but for the button.
@@ -325,7 +353,9 @@
     const there = groups.filter((group) => other.contains(group) && !group.closest("[hidden]"));
     if (!there.length) return;
     if (other === map) {
-      scroll(map, there[0].getBoundingClientRect(), false);
+      // Its name, which a zoomed map may show when the whole of a long arrow cannot.
+      const name = there.map((group) => group.querySelector("text")).find(Boolean);
+      scroll(map, (name ?? there[0]).getBoundingClientRect(), false);
       return;
     }
     const at = parseInt(clicked.dataset.span, 10) - 1;
@@ -338,13 +368,130 @@
 
   document.querySelector(".plot").addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
-    // A click in a caption, or one that selected bases, leaves the item highlighted.
-    if (!target?.closest("svg") || onBase) return;
+    // A click in a caption, one that selected bases, or a pan, leaves the item highlighted.
+    if (!target?.closest("svg") || onBase || panned) return;
+    if (chosen && target.closest(".map")) choose(null);
     const item = target.closest("[data-kind]");
     const chosenKey = item && key(item) !== selected ? key(item) : null;
     const groups = select(chosenKey);
     if (item && chosenKey) reveal(item, groups);
   });
+
+  // Where the shape shown was scrolled, kept as its pane scrolls.
+  map.addEventListener("scroll", () => {
+    held(showing()).left = map.scrollLeft;
+    held(showing()).top = map.scrollTop;
+  });
+
+  // Measures a shape at 1×: the room its drawing takes, which it keeps while zoomed, and the room
+  // its pane holds right of and below the drawing, which stays there. So the pane scrolls as much
+  // further as the drawing grew, and any point of it can stay where it is.
+  const pin = (shape) => {
+    const box = shape.querySelector("svg").getBoundingClientRect();
+    const frame = map.getBoundingClientRect();
+    const right = box.right - frame.left - map.clientLeft + map.scrollLeft;
+    const below = box.bottom - frame.top - map.clientTop + map.scrollTop;
+    shape.style.setProperty("--width", `${box.width}px`);
+    shape.style.setProperty("--height", `${box.height}px`);
+    shape.style.setProperty("--right", `${Math.max(map.scrollWidth - right, 0)}px`);
+    shape.style.setProperty("--below", `${Math.max(map.scrollHeight - below, 0)}px`);
+    return box;
+  };
+  // Measures a zoomed shape again, and scales where the pane was scrolled by how much it changed.
+  const fit = (shape) => {
+    if (!shape.classList.contains("zoomed")) return;
+    const by = 1 / parseFloat(shape.style.getPropertyValue("--width"));
+    shape.classList.remove("zoomed");
+    const { width } = pin(shape);
+    shape.classList.add("zoomed");
+    map.scrollTo(held(shape).left * width * by, held(shape).top * width * by);
+  };
+  new ResizeObserver(() => fit(showing())).observe(plot);
+
+  // Where the last zoom scrolled the pane, before the pane rounded it to whole pixels, so that
+  // zooming step by step does not add up the rounding.
+  let wanted = null;
+  // Zooms the shape shown to `level` doublings, keeping the point at (x, y) where it is: the
+  // drawing grows from its top left, and the pane scrolls over it.
+  const zoom = (level, x, y) => {
+    const shape = showing();
+    if (!zooms(shape)) return;
+    const to = Math.min(Math.max(level, Number(slider.min)), Number(slider.max));
+    const by = 2 ** (to - held(shape).level);
+    const box = held(shape).level ? shape.querySelector("svg").getBoundingClientRect() : pin(shape);
+    const { scrollLeft, scrollTop } = map;
+    const near = (one, other) => Math.abs(one - other) < 1;
+    const [left, top] =
+      wanted?.shape === shape && near(wanted.left, scrollLeft) && near(wanted.top, scrollTop)
+        ? [wanted.left, wanted.top]
+        : [scrollLeft, scrollTop];
+    // The drawing's top left had the pane scrolled to exactly `left` and `top`.
+    const [dx, dy] = [box.left + scrollLeft - left, box.top + scrollTop - top];
+    shape.style.setProperty("--zoom", String(2 ** to));
+    shape.classList.toggle("zoomed", to > 0);
+    wanted = { shape, left: left + (x - dx) * (by - 1), top: top + (y - dy) * (by - 1) };
+    map.scrollTo(wanted.left, wanted.top);
+    held(shape).level = to;
+    slider.value = String(to);
+  };
+
+  // The slider zooms about the middle of the drawing in sight, and Ctrl or ⌘ with the wheel, as a
+  // trackpad's pinch sends it, about the pointer. A plain wheel scrolls.
+  slider?.addEventListener("input", () => {
+    const { top, bottom, left, right } = sight(map);
+    const box = showing().querySelector("svg").getBoundingClientRect();
+    const x = (Math.max(left, box.left) + Math.min(right, box.right)) / 2;
+    const y = (Math.max(top, box.top) + Math.min(bottom, box.bottom)) / 2;
+    zoom(Number(slider.value), x, y);
+  });
+  zoomer?.querySelector(".reset").addEventListener("click", () => {
+    zoom(0, 0, 0);
+    map.scrollTo(0, 0);
+  });
+  map.addEventListener(
+    "wheel",
+    (event) => {
+      if (!(event.ctrlKey || event.metaKey) || !zooms(showing())) return;
+      event.preventDefault();
+      // A pinch sends 100 × ln(its scale); a wheel's notch zooms at most half a doubling.
+      const lines = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? map.clientHeight : 1;
+      const by = -(event.deltaY * lines) / 100 / Math.LN2;
+      const level = held(showing()).level + Math.min(Math.max(by, -0.5), 0.5);
+      zoom(level, event.clientX, event.clientY);
+    },
+    { passive: false },
+  );
+
+  // A press on the map that moves more than a few pixels pans it, and is not a click. A touch
+  // pans as the browser scrolls.
+  document.addEventListener("pointerdown", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const { clientX: x, clientY: y, pointerId: id } = event;
+    panned = false;
+    press =
+      event.button === 0 && event.pointerType !== "touch" && target?.closest(".map svg")
+        ? { x, y, id, left: map.scrollLeft, top: map.scrollTop }
+        : null;
+  });
+  document.addEventListener("pointermove", (event) => {
+    if (!press) return;
+    const x = event.clientX - press.x;
+    const y = event.clientY - press.y;
+    if (!panned && Math.hypot(x, y) <= 4) return;
+    if (!panned) {
+      panned = true;
+      map.setPointerCapture(press.id);
+      map.classList.add("panning");
+      tip.hidden = true;
+    }
+    map.scrollTo(press.left - x, press.top - y);
+  });
+  const drop = () => {
+    press = null;
+    map.classList.remove("panning");
+  };
+  document.addEventListener("pointerup", drop);
+  document.addEventListener("pointercancel", drop);
 
   const details = (item) =>
     item.dataset.hidden
@@ -375,6 +522,7 @@
 
   let shown = null;
   document.addEventListener("pointermove", (event) => {
+    if (press && panned) return;
     const target = event.target instanceof Element ? event.target : null;
     const item = target?.closest(".plot [data-kind], .plot [data-hidden]");
     const base = !item && target?.closest(".sequence-view svg") ? baseAt(event, false) : null;

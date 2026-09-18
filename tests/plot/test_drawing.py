@@ -28,7 +28,15 @@ from liulab_mbio.plot import (
 )
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.plot.labels import Box
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    Topology,
+)
 
 from ..html import Node, parse
 from . import crowds
@@ -711,6 +719,32 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
     assert [box.attrs["name"] for box in views.find_all("input")] == ["shape"] * len(radios) + [
         "view"
     ]
+
+
+@pytest.mark.parametrize(
+    ("topology", "opened"), [("circular", False), ("circular", True), ("linear", False)]
+)
+def test_the_circle_zooms_one_to_eight_times_from_a_caption_on_the_map_shown_with_it(
+    tmp_path: Path, topology: Topology, opened: bool
+) -> None:
+    record = SequenceRecord("ACGT" * 10, topology=topology, name="small")
+    _, page = _page(draw_map(record, linear=opened), tmp_path / "map.html")
+    carried = _shapes(page)
+    assert {shape: one.attrs.get("data-zoom") for shape, one in carried.items()} == {
+        shape: "free" if shape == "circle" else None for shape in carried
+    }
+    captions = _maps(page).find_all("figcaption")
+    if "circle" not in carried:
+        assert not captions
+        return
+    [caption] = captions
+    assert ("hidden" in caption.attrs) == (next(iter(carried)) != "circle")
+    # The slider counts doublings, continuously.
+    [slider] = caption.find_all("input", name="zoom")
+    assert slider.attrs["type"] == "range"
+    assert (2 ** float(slider.attrs["min"]), 2 ** float(slider.attrs["max"])) == (1, 8)
+    assert (slider.attrs["step"], slider.attrs["value"]) == ("any", "0")
+    assert [button.text for button in caption.find_all("button")] == ["Reset"]
 
 
 def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(

@@ -6,14 +6,16 @@ search and copy. It keeps a white background whatever the browser's colour schem
 
 Switches above the drawing show or hide each kind of item and each feature type in place, flip
 the map between its shapes at top right, and show the sequence view with it: beside the map while
-the page is wide enough for both, under it otherwise. A click on an item highlights it in both
-views, and scrolls the other view to it. In the sequence view, a toggle shows one strand or both,
-hovering over a base shows its position, and a drag selects bases to copy, scrolling the view
-while it passes the view's top or bottom.
+the page is wide enough for both, under it otherwise. A caption on the map zooms a shape that
+zooms, and a drag pans it. A click on an item highlights it in both views, and scrolls the other
+view to it. In the sequence view, a toggle shows one strand or both, hovering over a base shows
+its position, and a drag selects bases to copy, scrolling the view while it passes the view's top
+or bottom.
 """
 
 import base64
-from collections.abc import Mapping, Sequence
+import math
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from functools import cache
 from html import escape
@@ -21,6 +23,9 @@ from importlib.resources import files
 from typing import Literal
 
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS, Font
+
+#: How many times its size a shape that zooms is drawn at most.
+_ZOOM = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +55,7 @@ def render(
     *,
     title: str,
     shown: str,
+    zooms: Collection[str] = (),
     switches: Sequence[Switch] = (),
     sequence_view: str | None = None,
     sequence_shown: bool = False,
@@ -59,17 +65,18 @@ def render(
 
     `maps` holds the map as an SVG element in each shape it is drawn in, such as ``"circle"``
     and ``"line"``. The shape `shown` names shows first, and a switch flips between them when
-    there are two. `sequence_view` is an SVG element too, as `sequence_view.layout` draws one with
-    both strands, or ``None`` for the map alone. A switch shows it, first when `sequence_shown`,
-    and a toggle in it shows its bottom strand, first when `both_strands`.
+    there are two. Each shape `zooms` names zooms in up to eight times by scaling its drawing,
+    from a caption on the map that shows while it does. `sequence_view` is an SVG element too, as
+    `sequence_view.layout` draws one with both strands, or ``None`` for the map alone. A switch
+    shows it, first when `sequence_shown`, and a toggle in it shows its bottom strand, first when
+    `both_strands`.
     """
     fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
     shapes = "".join(
-        f'<div class="shape" data-shape="{escape(shape)}"{"" if shape == shown else " hidden"}>'
-        f"{image}</div>\n"
-        for shape, image in maps.items()
+        _shape(shape, image, shape == shown, shape in zooms) for shape, image in maps.items()
     )
-    figures = f'<figure class="map">\n{shapes}</figure>\n'
+    caption = _zoom(shown in zooms) if zooms else ""
+    figures = f'<figure class="map">{caption}\n{shapes}</figure>\n'
     if sequence_view is not None:
         figures += _sequence_view(sequence_view, sequence_shown, both_strands)
     return (
@@ -124,6 +131,23 @@ def _sequence_view(image: str, shown: bool, both_strands: bool) -> str:
         f"<figcaption>{_input('checkbox', 'strands', 'both', 'Both strands', both_strands)}"
         '<output class="selection"></output><button type="button" class="copy" hidden>Copy'
         f"</button></figcaption>{image}</figure>\n"
+    )
+
+
+def _shape(shape: str, image: str, shown: bool, zooms: bool) -> str:
+    zoom = ' data-zoom="free"' if zooms else ""
+    hidden = "" if shown else " hidden"
+    return f'<div class="shape" data-shape="{escape(shape)}"{zoom}{hidden}>{image}</div>\n'
+
+
+def _zoom(shown: bool) -> str:
+    """Return the map's caption: a zoom slider counting doublings, and a button to reset it."""
+    slider = (
+        f'<input type="range" name="zoom" min="0" max="{math.log2(_ZOOM):g}" step="any" value="0">'
+    )
+    return (
+        f"<figcaption{'' if shown else ' hidden'}><label>Zoom {slider}</label>"
+        '<button type="button" class="reset">Reset</button></figcaption>'
     )
 
 
