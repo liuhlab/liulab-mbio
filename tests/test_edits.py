@@ -123,10 +123,18 @@ def test_flipped_turns_every_span_and_strand_end_for_end() -> None:
     assert flipped(turned) == record
 
 
-def test_flipped_refuses_a_span_across_the_origin() -> None:
-    record = SequenceRecord(BASES, topology="circular", features=(_feature("across", (10, 14)),))
-    with pytest.raises(ValueError, match="across its origin"):
-        flipped(record)
+def test_flipped_keeps_a_span_across_the_origin_across_it() -> None:
+    primer = Primer("p", "GAAA", binding_sites=(BindingSite(11, 15, Strand.FORWARD),))
+    record = SequenceRecord(
+        BASES, topology="circular", features=(_feature("across", (9, 14)),), primers=(primer,)
+    )
+    turned = flipped(record)
+    # The feature read GGGAA and the primer site GAAA; turned over, each reads the other strand.
+    assert turned.features == (_feature("across", (10, 15), strand=Strand.REVERSE),)
+    assert turned.extract(Segment(10, 15)) == "TTCCC"
+    assert turned.primers[0].binding_sites == (BindingSite(9, 13, Strand.REVERSE),)
+    assert turned.extract(Segment(9, 13)) == "TTTC"
+    assert flipped(turned) == record
 
 
 def test_carried_cuts_a_feature_down_to_the_span_and_shifts_it_by_the_offset() -> None:
