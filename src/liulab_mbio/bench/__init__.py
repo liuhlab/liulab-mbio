@@ -43,7 +43,13 @@ from liulab_mbio.bench.pcr import (
     pcr_program,
     pcr_reaction,
 )
-from liulab_mbio.bench.phenotype import SELECTION, Phenotype, read_phenotype
+from liulab_mbio.bench.phenotype import (
+    MEDIUM,
+    SELECTION,
+    Phenotype,
+    read_phenotype,
+    selection_marker,
+)
 from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
 from liulab_mbio.bench.steps import (
     ASSEMBLY_UL,
@@ -134,6 +140,7 @@ __all__ = [
     "JUNCTION_OFFSET",
     "LADDER_1_KB_PLUS",
     "LADDER_100_BP",
+    "MEDIUM",
     "NEB_TRANSFORMATION",
     "OUTGROWTH_CELSIUS",
     "OUTGROWTH_SECONDS",
@@ -192,6 +199,7 @@ __all__ = [
     "reaction_table",
     "read_phenotype",
     "sanger_primers",
+    "selection_marker",
     "sequencing_step",
     "to_nanograms",
     "to_pmol",

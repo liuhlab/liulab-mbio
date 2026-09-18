@@ -447,8 +447,11 @@ def _plate(phenotype: Phenotype) -> str:
     """Return what to pour the selection plates with."""
     antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
     if phenotype.blue_white:
-        return f"LB agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal and {IPTG_UM} µM IPTG"
-    return f"LB agar plates with {antibiotic}"
+        return (
+            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
+            f"and {IPTG_UM} µM IPTG"
+        )
+    return f"{phenotype.medium} agar plates with {antibiotic}"
 
 
 def _steps(
