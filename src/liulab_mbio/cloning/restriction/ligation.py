@@ -4,7 +4,9 @@ Two rules run through the module:
 
 - **An overhang is written on the top strand, so two pieces join by concatenating their spans.**
   `liulab_mbio.sites.digest` cuts at top-strand positions, so the spans of the pieces that go on
-  lay end to end; `liulab_mbio.overhangs.compatible` is what says they may.
+  lay end to end; `liulab_mbio.overhangs.compatible` is what says they may. Where the bases they
+  paired on lie is a second question, answered by which strand overhangs: a 5' overhang is the
+  following piece's first bases, a 3' overhang the last bases of the piece before.
 - **This method's junction is not scarless.** The two ends came from a recognition site, and
   ligating them puts that site back, so the product gains those bases. A junction says which
   site it spells, read off the product rather than assumed.
@@ -208,9 +210,10 @@ def _spells(product: SequenceRecord, junction: Junction) -> bool:
     return junction.span is None or product.extract(junction.span) == junction.overhang
 
 
-def _junction(start: int, before: Piece, after: Piece, product: SequenceRecord) -> Junction:
-    """Build the junction at `start`, reading off the product what the join put back."""
+def _junction(seam: int, before: Piece, after: Piece, product: SequenceRecord) -> Junction:
+    """Build the junction whose pieces meet at `seam`, reading off the product what it put back."""
     overhang = after.fragment.left_overhang
+    start = _paired(seam, after.left_enzyme, len(product))
     site = _restored(product, start, len(overhang), (before.right_enzyme, after.left_enzyme))
     if site is None:
         return Junction(start, overhang, before.name, after.name)
@@ -223,6 +226,19 @@ def _junction(start: int, before: Piece, after: Piece, product: SequenceRecord) 
         site.enzyme.name,
         site.span,
     )
+
+
+def _paired(seam: int, enzyme: Enzyme, total: int) -> int:
+    """Return where the bases the two overhangs paired on begin, given the pieces meet at `seam`.
+
+    A fragment is bounded by the top-strand cuts and writes both overhangs top-strand, so which
+    strand overhangs decides where those bases lie. A 5' overhang is the following piece's own
+    first bases and begins at the seam; a 3' overhang is the last bases of the piece before, so
+    it begins that many earlier. A blunt end leaves none and begins at the seam either way.
+    """
+    if enzyme.end != "3'":
+        return seam
+    return (seam - enzyme.overhang_length) % total
 
 
 def _restored(
