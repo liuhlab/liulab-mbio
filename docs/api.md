@@ -226,6 +226,35 @@ because one reaction joins as many inserts as the overhangs allow.
 
 ::: liulab_mbio.cloning.goldengate.steps
 
+## Gibson assembly
+
+`plan_gibson` is the way in, and `Plan.write` puts the plasmid, the oligo sheet and the protocol
+in one directory. `design` chooses each junction's overlap and lays out the oligos that stitch a
+short part or bridge two fragments; `assembly` makes the parts and joins them; `bench` is every
+assembly product's own documented numbers, the reaction and the incubation; `oligos` and `steps`
+carry what the sheet and the protocol need.
+
+One name means two things in a plan here, so read it carefully. `Plan.product` is the
+**assembly product** — the kit the reaction is run with, which sets the overlap rule, the
+reaction, the incubation and the fragment count. The plasmid the assembly makes is
+`Plan.plasmid`. Golden Gate's `Plan.product` is the record, so the two plans differ here.
+
+::: liulab_mbio.cloning.gibson
+    options:
+      members: false
+
+::: liulab_mbio.cloning.gibson.plan
+
+::: liulab_mbio.cloning.gibson.design
+
+::: liulab_mbio.cloning.gibson.assembly
+
+::: liulab_mbio.cloning.gibson.bench
+
+::: liulab_mbio.cloning.gibson.oligos
+
+::: liulab_mbio.cloning.gibson.steps
+
 ## Libraries
 
 `plan_library` is the way in. It builds a barcoded library of every combination of the part
@@ -273,6 +302,8 @@ spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.cli
 
 ::: liulab_mbio.cloning.goldengate.cli
+
+::: liulab_mbio.cloning.gibson.cli
 
 ::: liulab_mbio.library.cli
 

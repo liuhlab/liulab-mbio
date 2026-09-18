@@ -52,7 +52,8 @@ record = read_record("vector.dna")
 A primer pair can also be checked against a whole genome, so you learn where else it would
 amplify before you order it — see [check primers on a genome](genome-check.md).
 
-[Put GFP into pUC19](golden-gate.md) walks through one job from end to end. The
+[Put GFP into pUC19](golden-gate.md) walks through one job from end to end.
+[The same job by Gibson](gibson.md) does it with no enzyme at all. The
 [API reference](api.md) has the full list, built from the docstrings in `src/`.
 
 ## Check your work

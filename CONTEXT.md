@@ -400,7 +400,8 @@ _Avoid_: joining, annealing, sealing
 
 The circular plasmid an assembly makes: every part's features carried to their new coordinates,
 its primers annotated where they anneal, and each junction marked. It keeps the vector's origin,
-so the vector's own coordinates still read true and no junction sits at base zero.
+so the vector's own coordinates still read true and no junction sits at base zero. A Gibson plan
+holds it as `Plan.plasmid`, because `Plan.product` there is the **assembly product**.
 _Avoid_: construct, output, final plasmid
 
 ### Assembly plan

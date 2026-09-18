@@ -9,6 +9,36 @@ sets one.
 
 ### Added
 
+- Gibson assembly, end to end. `liulab_mbio.cloning.gibson.plan_gibson` and `liulab_mbio cloning
+  gibson plan` take a vector and up to five inserts, in the order they go round the product and
+  either way round. Nothing is cut, so a part that reads a site for every Type IIS enzyme still
+  goes in as it is. The vector is opened by PCR across the span the inserts replace, or handed in
+  already linear. Each junction gets an overlap of the length and melting temperature the kit
+  documents, carried as a primer tail by the part on the other side, so the junction spells only
+  what the parts spell. `Plan.write` writes the same four files a Golden Gate plan writes. The
+  protocol runs from the two PCRs through the DpnI digest, a column cleanup, a reading of each
+  concentration, the assembly and the plate, and ends at the sequencing rather than at the
+  transformation.
+- The kit is yours to name, and it sets the numbers. `--product` takes NEBuilder HiFi, the Gibson
+  Assembly Master Mix or In-Fusion, and the start of a name is enough. Each carries its own
+  overlap rule, reaction, incubation, molar ratio and documented fragment count, read from that
+  supplier's own manual. Nothing is borrowed from one supplier to fill a gap in another: where
+  Takara publishes no melting temperature for an overlap and no picomole band, those checks say
+  so instead of passing. So do an overlap's GC and how alike two overlaps are, which nobody
+  quantifies for any kit.
+- A short part can be built from oligos instead of amplified. `--route stitch` lays a linker, a
+  tag or a short promoter out as oligos that overlap each other and tile both strands, assembled
+  in the same tube. Two ceilings, and they differ: above 500 bases the plan refuses, because
+  twelve 60-base oligos are the most the method allows; outside 60 to 150 bp it warns, the window
+  the route is worth using in.
+- Two fragments that share nothing can be joined by one oligo. `--bridge BEFORE:AFTER` designs an
+  oligo carrying bases from each end, so neither fragment needs a tailed primer and an amplicon
+  made for something else goes in as it is. Both kinds of oligo are rows of the one order sheet,
+  with the job each does. Neither primes anything, so no threshold judges it and its row carries
+  no verdict rather than a pass nothing measured. In-Fusion takes no single-stranded oligo, so it
+  refuses both routes and names the kits that can.
+- A `gibson/METHOD.md` behind the `molecular-cloning` skill, which now chooses between two
+  methods on the same five things, and a docs page following one Gibson job end to end.
 - Each shipped enzyme now names the buffer its supplier sells it in, as `Enzyme.supplied_buffer`.
   All sixteen multiple cloning site enzymes read `rCutSmart Buffer`, so any pair of them can be
   cut in one tube; BsmBI-v2 and BspQI read `NEBuffer r3.1`. The buffer belongs to the product
@@ -121,6 +151,12 @@ sets one.
 
 ### Changed
 
+- An insert with no room for a junction primer no longer stops a colony PCR being designed. A
+  junction primer anneals 100 bases inside the insert, so a linker or a tag is too short to hold
+  one. `liulab_mbio.bench.validation.colony_pcr_check` used to refuse; it now leaves that primer
+  off, keeps the flanking pair that reads across the junction, and says the gel cannot tell an
+  insert that short from one the wrong way round. Golden Gate plans of a short insert are
+  designed rather than refused for the same reason.
 - The cloning methods are grouped under one verb. `liulab_mbio goldengate plan` is now
   `liulab_mbio cloning goldengate plan`, and `liulab_mbio cloning --help` lists the methods this
   package plans. `liulab_mbio library plan` is unchanged. The import path moves with the verb:
