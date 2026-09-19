@@ -218,6 +218,10 @@ addopts = [
     # unedited here, and the template already tests it. Drop this line if this repo edits the
     # checker. Name the file to run them: `pixi run test -- tests/test_conformance.py`.
     "--ignore=tests/test_conformance.py",
+    # The quoted-evidence tests stay out for the same reason: they test the template's ruff and
+    # markdownlint settings, which the template tests itself, and each run lints the whole repo.
+    # Name the file to run them: `pixi run test -- tests/test_quoted_evidence.py`.
+    "--ignore=tests/test_quoted_evidence.py",
 ]
 xfail_strict = true
 filterwarnings = ["error"]
