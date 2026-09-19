@@ -265,12 +265,22 @@ sets one.
 ### Fixed
 
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane
-  used to come from the product with its insert turned over in place. At an end with an
-  that put the overhang's bases on the wrong side of the join. The band was then off by the
-  overhang, 231 bp where the real clone gives 227 with EcoRI. Now restriction and ligation turns
-  the cut insert over and ligates it in, as the bench does.
+  used to come from the product with its insert turned over in place. At an end with an overhang
+  the two strands stop at different bases, and that put the overhang's bases on the wrong side of
+  the join. The band was then off by the overhang, 231 bp where the real clone gives 227 with
+  EcoRI. Now restriction and ligation turns the cut insert over and ligates it in, as the bench
+  does.
 - Golden Gate and Gibson no longer draw a lane for an insert the wrong way round. Neither can
   make one: no overhang in a Golden Gate set pairs with another backwards, and a Gibson insert
   shares its bases with the vector one way round only. With no orientation to tell, the colony
   PCR's reverse primer sits as close to its junction as the forward one, so both plans' bands
   are shorter than before.
+- A plan no longer refuses a record that has a feature or primer across its origin when it has
+  to read that record from the other strand. SnapGene often writes such a feature. Restriction
+  and ligation refused any plasmid like this that an insert was cut from. Golden Gate and Gibson
+  refused one given as an insert in reverse, and Gateway refused one whose first att site reads
+  backwards. On the other strand, the feature still runs across the origin.
+- A feature in pieces across the origin of a circular plasmid now keeps them in the order it
+  reads. The GenBank reader sorted them by position, and so did turning a record over and
+  building a plan's product. A feature that reads bases 91 to 98, then 2 to 8, came back reading
+  2 to 8 first, so its bases came out of order. SnapGene files already kept the order.

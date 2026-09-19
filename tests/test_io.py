@@ -49,6 +49,69 @@ def test_read_record_reads_genbank_topology_and_features(tmp_path: Path) -> None
     assert record.notes["Description"] == "a tiny circular record"
 
 
+#: 100 bp, circular, numbered as GenBank does: bases 2 to 8 are C, 91 to 98 are G, the rest A.
+GAPPED = """LOCUS       gapped                   100 bp    DNA     circular SYN 01-JAN-2020
+FEATURES             Location/Qualifiers
+     misc_feature    {location}
+                     /label="g"
+{qualifiers}ORIGIN
+        1 acccccccaa aaaaaaaaaa aaaaaaaaaa aaaaaaaaaa aaaaaaaaaa aaaaaaaaaa
+       61 aaaaaaaaaa aaaaaaaaaa aaaaaaaaaa ggggggggaa
+//
+"""
+
+
+def _gapped(tmp_path: Path, location: str, qualifiers: str = "") -> SequenceRecord:
+    """Read `GAPPED` with its feature at `location`, and these qualifier lines after its label."""
+    path = tmp_path / "gapped.gb"
+    path.write_text(GAPPED.format(location=location, qualifiers=qualifiers))
+    return read_record(path)
+
+
+def test_read_record_keeps_a_join_across_the_origin_in_the_order_it_reads(
+    tmp_path: Path,
+) -> None:
+    record = _gapped(tmp_path, "join(91..98,2..8)")
+    (feature,) = record.features
+    assert feature.segments == (Segment(90, 98), Segment(1, 8))
+    assert record.extract(feature) == "GGGGGGGGCCCCCCC"
+    record = _gapped(tmp_path, "complement(join(91..98,2..8))")
+    (feature,) = record.features
+    assert (feature.segments, feature.strand) == ((Segment(90, 98), Segment(1, 8)), Strand.REVERSE)
+    assert record.extract(feature) == "GGGGGGGCCCCCCCC"
+
+
+def test_read_record_joins_two_parts_only_where_the_feature_reads_across_the_origin(
+    tmp_path: Path,
+) -> None:
+    record = _gapped(tmp_path, "complement(join(91..100,1..8))")
+    (feature,) = record.features
+    assert feature.segments == (Segment(90, 108),)
+    assert record.extract(feature) == "GGGGGGGTTTCCCCCCCC"
+    # These two meet at the origin only if read the other way round.
+    assert _gapped(tmp_path, "join(1..8,91..100)").features[0].segments == (
+        Segment(0, 8),
+        Segment(90, 100),
+    )
+
+
+def test_read_record_colours_a_segment_list_across_the_origin(tmp_path: Path) -> None:
+    record = _gapped(
+        tmp_path,
+        "join(91..98,2..8)",
+        """                     /note="This feature has 2 segments:
+                        1: 91 .. 98 / #ff0000
+                        2: 2 .. 8 / #00ff00"
+""",
+    )
+    (feature,) = record.features
+    assert (feature.color, feature.segments, feature.qualifiers) == (
+        "#ff0000",
+        (Segment(90, 98), Segment(1, 8, color="#00ff00")),
+        {},
+    )
+
+
 def _named(record: SequenceRecord, name: str) -> Feature:
     (feature,) = (f for f in record.features if f.name == name)
     return feature

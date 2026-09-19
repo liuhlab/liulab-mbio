@@ -37,4 +37,6 @@ unconverted, 0-based and half-open, and cannot run across the origin.
 
 Slicing `sequence` directly is wrong across the origin; `SequenceRecord.extract` is the
 wrap-aware read. Edits that shift coordinates or rotate the origin reduce positions modulo the
-length.
+length. A feature lists its segments in the order it reads them along the top strand, whatever
+its strand, so one across the origin, or cut apart at the two ends of a linear record, can list
+a higher start first; sorting them reads its bases out of order.
