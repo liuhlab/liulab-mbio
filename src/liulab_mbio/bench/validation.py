@@ -183,7 +183,7 @@ def colony_pcr_check(
             for name, (first, last) in zip(
                 _numbered(_JUNCTION_PRIMER, len(inserts)), inserts, strict=True
             )
-            if last - first > junction_offset + COLONY_ALLOWANCE
+            if last - first >= junction_offset + COLONY_ALLOWANCE
         )
     if len(chosen) < 2:
         raise ValueError("a colony PCR needs at least two primers")

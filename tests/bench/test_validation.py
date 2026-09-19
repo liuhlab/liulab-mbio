@@ -254,3 +254,29 @@ def test_an_insert_too_short_for_a_junction_primer_loses_it_rather_than_refusing
     assert bands(check, "Reversed insert 1") != correct
     assert bands(check, "Reversed insert 3") != correct
     assert not check.tells_orientation
+
+
+def test_an_insert_of_exactly_the_offset_and_the_allowance_keeps_its_junction_primer(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> None:
+    # Fewer bases than the two together is what has no room, so an insert of exactly that many
+    # has some: its whole 5' window lies inside it, short of the far junction.
+    first, last = junctions
+    room = JUNCTION_OFFSET + COLONY_ALLOWANCE
+    check = colony_pcr_check(
+        product, (first, first + room, last), vector=puc19, flank=60, insert_primer=True
+    )
+    assert [primer.name for primer in check.primers] == [
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse 1",
+        "Junction reverse 2",
+    ]
+    one_shorter = colony_pcr_check(
+        product, (first, first + room - 1, last), vector=puc19, flank=60, insert_primer=True
+    )
+    assert [primer.name for primer in one_shorter.primers] == [
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse 2",
+    ]
