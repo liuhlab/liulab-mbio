@@ -226,10 +226,11 @@ addopts = [
     # Name the file to run them: `pixi run test -- tests/test_quoted_evidence.py`.
     "--ignore=tests/test_quoted_evidence.py",
     # Parallel workers, set here and not in the CI workflow so the laptop and CI run alike.
-    # Four, because the CI runner has four cores and `--dist loadfile` cannot finish sooner
-    # than its slowest file. Naming tests on the command line still collects only those, so a
-    # single-test run stays cheap.
-    "--numprocesses=4",
+    # Three, not one per core: a worker rebuilds the caches `primers.placement` fills, so each
+    # one added spends CPU again that a single process spends once, and the CI runner runs out
+    # of throughput before it runs out of workers. Naming tests on the command line still
+    # collects only those, so a single-test run stays cheap.
+    "--numprocesses=3",
     # A whole file to one worker. A test file's module-scoped plans, and the priming sites
     # `primers.placement` remembers per template, are then built once for the file rather than
     # once per test that lands elsewhere.
