@@ -284,3 +284,9 @@ sets one.
   reads. The GenBank reader sorted them by position, and so did turning a record over and
   building a plan's product. A feature that reads bases 91 to 98, then 2 to 8, came back reading
   2 to 8 first, so its bases came out of order. SnapGene files already kept the order.
+- Golden Gate and Gibson now say why they refuse a feature named as the insertion site when it
+  runs across the vector's origin, as the vector's `MCS` can. The message used to say only that
+  the site did not lie inside the vector, with two positions counted from zero that could run
+  backwards, such as 90-8. It now names the feature and the vector, says the site crosses the
+  origin, and says what to do: move the vector's origin away from the site, or give a start and
+  end on one side of it.
