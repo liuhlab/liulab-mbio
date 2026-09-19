@@ -240,3 +240,14 @@ def test_the_designed_set_carries_its_own_fidelity(
     assert chosen.fidelity.measured
     assert chosen.fidelity.value > 0.9
     assert chosen.enzyme is get_enzyme("BbsI")
+
+
+def test_the_pair_the_pipeline_designs_is_scored_on_measured_data() -> None:
+    # What GFP into the pUC19 multiple cloning site takes, which the pipeline plans by default.
+    chosen = design_overhangs(
+        [Junction("GFP", overhang="ATGA"), Junction("pUC19", overhang="TGGC")], "BbsI"
+    )
+
+    assert chosen.fidelity.measured
+    assert "Pryor" in chosen.fidelity.source
+    assert chosen.fidelity.value == pytest.approx(1.0)
