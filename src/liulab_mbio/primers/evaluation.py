@@ -13,7 +13,7 @@ from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.primers.placement import amplicon_sizes, find_binding_sites, find_priming_sites
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
 from liulab_mbio.primers.thresholds import THRESHOLDS, Band, Thresholds
-from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand
+from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand, Topology
 
 #: primer3 refuses a thermodynamic alignment on anything longer.
 _THERMO_MAX = 60
@@ -83,20 +83,39 @@ def evaluate_primer(
     >>> report["gc_clamp"].value, report.status
     (3, 'warn')
     """
-    sites = primer.binding_sites
+    bases = None if template is None else (template.sequence, template.topology)
+    checks = _checks(primer.sequence, primer.binding_sites, bases, polymerase, thresholds)
+    return PrimerReport(primer, checks)
+
+
+@lru_cache(maxsize=1 << 13)
+def _checks(
+    sequence: str,
+    sites: tuple[BindingSite, ...],
+    bases: tuple[str, Topology] | None,
+    polymerase: Polymerase,
+    thresholds: Thresholds,
+) -> tuple[Check, ...]:
+    """Return every check `evaluate_primer` runs on one primer.
+
+    A design judges the same candidates on the same template again and again, so these are
+    remembered: they depend on nothing but the primer's bases and binding sites, the template's
+    bases and topology, the polymerase and the thresholds.
+    """
+    template = None if bases is None else _template(*bases)
     if not sites and template is not None:
-        sites = find_binding_sites(primer.sequence, template, thresholds=thresholds)
-    annealing = _annealing_region(primer, sites)
-    thermo, note = _thermo_sequence(primer.sequence)
+        sites = find_binding_sites(sequence, template, thresholds=thresholds)
+    annealing = sequence[-max(site.end - site.start for site in sites) :] if sites else sequence
+    thermo, note = _thermo_sequence(sequence)
     hairpin, self_dimer, anchored_dimer = _structure_tms(thermo)
     checks = (
         *annealing_checks(annealing, polymerase=polymerase, thresholds=thresholds),
-        Check("tm_full", None, melting_temperature(primer.sequence, polymerase)),
+        Check("tm_full", None, melting_temperature(sequence, polymerase)),
         Check("end_stability", None, _end_stability(annealing)),
-        _run_check(primer.sequence, thresholds),
+        _run_check(sequence, thresholds),
         _graded(
             "dinucleotide_repeat",
-            _longest_dinucleotide_repeat(primer.sequence),
+            _longest_dinucleotide_repeat(sequence),
             thresholds.dinucleotide_repeat,
         ),
         _graded("hairpin", hairpin, thresholds.hairpin, note),
@@ -105,7 +124,13 @@ def evaluate_primer(
     )
     if template is not None:
         checks += _template_checks(annealing, sites, template, thresholds)
-    return PrimerReport(primer, checks)
+    return checks
+
+
+@lru_cache(maxsize=8)
+def _template(sequence: str, topology: Topology) -> SequenceRecord:
+    """Return a bare record of a template's bases, which is all a primer is judged against."""
+    return SequenceRecord(sequence, topology=topology)
 
 
 def annealing_checks(
@@ -304,13 +329,6 @@ def _run_check(sequence: str, thresholds: Thresholds) -> Check:
         longest,
         f"{guanines} Gs in a row" if guanine_status != "pass" else "",
     )
-
-
-def _annealing_region(primer: Primer, sites: tuple[BindingSite, ...] = ()) -> str:
-    sites = sites or primer.binding_sites
-    if not sites:
-        return primer.sequence
-    return primer.sequence[-max(site.end - site.start for site in sites) :]
 
 
 def _thermo_sequence(sequence: str) -> tuple[str, str]:

@@ -101,17 +101,27 @@ def find_binding_sites(
     >>> sites = find_binding_sites("TTGGTCTCAGGCGTAATCATGGTCATAGC", template)
     >>> [(site.start, site.end, site.strand.name) for site in sites]
     [(1, 21, 'FORWARD')]
+
+    A plan places the same primers on the same records again and again, so where a sequence
+    binds is remembered: it depends on nothing but the sequence, the template and the thresholds.
     """
-    dna = sequence.upper()
-    length = len(template)
+    return _binding_sites(sequence.upper(), template.sequence, template.topology, thresholds)
+
+
+@lru_cache(maxsize=1 << 12)
+def _binding_sites(
+    dna: str, sequence: str, topology: str, thresholds: Thresholds
+) -> tuple[BindingSite, ...]:
+    length = len(sequence)
+    circular = topology == "circular"
     reverse = reverse_complement(dna)
     sites = []
     for index in range(length):
-        matched = _matched(template, index, dna[::-1], -1)
+        matched = _matched(sequence, circular, index, dna[::-1], -1)
         if matched >= thresholds.binding_min_length:
             start = (index - matched + 1) % length
             sites.append(BindingSite(start, start + matched, Strand.FORWARD))
-        matched = _matched(template, index, reverse, 1)
+        matched = _matched(sequence, circular, index, reverse, 1)
         if matched >= thresholds.binding_min_length:
             sites.append(BindingSite(index, index + matched, Strand.REVERSE))
     return tuple(sorted(sites, key=lambda site: (site.start, site.strand)))
@@ -146,7 +156,8 @@ def _priming_sites(
     top = sequence + (sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
     edge = min(size, thresholds.off_target_3prime_window)
-    floor = primer3.calc_end_stability(dna, reverse).tm - thresholds.off_target_margin
+    perfect = primer3.calc_end_stability(dna, reverse).tm
+    floor = perfect - thresholds.off_target_margin
     starts = range(length if circular else length - size + 1)
     ends = tuple(
         _anchored(
@@ -172,7 +183,12 @@ def _priming_sites(
             mismatches = _mismatches(probe, here, thresholds.off_target_mismatches)
             if mismatches > thresholds.off_target_mismatches:
                 continue
-            tm = primer3.calc_end_stability(dna, annealed or reverse_complement(here)).tm
+            # A perfect match anneals exactly as the floor's duplex does.
+            tm = (
+                perfect
+                if not mismatches
+                else primer3.calc_end_stability(dna, annealed or reverse_complement(here)).tm
+            )
             if tm >= floor:
                 found.append(PrimingSite(BindingSite(start, start + size, strand), tm, mismatches))
     return tuple(found)
@@ -218,22 +234,27 @@ def _holds(span: Segment, position: int, template: SequenceRecord) -> bool:
     return span.start <= position < span.end
 
 
-def _matched(template: SequenceRecord, index: int, probe: str, step: int) -> int:
-    """Return how many bases of `probe` match the template from `index`, walking by `step`."""
-    length = len(template)
-    circular = template.topology == "circular"
+def _matched(sequence: str, circular: bool, index: int, probe: str, step: int) -> int:
+    """Return how many bases of `probe` match a template from `index`, walking by `step`."""
+    length = len(sequence)
     matched = 0
     while matched < min(len(probe), length):
         position = index + step * matched
         if not circular and not 0 <= position < length:
             break
-        if template.sequence[position % length] != probe[matched]:
+        if sequence[position % length] != probe[matched]:
             break
         matched += 1
     return matched
 
 
-def _near(window: str, alphabet: set[str], mismatches: int) -> frozenset[str] | None:
+@lru_cache(maxsize=8)
+def _alphabet(sequence: str) -> frozenset[str]:
+    """Return the letters a template holds, which every candidate tested against it asks for."""
+    return frozenset(sequence)
+
+
+def _near(window: str, alphabet: frozenset[str], mismatches: int) -> frozenset[str] | None:
     """Return every string `mismatches` substitutions or fewer from `window`, over `alphabet`.
 
     ``None`` stands for every string of that length, which is no filter at all. A template is
@@ -268,7 +289,7 @@ def _anchored(
     once and each candidate looks up only the few windows its own can match, rather than walking
     every position itself.
     """
-    near = _near(window, set(sequence), mismatches)
+    near = _near(window, _alphabet(sequence), mismatches)
     if near is None:
         return set(starts)
     length = len(sequence)
