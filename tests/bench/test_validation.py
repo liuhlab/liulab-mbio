@@ -21,7 +21,6 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.primers import amplicon_sizes
 from liulab_mbio.sequence import Primer, SequenceRecord, reverse_complement
 
 #: The multiple cloning site of the fixture, 0-based and half-open, and the GFP that replaces it.
@@ -65,80 +64,70 @@ def reversed_plasmids(
     return tuple(made)
 
 
+@pytest.fixture(scope="module")
+def m13_check(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> ColonyCheck:
+    """The Addgene pair across one insert, and the plasmid holding that insert reversed."""
+    return colony_pcr_check(
+        product,
+        junctions,
+        vector=puc19,
+        primers=(M13_FORWARD, M13_REVERSE),
+        reversed_inserts=reversed_plasmids(product, junctions),
+    )
+
+
+@pytest.fixture(scope="module")
+def directional_check(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> ColonyCheck:
+    """The same pair where the ends are directional, so no plasmid holds the insert reversed."""
+    return colony_pcr_check(product, junctions, vector=puc19, primers=(M13_FORWARD, M13_REVERSE))
+
+
+@pytest.fixture(scope="module")
+def two_insert_check(
+    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
+) -> ColonyCheck:
+    """Two inserts, each with a junction primer and a plasmid holding it the other way round."""
+    return colony_pcr_check(
+        product,
+        three_junctions,
+        vector=puc19,
+        flank=60,
+        insert_primer=True,
+        reversed_inserts=reversed_plasmids(product, three_junctions),
+    )
+
+
 def bands(check: ColonyCheck, name: str) -> tuple[int, ...]:
     return next(clone.bands_bp for clone in check.clones if clone.name == name)
 
 
-def test_the_m13_pair_gives_nebs_empty_vector_band(puc19: SequenceRecord) -> None:
-    assert amplicon_sizes(M13_FORWARD, M13_REVERSE, puc19) == (137,)
-
-
 def test_the_product_band_is_the_empty_band_less_what_the_insert_replaced(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+    directional_check: ColonyCheck,
 ) -> None:
-    check = colony_pcr_check(product, junctions, vector=puc19, primers=(M13_FORWARD, M13_REVERSE))
     # 137 bp empty, less the 57 bp multiple cloning site, plus 717 bp of GFP.
-    assert bands(check, "Correct clone") == (797,)
-    assert bands(check, "Empty vector") == (137,)
+    assert bands(directional_check, "Correct clone") == (797,)
+    assert bands(directional_check, "Empty vector") == (137,)
 
 
 def test_two_flanking_primers_cannot_tell_the_insert_round_the_other_way(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+    m13_check: ColonyCheck,
 ) -> None:
-    check = colony_pcr_check(
-        product,
-        junctions,
-        vector=puc19,
-        primers=(M13_FORWARD, M13_REVERSE),
-        reversed_inserts=reversed_plasmids(product, junctions),
-    )
-    assert bands(check, "Reversed insert") == bands(check, "Correct clone")
-    assert not check.tells_orientation
+    assert bands(m13_check, "Reversed insert") == bands(m13_check, "Correct clone")
+    assert not m13_check.tells_orientation
 
 
 def test_a_clone_that_cannot_turn_round_simulates_no_reversed_insert(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+    m13_check: ColonyCheck, directional_check: ColonyCheck
 ) -> None:
-    pair = (M13_FORWARD, M13_REVERSE)
-    every = colony_pcr_check(
-        product,
-        junctions,
-        vector=puc19,
-        primers=pair,
-        reversed_inserts=reversed_plasmids(product, junctions),
-    )
-    directional = colony_pcr_check(product, junctions, vector=puc19, primers=pair)
-
+    every, directional = m13_check, directional_check
     assert [clone.name for clone in every.clones] == [CORRECT_CLONE, EMPTY_CLONE, REVERSED_CLONE]
     assert directional.clones == every.clones[:2]
     assert not directional.reversed_clones
     assert [lane.label for lane in directional.gel.lanes] == [CORRECT_CLONE, EMPTY_CLONE]
-
-
-def test_a_junction_primer_tells_orientation_when_the_flanks_differ(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
-) -> None:
-    check = colony_pcr_check(
-        product,
-        junctions,
-        vector=puc19,
-        primers=(M13_FORWARD, M13_REVERSE),
-        insert_primer=True,
-        reversed_inserts=reversed_plasmids(product, junctions),
-    )
-    assert len(check.primers) == 3
-    assert bands(check, "Reversed insert") != bands(check, "Correct clone")
-    assert check.tells_orientation
-    assert bands(check, "Empty vector") == (137,)
-
-
-def test_a_designed_pair_flanks_both_junctions(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
-) -> None:
-    check = colony_pcr_check(product, junctions, vector=puc19, flank=60)
-    assert bands(check, "Correct clone") == (837,)
-    assert bands(check, "Empty vector") == (177,)
-    assert all(report.status != "fail" for report in check.reports)
 
 
 def test_a_reverse_distance_of_its_own_gives_a_reversed_insert_bands_of_its_own(
@@ -163,32 +152,24 @@ def test_a_reverse_distance_of_its_own_gives_a_reversed_insert_bands_of_its_own(
 
 
 def test_the_gel_carries_one_lane_per_clone_and_a_ladder_for_the_range(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+    m13_check: ColonyCheck,
 ) -> None:
-    check = colony_pcr_check(
-        product,
-        junctions,
-        vector=puc19,
-        primers=(M13_FORWARD, M13_REVERSE),
-        reversed_inserts=reversed_plasmids(product, junctions),
-    )
-    gel = check.gel
+    gel = m13_check.gel
     assert [lane.label for lane in gel.lanes] == [
         "Correct clone",
         "Empty vector",
         "Reversed insert",
     ]
     assert gel.ladder is LADDER_100_BP
-    assert check.agarose_percent == 2.0
+    assert m13_check.agarose_percent == 2.0
 
 
 def test_the_annealing_temperature_and_extension_come_from_the_polymerase(
-    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+    directional_check: ColonyCheck,
 ) -> None:
-    check = colony_pcr_check(product, junctions, vector=puc19, primers=(M13_FORWARD, M13_REVERSE))
     # OneTaq: the 23-mer M13/pUC pair anneals at 51.5 C, and 797 bp extends for a minute.
-    assert check.annealing_temperature == pytest.approx(51.5, abs=0.1)
-    assert check.extension_seconds == 60
+    assert directional_check.annealing_temperature == pytest.approx(51.5, abs=0.1)
+    assert directional_check.extension_seconds == 60
 
 
 def test_sanger_primers_read_from_outside_each_junction(
@@ -209,19 +190,10 @@ def test_colony_pcr_check_refuses_a_junction_pair_it_cannot_place(
         colony_pcr_check(product, (395,), vector=puc19)
 
 
-def test_a_junction_primer_is_designed_for_every_insert(
-    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
-) -> None:
-    check = colony_pcr_check(
-        product,
-        three_junctions,
-        vector=puc19,
-        flank=60,
-        insert_primer=True,
-        reversed_inserts=reversed_plasmids(product, three_junctions),
-    )
-    assert len(check.primers) == 4
-    assert [clone.name for clone in check.clones] == [
+def test_a_junction_primer_is_designed_for_every_insert(two_insert_check: ColonyCheck) -> None:
+    assert len(two_insert_check.primers) == 4
+    assert all(report.status != "fail" for report in two_insert_check.reports)
+    assert [clone.name for clone in two_insert_check.clones] == [
         "Correct clone",
         "Empty vector",
         "Reversed insert 1",
@@ -230,30 +202,19 @@ def test_a_junction_primer_is_designed_for_every_insert(
 
 
 def test_the_correct_clone_shows_one_band_reading_each_junction(
-    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
+    two_insert_check: ColonyCheck,
 ) -> None:
-    check = colony_pcr_check(product, three_junctions, vector=puc19, flank=60, insert_primer=True)
     # 60 bases of vector then 100 into each insert, each within its allowance of that, and the
     # flanking pair across the whole span.
-    assert bands(check, "Correct clone") == (160, 492, 837)
-    assert bands(check, "Empty vector") == (177,)
+    assert bands(two_insert_check, "Correct clone") == (160, 492, 837)
+    assert bands(two_insert_check, "Empty vector") == (177,)
 
 
-def test_each_reversed_plasmid_gets_a_lane_of_its_own(
-    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
-) -> None:
-    check = colony_pcr_check(
-        product,
-        three_junctions,
-        vector=puc19,
-        flank=60,
-        insert_primer=True,
-        reversed_inserts=reversed_plasmids(product, three_junctions),
-    )
-    correct = bands(check, "Correct clone")
-    assert bands(check, "Reversed insert 1") != correct
-    assert bands(check, "Reversed insert 2") != correct
-    assert check.tells_orientation
+def test_each_reversed_plasmid_gets_a_lane_of_its_own(two_insert_check: ColonyCheck) -> None:
+    correct = bands(two_insert_check, "Correct clone")
+    assert bands(two_insert_check, "Reversed insert 1") != correct
+    assert bands(two_insert_check, "Reversed insert 2") != correct
+    assert two_insert_check.tells_orientation
 
 
 def test_sanger_primers_read_from_outside_the_whole_inserted_span(
@@ -265,10 +226,12 @@ def test_sanger_primers_read_from_outside_the_whole_inserted_span(
 
 
 def test_an_insert_too_short_for_a_junction_primer_loses_it_rather_than_refusing_the_check(
-    product: SequenceRecord, puc19: SequenceRecord
+    product: SequenceRecord, puc19: SequenceRecord, three_junctions: tuple[int, ...]
 ) -> None:
-    # A linker or a tag has no room to anneal a primer 100 bases inside it, whatever made it.
-    short = (MCS[0], MCS[0] + JUNCTION_OFFSET - COLONY_ALLOWANCE, MCS[0] + 717)
+    # A linker or a tag has no room to anneal a primer 100 bases inside it, whatever made it, so
+    # the middle insert here is shorter than the offset and the allowance together.
+    first, split, last = three_junctions
+    short = (first, split - (JUNCTION_OFFSET - COLONY_ALLOWANCE), split, last)
     check = colony_pcr_check(
         product,
         short,
@@ -277,13 +240,17 @@ def test_an_insert_too_short_for_a_junction_primer_loses_it_rather_than_refusing
         insert_primer=True,
         reversed_inserts=reversed_plasmids(product, short),
     )
+    # Numbered for the insert each reads out of, so the one with no room leaves a gap.
     assert [primer.name for primer in check.primers] == [
         "Colony PCR forward",
         "Colony PCR reverse",
-        "Junction reverse 2",
+        "Junction reverse 1",
+        "Junction reverse 3",
     ]
     # The flanking pair still reads across it, and the gel says plainly that it cannot tell it
     # turned round rather than claiming a lane it does not have.
-    assert bands(check, "Correct clone") == bands(check, "Reversed insert 1")
-    assert bands(check, "Reversed insert 2") != bands(check, "Correct clone")
+    correct = bands(check, "Correct clone")
+    assert bands(check, "Reversed insert 2") == correct
+    assert bands(check, "Reversed insert 1") != correct
+    assert bands(check, "Reversed insert 3") != correct
     assert not check.tells_orientation
