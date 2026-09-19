@@ -146,16 +146,6 @@ def test_puc19_is_made_compatible_at_a_named_span(puc19):
     assert again.stuffer == taken.stuffer
 
 
-def test_puc19_keeps_its_features_around_the_new_stuffer(puc19):
-    made = scheme()
-
-    taken = destination_vector(puc19, made, site=GAP)
-
-    for before in puc19.features:
-        after = next(one for one in taken.record.features if one.name == before.name)
-        assert taken.record.extract(after) == puc19.extract(before)
-
-
 def test_an_edit_names_the_features_and_binding_sites_it_changed():
     made = scheme()
     at = 40

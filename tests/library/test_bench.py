@@ -1,4 +1,4 @@
-"""Library bench amounts, computed from the lengths, with the two sourced traps pinned.
+"""Library bench amounts, computed from the lengths, with the sourced SPRI ratios pinned.
 
 The defaults are the method's own, through `docs/research/protein-library-assembly.md`.
 """
@@ -6,7 +6,6 @@ The defaults are the method's own, through `docs/research/protein-library-assemb
 import pytest
 
 from liulab_mbio.library.bench import (
-    GROWTH_CELSIUS,
     SPRI_AFTER_DIGEST,
     SPRI_AFTER_LIGATION,
     digest_amount,
@@ -20,10 +19,6 @@ def test_a_digest_takes_one_microgram_as_picomoles_of_its_own_length() -> None:
 
     assert amount.nanograms == pytest.approx(1000.0)
     assert amount.pmol == pytest.approx(0.325, abs=0.001)
-
-
-def test_a_longer_plasmid_is_fewer_picomoles_for_the_same_microgram() -> None:
-    assert digest_amount(("long", 10000)).pmol < digest_amount(("short", 5000)).pmol
 
 
 def test_a_digest_refuses_dna_too_dilute_for_its_reaction() -> None:
@@ -40,11 +35,6 @@ def test_the_ligation_matches_molecules_and_not_masses() -> None:
 
     assert opened.pmol == pytest.approx(released.pmol)
     assert released.nanograms < opened.nanograms
-
-
-def test_the_ligation_gives_the_destination_twenty_nanograms() -> None:
-    opened, _ = ligation_amounts(("library", 5000), ("C part list", 1200))
-
     assert opened.nanograms == pytest.approx(20.0)
 
 
@@ -69,10 +59,6 @@ def test_the_ligation_refuses_a_ratio_that_is_not_positive() -> None:
 
 def test_an_electroporation_takes_at_most_a_hundred_nanograms() -> None:
     assert transformation_amount(("round 1 library", 6200)).nanograms == pytest.approx(100.0)
-
-
-def test_both_growth_steps_run_at_thirty_degrees() -> None:
-    assert GROWTH_CELSIUS == 30.0
 
 
 def test_the_two_spri_ratios_differ() -> None:

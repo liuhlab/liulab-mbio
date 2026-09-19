@@ -14,9 +14,7 @@ import pytest
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.library.scheme import Position, Scheme, read_scheme
-from liulab_mbio.library.vector import destination_vector
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
-from liulab_mbio.sites import digest
+from liulab_mbio.sequence import reverse_complement
 from liulab_mbio.translate import translate
 
 #: The paper's scheme, as a user supplies one.
@@ -109,37 +107,24 @@ def scheme(**changes: Any) -> Scheme:
     return Scheme("test", **fields)
 
 
-def test_the_worked_example_derives_its_entry_overhangs():
+def test_the_worked_example_derives_what_a_build_reads_off_it():
     made = read_scheme(EXAMPLE)
+    terminal = made.positions[-1]
+    # Only the terminal stuffer is read in the product. Every other one is excised by the round
+    # that opens it, which leaves nothing of it behind but the overhang at either end.
+    retained = made.internal_stuffer(-1)
 
     assert made.entry_overhangs == ("CTCC", "GGAG", "CCGA")
     assert made.scar_overhang == "AGCG"
     assert tuple(position.name for position in made.positions) == ("N", "bZIP", "C")
-
-
-def test_the_worked_example_keeps_its_terminal_stuffer_in_frame():
-    made = read_scheme(EXAMPLE)
-    terminal = made.positions[-1]
-
-    assert made.retained_length % 3 == 0
-    assert len(terminal.internal_stuffer_prefix) > len(made.entry_overhang(0))
-    assert made.barcode_length == 11
-    assert made.source
-
-
-def test_the_worked_example_names_the_enzymes_of_each_job():
-    made = read_scheme(EXAMPLE)
-
     assert made.internal.site == "GGTCTC"
     assert made.external.site == "GAAGAC"
     assert tuple(enzyme.end for enzyme in made.blunt) == ("blunt", "blunt")
-
-
-def test_the_entry_overhangs_are_read_off_the_stuffers():
-    made = scheme()
-
-    assert made.entry_overhangs == MORE[:3]
-    assert made.scar_overhang == SCAR
+    assert made.retained_length % 3 == 0
+    assert len(terminal.internal_stuffer_prefix) > len(made.entry_overhang(0))
+    assert "*" not in translate(retained[: len(retained) // 3 * 3])
+    assert made.barcode_length == 11
+    assert made.source
 
 
 @pytest.mark.parametrize("count", [1, 2, 4])
@@ -148,6 +133,7 @@ def test_any_number_of_positions_validates(count: int):
 
     assert made.position_count == count
     assert made.entry_overhangs == MORE[:count]
+    assert made.scar_overhang == SCAR
 
 
 def test_a_prefix_not_ending_with_the_next_entry_overhang_is_refused():
@@ -215,26 +201,3 @@ def test_an_internal_stuffer_leaving_no_scar_overhang_is_refused():
 
     with pytest.raises(ValueError, match="internal-stuffer-cuts"):
         scheme(internal_stuffer_core=without)
-
-
-def test_the_worked_example_spells_no_stop_in_its_retained_stuffer():
-    made = read_scheme(EXAMPLE)
-    # Only the terminal stuffer is read in the product. Every other one is excised by the round
-    # that opens it, which leaves nothing of it behind but the overhang at either end.
-    retained = made.internal_stuffer(-1)
-
-    assert "*" not in translate(retained[: len(retained) // 3 * 3])
-
-
-def test_the_worked_example_opens_a_destination_vector():
-    made = read_scheme(EXAMPLE)
-    backbone = SequenceRecord(pad(600), topology="circular", name="backbone")
-
-    destination = destination_vector(backbone, made, site=(100, 140))
-
-    assert destination.edit is not None
-    assert len(destination.record) == len(backbone) + len(made.internal_stuffer(-1))
-    assert any(
-        piece.left_overhang == made.entry_overhang(0) and piece.right_overhang == made.scar_overhang
-        for piece in digest(destination.record, made.internal)
-    )

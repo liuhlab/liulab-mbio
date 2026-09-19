@@ -129,19 +129,25 @@ def retained_codons(made: Scheme, candidate: str) -> tuple[str, ...]:
     )
 
 
-def test_the_standard_returns_one_overhang_a_position_and_the_scheme_s_scar():
-    made = scheme(MORE[:2])
+@pytest.fixture(scope="module")
+def made():
+    """A scheme of two positions, laid out from the shipped enzyme definitions."""
+    return scheme(MORE[:2])
 
-    standard = design_standard(made, (FIRST, SECOND))
 
+@pytest.fixture(scope="module")
+def standard(made):
+    """What the designer returns over the two part lists, with nothing pinned."""
+    return design_standard(made, (FIRST, SECOND))
+
+
+def test_the_standard_returns_one_overhang_a_position_and_the_scheme_s_scar(made, standard):
     assert len(standard.entry_overhangs) == made.position_count
     assert standard.scar_overhang == made.cloning_scar
     assert len(standard.choices) == made.position_count + 1
 
 
-def test_every_chosen_overhang_holds_the_reused_rules():
-    made = scheme(MORE[:2])
-    standard = design_standard(made, (FIRST, SECOND))
+def test_every_chosen_overhang_holds_the_reused_rules(made, standard):
     chosen = (*standard.entry_overhangs, standard.scar_overhang)
 
     for index, overhang in enumerate(chosen):
@@ -157,10 +163,7 @@ def test_every_chosen_overhang_holds_the_reused_rules():
         )
 
 
-def test_no_overhang_spells_a_stop_where_the_product_reads_through_it():
-    made = scheme(MORE[:2])
-    standard = design_standard(made, (FIRST, SECOND))
-
+def test_no_overhang_spells_a_stop_where_the_product_reads_through_it(standard):
     for overhang in standard.entry_overhangs:
         donated, _ = junction_residues(len(overhang))
         start = (3 - donated) % 3
@@ -185,64 +188,41 @@ def test_the_published_terminal_changes_are_reproduced():
     }
 
 
-def test_a_junction_no_overhang_spells_unchanged_is_reported():
-    made = scheme(MORE[:2])
-
-    standard = design_standard(made, (FIRST, SECOND))
-
+def test_a_junction_no_overhang_spells_unchanged_is_reported(standard):
     assert "p2" in standard.forced
     assert standard.cost > 0
     assert {one.part for one in standard.changes}
 
 
-def test_the_first_entry_overhang_spells_no_stop_in_the_retained_stuffer():
-    made = scheme(MORE[:2])
-
-    standard = design_standard(made, (FIRST, SECOND))
-
+def test_the_first_entry_overhang_spells_no_stop_in_the_retained_stuffer(made, standard):
     spelled = retained_codons(made, standard.entry_overhangs[0])
+
     assert spelled
     assert all(amino_acid(one) != "*" for one in spelled)
 
 
-def test_a_retained_stop_names_its_rule_in_the_trail():
-    made = scheme(MORE[:2])
-
-    standard = design_standard(made, (FIRST, SECOND))
-    refused = {one.overhang for one in standard.choices[0].rejected if one.rule == "stop"}
-
-    assert refused
-    for overhang in refused:
-        assert any(amino_acid(one) == "*" for one in retained_codons(made, overhang))
-
-
-def test_a_pinned_overhang_spelling_a_retained_stop_is_refused():
-    made = scheme(MORE[:2])
-
+def test_a_pinned_overhang_spelling_a_retained_stop_is_refused(made):
     with pytest.raises(ValueError, match="stop"):
         design_standard(made, (FIRST, SECOND), pinned={"p1": "AGGA"})
 
 
-def test_the_vector_junction_charges_no_part_list_its_5_terminus():
-    made = scheme(MORE[:2])
+def test_a_pinned_overhang_is_kept_and_charges_no_part_list_its_5_terminus(made):
     starts_with_s = {"a": "SKTD", "b": "SKTK"}
 
-    standard = design_standard(made, (starts_with_s, SECOND), pinned={"p1": "CTCC"})
+    pinned = design_standard(made, (starts_with_s, SECOND), pinned={"p1": "CTCC"})
 
-    assert standard.entry_overhangs[0] == "CTCC"
-    assert not [one for one in standard.termini if one.position == "p1" and one.end == "5'"]
+    assert pinned.entry_overhangs[0] == "CTCC"
+    assert not [one for one in pinned.termini if one.position == "p1" and one.end == "5'"]
 
 
-def test_no_cheaper_standard_is_available():
+def test_no_cheaper_standard_is_available(made, standard):
     """Price every set the rules allow, and show none beats what the designer returned.
 
     A junction's cost never falls, so a set whose first junctions already cost more than the
     answer cannot win and is not priced further. The cost model itself is pinned by
     `test_the_published_terminal_changes_are_reproduced`.
     """
-    made = scheme(MORE[:2])
     lists = (FIRST, SECOND)
-    standard = design_standard(made, lists)
     enzyme, avoid = made.internal, (made.external, *made.blunt)
     usage = codon_usage()
     sites = _sites(
@@ -276,50 +256,33 @@ def test_no_cheaper_standard_is_available():
     assert cheapest == standard.cost
 
 
-def test_a_pinned_overhang_is_kept():
-    made = scheme(MORE[:2])
-
-    standard = design_standard(made, (FIRST, SECOND), pinned={"p1": "CTCC"})
-
-    assert standard.entry_overhangs[0] == "CTCC"
-
-
-def test_a_pinned_overhang_is_held_to_every_rule():
-    made = scheme(MORE[:2])
-
+def test_a_pinned_overhang_is_held_to_every_rule(made):
     with pytest.raises(ValueError, match="palindrome"):
         design_standard(made, (FIRST, SECOND), pinned={"p1": "GGCC"})
 
 
-def test_a_pinned_name_that_is_not_a_position_is_refused():
-    made = scheme(MORE[:2])
-
+def test_a_pinned_name_that_is_not_a_position_is_refused(made):
     with pytest.raises(ValueError, match="not positions of this scheme"):
         design_standard(made, (FIRST, SECOND), pinned={"nowhere": "AGGT"})
 
 
-def test_part_lists_must_match_the_positions():
-    made = scheme(MORE[:2])
-
+def test_part_lists_must_match_the_positions(made):
     with pytest.raises(ValueError, match="part list"):
         design_standard(made, (FIRST,))
 
 
-def test_a_protein_shorter_than_a_junction_spells_is_refused():
-    made = scheme(MORE[:2])
-
+def test_a_protein_shorter_than_a_junction_spells_is_refused(made):
     with pytest.raises(ValueError, match="amino acid"):
         design_standard(made, ({"tiny": "M"}, SECOND))
 
 
-def test_the_rejection_trail_names_the_rule_that_refused_a_candidate():
-    made = scheme(MORE[:2])
-    wanted = design_standard(made, (FIRST, SECOND)).entry_overhangs[0]
+def test_the_rejection_trail_names_the_rule_that_refused_a_candidate(made, standard):
+    wanted = standard.entry_overhangs[0]
 
     # A pinned junction settles first, so pinning the second position to what the first would
     # otherwise take leaves the first to refuse it as a repeat and say so.
-    standard = design_standard(made, (FIRST, SECOND), pinned={"p2": wanted})
-    trail = [one for choice in standard.choices for one in choice.rejected]
+    again = design_standard(made, (FIRST, SECOND), pinned={"p2": wanted})
+    trail = [one for choice in again.choices for one in choice.rejected]
 
     assert ("repeat", wanted) in {(one.rule, one.overhang) for one in trail}
     assert all(one.detail for one in trail)

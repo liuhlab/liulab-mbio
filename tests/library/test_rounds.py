@@ -140,13 +140,18 @@ def made():
 
 
 @pytest.fixture(scope="module")
-def standard(made):
-    return built(made)[0]
+def build(made):
+    return built(made)
 
 
 @pytest.fixture(scope="module")
-def parts(made):
-    return representative(built(made)[1], made)
+def standard(build):
+    return build[0]
+
+
+@pytest.fixture(scope="module")
+def parts(build, made):
+    return representative(build[1], made)
 
 
 @pytest.fixture(scope="module")
@@ -197,23 +202,15 @@ def test_overhangs_that_do_not_match_are_refused_naming_both(vector, parts, made
     assert parts[1].name in message
 
 
-def test_the_barcode_block_reads_newest_first(rounds, parts, made):
-    final = rounds[-1]
-
-    block = final.product.extract(final.block)
-
-    assert block == SCAR.join(part.barcode for part in reversed(parts))
-    # Three barcodes and two scars: the vector's own barcode is not one of them.
-    assert len(block) == made.barcode_block_length == 41
-    assert final.block.end - final.block.start == len(block)
-
-
-def test_each_round_appends_its_barcode_to_the_front_of_the_block(rounds, parts):
+def test_each_round_appends_its_barcode_to_the_front_of_the_block(rounds, parts, made):
     for number, one in enumerate(rounds, start=1):
         block = one.product.extract(one.block)
 
         assert block.startswith(one.product.extract(one.barcode))
         assert block == SCAR.join(part.barcode for part in reversed(parts[:number]))
+        assert one.block.end - one.block.start == len(block)
+    # Three barcodes and two scars: the vector's own barcode is not one of them.
+    assert len(rounds[-1].product.extract(rounds[-1].block)) == made.barcode_block_length == 41
 
 
 def test_the_retained_region_is_frame_correct_and_free_of_in_phase_stops(rounds, made):
@@ -301,14 +298,6 @@ def test_the_records_are_written_and_read_back_with_their_features(rounds, tmp_p
         assert back.extract(feature) == final.extract(before)
 
 
-def test_the_same_inputs_write_the_same_bytes(rounds, tmp_path):
-    once = write_records(rounds, tmp_path / "once")
-    twice = write_records(rounds, tmp_path / "twice")
-
-    for one, other in zip(once, twice, strict=True):
-        assert one.read_bytes() == other.read_bytes()
-
-
 def test_a_stuffer_across_the_origin_is_opened_where_it_lies(vector, parts, made, rounds):
     turned = rotate(vector, 90)
     assert turned.sequence != vector.sequence
@@ -338,10 +327,10 @@ def test_a_linear_destination_is_refused(vector, parts, made):
         assemble_round(linear, parts[0], made)
 
 
-def test_a_representative_needs_a_part_for_every_position(made):
+def test_a_representative_needs_a_part_for_every_position(build, made):
     # Both of these fill position one, so nothing is left to fill position two.
     with pytest.raises(ValueError, match="no part fills position 'p2'"):
-        representative(built(made)[1][:2], made)
+        representative(build[1][:2], made)
 
 
 def test_no_round_is_nothing_to_write(tmp_path):

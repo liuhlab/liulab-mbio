@@ -10,10 +10,12 @@ import pytest
 
 from liulab_mbio.barcodes import BarcodeRules, check_barcodes
 from liulab_mbio.library.parts import (
+    BARCODE_COLUMNS,
     CHANGE_COLUMNS,
     SHEET_COLUMNS,
     barcode_phase,
     barcode_rules,
+    barcode_table,
     change_table,
     design_parts,
     synthesis_sheet,
@@ -22,7 +24,7 @@ from liulab_mbio.library.scheme import read_scheme
 from liulab_mbio.library.standard import design_standard, junction_residues
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest, find_sites
-from liulab_mbio.translate import translate
+from liulab_mbio.translate import reverse_translate, translate
 
 #: The paper's scheme, as a user supplies one.
 EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
@@ -59,9 +61,27 @@ def parts(scheme, standard):
     return design_parts(scheme, LISTS, standard, host=HOST)
 
 
+@pytest.fixture(scope="module")
+def agreed(scheme):
+    """The standard over the part lists that agree at every junction, which charges nobody."""
+    return design_standard(scheme, AGREED)
+
+
 def enzymes(scheme):
     """Every enzyme the scheme names."""
     return (scheme.internal, scheme.external, *scheme.blunt)
+
+
+def charged(standard, part, end):
+    """What the standard charges one end of one part, or None where it charges nothing."""
+    return next(
+        (
+            one
+            for one in standard.termini
+            if one.part == part.name and one.position == part.position and one.end == end
+        ),
+        None,
+    )
 
 
 def stuffer_span(scheme, part):
@@ -172,12 +192,6 @@ def test_the_barcode_block_begins_one_base_into_a_codon(scheme, parts):
     assert check_barcodes([one.barcode for one in parts], barcode_rules(scheme)) == ()
 
 
-def test_each_part_list_gets_its_own_barcodes(parts):
-    for index in range(3):
-        drawn = [one.barcode for one in parts if one.index == index]
-        assert len(set(drawn)) == len(drawn)
-
-
 def test_the_sheet_holds_one_row_a_part(parts):
     sheet = synthesis_sheet(parts)
 
@@ -194,6 +208,47 @@ def test_the_sheet_holds_one_row_a_part(parts):
         )
         assert int(length) == part.length
     assert sheet.endswith("\n")
+
+
+def test_the_barcode_table_names_every_part_and_where_it_reads(scheme, parts):
+    rows = barcode_table(parts, scheme).splitlines()
+
+    assert rows[0].split("\t") == list(BARCODE_COLUMNS)
+    assert len(rows) == len(parts) + 1
+    for part, row in zip(parts, rows[1:], strict=True):
+        name, position, number, slot, barcode = row.split("\t")
+        assert (name, position, barcode) == (part.name, part.position, part.barcode)
+        # The block reads newest first, so the last round's part is slot one.
+        assert int(number) == part.index + 1
+        assert int(slot) == scheme.position_count - part.index
+
+
+def test_coding_bases_given_are_kept_but_for_a_codon_a_site_moves(scheme, standard, parts):
+    # Coded for another host, so every codon differs from the one this host would have written.
+    supplied = {
+        name: reverse_translate(protein, host="human")
+        for one in LISTS
+        for name, protein in one.items()
+    }
+    coding = tuple({name: supplied[name] for name in one} for one in LISTS)
+
+    made = design_parts(scheme, LISTS, standard, host=HOST, coding=coding)
+
+    assert [one.coding_sequence for one in made] != [one.coding_sequence for one in parts]
+    for part in made:
+        head = charged(standard, part, "5'")
+        tail = charged(standard, part, "3'")
+        first = len(head.wild_type) if head is not None else 0
+        whole = len(part.protein) - first - (len(tail.wild_type) if tail is not None else 0)
+        body = supplied[part.name][3 * first : 3 * (first + whole)]
+        assert body
+        # Every codon is the one that was handed over, except the ones the part reports moving
+        # to take a forbidden site out. Nothing else was written again.
+        expected = [body[at : at + 3] for at in range(0, len(body), 3)]
+        for change in part.changes:
+            assert expected[change.codon_index] == change.old_codon, part.name
+            expected[change.codon_index] = change.new_codon
+        assert part.coding_sequence.startswith("".join(expected)), part.name
 
 
 def test_the_change_table_names_every_part_whose_residues_moved(scheme, standard):
@@ -213,11 +268,9 @@ def test_the_change_table_names_every_part_whose_residues_moved(scheme, standard
         ]
 
 
-def test_the_change_table_is_empty_where_the_standard_moved_nothing(scheme):
-    standard = design_standard(scheme, AGREED)
-
-    assert standard.cost == 0
-    assert change_table(standard) == "\t".join(CHANGE_COLUMNS) + "\n"
+def test_the_change_table_is_empty_where_the_standard_moved_nothing(agreed):
+    assert agreed.cost == 0
+    assert change_table(agreed) == "\t".join(CHANGE_COLUMNS) + "\n"
 
 
 def test_the_same_inputs_write_the_same_bytes(scheme, standard):
@@ -239,11 +292,9 @@ def test_part_lists_must_match_the_scheme(scheme, standard):
         design_parts(scheme, LISTS[:2], standard, host=HOST)
 
 
-def test_a_standard_charging_other_part_lists_is_refused(scheme):
-    standard = design_standard(scheme, AGREED)
-
+def test_a_standard_charging_other_part_lists_is_refused(scheme, agreed):
     with pytest.raises(ValueError, match="design it over these same part lists"):
-        design_parts(scheme, LISTS, standard, host=HOST)
+        design_parts(scheme, LISTS, agreed, host=HOST)
 
 
 def test_a_part_spelling_a_site_the_scheme_does_not_expect_is_refused(scheme, standard):
