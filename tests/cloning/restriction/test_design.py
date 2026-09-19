@@ -1,16 +1,20 @@
 """Choosing the pair, over records small enough to read.
 
-Every record here is written in code, so what refuses a pair and what ranks one above another is
-on the page beside the assertion. The plan seam is in `test_plan.py`.
+Almost every record here is written in code, so what refuses a pair and what ranks one above
+another is on the page beside the assertion; the pUC19 and GFP fixtures are where a refusal
+naming the sites of a real plasmid is pinned. The plan seam is in `test_plan.py`.
 """
 
 import dataclasses
+import re
 
 import pytest
 
 from liulab_mbio.cloning.restriction.design import candidates, choose_pair, refusal
+from liulab_mbio.cloning.restriction.digest import resolve
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from liulab_mbio.sites import find_sites
 
 #: Bases spelling no site of any enzyme named below, for padding a record written in code.
 FILLER = "ACGT" * 6
@@ -38,7 +42,7 @@ def plasmid(sequence: str, name: str, features: tuple[Feature, ...] = ()) -> Seq
 
 
 @pytest.fixture(scope="module")
-def vector() -> SequenceRecord:
+def into() -> SequenceRecord:
     """A vector whose cloning site reads EcoRI, then BamHI, then SalI close behind it."""
     return plasmid(
         FILLER * 6 + "GAATTC" + FILLER + "GGATCC" + "ACGTACGT" + "GTCGAC" + FILLER * 6, "pVec"
@@ -46,21 +50,19 @@ def vector() -> SequenceRecord:
 
 
 @pytest.fixture(scope="module")
-def source() -> SequenceRecord:
+def holder() -> SequenceRecord:
     """The same three sites, with something annotated between the first two."""
     bases = FILLER * 4 + "GAATTC" + FILLER * 2 + "GGATCC" + "ACGTACGT" + "GTCGAC" + FILLER * 4
     cargo = Feature("cargo", "misc_feature", (Segment(len(FILLER * 4) + 6, len(FILLER * 6) + 6),))
     return plasmid(bases, "pIns", (cargo,))
 
 
-def test_the_chosen_pair_moves_what_the_source_annotates_rather_than_the_least_vector(
-    vector, source
-):
+def test_the_chosen_pair_moves_what_the_source_annotates_rather_than_the_least_vector(into, holder):
     # BamHI and SalI lie eight bases apart, so that pair gives up less of the vector than any
     # other -- and carries none of what the source annotates, which is what the cloning is for.
-    assert [one.name for one in choose_pair(vector, source).enzymes] == ["BamHI", "EcoRI"]
-    bare = dataclasses.replace(source, features=())
-    assert [one.name for one in choose_pair(vector, bare).enzymes] == ["BamHI", "SalI"]
+    assert [one.name for one in choose_pair(into, holder).enzymes] == ["BamHI", "EcoRI"]
+    bare = dataclasses.replace(holder, features=())
+    assert [one.name for one in choose_pair(into, bare).enzymes] == ["BamHI", "SalI"]
 
 
 def test_a_pair_the_verdicts_rank_down_loses_to_one_they_do_not():
@@ -75,9 +77,9 @@ def test_a_pair_the_verdicts_rank_down_loses_to_one_they_do_not():
     assert [one.name for one in cool.enzymes] == ["EcoRI", "CoolI"]
 
 
-def test_an_enzyme_reading_no_site_in_the_vector_refuses_every_pair_it_is_in(vector, source):
-    holder = plasmid(source.sequence + "AAGCTT" + FILLER, "pIns2")
-    chosen = choose_pair(vector, holder, enzymes=["EcoRI", "BamHI", "HindIII"])
+def test_an_enzyme_reading_no_site_in_the_vector_refuses_every_pair_it_is_in(into, holder):
+    longer = plasmid(holder.sequence + "AAGCTT" + FILLER, "pIns2")
+    chosen = choose_pair(into, longer, enzymes=["EcoRI", "BamHI", "HindIII"])
     assert [(one.rule, one.names) for one in chosen.refusals] == [
         ("vector site", "BamHI and HindIII"),
         ("vector site", "EcoRI and HindIII"),
@@ -85,7 +87,7 @@ def test_an_enzyme_reading_no_site_in_the_vector_refuses_every_pair_it_is_in(vec
     assert "HindIII cuts pVec 0 time(s)" in chosen.refusals[0].detail
 
 
-def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(vector):
+def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(into):
     # One EcoRI site and no BamHI site: too few sites to cut the insert out, and one too many to
     # amplify it with the sites on its tails.
     coding = "ATG" + "GAATTC" + "AAACCTTTAGGCATT" + "TAA"
@@ -95,7 +97,7 @@ def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(vec
         features=(Feature("cargo", "CDS", (Segment(6, 6 + len(coding)),)),),
     )
     pair = [get_enzyme("EcoRI"), get_enzyme("BamHI")]
-    inside = refusal(vector, gene, pair)
+    inside = refusal(into, gene, pair)
     assert inside is not None
     assert (inside.rule, inside.domesticable) == ("insert site", True)
     assert "1 EcoRI site (at 9) and no BamHI site" in inside.detail
@@ -104,7 +106,7 @@ def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(vec
 
     # The same bases annotating no coding sequence: a flat refusal, because taking the site out
     # would change what the record spells.
-    outside = refusal(vector, dataclasses.replace(gene, features=()), pair)
+    outside = refusal(into, dataclasses.replace(gene, features=()), pair)
     assert outside is not None
     assert (outside.rule, outside.domesticable) == ("insert site", False)
     assert "no synonymous codon change reaches EcoRI at 9" in outside.detail
@@ -131,16 +133,31 @@ def test_a_backbone_that_closes_on_itself_and_ends_that_do_not_anneal_name_their
     assert apart is not None
     assert apart.rule == "ends"
     assert "do not anneal" in apart.detail
+    # AAAA in the one and GGGG in the other: the refusal names the two ends that did not meet.
+    assert re.search(r"do not anneal.*(AAAA|GGGG)", apart.detail)
 
 
-def test_where_no_pair_can_be_found_the_reasons_are_named(vector, source):
+def test_an_enzyme_cutting_the_insert_twice_over_is_refused_naming_every_site_it_reads(
+    puc19, source
+):
+    # Two BsaI sites and one EcoRI site is a cut too many: three cuts in the record the insert
+    # comes out of, where this method makes two.
+    sites = find_sites(source, "BsaI")
+    assert len(sites) == 2
+    refused = refusal(puc19, source, resolve(["BsaI", "EcoRI"]))
+    assert refused is not None
+    assert refused.rule == "insert site"
+    assert f"2 BsaI sites (at {sites[0].start} and {sites[1].start})" in refused.detail
+
+
+def test_where_no_pair_can_be_found_the_reasons_are_named(into, holder):
     with pytest.raises(ValueError, match="every pair was refused, 1 on the vector site rule"):
-        choose_pair(vector, source, enzymes=["HindIII", "NotI"])
+        choose_pair(into, holder, enzymes=["HindIII", "NotI"])
 
 
 def test_a_usable_pair_is_refused_by_nothing_and_every_candidate_puts_its_own_site_back(
-    vector, source
+    into, holder
 ):
-    assert refusal(vector, source, [get_enzyme("EcoRI"), get_enzyme("BamHI")]) is None
+    assert refusal(into, holder, [get_enzyme("EcoRI"), get_enzyme("BamHI")]) is None
     assert all(one.type == "II" for one in candidates())
     assert {"EcoRI", "BamHI"} <= {one.name for one in candidates()}
