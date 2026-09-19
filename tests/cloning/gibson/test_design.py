@@ -132,6 +132,19 @@ def test_the_reaction_is_twenty_microlitres_of_which_half_is_master_mix():
         assembly_reaction(NEBUILDER_HIFI, amounts[:1])
 
 
+def test_in_fusions_table_prints_both_the_picomoles_and_the_weight_of_every_fragment():
+    amounts = assembly_amounts(("backbone", 2629), [("GFP", 717)], product=IN_FUSION)
+    table = assembly_reaction(IN_FUSION, amounts)
+    volumes = {one.name: one.volume_ul for one in table.components}
+    assert sum(volumes.values()) == pytest.approx(IN_FUSION.reaction_ul)
+    assert volumes[IN_FUSION.name] == IN_FUSION.master_mix_ul
+    # Takara asks for its inserts by weight and by picomoles, so the table prints both.
+    insert = next(one for one in table.components if one.name == "GFP")
+    assert "pmol" in insert.final
+    assert "ng" in insert.final
+    assert amounts[1].pmol == pytest.approx(2.0 * amounts[0].pmol, rel=1e-3)
+
+
 def test_the_incubation_is_one_temperature_and_no_cycling():
     program = assembly_program(NEBUILDER_HIFI, fragments=2)
     assembly, hold = program.stages

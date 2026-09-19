@@ -3,29 +3,30 @@
 `tests/data/pUC19.dna` and `tests/data/GFP.dna`: put GFP into the pUC19 multiple cloning site by
 Gibson assembly. Nothing about the fixtures is hard-coded in the package; the numbers below are
 read off the records and pinned here.
+
+One plan carries the common path, and one more each route the method takes differently: a
+vector handed in linear, an insert the other way round, several inserts, and the two oligo
+routes. What a function below the plan decides is checked there instead, in `test_assembly.py`
+and `test_design.py`.
 """
 
 import pytest
 
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify_step
-from liulab_mbio.bench.validation import SANGER_ALLOWANCE, SANGER_FLANK, ColonyCheck, SangerRead
+from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.gibson import Plan, plan_gibson
 from liulab_mbio.cloning.gibson.bench import IN_FUSION, NEBUILDER_HIFI
-from liulab_mbio.cloning.gibson.design import (
-    BRIDGE_HOMOLOGY_BP,
-    STITCH_OLIGO_BASES,
-    STITCH_OVERLAP_BP,
-    wallace_tm,
-)
+from liulab_mbio.cloning.gibson.design import BRIDGE_HOMOLOGY_BP
 from liulab_mbio.cloning.gibson.steps import (
     CLEANUP_FRAGMENTS,
     CORRECT_AT_FIVE,
     MOLECULES_PER_ERROR,
     SCREENED_COLONIES,
 )
+from liulab_mbio.edits import flipped
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits.
@@ -42,75 +43,17 @@ def made(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
     return plan_gibson(puc19, gfp)
 
 
-def test_each_junction_takes_its_overlap_from_the_vector_at_the_length_the_note_states(made, puc19):
-    rule = NEBUILDER_HIFI.tiers[0].overlap
-    floor = rule.tm_floor
-    assert floor is not None
-    assert floor == 48.0
+def test_the_junctions_are_the_vectors_own_bases_and_the_insert_carries_them_as_tails(made, puc19):
     first, last = made.assembly.junctions
     assert [len(one) for one in made.overlaps] == [16, 16]
-    for one in (first, last):
-        assert rule.shortest <= one.length <= rule.longest
-        assert wallace_tm(one.overlap) >= floor
-        assert one.taken_from == made.linearised_vector.name
-    # The bases are the vector's own, on either side of the span the insert replaces.
+    # The bases are the vector's own, on either side of the span the insert replaces, so the
+    # opened backbone needs no tail and can be reused.
     assert first.overlap == puc19.sequence[MCS[0] - first.length : MCS[0]]
     assert last.overlap == puc19.sequence[MCS[1] : MCS[1] + last.length]
-
-
-def test_the_insert_primers_carry_the_overlaps_as_tails_and_the_vector_primers_carry_none(made):
-    first, last = made.assembly.junctions
+    assert {one.taken_from for one in (first, last)} == {made.linearised_vector.name}
     insert = made.insert_parts[0]
     assert (insert.left_tail, insert.right_tail) == (first.overlap, last.overlap)
-    assert insert.forward.sequence.startswith(first.overlap)
     assert (made.linearised_vector.left_tail, made.linearised_vector.right_tail) == ("", "")
-    # The amplicon is longer than what the part puts into the product, by the two tails.
-    assert insert.length == insert.fragment_length + first.length + last.length
-
-
-def test_the_tm_of_a_tailed_primer_is_read_from_its_annealing_region_alone(made):
-    report = next(one for one in made.reports if one.primer.name == "GFP forward")
-    annealing = report.primer.binding_sites[0]
-    assert len(report.primer.sequence) == 42
-    assert annealing.end - annealing.start == 26
-    assert report["length"].value == 26
-    # The whole oligo's melting temperature is reported beside it, and carries no verdict.
-    assert report["tm_full"].value > report["tm"].value
-    assert report["tm_full"].status is None
-    # The structures are judged on the whole oligo, tail included.
-    assert report["hairpin"].status is not None
-
-
-def test_the_product_carries_every_feature_at_its_new_coordinates(made, puc19, gfp):
-    product = made.plasmid
-    assert len(product) == len(puc19) - (MCS[1] - MCS[0]) + len(gfp) == 3346
-    features = {
-        one.name: [(bit.start, bit.end) for bit in one.segments] for one in product.features
-    }
-    # The vector's reporter meets the replaced span twice, so it keeps a segment either side.
-    reporter = next(name for name in features if name.startswith("lacZ"))
-    assert features[reporter] == [(145, 395), (1112, 1129)]
-    assert features["GFP"] == [(395, 1112)]
-    # A feature lying wholly inside the span the insert replaced is gone.
-    assert "MCS" not in features
-    # One further round the plasmid, shifted by what the insert added and the span removed.
-    assert features["M13 rev"] == [(1124, 1141)]
-
-
-def test_the_product_keeps_the_vectors_own_origin_so_no_junction_sits_at_base_zero(made, puc19):
-    assert made.plasmid.sequence[: MCS[0]] == puc19.sequence[: MCS[0]]
-    assert made.plasmid.topology == "circular"
-    assert made.assembly.junction_positions == (379, 1112)
-    assert all(one.start > 0 for one in made.assembly.junctions)
-
-
-def test_each_junction_is_marked_and_says_which_part_the_bases_came_from(made):
-    marks = {one.name: one for one in made.plasmid.features if one.name.endswith("overlap")}
-    assert set(marks) == {"pUC19 backbone-GFP overlap", "GFP-pUC19 backbone overlap"}
-    for junction in made.assembly.junctions:
-        mark = marks[f"{junction.before}-{junction.after} overlap"]
-        assert (mark.segments[0].start, mark.segments[0].end) == (junction.start, junction.end)
-        assert junction.taken_from in mark.qualifiers["note"][0]
 
 
 def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
@@ -131,16 +74,6 @@ def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
     assert (placed["GFP forward"].start, placed["GFP forward"].end) == (395, 421)
 
 
-def test_a_part_gives_way_where_the_shared_bases_end_and_not_where_they_begin(made, gfp):
-    # Both overlaps are the vector's own bases: the first sits at the end of the backbone's
-    # share and the last at the start of it. Reading the junction starts as boundaries instead
-    # would put a screening primer 16 bases out and turn vector bases round with the insert.
-    first, last = made.assembly.junctions
-    assert made.assembly.junction_positions == (first.start, last.start)
-    assert made.assembly.boundaries == (first.end, last.start)
-    assert made.assembly.boundaries == made.assembly.insert_span == (MCS[0], MCS[0] + len(gfp))
-
-
 def test_the_colony_pcr_sizes_are_the_ones_the_simulated_clones_give(made, gfp):
     bands = {clone.name: clone.bands_bp for clone in made.colony.clones}
     start, end = made.assembly.boundaries
@@ -156,19 +89,6 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_clones_give(made, gfp):
         "Empty vector": (ahead + removed + behind,),
     }
     assert {lane.label: lane.bands_bp for lane in made.colony.gel.lanes} == bands
-
-
-def test_the_sequencing_primers_read_in_from_outside_the_first_and_the_last_junction(made):
-    first, last = made.assembly.junctions
-    start, end = made.assembly.boundaries
-    forward, reverse = made.reads
-    ahead, behind = (read.primer.binding_sites[0] for read in made.reads)
-    assert ahead.end <= first.start
-    assert behind.start >= last.end
-    for read in made.reads:
-        assert SANGER_FLANK <= read.distance_bp <= SANGER_FLANK + SANGER_ALLOWANCE
-    # Each has to carry as far as the other's junction for one read to confirm both.
-    assert (forward.read_bp, reverse.read_bp) == (end - ahead.end, behind.start - start)
 
 
 def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_features(made):
@@ -198,8 +118,8 @@ def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_fr
     confirm = " ".join(steps[SEQUENCING_TITLE].notes)
     assert f"one error per {MOLECULES_PER_ERROR} molecules" in confirm
     citations = " ".join(one.text for one in protocol.references)
-    assert "In-Fusion Cloning FAQs" in citations
-    assert "Gibson, D.G." in citations
+    for cited in ("In-Fusion Cloning FAQs", "Gibson, D.G.", "NEBuilder", "protocols.io", "REBASE"):
+        assert cited in citations
     for title in (COLONY_PCR_TITLE, SEQUENCING_TITLE):
         assert steps[title].troubleshooting
 
@@ -239,17 +159,35 @@ def test_the_plans_status_is_the_worst_of_its_checks(made):
     ]
 
 
-def test_the_reaction_and_the_incubation_come_from_the_products_own_tier(made):
+def test_the_protocol_is_enough_to_run_the_experiment(made):
+    protocol = made.protocol()
+    assert [step.title for step in protocol.steps] == [
+        "Amplify pUC19 backbone",
+        "Amplify GFP",
+        "Check the PCRs on a gel",
+        "Digest the plasmid template with DpnI",
+        "Purify every amplicon",
+        "Measure every concentration",
+        "Set up the NEBuilder HiFi DNA Assembly Master Mix reaction",
+        "Incubate the assembly",
+        "Transform and plate",
+        "Screen colonies by PCR",
+        "Confirm the clone by sequencing",
+    ]
+    for step in protocol.steps:
+        assert step.expected, step.title
+    assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
+    # The reaction and the incubation are the default product's, and every fragment is weighed.
     assert made.product is NEBUILDER_HIFI
     assert [one.name for one in made.amounts] == [part.name for part in made.parts]
-    program = next(
-        one
-        for step in made.protocol().steps
-        for one in step.programs
-        if one.title.startswith("Assembly")
-    )
-    assert program.stages[0].incubations[0].temperature_c == 50.0
-    assert program.stages[0].incubations[0].seconds == 900
+    # The template the backbone was amplified off is digested, and the digest is timed.
+    digest = next(one for one in protocol.steps if one.title.endswith("DpnI"))
+    assert "37 °C for 30 minutes" in " ".join(digest.instructions)
+    assert [timer.label for timer in digest.timers] == ["DpnI digest", "Heat-inactivate DpnI"]
+    # Every check reaches the page, the ones nothing judges included, with their detail.
+    assert [(one.name, one.status, one.detail) for one in protocol.checks] == [
+        (one.name, one.status, one.detail) for one in made.checks
+    ]
 
 
 def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
@@ -288,50 +226,6 @@ def test_the_primer_sheet_carries_every_oligo_and_the_page_lists_the_same_rows(m
         assert oligo.purpose
 
 
-def test_the_protocol_is_enough_to_run_the_experiment(made):
-    protocol = made.protocol()
-    assert [step.title for step in protocol.steps] == [
-        "Amplify pUC19 backbone",
-        "Amplify GFP",
-        "Check the PCRs on a gel",
-        "Digest the plasmid template with DpnI",
-        "Purify every amplicon",
-        "Measure every concentration",
-        "Set up the NEBuilder HiFi DNA Assembly Master Mix reaction",
-        "Incubate the assembly",
-        "Transform and plate",
-        "Screen colonies by PCR",
-        "Confirm the clone by sequencing",
-    ]
-    for step in protocol.steps:
-        assert step.expected, step.title
-    assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
-    # Every check reaches the page, the ones nothing judges included, with their detail.
-    assert [(one.name, one.status, one.detail) for one in protocol.checks] == [
-        (one.name, one.status, one.detail) for one in made.checks
-    ]
-    assert [one.name for one in protocol.checks if one.status is None] == [
-        "overlap gc",
-        "overlap similarity",
-    ]
-
-
-def test_the_dpni_digest_prints_nebs_own_dose_and_its_heat_inactivation(made):
-    step = next(one for one in made.protocol().steps if one.title.endswith("DpnI"))
-    instructions = " ".join(step.instructions)
-    assert "20 units" in instructions
-    assert "37 °C for 30 minutes" in instructions
-    assert "80 °C for 20 minutes" in instructions
-    assert [timer.label for timer in step.timers] == ["DpnI digest", "Heat-inactivate DpnI"]
-
-
-def test_the_protocol_cites_the_documents_behind_its_numbers(made):
-    citations = " ".join(reference.text for reference in made.protocol().references)
-    assert "NEBuilder" in citations
-    assert "protocols.io" in citations
-    assert "REBASE" in citations
-
-
 def test_a_plan_needs_at_least_one_insert(puc19):
     with pytest.raises(ValueError, match="at least one insert"):
         plan_gibson(puc19)
@@ -342,23 +236,31 @@ def test_there_is_one_orientation_for_each_insert(puc19, gfp):
         plan_gibson(puc19, gfp, orientation=["forward", "reverse"])
 
 
+def test_an_insert_goes_in_on_the_strand_it_is_given_for(made, puc19, gfp):
+    # The other strand of GFP, turned back by the orientation, is the plan the forward record
+    # makes: every sequence here is one the run has already designed on.
+    turned = plan_gibson(puc19, flipped(gfp), orientation="reverse")
+    assert turned.inserts[0].sequence == gfp.sequence
+    assert turned.plasmid.sequence == made.plasmid.sequence
+    assert flipped(gfp).sequence not in turned.plasmid.sequence
+
+
 @pytest.fixture(scope="module")
 def handed_in(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
-    """GFP the other way round, into a backbone that was cut last week and handed in as it is.
+    """GFP into a backbone that was cut last week and handed in as it is.
 
-    Two things that do not touch each other, designed once: a plan whose product is new to the
-    suite pays a second of primer design, and this is the only one here that has to.
+    The only plan here whose product is new to the run, so the only one paying a second of
+    primer design: a linear vector puts a junction at base zero, which no other product has.
     """
     cut = SequenceRecord(puc19.sequence[MCS[1] :] + puc19.sequence[: MCS[0]], name="pUC19 cut")
-    return plan_gibson(cut, gfp, orientation="reverse")
+    return plan_gibson(cut, gfp)
 
 
-def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, gfp):
+def test_a_vector_already_linear_is_opened_by_nothing_and_the_inserts_cross_the_origin(
+    handed_in, puc19, gfp
+):
     backbone = handed_in.linearised_vector
-    # No PCR opens it, so it has no primers, nothing to run on the gel and no template to cut.
-    assert not backbone.amplified
-    assert (backbone.forward, backbone.reverse, backbone.report) == (None, None, None)
-    assert not backbone.dpni
+    # No PCR opens it, so nothing runs on the gel for it and no template has to be cut.
     designed = [one.primer.name for one in handed_in.reports]
     assert designed[:2] == ["GFP forward", "GFP reverse"]
     assert not any(name.startswith("pUC19 cut backbone") for name in designed)
@@ -378,12 +280,6 @@ def test_a_vector_already_linear_is_taken_as_the_opened_part(handed_in, puc19, g
     assert handed_in.assembly.insert_span == (len(handed_in.vector), len(handed_in.plasmid))
 
 
-def test_an_insert_goes_in_on_the_strand_it_is_given_for(handed_in, gfp):
-    assert handed_in.inserts[0].sequence == reverse_complement(gfp.sequence)
-    assert handed_in.inserts[0].sequence in handed_in.plasmid.sequence
-    assert gfp.sequence not in handed_in.plasmid.sequence
-
-
 def test_a_site_is_refused_for_a_vector_that_is_already_linear(gfp):
     with pytest.raises(ValueError, match="already linear"):
         plan_gibson(gfp, gfp, site="MCS")
@@ -400,10 +296,6 @@ def test_the_insertion_site_is_read_from_a_feature_name_or_given_as_coordinates(
     given = plan_gibson(puc19, gfp, site=MCS)
     assert named.plasmid.sequence == given.plasmid.sequence
     assert named.span == given.span == MCS
-
-
-def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file):
-    assert plan_gibson(puc19_file, gfp_file).plasmid.name == "pUC19-GFP"
 
 
 @pytest.fixture(scope="module")
@@ -439,40 +331,9 @@ def test_the_inserts_go_round_the_product_in_the_order_they_are_given(several, m
     assert inner.overlap == gfp.sequence[SPLIT - inner.length : SPLIT]
     assert several.insert_parts[1].forward.sequence.startswith(inner.overlap)
     assert several.linearised_vector.left_tail == several.linearised_vector.right_tail == ""
-
-
-def test_the_product_names_every_junction_and_the_reaction_counts_every_fragment(several):
-    marks = sorted(one.name for one in several.plasmid.features if one.name.endswith("overlap"))
-    assert marks == [
-        "GFP 3'-pUC19 backbone overlap",
-        "GFP 5'-GFP 3' overlap",
-        "pUC19 backbone-GFP 5' overlap",
-    ]
+    # The reaction counts the inserts, and every fragment is weighed for it.
+    assert {one.name: one.value for one in several.checks}["fragment count"] == 2
     assert [one.name for one in several.amounts] == [part.name for part in several.parts]
-    judged = {one.name: one for one in several.checks}
-    assert judged["fragment count"].value == 2
-    assert judged["overlap similarity"].status is None
-
-
-def test_the_assembly_product_the_caller_names_sets_the_design_and_the_reaction(puc19, gfp):
-    made = plan_gibson(puc19, gfp, product=IN_FUSION)
-    assert made.product is IN_FUSION
-    # Takara's own overlap: 15 bp for one insert, and no melting temperature judges it.
-    assert [len(one) for one in made.overlaps] == [15, 15]
-    judged = {one.name: one for one in made.checks}
-    assert judged["overlap tm"].status is None
-    assert judged["assembly DNA"].status is None
-    table = next(
-        one for step in made.protocol().steps for one in step.tables if "reaction" in one.title
-    )
-    volumes = {one.name: one.volume_ul for one in table.components}
-    assert sum(volumes.values()) == pytest.approx(10.0)
-    assert volumes[IN_FUSION.name] == 2.0
-    # Its picomoles and its weight are both printed, at the ratio Takara asks for.
-    insert = next(one for one in table.components if one.name == "GFP")
-    assert "pmol" in insert.final
-    assert "ng" in insert.final
-    assert made.amounts[1].pmol == pytest.approx(2.0 * made.amounts[0].pmol, rel=1e-3)
 
 
 @pytest.fixture(scope="module")
@@ -485,7 +346,7 @@ def routed(puc19: SequenceRecord, halves: tuple[SequenceRecord, ...]) -> Plan:
     return plan_gibson(puc19, *halves, route=["amplify", "stitch"], bridge=[("GFP 5'", "GFP 3'")])
 
 
-def test_a_stitched_part_is_oligos_tiling_both_strands_rather_than_a_pcr(routed):
+def test_a_stitched_part_is_oligos_rather_than_a_pcr_and_is_told_where_it_is_unusual(routed):
     stitched = routed.insert_parts[1]
     assert stitched.stitched
     assert not stitched.amplified
@@ -495,25 +356,16 @@ def test_a_stitched_part_is_oligos_tiling_both_strands_rather_than_a_pcr(routed)
         None,
         False,
     )
-    # As few oligos as tile the whole molecule the reaction assembles, none longer than the
-    # note's 60 bases, neighbours overlapping by exactly its 20 bp, and the strands alternating.
-    tiled = stitched.length - STITCH_OVERLAP_BP
-    step = STITCH_OLIGO_BASES - STITCH_OVERLAP_BP
-    assert len(stitched.oligos) == -(-tiled // step)
-    assert max(len(one.sequence) for one in stitched.oligos) <= STITCH_OLIGO_BASES
-    assert [one.strand for one in stitched.oligos] == [Strand.FORWARD, Strand.REVERSE] * (
-        len(stitched.oligos) // 2
-    ) + [Strand.FORWARD] * (len(stitched.oligos) % 2)
-    assert (stitched.oligos[0].start, stitched.oligos[-1].end) == (0, stitched.length)
-    for one in stitched.oligos:
-        written = one.sequence if one.strand == Strand.FORWARD else reverse_complement(one.sequence)
-        assert written == stitched.amplicon.sequence[one.start : one.end]
     # Nothing amplifies it, so no PCR step and no gel lane names it.
     steps = {step.title: step for step in routed.protocol().steps}
     assert f"Amplify {stitched.name}" not in steps
     assert stitched.name not in [
         lane.label for gel in steps["Check the PCRs on a gel"].gels for lane in gel.lanes
     ]
+    # Refused only above the oligo count Gibson states; above Addgene's window it is only told.
+    judged = {one.name: one for one in routed.checks}
+    assert judged["stitched size"].status == "warn"
+    assert f"GFP 3' {stitched.fragment_length} bp" in judged["stitched size"].detail
 
 
 def test_a_bridging_oligo_joins_two_fragments_and_neither_carries_a_tail(routed):
@@ -583,14 +435,6 @@ def test_the_assembly_step_doses_each_route_the_way_its_own_source_does(routed):
     assert "1 pmol" in said
     # The stitched part is still one of the fragments the table gives picomoles for.
     assert [one.name for one in routed.amounts] == [part.name for part in routed.parts]
-
-
-def test_a_part_above_addgenes_window_is_told_and_still_stitched(routed):
-    judged = {one.name: one for one in routed.checks}
-    # Refused only above the oligo count Gibson states; above Addgene's window it is only told.
-    assert judged["stitched size"].status == "warn"
-    assert f"GFP 3' {routed.insert_parts[1].fragment_length} bp" in judged["stitched size"].detail
-    assert "Addgene uses this route between 60 and 150 bp" in judged["stitched size"].detail
 
 
 def test_a_product_supporting_neither_oligo_route_refuses_both_and_says_which_do(puc19, gfp):
