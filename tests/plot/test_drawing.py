@@ -990,15 +990,14 @@ def test_past_its_limit_a_page_leaves_out_the_sequence_view_and_its_switch(
     ],
 )
 def test_each_row_at_either_width_says_which_bases_it_holds_and_where_its_strands_lie(
-    request: pytest.FixtureRequest,
-    tmp_path: Path,
+    pages: Callable[..., Written],
     record: str,
     region: tuple[int, int] | None,
     widths: list[int],
 ) -> None:
-    drawn: SequenceRecord = request.getfixturevalue(record)
-    drawing = draw_map(drawn, region=region, sequence_view=True, bases_per_row=widths[0])
-    views = _views(_page(drawing, tmp_path / "map.html")[1])
+    drawing, _, page = pages(record, region=region, sequence_view=True, bases_per_row=widths[0])
+    drawn = drawing.record
+    views = _views(page)
     # Full rows show first; rows half as long, rounded up, hide until a page is too narrow for them.
     assert list(views) == widths
     assert ["hidden" in view.attrs for view in views.values()] == [False, True][: len(widths)]
@@ -1032,7 +1031,7 @@ def test_each_row_at_either_width_says_which_bases_it_holds_and_where_its_strand
 
 
 def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases_as_asked(
-    gfp: SequenceRecord, tmp_path: Path
+    gfp: SequenceRecord, pages: Callable[..., Written], tmp_path: Path
 ) -> None:
     rows = _rows(
         _page(draw_map(gfp, sequence_view=True, bases_per_row=100), tmp_path / "a.html")[1]
@@ -1048,8 +1047,8 @@ def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases
     assert _texts(rows[-1], "position") == ["717"]
     [bar] = rows[0].find_all("g", data_kind="feature")
     assert (bar.attrs["data-name"], bar.attrs["data-span"]) == ("GFP", "1 .. 717")
-    drawing = draw_map(gfp, sequence_view=True, both_strands=False)
-    one = _rows(_page(drawing, tmp_path / "b.html")[1])
+    drawing, _, page = pages("gfp", sequence_view=True, both_strands=False)
+    one = _rows(page)
     assert len(one) == 12
     assert _texts(one[0], "top") == [gfp.sequence[:60]]
     # The page carries the bottom strand for its toggle to show, and a PNG or a PDF leaves it out.
@@ -1117,10 +1116,9 @@ def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
 
 
 def test_a_regions_sequence_view_keeps_the_records_numbering_across_the_origin(
-    puc19: SequenceRecord, tmp_path: Path
+    puc19: SequenceRecord, pages: Callable[..., Written]
 ) -> None:
-    drawing = draw_map(puc19, region=(2679, 2696), sequence_view=True, bases_per_row=10)
-    rows = _rows(_page(drawing, tmp_path / "map.html")[1])
+    rows = _rows(pages("puc19", region=(2679, 2696), sequence_view=True, bases_per_row=10)[2])
     assert [_texts(row, "top") for row in rows] == [
         [puc19.sequence[2679:] + puc19.sequence[:3]],
         [puc19.sequence[3:10]],
