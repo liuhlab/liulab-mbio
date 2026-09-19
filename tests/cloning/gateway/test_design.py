@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from liulab_mbio.cloning.gateway.att import find_att_sites
 from liulab_mbio.cloning.gateway.design import (
     C_TERMINAL_FRAME,
     FUSIONS,
@@ -75,6 +76,7 @@ def test_the_amplicon_is_the_forward_tail_the_insert_and_the_reverse_tail_turned
     assert amplicon.length == len(gfp) + len(forward) + len(reverse)
     assert amplicon.primers[0].sequence.startswith(forward)
     assert amplicon.primers[1].sequence.startswith(reverse)
+    assert [one.name for one in find_att_sites(amplicon.record)] == ["attB1", "attB2"]
 
 
 def test_each_primer_reads_its_tm_off_the_annealing_region_alone(

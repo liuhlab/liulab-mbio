@@ -108,6 +108,22 @@ def test_att_pair_refuses_a_record_carrying_none_and_says_what_it_looked_for() -
         att_pair(SequenceRecord("ACGT" * 20, name="pUC19"), "attL")
 
 
+def test_att_pair_refuses_a_record_carrying_the_same_site_twice() -> None:
+    filler = "TTGACCGCTTAAGGCTAACGTCAGT"
+    twice = SequenceRecord(
+        REGIONS["attL1"]
+        + filler
+        + reverse_complement(REGIONS["attL2"])
+        + filler
+        + REGIONS["attL1"],
+        topology="circular",
+        name="pENTR-GFP",
+    )
+
+    with pytest.raises(ValueError, match="carries 2 attL1 sites, needing one"):
+        att_pair(twice, "attL")
+
+
 def test_att_pair_refuses_two_sites_that_do_not_point_at_each_other() -> None:
     filler = "TTGACCGCTTAAGGCTAACGTCAGT"
     both = SequenceRecord(REGIONS["attL1"] + filler + REGIONS["attL2"], name="pBAD")
