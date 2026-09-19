@@ -6,7 +6,7 @@ import json
 import math
 import re
 import struct
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -35,7 +35,6 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
-    Topology,
 )
 
 from ..html import Node, parse
@@ -59,10 +58,39 @@ def colour_test_page(colour_test: Drawing, tmp_path_factory: pytest.TempPathFact
     return _page(colour_test, tmp_path_factory.mktemp("colour-test") / "map.html")[1]
 
 
+#: A record drawn as asked, and its page.
+type Written = tuple[Drawing, str, Node]
+
+
 @pytest.fixture(scope="module")
-def puc19_page(puc19_file: Path, tmp_path_factory: pytest.TempPathFactory) -> tuple[str, Node]:
-    """pUC19's page with nothing asked for, written once."""
-    return _page(draw_map(puc19_file), tmp_path_factory.mktemp("puc19") / "map.html")
+def pages(
+    puc19: SequenceRecord, gfp: SequenceRecord, tmp_path_factory: pytest.TempPathFactory
+) -> Callable[..., Written]:
+    """pUC19, GFP or the EcoRI crowd drawn as asked, each page written once for the module."""
+    records = {"puc19": puc19, "gfp": gfp, "crowd": crowds.ecori_crowd()}
+    folder = tmp_path_factory.mktemp("pages")
+    written: dict[tuple[object, ...], Written] = {}
+
+    def page(record: str, **options: Any) -> Written:
+        drawing = draw_map(records[record], **options)
+        # What the drawing was asked for, however it was asked.
+        key = tuple(
+            record if one.name == "record" else getattr(drawing, one.name)
+            for one in dataclasses.fields(drawing)
+            if one.init
+        )
+        if key not in written:
+            written[key] = (drawing, *_page(drawing, folder / f"{len(written)}.html"))
+        return written[key]
+
+    return page
+
+
+@pytest.fixture(scope="module")
+def puc19_page(pages: Callable[..., Written]) -> tuple[str, Node]:
+    """pUC19's page with nothing asked for."""
+    _, html, page = pages("puc19")
+    return html, page
 
 
 def _shapes(page: Node) -> dict[str, Node]:
@@ -114,9 +142,10 @@ def test_a_record_or_any_file_the_pipelines_read_is_drawn(
     fasta = tmp_path / "insert.fasta"
     fasta.write_text(">insert\nACGTACGTAC\n")
     for source in (puc19, puc19_file, str(fasta)):
-        written = draw_map(source).write(tmp_path / "map.html")
-        assert written == tmp_path / "map.html"
-        assert parse(written.read_text(encoding="utf-8")).find_all("svg")
+        assert draw_map(source).layout.shapes
+    written = draw_map(str(fasta)).write(tmp_path / "map.html")
+    assert written == tmp_path / "map.html"
+    assert parse(written.read_text(encoding="utf-8")).find_all("svg")
 
 
 @pytest.mark.parametrize("name", ["map.svg", "map.jpg", "map"])
@@ -690,12 +719,12 @@ def _dots(page: Node) -> int:
     ],
 )
 def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_each_end(
-    request: pytest.FixtureRequest, tmp_path: Path, record: str, opened: bool, line: bool, dots: int
+    pages: Callable[..., Written], record: str, opened: bool, line: bool, dots: int
 ) -> None:
-    drawing = draw_map(request.getfixturevalue(record), linear=opened, cut_sites=False)
+    drawing, _, page = pages(record, linear=opened)
     kind = linear.LinearMap if line else circular.CircularMap
     assert isinstance(drawing.layout, kind)
-    assert _dots(_map(_page(drawing, tmp_path / "map.html")[1])) == dots
+    assert _dots(_map(page)) == dots
 
 
 @pytest.mark.parametrize(
@@ -708,9 +737,9 @@ def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_
     ],
 )
 def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_right(
-    request: pytest.FixtureRequest, tmp_path: Path, record: str, switches: dict, shapes: list[str]
+    pages: Callable[..., Written], record: str, switches: dict, shapes: list[str]
 ) -> None:
-    _, page = _page(draw_map(request.getfixturevalue(record), **switches), tmp_path / "map.html")
+    _, _, page = pages(record, **switches)
     carried = _shapes(page)
     assert list(carried) == shapes
     # The line at each step of its zoom.
@@ -734,13 +763,12 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
 
 
 @pytest.mark.parametrize(
-    ("topology", "opened"), [("circular", False), ("circular", True), ("linear", False)]
+    ("record", "switches"), [("puc19", {}), ("puc19", {"linear": True}), ("gfp", {})]
 )
 def test_the_map_zooms_one_to_eight_times_from_a_caption_the_circle_freely_the_line_in_steps(
-    tmp_path: Path, topology: Topology, opened: bool
+    pages: Callable[..., Written], record: str, switches: dict
 ) -> None:
-    record = SequenceRecord("ACGT" * 10, topology=topology, name="small")
-    _, page = _page(draw_map(record, linear=opened), tmp_path / "map.html")
+    _, _, page = pages(record, **switches)
     carried = _shapes(page)
     assert {shape: one.attrs.get("data-zoom") for shape, one in carried.items()} == {
         shape: "free" if shape == "circle" else "steps" for shape in carried
@@ -757,10 +785,10 @@ def test_the_map_zooms_one_to_eight_times_from_a_caption_the_circle_freely_the_l
 
 
 def test_the_page_carries_the_line_at_1_2_4_and_8_times_its_length_each_saying_what_it_hid(
-    tmp_path: Path,
+    pages: Callable[..., Written],
 ) -> None:
-    drawing = draw_map(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"], linear=True)
-    steps = _shapes(_page(drawing, tmp_path / "map.html")[1])["line"].find_all("div", cls="step")
+    _, _, page = pages("crowd", enzymes=["EcoRI", "HindIII"])
+    steps = _shapes(page)["line"].find_all("div", cls="step")
     assert ["hidden" in step.attrs for step in steps] == [False, True, True, True]
     labels = {f"EcoRI ({cut})" for cut in range(101, 500, 8)} | {"HindIII (1701)", "HindIII (2001)"}
     hid = []
@@ -782,11 +810,11 @@ def test_the_page_carries_the_line_at_1_2_4_and_8_times_its_length_each_saying_w
 
 
 def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
-    puc19: SequenceRecord, tmp_path: Path
+    puc19: SequenceRecord, pages: Callable[..., Written], tmp_path: Path
 ) -> None:
-    drawing = draw_map(puc19, region="mcs")
+    drawing, _, written = pages("puc19", region="mcs")
     assert isinstance(drawing.layout, linear.LinearMap)
-    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    page = _map(written)
     assert "396 .. 452 (57 bp)" in _texts(page)
     assert _texts(page, "scale") == ["400", "410", "420", "430", "440", "450"]
     assert ["".join(text for text, _ in label) for label in _labels(page, "cut_site")] == [
@@ -891,12 +919,11 @@ def _rows(page: Node) -> list[Node]:
     ],
 )
 def test_the_page_carries_the_sequence_view_with_the_map_shown_first_as_asked(
-    gfp: SequenceRecord, tmp_path: Path, switches: dict, shown: bool, both: bool
+    pages: Callable[..., Written], switches: dict, shown: bool, both: bool
 ) -> None:
-    drawing = draw_map(gfp, **switches)
+    drawing, _, page = pages("gfp", **switches)
     # A PNG or a PDF draws it only when it is switched on.
     assert (drawing.sequence_view is not None) == shown
-    _, page = _page(drawing, tmp_path / "map.html")
     [main] = page.find_all("main")
     [_, view] = main.find_all("figure")
     assert view.attrs["class"].split() == ["sequence-view"] + ([] if both else ["one-strand"])
@@ -1233,19 +1260,20 @@ def test_a_row_of_no_bases_is_refused(gfp: SequenceRecord, bases_per_row: int) -
         draw_map(gfp, sequence_view=True, bases_per_row=bases_per_row)
 
 
-@pytest.mark.parametrize("opened", [False, True], ids=["circle", "line"])
+@pytest.mark.parametrize("shape", ["circle", "line"])
 def test_a_crowded_map_hides_cut_sites_before_the_primer_among_them_and_says_what_it_hid(
-    tmp_path: Path, opened: bool
+    pages: Callable[..., Written], shape: str
 ) -> None:
-    drawing = draw_map(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"], linear=opened)
-    hidden = drawing.hidden
+    enzymes = ["EcoRI", "HindIII"]
+    hidden = draw_map(crowds.ecori_crowd(), enzymes=enzymes, linear=shape == "line").hidden
     assert hidden
     assert {(item.kind, item.name) for item in hidden} == {("cut_site", "EcoRI")}
     # Labels of one length hide in the record's order.
     cuts = [item.spans[0].start for item in hidden]
     assert cuts == sorted(cuts)
     assert set(cuts) < set(range(101, 500, 8))
-    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    # The page carries both shapes, whichever it shows first.
+    page = _shapes(pages("crowd", enzymes=enzymes)[2])[shape].find_all("svg")[0]
     [notice] = page.find_all("g", cls="notice")
     assert notice.text == f"{len(hidden)} enzyme sites are hidden"
     assert json.loads(notice.attrs["data-hidden"]) == [

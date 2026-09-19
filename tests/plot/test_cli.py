@@ -40,16 +40,6 @@ def _run(*arguments: str) -> tuple[int, list[str]]:
     return result.exit_code, re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
 
 
-def test_the_command_writes_the_page_and_prints_the_file_written(
-    puc19_file: Path, tmp_path: Path
-) -> None:
-    out = tmp_path / "pUC19.html"
-    code, lines = _run(str(puc19_file), "-o", str(out))
-    assert code == 0
-    assert lines == [str(out)]
-    assert "<svg" in out.read_text(encoding="utf-8")
-
-
 def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
     puc19_file: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
