@@ -30,6 +30,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
+from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import annealed, carried, ordered, rotate
 from liulab_mbio.primers.design import design_pair
@@ -470,27 +471,23 @@ class Assembly:
     def boundaries(self) -> tuple[int, ...]:
         """Where each part gives way to the next, which is what a validation design reads across.
 
-        `Junction.boundary` is the rule.
+        `Junction.boundary` is the rule and `insert_order` the order: from the boundary the
+        first part gives way at, so the last passes the product's length where the inserts run
+        across the origin.
         """
-        return tuple(one.boundary for one in self.junctions)
+        opened = self.parts[0].name
+        at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
+        return insert_order([one.boundary for one in self.junctions], at, len(self.product))
 
     @property
     def insert_span(self) -> tuple[int, int]:
         """The product bases the inserts own: everything the first part does not.
 
-        From the boundary the first part gives way at to the one it takes over at. The span
-        ends past the product's length where it runs across the origin, which it does whenever
-        the first part is not itself split there.
+        From the boundary the first part gives way at to the one it takes over at, which are the
+        two ends of `boundaries`.
         """
-        opened = self.parts[0].name
         boundaries = self.boundaries
-        start = next(
-            at for at, one in zip(boundaries, self.junctions, strict=True) if one.before == opened
-        )
-        end = next(
-            at for at, one in zip(boundaries, self.junctions, strict=True) if one.after == opened
-        )
-        return start, end if end > start else end + len(self.product)
+        return boundaries[0], boundaries[-1]
 
     @property
     def checks(self) -> tuple[Check, ...]:

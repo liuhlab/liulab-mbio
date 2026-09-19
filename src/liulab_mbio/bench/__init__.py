@@ -113,6 +113,7 @@ from liulab_mbio.bench.validation import (
     ColonyCheck,
     SangerRead,
     colony_pcr_check,
+    insert_order,
     sanger_primers,
 )
 from liulab_mbio.protocol.model import Reference
@@ -193,6 +194,7 @@ __all__ = [
     "fits",
     "gel_step",
     "heat_inactivation",
+    "insert_order",
     "listed",
     "molecular_weight",
     "oligo_row",

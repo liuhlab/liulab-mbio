@@ -141,7 +141,8 @@ def colony_pcr_check(
     """Return what a colony PCR across these junctions should show.
 
     An assembly of n inserts has n + 1 junctions and the inserts are the spans between them, so
-    a product whose inserts cross the origin is rotated first. Without `primers`, a pair is
+    the junctions come in insert order and the last passes the product's length where they cross
+    the origin -- `insert_order` is what builds one. Without `primers`, a pair is
     designed in the vector `flank` bases outside the first junction and `reverse_flank` outside
     the last, `flank` again where none is given -- `REVERSE_FLANK` is the distance that keeps a
     reversed insert bands of its own, and `tells_orientation` says why one distance cannot.
@@ -166,7 +167,7 @@ def colony_pcr_check(
     Raises
     ------
     ValueError
-        If the junctions are not two or more separate positions inside the product, if fewer
+        If the junctions are not two or more positions rising from inside the product, if fewer
         than two primers are given, or if the primers amplify nothing at all.
     """
     places = _junction_span(junctions, len(product))
@@ -243,16 +244,17 @@ def sanger_primers(
 ) -> tuple[SangerRead, SangerRead]:
     """Return a sequencing primer reading into the inserts from outside the first and last junction.
 
-    Every 3' end lands `flank` to `flank` plus `SANGER_ALLOWANCE` bases from its own junction,
-    near enough for the read to be clean there and never nearer, and `SangerRead.read_bp` is how
-    far it must carry to reach the far junction. A provider whose reads are shorter needs a
-    primer inside the inserts as well.
+    The junctions come in insert order, as `colony_pcr_check` takes them. Every 3' end lands
+    `flank` to `flank` plus `SANGER_ALLOWANCE` bases from its own junction, near enough for the
+    read to be clean there and never nearer, and `SangerRead.read_bp` is how far it must carry to
+    reach the far junction. A provider whose reads are shorter needs a primer inside the inserts
+    as well.
 
     Raises
     ------
     ValueError
-        If the junctions are not two or more separate positions inside the product, or no primer
-        fits outside the first or the last.
+        If the junctions are not two or more positions rising from inside the product, or no
+        primer fits outside the first or the last.
     """
     places = _junction_span(junctions, len(product))
     start, end = places[0], places[-1]
@@ -286,16 +288,42 @@ def sanger_primers(
     )
 
 
+def insert_order(positions: Sequence[int], at: int, length: int) -> tuple[int, ...]:
+    """Return the junction positions read round the product from the one at index `at`.
+
+    `colony_pcr_check` and `sanger_primers` read the spans between the positions they are given
+    as the inserts, so a set has to start where the opened vector gives way to the first insert
+    rather than at the product's own base zero. Every position before that one is reached after
+    the origin and passes `length`, which is ADR 0001's rule for a span across the origin.
+
+    Examples
+    --------
+    >>> insert_order((395, 1112), 0, 3347)
+    (395, 1112)
+
+    The same two junctions where the insert lands at the product's end instead:
+
+    >>> insert_order((0, 2630), 1, 3347)
+    (2630, 3347)
+    """
+    places = tuple(positions)
+    return (*places[at:], *(one + length for one in places[:at]))
+
+
 def _junction_span(junctions: Sequence[int], length: int) -> tuple[int, ...]:
-    """Return the junctions in rising order, refusing a set no assembly could leave."""
+    """Return the junctions as given, refusing a set no assembly could leave.
+
+    They come in insert order, so nothing is sorted: the last passes `length` where the inserts
+    cross the origin, and `insert_order` is what builds one.
+    """
     if len(junctions) < 2:
         raise ValueError(
             f"an assembly has a junction at each end of every insert, got {len(junctions)}"
         )
-    places = tuple(sorted(junctions))
-    if len(set(places)) != len(places):
-        raise ValueError(f"two junctions share a position: {places}")
-    if places[0] < 0 or places[-1] > length:
+    places = tuple(junctions)
+    if any(one >= after for one, after in pairwise(places)):
+        raise ValueError(f"junctions {places} do not rise, each one past the one before")
+    if not 0 <= places[0] < length or places[-1] > places[0] + length:
         raise ValueError(f"junctions {places} do not lie inside {length} bases")
     return places
 

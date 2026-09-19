@@ -18,6 +18,7 @@ the vector's own coordinates still read true and no junction sits at base zero.
 import dataclasses
 from dataclasses import dataclass
 
+from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.restriction.digest import Piece, closes
 from liulab_mbio.edits import carried, ordered, rotate
@@ -107,8 +108,14 @@ class Ligation:
 
     @property
     def junction_positions(self) -> tuple[int, ...]:
-        """Where each junction begins, which is what a validation design reads across."""
-        return tuple(one.start for one in self.junctions)
+        """Where each junction begins, which is what a validation design reads across.
+
+        `insert_order` is the order: from the junction the backbone gives way at, so the last
+        passes the product's length where the insert runs across the origin.
+        """
+        opened = self.pieces[0].name
+        at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
+        return insert_order([one.start for one in self.junctions], at, len(self.product))
 
     @property
     def blunt(self) -> bool:
