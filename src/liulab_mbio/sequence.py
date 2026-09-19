@@ -96,7 +96,9 @@ class Feature:
     type
         A GenBank feature key, such as ``"CDS"`` or ``"promoter"``.
     segments
-        In top-strand order, whatever the strand.
+        In the order the feature reads them along the top strand, so a reverse-strand feature
+        reads them last to first. One across the origin, or cut apart at the two ends of a linear
+        record, may list a higher start first.
     strand
         The strand the feature reads along.
     qualifiers

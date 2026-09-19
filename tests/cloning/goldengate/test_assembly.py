@@ -141,8 +141,9 @@ def test_features_are_carried_into_the_amplicon(backbone, insert, puc19, gfp):
     assert "MCS" not in carried
     assert _spans(carried["AmpR"]) == [(1187, 1979), (1979, 2048)]
     assert carried["AmpR"].strand == Strand.REVERSE
-    # The disrupted CDS meets the amplified span twice, once either side of the removed MCS.
-    assert _spans(carried["lacZα"]) == [(14, 31), (2393, 2643)]  # noqa: RUF001
+    # The disrupted CDS meets the amplified span twice, once either side of the removed MCS. It
+    # reads the piece at the far end first.
+    assert _spans(carried["lacZα"]) == [(2393, 2643), (14, 31)]  # noqa: RUF001
     assert [one.name for one in insert.amplicon.features] == ["GFP"]
 
 

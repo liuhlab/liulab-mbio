@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 from liulab_mbio.edits import (
@@ -7,6 +9,7 @@ from liulab_mbio.edits import (
     delete,
     flipped,
     insert,
+    ordered,
     replace,
     rotate,
 )
@@ -21,6 +24,11 @@ def _feature(name: str, *spans: tuple[int, int], strand: Strand = Strand.FORWARD
 A, C, G = _feature("a", (0, 4)), _feature("c", (4, 8)), _feature("g", (8, 12))
 BASES = "AAAACCCCGGGG"
 RECORD = SequenceRecord(BASES, features=(A, C, G))
+#: Reads the G at (90, 98), across the origin, then the C at (1, 8), of the 100 bases of `GAPPED`.
+GAP = _feature("gap", (90, 98), (1, 8))
+GAPPED = SequenceRecord(
+    "A" + "C" * 7 + "A" * 82 + "G" * 8 + "AA", topology="circular", features=(GAP,)
+)
 
 
 def test_insert_shifts_features_after_it_and_leaves_those_before() -> None:
@@ -137,6 +145,18 @@ def test_flipped_keeps_a_span_across_the_origin_across_it() -> None:
     assert flipped(turned) == record
 
 
+def test_flipped_keeps_a_feature_across_the_origin_reading_the_same_bases() -> None:
+    turned = flipped(GAPPED)
+    assert turned.features == (_feature("gap", (92, 99), (2, 10), strand=Strand.REVERSE),)
+    assert turned.extract(turned.features[0]) == "GGGGGGGGCCCCCCC"
+    assert flipped(turned) == GAPPED
+
+
+def test_ordered_puts_a_feature_where_it_begins_and_keeps_its_segments_in_reading_order() -> None:
+    middle = _feature("middle", (40, 50))
+    assert ordered(dataclasses.replace(GAPPED, features=(GAP, middle))).features == (middle, GAP)
+
+
 def test_carried_cuts_a_feature_down_to_the_span_and_shifts_it_by_the_offset() -> None:
     features, primers = carried(RECORD, 2, 10, offset=-2)
     assert features == (_feature("a", (0, 2)), _feature("c", (2, 6)), _feature("g", (6, 8)))
@@ -146,7 +166,13 @@ def test_carried_cuts_a_feature_down_to_the_span_and_shifts_it_by_the_offset() -
 def test_a_feature_meeting_a_span_across_the_origin_twice_keeps_a_segment_for_each() -> None:
     record = SequenceRecord(BASES, topology="circular", features=(_feature("split", (4, 10)),))
     features, _ = carried(record, 8, 18, offset=-8)
-    assert features == (_feature("split", (0, 2), (8, 10)),)
+    # Its bases 4 and 5 land at 8, and come before its bases 8 and 9, which land at 0.
+    assert features == (_feature("split", (8, 10), (0, 2)),)
+
+
+def test_carried_keeps_a_feature_across_the_origin_in_reading_order() -> None:
+    # The span drops bases 1 to 3, so the C left at (4, 8) moves 4 back, as does the G.
+    assert carried(GAPPED, 4, 100, offset=-4) == ((_feature("gap", (86, 94), (0, 4)),), ())
 
 
 def test_carried_keeps_a_primer_only_where_a_whole_binding_site_survives() -> None:
