@@ -55,9 +55,9 @@ Every fixed bug keeps its test, at the lowest level that still reproduces the bu
 ## Time
 
 pytest on CI has a budget of 30 s. No gate enforces it: runner speed varies, and a time gate
-would fail a correct pull request. Over budget, trim by the rules above first. Add pytest-xdist
-only once trimming falls short, with its options in pytest's own settings so the laptop and CI
-run alike.
+would fail a correct pull request. The suite runs in four parallel workers, a file at a time
+each, set in pytest's own options so the laptop and CI run alike. Over budget, trim by the
+rules above: past the slowest single file, more workers buy nothing.
 
 A plan test's cost is its first primer design on a sequence the run has not seen:
 `primers.placement` remembers what each sequence primes on a template, so a later design on
