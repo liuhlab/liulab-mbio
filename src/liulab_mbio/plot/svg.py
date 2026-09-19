@@ -140,7 +140,7 @@ def document(shapes: Iterable[Shape], extent: Box, *, outlines: bool = False) ->
     """
     view = " ".join(number(value) for value in (extent.x, extent.y, extent.width, extent.height))
     glyphs: dict[str, str] | None = {} if outlines else None
-    body = "".join(_shape(shape, glyphs) for shape in shapes)
+    body = "".join([_shape(shape, glyphs) for shape in shapes])
     if glyphs:
         defs = "".join(f'<path id="{key}" d="{outline}"/>' for key, outline in glyphs.items())
         body = f"<defs>{defs}</defs>{body}"
@@ -152,41 +152,50 @@ def document(shapes: Iterable[Shape], extent: Box, *, outlines: bool = False) ->
 
 def _shape(shape: Shape, glyphs: dict[str, str] | None) -> str:
     """Return a shape as SVG, its text as outlines when `glyphs` collects the glyphs they use."""
+    # The commonest shapes first.
     match shape:
-        case Path(d, fill, stroke, width):
-            return f'<path d="{d}"{_paint(fill, stroke, width)}/>'
-        case Line(x1, y1, x2, y2, stroke, width):
-            points = _attributes(x1=x1, y1=y1, x2=x2, y2=y2)
-            return f"<line{points}{_paint('none', stroke, width)}/>"
-        case Circle(cx, cy, r, stroke, width):
-            return f"<circle{_attributes(cx=cx, cy=cy, r=r)}{_paint('none', stroke, width)}/>"
-        case Rect(box, fill, stroke, width, corner):
-            place = _attributes(x=box.x, y=box.y, width=box.width, height=box.height, rx=corner)
-            return f"<rect{place}{_paint(fill, stroke, width)}/>"
-        case Text():
-            return _text(shape) if glyphs is None else _outlined(shape, glyphs)
-        case Letters():
-            return _letters(shape) if glyphs is None else _outlined(shape, glyphs)
         case Group(shapes, classes, data, rotate, x, y):
             attributes = f' class="{_escaped(" ".join(classes))}"' if classes else ""
             attributes += "".join(
-                f' data-{_escaped(key)}="{_escaped(value)}"' for key, value in data.items()
+                [f' data-{_escaped(key)}="{_escaped(value)}"' for key, value in data.items()]
             )
             moves = [f"translate({number(x)} {number(y)})"] if x or y else []
             moves += [f"rotate({number(rotate)})"] if rotate else []
             if moves:
                 attributes += f' transform="{" ".join(moves)}"'
-            return f"<g{attributes}>{''.join(_shape(one, glyphs) for one in shapes)}</g>"
+            return f"<g{attributes}>{''.join([_shape(one, glyphs) for one in shapes])}</g>"
+        case Line(x1, y1, x2, y2, stroke, width):
+            return (
+                f'<line x1="{number(x1)}" y1="{number(y1)}" x2="{number(x2)}" y2="{number(y2)}"'
+                f"{_paint('none', stroke, width)}/>"
+            )
+        case Path(d, fill, stroke, width):
+            return f'<path d="{d}"{_paint(fill, stroke, width)}/>'
+        case Letters():
+            return _letters(shape) if glyphs is None else _outlined(shape, glyphs)
+        case Text():
+            return _text(shape) if glyphs is None else _outlined(shape, glyphs)
+        case Rect(box, fill, stroke, width, corner):
+            return (
+                f'<rect x="{number(box.x)}" y="{number(box.y)}" width="{number(box.width)}"'
+                f' height="{number(box.height)}" rx="{number(corner)}"'
+                f"{_paint(fill, stroke, width)}/>"
+            )
+        case Circle(cx, cy, r, stroke, width):
+            return (
+                f'<circle cx="{number(cx)}" cy="{number(cy)}" r="{number(r)}"'
+                f"{_paint('none', stroke, width)}/>"
+            )
 
 
 def _text(text: Text) -> str:
     weight = "700" if text.font.style == "Bold" else "400"
-    attributes = _attributes(
-        x=text.x, y=text.y, font_size=text.size, textLength=text.font.width(text.text, text.size)
-    )
+    length = text.font.width(text.text, text.size)
     return (
-        f'<text{attributes} font-family="\'{_escaped(text.font.family)}\'" font-weight="{weight}"'
-        f' fill="{_escaped(text.fill)}">{escape(text.font.drawn(text.text))}</text>'
+        f'<text x="{number(text.x)}" y="{number(text.y)}" font-size="{number(text.size)}"'
+        f' textLength="{number(length)}" font-family="\'{_escaped(text.font.family)}\'"'
+        f' font-weight="{weight}" fill="{_escaped(text.fill)}">'
+        f"{_escaped(text.font.drawn(text.text))}</text>"
     )
 
 
@@ -197,7 +206,7 @@ def _letters(letters: Letters) -> str:
     given no baseline keeps the one before it, and one given no turn is not turned.
     """
     xs, ys, turns = zip(*letters.places, strict=True) if letters.places else ((), (), ())
-    places = f' x="{" ".join(map(number, xs))}"'
+    places = f' x="{_numbers(xs)}"'
     if len(shared := set(ys)) == 1:
         places += f' y="{number(shared.pop())}"'
     else:
@@ -206,7 +215,7 @@ def _letters(letters: Letters) -> str:
         places += f' rotate="{" ".join(map(number, turns))}"'
     weight = "700" if letters.font.style == "Bold" else "400"
     return (
-        f"<text{places}{_attributes(font_size=letters.size)}"
+        f'<text{places} font-size="{number(letters.size)}"'
         f' font-family="\'{_escaped(letters.font.family)}\'" font-weight="{weight}"'
         f' fill="{_escaped(letters.fill)}">{escape(letters.font.drawn(letters.text))}</text>'
     )
@@ -261,12 +270,14 @@ def _paint(fill: str, stroke: str, width: float) -> str:
     return f' fill="{escape(fill)}" stroke="{escape(stroke)}" stroke-width="{number(width)}"'
 
 
-def _attributes(**values: float) -> str:
-    return "".join(f' {name.replace("_", "-")}="{number(value)}"' for name, value in values.items())
-
-
-#: `escape`, for words a drawing repeats shape after shape: classes, keys, colours and faces.
+#: `escape`, for words a drawing repeats shape after shape: classes, keys, colours, faces, labels.
 _escaped = lru_cache(maxsize=1 << 12)(escape)
+
+
+# The sequence view sets its strands in the same cells row after row.
+@lru_cache(maxsize=1 << 8)
+def _numbers(values: tuple[float, ...]) -> str:
+    return " ".join(map(number, values))
 
 
 # A drawing repeats its coordinates row after row.

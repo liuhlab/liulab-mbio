@@ -28,6 +28,7 @@ labels in a given order until it fits, and a label in no such crowd never hides.
 
 import itertools
 import math
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from typing import NamedTuple
@@ -204,24 +205,25 @@ def staircase(labels: Sequence[Anchored], *, base: float, spacing: float) -> tup
         to the bottom of its box.
     """
     xs = [label.anchor.x for label in labels]
+    ordered = sorted(xs)
     placed: dict[int, tuple[float, float]] = {}
+    # Each box placed: its left edge, its right edge and `spacing` beyond, and the lowest a box
+    # above it may end.
+    boxes: list[tuple[float, float, float]] = []
 
     def bottom(left: float, width: float) -> float:
-        return min(
-            (
-                low - labels[j].height - spacing
-                for j, (low, other) in placed.items()
-                if other < left + width + spacing and left < other + labels[j].width + spacing
-            ),
-            default=base,
-        )
+        right = left + width + spacing
+        return min((low for start, end, low in boxes if start < right and left < end), default=base)
 
     for i in sorted(range(len(labels)), key=lambda i: (-xs[i], i)):
-        width = labels[i].width
+        width, height = labels[i].width, labels[i].height
         right = bottom(xs[i], width)
-        free = not any(xs[i] - width - spacing <= x <= xs[i] for j, x in enumerate(xs) if j != i)
+        # Whether no other anchor lies under the box hung left, or within `spacing` before it.
+        free = bisect_right(ordered, xs[i]) - bisect_left(ordered, xs[i] - width - spacing) <= 1
         left = bottom(xs[i] - width, width) if free else right
         placed[i] = (left, xs[i] - width) if left > right else (right, xs[i])
+        low, start = placed[i]
+        boxes.append((start, start + width + spacing, low - height - spacing))
     result = []
     for (low, x), label in zip((placed[i] for i in range(len(labels))), labels, strict=True):
         box = Box(x, low - label.height, label.width, label.height)
