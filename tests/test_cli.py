@@ -8,12 +8,9 @@ from liulab_mbio import __version__
 from liulab_mbio.cli import app
 
 
-def test_version_comes_from_the_installed_metadata() -> None:
+def test_the_version_verb_prints_the_installed_version() -> None:
     # hatch-vcs derives it from git, so the value moves. That it exists is the claim.
     assert __version__
-
-
-def test_the_version_verb_prints_it() -> None:
     result = CliRunner().invoke(app, ["version"])
     assert result.exit_code == 0
     assert result.output.strip() == __version__

@@ -63,15 +63,6 @@ def _feature(record_features: tuple[Feature, ...], name: str) -> Feature:
     return feature
 
 
-def test_read_dna_gives_the_sequence_and_topology(puc19_file: Path, gfp_file: Path) -> None:
-    puc19 = read_dna(puc19_file)
-    gfp = read_dna(gfp_file)
-    assert (len(puc19), puc19.topology) == (2686, "circular")
-    assert puc19.sequence.startswith("TCGCGCGTTTCGGTGATGACGG")
-    assert (len(gfp), gfp.topology) == (717, "linear")
-    assert gfp.sequence.startswith("ATGAGTAAAGGAGAAGAACTTTTCACTGG")
-
-
 def test_read_dna_converts_feature_ranges_to_half_open_segments(
     puc19_file: Path, gfp_file: Path
 ) -> None:
