@@ -47,6 +47,11 @@ body {
     flex-shrink: 0;
   }
 
+  /* Whether or not the view scrolls, it keeps the same room for a scrollbar that takes room. */
+  .sequence-view {
+    scrollbar-gutter: stable;
+  }
+
   .plot.under {
     flex-direction: column;
     align-items: center;
@@ -69,7 +74,19 @@ body {
 
   /* A zoomed shape keeps the room it takes at 1×, and its drawing grows past it from its top left,
      keeping right of and below it the room the pane held there at 1×, for the pane to scroll over.
-     Print draws it at 1×. */
+     The pane keeps its 1× width, and under the map its height, so scrollbars that take room take
+     it from what the pane shows. Print draws it at 1×. */
+  .plot .map:has(> .zoomed:not([hidden])) {
+    box-sizing: border-box;
+    width: var(--pane-width);
+    max-width: 100%;
+  }
+
+  .plot.under > .map:has(> .zoomed:not([hidden])) {
+    height: var(--pane-height);
+    max-height: 100%;
+  }
+
   .plot .map .zoomed {
     width: var(--width);
     height: var(--height);

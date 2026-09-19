@@ -133,7 +133,8 @@
   window.addEventListener("pageshow", apply);
 
   // Where the sequence view stands, and in which rows: the first of these arrangements that fits
-  // the page's own width, given each drawing's natural width, its SVG's `width`.
+  // the page's own width, given each drawing's natural width, its SVG's `width`, and the room the
+  // view keeps beside the rows for a scrollbar that takes room.
   const plot = document.querySelector(".plot");
   const least = 320; // The narrowest the map goes beside the rows.
   const beside = (rows, width) => rows + width.gap + Math.min(width.map, least) <= width.room;
@@ -150,18 +151,20 @@
   const arrange = () => {
     if (!view) return;
     const style = getComputedStyle(plot);
+    const bar = view.offsetWidth - view.clientWidth;
     const width = {
       room: plot.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
       gap: parseFloat(style.columnGap),
       map: natural(map.querySelector("[data-shape]:not([hidden])")),
-      full: natural(drawings[0]),
-      narrow: natural(drawings.at(-1)),
+      full: natural(drawings[0]) + bar,
+      narrow: natural(drawings.at(-1)) + bar,
     };
     const { under, narrow } = arrangements.find((one) => one.fits(width));
     plot.classList.toggle("under", under && !view.hidden);
     drawn = narrow ? drawings.at(-1) : drawings[0];
     for (const one of drawings) one.hidden = one !== drawn;
     if (!view.hidden) keep();
+    wide = across();
   };
   new ResizeObserver(arrange).observe(plot);
 
@@ -282,6 +285,10 @@
   // The first base of the top row in sight, as scrolling last left it, for a change of rows to keep
   // at the top.
   let heading = null;
+  // How wide the rows were when last arranged or scrolled. A scroll the browser makes as they change
+  // width, before `arrange` runs, is not the reader's, and moves no heading.
+  let wide = 0;
+  const across = () => drawn.getBoundingClientRect().width;
   // The top row in sight: the first whose bases reach below the caption.
   const topmost = () => {
     const { left, top } = sight(view);
@@ -355,7 +362,9 @@
   });
   view?.addEventListener("scroll", () => {
     const block = topmost();
-    if (heading === null || !holds(block, heading)) heading = block.start;
+    const width = across();
+    if (width === wide && (heading === null || !holds(block, heading))) heading = block.start;
+    wide = width;
     // And a scroll under a still pointer, by the wheel or otherwise, moves the bases under it too.
     if (anchor !== null) extend();
   });
@@ -451,7 +460,8 @@
 
   // Measures a shape at 1×: the room its drawing takes, which it keeps while zoomed, and the room
   // its pane holds right of and below the drawing, which stays there. So the pane scrolls as much
-  // further as the drawing grew, and any point of it can stay where it is.
+  // further as the drawing grew, and any point of it can stay where it is. The pane keeps its size,
+  // so that scrollbars taking room move nothing.
   const pin = (shape) => {
     const box = shape.querySelector("svg").getBoundingClientRect();
     const frame = map.getBoundingClientRect();
@@ -461,6 +471,11 @@
     shape.style.setProperty("--height", `${box.height}px`);
     shape.style.setProperty("--right", `${Math.max(map.scrollWidth - right, 0)}px`);
     shape.style.setProperty("--below", `${Math.max(map.scrollHeight - below, 0)}px`);
+    map.style.setProperty("--pane-width", `${frame.width}px`);
+    // Under the rows, the pane's content sets its height, and scrollbars would add to it. Beside
+    // them, the pane is as tall as the page, too tall to keep once the rows go under.
+    const under = plot.classList.contains("under");
+    map.style.setProperty("--pane-height", under ? `${frame.height}px` : "auto");
     return box;
   };
   // Measures a zoomed shape again, at its first step when it steps, and scales where the pane was
