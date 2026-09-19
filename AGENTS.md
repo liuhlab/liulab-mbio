@@ -147,6 +147,7 @@ Where a fact has to survive, it has a home that is checked:
 | When | Read |
 | --- | --- |
 | Before changing code | `CONTEXT.md`, then any ADR covering the area |
+| Writing or moving a test | `docs/agents/testing.md` |
 | Recording vocabulary or a decision | `docs/agents/domain.md` |
 | Filing or working an issue | `docs/agents/issue-tracker.md` |
 | Labelling someone else's issue | `docs/agents/triage-labels.md` |
