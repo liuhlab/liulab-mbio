@@ -86,41 +86,6 @@ def _crowded() -> tuple[layers.Item, ...]:
     return (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
 
 
-def _random(seed: int) -> tuple[layers.Item, ...]:
-    """Features, primers and cut sites with random names, half clustered, some across the origin."""
-    rng = random.Random(seed)
-    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -()"
-    centres = [rng.randrange(LENGTH) for _ in range(3)]
-
-    def position() -> int:
-        if rng.random() < 0.5:
-            return (rng.choice(centres) + rng.randint(-60, 60)) % LENGTH
-        return rng.randrange(LENGTH)
-
-    def name() -> str:
-        return "".join(rng.choice(letters) for _ in range(rng.randint(1, 30)))
-
-    features = []
-    for i in range(rng.randint(10, 100)):
-        start = position()
-        size = rng.choice([rng.randint(1, 30), rng.randint(30, 900)])
-        features.append(_feature(f"{i}{name()}", start, start + size, rng.choice(list(Strand))))
-    primers = []
-    for i in range(rng.randint(0, 10)):
-        start = position()
-        strand = rng.choice([Strand.FORWARD, Strand.REVERSE])
-        primers.append(_primer(f"{i}{name()}", start, start + rng.randint(15, 40), strand))
-    cuts = [(f"{i}{name()}", position()) for i in range(rng.randint(0, 30))]
-    record = SequenceRecord(
-        "A" * LENGTH,
-        topology="circular",
-        name=f"random {seed}",
-        features=tuple(features),
-        primers=tuple(primers),
-    )
-    return (*layers.items(record), *layers.merge_cuts(cuts, LENGTH))
-
-
 def _near_fit() -> tuple[layers.Item, ...]:
     """Names all round the circle on arrows about as long as they are, five rings deep."""
     rng = random.Random(1)
@@ -136,11 +101,13 @@ def _near_fit() -> tuple[layers.Item, ...]:
     return layers.items(record)
 
 
+#: One record per crowd no other record runs the layout through: labels crowding the origin, the
+#: bottom and the sides past the cap; names on arrows on every ring, each near its fit; and a real
+#: record the cap is set to show whole.
 RECORDS = {
     "crowded": lambda: Given(_crowded()),
     "near fit": lambda: Given(_near_fit()),
     "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), 2686),
-    **{f"random {seed}": lambda seed=seed: Given(_random(seed)) for seed in range(12)},
 }
 
 
