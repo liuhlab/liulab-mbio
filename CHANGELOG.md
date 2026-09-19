@@ -267,3 +267,7 @@ sets one.
   and ligation refused any plasmid like this that an insert was cut from. Golden Gate and Gibson
   refused one given as an insert in reverse, and Gateway refused one whose first att site reads
   backwards. On the other strand, the feature still runs across the origin.
+- A feature in pieces across the origin of a circular plasmid now keeps them in the order it
+  reads. The GenBank reader sorted them by position, and so did turning a record over and
+  building a plan's product. A feature that reads bases 91 to 98, then 2 to 8, came back reading
+  2 to 8 first, so its bases came out of order. SnapGene files already kept the order.

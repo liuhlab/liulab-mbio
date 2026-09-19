@@ -205,7 +205,7 @@ def _listed(
             return None
         start, end = int(entry[1]) - 1, int(entry[2])
         listed[start, end if end > start else end + length] = entry[3], entry[4] or ""
-    if sorted(listed) != [(segment.start, segment.end) for segment in segments]:
+    if sorted(listed) != sorted((segment.start, segment.end) for segment in segments):
         return None
     first, coloured = next(iter(listed.values()))[0], []
     for segment in segments:
@@ -217,14 +217,19 @@ def _listed(
 
 
 def _segments(feature: "SeqFeature", length: int, topology: Topology) -> tuple[Segment, ...]:
-    """Take the parts in top-strand order, joining the two a feature across the origin holds."""
-    # Biopython's positions are ints, but an inexact one is a class its stubs do not narrow.
-    parts = sorted(
-        (cast("int", part.start), cast("int", part.end))
-        for part in (feature.location.parts if feature.location is not None else ())
-    )
-    if topology == "circular" and len(parts) > 1 and parts[0][0] == 0 and parts[-1][1] == length:
-        first, last = parts.pop(0), parts.pop()
-        parts.append((last[0], length + first[1]))
-        parts.sort()
-    return tuple(Segment(start, end) for start, end in parts)
+    """Take the parts in the order the top strand reads them, joining two that meet at the origin.
+
+    Biopython lists a join's parts in the order the feature reads, so a reverse-strand one's are
+    turned round.
+    """
+    if (location := feature.location) is None:
+        return ()
+    spans: list[tuple[int, int]] = []
+    for part in location.parts[::-1] if location.strand == -1 else location.parts:
+        # Biopython's positions are ints, but an inexact one is a class its stubs do not narrow.
+        start, end = cast("int", part.start), cast("int", part.end)
+        if topology == "circular" and spans and spans[-1][1] == length and start == 0:
+            spans[-1] = (spans[-1][0], length + end)
+        else:
+            spans.append((start, end))
+    return tuple(Segment(start, end) for start, end in spans)

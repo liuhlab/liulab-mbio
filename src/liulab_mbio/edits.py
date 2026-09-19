@@ -126,7 +126,8 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
 def flipped(record: SequenceRecord) -> SequenceRecord:
     """Return `record` read from the other strand, features and binding sites turned with it.
 
-    A span across the origin of a circular record lands across it again.
+    A span across the origin of a circular record lands across it again. A feature's segments
+    come in reverse order, so it reads the same bases.
 
     Examples
     --------
@@ -144,17 +145,10 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
         dataclasses.replace(
             feature,
             segments=tuple(
-                sorted(
-                    (
-                        Segment(
-                            *mirrored(segment.start, segment.end),
-                            name=segment.name,
-                            color=segment.color,
-                        )
-                        for segment in feature.segments
-                    ),
-                    key=lambda segment: (segment.start, segment.end),
+                Segment(
+                    *mirrored(segment.start, segment.end), name=segment.name, color=segment.color
                 )
+                for segment in reversed(feature.segments)
             ),
             strand=other.get(feature.strand, feature.strand),
         )
@@ -188,8 +182,8 @@ def carried(
     lifted to the front of one takes a negative `offset`.
 
     A feature reaching outside the span is cut down to it, and one meeting it in two places
-    keeps a segment for each. A primer is kept only where a whole binding site survives, having
-    nowhere to anneal otherwise.
+    keeps a segment for each. Its segments stay in the order it reads them. A primer is kept only
+    where a whole binding site survives, having nowhere to anneal otherwise.
 
     `end` passes `record`'s length where the span runs across the origin of a circular one.
 
@@ -208,7 +202,6 @@ def carried(
             for first, last in _pieces(segment.start, segment.end, start, end, record)
         ]
         if kept:
-            kept.sort(key=lambda segment: (segment.start, segment.end))
             features.append(dataclasses.replace(feature, segments=tuple(kept)))
     primers = []
     for primer in record.primers:
@@ -224,7 +217,7 @@ def carried(
 
 
 def ordered(record: SequenceRecord) -> SequenceRecord:
-    """Return `record` with its features in position order, each one's segments in base order.
+    """Return `record` with its features sorted by where each begins, their segments untouched.
 
     A product is built part by part and then turned to its vector's origin, and neither step
     reorders what it moves, so the record it leaves is sorted here before anyone reads it.
@@ -236,13 +229,9 @@ def ordered(record: SequenceRecord) -> SequenceRecord:
     >>> [one.name for one in ordered(SequenceRecord("AACCGG", features=(late, early))).features]
     ['a', 'b']
     """
-    features = [
-        dataclasses.replace(
-            feature, segments=tuple(sorted(feature.segments, key=lambda one: (one.start, one.end)))
-        )
-        for feature in record.features
-    ]
-    features.sort(key=lambda feature: (feature.segments[0].start, feature.segments[0].end))
+    features = sorted(
+        record.features, key=lambda feature: (feature.segments[0].start, feature.segments[0].end)
+    )
     return dataclasses.replace(record, features=tuple(features))
 
 
@@ -272,15 +261,17 @@ def _pieces(
     """Return where ``[start, end)`` of `record` falls inside the window ``[low, high)``.
 
     A span of a circular record is tried a turn either way, so one meeting the window twice —
-    as a feature either side of the span an outward PCR drops does — gives a piece for each.
+    as a feature either side of the span an outward PCR drops does — gives a piece for each, in
+    the order the span reads them.
     """
     turns = (0, len(record), -len(record)) if record.topology == "circular" else (0,)
     found = []
     for turn in turns:
         first, last = max(start + turn, low), min(end + turn, high)
         if first < last:
-            found.append((first, last))
-    return sorted(found)
+            along = first - turn
+            found.append((along, first, last))
+    return [(first, last) for along, first, last in sorted(found)]
 
 
 def _check_span(record: SequenceRecord, start: int, end: int) -> None:
