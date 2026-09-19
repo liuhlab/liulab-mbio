@@ -143,6 +143,18 @@ def find_priming_sites(
 
 
 @lru_cache(maxsize=1 << 15)
+def _perfect_stability(dna: str) -> float:
+    """Return the end stability of a sequence annealed to its own complement.
+
+    It depends on the sequence alone, so the templates a sequence is searched against share
+    one value.
+    """
+    import primer3
+
+    return primer3.calc_end_stability(dna, reverse_complement(dna)).tm
+
+
+@lru_cache(maxsize=1 << 15)
 def _priming_sites(
     dna: str, sequence: str, topology: str, thresholds: Thresholds
 ) -> tuple[PrimingSite, ...]:
@@ -156,7 +168,7 @@ def _priming_sites(
     top = sequence + (sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
     edge = min(size, thresholds.off_target_3prime_window)
-    perfect = primer3.calc_end_stability(dna, reverse).tm
+    perfect = _perfect_stability(dna)
     floor = perfect - thresholds.off_target_margin
     starts = range(length if circular else length - size + 1)
     ends = tuple(
