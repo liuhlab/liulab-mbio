@@ -15,6 +15,7 @@ import typing  # Spelled out: `Protocol` here is the bench protocol imported bel
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -115,7 +116,9 @@ def insertion_span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
     ------
     ValueError
         If no site is named and the vector annotates no `MCS_FEATURE` feature, if it annotates
-        no feature of the name given, or if the span does not lie inside the vector.
+        no feature of the name given, if that feature runs across the origin of a circular
+        vector or lies at both ends of a linear one, or if the span does not lie inside the
+        vector.
     """
     if isinstance(site, tuple):
         start, end = site
@@ -131,7 +134,20 @@ def insertion_span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
             found = _named(vector, site)
             if found is None:
                 raise ValueError(f"this vector annotates no feature called {site!r}")
-        start, end = found.segments[0].start, found.segments[-1].end
+        if _through_the_end(found, len(vector)):
+            what = vector.name or "the vector"
+            if vector.topology == "linear":
+                raise ValueError(
+                    f"{what} is linear, and the insertion site {found.name!r} lies in two pieces "
+                    "at its two ends; pass a (start, end) span that lies between them"
+                )
+            raise ValueError(
+                f"the insertion site {found.name!r} runs across the origin of {what}, and a "
+                "plan cannot replace bases there; move the vector's origin away from the site, "
+                "or pass a (start, end) span that stays on one side of the origin"
+            )
+        start = min(one.start for one in found.segments)
+        end = max(one.end for one in found.segments)
     if not 0 <= start < end <= len(vector):
         raise ValueError(
             f"the insertion site {start}-{end} does not lie inside {len(vector)} bases"
@@ -167,6 +183,19 @@ def _named(record: SequenceRecord, name: str) -> Feature | None:
     """Return the first feature of that name, whatever its case."""
     return next(
         (feature for feature in record.features if feature.name.lower() == name.lower()), None
+    )
+
+
+def _through_the_end(feature: Feature, length: int) -> bool:
+    """Whether `feature` reads on from the last base of a record of `length` bases to its first.
+
+    That is across the origin of a circular record, or cut apart at the two ends of a linear
+    one. Segments are listed in the order the top strand reads them, so one starting before the
+    segment listed ahead of it has passed the end.
+    """
+    segments = feature.segments
+    return any(one.end > length for one in segments) or any(
+        after.start < before.start for before, after in pairwise(segments)
     )
 
 
