@@ -142,6 +142,48 @@ def find_priming_sites(
     return _priming_sites(sequence.upper(), template.sequence, template.topology, thresholds)
 
 
+def find_off_target_sites(
+    sequence: str,
+    template: SequenceRecord,
+    placed: tuple[BindingSite, ...],
+    *,
+    thresholds: Thresholds = THRESHOLDS,
+) -> tuple[PrimingSite, ...]:
+    """Return where an annealing region primes a template other than where it is placed.
+
+    What `find_priming_sites` returns, less every site sharing its 3' end with one of `placed`.
+    Dropping those first is what a primer is judged on, and the thermodynamics of a place no
+    one asked about is never worked out.
+
+    Examples
+    --------
+    >>> template = SequenceRecord("CGGCGTAATCATGGTCATAGCTGTTTCC")
+    >>> intended = find_binding_sites("GGCGTAATCATGGTCATAGC", template)
+    >>> find_off_target_sites("GGCGTAATCATGGTCATAGC", template, intended)
+    ()
+    """
+    dna = sequence.upper()
+    bases, topology = template.sequence, template.topology
+    intended = {_three_prime_end(site, len(bases)) for site in placed}
+    return _primed(
+        dna,
+        bases,
+        topology,
+        thresholds,
+        tuple(
+            annealing
+            for annealing in _annealings(dna, bases, topology, thresholds)
+            if _three_prime_end(annealing[0], len(bases)) not in intended
+        ),
+    )
+
+
+def _three_prime_end(site: BindingSite, length: int) -> tuple[int, Strand]:
+    """Return the base a site reads from and its strand, which is where a primer extends."""
+    end = site.start if site.strand is Strand.REVERSE else site.end - 1
+    return end % length, site.strand
+
+
 @lru_cache(maxsize=1 << 15)
 def _perfect_stability(dna: str) -> float:
     """Return the end stability of a sequence annealed to its own complement.
@@ -154,12 +196,23 @@ def _perfect_stability(dna: str) -> float:
     return primer3.calc_end_stability(dna, reverse_complement(dna)).tm
 
 
-@lru_cache(maxsize=1 << 15)
+@lru_cache(maxsize=1 << 12)
 def _priming_sites(
     dna: str, sequence: str, topology: str, thresholds: Thresholds
 ) -> tuple[PrimingSite, ...]:
-    import primer3
+    annealings = _annealings(dna, sequence, topology, thresholds)
+    return _primed(dna, sequence, topology, thresholds, annealings)
 
+
+@lru_cache(maxsize=1 << 15)
+def _annealings(
+    dna: str, sequence: str, topology: str, thresholds: Thresholds
+) -> tuple[tuple[BindingSite, int], ...]:
+    """Return every site whose 3' window anchors and whose bases mismatch within the cap.
+
+    Each with how many of its bases mismatch, by start. What a site melts at is settled apart
+    from this, so a caller dropping a site pays primer3 nothing for it.
+    """
     size = len(dna)
     length = len(sequence)
     if size > length:
@@ -168,8 +221,6 @@ def _priming_sites(
     top = sequence + (sequence[: size - 1] if circular else "")
     reverse = reverse_complement(dna)
     edge = min(size, thresholds.off_target_3prime_window)
-    perfect = _perfect_stability(dna)
-    floor = perfect - thresholds.off_target_margin
     starts = range(length if circular else length - size + 1)
     ends = tuple(
         _anchored(
@@ -186,24 +237,51 @@ def _priming_sites(
     found = []
     for start in sorted(ends[0] | ends[1]):
         here = top[start : start + size]
-        for strand, probe, anchored, annealed in (
-            (Strand.FORWARD, dna, start in ends[0], None),
-            (Strand.REVERSE, reverse, start in ends[1], here),
+        for strand, probe, anchored in (
+            (Strand.FORWARD, dna, start in ends[0]),
+            (Strand.REVERSE, reverse, start in ends[1]),
         ):
             if not anchored:
                 continue
             mismatches = _mismatches(probe, here, thresholds.off_target_mismatches)
-            if mismatches > thresholds.off_target_mismatches:
-                continue
-            # A perfect match anneals exactly as the floor's duplex does.
-            tm = (
-                perfect
-                if not mismatches
-                else primer3.calc_end_stability(dna, annealed or reverse_complement(here)).tm
-            )
-            if tm >= floor:
-                found.append(PrimingSite(BindingSite(start, start + size, strand), tm, mismatches))
+            if mismatches <= thresholds.off_target_mismatches:
+                found.append((BindingSite(start, start + size, strand), mismatches))
     return tuple(found)
+
+
+def _primed(
+    dna: str,
+    sequence: str,
+    topology: str,
+    thresholds: Thresholds,
+    annealings: tuple[tuple[BindingSite, int], ...],
+) -> tuple[PrimingSite, ...]:
+    """Return those annealing places melting within the margin of a perfect match."""
+    if not annealings:
+        return ()
+    import primer3
+
+    perfect = _perfect_stability(dna)
+    floor = perfect - thresholds.off_target_margin
+    found = []
+    for site, mismatches in annealings:
+        # A perfect match anneals exactly as the floor's duplex does.
+        if mismatches:
+            here = _covered(sequence, topology, site)
+            annealed = here if site.strand is Strand.REVERSE else reverse_complement(here)
+            tm = primer3.calc_end_stability(dna, annealed).tm
+        else:
+            tm = perfect
+        if tm >= floor:
+            found.append(PrimingSite(site, tm, mismatches))
+    return tuple(found)
+
+
+def _covered(sequence: str, topology: str, site: BindingSite) -> str:
+    """Return the bases of a template a site covers, wrapping once round a circular origin."""
+    if topology == "circular" and site.end > len(sequence):
+        return sequence[site.start :] + sequence[: site.end - len(sequence)]
+    return sequence[site.start : site.end]
 
 
 def amplicon_sizes(
@@ -301,18 +379,29 @@ def _anchored(
     once and each candidate looks up only the few windows its own can match, rather than walking
     every position itself.
     """
-    near = _near(window, _alphabet(sequence), mismatches)
-    if near is None:
+    hits = _hits(window, sequence, edge, circular, mismatches)
+    if hits is None:
         return set(starts)
     length = len(sequence)
+    if circular:
+        return {(position - offset) % length for position in hits}
+    return {position - offset for position in hits if position - offset in starts}
+
+
+@lru_cache(maxsize=1 << 12)
+def _hits(
+    window: str, sequence: str, edge: int, circular: bool, mismatches: int
+) -> tuple[int, ...] | None:
+    """Return where a template's own windows lie within `mismatches` of this one.
+
+    ``None`` stands for everywhere. Candidates of every length at one 3' end share a window,
+    so the lookup is remembered.
+    """
+    near = _near(window, _alphabet(sequence), mismatches)
+    if near is None:
+        return None
     index = _windows(sequence, edge, circular)
-    found = set()
-    for probe in near:
-        for position in index.get(probe, ()):
-            start = (position - offset) % length if circular else position - offset
-            if start in starts:
-                found.add(start)
-    return found
+    return tuple(position for probe in near for position in index.get(probe, ()))
 
 
 @lru_cache(maxsize=8)

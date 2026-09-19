@@ -10,10 +10,14 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from liulab_mbio.checks import Check, Status, worst, worst_of
-from liulab_mbio.primers.placement import amplicon_sizes, find_binding_sites, find_priming_sites
+from liulab_mbio.primers.placement import (
+    amplicon_sizes,
+    find_binding_sites,
+    find_off_target_sites,
+)
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
 from liulab_mbio.primers.thresholds import THRESHOLDS, Band, Thresholds
-from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand, Topology
+from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Topology
 
 #: primer3 refuses a thermodynamic alignment on anything longer.
 _THERMO_MAX = 60
@@ -286,13 +290,7 @@ def _template_checks(
     template: SequenceRecord,
     thresholds: Thresholds,
 ) -> tuple[Check, ...]:
-    length = len(template)
-    intended = {_three_prime_end(site, length) for site in sites}
-    elsewhere = [
-        site
-        for site in find_priming_sites(annealing, template, thresholds=thresholds)
-        if _three_prime_end(site.site, length) not in intended
-    ]
+    elsewhere = find_off_target_sites(annealing, template, sites, thresholds=thresholds)
     detail = ", ".join(
         f"{site.site.start} {site.site.strand.name.lower()}, {site.mismatches} mismatched"
         for site in elsewhere
@@ -301,11 +299,6 @@ def _template_checks(
         _graded("binding_sites", len(sites), thresholds.binding_sites),
         _graded("off_target", len(elsewhere), thresholds.off_target, detail),
     )
-
-
-def _three_prime_end(site: BindingSite, length: int) -> tuple[int, Strand]:
-    end = site.start if site.strand is Strand.REVERSE else site.end - 1
-    return end % length, site.strand
 
 
 def _named(checks: tuple[Check, ...], name: str) -> Check:
