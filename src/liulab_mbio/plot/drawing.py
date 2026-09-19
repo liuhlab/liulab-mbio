@@ -2,6 +2,7 @@
 
 import dataclasses
 import math
+import operator
 import os
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -22,6 +23,10 @@ type Region = str | tuple[int, int]
 #: How many times its width a PDF's page of sequence view rows is tall: the proportions of A4, so
 #: each page prints filling a sheet.
 _PAGE = math.sqrt(2)
+
+#: How many times `linear.WIDTH` long a page lays out the line, a step of its zoom each, each twice
+#: as long as the last, as `page.render` takes them.
+_STEPS = (1, 2, 4, 8)
 
 #: What a page's switch for each kind of item says, in the order the switches stand.
 _KINDS: dict[layers.Kind, str] = {
@@ -57,9 +62,9 @@ class Drawing:
 
     A PNG or a PDF draws only the items that show, and the sequence view only when it is switched
     on. A page carries every item the record draws, laid out together, and the sequence view of
-    any stretch up to `sequence_view.LIMIT` bases with both its strands; it shows first what is
-    switched on, and switches the rest in place. Each distinct layout runs when it is first
-    needed, and is kept.
+    any stretch up to `sequence_view.LIMIT` bases with both its strands, at `bases_per_row` and at
+    half of it for a narrow page; it shows first what is switched on, and switches the rest in
+    place. Each distinct layout runs when it is first needed, and is kept.
 
     Parameters
     ----------
@@ -106,7 +111,7 @@ class Drawing:
         """Where everything that shows went in the sequence view, when it is switched on."""
         if not self.with_sequence_view:
             return None
-        return _rows(self, _shown(self), both_strands=self.both_strands)
+        return _rows(self, _shown(self), self.bases_per_row, both_strands=self.both_strands)
 
     @property
     def hidden(self) -> tuple[layers.Item, ...]:
@@ -120,15 +125,17 @@ class Drawing:
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
-        A ``.html`` page keeps its text as text, and puts the sequence view beside the map. A
-        ``.png`` at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on
-        any machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under
-        the map. The PDF has the map on its first page, and the sequence view's rows on the pages
+        A ``.html`` page keeps its text as text, and puts the sequence view beside the map, or
+        under it on a narrow page, in rows half as long where full ones would shrink. A ``.png``
+        at `dpi` and a ``.pdf`` draw every letter as its outline, so they look the same on any
+        machine; `dpi` counts for the PNG alone. The PNG is one image, the sequence view under the
+        map. The PDF has the map on its first page, and the sequence view's rows on the pages
         after, as many to a page as fit whole.
 
         A page carries every item behind its switches, a circular record drawn whole both as a
-        circle and as a line, and the sequence view of a stretch up to `sequence_view.LIMIT`
-        bases. A PNG and a PDF draw only what is switched on.
+        circle and as a line, the line laid out again at two, four and eight times its length to
+        zoom in steps, and the sequence view of a stretch up to `sequence_view.LIMIT` bases. A PNG
+        and a PDF draw only what is switched on, the line at its one length.
 
         Raises
         ------
@@ -182,8 +189,7 @@ def draw_map(
     linear
         Whether a circular record drawn whole is opened as a line.
     sequence_view
-        Whether the sequence view beside the map is switched on, at most `sequence_view.LIMIT`
-        bases.
+        Whether the sequence view is switched on, at most `sequence_view.LIMIT` bases.
     features, primers, cut_sites
         Whether each is switched on.
     enzymes
@@ -194,7 +200,8 @@ def draw_map(
     source
         Whether a `source` feature is switched on.
     bases_per_row
-        How many bases each row of the sequence view holds.
+        How many bases each row of the sequence view holds; a page also carries rows of half as
+        many, rounded up, for a narrow page.
     both_strands
         Whether the sequence view's bottom strand, under the top one, is switched on.
 
@@ -337,34 +344,37 @@ def _circle(drawing: Drawing, items: tuple[layers.Item, ...]) -> circular.Circul
     )
 
 
-def _line(drawing: Drawing, items: tuple[layers.Item, ...]) -> line.LinearMap:
+def _line(
+    drawing: Drawing, items: tuple[layers.Item, ...], width: float = line.WIDTH
+) -> line.LinearMap:
     record = drawing.record
     return _kept(
         drawing,
-        ("line", items),
+        ("line", items, width),
         lambda: line.layout(
             items,
             name=record.name,
             length=len(record),
             circular=record.topology == "circular",
             span=drawing.span,
+            width=width,
         ),
     )
 
 
 def _rows(
-    drawing: Drawing, items: tuple[layers.Item, ...], *, both_strands: bool
+    drawing: Drawing, items: tuple[layers.Item, ...], bases_per_row: int, *, both_strands: bool
 ) -> view.SequenceView:
     record = drawing.record
     return _kept(
         drawing,
-        ("rows", items, both_strands),
+        ("rows", items, bases_per_row, both_strands),
         lambda: view.layout(
             items,
             bases=record.sequence,
             circular=record.topology == "circular",
             span=drawing.span,
-            bases_per_row=drawing.bases_per_row,
+            bases_per_row=bases_per_row,
             both_strands=both_strands,
         ),
     )
@@ -390,10 +400,11 @@ def _first_shown_one(
         return _notice(shape, [item for item in hidden if switches.show(item.kind, item.type)])
     data = shape.data
     off = "kind" in data and not switches.show(data["kind"], data.get("type", ""))
+    shapes = _first_shown(shape.shapes, switches, hidden)
+    if not off and all(map(operator.is_, shapes, shape.shapes)):
+        return shape
     return dataclasses.replace(
-        shape,
-        shapes=_first_shown(shape.shapes, switches, hidden),
-        classes=(*shape.classes, "off") if off else shape.classes,
+        shape, shapes=shapes, classes=(*shape.classes, "off") if off else shape.classes
     )
 
 
@@ -440,27 +451,34 @@ def _switches(switches: Switches, drawn: line.LinearMap) -> list[page.Switch]:
 
 def _html(drawing: Drawing, path: Path, dpi: float) -> None:
     everything = _everything(drawing)
-    layouts: dict[str, circular.CircularMap | line.LinearMap] = {}
+    layouts: dict[str, list[circular.CircularMap | line.LinearMap]] = {}
     if _whole_circle(drawing):
-        layouts["circle"] = _circle(drawing, everything)
-    layouts["line"] = _line(drawing, everything)
+        layouts["circle"] = [_circle(drawing, everything)]
+    layouts["line"] = [_line(drawing, everything, times * line.WIDTH) for times in _STEPS]
     switches = drawing.switches
     maps = {
-        shape: svg.document(_first_shown(one.shapes, switches, one.hidden), one.extent)
-        for shape, one in layouts.items()
+        shape: [
+            svg.document(_first_shown(one.shapes, switches, one.hidden), one.extent)
+            for one in drawn
+        ]
+        for shape, drawn in layouts.items()
     }
-    beside = None
+    views: dict[int, str] = {}
     if _carries_sequence_view(drawing):
-        # Both strands, so hiding the bottom one moves nothing.
-        rows = _rows(drawing, everything, both_strands=True)
-        beside = svg.document(_first_shown(rows.shapes, switches), rows.extent)
+        # Both strands, so hiding the bottom one moves nothing; and rows half as long, rounded up,
+        # for a page too narrow for full ones.
+        full = drawing.bases_per_row
+        for bases_per_row in sorted({full, math.ceil(full / 2)}, reverse=True):
+            rows = _rows(drawing, everything, bases_per_row, both_strands=True)
+            views[bases_per_row] = svg.document(_first_shown(rows.shapes, switches), rows.extent)
     shown = "circle" if "circle" in layouts and not drawing.linear else "line"
     html = page.render(
         maps,
         title=drawing.record.name or path.stem,
         shown=shown,
-        switches=_switches(switches, layouts["line"]),
-        sequence_view=beside,
+        zooms=[shape for shape in layouts if shape == "circle"],
+        switches=_switches(switches, _line(drawing, everything)),
+        sequence_view=views,
         sequence_shown=drawing.with_sequence_view,
         both_strands=drawing.both_strands,
     )

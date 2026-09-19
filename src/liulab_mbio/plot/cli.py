@@ -50,7 +50,7 @@ def map_(
     sequence_view: Annotated[
         bool,
         typer.Option(
-            "--sequence-view", help="Switch the bases beside the map on, at most 100,000 of them."
+            "--sequence-view", help="Switch the bases on, with the map, at most 100,000 of them."
         ),
     ] = False,
     no_features: Annotated[
@@ -76,7 +76,10 @@ def map_(
     ] = None,
     source: Annotated[bool, typer.Option("--source", help="Switch the source feature on.")] = False,
     bases_per_row: Annotated[
-        int, typer.Option(help="How many bases a row of the sequence view holds.")
+        int,
+        typer.Option(
+            help="How many bases a row of the sequence view holds; half on a narrow page."
+        ),
     ] = 60,
     one_strand: Annotated[
         bool, typer.Option("--one-strand", help="Switch the sequence view's bottom strand off.")

@@ -39,8 +39,82 @@ body {
   height: auto;
 }
 
+/* The script sets the sequence view beside the map while its rows, full or narrow, keep their
+   natural width, and under the map otherwise, where the map fits in at most 40% of the page's
+   height, less its pane's padding and caption. Print keeps them side by side, in full rows. */
+@media screen {
+  .plot:not(.under) > .sequence-view {
+    flex-shrink: 0;
+  }
+
+  /* Whether or not the view scrolls, it keeps the same room for a scrollbar that takes room. */
+  .sequence-view {
+    scrollbar-gutter: stable;
+  }
+
+  .plot.under {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0;
+  }
+
+  .plot.under > .map {
+    flex: none;
+  }
+
+  .plot.under > .map svg {
+    width: auto;
+    max-height: calc(40vh - 52px);
+  }
+
+  .plot.under > .sequence-view {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  /* A zoomed shape keeps the room it takes at 1×, and its drawing grows past it from its top left,
+     keeping right of and below it the room the pane held there at 1×, for the pane to scroll over.
+     The pane keeps its 1× width, and under the map its height, so scrollbars that take room take
+     it from what the pane shows. Print draws it at 1×. */
+  .plot .map:has(> .zoomed:not([hidden])) {
+    box-sizing: border-box;
+    width: var(--pane-width);
+    max-width: 100%;
+  }
+
+  .plot.under > .map:has(> .zoomed:not([hidden])) {
+    height: var(--pane-height);
+    max-height: 100%;
+  }
+
+  .plot .map .zoomed {
+    width: var(--width);
+    height: var(--height);
+  }
+
+  .plot .map .zoomed svg {
+    box-sizing: content-box;
+    width: calc(var(--zoom) * var(--width));
+    height: calc(var(--zoom) * var(--height));
+    max-width: none;
+    max-height: none;
+    padding: 0 var(--right) var(--below) 0;
+  }
+
+  /* A shape that zooms in steps shows the step's drawing at the scale its first takes. */
+  .plot .map .zoomed .step svg {
+    width: calc(var(--across) * var(--width));
+    height: calc(var(--down) * var(--height));
+  }
+}
+
 .plot text {
   white-space: pre;
+}
+
+.map.panning,
+.map.panning [data-kind] {
+  cursor: grabbing;
 }
 
 .plot [data-kind] {
@@ -80,9 +154,10 @@ body {
   pointer-events: none;
 }
 
-.sequence-view figcaption {
+.plot figcaption {
   position: sticky;
   top: -16px;
+  left: 0;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -94,19 +169,29 @@ body {
   font: 13px/1.4 "Liulab Mbio Sans", sans-serif;
 }
 
-.sequence-view figcaption label {
+.plot figcaption[hidden] {
+  display: none;
+}
+
+.plot figcaption label {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.sequence-view figcaption input,
-.sequence-view figcaption button {
+.plot figcaption input,
+.plot figcaption button {
   margin: 0;
   font: inherit;
 }
 
-.sequence-view figcaption button[hidden] {
+/* A narrow map narrows its zoom slider. */
+.map figcaption label,
+.map figcaption input {
+  min-width: 0;
+}
+
+.plot figcaption button[hidden] {
   display: none;
 }
 
@@ -179,7 +264,7 @@ body {
 
 @media print {
   .switches,
-  .sequence-view figcaption {
+  .plot figcaption {
     display: none;
   }
 
@@ -192,6 +277,17 @@ body {
   .map,
   .sequence-view {
     overflow: visible;
+  }
+
+  /* The full rows, whichever rows the page's width shows, and the line at its first step. */
+  .sequence-view .row-width,
+  .map .step {
+    display: block;
+  }
+
+  .sequence-view .row-width ~ .row-width,
+  .map .step ~ .step {
+    display: none;
   }
 }
 

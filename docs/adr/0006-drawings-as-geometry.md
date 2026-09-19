@@ -34,3 +34,7 @@ milliseconds rather than on pixels.
   as its outline, so its text cannot be searched or copied.
 - A switch in the page hides shapes where they are. Moving labels when a layer is switched off
   would need a layout per combination of switches, so each distinct layout runs once and is kept.
+- The page zooms the line by carrying it laid out along lines two, four and eight times as long,
+  and fits a narrow page by carrying the sequence view at half its row width too. Each is a
+  layout of its own, run once and kept, and a PNG or PDF draws only the first. The circle zooms by
+  scaling its one drawing.

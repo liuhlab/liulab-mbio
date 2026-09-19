@@ -642,7 +642,7 @@ _Avoid_: plasmid map (a linear record has one too), figure, plot
 ### Sequence view
 
 A drawing of a sequence record base by base, in rows: both strands, the translation of every CDS,
-features as bars, primers as arrows and enzyme names above their cut. It is drawn only beside a
+features as bars, primers as arrows and enzyme names above their cut. It is drawn only with a
 map, which shows where each row lies.
 _Avoid_: sequence panel, text view
 

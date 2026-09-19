@@ -25,6 +25,8 @@ hidden.
 import dataclasses
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import cache, lru_cache
+from itertools import pairwise, repeat
 from typing import NamedTuple
 
 from liulab_mbio.plot import labels
@@ -1038,22 +1040,14 @@ def _ruler(first: int, last: int, length: int, top: float, rail: float) -> tuple
     A number stands over every base the record numbers a multiple of ten. The rail ticks every
     base, longer at a multiple of five and longer still at one of ten.
     """
-    numbers: list[tuple[float, str]] = []
-    ticks = []
-    reach = 0.0
-    for position in range(first, last):
-        shown = position % length + 1
-        x = (position - first + 0.5) * CELL
-        before, reach = reach, _TICKS[(shown % 5 == 0) + (shown % 10 == 0)]
-        if position == first:
-            ticks.append(f"M{number(x)} {number(rail - reach)}v{number(2 * reach)}")
-        else:
-            ticks.append(_STEPS[before, reach])
-        if shown % 10 == 0:
-            numbers.append((x, str(shown)))
+    count = last - first
+    shown = first % length + 1
+    reach, steps, tens = _marks(shown % 10, count, min(count, length - shown + 1))
+    numbers = [((index + 0.5) * CELL, str((first + index) % length + 1)) for index in tens]
+    ticks = f"M{number(0.5 * CELL)} {number(rail - reach)}v{number(2 * reach)}{steps}"
     shapes: list[Shape] = [
-        Line(0.0, rail, (last - first) * CELL, rail, _RAIL, 1.6),
-        Path("".join(ticks), "none", _RAIL, 1.0),
+        Line(0.0, rail, count * CELL, rail, _RAIL, 1.6),
+        Path(ticks, "none", _RAIL, 1.0),
     ]
     if not numbers:
         return Group(tuple(shapes), classes=("ruler",)), []
@@ -1061,18 +1055,39 @@ def _ruler(first: int, last: int, length: int, top: float, rail: float) -> tuple
     return Group((text, *shapes), classes=("ruler",)), [_letters_box(text)]
 
 
+@lru_cache(maxsize=1 << 8)
+def _marks(phase: int, count: int, before: int) -> tuple[float, str, tuple[int, ...]]:
+    """Return how far a row's first tick reaches, the ticks on from it, and which bases are tens.
+
+    The row's first base is numbered `phase` modulo ten, and the numbering starts again at 1 after
+    `before` bases, across the origin; rows alike in these share them.
+    """
+    shown = [*range(phase, phase + before), *range(1, count - before + 1)]
+    reaches = [_TICKS[(one % 5 == 0) + (one % 10 == 0)] for one in shown]
+    steps = "".join(map(_STEPS.__getitem__, pairwise(reaches)))
+    return reaches[0], steps, tuple(index for index, one in enumerate(shown) if one % 10 == 0)
+
+
 def _strand(text: str, top: float) -> Letters:
     """Return a strand's bases set one to a cell, its top at `top`."""
     baseline = _baseline(MONO, BASE_SIZE, top + _height(MONO, BASE_SIZE) / 2)
+    # Made as the plain tuples places are, without a Python call for each base.
+    places = zip(_cells(len(text)), repeat(baseline), repeat(0.0))
+    return Letters(tuple(map(tuple.__new__, repeat(Place), places)), text, MONO, BASE_SIZE, _INK)
+
+
+@cache
+def _cells(count: int) -> tuple[float, ...]:
+    """Return where each of `count` bases starts along a row, centred in its cell."""
     offset = (CELL - MONO.width("A", BASE_SIZE)) / 2
-    places = tuple(Place(index * CELL + offset, baseline, 0.0) for index in range(len(text)))
-    return Letters(places, text, MONO, BASE_SIZE, _INK)
+    return tuple(index * CELL + offset for index in range(count))
 
 
 def _bases(bases: str, first: int, last: int) -> str:
     """Return the top strand from `first` to `last`, across the origin as needed."""
-    length = len(bases)
-    return "".join(bases[position % length] for position in range(first, last))
+    start = first % len(bases)
+    end = start + last - first
+    return bases[start:end] if end <= len(bases) else bases[start:] + bases[: end - len(bases)]
 
 
 def _last(last: int, length: int) -> str:
@@ -1131,13 +1146,19 @@ def _set(text: str, left: float, middle: float, fill: str) -> Letters:
     return Letters(places, text, SANS, LABEL_SIZE, fill)
 
 
+@cache
 def _height(font: Font, size: float) -> float:
     return (font.ascender - font.descender) / font.units_per_em * size
 
 
 def _baseline(font: Font, size: float, middle: float) -> float:
     """Return the baseline that centres a line of text on the height `middle`."""
-    return middle + (font.ascender + font.descender) / 2 / font.units_per_em * size
+    return middle + _drop(font, size)
+
+
+@cache
+def _drop(font: Font, size: float) -> float:
+    return (font.ascender + font.descender) / 2 / font.units_per_em * size
 
 
 def _text_box(text: Text) -> Box:

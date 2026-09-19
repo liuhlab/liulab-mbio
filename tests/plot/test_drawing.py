@@ -6,7 +6,7 @@ import json
 import math
 import re
 import struct
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -28,7 +28,14 @@ from liulab_mbio.plot import (
 )
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.plot.labels import Box
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+)
 
 from ..html import Node, parse
 from . import crowds
@@ -51,10 +58,39 @@ def colour_test_page(colour_test: Drawing, tmp_path_factory: pytest.TempPathFact
     return _page(colour_test, tmp_path_factory.mktemp("colour-test") / "map.html")[1]
 
 
+#: A record drawn as asked, and its page.
+type Written = tuple[Drawing, str, Node]
+
+
 @pytest.fixture(scope="module")
-def puc19_page(puc19_file: Path, tmp_path_factory: pytest.TempPathFactory) -> tuple[str, Node]:
-    """pUC19's page with nothing asked for, written once."""
-    return _page(draw_map(puc19_file), tmp_path_factory.mktemp("puc19") / "map.html")
+def pages(
+    puc19: SequenceRecord, gfp: SequenceRecord, tmp_path_factory: pytest.TempPathFactory
+) -> Callable[..., Written]:
+    """pUC19, GFP or the EcoRI crowd drawn as asked, each page written once for the module."""
+    records = {"puc19": puc19, "gfp": gfp, "crowd": crowds.ecori_crowd()}
+    folder = tmp_path_factory.mktemp("pages")
+    written: dict[tuple[object, ...], Written] = {}
+
+    def page(record: str, **options: Any) -> Written:
+        drawing = draw_map(records[record], **options)
+        # What the drawing was asked for, however it was asked.
+        key = tuple(
+            record if one.name == "record" else getattr(drawing, one.name)
+            for one in dataclasses.fields(drawing)
+            if one.init
+        )
+        if key not in written:
+            written[key] = (drawing, *_page(drawing, folder / f"{len(written)}.html"))
+        return written[key]
+
+    return page
+
+
+@pytest.fixture(scope="module")
+def puc19_page(pages: Callable[..., Written]) -> tuple[str, Node]:
+    """pUC19's page with nothing asked for."""
+    _, html, page = pages("puc19")
+    return html, page
 
 
 def _shapes(page: Node) -> dict[str, Node]:
@@ -65,12 +101,17 @@ def _shapes(page: Node) -> dict[str, Node]:
 
 
 def _map(page: Node) -> Node:
-    """The map the page shows first."""
-    return next(iter(_shapes(page).values()))
+    """The map the page shows first: the shape shown first, unzoomed."""
+    return next(iter(_shapes(page).values())).find_all("svg")[0]
 
 
 def _maps(page: Node) -> Node:
-    """The page's map, in each shape it carries."""
+    """The page's map unzoomed, in each shape it carries."""
+    return Node("maps", {}, [shape.find_all("svg")[0] for shape in _shapes(page).values()])
+
+
+def _figure(page: Node) -> Node:
+    """The page's map, with its caption, in each shape and at each step it carries."""
     [figure] = page.find_all("figure", cls="map")
     return figure
 
@@ -101,9 +142,10 @@ def test_a_record_or_any_file_the_pipelines_read_is_drawn(
     fasta = tmp_path / "insert.fasta"
     fasta.write_text(">insert\nACGTACGTAC\n")
     for source in (puc19, puc19_file, str(fasta)):
-        written = draw_map(source).write(tmp_path / "map.html")
-        assert written == tmp_path / "map.html"
-        assert parse(written.read_text(encoding="utf-8")).find_all("svg")
+        assert draw_map(source).layout.shapes
+    written = draw_map(str(fasta)).write(tmp_path / "map.html")
+    assert written == tmp_path / "map.html"
+    assert parse(written.read_text(encoding="utf-8")).find_all("svg")
 
 
 @pytest.mark.parametrize("name", ["map.svg", "map.jpg", "map"])
@@ -576,7 +618,8 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
         "primer": {"primer"},
         "cut_site": {"cut site"},
     }
-    for shown in _shapes(page).values():
+    # In each shape, and each step of the line's zoom.
+    for shown in _figure(page).find_all("svg"):
         found: dict[str, set[str]] = {}
         switched: dict[str, set[str]] = {}
         for group in shown.find_all("g"):
@@ -612,13 +655,14 @@ def test_the_page_carries_every_layer_and_type_and_switches_off_only_what_was_as
 @pytest.mark.parametrize(
     ("switches", "counts"),
     [
-        ({}, {"circular": 1, "linear": 1, "sequence_view": 1}),
-        ({"primers": False}, {"circular": 2, "linear": 1, "sequence_view": 2}),
-        ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 2}),
-        ({"region": "mcs"}, {"linear": 1, "sequence_view": 1}),
-        ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 2}),
+        # The page lays out the sequence view at two row widths, and a PNG or a PDF the first.
+        ({}, {"circular": 1, "linear": 1, "sequence_view": 2}),
+        ({"primers": False}, {"circular": 2, "linear": 1, "sequence_view": 3}),
+        ({"linear": True, "primers": False}, {"circular": 1, "linear": 2, "sequence_view": 3}),
+        ({"region": "mcs"}, {"linear": 1, "sequence_view": 2}),
+        ({"region": "mcs", "cut_sites": False}, {"linear": 2, "sequence_view": 3}),
         # The page lays out both strands, to hide the bottom one in place.
-        ({"both_strands": False}, {"circular": 1, "linear": 1, "sequence_view": 2}),
+        ({"both_strands": False}, {"circular": 1, "linear": 1, "sequence_view": 3}),
     ],
 )
 def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
@@ -633,10 +677,10 @@ def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
     counted: dict[str, int] = {}
     for module in (circular, linear, sequence_view):
 
-        def lay_out(
-            *args: object, module: Any = module, real: Any = module.layout, **kwargs: object
-        ):
+        def lay_out(*args: object, module: Any = module, real: Any = module.layout, **kwargs: Any):
             key = module.__name__.rsplit(".", 1)[-1]
+            times = kwargs.get("width", linear.WIDTH) / linear.WIDTH
+            key += f" {times:g}x" if times != 1 else ""
             counted[key] = counted.get(key, 0) + 1
             return real(*args, **kwargs)
 
@@ -649,7 +693,9 @@ def test_each_distinct_layout_runs_once_when_first_needed_and_is_kept(
         assert drawing.layout.extent
         assert drawing.sequence_view is not None
         assert drawing.hidden == ()
-    assert counted == counts
+    # The page's line at each longer step of its zoom, which only the page draws.
+    steps = {"linear 2x": 1, "linear 4x": 1, "linear 8x": 1}
+    assert counted == counts | steps
 
 
 def _texts(page: Node, cls: str = "") -> list[str]:
@@ -673,12 +719,12 @@ def _dots(page: Node) -> int:
     ],
 )
 def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_each_end(
-    request: pytest.FixtureRequest, tmp_path: Path, record: str, opened: bool, line: bool, dots: int
+    pages: Callable[..., Written], record: str, opened: bool, line: bool, dots: int
 ) -> None:
-    drawing = draw_map(request.getfixturevalue(record), linear=opened, cut_sites=False)
+    drawing, _, page = pages(record, linear=opened)
     kind = linear.LinearMap if line else circular.CircularMap
     assert isinstance(drawing.layout, kind)
-    assert _dots(_map(_page(drawing, tmp_path / "map.html")[1])) == dots
+    assert _dots(_map(page)) == dots
 
 
 @pytest.mark.parametrize(
@@ -691,12 +737,15 @@ def test_a_linear_record_is_always_a_line_and_a_circular_one_opens_with_dots_at_
     ],
 )
 def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_right(
-    request: pytest.FixtureRequest, tmp_path: Path, record: str, switches: dict, shapes: list[str]
+    pages: Callable[..., Written], record: str, switches: dict, shapes: list[str]
 ) -> None:
-    _, page = _page(draw_map(request.getfixturevalue(record), **switches), tmp_path / "map.html")
+    _, _, page = pages(record, **switches)
     carried = _shapes(page)
     assert list(carried) == shapes
-    assert [len(shape.find_all("svg")) for shape in carried.values()] == [1] * len(shapes)
+    # The line at each step of its zoom.
+    assert [len(shape.find_all("svg")) for shape in carried.values()] == [
+        1 if shape == "circle" else 4 for shape in shapes
+    ]
     radios = {
         box.attrs["value"]: "checked" in box.attrs for box in page.find_all("input", name="shape")
     }
@@ -713,12 +762,59 @@ def test_a_circular_record_drawn_whole_flips_between_circle_and_line_at_top_righ
     ]
 
 
-def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
-    puc19: SequenceRecord, tmp_path: Path
+@pytest.mark.parametrize(
+    ("record", "switches"), [("puc19", {}), ("puc19", {"linear": True}), ("gfp", {})]
+)
+def test_the_map_zooms_one_to_eight_times_from_a_caption_the_circle_freely_the_line_in_steps(
+    pages: Callable[..., Written], record: str, switches: dict
 ) -> None:
-    drawing = draw_map(puc19, region="mcs")
+    _, _, page = pages(record, **switches)
+    carried = _shapes(page)
+    assert {shape: one.attrs.get("data-zoom") for shape, one in carried.items()} == {
+        shape: "free" if shape == "circle" else "steps" for shape in carried
+    }
+    [caption] = _figure(page).find_all("figcaption")
+    assert "hidden" not in caption.attrs
+    # The slider counts doublings: continuously on the circle, a step at a time on the line.
+    [slider] = caption.find_all("input", name="zoom")
+    assert slider.attrs["type"] == "range"
+    assert (2 ** float(slider.attrs["min"]), 2 ** float(slider.attrs["max"])) == (1, 8)
+    step = "any" if next(iter(carried)) == "circle" else "1"
+    assert (slider.attrs["step"], slider.attrs["value"]) == (step, "0")
+    assert [button.text for button in caption.find_all("button")] == ["Reset"]
+
+
+def test_the_page_carries_the_line_at_1_2_4_and_8_times_its_length_each_saying_what_it_hid(
+    pages: Callable[..., Written],
+) -> None:
+    _, _, page = pages("crowd", enzymes=["EcoRI", "HindIII"])
+    steps = _shapes(page)["line"].find_all("div", cls="step")
+    assert ["hidden" in step.attrs for step in steps] == [False, True, True, True]
+    labels = {f"EcoRI ({cut})" for cut in range(101, 500, 8)} | {"HindIII (1701)", "HindIII (2001)"}
+    hid = []
+    for times, step in zip([1, 2, 4, 8], steps, strict=True):
+        [drawn] = step.find_all("svg")
+        backbone = [one for one in drawn.children if isinstance(one, Node) and one.tag == "line"]
+        assert [(one.attrs["x1"], one.attrs["x2"]) for one in backbone] == [
+            ("0", svg.number(times * linear.WIDTH))
+        ] * 2
+        # Each step's notice lists the labels that step left out, and those alone.
+        [notice] = drawn.find_all("g", cls="notice")
+        listed = [one["label"] for one in json.loads(notice.attrs["data-hidden"])]
+        shown = ["".join(text for text, _ in label) for label in _labels(drawn, "cut_site")]
+        assert sorted([*shown, *listed]) == sorted(labels)
+        assert notice.text == f"{len(listed)} enzyme sites are hidden"
+        hid.append(len(listed))
+    # A longer line has room for more of the crowd.
+    assert hid[-1] < hid[0]
+
+
+def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
+    puc19: SequenceRecord, pages: Callable[..., Written], tmp_path: Path
+) -> None:
+    drawing, _, written = pages("puc19", region="mcs")
     assert isinstance(drawing.layout, linear.LinearMap)
-    page = _maps(_page(drawing, tmp_path / "map.html")[1])
+    page = _map(written)
     assert "396 .. 452 (57 bp)" in _texts(page)
     assert _texts(page, "scale") == ["400", "410", "420", "430", "440", "450"]
     assert ["".join(text for text, _ in label) for label in _labels(page, "cut_site")] == [
@@ -737,7 +833,7 @@ def test_a_region_named_by_a_feature_is_a_line_keeping_the_records_numbering(
     assert features == {"lacZ\N{GREEK SMALL LETTER ALPHA}": "146 .. 469", "MCS": "396 .. 452"}
     # A region at the start of a linear record carries on past its end only.
     line = draw_map(dataclasses.replace(puc19, topology="linear"), region=(0, 100))
-    assert _dots(_page(line, tmp_path / "line.html")[1]) == 3
+    assert _dots(_map(_page(line, tmp_path / "line.html")[1])) == 3
 
 
 @pytest.mark.parametrize(
@@ -754,7 +850,7 @@ def test_a_region_runs_across_the_origin_of_a_circular_record(
     title: str,
     scale: list[str],
 ) -> None:
-    _, page = _page(draw_map(colour_test.record, region=region), tmp_path / "map.html")
+    page = _map(_page(draw_map(colour_test.record, region=region), tmp_path / "map.html")[1])
     assert title in _texts(page)
     assert _texts(page, "scale") == scale
     assert _dots(page) == 6
@@ -775,9 +871,9 @@ def test_a_cutter_unique_in_a_region_but_not_in_the_record_is_not_bold_or_shown_
 ) -> None:
     # BsmBI cuts pUC19 after bases 3 and 45.
     _, named = _page(draw_map(puc19, region=(0, 20), enzymes=["BsmBI"]), tmp_path / "named.html")
-    assert _labels(_maps(named), "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
+    assert _labels(_map(named), "cut_site") == [[("BsmBI", "400"), (" (3)", "400")]]
     _, shipped = _page(draw_map(puc19, region=(0, 20)), tmp_path / "shipped.html")
-    assert not _labels(_maps(shipped), "cut_site")
+    assert not _labels(_map(shipped), "cut_site")
 
 
 @pytest.mark.parametrize(
@@ -799,10 +895,18 @@ def test_a_region_naming_no_feature_or_lying_off_the_record_is_refused(
         draw_map(request.getfixturevalue(record), region=region)
 
 
-def _rows(page: Node) -> list[Node]:
-    """The sequence view's rows, top to bottom."""
+def _views(page: Node) -> dict[int, Node]:
+    """The sequence view at each row width the page carries, by bases a row holds, the one shown
+    first first."""
     [view] = page.find_all("figure", cls="sequence-view")
-    return view.find_all("g", cls="row")
+    widths = view.find_all("div", cls="row-width")
+    widths.sort(key=lambda width: "hidden" in width.attrs)
+    return {int(width.attrs["data-bases-per-row"]): width for width in widths}
+
+
+def _rows(page: Node) -> list[Node]:
+    """The rows of the sequence view shown first, top to bottom."""
+    return next(iter(_views(page).values())).find_all("g", cls="row")
 
 
 @pytest.mark.parametrize(
@@ -814,13 +918,12 @@ def _rows(page: Node) -> list[Node]:
         ({"both_strands": False}, False, False),
     ],
 )
-def test_the_page_carries_the_sequence_view_beside_the_map_shown_first_as_asked(
-    gfp: SequenceRecord, tmp_path: Path, switches: dict, shown: bool, both: bool
+def test_the_page_carries_the_sequence_view_with_the_map_shown_first_as_asked(
+    pages: Callable[..., Written], switches: dict, shown: bool, both: bool
 ) -> None:
-    drawing = draw_map(gfp, **switches)
+    drawing, _, page = pages("gfp", **switches)
     # A PNG or a PDF draws it only when it is switched on.
     assert (drawing.sequence_view is not None) == shown
-    _, page = _page(drawing, tmp_path / "map.html")
     [main] = page.find_all("main")
     [_, view] = main.find_all("figure")
     assert view.attrs["class"].split() == ["sequence-view"] + ([] if both else ["one-strand"])
@@ -834,17 +937,16 @@ def test_the_page_carries_the_sequence_view_beside_the_map_shown_first_as_asked(
 def test_the_strand_toggle_hides_the_bottom_strand_and_the_cuts_through_it_in_place(
     puc19: SequenceRecord, tmp_path: Path
 ) -> None:
-    def view(both_strands: bool) -> Node:
+    def view(both_strands: bool) -> list[Node]:
         drawing = draw_map(puc19, region="mcs", sequence_view=True, both_strands=both_strands)
         [figure] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-        [image] = figure.find_all("svg")
-        return image
+        return figure.find_all("svg")
 
-    # Nothing moves: the page lays out both strands either way.
-    image = view(both_strands=False)
-    assert image == view(both_strands=True)
+    # Nothing moves: the page lays out both strands either way, at each row width.
+    images = view(both_strands=False)
+    assert images == view(both_strands=True)
     hidden = shown = 0
-    for row in image.find_all("g", cls="row"):
+    for row in (row for image in images for row in image.find_all("g", cls="row")):
         rail = float(row.attrs["data-rail"])
         for cut in row.find_all("g", cls="cut_site"):
             if "label" in cut.attrs["class"].split():
@@ -879,47 +981,57 @@ def test_past_its_limit_a_page_leaves_out_the_sequence_view_and_its_switch(
 
 
 @pytest.mark.parametrize(
-    ("record", "region", "bases_per_row"), [("gfp", None, 60), ("puc19", (2679, 2696), 10)]
+    ("record", "region", "widths"),
+    [
+        ("gfp", None, [60, 30]),
+        ("puc19", (2679, 2696), [10, 5]),
+        ("gfp", (0, 100), [45, 23]),
+        ("puc19", (2679, 2696), [1]),
+    ],
 )
-def test_each_row_says_which_bases_it_holds_and_where_its_strands_lie(
-    request: pytest.FixtureRequest,
-    tmp_path: Path,
+def test_each_row_at_either_width_says_which_bases_it_holds_and_where_its_strands_lie(
+    pages: Callable[..., Written],
     record: str,
     region: tuple[int, int] | None,
-    bases_per_row: int,
+    widths: list[int],
 ) -> None:
-    drawn: SequenceRecord = request.getfixturevalue(record)
-    drawing = draw_map(drawn, region=region, sequence_view=True, bases_per_row=bases_per_row)
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-    [whole] = view.find_all("g", cls="rows")
-    length, cell = int(whole.attrs["data-length"]), float(whole.attrs["data-cell"])
-    assert (length, cell) == (len(drawn), sequence_view.CELL)
-    rows = whole.find_all("g", cls="row")
-    held = [(int(row.attrs["data-start"]), int(row.attrs["data-end"])) for row in rows]
-    assert (held[0][0], held[-1][1]) == (region or (0, len(drawn)))
-    assert all(before[1] == after[0] for before, after in pairwise(held))
-    for row, (first, last) in zip(rows, held, strict=True):
-        [top] = row.find_all("g", cls="top")
-        [bases] = top.find_all("text")
-        assert bases.text == "".join(drawn.sequence[at % length] for at in range(first, last))
-        # Each base lies in the cell its index along the row counts to.
-        places = [float(x) for x in bases.attrs["x"].split()]
-        assert [int(x // cell) for x in places] == list(range(last - first))
-        # Its last base is numbered as the page reads a position.
-        assert _texts(row, "position") == [str((last - 1) % length + 1)]
-        [bottom] = [group for group in row.find_all("g", cls="strand") if group is not top]
-        [complement] = bottom.find_all("text")
-        assert (
-            float(row.attrs["data-top"])
-            < float(bases.attrs["y"])
-            < float(row.attrs["data-rail"])
-            < float(complement.attrs["y"])
-            <= float(row.attrs["data-bottom"])
-        )
+    drawing, _, page = pages(record, region=region, sequence_view=True, bases_per_row=widths[0])
+    drawn = drawing.record
+    views = _views(page)
+    # Full rows show first; rows half as long, rounded up, hide until a page is too narrow for them.
+    assert list(views) == widths
+    assert ["hidden" in view.attrs for view in views.values()] == [False, True][: len(widths)]
+    for bases_per_row, view in views.items():
+        [whole] = view.find_all("g", cls="rows")
+        length, cell = int(whole.attrs["data-length"]), float(whole.attrs["data-cell"])
+        assert (length, cell) == (len(drawn), sequence_view.CELL)
+        rows = whole.find_all("g", cls="row")
+        held = [(int(row.attrs["data-start"]), int(row.attrs["data-end"])) for row in rows]
+        assert (held[0][0], held[-1][1]) == (region or (0, len(drawn)))
+        assert all(before[1] == after[0] for before, after in pairwise(held))
+        assert all(last - first == bases_per_row for first, last in held[:-1])
+        for row, (first, last) in zip(rows, held, strict=True):
+            [top] = row.find_all("g", cls="top")
+            [bases] = top.find_all("text")
+            assert bases.text == "".join(drawn.sequence[at % length] for at in range(first, last))
+            # Each base lies in the cell its index along the row counts to.
+            places = [float(x) for x in bases.attrs["x"].split()]
+            assert [int(x // cell) for x in places] == list(range(last - first))
+            # Its last base is numbered as the page reads a position.
+            assert _texts(row, "position") == [str((last - 1) % length + 1)]
+            [bottom] = [group for group in row.find_all("g", cls="strand") if group is not top]
+            [complement] = bottom.find_all("text")
+            assert (
+                float(row.attrs["data-top"])
+                < float(bases.attrs["y"])
+                < float(row.attrs["data-rail"])
+                < float(complement.attrs["y"])
+                <= float(row.attrs["data-bottom"])
+            )
 
 
 def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases_as_asked(
-    gfp: SequenceRecord, tmp_path: Path
+    gfp: SequenceRecord, pages: Callable[..., Written], tmp_path: Path
 ) -> None:
     rows = _rows(
         _page(draw_map(gfp, sequence_view=True, bases_per_row=100), tmp_path / "a.html")[1]
@@ -935,8 +1047,8 @@ def test_each_row_shows_a_ruler_both_strands_and_its_last_position_as_many_bases
     assert _texts(rows[-1], "position") == ["717"]
     [bar] = rows[0].find_all("g", data_kind="feature")
     assert (bar.attrs["data-name"], bar.attrs["data-span"]) == ("GFP", "1 .. 717")
-    drawing = draw_map(gfp, sequence_view=True, both_strands=False)
-    one = _rows(_page(drawing, tmp_path / "b.html")[1])
+    drawing, _, page = pages("gfp", sequence_view=True, both_strands=False)
+    one = _rows(page)
     assert len(one) == 12
     assert _texts(one[0], "top") == [gfp.sequence[:60]]
     # The page carries the bottom strand for its toggle to show, and a PNG or a PDF leaves it out.
@@ -982,7 +1094,7 @@ def _three_letters(protein: str) -> list[str]:
 
 
 def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
-    puc19: SequenceRecord, colour_test: Drawing, tmp_path: Path
+    puc19: SequenceRecord, colour_test: Drawing, puc19_page: tuple[str, Node]
 ) -> None:
     drawing = draw_map(puc19, sequence_view=True)
     for feature in (one for one in puc19.features if one.type == "CDS"):
@@ -993,7 +1105,8 @@ def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
     joined = draw_map(colour_test.record, sequence_view=True)
     [split] = [one for one in colour_test.record.features if one.name == "split"]
     assert _amino_acids(joined, "split") == _three_letters(str(split.qualifiers["translation"][0]))
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
+    # The page carries the view whether or not it shows first.
+    [view] = puc19_page[1].find_all("figure", cls="sequence-view")
     fills = {
         text.attrs["fill"]
         for group in view.find_all("g", cls="translation")
@@ -1003,10 +1116,9 @@ def test_every_cds_shows_its_three_letter_translation_as_snapgene_translates_it(
 
 
 def test_a_regions_sequence_view_keeps_the_records_numbering_across_the_origin(
-    puc19: SequenceRecord, tmp_path: Path
+    puc19: SequenceRecord, pages: Callable[..., Written]
 ) -> None:
-    drawing = draw_map(puc19, region=(2679, 2696), sequence_view=True, bases_per_row=10)
-    rows = _rows(_page(drawing, tmp_path / "map.html")[1])
+    rows = _rows(pages("puc19", region=(2679, 2696), sequence_view=True, bases_per_row=10)[2])
     assert [_texts(row, "top") for row in rows] == [
         [puc19.sequence[2679:] + puc19.sequence[:3]],
         [puc19.sequence[3:10]],
@@ -1063,17 +1175,8 @@ def test_the_sequence_view_takes_the_maps_enzymes_layers_and_feature_types(
         "cut_site": set(switches.get("enzymes", ["EcoRI", "HindIII"])),
     }
     page = _page(drawing, tmp_path / "map.html")[1]
-    [view] = page.find_all("figure", cls="sequence-view")
-    found: dict[str, set[str]] = {}
-    switched: dict[str, set[str]] = {}
-    for group in view.find_all("g"):
-        if "data-kind" in group.attrs:
-            kind, name = group.attrs["data-kind"], group.attrs["data-name"]
-            found.setdefault(kind, set()).add(name)
-            if "off" in group.attrs["class"].split():
-                switched.setdefault(kind, set()).add(name)
-    assert (found, switched) == (everything, off)
-    # Each item is known by the same details in both views, for a switch or a click to reach.
+    # Each item is known by the same details in both views, and at each row width, for a switch or
+    # a click to reach.
     details = ["data-kind", "data-name", "data-type", "data-span", "data-length"]
 
     def known(figure: Node) -> set[tuple[str | None, ...]]:
@@ -1083,7 +1186,19 @@ def test_the_sequence_view_takes_the_maps_enzymes_layers_and_feature_types(
             if "data-kind" in group.attrs
         }
 
-    assert known(view) == known(_map(page))
+    views = _views(page)
+    assert len(views) == 2
+    for view in views.values():
+        found: dict[str, set[str]] = {}
+        switched: dict[str, set[str]] = {}
+        for group in view.find_all("g"):
+            if "data-kind" in group.attrs:
+                kind, name = group.attrs["data-kind"], group.attrs["data-name"]
+                found.setdefault(kind, set()).add(name)
+                if "off" in group.attrs["class"].split():
+                    switched.setdefault(kind, set()).add(name)
+        assert (found, switched) == (everything, off)
+        assert known(view) == known(_map(page))
     # A PNG or a PDF draws only what shows.
     assert drawing.sequence_view is not None
     drawn = {
@@ -1105,8 +1220,8 @@ def test_the_sequence_view_stacks_the_names_at_one_cut_bold_where_one_cuts_once(
     drawing = draw_map(
         puc19, region=(660, 720), sequence_view=True, enzymes=["SapI", "BspQI", "BsaI"]
     )
-    [view] = _page(drawing, tmp_path / "map.html")[1].find_all("figure", cls="sequence-view")
-    assert _labels(view, "cut_site") == [[("BspQI", "700"), ("SapI", "700")]]
+    for view in _views(_page(drawing, tmp_path / "map.html")[1]).values():
+        assert _labels(view, "cut_site") == [[("BspQI", "700"), ("SapI", "700")]]
 
 
 def test_the_sequence_view_draws_each_primers_tail_and_mismatches_where_snapgene_binds_it(
@@ -1143,19 +1258,20 @@ def test_a_row_of_no_bases_is_refused(gfp: SequenceRecord, bases_per_row: int) -
         draw_map(gfp, sequence_view=True, bases_per_row=bases_per_row)
 
 
-@pytest.mark.parametrize("opened", [False, True], ids=["circle", "line"])
+@pytest.mark.parametrize("shape", ["circle", "line"])
 def test_a_crowded_map_hides_cut_sites_before_the_primer_among_them_and_says_what_it_hid(
-    tmp_path: Path, opened: bool
+    pages: Callable[..., Written], shape: str
 ) -> None:
-    drawing = draw_map(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"], linear=opened)
-    hidden = drawing.hidden
+    enzymes = ["EcoRI", "HindIII"]
+    hidden = draw_map(crowds.ecori_crowd(), enzymes=enzymes, linear=shape == "line").hidden
     assert hidden
     assert {(item.kind, item.name) for item in hidden} == {("cut_site", "EcoRI")}
     # Labels of one length hide in the record's order.
     cuts = [item.spans[0].start for item in hidden]
     assert cuts == sorted(cuts)
     assert set(cuts) < set(range(101, 500, 8))
-    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    # The page carries both shapes, whichever it shows first.
+    page = _shapes(pages("crowd", enzymes=enzymes)[2])[shape].find_all("svg")[0]
     [notice] = page.find_all("g", cls="notice")
     assert notice.text == f"{len(hidden)} enzyme sites are hidden"
     assert json.loads(notice.attrs["data-hidden"]) == [
@@ -1216,7 +1332,8 @@ def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pd
     record, whole = primed_crowd
     drawing = draw_map(record, enzymes=["EcoRI", "HindIII"], **switches)
     assert layers.notice(drawing.hidden) == in_a_pdf
-    page = _map(_page(drawing, tmp_path / "map.html")[1])
+    # With every switch on, the page is the one the fixture wrote.
+    page = _map(_page(drawing, tmp_path / "map.html")[1]) if switches else whole
     [notice] = page.find_all("g", cls="notice")
     assert ("off" in notice.attrs["class"].split()) == (not on_the_page)
     if on_the_page:

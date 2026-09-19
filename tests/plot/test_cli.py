@@ -20,10 +20,10 @@ from . import crowds
 
 
 def _shown(page: Path) -> Node:
-    """The map a page shows first."""
+    """The map a page shows first: the shape shown first, unzoomed."""
     tree = parse(page.read_text(encoding="utf-8"))
     [shown] = [shape for shape in tree.find_all("div", cls="shape") if "hidden" not in shape.attrs]
-    return shown
+    return shown.find_all("svg")[0]
 
 
 def _groups(page: Path) -> list[Node]:
@@ -38,16 +38,6 @@ def _groups(page: Path) -> list[Node]:
 def _run(*arguments: str) -> tuple[int, list[str]]:
     result = CliRunner().invoke(app, ["plot", "map", *arguments])
     return result.exit_code, re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
-
-
-def test_the_command_writes_the_page_and_prints_the_file_written(
-    puc19_file: Path, tmp_path: Path
-) -> None:
-    out = tmp_path / "pUC19.html"
-    code, lines = _run(str(puc19_file), "-o", str(out))
-    assert code == 0
-    assert lines == [str(out)]
-    assert "<svg" in out.read_text(encoding="utf-8")
 
 
 def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
@@ -67,8 +57,9 @@ def test_the_command_writes_each_format_asked_for_laying_the_map_out_once(
     code, lines = _run(str(puc19_file), *(f"--output={out}" for out in outs), "--dpi", "18")
     assert code == 0
     assert lines == [str(out) for out in outs]
-    # The page carries the line too; every item shows, so the circle is the PNG's and the PDF's.
-    assert layouts == {circular.__name__: 1, linear.__name__: 1}
+    # The page carries the line too, at each step of its zoom; every item shows, so the circle is
+    # the PNG's and the PDF's.
+    assert layouts == {circular.__name__: 1, linear.__name__: 4}
     assert "<svg" in outs[0].read_text(encoding="utf-8")
     width = struct.unpack(">I", outs[1].read_bytes()[16:20])[0]
     assert width == pytest.approx(extent.width * 18 / 72, abs=1)
@@ -212,7 +203,8 @@ def test_the_command_draws_the_sequence_view_in_rows_of_the_bases_asked_for_on_o
     )
     assert (code, lines) == (0, [str(out)])
     [view] = parse(out.read_text(encoding="utf-8")).find_all("figure", cls="sequence-view")
-    rows = view.find_all("g", cls="row")
+    [shown] = [one for one in view.find_all("div", cls="row-width") if "hidden" not in one.attrs]
+    rows = shown.find_all("g", cls="row")
     assert [row.find_all("g", cls="top")[0].text for row in rows] == [
         gfp.sequence[start : start + 100] for start in range(0, len(gfp), 100)
     ]
