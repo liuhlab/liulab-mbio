@@ -1,0 +1,1298 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/ligation-fidelity/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Ligation fidelity data: sources, licence, and how a set of overhangs is scored - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ligation-fidelity-data-sources-licence-and-how-a-set-of-overhangs-is-scored" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Ligation fidelity data: sources, licence, and how a set of overhangs is scored
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-data-file-holds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. What the data file holds
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Licences
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Licences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pryor-et-al-2020-cc-by-40-so-it-ships" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pryor et al. 2020: CC BY 4.0, so it ships
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#potapov-et-al-2018-cc-by-nc-so-it-does-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Potapov et al. 2018: CC BY-NC, so it does not
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neb-cited-never-mirrored" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        NEB: cited, never mirrored
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-reading-the-workbooks-without-a-spreadsheet-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Reading the workbooks without a spreadsheet library
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-which-way-round-the-matrix-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Which way round the matrix is
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-fidelity-as-the-paper-defines-it-and-as-the-code-computes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Fidelity, as the paper defines it and as the code computes it
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Fidelity, as the paper defines it and as the code computes it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#this-was-checked-against-the-papers-own-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        This was checked against the paper's own numbers
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-thresholds-are-on-normalised-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The thresholds are on normalised counts
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-overhang-rules-and-who-says-so" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. The overhang rules, and who says so
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-fallback-for-an-enzyme-nobody-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. The fallback for an enzyme nobody measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-a-matrix-the-user-holds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. A matrix the user holds
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. A matrix the user holds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-the-archive-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Where the archive is
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pointing-the-tool-at-a-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pointing the tool at a copy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-report-then-says" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the report then says
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-regeneration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Regeneration
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="ligation-fidelity-data-sources-licence-and-how-a-set-of-overhangs-is-scored">Ligation fidelity data: sources, licence, and how a set of overhangs is scored<a class="headerlink" href="#ligation-fidelity-data-sources-licence-and-how-a-set-of-overhangs-is-scored" title="Permanent link">&para;</a></h1>
+<p>Research note for issues #11 and #18. Everything below was retrieved on <strong>2026-09-12</strong>. It records where
+<code>src/liulab_mbio/data/ligation_fidelity.json</code> comes from, what its licence allows, how the
+shipped matrices are read, and which overhang rules the code applies and on whose authority.</p>
+<p>Issue #4's note (<code>docs/research/golden-gate-assembly.md</code>, section 4) surveyed the field and drew
+the licence line. This note carries out what it decided and records what could be checked
+against the paper's own published numbers.</p>
+<h2 id="1-what-the-data-file-holds">1. What the data file holds<a class="headerlink" href="#1-what-the-data-file-holds" title="Permanent link">&para;</a></h2>
+<p>One file, <code>ligation_fidelity.json</code>, read with <code>importlib.resources</code> by
+<code>liulab_mbio.overhangs</code>. It holds five count matrices, one per enzyme, plus the
+attribution every copy of the data has to carry.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td>citation, DOI, download address, retrieval date, copyright, licence, licence text</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td>what the matrix is, stated in the file so a reader need not find the code first</td>
+</tr>
+<tr>
+<td><code>matrices[].enzyme</code></td>
+<td>the name this package ships the enzyme under</td>
+</tr>
+<tr>
+<td><code>matrices[].product</code></td>
+<td>the supplier's product the measurement used, such as BsaI-HFv2</td>
+</tr>
+<tr>
+<td><code>matrices[].table</code>, <code>.file</code>, <code>.sheet</code></td>
+<td>which supplementary table, file and sheet it came from</td>
+</tr>
+<tr>
+<td><code>matrices[].overhang_length</code></td>
+<td>4, or 3 for SapI</td>
+</tr>
+<tr>
+<td><code>matrices[].cycling_celsius</code></td>
+<td>the two temperatures that reaction was cycled between</td>
+</tr>
+<tr>
+<td><code>matrices[].observations</code></td>
+<td>every ligation event the matrix counts</td>
+</tr>
+<tr>
+<td><code>matrices[].counts</code></td>
+<td>the matrix itself, sparse</td>
+</tr>
+</tbody>
+</table>
+<p>The five, as built:</p>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Product</th>
+<th>Overhangs</th>
+<th>Cycling</th>
+<th>Observations</th>
+<th>Non-zero cells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>BsaI-HFv2</td>
+<td>256 of 4 nt</td>
+<td>37 / 16 °C</td>
+<td>203,364</td>
+<td>4,005</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>BsmBI-v2</td>
+<td>256 of 4 nt</td>
+<td>42 / 16 °C</td>
+<td>219,378</td>
+<td>4,130</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Esp3I</td>
+<td>256 of 4 nt</td>
+<td>37 / 16 °C</td>
+<td>224,222</td>
+<td>4,051</td>
+</tr>
+<tr>
+<td>S4</td>
+<td>BbsI-HF</td>
+<td>256 of 4 nt</td>
+<td>37 / 16 °C</td>
+<td>189,282</td>
+<td>4,230</td>
+</tr>
+<tr>
+<td>S5</td>
+<td>SapI</td>
+<td>64 of 3 nt</td>
+<td>37 / 16 °C</td>
+<td>172,332</td>
+<td>739</td>
+</tr>
+</tbody>
+</table>
+<p>The full matrices are 256 x 256 and 64 x 64, which is 266,240 cells holding 17,155 non-zero
+counts. <strong>The shipped file is sparse</strong>: a pair never observed is absent rather than written as
+a zero, and each row is written on one line so a change to the data reads as a change to a row.
+That is the whole of the format, and the file says so in its own <code>format</code> field.</p>
+<h2 id="2-licences">2. Licences<a class="headerlink" href="#2-licences" title="Permanent link">&para;</a></h2>
+<h3 id="pryor-et-al-2020-cc-by-40-so-it-ships">Pryor et al. 2020: CC BY 4.0, so it ships<a class="headerlink" href="#pryor-et-al-2020-cc-by-40-so-it-ships" title="Permanent link">&para;</a></h3>
+<p>The article's own permissions block, from the JATS XML at <code>journals.plos.org</code>:</p>
+<blockquote>
+<p>This is an open access article distributed under the terms of the Creative Commons
+Attribution License, which permits unrestricted use, distribution, and reproduction in any
+medium, provided the original author and source are credited.</p>
+</blockquote>
+<p>The licence is <code>http://creativecommons.org/licenses/by/4.0/</code> and the copyright line is
+<code>Copyright (c) 2020 Pryor et al</code>. Attribution is the only condition, and it is met three times
+over: in the data file's <code>source</code> block, in the module docstring of
+<code>liulab_mbio/overhangs.py</code>, and here.</p>
+<blockquote>
+<p>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020)
+Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized
+assembly design. <em>PLoS One</em> 15(9): e0238592.
+<a href="https://doi.org/10.1371/journal.pone.0238592">doi:10.1371/journal.pone.0238592</a></p>
+</blockquote>
+<p><strong>Verdict: S1-S5 Tables ship</strong>, converted to the sparse form above. The conversion is a format
+change, not a new work: every integer is the integer the spreadsheet holds.</p>
+<h3 id="potapov-et-al-2018-cc-by-nc-so-it-does-not">Potapov et al. 2018: CC BY-NC, so it does not<a class="headerlink" href="#potapov-et-al-2018-cc-by-nc-so-it-does-not" title="Permanent link">&para;</a></h3>
+<p>Both 2018 papers and the figshare Supporting Data are CC BY-NC 4.0. A non-commercial term
+cannot be honoured by an MIT-licensed package, so <strong>none of that data ships</strong>. It is cited
+where it is the authority for something:</p>
+<ul>
+<li>The measurement that the two-mismatch rule is stricter than it needs to be.</li>
+<li>The junction 6 (<code>GCCG</code>/<code>CGGC</code>) truncation, which is why an overhang of one base kind is
+  refused here even though the fidelity data alone would pass it.</li>
+<li>The normalisation to 100,000 ligation events that NEB's thresholds are stated in.</li>
+<li>The ready-made high-fidelity overhang sets of its Table 1, which are short factual lists
+  reproduced with citation in a test, not bulk data.</li>
+</ul>
+<p>The analysis code at <code>github.com/potapovneb/ligase-fidelity</code> is AGPL-3.0 and was not read into
+this package.</p>
+<h3 id="neb-cited-never-mirrored">NEB: cited, never mirrored<a class="headerlink" href="#neb-cited-never-mirrored" title="Permanent link">&para;</a></h3>
+<p>The Ligase Fidelity Viewer help page supplies the two thresholds and the statement of which
+axis is which. Those are facts read from a cited page, in the same position issue #7 took for
+the enzyme properties: no NEB file, page or table is redistributed.</p>
+<h2 id="3-reading-the-workbooks-without-a-spreadsheet-library">3. Reading the workbooks without a spreadsheet library<a class="headerlink" href="#3-reading-the-workbooks-without-a-spreadsheet-library" title="Permanent link">&para;</a></h2>
+<p>An <code>.xlsx</code> is a zip of XML, so <code>scripts/build_ligation_fidelity.py</code> reads the three parts it
+needs with <code>zipfile</code> and <code>xml.etree</code> and <strong>no dependency is added</strong>: <code>xl/workbook.xml</code> for the
+sheet name, <code>xl/sharedStrings.xml</code> for the labels, and <code>xl/worksheets/sheet1.xml</code> for the
+cells. Labels are shared strings and counts are numbers; a cell of any other type is refused
+rather than guessed at.</p>
+<p>Two guards, because a mis-mapped table would be silent and wrong:</p>
+<ul>
+<li>The sheet name must carry the product the table is supposed to measure. The five sheets are
+  named <code>S1 Table. BsaI-HFv2</code>, <code>Table S2. BsmBI-v2</code>, <code>Table S3. Esp3I</code>, <code>Table S4. BbsI-HF</code>
+  and <code>Table S5. SapI</code>, so this is a real check and not a formality.</li>
+<li>Every row label must be an overhang of the length that enzyme leaves, which is what catches
+  a four-base table served where the three-base one was asked for.</li>
+</ul>
+<p>A cell is placed by the letters of its reference, not by its position in the row: a row omits
+the cells it has no count for, so counting along the row would shift every column after the
+first gap.</p>
+<h2 id="4-which-way-round-the-matrix-is">4. Which way round the matrix is<a class="headerlink" href="#4-which-way-round-the-matrix-is" title="Permanent link">&para;</a></h2>
+<p>From NEB's Ligase Fidelity Viewer help page:</p>
+<blockquote>
+<p>Overhangs in rows correspond to top strand. Overhangs in columns correspond to bottom strand.
+Overhangs are always written 5' to 3'.</p>
+</blockquote>
+<p>So <strong>the Watson-Crick entry of a row is the column spelling its reverse complement</strong>, and the
+cell where a row meets the column of the same name is a mispair. Row <code>TTTT</code> against column
+<code>AAAA</code> holds 635 in the BsaI table while row <code>TTTT</code> against column <code>TTTT</code> holds 4. Getting this
+backwards would read every fidelity as near zero, which is why a test pins it.</p>
+<h2 id="5-fidelity-as-the-paper-defines-it-and-as-the-code-computes-it">5. Fidelity, as the paper defines it and as the code computes it<a class="headerlink" href="#5-fidelity-as-the-paper-defines-it-and-as-the-code-computes-it" title="Permanent link">&para;</a></h2>
+<p>Pryor 2020, Methods, verbatim:</p>
+<blockquote>
+<p>Fidelity F for a set of n overhangs {O1, O2, O3, ..., On}, was defined as a probability that
+all overhangs in the set ligate correctly to their WC pair. Fidelity estimates the fraction
+of correctly ligated products when using a given set of overhangs in Golden Gate assembly and
+was computed as follows: F = p(O1) x p(O2) x p(O3) x p(On), where p(Oi) is the probability of
+overhang Oi ligating correctly to its WC pair in a given set of overhangs.</p>
+</blockquote>
+<p>The paper leaves one thing for a reader to work out: which cells of the matrix p(Oi) is a ratio
+of. A junction is one thing with two ends. One end presents its overhang on the top strand, a
+row; the other presents the reverse complement on the bottom strand, a column. <strong>Both ends are
+counted</strong>, and the set of columns a reaction offers is the set of overhangs closed under
+reverse complement, which is also what the Viewer means by "Complementary (reverse) overhangs
+are automatically added to the query".</p>
+<p>So, for a junction with top-strand overhang O and partner O' = reverse complement of O, over a
+query set Q closed under reverse complement:</p>
+<div class="highlight"><pre><span></span><code>p(O) = (count[O][O'] + count[O'][O]) / sum over c in Q of (count[O][c] + count[O'][c])
+F    = product of p(O) over the junctions
+</code></pre></div>
+<h3 id="this-was-checked-against-the-papers-own-numbers">This was checked against the paper's own numbers<a class="headerlink" href="#this-was-checked-against-the-papers-own-numbers" title="Permanent link">&para;</a></h3>
+<p>Counting only one end of each junction gives 76% where the paper says 81%; counting both gives
+81%. Three of the paper's published examples come back exactly, which is the evidence that the
+formula, the axis orientation and the parsing are all right together:</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Paper</th>
+<th>Computed here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11 plant overhangs, BsmBI-v2, 42/16 (Fig 4A)</td>
+<td>81%</td>
+<td>80.93%</td>
+</tr>
+<tr>
+<td>the same set without the <code>GGTA</code>/<code>TACT</code> mispair (Fig 4A)</td>
+<td>92%</td>
+<td>92.11%</td>
+</tr>
+<tr>
+<td>the same set extended to 20 by GetSet (Fig 4B)</td>
+<td>80%</td>
+<td>80.48%</td>
+</tr>
+</tbody>
+</table>
+<p>The paper also names the worst mispair of the plant set, <code>5'-GGTA</code>/<code>5'-TACT</code>, and that pair is
+what this code reports first, at 22.8 ligations per 100,000 events against 8.7 for the next.</p>
+<p><strong>Two of the paper's numbers do not come back exactly</strong>, and neither is guessed at or tuned
+for. Both are from the table of GetSet-generated sets used for the lac assemblies rather than
+from the worked example:</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Paper</th>
+<th>Computed here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>13 SapI three-base overhangs</td>
+<td>79%</td>
+<td>77.45%</td>
+</tr>
+<tr>
+<td>35 BsmBI-v2 overhangs</td>
+<td>65%</td>
+<td>61.06%</td>
+</tr>
+</tbody>
+</table>
+<p>Those sets were generated for an assembly that also carries a destination plasmid junction, so
+the reaction they were scored in holds at least one overhang the table does not list. That is
+the likeliest reading and it is <strong>not</strong> confirmed, so it is recorded here rather than worked
+around. The three exact reproductions are the ones the tests pin.</p>
+<h3 id="the-thresholds-are-on-normalised-counts">The thresholds are on normalised counts<a class="headerlink" href="#the-thresholds-are-on-normalised-counts" title="Permanent link">&para;</a></h3>
+<p>The Viewer's help page calls a Watson-Crick pair <strong>strong</strong> above 100 normalised ligations and
+a mismatch <strong>trace</strong> below 10, <strong>modest</strong> between 10 and 100, and <strong>high-count</strong> above 100.
+Those numbers are per 100,000 ligation events, the scale Potapov 2018 normalises to, and not
+counts in one matrix's own total, which is why <code>LigationMatrix.normalised</code> exists.</p>
+<p>A measurement worth recording, pinned by a test: <strong>no Watson-Crick pair in any of the five
+shipped matrices is weak.</strong> The lowest normalised pair sits just above the threshold, so
+<code>FidelityReport.weak</code> is empty for every set scored on shipped data. A weak pair would be news.</p>
+<h2 id="6-the-overhang-rules-and-who-says-so">6. The overhang rules, and who says so<a class="headerlink" href="#6-the-overhang-rules-and-who-says-so" title="Permanent link">&para;</a></h2>
+<p>Pryor 2020 states the conventional rules and then shows they are the wrong abstraction:</p>
+<blockquote>
+<p>avoiding use of palindromic overhang sequences or the same overhang pair more than once in an
+assembly reaction. In addition, most modular cloning systems also require that
+non-complementary overhang sequences have at least 2 mispaired bases. Moreover, overhangs
+that contain 100% A/T or G/C content are also often avoided.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it refuses</th>
+<th>Source</th>
+<th>Dial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>length</code></td>
+<td>anything but the enzyme's own overhang length in A, C, G, T</td>
+<td>the enzyme record</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>palindrome</code></td>
+<td>an overhang reading the same on both strands</td>
+<td>NEB: overhangs are designed "non-palindromic (to eliminate self insert ligations)"</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>repeat</code></td>
+<td>an overhang already taken, or its reverse complement</td>
+<td>Pryor 2020, above; NEB designs overhangs "unique"</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>near-duplicate</code></td>
+<td>fewer than two bases different from another overhang or its reverse complement</td>
+<td>the modular cloning convention Pryor 2020 states</td>
+<td><code>min_distance</code></td>
+</tr>
+<tr>
+<td><code>uniform</code></td>
+<td>an overhang that is all G/C or all A/T</td>
+<td>Pryor 2020, above; Potapov 2018's junction 6 truncation</td>
+<td><code>allow_uniform</code></td>
+</tr>
+<tr>
+<td><code>site</code></td>
+<td>an overhang no primer tail can carry without spelling a second site</td>
+<td><code>liulab_mbio.sites.primer_tail</code></td>
+<td><code>avoid</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The distance rule is two bases and it is an argument.</strong> Potapov 2018 measured the convention
+as stricter than it needs to be:</p>
+<blockquote>
+<p>it is not necessary to ensure all overhangs have at least two bases different from all other
+overhangs, as many pairs with only a single base difference ... form very few if any mismatch
+ligation products with each other.</p>
+</blockquote>
+<p>So it stays the default, because it is what the modular cloning standards require and what
+makes a set portable, and it is the one rule a caller can lower. The data is the better
+authority on any particular pair, and that is what <code>fidelity</code> is for: the rules pick a set
+quickly, and the score says whether that set is any good.</p>
+<p>Composition is not a rule beyond <code>uniform</code>. Pryor 2020 measured that efficiency is not a
+function of composition at all:</p>
+<blockquote>
+<p>the relative efficiency of each Watson-Crick pair was not simply a function of GC content,
+and thus, difficult to predict based on the sequence composition alone.</p>
+</blockquote>
+<p>So the 25%-GC heuristic that some systems apply is <strong>not</strong> implemented. <code>uniform</code> survives
+because Potapov 2018 saw a real failure at an all-GC junction, a 23% drop in connections at
+junction 6, and that is a truncation the fidelity data does not predict.</p>
+<p>Where a matrix exists, free candidates are <strong>ordered</strong> by the strength of their own
+Watson-Crick pair, so a design takes the best overhang that passes the rules rather than the
+first one in alphabetical order. Ordering, not refusing: a weak pair is never forbidden, which
+matters for a scarless junction, where the sequence chooses the overhang and not the designer.</p>
+<h2 id="7-the-fallback-for-an-enzyme-nobody-measured">7. The fallback for an enzyme nobody measured<a class="headerlink" href="#7-the-fallback-for-an-enzyme-nobody-measured" title="Permanent link">&para;</a></h2>
+<p>PaqCI, AarI, BspQI, BpiI and BtgZI have no published matrix. Their overhangs are scored by the
+rules instead, and <code>FidelityReport.measured</code> is <code>False</code> so that nothing mistakes the number for
+a measurement.</p>
+<p>The two weights, 0.05 for each near-duplicate partner and 0.02 for an overhang of one base
+kind, are <strong>ranking choices and not measurements</strong>. They are module constants saying so. A set
+scored this way compares with another set scored this way and with nothing else; it must never
+be printed beside a measured fidelity as though the two were the same kind of number.</p>
+<p>A tempting alternative was rejected: scoring PaqCI on BsaI's matrix, on the argument that
+ligation fidelity belongs to T4 ligase and the cycling temperature rather than to the Type IIS
+enzyme. It is a reasonable argument and it is still a substitution of one enzyme's measurement
+for another's, so <code>choose_enzyme</code> prefers an enzyme that has its own matrix instead, and says
+so in its ranking. Section 8 does the different thing that argument actually licenses: score the
+overhangs against a measurement of <strong>the ligase itself</strong>, and label the number as the ligase's
+and not the enzyme's.</p>
+<h2 id="8-a-matrix-the-user-holds">8. A matrix the user holds<a class="headerlink" href="#8-a-matrix-the-user-holds" title="Permanent link">&para;</a></h2>
+<p>Potapov 2018 covers what Pryor does not. It profiled <strong>T4 DNA ligase itself</strong> across all 256
+four-base overhangs, at 25 °C and at 37 °C, for 1 hour and for 18 hours, and T7 ligase besides.
+Ligation is the ligase's work, so that data speaks to every Type IIS enzyme, including the ones
+nobody has measured.</p>
+<p><strong>It is CC BY-NC 4.0, so none of it is here.</strong> No file from that archive is in this repository,
+no test fixture is copied from it, and no number of it is transcribed into the code or the tests.
+The package reads a matrix from a file <strong>the user already holds</strong>, so nothing is redistributed
+and nothing needs licence marking. Whoever downloads the archive accepts its terms themselves.</p>
+<h3 id="where-the-archive-is">Where the archive is<a class="headerlink" href="#where-the-archive-is" title="Permanent link">&para;</a></h3>
+<p>figshare item 7267505, <code>sb8b00333_si_002.zip</code>, the Supporting Data of
+<a href="https://doi.org/10.1021/acssynbio.8b00333">doi:10.1021/acssynbio.8b00333</a>. Six of its files are
+count matrices over every overhang pair, one per condition:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Ligase</th>
+<th>Incubation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FileS01_T4_01h_25C.xlsx</code></td>
+<td>T4</td>
+<td>1 h at 25 °C</td>
+</tr>
+<tr>
+<td><code>FileS02_T4_01h_37C.xlsx</code></td>
+<td>T4</td>
+<td>1 h at 37 °C</td>
+</tr>
+<tr>
+<td><code>FileS03_T4_18h_25C.xlsx</code></td>
+<td>T4</td>
+<td>18 h at 25 °C</td>
+</tr>
+<tr>
+<td><code>FileS04_T4_18h_37C.xlsx</code></td>
+<td>T4</td>
+<td>18 h at 37 °C</td>
+</tr>
+<tr>
+<td><code>FileS06_T7_18h_25C.csv</code></td>
+<td>T7</td>
+<td>18 h at 25 °C</td>
+</tr>
+<tr>
+<td><code>FileS08_T7_18h_37C.csv</code></td>
+<td>T7</td>
+<td>18 h at 37 °C</td>
+</tr>
+</tbody>
+</table>
+<p><code>FileS03</code> is the one to reach for, because NEB's own Viewer defaults to it: "The default
+conditions are ligation at 25°C for 18 hours; these conditions have been shown to well predict
+the results of Golden Gate assembly using typical cycled conditions."</p>
+<p>The <code>*_cycled</code> files in the same archive are <strong>per-assembly summaries, not matrices</strong>. They are
+refused rather than read as fidelity data, because their labels are assembly compositions and
+not overhangs.</p>
+<h3 id="pointing-the-tool-at-a-copy">Pointing the tool at a copy<a class="headerlink" href="#pointing-the-tool-at-a-copy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">liulab_mbio.cloning.goldengate</span><span class="w"> </span><span class="kn">import</span> <span class="n">plan_assembly</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">liulab_mbio.ligase</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_profile</span>
+
+<span class="n">profile</span> <span class="o">=</span> <span class="n">read_profile</span><span class="p">(</span><span class="s2">"~/potapov/FileS03_T4_18h_25C.xlsx"</span><span class="p">)</span>
+<span class="n">plan_assembly</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">insert</span><span class="p">,</span> <span class="n">enzyme</span><span class="o">=</span><span class="s2">"PaqCI"</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
+</code></pre></div>
+<p>On the command line, as an option or as an environment variable:</p>
+<div class="highlight"><pre><span></span><code>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>goldengate<span class="w"> </span>plan<span class="w"> </span>vector.dna<span class="w"> </span>insert.dna<span class="w"> </span>--out<span class="w"> </span>run<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ligase-matrix<span class="w"> </span>~/potapov/FileS03_T4_18h_25C.xlsx
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">LIULAB_MBIO_LIGASE_MATRIX</span><span class="o">=</span>~/potapov/FileS03_T4_18h_25C.xlsx
+liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>goldengate<span class="w"> </span>plan<span class="w"> </span>vector.dna<span class="w"> </span>insert.dna<span class="w"> </span>--out<span class="w"> </span>run
+</code></pre></div>
+<p>Both shapes load with the standard library alone. An <code>.xlsx</code> is read by the same <code>zipfile</code> and
+<code>xml.etree</code> code the build script uses, which moved into <code>liulab_mbio.ligase</code> so that
+the package and the script share one reader; a <code>.csv</code> is read by <code>csv</code>. <strong>No dependency was
+added.</strong> A file that is not a count matrix is refused with a message saying what one is, rather
+than a stack trace: a header row of overhang labels, the same labels down the first column, and
+a count in each cell.</p>
+<p>The conditions are read off the file name where it is named the way the archive names one, and
+<code>conditions=</code> states them for a file that has been renamed.</p>
+<h3 id="what-the-report-then-says">What the report then says<a class="headerlink" href="#what-the-report-then-says" title="Permanent link">&para;</a></h3>
+<p>A profile belongs to the ligase and the conditions, not to the Type IIS enzyme, and
+<code>FidelityReport</code> keeps the three kinds of number apart:</p>
+<table>
+<thead>
+<tr>
+<th>Scored by</th>
+<th><code>measured</code></th>
+<th><code>enzyme_specific</code></th>
+<th><code>label</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the enzyme's own shipped matrix</td>
+<td><code>True</code></td>
+<td><code>True</code></td>
+<td><code>measured</code></td>
+</tr>
+<tr>
+<td>a ligase profile</td>
+<td><code>True</code></td>
+<td><code>False</code></td>
+<td><code>measured ligase profile, not specific to PaqCI</code></td>
+</tr>
+<tr>
+<td>the rules</td>
+<td><code>False</code></td>
+<td><code>True</code></td>
+<td><code>rule-based estimate</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>source</code> names the conditions and the file, so the protocol cites the file the number came from
+and the overview prints the label beside the percentage. <strong>A ligase profile is never presented as
+a measurement of the enzyme</strong>, and a rule-based score is still never printed beside a measured
+one as though the two were the same kind of number.</p>
+<p>The enzyme's own matrix wins where there is one, because a profile stands in for a measurement
+nobody has made rather than replacing one somebody has. <code>prefer_profile</code> overrides that, for a
+designer who wants one set of conditions across several enzymes.</p>
+<p><strong>Without such a file nothing changes.</strong> PaqCI is scored by the rules exactly as it was before,
+which a test pins.</p>
+<h2 id="9-regeneration">9. Regeneration<a class="headerlink" href="#9-regeneration" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_ligation_fidelity.py<span class="w">            </span><span class="c1"># downloads the five tables</span>
+pixi<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/build_ligation_fidelity.py<span class="w"> </span>--from<span class="w"> </span>DIR<span class="w"> </span><span class="c1"># from files already downloaded</span>
+</code></pre></div>
+<p><code>journals.plos.org</code> serves each table from
+<code>https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0238592.sNNN&amp;type=supplementary</code>,
+redirecting to signed storage, which <code>urllib</code> follows. Nothing else is fetched.</p>
+<p>Tests never touch the network: <code>tests/scripts/test_build_ligation_fidelity.py</code> writes the three XML
+parts of a workbook itself and reads them back, which is also what makes the guards testable.</p>
+<h2 id="10-open-gaps">10. Open gaps<a class="headerlink" href="#10-open-gaps" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why it is missing</th>
+<th>What is done instead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The exact query set NEB's own tool uses</td>
+<td>The Viewer v2 help page is 403 and the v1 page does not spell the arithmetic</td>
+<td>The reading above, checked against three published numbers</td>
+</tr>
+<tr>
+<td>Why two GetSet table sets score 1.5 and 4 points low</td>
+<td>The sets as printed may not be the whole reaction</td>
+<td>Recorded in section 5, untouched</td>
+</tr>
+<tr>
+<td>T7 DNA ligase, and static 25 °C conditions</td>
+<td>Only Potapov 2018 covers them, CC BY-NC</td>
+<td>Not shipped; read from the user's own copy (section 8)</td>
+</tr>
+<tr>
+<td>A matrix for PaqCI, AarI, BspQI, BtgZI</td>
+<td>Nobody has published one</td>
+<td>A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All read on 2026-09-12.</p>
+<ul>
+<li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020)
+  Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized
+  assembly design. <em>PLoS One</em> 15(9): e0238592.
+  <a href="https://doi.org/10.1371/journal.pone.0238592">doi:10.1371/journal.pone.0238592</a> (CC BY 4.0),
+  its JATS XML, and its S1-S5 Tables</li>
+<li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by
+  T4 DNA Ligase and application to DNA assembly. <em>ACS Synth. Biol.</em> 7, 2665-2674.
+  <a href="https://doi.org/10.1021/acssynbio.8b00333">doi:10.1021/acssynbio.8b00333</a> (CC BY-NC 4.0)</li>
+<li>Potapov, V. et al. (2018) A single-molecule sequencing assay for the comprehensive profiling
+  of T4 DNA ligase fidelity and bias during DNA end-joining. <em>Nucleic Acids Res.</em> 46, e79.
+  <a href="https://doi.org/10.1093/nar/gky303">doi:10.1093/nar/gky303</a> (CC BY-NC 4.0)</li>
+<li>NEB, <em>Ligase Fidelity Viewer: Help Page</em>:
+  <a href="https://tools.neb.com/~potapov/ligase-fidelity-viewer/help.html">tools.neb.com</a></li>
+<li>NEB, <em>NEBridge Golden Gate Assembly Kit (BsmBI-v2)</em> instruction manual, NEB #E1602S/L, for
+  what the NEBridge design tool guarantees about the overhangs it picks</li>
+<li>ECMA-376, <em>Office Open XML File Formats</em>, for the three parts of a workbook that hold a sheet</li>
+<li><code>docs/research/golden-gate-assembly.md</code> (issue #4), which drew the licence line this note
+  carries out, and <code>docs/research/restriction-enzyme-data.md</code> (issue #7) for the precedent:
+  ship what the licence allows, cite the rest, and record what is unverified</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

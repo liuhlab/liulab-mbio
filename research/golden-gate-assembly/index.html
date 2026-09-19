@@ -1,0 +1,1970 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/golden-gate-assembly/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Golden Gate assembly with NEBridge, overhang fidelity and other assembly methods - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#golden-gate-assembly-with-nebridge-overhang-fidelity-and-other-assembly-methods" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Golden Gate assembly with NEBridge, overhang fidelity and other assembly methods
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read this note
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-sources-and-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Sources and licences
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-reaction-setup-per-enzyme" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Reaction setup per enzyme
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Reaction setup per enzyme">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-kit-reaction-e1601-and-e1602" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 Kit reaction, E1601 and E1602
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-kit-cycling-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 Kit cycling programs
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-nebridge-ligase-master-mix-m1100-the-per-enzyme-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 NEBridge Ligase Master Mix (M1100) — the per-enzyme table
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-paqci-needs-an-activator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 PaqCI needs an activator
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-home-brew-reactions-individual-enzyme-t4-dna-ligase" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.5 Home-brew reactions (individual enzyme + T4 DNA Ligase)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-per-enzyme-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.6 Per-enzyme properties
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-neb-revisions-to-watch" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two NEB revisions to watch
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-vector-prepared-by-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Vector prepared by PCR
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-overhangs-and-ligation-fidelity" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Overhangs and ligation fidelity
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Overhangs and ligation fidelity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-classic-design-rules-and-their-measured-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.1 The classic design rules, and their measured limits
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-potapov-et-al-2018-acs-synth-biol-7-26652674" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.2 Potapov et al. 2018, <em>ACS Synth. Biol.</em> 7, 2665–2674
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-potapov-et-al-2018-nucleic-acids-research-46-e79-gky303" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.3 Potapov et al. 2018, <em>Nucleic Acids Research</em> 46, e79 (gky303)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-pryor-et-al-2020-plos-one-159-e0238592-the-shippable-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.4 Pryor et al. 2020, <em>PLoS One</em> 15(9): e0238592 — the shippable dataset
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-what-nebs-tools-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.5 What NEB's tools compute
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-transformation-and-screening" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Transformation and screening
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-troubleshooting-from-neb" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Troubleshooting, from NEB
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-other-assembly-methods-briefly" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Other assembly methods, briefly
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-notes-for-the-smoke-test-puc19-gfp" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Notes for the smoke test (pUC19 + GFP)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-implications-for-this-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Implications for this package
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="golden-gate-assembly-with-nebridge-overhang-fidelity-and-other-assembly-methods">Golden Gate assembly with NEBridge, overhang fidelity and other assembly methods<a class="headerlink" href="#golden-gate-assembly-with-nebridge-overhang-fidelity-and-other-assembly-methods" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #4. Everything below was retrieved on <strong>2026-09-12</strong> unless a
+different date is given next to the source.</p>
+<h2 id="how-to-read-this-note">How to read this note<a class="headerlink" href="#how-to-read-this-note" title="Permanent link">&para;</a></h2>
+<p><code>neb.com</code> returns HTTP 403 to both <code>curl</code> and WebFetch for its HTML pages. Three routes work
+and every fact below came from one of them:</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Works</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>neb.com/-/media/nebus/files/manuals/*.pdf</code></td>
+<td>yes (WebFetch)</td>
+<td>kit manuals E1601, E1602</td>
+</tr>
+<tr>
+<td><code>neb.com/-/media/catalog/specifications/*.pdf</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>per-enzyme product specifications</td>
+</tr>
+<tr>
+<td>Wayback snapshots of <code>neb.com</code> HTML</td>
+<td>yes</td>
+<td>product pages, protocol and chart pages</td>
+</tr>
+</tbody>
+</table>
+<p>Values taken from an archived snapshot carry the word <strong>archived</strong> and the snapshot date. That
+date matters: NEB revises these tables, and two of them have already changed (see
+<a href="#two-neb-revisions-to-watch">Two NEB revisions to watch</a>). Anything still unverified is in
+<a href="#10-open-gaps">Open gaps</a> and is never guessed.</p>
+<h2 id="1-sources-and-licences">1. Sources and licences<a class="headerlink" href="#1-sources-and-licences" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Dataset or document</th>
+<th>Licence</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pryor et al. 2020, <em>PLoS One</em>, S1–S5 Tables (xlsx)</td>
+<td>CC BY 4.0</td>
+<td><strong>Yes</strong>, with attribution</td>
+</tr>
+<tr>
+<td>Potapov et al. 2018, <em>ACS Synth. Biol.</em>, Supporting Data (figshare)</td>
+<td>CC BY-NC 4.0</td>
+<td><strong>No</strong> — non-commercial clashes with our MIT licence</td>
+</tr>
+<tr>
+<td>Potapov et al. 2018, <em>Nucleic Acids Research</em> (gky303)</td>
+<td>CC BY-NC 4.0</td>
+<td><strong>No</strong>, same reason</td>
+</tr>
+<tr>
+<td><code>potapovneb/ligase-fidelity</code> analysis scripts</td>
+<td>AGPL-3.0</td>
+<td><strong>No</strong> — do not vendor into an MIT package</td>
+</tr>
+<tr>
+<td>NEB manuals, protocols, charts, specification sheets</td>
+<td>© NEB, all rights reserved</td>
+<td><strong>No</strong> — cite and paraphrase numbers, never redistribute the files</td>
+</tr>
+<tr>
+<td>REBASE enzyme records</td>
+<td>See <a href="#10-open-gaps">Open gaps</a></td>
+<td>Licence statement not found on the pages read</td>
+</tr>
+</tbody>
+</table>
+<p>Licence text, quoted:</p>
+<ul>
+<li>Pryor 2020: "This is an open access article distributed under the terms of the Creative
+  Commons Attribution License, which permits unrestricted use, distribution, and reproduction
+  in any medium, provided the original author and source are credited."
+  (<code>journals.plos.org</code> article XML, <code>&lt;permissions&gt;</code>).</li>
+<li>Potapov 2018 NAR: "This is an Open Access article distributed under the terms of the
+  Creative Commons Attribution Non-Commercial License
+  (<code>http://creativecommons.org/licenses/by-nc/4.0/</code>) …".</li>
+<li>Potapov 2018 ACS Supporting Data: figshare API reports
+  <code>{"name": "CC BY-NC 4.0"}</code> for both items of collection 4283045.</li>
+</ul>
+<h2 id="2-reaction-setup-per-enzyme">2. Reaction setup per enzyme<a class="headerlink" href="#2-reaction-setup-per-enzyme" title="Permanent link">&para;</a></h2>
+<p>NEB ships two different one-pot systems, and they have different tables. Do not mix them.</p>
+<ul>
+<li><strong>Kits</strong> E1601 (BsaI-HFv2) and E1602 (BsmBI-v2): one enzyme mix that already contains
+  T4 DNA Ligase, plus the pGGAselect destination plasmid.</li>
+<li><strong>NEBridge Ligase Master Mix</strong> (M1100), a 3X ligase master mix you combine with <strong>your
+  choice</strong> of NEB Type IIS enzyme. This is the only NEB table that covers BbsI-HF, Esp3I,
+  PaqCI, SapI and BspQI.</li>
+</ul>
+<h3 id="21-kit-reaction-e1601-and-e1602">2.1 Kit reaction, E1601 and E1602<a class="headerlink" href="#21-kit-reaction-e1601-and-e1602" title="Permanent link">&para;</a></h3>
+<p>Both manuals give the same table (E1601 manual v5.0_6/26; E1602 manual):</p>
+<table>
+<thead>
+<tr>
+<th>Reagent</th>
+<th>Assembly reaction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Destination plasmid</td>
+<td>0.05 pmol (pGGAselect = 75 ng = 0.05 pmol)</td>
+</tr>
+<tr>
+<td>Inserts, precloned</td>
+<td>0.05 pmol each</td>
+</tr>
+<tr>
+<td>Inserts, amplicon</td>
+<td>1:1 molar ratio (insert:vector)</td>
+</tr>
+<tr>
+<td>T4 DNA Ligase Buffer (10X)</td>
+<td>2 µl</td>
+</tr>
+<tr>
+<td>NEBridge Golden Gate Enzyme Mix</td>
+<td>1–2 µl</td>
+</tr>
+<tr>
+<td>Nuclease-free water</td>
+<td>to 20 µl</td>
+</tr>
+</tbody>
+</table>
+<p>Footnotes that carry real constraints:</p>
+<ul>
+<li>Enzyme mix volume: "For assemblies ≤ 10 inserts, use 1 µl; for assemblies &gt; 10 inserts, use
+  2 µl."</li>
+<li>Volume: "Can be increased to 25 µl volume if required due to DNA component volumes; add
+  additional 0.5 µl T4 DNA Ligase Buffer (10X)."</li>
+<li>Amplicon inserts "must possess 5´ flanking bases (6 recommended) and BsaI restriction sites
+  at both ends of the amplicon and in the proper orientation."</li>
+<li>Molar conversions: NEB points at NEBioCalculator.</li>
+</ul>
+<h3 id="22-kit-cycling-programs">2.2 Kit cycling programs<a class="headerlink" href="#22-kit-cycling-programs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Insert number</th>
+<th>E1601 (BsaI-HFv2)</th>
+<th>E1602 (BsmBI-v2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 insert</td>
+<td>37 °C 5 min (cloning) or 37 °C 1 h (library) → 60 °C 5 min</td>
+<td>42 °C 5 min (cloning) or 42 °C 1 h (library) → 60 °C 5 min</td>
+</tr>
+<tr>
+<td>2–10 inserts</td>
+<td>(37 °C 1 min → 16 °C 1 min) × 30 → 60 °C 5 min</td>
+<td>(42 °C 1 min → 16 °C 1 min) × 30–60 → 60 °C 5 min</td>
+</tr>
+<tr>
+<td>11–20+ inserts</td>
+<td>(37 °C 5 min → 16 °C 5 min) × 30 → 60 °C 5 min</td>
+<td>(42 °C 5 min → 16 °C 5 min) × 30–60 → 60 °C 5 min</td>
+</tr>
+</tbody>
+</table>
+<p>The 60 °C step is not heat inactivation of the ligase; it is a background-reducing digest.
+NEB, FAQ 10/11 in the two manuals: "The final incubation step at 60°C favors Type IIS
+restriction enzyme cutting, in the absence of DNA ligation. Digesting any uncut or
+cut/religated destination plasmid still present in the assembly reactions reduces
+background."</p>
+<p>More cycles are allowed and help: "efficiency increases dramatically from 30 cycles to 60-65
+cycles, with no loss of fidelity" (E1601 manual, FAQ 14).</p>
+<h3 id="23-nebridge-ligase-master-mix-m1100-the-per-enzyme-table">2.3 NEBridge Ligase Master Mix (M1100) — the per-enzyme table<a class="headerlink" href="#23-nebridge-ligase-master-mix-m1100-the-per-enzyme-table" title="Permanent link">&para;</a></h3>
+<p>Reaction, from the NEB M1100 protocol page (<strong>archived, 2023-03-31</strong>):</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>2-fragment or 3–6 fragment</th>
+<th>7+ fragment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NEBridge Ligase Master Mix</td>
+<td>5 µl</td>
+<td>10 µl</td>
+</tr>
+<tr>
+<td>DNA fragments</td>
+<td>0.05 pmol each</td>
+<td>0.05 pmol each</td>
+</tr>
+<tr>
+<td>Type IIS restriction enzyme</td>
+<td>x µl (below)</td>
+<td>x µl (below)</td>
+</tr>
+<tr>
+<td>Nuclease-free water</td>
+<td>to volume</td>
+<td>to volume</td>
+</tr>
+<tr>
+<td>Total reaction volume</td>
+<td>15 µl</td>
+<td>30 µl</td>
+</tr>
+</tbody>
+</table>
+<p>Enzyme amounts, from the same protocol page and from the NEBridge Ligase Master Mix Protocol
+Guidelines (<strong>archived, 2025-07-13</strong>); the two agree except where noted:</p>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>2 fragment</th>
+<th>3–6 fragment</th>
+<th>7+ fragment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BbsI-HF (R3539)</td>
+<td>1 µl (20 U)</td>
+<td>1 µl (20 U)</td>
+<td>1 µl (50 U) — needs R3539M at 50 U/µl</td>
+</tr>
+<tr>
+<td>BsaI-HFv2 (R3733)</td>
+<td>1 µl (20 U)</td>
+<td>1 µl (20 U)</td>
+<td>1 µl (20 U)</td>
+</tr>
+<tr>
+<td>BsmBI-v2 (R0739)</td>
+<td>3 µl (30 U)</td>
+<td>3 µl (30 U)</td>
+<td>6 µl (60 U) — "Use of less enzyme will reduce performance"</td>
+</tr>
+<tr>
+<td>BspQI / BspQI-HF (R0712 / R3712)</td>
+<td>1 µl (10 U)</td>
+<td>1 µl (10 U)</td>
+<td>2 µl (20 U)</td>
+</tr>
+<tr>
+<td>Esp3I (R0734)</td>
+<td>2 µl (20 U)</td>
+<td>3 µl (30 U)</td>
+<td>4 µl (40 U)</td>
+</tr>
+<tr>
+<td>PaqCI (R0745)</td>
+<td>1 µl (10 U)</td>
+<td>1 µl (10 U)</td>
+<td>2.5 µl (25 U)</td>
+</tr>
+<tr>
+<td>SapI (R0569)</td>
+<td>1 µl (10 U)</td>
+<td>1 µl (10 U)</td>
+<td>2 µl (20 U)</td>
+</tr>
+</tbody>
+</table>
+<p>Cycling, from the M1100 protocol page (<strong>archived, 2023-03-31</strong>). Enzymes split into a 37 °C
+group and a 42 °C group:</p>
+<table>
+<thead>
+<tr>
+<th>Complexity</th>
+<th>BbsI-HF, BsaI-HFv2, Esp3I, PaqCI, SapI</th>
+<th>BsmBI-v2, BspQI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2 fragment, single gene cloning</td>
+<td>37 °C for 15 min</td>
+<td>15 cycles of 42 °C 1 min / 16 °C 1 min</td>
+</tr>
+<tr>
+<td>2 fragment, library construction</td>
+<td>37 °C for 60 min</td>
+<td>30 cycles of 42 °C 1 min / 16 °C 1 min</td>
+</tr>
+<tr>
+<td>3–6 fragment</td>
+<td>30 cycles of 37 °C 1 min / 16 °C 1 min</td>
+<td>30 cycles of 42 °C 1 min / 16 °C 1 min</td>
+</tr>
+<tr>
+<td>7–13 fragment</td>
+<td>30 cycles of 37 °C 5 min / 16 °C 5 min</td>
+<td>30 cycles of 42 °C 5 min / 16 °C 5 min</td>
+</tr>
+<tr>
+<td>14+ fragment</td>
+<td>60 cycles of 37 °C 5 min / 16 °C 5 min</td>
+<td>60 cycles of 42 °C 5 min / 16 °C 5 min</td>
+</tr>
+</tbody>
+</table>
+<p>Then, for every enzyme and every tier: "End Soak: Incubate at 60°C for 5 minutes, before
+transformation. Chill on ice. Use 2 μl of the reaction to transform 50 μl of competent cells.
+If reaction will not be used immediately for transformation, store at -20°C."</p>
+<p>Order of addition matters enough that NEB spells it out: DNA + water first, then master mix
+(mix by pipetting 3 times), then the Type IIS enzyme (mix by pipetting 5 times), on ice.</p>
+<h3 id="24-paqci-needs-an-activator">2.4 PaqCI needs an activator<a class="headerlink" href="#24-paqci-needs-an-activator" title="Permanent link">&para;</a></h3>
+<p>PaqCI is a tetramer that must engage several copies of its recognition site before it cuts, so
+NEB supplies a short activator duplex. The mechanism is in the open-access structure paper
+(Kennedy et al. 2023, <em>Nucleic Acids Res.</em> 51, 4467–4487, CC BY): PaqCI scans for identical
+7 bp targets and synapses them through its target-recognition domains, and the activator is "a
+short double-stranded hairpin DNA construct spanning the PaqCI recognition site" that "does not
+extend past the point of cutting", occupying spare target-recognition domains so the
+endonuclease domains can re-dimerise. That paper used a 5:1 activator:enzyme molar ratio
+in vitro.</p>
+<p>For bench use, two NEB tables exist and they differ:</p>
+<ul>
+<li>Ligase Master Mix guidelines (<strong>archived, 2025-07-13</strong>): "Recommended PaqCI Activator :
+  PaqCI ratio is 1:1 (pmol:U). Use 0.5 µl of PaqCI Activator (20 µM) for 2 and 3-6 fragments;
+  1.25 µl of PaqCI Activator (20 µM) for 7+ fragments."</li>
+<li>Usage Guidelines for Golden Gate Assembly with PaqCI, the T4-DNA-Ligase version
+  (<strong>archived, 2021-06-15</strong>):</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Assembly complexity</th>
+<th>PaqCI</th>
+<th>T4 DNA Ligase</th>
+<th>PaqCI Activator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single insert cloning (10 min 37 °C) or library prep (60 min 37 °C)</td>
+<td>5 U</td>
+<td>200 U</td>
+<td>5 pmol (¼ µl of 20 µM)</td>
+</tr>
+<tr>
+<td>Simple to moderate, 2–10 fragments</td>
+<td>5–10 U</td>
+<td>200–400 U</td>
+<td>5 pmol (¼ µl of 20 µM)</td>
+</tr>
+<tr>
+<td>Complex, 11–20+ fragments</td>
+<td>10–20 U</td>
+<td>400–800 U</td>
+<td>5–10 pmol (¼–½ µl of 20 µM)</td>
+</tr>
+</tbody>
+</table>
+<p>Same page: "The activator solution is in a Mg-free buffer for optimal long-term storage. For
+  short-term working stocks, if desired, dilute an appropriate amount in 1X T4 DNA Ligase
+  Buffer to achieve more easily pipettable volumes (e.g., a four-fold dilution = 5 µM, 5
+  pmoles/µl activator.)"</p>
+<h3 id="25-home-brew-reactions-individual-enzyme-t4-dna-ligase">2.5 Home-brew reactions (individual enzyme + T4 DNA Ligase)<a class="headerlink" href="#25-home-brew-reactions-individual-enzyme-t4-dna-ligase" title="Permanent link">&para;</a></h3>
+<p>NEB's own high-complexity protocol, from the technical note <em>Breaking through the Limitations
+of Golden Gate Assembly</em> (NEB, 01/19, retrieved from the <code>neb-online.de</code> mirror):</p>
+<table>
+<thead>
+<tr>
+<th>Reagent</th>
+<th>24-fragment assembly</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pGGA destination plasmid, 75 ng/µl</td>
+<td>1 µl (75 ng)</td>
+</tr>
+<tr>
+<td>24 precloned inserts, 100 ng/µl each</td>
+<td>0.75 µl (75 ng) each, 18 µl total</td>
+</tr>
+<tr>
+<td>T4 DNA Ligase Buffer (10X)</td>
+<td>2.5 µl</td>
+</tr>
+<tr>
+<td>T4 DNA Ligase (M0202), 2000 U/µl</td>
+<td>0.5 µl (1000 units)</td>
+</tr>
+<tr>
+<td>BsaI-HFv2 (R3733), 20 U/µl</td>
+<td>1.5 µl (30 units)</td>
+</tr>
+<tr>
+<td>Water</td>
+<td>1.5 µl</td>
+</tr>
+</tbody>
+</table>
+<p>Program: "(5 min 37°C → 5 min 16°C) x 30 cycles followed by 5 min 60°C". For ≤10 fragments the
+same note says 500 U T4 DNA Ligase and 15 U BsaI-HFv2 suffice. Caveat from the E1602 manual
+(FAQ 5): home brews work but "will not match the efficiency and fidelity achieved with this
+kit", because glycerol from stock enzymes has to stay at or below about 10%.</p>
+<p>Buffer choices, from NEB's <em>Technical Tips for Optimizing Golden Gate Assembly Reactions</em>
+(<strong>archived, 2020-10-26</strong>) and the 2024 Golden Gate brochure: T4 DNA Ligase Buffer is the
+default for BsaI-HFv2, BsmBI-v2 and PaqCI; alternatives are NEBuffer r1.1 (BsaI-HFv2),
+NEBuffer r2.1 (BsmBI-v2) or rCutSmart (PaqCI), each "supplemented with 1 mM ATP and 5–10 mM
+DTT".</p>
+<h3 id="26-per-enzyme-properties">2.6 Per-enzyme properties<a class="headerlink" href="#26-per-enzyme-properties" title="Permanent link">&para;</a></h3>
+<p>Sites and cut offsets are REBASE records cross-checked against NEB's own table in the 2024
+Golden Gate brochure; they agree. Incubation, heat inactivation and methylation come from NEB
+product pages (<strong>archived, 2021-04</strong>) and from NEB's Heat Inactivation and
+Dam-Dcm-and-CpG-Methylation charts (<strong>archived, 2021-04</strong>). Unit definitions come from the
+specification PDFs fetched directly today.</p>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>Site (cut offsets)</th>
+<th>Overhang</th>
+<th>Golden Gate temp</th>
+<th>Heat inactivation</th>
+<th>Dam / Dcm / CpG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BsaI-HFv2 (R3733)</td>
+<td><code>GGTCTC(1/5)</code></td>
+<td>4 nt, 5′</td>
+<td>37 °C</td>
+<td>80 °C, 20 min</td>
+<td>Not sensitive / impaired by some overlapping / blocked by some overlapping</td>
+</tr>
+<tr>
+<td>BsmBI-v2 (R0739)</td>
+<td><code>CGTCTC(1/5)</code></td>
+<td>4 nt, 5′</td>
+<td>42 °C</td>
+<td>80 °C, 20 min</td>
+<td>CpG blocked; Dam/Dcm cells unread in the archived chart</td>
+</tr>
+<tr>
+<td>Esp3I (R0734)</td>
+<td><code>CGTCTC(1/5)</code></td>
+<td>4 nt, 5′</td>
+<td>37 °C</td>
+<td>65 °C, 20 min</td>
+<td>Not sensitive / not sensitive / blocked</td>
+</tr>
+<tr>
+<td>BbsI-HF (R3539)</td>
+<td><code>GAAGAC(2/6)</code></td>
+<td>4 nt, 5′</td>
+<td>37 °C</td>
+<td>65 °C, 20 min</td>
+<td>Not sensitive / not sensitive / not sensitive</td>
+</tr>
+<tr>
+<td>PaqCI (R0745)</td>
+<td><code>CACCTGC(4/8)</code></td>
+<td>4 nt, 5′</td>
+<td>37 °C</td>
+<td>65 °C, 20 min</td>
+<td>Not sensitive / not sensitive / impaired by overlapping</td>
+</tr>
+<tr>
+<td>SapI (R0569)</td>
+<td><code>GCTCTTC(1/4)</code></td>
+<td><strong>3 nt</strong>, 5′</td>
+<td>37 °C</td>
+<td>65 °C, 20 min</td>
+<td>Not sensitive / not sensitive / not sensitive</td>
+</tr>
+<tr>
+<td>BspQI (R0712)</td>
+<td><code>GCTCTTC(1/4)</code></td>
+<td><strong>3 nt</strong>, 5′</td>
+<td>42 °C per M1100 table</td>
+<td>80 °C, 20 min</td>
+<td>Not sensitive / not sensitive / not sensitive</td>
+</tr>
+<tr>
+<td>BtgZI (R0703)</td>
+<td><code>GCGATG(10/14)</code></td>
+<td>4 nt, 5′</td>
+<td><strong>no NEB Golden Gate protocol</strong></td>
+<td>80 °C, 20 min</td>
+<td>Not sensitive / not sensitive / impaired</td>
+</tr>
+</tbody>
+</table>
+<p>Notes worth carrying into code:</p>
+<ul>
+<li>REBASE prototypes and isoschizomers: BsaI's prototype is Eco31I; BsmBI's prototype is
+  Esp3I (so BsmBI-v2 and Esp3I are isoschizomers with <strong>different</strong> optimal temperatures, 42 °C
+  and 37 °C — E1602 manual FAQ 4); BbsI's prototype is BbvII; PaqCI's prototype is AarI;
+  SapI is its own prototype and BspQI is the isoschizomer.</li>
+<li>BsmBI-v2 is only 25% active in rCutSmart (product page, archived); BsaI-HFv2, BbsI-HF, SapI
+  and PaqCI are 100%.</li>
+<li>BtgZI's unit definition is at <strong>60 °C</strong> (specification PS-R0703S/L v1.0), and its terminal
+  integrity is much weaker than the others: "After a 5-fold over-digestion of Lambda DNA with
+  BtgZI, ~75% of the DNA fragments can be ligated … Of these ligated fragments, ~75% can be
+  recut". NEB names BtgZI only as a fallback specificity (E1601 manual FAQ 4), never with a
+  reaction table. Treat BtgZI as last-resort in our ranking.</li>
+<li>SapI, per the specification sheet, is qualified for 4-hour incubations; NEB's 3-nt overhang
+  means overhang design has 64 sequences to work with, not 256.</li>
+<li>BsaI and BsaI-HFv2 are "blocked by overlapping dcm methylation (methylation at the C5
+  position of cytosine in the sequences CCAGG or CCTGG)", which matters only when a
+  <code>CC(A/T)</code> sits immediately 5′ of <code>GGTCTC</code> (E1601 manual, tip 6). This is a real constraint
+  on spacer-base choice in primer tails.</li>
+</ul>
+<h3 id="two-neb-revisions-to-watch">Two NEB revisions to watch<a class="headerlink" href="#two-neb-revisions-to-watch" title="Permanent link">&para;</a></h3>
+<ol>
+<li>The E1601 manual changed its reaction amounts in revision 5.0 (6/26): earlier NEB copy
+   (protocol page text, mirrored by an iGEM team, undated copy) used a <strong>2:1</strong> insert:vector
+   ratio and grouped cycling as "2–4 inserts 37 °C 1 hr" and "5–10 inserts × 30 cycles". The
+   current manual says <strong>1:1</strong> for amplicons and "2–10 inserts × 30 cycles". The archived
+   <em>Insert Considerations</em> page (<strong>archived, 2020-11-29</strong>) also says 2:1 against pGGA (2,174 bp).
+   Our code should follow the current manual and record which revision it followed.</li>
+<li>The destination plasmid changed from pGGA (2,174 or 2,155 bp depending on the page) to
+   pGGAselect (2,220 bp per the E1601 manual text, 2,155 bp per the E1602 manual insert
+   section). NEB's own pages disagree on this number; do not hard-code it.</li>
+</ol>
+<h2 id="3-vector-prepared-by-pcr">3. Vector prepared by PCR<a class="headerlink" href="#3-vector-prepared-by-pcr" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Outward primers carrying the site.</strong> NEB's rule is orientation, not sequence: "the
+  recognition sites should always face inwards towards your DNA to be assembled" (Technical
+  Tips, archived 2020-10-26). For a PCR-linearised vector the same rule applies to the
+  backbone: each outward primer carries spacer bases, then the recognition site pointing back
+  into the backbone, then the 4-nt (or 3-nt) overhang.</li>
+<li><strong>Bases needed 5′ of the site.</strong> NEB, <em>Cleavage Close to the End of DNA Fragments</em>
+  (<strong>archived, 2021-04-16</strong>), verbatim: "As a general rule and for enzymes not listed below, 6
+  base pairs should be added on on either side of the recognition site to cleave efficiently.
+  The extra bases should be chosen so that palindromes and primer dimers are not formed. In
+  most cases there is no requirement for specific bases." The kit manuals repeat this as "5´
+  flanking bases (6 recommended)". The per-enzyme table on that page (which enzymes cut with
+  1, 2, 3… bp from the end) did not survive the snapshot — see <a href="#10-open-gaps">Open gaps</a>.</li>
+<li><strong>DpnI treatment of the template.</strong> DpnI is the right tool because it only cuts methylated
+  DNA: REBASE records DpnI as recognising <code>G6mA^TC</code>, a "Type II Methyl-directed restriction
+  enzyme (recognizes the sequence only when methylated)". Plasmid template grown in a
+  Dam-positive <em>E. coli</em> is cut; the PCR product, unmethylated, is not. NEB's own Golden Gate
+  pages do <strong>not</strong> prescribe DpnI, so this step is ours to specify and to justify by the
+  REBASE record, not by an NEB protocol.</li>
+<li><strong>Cleanup.</strong> NEB is explicit that a spin column is required for multi-fragment work and
+  optional-but-better for single insert: "While single insert amplicons can be used directly
+  from PCR without purification under certain circumstances (see FAQ), it is always best to
+  purify amplicons using spin columns". The reason to purify, from FAQ 9: carryover PCR
+  polymerase fills in 5′ four-base overhangs, producing blunt ends and non-specific assembly.
+  Unpurified amplicon is tolerated for single-insert cloning only "as long as insert volume is
+  1 µl or less".</li>
+<li><strong>Storage.</strong> "For long term storage at –20°C, store DNA in 10 mM Tris (pH 8.5), 1 mM EDTA
+  (TE) or short-term storage in 10 mM Tris (pH 8.5), 0.1 mM EDTA" — EDTA at those levels does
+  not meaningfully lower the 10 mM MgCl₂ of the ligase buffer (E1601 manual, FAQ 6).</li>
+<li><strong>Polymerase and cycle count.</strong> "Use a high-fidelity DNA polymerase and avoid
+  over-amplification… use the minimum number of cycles required… this is usually 20 cycles or
+  less" (E1601 manual, FAQ 11).</li>
+</ul>
+<h2 id="4-overhangs-and-ligation-fidelity">4. Overhangs and ligation fidelity<a class="headerlink" href="#4-overhangs-and-ligation-fidelity" title="Permanent link">&para;</a></h2>
+<h3 id="41-the-classic-design-rules-and-their-measured-limits">4.1 The classic design rules, and their measured limits<a class="headerlink" href="#41-the-classic-design-rules-and-their-measured-limits" title="Permanent link">&para;</a></h3>
+<p>Pryor 2020 states the conventional rules and then shows they are the wrong abstraction:
+"avoiding use of palindromic overhang sequences or the same overhang pair more than once in an
+assembly reaction. In addition, most modular cloning systems also require that
+non-complementary overhang sequences have at least 2 mispaired bases. Moreover, overhangs that
+contain 100% A/T or G/C content are also often avoided… sometimes, overhangs with 25% G/C
+content are also avoided for the same reason."</p>
+<p>Potapov 2018 measured that the two-mismatch rule is unnecessarily strict: "it is not necessary
+to ensure all overhangs have at least two bases different from all other overhangs, as many
+pairs with only a single base difference … form very few if any mismatch ligation products with
+each other." And Pryor 2020 measured that efficiency is not a function of composition: "the
+relative efficiency of each Watson-Crick pair was not simply a function of GC content, and
+thus, difficult to predict based on the sequence composition alone. For example, … the
+5′-ATTT/5′-AAAT overhang pair is significantly more efficient than assembly of the
+5′-TTTA/5′-TAAA pair."</p>
+<p>Two empirical findings that a scorer should not lose:</p>
+<ul>
+<li>A 100% GC junction can fail even when the fidelity data says it is fine. Potapov 2018 saw
+  truncations at junction 6, the <code>GCCG/CGGC</code> pair, with "a drop of roughly 23% of connections
+  at junction 6 relative to the average for all junctions, despite this sequence not being a
+  low efficiency junction in the ligation fidelity data set."</li>
+<li>A high-fidelity but low-efficiency pair (<code>TAAA/ATTT</code>) joined with about 30% reduced incidence
+  and produced truncated products. Fidelity and efficiency are two different axes.</li>
+</ul>
+<h3 id="42-potapov-et-al-2018-acs-synth-biol-7-26652674">4.2 Potapov et al. 2018, <em>ACS Synth. Biol.</em> 7, 2665–2674<a class="headerlink" href="#42-potapov-et-al-2018-acs-synth-biol-7-26652674" title="Permanent link">&para;</a></h3>
+<ul>
+<li>DOI 10.1021/acssynbio.8b00333. Method: all 256 four-base overhangs on one multiplexed
+  substrate, ligated then read by PacBio SMRT sequencing.</li>
+<li>Conditions: substrate 100 nM, 1.75 µM T4 (or T7) DNA Ligase, 1X T4 DNA Ligase Buffer
+  (50 mM Tris-HCl pH 7.5, 10 mM MgCl₂, 1 mM ATP, 10 mM DTT), 50 µl, "incubated for 1 or 18 h
+  at 25 or 37 °C". A cycled Golden Gate condition was also run: "30 cycles of 1 or 5 min at
+  37 °C and 1 or 5 min at 16 °C, followed by a 5 min 65 °C heat inactivation step."</li>
+<li>Counts are normalised to 100,000 ligation events; a typical Watson–Crick pair then sits at
+  300–400 observations.</li>
+<li>Validation: a 10-fragment assembly with the predicted high-fidelity (HF) set gave "99.9% of
+  all observed assemblies … formed by only correct Watson−Crick pairings", against the
+  low-fidelity (LF) set where "74.1% of assemblies containing at least one erroneous junction".
+  Predicted-versus-observed for lac cassettes: 99% (12-fragment) and 91% (24-fragment)
+  predicted; about 99% blue observed for the 12-fragment set, 45 ± 5% for the deliberately
+  deletion-prone set (predicted about 33%).</li>
+<li><strong>Ready-made high-fidelity overhang sets</strong>, Table 1, "for use with cycled assembly
+  (16 °C/37 °C cycles)", one member of each complementary pair shown:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Set</th>
+<th>Overhangs</th>
+<th>Estimated fidelity</th>
+<th>Sequences</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>15</td>
+<td>98.5%</td>
+<td>TGCC, GCAA, ACTA, TTAC, CAGA, TGTG, GAGC, AGGA, ATTC, CGAA, ATAG, AAGG, AACT, AAAA, ACCG</td>
+</tr>
+<tr>
+<td>2</td>
+<td>20</td>
+<td>98.1%</td>
+<td>AGTG, CAGG, ACTC, AAAA, AGAC, CGAA, ATAG, AACC, TACA, TAGA, ATGC, GATA, CTCC, GTAA, CTGA, ACAA, AGGA, ATTA, ACCG, GCGA</td>
+</tr>
+<tr>
+<td>3</td>
+<td>25</td>
+<td>95.8%</td>
+<td>CCTC, CTAA, GACA, GCAC, AATC, GTAA, TGAA, ATTA, CCAG, AGGA, ACAA, TAGA, CGGA, CATA, CAGC, AACG, AAGT, CTCC, AGAT, ACCA, AGTG, GGTA, GCGA, AAAA, ATGA</td>
+</tr>
+<tr>
+<td>4</td>
+<td>30</td>
+<td>91.7%</td>
+<td>TACA, CTAA, GGAA, GCCA, CACG, ACTC, CTTC, TCAA, GATA, ACTG, AACT, AAGC, CATA, GACC, AGGA, ATCG, AGAG, ATTA, CGGA, TAGA, AGCA, TGAA, ACAT, CCAG, GTGA, ACGA, ATAC, AAAA, AAGG, CAAC</td>
+</tr>
+</tbody>
+</table>
+<p>Set 1 extends the MoClo standard set (TGCC, GCAA, ACTA, TTAC, CAGA, TGTG, GAGC). Sets 2–4
+  "exclude all Watson−Crick pairs that ligate significantly below the mean" and avoid 100% GC
+  overhangs. Subsets are predicted to be at least as good as the whole set. A separate table
+  (S8) covers static 37 °C incubation.
+- Supporting Data, figshare item 7267505, <code>sb8b00333_si_002.zip</code> (980,557 bytes, CC BY-NC 4.0),
+  contains one file per condition plus the test sequence:</p>
+<p><code>FileS01_T4_01h_25C.xlsx</code>, <code>FileS02_T4_01h_37C.xlsx</code>, <code>FileS03_T4_18h_25C.xlsx</code>,
+  <code>FileS04_T4_18h_37C.xlsx</code>, <code>FileS05_HF_cycled.xlsx</code>, <code>FileS06_T7_18h_25C.csv</code>,
+  <code>FileS07_LF_cycled.xlsx</code>, <code>FileS08_T7_18h_37C.csv</code>, <code>FileS09_DP_cycled.xlsx</code>,
+  <code>FileS10_FP_cycled.xlsx</code>, <code>FileS11_HF_01h_37C.xlsx</code>, <code>FileS12_LF_18h_37C.xlsx</code>,
+  <code>FileS13_DP_18h_37C.xlsx</code>, <code>FileS14_FP_18h_37C.xlsx</code>, <code>lac.fasta</code>.</p>
+<p>The four <code>T4_*</code> files are 257 × 257 count matrices (<code>Overhang</code> header, 256 overhangs on each
+  axis). The <code>*_cycled</code> files are per-assembly summaries instead: sheets <code>table_01</code>…<code>table_05</code>
+  holding insert counts and fractions, a small overhang-versus-overhang junction matrix, and an
+  assembly-composition table such as <code>{A:B:C:D:E:F:G:H</code>, count, correct flag, size, fraction.</p>
+<h3 id="43-potapov-et-al-2018-nucleic-acids-research-46-e79-gky303">4.3 Potapov et al. 2018, <em>Nucleic Acids Research</em> 46, e79 (gky303)<a class="headerlink" href="#43-potapov-et-al-2018-nucleic-acids-research-46-e79-gky303" title="Permanent link">&para;</a></h3>
+<p>The companion method paper, three-base overhangs, CC BY-NC 4.0. Conditions: 1.75 µM T4 DNA
+Ligase, 100 nM randomised three-base 5′-overhang substrate, 1X T4 ligase buffer, 25 °C or
+37 °C, 1 h or 18 h. Fidelity there is "the fraction of correct ligations divided by the total
+fraction of ligations for a given overhang". Data: SRA <code>SRP130363</code>; analysis code
+<code>github.com/potapovneb/ligase-fidelity</code> (<strong>AGPL-3.0</strong> — read it, do not vendor it).</p>
+<h3 id="44-pryor-et-al-2020-plos-one-159-e0238592-the-shippable-dataset">4.4 Pryor et al. 2020, <em>PLoS One</em> 15(9): e0238592 — the shippable dataset<a class="headerlink" href="#44-pryor-et-al-2020-plos-one-159-e0238592-the-shippable-dataset" title="Permanent link">&para;</a></h3>
+<p>This is the one to ship. It is CC BY 4.0, it is per-enzyme, and it covers SapI's three-base
+overhangs, which Potapov 2018 does not.</p>
+<p>Conditions, verbatim from Methods: reactions of 20 µl, "with T4 DNA ligase and BsaIHF-v2 or
+BsmBI-v2 … using their respective NEB Golden Gate Enzyme Mixes (2 μL) in 1X T4 DNA ligase
+buffer"; "T4 DNA ligase (500 U) and SapI (15 U) or Esp3I (15 U) … in 1X T4 DNA ligase buffer";
+"T4 DNA ligase (500 U) and BbsI-HF (15 U) … in 1X CutSmart Buffer supplemented with 10 mM DTT
+and 1 mM ATP". Substrate at 100 nM. "The reactions were cycled between 37°C and 16°C (SapI,
+Esp3I, BsaI-HFv2, BbsI-HF) or 42°C and 16°C (BsmBI-v2) for 5 minutes at each temperature for
+30 cycles, and then subjected to a final heat-soak for 5 minutes at 60°C."</p>
+<p>Fidelity, verbatim: "Fidelity F for a set of n overhangs {O₁, O₂, O₃, …, Oₙ} was defined as a
+probability that all overhangs in the set ligate correctly to their WC pair… computed as
+follows: F = p(O₁) × p(O₂) × p(O₃) × p(Oₙ)", where "p(Oᵢ) = N_correct / N_total". GetSet
+searches for sets with an MCMC optimiser, because exhaustive search "exceeds 10¹⁴ combinations
+for 10-overhang sets"; consequently "repeating a search can result in different junction sets
+with similar predicted fidelities".</p>
+<p>Files, and exactly what each is:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>File</th>
+<th>Bytes</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1 Table</td>
+<td><code>pone.0238592.s001.xlsx</code></td>
+<td>202,549</td>
+<td>BsaI-HFv2 ligation frequencies, sheet <code>S1 Table. BsaI-HFv2</code>, range <code>A1:IW257</code></td>
+</tr>
+<tr>
+<td>S2 Table</td>
+<td><code>pone.0238592.s002.xlsx</code></td>
+<td>203,006</td>
+<td>BsmBI-v2, same shape</td>
+</tr>
+<tr>
+<td>S3 Table</td>
+<td><code>pone.0238592.s003.xlsx</code></td>
+<td>202,302</td>
+<td>Esp3I, same shape</td>
+</tr>
+<tr>
+<td>S4 Table</td>
+<td><code>pone.0238592.s004.xlsx</code></td>
+<td>203,060</td>
+<td>BbsI-HF, same shape</td>
+</tr>
+<tr>
+<td>S5 Table</td>
+<td><code>pone.0238592.s005.xlsx</code></td>
+<td>24,232</td>
+<td>SapI, sheet <code>Table S5. SapI</code>, range <code>A1:BM65</code> (64 three-base overhangs)</td>
+</tr>
+<tr>
+<td>S6 Table</td>
+<td><code>pone.0238592.s006.xlsx</code></td>
+<td>13,251</td>
+<td>13-fragment <em>lac</em> test system: <code>Fragment #</code>, <code>Sequence</code>, <code>Length (bp)</code></td>
+</tr>
+<tr>
+<td>S7 Table</td>
+<td><code>pone.0238592.s007.xlsx</code></td>
+<td>13,808</td>
+<td>35-fragment <em>lac</em> test system</td>
+</tr>
+<tr>
+<td>S8 Table</td>
+<td><code>pone.0238592.s008.xlsx</code></td>
+<td>10,494</td>
+<td>DNA substrate precursor oligonucleotides</td>
+</tr>
+<tr>
+<td>S1–S3 Fig</td>
+<td><code>.s009</code>–<code>.s011</code></td>
+<td>TIFF</td>
+<td>Mispair partners; colony PCR gels; fidelity versus set size</td>
+</tr>
+<tr>
+<td>S1 Text</td>
+<td><code>pone.0238592.s012.pdf</code></td>
+<td>79,081</td>
+<td>Error propagation analysis</td>
+</tr>
+</tbody>
+</table>
+<p>Download URL pattern (302-redirects to a signed Google Storage URL, <code>curl -L</code> works):</p>
+<div class="highlight"><pre><span></span><code>https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0238592.sNNN&amp;type=supplementary
+</code></pre></div>
+<p>Matrix format, confirmed by opening the files: row 1 is a header, cell <code>A1</code> is the literal
+<code>Overhang</code>, then 256 (or 64) overhang labels across; column A holds the overhang labels down.
+Cells are <strong>integer observation counts</strong>, not probabilities. First rows of S1:</p>
+<div class="highlight"><pre><span></span><code>Overhang,AAAA,AAAC,AAAG,AAAT,AACA,AACC,...
+TTTT,635,8,40,16,2,0,...
+GTTT,3,476,4,45,0,20,...
+</code></pre></div>
+<p>Axis orientation comes from the Ligase Fidelity Viewer help page: "Overhangs in rows correspond
+to top strand. Overhangs in columns correspond to bottom strand. Overhangs are always written
+5' to 3'." So <code>ATTC</code> (row) against <code>GAAT</code> (column) is the Watson–Crick pair. Note the diagonal
+is not the Watson–Crick entry — <code>TTTT</code>/<code>AAAA</code> is, i.e. the pairing is row against the reverse
+complement of the column label.</p>
+<h3 id="45-what-nebs-tools-compute">4.5 What NEB's tools compute<a class="headerlink" href="#45-what-nebs-tools-compute" title="Permanent link">&para;</a></h3>
+<p>From the Ligase Fidelity Viewer help page (<code>tools.neb.com/~potapov/ligase-fidelity-viewer/help.html</code>,
+reachable today):</p>
+<ul>
+<li>Input: a comma-separated list of overhangs, 5′→3′, four canonical bases, no degenerate bases;
+  "Complementary (reverse) overhangs are automatically added to the query"; duplicates and
+  malformed entries are discarded.</li>
+<li>Condition choice selects which published dataset scores the set. "The default conditions are
+  ligation at 25°C for 18 hours; these conditions have been shown to well predict the results
+  of Golden Gate assembly using typical cycled conditions (16°C 5 min/37°C 5 min, 30 cycles)."</li>
+<li>Output: "the total fraction of correct ligation events out of all ligation events", plus a
+  matrix with thresholds we can copy directly: Watson–Crick pairs above 100 normalised
+  ligations are "strong", below 100 "weak" (users may wish to avoid them); mismatches below 10
+  are "trace", 10–100 "modest … should be avoided", above 100 "high-count … observed on a
+  frequency similar to that of proper Watson-Crick ligations".</li>
+<li>The three tools, per the E1601/E1602 manuals and Pryor 2020: <strong>Ligase Fidelity Viewer</strong>
+  (score a set), <strong>GetSet</strong> (generate or extend a high-fidelity set, with MCMC), <strong>SplitSet</strong>
+  (split a target sequence into high-fidelity fragments). Worked example from Pryor 2020: the
+  11 standard plant-synthetic-biology overhangs (GGAG, TGAC, TCCC, TACT, CCAT, AATG, AGCC,
+  TTCG, GCTT, GGTA, CGCT) score 81% with BsmBI-v2 and 42 °C/16 °C cycling; GetSet extended the
+  set to 20 overhangs at 80%.</li>
+<li>The NEBridge Golden Gate Assembly Tool (<code>goldengate.neb.com</code>) designs primers: per the
+  E1602 manual, "The primers will feature 6 bases at the 5´ end flanking the BsmBI recognition
+  site, the recognition site itself, plus the 4-base overhangs… All overhangs will
+  automatically be designed as non-palindromic (to eliminate self insert ligations), unique,
+  and in the correct orientations."</li>
+</ul>
+<h2 id="5-transformation-and-screening">5. Transformation and screening<a class="headerlink" href="#5-transformation-and-screening" title="Permanent link">&para;</a></h2>
+<p>From the E1601 and E1602 manuals (identical text):</p>
+<ol>
+<li>Thaw 50 µl NEB 10-beta Competent <em>E. coli</em> (C3019) on ice for 10 min.</li>
+<li>Add <strong>2 µl</strong> of the assembly reaction; flick 4–5 times.</li>
+<li>Ice 30 min.</li>
+<li>Heat shock 42 °C for 30 s.</li>
+<li>Ice 5 min.</li>
+<li>Add 950 µl room-temperature NEB 10-beta/Stable Outgrowth Medium; 37 °C for 60 min at
+   250 rpm.</li>
+</ol>
+<p>Plating: warm selective plates to 37 °C; "spread 50 µl of a 1:5 dilution (single inserts) or
+50–100 µl (multiple inserts) of the 1 ml outgrowth onto each plate"; overnight at 37 °C, or
+24–36 h at 30 °C, or 48 h at 25 °C.</p>
+<p>Strains (E1601 manual, FAQ 15): 10-beta (C3019) or NEB Stable (C3040) for large or repeat-rich
+assemblies; 5-alpha (C2987), Turbo (C2984) or T7 Express (C2566) for smaller ones;
+"Subcloning efficiency cells will result in lower transformation levels and should not be used
+for multi-component assemblies."</p>
+<p><strong>Expected counts.</strong> NEB's release specification for E1601 is a usable yardstick: a 5-insert
+lacI/lacZ assembly transformed into T7 Express "yields greater than 250 colonies and &gt; 80% blue
+colonies when 5% of the outgrowth is spread on an IPTG/Xgal/Chloramphenicol plate and incubated
+overnight at 37°C" (PS-E1601S/L v1.0; E1602's is the same shape with BsmBI-v2 at 42 °C, and
+M1100's uses BsaI-HFv2 in a 15 µl reaction). The technical note gives a fuller efficiency
+ladder for BsaI-HFv2 with T4 DNA Ligase:</p>
+<table>
+<thead>
+<tr>
+<th>Fragments</th>
+<th>Protocol (outgrowth plated)</th>
+<th>Correct colonies/plate</th>
+<th>Fidelity</th>
+<th>Per full reaction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>5 min 37 °C (2.5 µl)</td>
+<td>687</td>
+<td>100%</td>
+<td>2,742,000</td>
+</tr>
+<tr>
+<td>1</td>
+<td>60 min 37 °C (2.5 µl)</td>
+<td>1,623</td>
+<td>100%</td>
+<td>6,492,000</td>
+</tr>
+<tr>
+<td>12</td>
+<td>(5 min 37 °C → 5 min 16 °C) × 30 (5 µl)</td>
+<td>245</td>
+<td>99.5%</td>
+<td>489,000</td>
+</tr>
+<tr>
+<td>24</td>
+<td>same × 30 (100 µl)</td>
+<td>78</td>
+<td>90.7%</td>
+<td>9,792</td>
+</tr>
+</tbody>
+</table>
+<p>NEB's 52-fragment brochure figure (Pryor et al. 2022, <em>ACS Synth. Biol.</em> 11, 2036–2042) reports
+an average 727 correct and 733 incorrect colonies per 100 µl outgrowth, i.e. 49% correct.</p>
+<p><strong>Blue/white.</strong> Two opposite conventions exist and confusing them will mis-read a plate:</p>
+<ul>
+<li>NEB's own kit test systems use <strong>reverse</strong> blue-white: the assembly reconstructs <em>lacZ</em>, so
+  <strong>correct assemblies are blue</strong>, and NEB deliberately uses the non-complementing T7 Express
+  strain "to avoid any possibility of alpha-fragment LacZ complementation" (technical note,
+  Figure 2 caption). Potapov 2018 gives plate composition for this: "Luria−Bertani broth
+  supplemented with 1 mg/mL dextrose, 1 mg/mL MgCl2, 30 μg/mL Chloramphenicol, 200 μM IPTG and
+  80 μg/mL X-gal", read after 18 h at 37 °C plus 8 h at 4 °C.</li>
+<li>Classic pUC19 screening is the other way round: an insert in the MCS disrupts <em>lacZα</em>, so
+  <strong>correct clones are white</strong>. This is our smoke test (see below).</li>
+</ul>
+<p><strong>Controls.</strong> NEB's position: "Golden Gate assembly protocols do not usually call for a
+negative control. However if desired, a 'no insert(s) added' reaction can be used" (FAQ 13).
+The technical note describes the stronger control it used for validation: omit any single
+component and no blue colonies appear.</p>
+<p><strong>Screening protocol.</strong> Colony PCR with OneTaq (M0480) or OneTaq Hot Start (M0481); Taq
+(M0267) is acceptable; LongAmp (M0323/M0534) "strongly recommended" for large assemblies.
+NEB's own pGGAselect screening primers, which are also its sequencing primers, are given in
+the manuals: forward 65 bp upstream <code>5´-CTGCAGGAAGGTTTAAACGCATTTAGG-3´</code>, reverse 62 bp
+downstream <code>5´-TAATACGACTCACTATAGGGAGACTC-3´</code>. Whatever the screen, "the correct assembly of
+insert(s) should always be confirmed by sequencing of the plasmid construct across the 4 base
+junctions and inserts."</p>
+<h2 id="6-troubleshooting-from-neb">6. Troubleshooting, from NEB<a class="headerlink" href="#6-troubleshooting-from-neb" title="Permanent link">&para;</a></h2>
+<p>Collected from the E1601/E1602 manual FAQs and tips, the Technical Tips page
+(<strong>archived, 2020-10-26</strong>) and the 2024 brochure's eleven tips.</p>
+<table>
+<thead>
+<tr>
+<th>Symptom or step</th>
+<th>NEB's guidance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Internal site in a part</td>
+<td>Single-insert assembly usually survives one internal site; multi-insert does not. Switch enzyme, domesticate by site-directed mutagenesis (Q5 SDM kit E0554, NEBaseChanger), or "a junction point can be created at the internal site's recognition sequence".</td>
+</tr>
+<tr>
+<td>No enzyme is free</td>
+<td>Use a 7-base-recognition enzyme (PaqCI) — "less likely to have internal sites present in any given sequence" — or switch to NEBuilder HiFi if ≤5 inserts.</td>
+</tr>
+<tr>
+<td>Background of empty vector</td>
+<td>Keep the 60 °C end soak; it digests uncut and re-ligated destination plasmid.</td>
+</tr>
+<tr>
+<td>Low transformant numbers</td>
+<td>Increase cycles from 30 to 45–65; plate more of the outgrowth (NEB plated 2.5 µl for 1 fragment, 100 µl for 24).</td>
+</tr>
+<tr>
+<td>Mis-assemblies from amplicons</td>
+<td>Purify amplicons; primer dimers carrying Type IIS sites "would be active in the assembly reaction and result in mis-assemblies".</td>
+</tr>
+<tr>
+<td>Blunt-end products from unpurified PCR</td>
+<td>Carryover polymerase fills in 5′ overhangs; purify, or keep unpurified insert to ≤1 µl and single-insert only.</td>
+</tr>
+<tr>
+<td>Over-large plasmid</td>
+<td>"Efficiencies are highest with assembled product plasmid constructs ~ 10-12 kb"; larger needs more colonies screened.</td>
+</tr>
+<tr>
+<td>Repetitive or very small/large parts</td>
+<td>Preclone inserts &lt;250 bp or &gt;3 kb, or repeat-rich ones; use NEB Stable cells for unstable repeats.</td>
+</tr>
+<tr>
+<td>Plasmid concentration overestimated</td>
+<td>Make sure precloned-insert plasmid preps are RNA-free.</td>
+</tr>
+<tr>
+<td>Previously working part stops working</td>
+<td>Suspect a propagation error in <em>E. coli</em>, "usually a frameshift due to slippage in a run of a single base (e.g., AAAA)".</td>
+</tr>
+<tr>
+<td>Complex assembly, &gt;10 fragments</td>
+<td>Insert amounts can drop from 75 to 50 ng each without hurting efficiency.</td>
+</tr>
+<tr>
+<td>Reaction volume too small for the DNA</td>
+<td>Scale the 20 µl reaction up to 25 µl (+0.5 µl 10X buffer), or scale everything down 2–3× if volumes allow.</td>
+</tr>
+<tr>
+<td>PCR errors in inserts</td>
+<td>Q5 High-Fidelity polymerase, ≤20 cycles.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-other-assembly-methods-briefly">7. Other assembly methods, briefly<a class="headerlink" href="#7-other-assembly-methods-briefly" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Mechanism</th>
+<th>When it fits</th>
+<th>What a later skill needs from us</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NEBuilder HiFi / Gibson</td>
+<td>5′ exonuclease chews back ends, overlapping homology anneals, polymerase and ligase finish it; one 50 °C incubation</td>
+<td>NEB's own cut-off: "if the assembly will involve 5 or less inserts" (E1601 FAQ 4). No Type IIS site needed, so no domestication</td>
+<td>Homology-arm design (length, Tm), junction-free product simulation. Reaction table still pending — see <a href="#10-open-gaps">Open gaps</a></td>
+</tr>
+<tr>
+<td>In-Fusion (Takara)</td>
+<td>Proprietary enzyme joins 15-bp overlaps; 50 °C, 15 min</td>
+<td>Single or few inserts into a linearised vector, no scars, no Type IIS constraint</td>
+<td>Primer design with a 15-bp vector-homology 5′ tail, 18–25 nt template-specific 3′ part; 20 bp when joining more than two fragments</td>
+</tr>
+<tr>
+<td>MoClo (Weber et al. 2011, <em>PLoS ONE</em> 6:e16765, CC BY)</td>
+<td>Hierarchical Golden Gate with alternating enzymes: BpiI at level 0 and level 2, BsaI at level 1</td>
+<td>Multigene constructs built from a shared, standard part library</td>
+<td>Standard fusion sites (AATG at the start codon, AGGT for a signal-peptide junction, GGAG/TACT/GCTT/CGCT in non-translated regions; position-specific sites such as TGCC/GCAA), and its cycling: 5 h 37 °C → 50 °C 5 min → 80 °C 10 min, or 45 × (37 °C 2 min → 16 °C 5 min) for hard constructs</td>
+</tr>
+<tr>
+<td>GoldenBraid (Sarrion-Perdigones et al. 2011, <em>PLoS ONE</em> 6:e21622, CC BY)</td>
+<td>Double loop: BsaI at level α, BsmBI at level Ω, alternating indefinitely; BbsI used for domestication</td>
+<td>Iterative binary assembly where composite parts re-enter the other level</td>
+<td>Level-aware enzyme choice, numbered BsaI sites versus lettered BsmBI sites, 25 digestion/ligation cycles</td>
+</tr>
+</tbody>
+</table>
+<p>Both standards matter for enzyme choice: NEB's own BbsI-HF and SapI pages list "Expanded
+'assembly standards' for MoClo, GoldenBraid2.0 and other modular Golden Gate Assembly methods"
+as a product note (<strong>archived, 2021-04</strong>).</p>
+<h2 id="8-notes-for-the-smoke-test-puc19-gfp">8. Notes for the smoke test (pUC19 + GFP)<a class="headerlink" href="#8-notes-for-the-smoke-test-puc19-gfp" title="Permanent link">&para;</a></h2>
+<p>NEB's pUC19 GenBank record (<code>neb.com/-/media/.../puc19gbk.txt</code>, fetched today) gives the
+coordinates the fixture should reproduce: <code>LOCUS pUC19 2686 bp DNA circular 18-OCT-2007</code>,
+<em>lacZα</em> <code>complement(146..469)</code>, MCS <code>misc_feature 396..452</code> ("multiple cloning site
+(EcoRI-HindIII)"), lac promoter signals <code>complement(514..519)</code> and <code>complement(538..543)</code>,
+CAP site <code>complement(563..575)</code>, pMB1 origin <code>complement(867..1455)</code>, <em>bla</em> (AmpR)
+<code>complement(1626..2486)</code>.</p>
+<p>Consequences for the protocol the skill writes:</p>
+<ul>
+<li><strong>Colony colour: white.</strong> GFP inserted into the MCS interrupts the <em>lacZα</em> reading frame, so
+  correct clones are white on X-gal/IPTG and empty vector is blue. This is the opposite of
+  NEB's kit test systems, which score correct assemblies as blue. Say which convention the
+  plate is using.</li>
+<li><strong>Host must α-complement.</strong> Blue/white with pUC19 needs a <em>lacZΔM15</em> host such as NEB
+  5-alpha (C2987). NEB's own Golden Gate test systems deliberately use T7 Express, whose
+  genotype carries <code>lacZ::T7 gene1</code> and therefore cannot complement (Potapov 2018, Methods) —
+  a fine choice for their reverse screen and the wrong choice for ours.</li>
+<li><strong>Plate composition.</strong> A citable recipe for the indicator plate is Potapov 2018's: LB with
+  1 mg/mL dextrose, 1 mg/mL MgCl₂, 200 µM IPTG, 80 µg/mL X-gal, plus the relevant antibiotic —
+  chloramphenicol there, ampicillin or carbenicillin for pUC19. Read after overnight 37 °C;
+  their protocol adds 8 h at 4 °C before scoring colour.</li>
+<li><strong>Enzyme choice.</strong> With BsaI blocked by a site in AmpR and BsmBI/Esp3I blocked by two sites
+  in pUC19, the free enzymes in the fixture pair are BbsI and PaqCI. Both have NEB reaction
+  tables via M1100 (BbsI-HF: 1 µl/20 U, 37 °C; PaqCI: 1 µl/10 U at 37 °C plus 0.5 µl activator),
+  so either yields a fully cited protocol. SapI has one site in pUC19 (683) and gives 3-nt
+  overhangs; prefer BbsI or PaqCI.</li>
+<li><strong>Single-insert program.</strong> Two fragments, single-gene cloning: with the kit, 37 °C 5 min →
+  60 °C 5 min; with M1100 and BbsI-HF or PaqCI, 37 °C 15 min → 60 °C 5 min. Use 15 cycles of
+  42 °C/16 °C only if the chosen enzyme is BsmBI-v2 or BspQI.</li>
+<li><strong>No fluorescence expected.</strong> The Clontech GFP CDS fixture has no ribosome binding site of
+  its own, and in the MCS it sits downstream of the lac promoter on the reverse strand; the
+  protocol should say the clone is not expected to fluoresce and that colour scoring is about
+  <em>lacZα</em>, not GFP.</li>
+<li><strong>Colony PCR.</strong> Per the fixture description in issue #1 (re-derive it in tests rather than
+  trusting it here), M13 forward (379–395) and M13 reverse (465–481) flank the MCS, giving a
+  103 bp empty-vector amplicon, so the correct-clone band is 103 bp + insert (plus tails). NEB's
+  pGGAselect primers above are the wrong primers for pUC19 — do not reuse them.</li>
+</ul>
+<h2 id="9-implications-for-this-package">9. Implications for this package<a class="headerlink" href="#9-implications-for-this-package" title="Permanent link">&para;</a></h2>
+<p><strong>For #7 (enzyme data).</strong> The per-enzyme table in §2.6 is the field list: name, commercial
+name, recognition site in IUPAC, top/bottom cut offsets in REBASE <code>(n/m)</code> form, overhang length
+and end type (5′), incubation temperature, Golden Gate temperature (which differs from the
+incubation temperature for BsmBI-v2 and BspQI, and from the unit-definition temperature for
+BsmBI-v2 and BtgZI), heat-inactivation temperature and time, Dam/Dcm/CpG sensitivity as one of
+NEB's seven states (not sensitive, impaired, blocked, and the four "by overlapping" /"by some
+combinations of overlapping" variants), isoschizomers, prototype, and a
+<code>requires_activator</code> flag for PaqCI. Two values need a note field rather than a number:
+BsmBI-v2's Dam/Dcm cells were not readable in the archived chart, and BtgZI has no NEB Golden
+Gate protocol at all.</p>
+<p><strong>For #11 (overhang design).</strong> Ship Pryor 2020 S1–S5 (CC BY 4.0) as package data under
+<code>src/liulab_mbio/data/</code>, one file per enzyme, with a <code>LICENSE</code>/attribution file naming the
+paper, DOI and CC BY 4.0, and a regeneration script that re-downloads from the
+<code>journals.plos.org</code> URL pattern in §4.4. Convert the xlsx to a compact tabular form but keep
+the integer counts, since the fidelity formula needs <code>N_correct / N_total</code>. Do <strong>not</strong> ship
+Potapov 2018's ACS data (CC BY-NC) — it is the only source for T7 ligase and for static 25 °C
+conditions, so cite it and offer the Potapov Table 1 overhang sets as literature constants
+(short factual lists, reproduced with citation) rather than bulk data. Implement fidelity as
+<code>F = Π p(Oᵢ)</code> with <code>p(Oᵢ) = N_correct / N_total</code> over the chosen set, matched to the enzyme's
+own matrix and thermocycling temperature. Score sets with the viewer's thresholds (weak WC pair
+below 100, mismatch trace/modest/high at 10 and 100 normalised counts). Keep the classic rules
+as cheap pre-filters (non-palindromic, unique, no reuse of a pair) but let the data override
+the "at least two mismatched bases" and GC-content heuristics, and flag 100%-GC junctions as
+truncation-prone on Potapov's junction-6 evidence. Remember SapI/BspQI need the 64-overhang
+three-base matrix, not the 256-overhang one, and that the matrix axes are top strand versus
+bottom strand.</p>
+<p><strong>For #13 (bench numbers).</strong> Every table in §2 is quotable with a citation. Pick one system
+per protocol and say which: kit E1601/E1602 (20 µl, 0.05 pmol vector, 1:1 amplicon:vector,
+1–2 µl enzyme mix) or M1100 (15 µl for 2 to 6 fragments, 30 µl for 7+, 0.05 pmol each, enzyme
+volume from the table, PaqCI activator when applicable). Always end with the 60 °C 5 min soak,
+then 2 µl into 50 µl cells. Keep the ng↔pmol conversion in code rather than quoting NEB's
+75 ng figure, which is specific to a 2,155–2,220 bp plasmid. Record the manual revision
+(E1601 v5.0_6/26) next to the numbers, because NEB changed the amplicon ratio from 2:1 to 1:1
+between revisions.</p>
+<p><strong>For #14 (the skill).</strong> The HTML protocol should print: the enzyme's own Golden Gate
+temperature and program tier, the reaction table for whichever system the user has, the
+activator line only for PaqCI, the end soak, the transformation and plating steps with the
+strain requirement (α-complementing host for pUC19 blue/white), the expected colony colour
+with the convention named explicitly, expected colony counts from §5 as an order-of-magnitude
+check, the colony PCR band sizes from the fixture's own M13 primers, and the per-step
+troubleshooting rows in §6. Cite NEB per step; the skill should never invent a number that is
+not in this note or computed by the package.</p>
+<h2 id="10-open-gaps">10. Open gaps<a class="headerlink" href="#10-open-gaps" title="Permanent link">&para;</a></h2>
+<p>Still unverified. None of these is guessed anywhere above.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why it is missing</th>
+<th>Workaround in use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-enzyme rows of <em>Cleavage Close to the End of DNA Fragments</em></td>
+<td>Table did not render in the Wayback snapshot; live page 403</td>
+<td>NEB's general rule of 6 bp either side, quoted in §3</td>
+</tr>
+<tr>
+<td>NEBuilder HiFi reaction table and overlap length</td>
+<td><code>manuale2621.pdf</code> returns 403 to both <code>curl</code> and WebFetch; no snapshot fetched</td>
+<td>Method described qualitatively in §7; NEB's ≤5-insert cut-off cited from the E1601 manual</td>
+</tr>
+<tr>
+<td>BtgZI product page</td>
+<td>No Wayback snapshot under either URL spelling</td>
+<td>Specification PDF (unit definition at 60 °C), heat-inactivation and methylation charts</td>
+</tr>
+<tr>
+<td>BsmBI-v2 Dam and Dcm cells</td>
+<td>Archived chart row truncated on parse</td>
+<td>CpG "Blocked" from the archived product page; Dam/Dcm left unstated</td>
+</tr>
+<tr>
+<td>Ligase Fidelity Viewer <strong>v2</strong> help, <code>ligasefidelity.neb.com</code></td>
+<td>403 live; only the older <code>tools.neb.com</code> v1 help page is reachable</td>
+<td>v1 help page, quoted in §4.5; the Pryor 2020 paper describes the v2 condition list</td>
+</tr>
+<tr>
+<td><code>goldengate.neb.com</code> tool behaviour</td>
+<td>403 live, no snapshot fetched</td>
+<td>The E1601/E1602 manuals describe what the tool designs, quoted in §4.5</td>
+</tr>
+<tr>
+<td>NEB screening-protocol and 52-fragment protocol pages</td>
+<td>403 live</td>
+<td>Manual screening section and the brochure's 52-fragment figure</td>
+</tr>
+<tr>
+<td>REBASE licence or citation terms</td>
+<td>No statement on the enzyme pages read</td>
+<td>Flagged for #7; check REBASE's own terms page before shipping REBASE-derived data</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All retrieved 2026-09-12.</p>
+<ul>
+<li>NEB, <em>NEBridge Golden Gate Assembly Kit (BsaI-HFv2)</em> instruction manual, NEB #E1601S/L,
+  version 5.0_6/26: <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf">manuale1601.pdf</a></li>
+<li>NEB, <em>NEBridge Golden Gate Assembly Kit (BsmBI-v2)</em> instruction manual, NEB #E1602S/L:
+  <a href="https://www.neb.com/en/-/media/nebus/files/manuals/manuale1602.pdf">manuale1602.pdf</a></li>
+<li>NEB product specifications (fetched under <code>/-/media/catalog/specifications/</code>): PS-E1601S/L
+  v1.0, PS-E1602S/L v1.0, PS-M1100S/L v1.0, PS-R3733S/L v1.0, PS-R0739S/L v1.0, PS-R3539S/L
+  v1.0, PS-R0745S/L v1.0, PS-R0569S/L v1.0, PS-R0703S/L v1.0, PS-R0734S/L v1.0</li>
+<li>NEB, <em>Protocol for NEBridge Ligase Master Mix (NEB #M1100)</em> — archived snapshot 2023-03-31:
+  <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100">web.archive.org</a></li>
+<li>NEB, <em>NEBridge Ligase Master Mix Protocol Guidelines</em> — archived snapshot 2025-07-13:
+  <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines">web.archive.org</a></li>
+<li>NEB, <em>Usage Guidelines for Golden Gate Assembly with PaqCI</em> — archived snapshot 2021-06-15:
+  <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci">web.archive.org</a></li>
+<li>NEB, <em>Cleavage Close to the End of DNA Fragments</em> — archived snapshot 2021-04-16;
+  <em>Heat Inactivation</em> — 2021-04-20; <em>Dam-Dcm and CpG Methylation</em> — 2021-04-13;
+  <em>Technical Tips For Optimizing Golden Gate Assembly Reactions</em> — 2020-10-26;
+  <em>Insert Considerations … (NEB #E1601)</em> — 2020-11-29 (all via <code>web.archive.org</code>)</li>
+<li>NEB product pages, archived snapshots 2021-04: BsaI-HFv2 (R3733), BsmBI-v2 (R0739),
+  BbsI-HF (R3539), SapI (R0569), PaqCI (R0745)</li>
+<li>NEB, <em>Golden Gate Assembly: 50+ fragment assembly now achievable</em> brochure, NEB142_V4.1_1024,
+  and <em>Breaking through the Limitations of Golden Gate Assembly</em> technical note, 01/19, both via
+  the <code>neb-online.de</code> mirror</li>
+<li>NEB, pUC19 GenBank record: <a href="https://www.neb.com/-/media/nebus/page-images/tools-and-resources/interactive-tools/dna-sequences-and-maps/text-documents/puc19gbk.txt">puc19gbk.txt</a></li>
+<li>NEB, <em>Ligase Fidelity Viewer: Help Page</em>:
+  <a href="https://tools.neb.com/~potapov/ligase-fidelity-viewer/help.html">tools.neb.com</a></li>
+<li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by
+  T4 DNA Ligase and application to DNA assembly. <em>ACS Synth. Biol.</em> 7, 2665–2674.
+  <a href="https://doi.org/10.1021/acssynbio.8b00333">doi:10.1021/acssynbio.8b00333</a>. Supporting Data
+  via figshare collection 4283045 (CC BY-NC 4.0)</li>
+<li>Potapov, V. et al. (2018) A single-molecule sequencing assay for the comprehensive profiling
+  of T4 DNA ligase fidelity and bias during DNA end-joining. <em>Nucleic Acids Res.</em> 46, e79.
+  <a href="https://doi.org/10.1093/nar/gky303">doi:10.1093/nar/gky303</a> (CC BY-NC 4.0)</li>
+<li>Pryor, J.M. et al. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity
+  using data-optimized assembly design. <em>PLoS One</em> 15(9): e0238592.
+  <a href="https://doi.org/10.1371/journal.pone.0238592">doi:10.1371/journal.pone.0238592</a> (CC BY 4.0)</li>
+<li>Pryor, J.M. et al. (2022) <em>ACS Synth. Biol.</em> 11, 2036–2042 (52-fragment assembly; cited via
+  the NEB brochure figure)</li>
+<li>Kennedy, M.A., Hosford, C.J., Azumaya, C.M., Luyten, Y.A., Chen, M., Morgan, R.D. and
+  Stoddard, B.L. (2023) Structures, activity and mechanism of the Type IIS restriction
+  endonuclease PaqCI. <em>Nucleic Acids Res.</em> 51, 4467–4487.
+  <a href="https://doi.org/10.1093/nar/gkad228">doi:10.1093/nar/gkad228</a> (CC BY)</li>
+<li>Weber, E. et al. (2011) A modular cloning system for standardized assembly of multigene
+  constructs. <em>PLoS ONE</em> 6: e16765 (CC BY)</li>
+<li>Sarrion-Perdigones, A. et al. (2011) GoldenBraid: an iterative cloning system for
+  standardized assembly of reusable genetic modules. <em>PLoS ONE</em> 6: e21622 (CC BY)</li>
+<li>REBASE enzyme records for BsaI, BsmBI, Esp3I, BbsI, SapI, PaqCI, BtgZI and DpnI:
+  <a href="http://rebase.neb.com/rebase/rebase.html">rebase.neb.com</a></li>
+<li>Takara Bio, In-Fusion HD cloning user manuals and <em>In-Fusion Cloning</em> learning centre pages</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

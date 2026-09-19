@@ -1,0 +1,1007 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/gateway/">
+      
+      
+        <link rel="prev" href="../restriction-ligation/">
+      
+      
+        <link rel="next" href="../genome-check/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Move a gene into an expression vector with Gateway - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#move-a-gene-into-an-expression-vector-with-gateway" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Move a gene into an expression vector with Gateway
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-bring" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you bring
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What it prints
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-comes-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What comes out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-the-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read the protocol
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-junction-is-not-clean" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The junction is not clean
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-strains-and-they-are-not-the-same-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two strains, and they are not the same one
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-check-with-no-verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        A check with no verdict
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-it-refuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When it refuses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-bring" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you bring
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What it prints
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-comes-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What comes out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-the-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read the protocol
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-junction-is-not-clean" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The junction is not clean
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-strains-and-they-are-not-the-same-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two strains, and they are not the same one
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-check-with-no-verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        A check with no verdict
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-it-refuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When it refuses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="move-a-gene-into-an-expression-vector-with-gateway">Move a gene into an expression vector with Gateway<a class="headerlink" href="#move-a-gene-into-an-expression-vector-with-gateway" title="Permanent link">&para;</a></h1>
+<p>This page follows one cloning job from end to end. Nothing is cut here, and nothing is joined by
+a ligase. Two short sites swap their halves, and the insert moves from one plasmid into the
+next.</p>
+<p>Gateway is what a shelf of expression vectors is built for. You make the entry clone once. Every
+destination after that is one reaction and one plate.</p>
+<h2 id="what-you-bring">What you bring<a class="headerlink" href="#what-you-bring" title="Permanent link">&para;</a></h2>
+<p>Three files, and all three are yours.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>your gene</td>
+<td>the insert. A plain coding sequence, a fragment that already has att ends, or an entry clone you made last year</td>
+</tr>
+<tr>
+<td>a donor vector</td>
+<td>where the entry clone comes from, such as a pDONR plasmid</td>
+</tr>
+<tr>
+<td>a destination vector</td>
+<td>where the gene ends up, carrying the promoter and the tag you want</td>
+</tr>
+</tbody>
+</table>
+<p>No vector ships with this package, and no list of vectors either. Export your own maps from
+SnapGene, or download them from the supplier.</p>
+<p>That is on purpose. The supplier's own att sites drift between products. A tool holding a copy
+of a site would match the old one and quietly miss yours. So the plan reads your file and looks
+for the sites in it, allowing a base to differ outside the core of each one. The reasoning is in
+<a href="../adr/0008-att-sites-and-vectors/">the att sites decision</a>.</p>
+<h2 id="run-it">Run it<a class="headerlink" href="#run-it" title="Permanent link">&para;</a></h2>
+<p>Three commands, and the files you hold decide which one you want.</p>
+<p>An entry clone already in hand, so only the LR reaction is needed:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>gateway<span class="w"> </span>plan<span class="w"> </span>entry.dna<span class="w"> </span>destination.dna<span class="w"> </span>--out<span class="w"> </span>plan/
+</code></pre></div>
+<p>A fragment that already carries att ends, so BP runs first:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>gateway<span class="w"> </span>plan<span class="w"> </span>insert.dna<span class="w"> </span>destination.dna<span class="w"> </span>--donor<span class="w"> </span>donor.dna<span class="w"> </span>--out<span class="w"> </span>plan/
+</code></pre></div>
+<p>A plain gene, which has to be amplified onto att ends first:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>gateway<span class="w"> </span>plan<span class="w"> </span>gene.dna<span class="w"> </span>destination.dna<span class="w"> </span>--donor<span class="w"> </span>donor.dna<span class="w"> </span>--amplify<span class="w"> </span>--out<span class="w"> </span>plan/
+</code></pre></div>
+<h2 id="what-it-prints">What it prints<a class="headerlink" href="#what-it-prints" title="Permanent link">&para;</a></h2>
+<p>One summary line, then every path it wrote. Read the line first. It is the whole design in one
+sentence:</p>
+<div class="highlight"><pre><span></span><code>NAME: LENGTH bp, BP then LR, INSERT bp insert, junctions attB1 at START, attB2 at START, checks pass
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Part of the line</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LENGTH bp</code></td>
+<td>how long the finished plasmid is</td>
+</tr>
+<tr>
+<td><code>BP then LR</code></td>
+<td>which reactions it planned. It reads <code>LR</code> alone when you brought the entry clone</td>
+</tr>
+<tr>
+<td><code>INSERT bp insert</code></td>
+<td>how much DNA moves between the att sites</td>
+</tr>
+<tr>
+<td><code>junctions attB1 at ...</code></td>
+<td>what each join now reads, and where it sits</td>
+</tr>
+<tr>
+<td><code>checks pass</code></td>
+<td>the worst verdict of every check, so read it before you order</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-comes-out">What comes out<a class="headerlink" href="#what-comes-out" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>entry-clone.dna</code></td>
+<td>the entry clone, written only when the run made one</td>
+</tr>
+<tr>
+<td><code>product.dna</code></td>
+<td>the expression clone, with every feature carried over and both joins marked. Opens in SnapGene</td>
+</tr>
+<tr>
+<td><code>primers.tsv</code></td>
+<td>every oligo it designed, with length and melting temperature. This is your order</td>
+</tr>
+<tr>
+<td><code>protocol.json</code></td>
+<td>the bench protocol written as data. The page is made from this file</td>
+</tr>
+<tr>
+<td><code>protocol.html</code></td>
+<td>the bench protocol: one page, no network, nothing to install</td>
+</tr>
+</tbody>
+</table>
+<p>So five files where the BP reaction ran, and four where you brought the entry clone. Nothing
+here is written by hand, so the same files in always give the same files out. To change the
+design, run the command again.</p>
+<p>To change what the page says without changing the design, edit <code>protocol.json</code> and turn it back
+into a page:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>protocol<span class="w"> </span>render<span class="w"> </span>protocol.json
+</code></pre></div>
+<h2 id="how-to-read-the-protocol">How to read the protocol<a class="headerlink" href="#how-to-read-the-protocol" title="Permanent link">&para;</a></h2>
+<p>Open <code>protocol.html</code> in a browser. It is built to be followed at the bench.</p>
+<p><strong>The top of the page</strong> carries a card for each vector, each clone, the reaction, the insert,
+the junctions, the product and what to select on. Under them sit a few sentences about the
+clone, then a badge for each check.</p>
+<p>One badge is worth knowing about before you start. An att site inside your own insert would
+recombine where nobody meant it to, and you would learn it from a plate of wrong clones. The
+plan looks for one on both strands, and fails that check when it finds one.</p>
+<p><strong>The middle</strong> is the bench work. A run from a plain gene has thirteen numbered steps, in five
+groups:</p>
+<ul>
+<li>amplify the gene onto att ends, then clean the product up</li>
+<li>set up BP, run it for an hour at 25 °C, stop it with proteinase K, transform and plate</li>
+<li>pick a colony, grow it overnight and prep the entry clone</li>
+<li>the same four steps again for LR</li>
+<li>screen the colonies, then sequence the clone</li>
+</ul>
+<p><strong>The miniprep is a step of its own, and that is the point.</strong> LR takes clean entry clone DNA,
+weighed out. A stopped BP reaction is not that. No plan can weigh a yield nobody has measured,
+so the page says what the step is for and leaves the weight to your own reading.</p>
+<p><strong>The tables count molecules, not just weight.</strong> BP takes the same number of molecules of each
+piece of DNA, and a short fragment weighs less than a vector at the same count. LR asks for 50
+to 150 ng of the entry clone. Both units are printed so that you do not do the arithmetic at the
+bench.</p>
+<p><strong>The screening step</strong> has two lanes, and the page draws both. A correct clone gives one band. A
+destination vector that never reacted gives a band of another size, because the cassette it
+still carries is not the insert. There is no third lane: the two att sites differ from each
+other, so the insert cannot go in the wrong way round.</p>
+<p><strong>The sequencing primers are designed against your own product</strong>, reading in from outside each
+join. The supplier's named primers are not used. One pair suits a single kit's vector, and the
+others cross well over a hundred bases of vector before they reach the insert.</p>
+<h2 id="the-junction-is-not-clean">The junction is not clean<a class="headerlink" href="#the-junction-is-not-clean" title="Permanent link">&para;</a></h2>
+<p>The insert arrives with a whole att site at each end, so the clone gains 25 bases there. Where
+your protein is meant to run into a tag, the ribosome reads through those bases, and the frame
+has to hold.</p>
+<p>The plan checks that frame only at an end you name:</p>
+<table>
+<thead>
+<tr>
+<th><code>--fusion</code></th>
+<th>What it changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>none</code></td>
+<td>nothing is added, and neither frame is judged</td>
+</tr>
+<tr>
+<td><code>N-terminal</code></td>
+<td>two more bases on the forward primer, so the tag in front stays in frame</td>
+</tr>
+<tr>
+<td><code>C-terminal</code></td>
+<td>one more base on the reverse primer, so the tag behind stays in frame</td>
+</tr>
+<tr>
+<td><code>both</code></td>
+<td>both ends</td>
+</tr>
+</tbody>
+</table>
+<p>Why name it rather than let the tool work it out? Nothing in a plasmid map says which coding
+sequence is a tag. The one nearest the join is as likely to be the resistance gene. A tool
+guessing there would fail plenty of correct work, so it asks instead.</p>
+<h2 id="two-strains-and-they-are-not-the-same-one">Two strains, and they are not the same one<a class="headerlink" href="#two-strains-and-they-are-not-the-same-one" title="Permanent link">&para;</a></h2>
+<p>A donor and a destination vector both carry ccdB, a gene that kills ordinary <em>E. coli</em>. That is
+what keeps your plate clean: after the reaction, leftover vector cannot grow.</p>
+<p>It also means two different strains:</p>
+<ul>
+<li>Grow the vectors themselves in the resistant strain the page names. An ordinary strain will
+  not take them.</li>
+<li>Select the clone in an ordinary strain, which ccdB kills.</li>
+<li>Never use a strain carrying the F′ episome. It brings <em>ccdA</em>, which cancels ccdB, and your
+  plate fills with background. The plan fails that check by name and tells you why.</li>
+</ul>
+<h2 id="a-check-with-no-verdict">A check with no verdict<a class="headerlink" href="#a-check-with-no-verdict" title="Permanent link">&para;</a></h2>
+<p>One check here comes back neither green nor red.</p>
+<p>The manuals say which strain grows a ccdB vector, and they forbid the F′ one. None of them says
+what happens if you plate the reaction itself on a resistant strain. It should lose the
+selection, but that is reasoning rather than a measurement.</p>
+<p>So the page shows the check as <code>not judged</code>, with the guidance beside it. It is never shown as a
+pass. A number nobody measured is worse than no number at all.</p>
+<h2 id="when-it-refuses">When it refuses<a class="headerlink" href="#when-it-refuses" title="Permanent link">&para;</a></h2>
+<p>It stops rather than guessing, and the message says what it looked for. Hand it a plasmid with
+no att sites and it answers:</p>
+<div class="highlight"><pre><span></span><code>error: pUC19 carries 0 attR1 sites, needing one: looked for attR1 and attR2 on either strand, matching the 7 bp overlap exactly and the rest of the 25 bp region within 1 base(s)
+</code></pre></div>
+<p>Read that as: this is not a destination vector, or it is not the file you meant. The same
+message names attL sites when it was given something that should be an entry clone.</p>
+<h2 id="before-you-order">Before you order<a class="headerlink" href="#before-you-order" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Read the whole protocol once, top to bottom.</li>
+<li>Look at every badge that is not green, and decide about it.</li>
+<li>Look for the badge reading <code>not judged</code>, and answer it yourself.</li>
+<li>Check that the product map holds what you meant to clone.</li>
+<li>Check that the two screening bands can still be told apart.</li>
+</ul>
+<p><code>pixi run liulab_mbio cloning gateway plan --help</code> lists the rest of the options: which
+polymerase to amplify with, which strain the protocol names, and what to call the product.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

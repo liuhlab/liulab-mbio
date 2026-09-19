@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/golden-gate/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/examples/pUC19-GFP/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/gibson/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/restriction-ligation/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/gateway/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/genome-check/</loc>
+      </url>
+      <url>
+        <loc>https://liuhlab.github.io/liulab-mbio/api/</loc>
+      </url>
+</urlset>

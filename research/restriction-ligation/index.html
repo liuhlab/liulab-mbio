@@ -1,0 +1,1771 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/restriction-ligation/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Restriction and ligation: the reactions, the buffers, and what may ship - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#restriction-and-ligation-the-reactions-the-buffers-and-what-may-ship" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Restriction and ligation: the reactions, the buffers, and what may ship
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read this note
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-sources-and-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Sources and licences
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-digest-reaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The digest reaction
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-double-digest-and-buffer-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Double digest and buffer compatibility
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-a-buffer-field-on-the-shipped-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. A buffer field on the shipped records
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-which-enzymes-are-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Which enzymes are missing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-dephosphorylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Dephosphorylation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-ligation-reaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. The ligation reaction
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-blunt-against-sticky" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Blunt against sticky
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-gel-purification" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Gel purification
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-between-the-digest-and-the-ligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. Between the digest and the ligation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-dam-and-dcm-methylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11. Dam and Dcm methylation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-what-the-plate-should-look-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        12. What the plate should look like
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        13. Troubleshooting
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-what-this-settles-for-the-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        14. What this settles for the spec
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        15. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="restriction-and-ligation-the-reactions-the-buffers-and-what-may-ship">Restriction and ligation: the reactions, the buffers, and what may ship<a class="headerlink" href="#restriction-and-ligation-the-reactions-the-buffers-and-what-may-ship" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #120, under spec #117. Everything below was retrieved on
+<strong>2026-09-18</strong> unless a source carries its own date. It answers the twelve questions #120
+asks, says what each source allows, and lists what nobody stated.</p>
+<h2 id="how-to-read-this-note">How to read this note<a class="headerlink" href="#how-to-read-this-note" title="Permanent link">&para;</a></h2>
+<p><code>neb.com</code> returns HTTP 403 to <code>curl</code> and WebFetch for its HTML pages, and its current pages
+are a JavaScript shell even when a snapshot of them exists. Five routes work and every fact
+below came from one of them.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Works</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>neb.com/-/media/nebus/files/manuals/*.pdf</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>Monarch kit manuals T1120, T1130, T1020, T1030</td>
+</tr>
+<tr>
+<td><code>neb.com/en/-/media/catalog/specifications/&lt;letter&gt;/&lt;digit&gt;/&lt;catalog&gt;_v1.pdf</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>product specifications (M0202, M0371)</td>
+</tr>
+<tr>
+<td><code>r.jina.ai/&lt;neb url&gt;</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>the <strong>live</strong> page, rendered to text: protocols, usage guidelines, product pages, charts</td>
+</tr>
+<tr>
+<td>Wayback snapshot of an <strong>old-style</strong> <code>neb.com</code> URL (no <code>/en-us/</code>)</td>
+<td>yes</td>
+<td>the same pages as they were server-rendered, 2019–2023</td>
+</tr>
+<tr>
+<td><code>nc3.neb.com/NEBcutter/data/enzymes.json</code></td>
+<td>yes</td>
+<td>cross-check of per-product buffer, activity and temperature</td>
+</tr>
+</tbody>
+</table>
+<p>Three traps, each paid for once:</p>
+<ul>
+<li><strong>A 403 from <code>neb.com</code> can mean "no such file".</strong> The body is the same size either way, so a
+  misspelled filename reads as a block. <code>ps-m0202s-l.pdf</code> 403s; <code>m/0/m0202s_l_v1.pdf</code> under
+  <code>/en/-/media/catalog/specifications/</code> returns the PDF. Try other spellings before recording
+  a document as unreachable.</li>
+<li><strong>A Wayback snapshot of a current <code>/en-us/</code> URL returns HTML with no content.</strong> The body is
+  fetched by script. Snapshots of the pre-2024 URLs (<code>/protocols/0001/01/01/…</code>,
+  <code>/tools-and-resources/…</code> without <code>/en-us/</code>) are server-rendered and do carry the text.</li>
+<li><strong><code>web.archive.org</code> was reported offline earlier the same day.</strong> Every number below that a
+  plan would print comes from a live page read today; snapshots are used for pages NEB has
+  since moved, and each carries its snapshot date.</li>
+</ul>
+<p>Values taken from an archived snapshot carry the word <strong>archived</strong> and the date. Anything
+still unverified is in <a href="#15-open-gaps">Open gaps</a> and is never guessed.</p>
+<h2 id="1-sources-and-licences">1. Sources and licences<a class="headerlink" href="#1-sources-and-licences" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Document or dataset</th>
+<th>Licence</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NEB product pages, protocols, usage guidelines, troubleshooting guides</td>
+<td>© NEB, all rights reserved</td>
+<td><strong>No</strong> — cite, and re-enter single facts by hand</td>
+</tr>
+<tr>
+<td>NEB <em>Performance Chart for Restriction Enzymes</em> (the whole activity table)</td>
+<td>as above</td>
+<td><strong>No</strong> — read for the shipped enzymes' rows, never republished or made a build input</td>
+</tr>
+<tr>
+<td>NEB <em>Restriction Endonuclease Technical Guide</em> (PDF, v5.0 – 7/17)</td>
+<td>as above</td>
+<td><strong>No</strong> — quoted here with citation only</td>
+</tr>
+<tr>
+<td>NEB Monarch instruction manuals (T1120, T1130) and product specifications (M0202, M0371)</td>
+<td>as above</td>
+<td><strong>No</strong> — same rule</td>
+</tr>
+<tr>
+<td>NEBcutter 3 <code>enzymes.json</code></td>
+<td>as above</td>
+<td><strong>No</strong> — read as a cross-check, never a build input</td>
+</tr>
+<tr>
+<td>REBASE enzyme records</td>
+<td>open database, with a citation</td>
+<td><strong>Yes</strong>, as <code>docs/research/restriction-enzyme-data.md</code> §2 already records</td>
+</tr>
+<tr>
+<td>Bauer et al. 2017, <em>PLoS ONE</em> 12(12): e0190062</td>
+<td>CC BY 4.0</td>
+<td><strong>Yes</strong>, with attribution</td>
+</tr>
+<tr>
+<td>Pheiffer &amp; Zimmerman 1983, <em>Nucleic Acids Res.</em> 11, 7853</td>
+<td>© OUP; free to read on PMC</td>
+<td><strong>No</strong> — cite only</td>
+</tr>
+<tr>
+<td>Addgene protocol pages</td>
+<td>site terms: non-commercial use only</td>
+<td><strong>No</strong> — and no number here rests on one</td>
+</tr>
+</tbody>
+</table>
+<p>NEB's terms of use are quoted in full in <code>docs/research/restriction-enzyme-data.md</code> §2. The
+operative sentence:</p>
+<blockquote>
+<p>You may not use or copy the Content other than for non-commercial individual reference
+purposes … you may not otherwise copy, display, download, install, use, compile, distribute,
+mirror on another server … or create any derivative work based on such Information.</p>
+</blockquote>
+<p>That verdict — <strong>cite, never mirror</strong> — was set by issue #4 and confirmed by #7, and it holds
+here unchanged. What ships is a handful of facts per product, each read from a cited page and
+re-entered by hand in <code>scripts/enzyme_properties.toml</code>. Section 4 says where that line falls
+for a buffer.</p>
+<p>Addgene's terms, read 2026-09-18:</p>
+<blockquote>
+<p>Content may not be reproduced, duplicated, copied, sold, resold, or otherwise exploited for
+any commercial purpose … You are free to use Content for your informational, noncommercial
+purposes, so long as you retain all copyright, Marks … and other proprietary notices.</p>
+</blockquote>
+<p>Non-commercial-only clashes with this repository's MIT licence, the same reason the Golden
+Gate note refuses Potapov 2018's CC BY-NC data. Addgene is not used as a source above.</p>
+<p>Bauer 2017 carries the PLoS licence line:</p>
+<blockquote>
+<p>This is an open access article distributed under the terms of the Creative Commons
+Attribution License, which permits unrestricted use, distribution, and reproduction in any
+medium, provided the original author and source are credited.</p>
+</blockquote>
+<h2 id="2-the-digest-reaction">2. The digest reaction<a class="headerlink" href="#2-the-digest-reaction" title="Permanent link">&para;</a></h2>
+<p>All from NEB, <em>Optimizing Restriction Endonuclease Reactions</em> (live, read 2026-09-18), unless
+marked.</p>
+<blockquote>
+<p>By definition, 1 unit of restriction enzyme will completely digest 1 μg of substrate DNA in a
+50 μl reaction in 60 minutes … most researchers follow the "typical" reaction conditions
+listed, where a 5–10 fold overdigestion is recommended.</p>
+</blockquote>
+<p>A "typical" digestion, as NEB tabulates it:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Amount</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Restriction enzyme</td>
+<td>10 units, generally 1 µl</td>
+</tr>
+<tr>
+<td>DNA</td>
+<td>1 µg</td>
+</tr>
+<tr>
+<td>10X NEBuffer</td>
+<td>5 µl (1X)</td>
+</tr>
+<tr>
+<td>Total reaction volume</td>
+<td>50 µl</td>
+</tr>
+<tr>
+<td>Incubation time</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td>Incubation temperature</td>
+<td>enzyme dependent</td>
+</tr>
+</tbody>
+</table>
+<p>Smaller volumes, from the same page: 25 µl takes 5 units, 0.5 µg and 2.5 µl of buffer; 10 µl
+takes 1 unit, 0.1 µg and 1 µl, and "should not be incubated for longer than 1 hour to avoid
+evaporation". The page's rules of thumb: 5–10 units per µg of DNA, 10–20 units per µg for
+genomic DNA, and enzyme volume no more than 10% of the reaction.</p>
+<p>The <em>Technical Guide</em> (v5.0 – 7/17) adds the other volume constraint, in its troubleshooting
+table: spin-column purification leaves salt, so "DNA solution should be no more than 25% of
+total reaction volume".</p>
+<p><strong>How much DNA one digest takes.</strong> 1 µg in 50 µl is the stated unit of work. For a vector
+digest feeding one ligation that is already generous: section 7's ligation takes 50 ng of a
+4 kb vector.</p>
+<p><strong>Star activity.</strong> The conditions and the countermeasures are NEB's own pairing, from the
+<em>Technical Guide</em> (v5.0 – 7/17) and the <em>Optimizing</em> page:</p>
+<table>
+<thead>
+<tr>
+<th>Condition that contributes</th>
+<th>What NEB says to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>High glycerol, &gt; 5% v/v</td>
+<td>Enzyme added is at most 10% of the reaction; use the standard 50 µl volume</td>
+</tr>
+<tr>
+<td>High enzyme per µg of DNA (varies by enzyme, usually 100 units/µg)</td>
+<td>Use the fewest units that digest</td>
+</tr>
+<tr>
+<td>Non-optimal buffer</td>
+<td>Use the supplied buffer wherever possible</td>
+</tr>
+<tr>
+<td>Prolonged reaction time</td>
+<td>Use the minimum time for complete digestion</td>
+</tr>
+<tr>
+<td>Organic solvents (DMSO, ethanol, ethylene glycol, dimethylacetamide, dimethylformamide, sulphalane)</td>
+<td>Keep the DNA prep free of them</td>
+</tr>
+<tr>
+<td>Mg²⁺ substituted by Mn²⁺, Cu²⁺, Co²⁺ or Zn²⁺</td>
+<td>Use Mg²⁺</td>
+</tr>
+</tbody>
+</table>
+<p>NEB's own caveat, quoted: "The relative significance of each of these altered conditions will
+vary from enzyme to enzyme," and the HF enzymes "have been engineered for reduced star
+activity". Eleven of the sixteen multiple-cloning-site enzymes this package ships are HF
+products already; NdeI, SmaI, XbaI, XhoI and XmaI are not.</p>
+<p><strong>Cutting a PCR product.</strong> NEB, <em>Cleavage Close to the End of DNA Fragments</em> (archived
+2021-04-19): "As a general rule and for enzymes not listed below, 6 base pairs should be added
+on either side of the recognition site to cleave efficiently." The per-enzyme table did render
+in that snapshot — a gap the Golden Gate note left open — and it is measured as percent
+cleavage of an annealed oligonucleotide (– is 0%, + is 0–20%, ++ is 20–50%, +++ is 50–100%).
+For the products this package names, at 1 / 2 / 3 / 4 / 5 spacer bases:</p>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BamHI-HF</td>
+<td>+</td>
+<td>+</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>EcoRI-HF</td>
+<td>+</td>
+<td>+</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>HindIII-HF</td>
+<td>–</td>
+<td>+</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>KpnI-HF</td>
+<td>+</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>NcoI-HF</td>
+<td>+</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>NdeI</td>
+<td>+</td>
+<td>+</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>NotI-HF</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+</tr>
+<tr>
+<td>PstI-HF</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>SacI-HF</td>
+<td>–</td>
+<td>+</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>SalI-HF</td>
+<td>–</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>SbfI-HF</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>SmaI</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>SphI-HF</td>
+<td>++</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>XbaI</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+</tr>
+<tr>
+<td>XhoI</td>
+<td>++</td>
+<td>++</td>
+<td>++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+<tr>
+<td>XmaI</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+<td>+++</td>
+</tr>
+</tbody>
+</table>
+<p>Two readings matter for a tailed primer: only SmaI and XmaI cut well at a single base, and NotI
+and XbaI never reach +++ even at five, so the six-base default is the right one and is what
+<code>sites.primer_tail</code> already builds.</p>
+<h2 id="3-double-digest-and-buffer-compatibility">3. Double digest and buffer compatibility<a class="headerlink" href="#3-double-digest-and-buffer-compatibility" title="Permanent link">&para;</a></h2>
+<p>NEB, <em>Double Digests</em> (live, read 2026-09-18), quoted:</p>
+<blockquote>
+<p>Double digests with NEB's restriction enzymes can be set up in rCutSmart Buffer. Otherwise,
+choose an NEBuffer that results in the most activity for both enzymes.</p>
+<p>The final concentration of glycerol in any reaction should be less than 5% … For example, in
+a 50 µl reaction, the total amount of enzyme added should not exceed 5 µl.</p>
+<p>If two different incubation temperatures are necessary, choose the optimal reaction buffer
+and set up reaction accordingly. Add the first enzyme and incubate at the desired
+temperature. Then, heat inactivate the first enzyme, add the second enzyme and incubate at
+the recommended temperature.</p>
+<p>NEB currently supplies two enzymes with unique buffers: EcoRI and DpnII … Note that EcoRI has
+an HF version which is supplied with rCutSmart Buffer.</p>
+</blockquote>
+<p><strong>When a sequential digest is needed</strong>, in NEB's own words on the same page:</p>
+<blockquote>
+<p>If there is no buffer in which the two enzymes exhibit &gt; 50% activity, a sequential digest
+can be performed.</p>
+</blockquote>
+<p>The sequential recipe: digest first with the enzyme whose recommended buffer has the lowest
+salt, adjust the salt to suit the second, add the second enzyme; or put the DNA through a spin
+column between the two.</p>
+<p>The 2021 snapshot of this page named three unique-buffer enzymes (EcoRI, SspI, DpnII); the live
+page names two. Nothing else in the text has changed.</p>
+<p><strong>Where the compatibility numbers live, and what may be done with them.</strong> NEB publishes them
+twice: once as the <em>Performance Chart for Restriction Enzymes</em>, a single table covering more
+than 200 enzymes with a "Supplied NEBuffer" column and four "% Activity in NEBuffer" columns;
+and once per enzyme, on that enzyme's own product page, under <strong>Reaction Conditions</strong> and
+<strong>Activity in NEBuffers</strong>. Read live on 2026-09-18, BsmBI-v2's page (NEB #R0739) gives
+"1X NEBuffer r3.1", "Incubate at 55°C" and "NEBuffer r1.1: &lt;10%, NEBuffer r2.1: 50%, NEBuffer
+r3.1: 100%, rCutSmart Buffer: 25%"; SmaI's page (NEB #R0141) gives "1X rCutSmart Buffer",
+"Incubate at 37°C" and "rCutSmart Buffer: 100%". The chart's own row for each agrees, read the
+same day.</p>
+<p>The chart is a compiled table and is covered by the terms in section 1: <strong>it is read, never
+republished, and never a build input</strong>, here or in <code>scripts/build_enzymes.py</code>. The same holds for
+NEBcutter 3's <code>enzymes.json</code>, which carries the same per-product fields (<code>buff_name</code>,
+<code>buff_act</code>) and which #7 already ruled out as a build input. The per-enzyme values on a product
+page are the same kind of fact as the incubation temperature and the methylation words this
+package already ships from those pages. Section 4 turns that into a verdict.</p>
+<h2 id="4-a-buffer-field-on-the-shipped-records">4. A buffer field on the shipped records<a class="headerlink" href="#4-a-buffer-field-on-the-shipped-records" title="Permanent link">&para;</a></h2>
+<p><strong>Verdict: <code>Enzyme</code> may gain a reaction buffer and its activity values, by the rule already in
+force.</strong> Each value is read from that enzyme's own product page — the page
+<code>scripts/enzyme_properties.toml</code> already cites for <code>incubation_celsius</code>,
+<code>heat_inactivation_celsius</code> and <code>methylation</code> — and re-entered by hand beside them. No NEB file
+is fetched, no chart is copied, and <code>build_enzymes.py</code> goes on downloading REBASE and nothing
+else.</p>
+<p>Two fields, and what each buys:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Source per enzyme</th>
+<th>What a plan can say with it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>supplied_buffer</code> (a string)</td>
+<td>product page, "Reaction Conditions"</td>
+<td>Two enzymes supplied in the same buffer digest together in it</td>
+</tr>
+<tr>
+<td><code>buffer_activity</code> (buffer → percent)</td>
+<td>product page, "Activity in NEBuffers"</td>
+<td>NEB's own rule: pick the buffer where both are most active; sequential when no buffer gives both &gt; 50%</td>
+</tr>
+</tbody>
+</table>
+<p>The narrower field answers the common case on its own. Of the twenty-six NEB products this
+package ships, twenty-four are supplied in rCutSmart Buffer — including <strong>all sixteen
+multiple-cloning-site enzymes</strong> — and only BsmBI-v2 and BspQI are supplied in NEBuffer r3.1.
+AarI and BpiI are Thermo Fisher products and sit outside NEB's buffer system entirely. So every
+pair drawn from the sixteen shares a buffer, and a plan that ships <code>supplied_buffer</code> alone can
+already give a verdict for every multiple-cloning-site pair it will be asked about. (Surveyed
+2026-09-18 across the shipped set, on the live Performance Chart and against NEBcutter 3's
+table; confirmed on the R0739 and R0141 product pages. PaqCI's entry reads "rCutSmart Buffer +
+Activator", which is the activator the Golden Gate note already records. No value from either
+source is a build input.)</p>
+<p>The wider field is what lets a plan judge a mixed pair — a multiple-cloning-site enzyme with
+BsmBI-v2, say, where rCutSmart leaves BsmBI-v2 at 25% and NEBuffer r3.1 leaves most of the
+others at 10%, so NEB's own &gt; 50% rule calls for a sequential digest. That is a real answer the
+narrower field cannot give.</p>
+<p><strong>One thing neither field carries.</strong> The Performance Chart flags, per cell, whether a
+non-optimal buffer risks star activity; the product page's activity block does not. A plan that
+proposes a buffer other than the supplied one cannot check that flag from a shippable source,
+so it should prefer the supplied buffer, and say plainly when it is not using one.</p>
+<p><strong>The conservative alternative</strong>, if a maintainer reads NEB's terms more strictly than #7 did:
+ship neither field, carry no verdict, and point the user at NEBcloner or the Double Digest
+Finder. The spec already describes that fallback. This note recommends the first reading,
+because it is the same reading that already put a temperature in the data file.</p>
+<h2 id="5-which-enzymes-are-missing">5. Which enzymes are missing<a class="headerlink" href="#5-which-enzymes-are-missing" title="Permanent link">&para;</a></h2>
+<p>The package ships 28 enzymes, of which 16 are the multiple-cloning-site enzymes this method
+uses. Measured against the repository's own vector fixture, <code>tests/data/pUC19.dna</code>:</p>
+<ul>
+<li>Twelve shipped enzymes cut once inside pUC19's multiple cloning site — EcoRI, SacI, KpnI,
+  SmaI, XmaI, BamHI, XbaI, SalI, SbfI, PstI, SphI, HindIII — and each cuts nowhere else in the
+  plasmid.</li>
+<li>Sixteen shipped enzymes cut pUC19 exactly once in total; BsmBI and Esp3I cut twice; ten do
+  not cut it at all.</li>
+<li>Against the repository's own pinned list of commercial enzymes with a six-base-or-longer site
+  that cut pUC19 once (<code>tests/data/pUC19-unique-6-cutters.tsv</code>), every unshipped enzyme in that
+  region but three either reads the same site as one the package ships or reads a site
+  containing it — Acc65I for KpnI, Cfr9I and TspMI for XmaI, Psp124BI for SacI, SdaI and
+  Sse8387I for SbfI, PaeI for SphI, ApoI, AcsI and XapI for EcoRI. The three genuinely absent
+  are <strong>AccI</strong> and <strong>HincII</strong>, which share pUC19's SalI position, and <strong>BspMI</strong>, a Type IIS
+  enzyme whose site sits between PstI and SphI.</li>
+</ul>
+<p>So for a pUC19-class vector the shipped set is already sufficient, and the enzyme set does not
+have to widen for this method to land.</p>
+<p><strong>What adding one costs.</strong> <code>scripts/build_enzymes.py</code> says "the enzymes in the data file are
+the ones <code>enzyme_properties.toml</code> names", and REBASE supplies the site, both cut offsets and
+the isoschizomers. So one enzyme is: one <code>[sources.*]</code> block (title, URL, retrieval or snapshot
+date) and one <code>[enzymes.*]</code> block of eight values — <code>commercial_name</code>, <code>catalog_number</code>,
+<code>supplier</code>, <code>incubation_celsius</code>, <code>heat_inactivation_celsius</code>, <code>heat_inactivation_minutes</code>,
+<code>methylation</code> (three words), <code>source</code> — each read from one cited product page, then
+<code>pixi run python scripts/build_enzymes.py</code>. No code changes, and the data file is never
+hand-edited.</p>
+<p><strong>What this cannot answer.</strong> The lab's own vector collection is not in this repository. pUC19
+and a GFP coding sequence are the only records under <code>tests/data/</code>, and <code>docs/examples/</code> builds
+on the same pair. The question "which enzymes do our vectors carry that we do not ship" needs
+those vector files; it is in <a href="#15-open-gaps">Open gaps</a> with what to ask for.</p>
+<h2 id="6-dephosphorylation">6. Dephosphorylation<a class="headerlink" href="#6-dephosphorylation" title="Permanent link">&para;</a></h2>
+<p><strong>When.</strong> When both vector ends can anneal to each other — one enzyme, or two enzymes leaving
+compatible ends, or two blunt ends — the vector closes on itself and the plate fills with empty
+vector. NEB's rSAP product page (archived 2021-06-24): "In cloning, dephosphorylation prevents
+religation of linearized plasmid DNA. The enzyme acts on 5´ protruding, 5´ recessed and blunt
+ends." A digest with two enzymes leaving incompatible ends needs no phosphatase, and NEB's
+cloning controls treat those two cases as the same control (section 12).</p>
+<p><strong>The reaction</strong>, from NEB's live protocol <em>Dephosphorylation of 5´-ends of DNA using rSAP</em>
+(NEB #M0371), read 2026-09-18:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>20 µl reaction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNA</td>
+<td>1 pmol of DNA ends</td>
+</tr>
+<tr>
+<td>rCutSmart Buffer (10X)</td>
+<td>2 µl</td>
+</tr>
+<tr>
+<td>rSAP</td>
+<td>1 unit</td>
+</tr>
+<tr>
+<td>Nuclease-free water</td>
+<td>to 20 µl</td>
+</tr>
+</tbody>
+</table>
+<p>Incubate at 37°C for 30 minutes; stop by heat inactivation at <strong>65°C for 5 minutes</strong>. NEB's own
+note: "1 pmol of DNA ends is about 1 µg of a 3 kb plasmid," and larger volumes scale
+proportionally.</p>
+<p><strong>In the digest, which is what a plan should do.</strong> The same page:</p>
+<ul>
+<li>"The phosphatase can be added directly into the digestion reaction during or after DNA
+  digestion."</li>
+<li>"rSAP is active in all NEB restriction enzyme buffers."</li>
+<li>"The restriction enzyme should be heat inactivated at the same time as the phosphatase after
+  digest and dephosphorylation."</li>
+<li>"If restriction enzyme(s) cannot be heat inactivated, DNA purification is required before
+  ligation."</li>
+</ul>
+<p>The archived in-digest protocol (2020-09-29) gives the dose the same way — "Add 1 unit of rSAP
+for every 1 pmol of DNA ends (about 1 μg of a 3 kb plasmid) and incubate at 37°C for 30–60
+minutes" — after a 1–5 µg digest in 20 µl.</p>
+<p><strong>How it is stopped, and why it matters.</strong> rSAP is "completely and irreversibly inactivated by
+heating at 65°C for 5 minutes, thereby making removal of rSAP prior to ligation or end-labeling
+unnecessary" (rSAP product page, archived 2021-06-24). NEB's cloning troubleshooting guide
+lists "inefficient dephosphorylation" and a live phosphatase as separate causes of background
+and of failed ligation, and says to heat inactivate or remove the phosphatase before the
+ligation.</p>
+<p><strong>The alternative.</strong> Antarctic Phosphatase (NEB #M0289), archived protocol 2020-08-05: 1 pmol of
+DNA ends, 2 µl of its own 10X buffer, <strong>5 units</strong>, to 20 µl, 37°C for 30 minutes, stopped at
+<strong>80°C for 2 minutes</strong>. It is "active in all NEB restriction enzyme buffers only when
+supplemented with Antarctic Phosphatase Reaction Buffer, which provides Zn²⁺". One unit of rSAP
+against five units of Antarctic Phosphatase for the same pmol of ends, and a lower stop
+temperature, is why rSAP is the default here.</p>
+<h2 id="7-the-ligation-reaction">7. The ligation reaction<a class="headerlink" href="#7-the-ligation-reaction" title="Permanent link">&para;</a></h2>
+<p>From NEB, <em>Ligation Protocol with T4 DNA Ligase (NEB #M0202)</em> (live, read 2026-09-18). NEB's
+precaution comes first: "Heat-inactivate restriction enzymes or purify DNA using a spin column
+(NEB #T1130) before ligation."</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>20 µl reaction</th>
+<th>Final amount</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T4 DNA Ligase Buffer (10X)</td>
+<td>2 µl</td>
+<td>1X</td>
+</tr>
+<tr>
+<td>Vector DNA (4 kb)</td>
+<td>X µl</td>
+<td>50 ng (0.020 pmol)</td>
+</tr>
+<tr>
+<td>Insert DNA (1 kb)</td>
+<td>X µl</td>
+<td>37.5 ng (0.060 pmol)</td>
+</tr>
+<tr>
+<td>Nuclease-free water</td>
+<td>to 20 µl</td>
+<td></td>
+</tr>
+<tr>
+<td>T4 DNA Ligase (400,000 u/ml)</td>
+<td>1 µl</td>
+<td>400 units, or 2,000 units at high concentration</td>
+</tr>
+</tbody>
+</table>
+<p>The table is a 1:3 vector-to-insert molar ratio for those two sizes. The page's own guidance on
+amounts:</p>
+<blockquote>
+<p>We recommend a vector amount of 20-30 fmol with an overall concentration of vector + insert
+between 1-10 ng/μl for efficient ligation. Concentration lower than 1 ng/μL may result in
+intramolecular ligation/circularization of the fragments. Vector: Insert molar ratios between
+1:1 and 1:10 are optimal for single insertions (up to 1:20 for short adaptors).</p>
+</blockquote>
+<p>Temperature and time, quoted:</p>
+<table>
+<thead>
+<tr>
+<th>Ends</th>
+<th>Incubation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cohesive (sticky)</td>
+<td>16°C overnight, <strong>or</strong> room temperature for 10 minutes</td>
+</tr>
+<tr>
+<td>Blunt, or a single-base overhang</td>
+<td>16°C overnight, <strong>or</strong> room temperature (25°C) for 2 hours, <strong>or</strong> high-concentration (2,000,000 u/ml) T4 DNA Ligase for 10 minutes at 25°C</td>
+</tr>
+</tbody>
+</table>
+<p>Then: heat-inactivate at 65°C for 10 minutes, chill on ice, and transform 1–5 µl of the
+reaction into 50 µl of competent cells.</p>
+<p><strong>The ligase and its unit.</strong> NEB product specification PS-M0202S/L v1.0 (effective 23 Jun 2016,
+fetched 2026-09-18): T4 DNA Ligase, 400,000 units/ml, "One unit is defined as the amount of
+enzyme required to give 50% ligation of 6 µg of Lambda-HindIII DNA in 30 minutes at 16°C in a
+total reaction volume of 20 µl." The product page (archived 2021-06-10) states the same unit
+against a 5´ DNA termini concentration of 0.12 µM and both concentrations sold, 400,000 and
+2,000,000 cohesive end units/ml. ATP is required: the live protocol notes ligation can run in
+any of the four restriction NEBuffers or T4 PNK buffer "if they are supplemented with 1 mM of
+ribo ATP … Deoxyribo ATP will not work."</p>
+<p><strong>The five-minute alternative.</strong> Quick Ligation Kit (NEB #M2200), archived protocol 2023-03-24:
+10 µl of 2X Quick Ligase Reaction Buffer, the same 50 ng / 37.5 ng of vector and insert, 1 µl
+Quick Ligase, to 20 µl; 5 minutes at 25°C; transform 1–5 µl. Two rules from that page are its
+own: "Do not heat inactivate – heat inactivation dramatically reduces transformation
+efficiency," and the ratio guidance, "Insert:vector ratios between 2 and 6 are optimal for
+single insertions. Ratios below 2:1 result in lower ligation efficiency. Ratios above 6:1
+promote multiple inserts." Its buffer contains PEG, which matters twice: it is why the reaction
+is fast (section 8) and why the product must be cleaned up before electroporation.</p>
+<h2 id="8-blunt-against-sticky">8. Blunt against sticky<a class="headerlink" href="#8-blunt-against-sticky" title="Permanent link">&para;</a></h2>
+<p>The only cost a supplier states is time, and it is stated in the same table for the same enzyme
+and the same units: <strong>10 minutes at room temperature for cohesive ends, 2 hours for blunt ends
+or a single-base overhang</strong> — a twelvefold longer incubation — or the same 10 minutes with
+five times the ligase (high-concentration T4 at 2,000,000 u/ml). NEB states no ratio of
+colonies, no yield and no fold difference anywhere read.</p>
+<p>What is <em>measured</em>, and it cuts against the folklore: Bauer et al. 2017 (<em>PLoS ONE</em>, CC BY 4.0)
+profiled T4 DNA ligase on defined blunt and cohesive oligonucleotide junctions by capillary
+electrophoresis, 1 µM ligase, 100 nM substrate, 20 minutes at 25°C. Their finding, quoted:
+"T4 DNA ligase, the most common enzyme utilized for in vitro ligation, had its greatest
+activity on blunt- and 2-base overhangs, and poorest on 5′-single base overhangs," with "T4 DNA
+ligase sealing over 60% of the A/T Blunt substrate in the presence or absence of PEG, and 50%
+of the G/C blunt substrate in the presence of PEG". So the sealing chemistry is not what makes
+blunt cloning hard; the hard part is holding two ends together long enough, which base-paired
+overhangs do and blunt ends do not.</p>
+<p>That is also what the compensations are for, and each is sourced:</p>
+<ul>
+<li><strong>More ligase</strong>, or longer: the two rows of NEB's own table above.</li>
+<li><strong>A crowding agent.</strong> Pheiffer &amp; Zimmerman 1983 (<em>Nucleic Acids Res.</em> 11, 7853), abstract:
+  "The rates of blunt-end and cohesive-end ligation of DNA by T4 DNA ligase are increased by
+  orders of magnitude in the presence of high concentrations of a variety of nonspecific
+  polymers such as polyethylene glycol, Ficoll, bovine plasma albumin, or glycogen." NEB's
+  Quick Ligation Kit buffer is one: its own page tells you to reduce the PEG before
+  electroporation, and the kit ligates "both blunt and cohesive (sticky) ends in 5 minutes at
+  room temperature" (M0202 page, live). For what such a buffer holds, Bauer 2017's methods give
+  the NEBNext Quick Ligation reaction buffer as 66 mM Tris pH 7.6, 10 mM MgCl₂, 1 mM DTT, 1 mM
+  ATP and 6% PEG 6000.</li>
+<li><strong>Dephosphorylate the vector.</strong> Two blunt ends are always compatible with each other, so
+  section 6 applies to every blunt ligation, not only to the single-enzyme case.</li>
+</ul>
+<p>One more measured caveat worth carrying: Bauer 2017 found end-joining "greatly reduced under
+physiologically relevant ionic strengths" — 150 mM NaCl eliminated nearly all activity except
+on the four-base overhang. A ligation set up in leftover digest buffer with high salt is a
+ligation that will not work.</p>
+<p><strong>Not sourced anywhere read:</strong> a colonies-per-reaction ratio between a blunt and a cohesive
+cloning of the same insert. See <a href="#15-open-gaps">Open gaps</a>.</p>
+<h2 id="9-gel-purification">9. Gel purification<a class="headerlink" href="#9-gel-purification" title="Permanent link">&para;</a></h2>
+<p><strong>When it is needed rather than optional.</strong> Three cases, each with a supplier line behind it:</p>
+<ul>
+<li><strong>A digest that leaves more than the backbone.</strong> Cutting a vector with two enzymes whose
+  sites are far apart releases a stuffer that religates into the backbone as readily as the
+  insert does. NEB's heat-inactivation page offers three ways out of a finished digest — a
+  column, a gel, or phenol/chloroform — and only the gel separates two fragments from each
+  other, so where a stuffer comes out the choice is made for you.</li>
+<li><strong>Background from uncut or religated vector.</strong> NEB FAQ, <em>How can I reduce the number of
+  vector-only background colonies?</em> (archived 2019-11-23): "the vector should be a PCR product
+  rather than a restriction fragment. If background continues to be a problem, the
+  PCR-amplified vector can be treated with DpnI to remove the template carry-over … extracted
+  from an agarose gel following electrophoresis."</li>
+<li><strong>The wrong PCR product.</strong> NEB's cloning troubleshooting guide lists "Incorrect PCR amplicon
+  was used during cloning" under colonies with the wrong construct, and answers "Gel purify the
+  correct PCR fragment."</li>
+</ul>
+<p><strong>What it costs.</strong> NEB, <em>Monarch Spin DNA Gel Extraction Kit</em> instruction manual (NEB #T1120,
+version 2.0 10.25, fetched 2026-09-18): typical recovery <strong>70–90% for fragments below 10 kb and
+50–70% at 10 kb or above</strong>, binding capacity 5 µg, elution from 6 µl, purity A260/280 &gt; 1.8.
+The older Monarch DNA Gel Extraction Kit manual (NEB #T1020, version 2.1_4/21) states the same
+band, 70–90% for 50 bp–10 kb and 50–70% for 11–23 kb, and warns that a high agarose percentage
+"will decrease the recovery yield due to incomplete extraction".</p>
+<p>So the working figure is: <strong>plan on losing a fifth of the DNA, and up to half of a fragment
+above 10 kb.</strong> The digest amounts in section 2 are large enough to absorb that.</p>
+<h2 id="10-between-the-digest-and-the-ligation">10. Between the digest and the ligation<a class="headerlink" href="#10-between-the-digest-and-the-ligation" title="Permanent link">&para;</a></h2>
+<p><strong>Heat inactivation</strong>, from NEB's <em>Heat Inactivation</em> usage guideline (archived 2021-04-20):</p>
+<blockquote>
+<p>Incubation at 65°C for 20 minutes inactivates the majority of restriction endonucleases that
+have an optimal incubation temperature of 37°C. Enzymes that cannot be inactivated at 65°C
+can often be inactivated by incubation at 80°C for 20 minutes.</p>
+<p>For enzymes that cannot be heat-inactivated at 65°C or 80°C, we recommend using a column for
+cleanup … or running the reaction on an agarose gel and then extracting the DNA … or
+performing a phenol/chloroform extraction.</p>
+</blockquote>
+<p>The per-enzyme answer already ships: <code>Enzyme.heat_inactivation_celsius</code> and
+<code>heat_inactivation_minutes</code> come from each product page, and for <strong>KpnI-HF, BamHI-HF and
+PstI-HF the supplier's answer is "No"</strong> — heat does not stop them, so a plan using any of the
+three has to clean up on a column or a gel before ligating. Of the sixteen multiple-cloning-site
+enzymes, those three are the only ones with no heat answer; the rest are 65°C for 20 minutes,
+except HindIII, NcoI and SbfI at 80°C for 20 minutes.</p>
+<p><strong>What each choice costs.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Yield cost</th>
+<th>What it leaves behind</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Heat, 65 or 80°C for 20 min</td>
+<td>none</td>
+<td>Salt, glycerol and the denatured enzyme stay in the tube, so the digest must stay a minority of the ligation volume</td>
+</tr>
+<tr>
+<td>Spin column (NEB #T1130, manual v1.0 06.24, fetched 2026-09-18)</td>
+<td>typical recovery <strong>70–90%</strong></td>
+<td>Nothing of the digest; but column eluates carry salt, so the <em>Technical Guide</em>'s 25%-of-volume rule applies to the next reaction</td>
+</tr>
+<tr>
+<td>Gel extraction (section 9)</td>
+<td>70–90%, or 50–70% above 10 kb</td>
+<td>Nothing, and it is the only route that also removes a stuffer</td>
+</tr>
+</tbody>
+</table>
+<p>NEB's own precaution on the ligation protocol reduces to one line: heat-inactivate, or spin
+column, before the ligase. A phosphatase in the same tube is stopped by the same heat step
+(section 6).</p>
+<h2 id="11-dam-and-dcm-methylation">11. Dam and Dcm methylation<a class="headerlink" href="#11-dam-and-dcm-methylation" title="Permanent link">&para;</a></h2>
+<p><strong>What methylates what.</strong> NEB <em>Technical Guide</em> (v5.0 – 7/17): Dam methyltransferase methylates
+"the N6 position of the adenine in the sequence GATC"; Dcm methylates "the C5 position of
+cytosine in the sequences" CCWGG. "Most laboratory strains of E. coli contain three site-specific
+DNA methyltransferases," and "Mammalian and plant DNA that has been cloned into a methylating
+E. coli strain will be Dam/Dcm methylated. Most commonly used laboratory E. coli strains
+methylate DNA." Genomic DNA taken straight from a mammalian source is neither Dam nor Dcm
+methylated, but is CpG methylated.</p>
+<p><strong>Which shipped enzymes care.</strong> Read from the shipped data file, whose values come from the
+product pages <code>scripts/enzyme_properties.toml</code> cites. Among the sixteen multiple-cloning-site
+enzymes:</p>
+<ul>
+<li><strong>Dam</strong>: only <strong>XbaI</strong>, which its supplier calls "blocked by overlapping". Every other one is
+  "not sensitive".</li>
+<li><strong>Dcm</strong>: none.</li>
+<li><strong>CpG</strong>, which matters only for DNA from a eukaryotic source: NotI, SalI and SmaI are
+  "blocked"; XhoI and XmaI are "impaired"; EcoRI and SacI are "blocked by some combinations of
+  overlapping".</li>
+</ul>
+<p><strong>"Blocked by overlapping" is a property of the flanks, not of the site</strong>, and it is
+computable rather than assumed. A Dam site is GATC; XbaI reads TCTAGA. A GATC overlaps that
+site only when the site is followed by TC (TCTAGATC) or preceded by GA (GATCTAGA). Nothing in
+the enzyme record knows which; the record says the enzyme is sensitive and the sequence decides.
+The package already holds both halves — <code>sites.DCM_SITE</code> is <code>CCWGG</code> and
+<code>cloning.goldengate.assembly.DAM_SITE</code> is <code>GATC</code> — and <code>sites.primer_tail</code> already refuses a
+tail that puts a Dcm site across the enzyme's site. The same check over a vector's own flanks is
+what this method needs.</p>
+<p><strong>Which strain.</strong> <em>Technical Guide</em>: "If the enzyme is inhibited by Dam or Dcm methylation, grow
+the plasmid in a dam⁻/dcm⁻ strain (NEB #C2925)." But that strain's own product page (archived
+2021-05-07) adds the warning that decides <em>when</em>:</p>
+<blockquote>
+<p>Note that dam⁻ strains are not recommended as a host for primary cloning/ligation. The dam
+mutation can result in an increased mutation rate in the cell and a reduction in the
+transformation efficiency. DNA should be maintained in a dam⁺ strain unless there is a
+specific need for DNA free of Dam or Dcm methylation.</p>
+</blockquote>
+<p>The same page gives its transformation efficiency as 1–3 × 10⁶ cfu/µg of pUC19, which is what
+"a reduction in the transformation efficiency" means in practice. So the order is: transform the
+ligation into the ordinary host,
+then re-transform the finished plasmid into C2925 only to prepare DNA for a digest a
+methylation-blocked enzyme has to make.</p>
+<h2 id="12-what-the-plate-should-look-like">12. What the plate should look like<a class="headerlink" href="#12-what-the-plate-should-look-like" title="Permanent link">&para;</a></h2>
+<p><strong>No supplier states an absolute colony count for this method.</strong> What NEB does state is a set of
+four controls and what each should give relative to the others, from the <em>Troubleshooting Guide
+for Cloning</em> (live, read 2026-09-18; identical in the archived 2021-05-16 copy):</p>
+<ol>
+<li>Transform 100 pg–1 ng of <strong>uncut vector</strong> — cell viability, transformation efficiency, and
+   that the antibiotic is right.</li>
+<li>Transform the <strong>cut vector</strong> — background from undigested plasmid. "The number of colonies
+   in this control should be <strong>&lt; 1%</strong> of the number of colonies in the uncut plasmid control."</li>
+<li>Transform a <strong>vector-only ligation</strong>. Its ends should not be able to religate, "because
+   either they are incompatible … or the 5´ phosphate group has been removed". "This control
+   transformation should yield the same number of colonies as control #2."</li>
+<li>Digest the vector with a <strong>single</strong> enzyme, religate and transform. Its ends are compatible,
+   so it "should result in approximately the same number of colonies as control #1."</li>
+</ol>
+<p>Two absolute numbers do appear, and they are about the cells rather than the ligation: a
+transformation efficiency below 10⁴ means the competent cells should be remade or replaced
+(same guide), and NEB's dam⁻/dcm⁻ cells are 1–3 × 10⁶ cfu/µg of pUC19 (section 11).</p>
+<p>So what a plan can promise is a <em>ratio</em>, not a count: the empty-vector background is measured on
+its own plate, and controls 2 and 3 are what "an empty-vector background beside it" actually
+means. The fraction of colonies carrying the insert is not stated by any source read; see
+<a href="#15-open-gaps">Open gaps</a>.</p>
+<h2 id="13-troubleshooting">13. Troubleshooting<a class="headerlink" href="#13-troubleshooting" title="Permanent link">&para;</a></h2>
+<p>From NEB's <em>Troubleshooting Guide for Cloning</em> (live, read 2026-09-18) and the <em>Technical
+Guide</em>'s own table (v5.0 – 7/17). Only the rows this method can hit are kept.</p>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Cause NEB names</th>
+<th>The fix NEB names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Few or no transformants</td>
+<td>Cells not viable</td>
+<td>Transform uncut pUC19; below 10⁴ cfu/µg, replace the cells</td>
+</tr>
+<tr>
+<td></td>
+<td>Inefficient ligation</td>
+<td>At least one fragment must carry a 5´ phosphate; vary vector:insert from 1:1 to 1:10 (1:20 for short adaptors); purify away salt and EDTA; fresh buffer, because ATP degrades over freeze–thaws; heat-inactivate or remove the phosphatase</td>
+</tr>
+<tr>
+<td></td>
+<td>Too much ligation mix transformed</td>
+<td>Use &lt; 5 µl of the ligation</td>
+</tr>
+<tr>
+<td></td>
+<td>Enzyme did not cleave completely</td>
+<td>Check methylation sensitivity; use the supplied buffer; clean up the DNA; leave at least 6 bases between the site and the end of a PCR fragment</td>
+</tr>
+<tr>
+<td></td>
+<td>PEG in the mix, with electrocompetent cells</td>
+<td>Drop dialysis, or a spin column, before electroporation</td>
+</tr>
+<tr>
+<td>Too much background</td>
+<td>Inefficient dephosphorylation</td>
+<td>Heat-inactivate or remove the restriction enzymes before the phosphatase</td>
+</tr>
+<tr>
+<td></td>
+<td>Kinase still active</td>
+<td>Heat-inactivate it; "active kinase will re-phosphorylate the dephosphorylated vector"</td>
+</tr>
+<tr>
+<td></td>
+<td>Enzyme did not cleave completely</td>
+<td>Methylation, wrong buffer, contaminated DNA</td>
+</tr>
+<tr>
+<td>No ligated product on a gel</td>
+<td>Inefficient ligation</td>
+<td>As above; single-base overhangs are "most difficult" and want Quick Ligase or concentrated T4; test the ligase on Lambda-HindIII DNA</td>
+</tr>
+<tr>
+<td>Ligation ran as a smear</td>
+<td>Ligase bound to the DNA</td>
+<td>Proteinase K before loading</td>
+</tr>
+<tr>
+<td>Digest ran as a smear</td>
+<td>Enzyme bound to the DNA</td>
+<td>Fewer units; SDS (0.1–0.5%) in the loading buffer, or Gel Loading Dye Purple; fresh gel and running buffer</td>
+</tr>
+<tr>
+<td></td>
+<td>Nuclease contamination</td>
+<td>Clean up the DNA</td>
+</tr>
+<tr>
+<td>Incomplete digest</td>
+<td>Salt inhibition</td>
+<td>Clean up the DNA; keep it under 25% of the reaction volume</td>
+</tr>
+<tr>
+<td></td>
+<td>Too few units</td>
+<td>At least 3–5 units per µg, 1–2 hours</td>
+</tr>
+<tr>
+<td></td>
+<td>Supercoiled substrate, or a slow site</td>
+<td>More units, or a longer incubation</td>
+</tr>
+<tr>
+<td></td>
+<td>Methylation</td>
+<td>Check the enzyme's sensitivity; grow the plasmid in NEB #C2925</td>
+</tr>
+<tr>
+<td>Extra bands</td>
+<td>Star activity</td>
+<td>An HF enzyme; fewer units; enzyme under 10% of the volume; shorter incubation; the supplied buffer</td>
+</tr>
+<tr>
+<td>Colonies without the insert</td>
+<td>Recombination, toxicity, internal site</td>
+<td>recA⁻ strain; plates at 25–30°C; check the insert for the enzyme's site</td>
+</tr>
+</tbody>
+</table>
+<h2 id="14-what-this-settles-for-the-spec">14. What this settles for the spec<a class="headerlink" href="#14-what-this-settles-for-the-spec" title="Permanent link">&para;</a></h2>
+<p>The three conditional decisions #117 left to this note:</p>
+<ol>
+<li><strong>May a buffer or activity field ship?</strong> Yes — <code>supplied_buffer</code>, and optionally the four
+   activity percentages, re-entered by hand from each enzyme's own product page into
+   <code>scripts/enzyme_properties.toml</code>, exactly as its temperature already is. The Performance
+   Chart and NEBcutter's table stay out of the build (section 4).</li>
+<li><strong>Does the enzyme set widen?</strong> Not for this method to land. All sixteen multiple-cloning-site
+   enzymes are supplied in one buffer and cover pUC19's whole site; the only absentees there are
+   AccI, HincII and BspMI. Widening costs one <code>enzyme_properties.toml</code> entry per enzyme and a
+   rebuild (section 5). The lab's own vectors may change this answer, and they are not in the
+   repository.</li>
+<li><strong>Can a compatibility verdict be given at all?</strong> Yes, and by NEB's own rule rather than a
+   guess: both enzymes supplied in the same buffer, digest together in it; otherwise the buffer
+   where both are most active; sequential when no buffer leaves both above 50%; and always
+   glycerol under 5%, which is enzyme volume under 10% of the reaction. Where the two enzymes
+   want different temperatures, NEB's answer is sequential with a heat inactivation between,
+   which for the sixteen is never needed — all sixteen incubate at 37°C.</li>
+</ol>
+<p>What the method's own <code>bench</code> module can compute, each with a line above it: digest units and
+volume (§2), star-activity conditions to print rather than predict (§2), spacer bases for a
+tailed primer (§2), the buffer verdict (§3, §4), the phosphatase dose and its stop (§6), the
+ligation table, ratio and both incubations (§7), the clean-up route and its yield (§9, §10), the
+methylation check and the strain (§11), and the four transformation controls (§12).</p>
+<h2 id="15-open-gaps">15. Open gaps<a class="headerlink" href="#15-open-gaps" title="Permanent link">&para;</a></h2>
+<p>Still unverified. None of these is guessed above.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why it is missing</th>
+<th>Workaround in use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Colonies per ligation, in absolute numbers</td>
+<td>No supplier or paper read states one for a generic restriction–ligation cloning</td>
+<td>The four relative controls in §12</td>
+</tr>
+<tr>
+<td>Fraction of colonies carrying the insert</td>
+<td>Same</td>
+<td>Colony PCR distinguishes them; <code>bench.validation</code> already designs it</td>
+</tr>
+<tr>
+<td>A measured blunt-against-cohesive ratio, in colonies</td>
+<td>Searched NEB, PLoS, NAR and PMC; the measurements found are sealing yields on oligonucleotides (Bauer 2017), not transformants</td>
+<td>§8: NEB's twelvefold incubation difference, and its own compensations</td>
+</tr>
+<tr>
+<td>Lund, Duch &amp; Pedersen 1996, <em>NAR</em> 24, 800, the transformant counts behind temperature-cycle ligation</td>
+<td>The PMC copy is a scan; the PDF route returns HTML and PubMed holds no abstract</td>
+<td>Not cited; nothing above rests on it</td>
+</tr>
+<tr>
+<td>Whether NEB's protocols.io postings are CC BY</td>
+<td>The rendered page shows no licence; the API needs a token</td>
+<td>Every protocol number above is cited from <code>neb.com</code> under the cite-never-mirror rule</td>
+</tr>
+<tr>
+<td>Star-activity flags per buffer cell</td>
+<td>They are on the Performance Chart, which does not ship; the product page's activity block omits them</td>
+<td>§4: prefer the supplied buffer and say when the plan does not</td>
+</tr>
+<tr>
+<td>Whether DNA damage from a UV gel box costs ligation efficiency</td>
+<td>Not stated in any manual read</td>
+<td>§9 records recovery only</td>
+</tr>
+<tr>
+<td>Which enzymes the lab's vectors carry</td>
+<td>No lab vector file is in the repository</td>
+<td>Ask for the vector records (<code>.dna</code> or GenBank); §5 answers it for pUC19</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>Read 2026-09-18 unless a snapshot date is given. Nothing below is redistributed; the downloads
+sit in <code>reference_docs/restriction-ligation/</code>, which is git-ignored.</p>
+<ul>
+<li>NEB, <em>Optimizing Restriction Endonuclease Reactions</em>:
+  <a href="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions">usage guideline</a>
+  (live; also archived 2021-04-22)</li>
+<li>NEB, <em>Double Digests</em>:
+  <a href="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests">usage guideline</a>
+  (live; also archived 2021-04-22)</li>
+<li>NEB, <em>NEBuffer Activity/Performance Chart with Restriction Enzymes</em> — read for the shipped
+  enzymes' rows only, live and archived 2021-05-14:
+  <a href="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebuffer-performance-chart-with-restriction-enzymes">usage guideline</a></li>
+<li>NEB, <em>Heat Inactivation</em> — archived 2021-04-20:
+  <a href="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation">usage guideline</a></li>
+<li>NEB, <em>Cleavage Close to the End of DNA Fragments</em> — archived 2021-04-19:
+  <a href="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments">usage guideline</a></li>
+<li>NEB, <em>Ligation Protocol with T4 DNA Ligase (NEB #M0202)</em>:
+  <a href="https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202">protocol</a>
+  (live; also archived 2023-01-26)</li>
+<li>NEB, <em>Quick Ligation Protocol (M2200)</em> — archived 2023-03-24:
+  <a href="https://www.neb.com/protocols/0001/01/01/quick-ligation-protocol">protocol</a></li>
+<li>NEB, <em>Protocol for Dephosphorylation of 5´-ends of DNA using rSAP (NEB #M0371)</em>:
+  <a href="https://www.neb.com/en-us/protocols/protocol-for-dephosphorylation-of-5-ends-of-dna-neb-m0371">protocol</a>
+  (live; the in-digest variant archived 2020-09-29)</li>
+<li>NEB, <em>Protocol for Dephosphorylation of 5´-ends of DNA using Antarctic Phosphatase (NEB
+  #M0289)</em> — archived 2020-08-05:
+  <a href="https://www.neb.com/protocols/0001/01/01/vector-dephosphorylation-protocol">protocol</a></li>
+<li>NEB, <em>Troubleshooting Guide for Cloning</em>:
+  <a href="https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning">guide</a>
+  (live; also archived 2021-05-16)</li>
+<li>NEB FAQ, <em>How can I reduce the number of vector-only background colonies?</em> — archived
+  2019-11-23</li>
+<li>NEB product pages, read live: SmaI (#R0141), BsmBI-v2 (#R0739), EcoRI-HF (#R3101); archived:
+  T4 DNA Ligase (#M0202, 2021-06-10), Shrimp Alkaline Phosphatase (#M0371, 2021-06-24), Quick
+  Ligation Kit (#M2200, 2021-04-19), dam⁻/dcm⁻ Competent E. coli (#C2925, 2021-05-07)</li>
+<li>NEB product specifications PS-M0202S/L v1.0 and PS-M0371S/L v1.0, fetched under
+  <code>/en/-/media/catalog/specifications/</code></li>
+<li>NEB, <em>Restriction Endonuclease Technical Guide</em>, version 5.0 – 7/17, via the <code>neb-online.de</code>
+  mirror:
+  <a href="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf">PDF</a></li>
+<li>NEB instruction manuals, fetched under <code>/-/media/nebus/files/manuals/</code>: Monarch Spin DNA Gel
+  Extraction Kit (#T1120, v2.0 10.25), Monarch Spin PCR &amp; DNA Cleanup Kit (#T1130, v1.0 06.24),
+  Monarch DNA Gel Extraction Kit (#T1020, v2.1_4/21), Monarch PCR &amp; DNA Cleanup Kit (#T1030,
+  v3.0_4/21)</li>
+<li>NEBcutter 3 enzyme table, cross-check only:
+  <a href="https://nc3.neb.com/NEBcutter/data/enzymes.json">nc3.neb.com</a></li>
+<li>Bauer, R.J., Zhelkovsky, A., Bilotti, K., Crowell, L.E., Evans, T.C., McReynolds, L.A. and
+  Lohman, G.J.S. (2017) Comparative analysis of the end-joining activity of several DNA ligases.
+  <em>PLoS ONE</em> 12(12): e0190062.
+  <a href="https://doi.org/10.1371/journal.pone.0190062">doi:10.1371/journal.pone.0190062</a> (CC BY 4.0)</li>
+<li>Pheiffer, B.H. and Zimmerman, S.B. (1983) Polymer-stimulated ligation: enhanced blunt- or
+  cohesive-end ligation of DNA or deoxyribooligonucleotides by T4 DNA ligase in polymer
+  solutions. <em>Nucleic Acids Res.</em> 11, 7853–7871.
+  <a href="https://doi.org/10.1093/nar/11.22.7853">doi:10.1093/nar/11.22.7853</a></li>
+<li>Addgene, <em>Terms of Use</em> — for the licence verdict only:
+  <a href="https://www.addgene.org/terms-of-use/">addgene.org</a></li>
+<li><code>docs/research/restriction-enzyme-data.md</code> (issue #7) for the REBASE and NEB licence verdicts
+  this note reuses, and for the shipped enzyme set</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>
