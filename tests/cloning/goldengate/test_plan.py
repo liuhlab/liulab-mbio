@@ -25,6 +25,7 @@ from liulab_mbio.bench import (
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.cloning.goldengate import plan_assembly
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.edits import rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
@@ -301,6 +302,26 @@ def test_one_insert_plans_exactly_what_it_did_before(plan):
     ] == [(455, 479), (377, 395), (4, 29), (691, 717)]
     assert len(plan.parts) == 2
     assert len(plan.reports) == 9
+
+
+def test_a_site_at_the_vectors_base_zero_is_read_across_the_insert_and_not_the_backbone(
+    plan, puc19, gfp
+):
+    # Turned so its multiple cloning site begins at base 0, the insert lands at the product's
+    # end and the junction set runs across the origin instead of starting at base zero.
+    turned = plan_assembly(rotate(puc19, MCS[0]), gfp)
+    length = len(turned.product)
+    assert turned.assembly.junction_positions == (length - len(gfp), length)
+    # Every band, read length and phenotype is what the plan on the unturned vector gives.
+    assert {clone.name: clone.bands_bp for clone in turned.colony.clones} == {
+        clone.name: clone.bands_bp for clone in plan.colony.clones
+    }
+    assert [(read.distance_bp, read.read_bp) for read in turned.reads] == [
+        (read.distance_bp, read.read_bp) for read in plan.reads
+    ]
+    assert turned.phenotype.insert == (length - len(gfp), length)
+    assert turned.phenotype.coding is not None
+    assert turned.phenotype.coding.name == plan.phenotype.coding.name
 
 
 def test_a_vector_with_nothing_to_put_in_it_is_refused(puc19):

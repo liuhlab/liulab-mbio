@@ -257,7 +257,7 @@ def handed_in(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
 
 
 def test_a_vector_already_linear_is_opened_by_nothing_and_the_inserts_cross_the_origin(
-    handed_in, puc19, gfp
+    handed_in, made, puc19, gfp
 ):
     backbone = handed_in.linearised_vector
     # No PCR opens it, so nothing runs on the gel for it and no template has to be cut.
@@ -278,6 +278,16 @@ def test_a_vector_already_linear_is_opened_by_nothing_and_the_inserts_cross_the_
     assert {one.taken_from for one in handed_in.assembly.junctions} == {backbone.name}
     # The inserts run from the end of the vector's own bases, across the origin.
     assert handed_in.assembly.insert_span == (len(handed_in.vector), len(handed_in.plasmid))
+    # So the colony PCR and the Sanger reads cross the origin with them, and give the same
+    # bands and read lengths as the circular vector does. Only the empty lane differs: the
+    # flanking pair points off the two ends of a backbone handed in linear.
+    lanes = {clone.name: clone.bands_bp for clone in handed_in.colony.clones}
+    circular = {clone.name: clone.bands_bp for clone in made.colony.clones}
+    assert lanes["Correct clone"] == circular["Correct clone"]
+    assert lanes["Empty vector"] == ()
+    assert [(read.distance_bp, read.read_bp) for read in handed_in.reads] == [
+        (read.distance_bp, read.read_bp) for read in made.reads
+    ]
 
 
 def test_a_site_is_refused_for_a_vector_that_is_already_linear(gfp):

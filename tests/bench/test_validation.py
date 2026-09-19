@@ -11,6 +11,7 @@ from liulab_mbio import edits
 from liulab_mbio.bench.gels import LADDER_100_BP
 from liulab_mbio.bench.validation import (
     COLONY_ALLOWANCE,
+    COLONY_FLANK,
     CORRECT_CLONE,
     EMPTY_CLONE,
     JUNCTION_OFFSET,
@@ -280,3 +281,21 @@ def test_an_insert_of_exactly_the_offset_and_the_allowance_keeps_its_junction_pr
         "Colony PCR reverse",
         "Junction reverse 2",
     ]
+
+
+def test_a_junction_set_whose_last_position_passes_the_length_reads_across_the_origin(
+    product: SequenceRecord, puc19: SequenceRecord, junctions: tuple[int, int]
+) -> None:
+    # The same two junctions read the other way round, so the span between them is the vector
+    # and the last passes the length: what a set in insert order does across the origin.
+    wrapping = (junctions[1], junctions[0] + len(product))
+    span = wrapping[1] - wrapping[0]
+    check = colony_pcr_check(product, wrapping, vector=puc19, flank=COLONY_FLANK)
+    forward, reverse = sanger_primers(product, wrapping)
+    # One band across the origin, a flank either side of it within the allowance, and not the
+    # GFP a sorted set would have read instead.
+    (band,) = bands(check, CORRECT_CLONE)
+    assert span + 2 * (COLONY_FLANK - COLONY_ALLOWANCE) <= band
+    assert band <= span + 2 * (COLONY_FLANK + COLONY_ALLOWANCE)
+    assert forward.read_bp == forward.distance_bp + span
+    assert reverse.read_bp == reverse.distance_bp + span
