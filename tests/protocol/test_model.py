@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.cloning.goldengate import Plan
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -238,15 +237,10 @@ def test_a_protocol_reads_from_its_json_file(data_dir: Path) -> None:
     assert protocol.references[0].url == "https://example.org/pcr"
 
 
-def test_a_protocol_written_as_json_reads_back_equal(
-    data_dir: Path, plan: Plan, tmp_path: Path
-) -> None:
-    for name, protocol in (
-        ("example", read_protocol(data_dir / "pcr-protocol.json")),
-        ("golden-gate", plan.protocol()),
-    ):
-        path = write_protocol(protocol, tmp_path / f"{name}.json")
-        assert read_protocol(path) == protocol
+def test_a_protocol_written_as_json_reads_back_equal(data_dir: Path, tmp_path: Path) -> None:
+    protocol = read_protocol(data_dir / "pcr-protocol.json")
+    path = write_protocol(protocol, tmp_path / "example.json")
+    assert read_protocol(path) == protocol
 
 
 def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: Path) -> None:

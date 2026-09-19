@@ -7,7 +7,6 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
-from liulab_mbio.library.scheme import read_scheme
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
 
@@ -27,22 +26,14 @@ def plain(text: str) -> str:
 
 @pytest.fixture(scope="module")
 def inputs(tmp_path_factory):
-    """A parts FASTA and a vector file, written once for every test here."""
-    scheme = read_scheme(EXAMPLE)
+    """A parts FASTA and a vector carrying no stuffer, written once for every test here."""
     directory = tmp_path_factory.mktemp("inputs")
     fasta = directory / "parts.fasta"
     fasta.write_text(
         "".join(f">{name}\n{protein}\n" for one in LISTS for name, protein in one.items())
     )
     vector = directory / "vector.dna"
-    write_dna(
-        SequenceRecord(
-            ("TA" * 40) + scheme.internal_stuffer(-1) + ("TA" * 40),
-            topology="circular",
-            name="carrier",
-        ),
-        vector,
-    )
+    write_dna(SequenceRecord("TA" * 100, topology="circular", name="bare"), vector)
     return fasta, vector
 
 
@@ -73,10 +64,26 @@ def run(inputs, out: Path, *extra: str):
 def test_one_command_plans_the_library_and_prints_the_paths(inputs, tmp_path):
     out = tmp_path / "library"
 
-    result = run(inputs, out)
+    # One run for the wiring of every option: the span a stuffer goes at, the pattern the part
+    # names are read with, the seed the barcodes are drawn from, and what the products are called.
+    result = run(
+        inputs,
+        out,
+        "--kind",
+        "protein",
+        "--site",
+        "100-140",
+        "--pattern",
+        r"^{position}_",
+        "--seed",
+        "7",
+        "--name",
+        "pool",
+    )
 
     assert result.exit_code == 0, result.output
     lines = plain(result.output).splitlines()
+    assert lines[0].startswith("pool round 3:")
     assert "8 construct(s)" in lines[0]
     assert "3 round(s)" in lines[0]
     assert "checks pass" in lines[0]

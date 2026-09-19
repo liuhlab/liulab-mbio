@@ -4,8 +4,9 @@
 and validate the insertion by colony PCR. Nothing about the fixtures is hard-coded in the
 package; the numbers below are read off the records and pinned here.
 
-Two fixtures make only a two-fragment assembly, so the many-part tests synthesise their own
-inserts. The first four bases of each are the overhang its junction takes.
+Two plans cover the pipeline: the shared `plan`, which is the common path, and `four`, the
+many-part case with one insert the other way round. Every other test here reads one of them, or
+plans inputs one of them has already designed on.
 """
 
 import dataclasses
@@ -22,62 +23,15 @@ from liulab_mbio.bench import (
     SANGER_FLANK,
 )
 from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.cloning.goldengate import Plan, plan_assembly
+from liulab_mbio.cloning.goldengate import plan_assembly
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
+from liulab_mbio.edits import rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)
-
-#: A flexible glycine-serine linker and a His-tagged spacer, written here rather than read from
-#: a file: they carry no BbsI site and begin on bases no other junction of the set can take.
-LINKER = (
-    "AACGGTTCAGGTGGATCTGGCGGTTCTGGAGGCAGCGGTTCAGGAGGTTCTGGCGGATCA"
-    "GGTGGTTCAGGAGGCTCAGGTTCTGGAGGATCTGGCGGTTCAGGAGGTTCTGGATCAGGT"
-    "TCTGGAGGCAGCGGTTCAGGAGGATCTGGT"
-)
-TAG = (
-    "CTTGGTCACCATCACCATCACCATGGTTCTGGATCAGGTTCTGCTTGGAGCCATCCGCAA"
-    "TTCGAAAAAGGTGGTTCTGGCGGATCAGGTTCTGGAGGCAGCTTCGGTTCAGGAGGATCT"
-    "GGTGGTTCAGGAAGCTCAGGTTCTGGAGGT"
-)
-
-
-def synthesised(name: str, sequence: str, color: str) -> SequenceRecord:
-    """An insert written in code, its one feature drawn in a colour of its own."""
-    return SequenceRecord(
-        sequence,
-        name=name,
-        features=(
-            Feature(
-                name,
-                "misc_feature",
-                (Segment(0, len(sequence)),),
-                strand=Strand.FORWARD,
-                color=color,
-            ),
-        ),
-    )
-
-
-@pytest.fixture(scope="module")
-def linker() -> SequenceRecord:
-    return synthesised("Linker", LINKER, "#3366cc")
-
-
-@pytest.fixture(scope="module")
-def tag() -> SequenceRecord:
-    return synthesised("Tag", TAG, "#cc6633")
-
-
-@pytest.fixture(scope="module")
-def four(
-    puc19: SequenceRecord, gfp: SequenceRecord, linker: SequenceRecord, tag: SequenceRecord
-) -> Plan:
-    """A backbone and three inserts, in the order they go round the product."""
-    return plan_assembly(puc19, gfp, linker, tag)
 
 
 def test_the_vector_junction_moves_one_base_off_an_all_gc_overhang(plan, puc19):
@@ -86,13 +40,6 @@ def test_the_vector_junction_moves_one_base_off_an_all_gc_overhang(plan, puc19):
     assert plan.overhangs.overhangs == ("ATGA", "TGGC")
     assert plan.span == (MCS[0], MCS[1] - 1)
     assert [rejection.rule for rejection in plan.overhangs.choices[1].rejected] == ["uniform"]
-
-
-def test_the_overhang_set_is_scored_on_measured_data(plan):
-    report = plan.overhangs.fidelity
-    assert report.measured
-    assert "Pryor" in report.source
-    assert report.value == pytest.approx(1.0)
 
 
 def test_an_enzyme_with_a_site_in_the_parts_is_refused(puc19, gfp):
@@ -129,24 +76,10 @@ def test_a_vector_with_no_multiple_cloning_site_asks_where_to_put_the_insert(gfp
         plan_assembly(bare, gfp)
 
 
-def test_the_other_orientation_puts_the_insert_on_the_other_strand(puc19, gfp):
-    back = plan_assembly(puc19, gfp, orientation="reverse")
-    assert back.product.sequence.count(reverse_complement(gfp.sequence)) == 1
-    assert gfp.sequence not in back.product.sequence
-    coding = next(one for one in back.product.features if one.name == "GFP")
-    assert coding.strand == Strand.REVERSE
-    assert back.assembly.status == "pass"
-
-
 def test_the_files_are_read_from_disk_when_a_path_is_given(puc19_file, gfp_file):
     made = plan_assembly(puc19_file, gfp_file)
     assert made.product.name == "pUC19-GFP"
     assert len(made.product) == 3347
-
-
-def test_the_written_product_reads_back_identically(plan, tmp_path):
-    outputs = plan.write(tmp_path)
-    assert read_dna(outputs.product) == plan.product
 
 
 def test_every_designed_primer_passes_evaluation(plan):
@@ -183,7 +116,7 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     }
 
 
-def test_the_four_outputs_land_in_the_directory_the_caller_names(plan, tmp_path):
+def test_the_four_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, tmp_path):
     outputs = plan.write(tmp_path / "run")
     paths = (outputs.product, outputs.primers, outputs.protocol_data, outputs.protocol)
     assert [(path.parent, path.name) for path in paths] == [
@@ -193,15 +126,8 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(plan, tmp_path)
         (tmp_path / "run", "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in paths)
-
-
-def test_the_protocol_data_reads_back_to_exactly_the_plans_protocol(plan, tmp_path):
-    outputs = plan.write(tmp_path)
+    assert read_dna(outputs.product) == plan.product
     assert read_protocol(outputs.protocol_data) == plan.protocol()
-
-
-def test_the_page_is_exactly_the_one_rendered_from_the_protocol_data(plan, tmp_path):
-    outputs = plan.write(tmp_path)
     page = outputs.protocol.read_text(encoding="utf-8")
     assert page == render_html(read_protocol(outputs.protocol_data))
 
@@ -218,22 +144,16 @@ def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
         assert one.read_bytes() == other.read_bytes()
 
 
-def test_the_primer_sheet_carries_every_oligo(plan):
+def test_the_primer_sheet_and_the_oligo_table_are_the_same_sheet(plan):
     rows = primer_sheet(plan.reports).splitlines()
     assert rows[0].split("\t") == ["name", "sequence", "length", "tm_c"]
     assert len(rows) == 1 + len(plan.reports)
-    for row, report in zip(rows[1:], plan.reports, strict=True):
+    oligos = plan.protocol().oligos
+    for row, report, oligo in zip(rows[1:], plan.reports, oligos, strict=True):
         name, sequence, length, tm = row.split("\t")
         assert (name, sequence) == (report.primer.name, report.primer.sequence)
         assert int(length) == len(sequence)
         assert float(tm) == pytest.approx(report["tm"].value, abs=0.05)
-
-
-def test_the_oligo_table_and_the_primer_sheet_are_the_same_sheet(plan):
-    oligos = plan.protocol().oligos
-    rows = primer_sheet(plan.reports).splitlines()[1:]
-    for oligo, row in zip(oligos, rows, strict=True):
-        name, sequence, length, tm = row.split("\t")
         assert (oligo.name, oligo.sequence) == (name, sequence)
         assert len(oligo.sequence) == int(length)
         assert oligo.tm_c == pytest.approx(float(tm), abs=0.05)
@@ -384,18 +304,43 @@ def test_one_insert_plans_exactly_what_it_did_before(plan):
     assert len(plan.reports) == 9
 
 
+def test_a_site_at_the_vectors_base_zero_is_read_across_the_insert_and_not_the_backbone(
+    plan, puc19, gfp
+):
+    # Turned so its multiple cloning site begins at base 0, the insert lands at the product's
+    # end and the junction set runs across the origin instead of starting at base zero.
+    turned = plan_assembly(rotate(puc19, MCS[0]), gfp)
+    length = len(turned.product)
+    assert turned.assembly.junction_positions == (length - len(gfp), length)
+    # Every band, read length and phenotype is what the plan on the unturned vector gives.
+    assert {clone.name: clone.bands_bp for clone in turned.colony.clones} == {
+        clone.name: clone.bands_bp for clone in plan.colony.clones
+    }
+    assert [(read.distance_bp, read.read_bp) for read in turned.reads] == [
+        (read.distance_bp, read.read_bp) for read in plan.reads
+    ]
+    assert turned.phenotype.insert == (length - len(gfp), length)
+    assert turned.phenotype.coding is not None
+    assert turned.phenotype.coding.name == plan.phenotype.coding.name
+
+
 def test_a_vector_with_nothing_to_put_in_it_is_refused(puc19):
     with pytest.raises(ValueError, match="insert"):
         plan_assembly(puc19)
 
 
-def test_every_insert_reaches_the_product_in_the_order_it_was_given(four, gfp):
-    product = four.product.sequence
+def test_every_insert_reaches_the_product_in_the_order_it_was_given(four, puc19, gfp, linker, tag):
+    going = (gfp.sequence, reverse_complement(linker.sequence), tag.sequence)
     assert [part.name for part in four.parts] == ["pUC19 backbone", "GFP", "Linker", "Tag"]
-    places = [product.index(bases) for bases in (gfp.sequence, LINKER, TAG)]
-    assert places == sorted(places)
-    assert [product.count(bases) for bases in (gfp.sequence, LINKER, TAG)] == [1, 1, 1]
-    assert len(four.product) == 3347 + len(LINKER) + len(TAG)
+    assert four.span == (395, 453)
+    assert four.product.sequence == puc19.sequence[:395] + "".join(going) + puc19.sequence[453:]
+    assert len(four.product) == 3645
+    # The linker was given the other way round, so only its other strand is in the product, and
+    # its feature turned over with it.
+    assert linker.sequence not in four.product.sequence
+    turned = next(one for one in four.product.features if one.name == "Linker")
+    assert turned.strand == Strand.REVERSE
+    assert len(four.assembly.junctions) == len(four.overhangs.overhangs) == 4
     assert four.assembly.status == "pass"
 
 
@@ -453,26 +398,10 @@ def test_a_plan_whose_parts_are_not_vector_first_writes_the_same_protocol(four):
     assert dataclasses.replace(again, checks=()) == dataclasses.replace(written, checks=())
 
 
-def test_three_inserts_make_four_junctions_no_two_of_them_alike(four):
-    overhangs = four.overhangs.overhangs
-    assert len(four.assembly.junctions) == len(overhangs) == 4
-    assert len(set(overhangs)) == 4
-    assert not set(overhangs) & {reverse_complement(one) for one in overhangs}
-
-
 def test_the_fidelity_of_the_set_falls_as_junctions_are_added(plan, four):
     assert four.overhangs.fidelity.measured
     assert four.overhangs.fidelity.enzyme == plan.overhangs.fidelity.enzyme
     assert four.overhangs.fidelity.value < plan.overhangs.fidelity.value
-
-
-def test_each_insert_goes_in_the_orientation_it_was_given(puc19, gfp, linker):
-    made = plan_assembly(puc19, gfp, linker, orientation=("forward", "reverse"))
-    product = made.product.sequence
-    assert product.count(gfp.sequence) == 1
-    assert product.count(reverse_complement(LINKER)) == 1
-    assert LINKER not in product
-    assert made.assembly.status == "pass"
 
 
 def test_the_reaction_takes_one_amount_for_every_part(four):

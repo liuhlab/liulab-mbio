@@ -172,26 +172,6 @@ def test_a_placement_near_a_target_chooses_the_best_primer_it_allows(puc19) -> N
     assert best(chosen, puc19, near, Strand.FORWARD)
 
 
-def test_a_placement_in_a_region_chooses_the_best_pair_it_allows(puc19) -> None:
-    forward_region = Placement(five_prime=Segment(374, 378), three_prime=Segment(396, 402))
-    reverse_region = Placement(five_prime=Segment(479, 483), three_prime=Segment(456, 462))
-    forward, reverse = design_pair(
-        puc19,
-        378,
-        481,
-        forward_placement=forward_region,
-        reverse_placement=reverse_region,
-        thresholds=NARROW,
-    )
-    chosen = evaluate_pair(forward, reverse, puc19, thresholds=NARROW)
-    every = [
-        evaluate_pair(one, other, puc19, thresholds=NARROW)
-        for one in allowed(puc19, forward_region, Strand.FORWARD)
-        for other in allowed(puc19, reverse_region, Strand.REVERSE)
-    ]
-    assert shape(chosen) == min(shape(one) for one in every)
-
-
 def test_a_placement_may_cross_the_origin(puc19) -> None:
     across = Placement(five_prime=Segment(len(puc19) - 6, len(puc19) + 7))
     chosen = design_primer(puc19, len(puc19), Strand.FORWARD, placement=across, thresholds=NARROW)

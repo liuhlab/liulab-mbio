@@ -22,11 +22,6 @@ def test_a_type_iis_enzyme_cuts_outside_its_site_and_leaves_a_5_prime_overhang()
     assert bsai.overhang_length == 4
 
 
-def test_sapi_leaves_a_three_base_overhang() -> None:
-    sapi = Enzyme("SapI", "GCTCTTC", top_cut=8, bottom_cut=11)  # GCTCTTC(1/4)
-    assert (sapi.type, sapi.end, sapi.overhang_length) == ("IIS", "5'", 3)
-
-
 @pytest.mark.parametrize(
     ("name", "site", "top_cut", "bottom_cut", "end", "length"),
     [

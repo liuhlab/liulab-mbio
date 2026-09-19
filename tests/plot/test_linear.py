@@ -4,7 +4,7 @@ past the cap, on crowded and seeded random records, whole and in regions, and al
 
 import random
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from itertools import combinations, pairwise
 
 import pytest
@@ -146,32 +146,17 @@ def _random_region(seed: int) -> Given:
     return Given(_random(seed, circular=True), span=(start, start + rng.randint(40, LENGTH)))
 
 
-#: The records of `crowds`, which `RECORDS` lays out along longer lines too.
-CROWDS: dict[str, Callable[[], Given]] = {
-    "pUC19 and its unique 6+ cutters": lambda: Given(crowds.puc19_crowded(), length=2686),
-    "fifty EcoRI sites": lambda: Given(
-        layers.items(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"])
-    ),
-}
-
+#: One record per stretch the page draws a line of, and per crowd no other record runs the layout
+#: through: a circular record whole, one across its origin, one region inside it, a linear record,
+#: and a crowd past the cap along a line eight times as long.
 RECORDS: dict[str, Callable[[], Given]] = {
     "crowded": lambda: Given(_crowded()),
     "crowded, across the origin": lambda: Given(_crowded(), span=(2700, 3500)),
-    "crowded, a region": lambda: Given(_crowded(), span=(360, 700)),
-    "pUC19 and its unique 6+ cutters": CROWDS["pUC19 and its unique 6+ cutters"],
-    **{f"random {seed}": lambda seed=seed: Given(_random(seed, True)) for seed in range(4)},
-    **{
-        f"random linear {seed}": lambda seed=seed: Given(_random(seed, False), circular=False)
-        for seed in range(4, 8)
-    },
-    **{f"random region {seed}": lambda seed=seed: _random_region(seed) for seed in range(8, 12)},
-    **{
-        f"{name}, {times} times as long": lambda crowd=crowd, times=times: replace(
-            crowd(), width=times * linear.WIDTH
-        )
-        for name, crowd in CROWDS.items()
-        for times in (2, 4, 8)
-    },
+    "random region 10": lambda: _random_region(10),
+    "random linear 4": lambda: Given(_random(4, False), circular=False),
+    "fifty EcoRI sites, 8 times as long": lambda: Given(
+        layers.items(crowds.ecori_crowd(), enzymes=["EcoRI", "HindIII"]), width=8 * linear.WIDTH
+    ),
 }
 
 

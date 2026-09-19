@@ -35,7 +35,7 @@ def plasmid(sequence: str, name: str) -> SequenceRecord:
 
 
 def test_a_backbone_that_closes_on_itself_names_the_phosphatase_and_says_which_ends_meet():
-    """One enzyme at both ends and two leaving compatible ends are read the same way."""
+    """One enzyme at both ends, two leaving compatible ends and blunt ends are read the same."""
     for enzymes, record, said in (
         (["EcoRI"], FILLER * 2 + "GAATTC" + FILLER * 8, "two 5' AATT ends"),
         (
@@ -43,6 +43,7 @@ def test_a_backbone_that_closes_on_itself_names_the_phosphatase_and_says_which_e
             FILLER * 2 + "GTCGAC" + FILLER * 8 + "CTCGAG" + FILLER * 2,
             "two 5' TCGA ends",
         ),
+        (["SmaI"], FILLER * 2 + "CCCGGG" + FILLER * 8, "two blunt ends"),
     ):
         backbone = opened(plasmid(record, "pClosing"), resolve(enzymes))[0]
         verdict = self_ligation_check(backbone)

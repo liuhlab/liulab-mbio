@@ -83,6 +83,9 @@ pyyaml = "*"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
+# The suite is past the 30 s budget in `docs/agents/testing.md` on one core, so it runs in
+# parallel workers. pytest's own settings hold the options; see `addopts` below.
+pytest-xdist = "*"
 # Declared here too, not inherited: `tests/test_conformance.py` runs conformance, and a test
 # environment shaped differently from this one would import-error on every test in it.
 pyyaml = "*"
@@ -218,6 +221,20 @@ addopts = [
     # unedited here, and the template already tests it. Drop this line if this repo edits the
     # checker. Name the file to run them: `pixi run test -- tests/test_conformance.py`.
     "--ignore=tests/test_conformance.py",
+    # The quoted-evidence tests stay out for the same reason: they test the template's ruff and
+    # markdownlint settings, which the template tests itself, and each run lints the whole repo.
+    # Name the file to run them: `pixi run test -- tests/test_quoted_evidence.py`.
+    "--ignore=tests/test_quoted_evidence.py",
+    # Parallel workers, set here and not in the CI workflow so the laptop and CI run alike.
+    # Three, not one per core: a worker rebuilds the caches `primers.placement` fills, so each
+    # one added spends CPU again that a single process spends once, and the CI runner runs out
+    # of throughput before it runs out of workers. Naming tests on the command line still
+    # collects only those, so a single-test run stays cheap.
+    "--numprocesses=3",
+    # A whole file to one worker. A test file's module-scoped plans, and the priming sites
+    # `primers.placement` remembers per template, are then built once for the file rather than
+    # once per test that lands elsewhere.
+    "--dist=loadfile",
 ]
 xfail_strict = true
 filterwarnings = ["error"]

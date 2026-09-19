@@ -35,6 +35,7 @@ from liulab_mbio.primers.placement import (
     PrimingSite,
     amplicon_sizes,
     find_binding_sites,
+    find_off_target_sites,
     find_priming_sites,
 )
 from liulab_mbio.primers.polymerase import (
@@ -92,6 +93,7 @@ __all__ = [
     "evaluate_pair_on_genome",
     "evaluate_primer",
     "find_binding_sites",
+    "find_off_target_sites",
     "find_priming_sites",
     "melting_temperature",
     "pair_checks",

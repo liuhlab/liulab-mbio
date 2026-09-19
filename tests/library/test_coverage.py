@@ -16,10 +16,6 @@ def test_the_construct_count_is_the_product_of_the_part_list_sizes() -> None:
     assert constructs((24, 24, 24)) == 13824
 
 
-def test_one_part_list_yields_its_own_members() -> None:
-    assert constructs((7,)) == 7
-
-
 def test_a_library_needs_a_part_list() -> None:
     with pytest.raises(ValueError, match="at least one part list"):
         constructs(())

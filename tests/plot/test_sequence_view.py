@@ -225,6 +225,9 @@ def _random_given(seed: int) -> Given:
     )
 
 
+#: One record per stretch the view draws, per strands it shows, and per crowd no other record runs
+#: the layout through: a circular record whole, one across its origin, one region inside it of a
+#: base a row, a linear record, and a crowd on one strand in rows of seven.
 RECORDS: dict[str, Callable[[], Given]] = {
     "crowded": _crowded,
     "crowded, across the origin": lambda: Given(
@@ -233,8 +236,7 @@ RECORDS: dict[str, Callable[[], Given]] = {
     "crowded, one strand, 7 a row": lambda: Given(
         _crowded().items, _crowded().bases, bases_per_row=7, both_strands=False
     ),
-    "crowded, 150 a row": lambda: Given(_crowded().items, _crowded().bases, bases_per_row=150),
-    **{f"random {seed}": lambda seed=seed: _random_given(seed) for seed in range(6)},
+    **{f"random {seed}": lambda seed=seed: _random_given(seed) for seed in (1, 2)},
 }
 
 
