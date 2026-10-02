@@ -171,8 +171,6 @@ class Enzyme:
         """
         top, bottom = self.cut_positions(start, strand)
         low, high = min(top, bottom), max(top, bottom)
-        if low == high:
-            return ""
         if record.topology == "linear" and not record.fits(low, high):
             raise ValueError(f"{self.name} cut at {low}-{high} falls off a linear record")
         return record.bases(low, high)

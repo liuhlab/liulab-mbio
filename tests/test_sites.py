@@ -64,6 +64,15 @@ def test_a_linear_record_ending_inside_the_cut_reports_the_site_but_no_overhang(
     assert not site.cuts
 
 
+def test_a_blunt_cut_past_a_linear_end_is_read_but_not_cut() -> None:
+    mlyi = Enzyme("MlyI", "GAGTC", top_cut=10, bottom_cut=10)
+    bases = "A" * 20 + "GAGTC" + "AA"
+    (site,) = find_sites(SequenceRecord(bases), mlyi)
+    assert (site.overhang, site.cuts) == (None, False)
+    (site,) = find_sites(SequenceRecord(bases, topology="circular"), mlyi)
+    assert (site.top_cut, site.overhang, site.cuts) == (3, "", True)
+
+
 def test_a_palindromic_site_is_counted_once_and_reported_on_the_forward_strand() -> None:
     sites = find_sites(SequenceRecord("AAAGAATTCAAA"), "EcoRI")
     assert [(s.start, s.strand) for s in sites] == [(3, Strand.FORWARD)]
