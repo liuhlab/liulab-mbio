@@ -19,6 +19,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    across_the_origin,
     reverse_complement,
 )
 
@@ -89,13 +90,18 @@ def replace(
         If the span does not fit the record under its topology.
     """
     length = len(record)
-    _check_span(record, start, end)
+    if not record.fits(start, end):
+        raise ValueError(
+            f"span {start}-{end} does not fit a {record.topology} record of {length} bases"
+        )
     if record.topology == "linear":
         return _splice(record, record, start, end - start, bases, wrapped=False)
     turned = rotate(record, start)
     edited, report = _splice(turned, record, 0, end - start, bases, wrapped=True)
-    origin = len(bases) + (length - end if end <= length else 0)
-    return (rotate(edited, origin) if len(edited) else edited), report
+    # An insertion removes no base, so it cannot run across the origin.
+    across = start < end and across_the_origin(Segment(start, end), length)
+    origin = len(bases) + (0 if across else length - end)
+    return rotate(edited, origin), report
 
 
 def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
@@ -111,16 +117,26 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
     >>> rotate(SequenceRecord("AACCGG", topology="circular"), 2).sequence
     'CCGGAA'
     """
-    if record.topology != "linear":
-        length = len(record)
-        start = origin % length
-        return dataclasses.replace(
-            record,
-            sequence=record.sequence[start:] + record.sequence[:start],
-            features=tuple(_turned_feature(feature, start, length) for feature in record.features),
-            primers=tuple(_turned_primer(primer, start, length) for primer in record.primers),
-        )
-    raise ValueError("only a circular record has an origin to rotate")
+    if record.topology == "linear":
+        raise ValueError("only a circular record has an origin to rotate")
+    length = len(record)
+
+    def turned[S: (Segment, BindingSite)](span: S) -> S:
+        start = (span.start - origin) % length
+        return dataclasses.replace(span, start=start, end=start + span.end - span.start)
+
+    return dataclasses.replace(
+        record,
+        sequence=record.bases(origin, origin + length),
+        features=tuple(
+            dataclasses.replace(feature, segments=tuple(map(turned, feature.segments)))
+            for feature in record.features
+        ),
+        primers=tuple(
+            dataclasses.replace(primer, binding_sites=tuple(map(turned, primer.binding_sites)))
+            for primer in record.primers
+        ),
+    )
 
 
 def flipped(record: SequenceRecord) -> SequenceRecord:
@@ -272,38 +288,6 @@ def _pieces(
             along = first - turn
             found.append((along, first, last))
     return [(first, last) for along, first, last in sorted(found)]
-
-
-def _check_span(record: SequenceRecord, start: int, end: int) -> None:
-    length = len(record)
-    span = f"span {start}-{end}"
-    if not 0 <= start <= end:
-        raise ValueError(f"need 0 <= start <= end, got {span}")
-    if record.topology == "linear":
-        if end > length:
-            raise ValueError(f"{span} runs past the end of a linear record of {length} bases")
-    elif start >= length or end - start > length:
-        raise ValueError(f"{span} does not fit a circular record of {length} bases")
-
-
-def _turned_feature(feature: Feature, start: int, length: int) -> Feature:
-    return dataclasses.replace(
-        feature,
-        segments=tuple(_turned_segment(segment, start, length) for segment in feature.segments),
-    )
-
-
-def _turned_segment(segment: Segment, start: int, length: int) -> Segment:
-    turned = (segment.start - start) % length
-    return dataclasses.replace(segment, start=turned, end=turned + segment.end - segment.start)
-
-
-def _turned_primer(primer: Primer, start: int, length: int) -> Primer:
-    sites = []
-    for site in primer.binding_sites:
-        turned = (site.start - start) % length
-        sites.append(BindingSite(turned, turned + site.end - site.start, site.strand))
-    return dataclasses.replace(primer, binding_sites=tuple(sites))
 
 
 def _splice(
