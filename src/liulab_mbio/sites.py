@@ -497,40 +497,39 @@ def domesticate(
 
 def _coding_feature(record: SequenceRecord, site: CutSite) -> Feature | None:
     """Return the first coding sequence the site touches, or ``None`` when it touches none."""
-    covered = _covered(record, site)
     for feature in record.features:
-        if feature.type == "CDS" and covered & set(_coding_positions(record, feature)):
+        if feature.type == "CDS" and any(
+            record.covers(feature, at) for at in range(site.start, site.end)
+        ):
             return feature
     return None
 
 
-def _covered(record: SequenceRecord, site: CutSite) -> set[int]:
-    """Return the record indices the matched site occupies, reduced across the origin."""
-    length = len(record)
-    return {(site.start + step) % length for step in range(len(site.enzyme.site))}
-
-
-def _coding_positions(record: SequenceRecord, feature: Feature) -> list[int]:
-    """Return each base of a coding sequence as a record index, in the order the codons read."""
-    length = len(record)
+def _coding_positions(feature: Feature) -> list[int]:
+    """Return each base of a coding sequence as its segments index it, in codon order."""
     positions = [
-        index % length
-        for segment in feature.segments
-        for index in range(segment.start, segment.end)
+        index for segment in feature.segments for index in range(segment.start, segment.end)
     ]
     if feature.strand == Strand.REVERSE:
         positions.reverse()
     return positions
 
 
-def _codon_span(three: list[int], length: int) -> tuple[int, int] | None:
+def _codon_span(record: SequenceRecord, three: list[int]) -> tuple[int, int] | None:
     """One codon's span on the top strand, or ``None`` when its bases do not run together."""
     if len(three) != 3:
         return None
-    top = three if (three[0] + 1) % length == three[1] else three[::-1]
-    if (top[0] + 1) % length != top[1] or (top[1] + 1) % length != top[2]:
+    top = three if _follows(record, three[0], three[1]) else three[::-1]
+    if not (_follows(record, top[0], top[1]) and _follows(record, top[1], top[2])):
         return None
-    return top[0], top[0] + 3
+    # `replace` and the report both take a start inside the record.
+    start = top[0] % len(record)
+    return start, start + 3
+
+
+def _follows(record: SequenceRecord, base: int, after: int) -> bool:
+    """Whether the top strand reads `after` straight after `base`, across the origin too."""
+    return record.covers(Segment(base + 1, base + 2), after)
 
 
 def _synonymous(
@@ -541,17 +540,17 @@ def _synonymous(
     active: tuple[Enzyme, ...],
 ) -> tuple[SequenceRecord, Domestication] | None:
     """Change one codon to take the site away, or ``None`` when no synonymous codon does."""
-    length = len(record)
-    positions = _coding_positions(record, feature)
+    positions = _coding_positions(feature)
     coding = record.extract(feature)
     if len(coding) != len(positions):
         return None
     where = {position: index for index, position in enumerate(positions)}
     before = len(find_sites(record, active))
     candidates: list[tuple[float, int, int, str, str, str, tuple[int, int]]] = []
-    for index in sorted({where[at] // 3 for at in _covered(record, site) if at in where}):
+    touched = {index // 3 for at, index in where.items() if record.covers(site.span, at)}
+    for index in sorted(touched):
         old = coding[3 * index : 3 * index + 3]
-        span = _codon_span(positions[3 * index : 3 * index + 3], length)
+        span = _codon_span(record, positions[3 * index : 3 * index + 3])
         if len(old) != 3 or span is None or set(old) - set("ACGT"):
             continue
         amino = table.amino_acid(old)
@@ -633,7 +632,7 @@ def _hit(
     except ValueError:
         # A Type IIS site near the end of a linear record: read, but with nothing left to cut.
         overhang = None
-    observed = record.extract(Segment(start, start + len(needle)))
+    observed = record.bases(start, start + len(needle))
     return CutSite(
         enzyme,
         start,

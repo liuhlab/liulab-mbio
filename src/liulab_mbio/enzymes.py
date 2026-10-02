@@ -17,7 +17,7 @@ from functools import cache
 from importlib.resources import files
 from typing import Literal
 
-from liulab_mbio.sequence import IUPAC_DNA, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import IUPAC_DNA, SequenceRecord, Strand
 
 #: Which strand the surviving single strand of a cut belongs to, or neither.
 type EndType = Literal["5'", "3'", "blunt"]
@@ -173,12 +173,9 @@ class Enzyme:
         low, high = min(top, bottom), max(top, bottom)
         if low == high:
             return ""
-        length = len(record)
-        if record.topology == "circular":
-            low, high = low % length, low % length + (high - low)
-        elif not (low >= 0 and high <= length):
+        if record.topology == "linear" and not record.fits(low, high):
             raise ValueError(f"{self.name} cut at {low}-{high} falls off a linear record")
-        return record.extract(Segment(low, high))
+        return record.bases(low, high)
 
 
 @cache
