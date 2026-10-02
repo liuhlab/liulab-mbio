@@ -15,7 +15,6 @@ import typing  # Spelled out: `Protocol` here is the bench protocol imported bel
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from itertools import pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -25,7 +24,7 @@ from liulab_mbio.primers.evaluation import PrimerReport
 from liulab_mbio.primers.thresholds import reading
 from liulab_mbio.protocol.model import Protocol, read_protocol, write_protocol
 from liulab_mbio.protocol.render import write_html
-from liulab_mbio.sequence import Feature, SequenceRecord
+from liulab_mbio.sequence import Feature, SequenceRecord, across_the_origin
 
 #: What a plan calls the product it writes: the annotated plasmid the design makes.
 PRODUCT_FILE = "product.dna"
@@ -134,7 +133,7 @@ def insertion_span(vector: SequenceRecord, site: Site) -> tuple[int, int]:
             found = _named(vector, site)
             if found is None:
                 raise ValueError(f"this vector annotates no feature called {site!r}")
-        if _through_the_end(found, len(vector)):
+        if across_the_origin(found, len(vector)):
             what = vector.name or "the vector"
             if vector.topology == "linear":
                 raise ValueError(
@@ -183,19 +182,6 @@ def _named(record: SequenceRecord, name: str) -> Feature | None:
     """Return the first feature of that name, whatever its case."""
     return next(
         (feature for feature in record.features if feature.name.lower() == name.lower()), None
-    )
-
-
-def _through_the_end(feature: Feature, length: int) -> bool:
-    """Whether `feature` reads on from the last base of a record of `length` bases to its first.
-
-    That is across the origin of a circular record, or cut apart at the two ends of a linear
-    one. Segments are listed in the order the top strand reads them, so one starting before the
-    segment listed ahead of it has passed the end.
-    """
-    segments = feature.segments
-    return any(one.end > length for one in segments) or any(
-        after.start < before.start for before, after in pairwise(segments)
     )
 
 
