@@ -13,6 +13,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    Topology,
     reverse_complement,
 )
 
@@ -62,7 +63,7 @@ class Placement:
         """Return whether both ends of a binding site lie where this placement puts them."""
         ends = (site.start, site.end) if site.strand is Strand.FORWARD else (site.end, site.start)
         return all(
-            span is None or _holds(span, position, template)
+            span is None or template.covers(span, position)
             for span, position in zip((self.five_prime, self.three_prime), ends, strict=True)
         )
 
@@ -167,8 +168,7 @@ def find_off_target_sites(
     intended = {_three_prime_end(site, len(bases)) for site in placed}
     return _primed(
         dna,
-        bases,
-        topology,
+        template,
         thresholds,
         tuple(
             annealing
@@ -198,10 +198,10 @@ def _perfect_stability(dna: str) -> float:
 
 @lru_cache(maxsize=1 << 12)
 def _priming_sites(
-    dna: str, sequence: str, topology: str, thresholds: Thresholds
+    dna: str, sequence: str, topology: Topology, thresholds: Thresholds
 ) -> tuple[PrimingSite, ...]:
     annealings = _annealings(dna, sequence, topology, thresholds)
-    return _primed(dna, sequence, topology, thresholds, annealings)
+    return _primed(dna, SequenceRecord(sequence, topology=topology), thresholds, annealings)
 
 
 @lru_cache(maxsize=1 << 15)
@@ -251,8 +251,7 @@ def _annealings(
 
 def _primed(
     dna: str,
-    sequence: str,
-    topology: str,
+    template: SequenceRecord,
     thresholds: Thresholds,
     annealings: tuple[tuple[BindingSite, int], ...],
 ) -> tuple[PrimingSite, ...]:
@@ -267,7 +266,7 @@ def _primed(
     for site, mismatches in annealings:
         # A perfect match anneals exactly as the floor's duplex does.
         if mismatches:
-            here = _covered(sequence, topology, site)
+            here = template.bases(site.start, site.end)
             annealed = here if site.strand is Strand.REVERSE else reverse_complement(here)
             tm = primer3.calc_end_stability(dna, annealed).tm
         else:
@@ -275,13 +274,6 @@ def _primed(
         if tm >= floor:
             found.append(PrimingSite(site, tm, mismatches))
     return tuple(found)
-
-
-def _covered(sequence: str, topology: str, site: BindingSite) -> str:
-    """Return the bases of a template a site covers, wrapping once round a circular origin."""
-    if topology == "circular" and site.end > len(sequence):
-        return sequence[site.start :] + sequence[: site.end - len(sequence)]
-    return sequence[site.start : site.end]
 
 
 def amplicon_sizes(
@@ -315,13 +307,6 @@ def amplicon_sizes(
             if span is not None:
                 products.append(span + tail + other_tail)
     return tuple(sorted(products))
-
-
-def _holds(span: Segment, position: int, template: SequenceRecord) -> bool:
-    """Return whether a span of positions holds one, counting round a circular template."""
-    if template.topology == "circular":
-        return (position - span.start) % len(template) < span.end - span.start
-    return span.start <= position < span.end
 
 
 def _matched(sequence: str, circular: bool, index: int, probe: str, step: int) -> int:
