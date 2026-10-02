@@ -42,7 +42,7 @@ from liulab_mbio.plot.layers import (
     text_color,
 )
 from liulab_mbio.plot.svg import Group, Letters, Line, Path, Place, Rect, Shape, Text, number
-from liulab_mbio.sequence import Strand, reverse_complement
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
 
 #: How many bases a sequence view draws at most.
 LIMIT = 100_000
@@ -386,7 +386,8 @@ def layout(
     both_strands
         Whether the bottom strand is drawn under the top one.
     """
-    length = len(bases)
+    record = SequenceRecord(bases, topology="circular" if circular else "linear")
+    length = len(record)
     start, end = span if span is not None else (0, length)
     bounds = [
         (first, min(first + bases_per_row, end)) for first in range(start, end, bases_per_row)
@@ -425,7 +426,7 @@ def layout(
         row, before = _row(
             first,
             last,
-            bases,
+            record,
             here,
             before,
             top=top,
@@ -526,7 +527,7 @@ def _by_row(found: Sequence[Piece], start: int, bases_per_row: int) -> dict[int,
 def _row(
     first: int,
     last: int,
-    bases: str,
+    record: SequenceRecord,
     found: _Found,
     before: Mapping[int, int],
     *,
@@ -545,7 +546,7 @@ def _row(
     def at(position: float) -> float:
         return (position - first) * CELL
 
-    length = len(bases)
+    length = len(record)
     runs = [
         run
         for item, cut in found.features
@@ -675,7 +676,7 @@ def _row(
         for (item, _), one in zip(anchored, stairs, strict=True)
     )
 
-    drawn, boxes = _bases_drawn(bases, first, last, down, shift, right, both_strands)
+    drawn, boxes = _bases_drawn(record, first, last, down, shift, right, both_strands)
     boxes += [
         Box(0.0, shift, 0.0, down.bottom),
         *(Box(bar.start, bar.body.y, bar.end - bar.start, _BAR) for bar in bars),
@@ -809,7 +810,7 @@ def _down(
 
 
 def _bases_drawn(
-    bases: str,
+    record: SequenceRecord,
     first: int,
     last: int,
     down: _Down,
@@ -821,8 +822,8 @@ def _bases_drawn(
 
     The last position is set flush right at `right`, level with the rail.
     """
-    length = len(bases)
-    top = _bases(bases, first, last)
+    length = len(record)
+    top = record.bases(first, last)
     ruler, boxes = _ruler(first, last, length, shift, down.rail + shift)
     strand = _strand(top, down.strand + shift)
     drawn: list[Shape] = [ruler, Group((strand,), classes=("strand", "top"))]
@@ -1081,13 +1082,6 @@ def _cells(count: int) -> tuple[float, ...]:
     """Return where each of `count` bases starts along a row, centred in its cell."""
     offset = (CELL - MONO.width("A", BASE_SIZE)) / 2
     return tuple(index * CELL + offset for index in range(count))
-
-
-def _bases(bases: str, first: int, last: int) -> str:
-    """Return the top strand from `first` to `last`, across the origin as needed."""
-    start = first % len(bases)
-    end = start + last - first
-    return bases[start:end] if end <= len(bases) else bases[start:] + bases[: end - len(bases)]
 
 
 def _last(last: int, length: int) -> str:

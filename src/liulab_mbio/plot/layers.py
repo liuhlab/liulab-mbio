@@ -36,6 +36,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    counted_round,
     reverse_complement,
 )
 from liulab_mbio.sites import find_sites
@@ -458,19 +459,17 @@ def default_color(feature: Feature) -> str:
     return OTHER.lower()
 
 
-def unwrapped(spans: Sequence[Span | Segment], length: int) -> tuple[tuple[int, int], ...]:
-    """Return each span's start and end, counted round a circular record from the first span.
+def hull(spans: Sequence[Span | Segment], length: int) -> tuple[int, int]:
+    """Return where the first span starts and the last ends, in reading order, one turn at most.
 
-    A span that starts before the one before it ends lies past the origin, so it moves on by the
-    record's length, as SnapGene reads a feature's segments.
+    Examples
+    --------
+    >>> hull((Segment(91, 98), Segment(2, 8)), 100)
+    (91, 108)
     """
-    counted: list[tuple[int, int]] = []
-    for span in spans:
-        start = span.start
-        if counted and start < counted[-1][1]:
-            start += length
-        counted.append((start, start + span.end - span.start))
-    return tuple(counted)
+    starts = counted_round((span.start for span in spans), length)
+    last = spans[-1]
+    return starts[0], min(starts[-1] + last.end - last.start, starts[0] + length)
 
 
 def pieces(item: Item, start: int, end: int, length: int, *, circular: bool) -> tuple[Piece, ...]:
@@ -490,7 +489,10 @@ def pieces(item: Item, start: int, end: int, length: int, *, circular: bool) -> 
     >>> [(one.start, one.end, one.starts, one.ends) for one in opened]
     [(0, 10, False, True), (90, 100, True, False)]
     """
-    counted = unwrapped(item.spans, length)
+    starts = counted_round((span.start for span in item.spans), length)
+    counted = [
+        (low, low + span.end - span.start) for low, span in zip(starts, item.spans, strict=True)
+    ]
     runs: list[tuple[int, int, Span | None]] = []
     for index, (span, (low, high)) in enumerate(zip(item.spans, counted, strict=True)):
         if index and low > counted[index - 1][1]:
@@ -563,14 +565,11 @@ def translation(feature: Feature, record: SequenceRecord) -> tuple[Codon, ...]:
     """
     length = len(record)
     positions = [
-        at % length
-        for start, end in unwrapped(feature.segments, length)
-        for at in range(start, end)
+        at % length for segment in feature.segments for at in range(segment.start, segment.end)
     ]
-    bases = "".join(record.sequence[at] for at in positions)
     if feature.strand == Strand.REVERSE:
         positions.reverse()
-        bases = reverse_complement(bases)
+    bases = record.extract(feature)
     first = _codon_start(feature) - 1
     return tuple(
         Codon(positions[at + 1], _amino_acid(bases[at : at + 3]))
@@ -611,7 +610,9 @@ def _feature(feature: Feature, record: SequenceRecord, translations: bool) -> It
         for segment in feature.segments
     )
     runs: list[list[int]] = []
-    for start, end in unwrapped(spans, length):
+    starts = counted_round((span.start for span in spans), length)
+    for start, span in zip(starts, spans, strict=True):
+        end = start + span.end - span.start
         if runs and start == runs[-1][1]:
             runs[-1][1] = end
         else:
@@ -670,10 +671,11 @@ def _mismatches(primer: Primer, site: BindingSite, record: SequenceRecord) -> tu
         reads, first = reverse_complement(pairing), site.start
     else:
         reads, first = pairing, site.end - len(pairing)
+    there = record.bases(first, first + len(reads))
     return tuple(
         (first + index) % length
-        for index, base in enumerate(reads)
-        if base != record.sequence[(first + index) % length]
+        for index, (base, paired) in enumerate(zip(reads, there, strict=True))
+        if base != paired
     )
 
 

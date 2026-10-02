@@ -29,10 +29,10 @@ from liulab_mbio.plot.layers import (
     Item,
     Span,
     hiding,
+    hull,
     notice,
     outline_color,
     text_color,
-    unwrapped,
 )
 from liulab_mbio.plot.svg import (
     Circle,
@@ -46,7 +46,7 @@ from liulab_mbio.plot.svg import (
     Text,
     number,
 )
-from liulab_mbio.sequence import Strand
+from liulab_mbio.sequence import Strand, counted_round
 
 #: The backbone's radius, in points. Everything else on the circle is laid out from it.
 RADIUS = 220.0
@@ -230,15 +230,10 @@ def _baseline(font: Font, size: float, middle: float) -> float:
     return middle + (font.ascender + font.descender) / 2 / font.units_per_em * size
 
 
-def _hull(item: Item, length: int) -> tuple[int, int]:
-    counted = unwrapped(item.spans, length)
-    return counted[0][0], min(counted[-1][1], counted[0][0] + length)
-
-
 def _rings(items: Sequence[Item], length: int) -> list[int]:
     """Return each item's ring, 0 outermost: the first it overlaps nothing on, longest first."""
     padding = length * _RING_PADDING / (math.tau * RADIUS)
-    hulls = [_hull(item, length) for item in items]
+    hulls = [hull(item.spans, length) for item in items]
     order = sorted(range(len(items)), key=lambda i: (hulls[i][0] - hulls[i][1], hulls[i][0]))
     rings: list[int] = [0] * len(items)
     taken: list[list[tuple[float, float]]] = []
@@ -282,9 +277,9 @@ def _arrows(items: Sequence[Item], length: int) -> tuple[Arrow, ...]:
     for item, ring in zip(items, rings, strict=True):
         last = len(item.spans) - 1
         radius = outer - ring * step
-        for index, (span, (start, end)) in enumerate(
-            zip(item.spans, unwrapped(item.spans, length), strict=True)
-        ):
+        starts = counted_round((span.start for span in item.spans), length)
+        for index, (span, start) in enumerate(zip(item.spans, starts, strict=True)):
+            end = start + span.end - span.start
             head_start = index == 0 and item.strand in (Strand.REVERSE, Strand.BOTH)
             head_end = index == last and item.strand in (Strand.FORWARD, Strand.BOTH)
             arrows.append(
@@ -393,7 +388,7 @@ def _labels(
     named = [item for item in items if SANS.drawn(item.label)]
     anchored = []
     for item in named:
-        start, end = _hull(item, length)
+        start, end = hull(item.spans, length)
         anchored.append(
             labels.Anchored(
                 sum(_font(bold).width(text, LABEL_SIZE) for text, bold in item.runs)

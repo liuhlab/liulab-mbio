@@ -266,21 +266,19 @@ def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:
         )
         if feature is None:
             raise ValueError(f"record {record.name!r} has no feature called {region!r} to draw")
-        counted = layers.unwrapped(feature.segments, length)
-        return counted[0][0], min(counted[-1][1], counted[0][0] + length)
+        return layers.hull(feature.segments, length)
     start, end = region
+    if start < end and record.fits(start, end):
+        return start, end
     if record.topology == "circular":
-        if not 0 <= start < length or not start < end <= start + length:
-            raise ValueError(
-                f"region {region} does not lie on the circular record {record.name!r} of "
-                f"{length} bases: it starts inside the record, and across the origin ends past "
-                "its length, at most one turn on"
-            )
-    elif not 0 <= start < end <= length:
         raise ValueError(
-            f"region {region} does not lie on the linear record {record.name!r} of {length} bases"
+            f"region {region} does not lie on the circular record {record.name!r} of "
+            f"{length} bases: it starts inside the record, and across the origin ends past "
+            "its length, at most one turn on"
         )
-    return start, end
+    raise ValueError(
+        f"region {region} does not lie on the linear record {record.name!r} of {length} bases"
+    )
 
 
 def _whole_circle(drawing: Drawing) -> bool:
