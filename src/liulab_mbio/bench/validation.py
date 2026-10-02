@@ -16,7 +16,7 @@ from liulab_mbio.primers.placement import Placement, amplicon_sizes
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, Thresholds
 from liulab_mbio.protocol.model import Gel, Ladder, Lane
-from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand, counted_round
+from liulab_mbio.sequence import Primer, Segment, SequenceRecord, Strand
 
 #: Vector kept either side of the junctions by a designed colony PCR pair, bases. Twice this is
 #: the empty-vector band, and the note asks for every band to stay at 100 bp or more.
@@ -286,28 +286,6 @@ def sanger_primers(
         SangerRead(forward, (start - ahead) % length, (end - ahead) % length),
         SangerRead(reverse, (behind - end) % length, (behind - start) % length),
     )
-
-
-def insert_order(positions: Sequence[int], at: int, length: int) -> tuple[int, ...]:
-    """Return the junction positions read round the product from the one at index `at`.
-
-    `colony_pcr_check` and `sanger_primers` read the spans between the positions they are given
-    as the inserts, so a set has to start where the opened vector gives way to the first insert
-    rather than at the product's own base zero. `liulab_mbio.sequence.counted_round` carries
-    every position before that one on past the origin.
-
-    Examples
-    --------
-    >>> insert_order((395, 1112), 0, 3347)
-    (395, 1112)
-
-    The same two junctions where the insert lands at the product's end instead:
-
-    >>> insert_order((0, 2630), 1, 3347)
-    (2630, 3347)
-    """
-    places = tuple(positions)
-    return counted_round((*places[at:], *places[:at]), length)
 
 
 def _junction_span(junctions: Sequence[int], product: SequenceRecord) -> tuple[int, ...]:

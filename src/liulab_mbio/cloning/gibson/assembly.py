@@ -30,7 +30,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import annealed, carried, ordered, rotate
 from liulab_mbio.primers.design import design_pair
@@ -43,6 +42,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    counted_round,
     reverse_complement,
 )
 
@@ -471,13 +471,14 @@ class Assembly:
     def boundaries(self) -> tuple[int, ...]:
         """Where each part gives way to the next, which is what a validation design reads across.
 
-        `Junction.boundary` is the rule and `insert_order` the order: from the boundary the
-        first part gives way at, so the last passes the product's length where the inserts run
-        across the origin.
+        `Junction.boundary` is the rule. They are counted round from the boundary the first part
+        gives way at, so the last passes the product's length where the inserts run across the
+        origin.
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.boundary for one in self.junctions], at, len(self.product))
+        boundaries = [one.boundary for one in self.junctions]
+        return counted_round((*boundaries[at:], *boundaries[:at]), len(self.product))
 
     @property
     def insert_span(self) -> tuple[int, int]:

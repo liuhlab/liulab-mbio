@@ -22,7 +22,6 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.edits import annealed, carried, ordered, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
@@ -36,6 +35,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    counted_round,
     reverse_complement,
 )
 from liulab_mbio.sites import (
@@ -337,12 +337,13 @@ class Assembly:
     def junction_positions(self) -> tuple[int, ...]:
         """Where each junction begins, which is what a validation design reads across.
 
-        `insert_order` is the order: from the junction the first part gives way at, so the last
-        passes the product's length where the inserts run across the origin.
+        They are counted round from the junction the first part gives way at, so the last passes
+        the product's length where the inserts run across the origin.
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.start for one in self.junctions], at, len(self.product))
+        starts = [one.start for one in self.junctions]
+        return counted_round((*starts[at:], *starts[:at]), len(self.product))
 
     @property
     def checks(self) -> tuple[Check, ...]:
