@@ -29,7 +29,14 @@ from liulab_mbio.overhangs import (
     refusal,
     scoring,
 )
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import (
+    Feature,
+    Segment,
+    SequenceRecord,
+    Strand,
+    counted_round,
+    reverse_complement,
+)
 from liulab_mbio.sites import (
     CutSite,
     Domestication,
@@ -370,7 +377,7 @@ def _codon_boundary(record: SequenceRecord, position: int) -> None:
     for feature in record.features:
         if feature.type != "CDS":
             continue
-        offset = _frame_offset(feature, position)
+        offset = _frame_offset(record, feature, position)
         if offset is None:
             continue
         if offset % 3:
@@ -382,17 +389,22 @@ def _codon_boundary(record: SequenceRecord, position: int) -> None:
     raise ValueError(f"no coding sequence covers position {position}, so nothing holds a frame")
 
 
-def _frame_offset(feature: Feature, position: int) -> int | None:
-    """How far into a coding sequence a top-strand position is, or ``None`` when outside it."""
+def _frame_offset(record: SequenceRecord, feature: Feature, position: int) -> int | None:
+    """How far into a coding sequence a top-strand position is, or ``None`` when outside it.
+
+    On a circular record, a position before a segment's start is read past the origin.
+    """
     segments = feature.segments
     if feature.strand == Strand.REVERSE:
         segments = tuple(reversed(segments))
+    circular = record.topology == "circular"
     seen = 0
     for segment in segments:
-        if segment.start <= position <= segment.end:
+        at = counted_round((segment.start, position), len(record))[1] if circular else position
+        if segment.start <= at <= segment.end:
             if feature.strand == Strand.REVERSE:
-                return seen + segment.end - position
-            return seen + position - segment.start
+                return seen + segment.end - at
+            return seen + at - segment.start
         seen += segment.end - segment.start
     return None
 

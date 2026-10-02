@@ -366,11 +366,7 @@ def _origin(record: SequenceRecord, start: int, end: int) -> int:
     Turning the product to put it back at zero is what keeps the vector's coordinates readable,
     and it moves the junction that would otherwise straddle the origin.
     """
-    turns = (0, len(record)) if record.topology == "circular" else (0,)
-    for turn in turns:
-        if start <= turn < end:
-            return turn - start
-    return 0
+    return -start % len(record) if record.covers(Segment(start, end), 0) else 0
 
 
 def _turned(junction: Junction, origin: int, length: int) -> Junction:

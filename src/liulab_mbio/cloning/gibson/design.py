@@ -39,7 +39,7 @@ from collections.abc import Iterator, Sequence
 from liulab_mbio.checks import Check
 from liulab_mbio.cloning.gibson.assembly import Bridge, Part, StitchOligo
 from liulab_mbio.cloning.gibson.bench import ASSEMBLY_PRODUCTS, AssemblyProduct, OverlapRule
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
 
 #: The Wallace rule's degrees per base pair, which is the only way either NEB manual names for
 #: an overlap's melting temperature: "AT pair = 2 C and GC pair = 4 C" (note §4).
@@ -183,15 +183,11 @@ def _window(record: SequenceRecord, start: int, size: int) -> str:
     ValueError
         If a linear record runs out before the overlap does.
     """
-    if record.topology == "circular":
-        first = start % len(record)
-    elif start >= 0 and start + size <= len(record):
-        first = start
-    else:
+    if record.topology == "linear" and not record.fits(start, start + size):
         raise ValueError(
             f"an overlap of {size} bases does not fit {record.name or 'this record'} at {start}"
         )
-    return record.extract(Segment(first, first + size))
+    return record.bases(start, start + size)
 
 
 def _chosen(candidates: Iterator[str], rule: OverlapRule) -> str:

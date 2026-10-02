@@ -673,11 +673,8 @@ def _overlap_feature(junction: Junction) -> Feature:
 def _origin(part: Part) -> int:
     """Where the first part's template origin falls in the product, or 0 when it is not there."""
     start, end = part.span
-    turns = (0, len(part.template)) if part.template.topology == "circular" else (0,)
-    for turn in turns:
-        if start <= turn < end:
-            return turn - start
-    return 0
+    template = part.template
+    return -start % len(template) if template.covers(Segment(start, end), 0) else 0
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:
