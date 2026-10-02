@@ -30,7 +30,13 @@ from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.edits import EditReport, ordered, replace
 from liulab_mbio.library.parts import Part
 from liulab_mbio.library.scheme import Scheme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import (
+    Feature,
+    Segment,
+    SequenceRecord,
+    Strand,
+    across_the_origin,
+)
 from liulab_mbio.sites import Fragment, digest, find_sites
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
@@ -270,10 +276,11 @@ def assemble_round(
     released = _released(donor, part, scheme)
     excised = _excised(destination, released, part, scheme, number)
     barcode_at = _barcode_at(part, scheme)
-    bases = donor.extract(Segment(released.start, released.end))
+    bases = donor.bases(released.start, released.end)
     product, edit = replace(destination, excised.start, excised.end, bases)
     total = len(product)
-    at = excised.start if excised.end <= len(destination) else total - len(bases)
+    crossing = across_the_origin(Segment(excised.start, excised.end), len(destination))
+    at = total - len(bases) if crossing else excised.start
     inner = _inner(donor, released, part, scheme)
 
     def moved(index: int) -> int:

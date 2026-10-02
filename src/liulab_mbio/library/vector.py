@@ -143,12 +143,12 @@ def _coding(record: SequenceRecord, at: int) -> Feature | None:
     """Return the first coding sequence `at` lies inside, or ``None`` where it lies in none.
 
     An insertion at a segment's first base lands ahead of it, which shifts the whole feature and
-    leaves its frame alone, so that position counts as outside.
+    leaves its frame alone, so each segment is asked about past that base.
     """
-    length = len(record)
     for feature in record.features:
         if feature.type == "CDS" and any(
-            0 < (at - segment.start) % length < segment.end - segment.start
+            segment.end - segment.start > 1
+            and record.covers(Segment(segment.start + 1, segment.end), at)
             for segment in feature.segments
         ):
             return feature
@@ -161,10 +161,8 @@ def _check_clean(record: SequenceRecord, scheme: Scheme, stuffer: Segment) -> No
     Inside it they are the design: the internal enzyme's two cuts and whichever blunt chopper
     shreds the excised piece. Outside, a round would cut the backbone.
     """
-    length = len(record)
-    inside = {index % length for index in range(stuffer.start, stuffer.end)}
     for site in find_sites(record, (scheme.internal, scheme.external, *scheme.blunt)):
-        if not all((site.start + step) % length in inside for step in range(len(site.enzyme.site))):
+        if not record.covers(stuffer, site.span):
             raise ValueError(
                 f"{site.enzyme.name} reads a site at {site.start} on the "
                 f"{site.strand.name.lower()} strand, outside the internal stuffer at "
