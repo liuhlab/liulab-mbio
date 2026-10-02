@@ -18,12 +18,18 @@ the vector's own coordinates still read true and no junction sits at base zero.
 import dataclasses
 from dataclasses import dataclass
 
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.restriction.digest import Piece, closes
 from liulab_mbio.edits import carried, ordered, rotate
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import Feature, Primer, Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import (
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    counted_round,
+    reverse_complement,
+)
 from liulab_mbio.sites import CutSite, find_sites
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
@@ -110,12 +116,13 @@ class Ligation:
     def junction_positions(self) -> tuple[int, ...]:
         """Where each junction begins, which is what a validation design reads across.
 
-        `insert_order` is the order: from the junction the backbone gives way at, so the last
-        passes the product's length where the insert runs across the origin.
+        They are counted round from the junction the backbone gives way at, so the last passes
+        the product's length where the insert runs across the origin.
         """
         opened = self.pieces[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.start for one in self.junctions], at, len(self.product))
+        starts = [one.start for one in self.junctions]
+        return counted_round((*starts[at:], *starts[:at]), len(self.product))
 
     @property
     def blunt(self) -> bool:
@@ -255,15 +262,15 @@ def _restored(
 
     Both ends' enzymes are looked for: a join between two ends of one enzyme puts that site
     back, and one between two compatible ends of different enzymes may put back either or
-    neither. A blunt join pairs on no base at all, so the join has to fall inside the site
-    rather than under it.
+    neither. A blunt join pairs on no base at all, so the site has to hold the base on each
+    side of it.
     """
-    total = len(product)
-    covered = {(start + step) % total for step in range(length)}
     for site in find_sites(product, enzymes):
-        reach = len(site.enzyme.site)
-        span = {(site.start + step) % total for step in range(reach)}
-        if covered <= span and (covered or 0 < (start - site.start) % total < reach):
+        if length:
+            inside = product.covers(site.span, Segment(start, start + length))
+        else:
+            inside = product.covers(site.span, start - 1) and product.covers(site.span, start)
+        if inside:
             return site
     return None
 
@@ -284,10 +291,8 @@ def _junction_feature(junction: Junction) -> Feature:
 
 def _origin(piece: Piece) -> int:
     """Where the piece's own source origin falls in the product, or 0 when it is not there."""
-    turns = (0, len(piece.source)) if piece.source.topology == "circular" else (0,)
-    for turn in turns:
-        if piece.start <= turn < piece.end:
-            return turn - piece.start
+    if piece.source.covers(Segment(piece.start, piece.end), 0):
+        return -piece.start % len(piece.source)
     return 0
 
 

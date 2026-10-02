@@ -28,7 +28,7 @@ from liulab_mbio.cloning.restriction.bench import (
 from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from liulab_mbio.cloning.restriction.ligation import Junction
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import Segment, SequenceRecord
+from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import DAM_SITE, DCM_SITE, CutSite, find_sites
 
 #: The two methylases as something to search a record for. `liulab_mbio.sites.find_sites` is what
@@ -300,13 +300,13 @@ def _overlapping(record: SequenceRecord, site: CutSite, methylase: Enzyme) -> tu
     reach = len(methylase.site) - 1
     length = len(record)
     if record.topology == "circular":
-        start, here = (site.start - reach) % length, reach
-        width = min(reach + len(site.enzyme.site) + reach, length)
+        start, here = site.start - reach, reach
+        end = start + min(reach + len(site.enzyme.site) + reach, length)
     else:
         start = max(site.start - reach, 0)
         here = site.start - start
-        width = min(site.start + len(site.enzyme.site) + reach, length) - start
-    window = record.extract(Segment(start, start + width))
+        end = min(site.end + reach, length)
+    window = record.bases(start, end)
     return tuple(
         (start + hit.start) % length
         for hit in find_sites(SequenceRecord(window), methylase)

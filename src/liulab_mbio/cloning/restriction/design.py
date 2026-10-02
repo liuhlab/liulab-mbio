@@ -348,17 +348,12 @@ def _carries(insert: Piece | None) -> int:
     """How many of its own record's features the insert carries whole, which is what it moves."""
     if insert is None:
         return 0
-    length = len(insert.source)
+    source, span = insert.source, Segment(insert.start, insert.end)
     return sum(
         1
-        for feature in insert.source.features
-        if all(_inside(segment, insert, length) for segment in feature.segments)
+        for feature in source.features
+        if all(source.covers(span, segment) for segment in feature.segments)
     )
-
-
-def _inside(segment: Segment, piece: Piece, length: int) -> bool:
-    """Whether a span of the piece's own record lies inside the piece, across the origin or not."""
-    return (segment.start - piece.start) % length + segment.end - segment.start <= piece.length
 
 
 def _reads_a_site(record: SequenceRecord, enzymes: Sequence[Enzyme]) -> bool:
