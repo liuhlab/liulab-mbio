@@ -5,7 +5,7 @@ Coordinates are 0-based and half-open: ``Segment(start, end)`` holds bases ``sta
 File formats convert at their own boundary; see ``docs/adr/0001-coordinates.md``.
 """
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import KW_ONLY, dataclass, field
 from enum import IntEnum
 from typing import Literal
@@ -242,12 +242,12 @@ class SequenceRecord:
         """Return the bases under a feature or segment, reading across the origin.
 
         A reverse-strand feature reads as the reverse complement of its joined segments. A bare
-        segment reads off the top strand.
+        segment reads off the top strand. Each segment reads as `bases` reads it.
 
         Raises
         ------
         ValueError
-            If a segment does not fit this record.
+            If a segment runs off a linear record.
 
         Examples
         --------
@@ -255,23 +255,129 @@ class SequenceRecord:
         'ACAA'
         """
         segments = span.segments if isinstance(span, Feature) else (span,)
-        bases = "".join(self._bases(segment) for segment in segments)
+        bases = "".join(self.bases(segment.start, segment.end) for segment in segments)
         if isinstance(span, Feature) and span.strand == Strand.REVERSE:
             return reverse_complement(bases)
         return bases
 
-    def _bases(self, segment: Segment) -> str:
-        self._check_fits(segment.start, segment.end, "extracted")
+    def bases(self, start: int, end: int) -> str:
+        """Return the top-strand bases in ``[start, end)``, reading across the origin.
+
+        On a circular record a position counts round the circle, so `start` may lie outside the
+        record; the span is at most one turn long.
+
+        Raises
+        ------
+        ValueError
+            If `end` comes before `start`, or the span runs off a linear record or is longer than
+            a circular one.
+
+        Examples
+        --------
+        >>> SequenceRecord("AACCGGTTAC", topology="circular").bases(-2, 2)
+        'ACAA'
+        """
         n = len(self.sequence)
-        if segment.end <= n:
-            return self.sequence[segment.start : segment.end]
-        return self.sequence[segment.start :] + self.sequence[: segment.end - n]
+        span = f"span {start}-{end}"
+        if end < start:
+            raise ValueError(f"{span} ends before it starts")
+        if self.topology == "linear":
+            if start < 0 or end > n:
+                raise ValueError(f"{span} runs past the end of a linear record of {n} bases")
+            return self.sequence[start:end]
+        if end - start > n:
+            raise ValueError(f"{span} is longer than a circular record of {n} bases")
+        if start == end:
+            return ""
+        first = start % n
+        last = first + end - start
+        if last <= n:
+            return self.sequence[first:last]
+        return self.sequence[first:] + self.sequence[: last - n]
+
+    def covers(
+        self, span: Feature | Segment | BindingSite, inner: int | Segment | BindingSite
+    ) -> bool:
+        """Whether `span` holds a position, or the whole of a shorter span, across the origin too.
+
+        A feature holds what one of its segments holds. On a circular record a position counts
+        round the circle, so one past the length names the base it reaches there.
+
+        Examples
+        --------
+        >>> SequenceRecord("AACCGGTTAC", topology="circular").covers(Segment(8, 12), 1)
+        True
+        """
+        segments = span.segments if isinstance(span, Feature) else (span,)
+        first, last = (inner, inner + 1) if isinstance(inner, int) else (inner.start, inner.end)
+        n = len(self.sequence)
+        if self.topology == "linear":
+            return any(one.start <= first and last <= one.end for one in segments)
+        return any(
+            (first - one.start) % n + last - first <= one.end - one.start for one in segments
+        )
+
+    def fits(self, start: int, end: int) -> bool:
+        """Whether ``[start, end)`` lies on this record, as every span it annotates must.
+
+        On a linear record it lies inside the bases. On a circular one it starts inside them and
+        is at most one turn long, ending past the length across the origin. An empty span fits
+        wherever a base could be inserted.
+
+        Examples
+        --------
+        >>> SequenceRecord("AACCGGTTAC", topology="circular").fits(8, 12)
+        True
+        """
+        n = len(self.sequence)
+        if not 0 <= start <= end:
+            return False
+        if self.topology == "linear":
+            return end <= n
+        return start < n and end - start <= n
 
     def _check_fits(self, start: int, end: int, owner: str) -> None:
+        if self.fits(start, end):
+            return
         n = len(self.sequence)
         span = f"{owner} span {start}-{end}"
         if self.topology == "linear":
-            if end > n:
-                raise ValueError(f"{span} runs past the end of a linear record of {n} bases")
-        elif start >= n or end - start > n:
-            raise ValueError(f"{span} does not fit a circular record of {n} bases")
+            raise ValueError(f"{span} runs past the end of a linear record of {n} bases")
+        raise ValueError(f"{span} does not fit a circular record of {n} bases")
+
+
+def across_the_origin(span: Feature | Segment | BindingSite, length: int) -> bool:
+    """Whether `span` runs on from the last of `length` bases into the first.
+
+    A segment or binding site does when it ends past `length`. A feature does when its segments,
+    counted round in reading order, do; on a linear record, such a feature lies at both ends.
+
+    Examples
+    --------
+    >>> across_the_origin(Segment(8, 12), 10)
+    True
+    """
+    if not isinstance(span, Feature):
+        return span.end > length
+    segments = span.segments
+    starts = counted_round((one.start for one in segments), length)
+    return any(
+        start + one.end - one.start > length for start, one in zip(starts, segments, strict=True)
+    )
+
+
+def counted_round(positions: Iterable[int], length: int) -> tuple[int, ...]:
+    """Return positions read in order round a circle of `length` bases, at most one turn.
+
+    A position before the one read ahead of it lies past the origin, and moves on by `length`, as
+    a span across the origin ends past the length.
+
+    Examples
+    --------
+    >>> counted_round((91, 2, 5), 100)
+    (91, 102, 105)
+    """
+    counted: list[int] = []
+    for position in positions:
+        counted.append(position + length if counted and position < counted[-1] else position)
+    return tuple(counted)

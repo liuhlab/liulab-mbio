@@ -7,6 +7,8 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    across_the_origin,
+    counted_round,
     reverse_complement,
 )
 
@@ -123,3 +125,68 @@ def test_extras_a_reader_keeps_for_its_writer_do_not_affect_equality() -> None:
     kept = SequenceRecord("ACGT", name="pUC19", notes=notes, extras={"cache": b"\x00"})
     assert kept == SequenceRecord("ACGT", name="pUC19", notes=notes)
     assert kept != SequenceRecord("ACGT", name="pUC18", notes=notes)
+
+
+def test_a_span_runs_across_the_origin_when_it_ends_past_the_length() -> None:
+    assert across_the_origin(Segment(8, 12), 10)
+    assert across_the_origin(BindingSite(8, 12, Strand.REVERSE), 10)
+    assert not across_the_origin(Segment(6, 10), 10)
+
+
+def test_a_feature_runs_across_the_origin_when_a_segment_starts_before_the_one_it_follows() -> None:
+    assert across_the_origin(_feature((8, 10), (0, 2)), 10)
+    assert not across_the_origin(_feature((0, 2), (8, 10)), 10)
+    assert not across_the_origin(_feature((0, 4), (3, 6)), 10)
+
+
+def test_a_span_across_the_origin_covers_the_positions_either_side_of_it() -> None:
+    assert CIRCULAR.covers(Segment(8, 12), 1)
+    assert CIRCULAR.covers(Segment(8, 12), 11)
+    assert not CIRCULAR.covers(Segment(8, 12), 2)
+    assert CIRCULAR.covers(_feature((2, 4), (8, 12)), 0)
+
+
+def test_a_span_covers_only_its_own_positions_on_a_linear_record() -> None:
+    assert LINEAR.covers(Segment(2, 6), 5)
+    assert not LINEAR.covers(Segment(2, 6), 6)
+    assert not LINEAR.covers(Segment(2, 6), 12)
+
+
+def test_a_span_covers_a_shorter_one_lying_inside_it_across_the_origin() -> None:
+    assert CIRCULAR.covers(Segment(7, 13), Segment(9, 12))
+    assert CIRCULAR.covers(Segment(7, 13), BindingSite(0, 2, Strand.FORWARD))
+    assert not CIRCULAR.covers(Segment(7, 13), Segment(2, 4))
+    assert not LINEAR.covers(Segment(2, 6), Segment(4, 7))
+
+
+def test_bases_read_across_the_origin_counting_any_position_round_the_circle() -> None:
+    assert CIRCULAR.bases(8, 12) == "ACAA"
+    assert CIRCULAR.bases(-2, 2) == CIRCULAR.bases(18, 22) == "ACAA"
+    with pytest.raises(ValueError, match="circular"):
+        CIRCULAR.bases(3, 14)
+
+
+def test_bases_read_a_linear_record_only_inside_it() -> None:
+    assert LINEAR.bases(2, 6) == "CCGG"
+    assert LINEAR.bases(4, 4) == ""
+    with pytest.raises(ValueError, match="linear"):
+        LINEAR.bases(8, 12)
+
+
+def test_a_span_fits_a_circular_record_starting_inside_it_and_at_most_one_turn_long() -> None:
+    assert CIRCULAR.fits(8, 12)
+    assert CIRCULAR.fits(0, 10)
+    assert not CIRCULAR.fits(10, 12)
+    assert not CIRCULAR.fits(2, 13)
+
+
+def test_a_span_fits_a_linear_record_only_inside_it() -> None:
+    assert LINEAR.fits(2, 10)
+    assert LINEAR.fits(10, 10)
+    assert not LINEAR.fits(8, 12)
+    assert not LINEAR.fits(-1, 2)
+
+
+def test_positions_counted_round_in_reading_order_pass_the_length_after_the_origin() -> None:
+    assert counted_round((91, 2, 5), 100) == (91, 102, 105)
+    assert counted_round((2, 5, 91), 100) == (2, 5, 91)
