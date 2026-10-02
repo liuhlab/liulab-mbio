@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from liulab_mbio.sequence import Feature, SequenceRecord, Strand
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
 #: Selection markers this package can name an antibiotic for, keyed by the feature name lowered,
 #: each from the guide that states what its own vectors are plated on. A marker absent from here
@@ -128,7 +128,7 @@ def read_phenotype(
         promoter,
         gap,
         promoter is not None and coding is not None and promoter.strand == coding.strand,
-        _ribosome_binding_site(product, promoter, first, last),
+        _ribosome_binding_site(product, promoter, gap, last),
         _interrupted(vector, span),
         selection_marker(vector, outside=span),
     )
@@ -196,21 +196,19 @@ def _promoter(product: SequenceRecord, first: int, last: int) -> tuple[Feature |
 
 
 def _ribosome_binding_site(
-    product: SequenceRecord, promoter: Feature | None, first: int, last: int
+    product: SequenceRecord, promoter: Feature | None, gap: int, last: int
 ) -> bool:
-    """Whether one is annotated between the promoter and the insert."""
-    if promoter is None:
+    """Whether one is annotated in the `gap` bases between the promoter and the insert."""
+    if promoter is None or not gap:
         return False
-    length = len(product)
     if promoter.strand == Strand.REVERSE:
-        low, high = last, min(segment.start for segment in promoter.segments)
+        start = last
     else:
-        low, high = max(segment.end for segment in promoter.segments), first
+        start = max(segment.end for segment in promoter.segments)
+    between = Segment(start, start + gap)
     return any(
         feature.type == "RBS"
-        and any(
-            (segment.start - low) % length < (high - low) % length for segment in feature.segments
-        )
+        and any(product.covers(between, segment.start) for segment in feature.segments)
         for feature in product.features
     )
 
