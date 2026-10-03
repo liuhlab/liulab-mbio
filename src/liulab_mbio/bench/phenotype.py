@@ -150,7 +150,7 @@ def selection_marker(
             for feature in record.features
             if feature.type == "CDS"
             and _is_marker(feature.name)
-            and not any(segment.start < end and start < segment.end for segment in feature.segments)
+            and not any(record.covers(feature, at) for at in range(start, end))
         ),
         None,
     )
@@ -220,8 +220,7 @@ def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | Non
         (
             feature
             for feature in vector.features
-            if feature.type == "CDS"
-            and any(segment.start < end and start < segment.end for segment in feature.segments)
+            if feature.type == "CDS" and any(vector.covers(feature, at) for at in range(start, end))
         ),
         None,
     )
