@@ -411,18 +411,22 @@ def across_the_origin(span: Feature | Segment | BindingSite, length: int) -> boo
     )
 
 
-def counted_round(positions: Iterable[int], length: int) -> tuple[int, ...]:
+def counted_round(positions: Iterable[int], length: int, *, first: int = 0) -> tuple[int, ...]:
     """Return positions read in order round a circle of `length` bases, at most one turn.
 
-    A position before the one read ahead of it lies past the origin, and moves on by `length`, as
+    Reading begins at the position at index `first` and comes round to those before it. A
+    position before the one read ahead of it lies past the origin, and moves on by `length`, as
     a span across the origin ends past the length.
 
     Examples
     --------
     >>> counted_round((91, 2, 5), 100)
     (91, 102, 105)
+    >>> counted_round((2, 5, 91), 100, first=2)
+    (91, 102, 105)
     """
+    listed = tuple(positions)
     counted: list[int] = []
-    for position in positions:
+    for position in (*listed[first:], *listed[:first]):
         counted.append(position + length if counted and position < counted[-1] else position)
     return tuple(counted)

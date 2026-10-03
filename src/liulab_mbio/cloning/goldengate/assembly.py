@@ -340,8 +340,8 @@ class Assembly:
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        starts = [one.start for one in self.junctions]
-        return counted_round((*starts[at:], *starts[:at]), len(self.product))
+        starts = (one.start for one in self.junctions)
+        return counted_round(starts, len(self.product), first=at)
 
     @property
     def checks(self) -> tuple[Check, ...]:

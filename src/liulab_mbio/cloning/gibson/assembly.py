@@ -477,8 +477,8 @@ class Assembly:
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        boundaries = [one.boundary for one in self.junctions]
-        return counted_round((*boundaries[at:], *boundaries[:at]), len(self.product))
+        boundaries = (one.boundary for one in self.junctions)
+        return counted_round(boundaries, len(self.product), first=at)
 
     @property
     def insert_span(self) -> tuple[int, int]:
