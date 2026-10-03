@@ -24,6 +24,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     Topology,
+    counted_round,
     reverse_complement,
 )
 
@@ -98,9 +99,12 @@ def _span(text: str, length: int, *, base: int) -> tuple[int, int]:
 
 
 def _range(start: int, end: int, length: int, *, base: int) -> str:
-    """Write a span as SnapGene's inclusive range, across the origin where it runs past."""
-    last = end - 1 + base
-    return f"{start + base}-{last - length if last >= length + base else last}"
+    """Write a span as SnapGene's inclusive range, across the origin where it runs past.
+
+    A span after the origin, starting past the length, is written where it lies in the record.
+    """
+    first, last = start % length + base, (end - 1) % length + base
+    return f"{first}-{last}"
 
 
 def _qualifier_value(node: ET.Element) -> str | int:
@@ -112,7 +116,13 @@ def _qualifier_value(node: ET.Element) -> str | int:
     return text if text is not None else predef or ""
 
 
-def _read_features(payload: bytes, length: int) -> tuple[tuple[Feature, ...], dict[Feature, str]]:
+def _read_features(
+    payload: bytes, length: int, topology: Topology
+) -> tuple[tuple[Feature, ...], dict[Feature, str]]:
+    """Read each feature's segments in the order the file lists them.
+
+    On a circular record a segment after the origin is counted round past the length.
+    """
     features, kept = [], {}
     for node in ET.fromstring(payload).iter("Feature"):
         parts = [
@@ -120,15 +130,18 @@ def _read_features(payload: bytes, length: int) -> tuple[tuple[Feature, ...], di
             for segment in node.iter("Segment")
             if segment.get("type") != "gap"
         ]
+        starts = [start for (start, _), _ in parts]
+        if topology == "circular":
+            starts = counted_round(starts, length)
         color = parts[0][1].get("color") if parts else None
         segments = tuple(
             Segment(
-                start,
-                end,
+                at,
+                at + end - start,
                 name=segment.get("name", ""),
                 color=None if segment.get("color") == color else segment.get("color"),
             )
-            for (start, end), segment in parts
+            for at, ((start, end), segment) in zip(starts, parts, strict=True)
         )
         qualifiers = {
             q.get("name", ""): tuple(_qualifier_value(v) for v in q.iter("V"))
@@ -210,7 +223,9 @@ def read_dna(path: str | os.PathLike[str]) -> SequenceRecord:
     topology: Topology = "circular" if flags & _CIRCULAR else "linear"
     by_kind = dict(packets)
     features, feature_xml = (
-        _read_features(by_kind[_FEATURES], len(bases)) if _FEATURES in by_kind else ((), {})
+        _read_features(by_kind[_FEATURES], len(bases), topology)
+        if _FEATURES in by_kind
+        else ((), {})
     )
     primers, primer_xml, hybridization = (
         _read_primers(by_kind[_PRIMERS], len(bases))
@@ -316,17 +331,12 @@ def _feature_node(feature: Feature, length: int) -> ET.Element:
     node.set("consecutiveTranslationNumbering", "1")
     previous: int | None = None
     for segment in feature.segments:
-        start = (
-            segment.start
-            if previous is None or segment.start >= previous
-            else segment.start + length
-        )
-        if previous is not None and start > previous:
+        if previous is not None and segment.start > previous:
             ET.SubElement(
                 node,
                 "Segment",
                 {
-                    "range": _range(previous, start, length, base=1),
+                    "range": _range(previous, segment.start, length, base=1),
                     "color": "noColor",
                     "type": "gap",
                 },
@@ -339,7 +349,7 @@ def _feature_node(feature: Feature, length: int) -> ET.Element:
         if feature.type == "CDS":
             attributes["translated"] = "1"
         ET.SubElement(node, "Segment", attributes)
-        previous = start + segment.end - segment.start
+        previous = segment.end
     for name, values in feature.qualifiers.items():
         qualifier = ET.SubElement(node, "Q", {"name": name})
         for value in values:

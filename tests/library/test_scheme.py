@@ -201,3 +201,13 @@ def test_an_internal_stuffer_leaving_no_scar_overhang_is_refused():
 
     with pytest.raises(ValueError, match="internal-stuffer-cuts"):
         scheme(internal_stuffer_core=without)
+
+
+def test_an_entry_overhang_that_is_the_cloning_scar_is_refused():
+    clashing = positions((SCAR, *MORE[1:3]))
+
+    with pytest.raises(ValueError, match="internal-stuffer-cuts") as refused:
+        scheme(positions=clashing)
+
+    assert "'p1'" in str(refused.value)
+    assert "5' external stuffer" in str(refused.value)

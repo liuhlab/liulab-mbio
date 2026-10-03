@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from liulab_mbio.sequence import Feature, SequenceRecord, Strand
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
 #: Selection markers this package can name an antibiotic for, keyed by the feature name lowered,
 #: each from the guide that states what its own vectors are plated on. A marker absent from here
@@ -128,7 +128,7 @@ def read_phenotype(
         promoter,
         gap,
         promoter is not None and coding is not None and promoter.strand == coding.strand,
-        _ribosome_binding_site(product, promoter, first, last),
+        _ribosome_binding_site(product, promoter, gap, last),
         _interrupted(vector, span),
         selection_marker(vector, outside=span),
     )
@@ -143,14 +143,13 @@ def selection_marker(
     common features are. A marker inside `outside` is passed over: a cassette the reaction
     throws away carries its own, and that is not what a plate selects.
     """
-    start, end = outside if outside is not None else (0, 0)
     return next(
         (
             feature
             for feature in record.features
             if feature.type == "CDS"
             and _is_marker(feature.name)
-            and not any(segment.start < end and start < segment.end for segment in feature.segments)
+            and (outside is None or not _meets(record, feature, outside))
         ),
         None,
     )
@@ -164,11 +163,14 @@ def _is_marker(name: str) -> bool:
 
 def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
     """Return the longest coding sequence lying wholly between the outer two junctions."""
+    if last <= first:
+        return None
+    insert = Segment(first, last)
     inside = [
         feature
         for feature in product.features
         if feature.type == "CDS"
-        and all(first <= segment.start and segment.end <= last for segment in feature.segments)
+        and all(product.covers(insert, segment) for segment in feature.segments)
     ]
     return max(
         inside,
@@ -196,34 +198,47 @@ def _promoter(product: SequenceRecord, first: int, last: int) -> tuple[Feature |
 
 
 def _ribosome_binding_site(
-    product: SequenceRecord, promoter: Feature | None, first: int, last: int
+    product: SequenceRecord, promoter: Feature | None, gap: int, last: int
 ) -> bool:
-    """Whether one is annotated between the promoter and the insert."""
-    if promoter is None:
+    """Whether one is annotated in the `gap` bases between the promoter and the insert."""
+    if promoter is None or not gap:
         return False
-    length = len(product)
     if promoter.strand == Strand.REVERSE:
-        low, high = last, min(segment.start for segment in promoter.segments)
+        start = last
     else:
-        low, high = max(segment.end for segment in promoter.segments), first
+        start = max(segment.end for segment in promoter.segments)
+    between = Segment(start, start + gap)
     return any(
         feature.type == "RBS"
-        and any(
-            (segment.start - low) % length < (high - low) % length for segment in feature.segments
-        )
+        and any(product.covers(between, segment.start) for segment in feature.segments)
         for feature in product.features
     )
 
 
 def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | None:
     """Return the vector coding sequence the insertion breaks, or ``None``."""
-    start, end = span
     return next(
         (
             feature
             for feature in vector.features
-            if feature.type == "CDS"
-            and any(segment.start < end and start < segment.end for segment in feature.segments)
+            if feature.type == "CDS" and _meets(vector, feature, span)
         ),
         None,
+    )
+
+
+def _meets(record: SequenceRecord, feature: Feature, span: tuple[int, int]) -> bool:
+    """Whether replacing `span` changes the feature: it shares a base, or an empty span splits it.
+
+    Two spans share a base exactly when one holds the other's first.
+    """
+    start, end = span
+    if start == end:
+        return any(
+            one.end - one.start > 1 and record.covers(Segment(one.start + 1, one.end), start)
+            for one in feature.segments
+        )
+    replaced = Segment(start, end)
+    return any(
+        record.covers(replaced, one.start) or record.covers(one, start) for one in feature.segments
     )

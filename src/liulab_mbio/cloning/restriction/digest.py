@@ -31,7 +31,7 @@ from liulab_mbio.bench.steps import listed
 from liulab_mbio.edits import flipped
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.overhangs import End, compatible
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite, EnzymeLike, Fragment, digest, find_sites
 
 #: How many enzymes one digest of this method uses. Two of them cut the insert out
@@ -83,7 +83,7 @@ class Piece:
     @property
     def bases(self) -> str:
         """The top strand it carries, 5' to 3'."""
-        return self.source.extract(Segment(self.start, self.end))
+        return self.source.bases(self.start, self.end)
 
     @property
     def left_end(self) -> End:

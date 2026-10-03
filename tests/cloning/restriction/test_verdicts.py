@@ -126,6 +126,17 @@ def test_a_junction_inside_a_coding_sequence_reports_the_frame_the_added_bases_l
     assert frame_check(record, junctions).value == 0
 
 
+@pytest.mark.parametrize("at", [98, 0])
+def test_a_junction_between_two_parts_separated_across_the_origin_is_in_the_coding_sequence(at):
+    # The gap runs 98..101 on a 100 bp record, so a junction at base 0 lies in it, past the origin.
+    record = SequenceRecord(
+        "A" * 100, topology="circular", name="p", features=(coding("tag", (90, 98), (101, 108)),)
+    )
+    found = frame_check(record, (Junction(at, "AATT", "backbone", "insert"),))
+    assert (found.status, found.value) == ("pass", 1)
+    assert "3 bases" in found.detail
+
+
 def test_the_ligation_ratio_is_judged_in_picomoles_and_shown_in_nanograms_too():
     backbone = dna_amount("backbone", 2665, pmol=0.02)
     inside = ratio_check(backbone, dna_amount("insert", 723, pmol=0.06))

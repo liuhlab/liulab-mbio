@@ -363,13 +363,12 @@ def _designed(
 
 def _planned(made: Recombination, amounts: tuple[Amount, Amount]) -> PlannedReaction:
     """Return one simulated reaction with what it takes and what its product says about itself."""
-    first, second = made.junctions
     return PlannedReaction(
         made,
         amounts,
         read_phenotype(
             made.product,
-            (first.start, second.end),
+            made.recombined,
             vector=made.backbone.record,
             span=made.cassette,
         ),

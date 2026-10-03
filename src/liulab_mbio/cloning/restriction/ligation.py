@@ -18,12 +18,18 @@ the vector's own coordinates still read true and no junction sits at base zero.
 import dataclasses
 from dataclasses import dataclass
 
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.restriction.digest import Piece, closes
-from liulab_mbio.edits import carried, ordered, rotate
+from liulab_mbio.edits import carried, ordered, origin_in, rotate
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import Feature, Primer, Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import (
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    counted_round,
+    reverse_complement,
+)
 from liulab_mbio.sites import CutSite, find_sites
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
@@ -110,12 +116,13 @@ class Ligation:
     def junction_positions(self) -> tuple[int, ...]:
         """Where each junction begins, which is what a validation design reads across.
 
-        `insert_order` is the order: from the junction the backbone gives way at, so the last
-        passes the product's length where the insert runs across the origin.
+        They are counted round from the junction the backbone gives way at, so the last passes
+        the product's length where the insert runs across the origin.
         """
         opened = self.pieces[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.start for one in self.junctions], at, len(self.product))
+        starts = (one.start for one in self.junctions)
+        return counted_round(starts, len(self.product), first=at)
 
     @property
     def blunt(self) -> bool:
@@ -164,8 +171,10 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
     """Ligate `insert` into `backbone` and return the circular product it makes.
 
     The backbone's right end meets the insert's left, and the insert's right end closes the
-    circle. The product is turned so the vector's own first base keeps the place it had, which
-    leaves the vector's coordinates readable and keeps a junction off base zero.
+    circle. Where the backbone carries the vector's own first base, the product is turned so that
+    base keeps the place it had, which leaves the vector's coordinates readable. Where the insert
+    replaced it, the product starts where the backbone does, so the insert's right end meets the
+    backbone at base zero.
 
     Raises
     ------
@@ -178,6 +187,7 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
             "not checked before they were joined"
         )
     pieces = (backbone, insert)
+    length = sum(len(piece.bases) for piece in pieces)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
@@ -185,13 +195,19 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
     for place, piece in enumerate(pieces):
         at = len(bases)
         bases += piece.bases
-        over, kept = carried(piece.source, piece.start, piece.end, offset=at - piece.start)
+        over, kept = carried(
+            piece.source, piece.start, piece.end, offset=at - piece.start, length=length
+        )
         features.extend(over)
         primers.extend(kept)
         joins.append((at, pieces[place - 1], piece))
-    origin = _origin(backbone)
+    origin = origin_in(backbone.source, backbone.start, backbone.end)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(features),
+        primers=tuple(primers),
     )
     turned = rotate(product, origin) if origin else product
     junctions = tuple(
@@ -255,15 +271,15 @@ def _restored(
 
     Both ends' enzymes are looked for: a join between two ends of one enzyme puts that site
     back, and one between two compatible ends of different enzymes may put back either or
-    neither. A blunt join pairs on no base at all, so the join has to fall inside the site
-    rather than under it.
+    neither. A blunt join pairs on no base at all, so the site has to hold the base on each
+    side of it.
     """
-    total = len(product)
-    covered = {(start + step) % total for step in range(length)}
     for site in find_sites(product, enzymes):
-        reach = len(site.enzyme.site)
-        span = {(site.start + step) % total for step in range(reach)}
-        if covered <= span and (covered or 0 < (start - site.start) % total < reach):
+        if length:
+            inside = product.covers(site.span, Segment(start, start + length))
+        else:
+            inside = product.covers(site.span, start - 1) and product.covers(site.span, start)
+        if inside:
             return site
     return None
 
@@ -280,15 +296,6 @@ def _junction_feature(junction: Junction) -> Feature:
         color=JUNCTION_COLOR,
         qualifiers={"note": (note,)},
     )
-
-
-def _origin(piece: Piece) -> int:
-    """Where the piece's own source origin falls in the product, or 0 when it is not there."""
-    turns = (0, len(piece.source)) if piece.source.topology == "circular" else (0,)
-    for turn in turns:
-        if piece.start <= turn < piece.end:
-            return turn - piece.start
-    return 0
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:

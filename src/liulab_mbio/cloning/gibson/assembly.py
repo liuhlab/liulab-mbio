@@ -30,9 +30,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import annealed, carried, ordered, rotate
+from liulab_mbio.edits import annealed, carried, ordered, origin_in, rotate
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
 from liulab_mbio.primers.polymerase import Q5, Polymerase
@@ -43,6 +42,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    counted_round,
     reverse_complement,
 )
 
@@ -158,7 +158,7 @@ class Part:
     @property
     def bases(self) -> str:
         """What this part puts into the product, its neighbours' overlaps left off."""
-        return self.template.extract(Segment(*self.span))
+        return self.template.bases(*self.span)
 
     @property
     def amplified(self) -> bool:
@@ -234,7 +234,7 @@ def amplify(
         polymerase=polymerase,
         thresholds=thresholds,
     )
-    bases = left + template.extract(Segment(start, end)) + right
+    bases = left + template.bases(start, end) + right
     features, kept = carried(template, start, end, offset=len(left) - start)
     placed = (
         annealed(forward, len(left), Strand.FORWARD),
@@ -471,13 +471,14 @@ class Assembly:
     def boundaries(self) -> tuple[int, ...]:
         """Where each part gives way to the next, which is what a validation design reads across.
 
-        `Junction.boundary` is the rule and `insert_order` the order: from the boundary the
-        first part gives way at, so the last passes the product's length where the inserts run
-        across the origin.
+        `Junction.boundary` is the rule. They are counted round from the boundary the first part
+        gives way at, so the last passes the product's length where the inserts run across the
+        origin.
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.boundary for one in self.junctions], at, len(self.product))
+        boundaries = (one.boundary for one in self.junctions)
+        return counted_round(boundaries, len(self.product), first=at)
 
     @property
     def insert_span(self) -> tuple[int, int]:
@@ -570,6 +571,7 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
     """
     if len(parts) < 2:
         raise ValueError(f"an assembly joins at least two parts, got {len(parts)}")
+    length = sum(len(part.bases) for part in parts)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
@@ -578,21 +580,24 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
         at = len(bases)
         starts.append(at)
         bases += part.bases
-        over, kept = carried(part.template, *part.span, offset=at - part.span[0])
+        over, kept = carried(part.template, *part.span, offset=at - part.span[0], length=length)
         features.extend(over)
         primers.extend(kept)
         if part.forward is not None and part.reverse is not None:
             primers.append(annealed(part.forward, at, Strand.FORWARD))
             primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
-    length = len(bases)
     joins = [
         _junction(parts[index - 1], part, starts[index], length) for index, part in enumerate(parts)
     ]
     features.extend(_overlap_feature(one) for one in joins)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(features),
+        primers=tuple(primers),
     )
-    origin = _origin(parts[0])
+    origin = origin_in(parts[0].template, *parts[0].span)
     return Assembly(
         ordered(rotate(product, origin) if origin else product),
         tuple(parts),
@@ -668,16 +673,6 @@ def _overlap_feature(junction: Junction) -> Feature:
             )
         },
     )
-
-
-def _origin(part: Part) -> int:
-    """Where the first part's template origin falls in the product, or 0 when it is not there."""
-    start, end = part.span
-    turns = (0, len(part.template)) if part.template.topology == "circular" else (0,)
-    for turn in turns:
-        if start <= turn < end:
-            return turn - start
-    return 0
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:

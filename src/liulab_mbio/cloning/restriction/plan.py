@@ -75,7 +75,7 @@ from liulab_mbio.primers.evaluation import PrimerReport, evaluate_primer
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from liulab_mbio.protocol.model import Protocol
-from liulab_mbio.sequence import Primer, SequenceRecord
+from liulab_mbio.sequence import Primer, SequenceRecord, counted_round
 from liulab_mbio.sites import EnzymeLike, find_sites
 from liulab_mbio.snapgene import write_dna
 
@@ -484,5 +484,9 @@ def _annotated(built: Ligation, designed: Sequence[Primer]) -> Ligation:
 
 
 def _replaced(backbone: Piece, length: int) -> tuple[int, int]:
-    """Return the vector bases the insert replaces: everything the backbone is not."""
-    return backbone.end % length, backbone.start
+    """Return the vector bases the insert replaces: everything the backbone is not.
+
+    Where they run across the origin, they end past the length.
+    """
+    start, end = counted_round((backbone.end % length, backbone.start), length)
+    return start, end

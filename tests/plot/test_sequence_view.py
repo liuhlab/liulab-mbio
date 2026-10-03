@@ -113,7 +113,7 @@ def _crowded() -> Given:
         Feature(
             "joined across",
             "CDS",
-            (Segment(1150, 1180), Segment(1190, 1220), Segment(20, 61)),
+            (Segment(1150, 1180), Segment(1190, 1220), Segment(1220, 1261)),
             strand=Strand.FORWARD,
             qualifiers={"codon_start": (2,)},
         ),
@@ -179,7 +179,7 @@ def _random(seed: int, circular: bool) -> tuple[tuple[layers.Item, ...], str]:
         start, end = span(rng.choice([rng.randint(1, 6), rng.randint(6, 30), rng.randint(30, 600)]))
         segments = (Segment(start, end),)
         if end - start > 60 and rng.random() < 0.3:
-            last = (end - 20) % LENGTH
+            last = end - 20
             segments = (Segment(start, start + 20), Segment(last, last + 20))
         features.append(
             Feature(

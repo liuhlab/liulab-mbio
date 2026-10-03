@@ -22,9 +22,8 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
-from liulab_mbio.bench.validation import insert_order
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import annealed, carried, ordered, rotate
+from liulab_mbio.edits import annealed, carried, ordered, origin_in, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
@@ -36,6 +35,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    counted_round,
     reverse_complement,
 )
 from liulab_mbio.sites import (
@@ -108,9 +108,7 @@ class Part:
     def bases(self) -> str:
         """What this part puts into the product, its own overhang standing first."""
         start, end = self.span
-        return self.left_overhang + self.template.extract(
-            Segment(start + len(self.left_overhang), end)
-        )
+        return self.left_overhang + self.template.bases(start + len(self.left_overhang), end)
 
 
 def amplify(
@@ -191,7 +189,7 @@ def amplify(
         polymerase=polymerase,
         thresholds=thresholds,
     )
-    bases = tails[0] + template.extract(Segment(anneal, end)) + reverse_complement(tails[1])
+    bases = tails[0] + template.bases(anneal, end) + reverse_complement(tails[1])
     features, kept = carried(template, start, end, offset=len(tails[0]) - len(left) - start)
     placed = (
         annealed(forward, len(tails[0]), Strand.FORWARD),
@@ -337,12 +335,13 @@ class Assembly:
     def junction_positions(self) -> tuple[int, ...]:
         """Where each junction begins, which is what a validation design reads across.
 
-        `insert_order` is the order: from the junction the first part gives way at, so the last
-        passes the product's length where the inserts run across the origin.
+        They are counted round from the junction the first part gives way at, so the last passes
+        the product's length where the inserts run across the origin.
         """
         opened = self.parts[0].name
         at = next(index for index, one in enumerate(self.junctions) if one.before == opened)
-        return insert_order([one.start for one in self.junctions], at, len(self.product))
+        starts = (one.start for one in self.junctions)
+        return counted_round(starts, len(self.product), first=at)
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -438,24 +437,30 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
     if len(parts) < 2:
         raise ValueError(f"an assembly joins at least two parts, got {len(parts)}")
     order = _chain(parts)
+    cut = [_cut(parts[index], one) for index in order]
+    length = sum(piece.end - piece.start for piece in cut)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
     joins: list[tuple[int, Part, Part]] = []
-    for place, index in enumerate(order):
-        part, piece = parts[index], _cut(parts[index], one)
+    for place, (index, piece) in enumerate(zip(order, cut, strict=True)):
+        part = parts[index]
         at = len(bases)
         bases += part.amplicon.extract(Segment(piece.start, piece.end))
-        over, kept = carried(part.template, *part.span, offset=at - part.span[0])
+        over, kept = carried(part.template, *part.span, offset=at - part.span[0], length=length)
         features.extend(over)
         primers.extend(kept)
         primers.append(annealed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
         primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
         joins.append((at, parts[order[place - 1]], part))
     features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
-    origin = _origin(parts[order[0]])
+    origin = origin_in(parts[order[0]].template, *parts[order[0]].span)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(features),
+        primers=tuple(primers),
     )
     return Assembly(
         ordered(rotate(product, origin) if origin else product),
@@ -551,13 +556,3 @@ def _chain(parts: Sequence[Part]) -> list[int]:
             f"{first.left_overhang}"
         )
     return order
-
-
-def _origin(part: Part) -> int:
-    """Where the first part's template origin falls in the product, or 0 when it is not there."""
-    start, end = part.span
-    turns = (0, len(part.template)) if part.template.topology == "circular" else (0,)
-    for turn in turns:
-        if start <= turn < end:
-            return turn - start
-    return 0

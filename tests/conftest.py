@@ -1,4 +1,4 @@
-"""What every test may share: the data directory, the pUC19 and GFP files and records, and one plan.
+"""What every test may share: the data, the pUC19 and GFP records, one across the origin, a plan.
 
 The package is imported inside each fixture, so a module that fails to import fails the tests
 that ask for it rather than every test in the run.
@@ -48,6 +48,42 @@ def gfp(gfp_file: Path) -> SequenceRecord:
     from liulab_mbio.io import read_record
 
     return read_record(gfp_file)
+
+
+@pytest.fixture(scope="session")
+def across_origin() -> SequenceRecord:
+    """100 bases, circular: C at 2..8 and G at 91..98 as a person counts them, A elsewhere.
+
+    Feature ``g`` reads 91..98 then 2..8 across the origin, and ``site`` is one reverse segment
+    across it, 97..4, where primer ``p`` binds.
+    """
+    from liulab_mbio.sequence import (
+        BindingSite,
+        Feature,
+        Primer,
+        Segment,
+        SequenceRecord,
+        Strand,
+    )
+
+    return SequenceRecord(
+        "A" + "C" * 7 + "A" * 82 + "G" * 8 + "AA",
+        topology="circular",
+        name="across",
+        features=(
+            Feature(
+                "g",
+                "misc_feature",
+                (Segment(90, 98), Segment(101, 108)),
+                strand=Strand.FORWARD,
+                color="#ff0000",
+            ),
+            Feature(
+                "site", "misc_feature", (Segment(96, 104),), strand=Strand.REVERSE, color="#00ff00"
+            ),
+        ),
+        primers=(Primer("p", "GGGTTTCC", binding_sites=(BindingSite(96, 104, Strand.REVERSE),)),),
+    )
 
 
 @pytest.fixture(scope="session")

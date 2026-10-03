@@ -19,6 +19,7 @@ from liulab_mbio.sequence import (
     Segment,
     SequenceRecord,
     Strand,
+    across_the_origin,
     reverse_complement,
 )
 
@@ -89,17 +90,24 @@ def replace(
         If the span does not fit the record under its topology.
     """
     length = len(record)
-    _check_span(record, start, end)
+    if not record.fits(start, end):
+        raise ValueError(
+            f"span {start}-{end} does not fit a {record.topology} record of {length} bases"
+        )
     if record.topology == "linear":
         return _splice(record, record, start, end - start, bases, wrapped=False)
     turned = rotate(record, start)
     edited, report = _splice(turned, record, 0, end - start, bases, wrapped=True)
-    origin = len(bases) + (length - end if end <= length else 0)
-    return (rotate(edited, origin) if len(edited) else edited), report
+    # An insertion removes no base, so it cannot run across the origin.
+    across = start < end and across_the_origin(Segment(start, end), length)
+    origin = len(bases) + (0 if across else length - end)
+    return rotate(edited, origin), report
 
 
 def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
     """Return the circular `record` read from `origin`, which becomes its first base.
+
+    A feature's segments after the new origin count round past the length.
 
     Raises
     ------
@@ -111,23 +119,36 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
     >>> rotate(SequenceRecord("AACCGG", topology="circular"), 2).sequence
     'CCGGAA'
     """
-    if record.topology != "linear":
-        length = len(record)
-        start = origin % length
-        return dataclasses.replace(
-            record,
-            sequence=record.sequence[start:] + record.sequence[:start],
-            features=tuple(_turned_feature(feature, start, length) for feature in record.features),
-            primers=tuple(_turned_primer(primer, start, length) for primer in record.primers),
-        )
-    raise ValueError("only a circular record has an origin to rotate")
+    if record.topology == "linear":
+        raise ValueError("only a circular record has an origin to rotate")
+    length = len(record)
+
+    def turned[S: (Segment, BindingSite)](span: S) -> S:
+        start = (span.start - origin) % length
+        return dataclasses.replace(span, start=start, end=start + span.end - span.start)
+
+    return dataclasses.replace(
+        record,
+        sequence=record.bases(origin, origin + length),
+        features=tuple(
+            dataclasses.replace(
+                feature, segments=tuple(map(turned, feature.segments))
+            ).counted_round(length)
+            for feature in record.features
+        ),
+        primers=tuple(
+            dataclasses.replace(primer, binding_sites=tuple(map(turned, primer.binding_sites)))
+            for primer in record.primers
+        ),
+    )
 
 
 def flipped(record: SequenceRecord) -> SequenceRecord:
     """Return `record` read from the other strand, features and binding sites turned with it.
 
     A span across the origin of a circular record lands across it again. A feature's segments
-    come in reverse order, so it reads the same bases.
+    come in reverse order, so it reads the same bases, and those after the origin of a circular
+    record count round past its length.
 
     Examples
     --------
@@ -154,6 +175,8 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
         )
         for feature in record.features
     )
+    if record.topology == "circular":
+        features = tuple(feature.counted_round(length) for feature in features)
     primers = tuple(
         dataclasses.replace(
             primer,
@@ -174,7 +197,7 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
 
 
 def carried(
-    record: SequenceRecord, start: int, end: int, *, offset: int
+    record: SequenceRecord, start: int, end: int, *, offset: int, length: int | None = None
 ) -> tuple[tuple[Feature, ...], tuple[Primer, ...]]:
     """Carry what `record` annotates over ``[start, end)`` into a record `offset` bases along.
 
@@ -182,8 +205,9 @@ def carried(
     lifted to the front of one takes a negative `offset`.
 
     A feature reaching outside the span is cut down to it, and one meeting it in two places
-    keeps a segment for each. Its segments stay in the order it reads them. A primer is kept only
-    where a whole binding site survives, having nowhere to anneal otherwise.
+    keeps a segment for each, in the order it reads them. Given `length`, that of the circular
+    record they are carried into, each feature is counted round it by `Feature.counted_round`. A
+    primer is kept only where a whole binding site survives, having nowhere to anneal otherwise.
 
     `end` passes `record`'s length where the span runs across the origin of a circular one.
 
@@ -202,7 +226,8 @@ def carried(
             for first, last in _pieces(segment.start, segment.end, start, end, record)
         ]
         if kept:
-            features.append(dataclasses.replace(feature, segments=tuple(kept)))
+            moved = dataclasses.replace(feature, segments=tuple(kept))
+            features.append(moved if length is None else moved.counted_round(length))
     primers = []
     for primer in record.primers:
         sites = [
@@ -214,6 +239,20 @@ def carried(
         if sites:
             primers.append(dataclasses.replace(primer, binding_sites=tuple(sites)))
     return tuple(features), tuple(primers)
+
+
+def origin_in(record: SequenceRecord, start: int, end: int) -> int:
+    """Return where `record`'s first base falls in the piece ``[start, end)`` taken from it, or 0.
+
+    A product built from that piece is turned by this much to keep `record`'s own coordinates.
+    A piece that does not hold that base gives 0.
+
+    Examples
+    --------
+    >>> origin_in(SequenceRecord("AACCGGTTAC", topology="circular"), 8, 12)
+    2
+    """
+    return -start % len(record) if record.covers(Segment(start, end), 0) else 0
 
 
 def ordered(record: SequenceRecord) -> SequenceRecord:
@@ -274,38 +313,6 @@ def _pieces(
     return [(first, last) for along, first, last in sorted(found)]
 
 
-def _check_span(record: SequenceRecord, start: int, end: int) -> None:
-    length = len(record)
-    span = f"span {start}-{end}"
-    if not 0 <= start <= end:
-        raise ValueError(f"need 0 <= start <= end, got {span}")
-    if record.topology == "linear":
-        if end > length:
-            raise ValueError(f"{span} runs past the end of a linear record of {length} bases")
-    elif start >= length or end - start > length:
-        raise ValueError(f"{span} does not fit a circular record of {length} bases")
-
-
-def _turned_feature(feature: Feature, start: int, length: int) -> Feature:
-    return dataclasses.replace(
-        feature,
-        segments=tuple(_turned_segment(segment, start, length) for segment in feature.segments),
-    )
-
-
-def _turned_segment(segment: Segment, start: int, length: int) -> Segment:
-    turned = (segment.start - start) % length
-    return dataclasses.replace(segment, start=turned, end=turned + segment.end - segment.start)
-
-
-def _turned_primer(primer: Primer, start: int, length: int) -> Primer:
-    sites = []
-    for site in primer.binding_sites:
-        turned = (site.start - start) % length
-        sites.append(BindingSite(turned, turned + site.end - site.start, site.strand))
-    return dataclasses.replace(primer, binding_sites=tuple(sites))
-
-
 def _splice(
     record: SequenceRecord,
     reported: SequenceRecord,
@@ -331,7 +338,8 @@ def _splice(
             feature.segments, edits, delta, len(bases), length + delta
         )
         if segments:
-            features.append(dataclasses.replace(feature, segments=segments))
+            kept = dataclasses.replace(feature, segments=segments)
+            features.append(kept.counted_round(length + delta) if wrapped else kept)
         if not segments:
             dropped.append(before)
         elif fate is _Fate.TRIMMED or fate is _Fate.REMOVED:

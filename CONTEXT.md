@@ -52,6 +52,14 @@ _Avoid_: window, flexibility, allowance
 Of a span on a circular sequence record: running through the last base and on into the first.
 _Avoid_: wrapping, wraparound
 
+### Reading order
+
+The order a feature lists its segments in: the order the top strand reads them, whatever the
+feature's strand, so one on the reverse strand reads them last to first. On a circular record, a
+segment after the origin starts past the record's length, so the starts ascend and a sort keeps
+the order. A feature cut apart at a linear record's two ends lists the higher start first.
+_Avoid_: segment order, sorted order
+
 ### Annealing region
 
 The 3' part of a primer that pairs with its binding site. Length, GC content and Tm are read

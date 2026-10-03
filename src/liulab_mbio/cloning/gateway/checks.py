@@ -22,7 +22,7 @@ from liulab_mbio.cloning.gateway.att import REGION_BP, find_att_sites
 from liulab_mbio.cloning.gateway.bench import HOSTS, PROPAGATION_HOST
 from liulab_mbio.cloning.gateway.design import Fusion
 from liulab_mbio.cloning.gateway.recombination import Junction, Piece, PlannedReaction
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, counted_round
 from liulab_mbio.translate import translate
 
 #: How much of a C-terminal fusion junction the destination vector supplies, base pairs: attB2's
@@ -180,7 +180,7 @@ def _n_frame(lr: PlannedReaction) -> Check:
     if "*" in spelled:
         return Check("N-terminal frame", "fail", added, f"{said}, spelling {spelled}, a stop")
     upstream = _upstream(product, junction, coding)
-    if upstream is not None and (junction.start - upstream.segments[0].start) % 3:
+    if upstream is not None and _apart(upstream.segments[0].start, junction.start, product) % 3:
         return Check(
             "N-terminal frame",
             "fail",
@@ -253,6 +253,12 @@ def _upstream(product: SequenceRecord, junction: Junction, coding: Feature) -> F
         if distance < gap:
             found, gap = feature, distance
     return found
+
+
+def _apart(start: int, end: int, record: SequenceRecord) -> int:
+    """Return how many bases lie from `start` on to `end`, round the origin of `record` too."""
+    start, end = counted_round((start, end), len(record))
+    return end - start
 
 
 def _drug(marker: Feature) -> str:

@@ -11,6 +11,8 @@ REVERSE = "GGGGAAAACGAGACCTTTT"
 ROTATED = "GTTTTCCCCAAAAGGTCTC"
 
 BSAI = Enzyme("BsaI", "GGTCTC", top_cut=7, bottom_cut=11)
+# GAGTC(5/5): a blunt cut five bases past its site. No shipped enzyme cuts that way.
+MLYI = Enzyme("MlyI", "GAGTC", top_cut=10, bottom_cut=10)
 
 
 def test_a_type_iis_enzyme_cuts_outside_its_site_and_leaves_a_5_prime_overhang() -> None:
@@ -65,3 +67,10 @@ def test_a_blunt_cutter_leaves_no_overhang() -> None:
 def test_a_site_too_close_to_the_end_of_a_linear_record_cannot_be_cut() -> None:
     with pytest.raises(ValueError, match="cut"):
         BSAI.overhang(SequenceRecord(ROTATED), 13, Strand.FORWARD)
+
+
+def test_a_blunt_cut_past_the_end_of_a_linear_record_cannot_be_cut() -> None:
+    bases = "A" * 20 + "GAGTC" + "AA"
+    with pytest.raises(ValueError, match="cut"):
+        MLYI.overhang(SequenceRecord(bases), 20)
+    assert MLYI.overhang(SequenceRecord(bases, topology="circular"), 20) == ""

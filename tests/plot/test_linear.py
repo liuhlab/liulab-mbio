@@ -79,7 +79,7 @@ def _crowded() -> tuple[layers.Item, ...]:
         Feature(
             "joined across",
             "CDS",
-            (Segment(2900, 2950), Segment(2980, 3020), Segment(60, 90)),
+            (Segment(2900, 2950), Segment(2980, 3020), Segment(3060, 3090)),
             strand=Strand.FORWARD,
         ),
         _feature("a name far longer than its feature", 1500, 1510),
@@ -121,7 +121,7 @@ def _random(seed: int, circular: bool) -> tuple[layers.Item, ...]:
         start, end = span(rng.choice([rng.randint(1, 30), rng.randint(30, 900)]))
         segments = (Segment(start, end),)
         if end - start > 60 and rng.random() < 0.3:
-            last = (end - 20) % LENGTH
+            last = end - 20
             segments = (Segment(start, start + 20), Segment(last, last + 20))
         strand = rng.choice(list(Strand))
         features.append(Feature(f"{i}{name()}", "misc_feature", segments, strand=strand))

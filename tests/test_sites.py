@@ -64,6 +64,15 @@ def test_a_linear_record_ending_inside_the_cut_reports_the_site_but_no_overhang(
     assert not site.cuts
 
 
+def test_a_blunt_cut_past_a_linear_end_is_read_but_not_cut() -> None:
+    mlyi = Enzyme("MlyI", "GAGTC", top_cut=10, bottom_cut=10)
+    bases = "A" * 20 + "GAGTC" + "AA"
+    (site,) = find_sites(SequenceRecord(bases), mlyi)
+    assert (site.overhang, site.cuts) == (None, False)
+    (site,) = find_sites(SequenceRecord(bases, topology="circular"), mlyi)
+    assert (site.top_cut, site.cuts) == (3, True)
+
+
 def test_a_palindromic_site_is_counted_once_and_reported_on_the_forward_strand() -> None:
     sites = find_sites(SequenceRecord("AAAGAATTCAAA"), "EcoRI")
     assert [(s.start, s.strand) for s in sites] == [(3, Strand.FORWARD)]
@@ -331,6 +340,19 @@ def test_a_site_no_synonymous_change_can_remove_is_reported_unchanged() -> None:
     assert report.changes == ()
     assert [site.start for site in report.unchanged] == [3]
     assert edited == record
+
+
+def test_a_linear_coding_sequence_cut_apart_at_its_two_ends_reads_its_codons_in_order() -> None:
+    # It lists its end first: the codon the site sits in, TCT, is its third, read from both ends.
+    cds = Feature("split", "CDS", (Segment(96, 100), Segment(0, 5)), strand=Strand.FORWARD)
+    record = SequenceRecord("GGTCTC" + "A" * 93 + "C", features=(cds,))
+
+    edited, report = domesticate(record, "BsaI")
+
+    [change] = report.changes
+    assert (change.codon_index, change.old_codon, change.new_codon) == (2, "TCT", "AGC")
+    assert _protein(edited.extract(cds)) == _protein(record.extract(cds))
+    assert not find_sites(edited, "BsaI")
 
 
 def _cds(sequence: str) -> SequenceRecord:

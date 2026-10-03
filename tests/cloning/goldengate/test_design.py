@@ -206,6 +206,24 @@ def test_an_in_frame_junction_off_a_codon_boundary_is_refused() -> None:
         design_overhangs([Junction("fusion", record=record, position=7, in_frame=True)], "BsaI")
 
 
+@pytest.mark.parametrize(
+    ("segment", "position", "overhang"),
+    [(Segment(24, 36), 3, "AAAC"), (Segment(6, 30), 0, "ATGA")],
+    ids=["across-the-origin", "ending-at-the-origin"],
+)
+def test_an_in_frame_junction_reads_its_frame_round_the_origin(
+    segment: Segment, position: int, overhang: str
+) -> None:
+    record = SequenceRecord(
+        "ATGAAACCCGGGTTTAAACCCGGGATGAAA",
+        topology="circular",
+        features=(Feature("cds", "CDS", (segment,), strand=Strand.FORWARD),),
+    )
+    junction = Junction("fusion", record=record, position=position, in_frame=True, window=0)
+
+    assert design_overhangs([junction], "BsaI").overhangs == (overhang,)
+
+
 def test_a_junction_with_no_acceptable_overhang_names_the_rules_that_refused_it() -> None:
     record = SequenceRecord("AAAAGGCCTTTT")
     junction = Junction("stuck", record=record, position=4, scarless=True)

@@ -212,6 +212,19 @@ def test_write_dna_writes_a_span_across_the_origin_as_a_wrapped_range(
     assert read_dna(path).features == (site,)
 
 
+def test_a_record_across_the_origin_round_trips_through_snapgenes_own_ranges(
+    across_origin: SequenceRecord, tmp_path: Path
+) -> None:
+    path = tmp_path / "across.dna"
+    write_dna(across_origin, path)
+    data = path.read_bytes()
+    for written in (b'range="91-98"', b'range="99-1" color="noColor" type="gap"', b'range="2-8"'):
+        assert written in data
+    assert b'range="97-4"' in data
+    assert b'location="96-3"' in data
+    assert read_dna(path) == across_origin
+
+
 def test_write_dna_fills_a_hole_between_segments_with_a_gap_segment(
     gfp_file: Path, tmp_path: Path
 ) -> None:

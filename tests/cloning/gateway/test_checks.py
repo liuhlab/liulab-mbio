@@ -3,6 +3,7 @@ and the frame, and the plate each marker calls for."""
 
 from __future__ import annotations
 
+import dataclasses
 from typing import TYPE_CHECKING
 
 import pytest
@@ -14,7 +15,8 @@ from liulab_mbio.cloning.gateway.design import C_TERMINAL_FRAME, N_TERMINAL_FRAM
 from liulab_mbio.cloning.gateway.recombination import PlannedReaction, recombine
 from liulab_mbio.cloning.gateway.steps import protocol
 from liulab_mbio.cloning.plan import status
-from liulab_mbio.sequence import reverse_complement
+from liulab_mbio.edits import rotate
+from liulab_mbio.sequence import Feature, Segment, Strand, reverse_complement
 
 from .records import att_site, destination_vector, donor_vector, entry_clone
 
@@ -209,6 +211,52 @@ def test_a_gene_keeping_its_stop_codon_breaks_the_c_terminal_frame(
 
     assert check.status == "fail"
     assert check.detail == "GFP ends in a stop codon, which a C-terminal fusion has to lose"
+
+
+def _tag_across_the_origin(destination: SequenceRecord) -> SequenceRecord:
+    """Return the destination vector read from inside its tag, so its tag runs across the origin."""
+    tag = next(feature for feature in destination.features if feature.name == "6xHis")
+    return rotate(destination, tag.segments[0].start + 4)
+
+
+def test_the_coding_sequence_upstream_is_the_one_ending_nearest_attb1_across_the_origin(
+    gfp: SequenceRecord,
+) -> None:
+    # The tag's two exons sit either side of a short reading frame, and of the origin: the tag
+    # ends at attB1, the short one three bases before it.
+    destination = destination_vector(tag="6xHis")
+    [tag] = (feature for feature in destination.features if feature.name == "6xHis")
+    at = tag.segments[0].start
+    exons = dataclasses.replace(tag, segments=(Segment(at, at + 3), Segment(at + 6, at + 9)))
+    between = Feature("uORF", "CDS", (Segment(at + 3, at + 6),), strand=Strand.FORWARD)
+    features = (*(exons if one is tag else one for one in destination.features), between)
+    acceptor = _tag_across_the_origin(dataclasses.replace(destination, features=features))
+
+    check = _check(
+        _judged(entry_clone(gfp.sequence[:-3], added=FRAME_BASES), acceptor, fusion="N-terminal"),
+        "N-terminal frame",
+    )
+
+    assert check.detail.endswith("in frame with 6xHis upstream")
+
+
+def test_a_tag_across_the_origin_is_read_in_frame_whatever_the_vector_length(
+    gfp: SequenceRecord,
+) -> None:
+    destination = destination_vector(tag="6xHis")
+    longer = dataclasses.replace(destination, sequence=destination.sequence + "A")
+
+    check = _check(
+        _judged(
+            entry_clone(gfp.sequence[:-3], added=FRAME_BASES),
+            _tag_across_the_origin(longer),
+            fusion="N-terminal",
+        ),
+        "N-terminal frame",
+    )
+
+    assert (check.status, check.value) == ("pass", 2)
+    assert check.detail.endswith("in frame with 6xHis upstream")
 
 
 def test_every_check_reaches_the_page_and_the_unjudged_one_shows_no_verdict(

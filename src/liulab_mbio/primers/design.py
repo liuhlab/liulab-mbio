@@ -278,7 +278,7 @@ def _options(
     """Return every binding site the placement allows, each judged whole and ranked."""
     options = []
     for site in _sites(template, position, strand, placement, thresholds):
-        bases = template.extract(Segment(site.start, site.end))
+        bases = template.bases(site.start, site.end)
         sequence = bases if strand is Strand.FORWARD else reverse_complement(bases)
         primer = Primer(name, tail + sequence, binding_sites=(site,))
         report = evaluate_primer(primer, template, polymerase=polymerase, thresholds=thresholds)
@@ -299,7 +299,7 @@ def _sites(
     circular = template.topology == "circular"
     shortest = int(_finite(thresholds.length.warn_low, thresholds.length.low))
     longest = min(int(_finite(thresholds.length.warn_high, thresholds.length.high)), length)
-    anchors, five = _anchors(template, position, placement)
+    anchors, five = _anchors(position, placement)
     for anchor in anchors:
         for size in range(shortest, longest + 1):
             # An anchor is one end: the start of the site where it is the 5' end of a forward
@@ -307,33 +307,24 @@ def _sites(
             start = anchor if (strand is Strand.FORWARD) == five else anchor - size
             if circular:
                 start %= length
-            elif not 0 <= start <= length - size:
+            if not template.fits(start, start + size):
                 continue
             site = BindingSite(start, start + size, strand)
             if placement is None or placement.allows(site, template):
                 yield site
 
 
-def _anchors(
-    template: SequenceRecord, position: int, placement: Placement | None
-) -> tuple[list[int], bool]:
+def _anchors(position: int, placement: Placement | None) -> tuple[list[int], bool]:
     """Return the positions the end a placement bounds may take, and whether that end is 5'."""
     if placement is None:
         return [position], True
-    five = _positions(placement.five_prime, template)
-    return (five, True) if five else (_positions(placement.three_prime, template), False)
+    five = _positions(placement.five_prime)
+    return (five, True) if five else (_positions(placement.three_prime), False)
 
 
-def _positions(span: Segment | None, template: SequenceRecord) -> list[int]:
-    """Return every position a span of them holds, wrapping one across the origin."""
-    if span is None:
-        return []
-    length = len(template)
-    circular = template.topology == "circular"
-    return [
-        (span.start + step) % length if circular else span.start + step
-        for step in range(span.end - span.start)
-    ]
+def _positions(span: Segment | None) -> list[int]:
+    """Return every position a span holds, past the length where it runs across the origin."""
+    return [] if span is None else list(range(span.start, span.end))
 
 
 def _fitted(options: list[_Option], position: int, placement: Placement | None) -> list[_Option]:

@@ -142,7 +142,7 @@ def colony_pcr_check(
 
     An assembly of n inserts has n + 1 junctions and the inserts are the spans between them, so
     the junctions come in insert order and the last passes the product's length where they cross
-    the origin -- `insert_order` is what builds one. Without `primers`, a pair is
+    the origin, as `liulab_mbio.sequence.counted_round` counts them. Without `primers`, a pair is
     designed in the vector `flank` bases outside the first junction and `reverse_flank` outside
     the last, `flank` again where none is given -- `REVERSE_FLANK` is the distance that keeps a
     reversed insert bands of its own, and `tells_orientation` says why one distance cannot.
@@ -170,7 +170,7 @@ def colony_pcr_check(
         If the junctions are not two or more positions rising from inside the product, if fewer
         than two primers are given, or if the primers amplify nothing at all.
     """
-    places = _junction_span(junctions, len(product))
+    places = _junction_span(junctions, product)
     start, end = places[0], places[-1]
     inserts = tuple(pairwise(places))
     chosen = (
@@ -256,7 +256,7 @@ def sanger_primers(
         If the junctions are not two or more positions rising from inside the product, or no
         primer fits outside the first or the last.
     """
-    places = _junction_span(junctions, len(product))
+    places = _junction_span(junctions, product)
     start, end = places[0], places[-1]
     longest = _longest_annealing(thresholds)
     forward = design_primer(
@@ -288,33 +288,11 @@ def sanger_primers(
     )
 
 
-def insert_order(positions: Sequence[int], at: int, length: int) -> tuple[int, ...]:
-    """Return the junction positions read round the product from the one at index `at`.
-
-    `colony_pcr_check` and `sanger_primers` read the spans between the positions they are given
-    as the inserts, so a set has to start where the opened vector gives way to the first insert
-    rather than at the product's own base zero. Every position before that one is reached after
-    the origin and passes `length`, which is ADR 0001's rule for a span across the origin.
-
-    Examples
-    --------
-    >>> insert_order((395, 1112), 0, 3347)
-    (395, 1112)
-
-    The same two junctions where the insert lands at the product's end instead:
-
-    >>> insert_order((0, 2630), 1, 3347)
-    (2630, 3347)
-    """
-    places = tuple(positions)
-    return (*places[at:], *(one + length for one in places[:at]))
-
-
-def _junction_span(junctions: Sequence[int], length: int) -> tuple[int, ...]:
+def _junction_span(junctions: Sequence[int], product: SequenceRecord) -> tuple[int, ...]:
     """Return the junctions as given, refusing a set no assembly could leave.
 
-    They come in insert order, so nothing is sorted: the last passes `length` where the inserts
-    cross the origin, and `insert_order` is what builds one.
+    They come in insert order, so nothing is sorted: the last passes the product's length where
+    the inserts cross the origin, as `liulab_mbio.sequence.counted_round` counts them.
     """
     if len(junctions) < 2:
         raise ValueError(
@@ -323,8 +301,8 @@ def _junction_span(junctions: Sequence[int], length: int) -> tuple[int, ...]:
     places = tuple(junctions)
     if any(one >= after for one, after in pairwise(places)):
         raise ValueError(f"junctions {places} do not rise, each one past the one before")
-    if not 0 <= places[0] < length or places[-1] > places[0] + length:
-        raise ValueError(f"junctions {places} do not lie inside {length} bases")
+    if not product.fits(places[0], places[-1]):
+        raise ValueError(f"junctions {places} do not lie inside {len(product)} bases")
     return places
 
 

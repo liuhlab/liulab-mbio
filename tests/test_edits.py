@@ -25,7 +25,7 @@ A, C, G = _feature("a", (0, 4)), _feature("c", (4, 8)), _feature("g", (8, 12))
 BASES = "AAAACCCCGGGG"
 RECORD = SequenceRecord(BASES, features=(A, C, G))
 #: Reads the G at (90, 98), across the origin, then the C at (1, 8), of the 100 bases of `GAPPED`.
-GAP = _feature("gap", (90, 98), (1, 8))
+GAP = _feature("gap", (90, 98), (101, 108))
 GAPPED = SequenceRecord(
     "A" + "C" * 7 + "A" * 82 + "G" * 8 + "AA", topology="circular", features=(GAP,)
 )
@@ -147,7 +147,7 @@ def test_flipped_keeps_a_span_across_the_origin_across_it() -> None:
 
 def test_flipped_keeps_a_feature_across_the_origin_reading_the_same_bases() -> None:
     turned = flipped(GAPPED)
-    assert turned.features == (_feature("gap", (92, 99), (2, 10), strand=Strand.REVERSE),)
+    assert turned.features == (_feature("gap", (92, 99), (102, 110), strand=Strand.REVERSE),)
     assert turned.extract(turned.features[0]) == "GGGGGGGGCCCCCCC"
     assert flipped(turned) == GAPPED
 
