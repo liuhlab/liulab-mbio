@@ -437,15 +437,17 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
     if len(parts) < 2:
         raise ValueError(f"an assembly joins at least two parts, got {len(parts)}")
     order = _chain(parts)
+    cut = [_cut(parts[index], one) for index in order]
+    length = sum(piece.end - piece.start for piece in cut)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
     joins: list[tuple[int, Part, Part]] = []
-    for place, index in enumerate(order):
-        part, piece = parts[index], _cut(parts[index], one)
+    for place, (index, piece) in enumerate(zip(order, cut, strict=True)):
+        part = parts[index]
         at = len(bases)
         bases += part.amplicon.extract(Segment(piece.start, piece.end))
-        over, kept = carried(part.template, *part.span, offset=at - part.span[0])
+        over, kept = carried(part.template, *part.span, offset=at - part.span[0], length=length)
         features.extend(over)
         primers.extend(kept)
         primers.append(annealed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
@@ -457,7 +459,7 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
         bases,
         topology="circular",
         name=name,
-        features=tuple(one.counted_round(len(bases)) for one in features),
+        features=tuple(features),
         primers=tuple(primers),
     )
     return Assembly(

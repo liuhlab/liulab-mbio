@@ -309,7 +309,9 @@ def recombine(
     features: list[Feature] = []
     primers: list[Primer] = []
     for piece, at in ((backbone, 0), (moved, backbone.length)):
-        over, kept = carried(piece.record, *piece.span, offset=at - piece.span[0])
+        over, kept = carried(
+            piece.record, *piece.span, offset=at - piece.span[0], length=len(bases)
+        )
         features.extend(over)
         primers.extend(kept)
     features.extend(_junction_feature(one) for one in junctions)
@@ -317,7 +319,7 @@ def recombine(
         bases,
         topology="circular",
         name=name,
-        features=tuple(one.counted_round(len(bases)) for one in features),
+        features=tuple(features),
         primers=tuple(primers),
     )
     origin = origin_in(acceptor, *backbone.span)

@@ -197,7 +197,7 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
 
 
 def carried(
-    record: SequenceRecord, start: int, end: int, *, offset: int
+    record: SequenceRecord, start: int, end: int, *, offset: int, length: int | None = None
 ) -> tuple[tuple[Feature, ...], tuple[Primer, ...]]:
     """Carry what `record` annotates over ``[start, end)`` into a record `offset` bases along.
 
@@ -205,9 +205,9 @@ def carried(
     lifted to the front of one takes a negative `offset`.
 
     A feature reaching outside the span is cut down to it, and one meeting it in two places
-    keeps a segment for each. Its segments stay in the order it reads them, for
-    `Feature.counted_round` to number on a circular record. A primer is kept only where a whole
-    binding site survives, having nowhere to anneal otherwise.
+    keeps a segment for each, in the order it reads them. Given `length`, that of the circular
+    record they are carried into, each feature is counted round it by `Feature.counted_round`. A
+    primer is kept only where a whole binding site survives, having nowhere to anneal otherwise.
 
     `end` passes `record`'s length where the span runs across the origin of a circular one.
 
@@ -226,7 +226,8 @@ def carried(
             for first, last in _pieces(segment.start, segment.end, start, end, record)
         ]
         if kept:
-            features.append(dataclasses.replace(feature, segments=tuple(kept)))
+            moved = dataclasses.replace(feature, segments=tuple(kept))
+            features.append(moved if length is None else moved.counted_round(length))
     primers = []
     for primer in record.primers:
         sites = [

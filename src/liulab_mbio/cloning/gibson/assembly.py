@@ -571,6 +571,7 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
     """
     if len(parts) < 2:
         raise ValueError(f"an assembly joins at least two parts, got {len(parts)}")
+    length = sum(len(part.bases) for part in parts)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
@@ -579,13 +580,12 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
         at = len(bases)
         starts.append(at)
         bases += part.bases
-        over, kept = carried(part.template, *part.span, offset=at - part.span[0])
+        over, kept = carried(part.template, *part.span, offset=at - part.span[0], length=length)
         features.extend(over)
         primers.extend(kept)
         if part.forward is not None and part.reverse is not None:
             primers.append(annealed(part.forward, at, Strand.FORWARD))
             primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
-    length = len(bases)
     joins = [
         _junction(parts[index - 1], part, starts[index], length) for index, part in enumerate(parts)
     ]
@@ -594,7 +594,7 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
         bases,
         topology="circular",
         name=name,
-        features=tuple(one.counted_round(len(bases)) for one in features),
+        features=tuple(features),
         primers=tuple(primers),
     )
     origin = origin_in(parts[0].template, *parts[0].span)

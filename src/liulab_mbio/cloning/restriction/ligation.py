@@ -187,6 +187,7 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
             "not checked before they were joined"
         )
     pieces = (backbone, insert)
+    length = sum(len(piece.bases) for piece in pieces)
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
@@ -194,7 +195,9 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
     for place, piece in enumerate(pieces):
         at = len(bases)
         bases += piece.bases
-        over, kept = carried(piece.source, piece.start, piece.end, offset=at - piece.start)
+        over, kept = carried(
+            piece.source, piece.start, piece.end, offset=at - piece.start, length=length
+        )
         features.extend(over)
         primers.extend(kept)
         joins.append((at, pieces[place - 1], piece))
@@ -203,7 +206,7 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
         bases,
         topology="circular",
         name=name,
-        features=tuple(one.counted_round(len(bases)) for one in features),
+        features=tuple(features),
         primers=tuple(primers),
     )
     turned = rotate(product, origin) if origin else product
