@@ -107,6 +107,8 @@ def replace(
 def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
     """Return the circular `record` read from `origin`, which becomes its first base.
 
+    A feature's segments after the new origin count round past the length.
+
     Raises
     ------
     ValueError
@@ -129,7 +131,9 @@ def rotate(record: SequenceRecord, origin: int) -> SequenceRecord:
         record,
         sequence=record.bases(origin, origin + length),
         features=tuple(
-            dataclasses.replace(feature, segments=tuple(map(turned, feature.segments)))
+            dataclasses.replace(
+                feature, segments=tuple(map(turned, feature.segments))
+            ).counted_round(length)
             for feature in record.features
         ),
         primers=tuple(
@@ -143,7 +147,8 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
     """Return `record` read from the other strand, features and binding sites turned with it.
 
     A span across the origin of a circular record lands across it again. A feature's segments
-    come in reverse order, so it reads the same bases.
+    come in reverse order, so it reads the same bases, and those after the origin of a circular
+    record count round past its length.
 
     Examples
     --------
@@ -170,6 +175,8 @@ def flipped(record: SequenceRecord) -> SequenceRecord:
         )
         for feature in record.features
     )
+    if record.topology == "circular":
+        features = tuple(feature.counted_round(length) for feature in features)
     primers = tuple(
         dataclasses.replace(
             primer,
@@ -198,8 +205,9 @@ def carried(
     lifted to the front of one takes a negative `offset`.
 
     A feature reaching outside the span is cut down to it, and one meeting it in two places
-    keeps a segment for each. Its segments stay in the order it reads them. A primer is kept only
-    where a whole binding site survives, having nowhere to anneal otherwise.
+    keeps a segment for each. Its segments stay in the order it reads them, for
+    `Feature.counted_round` to number on a circular record. A primer is kept only where a whole
+    binding site survives, having nowhere to anneal otherwise.
 
     `end` passes `record`'s length where the span runs across the origin of a circular one.
 
@@ -315,7 +323,8 @@ def _splice(
             feature.segments, edits, delta, len(bases), length + delta
         )
         if segments:
-            features.append(dataclasses.replace(feature, segments=segments))
+            kept = dataclasses.replace(feature, segments=segments)
+            features.append(kept.counted_round(length + delta) if wrapped else kept)
         if not segments:
             dropped.append(before)
         elif fate is _Fate.TRIMMED or fate is _Fate.REMOVED:

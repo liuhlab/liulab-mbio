@@ -198,7 +198,11 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
         joins.append((at, pieces[place - 1], piece))
     origin = _origin(backbone)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(one.counted_round(len(bases)) for one in features),
+        primers=tuple(primers),
     )
     turned = rotate(product, origin) if origin else product
     junctions = tuple(

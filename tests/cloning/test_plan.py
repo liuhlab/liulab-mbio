@@ -18,7 +18,7 @@ def vector(*segments: Segment, topology: Topology = "circular") -> SequenceRecor
 
 @pytest.mark.parametrize(
     "segments",
-    [(Segment(90, 108),), (Segment(90, 98), Segment(1, 8))],
+    [(Segment(90, 108),), (Segment(90, 98), Segment(101, 108))],
     ids=["one segment", "two segments"],
 )
 def test_a_named_site_across_the_origin_is_refused_and_the_refusal_says_so(segments):

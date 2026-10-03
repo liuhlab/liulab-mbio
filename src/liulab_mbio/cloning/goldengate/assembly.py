@@ -456,7 +456,11 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
     features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
     origin = _origin(parts[order[0]])
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(one.counted_round(len(bases)) for one in features),
+        primers=tuple(primers),
     )
     return Assembly(
         ordered(rotate(product, origin) if origin else product),

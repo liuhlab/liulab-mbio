@@ -295,7 +295,11 @@ def recombine(
         primers.extend(kept)
     features.extend(_junction_feature(one) for one in junctions)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(one.counted_round(len(bases)) for one in features),
+        primers=tuple(primers),
     )
     origin = _origin(acceptor, *backbone.span)
     first, second = (_turned(one, origin, len(bases)) for one in junctions)

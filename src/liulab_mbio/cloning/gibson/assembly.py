@@ -591,7 +591,11 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
     ]
     features.extend(_overlap_feature(one) for one in joins)
     product = SequenceRecord(
-        bases, topology="circular", name=name, features=tuple(features), primers=tuple(primers)
+        bases,
+        topology="circular",
+        name=name,
+        features=tuple(one.counted_round(len(bases)) for one in features),
+        primers=tuple(primers),
     )
     origin = _origin(parts[0])
     return Assembly(
