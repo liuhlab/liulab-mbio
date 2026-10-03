@@ -55,8 +55,9 @@ _Avoid_: wrapping, wraparound
 ### Reading order
 
 The order a feature lists its segments in: the order the top strand reads them, whatever the
-feature's strand, so one on the reverse strand reads them last to first. A feature across the
-origin reads the segment ending at the origin before the one beginning there.
+feature's strand, so one on the reverse strand reads them last to first. On a circular record, a
+segment after the origin starts past the record's length, so the starts ascend and a sort keeps
+the order. A feature cut apart at a linear record's two ends lists the higher start first.
 _Avoid_: segment order, sorted order
 
 ### Annealing region
