@@ -308,9 +308,20 @@ class Scheme:
         )
 
     def _check_internal_stuffers(self) -> None:
-        """Check each prefix names the position it admits next, and that both cuts are there."""
+        """Check each prefix names the position it admits next, and that two cuts open it."""
+        scar = self.scar_overhang
         for index, position in enumerate(self.positions):
+            admits = self.positions[(index + 1) % self.position_count].name
             following = self.entry_overhang((index + 1) % self.position_count)
+            if following == scar:
+                _refuse(
+                    "internal-stuffer-cuts",
+                    f"position {admits!r} enters on {following!r}, which is also this scheme's "
+                    f"cloning scar, so {self.internal.name} leaves that overhang at both ends of "
+                    f"the internal stuffer of position {position.name!r}: excising it leaves two "
+                    "ends that anneal to each other, and a part goes in either way round. Give "
+                    f"position {admits!r} a 5' external stuffer whose cut leaves another overhang",
+                )
             prefix = position.internal_stuffer_prefix
             if not prefix.endswith(following):
                 _refuse(
@@ -327,13 +338,13 @@ class Scheme:
                     f"{self.internal.name} leaves {spells} in the internal stuffer of position "
                     f"{position.name!r}, and not the {following!r} the next part enters on",
                 )
-            if self.scar_overhang not in left:
+            if scar not in left:
                 spells = ", ".join(sorted(left)) or "no overhang at all"
                 _refuse(
                     "internal-stuffer-cuts",
                     f"{self.internal.name} leaves {spells} in the internal stuffer of position "
-                    f"{position.name!r}, and not the cloning scar {self.scar_overhang!r}: a "
-                    "stuffer carries both of the cuts that open it",
+                    f"{position.name!r}, and not the cloning scar {scar!r}: a stuffer carries "
+                    "both of the cuts that open it",
                 )
 
     def _check_terminal_frame(self) -> None:
