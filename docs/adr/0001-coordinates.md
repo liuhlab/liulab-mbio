@@ -42,9 +42,9 @@ unconverted, 0-based and half-open, and cannot run across the origin.
 
 ## Consequences
 
-Slicing `sequence` directly is wrong across the origin; `SequenceRecord.extract` reads across
-it. Edits that shift coordinates or rotate the origin reduce positions modulo the length, then
-count features round with `Feature.counted_round`. A feature lists its segments in reading
-order; on a circular record the representation carries that rule, not prose: starts ascend, so
-a sort changes nothing. A feature cut apart at a linear record's two ends still lists the higher
-start first, which a sort breaks.
+Slicing `sequence` is wrong across the origin; `SequenceRecord.extract` reads across it. Edits that
+shift coordinates or rotate the origin reduce positions modulo the length, then count features round
+with `Feature.counted_round`, and positions read in order, such as junctions, with `counted_round`.
+A feature lists its segments in reading order; on a circular record the representation carries that
+rule, not prose: starts ascend, so a sort changes nothing. A feature cut apart at a linear record's
+two ends still lists the higher start first, which a sort breaks.
