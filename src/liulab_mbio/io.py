@@ -6,7 +6,14 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, Topology
+from liulab_mbio.sequence import (
+    Feature,
+    Segment,
+    SequenceRecord,
+    Strand,
+    Topology,
+    counted_round,
+)
 
 if TYPE_CHECKING:
     from Bio.SeqFeature import SeqFeature
@@ -194,7 +201,8 @@ def _listed(
     """Read a segment list into colours and names, as the ``.dna`` reader holds them.
 
     Returns the feature's colour, its segments, and the text after the list; `None` unless the
-    list names every segment, and nothing else, each with a ``#rrggbb`` colour.
+    list names every segment, and nothing else, each with a ``#rrggbb`` colour. A listed segment
+    is matched by where it starts in the record, which a segment after the origin passes.
     """
     if not lines or (header := _LIST_HEADER.fullmatch(lines[0])) is None:
         return None
@@ -204,12 +212,13 @@ def _listed(
         if (entry := _LISTED_SEGMENT.fullmatch(line)) is None:
             return None
         start, end = int(entry[1]) - 1, int(entry[2])
-        listed[start, end if end > start else end + length] = entry[3], entry[4] or ""
-    if sorted(listed) != sorted((segment.start, segment.end) for segment in segments):
+        listed[start, (end - start) % length or length] = entry[3], entry[4] or ""
+    placed = [(segment.start % length, segment.end - segment.start) for segment in segments]
+    if sorted(listed) != sorted(placed):
         return None
     first, coloured = next(iter(listed.values()))[0], []
-    for segment in segments:
-        color, name = listed[segment.start, segment.end]
+    for segment, place in zip(segments, placed, strict=True):
+        color, name = listed[place]
         coloured.append(
             Segment(segment.start, segment.end, name=name, color=None if color == first else color)
         )
@@ -220,16 +229,21 @@ def _segments(feature: "SeqFeature", length: int, topology: Topology) -> tuple[S
     """Take the parts in the order the top strand reads them, joining two that meet at the origin.
 
     Biopython lists a join's parts in the order the feature reads, so a reverse-strand one's are
-    turned round.
+    turned round. A part after the origin of a circular record is counted round past the length.
+    A linear record has no origin, so a join of its two ends keeps the higher start first.
     """
     if (location := feature.location) is None:
         return ()
+    parts = location.parts[::-1] if location.strand == -1 else location.parts
+    # Biopython's positions are ints, but an inexact one is a class its stubs do not narrow.
+    read = [(cast("int", part.start), cast("int", part.end)) for part in parts]
+    if topology == "circular":
+        starts = counted_round((start for start, _ in read), length)
+        read = [(at, at + end - start) for at, (start, end) in zip(starts, read, strict=True)]
     spans: list[tuple[int, int]] = []
-    for part in location.parts[::-1] if location.strand == -1 else location.parts:
-        # Biopython's positions are ints, but an inexact one is a class its stubs do not narrow.
-        start, end = cast("int", part.start), cast("int", part.end)
-        if topology == "circular" and spans and spans[-1][1] == length and start == 0:
-            spans[-1] = (spans[-1][0], length + end)
+    for start, end in read:
+        if spans and spans[-1][1] == length == start:
+            spans[-1] = (spans[-1][0], end)
         else:
             spans.append((start, end))
     return tuple(Segment(start, end) for start, end in spans)

@@ -73,12 +73,23 @@ def test_read_record_keeps_a_join_across_the_origin_in_the_order_it_reads(
 ) -> None:
     record = _gapped(tmp_path, "join(91..98,2..8)")
     (feature,) = record.features
-    assert feature.segments == (Segment(90, 98), Segment(1, 8))
+    assert feature.segments == (Segment(90, 98), Segment(101, 108))
     assert record.extract(feature) == "GGGGGGGGCCCCCCC"
     record = _gapped(tmp_path, "complement(join(91..98,2..8))")
     (feature,) = record.features
-    assert (feature.segments, feature.strand) == ((Segment(90, 98), Segment(1, 8)), Strand.REVERSE)
+    assert (feature.segments, feature.strand) == (
+        (Segment(90, 98), Segment(101, 108)),
+        Strand.REVERSE,
+    )
     assert record.extract(feature) == "GGGGGGGCCCCCCCC"
+
+
+def test_a_join_across_the_origin_reads_back_from_the_dna_file_it_is_written_to(
+    tmp_path: Path,
+) -> None:
+    record = _gapped(tmp_path, "join(91..98,2..8)")
+    write_dna(record, tmp_path / "gapped.dna")
+    assert read_record(tmp_path / "gapped.dna").features[0].segments == record.features[0].segments
 
 
 def test_read_record_joins_two_parts_only_where_the_feature_reads_across_the_origin(
@@ -107,7 +118,7 @@ def test_read_record_colours_a_segment_list_across_the_origin(tmp_path: Path) ->
     (feature,) = record.features
     assert (feature.color, feature.segments, feature.qualifiers) == (
         "#ff0000",
-        (Segment(90, 98), Segment(1, 8, color="#00ff00")),
+        (Segment(90, 98), Segment(101, 108, color="#00ff00")),
         {},
     )
 
