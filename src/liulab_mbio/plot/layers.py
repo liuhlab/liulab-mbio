@@ -464,7 +464,7 @@ def hull(spans: Sequence[Span | Segment], length: int) -> tuple[int, int]:
 
     Examples
     --------
-    >>> hull((Segment(91, 98), Segment(2, 8)), 100)
+    >>> hull((Segment(91, 98), Segment(102, 108)), 100)
     (91, 108)
     """
     starts = counted_round((span.start for span in spans), length)
