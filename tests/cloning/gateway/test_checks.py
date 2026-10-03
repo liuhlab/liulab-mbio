@@ -240,6 +240,25 @@ def test_the_coding_sequence_upstream_is_the_one_ending_nearest_attb1_across_the
     assert check.detail.endswith("in frame with 6xHis upstream")
 
 
+def test_a_tag_across_the_origin_is_read_in_frame_whatever_the_vector_length(
+    gfp: SequenceRecord,
+) -> None:
+    destination = destination_vector(tag="6xHis")
+    longer = dataclasses.replace(destination, sequence=destination.sequence + "A")
+
+    check = _check(
+        _judged(
+            entry_clone(gfp.sequence[:-3], added=FRAME_BASES),
+            _tag_across_the_origin(longer),
+            fusion="N-terminal",
+        ),
+        "N-terminal frame",
+    )
+
+    assert (check.status, check.value) == ("pass", 2)
+    assert check.detail.endswith("in frame with 6xHis upstream")
+
+
 def test_every_check_reaches_the_page_and_the_unjudged_one_shows_no_verdict(
     gateway_plan: Plan,
 ) -> None:
