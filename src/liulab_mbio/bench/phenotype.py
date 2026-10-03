@@ -143,14 +143,13 @@ def selection_marker(
     common features are. A marker inside `outside` is passed over: a cassette the reaction
     throws away carries its own, and that is not what a plate selects.
     """
-    start, end = outside if outside is not None else (0, 0)
     return next(
         (
             feature
             for feature in record.features
             if feature.type == "CDS"
             and _is_marker(feature.name)
-            and not any(record.covers(feature, at) for at in range(start, end))
+            and (outside is None or not _meets(record, feature, outside))
         ),
         None,
     )
@@ -218,12 +217,28 @@ def _ribosome_binding_site(
 
 def _interrupted(vector: SequenceRecord, span: tuple[int, int]) -> Feature | None:
     """Return the vector coding sequence the insertion breaks, or ``None``."""
-    start, end = span
     return next(
         (
             feature
             for feature in vector.features
-            if feature.type == "CDS" and any(vector.covers(feature, at) for at in range(start, end))
+            if feature.type == "CDS" and _meets(vector, feature, span)
         ),
         None,
+    )
+
+
+def _meets(record: SequenceRecord, feature: Feature, span: tuple[int, int]) -> bool:
+    """Whether replacing `span` changes the feature: it shares a base, or an empty span splits it.
+
+    Two spans share a base exactly when one holds the other's first.
+    """
+    start, end = span
+    if start == end:
+        return any(
+            one.end - one.start > 1 and record.covers(Segment(one.start + 1, one.end), start)
+            for one in feature.segments
+        )
+    replaced = Segment(start, end)
+    return any(
+        record.covers(replaced, one.start) or record.covers(one, start) for one in feature.segments
     )

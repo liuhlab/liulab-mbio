@@ -49,3 +49,15 @@ def test_a_marker_inside_a_replaced_span_past_the_origin_is_passed_over():
     marker = selection_marker(vector, outside=(95, 105))
     assert marker is not None
     assert marker.name == "KanR"
+
+
+def test_an_insertion_that_replaces_nothing_breaks_a_coding_sequence_only_inside_it():
+    # KanR runs across the origin; an insertion at AmpR's first base leaves AmpR whole.
+    vector = plasmid(feature("AmpR", "CDS", (10, 60)), feature("KanR", "CDS", (90, 110)))
+    for at, broken, marker in ((30, "AmpR", "KanR"), (0, "KanR", "AmpR"), (10, None, "AmpR")):
+        read = read_phenotype(vector, (0, 0), vector=vector, span=(at, at))
+        assert (_name(read.reporter), _name(read.marker)) == (broken, marker), at
+
+
+def _name(one: Feature | None) -> str | None:
+    return None if one is None else one.name
