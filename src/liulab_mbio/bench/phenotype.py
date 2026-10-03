@@ -164,11 +164,14 @@ def _is_marker(name: str) -> bool:
 
 def _coding(product: SequenceRecord, first: int, last: int) -> Feature | None:
     """Return the longest coding sequence lying wholly between the outer two junctions."""
+    if last <= first:
+        return None
+    insert = Segment(first, last)
     inside = [
         feature
         for feature in product.features
         if feature.type == "CDS"
-        and all(first <= segment.start and segment.end <= last for segment in feature.segments)
+        and all(product.covers(insert, segment) for segment in feature.segments)
     ]
     return max(
         inside,
