@@ -1,13 +1,16 @@
 """The sequence model every other module reads and writes.
 
 Coordinates are 0-based and half-open: ``Segment(start, end)`` holds bases ``start`` to
-``end - 1``. A segment across the origin of a circular record ends past the record's length.
-File formats convert at their own boundary; see ``docs/adr/0001-coordinates.md``.
+``end - 1``. A segment across the origin of a circular record ends past the record's length,
+and a feature's segments after the origin start past it. File formats convert at their own
+boundary; see ``docs/adr/0001-coordinates.md``.
 """
 
+import dataclasses
 from collections.abc import Iterable, Mapping
 from dataclasses import KW_ONLY, dataclass, field
 from enum import IntEnum
+from itertools import pairwise
 from typing import Literal
 
 #: The IUPAC nucleotide codes a DNA sequence may hold.
@@ -97,8 +100,10 @@ class Feature:
         A GenBank feature key, such as ``"CDS"`` or ``"promoter"``.
     segments
         In the order the feature reads them along the top strand, so a reverse-strand feature
-        reads them last to first. One across the origin, or cut apart at the two ends of a linear
-        record, may list a higher start first.
+        reads them last to first. On a circular record they start in ascending order: a segment
+        after the origin starts past the record's length, as one across it ends past it. A linear
+        record has no origin to cross, so a feature cut apart at its two ends lists the higher
+        start first.
     strand
         The strand the feature reads along.
     qualifiers
@@ -124,6 +129,26 @@ class Feature:
         """Refuse a feature with no segment."""
         if not self.segments:
             raise ValueError(f"feature {self.name!r} has no segment")
+
+    def counted_round(self, length: int) -> "Feature":
+        """Return this feature as a circular record of `length` bases holds it.
+
+        Each segment keeps its width and its place in the reading order, starts where it lies in
+        the record, and is then counted round past the length if it comes after the origin.
+
+        Examples
+        --------
+        >>> Feature("f", "CDS", (Segment(91, 98), Segment(2, 8))).counted_round(100).segments[1]
+        Segment(start=102, end=108, name='', color=None)
+        """
+        starts = counted_round((one.start % length for one in self.segments), length)
+        return dataclasses.replace(
+            self,
+            segments=tuple(
+                dataclasses.replace(one, start=start, end=start + one.end - one.start)
+                for start, one in zip(starts, self.segments, strict=True)
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,7 +225,9 @@ class SequenceRecord:
     name
         The name shown on a map.
     features, primers
-        Every feature segment and primer binding site must fit the sequence under its topology.
+        Every feature and primer binding site must fit the sequence under its topology. On a
+        circular record a feature's first segment fits, the rest follow it in ascending order,
+        and the whole spans at most one turn.
     notes
         Descriptive fields, such as ``"Description"``, keyed by name.
     extras
@@ -228,8 +255,7 @@ class SequenceRecord:
             raise ValueError(f"topology must be 'linear' or 'circular', got {self.topology!r}")
         object.__setattr__(self, "sequence", _dna(self.sequence))
         for feature in self.features:
-            for segment in feature.segments:
-                self._check_fits(segment.start, segment.end, f"feature {feature.name!r}")
+            self._check_feature(feature)
         for primer in self.primers:
             for site in primer.binding_sites:
                 self._check_fits(site.start, site.end, f"primer {primer.name!r}")
@@ -335,6 +361,21 @@ class SequenceRecord:
         if self.topology == "linear":
             return end <= n
         return start < n and end - start <= n
+
+    def _check_feature(self, feature: Feature) -> None:
+        owner, segments = f"feature {feature.name!r}", feature.segments
+        if self.topology == "linear":
+            for segment in segments:
+                self._check_fits(segment.start, segment.end, owner)
+            return
+        for before, after in pairwise(segments):
+            if after.start < before.start:
+                raise ValueError(
+                    f"{owner} lists span {after.start}-{after.end} after {before.start}-"
+                    f"{before.end}: past the origin of a circular record, a span starts past "
+                    "its length"
+                )
+        self._check_fits(segments[0].start, max(one.end for one in segments), owner)
 
     def _check_fits(self, start: int, end: int, owner: str) -> None:
         if self.fits(start, end):

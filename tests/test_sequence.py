@@ -74,6 +74,40 @@ def test_a_segment_may_not_start_past_the_origin_or_wrap_more_than_once() -> Non
         SequenceRecord("ACGTACGT", topology="circular", features=(_feature((2, 11)),))
 
 
+def test_a_feature_reads_the_same_bases_with_its_later_segments_past_the_length(
+    across_origin: SequenceRecord,
+) -> None:
+    across, site = across_origin.features
+    top = across_origin.sequence
+    assert across.segments == (Segment(90, 98), Segment(101, 108))
+    assert across_origin.extract(across) == top[90:98] + top[1:8]
+    assert across_origin.extract(site) == reverse_complement(top[96:] + top[:4])
+
+
+def test_a_later_segment_across_the_origin_starts_past_the_length_within_one_turn() -> None:
+    def circular(*segments: tuple[int, int]) -> SequenceRecord:
+        return SequenceRecord("ACGTACGT", topology="circular", features=(_feature(*segments),))
+
+    assert circular((6, 8), (9, 10)).extract(circular((6, 8), (9, 10)).features[0]) == "GTC"
+    with pytest.raises(ValueError, match="circular"):
+        circular((2, 6), (9, 11))
+    with pytest.raises(ValueError, match="circular"):
+        circular((6, 8), (1, 2))
+
+
+def test_sorting_a_feature_across_the_origin_leaves_its_segments_as_they_are(
+    across_origin: SequenceRecord,
+) -> None:
+    for feature in across_origin.features:
+        assert tuple(sorted(feature.segments, key=lambda one: one.start)) == feature.segments
+
+
+def test_a_feature_at_both_ends_of_a_linear_record_lists_its_higher_start_first() -> None:
+    record = SequenceRecord("ACGTACGT", features=(_feature((6, 8), (0, 2)),))
+    assert record.features[0].segments == (Segment(6, 8), Segment(0, 2))
+    assert record.extract(record.features[0]) == "GTAC"
+
+
 def test_reverse_complement_pairs_iupac_codes_in_either_case() -> None:
     assert reverse_complement("AACRYK") == "MRYGTT"
     assert reverse_complement("aacg") == "cgtt"
@@ -133,7 +167,8 @@ def test_a_span_runs_across_the_origin_when_it_ends_past_the_length() -> None:
     assert not across_the_origin(Segment(6, 10), 10)
 
 
-def test_a_feature_runs_across_the_origin_when_a_segment_starts_before_the_one_it_follows() -> None:
+def test_a_feature_runs_across_the_origin_when_its_segments_count_round_past_the_length() -> None:
+    assert across_the_origin(_feature((8, 10), (11, 12)), 10)
     assert across_the_origin(_feature((8, 10), (0, 2)), 10)
     assert not across_the_origin(_feature((0, 2), (8, 10)), 10)
     assert not across_the_origin(_feature((0, 4), (3, 6)), 10)
