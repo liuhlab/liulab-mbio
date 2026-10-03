@@ -32,7 +32,7 @@ from liulab_mbio.cloning.gateway.att import (
     joined,
     writes,
 )
-from liulab_mbio.edits import carried, flipped, ordered, rotate
+from liulab_mbio.edits import carried, flipped, ordered, origin_in, rotate
 from liulab_mbio.sequence import (
     Feature,
     Primer,
@@ -320,7 +320,7 @@ def recombine(
         features=tuple(one.counted_round(len(bases)) for one in features),
         primers=tuple(primers),
     )
-    origin = _origin(acceptor, *backbone.span)
+    origin = origin_in(acceptor, *backbone.span)
     first, second = (_turned(one, origin, len(bases)) for one in junctions)
     return Recombination(
         reaction,
@@ -381,15 +381,6 @@ def _length(record: SequenceRecord, start: int, end: int, what: str) -> int:
             f"them, so nothing {what}"
         )
     return length
-
-
-def _origin(record: SequenceRecord, start: int, end: int) -> int:
-    """Where `record`'s own first base falls in the piece taken from ``[start, end)``, or 0.
-
-    Turning the product to put it back at zero is what keeps the vector's coordinates readable,
-    and it moves the junction that would otherwise straddle the origin.
-    """
-    return -start % len(record) if record.covers(Segment(start, end), 0) else 0
 
 
 def _turned(junction: Junction, origin: int, length: int) -> Junction:

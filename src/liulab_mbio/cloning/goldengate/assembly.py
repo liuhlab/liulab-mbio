@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import annealed, carried, ordered, rotate
+from liulab_mbio.edits import annealed, carried, ordered, origin_in, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
@@ -452,7 +452,7 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
         primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
         joins.append((at, parts[order[place - 1]], part))
     features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
-    origin = _origin(parts[order[0]])
+    origin = origin_in(parts[order[0]].template, *parts[order[0]].span)
     product = SequenceRecord(
         bases,
         topology="circular",
@@ -554,10 +554,3 @@ def _chain(parts: Sequence[Part]) -> list[int]:
             f"{first.left_overhang}"
         )
     return order
-
-
-def _origin(part: Part) -> int:
-    """Where the first part's template origin falls in the product, or 0 when it is not there."""
-    start, end = part.span
-    template = part.template
-    return -start % len(template) if template.covers(Segment(start, end), 0) else 0

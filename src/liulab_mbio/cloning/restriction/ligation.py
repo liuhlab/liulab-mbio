@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.restriction.digest import Piece, closes
-from liulab_mbio.edits import carried, ordered, rotate
+from liulab_mbio.edits import carried, ordered, origin_in, rotate
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.sequence import (
     Feature,
@@ -198,7 +198,7 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
         features.extend(over)
         primers.extend(kept)
         joins.append((at, pieces[place - 1], piece))
-    origin = _origin(backbone)
+    origin = origin_in(backbone.source, backbone.start, backbone.end)
     product = SequenceRecord(
         bases,
         topology="circular",
@@ -293,13 +293,6 @@ def _junction_feature(junction: Junction) -> Feature:
         color=JUNCTION_COLOR,
         qualifiers={"note": (note,)},
     )
-
-
-def _origin(piece: Piece) -> int:
-    """Where the piece's own source origin falls in the product, or 0 when it is not there."""
-    if piece.source.covers(Segment(piece.start, piece.end), 0):
-        return -piece.start % len(piece.source)
-    return 0
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:

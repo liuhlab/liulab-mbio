@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 from liulab_mbio.bench.steps import dam_sites
 from liulab_mbio.checks import Check, Status, worst_of
-from liulab_mbio.edits import annealed, carried, ordered, rotate
+from liulab_mbio.edits import annealed, carried, ordered, origin_in, rotate
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
 from liulab_mbio.primers.polymerase import Q5, Polymerase
@@ -597,7 +597,7 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
         features=tuple(one.counted_round(len(bases)) for one in features),
         primers=tuple(primers),
     )
-    origin = _origin(parts[0])
+    origin = origin_in(parts[0].template, *parts[0].span)
     return Assembly(
         ordered(rotate(product, origin) if origin else product),
         tuple(parts),
@@ -673,13 +673,6 @@ def _overlap_feature(junction: Junction) -> Feature:
             )
         },
     )
-
-
-def _origin(part: Part) -> int:
-    """Where the first part's template origin falls in the product, or 0 when it is not there."""
-    start, end = part.span
-    template = part.template
-    return -start % len(template) if template.covers(Segment(start, end), 0) else 0
 
 
 def _copies(record: SequenceRecord, bases: str) -> int:

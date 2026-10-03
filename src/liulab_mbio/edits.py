@@ -240,6 +240,20 @@ def carried(
     return tuple(features), tuple(primers)
 
 
+def origin_in(record: SequenceRecord, start: int, end: int) -> int:
+    """Return where `record`'s first base falls in the piece ``[start, end)`` taken from it, or 0.
+
+    A product built from that piece is turned by this much to keep `record`'s own coordinates.
+    A piece that does not hold that base gives 0.
+
+    Examples
+    --------
+    >>> origin_in(SequenceRecord("AACCGGTTAC", topology="circular"), 8, 12)
+    2
+    """
+    return -start % len(record) if record.covers(Segment(start, end), 0) else 0
+
+
 def ordered(record: SequenceRecord) -> SequenceRecord:
     """Return `record` with its features sorted by where each begins, their segments untouched.
 
