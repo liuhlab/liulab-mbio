@@ -28,7 +28,7 @@ from liulab_mbio.cloning.restriction.bench import (
 from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from liulab_mbio.cloning.restriction.ligation import Junction
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import DAM_SITE, DCM_SITE, CutSite, find_sites
 
 #: The two methylases as something to search a record for. `liulab_mbio.sites.find_sites` is what
@@ -263,9 +263,11 @@ def _interrupted(
         if feature.type != "CDS":
             continue
         for left, right in zip(feature.segments, feature.segments[1:], strict=False):
-            gap = right.start - left.end
-            if gap > 0 and any(left.end <= one.start < right.start for one in junctions):
-                found.append((feature.name, gap))
+            if right.start <= left.end:
+                continue
+            gap = Segment(left.end, right.start)
+            if any(product.covers(gap, one.start) for one in junctions):
+                found.append((feature.name, gap.end - gap.start))
     return tuple(found)
 
 
