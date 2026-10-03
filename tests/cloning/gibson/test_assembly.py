@@ -16,6 +16,7 @@ from liulab_mbio.cloning.gibson.assembly import (
 )
 from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
 from liulab_mbio.cloning.gibson.design import overlap_after, overlap_before
+from liulab_mbio.edits import rotate
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 
@@ -70,6 +71,15 @@ def test_a_part_carries_its_neighbours_bases_and_none_of_its_own(parts, overlaps
     assert insert.length == insert.fragment_length + len(left) + len(right)
     # A junction with the vector on either side takes the vector's own bases, so it needs none.
     assert (backbone.left_tail, backbone.right_tail) == ("", "")
+
+
+def test_a_vector_whose_span_ends_at_its_last_base_opens_as_it_does_unturned(parts, puc19):
+    # Turned so the span ends at the vector's last base, the backbone starts past the length.
+    turned = rotate(puc19, MCS[1])
+    start = MCS[0] - MCS[1] + len(puc19)
+    opened = open_vector(turned, start, len(puc19), thresholds=AMPLIFICATION)
+    assert opened.amplicon.sequence == parts[0].amplicon.sequence
+    assert opened.bases == parts[0].bases
 
 
 def test_the_tm_of_a_tailed_primer_is_read_from_its_annealing_region_alone(parts):

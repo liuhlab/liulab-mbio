@@ -158,7 +158,7 @@ class Part:
     @property
     def bases(self) -> str:
         """What this part puts into the product, its neighbours' overlaps left off."""
-        return self.template.extract(Segment(*self.span))
+        return self.template.bases(*self.span)
 
     @property
     def amplified(self) -> bool:
@@ -234,7 +234,7 @@ def amplify(
         polymerase=polymerase,
         thresholds=thresholds,
     )
-    bases = left + template.extract(Segment(start, end)) + right
+    bases = left + template.bases(start, end) + right
     features, kept = carried(template, start, end, offset=len(left) - start)
     placed = (
         annealed(forward, len(left), Strand.FORWARD),

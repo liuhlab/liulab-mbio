@@ -273,13 +273,17 @@ class SequenceRecord:
         Raises
         ------
         ValueError
-            If a segment runs off a linear record.
+            If the feature or segment does not fit this record, as an annotation must.
 
         Examples
         --------
         >>> SequenceRecord("AACCGGTTAC", topology="circular").extract(Segment(8, 12))
         'ACAA'
         """
+        if isinstance(span, Feature):
+            self._check_feature(span)
+        else:
+            self._check_fits(span.start, span.end, "extracted")
         segments = span.segments if isinstance(span, Feature) else (span,)
         bases = "".join(self.bases(segment.start, segment.end) for segment in segments)
         if isinstance(span, Feature) and span.strand == Strand.REVERSE:

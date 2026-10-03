@@ -108,9 +108,7 @@ class Part:
     def bases(self) -> str:
         """What this part puts into the product, its own overhang standing first."""
         start, end = self.span
-        return self.left_overhang + self.template.extract(
-            Segment(start + len(self.left_overhang), end)
-        )
+        return self.left_overhang + self.template.bases(start + len(self.left_overhang), end)
 
 
 def amplify(
@@ -191,7 +189,7 @@ def amplify(
         polymerase=polymerase,
         thresholds=thresholds,
     )
-    bases = tails[0] + template.extract(Segment(anneal, end)) + reverse_complement(tails[1])
+    bases = tails[0] + template.bases(anneal, end) + reverse_complement(tails[1])
     features, kept = carried(template, start, end, offset=len(tails[0]) - len(left) - start)
     placed = (
         annealed(forward, len(tails[0]), Strand.FORWARD),

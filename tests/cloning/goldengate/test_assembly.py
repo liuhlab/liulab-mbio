@@ -106,6 +106,17 @@ def test_the_backbone_amplicon_is_the_vector_without_the_span(backbone, puc19, m
     assert backbone.report["products"].value == 1
 
 
+def test_a_vector_whose_span_ends_at_its_last_base_opens_as_it_does_unturned(
+    backbone, puc19, mcs, overhangs
+):
+    # Turned so the span ends at the vector's last base, the backbone starts past the length.
+    turned = edits.rotate(puc19, mcs[1])
+    start = mcs[0] - mcs[1] + len(puc19)
+    opened = open_vector(turned, "BbsI", start, len(puc19), overhangs=overhangs)
+    assert opened.amplicon.sequence == backbone.amplicon.sequence
+    assert opened.bases == backbone.bases
+
+
 def test_the_insert_amplicon_carries_the_whole_coding_sequence(insert, gfp):
     assert len(insert.amplicon) == 2 * (SPACER + 12) + len(gfp) - 4
     assert insert.amplicon.sequence.count(gfp.sequence[4:]) == 1

@@ -136,6 +136,15 @@ def test_extract_reads_a_segment_across_the_origin() -> None:
     assert CIRCULAR.extract(Segment(3, 13)) == "CGGTTACAAC"
 
 
+def test_extract_refuses_a_span_that_does_not_fit_the_record() -> None:
+    with pytest.raises(ValueError, match="circular"):
+        CIRCULAR.extract(Segment(10, 14))
+    with pytest.raises(ValueError, match="circular"):
+        CIRCULAR.extract(_feature((2, 13)))
+    with pytest.raises(ValueError, match="linear"):
+        LINEAR.extract(Segment(8, 12))
+
+
 def test_a_primer_holds_its_sequence_in_upper_case_and_refuses_other_letters() -> None:
     assert Primer("M13 fwd", "gtaaaacgacggccagt").sequence == "GTAAAACGACGGCCAGT"
     with pytest.raises(ValueError, match="U"):
