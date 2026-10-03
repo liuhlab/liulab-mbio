@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Golden Gate assembly: GFP into pUC19</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #1c1e21;
+  --muted: #5c626b;
+  --line: #dedbd3;
+  --accent: #1d6b58;
+  --accent-soft: #e2f0eb;
+  --caution: #8f4a00;
+  --caution-soft: #fff1dc;
+  --fail: #a11d1d;
+  --fail-soft: #fdeaea;
+  --expected: #1a4f8b;
+  --expected-soft: #e8f1fc;
+  --code-bg: #efede7;
+  --gel: #15171c;
+  --well: #030407;
+  --band: #f3f0ff;
+  --ladder: #a9bbff;
+  --gel-ink: #c9ced6;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111316;
+    --surface: #191c20;
+    --ink: #e7e5e0;
+    --muted: #9ea4ac;
+    --line: #2d3137;
+    --accent: #6cc4a9;
+    --accent-soft: #1a2d27;
+    --caution: #f2b464;
+    --caution-soft: #2b2316;
+    --fail: #f28b8b;
+    --fail-soft: #2e1a1a;
+    --expected: #93bdf2;
+    --expected-soft: #16212f;
+    --code-bg: #23272c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.page { max-width: 54rem; margin: 0 auto; padding-block: 2rem 4rem; }
+
+h1 { font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.2; margin: 0 0 0.5rem; }
+h2 { font-size: 1.3rem; line-height: 1.3; margin: 0 0 0.75rem; }
+h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.4rem; }
+p { margin: 0 0 0.75rem; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+
+.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+
+/* Short facts only: a card is a few words, so the row stays one height. A sentence is
+   .highlights, and the model refuses one here. */
+.overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0.45rem; margin: 1.25rem 0 1rem; }
+.overview div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.45rem 0.7rem; }
+.overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+
+.highlights { max-width: 44rem; margin: 0 0 1rem; }
+.highlights p:last-child { margin-bottom: 0; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
+.check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.check-name { overflow-wrap: anywhere; }
+.verdict { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.is-pass .verdict { color: var(--accent); }
+.is-warn { background: var(--caution-soft); border-color: var(--caution); }
+.is-warn .verdict { color: var(--caution); }
+.is-fail { background: var(--fail-soft); border-color: var(--fail); }
+.is-fail .verdict { color: var(--fail); }
+.is-none { border-style: dashed; }
+.is-none .verdict { color: var(--muted); }
+.check-detail { font-size: 0.9rem; color: var(--muted); margin: 0 0 0.3rem; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0; }
+.progress { margin-right: auto; font-weight: 600; }
+
+button {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  min-height: 2rem;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
+.toc li { counter-increment: toc; }
+.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+.block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
+.step { scroll-margin-top: 1rem; }
+.step.is-done { opacity: 0.6; }
+.step > * + * { margin-top: 0.9rem; }
+
+input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); flex: none; margin: 0.2rem 0 0; }
+.step-title label { display: flex; gap: 0.6rem; align-items: baseline; cursor: pointer; }
+.step-title input { align-self: center; margin: 0; }
+.step-n { display: inline-grid; place-items: center; min-width: 1.8rem; height: 1.8rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.95rem; }
+
+.instructions { padding-left: 0; list-style: none; margin-bottom: 0; }
+.instructions li + li { margin-top: 0.35rem; }
+.instructions label { display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer; }
+.instructions input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.caution { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; }
+.expected { background: var(--expected-soft); border-radius: 8px; padding: 0.7rem 0.9rem; }
+.expected h3 { color: var(--expected); }
+.expected ul, .notes ul { margin: 0; padding-left: 1.2rem; }
+.trouble dl { margin: 0; }
+.trouble dt { font-weight: 600; }
+.trouble dd { margin: 0 0 0.5rem; color: var(--muted); }
+
+figure { margin: 0; }
+figcaption { font-weight: 600; margin-bottom: 0.4rem; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 0.78rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tfoot th, tfoot td { font-weight: 700; border-bottom: none; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.per-tube { color: var(--muted); }
+.mix { font-weight: 600; }
+.stage + .stage td { border-top: 2px solid var(--line); }
+
+.count { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0 0.5rem 0.5rem 0; font-size: 0.9rem; }
+.count input { width: 4.5rem; font: inherit; padding: 0.2rem 0.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.dispense { font-size: 0.9rem; color: var(--muted); margin: 0.4rem 0 0; }
+
+code, .seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+.seq { background: var(--code-bg); border-radius: 4px; padding: 0.1rem 0.3rem; overflow-wrap: anywhere; }
+.seq-cell { min-width: 12rem; }
+.oligos .seq-cell { min-width: 14rem; }
+.equipment { font-size: 0.92rem; color: var(--muted); margin: 0.7rem 0 0; }
+
+.verdict-cell { white-space: nowrap; }
+.oligos td .check { padding: 0.05rem 0.55rem; font-size: 0.78rem; }
+.oligo-checks { font-size: 0.9rem; margin-top: 0.6rem; }
+.oligo-checks summary { cursor: pointer; color: var(--muted); }
+.oligo-checks ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; margin-left: 0.25rem; }
+button.is-copied { border-color: var(--accent); color: var(--accent); }
+
+.timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
+.timer-action { color: var(--accent); }
+button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.55; } }
+
+.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+.gel-bg { fill: var(--gel); }
+.well { fill: var(--well); }
+.band { fill: var(--band); }
+.ladder .band { fill: var(--ladder); }
+.gel-image text { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--muted); }
+.gel-image .lane-mark { text-anchor: middle; font-weight: 700; fill: var(--ink); }
+.gel-image .size { text-anchor: end; }
+.gel-legend { list-style: none; padding: 0; margin: 0.5rem 0 0; font-size: 0.88rem; }
+.gel-legend strong { display: inline-block; min-width: 1.4rem; }
+
+@media (max-width: 30rem) {
+  .block, .step { padding: 0.9rem; }
+  h2 { font-size: 1.15rem; }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #000000;
+    --muted: #3a3a3a;
+    --line: #bdbdbd;
+    --accent: #000000;
+    --accent-soft: #ffffff;
+    --caution-soft: #ffffff;
+    --fail-soft: #ffffff;
+    --expected-soft: #ffffff;
+    --code-bg: #ffffff;
+  }
+  body { padding: 0; font-size: 10.5pt; }
+  .page { max-width: none; padding: 0; }
+  .toolbar, .toc, button.copy, .timer-action { display: none !important; }
+  .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
+  .step.is-done { opacity: 1; }
+  .caution, .expected { border: 1px solid var(--line); }
+  /* The verdict word carries the badge on paper, where the fill does not print. */
+  .check { border: 1px solid var(--line); }
+  /* Paper has no toggle, so the reasons print with the sheet. */
+  .oligo-checks:not([open]) > ul { display: block; }
+  .oligo-checks::details-content { content-visibility: visible; }
+  button.timer { border: 1px solid var(--line); animation: none; }
+  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  .count input { border: none; width: 2.5rem; }
+  .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
+  .references a::after { content: none; }
+}
+</style>
+</head>
+<body data-protocol="0bae9a6faa909029">
+<main class="page">
+<header class="intro">
+<h1>Golden Gate assembly: GFP into pUC19</h1>
+<p class="summary">Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.</p>
+<dl class="overview"><div><dt>Vector</dt><dd>pUC19, 2686 bp</dd></div><div><dt>Insert</dt><dd>GFP, 717 bp</dd></div><div><dt>Enzyme</dt><dd>BbsI-HF (R3539) at 37 °C</dd></div><div><dt>Fragments</dt><dd>2 in one reaction</dd></div><div><dt>Overhangs</dt><dd>ATGA and TGGC</dd></div><div><dt>Fidelity</dt><dd>100%, measured</dd></div><div><dt>Product</dt><dd>pUC19-GFP, 3347 bp</dd></div><div><dt>Selection</dt><dd>ampicillin or carbenicillin</dd></div></dl>
+<div class="highlights"><p>One reaction joins 2 fragments: pUC19 backbone (2630 bp) and GFP (717 bp).</p><p>GFP reads on the opposite strand from lac promoter, 61 bp away, so that promoter does not transcribe it.</p><p>There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.</p><p>The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG.</p></div>
+<ul class="checks" aria-label="Checks"><li class="check is-pass"><span class="check-name">sites</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">pUC19 backbone</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">GFP</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">junctions</span><span class="verdict">pass</span></li><li class="check is-warn"><span class="check-name">primers</span><span class="verdict">warn</span></li></ul>
+<p class="check-detail"><strong>primers warn:</strong> 9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3&#x27; end stability</p>
+<div class="toolbar"><span class="progress" aria-live="polite">0 of 11 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
+<nav class="toc" aria-label="Steps"><ol><li><a href="#step-1">Amplify pUC19 backbone</a></li><li><a href="#step-2">Amplify GFP</a></li><li><a href="#step-3">Check the PCRs on a gel</a></li><li><a href="#step-4">Digest the plasmid template with DpnI</a></li><li><a href="#step-5">Purify every amplicon</a></li><li><a href="#step-6">Measure every concentration</a></li><li><a href="#step-7">Set up the Golden Gate reaction</a></li><li><a href="#step-8">Run the Golden Gate program</a></li><li><a href="#step-9">Transform and plate</a></li><li><a href="#step-10">Screen colonies by PCR</a></li><li><a href="#step-11">Confirm the clone by sequencing</a></li></ol></nav>
+</header>
+<section class="block materials">
+<h2>Materials</h2>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>pUC19 plasmid</td><td></td><td></td><td>-20 °C</td><td></td><td>PCR template</td></tr><tr><td>GFP template</td><td></td><td></td><td>-20 °C</td><td></td><td>PCR template</td></tr><tr><td>Q5 DNA Polymerase and its reaction buffer</td><td>New England Biolabs</td><td></td><td>-20 °C</td><td></td><td></td></tr><tr><td>dNTP mix</td><td></td><td></td><td>-20 °C</td><td></td><td>10 mM of each base</td></tr><tr><td>DpnI</td><td>New England Biolabs</td><td></td><td>-20 °C</td><td>20 units per PCR</td><td>cuts the methylated plasmid template only</td></tr><tr><td>PCR and gel cleanup spin columns</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>NEBridge Ligase Master Mix</td><td>New England Biolabs</td><td>M1100</td><td>-20 °C</td><td>5 µL per reaction</td><td></td></tr><tr><td>BbsI-HF</td><td>New England Biolabs</td><td>R3539</td><td>-20 °C</td><td>1 µL per reaction</td><td></td></tr><tr><td>NEB 5-alpha Competent E. coli</td><td>New England Biolabs</td><td>C2987</td><td>-80 °C</td><td>50 µL per transformation</td><td></td></tr><tr><td>SOC or NEB 10-beta/Stable Outgrowth Medium</td><td></td><td></td><td></td><td>950 µL per transformation</td><td></td></tr><tr><td>LB agar plates with ampicillin or carbenicillin, 80 µg/mL X-gal and 200 µM IPTG</td><td></td><td></td><td></td><td>one plate per transformation</td><td></td></tr><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer</td><td>New England Biolabs</td><td>M0486</td><td>-20 °C</td><td>12.5 µL per reaction</td><td></td></tr><tr><td>Agarose and 1X TAE or TBE</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>NEB 1 kb Plus DNA Ladder</td><td>New England Biolabs</td><td>N3200</td><td></td><td></td><td></td></tr><tr><td>NEB 100 bp DNA Ladder</td><td>New England Biolabs</td><td>N3231</td><td></td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Thermocycler with a heated lid, Agarose gel rig and power supply, Microcentrifuge, Spectrophotometer or fluorometer, Heat block or water bath at 42 °C, Shaking incubator and a plate incubator at 37 °C</p>
+</section>
+<section class="block oligos">
+<h2>Oligos</h2>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Sequence (5&#x27;→3&#x27;)</th><th class="num">Length</th><th class="num">Tm (°C)</th><th>For</th><th>Working stock</th><th>Checks</th></tr></thead><tbody><tr><td>pUC19 backbone forward</td><td class="seq-cell"><code class="seq">AAACACGAAGACAATGGCGTAATCATGGTCATAGCTGTTTCC</code><button type="button" class="copy" data-copy="AAACACGAAGACAATGGCGTAATCATGGTCATAGCTGTTTCC">Copy</button></td><td class="num">42</td><td class="num">63.0</td><td>Amplify pUC19 backbone</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>pUC19 backbone reverse</td><td class="seq-cell"><code class="seq">AAACACGAAGACAATCATACTGGCCGTCGTTTTACA</code><button type="button" class="copy" data-copy="AAACACGAAGACAATCATACTGGCCGTCGTTTTACA">Copy</button></td><td class="num">36</td><td class="num">64.1</td><td>Amplify pUC19 backbone</td><td>10 µM</td><td class="verdict-cell"><span class="check is-warn"><span class="verdict">warn</span></span></td></tr><tr><td>GFP forward</td><td class="seq-cell"><code class="seq">AAACACGAAGACAAATGAGTAAAGGAGAAGAACTTTTCACTGG</code><button type="button" class="copy" data-copy="AAACACGAAGACAAATGAGTAAAGGAGAAGAACTTTTCACTGG">Copy</button></td><td class="num">43</td><td class="num">63.0</td><td>Amplify GFP</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>GFP reverse</td><td class="seq-cell"><code class="seq">AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCAT</code><button type="button" class="copy" data-copy="AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCAT">Copy</button></td><td class="num">44</td><td class="num">62.0</td><td>Amplify GFP</td><td>10 µM</td><td class="verdict-cell"><span class="check is-warn"><span class="verdict">warn</span></span></td></tr><tr><td>Colony PCR forward</td><td class="seq-cell"><code class="seq">TGGGTAACGCCAGGGTTTTCC</code><button type="button" class="copy" data-copy="TGGGTAACGCCAGGGTTTTCC">Copy</button></td><td class="num">21</td><td class="num">61.9</td><td>Screen colonies by PCR</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>Colony PCR reverse</td><td class="seq-cell"><code class="seq">CGTATGTTGTGTGGAATTGTGAGCGGAT</code><button type="button" class="copy" data-copy="CGTATGTTGTGTGGAATTGTGAGCGGAT">Copy</button></td><td class="num">28</td><td class="num">62.2</td><td>Screen colonies by PCR</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>Junction reverse</td><td class="seq-cell"><code class="seq">CATCACCTTCACCCTCTCCACTGA</code><button type="button" class="copy" data-copy="CATCACCTTCACCCTCTCCACTGA">Copy</button></td><td class="num">24</td><td class="num">62.0</td><td>Screen colonies by PCR</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>Sequencing forward</td><td class="seq-cell"><code class="seq">GCGCAACTGTTGGGAA</code><button type="button" class="copy" data-copy="GCGCAACTGTTGGGAA">Copy</button></td><td class="num">16</td><td class="num">63.3</td><td>Confirm the clone by sequencing</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr><tr><td>Sequencing reverse</td><td class="seq-cell"><code class="seq">CGCAACGCAATTAATGTGAG</code><button type="button" class="copy" data-copy="CGCAACGCAATTAATGTGAG">Copy</button></td><td class="num">20</td><td class="num">62.2</td><td>Confirm the clone by sequencing</td><td>10 µM</td><td class="verdict-cell"><span class="check is-pass"><span class="verdict">pass</span></span></td></tr></tbody></table></div><details class="oligo-checks"><summary>Checks on 2 of 9 oligos</summary><ul><li><strong>pUC19 backbone reverse</strong> warn: Tm 64.1 °C (band 60-64)</li><li><strong>GFP reverse</strong> warn: GC 35% (band 40-60)</li></ul></details><p><button type="button" class="copy" data-copy="pUC19 backbone forward	AAACACGAAGACAATGGCGTAATCATGGTCATAGCTGTTTCC
+pUC19 backbone reverse	AAACACGAAGACAATCATACTGGCCGTCGTTTTACA
+GFP forward	AAACACGAAGACAAATGAGTAAAGGAGAAGAACTTTTCACTGG
+GFP reverse	AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCAT
+Colony PCR forward	TGGGTAACGCCAGGGTTTTCC
+Colony PCR reverse	CGTATGTTGTGTGGAATTGTGAGCGGAT
+Junction reverse	CATCACCTTCACCCTCTCCACTGA
+Sequencing forward	GCGCAACTGTTGGGAA
+Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
+</section>
+<section class="step" id="step-1">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Amplify pUC19 backbone</span></label></h2>
+<p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Mix the master mix and put it in each tube, then add the pUC19 template.</span></label></li><li><label><input type="checkbox" data-key="step-1-3"><span>Run the program below: 64 °C annealing and 60 s extension for a 2662 bp product.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>pUC19 backbone PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.75</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="program"><figcaption>pUC19 backbone PCR <span class="muted">· 32 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20</td></tr><tr><td>Anneal</td><td class="num">64 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>One band at 2662 bp.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the pUC19 template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>20 cycles, which is the fewest NEB finds enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.</li><li>The primers carry a BbsI site pointing back into the part, so cutting the amplicon leaves TGGC and ATGA.</li></ul></div>
+</section>
+<section class="step" id="step-2">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-2"><span class="step-n">2</span><span>Amplify GFP</span></label></h2>
+<p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-2-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-2-2"><span>Mix the master mix and put it in each tube, then add the GFP template.</span></label></li><li><label><input type="checkbox" data-key="step-2-3"><span>Run the program below: 63 °C annealing and 20 s extension for a 749 bp product.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.75</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="program"><figcaption>GFP PCR <span class="muted">· 19 min 10 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20</td></tr><tr><td>Anneal</td><td class="num">63 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>One band at 749 bp.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the GFP template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>20 cycles, which is the fewest NEB finds enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.</li><li>The primers carry a BbsI site pointing back into the part, so cutting the amplicon leaves ATGA and TGGC.</li></ul></div>
+</section>
+<section class="step" id="step-3">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-3"><span class="step-n">3</span><span>Check the PCRs on a gel</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-3-1"><span>Pour a 1% agarose gel.</span></label></li><li><label><input type="checkbox" data-key="step-3-2"><span>Load 5 µL of each reaction beside the ladder.</span></label></li><li><label><input type="checkbox" data-key="step-3-3"><span>Run until the dye front is two thirds down the gel.</span></label></li></ol>
+<div class="expected"><h3>Expected result</h3><ul><li>pUC19 backbone: one band at 2662 bp.</li><li>GFP: one band at 749 bp.</li></ul><figure class="gel"><figcaption>PCR products</figcaption><svg class="gel-image" viewBox="0 0 202 276" role="img" aria-label="PCR products"><rect class="gel-bg" x="46" y="22" width="154" height="252" rx="6"/><text class="size" x="41" y="51.5">10002</text><text class="size" x="41" y="61.7">8001</text><text class="size" x="41" y="74.8">6001</text><text class="size" x="41" y="93.3">4001</text><text class="size" x="41" y="106.4">3001</text><text class="size" x="41" y="124.5">2017</text><text class="size" x="41" y="137.5">1517</text><text class="size" x="41" y="148.2">1200</text><text class="size" x="41" y="161.3">900</text><text class="size" x="41" y="172.8">700</text><text class="size" x="41" y="188.1">500</text><text class="size" x="41" y="198.3">400</text><text class="size" x="41" y="211.4">300</text><text class="size" x="41" y="229.9">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 1 kb Plus DNA Ladder (N3200)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="10002" x="59" y="46.0" width="32" height="4" rx="1.5"><title>10002 bp</title></rect><rect class="band" data-bp="8001" x="59" y="56.2" width="32" height="4" rx="1.5"><title>8001 bp</title></rect><rect class="band" data-bp="6001" x="59" y="69.3" width="32" height="4" rx="1.5"><title>6001 bp</title></rect><rect class="band" data-bp="5001" x="59" y="77.6" width="32" height="4" rx="1.5"><title>5001 bp</title></rect><rect class="band" data-bp="4001" x="59" y="87.8" width="32" height="4" rx="1.5"><title>4001 bp</title></rect><rect class="band" data-bp="3001" x="59" y="100.9" width="32" height="4" rx="1.5"><title>3001 bp</title></rect><rect class="band" data-bp="2017" x="59" y="119.0" width="32" height="4" rx="1.5"><title>2017 bp</title></rect><rect class="band" data-bp="1517" x="59" y="132.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="142.7" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="151.0" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="155.8" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="161.2" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="167.3" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="174.3" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="182.6" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="192.8" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="205.9" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="224.4" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="pUC19 backbone"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="2662" x="107" y="106.4" width="32" height="4" rx="1.5"><title>2662 bp</title></rect></g><g class="lane" data-lane="GFP"><text class="lane-mark" x="171.0" y="14">2</text><rect class="well" x="152" y="30" width="38" height="6"/><rect class="band" data-bp="749" x="155" y="164.2" width="32" height="4" rx="1.5"><title>749 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 1 kb Plus DNA Ladder (N3200)</li><li><strong>1</strong> pUC19 backbone: 2662 bp</li><li><strong>2</strong> GFP: 749 bp</li></ol></figure></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>A smear or an extra band</dt><dd>Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.</dd></dl></div>
+</section>
+<section class="step" id="step-4">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-4"><span class="step-n">4</span><span>Digest the plasmid template with DpnI</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-4-1"><span>Add 20 units of DpnI to the pUC19 backbone PCR and mix.</span></label></li><li><label><input type="checkbox" data-key="step-4-2"><span>Incubate at 37 °C for 60 minutes.</span></label></li></ol>
+<div class="timers"><button type="button" class="timer" data-seconds="3600"><span class="timer-label">DpnI digest</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
+<div class="expected"><h3>Expected result</h3><ul><li>Nothing visible. The digest shows up later as fewer colonies carrying the template plasmid.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>Many colonies on the no-insert control</dt><dd>The template survived: digest longer, or use more DpnI.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (15 Dam sites) and leaves the PCR product, which carries no methylation.</li><li>This step is not in NEB&#x27;s Golden Gate protocol; the incubation is this package&#x27;s choice.</li></ul></div>
+</section>
+<section class="step" id="step-5">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-5"><span class="step-n">5</span><span>Purify every amplicon</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-5-1"><span>Run each reaction over a spin column and elute in the smallest volume the kit allows.</span></label></li></ol>
+<div class="expected"><h3>Expected result</h3><ul><li>Clean DNA, free of polymerase, primers and dNTPs.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>Low recovery</dt><dd>Elute twice through the same column, or pool two reactions before purifying.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>NEB asks for purified amplicons: polymerase carried over from the PCR fills in the four-base overhangs, which blunts the ends and mis-assembles them.</li></ul></div>
+</section>
+<section class="step" id="step-6">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-6"><span class="step-n">6</span><span>Measure every concentration</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-6-1"><span>Measure each purified amplicon by A260 or with a fluorometer.</span></label></li><li><label><input type="checkbox" data-key="step-6-2"><span>Work out the volume that carries the picomoles the next table asks for.</span></label></li></ol>
+<div class="expected"><h3>Expected result</h3><ul><li>pUC19 backbone: 0.05 pmol is 81.98 ng, so 82 ng/µL or more fits in 1 µL.</li><li>GFP: 0.05 pmol is 23.07 ng, so 23 ng/µL or more fits in 1 µL.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>Too dilute to fit in the reaction</dt><dd>Concentrate the amplicon, or scale the reaction up.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>Picomoles, not nanograms: the shorter fragment weighs less at the same molar ratio. Mass to moles here is NEBioCalculator&#x27;s 36.04 + 615.94 per base pair, which is about 5% off the 650 Da per base pair of NEB&#x27;s manuals.</li></ul></div>
+</section>
+<section class="step" id="step-7">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-7"><span class="step-n">7</span><span>Set up the Golden Gate reaction</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-7-1"><span>Thaw the master mix on ice and mix it well; it is viscous.</span></label></li><li><label><input type="checkbox" data-key="step-7-2"><span>Pipette the DNA into the tube first, then the rest.</span></label></li><li><label><input type="checkbox" data-key="step-7-3"><span>Mix gently and spin down.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>Golden Gate assembly, NEBridge Ligase Master Mix (M1100)</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-7-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>pUC19 backbone</td><td></td><td>0.05 pmol (81.98 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>GFP</td><td></td><td>0.05 pmol (23.07 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>NEBridge Ligase Master Mix</td><td>3X</td><td>1X</td><td class="num">5</td><td class="num mix" data-ul="5.0">5.5</td></tr><tr><td>BbsI-HF (R3539)</td><td>20 U/µL</td><td>20 units</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 15 µL</td><td class="num">7</td><td class="num mix" data-ul="7.0">7.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">15</td><td class="num mix" data-ul="13.0">14.3</td></tr></tfoot></table></div><p class="dispense">Put 13 µL of mix in each tube, then add 1 µL pUC19 backbone, 1 µL GFP.</p></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>A 15 µL reaction holding every fragment.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>The DNA does not fit the reaction volume</dt><dd>Concentrate the fragments, or scale the whole reaction up.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>The volumes above assume the concentrations measured in the step before; pipette the volume that gives the picomoles, and make the difference up with water.</li></ul></div>
+</section>
+<section class="step" id="step-8">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-8"><span class="step-n">8</span><span>Run the Golden Gate program</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-8-1"><span>Put the tube in the thermocycler and run the program below.</span></label></li></ol>
+<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 20 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Assembly</td><td class="num">37 °C</td><td class="num">15 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<figure class="program"><figcaption>BbsI heat inactivation <span class="muted">· 20 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">65 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.</li><li>The product carries ATGA at 395, joining pUC19 backbone to GFP.</li><li>The product carries TGGC at 1112, joining GFP to pUC19 backbone.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>Mostly empty vector later</dt><dd>Keep the 60 °C soak, and check the template was digested with DpnI.</dd><dt>Few colonies later</dt><dd>Raise the cycle count, or plate more of the outgrowth.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>Junction positions are 0-based, on the product.</li></ul></div>
+</section>
+<section class="step" id="step-9">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-9"><span class="step-n">9</span><span>Transform and plate</span></label></h2>
+<p class="caution"><strong>Caution:</strong> Competent cells die if they warm up; keep them on ice until the shock.</p>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-9-1"><span>Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-2"><span>Add 2 µL of the assembly and flick the tube four or five times.</span></label></li><li><label><input type="checkbox" data-key="step-9-3"><span>Hold on ice for 30 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-4"><span>Heat shock at 42 °C for 30 seconds.</span></label></li><li><label><input type="checkbox" data-key="step-9-5"><span>Return to ice for 5 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-6"><span>Add 950 µL of outgrowth medium and shake at 37 °C for 60 minutes at 250 rpm.</span></label></li><li><label><input type="checkbox" data-key="step-9-7"><span>Spread 50 µL of a 1:5 dilution on a warmed plate and grow overnight at 37 °C.</span></label></li></ol>
+<div class="timers"><button type="button" class="timer" data-seconds="1800"><span class="timer-label">On ice</span><span class="timer-time">30:00</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-seconds="30"><span class="timer-label">Heat shock</span><span class="timer-time">0:30</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-seconds="3600"><span class="timer-label">Outgrowth</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
+<div class="expected"><h3>Expected result</h3><ul><li>Hundreds of colonies; NEB counts about 687 correct ones from a single-insert assembly with 2.5 µL of the outgrowth plated.</li><li>Correct clones are white and empty vector is blue: the insertion interrupts lacZα, which is then not there to complete the host&#x27;s own.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>No colonies</dt><dd>Check the antibiotic and the cells&#x27; efficiency, and plate the rest of the outgrowth.</dd><dt>A lawn</dt><dd>Plate a smaller volume or a greater dilution next time.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>The plate reads colour only with an alpha-complementing host, such as NEB 5-alpha Competent E. coli (C2987). A host that cannot complement gives white colonies whatever the clone carries.</li><li>The clone is not expected to make GFP: it reads on the opposite strand from lac promoter and no ribosome binding site is annotated ahead of it.</li></ul></div>
+</section>
+<section class="step" id="step-10">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-10"><span class="step-n">10</span><span>Screen colonies by PCR</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-10-1"><span>Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.</span></label></li><li><label><input type="checkbox" data-key="step-10-2"><span>Streak the same toothpick onto a numbered plate, so the clone survives the PCR.</span></label></li><li><label><input type="checkbox" data-key="step-10-3"><span>Run the program below and load 5 µL on a 2% gel.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-10-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.75</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.65</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix" data-ul="25.0">27.5</td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
+<figure class="program"><figcaption>Colony PCR <span class="muted">· 1 h 10 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Lysis</td><td class="num">94 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">94 °C</td><td class="num">30 s</td><td class="num" rowspan="3">30</td></tr><tr><td>Anneal</td><td class="num">56.9 °C</td><td class="num">30 s</td></tr><tr><td>Extend</td><td class="num">68 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">68 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">10 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.</li><li>Correct clone: 160 bp, 838 bp.</li><li>Empty vector: 177 bp.</li></ul><figure class="gel"><figcaption>Colony PCR</figcaption><svg class="gel-image" viewBox="0 0 202 276" role="img" aria-label="Colony PCR"><rect class="gel-bg" x="46" y="22" width="154" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="Correct clone"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="838" x="107" y="91.8" width="32" height="4" rx="1.5"><title>838 bp</title></rect><rect class="band" data-bp="160" x="107" y="219.7" width="32" height="4" rx="1.5"><title>160 bp</title></rect></g><g class="lane" data-lane="Empty vector"><text class="lane-mark" x="171.0" y="14">2</text><rect class="well" x="152" y="30" width="38" height="6"/><rect class="band" data-bp="177" x="155" y="211.9" width="32" height="4" rx="1.5"><title>177 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> Correct clone: 160, 838 bp</li><li><strong>2</strong> Empty vector: 177 bp</li></ol></figure></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band in any lane</dt><dd>The colony was too much material: touch a smaller one, or dilute it.</dd><dt>Every colony reads as empty vector</dt><dd>The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>The long first step at 94 °C lyses the cells; there is no purified template.</li></ul></div>
+</section>
+<section class="step" id="step-11">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-11"><span class="step-n">11</span><span>Confirm the clone by sequencing</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-11-1"><span>Miniprep two or three colonies that read as correct.</span></label></li><li><label><input type="checkbox" data-key="step-11-2"><span>Send each with both sequencing primers.</span></label></li><li><label><input type="checkbox" data-key="step-11-3"><span>Check the read across every junction and the whole of each insert.</span></label></li></ol>
+<div class="expected"><h3>Expected result</h3><ul><li>Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.</li><li>Sequencing reverse anneals 119 bp from its own junction and has to read 836 bp to cover the far one.</li><li>The junctions read as ATGA and TGGC, and the parts match GFP.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>The read starts too close to the junction</dt><dd>Move the primer further out; the first bases after a primer are unreadable.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>Only a read across the junctions confirms the assembly, whatever the screen said.</li><li>A provider whose read is shorter than the lengths above needs a further primer inside the inserts.</li></ul></div>
+</section>
+<section class="block references">
+<h2>References</h2>
+<ol><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF</li><li>REBASE record for DpnI, which cuts G6mATC and so only methylated template <a href="http://rebase.neb.com/rebase/rebase.html" rel="noreferrer">http://rebase.neb.com/rebase/rebase.html</a></li><li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal and IPTG plate <a href="https://doi.org/10.1021/acssynbio.8b00333" rel="noreferrer">https://doi.org/10.1021/acssynbio.8b00333</a></li></ol>
+</section>
+</main>
+<script>
+(function () {
+  "use strict";
+
+  var storageKey = "liulab-protocol:" + (document.body.getAttribute("data-protocol") || "");
+
+  // Storage can be missing or throw (private windows, blocked site data); the page works without it.
+  function load() {
+    try {
+      return JSON.parse(window.localStorage.getItem(storageKey) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function save() {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (error) {
+      /* checks last for this visit only */
+    }
+  }
+
+  var state = load();
+
+  function all(selector, root) {
+    return Array.prototype.slice.call((root || document).querySelectorAll(selector));
+  }
+
+  // Check marks.
+  var boxes = all('input[type="checkbox"][data-key]');
+  var stepBoxes = all("input.done");
+  var progress = document.querySelector(".progress");
+
+  function refresh() {
+    var done = 0;
+    stepBoxes.forEach(function (box) {
+      var step = box.closest(".step");
+      if (step) step.classList.toggle("is-done", box.checked);
+      if (box.checked) done += 1;
+    });
+    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+  }
+
+  boxes.forEach(function (box) {
+    box.checked = state[box.getAttribute("data-key")] === true;
+    box.addEventListener("change", function () {
+      var key = box.getAttribute("data-key");
+      if (box.checked) state[key] = true;
+      else delete state[key];
+      save();
+      refresh();
+    });
+  });
+  refresh();
+
+  var clear = document.querySelector("button.clear");
+  if (clear) {
+    clear.addEventListener("click", function () {
+      boxes.forEach(function (box) {
+        box.checked = false;
+        delete state[box.getAttribute("data-key")];
+      });
+      save();
+      refresh();
+    });
+  }
+
+  var print = document.querySelector("button.print");
+  if (print) print.addEventListener("click", function () { window.print(); });
+
+  // Reaction tables: the same arithmetic as ReactionTable.mix_volumes.
+  function round2(value) {
+    return String(Math.round(value * 100) / 100);
+  }
+
+  all(".reaction").forEach(function (figure) {
+    var input = figure.querySelector("input.rxn-count");
+    if (!input) return;
+    var overage = parseFloat(figure.getAttribute("data-overage")) || 0;
+    var key = input.getAttribute("data-key");
+
+    function update() {
+      var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
+      var scale = reactions * (1 + overage);
+      all("[data-ul]", figure).forEach(function (cell) {
+        cell.textContent = round2(parseFloat(cell.getAttribute("data-ul")) * scale);
+      });
+      all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
+      return reactions;
+    }
+
+    if (typeof state[key] === "number") input.value = String(state[key]);
+    update();
+    input.addEventListener("input", function () {
+      state[key] = update();
+      save();
+    });
+  });
+
+  // Copy buttons.
+  function fallbackCopy(text) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    try {
+      return document.execCommand("copy");
+    } catch (error) {
+      return false;
+    } finally {
+      document.body.removeChild(area);
+    }
+  }
+
+  function flash(button, label) {
+    var original = button.getAttribute("data-label") || button.textContent;
+    button.setAttribute("data-label", original);
+    button.textContent = label;
+    button.classList.add("is-copied");
+    window.setTimeout(function () {
+      button.textContent = original;
+      button.classList.remove("is-copied");
+    }, 1400);
+  }
+
+  all("button.copy").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var text = button.getAttribute("data-copy") || "";
+      var done = function () { flash(button, "Copied"); };
+      var failed = function () { flash(button, fallbackCopy(text) ? "Copied" : "Copy failed"); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, failed);
+      } else {
+        failed();
+      }
+    });
+  });
+
+  // Timers.
+  function clock(seconds) {
+    var s = Math.max(0, Math.round(seconds));
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var rest = String(s % 60).padStart(2, "0");
+    return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
+  }
+
+  function alarm() {
+    try {
+      var Context = window.AudioContext || window.webkitAudioContext;
+      var context = new Context();
+      [0, 0.35, 0.7].forEach(function (offset) {
+        var tone = context.createOscillator();
+        var gain = context.createGain();
+        tone.frequency.value = 880;
+        gain.gain.value = 0.15;
+        tone.connect(gain);
+        gain.connect(context.destination);
+        tone.start(context.currentTime + offset);
+        tone.stop(context.currentTime + offset + 0.2);
+      });
+    } catch (error) {
+      /* no sound available */
+    }
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+
+  all("button.timer").forEach(function (button) {
+    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+    var left = total;
+    var end = 0;
+    var handle = null;
+    var time = button.querySelector(".timer-time");
+    var action = button.querySelector(".timer-action");
+
+    function show(label) {
+      time.textContent = clock(left);
+      action.textContent = label;
+    }
+
+    function stop() {
+      window.clearInterval(handle);
+      handle = null;
+      button.classList.remove("is-running");
+    }
+
+    function tick() {
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left <= 0) {
+        stop();
+        left = 0;
+        button.classList.add("is-finished");
+        show("Reset");
+        alarm();
+      } else {
+        show("Pause");
+      }
+    }
+
+    button.addEventListener("click", function () {
+      if (handle !== null) {
+        stop();
+        show("Resume");
+      } else if (left <= 0) {
+        left = total;
+        button.classList.remove("is-finished");
+        show("Start");
+      } else {
+        end = Date.now() + left * 1000;
+        handle = window.setInterval(tick, 250);
+        button.classList.add("is-running");
+        show("Pause");
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

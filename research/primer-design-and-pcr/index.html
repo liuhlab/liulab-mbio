@@ -1,0 +1,2540 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/primer-design-and-pcr/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Primer design, Tm calculation and colony PCR validation - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#primer-design-tm-calculation-and-colony-pcr-validation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Primer design, Tm calculation and colony PCR validation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sources-and-how-they-were-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources and how they were read
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-tm-calculation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Tm calculation
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Tm calculation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-santalucia-1998-nearest-neighbour-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.1 SantaLucia 1998 nearest-neighbour model
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-salt-corrections-for-pcr-buffers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.2 Salt corrections for PCR buffers
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-primer3-py-231-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.3 primer3-py 2.3.1 API
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-reproducing-the-neb-tm-calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.4 Reproducing the NEB Tm Calculator
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-annealing-temperature" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Annealing temperature
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Annealing temperature">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-rules-in-the-neb-calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 Rules in the NEB calculator
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-what-the-manuals-say" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 What the manuals say
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-5-tails" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 5′ tails
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-two-step-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 Two-step PCR
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cycling" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Cycling
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Cycling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-standard-programs-and-extension-rates" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 Standard programs and extension rates
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-colony-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 Colony PCR
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-primer-checks-and-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Primer checks and thresholds
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Validation
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-expected-colony-pcr-bands" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 Expected colony PCR bands
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-smoke-test-numbers-puc19-fixture" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.2 Smoke-test numbers (pUC19 fixture)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-sanger-read-geometry-and-primer-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Sanger read geometry and primer placement
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-gels-and-quantities" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Gels and quantities
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Gels and quantities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-agarose-percentage-by-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Agarose percentage by size
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-neb-ladders" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 NEB ladders
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-ng-pmol" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 ng ↔ pmol
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implications-for-this-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Implications for this package
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implications for this package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-8-primer-design-and-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        For #8, primer design and evaluation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-13-bench-numbers-and-colony-pcr-14-protocol-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        For #13, bench numbers and colony PCR; #14, protocol skill
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open questions
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="primer-design-tm-calculation-and-colony-pcr-validation">Primer design, Tm calculation and colony PCR validation<a class="headerlink" href="#primer-design-tm-calculation-and-colony-pcr-validation" title="Permanent link">&para;</a></h1>
+<p>This note answers the questions in #5 (part of #1). It feeds primer design and evaluation (#8), bench
+numbers and colony PCR validation (#13), and the protocol skill (#14). Everything was retrieved on
+2026-09-12 unless a capture date is given. A value taken from an archived capture or a third-party
+copy says so where it is used.</p>
+<h2 id="sources-and-how-they-were-read">Sources and how they were read<a class="headerlink" href="#sources-and-how-they-were-read" title="Permanent link">&para;</a></h2>
+<p><code>www.neb.com</code> HTML pages, and most of its PDFs, answer scripts and a headless browser with HTTP 403 or
+a bot check. NEB material therefore came by these routes:</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>What it gave</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tmcalculator.neb.com</code>, rendered in headless Chrome (app version 1.17.0)</td>
+<td>Help page text; app script <code>scripts/main-690de58338.js</code> (Ta rules, salt code, default primer concentration)</td>
+</tr>
+<tr>
+<td>NEB Tm API <code>https://tmapi.neb.com/tm</code> (API version 0.19.0), called with curl</td>
+<td>Live Tm and Ta for test primers; product codes from <code>/docs/productcodes</code></td>
+</tr>
+<tr>
+<td>Wayback Machine raw captures</td>
+<td><code>tmcalculator.neb.com/data/tmcalculatordata.json</code> (captured 2023-10-09); 1 kb Plus DNA Ladder page (2026-03-07); 100 bp DNA Ladder page (2025-10-31); Q5 M0491 protocol page (2024-08-04); Agarose Gel Resolution table (2024-09-18); Nucleic Acid Data page (2024-04-20); pUC19 sequencing-primer FAQ (2025-09-10); NEBioCalculator script <code>scripts/main-6f3020c533.js</code> (2026-08-28)</td>
+</tr>
+<tr>
+<td>NEB PDFs at URLs that search engines index</td>
+<td>Q5 High-Fidelity PCR Kit manual E0555 (version 5.0, 7/25); Phusion High-Fidelity PCR Kit manual E0553; Gibson Assembly Master Mix manual E2611/E5510 (version 3.0, 1/26); application note "Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes" (Y. Xu, 11/13); application note "Universal Annealing Temperature in PCR" (06/26); product specification N0550</td>
+</tr>
+<tr>
+<td>NEB-authored protocols on protocols.io</td>
+<td>OneTaq M0480, version 2 (2022-02-21, doi:10.17504/protocols.io.bd24i8gw); Taq M0273, version 1 (2015-01-29, doi:10.17504/protocols.io.ch7t9m)</td>
+</tr>
+<tr>
+<td>NEB product specification PDFs, <code>https://www.neb.com/-/media/catalog/specifications/&lt;r&gt;/&lt;n&gt;/&lt;cat&gt;s_l_v&lt;N&gt;.pdf</code>, with plain curl</td>
+<td>1 kb Plus (PS-N3200S/L v2.0), 100 bp ladder (PS-N3231S/L v1.0), Q5 (PS-M0491S/L v2.0), Quick-Load Purple 1 kb Plus (PS-N0550S/L v2.0). These carry release criteria and storage conditions, not band tables</td>
+</tr>
+<tr>
+<td>Third-party copy</td>
+<td>100 bp DNA Ladder datasheet, lot 0951209, hosted by genexpress.cl; it agrees with the archived NEB page</td>
+</tr>
+</tbody>
+</table>
+<p>primer3 and primer3-py were read at source: libnano/primer3-py tag <code>v2.3.1</code> (<code>primer3/bindings.py</code>,
+<code>primer3/thermoanalysis.pyx</code>, <code>primer3/argdefaults.py</code> and the bundled <code>primer3/src/libprimer3</code>, which
+its <code>ABOUT.txt</code> says is "derived from the Primer 2.6.1 source"), and the primer3 manual
+<code>src/primer3_manual.htm</code> at primer3-org/primer3 tag <code>v2.6.1</code>. primer3-py 2.3.1 (bioconda, Python 3.13)
+was also run, in a throwaway <code>pixi exec</code> environment that was not added to the project. Every
+primer3-py number below comes from that run.</p>
+<p>Not read: the Owczarzy 2004 and 2008 full texts (paywalled). Their abstracts come from PubMed, and
+their coefficients from two independent implementations (primer3 C source, NEB calculator script)
+that agree with each other.</p>
+<h2 id="1-tm-calculation">1. Tm calculation<a class="headerlink" href="#1-tm-calculation" title="Permanent link">&para;</a></h2>
+<h3 id="11-santalucia-1998-nearest-neighbour-model">1.1 SantaLucia 1998 nearest-neighbour model<a class="headerlink" href="#11-santalucia-1998-nearest-neighbour-model" title="Permanent link">&para;</a></h3>
+<p>SantaLucia J Jr (1998) "A unified view of polymer, dumbbell, and oligonucleotide DNA nearest-neighbor
+thermodynamics", PNAS 95:1460–1465, doi:10.1073/pnas.95.4.1460. Unified parameters (Table 2, 1 M
+NaCl):</p>
+<table>
+<thead>
+<tr>
+<th>Stack</th>
+<th>ΔH° (kcal/mol)</th>
+<th>ΔS° (cal/K·mol)</th>
+<th>ΔG°37 (kcal/mol)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AA/TT</td>
+<td>−7.9</td>
+<td>−22.2</td>
+<td>−1.00</td>
+</tr>
+<tr>
+<td>AT/TA</td>
+<td>−7.2</td>
+<td>−20.4</td>
+<td>−0.88</td>
+</tr>
+<tr>
+<td>TA/AT</td>
+<td>−7.2</td>
+<td>−21.3</td>
+<td>−0.58</td>
+</tr>
+<tr>
+<td>CA/GT</td>
+<td>−8.5</td>
+<td>−22.7</td>
+<td>−1.45</td>
+</tr>
+<tr>
+<td>GT/CA</td>
+<td>−8.4</td>
+<td>−22.4</td>
+<td>−1.44</td>
+</tr>
+<tr>
+<td>CT/GA</td>
+<td>−7.8</td>
+<td>−21.0</td>
+<td>−1.28</td>
+</tr>
+<tr>
+<td>GA/CT</td>
+<td>−8.2</td>
+<td>−22.2</td>
+<td>−1.30</td>
+</tr>
+<tr>
+<td>CG/GC</td>
+<td>−10.6</td>
+<td>−27.2</td>
+<td>−2.17</td>
+</tr>
+<tr>
+<td>GC/CG</td>
+<td>−9.8</td>
+<td>−24.4</td>
+<td>−2.24</td>
+</tr>
+<tr>
+<td>GG/CC</td>
+<td>−8.0</td>
+<td>−19.9</td>
+<td>−1.84</td>
+</tr>
+<tr>
+<td>Initiation, terminal G·C</td>
+<td>0.1</td>
+<td>−2.8</td>
+<td>0.98</td>
+</tr>
+<tr>
+<td>Initiation, terminal A·T</td>
+<td>2.3</td>
+<td>4.1</td>
+<td>1.03</td>
+</tr>
+<tr>
+<td>Symmetry correction</td>
+<td>0</td>
+<td>−1.4</td>
+<td>0.43 (computed as −310.15 K × ΔS°)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Both primer3 (<code>oligotm.c</code>) and the NEB calculator script add the initiation term once for each end,
+  choosing the A·T or G·C row by the terminal base.</li>
+<li>Duplex Tm: <code>Tm = ΔH° / (ΔS° + R ln(CT/x))</code>, R = 1.987 cal/(K·mol), CT = total strand concentration,
+  x = 4 for two non-self-complementary strands at equal concentration, x = 1 for a self-complementary
+  strand.</li>
+<li>Salt, for oligomers: <code>ΔS°[Na⁺] = ΔS°(1 M NaCl) + 0.368 × N × ln[Na⁺]</code>, N = total phosphates in the
+  duplex divided by 2; the matching ΔG°37 coefficient is −0.114. primer3 codes N as length − 1:
+  <code>delta_S + 0.368 * (len - 1) * log(K_mM / 1000.0)</code>.</li>
+<li>The paper covers Na⁺ only. It has no Mg²⁺ treatment.</li>
+</ul>
+<h3 id="12-salt-corrections-for-pcr-buffers">1.2 Salt corrections for PCR buffers<a class="headerlink" href="#12-salt-corrections-for-pcr-buffers" title="Permanent link">&para;</a></h3>
+<p>Concentrations inside a logarithm are in mol/L unless marked mM.</p>
+<p><strong>Divalent-to-monovalent equivalent.</strong> von Ahsen N, Wittwer CT, Schütz E (2001) Clin Chem
+47:1956–1961, as given in the primer3 manual under <code>PRIMER_SALT_DIVALENT</code> and coded in
+<code>divalent_to_monovalent</code>:</p>
+<div class="highlight"><pre><span></span><code>[Mon]eq (mM) = [Mon] (mM) + 120 × sqrt([Mg2+] − [dNTP])   (mM inside the root)
+if [dNTP] ≥ [Mg2+], the divalent term is dropped
+</code></pre></div>
+<p>primer3 applies it in its <code>schildkraut</code> and <code>santalucia</code> salt modes, to primer Tm, product Tm,
+hairpins, dimers and template mispriming.</p>
+<p><strong>Schildkraut and Lifson (1965)</strong>, Biopolymers 3:195–208: <code>Tm = Tm(1 M) + 16.6 × log10([Mon])</code>.</p>
+<p><strong>Owczarzy et al. (2004)</strong>, "Effects of sodium ions on DNA duplex oligomers: improved predictions of
+melting temperatures", Biochemistry 43:3537–3554, doi:10.1021/bi034621r, PMID 15035624. The abstract
+reports 92 duplexes at 69 mM–1.02 M Na⁺, a quadratic dependence on ln[Na⁺], an average error of
+1.6 °C on an independent set, and a correction that depends on G·C fraction but not on length or
+DNA concentration. Eq. 22, as coded in primer3 and in the NEB script (Tm in K):</p>
+<div class="highlight"><pre><span></span><code>1/Tm = 1/Tm(1 M) + (4.29 × fGC − 3.95) × 1e-5 × ln[Na+] + 9.40e-6 × (ln[Na+])^2
+</code></pre></div>
+<p><strong>Owczarzy et al. (2008)</strong>, "Predicting stability of DNA duplexes in solutions containing magnesium
+and monovalent cations", Biochemistry 47:5336–5353, doi:10.1021/bi702363u, PMID 18422348. From the
+abstract: "If the concentration ratio of [Mg (2+)] (0.5)/[Mon (+)] is less than 0.22 M (-1/2),
+monovalent ions (K (+), Na (+)) are dominant. Effects of magnesium ions dominate and determine duplex
+stability at higher ratios. Typical reaction conditions for PCR and DNA sequencing (1.5-5 mM magnesium
+and 20-100 mM monovalent cations) fall within this range."</p>
+<p>Eq. 16, as coded in primer3 <code>oligotm.c</code> and in the NEB script (the same coefficients in both):</p>
+<div class="highlight"><pre><span></span><code>R = sqrt([Mg2+]) / [Mon+]
+R &lt; 0.22        -&gt; use Eq. 22 above
+R ≥ 0.22        -&gt; 1/Tm = 1/Tm(1 M) + a + b·ln[Mg] + fGC·(c + d·ln[Mg])
+                                   + (e + f·ln[Mg] + g·(ln[Mg])^2) / (2·(N − 1))
+a = 3.92e-5   b = −9.11e-6   c = 6.26e-5   d = 1.42e-5
+e = −4.82e-4  f = 5.25e-4    g = 8.31e-5
+0.22 ≤ R &lt; 6    -&gt; a = 3.92e-5 × (0.843 − 0.352 · sqrt[Mon] · ln[Mon])
+                   d = 1.42e-5 × (1.279 − 4.03e-3 · ln[Mon] − 8.03e-3 · (ln[Mon])^2)
+                   g = 8.31e-5 × (0.486 − 0.258 · ln[Mon] + 5.25e-3 · (ln[Mon])^3)
+</code></pre></div>
+<p>primer3 uses free Mg²⁺ = [Mg²⁺] − [dNTP], set to 1e-11 M when dNTP ≥ Mg²⁺, and sets R = 6 when
+[Mon] = 0.</p>
+<p><strong>Finding: primer3 drops the length term of Eq. 16.</strong> <code>oligotm.c</code> writes the term as
+<code>(1/(2 * (len - 1))) * (e + (f * log(free_divalent)) + g * (pow((log(free_divalent)),2)))</code>. <code>len</code> is
+an <code>int</code>, so <code>1/(2 * (len - 1))</code> is integer division and is 0 for every oligo. The same line is in
+upstream primer3 <code>main</code> (commit 345cba9, 2026-08-02, <code>src/oligotm.c</code> line 518) and in the copy
+bundled with primer3-py 2.3.1. The NEB script writes <code>.5/(this.wseq.length-1)</code> and keeps the term.
+Checked with primer3-py 2.3.1 at 50 mM K⁺, 2 mM Mg²⁺, 0.2 mM dNTP, 500 nM, <code>owczarzy</code> (R = 0.85):</p>
+<table>
+<thead>
+<tr>
+<th>Primer</th>
+<th>Length</th>
+<th>primer3-py</th>
+<th>Eq. 16 with length term</th>
+<th>Eq. 16 without</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GTAAAACGACGGCCAGT</td>
+<td>17</td>
+<td>58.925</td>
+<td>59.236</td>
+<td>58.925</td>
+</tr>
+<tr>
+<td>CGCCAGGGTTTTCCCAGTCACGACG</td>
+<td>25</td>
+<td>73.363</td>
+<td>73.588</td>
+<td>73.363</td>
+</tr>
+<tr>
+<td>ATGAGTAAAGGAGAAGAACTTTTC</td>
+<td>24</td>
+<td>57.616</td>
+<td>57.831</td>
+<td>57.616</td>
+</tr>
+</tbody>
+</table>
+<p>So primer3's <code>owczarzy</code> mode reads 0.2–0.3 °C low whenever R ≥ 0.22. It does not affect
+<code>santalucia</code> or <code>schildkraut</code>, or <code>owczarzy</code> with <code>dv_conc=0</code>.</p>
+<h3 id="13-primer3-py-231-api">1.3 primer3-py 2.3.1 API<a class="headerlink" href="#13-primer3-py-231-api" title="Permanent link">&para;</a></h3>
+<p>Signatures, introspected from the installed build:</p>
+<div class="highlight"><pre><span></span><code><span class="n">calc_tm</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">mv_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dv_conc</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">dntp_conc</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">dna_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dmso_conc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">dmso_fact</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">formamide_conc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">annealing_temp_c</span><span class="o">=-</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">max_nn_length</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">tm_method</span><span class="o">=</span><span class="s1">'santalucia'</span><span class="p">,</span> <span class="n">salt_corrections_method</span><span class="o">=</span><span class="s1">'santalucia'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+<span class="n">calc_hairpin</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">mv_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dv_conc</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">dntp_conc</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">dna_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">temp_c</span><span class="o">=</span><span class="mf">37.0</span><span class="p">,</span>
+             <span class="n">max_loop</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">output_structure</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ThermoResult</span>
+<span class="n">calc_homodimer</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">mv_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dv_conc</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">dntp_conc</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">dna_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">temp_c</span><span class="o">=</span><span class="mf">37.0</span><span class="p">,</span>
+               <span class="n">max_loop</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">output_structure</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ThermoResult</span>
+<span class="n">calc_heterodimer</span><span class="p">(</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">,</span> <span class="n">mv_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dv_conc</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">dntp_conc</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">dna_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+                 <span class="n">temp_c</span><span class="o">=</span><span class="mf">37.0</span><span class="p">,</span> <span class="n">max_loop</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">output_structure</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ThermoResult</span>
+<span class="n">calc_end_stability</span><span class="p">(</span><span class="n">seq1</span><span class="p">,</span> <span class="n">seq2</span><span class="p">,</span> <span class="n">mv_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dv_conc</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">dntp_conc</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">dna_conc</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+                   <span class="n">temp_c</span><span class="o">=</span><span class="mf">37.0</span><span class="p">,</span> <span class="n">max_loop</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ThermoResult</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Unit and meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mv_conc</code></td>
+<td>mM monovalent cations (primer3 <code>PRIMER_SALT_MONOVALENT</code>, "usually KCl")</td>
+</tr>
+<tr>
+<td><code>dv_conc</code></td>
+<td>mM divalent cations (<code>PRIMER_SALT_DIVALENT</code>)</td>
+</tr>
+<tr>
+<td><code>dntp_conc</code></td>
+<td>mM, sum of all four dNTPs; the manual's example: 0.2 mM each = 0.8</td>
+</tr>
+<tr>
+<td><code>dna_conc</code></td>
+<td>nM of each annealing oligo; primer3 uses CT/4 in the Tm equation</td>
+</tr>
+<tr>
+<td><code>temp_c</code></td>
+<td>°C at which ΔG is reported</td>
+</tr>
+<tr>
+<td><code>max_loop</code></td>
+<td>largest loop considered in structures</td>
+</tr>
+<tr>
+<td><code>dmso_conc</code>, <code>dmso_fact</code></td>
+<td>% DMSO, and °C subtracted per % (default 0.6)</td>
+</tr>
+<tr>
+<td><code>formamide_conc</code></td>
+<td>mol/L formamide</td>
+</tr>
+<tr>
+<td><code>annealing_temp_c</code></td>
+<td>°C; −10 means off. When positive, primer3 computes percent bound, which <code>calc_tm</code>'s float return does not expose</td>
+</tr>
+<tr>
+<td><code>max_nn_length</code></td>
+<td>longer sequences use <code>long_seq_tm</code>: <code>Tm = 81.5 + 16.6·log10([Mon]eq/1000) + 41·fGC − 600/N</code></td>
+</tr>
+<tr>
+<td><code>tm_method</code></td>
+<td><code>'santalucia'</code> (primer3 value 1, "RECOMMENDED") or <code>'breslauer'</code> (0)</td>
+</tr>
+<tr>
+<td><code>salt_corrections_method</code></td>
+<td><code>'santalucia'</code> (1, "RECOMMENDED"), <code>'owczarzy'</code> (2), <code>'schildkraut'</code> (0)</td>
+</tr>
+</tbody>
+</table>
+<p>Traps:</p>
+<ul>
+<li><code>dna_conc</code> is nM. The <code>_ThermoAnalysis</code> class docstring says "(mM)", which is wrong: <code>argdefaults.py</code>
+  and <code>bindings.py</code> say nM, and the default 50 matches primer3's <code>PRIMER_DNA_CONC</code> "(nM)".</li>
+<li>The class keyword is <code>salt_correction_method</code> (singular). <code>bindings.calc_tm</code> spells it
+  <code>salt_corrections_method</code>.</li>
+<li><code>ThermoResult.dg</code> and <code>.dh</code> are in cal/mol, <code>.ds</code> is in cal/(K·mol) and <code>.tm</code> is in °C. Divide <code>dg</code> by
+  1000 before comparing it with a kcal/mol threshold.</li>
+<li><code>ThermoResult</code> has <code>structure_found</code>, <code>tm</code>, <code>dg</code>, <code>dh</code>, <code>ds</code>, <code>ascii_structure</code>,
+  <code>ascii_structure_lines</code>, <code>check_exc()</code> and <code>todict()</code>. <code>ascii_structure</code> is filled only with
+  <code>output_structure=True</code>.</li>
+<li>Alignment types (<code>thermoanalysis.pyx</code>): homodimer and heterodimer use <code>thal_alignment_any</code>, hairpin
+  uses <code>thal_alignment_hairpin</code>, end stability uses <code>thal_alignment_end1</code> (3′ end of <code>seq1</code> anchored).
+  <code>thal_alignment_end2</code> is not exposed. primer3 itself scores pair 3′ complementarity with both END1
+  and END2 and keeps the larger (<code>libprimer3.c</code>, <code>align_thermod(s1, s2_rev, end1)</code> and <code>end2</code>).</li>
+</ul>
+<p>Worked values:</p>
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calc_tm('GTAAAACGACGGCCAGT')</code> (M13 fwd), defaults</td>
+<td>54.70 °C</td>
+</tr>
+<tr>
+<td>same, <code>salt_corrections_method='owczarzy'</code></td>
+<td>55.20 °C</td>
+</tr>
+<tr>
+<td>same, <code>salt_corrections_method='schildkraut'</code></td>
+<td>50.45 °C</td>
+</tr>
+<tr>
+<td>same, <code>dv_conc=0, dntp_conc=0, dna_conc=250</code></td>
+<td>51.67 °C</td>
+</tr>
+<tr>
+<td>same, <code>mv_conc=50, dv_conc=2.0, dntp_conc=0.2, dna_conc=500, salt_corrections_method='owczarzy'</code></td>
+<td>58.93 °C</td>
+</tr>
+<tr>
+<td><code>calc_tm('CAGGAAACAGCTATGAC')</code> (M13 rev), defaults</td>
+<td>49.10 °C</td>
+</tr>
+</tbody>
+</table>
+<p>The default value checks out by hand. ΔH° = −133.6 kcal/mol and ΔS° = −360.7 cal/(K·mol): the ten
+stacks, plus initiation for a 5′ G·C end and a 3′ A·T end. <code>[Mon]eq = 50 + 120 × sqrt(1.5 − 0.6) =
+163.84 mM</code>, <code>ΔS°salt = ΔS° + 0.368 × 16 × ln(0.16384)</code>, and
+<code>Tm = 1000·ΔH° / (ΔS°salt + 1.987 × ln(50e-9 / 4)) − 273.15 = 54.70 °C</code>.</p>
+<p>3′-anchored dimers, measured at defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Primer</th>
+<th><code>calc_homodimer</code></th>
+<th><code>calc_end_stability(p, p)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACTTACTGACTACGAATTCG</code> (GAATTC at the 3′ end)</td>
+<td>tm 25.64 °C, dg −8.44 kcal/mol</td>
+<td>tm 25.64 °C, dg −8.44 kcal/mol: same structure, 3′-anchored</td>
+</tr>
+<tr>
+<td><code>GAATTCGACTTACTGACTAC</code> (GAATTC at the 5′ end)</td>
+<td>tm −19.25 °C, dg −2.53 kcal/mol</td>
+<td>tm −102.27 °C, dg −0.54 kcal/mol: no 3′-anchored duplex</td>
+</tr>
+</tbody>
+</table>
+<p><code>calc_end_stability(seq1, seq2)</code> takes <code>seq2</code> written 5′→3′ as the strand <code>seq1</code> would anneal to:</p>
+<ul>
+<li>self-dimer: <code>(p, p)</code></li>
+<li>cross-dimer: <code>(fwd, rev)</code> and <code>(rev, fwd)</code></li>
+<li>a primer on its template: <code>(p, reverse_complement(p))</code>, which gives tm 54.61 °C for M13 fwd
+  (<code>calc_tm</code> gives 54.70 °C)</li>
+</ul>
+<h3 id="14-reproducing-the-neb-tm-calculator">1.4 Reproducing the NEB Tm Calculator<a class="headerlink" href="#14-reproducing-the-neb-tm-calculator" title="Permanent link">&para;</a></h3>
+<p>Help page text (app version 1.17.0):</p>
+<ul>
+<li>"Tm values are calculated using thermodynamic data from Santa Lucia [1] and the salt correction of
+  Owczarzy [2]. For Phusion® DNA Polymerases, the salt correction of Schildkraut [2] is used."
+  References given: SantaLucia (1998) PNAS 95:1460-5; Owczarzy et al (2004) Biochem 43:3537-54;
+  Schildkraut et al (1965) Biopolymers 3, 195-208.</li>
+<li><code>Tm = (ΔH°i + ΔH°)·1000 / (ΔS°i + ΔS° + R·ln Cp) − 273.15</code>, where "the primer concentration Cp is
+  assumed to be significantly greater (6x) than the target template concentration".</li>
+<li>Owczarzy: <code>Tm(corrected) = 1 / (1/Tm + [(4.29·fgc − 3.95)·ln(m) + 0.94·(ln(m))²]·10⁻⁵)</code>, m the
+  monovalent cation concentration.</li>
+<li>Phusion: the page shows <code>Tm + 16.6·ln(m)</code>. The script computes <code>16.6*Math.log(saltc)/Math.LN10</code>, that
+  is log10.</li>
+<li>"The calculations in the NEB Tm calculator were modified in 2016 to correct an error that was
+  decreasing the effective primer concentration to one quarter of its input value. The correction
+  raised Tm values by roughly 2°C for all polymerase reaction buffers except Phusion, which used a
+  different algorithm." In the script, the Phusion path still divides the primer concentration by 4
+  (<code>l=5,M/=4</code>).</li>
+</ul>
+<p>Buffer values from <code>tmcalculatordata.json</code> (Wayback capture 2023-10-09). The script uses each value as
+m in mM; no divalent term is set, so every product takes the Eq. 22 branch.</p>
+<table>
+<thead>
+<tr>
+<th>Buffer key</th>
+<th>m (mM)</th>
+<th>Products (API prodcode)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>q5</code></td>
+<td>150</td>
+<td>Q5 M0491 (<code>q5-0</code>), Q5 Hot Start M0493 (<code>q5hs-0</code>)</td>
+</tr>
+<tr>
+<td><code>q5mm</code></td>
+<td>150</td>
+<td>Q5 2X Master Mix M0492 (<code>q5-1</code>)</td>
+</tr>
+<tr>
+<td><code>q5u</code></td>
+<td>170</td>
+<td>Q5U Hot Start</td>
+</tr>
+<tr>
+<td><code>q5bd</code></td>
+<td>150</td>
+<td>Q5 Blood Direct</td>
+</tr>
+<tr>
+<td><code>phusion_hf</code>, <code>phusion_gc</code></td>
+<td>222</td>
+<td>Phusion M0530 HF (<code>phusion-0</code>), Phusion Master Mix M0531 (<code>phusion-4</code>)</td>
+</tr>
+<tr>
+<td><code>onetaq_std</code></td>
+<td>54</td>
+<td>OneTaq M0480 Standard (<code>onetaq-0</code>), OneTaq 2X Master Mix M0482 (<code>onetaq-2</code>)</td>
+</tr>
+<tr>
+<td><code>onetaq_gc</code></td>
+<td>80</td>
+<td>OneTaq GC buffer (<code>onetaq-1</code>); the script also sets DMSO = 5 for this buffer, so Tm drops 3 °C</td>
+</tr>
+<tr>
+<td><code>standard_taq</code></td>
+<td>55</td>
+<td>Taq M0273 (<code>taq-0</code>), Taq 2X Master Mix M0270 (<code>taqmaster-0</code>), Hot Start Taq M0495 (<code>hstaq-0</code>)</td>
+</tr>
+<tr>
+<td>others</td>
+<td>—</td>
+<td><code>thermopol</code> 40, <code>longamp</code> 100, <code>longamphs</code> 100, <code>multiplex</code> 90, <code>hemo_klentaq</code> 70, <code>crimson_taq</code> 55, <code>phusionflex_hf</code>/<code>_gc</code> 222</td>
+</tr>
+</tbody>
+</table>
+<p>The capture is still current. Fitting m to the live API on 2026-09-12, without looking at the JSON,
+returned 150 mM (Q5, 10 primers), 55 mM (Taq, 6), 54 mM (OneTaq, 4) and 222 mM (Phusion, 8), each
+with a maximum residual of 0.005 °C or less.</p>
+<p>Default primer concentration (script <code>setCt</code>): 500 nM for Q5 and Phusion, 400 nM for LongAmp, 200 nM
+otherwise. The API requires <code>conc</code>, in µM: <code>GET
+https://tmapi.neb.com/tm?seq1=…&amp;seq2=…&amp;prodcode=q5-0&amp;conc=0.5&amp;fmt=long</code>.</p>
+<p>primer3-py settings that reproduce the NEB Tm:</p>
+<table>
+<thead>
+<tr>
+<th>NEB product and primer concentration</th>
+<th>primer3-py call</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q5, 500 nM</td>
+<td><code>calc_tm(s, mv_conc=150, dv_conc=0, dntp_conc=0, dna_conc=2000, salt_corrections_method='owczarzy')</code></td>
+</tr>
+<tr>
+<td>Taq, 200 nM</td>
+<td><code>calc_tm(s, mv_conc=55, dv_conc=0, dntp_conc=0, dna_conc=800, salt_corrections_method='owczarzy')</code></td>
+</tr>
+<tr>
+<td>OneTaq Standard, 200 nM</td>
+<td><code>calc_tm(s, mv_conc=54, dv_conc=0, dntp_conc=0, dna_conc=800, salt_corrections_method='owczarzy')</code></td>
+</tr>
+<tr>
+<td>Phusion HF, 500 nM</td>
+<td><code>calc_tm(s, mv_conc=222, dv_conc=0, dntp_conc=0, dna_conc=500, salt_corrections_method='schildkraut')</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>dna_conc</code> is 4 × the primer concentration for the Owczarzy products: primer3 always applies CT/4,
+while NEB uses Cp. For Phusion NEB divides by 4 itself, so pass the real concentration. With
+<code>dv_conc=0</code>, the Eq. 16 defect in §1.2 cannot trigger.</p>
+<p>Checked, primer3-py against the live API:</p>
+<table>
+<thead>
+<tr>
+<th>Primer</th>
+<th>Product</th>
+<th>NEB API Tm</th>
+<th>primer3-py</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GTAAAACGACGGCCAGT</td>
+<td>Q5, 0.5 µM</td>
+<td>62.27</td>
+<td>62.27</td>
+</tr>
+<tr>
+<td>CAGGAAACAGCTATGAC</td>
+<td>Q5, 0.5 µM</td>
+<td>56.31</td>
+<td>56.31</td>
+</tr>
+<tr>
+<td>CGCCAGGGTTTTCCCAGTCACGACG</td>
+<td>Q5, 0.5 µM</td>
+<td>76.60</td>
+<td>76.60</td>
+</tr>
+<tr>
+<td>GTAAAACGACGGCCAGT</td>
+<td>Taq, 0.2 µM</td>
+<td>53.96</td>
+<td>53.96</td>
+</tr>
+<tr>
+<td>CAGGAAACAGCTATGAC</td>
+<td>Taq, 0.2 µM</td>
+<td>47.99</td>
+<td>47.99</td>
+</tr>
+<tr>
+<td>GTAAAACGACGGCCAGT</td>
+<td>Phusion, 0.5 µM</td>
+<td>56.57</td>
+<td>56.57</td>
+</tr>
+<tr>
+<td>CAGGAAACAGCTATGAC</td>
+<td>Phusion, 0.5 µM</td>
+<td>50.89</td>
+<td>50.89</td>
+</tr>
+<tr>
+<td>CGCCAGGGTTTTCCCAGTCACGACG</td>
+<td>Phusion, 0.5 µM</td>
+<td>71.12</td>
+<td>71.12</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-annealing-temperature">2. Annealing temperature<a class="headerlink" href="#2-annealing-temperature" title="Permanent link">&para;</a></h2>
+<h3 id="21-rules-in-the-neb-calculator">2.1 Rules in the NEB calculator<a class="headerlink" href="#21-rules-in-the-neb-calculator" title="Permanent link">&para;</a></h3>
+<p>From <code>getAnnealTemp</code> in the script. s is the lower Tm of the pair and u the length of the shorter
+primer. Ta uses the unrounded Tm and is shown to 0.1 °C (56.31 + 1 → 57.3).</p>
+<table>
+<thead>
+<tr>
+<th>Product group</th>
+<th>Ta</th>
+<th>Cap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q5, Q5 Hot Start, Q5 Blood Direct; Q5 master mixes</td>
+<td>s + 1 (when u &gt; 7)</td>
+<td>72 °C</td>
+</tr>
+<tr>
+<td>Q5U Hot Start</td>
+<td>s + 2</td>
+<td>72 °C</td>
+</tr>
+<tr>
+<td>Phusion, Phusion Hot Start Flex; Phusion master mixes</td>
+<td>0.93 × s + 7.5</td>
+<td>72 °C</td>
+</tr>
+<tr>
+<td>Taq, Hot Start Taq, OneTaq, OneTaq Hot Start, Hemo KlenTaq, EpiMark Hot Start</td>
+<td>s − 5</td>
+<td>68 °C</td>
+</tr>
+<tr>
+<td>LongAmp Taq, LongAmp Hot Start Taq</td>
+<td>s − 5</td>
+<td>65 °C</td>
+</tr>
+<tr>
+<td>Vent, Deep Vent</td>
+<td>s − 2 when u &gt; 20</td>
+<td>72 °C</td>
+</tr>
+<tr>
+<td>Other master mixes</td>
+<td>s − 5</td>
+<td>68 °C</td>
+</tr>
+</tbody>
+</table>
+<p>Warnings (<code>validateTm</code>, <code>validateInput</code>):</p>
+<ul>
+<li>Tm difference greater than 5 °C: "Tm difference is greater than the recommended limit of 5 °C."</li>
+<li>Ta below 55 °C for Q5: "The minimum recommended annealing temperature for Q5 is 55 °C." Below 60 °C
+  for Q5U. Below 45 °C otherwise: "Annealing temperature is lower than the recommended minimum of
+  45 °C."</li>
+<li>A note when Ta reaches 72 °C for Q5, Phusion, Vent and Deep Vent ("should typically not exceed
+  72°C"), or 65 °C for LongAmp.</li>
+<li>Primer concentration below 500 nM for Q5, Q5U or Phusion.</li>
+<li>Each primer must be longer than 7 nt. At most 3 ambiguous bases are allowed; Tm is then the minimum
+  over the expanded sequences.</li>
+</ul>
+<p>Live API results (2026-09-12):</p>
+<table>
+<thead>
+<tr>
+<th>Pair (lengths)</th>
+<th>Product, primer conc</th>
+<th>Tm1 / Tm2 (°C)</th>
+<th>Ta (°C)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GTAAAACGACGGCCAGT / CAGGAAACAGCTATGAC (17/17)</td>
+<td><code>q5-0</code>, 0.5 µM</td>
+<td>62.27 / 56.31</td>
+<td>57.3</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>phusion-0</code>, 0.5 µM</td>
+<td>56.57 / 50.89</td>
+<td>54.8</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>onetaq-0</code>, 0.2 µM</td>
+<td>53.82 / 47.85</td>
+<td>42.8, below-45 warning</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>taq-0</code>, 0.2 µM</td>
+<td>53.96 / 47.99</td>
+<td>43.0, below-45 warning</td>
+</tr>
+<tr>
+<td>CGCCAGGGTTTTCCCAGTCACGACG / AGCGGATAACAATTTCACACAGGAAAC (25/27)</td>
+<td><code>q5-0</code>, 0.5 µM</td>
+<td>76.60 / 67.31</td>
+<td>68.3</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>phusion-0</code>, 0.5 µM</td>
+<td>71.12 / 63.86</td>
+<td>66.9</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>taq-0</code>, 0.2 µM</td>
+<td>68.68 / 58.72</td>
+<td>53.7</td>
+</tr>
+<tr>
+<td>CGCCAGGGTTTTCCCAGTCACGACGTTG / GCGGATAACAATTTCACACAGGAAACAGCTATGAC (28/35)</td>
+<td><code>q5-0</code>, 0.5 µM</td>
+<td>77.45 / 71.73</td>
+<td>72 (capped)</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>phusion-0</code>, 0.5 µM</td>
+<td>72.52 / 68.67</td>
+<td>71.4</td>
+</tr>
+<tr>
+<td>CCCAGTCACGACGTTGTAAAACG / AGCGGATAACAATTTCACACAGG (23/23)</td>
+<td><code>onetaq-2</code>, 0.2 µM</td>
+<td>59.94 / 56.49</td>
+<td>51.5</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>taq-0</code>, 0.2 µM</td>
+<td>60.09 / 56.64</td>
+<td>51.6</td>
+</tr>
+<tr>
+<td>same</td>
+<td><code>q5-0</code>, 0.5 µM</td>
+<td>68.30 / 65.16</td>
+<td>66.2</td>
+</tr>
+</tbody>
+</table>
+<p>Unexplained: <code>taqmaster-0</code> (Taq 2X Master Mix) returned Ta 56.6 for the 23/23 pair, which is s with no
+−5. <code>taq-0</code> and <code>onetaq-2</code> returned s − 5, as the script's rules predict.</p>
+<h3 id="22-what-the-manuals-say">2.2 What the manuals say<a class="headerlink" href="#22-what-the-manuals-say" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Q5</strong> (M0491 protocol page, capture 2024-08-04; same wording in the E0555 manual): "Typically, use a
+  10–30 second annealing step at 3°C above the Tm of the lower Tm primer." The Tm Calculator help page
+  explains the gap with the calculator's own +1: "Tm values obtained from other calculators generally
+  underestimate the Tm for use with Q5. If you obtain Tm values from another calculator, we suggest
+  raising your annealing temperature to at least Tm + 3. However, for best results when using Q5, we
+  still recommend using the annealing temperature provided by the NEB Tm Calculator." The Q5
+  application note (06/26) finds a single Ta of 62 °C (M0491, M0493, M2499) or 60 °C (Q5 master mixes)
+  works for many pairs, while the per-pair optimum still gives the best yield and specificity.</li>
+<li><strong>Phusion</strong> (E0553 manual): "Typically, primers greater than 20 nucleotides in length anneal for
+  10–30 seconds at 3°C above the Tm of the lower Tm primer. If the primer length is less than 20
+  nucleotides, an annealing temperature equivalent to the Tm of the lower primer should be used." The
+  calculator uses 0.93 × s + 7.5 with its Schildkraut Tm instead.</li>
+<li><strong>OneTaq</strong> (protocols.io version 2) and <strong>Taq</strong> (version 1), same wording: "Annealing temperature is
+  based on the Tm of the primer pair and is typically 45–68°C. Annealing temperatures can be optimized
+  by doing a temperature gradient PCR starting 5°C below the calculated Tm."</li>
+<li><strong>IDT</strong> ("A practical guide for PCR and qPCR primer design", updated 2024-04-08): Ta "should be no
+  more than 5°C below the Tm of your primers".</li>
+<li><strong>primer3 manual</strong> ("General thoughts on primer binding"): the annealing temperature is "usually
+  chosen 6-10°C below the melting temperature of the primers", relative to primer3's own lower Tm
+  (50 nM, CT/4).</li>
+</ul>
+<h3 id="23-5-tails">2.3 5′ tails<a class="headerlink" href="#23-5-tails" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The calculator has no notion of a tail. It computes the Tm of whatever sequence is entered.</li>
+<li>NEB's Gibson Assembly manual (E2611/E5510) describes a primer as a 5′ overlap sequence plus a 3′
+  gene-specific sequence, and says: "The Tm of the 3´ gene-specific sequence of the primer can be
+  calculated using the Tm calculator found on the NEB website." Ta therefore comes from the
+  template-matching 3′ part.</li>
+<li>In the first cycle only the 3′ part matches the template. Strands copied from a tailed primer carry
+  the tail's complement, so later cycles can anneal the whole primer, whose Tm is higher. Measured:
+  GFP start <code>ATGAGTAAAGGAGAAGAACTTTTC</code> has Tm 54.81 °C (primer3 defaults) and 59.59 °C (NEB Q5); with
+  the 11-nt tail <code>TTGAAGACAAA</code> added, 63.05 °C and 66.24 °C.</li>
+<li>Not found in any source read: a program that runs the first cycles at the 3′-part Ta and later
+  cycles at the full-primer Ta. It is common practice but unverified here.</li>
+<li>Hairpin and dimer checks should run on the full oligo, because the tail is physically present.
+  This is inference from what the checks measure, not a quoted rule.</li>
+</ul>
+<h3 id="24-two-step-pcr">2.4 Two-step PCR<a class="headerlink" href="#24-two-step-pcr" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Q5</strong>: "When primers with annealing temperatures ≥ 72°C are used, a 2-step thermocycling protocol
+  (combining annealing and extension into one step) is possible." (M0491 protocol page, capture
+  2024-08-04). The Q5 application note (06/26) agrees: "a combined annealing and extension step at
+  72°C is recommended when primers with annealing temperatures ≥ 72°C are used". The E0555 manual
+  prints "≤ 72°C" in the same sentence, taken here as a typo. E0555's two-step program: 98 °C 30 s;
+  25–35 cycles of 98 °C 5–10 s and 72 °C 15–30 s/kb; 72 °C 2 min; hold 4–10 °C. The application
+  note's two-step table uses 20–30 s/kb.</li>
+<li><strong>Phusion</strong> (E0553): "When primers with annealing temperatures ≥ 72°C are used, a 2-step
+  thermocycling protocol is recommended." The PDF encodes the sign as U+F0B3, which is ≥ in the Symbol
+  font. Program: 98 °C 30 s; 25–35 cycles of 98 °C 5–10 s and 72 °C 15–30 s/kb; 72 °C 5–10 min; hold
+  4 °C.</li>
+<li><strong>OneTaq</strong>: "When primers with annealing temperatures of 68°C or above are used, a 2-step
+  thermocycling protocol (combining annealing and extension into one step) is possible."</li>
+<li><strong>Taq</strong>: "When primers with annealing temperatures above 65°C are used, a 2-step thermocycling
+  protocol is possible", at 65–68 °C for 1 min/kb, final extension 65–68 °C for 5 min.</li>
+<li>Q5 application note (06/26), general: "two-step thermocycling protocols are commonly recommended when
+  PCR primers have high Tm values (≥ 68°C)."</li>
+</ul>
+<h2 id="3-cycling">3. Cycling<a class="headerlink" href="#3-cycling" title="Permanent link">&para;</a></h2>
+<h3 id="31-standard-programs-and-extension-rates">3.1 Standard programs and extension rates<a class="headerlink" href="#31-standard-programs-and-extension-rates" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Q5 M0491</th>
+<th>Phusion (E0553 kit)</th>
+<th>OneTaq M0480</th>
+<th>Taq M0273</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source</td>
+<td>protocol page, capture 2024-08-04</td>
+<td>E0553 manual</td>
+<td>protocols.io v2</td>
+<td>protocols.io v1</td>
+</tr>
+<tr>
+<td>Mg²⁺ in 1X buffer</td>
+<td>2.0 mM (5X Q5 Reaction Buffer)</td>
+<td>1.5 mM (HF or GC buffer)</td>
+<td>1.8 mM Standard; 2.0 mM GC</td>
+<td>1.5 mM Standard Taq buffer</td>
+</tr>
+<tr>
+<td>dNTPs</td>
+<td>200 µM each</td>
+<td>200 µM each</td>
+<td>200 µM each</td>
+<td>200 µM each</td>
+</tr>
+<tr>
+<td>Each primer</td>
+<td>0.5 µM</td>
+<td>0.5 µM (0.2–1)</td>
+<td>0.2 µM (0.05–1)</td>
+<td>0.2 µM (0.05–1)</td>
+</tr>
+<tr>
+<td>Enzyme</td>
+<td>0.02 U/µl (1.0 U/50 µl)</td>
+<td>1.0 U/50 µl (0.5 U per 20 µl in the table)</td>
+<td>1.25 U/50 µl</td>
+<td>1.25 U/50 µl</td>
+</tr>
+<tr>
+<td>Template, 50 µl</td>
+<td>&lt; 1,000 ng; genomic 1 ng–1 µg; plasmid or viral 1 pg–10 ng</td>
+<td>&lt; 250 ng; genomic 50–250 ng; plasmid or viral 1 pg–10 ng</td>
+<td>&lt; 1,000 ng; genomic 1 ng–1 µg; plasmid or viral 1 pg–10 ng</td>
+<td>&lt; 1,000 ng; genomic 1 ng–1 µg; plasmid or viral 1 pg–1 ng</td>
+</tr>
+<tr>
+<td>Initial denaturation</td>
+<td>98 °C 30 s (up to 3 min)</td>
+<td>98 °C 30 s (up to 3 min)</td>
+<td>94 °C 30 s</td>
+<td>95 °C 30 s</td>
+</tr>
+<tr>
+<td>Cycles</td>
+<td>25–35</td>
+<td>30 in the table; 25–35 in the guidelines</td>
+<td>30 in the table; 25–35 in the guidelines</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Denaturation</td>
+<td>98 °C 5–10 s</td>
+<td>98 °C 5–10 s</td>
+<td>94 °C 15–30 s</td>
+<td>95 °C 15–30 s</td>
+</tr>
+<tr>
+<td>Annealing</td>
+<td>50–72 °C, 10–30 s</td>
+<td>45–72 °C, 10–30 s</td>
+<td>45–68 °C, 15–60 s</td>
+<td>45–68 °C, 15–60 s</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td>72 °C</td>
+<td>72 °C</td>
+<td>68 °C</td>
+<td>68 °C</td>
+</tr>
+<tr>
+<td>Final extension</td>
+<td>72 °C 2 min</td>
+<td>72 °C 5–10 min</td>
+<td>68 °C 5 min</td>
+<td>68 °C 5 min</td>
+</tr>
+<tr>
+<td>Hold</td>
+<td>4–10 °C</td>
+<td>4 °C</td>
+<td>4–10 °C</td>
+<td>4–10 °C</td>
+</tr>
+</tbody>
+</table>
+<p>Extension rates:</p>
+<table>
+<thead>
+<tr>
+<th>Polymerase</th>
+<th>Rate</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q5</td>
+<td>"20–30 seconds per kb for complex, genomic samples, but can be reduced to 10 seconds per kb for simple templates (plasmid, E. coli, etc.) or complex templates &lt; 1 kb"; 40 s/kb for cDNA or long complex templates; 40–50 s/kb for products &gt; 6 kb</td>
+<td>M0491 protocol page (capture 2024-08-04), E0555</td>
+</tr>
+<tr>
+<td>Phusion</td>
+<td>"Generally, an extension time of 15 seconds per kb can be used"; 30 s/kb for complex amplicons such as genomic DNA; 40 s/kb for cDNA</td>
+<td>E0553</td>
+</tr>
+<tr>
+<td>OneTaq</td>
+<td>"Extension times are generally 1 minute per kb"</td>
+<td>protocols.io v2</td>
+</tr>
+<tr>
+<td>Taq</td>
+<td>"Extension times are generally 1 minute per kb"</td>
+<td>protocols.io v1</td>
+</tr>
+</tbody>
+</table>
+<p>The Q5 2X Master Mix (E0555) contains 2 mM MgCl₂ and 200 µM each dNTP at 1X, with primers at 0.5 µM.</p>
+<h3 id="32-colony-pcr">3.2 Colony PCR<a class="headerlink" href="#32-colony-pcr" title="Permanent link">&para;</a></h3>
+<p>NEB application note, "Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master
+Mixes" (Y. Xu; dated 11/13, © 2018):</p>
+<ul>
+<li>Reaction (50 µl): 25 µl OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486) or the Hot Start
+  version (M0488), each primer at 200 nM, water to 50 µl. Set up the non-hot-start mix on ice; the Hot
+  Start mix can be set up at room temperature.</li>
+<li>Template: "Well-isolated bacterial colonies, ideally 1-2 mm in diameter". "Use a sterile toothpick to
+  pick up individual colonies and dip into each reaction tube. As soon as the solution looks cloudy,
+  remove the toothpick." Then keep each colony by dipping the toothpick into 3 ml medium with
+  antibiotic, or by streaking it onto another plate.</li>
+<li>Program: initial denaturation 2 minutes, then 30 cycles of 94 °C 15–30 s, 45–68 °C 15–60 s and
+  68 °C 1 min/kb, then 68 °C 5–10 min and a 10 °C hold. The initial-denaturation temperature cell is
+  garbled in the PDF (it reads "PCR Primer"), so take the temperature from the protocols below.</li>
+<li>Load 4–6 µl directly on an agarose gel. The note reports success in 18 E. coli strains and with
+  amplicons up to 10 kb.</li>
+<li>For inserts over 65% GC, the note points to the GC-buffer master mixes.</li>
+</ul>
+<p>Initial denaturation for colony PCR in the protocols:</p>
+<ul>
+<li>OneTaq: "With colony PCR, an initial 2–5 minute incubation at 94°C is recommended to lyse cells."</li>
+<li>Taq: "With colony PCR, an initial 5 minute denaturation at 95°C is recommended."</li>
+</ul>
+<p>Not found in any source read: an NEB recommendation for or against Q5 in colony PCR.</p>
+<h2 id="4-primer-checks-and-thresholds">4. Primer checks and thresholds<a class="headerlink" href="#4-primer-checks-and-thresholds" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>primer3 2.6.1 default (manual)</th>
+<th>NEB</th>
+<th>IDT</th>
+<th>Other</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Length</td>
+<td><code>PRIMER_MIN_SIZE</code> 18, <code>PRIMER_OPT_SIZE</code> 20, <code>PRIMER_MAX_SIZE</code> 27; max "cannot be larger than 35", the limit of its Tm formula</td>
+<td>"generally 20–40 nucleotides in length", tails included (Q5, Phusion, Taq manuals)</td>
+<td>18–30 bases</td>
+<td>Sanger primers 18–24 (Genewiz)</td>
+</tr>
+<tr>
+<td>GC content</td>
+<td><code>PRIMER_MIN_GC</code> 20, <code>PRIMER_MAX_GC</code> 80, <code>PRIMER_OPT_GC_PERCENT</code> 50</td>
+<td>"ideally have a GC content of 40–60%"</td>
+<td>35–65%, ideal 50% (guide); 35–80% (FAQ)</td>
+<td>Sanger 45–55% (Genewiz)</td>
+</tr>
+<tr>
+<td>GC clamp</td>
+<td><code>PRIMER_GC_CLAMP</code> 0 (off); <code>PRIMER_MAX_END_GC</code> 5 = most G or C allowed in the last five 3′ bases</td>
+<td>"Avoid GC-rich 3´ ends" (Q5 E0555 troubleshooting)</td>
+<td>—</td>
+<td>Sanger: "Have a G or C at 3′ end" (Genewiz)</td>
+</tr>
+<tr>
+<td>Runs</td>
+<td><code>PRIMER_MAX_POLY_X</code> 5 = longest mononucleotide run; N counts as the worst case</td>
+<td>—</td>
+<td>"should not contain regions of 4 or more consecutive G residues"</td>
+<td>No source read gives a dinucleotide-repeat limit</td>
+</tr>
+<tr>
+<td>Tm</td>
+<td><code>PRIMER_MIN_TM</code> 57, <code>PRIMER_OPT_TM</code> 60, <code>PRIMER_MAX_TM</code> 63</td>
+<td>Use the NEB calculator</td>
+<td>60–64 °C, ideal 62 °C</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Pair Tm difference</td>
+<td><code>PRIMER_PAIR_MAX_DIFF_TM</code> 100 (effectively off)</td>
+<td>Calculator warns above 5 °C</td>
+<td>"should not differ by more than 2°C" (guide); "less than 5°C" (FAQ)</td>
+<td>Q5 application note: "a maximum difference of 5°C"</td>
+</tr>
+<tr>
+<td>3′ end stability</td>
+<td><code>PRIMER_MAX_END_STABILITY</code> 100 (off). ΔG in kcal/mol to disrupt the last five 3′ bases; with SantaLucia 1998 parameters, 6.86 for GCGCG (most stable) to 0.86 for TATAT (most labile). The manual's Primer3Plus settings list 9.0</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Hairpin</td>
+<td><code>PRIMER_MAX_HAIRPIN_TH</code> 47.0 °C, Tm of the structure; "10 degrees lower than the default value of PRIMER_MIN_TM"</td>
+<td>—</td>
+<td>ΔG weaker (more positive) than −9.0 kcal/mol</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Self-dimer</td>
+<td><code>PRIMER_MAX_SELF_ANY_TH</code> 47.00 °C; <code>PRIMER_MAX_SELF_END_TH</code> 47.00 °C (3′-anchored). Alignment-score versions: <code>PRIMER_MAX_SELF_ANY</code> 8.00, <code>PRIMER_MAX_SELF_END</code> 3.00</td>
+<td>"Verify that primers are non-complementary, both internally and to each other"</td>
+<td>ΔG weaker than −9.0 kcal/mol</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Hetero-dimer</td>
+<td><code>PRIMER_PAIR_MAX_COMPL_ANY_TH</code> 47.00 °C; <code>PRIMER_PAIR_MAX_COMPL_END_TH</code> 47.00 °C; score version <code>PRIMER_PAIR_MAX_COMPL_END</code> 3.00</td>
+<td>as above</td>
+<td>ΔG weaker than −9.0 kcal/mol; "Avoid 3' complementarity between the two primers"</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Off-target on template</td>
+<td><code>PRIMER_MAX_TEMPLATE_MISPRIMING_TH</code> −1 (off); the manual: "47.0 would be a reasonable choice if PRIMER_MIN_TM is 57.0". Needs <code>PRIMER_THERMODYNAMIC_TEMPLATE_ALIGNMENT</code> = 1 (default 0). Pair version <code>PRIMER_PAIR_MAX_TEMPLATE_MISPRIMING_TH</code> sums both primers' ectopic Tm</td>
+<td>"Verify that primers have no additional complementary regions within the template DNA"</td>
+<td>Run BLAST for uniqueness</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: primer3 manual (tag v2.6.1); NEB Q5 E0555, Phusion E0553 and Taq M0273 manuals; IDT FAQ "How
+can I check my PCR primers using the OligoAnalyzer program…" and IDT guide (updated 2024-04-08);
+Genewiz Technical Notes page; NEB Q5 application note (06/26).</p>
+<p>Notes:</p>
+<ul>
+<li>primer3 explains why the 3′ end matters: <code>PRIMER_MAX_SELF_END</code> "tries to bind the 3'-END to a
+  identical primer … This is critical for primer quality because it allows primers use itself as a
+  target and amplify a short piece (forming a primer-dimer)."</li>
+<li>The primer3 <code>_TH</code> limits are structure Tms at primer3's own conditions (50 mM K⁺, 1.5 mM Mg²⁺,
+  0.6 mM dNTP, 50 nM). They are set 10 °C below <code>PRIMER_MIN_TM</code> 57, so they only mean something next
+  to a Tm computed the same way.</li>
+<li>IDT does not state the temperature or salt at which its −9.0 kcal/mol applies. primer3-py reports ΔG
+  at <code>temp_c</code>, 37 °C by default. The threshold is therefore approximate.</li>
+</ul>
+<h2 id="5-validation">5. Validation<a class="headerlink" href="#5-validation" title="Permanent link">&para;</a></h2>
+<h3 id="51-expected-colony-pcr-bands">5.1 Expected colony PCR bands<a class="headerlink" href="#51-expected-colony-pcr-bands" title="Permanent link">&para;</a></h3>
+<p>The general method: simulate PCR on each candidate plasmid and list every product. Primer sites are
+found on both strands, the origin is joined for circular sequences, and the size is the distance from
+the forward primer's 5′ end to the reverse primer's 5′ end. The candidates are:</p>
+<ol>
+<li>the correct product,</li>
+<li>the parental vector (uncut plasmid, or PCR template carried past DpnI),</li>
+<li>the product with the insert reversed,</li>
+<li>the linearized vector closed without insert, when that is possible.</li>
+</ol>
+<p>Symbols: <code>E</code> = empty-vector amplicon between the two vector primers; <code>D</code> = vector bases between the
+two junctions that the design removes (stuffer, dropout, or bases deleted by outward PCR); <code>I</code> = insert
+length including any bases the design adds (scar, spacer, start or stop codon).</p>
+<table>
+<thead>
+<tr>
+<th>Primer layout</th>
+<th>Correct</th>
+<th>Parental vector</th>
+<th>Insert reversed</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Both primers in the vector, flanking the site (e.g. M13 pair)</td>
+<td><code>E − D + I</code></td>
+<td><code>E</code></td>
+<td><code>E − D + I</code>, the same as correct</td>
+<td>Cannot tell orientation. Gives a band for every clone, so a failed PCR is visible</td>
+</tr>
+<tr>
+<td>Vector primer + insert primer across one junction</td>
+<td>vector primer to insert primer</td>
+<td>none</td>
+<td>none; the insert primer now points the wrong way</td>
+<td>Tells orientation. No band from a failed PCR either, so include a positive control</td>
+</tr>
+<tr>
+<td>Three primers: both vector primers + one insert primer</td>
+<td>two bands: <code>E − D + I</code> and the junction band</td>
+<td>one band <code>E</code></td>
+<td><code>E − D + I</code> plus a different-size band from the insert primer pairing with the other vector primer</td>
+<td>Tells orientation. Read sizes off the simulation rather than deriving them by hand</td>
+</tr>
+</tbody>
+</table>
+<p>Golden Gate points for #13:</p>
+<ul>
+<li>Non-palindromic, distinct overhangs make the reversed product unlikely; the simulation still lists it.</li>
+<li>The parental vector's <code>E</code> band is the main background when the vector is PCR-linearized. This is
+  why the template is digested with DpnI.</li>
+<li>On pUC19, a lacZα insert also gives white rather than blue colonies (issue #1).</li>
+</ul>
+<p>Gel sizing: keep every expected band at 100 bp or more and inside the ladder's range (§6.2). NEB's
+agarose table has no row below 0.2 kb, and NEB's 100 bp ladder page gives an optimum of 2% agarose.</p>
+<h3 id="52-smoke-test-numbers-puc19-fixture">5.2 Smoke-test numbers (pUC19 fixture)<a class="headerlink" href="#52-smoke-test-numbers-puc19-fixture" title="Permanent link">&para;</a></h3>
+<p>Primer sites located in <code>tests/data/pUC19.dna</code> (1-based, fixture features: M13 fwd 379–395, M13 rev
+465–481, MCS 396–452):</p>
+<table>
+<thead>
+<tr>
+<th>Primer</th>
+<th>Sequence 5′→3′</th>
+<th>Named by</th>
+<th>pUC19 site</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M13 fwd</td>
+<td>GTAAAACGACGGCCAGT</td>
+<td>SnapGene feature in the fixture</td>
+<td>379–395, top strand</td>
+</tr>
+<tr>
+<td>M13 Forward (−21)</td>
+<td>TGTAAAACGACGGCCAGT</td>
+<td>Addgene (content reviewed 2025-10-22)</td>
+<td>378–395, top</td>
+</tr>
+<tr>
+<td>M13F</td>
+<td>GTAAAACGACGGCCAG</td>
+<td>Genewiz free universal primers</td>
+<td>379–394, top</td>
+</tr>
+<tr>
+<td>M13 Forward (−40) / M13-40FOR</td>
+<td>GTTTTCCCAGTCACGAC</td>
+<td>Addgene / Genewiz</td>
+<td>359–375, top</td>
+</tr>
+<tr>
+<td>M13/pUC Forward</td>
+<td>CCCAGTCACGACGTTGTAAAACG</td>
+<td>Addgene</td>
+<td>364–386, top</td>
+</tr>
+<tr>
+<td>M13 rev / M13 Reverse / M13R</td>
+<td>CAGGAAACAGCTATGAC</td>
+<td>SnapGene feature / Addgene / Genewiz</td>
+<td>465–481, bottom</td>
+</tr>
+<tr>
+<td>M13/pUC Reverse</td>
+<td>AGCGGATAACAATTTCACACAGG</td>
+<td>Addgene</td>
+<td>478–500, bottom</td>
+</tr>
+<tr>
+<td>M13-48REV</td>
+<td>CGGATAACAATTTCACACAG</td>
+<td>Genewiz</td>
+<td>479–498, bottom</td>
+</tr>
+</tbody>
+</table>
+<p>The fixture also contains <code>CGCCAGGGTTTTCCCAGTCACGAC</code> (352–375, top) and <code>AACAGCTATGACCATG</code> (461–476,
+bottom). A search-engine summary named these NEB's "(−47)" and "(−24)" sequencing primers, but no NEB
+page could be read to confirm it. NEB's FAQ "What primers should I use to sequence an insert (pUC19,
+pNEB193, LITMUS)?" (capture 2025-09-10) only says they are "what most labs refer to as 'universal M13
+primers'" and points to the catalog.</p>
+<p>Empty-vector amplicons on pUC19:</p>
+<table>
+<thead>
+<tr>
+<th>Forward</th>
+<th>Reverse</th>
+<th>Empty amplicon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M13 fwd</td>
+<td>M13 rev</td>
+<td>103 bp (matches #1)</td>
+</tr>
+<tr>
+<td>M13 Forward (−21)</td>
+<td>M13 Reverse</td>
+<td>104 bp</td>
+</tr>
+<tr>
+<td>M13 fwd</td>
+<td>M13/pUC Reverse</td>
+<td>122 bp</td>
+</tr>
+<tr>
+<td>M13 Forward (−40)</td>
+<td>M13 Reverse</td>
+<td>123 bp</td>
+</tr>
+<tr>
+<td>M13/pUC Forward</td>
+<td>M13/pUC Reverse</td>
+<td>137 bp</td>
+</tr>
+<tr>
+<td>M13 Forward (−40)</td>
+<td>M13/pUC Reverse</td>
+<td>142 bp</td>
+</tr>
+</tbody>
+</table>
+<p>Worked example, for illustration only; the real <code>D</code> and <code>I</code> come from the #8/#9 design. If the 717-bp
+GFP CDS replaced exactly MCS 396–452 (<code>D</code> = 57) with no added bases, the M13 amplicon would be
+<code>103 − 57 + 717 = 763 bp</code> against 103 bp for the parental vector.</p>
+<p>The M13 17-mers give Ta 42.8 °C in OneTaq (Tm 53.82/47.85), below NEB's 45 °C minimum. The 23-mer
+M13/pUC Forward and Reverse give Ta 51.5 °C in the OneTaq 2X Master Mix, and a 137-bp empty band.</p>
+<h3 id="53-sanger-read-geometry-and-primer-placement">5.3 Sanger read geometry and primer placement<a class="headerlink" href="#53-sanger-read-geometry-and-primer-placement" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Genewiz FAQ: "We recommend designing your sequencing primers in a region that is 100 bases upstream
+  of your sequence of interest. If you do not have the luxury of having this buffer, the closest you
+  want the primer to be to your area of interest is 50-60 bases."</li>
+<li>Genewiz Technical Notes: "Approximately 18-24 bases in length", "Melting temperature (Tm) between 50
+  – 60 degrees", "GC content should be about 45 – 55%", "Have a G or C at 3′ end". The FAQ says Tm
+  56–60.</li>
+<li>Read length: no page read here states a typical high-quality read length. The Genewiz FAQ mentions
+  "a read length of between 500-1000bp" only for a low-concentration plasmid service. Unverified; ask
+  the provider.</li>
+<li>Geometry on the fixture: the M13 fwd 3′ end is at 395, the base before MCS 396. The M13 rev 3′ end
+  is 12 bases past MCS end 452, and M13-48REV's is 26 bases past. All are closer than the 50–60-base
+  minimum, so each read starts too close to its own junction. Each junction is then covered only by
+  the read from the far side, after it has crossed the whole insert. A Sanger primer needs its 3′ end
+  at least 50–60 (ideally 100) bases outside each junction, and a read must reach the far junction:
+  <code>distance to near junction + insert length + margin</code>.</li>
+</ul>
+<h2 id="6-gels-and-quantities">6. Gels and quantities<a class="headerlink" href="#6-gels-and-quantities" title="Permanent link">&para;</a></h2>
+<h3 id="61-agarose-percentage-by-size">6.1 Agarose percentage by size<a class="headerlink" href="#61-agarose-percentage-by-size" title="Permanent link">&para;</a></h3>
+<p>NEB "Agarose Gel Resolution" (capture 2024-09-18), optimum resolution for linear DNA:</p>
+<table>
+<thead>
+<tr>
+<th>% gel</th>
+<th>Range (kb)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.5</td>
+<td>1.0–30</td>
+</tr>
+<tr>
+<td>0.7</td>
+<td>0.8–12</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>0.5–10</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>0.4–7</td>
+</tr>
+<tr>
+<td>1.5</td>
+<td>0.2–3</td>
+</tr>
+</tbody>
+</table>
+<p>Also:</p>
+<ul>
+<li>Azenta/Genewiz "Sanger Quick Tips", Table 1: under 250 bp "Not Recommended"; 250–1,500 bp 2.00%;
+  300–4,000 bp 1.50%; 400–7,000 bp 1.20%; 500–9,000 bp 1.00%; 800–11,000 bp 0.75%; 1,000–30,000 bp
+  0.50%. The same guide gives about 10 ng per band as the minimum and about 150 ng per band as the
+  most.</li>
+<li>NEB ladder pages: 1 kb Plus "Recommended gel percentage range: 1-1.4%", "Optimum separation on 1.2%";
+  100 bp ladder "Recommended gel percentage range: 1.2-3%", "Optimum separation on 2%".</li>
+<li>Lee PY et al. (2012) J Vis Exp 62:e3923, doi:10.3791/3923: "most gels ranging between 0.5%-2%".</li>
+</ul>
+<h3 id="62-neb-ladders">6.2 NEB ladders<a class="headerlink" href="#62-neb-ladders" title="Permanent link">&para;</a></h3>
+<p><strong>1 kb Plus DNA Ladder, N3200</strong> (NEB page, capture 2026-03-07). Formerly the 2-Log DNA Ladder, "no
+changes to product formulation or specifications". 19 bands, 100 bp to 10 kb; "The 0.5, 1.0 and 3.0
+kb bands have increased intensity to serve as reference points." Mass at a 1.0 µg load, image on 1.0%
+TBE:</p>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>bp</th>
+<th>ng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>10,002</td>
+<td>40</td>
+</tr>
+<tr>
+<td>2</td>
+<td>8,001</td>
+<td>40</td>
+</tr>
+<tr>
+<td>3</td>
+<td>6,001</td>
+<td>48</td>
+</tr>
+<tr>
+<td>4</td>
+<td>5,001</td>
+<td>40</td>
+</tr>
+<tr>
+<td>5</td>
+<td>4,001</td>
+<td>32</td>
+</tr>
+<tr>
+<td>6</td>
+<td>3,001</td>
+<td>120</td>
+</tr>
+<tr>
+<td>7</td>
+<td>2,017</td>
+<td>40</td>
+</tr>
+<tr>
+<td>8</td>
+<td>1,517</td>
+<td>57</td>
+</tr>
+<tr>
+<td>9</td>
+<td>1,200</td>
+<td>45</td>
+</tr>
+<tr>
+<td>10</td>
+<td>1,000</td>
+<td>122</td>
+</tr>
+<tr>
+<td>11</td>
+<td>900</td>
+<td>34</td>
+</tr>
+<tr>
+<td>12</td>
+<td>800</td>
+<td>31</td>
+</tr>
+<tr>
+<td>13</td>
+<td>700</td>
+<td>27</td>
+</tr>
+<tr>
+<td>14</td>
+<td>600</td>
+<td>23</td>
+</tr>
+<tr>
+<td>15</td>
+<td>500/517</td>
+<td>124</td>
+</tr>
+<tr>
+<td>16</td>
+<td>400</td>
+<td>49</td>
+</tr>
+<tr>
+<td>17</td>
+<td>300</td>
+<td>37</td>
+</tr>
+<tr>
+<td>18</td>
+<td>200</td>
+<td>32</td>
+</tr>
+<tr>
+<td>19</td>
+<td>100</td>
+<td>61</td>
+</tr>
+</tbody>
+</table>
+<p><strong>100 bp DNA Ladder, N3231</strong> (NEB page, capture 2025-10-31). The 2014-lot datasheet copy (lot
+0951209) gives the same values. 12 bands, 100–1,517 bp; "The 500 and 1,000 base pair bands have
+increased intensity to serve as reference points." Mass at a 0.5 µg load, image on 1.3% TAE:</p>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>bp</th>
+<th>ng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1,517</td>
+<td>45</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1,200</td>
+<td>35</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1,000</td>
+<td>95</td>
+</tr>
+<tr>
+<td>4</td>
+<td>900</td>
+<td>27</td>
+</tr>
+<tr>
+<td>5</td>
+<td>800</td>
+<td>24</td>
+</tr>
+<tr>
+<td>6</td>
+<td>700</td>
+<td>21</td>
+</tr>
+<tr>
+<td>7</td>
+<td>600</td>
+<td>18</td>
+</tr>
+<tr>
+<td>8</td>
+<td>500/517</td>
+<td>97</td>
+</tr>
+<tr>
+<td>9</td>
+<td>400</td>
+<td>38</td>
+</tr>
+<tr>
+<td>10</td>
+<td>300</td>
+<td>29</td>
+</tr>
+<tr>
+<td>11</td>
+<td>200</td>
+<td>25</td>
+</tr>
+<tr>
+<td>12</td>
+<td>100</td>
+<td>48</td>
+</tr>
+</tbody>
+</table>
+<p>NEB counts 500/517 as one band in both ladders. The Q5 kit (E0555) ships the Quick-Load Purple 1 kb
+Plus DNA Ladder (N0550): "19 bands … from 100 bp to 10 kb", with the same reference bands.</p>
+<p>The band tables above come from the archived product pages. The live specification PDFs for both
+ladders carry no band table; they give release criteria, and both name a 1.2% agarose gel with
+0.5 µg/ml ethidium bromide as the QC condition for the banding pattern.</p>
+<h3 id="63-ng-pmol">6.3 ng ↔ pmol<a class="headerlink" href="#63-ng-pmol" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>NEB Nucleic Acid Data</strong> (capture 2024-04-20):</li>
+<li>"Average weight of a DNA basepair (sodium salt) = 650 daltons"</li>
+<li>"MW of a double-stranded DNA molecule = (# of base pairs) X (650 daltons/base pair)"</li>
+<li>"Moles of ends of a double-stranded DNA molecule = 2 X (grams of DNA) / (MW in daltons)"</li>
+<li>"1 µg of 1000 bp DNA = 1.52 pmol"; "1 µg of pUC18/19 DNA (2686 bp) = 0.57 pmol"; "1 pmol of 1000 bp
+    DNA = 0.66 µg"</li>
+<li>1.0 A260 unit: dsDNA 50 µg/ml, ssDNA 33 µg/ml, ssRNA 40 µg/ml</li>
+<li><strong>NEB assembly manuals</strong> (Gibson E2611/E5510, version 3.0 1/26): "pmols = (weight in ng) x 1,000 /
+  (base pairs x 650 daltons)"; "50 ng of 5000 bp dsDNA is about 0.015 pmols."</li>
+<li><strong>NEBioCalculator</strong> (script <code>main-6f3020c533.js</code>, capture 2026-08-28):</li>
+<li>dsDNA MW (g/mol) = 36.04 + bp × 615.94</li>
+<li>dsDNA MW from sequence = 36.04 + (A+T) × (312.23 + 303.21) + (G+C) × (328.23 + 288.2)</li>
+<li>ssDNA MW = 18.02 + nt × 307.97; from sequence 18.02 + 312.23·A + 303.21·T + 328.23·G + 288.2·C</li>
+<li>ssRNA MW = 18.02 + nt × 320.47</li>
+<li>moles of ends (dsDNA) = 2 × moles</li>
+</ul>
+<p>The two NEB constants differ by about 5.5%. 1 µg of pUC19 is 0.573 pmol by the 650-Da rule and
+0.604 pmol by NEBioCalculator (<code>1e-6 / (36.04 + 2686 × 615.94)</code> mol). A search-engine summary gave
+617.96 g/mol per bp for NEBioCalculator; the script says 615.94.</p>
+<h2 id="implications-for-this-package">Implications for this package<a class="headerlink" href="#implications-for-this-package" title="Permanent link">&para;</a></h2>
+<h3 id="for-8-primer-design-and-evaluation">For #8, primer design and evaluation<a class="headerlink" href="#for-8-primer-design-and-evaluation" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Tm and Ta, NEB-compatible.</strong> Use SantaLucia 1998 through primer3-py, with a per-polymerase
+   profile. The output should say, for example: "Tm: SantaLucia 1998 nearest-neighbour, Owczarzy 2004
+   salt correction at the NEB buffer's monovalent equivalent (NEB Tm Calculator method); Ta: NEB rule
+   for Q5".</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th><code>salt_corrections_method</code></th>
+<th><code>mv_conc</code></th>
+<th><code>dv_conc</code>, <code>dntp_conc</code></th>
+<th><code>dna_conc</code> passed</th>
+<th>Ta</th>
+<th>Cap</th>
+<th>Warn if Ta below</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q5 (default), 500 nM</td>
+<td><code>owczarzy</code></td>
+<td>150</td>
+<td>0, 0</td>
+<td>2000</td>
+<td>lower Tm + 1</td>
+<td>72</td>
+<td>55</td>
+</tr>
+<tr>
+<td>Phusion HF, 500 nM</td>
+<td><code>schildkraut</code></td>
+<td>222</td>
+<td>0, 0</td>
+<td>500</td>
+<td>0.93 × lower Tm + 7.5</td>
+<td>72</td>
+<td>45</td>
+</tr>
+<tr>
+<td>OneTaq Standard, 200 nM</td>
+<td><code>owczarzy</code></td>
+<td>54</td>
+<td>0, 0</td>
+<td>800</td>
+<td>lower Tm − 5</td>
+<td>68</td>
+<td>45</td>
+</tr>
+<tr>
+<td>Taq Standard, 200 nM</td>
+<td><code>owczarzy</code></td>
+<td>55</td>
+<td>0, 0</td>
+<td>800</td>
+<td>lower Tm − 5</td>
+<td>68</td>
+<td>45</td>
+</tr>
+</tbody>
+</table>
+<p>Round Ta to 0.1 °C and compute it from unrounded Tm. Warn when the pair's annealing-part Tm differ
+   by more than 5 °C (NEB, IDT). Pin these in tests: M13 fwd/rev Q5 62.27/56.31, Ta 57.3; Phusion
+   56.57/50.89, Ta 54.8; Taq 53.96/47.99, Ta 43.0; the 28/35-nt pair under Q5, Ta 72 (capped).
+2. <strong>Do not use primer3's <code>owczarzy</code> mode with <code>dv_conc</code> &gt; 0</strong> until the Eq. 16 defect (§1.2) is fixed
+   upstream; the profiles above avoid it.
+3. <strong>Tails.</strong> Take Tm and Ta from the 3′ annealing part only. Report the full-primer Tm for
+   information. Run hairpin and dimer checks on the full oligo.
+4. <strong>Two-step.</strong> When the computed Ta hits the cap (72 °C for Q5 and Phusion), emit a two-step program
+   at 72 °C. For OneTaq the trigger is Ta ≥ 68 °C, for Taq Ta &gt; 65 °C.
+5. <strong>Checks with sourced defaults.</strong> Thresholds live in one table. Rows marked <em>proposal</em> are this
+   note's choices, not a quoted rule.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Pass</th>
+<th>Warn</th>
+<th>Fail</th>
+<th>Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Annealing length</td>
+<td>18–30 nt</td>
+<td>15–17 or 31–35 nt</td>
+<td>&lt; 15 or &gt; 35 nt</td>
+<td>primer3 18/27 and 35 cap; IDT 18–30; <em>proposal</em> for the warn band</td>
+</tr>
+<tr>
+<td>Annealing length, sequencing primer</td>
+<td>16–24 nt</td>
+<td>15 or 25–35 nt</td>
+<td>&lt; 15 or &gt; 35 nt</td>
+<td>Genewiz 18–24 (§4); Genewiz's own M13F universal primer is 16 nt (§5.2); warn band as above</td>
+</tr>
+<tr>
+<td>GC % (annealing part)</td>
+<td>40–60</td>
+<td>20–40 or 60–80</td>
+<td>&lt; 20 or &gt; 80</td>
+<td>NEB 40–60; primer3 20–80</td>
+</tr>
+<tr>
+<td>G/C in last 5 bases</td>
+<td>1–3</td>
+<td>0 or 4–5</td>
+<td>—</td>
+<td>primer3 <code>MAX_END_GC</code> 5; NEB "avoid GC-rich 3´ ends"; <em>proposal</em></td>
+</tr>
+<tr>
+<td>Mononucleotide run</td>
+<td>≤ 4 (G ≤ 3)</td>
+<td>5, or G run ≥ 4</td>
+<td>≥ 6</td>
+<td>primer3 <code>MAX_POLY_X</code> 5; IDT G run</td>
+</tr>
+<tr>
+<td>Dinucleotide repeat</td>
+<td>&lt; 4 repeats</td>
+<td>≥ 4 repeats</td>
+<td>—</td>
+<td><em>proposal</em>, no source found</td>
+</tr>
+<tr>
+<td>Hairpin, dimers: structure Tm at primer3 default conditions</td>
+<td>≤ 47 °C</td>
+<td>&gt; 47 °C, not 3′-anchored</td>
+<td>&gt; 47 °C and 3′-anchored (END1 either way)</td>
+<td>primer3 <code>_TH</code> 47; primer3 SELF_END rationale</td>
+</tr>
+<tr>
+<td>Hairpin, dimers: ΔG at 37 °C</td>
+<td>&gt; −9.0 kcal/mol</td>
+<td>≤ −9.0, not 3′-anchored</td>
+<td>≤ −9.0 and 3′-anchored</td>
+<td>IDT −9.0; 3′ rule <em>proposal</em></td>
+</tr>
+<tr>
+<td>3′ end stability</td>
+<td>report only</td>
+<td>—</td>
+<td>—</td>
+<td>primer3 default off; no primary threshold found</td>
+</tr>
+<tr>
+<td>Off-target: other template sites, both strands, origin-joined, 3′ end anchored</td>
+<td>Tm &lt; annealing-part Tm − 10 °C</td>
+<td>within 10 °C</td>
+<td>would give an extra product with the partner primer inside the size range</td>
+<td>primer3 manual (47 vs 57); <em>proposal</em> for fail</td>
+</tr>
+</tbody>
+</table>
+<p>Every other row holds for a sequencing primer as well. Genewiz's own universal primers miss its
+   45–55% GC (M13F 56%, M13-48REV 40%, §5.2), and its 50–60 °C Tm (§5.3) names no method, so it
+   cannot be placed on a polymerase's scale. A colony PCR primer is a PCR primer: §3.2 gives it no
+   primer rules of its own.</p>
+<h3 id="for-13-bench-numbers-and-colony-pcr-14-protocol-skill">For #13, bench numbers and colony PCR; #14, protocol skill<a class="headerlink" href="#for-13-bench-numbers-and-colony-pcr-14-protocol-skill" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>PCR program from polymerase and amplicon.</strong> Q5 default: 98 °C 30 s; 30 cycles of 98 °C 10 s,
+   Ta 20 s, 72 °C at 20 s/kb (NEB allows 10 s/kb for plasmid templates); 72 °C 2 min; 4 °C. Primers
+   0.5 µM, plasmid template 1 pg–10 ng per 50 µl. Round extension time up; the rounding rule is a
+   <em>proposal</em>.</li>
+<li><strong>Colony PCR default:</strong> OneTaq Quick-Load 2X Master Mix, primers 200 nM, 25 µl (a <em>proposal</em>; NEB's
+   note uses 50 µl). Touch a 1–2 mm colony with a toothpick until cloudy, then streak the same
+   toothpick onto a numbered replica plate. Program: 94 °C 5 min (the upper end of NEB's 2–5 min);
+   30 cycles of 94 °C 30 s, NEB OneTaq Ta for 30 s, 68 °C 1 min/kb (at least 30 s is a <em>proposal</em>);
+   68 °C 5 min; 10 °C. Load 5 µl.</li>
+<li><strong>Colony PCR primers for the smoke test:</strong> M13/pUC Forward + M13/pUC Reverse (23-mers, Ta 51.5 °C
+   in OneTaq, 137-bp empty band) instead of the 17-mer M13 pair (Ta 42.8 °C, below NEB's minimum).
+   Report the correct size from the simulation (<code>E − D + I</code>) and 137 bp for empty vector. Add a
+   junction primer when orientation matters.</li>
+<li><strong>Gel:</strong> choose from the largest and smallest expected band. Below 1 kb, including any empty-vector
+   band: 2% agarose with the 100 bp ladder. 1–10 kb: 1% with the 1 kb Plus ladder. The simulated gel
+   uses the ladder tables in §6.2, with 500/517 drawn as one band.</li>
+<li><strong>ng ↔ pmol:</strong> use NEBioCalculator's <code>36.04 + 615.94 × bp</code> as the NEB tool default. State the
+   constant in the protocol, because NEB's manual formula (650 Da/bp) differs by about 5.5%.</li>
+<li><strong>Sequencing:</strong> design or pick Sanger primers whose 3′ end is at least 60, ideally 100, bases
+   outside each junction. The M13 17-mers sit 0–26 bases from the pUC19 MCS, too close to read their
+   own junction.</li>
+</ol>
+<h2 id="open-questions">Open questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Report the primer3 Eq. 16 integer-division defect upstream (primer3-org/primer3), and to
+  libnano/primer3-py for its bundled copy.</li>
+<li>Typical Sanger read length and the size of the unreadable region after the primer: no primary
+  source read.</li>
+<li>The conditions (temperature, salt, oligo concentration) behind IDT's −9.0 kcal/mol threshold.</li>
+<li>Why the NEB API gives Ta = lower Tm for <code>taqmaster-0</code> while the script's rule gives lower Tm − 5.</li>
+<li>The initial-denaturation temperature in NEB's colony PCR application note table, which is garbled.</li>
+<li>NEB's names for the sequencing primers (−20, −24, −47): no NEB page with sequences could be read.</li>
+<li>Whether NEB recommends Q5 for colony PCR.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

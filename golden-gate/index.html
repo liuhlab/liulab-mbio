@@ -1,0 +1,931 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/golden-gate/">
+      
+      
+        <link rel="prev" href="./..">
+      
+      
+        <link rel="next" href="../examples/pUC19-GFP/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Put GFP into pUC19 - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#put-gfp-into-puc19" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Put GFP into pUC19
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Put GFP into pUC19
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-bbsi" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why BbsI
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-checks-warn" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why <code>checks warn</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-comes-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What comes out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-the-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read the protocol
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-finished-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The finished example
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#point-it-at-your-own-ligase-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Point it at your own ligase data
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/pUC19-GFP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Example plan
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Join GFP into pUC19 by Gibson
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Clone GFP into pUC19 with two enzymes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Move a gene into an expression vector with Gateway
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../genome-check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Check primers on a genome
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-bbsi" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why BbsI
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-checks-warn" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why <code>checks warn</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-comes-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What comes out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-the-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read the protocol
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-finished-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The finished example
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#point-it-at-your-own-ligase-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Point it at your own ligase data
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="put-gfp-into-puc19">Put GFP into pUC19<a class="headerlink" href="#put-gfp-into-puc19" title="Permanent link">&para;</a></h1>
+<p>This page follows one cloning job from end to end. The vector is pUC19. The insert is the GFP
+coding sequence. One command does the design and writes the bench protocol.</p>
+<p>Both sequence files ship with the repo, under <code>tests/data/</code>.</p>
+<h2 id="run-it">Run it<a class="headerlink" href="#run-it" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>goldengate<span class="w"> </span>plan<span class="w"> </span>tests/data/pUC19.dna<span class="w"> </span>tests/data/GFP.dna<span class="w"> </span>--out<span class="w"> </span>docs/examples/pUC19-GFP
+</code></pre></div>
+<p>It prints one summary line, then the four paths it wrote:</p>
+<div class="highlight"><pre><span></span><code>pUC19-GFP: 3347 bp, BbsI, 2 fragments, overhangs ATGA, TGGC, fidelity 100% (measured), checks warn
+</code></pre></div>
+<p>Read that line first. It is the whole design in one sentence.</p>
+<table>
+<thead>
+<tr>
+<th>Part of the line</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>3347 bp</code></td>
+<td>how long the finished plasmid is</td>
+</tr>
+<tr>
+<td><code>BbsI</code></td>
+<td>the enzyme it chose</td>
+</tr>
+<tr>
+<td><code>2 fragments</code></td>
+<td>the opened vector, plus GFP</td>
+</tr>
+<tr>
+<td><code>overhangs ATGA, TGGC</code></td>
+<td>the four bases each join is cut to</td>
+</tr>
+<tr>
+<td><code>fidelity 100% (measured)</code></td>
+<td>how well those two joins should pair up</td>
+</tr>
+<tr>
+<td><code>checks warn</code></td>
+<td>something is worth a look before you order</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-bbsi">Why BbsI<a class="headerlink" href="#why-bbsi" title="Permanent link">&para;</a></h3>
+<p>The tool ranks enzymes by how many sites they read in the parts. BsaI reads a site in both
+pUC19 and GFP, and BsmBI reads two in pUC19. Cutting either would cut the parts as well as the
+ends. BbsI reads none, so nothing has to be changed to use it.</p>
+<p>If no enzyme were free, the command would stop and say so. It never quietly edits your
+sequence to make one fit.</p>
+<h3 id="why-checks-warn">Why <code>checks warn</code><a class="headerlink" href="#why-checks-warn" title="Permanent link">&para;</a></h3>
+<p>Nine oligos were designed and two carry a warning: melting temperature on the pUC19 backbone
+reverse primer, GC content on the GFP reverse primer. None fails. The badge names those kinds,
+and the oligo sheet gives every oligo a verdict of its own.</p>
+<p>Each oligo is judged by what it is for. A sequencing primer may be as short as 16 bases, since
+one of the free primers Genewiz itself offers is that long. A PCR primer needs 18.</p>
+<p>A warning is yours to judge. Both of these sit on a primer that carries a BbsI tail, and the
+junction fixes where such a primer binds. The design searches every binding site a placement
+allows and keeps the one that warns least, so a warning left on a tailed primer is one nothing
+nearby could clear.</p>
+<h2 id="what-comes-out">What comes out<a class="headerlink" href="#what-comes-out" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>product.dna</code></td>
+<td>the finished plasmid, with every feature carried over and both joins marked. Opens in SnapGene</td>
+</tr>
+<tr>
+<td><code>primers.tsv</code></td>
+<td>the nine oligos, with length and melting temperature. This is your order</td>
+</tr>
+<tr>
+<td><code>protocol.json</code></td>
+<td>the bench protocol written as data. The page is made from this file</td>
+</tr>
+<tr>
+<td><code>protocol.html</code></td>
+<td>the bench protocol: one page, no network, nothing to install</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing here is written by hand, so the same two input files always give the same four files.
+To change the design, run the command again.</p>
+<p>The page is made from <code>protocol.json</code>, so the two always agree. To change what the page says,
+edit <code>protocol.json</code> and turn it back into a page:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>protocol<span class="w"> </span>render<span class="w"> </span>protocol.json
+</code></pre></div>
+<h2 id="how-to-read-the-protocol">How to read the protocol<a class="headerlink" href="#how-to-read-the-protocol" title="Permanent link">&para;</a></h2>
+<p>Open <code>protocol.html</code> in a browser. It is built to be followed at the bench, not filed away.</p>
+<p><strong>The top of the page</strong> carries eight cards: the vector, the insert, the enzyme, the fragment
+count, the overhangs, the fidelity, the product and what to select on. Each is a few words.
+Under them sit four sentences about what the clone should do, then the badges — <code>sites</code>,
+<code>junctions</code>, <code>primers</code> and one per part. A badge that is not green spells out why beneath it.</p>
+<p>Two of those sentences matter before you start:</p>
+<ul>
+<li>GFP goes in on the opposite strand from the lac promoter, so that promoter does not read it.</li>
+<li>Nothing is annotated ahead of GFP to start translation, so the clone is not expected to glow.</li>
+</ul>
+<p>That is the design telling you what it is and is not. It reads both from the finished plasmid,
+so it cannot disagree with the map.</p>
+<p><strong>The oligo sheet</strong> gives each oligo its own verdict, written as a word rather than a colour:
+<code>pass</code>, <code>warn</code> or <code>fail</code>. One line under the sheet opens to show which check fired on which
+oligo, what it measured, and the band it missed. It stays closed, so the sheet you order from
+is still a list of oligos.</p>
+<p><strong>The middle</strong> is eleven numbered steps, from the first PCR to sequencing. Each step has a
+check mark, what to do, what a good result looks like, and what to do when it is wrong.
+Reaction tables rescale when you change the number of reactions at the top of the table, so
+you do not do that arithmetic yourself. Gel steps draw the bands to expect.</p>
+<p><strong>The screening step</strong> is the one to read twice. A correct clone gives two bands, 160 and
+838 bp. An empty vector gives one band at 177 bp. There is no third lane. Each end of GFP
+pairs with one end of the vector and no other, so it cannot go in the wrong way round. Read
+the big band first: only a clone that holds GFP carries it.</p>
+<h2 id="the-finished-example">The finished example<a class="headerlink" href="#the-finished-example" title="Permanent link">&para;</a></h2>
+<p>The plan above is published here, exactly as the command wrote it:</p>
+<ul>
+<li><a href="../examples/pUC19-GFP/protocol.html">the bench protocol</a></li>
+<li><a href="../examples/pUC19-GFP/">everything the run wrote</a></li>
+</ul>
+<h2 id="point-it-at-your-own-ligase-data">Point it at your own ligase data<a class="headerlink" href="#point-it-at-your-own-ligase-data" title="Permanent link">&para;</a></h2>
+<p>Fidelity says how likely the joins are to pair correctly. For five enzymes that number is
+measured, and the measurements ship with the package. For the rest, it is worked out from
+rules.</p>
+<p>You can do better if you hold a copy of the T4 ligase data from Potapov and colleagues. That
+archive is not ours to ship, so nothing from it is in this package. Point the command at your
+own copy instead:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>liulab_mbio<span class="w"> </span>cloning<span class="w"> </span>goldengate<span class="w"> </span>plan<span class="w"> </span>vector.dna<span class="w"> </span>insert.dna<span class="w"> </span>--out<span class="w"> </span>plan/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ligase-matrix<span class="w"> </span>~/potapov/FileS03_T4_18h_25C.xlsx
+</code></pre></div>
+<p>An environment variable does the same for every run:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">LIULAB_MBIO_LIGASE_MATRIX</span><span class="o">=</span>~/potapov/FileS03_T4_18h_25C.xlsx
+</code></pre></div>
+<p>Reach for <code>FileS03</code> first: 25 °C for 18 hours is what NEB's own viewer assumes. Both <code>.xlsx</code>
+and <code>.csv</code> are read.</p>
+<p>The report then says where its number came from, and keeps the three kinds apart:</p>
+<table>
+<thead>
+<tr>
+<th>Scored against</th>
+<th>What the protocol prints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the enzyme's own measurements</td>
+<td><code>measured</code></td>
+</tr>
+<tr>
+<td>your ligase file</td>
+<td><code>measured ligase profile, not specific to PaqCI</code></td>
+</tr>
+<tr>
+<td>the rules</td>
+<td><code>rule-based estimate</code></td>
+</tr>
+</tbody>
+</table>
+<p>The enzyme's own measurements win where they exist. A ligase file stands in for a measurement
+nobody has made; it does not replace one somebody has. Without such a file nothing changes.</p>
+<h2 id="before-you-order">Before you order<a class="headerlink" href="#before-you-order" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Read the whole protocol once, top to bottom.</li>
+<li>Look at every badge that is not green, and decide about it.</li>
+<li>Open the line under the oligo sheet and decide about each warning.</li>
+<li>Check that the product map holds what you meant to clone.</li>
+<li>Check the three screening lanes can still be told apart.</li>
+</ul>
+<p><code>pixi run liulab_mbio cloning goldengate plan --help</code> lists the rest of the options: where to
+put the insert, which way round it goes, holding a join in frame, forcing an enzyme, and which
+polymerase and strain the protocol should name.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>
