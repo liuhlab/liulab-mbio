@@ -8,6 +8,7 @@ import pytest
 
 from liulab_mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
 from liulab_mbio.cloning.gateway.recombination import recombine
+from liulab_mbio.edits import rotate
 from liulab_mbio.sequence import (
     BindingSite,
     Primer,
@@ -151,6 +152,18 @@ def test_the_segment_that_moved_is_bounded_inside_each_att_region_not_at_its_edg
 
     assert (start, end) == (first.start + CROSSOVER, second.end - CROSSOVER)
     assert lr.product.extract(Segment(start, end)) == lr.moved.bases
+
+
+def test_junctions_across_the_product_s_origin_leave_spans_ending_past_its_length(
+    lr: Recombination, entry: SequenceRecord, destination: SequenceRecord
+) -> None:
+    # Turned to 89, the vector's first base falls inside the first junction's att region.
+    made = recombine(entry, rotate(destination, 89), reaction="LR")
+
+    assert made.product.extract(Segment(*made.boundaries)) == made.moved.bases
+    start, end = made.recombined
+    assert start < len(made.product) < end
+    assert made.product.extract(Segment(start, end)) == lr.product.extract(Segment(*lr.recombined))
 
 
 def test_bp_writes_an_entry_clone_carrying_the_insert_between_its_attl_sites(

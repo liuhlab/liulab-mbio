@@ -33,7 +33,14 @@ from liulab_mbio.cloning.gateway.att import (
     writes,
 )
 from liulab_mbio.edits import carried, flipped, ordered, rotate
-from liulab_mbio.sequence import Feature, Primer, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import (
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    counted_round,
+)
 
 #: What an att junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -144,7 +151,19 @@ class Recombination:
         acceptor's, so the segment starts inside the first region and ends inside the second.
         """
         first, second = self.junctions
-        return first.start + CROSSOVER, second.end - CROSSOVER
+        return self._counted(first.start + CROSSOVER, second.end - CROSSOVER)
+
+    @property
+    def recombined(self) -> tuple[int, int]:
+        """Both att regions and the segment between them: the product bases the reaction wrote."""
+        first, second = self.junctions
+        return self._counted(first.start, second.end)
+
+    def _counted(self, start: int, end: int) -> tuple[int, int]:
+        """Return a span of the product, ending past its length where it runs across the origin."""
+        length = len(self.product)
+        first, last = counted_round((start % length, end % length), length)
+        return first, last
 
     @property
     def cassette(self) -> tuple[int, int]:
