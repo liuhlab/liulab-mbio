@@ -23,7 +23,7 @@ from liulab_mbio.cloning.restriction.bench import (
 )
 from liulab_mbio.cloning.restriction.design import refusal
 from liulab_mbio.cloning.restriction.digest import resolve
-from liulab_mbio.edits import flipped
+from liulab_mbio.edits import flipped, rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.snapgene import read_dna
@@ -76,6 +76,19 @@ def test_the_product_replaces_the_cloning_site_and_carries_every_designed_oligo_
         site = placed[primer.name].binding_sites[0]
         read = made.product.extract(site)
         assert read == (primer.sequence if site.strand > 0 else reverse_complement(primer.sequence))
+
+
+def test_a_cloning_site_across_the_vector_s_origin_is_replaced_by_a_span_ending_past_its_length(
+    puc19, source
+):
+    # Turned to 405, the vector's first base lies between the EcoRI and BamHI cuts.
+    turn, length = 405, len(puc19)
+    made = plan_restriction(rotate(puc19, turn), source, enzymes=["EcoRI", "BamHI"])
+    assert made.span == (ECORI + 1 - turn + length, BAMHI + 1 - turn + length)
+    # The insert interrupts lacZ as it does with the vector unturned.
+    assert made.phenotype.blue_white
+    frame = next(check for check in made.checks if check.name == "reading frame")
+    assert "gains 723 bases" in frame.detail
 
 
 def test_the_plan_status_is_the_worst_of_its_checks(made):
