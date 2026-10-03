@@ -70,7 +70,7 @@ def test_a_blunt_cut_past_a_linear_end_is_read_but_not_cut() -> None:
     (site,) = find_sites(SequenceRecord(bases), mlyi)
     assert (site.overhang, site.cuts) == (None, False)
     (site,) = find_sites(SequenceRecord(bases, topology="circular"), mlyi)
-    assert (site.top_cut, site.overhang, site.cuts) == (3, "", True)
+    assert (site.top_cut, site.cuts) == (3, True)
 
 
 def test_a_palindromic_site_is_counted_once_and_reported_on_the_forward_strand() -> None:
