@@ -171,8 +171,10 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
     """Ligate `insert` into `backbone` and return the circular product it makes.
 
     The backbone's right end meets the insert's left, and the insert's right end closes the
-    circle. The product is turned so the vector's own first base keeps the place it had, which
-    leaves the vector's coordinates readable and keeps a junction off base zero.
+    circle. Where the backbone carries the vector's own first base, the product is turned so that
+    base keeps the place it had, which leaves the vector's coordinates readable. Where the insert
+    replaced it, the product starts where the backbone does, so the insert's right end meets the
+    backbone at base zero.
 
     Raises
     ------
