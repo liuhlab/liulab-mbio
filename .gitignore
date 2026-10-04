@@ -25,4 +25,7 @@ __pycache__/
 # needs another machine's copy.
 /.codex/
 /.gemini/
-reference_docs/
+# Downloaded papers and manuals, which vendors do not let us redistribute. Its README, the
+# rules for keeping it, is tracked.
+reference_docs/*
+!reference_docs/README.md

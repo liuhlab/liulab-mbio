@@ -95,6 +95,10 @@ reference_docs/   reference material downloaded for a method — papers, manuals
 CONTEXT.md        the glossary — the words this repo uses
 ```
 
+`reference_docs/` is yours to use: download what a method's research needs. Leave it sorted
+into subdirectories, each method's with a README listing every file and its source, and no
+temporary files. `reference_docs/README.md` says how.
+
 ## Gates
 
 `pixi run check` must be green before you commit: `lint` and `fmt-check` (ruff), `typecheck`
