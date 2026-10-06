@@ -231,8 +231,9 @@ form is section 6.9.
 - **The route from a transformation to a clonal well is ours.** Qian goes transformation,
   dilution plates for a colony count, bulk plate, picker. The method page spots a frozen
   polyclonal archive and regrows it, which has no counterpart in any source and no stated
-  dilution, titre or plating density. This is invention and should be marked as such or
-  replaced. See section 6.6.
+  dilution, titre or plating density. Its handling is ours as well: duplicate plates, drawn one
+  way and never re-frozen. This is invention and should be marked as such or replaced. See
+  section 6.6.
 - **The library primers are replaced.** Qian amplifies a whole pool in one reaction with a
   primer pair carrying the BsmBI sites that give `AGGA`/`TTCC`. The three-primer scheme replaces
   that pair with orthogonal 20-mers, which carry no site. Nothing then puts a Type IIS site on
@@ -375,10 +376,10 @@ clear of five enzymes.
 | Add enzyme-site freedom to the rules | Measured, 0.90% of 11-mers drawn to the stated rules carry one of the eight motifs — one library member in 112 cut apart in its own round. Freschlin lost whole replicates to exactly this. |
 | Leave it out and screen afterwards | Cheaper to state, but the screen has to exist and nothing describes it. |
 
-Related and separable: the distance metric. The source's rule is Hamming; the method page says
-edit distance. A Hamming floor does not imply a Sequence-Levenshtein floor, and the glossary
-names edit distance as a term to avoid. Which metric the set is drawn to is itself a decision,
-and `docs/research/barcode-design.md` holds the evidence for it.
+Related and separable: the distance metric. The source's rule is Hamming, and the method page
+now states Hamming, the glossary naming edit distance as a term to avoid because the two are not
+the same. A Hamming floor does not imply a Sequence-Levenshtein floor, so which metric the set is
+drawn to is itself a decision, and `docs/research/barcode-design.md` holds the evidence for it.
 
 ### 6.6 The pass criterion for a well
 
@@ -432,13 +433,15 @@ the reader to derive colonies from the coverage wanted, with no rule and no poin
 | Option | Evidence |
 | --- | --- |
 | Bound by mass, as the paper does | 20 ng of digested backbone per 200 µL ligation, up to 100 ng of purified ligation product electroporated, with the coverage claim resting on a terminal representation read. |
-| Bound by a transformant count | What Qian does at its one transformation, gating on a colony count times library complexity above 300. Requires plating every round, which the method page currently forbids. |
+| Bound by a transformant count | What Qian does at its one transformation, gating on a colony count times library complexity above 300. Requires plating every round, which the method page's earlier wording forbade. |
 
-The forbidding is itself unresolved. "Rounds run unchecked, as the paper runs them" reads a
-silence as a statement — the paper describes recovery and growth and never mentions plating,
-colonies or counts — and it contradicts the representation read two steps later, which measures
-after every bottleneck while every round ends in an electroporation. The mechanism the claim
-rests on, that the ligase will not join blunt ends, is cited to no source read here.
+Whether the rounds are checked at all is itself unresolved, which is why the method page now
+carries it as an undecided line rather than as a decision. The earlier claim, "rounds run
+unchecked, as the paper runs them", read a silence as a statement — the paper describes recovery
+and growth and never mentions plating, colonies or counts — and it contradicted the
+representation read two steps later, which measures after every bottleneck while every round
+ends in an electroporation. The mechanism that claim rested on, that the ligase will not join
+blunt ends, is cited to no source read here.
 
 The same paragraph carries D16: whether an assembled clone is sequenced whole before it becomes
 a stock. The departures note says this became a per-round product check; the method page says
@@ -457,6 +460,19 @@ regions, which an assembled library does not carry.
 | Design a pair against the cargo's own constant flanks | The cargo's `AGGA`/`TTCC` ends and its stuffer are constant across the library, so a pair exists. Nothing has been designed or checked. |
 | Reuse the two universal primers flanking the design | They are named in the source but **no sequences are published** for them; they are absent from the published primer table. Listing them as orderable implies sequences we do not hold. |
 
+### 6.11 What the part carrier brings into the assembly
+
+Measured: the part carrier has no BsmBI site and **one BsaI site**, and its own selection is the
+counter-selection cassette. A part that fits its default overhang pair enters the
+working-cassette reaction as the whole carrier plasmid, so both of those enter with it. Only the
+marker separates the two outcomes — the carrier is KanR, the working vector AmpR or CarbR.
+
+| Option | Evidence |
+| --- | --- |
+| Leave it, and let the marker do the work | The method page already adds a default-pair part as the carrier plasmid, with no digest and no PCR of its own, which is the whole saving of holding parts as plasmids. Nothing has been simulated to show what the carrier's BsaI site and counter-selection cassette do in that reaction. |
+| Amplify every part out of its carrier | Only the part then enters, and the retailoring primer form already exists for exactly this shape. It costs a reaction per part, which is what entering as the plasmid was written to avoid. |
+| Domesticate the carrier once | One edit to a lab resource built once removes the BsaI site for every part afterwards. The counter-selection cassette is the carrier's own selection and cannot be removed the same way. |
+
 ### Also open, and smaller
 
 - **The read-out route** is a per-project choice with a suggested threshold: at or below one
@@ -465,7 +481,8 @@ regions, which an assembled library does not carry.
   needed, so the limit is reagent and labour cost, one reaction per well.
 - **Which vector parent** to rebuild. The two differ only in which strand carries the cassette
   and release the same cargo, so the rule as written does not discriminate.
-- **The colony picker model**, two candidates, a purchase decision rather than a design one.
+- **The colony picker model**, the QPix 420 or the QPix FLEX, a purchase decision rather than a
+  design one. The method page names neither, only that the choice is open.
 - **Where the added PmeI sites go**, which has no free space on one parent without sacrificing
   an annotated tag.
 - **Whether acronyms are expanded on first use**, now that the page is published in the site

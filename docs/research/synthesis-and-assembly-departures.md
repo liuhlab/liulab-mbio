@@ -18,17 +18,17 @@ method document. D16, whether assembled clones get whole-plasmid sequencing, is 
 the method document says the opposite of a per-round check, so the question is recorded with
 its options in the research note instead.
 
-Line numbers refer to the method document as it stood on 2026-10-05, before it moved into the
-site; read them as pointers to the section, not the line. Everything here was simulated with
-`liulab_mbio`, not read off the page.
+Pointers into the method document name its sections, so they survive an edit to it. Everything
+here was simulated with `liulab_mbio`, not read off the page.
 
 ## D1. The two enzyme roles moved up one enzyme
 
 Paper: the internal stuffer carries BsaI and opens the destination; the external stuffers carry
-BsaI and release the donor. Ours: the internal stuffer carries BbsI (line 110) and BsaI
-releases the donor (line 114).
+BsaI and release the donor. Ours: the internal stuffer carries BbsI (`### iGGA cargo`) and
+BsaI releases the donor (`### iGGA pipeline`).
 
-Why: the DMX plate-barcode kit is used as supplied (line 22), and its 96 plasmids present
+Why: the DMX plate-barcode kit is used as supplied (`### Lab resources (build once)`), and its
+96 plasmids present
 `AGGA` and `TTCC` cut by BsaI. That fixes BsaI at the cargo interface, which pushes the internal
 stuffer onto a third enzyme. The DMX paper's own use of BsaI is not what forces it, since we
 rebuild that backbone anyway.
@@ -54,10 +54,11 @@ Cargo now has to be clear of a 6 bp site instead of a 7 bp one. The paper alread
 all 72 of its domains, 23,103 bp including one of 1,046 bp, carry zero BbsI, zero BsaI, zero
 SrfI and zero PmeI, against 11 BsmBI and 15 PaqCI it never had to remove. Recoded for E. coli
 the cost is about 1.5 extra synonymous changes per 2.5 kb. Non-coding fragments are unaffected
-by the choice; lines 29 and 30 own them.
+by the choice; `### Cargo synthesis` step 2 owns them.
 
 A destination that escapes BbsI is still linearised by SrfI into blunt ends, so the parent
-could only return if the ligase joined blunt. Line 113's T7 does not.
+could only return if the ligase joined blunt. The T7 ligase in `## Reagents and equipment` does
+not.
 
 ## D3. One overhang pair every round instead of one per position
 
@@ -67,10 +68,10 @@ N part can only be followed by a bZIP part. Order is fixed by the DNA, and it is
 part presents `CTCC` again, so a fourth round with an N pool would work. Three rounds is
 protocol, not sequence.
 
-Ours: `AGGA` and `TTCC` at every round (lines 108, 110). Order is set by which pool goes in the
-tube (line 113).
+Ours: `AGGA` and `TTCC` at every round (`### iGGA cargo`). Order is set by which pool goes in
+the tube (`### iGGA pipeline` step 1).
 
-Why: `AGGA` and `TTCC` are the published SAPP standard (lines 32, 33). Position-specific
+Why: `AGGA` and `TTCC` are the published SAPP standard (`### Parts`). Position-specific
 overhangs would need a different DMX vector per position.
 
 The pot is safe. The four ends present are `TCCT` and `TTCC` from the opened destination and
@@ -78,7 +79,7 @@ The pot is safe. The four ends present are `TCCT` and `TTCC` from the opened des
 intended ones, so a donor cannot go in backwards, two donors cannot chain, and neither molecule
 closes on itself. Simulated, one circular product.
 
-Any pool fits any round once every fragment obeys the length rule (line 109). That constraint is
+Any pool fits any round once every fragment obeys the length rule (`### iGGA cargo`). That constraint is
 uniform across pools rather than per position, which is why ours needs no terminal molecule (D7).
 
 ## D4. Our cargo has no external stuffers
@@ -86,7 +87,7 @@ uniform across pools rather than per position, which is why ours needs no termin
 Paper: every synthesized block is 29 bp external stuffer, CDS, internal stuffer, 11 bp barcode,
 29 bp external stuffer, with BbsI and PmeI in the external stuffers. The C block also carries a
 54 bp T2A. Ours is `[AGGA]─[fragment]─[internal stuffer]─[11 bp barcode]─[TTCC]` and nothing
-else (line 108); the BsaI sites belong to the DMX cassette (line 93).
+else (`### iGGA cargo`); the BsaI sites belong to the DMX cassette (`### DMX vector`).
 
 Why: the DMX vector already supplies BsaI in the right places, so external stuffers would
 duplicate it. The oligo-pool budget is the weaker reason. 58 bp is about a quarter of one
@@ -99,7 +100,7 @@ PCR product or a gene fragment. Ours cannot be a donor until it is cloned.
 
 The paper carries PmeI in each synthesized block's external stuffers, measured at offset 0 of
 every 5' stuffer and offset 21 of every 3' stuffer, across all 72 blocks, with none anywhere
-else in a block. Ours sits in the DMX vector, outboard of each BsaI site (lines 93, 151).
+else in a block. Ours sits in the DMX vector, outboard of each BsaI site (`### DMX vector`).
 
 Same order of sites either way: PmeI outermost, then the enzyme that releases the donor, then
 the cargo's overhang. Only the molecule differs, because D4 left us with no external stuffers to
@@ -129,11 +130,11 @@ is ours, derived by digesting both layouts.
 
 Paper: every one of the 72 published blocks contains, by design, 2 BsaI, 2 BbsI, 1 SrfI and
 2 PmeI. Ours must be clear of BsaI, BsmBI, BbsI, SrfI and PmeI outside its own stuffer
-(lines 24, 28).
+(`### Vectors and parts summary`).
 
 Why: our cargo passes through more hands. BsmBI puts it into the DMX vector, BsaI takes it out,
 BbsI and SrfI run the rounds, PmeI kills the donor backbone. Cost: a non-coding fragment cannot
-be recoded at all, which lines 29 and 30 already hand back to the user.
+be recoded at all, which `### Cargo synthesis` step 2 already hands back to the user.
 
 ## D7. The paper needs a position-specific terminal molecule, we do not
 
@@ -161,7 +162,8 @@ BsaI          1438 bp  TTCC / AGGA     backbone
 
 So our chain is a true cycle, as theirs is, and the finished product is still releasable.
 
-Why ours can be uniform: one fragment rule (line 109) serves every position, because no fragment
+Why ours can be uniform: one fragment rule (`### iGGA cargo`) serves every position, because no
+fragment
 of ours ends the protein the way the paper's C block does, and the stuffer sits at the same
 phase every round. That is what makes D3's any-pool-in-any-round real rather than nominal, and
 it is the one place our design is simpler than the paper's rather than merely different.
@@ -178,7 +180,8 @@ BC_C 1105   BC_bZIP 1120   BC_N 1135   first stop 1170
 The 54 bp T2A sits between the C insert and the stuffer, so the stuffer and all three barcodes
 come off as a separate 41-residue peptide and the transcription factor ends at the 2A.
 
-Ours has no T2A anywhere, and the cargo sits in one ORF (lines 77, 78), so the whole barcode
+Ours has no T2A anywhere, and the cargo sits in one ORF (`### Working vector`), so the whole
+barcode
 block is translated inside the fusion protein. Three rounds is 45 bp, fifteen residues.
 
 Why: forced. A T2A inside the cargo would end translation before the C-terminal part, so every
@@ -189,10 +192,11 @@ them.
 Cost: fifteen residues of per-member sequence in the middle of every protein, and any stop codon
 in a barcode truncates it. Their barcodes are translated too, and all 72 are stop-free at their
 own phase, which is offset 2 into the barcode. At ours, offset 0, six of the 72 carry a stop, so
-their set is not reusable (line 112). Ours truncates the protein; theirs truncates a junk peptide.
+their set is not reusable. Ours truncates the protein; theirs truncates a junk peptide.
 
 A last round can still put a T2A in, by swapping the stuffer for an `AGGA`/`TTCC` block that is
-1 mod 3 counted from its `AGGA` (line 117). `AGGA` plus the paper's 54 bp T2A is 58, which is
+1 mod 3 counted from its `AGGA` (`### iGGA cargo`). `AGGA` plus the paper's 54 bp T2A is 58,
+which is
 1 mod 3 with no padding. That ends the chain, since the product then carries no stuffer to
 reopen.
 
@@ -202,7 +206,7 @@ Paper: each domain codon-optimized and individually synthesized as a clonal plas
 Kan, then pooled equimolar per family. Measured CDS lengths 27 to 1,046 bp.
 
 Ours: fragments come from a 300-mer Twist pool, assembled by DAD, split into wells by DMX and
-read by ONT (lines 5, 23, 130 to 140).
+read by ONT (`## Goal`, `### Cargo synthesis`, `### Cargo validation (optional)`).
 
 The budget fits. About 235 bp usable per 300-mer, so a 2.5 kb fragment is about 11 oligos, and
 the cargo's constant regions are about a quarter of one oligo. What ours carries and the paper's
@@ -213,8 +217,9 @@ did not is a per-clone sequence-and-reformat step before assembly can start.
 Paper: domain plasmids are pTwist Kan. The destination in round 1 is itself a domain plasmid, so
 donor and destination share a marker there too. The paper never states this; it follows.
 
-Ours: the DMX vector becomes KanR by replacing the AmpR of DMX0001 or DMX0002 (lines 148, 149),
-and the working vector it feeds is AmpR or CarbR (line 25).
+Ours: the DMX vector becomes KanR by replacing the AmpR of DMX0001 or DMX0002
+(`### Lab resources (build once)`), and the working vector it feeds is AmpR or CarbR
+(`### Vectors and parts summary`).
 
 Why: forced. Measured, DMX0001, DMX0002 and all four barcode plasmids are AmpR as supplied. The
 final step moves cargo from the DMX vector into the working vector, so the two must not share a
@@ -226,7 +231,7 @@ Paper: the assembled library goes into the CAR vector by the same two-digest che
 that vector's own internal stuffer. No counter-selection; `ccdB` appears nowhere in the paper.
 
 Ours: one pot, BsaI only, into a working vector whose ccdB cassette the cargo replaces
-(lines 101, 102).
+(`### Final assembly`).
 
 Why: the cargo already presents `AGGA`/`TTCC`, which is the working vector's interface. Both
 byproducts are covered. The released DMX backbone is KanR on an Amp plate, and released ccdB
@@ -236,10 +241,11 @@ kills anything that takes it. The document never spells that out.
 
 Paper: the product is a repair template for knock-in at the human TRAC locus in primary T cells.
 Ours goes into a bacterial expression vector, with promoter and RBS either in the backbone or in
-the N-terminal part (line 68), and libraries in BL21(DE3) (line 95).
+the N-terminal part (`#### Input working vector`), and libraries in BL21(DE3)
+(`## Reagents and equipment`).
 
 Consequence: ours needs the whole working-cassette layer, reusable N- and C-terminal parts with
-their own overhangs and their own carrier vector (lines 19, 20, 44). The iGGA cargo has to
+their own overhangs and their own carrier vector (`### Parts`). The iGGA cargo has to
 present `AGGA`/`TTCC` cleanly to drop into it.
 
 ## D14. A second barcode system, and BsaI with three jobs
@@ -247,7 +253,8 @@ present `AGGA`/`TTCC` cleanly to drop into it.
 Paper: one 11 bp barcode per domain plus one in the knock-in vector. BsaI does one thing.
 
 Ours: the same per-fragment barcode plus the DMX plate-barcode kit, 96 plasmids in four groups
-of 24 (line 22). Measured, they chain exactly as the line says: group 1 gives `AGGA`/`GTTC`,
+of 24 (`### Vectors and parts summary`). Measured, they chain exactly as that row says: group 1
+gives `AGGA`/`GTTC`,
 group 2 `GTTC`/`CCTT`, group 3 `CCTT`/`TCAG`, group 4 `TCAG`/`TTCC`. So BsaI on the DMX vector
 does three jobs: plate barcoding, releasing cargo as the iGGA donor, releasing cargo into the
 working vector.
@@ -263,6 +270,7 @@ positions than theirs.
 ## D15. Extra strains, forced by ccdB
 
 The iGGA rounds themselves are unchanged: Endura, recover and grow at 30 °C every round
-(lines 115, 116), exactly as the paper. The extra strains belong to the DMX entry step and the
+(`### iGGA pipeline`; the temperature itself belongs to the detail protocol, not the method
+page), exactly as the paper. The extra strains belong to the DMX entry step and the
 final transfer, which are layers the paper has no counterpart for. A ccdB-sensitive strain
-(lines 95, 102) and NEB Stable for anything carrying ccdB (lines 87, 153).
+and NEB Stable for anything carrying ccdB, both in `## Reagents and equipment`.

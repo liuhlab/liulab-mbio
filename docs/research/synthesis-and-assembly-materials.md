@@ -19,7 +19,7 @@ and marked with it; anything still unknown is marked **pending** rather than gue
 | pCR-Blunt II-TOPO | Part carrier. KanR + Zeocin, ccdB, no BsmBI site |
 | DMX0001 / DMX0002 | Parent of the DMX vector, modified before first use |
 | Working vector backbone | Chosen per application; must have no BsaI or BsmBI and use AmpR/CarbR |
-| RFP stuffer cassette | Fills the cassette site of the input working vector; long enough that the cut backbone separates on a gel |
+| RFP stuffer cassette | Fills the cassette site of the input working vector; long enough that the cut backbone separates on a gel, and fluorescent, so a colony that lost it is the one to pick |
 | ccdB cassette, four versions | N and C, no N, no C, neither |
 | Orthogonal primer set | 185 primers of 20 nt, 165 of them in the orthogonal set; Subramanian et al. 2018, Supplementary Table 1 |
 | DMX barcode kit | 96 plasmids, four groups of 24; `docs/research/synthesis-and-assembly-barcode-kit.md` |
@@ -49,7 +49,7 @@ plates holding each slot's pair. A slot always means the same pair.
 | Twist oligo pool | product and length chosen at design time, from Twist's own product and pricing material |
 | Primer source and combination plates | the P1 / P2 / P3 roles |
 | BsmBI, ligase | assembly into the DMX vector |
-| ccdB-sensitive strain | receiving cargo |
+| ccdB-sensitive strain carrying T7 polymerase | receiving cargo; without the polymerase the cassette is never transcribed and nothing counter-selects |
 | Electrocompetent BL21(DE3) | for a library |
 | Glycerol | archive plates |
 
