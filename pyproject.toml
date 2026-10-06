@@ -254,6 +254,12 @@ filterwarnings = ["error"]
 "docs/adr/" = "LengthAdr"
 "docs/research/" = false
 
+# Keyed by the package that must not import, value every package it must not import. One
+# distribution ships both import packages: synbio composes mbio, and mbio never reaches back.
+# That direction is the whole of the boundary between them, and it is all this says.
+[tool.liulab.must-not-import]
+liulab_mbio = ["liulab_synbio"]
+
 # Keyed by rule name, value the reason. Per-rule, never per-file; no expiry; printed on every
 # run. `placeholder-rename` refuses to be waived.
 #

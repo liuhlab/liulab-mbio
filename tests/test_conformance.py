@@ -7,7 +7,7 @@ checked by no rule at all, with zero alerts and green CI. So the claim these tes
 
 Every test builds a tmp_path tree that is correct in every respect but one, and asserts the run
 marks THAT rule FAIL and names the offending file. The rule name alone would prove nothing: the
-status table prints all fifteen names on every run, passing or failing, so the assertions read the
+status table prints all sixteen names on every run, passing or failing, so the assertions read the
 status word out of the table rather than grepping the output for a name.
 
 The exit status is checked here too, all three of it: 0, 1 when a rule failed, and 2 when the
@@ -178,7 +178,7 @@ def repo(tmp_path: Path) -> Path:
 
     It has no `src/`, no workflow at all and so no release workflow, so rule 8's two conditionals,
     rule 9 and rule 11 are all vacuous here; the tests that care add the premise, through
-    `publishes` and `runs`. It has no `skills/init-repo/`, so rule 1 and warning 14 are both live
+    `publishes` and `runs`. It has no `skills/init-repo/`, so rule 1 and warning 15 are both live
     — the state a derived repo is in, and the only state where they check anything.
     """
     root = tmp_path / "repo"
@@ -235,7 +235,7 @@ def statuses(proc: subprocess.CompletedProcess[str]) -> dict[str, str]:
     """The verdict the run gave each rule, read off its own status table.
 
     Asserting on the status word rather than on the presence of a rule NAME is the point: the
-    table prints all fifteen names on every run, so `"repo-shape" in output` is true of a green run
+    table prints all sixteen names on every run, so `"repo-shape" in output` is true of a green run
     and would prove nothing at all.
     """
     found: dict[str, str] = {}
@@ -269,6 +269,7 @@ def test_the_fixture_tree_passes_every_rule(repo: Path) -> None:
         "python-version-agreement",
         "workflow-step-tasks",
         "nav-target-exists",
+        "import-direction",
         "init-sentinel",
         "waivers",
     }
@@ -300,14 +301,14 @@ def test_a_tree_that_has_skills_passes_every_rule(repo: Path) -> None:
 def test_it_exits_0_when_it_ran_and_every_rule_passed(repo: Path) -> None:
     proc = conformance(repo)
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert "All 13 rules pass." in proc.stdout
+    assert "All 14 rules pass." in proc.stdout
 
 
 def test_it_exits_1_when_it_ran_and_a_rule_failed(repo: Path) -> None:
     write(repo, "README.md", f"# liulab-{PLACEHOLDER}\n\nA repo that was never renamed.\n")
     proc = conformance(repo)
     assert proc.returncode == 1
-    assert "1 of 13 rules failed" in proc.stderr
+    assert "1 of 14 rules failed" in proc.stderr
 
 
 def test_it_exits_2_when_there_is_no_git_to_list_tracked_files_from(tmp_path: Path) -> None:
@@ -362,7 +363,7 @@ def test_rule_1_fires_on_a_placeholder_in_a_path_not_only_in_a_file(repo: Path) 
 
 def test_rule_1_is_not_checked_while_the_init_skill_is_there(repo: Path) -> None:
     # The template ships the placeholder ON PURPOSE, and `skills/init-repo/` is what says the
-    # rename has not happened yet. Same discriminator warning 14 uses.
+    # rename has not happened yet. Same discriminator warning 15 uses.
     write(repo, "README.md", f"# liulab-{PLACEHOLDER}\n\nStill the template.\n")
     add_skill(repo, "init-repo")
     proc = conformance(repo)
@@ -669,7 +670,7 @@ def test_rule_9_says_it_reads_one_path_and_the_rename_that_leaves_it(repo: Path)
     assert "a publishing workflow under any other name is outside it" in flat(proc.stdout)
 
 
-def test_warning_14_warns_about_the_sentinel_and_does_not_fail(repo: Path) -> None:
+def test_warning_15_warns_about_the_sentinel_and_does_not_fail(repo: Path) -> None:
     write(
         repo,
         "AGENTS.md",
@@ -681,7 +682,7 @@ def test_warning_14_warns_about_the_sentinel_and_does_not_fail(repo: Path) -> No
     assert "AGENTS.md still carries the `/init` sentinel" in flat(proc.stdout)
 
 
-def test_warning_14_is_silent_while_the_init_skill_is_the_nag(repo: Path) -> None:
+def test_warning_15_is_silent_while_the_init_skill_is_the_nag(repo: Path) -> None:
     write(
         repo,
         "AGENTS.md",
@@ -735,7 +736,7 @@ def test_every_failure_is_reported_and_not_just_the_first(repo: Path) -> None:
     assert verdicts["agent-docs-unpublished"] == "FAIL"
     assert verdicts["skill-file-location"] == "FAIL"
     assert verdicts["repo-shape"] == "FAIL"
-    assert "3 of 13 rules failed" in proc.stderr
+    assert "3 of 14 rules failed" in proc.stderr
 
 
 @pytest.mark.parametrize(
@@ -1423,3 +1424,53 @@ def test_rule_13_reads_a_site_config_that_will_not_parse_as_empty(repo: Path) ->
     assert "Traceback" not in proc.stderr
     assert statuses(proc)["nav-target-exists"] == "ok"
     assert "not checked: mkdocs.broken.yml declares no `nav:`" in flat(proc.stdout)
+
+
+def layered(root: Path, *, lower: str = "lower", upper: str = "upper") -> None:
+    """Declare that one package must not import another, and give the tree what that costs.
+
+    `tests/` comes with the declaration because rule 8 asks for it the moment `src/` is tracked,
+    and a rule 14 fixture must vary nothing but what its modules import.
+    """
+    write(
+        root,
+        "pyproject.toml",
+        PYPROJECT + f'\n[tool.liulab.must-not-import]\n{lower} = ["{upper}"]\n',
+    )
+    write(root, f"tests/test_{lower}.py", "def test_it() -> None:\n    assert True\n")
+
+
+def test_rule_14_fires_on_an_import_the_declared_direction_forbids(repo: Path) -> None:
+    layered(repo)
+    write(repo, "src/lower/__init__.py", "")
+    write(repo, "src/lower/work.py", '"""Does the work."""\n\nfrom upper import helper\n')
+    proc = conformance(repo)
+    assert proc.returncode == 1
+    assert statuses(proc)["import-direction"] == "FAIL"
+    assert "src/lower/work.py:3 imports `upper` — from upper import helper" in proc.stderr
+    assert "move what this module needs out of `upper` and into `lower`" in flat(proc.stderr)
+
+
+def test_rule_14_stays_quiet_on_a_tree_that_imports_the_declared_way(repo: Path) -> None:
+    # `lower` NAMES `upper` here, in a docstring and in a comment, which is correct work. A rule
+    # that looked for the bare package name rather than for an import statement would fail this
+    # tree — and a rule that fires on correct work is evidence against the rule.
+    layered(repo)
+    write(repo, "src/lower/__init__.py", "")
+    write(
+        repo,
+        "src/lower/work.py",
+        '"""Does the work. `upper` composes this one; it never reaches back."""\n\n'
+        "import os  # upper imports this too\n\n"
+        "WHERE = os.sep\n",
+    )
+    write(repo, "src/upper/__init__.py", "")
+    write(
+        repo,
+        "src/upper/plan.py",
+        '"""Composes `lower`."""\n\nfrom lower import work\n\nUSED = work.WHERE\n',
+    )
+    proc = conformance(repo)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert statuses(proc)["import-direction"] == "ok"
+    assert "2 module(s) of `lower` read for `upper`" in flat(proc.stdout)
