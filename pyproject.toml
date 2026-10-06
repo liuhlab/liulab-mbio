@@ -28,6 +28,7 @@ dependencies = [
 
 [project.scripts]
 liulab_mbio = "liulab_mbio.cli:app"
+liulab_synbio = "liulab_synbio.cli:app"
 
 # ============================== build ==============================
 
@@ -39,8 +40,9 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
+# One distribution, two import packages. One version, one dependency set, one gate.
 [tool.hatch.build.targets.wheel]
-packages = ["src/liulab_mbio"]
+packages = ["src/liulab_mbio", "src/liulab_synbio"]
 
 # ============================== pixi ==============================
 

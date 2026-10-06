@@ -5,7 +5,12 @@ plan an experiment end to end: a cloning job from a vector and its inserts, by a
 `cloning/`, and a barcoded combinatorial library built from lists of proteins in rounds. Each
 picks its enzymes, designs the DNA, simulates the product, and writes a bench protocol someone
 can follow. Repo-local skills call them; the lab uses both. Distribution name
-**`liulab-mbio`**, import name **`liulab_mbio`**.
+**`liulab-mbio`**, import names **`liulab_mbio`** and **`liulab_synbio`**.
+
+**The package boundary.** One distribution ships both, at one version. `liulab_synbio` holds
+one named method's pipelines: **synbio imports mbio; mbio imports synbio nowhere.** Which side
+a module is on: could a different method use it unchanged? If yes it is mbio's; if it encodes
+one method's choices it is synbio's.
 
 **Easiest thing to get wrong: coordinates.** Every module is 0-based and half-open, and a span
 across the origin of a circular record ends past the record's length. Read
@@ -86,13 +91,14 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 ## Layout
 
 ```text
-src/liulab_mbio/  the package
-tests/            pytest, mirroring src/
-docs/             the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
-skills/           repo-local agent skills
-scripts/          the gate runner, and the package-data builders
-reference_docs/   reference material downloaded for a method — papers, manuals; git-ignored
-CONTEXT.md        the glossary — the words this repo uses
+src/liulab_mbio/   the general package
+src/liulab_synbio/ one method's pipelines
+tests/             pytest, mirroring src/
+docs/              the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
+skills/            repo-local agent skills
+scripts/           the gate runner, and the package-data builders
+reference_docs/    reference material downloaded for a method — papers, manuals; git-ignored
+CONTEXT.md         the glossary — the words this repo uses
 ```
 
 `reference_docs/` is yours to use: download what a method's research needs. Leave it sorted
