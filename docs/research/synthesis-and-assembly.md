@@ -34,6 +34,10 @@ rows carry the directory's retrieval window instead.
 **Measurements.** Section 5 carries every number the review computed, with what it was computed
 over. A number with no source is not in this note and does not belong in the method page.
 
+**The demo project.** `docs/research/ap1-demo-project.md` specifies one real project against the
+method page and answers section 6's open decisions for that project alone. Nothing it decides is
+a default here.
+
 **Paths.** Downloaded files are named in section 7 so the provenance survives the file. They
 are git-ignored and a fresh clone does not have them, so nothing outside section 7 cites one:
 claims cite the source itself.
@@ -209,8 +213,18 @@ summary, one line each:
 | D14 | A second barcode system, and BsaI doing three jobs | The plate-barcode kit is added on top of the per-fragment barcode |
 | D15 | Extra strains | Forced by the counter-selection cassette |
 
-Two further departures the review established and the departures note does not yet carry:
+Three further departures the review established and the departures note does not yet carry:
 
+- **The barcode set is drawn to an indel-aware metric, with a homopolymer cap the paper has
+  none of.** The paper states a minimum Hamming distance of 3 between domain barcodes and
+  imposes no GC band and no cap; measured, its own set spans GC 2 to 9 of 11 and reaches a run
+  of 6. Ours is a minimum Sequence-Levenshtein distance of 3 within a part list, a homopolymer
+  run of 5, and still no GC band. The reason is the read-out: 92.0% of the residual
+  discordances of a HiFi read are indels in homopolymers, one every 477 bp, and no Hamming
+  distance sees a deleted base at any value. It costs nothing measured — each of the paper's
+  three part lists already stands 3 apart under the indel-aware metric, and the cap rejects one
+  of its 72 barcodes. `docs/research/barcode-design.md` holds every measurement, and the
+  method page carries the rules.
 - **Both library reads move to nanopore.** The paper ran linkage on PacBio HiFi and
   representation on Illumina. Our equipment list has one nanopore sequencer. The reason is
   equipment, not biology, and the move is undocumented in the departures note.
@@ -367,8 +381,8 @@ genes lengthen. No value is given, so the rule cannot be applied to a first batc
 
 ### 6.5 The barcode set's enzyme-site freedom
 
-The stated barcode rules are a distance floor, no in-frame stop, a GC band and a homopolymer
-cap. Enzyme-site freedom is not among them, although the barcode sits inside cargo that must be
+The stated barcode rules are a distance floor, no in-frame stop and a homopolymer cap.
+Enzyme-site freedom is not among them, although the barcode sits inside cargo that must be
 clear of five enzymes.
 
 | Option | Evidence |
@@ -376,10 +390,13 @@ clear of five enzymes.
 | Add enzyme-site freedom to the rules | Measured, 0.90% of 11-mers drawn to the stated rules carry one of the eight motifs — one library member in 112 cut apart in its own round. Freschlin lost whole replicates to exactly this. |
 | Leave it out and screen afterwards | Cheaper to state, but the screen has to exist and nothing describes it. |
 
-Related and separable: the distance metric. The source's rule is Hamming, and the method page
-now states Hamming, the glossary naming edit distance as a term to avoid because the two are not
-the same. A Hamming floor does not imply a Sequence-Levenshtein floor, so which metric the set is
-drawn to is itself a decision, and `docs/research/barcode-design.md` holds the evidence for it.
+Related and separable, and no longer open: the distance metric, the GC band and the homopolymer
+cap. A Hamming floor does not imply a Sequence-Levenshtein floor, so the metric is a decision of
+its own, and the page now states the three verdicts of `docs/research/barcode-design.md` —
+Sequence-Levenshtein 3 within a part list, no GC band, and a homopolymer run of 5. Neither a
+band of GC 3 to 7 of 11 nor a cap of 3 came from a source: both are the convention that note
+traces to one uncited sentence, and the published set meets neither. Section 4 carries the
+departure from the source that is left once they go.
 
 ### 6.6 The pass criterion for a well
 

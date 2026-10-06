@@ -3,7 +3,8 @@
 This is the strategy the pipeline is built against. Design specifics are settled when the code
 is written and the first project runs. An item marked undecided here is work the package will
 own, not work forgotten. The evidence behind each choice, and every open decision, is in
-`docs/research/synthesis-and-assembly.md`.
+`docs/research/synthesis-and-assembly.md`. One project that answers each open decision for
+itself is `docs/research/ap1-demo-project.md`.
 
 ## Goal
 
@@ -108,9 +109,11 @@ Runs in the DMX vector; the working vector takes only the finished cargo.
 - iGGA cargo: `[AGGA]─[fragment]─[internal stuffer]─[11 bp barcode]─[TTCC]`
 - Each fragment, counted from the first base of its `AGGA`, is a multiple of 3
 - Internal stuffer `[AGGA.BbsI]─[SrfI]─[BbsI.TTCC]`, 34 bp: `AGGAAAGTCTTCAGCCCGGGCAGAAGACAATTCC`
-- Barcode: 11 bp, minimum Hamming distance 3 over the whole set, no in-frame stop codon, GC 3 to 7 of 11, no homopolymer over 3
+- Barcode: 11 bp, minimum Sequence-Levenshtein distance 3 within a part list, no in-frame stop codon, no homopolymer run over 5
 - The stuffer is retained every round
 - A capping block is any `AGGA`/`TTCC` block that is 1 mod 3 counted from its `AGGA`, such as T2A. It ends the chain
+
+`docs/research/barcode-design.md` is the evidence for each barcode rule.
 
 ## Experiment sections
 

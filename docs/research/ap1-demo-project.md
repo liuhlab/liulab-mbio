@@ -408,10 +408,9 @@ one of the eight motifs 0.90% of the time, which is one library member in 112 cu
 own round, and Freschlin lost whole replicates to exactly that.
 
 The metric, the absent GC band, the cap of 5 and the shuffled draw order are the verdicts of
-`docs/research/barcode-design.md`. They are **not** what the method page currently prints, which
-says edit distance, GC 3 to 7 of 11 and no homopolymer over 3; the glossary names edit distance
-as a term to avoid. This project follows the research note. Reconciling the page is work for the
-page.
+`docs/research/barcode-design.md`, and the method page now carries them. Enzyme-site freedom is
+the method page's one open barcode decision, which is why this section decides it for this
+project.
 
 The source's 72 barcodes are not reused: six of them carry a stop at this design's frame offset,
 measured.
