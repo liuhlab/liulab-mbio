@@ -268,8 +268,12 @@ class _Design:
 
 
 def _enzymes(scheme: Scheme) -> tuple[Enzyme, ...]:
-    """Every enzyme a block is allowed to spell a site for, and nowhere but its stuffers."""
-    return (scheme.internal, scheme.external, *scheme.blunt)
+    """Every enzyme a block is held clear of, the scheme's own three roles and what it reserves.
+
+    The first three are allowed in a block's stuffers and nowhere else; a reserved enzyme is
+    allowed nowhere at all, which the scheme checks of its own stuffers when it is read.
+    """
+    return (scheme.internal, scheme.external, *scheme.blunt, *scheme.reserved_enzymes)
 
 
 def _check_lists(scheme: Scheme, part_lists: Sequence[PartList]) -> None:

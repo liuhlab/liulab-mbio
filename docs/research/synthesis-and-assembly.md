@@ -664,3 +664,105 @@ Read dates are in section 2 and provenance in section 7.
   directly, not published.
 - Addgene depositor maps for the two vector parents, four barcode plasmids and the part
   carrier, by plasmid number.
+
+## The AP-1 demo, planned and compared against the source
+
+Run on **2026-10-06** for issue #220, over the 72 AP-1 proteins of
+`docs/research/ap1-demo-project.md` — 24 N, 24 DBD, 24 C — with the inputs in
+`docs/examples/ap1-library`. The design was frozen and written to disk before the source's own
+parts were opened, so the comparison below is a check and not an input. The source is
+Takacsi-Nagy et al. 2026, Table S1, CC BY 4.0.
+
+### What the input was, and what it was not
+
+Amino acid sequences and a position each, and nothing else. The wild-type protein of every
+domain was recovered from the full-length natural TF sheet of Table S1 — the sheet that carries
+no design choice — and cross-checked against the two wild-type residue columns on the N and C
+sheets. They agree on all 48. No overhang, stuffer, barcode or codon was given to the planner.
+
+### What the pipeline chose
+
+| | Planned |
+| --- | --- |
+| Entry overhangs | `AGGA` into N, `AGAT` into DBD, `GCAT` into C |
+| Cloning scar | `TTCC` |
+| Internal stuffer | 34 bp at every position |
+| Barcodes | 72 distinct 11-mers, minimum Hamming 4 in each pool, longest run 4, GC 18-82% |
+| Residues moved | 27, over 26 of 48 junction termini |
+| Synonymous codons moved by domestication | 55 |
+| Coding bases over the 72 parts | 23,103 |
+| Blocks | 133 to 1,149 bp, 30,519 bp in all |
+| Product | 2,276 bp, 13,824 distinct constructs, every check passing |
+| Colonies asked for at 300x | 7,200, then 172,800, then 4,147,200 |
+
+23,103 bp is the source's own published total, to the base. The retained tail reads 75 bases,
+25 codons, no stop, opening `RKVFSPGRRQF` — the specification's section 3.2 derived both.
+
+### The comparison, difference by difference
+
+| What | Theirs | Ours | Classification |
+| --- | --- | --- | --- |
+| Overhang count | four: `CTCC`, `GGAG`, `CCGA`, scar `AGCG` | four: `AGGA`, `AGAT`, `GCAT`, scar `TTCC` | **our defect** — the method asks for one pair at every position (D3) and the planner cannot express it |
+| Which overhangs | fixed by their own standard | `AGGA` pinned by the destination, the rest chosen for fewest residues moved | two valid designs |
+| Internal stuffer | 56 bp, 58 bp terminal | 34 bp throughout | recorded departure D2 |
+| External stuffers | 29 bp each end, on the block | 29 bp each end, on the block | **our defect** — D4 puts them in the carrier, and the planner has no way to say so |
+| Barcode length | 11 | 11 | agreement |
+| Barcode distance | minimum Hamming 3, 4, 4 per pool | 4, 4, 4 | two valid designs |
+| Barcode set | their 72 | 72 others, none shared | two valid designs; both sets are stop-free at our frame |
+| Residues at the N junction | 15 of 24 changed | 15 of 24 changed, 6 of them the same part | two valid designs |
+| Residues at the middle junction | not recorded on their sheet | 11 of 24 changed | two valid designs |
+| Residues at the C junction | 19 of 24 first residues changed, all to R | none — our terminal position is charged nothing | two valid designs |
+| Reserved enzymes | their blocks carry 2 BsaI, 2 BbsI, 1 SrfI, 2 PmeI by design | the same, and no BsmBI | **our defect, fixed** — see below |
+
+### The residue rule, and its prediction
+
+The specification predicted the rule and its exclusion set. Both hold, measured.
+
+A 4-base overhang donates its first base to close the upstream part's last codon and spells one
+whole codon with the other three. So the last residue of every fragment must have a codon ending
+in the donated base, and the residue the overhang spells overwrites what follows. At `AGAT` the
+donated base is `A`, and the residues no codon of which ends in `A` are **C, D, F, H, M, N, W,
+Y** — the specification's eight, derived independently. The prediction that a part is changed
+exactly when its last residue is one of those is **right on 24 of 24 N parts**, and the same
+test at the C junction, where `GCAT` donates `G` and the excluded set is **C, D, F, H, I, N, Y**,
+is right on 24 of 24 DBD parts.
+
+This is the equivalent of the source's own residue changes, and it is reached the same way:
+both designs overwrite a boundary residue rather than insert one. The specification's section
+3.1 prefers inserting a Gly and keeping every native residue; the planner has no such option,
+which is recorded below.
+
+### Two things the specification says that this run does not reproduce
+
+- **Section 9.5 says six of the source's 72 barcodes carry a stop at our frame offset.**
+  Measured here: **none** do, at the retained stuffer's phase of 1, with our scar or theirs, in
+  a bare barcode-plus-scar unit and in a whole 41-base block alike. The reason for drawing a
+  fresh set stands on the distance rule and the site screen; this one measurement does not.
+- **Section 6 says three positions is two iGGA rounds.** The planner reports three, because its
+  first round is the step that seats position one in its carrier. The substance agrees; the
+  wording in the protocol it writes does not.
+
+### What the planner could not do
+
+Five gaps, each measured on this run. The first is fixed; the rest are open.
+
+1. **An enzyme reserved by a step outside the rounds had nowhere to be named.** The scheme took
+   one internal enzyme, one external and the blunt choppers, so BsmBI — which seats a part in
+   the DMX carrier — reached neither domestication nor the barcode rules. Measured: **four BsmBI
+   sites survived in the 72 designed coding regions**, one of which a later cut would have
+   destroyed. Fixed in #220: a scheme now takes a `reserved` list, held clear everywhere in a
+   block and refused in the scheme's own stuffers.
+2. **One overhang pair cannot serve every position.** The standard holds every junction's
+   overhang to a pairwise distance rule, which is right for one pot and not for rounds: each
+   round's tube holds one entry overhang and the scar, and no other pair ever meets.
+3. **The external stuffers cannot move to the carrier.** D4 leaves our cargo with none, and the
+   scheme requires both. The order sheet therefore carries 58 bp a part that this design would
+   not buy.
+4. **A junction cannot add a residue.** Its codons are always charged to a neighbouring part, so
+   the designed protein never grows.
+5. **A destination may not carry the external enzyme's sites.** The DMX backbone does, because
+   the same plasmid is a donor in another tube. The demo therefore runs on a minimal destination
+   rather than a DMX build.
+
+Domestication still takes an enzyme list and not a motif list, so the polyadenylation screen of
+section 3.3 was not run. That gap was already open.

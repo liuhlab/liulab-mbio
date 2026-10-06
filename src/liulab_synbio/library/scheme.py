@@ -138,6 +138,11 @@ class Scheme:
     source
         Where these values came from, so provenance travels with the scheme. Empty where nothing
         states it.
+    reserved
+        The names of further enzymes a block must be free of, beyond the ones above. A step
+        outside the rounds — seating a part in its carrier, or the last transfer into a working
+        vector — cuts the cargo too, and its enzyme has no role here to be named by. A block
+        spells none of these anywhere, its stuffers included.
 
     Raises
     ------
@@ -158,11 +163,13 @@ class Scheme:
     cloning_scar: str
     barcode_length: int
     source: str = ""
+    reserved: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Normalise the sequences, then check every invariant in turn."""
         object.__setattr__(self, "positions", tuple(self.positions))
         object.__setattr__(self, "blunt_enzymes", tuple(self.blunt_enzymes))
+        object.__setattr__(self, "reserved", tuple(self.reserved))
         object.__setattr__(self, "internal_stuffer_core", self.internal_stuffer_core.upper())
         object.__setattr__(self, "cloning_scar", self.cloning_scar.upper())
         if not self.positions:
@@ -194,6 +201,11 @@ class Scheme:
     def blunt(self) -> tuple[Enzyme, ...]:
         """The blunt choppers, in the order this scheme names them."""
         return tuple(get_enzyme(name) for name in self.blunt_enzymes)
+
+    @property
+    def reserved_enzymes(self) -> tuple[Enzyme, ...]:
+        """The enzymes a step outside the rounds reserves, in the order this scheme names them."""
+        return tuple(get_enzyme(name) for name in self.reserved)
 
     def internal_stuffer(self, index: int) -> str:
         """Return the internal stuffer a part at `index` carries: its prefix and the shared core."""
@@ -264,6 +276,12 @@ class Scheme:
             cloning_scar=_text(data, "cloning_scar", "a scheme"),
             barcode_length=_whole(data, "barcode_length", "a scheme"),
             source=_one_text(data.get("source", ""), "a scheme source"),
+            reserved=tuple(
+                _one_text(name, f"reserved[{index}]")
+                for index, name in enumerate(
+                    _sequence(data, "reserved", "a scheme") if "reserved" in data else ()
+                )
+            ),
         )
 
     def _check_barcode_frame(self) -> None:
@@ -397,6 +415,26 @@ class Scheme:
                     f"the blunt enzyme {chopper.name} reads no site in the internal stuffer core "
                     "or any external stuffer, so it chops none of the pieces a round discards",
                 )
+        kept = (
+            self.internal_stuffer_core,
+            *(
+                bases
+                for position in self.positions
+                for bases in (
+                    position.internal_stuffer_prefix,
+                    position.external_stuffer_5,
+                    position.external_stuffer_3,
+                )
+            ),
+        )
+        for held in self.reserved_enzymes:
+            if any(_cuts(bases, held) for bases in kept):
+                _refuse(
+                    "enzyme-regions",
+                    f"the reserved enzyme {held.name} reads a site in a stuffer of this scheme, "
+                    "and a block spells a reserved site nowhere: the step that reserved it would "
+                    "cut every part",
+                )
 
 
 def read_scheme(path: str | os.PathLike[str]) -> Scheme:
@@ -423,7 +461,7 @@ _SCHEME_KEYS = frozenset(
         "barcode_length",
     }
 )
-_SCHEME_OPTIONAL = frozenset({"source"})
+_SCHEME_OPTIONAL = frozenset({"source", "reserved"})
 _POSITION_KEYS = frozenset(
     {"name", "internal_stuffer_prefix", "external_stuffer_5", "external_stuffer_3"}
 )
