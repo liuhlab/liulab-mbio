@@ -4,6 +4,10 @@ Papers, manuals and web pages downloaded while researching a method. Everything 
 this file is git-ignored: vendors do not let us redistribute their documents, so what ships
 is what we learned from them, cited in a note under `docs/research/`.
 
+Downloads live here. What the lab writes is tracked under `docs/research/`, however much of
+it was drafted while reading these files. The one thing of ours that stays is a script whose
+whole job is to rebuild a dump of a file here, because the file it reads cannot move.
+
 ## Using it
 
 Read anything here. Cite the source itself in the research note — its URL, version and page
@@ -11,21 +15,19 @@ Read anything here. Cite the source itself in the research note — its URL, ver
 
 ## Adding to it
 
-One directory per method or topic, named for it (`gibson/`, `gateway/`). Inside, sort by kind:
-
-| Subdirectory | What goes in it |
-| --- | --- |
-| `papers/` | Journal articles, preprints, patents |
-| `manuals/` | Vendor manuals, protocols, product sheets, app notes, brochures; one subdirectory per vendor when there are several |
-| `web/` | Web pages as text; `live/` and `archived/` when both were read |
-| `sequences/` | GenBank, SnapGene or FASTA records |
+One directory per method or topic, named for it (`gibson/`, `gateway/`). Inside, sort into
+subdirectories that say what they hold — by kind (`papers/`, `manuals/`, `web/`), by source
+(`twist/`, `Lund2024/`), or however the material divides.
 
 - Keep the source and one copy you can grep: a PDF with its `pdftotext` dump beside it, a
   web page as `.txt` or `.md`, never its raw HTML.
 - Name a file for what it is: author and year for a paper, the vendor's filename for a
   manual, the snapshot date for an archived page.
-- Each method directory has a `README.md`. It names the research note it serves, lists every
-  file with its source URL and version, and lists what was left out and where it is online.
+- A method directory has a `README.md`: the research note it serves, what each subdirectory
+  holds, and what was left out with where it is online. A source worth an account of its own
+  gets a `README.md` in its own directory, listed from the method's.
+- Per-file provenance — URL, version, retrieval date — belongs in the research note, which is
+  tracked and outlives the download. A README here need not repeat it.
 
 ## Keeping it clean
 

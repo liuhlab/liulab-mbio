@@ -331,6 +331,13 @@ sheet, 39 in the individually synthesised DESynR sheet, 37 control barcodes in t
 reference sheet, 16 in the HA GD2 CAR sheet and 1 in the vector — a union of 164 after
 duplicates across sheets are removed.
 
+**Re-measured 2026-10-06 and confirmed.** The barcode column differs between sheets — column 6 on
+the C sheet, which carries an extra `T2A` column, and column 5 on the N and bZIP sheets — so the
+count was taken again, both by each sheet's own barcode column and by scanning every cell of
+every sheet for an 11-base one. Both give the same eight per-sheet figures above and the same
+union of **164**. The 195 that the per-sheet figures sum to leaves 31 barcodes shared between
+sheets.
+
 ### The distance rule is per pool, and the paper overstates it
 
 METHOD DETAILS, p. e7:

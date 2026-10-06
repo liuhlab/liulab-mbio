@@ -5,7 +5,7 @@
     python scripts/conformance.py [--root PATH]
 
 It states the RULE, not the file contents — a pull model, so a repo that legitimately diverges
-stays green while the shared conventions stay checked. Fifteen rules: thirteen fail, two only warn.
+stays green while the shared conventions stay checked. Sixteen rules: fourteen fail, two warn.
 
 Three exit statuses, spelled the way `scripts/check.sh` spells its own: **0** every rule passed,
 **1** it ran and a rule failed, **2** it could not run at all — no `.git` to list tracked files
@@ -81,7 +81,7 @@ class CannotRunError(Exception):
 #: neither happens.
 PLACEHOLDER = "new" + "pkg"
 
-#: Rule 1 and warning 14 are both gated on this directory, and it is the only discriminator either
+#: Rule 1 and warning 15 are both gated on this directory, and it is the only discriminator either
 #: needs. While it is here, `init-repo` has not run: the placeholder is still the repo's own name,
 #: and the auto-discovered skill is itself the nag. Once it is gone the repo claims to be its own,
 #: and both rules start checking.
@@ -136,6 +136,11 @@ VALE_OFF = {"NO", "FALSE", "OFF"}
 #: Both are named here because rule 12's problem text and its fix both spell them.
 PIXI_RUN = "pixi run"
 TASK_TABLE = "[tool.pixi.tasks]"
+
+#: Rule 14's declaration: keyed by the package that must not import, value the list of packages it
+#: must not import. Written here once because the rule's note, its problem text and its fix all
+#: spell it.
+IMPORT_TABLE = "[tool.liulab.must-not-import]"
 
 #: Every `pixi run` option that takes a SEPARATE value, so the token after one is that value and
 #: never the task name. Both spellings of each, because a workflow writes either. The
@@ -192,6 +197,21 @@ _SKILL_DIR_RES = (
     re.compile(r"^skills/(?P<name>[^/]+)/"),
     re.compile(r"^\.(?:claude|agents)/skills/(?P<name>[^/]+)(?:/|$)"),
 )
+
+#: Where one import package's modules sit, in the two layouts a Python project uses. Rule 14
+#: resolves a declared package name against both, so a src layout and a flat one both check.
+PACKAGE_ROOTS = ("src/{name}/", "{name}/")
+
+#: What rule 14 reads. A stub declares its imports too, and one reaching across the boundary
+#: would be as wrong as a module doing it.
+MODULE_SUFFIXES = (".py", ".pyi")
+
+#: An import STATEMENT at the start of a line, which is the whole of what rule 14 matches. A
+#: pattern looking for the bare package name would fire on a comment or a docstring that mentions
+#: it — correct work — and a rule shown to fire on correct work is evidence against the rule.
+#: `import os, pkg` is the one spelling this misses; E401 rejects that line wherever pycodestyle
+#: rules are selected, which is the same `lint` step of the same gate.
+_IMPORT_TEMPLATE = r"^[ \t]*(?:from|import)[ \t]+{name}\b"
 
 
 @dataclass(frozen=True)
@@ -928,6 +948,22 @@ def _spell(level: tuple[int, int]) -> str:
     return f"{level[0]}.{level[1]}"
 
 
+def _imports_of(text: str, package: str) -> list[tuple[int, str]]:
+    """Every line of one module that imports a package, as (1-based line number, the line).
+
+    The early return is the whole cost of this rule in a tree that holds: a module that never
+    writes the name at all is never split into lines.
+    """
+    if package not in text:
+        return []
+    pattern = re.compile(_IMPORT_TEMPLATE.format(name=re.escape(package)))
+    return [
+        (number, line.strip())
+        for number, line in enumerate(text.splitlines(), 1)
+        if pattern.match(line)
+    ]
+
+
 def _python_pins(pyproject: dict[str, Any]) -> dict[str, str]:
     """Every pixi `python` pin, keyed by the table header that holds it.
 
@@ -949,7 +985,7 @@ def _python_pins(pyproject: dict[str, Any]) -> dict[str, str]:
 
 
 # --------------------------------------------------------------------------------------
-# The rules. Thirteen fail, two warn. Each returns what it found; nothing here exits or prints.
+# The rules. Fourteen fail, two warn. Each returns what it found; nothing here exits or prints.
 # --------------------------------------------------------------------------------------
 
 
@@ -1674,8 +1710,53 @@ def rule_nav_target_exists(repo: Repo) -> Result:
     return result
 
 
+def rule_import_direction(repo: Repo) -> Result:
+    """14. No package imports one `[tool.liulab.must-not-import]` says it must not."""
+    result = Result()
+    declared = _table(repo.manifest, "tool", "liulab", "must-not-import")
+    if not declared:
+        result.notes.append(f"not checked: pyproject.toml has no {IMPORT_TABLE}")
+        return result
+    for importer in sorted(declared):
+        value: Any = declared[importer]
+        forbidden = [n for n in value if isinstance(n, str)] if isinstance(value, list) else []
+        roots = tuple(root.format(name=importer) for root in PACKAGE_ROOTS)
+        modules = [
+            rel for rel in repo.tracked if rel.endswith(MODULE_SUFFIXES) and rel.startswith(roots)
+        ]
+        if not forbidden:
+            result.notes.append(f"not checked: `{importer}` names no package it must not import")
+            continue
+        if not modules:
+            # Vacuous, not failing, and for the usual reason: a package this checkout does not
+            # carry is a package nothing can be held to. Said out loud so a declaration whose
+            # package was renamed does not read as a rule that passed.
+            result.notes.append(f"not checked: `{importer}` has no tracked module")
+            continue
+        for rel in modules:
+            text = repo.read(rel)
+            if text is None:
+                continue
+            for name in forbidden:
+                for number, line in _imports_of(text, name):
+                    result.problems.append(
+                        _problem(
+                            f"{rel}:{number} imports `{name}` — {line}",
+                            f"`{importer}` is declared not to import `{name}`. The direction is "
+                            f"what keeps `{importer}` installable and testable on its own, and "
+                            "one import the wrong way is invisible until someone tries",
+                            f"move what this module needs out of `{name}` and into `{importer}`, "
+                            f"or move the module into `{name}`. If the direction itself was meant "
+                            f"to change, change {IMPORT_TABLE}",
+                        )
+                    )
+        named = ", ".join(f"`{name}`" for name in forbidden)
+        result.notes.append(f"{len(modules)} module(s) of `{importer}` read for {named}")
+    return result
+
+
 def warning_init_sentinel(repo: Repo) -> Result:
-    """14. `AGENTS.md` still carries the line telling you to run `/init`."""
+    """15. `AGENTS.md` still carries the line telling you to run `/init`."""
     result = Result()
     if repo.exists(INIT_SKILL):
         result.notes.append(f"not checked: {INIT_SKILL}/ is here, and that skill is the nag")
@@ -1811,6 +1892,14 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         14,
+        "import-direction",
+        f"no package named in {IMPORT_TABLE} imports a package that table says it must not. The "
+        "declaration is the repo's own — a package this checkout does not carry, and a package "
+        "that forbids nothing, are both reported unchecked rather than failed",
+        rule_import_direction,
+    ),
+    Rule(
+        15,
         "init-sentinel",
         "AGENTS.md is still the template's generic copy",
         warning_init_sentinel,
@@ -1818,9 +1907,9 @@ RULES: tuple[Rule, ...] = (
     ),
 )
 
-#: Warning 15 is not a rule with a tree to inspect: it is the waiver table itself, printed on
+#: Warning 16 is not a rule with a tree to inspect: it is the waiver table itself, printed on
 #: every run. It lives in `report` because only the reporter knows what each waiver suppressed.
-WAIVER_RULE = (15, "waivers")
+WAIVER_RULE = (16, "waivers")
 
 
 def load(root: Path) -> Repo:

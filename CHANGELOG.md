@@ -217,6 +217,12 @@ sets one.
 
 ### Changed
 
+- The combinatorial library pipeline moved to `liulab_synbio`, the package for one named
+  method's pipelines. It fixes one method's enzymes, stuffers and round order, so it sits on
+  synbio's side of the boundary. Nothing was rewritten: the same eleven modules, the same tests,
+  the same files written with the same bytes. The command is now `liulab_synbio library plan`
+  rather than `liulab_mbio library plan`, and the import path moves with it:
+  `liulab_synbio.library.plan_library`. `liulab_mbio` imports nothing from `liulab_synbio`.
 - A plate step now names the medium the drug needs, and reads a marker the table does not know.
   `liulab_mbio.bench.phenotype` gained the markers Gateway's vectors carry: kanamycin, Zeocin
   and spectinomycin. Zeocin only works in low-salt medium, so `Phenotype.medium` sits beside the

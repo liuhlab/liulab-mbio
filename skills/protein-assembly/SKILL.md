@@ -2,7 +2,7 @@
 name: protein-assembly
 description: >-
   Build a barcoded combinatorial library from lists of protein or DNA sequences by iterative
-  Golden Gate with `liulab_mbio`: design every part's synthesis block, choose the overhang
+  Golden Gate with `liulab_synbio`: design every part's synthesis block, choose the overhang
   standard that costs the proteins fewest amino acids, draw a barcode for each part, accept or
   retrofit the destination vector, simulate every round, size each round's colonies for the
   coverage asked for, and write an interactive HTML bench protocol covering all the rounds. Use
@@ -13,7 +13,7 @@ description: >-
 
 # Protein library assembly
 
-`liulab_mbio.library` does the design. This skill is the way in: one command turns lists of
+`liulab_synbio.library` does the design. This skill is the way in: one command turns lists of
 proteins, a scheme and a vector into a synthesis order sheet, annotated records and a bench
 protocol. Never invent a block, a barcode, an overhang, an amount or a colony count: the package
 works each one out and checks it, and nothing checks a number you made up.
@@ -21,7 +21,7 @@ works each one out and checks it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_mbio library plan parts.fasta \
+pixi run liulab_synbio library plan parts.fasta \
   --scheme scheme.json --vector vector.dna \
   --host human --coverage 10 --out library/
 ```
@@ -31,10 +31,20 @@ pixi run liulab_mbio library plan parts.fasta \
 naming it. Pass `--kind dna` where the sequences are already coded: those codons are checked and
 kept, not written again.
 
-The scheme is data the user supplies, not something this package ships;
-`docs/examples/protein-library/scheme.json` is the worked example to copy and edit, and
+The scheme is data the user supplies, not something this package ships, and
 `docs/adr/0005-scheme-data.md` says why. Read it back to the user when they ask what the design
-assumed.
+assumed. Two worked schemes ship, and they are not interchangeable:
+
+- `docs/examples/protein-library/scheme.json` — **copy this one.** It is a scheme and nothing
+  else, written to be edited, with no project's choices in it.
+- `docs/examples/ap1-library/` — **read this one.** A whole run, inputs and outputs, whose scheme
+  is one published library's own architecture.
+
+A scheme's `reserved` list names any further enzyme a step outside the rounds cuts the cargo
+with — seating a part in a carrier, or a last transfer into a working vector. Every block is held
+clear of all of them, its stuffers included. Ask the user what cuts their cargo outside the
+rounds, and write `[]` where nothing does: the ap1 scheme reserves `BsmBI`, the one to copy
+reserves nothing and says so.
 
 Files land in the directory you name:
 
@@ -70,7 +80,7 @@ The command prints a summary line and the paths. The same inputs write the same 
 ## From Python
 
 ```python
-from liulab_mbio.library.plan import plan_library
+from liulab_synbio.library.plan import plan_library
 
 plan = plan_library("parts.fasta", "scheme.json", "vector.dna", host="human", coverage=10)
 plan.status  # "pass", "warn" or "fail" over every round's checks

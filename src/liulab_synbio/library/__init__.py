@@ -21,8 +21,8 @@ Only the way in and the scheme's own types are re-exported. Everything else is i
 module, as `liulab_mbio.cloning.goldengate.design` is.
 """
 
-from liulab_mbio.library.plan import Files, LibraryPlan, plan_library
-from liulab_mbio.library.scheme import Position, Scheme, read_scheme
+from liulab_synbio.library.plan import Files, LibraryPlan, plan_library
+from liulab_synbio.library.scheme import Position, Scheme, read_scheme
 
 __all__ = [
     "Files",

@@ -1,0 +1,34 @@
+LOCUS       DMX-demo                1234 bp    DNA     circular SYN 01-JAN-1980
+DEFINITION  Minimal destination for the AP-1 demo: one BbsI internal stuffer.
+ACCESSION   DMX-demo
+VERSION     DMX-demo
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     misc_feature    601..634
+                     /label="internal stuffer"
+ORIGIN
+        1 cctgtttcgc tctgtcaaca ggagaacacg gaccaaaatg ttgtctagtt tatgaacgag
+       61 cccctacgcg ggggccgtgt acgacctcga acaccgagat gtgtaatcct agagaatcat
+      121 agggcccgga cggcccgaat tgtggaggga agggcgaaat gtccgatgtt aagggttctg
+      181 cggtactttc aagatgttac tattgctcat cctgctgctt ctcacgtcct cttccgcagg
+      241 ataacctcca gggttttttc cggatttacg gagttgacgt cggcgaatta cggactccga
+      301 agtacaaaaa tgaagatagc atatcgggac ctttaccaag gtaatagact aaggtctagg
+      361 ccacgtgggt aagtcttacg tcaccagttc acctcgtggc cgctaatgtg attgtgcgag
+      421 tcctaaaagt aggggatatc tgggattccc gctgccagta tcagcttcag ccaatcgcag
+      481 catgtgaact ctcgcactct tggcaactat actcatattc tgccctgtca ttggctacag
+      541 cgtacagctt actccgcgaa tcacccagct gtgcatcaca gttgaaacgc agggacctag
+      601 aggaaagtct tcagcccggg cagaagacaa ttccatgaca agtctgcgag acaataaagt
+      661 ttagtcgtaa cctagacacc atttcagacc gcgcccttgt tacaccctca ggtacatgat
+      721 aggatccggt aacccgtaag gtctaaggat tgggtatcaa gccgggtagg ccccatattt
+      781 atacagttaa tatacgctct cgacttccga acgccatggg ctacctaggg taatctattc
+      841 gttaggttac cgcctgaata taggagcgtt tccaacgtca tacagtattg cgaccaggat
+      901 tcagcaacgt gagttgatca cagaagggct gggagagtat tgcaggagtc ggtgaccgtg
+      961 gatgtaagcc tcaacgcttc atggtgcgtt cctcgtccgt gtaatcgtaa actgcttgag
+     1021 ccagcgctag cacctgaagc cgcttcggcc gcatgggaag ttacgtagct taggccaggt
+     1081 ggtcgttgtg aggttcctcc tgcattggct acgaagctct atttttacac cgtgtatgag
+     1141 ttggtaacct tctgcgcctg tcaaccgcct accgaccgtt aaaattgcct acagcgccgt
+     1201 ataacctcag ttgtcgcacg cactagctta atgt
+//

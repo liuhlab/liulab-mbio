@@ -7,8 +7,8 @@ import typer
 
 from liulab_mbio.barcodes import SEED
 from liulab_mbio.cloning.cli import plan_command
-from liulab_mbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
-from liulab_mbio.library.vector import Site
+from liulab_synbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
+from liulab_synbio.library.vector import Site
 
 app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=True)
 

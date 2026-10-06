@@ -1,12 +1,13 @@
 {
   "name": "Three positions, one barcode each",
-  "source": "A worked example to copy and edit. Its stuffer bodies are synthetic: each lays the enzyme's site at the offset that enzyme's own cut offsets ask for, so the overhangs are read off the DNA rather than stated. The architecture is the one docs/research/protein-library-assembly.md describes.",
+  "source": "A worked example to copy and edit. Its stuffer bodies are synthetic: each lays the enzyme's site at the offset that enzyme's own cut offsets ask for, so the overhangs are read off the DNA rather than stated. The architecture is the one docs/research/protein-library-assembly.md describes. No step of that architecture falls outside the rounds -- its last transfer, into the CAR vector, is a round on the same enzyme pair -- so reserved is empty and spelled out rather than left off.",
   "internal_enzyme": "BsaI",
   "external_enzyme": "BbsI",
   "blunt_enzymes": [
     "SrfI",
     "PmeI"
   ],
+  "reserved": [],
   "internal_stuffer_core": "CGAGACCTATGCCCGGGCTATATGGTCTCTAGCG",
   "cloning_scar": "AGCG",
   "barcode_length": 11,

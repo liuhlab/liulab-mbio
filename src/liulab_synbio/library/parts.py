@@ -11,7 +11,7 @@ set the part lists cost least. Nothing else in a stuffer moves.
 
 A block's coding bases stop where the overhang either side of it spells the rest: an overhang
 finishes the upstream part's last codon and spells whole codons of its own, so a part's own bases
-are its amino acids less the ones charged to a junction. `liulab_mbio.library.standard` decides
+are its amino acids less the ones charged to a junction. `liulab_synbio.library.standard` decides
 which those are, and this writes them.
 """
 
@@ -31,11 +31,11 @@ from liulab_mbio.barcodes import (
 )
 from liulab_mbio.codons import CodonUsage, codon_usage
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.library.scheme import Scheme
-from liulab_mbio.library.standard import End, PartList, Standard, Terminus, junction_residues
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import CutSite, Domestication, domesticate, find_sites
 from liulab_mbio.translate import SiteNotRemovableError, reverse_translate, translate
+from liulab_synbio.library.scheme import Scheme
+from liulab_synbio.library.standard import End, PartList, Standard, Terminus, junction_residues
 
 #: The columns of the synthesis order sheet.
 SHEET_COLUMNS = ("name", "sequence", "length", "position", "barcode")
@@ -153,7 +153,7 @@ def design_parts(
         One per position, in the scheme's order: each member's name and the protein it codes for.
     standard
         The overhang standard the build works to, and what it charges each part. Design it with
-        `liulab_mbio.library.standard.design_standard` over these same part lists.
+        `liulab_synbio.library.standard.design_standard` over these same part lists.
     host
         The name of the codon usage table the coding bases are written for.
     coding
@@ -268,8 +268,12 @@ class _Design:
 
 
 def _enzymes(scheme: Scheme) -> tuple[Enzyme, ...]:
-    """Every enzyme a block is allowed to spell a site for, and nowhere but its stuffers."""
-    return (scheme.internal, scheme.external, *scheme.blunt)
+    """Every enzyme a block is held clear of, the scheme's own three roles and what it reserves.
+
+    The first three are allowed in a block's stuffers and nowhere else; a reserved enzyme is
+    allowed nowhere at all, which the scheme checks of its own stuffers when it is read.
+    """
+    return (scheme.internal, scheme.external, *scheme.blunt, *scheme.reserved_enzymes)
 
 
 def _check_lists(scheme: Scheme, part_lists: Sequence[PartList]) -> None:

@@ -28,8 +28,6 @@ from pathlib import Path
 from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.edits import EditReport, ordered, replace
-from liulab_mbio.library.parts import Part
-from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.sequence import (
     Feature,
     Segment,
@@ -40,6 +38,8 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import Fragment, digest, find_sites
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
+from liulab_synbio.library.parts import Part
+from liulab_synbio.library.scheme import Scheme
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -128,7 +128,7 @@ class Round:
         """What the product keeps past this round's part: its stuffer and the barcode block.
 
         After the terminal round this is the region the whole construct reads through, and its
-        length is the scheme's `liulab_mbio.library.scheme.Scheme.retained_length`.
+        length is the scheme's `liulab_synbio.library.scheme.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
         return _span(self.coding.end, carried + _length(self.block), len(self.product))
@@ -245,7 +245,7 @@ def assemble_round(
         The library the round opens, circular: the vector for the first round, and the round
         before's product after that.
     part
-        The part this round appends, as `liulab_mbio.library.parts.design_parts` built it.
+        The part this round appends, as `liulab_synbio.library.parts.design_parts` built it.
     scheme
         The architecture the build is given.
     number
@@ -332,7 +332,7 @@ def assemble_rounds(
     Parameters
     ----------
     destination
-        The vector the first round opens, circular. `liulab_mbio.library.vector` makes one.
+        The vector the first round opens, circular. `liulab_synbio.library.vector` makes one.
     parts
         One part a position, in the order the rounds fill them: `representative` picks a set.
     scheme

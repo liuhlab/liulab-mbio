@@ -28,6 +28,7 @@ dependencies = [
 
 [project.scripts]
 liulab_mbio = "liulab_mbio.cli:app"
+liulab_synbio = "liulab_synbio.cli:app"
 
 # ============================== build ==============================
 
@@ -39,8 +40,9 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
+# One distribution, two import packages. One version, one dependency set, one gate.
 [tool.hatch.build.targets.wheel]
-packages = ["src/liulab_mbio"]
+packages = ["src/liulab_mbio", "src/liulab_synbio"]
 
 # ============================== pixi ==============================
 
@@ -251,6 +253,12 @@ filterwarnings = ["error"]
 "skills/" = "LengthDoc"
 "docs/adr/" = "LengthAdr"
 "docs/research/" = false
+
+# Keyed by the package that must not import, value every package it must not import. One
+# distribution ships both import packages: synbio composes mbio, and mbio never reaches back.
+# That direction is the whole of the boundary between them, and it is all this says.
+[tool.liulab.must-not-import]
+liulab_mbio = ["liulab_synbio"]
 
 # Keyed by rule name, value the reason. Per-rule, never per-file; no expiry; printed on every
 # run. `placeholder-rename` refuses to be waived.

@@ -6,11 +6,11 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
+from liulab_synbio.cli import app
 
-EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
+EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 LISTS = (
     {"N_a": "MKTAEK", "N_b": "MKTCEK"},

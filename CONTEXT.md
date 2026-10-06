@@ -2,6 +2,9 @@
 
 ## Glossary
 
+One glossary for both import packages. An entry is `liulab_mbio`'s unless it ends with a
+`_Package_` line naming another.
+
 ### Sequence record
 
 One DNA sequence with its topology, features, primers and notes: what a sequence file holds,
@@ -556,6 +559,7 @@ internally, externally and bluntly, the stuffers, the cloning scar and the barco
 one object the user supplies, checked as it is read, and any one scheme is an instance of the
 pattern rather than the only one. A part list is what fills one of its positions.
 _Avoid_: config, standard, design, layout
+_Package_: liulab_synbio
 
 ### Entry overhang
 
@@ -564,6 +568,7 @@ it to. Each position has its own: a part's 5' external stuffer begins with its o
 and its internal stuffer begins with the next position's, which is how a part carries its place.
 Every member of a part list shares them, which is what lets one round take a whole list.
 _Avoid_: fusion site, position tag, adapter
+_Package_: liulab_synbio
 
 ### Internal stuffer
 
@@ -572,6 +577,7 @@ it. It holds that enzyme's two sites facing inward and a blunt enzyme's site in 
 excised piece is cut again and cannot ligate back. Its first bases are the next position's entry
 overhang.
 _Avoid_: filler, spacer, placeholder, dummy insert
+_Package_: liulab_synbio
 
 ### External stuffer
 
@@ -580,6 +586,7 @@ external enzyme cuts inside it to release the part as a digest fragment, and a b
 further out so that what is left of the block cannot ligate back. The 5' one begins with the
 part's own entry overhang.
 _Avoid_: adapter, arm, flank, tail
+_Package_: liulab_synbio
 
 ### Barcode
 
@@ -620,8 +627,11 @@ One stage of an iterative assembly: the library built so far is cut internally t
 round's parts are cut externally to release them, the two ligate, and the product is transformed,
 grown and prepped to become the next round's destination. One round appends one part list and its
 barcode to every member of the library at once. The product keeps the internal enzyme's sites,
-which is what lets the next round open it.
+which is what lets the next round open it. The first round opens the destination vector, which is
+the library before any part list has been appended, so a build over _n_ positions runs _n_ rounds.
+A step that seats one part in a carrier makes no library and is not a round.
 _Avoid_: cycle, iteration, step
+_Package_: liulab_synbio
 
 ### Synthesis order sheet
 
@@ -630,6 +640,7 @@ ordered under, the whole synthesised block 5' to 3', its length, the position it
 barcode. The barcode stands on the same row, so the sheet ordered from is also what decodes the
 sequencing afterwards.
 _Avoid_: gene list, construct table, primer order sheet (the oligo one, and its own entry)
+_Package_: liulab_synbio
 
 ### Library coverage
 
@@ -638,6 +649,7 @@ colonies counted against the number of those products. A round short of the cove
 loses members no later round can put back, so it is counted for each round and not once at the
 end.
 _Avoid_: complexity, depth, diversity, representation
+_Package_: liulab_synbio
 
 ### Map
 
