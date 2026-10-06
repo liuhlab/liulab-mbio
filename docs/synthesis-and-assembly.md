@@ -14,16 +14,17 @@ What each molecule is. What is done with it is in `## Experiment Sections`.
 
 | Item                | Source and purpose                                                                    | Selection  | Common overhangs                             | Sites to remove outside designed cassettes | Cut by                                                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------- | ---------- | -------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Part carrier vector | pCR-Blunt II-TOPO; stores each part                                                   | KanR       | -                                            | BsmBI                                      | BsmBI (releases the part)                                                                                                      |
-| Parts               | reusable in-frame elements: tag, linker, signal peptide, localization signal, degron  | -          | N-term pair TATG/AGGA; C-term pair TTCC/CTAA | BsaI, BsmBI                                | BsmBI (cut in the assembly reaction)                                                                                           |
-| DMX vector          | holds cargo                                                                           | KanR       | AGGA, TTCC                                   | BsaI, BsmBI, BbsI, SrfI, PmeI              | BsmBI (insert cargo), BsaI (barcode, release cargo, iGGA donor), BbsI (open iGGA destination), PmeI (blunt the donor backbone) |
+| Part carrier vector | pCR-Blunt II-TOPO; stores each part                                                   | KanR       | -                                            | BsmBI                                      | -                                                                                                                              |
+| Parts               | reusable in-frame elements: tag, linker, signal peptide, localization signal, degron  | -          | N-term pair TATG/AGGA; C-term pair TTCC/CTAA | BsaI, BsmBI                                | BsmBI (releases the part in the assembly reaction)                                                                             |
+| DMX vector          | holds cargo                                                                           | KanR       | AGGA, TTCC                                   | BsaI, BsmBI, BbsI                          | BsmBI (insert cargo), BsaI (barcode, release cargo, iGGA donor), PmeI (blunt the donor backbone)                               |
 | DMX barcode vector  | 96 barcodes in four groups of 24; one from each group marks a well for ONT sequencing | AmpR       | chain AGGA→GTTC→CCTT→TCAG→TTCC, group 1 to 4 | - (used as supplied)                       | BsaI (plate barcoding)                                                                                                         |
 | Cargo               | Twist oligo pool fragments, via DAD and DMX                                           | -          | AGGA, TTCC                                   | BsaI, BsmBI                                | BsmBI (insert cargo to vector)                                                                                                 |
 | iGGA cargo          | cargo built for iterative random assembly                                             | -          | AGGA, TTCC                                   | BsaI, BsmBI, BbsI, SrfI, PmeI              | BsmBI (into DMX vector), BsaI (release as donor), BbsI (open internal stuffer), SrfI (cut the released stuffer)                |
 | Working vector      | chosen backbone plus working cassette; gives cargo its application                    | AmpR/CarbR | TATG, CTAA (cassette); AGGA, TTCC (cargo)    | BsaI, BsmBI                                | BsmBI (insert working cassette), BsaI (insert cargo)                                                                           |
 | Final vector        | working vector with cargo installed                                                   | AmpR/CarbR | AGGA, TTCC (cargo junction)                  | -                                          | -                                                                                                                              |
 
-The barcode chain is measured from the four plasmids we hold; `final/dmx-barcodes.md` has all 96.
+The barcode chain is measured from the four plasmids we hold;
+`docs/research/synthesis-and-assembly-barcode-kit.md` has all 96.
 
 ### Parts
 
@@ -68,6 +69,8 @@ The barcode chain is measured from the four plasmids we hold; `final/dmx-barcode
 - The PmeI site blunts the donor backbone in iGGA; the DMX pipeline does not use it
 - DMX ccdB cassette: `[PmeI]─[BsaI.AGGA.BsmBI]─[promoter+ccdB]─[BsmBI.TTCC.BsaI]─[PmeI]`
 - BsmBI inserts cargo; BsaI adds plate barcodes or releases cargo
+- The ccdB cassette reads from a T7 promoter under a *lac* operator, with the repressor on the
+  plasmid. Only a strain carrying T7 polymerase counter-selects
 
 ### Final vectors
 
@@ -116,7 +119,8 @@ per-project files. A gene whose own sequence contains its slot's primer site mov
 assignment is not redrawn. Combination plates are kept pre-made and a plate is drawn when
 needed.
 
-Anything carrying ccdB is propagated in NEB Stable.
+Anything carrying ccdB is propagated in NEB Stable, which carries no T7 polymerase and so never
+transcribes the cassette.
 
 ### Working cassette (per application)
 
@@ -191,6 +195,7 @@ with well position throughout.
 | 8 | Pool, then PCR the three primer pairs separately | barcoded pool | three amplicon pools | — |
 | 9 | Sequence | amplicons | reads | — |
 | 10 | Basecall and demultiplex | reads | a sequence per well | what counts as a pass |
+| 11 | Reformat | per-well calls | compacted plate | which wells carry forward |
 
 #### Route B — index PCR
 
@@ -200,15 +205,12 @@ with well position throughout.
 | 6 | Pool per plate and clean up | amplicons | one pool per plate | — |
 | 7 | Sequence | pool | reads | — |
 | 8 | Demultiplex | reads | a sequence per well | what counts as a pass |
+| 9 | Reformat | per-well calls | compacted plate | which wells carry forward |
 
 #### After either route
 
-| # | Step | In | Out | Decision |
-| --- | --- | --- | --- | --- |
-| 11 | Reformat | per-well calls | compacted plate | which wells carry forward |
-
-Choose the route on wells per flow cell. Route A scales to thousands; Route B is capped by how
-many primer pairs are owned, and its primers need redesigning against the DMX vector.
+Choose the route per project: at or below one plate of samples, index PCR; above it, DMX
+barcoding.
 
 Reformatting only compacts out the wells that failed; every well already has its identity. The
 polyclonal route skips this section, and its plate is already a clean array.
@@ -262,7 +264,8 @@ released ccdB kills anything that takes it.
 
 ## Reagents and equipment
 
-Detail is in `final/materials.md`, by the process that uses it, and `final/dmx-barcodes.md`.
+Detail is in `docs/research/synthesis-and-assembly-materials.md`, by the process that uses it,
+and `docs/research/synthesis-and-assembly-barcode-kit.md`.
 
 ### Equipment list
 
@@ -280,7 +283,7 @@ Detail is in `final/materials.md`, by the process that uses it, and `final/dmx-b
 | pCR-Blunt II-TOPO | part carrier | Zero Blunt TOPO kit |
 | DMX0001 | DMX vector parent | Addgene 247434 |
 | DMX0002 | alternative parent, cassette on the opposite strand | Addgene 247435 |
-| DMX barcode kit, 96 plasmids | one barcode per group marks a well | Addgene; accession range in `final/dmx-barcodes.md` |
+| DMX barcode kit, 96 plasmids | one barcode per group marks a well | Addgene; accession range in `docs/research/synthesis-and-assembly-barcode-kit.md` |
 | ccdB cassette, four versions | N and C, no N, no C, neither | synthesised, held as parts |
 | Working vector backbone | per application | the user's own |
 
@@ -293,7 +296,7 @@ Detail is in `final/materials.md`, by the process that uses it, and `final/dmx-b
 | DMX library pair | carries the BsmBI sites giving `AGGA`/`TTCC` | Qian, Supplementary Table 4 |
 | DMX1–DMX6 | three pairs for the barcoded amplicon | Qian, Supplementary Table 4 |
 | dmx0 / dmx7 | universal primers flanking the design | Qian |
-| Index-PCR barcoded plate | one pair per well, if that read-out is chosen | **pending** — Long et al., Tables S5–S12 |
+| Index-PCR barcoded plate | one pair per well, if that read-out is chosen | Long et al., Tables S3 and S4; ordered as published |
 
 ### Reagent list
 
@@ -304,21 +307,20 @@ Detail is in `final/materials.md`, by the process that uses it, and `final/dmx-b
 | Ligases | T4 DNA ligase; T7 DNA ligase with StickTogether buffer |
 | Clean-up | SPRI beads; a column clean-up kit; a plasmid prep kit |
 | Cloning kit | Zero Blunt TOPO |
-| Strains | NEB Stable (anything with ccdB); a ccdB-sensitive strain (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds) |
+| Strains | NEB Stable (anything with ccdB); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds) |
 | Media and selection | low-salt LB; carbenicillin, kanamycin; glycerol for the archive |
-
-BbsI replaces the source method's PaqCI. No activator oligo is needed.
 
 ## References
 
 | Source | What it gives |
 | --- | --- |
 | Qian, Z. et al. Accelerating protein design by scaling experimental characterization. *Nat. Commun.* (2026). [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5) | The DMX vector, the barcode kit and the barcoded ONT read-out |
-| Lund, S., Potapov, V., Johnson, S. R., Buss, J. & Tanner, N. A. Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. *ACS Synth. Biol.* 13, 745–751 (2024). [doi:10.1021/acssynbio.3c00694](https://doi.org/10.1021/acssynbio.3c00694) | DAD and SplitSet: the fragment split and its overhang choice |
+| Lund, S., Potapov, V., Johnson, S. R., Buss, J. & Tanner, N. A. Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. *ACS Synth. Biol.* 13, 745–751 (2024). [doi:10.1021/acssynbio.3c00694](https://doi.org/10.1021/acssynbio.3c00694) | Building a gene from a cheap oligo pool: the fragment split, its overhangs chosen on ligation fidelity, and fixed terminal overhangs |
 | Subramanian, S. K., Russ, W. P. & Ranganathan, R. A set of experimentally validated, mutually orthogonal primers for combinatorially specifying genetic components. *Synth. Biol.* 3, ysx008 (2018). [doi:10.1093/synbio/ysx008](https://doi.org/10.1093/synbio/ysx008) | The orthogonal primer set the P1 / P2 / P3 roles draw from |
-| Baker lab three-primer scheme | The nested PCR that demultiplexes the pool; unpublished, held as `long_fragment_GGA/Baker Lab Strategy.png` |
-| Takacsi-Nagy, O. et al. Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. *Cell* 189, 1–20 (2026). [doi:10.1016/j.cell.2026.07.054](https://doi.org/10.1016/j.cell.2026.07.054) | iGGA: the rounds, the stuffer and barcode architecture, the library reads |
+| Baker lab three-primer scheme | The nested PCR that demultiplexes the pool; unpublished, a diagram sent to us |
+| Takacsi-Nagy, O. et al. Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. *Cell* 189, 1–20 (2026). [doi:10.1016/j.cell.2026.07.054](https://doi.org/10.1016/j.cell.2026.07.054) | Assembly in rounds: the round structure, the idea of an internal stuffer, the 11 bp barcode length, and the cells and temperature each round |
 | Long, Y., Mora, A., Li, F.-Z., Gürsoy, E., Johnston, K. E. & Arnold, F. H. LevSeq: rapid generation of sequence-function data for directed evolution and machine learning. *ACS Synth. Biol.* (2025). [doi:10.1021/acssynbio.4c00625](https://doi.org/10.1021/acssynbio.4c00625) | The index-PCR read-out, as the alternative to DMX barcoding |
 | Twist Bioscience oligo pool and gene products | Pool lengths, sizes and prices |
 
-How our design departs from Takacsi-Nagy is in `prot-assembly/changes-from-the-paper.md`.
+How our design departs from Takacsi-Nagy is in
+`docs/research/synthesis-and-assembly-departures.md`.

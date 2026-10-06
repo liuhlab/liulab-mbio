@@ -91,13 +91,14 @@ Two read-outs, one of which is chosen.
 
 | Item | Note |
 | --- | --- |
-| Barcoded primer plate | **pending** — Long et al. keep these in Supporting Information Tables S5–S12, with the plate-to-library pairing in S14 |
+| Barcoded primer plate | Long et al., Supporting Information Table S3 (forward) and Table S4 (reverse), the full-length barcode-linked primers; Tables S5–S12 are the plate maps and S14 the plate-to-library pairing |
 | Nanopore sequencing | as above |
 
-Their primers are backbone-specific, annealing outside the insert, so they are designed against
-the paper's plasmid and not ours. Whether they can be used unchanged against the DMX vector, or
-need redesigning, is **pending** on reading that supplement. The DMX route does not have this
-problem, because its barcodes attach by Type IIS and ignore the backbone.
+Their primers are backbone-specific, annealing outside the insert, so they were designed against
+the paper's plasmid and not ours. Measured on 2026-10-06, both constant backbone tails match
+both DMX parents at full length and each pair brackets the ccdB cassette, so the plates are
+ordered as published and no redesign is needed. The DMX route does not have this problem,
+because its barcodes attach by Type IIS and ignore the backbone.
 
 ## iGGA
 
