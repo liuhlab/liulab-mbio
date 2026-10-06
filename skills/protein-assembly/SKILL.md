@@ -40,6 +40,12 @@ assumed. Two worked schemes ship, and they are not interchangeable:
 - `docs/examples/ap1-library/` — **read this one.** A whole run, inputs and outputs, whose scheme
   is one published library's own architecture.
 
+A scheme's `reserved` list names any further enzyme a step outside the rounds cuts the cargo
+with — seating a part in a carrier, or a last transfer into a working vector. Every block is held
+clear of all of them, its stuffers included. Ask the user what cuts their cargo outside the
+rounds, and write `[]` where nothing does: the ap1 scheme reserves `BsmBI`, the one to copy
+reserves nothing and says so.
+
 Files land in the directory you name:
 
 - `parts.tsv` — the synthesis order sheet: every block 5' to 3', with its barcode on the same row
