@@ -13,12 +13,12 @@ from typing import Any
 import pytest
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.library.scheme import Position, Scheme, read_scheme
 from liulab_mbio.sequence import reverse_complement
 from liulab_mbio.translate import translate
+from liulab_synbio.library.scheme import Position, Scheme, read_scheme
 
 #: The paper's scheme, as a user supplies one.
-EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
+EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 #: The four enzymes the paper's scheme names, by their jobs.
 INTERNAL = "BsaI"

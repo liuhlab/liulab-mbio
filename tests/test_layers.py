@@ -13,7 +13,7 @@ CLONING = "liulab_mbio.cloning"
 SHARED = ("liulab_mbio.cloning", "liulab_mbio.cloning.plan")
 
 
-@pytest.mark.parametrize("package", ["liulab_mbio.bench", "liulab_mbio.library"])
+@pytest.mark.parametrize("package", ["liulab_mbio.bench", "liulab_synbio.library"])
 def test_no_cloning_pipeline_is_loaded(package: str) -> None:
     # A fresh interpreter: this one has already imported every module under `src/`.
     loaded = subprocess.run(

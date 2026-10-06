@@ -1,7 +1,7 @@
 # API reference
 
-Built from the docstrings in `src/liulab_mbio/`, so this page and the code cannot drift apart.
-Write the docstring; this page follows.
+Built from the docstrings in `src/liulab_mbio/` and `src/liulab_synbio/`, so this page and the
+code cannot drift apart. Write the docstring; this page follows.
 
 ## What to import
 
@@ -346,36 +346,38 @@ takes the destination or retrofits it, `rounds` simulates each round, and `cover
 colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps.
 
 A library is a pipeline over Golden Gate rather than a cloning method of its own — see
-[the library rounds decision](adr/0004-library-rounds.md).
+[the library rounds decision](adr/0004-library-rounds.md). It is `liulab_synbio`'s, because it
+fixes one method's enzymes, stuffers and round order; everything it builds on is
+`liulab_mbio`'s.
 
-::: liulab_mbio.library
+::: liulab_synbio.library
     options:
       members: false
 
-::: liulab_mbio.library.plan
+::: liulab_synbio.library.plan
 
-::: liulab_mbio.library.scheme
+::: liulab_synbio.library.scheme
 
-::: liulab_mbio.library.standard
+::: liulab_synbio.library.standard
 
-::: liulab_mbio.library.parts
+::: liulab_synbio.library.parts
 
-::: liulab_mbio.library.vector
+::: liulab_synbio.library.vector
 
-::: liulab_mbio.library.rounds
+::: liulab_synbio.library.rounds
 
-::: liulab_mbio.library.coverage
+::: liulab_synbio.library.coverage
 
-::: liulab_mbio.library.bench
+::: liulab_synbio.library.bench
 
-::: liulab_mbio.library.steps
+::: liulab_synbio.library.steps
 
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
-`liulab_mbio.cli:app` — the object `[project.scripts]` registers — is built from them. One
-cloning method is one sub-app under the `cloning` group, and every plan verb is the same
-spine: plan, write, and report what was written.
+`liulab_mbio.cli:app` and `liulab_synbio.cli:app` — the two objects `[project.scripts]`
+registers — are built from them. One cloning method is one sub-app under the `cloning` group,
+and every plan verb is the same spine: plan, write, and report what was written.
 
 ::: liulab_mbio.cli
 
@@ -389,7 +391,9 @@ spine: plan, write, and report what was written.
 
 ::: liulab_mbio.cloning.gateway.cli
 
-::: liulab_mbio.library.cli
+::: liulab_synbio.cli
+
+::: liulab_synbio.library.cli
 
 ::: liulab_mbio.protocol.cli
 

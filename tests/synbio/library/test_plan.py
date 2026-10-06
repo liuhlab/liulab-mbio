@@ -12,7 +12,11 @@ import pytest
 
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
-from liulab_mbio.library.plan import (
+from liulab_mbio.protocol import read_protocol
+from liulab_mbio.sequence import Segment, SequenceRecord
+from liulab_mbio.sites import digest
+from liulab_mbio.translate import reverse_translate
+from liulab_synbio.library.plan import (
     BARCODE_FILE,
     CHANGE_FILE,
     PARTS_FILE,
@@ -20,14 +24,10 @@ from liulab_mbio.library.plan import (
     plan_library,
     read_part_lists,
 )
-from liulab_mbio.library.rounds import ROUND_FILE
-from liulab_mbio.library.scheme import read_scheme
-from liulab_mbio.protocol import read_protocol
-from liulab_mbio.sequence import Segment, SequenceRecord
-from liulab_mbio.sites import digest
-from liulab_mbio.translate import reverse_translate
+from liulab_synbio.library.rounds import ROUND_FILE
+from liulab_synbio.library.scheme import read_scheme
 
-EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
+EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 HOST = "e-coli-k12"
 COVERAGE = 10.0

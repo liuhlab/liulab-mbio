@@ -13,8 +13,11 @@ import pytest
 from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
-from liulab_mbio.library.parts import design_parts
-from liulab_mbio.library.rounds import (
+from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sites import digest, find_sites
+from liulab_mbio.translate import translate
+from liulab_synbio.library.parts import design_parts
+from liulab_synbio.library.rounds import (
     PRODUCT_FILE,
     ROUND_FILE,
     assemble_round,
@@ -22,11 +25,8 @@ from liulab_mbio.library.rounds import (
     representative,
     write_records,
 )
-from liulab_mbio.library.scheme import Position, Scheme
-from liulab_mbio.library.standard import design_standard
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
-from liulab_mbio.sites import digest, find_sites
-from liulab_mbio.translate import translate
+from liulab_synbio.library.scheme import Position, Scheme
+from liulab_synbio.library.standard import design_standard
 
 #: The jobs the test scheme gives its enzymes.
 INTERNAL = "BsaI"

@@ -9,7 +9,10 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.barcodes import BarcodeRules, check_barcodes
-from liulab_mbio.library.parts import (
+from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sites import digest, find_sites
+from liulab_mbio.translate import reverse_translate, translate
+from liulab_synbio.library.parts import (
     BARCODE_COLUMNS,
     CHANGE_COLUMNS,
     SHEET_COLUMNS,
@@ -20,14 +23,11 @@ from liulab_mbio.library.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_mbio.library.scheme import read_scheme
-from liulab_mbio.library.standard import design_standard, junction_residues
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import digest, find_sites
-from liulab_mbio.translate import reverse_translate, translate
+from liulab_synbio.library.scheme import read_scheme
+from liulab_synbio.library.standard import design_standard, junction_residues
 
 #: The paper's scheme, as a user supplies one.
-EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
+EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 HOST = "e-coli-k12"
 

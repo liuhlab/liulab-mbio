@@ -8,6 +8,7 @@ command, and a pipeline mounted as a sub-app with `app.add_typer`.
 import typer
 
 from liulab_synbio import __version__ as _package_version
+from liulab_synbio.library.cli import app as _library_app
 
 #: What `[project.scripts]` registers. Typer builds the parser from the signatures below, so
 #: a verb is a function and its help is the docstring.
@@ -16,15 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-
-@app.callback()
-def main() -> None:
-    """Keep this a group of verbs.
-
-    Typer collapses an app holding one command and no callback into that command alone, so
-    without this `version` stops being a verb and a bare invocation runs it. The callback goes
-    when a second pipeline mounts here, or stays if it grows an option every verb shares.
-    """
+app.add_typer(_library_app, name="library")
 
 
 @app.command()

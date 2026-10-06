@@ -27,7 +27,6 @@ from typing import Literal
 
 from liulab_mbio.codons import CodonUsage, amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.overhangs import (
     MIN_DISTANCE,
     Choice,
@@ -37,6 +36,7 @@ from liulab_mbio.overhangs import (
     refusal,
 )
 from liulab_mbio.sequence import reverse_complement
+from liulab_synbio.library.scheme import Scheme
 
 #: One part list: the name each member is ordered under, and the protein it codes for.
 type PartList = Mapping[str, str]

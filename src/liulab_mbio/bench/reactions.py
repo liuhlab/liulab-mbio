@@ -88,7 +88,7 @@ def fits(
 
     `taken_ul` is what everything else takes, which is room the DNA does not have. A caller
     building the table hands the rule its components; one measuring the DNA before there is a
-    table, as `liulab_mbio.library.bench` does, hands it the volume they will take.
+    table, as the library pipeline's own amounts do, hands it the volume they will take.
 
     Raises
     ------

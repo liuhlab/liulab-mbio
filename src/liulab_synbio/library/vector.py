@@ -15,9 +15,9 @@ past the record's length.
 from dataclasses import dataclass
 
 from liulab_mbio.edits import EditReport, insert
-from liulab_mbio.library.scheme import Scheme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
+from liulab_synbio.library.scheme import Scheme
 
 #: Where the internal stuffer goes: the name of a feature, or a ``(start, end)`` span.
 type Site = str | tuple[int, int]

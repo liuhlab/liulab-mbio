@@ -4,7 +4,7 @@ The protocol covers every round as one experiment. A round is two digests, a cle
 ligation, a second clean-up, an electroporation, a growth and a prep, and the rounds run in the
 order the scheme fills its positions.
 
-Every number comes from `liulab_mbio.library.bench` and `liulab_mbio.library.coverage`, each
+Every number comes from `liulab_synbio.library.bench` and `liulab_synbio.library.coverage`, each
 sourced in ``docs/research/protein-library-assembly.md``, or from the design the plan computed.
 What the method leaves unpublished -- the ligase's units, the buffer's strength, the
 electroporation settings -- is one line saying so rather than a number invented here.
@@ -24,29 +24,6 @@ from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.bench.steps import badges, card, enzyme_material, listed
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.library.bench import (
-    DIGEST_CELSIUS,
-    DIGEST_SECONDS,
-    DIGEST_VOLUME_UL,
-    ENZYME_UL,
-    GROWTH_CELSIUS,
-    LIGATION_SECONDS,
-    LIGATION_VOLUME_UL,
-    MOLAR_RATIO,
-    OUTGROWTH_SECONDS,
-    RECOVERY_SECONDS,
-    SPRI_AFTER_DIGEST,
-    SPRI_AFTER_LIGATION,
-    TRANSFORMATION_NG,
-)
-from liulab_mbio.library.bench import REFERENCES as BENCH_REFERENCES
-from liulab_mbio.library.coverage import REFERENCES as COVERAGE_REFERENCES
-from liulab_mbio.library.coverage import RoundCoverage
-from liulab_mbio.library.parts import Part
-from liulab_mbio.library.rounds import Round
-from liulab_mbio.library.scheme import Scheme
-from liulab_mbio.library.standard import PartList, Standard
-from liulab_mbio.library.vector import Destination
 from liulab_mbio.protocol.model import (
     Component,
     Incubation,
@@ -62,6 +39,29 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
+from liulab_synbio.library.bench import (
+    DIGEST_CELSIUS,
+    DIGEST_SECONDS,
+    DIGEST_VOLUME_UL,
+    ENZYME_UL,
+    GROWTH_CELSIUS,
+    LIGATION_SECONDS,
+    LIGATION_VOLUME_UL,
+    MOLAR_RATIO,
+    OUTGROWTH_SECONDS,
+    RECOVERY_SECONDS,
+    SPRI_AFTER_DIGEST,
+    SPRI_AFTER_LIGATION,
+    TRANSFORMATION_NG,
+)
+from liulab_synbio.library.bench import REFERENCES as BENCH_REFERENCES
+from liulab_synbio.library.coverage import REFERENCES as COVERAGE_REFERENCES
+from liulab_synbio.library.coverage import RoundCoverage
+from liulab_synbio.library.parts import Part
+from liulab_synbio.library.rounds import Round
+from liulab_synbio.library.scheme import Scheme
+from liulab_synbio.library.standard import PartList, Standard
+from liulab_synbio.library.vector import Destination
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
 #: names all three and publishes neither the ligase's units nor either buffer's strength.
@@ -234,7 +234,7 @@ def protocol(
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
-    Each argument is the `liulab_mbio.library.plan.LibraryPlan` field or property of that name;
+    Each argument is the `liulab_synbio.library.plan.LibraryPlan` field or property of that name;
     `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
     in the order someone does them: order the blocks, pool each part list, then every round in
     turn, and finally read the barcode block back.

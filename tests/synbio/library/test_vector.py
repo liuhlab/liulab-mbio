@@ -11,8 +11,6 @@ import pytest
 
 from liulab_mbio.edits import rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.library.scheme import Position, Scheme
-from liulab_mbio.library.vector import destination_vector
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -22,6 +20,8 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
+from liulab_synbio.library.scheme import Position, Scheme
+from liulab_synbio.library.vector import destination_vector
 
 #: The jobs the test schemes give their enzymes. All four are free of sites in pUC19.
 INTERNAL = "BbsI"

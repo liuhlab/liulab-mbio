@@ -27,26 +27,26 @@ from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
 from liulab_mbio.codons import codon_usage
-from liulab_mbio.library.bench import digest_amount, ligation_amounts, transformation_amount
-from liulab_mbio.library.coverage import RoundCoverage, constructs, plan_coverage
-from liulab_mbio.library.parts import (
+from liulab_mbio.overhangs import MIN_DISTANCE
+from liulab_mbio.protocol.model import Protocol
+from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sites import digest
+from liulab_mbio.translate import translate
+from liulab_synbio.library.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.library.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.library.parts import (
     Part,
     barcode_table,
     change_table,
     design_parts,
     synthesis_sheet,
 )
-from liulab_mbio.library.rounds import Round, assemble_rounds, representative, write_records
-from liulab_mbio.library.scheme import Scheme, read_scheme
-from liulab_mbio.library.standard import PartList, Standard, design_standard
-from liulab_mbio.library.steps import RoundBench
-from liulab_mbio.library.steps import protocol as protocol_for
-from liulab_mbio.library.vector import Destination, Site, destination_vector
-from liulab_mbio.overhangs import MIN_DISTANCE
-from liulab_mbio.protocol.model import Protocol
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import digest
-from liulab_mbio.translate import translate
+from liulab_synbio.library.rounds import Round, assemble_rounds, representative, write_records
+from liulab_synbio.library.scheme import Scheme, read_scheme
+from liulab_synbio.library.standard import PartList, Standard, design_standard
+from liulab_synbio.library.steps import RoundBench
+from liulab_synbio.library.steps import protocol as protocol_for
+from liulab_synbio.library.vector import Destination, Site, destination_vector
 
 #: What a part list holds: the proteins each member codes for, or the DNA it is already coded in.
 type Kind = Literal["protein", "dna"]
@@ -57,7 +57,7 @@ type Kind = Literal["protein", "dna"]
 NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 
 #: What `LibraryPlan.write` calls the sheets it writes. The records are named by
-#: `liulab_mbio.library.rounds`, which writes one for each round and the product for the
+#: `liulab_synbio.library.rounds`, which writes one for each round and the product for the
 #: last, and the protocol pair by `liulab_mbio.cloning.plan`.
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
@@ -209,7 +209,7 @@ class LibraryPlan:
         """Write the sheets, the records, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
-        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_mbio.library.rounds` for the records
+        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_synbio.library.rounds` for the records
         and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run over the
         same inputs writes the same bytes.
         """
@@ -272,7 +272,7 @@ def plan_library(
     pattern
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
-        What every barcode holds to. `liulab_mbio.library.parts.barcode_rules` by default.
+        What every barcode holds to. `liulab_synbio.library.parts.barcode_rules` by default.
     seed
         The seed the barcodes are drawn with.
     name

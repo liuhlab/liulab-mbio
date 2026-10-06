@@ -6,7 +6,7 @@ import pytest
 
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.library.bench import (
+from liulab_synbio.library.bench import (
     DIGEST_CELSIUS,
     DIGEST_SECONDS,
     DIGEST_VOLUME_UL,
@@ -16,8 +16,8 @@ from liulab_mbio.library.bench import (
     OUTGROWTH_SECONDS,
     RECOVERY_SECONDS,
 )
-from liulab_mbio.library.scheme import read_scheme
-from liulab_mbio.library.steps import (
+from liulab_synbio.library.scheme import read_scheme
+from liulab_synbio.library.steps import (
     choppers,
     digest_program,
     digest_reaction,
@@ -25,7 +25,7 @@ from liulab_mbio.library.steps import (
     ligation_reaction,
 )
 
-EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "protein-library" / "scheme.json"
+EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 
 @pytest.fixture(scope="module")
