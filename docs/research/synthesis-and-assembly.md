@@ -1,0 +1,605 @@
+---
+search:
+  exclude: true
+---
+
+# Highly parallel DNA synthesis and assembly: the evidence behind the method
+
+Research note for issue #212, under the spec at #210. It holds the evidence behind
+`docs/synthesis-and-assembly.md`: every source read and when, what the design took from each,
+where it departs and why, what the review measured, and every design decision still open with
+its live options.
+
+Four companion documents sit beside it and are cited rather than restated. The first three were
+written while the method was designed and are tracked here for the first time; the fourth is
+the existing note for the paper the assembly rounds come from.
+
+| Document | What it holds |
+| --- | --- |
+| `docs/research/synthesis-and-assembly-materials.md` | Every plasmid, primer, enzyme and strain, grouped by the process that uses it |
+| `docs/research/synthesis-and-assembly-barcode-kit.md` | The 96-plasmid plate-barcode kit: how it chains, what each group primes, what to order |
+| `docs/research/synthesis-and-assembly-departures.md` | Each departure from Takacsi-Nagy et al., worked through base by base |
+| `docs/research/protein-library-assembly.md` | Takacsi-Nagy et al. itself: its method, its numbers, its licence |
+
+The last of those is the account of the iterative-assembly paper. Nothing here repeats it;
+section 3 says only what this design takes from it and section 4 where it departs.
+
+## How to read this note
+
+**Dates.** A source's read date is the date the local copy was retrieved, taken from that
+copy's timestamp. Where a directory note records a date of its own, that date wins. Timestamps
+on three files predate the project because the publisher's date survived the download; those
+rows carry the directory's retrieval window instead.
+
+**Measurements.** Section 5 carries every number the review computed, with what it was computed
+over. A number with no source is not in this note and does not belong in the method page.
+
+**Paths.** Downloaded files are named in section 7 so the provenance survives the file. They
+are git-ignored and a fresh clone does not have them, so nothing outside section 7 cites one:
+claims cite the source itself.
+
+## 1. What the method is, in one paragraph
+
+Cargo fragments are synthesised in one oligo pool, amplified out of it gene by gene with a
+nested three-primer scheme, assembled by Golden Gate into a counter-selection vector, split one
+clone per well, and read by nanopore. Validated cargo then goes two ways: through a working
+vector that gives it an application, or through rounds of iterative Golden Gate that chain
+fragments with a barcode at every junction. Four published systems meet here and none of them
+covers the whole of it.
+
+## 2. Sources, and the date each was read
+
+| Source | What it is | Read | Drawn from |
+| --- | --- | --- | --- |
+| Qian et al. 2026, *Nat. Commun.* | The counter-selection vector, the plate-barcode kit, the barcoding and sequencing protocol | 2026-10-01 to 2026-10-05 | yes |
+| Takacsi-Nagy et al. 2026, *Cell* | Iterative Golden Gate in rounds, with a barcode per part | 2026-09-14 | yes |
+| Lund et al. 2024, *ACS Synth. Biol.* | Genes built from a cheap oligo pool by Golden Gate, one gene per reaction | 2026-10-01 to 2026-10-05 | yes |
+| Subramanian et al. 2018, *Synth. Biol.* | The mutually orthogonal 20-mer primer set | 2026-10-01 | yes |
+| Twist product and protocol material | Oligo pool and gene fragment products, lengths, prices, design rules | 2026-09-14 to 2026-09-17 | yes |
+| Baker lab three-primer scheme | The nested-PCR variant, as a diagram sent to us | 2026-10-01 | yes |
+| Correspondence with the Baker lab | Which primer set, which read-out, what scale | 2026-10-05 | yes |
+| Long et al. 2025, *ACS Synth. Biol.* (LevSeq) | Index PCR per well, pooled per plate, read by nanopore | 2026-10-05 | yes |
+| Molecular Devices QPix material | Colony picker models | 2026-10-03 | background only |
+| Freschlin et al. 2026, *Sci. Adv.* (OMEGA) | Oligo-pool gene libraries, one reaction per subpool | 2026-10-05 | **no** |
+| Romanowicz et al. 2026, *bioRxiv* (DropSynth-Gold) | Pooled synthesis in emulsion droplets, one gene per droplet | 2026-10-05 | **no** |
+
+Full citations are in [Sources](#sources).
+
+### Read but not drawn from
+
+**Freschlin et al. 2026** and **Romanowicz et al. 2026** were read while comparing assembly
+strategies and neither shaped the design. They are listed here rather than in the method page's
+reference table, which means "what the design took".
+
+Both measure what the method page's goal asserts, so both are worth citing the moment that goal
+is restated. Freschlin measures oligo-pool gene assembly to 2,598 bp, gives $1.50 to $14 per
+gene for constructs up to 2.6 kb, and gives about 246 bp of usable coding sequence per 300 nt
+oligo — the denominator the page's per-kb figure is missing. Romanowicz measures architectures
+from five 300-mers to twelve 350-mers, about 3 kb, with per-design success rates.
+
+Two of their findings bear on open decisions in section 6 and are cited there: Freschlin pads
+every oligo to a uniform 300 nt and screens the padding for enzyme sites, and Freschlin lost
+whole replicates to enzyme sites inside a barcode payload.
+
+**Molecular Devices QPix material** supports one equipment row and nothing else. The two
+candidate models are real; which to buy is undecided and is not a design question.
+
+## 3. What the design takes from each source, and what is ours
+
+### Qian et al. — inherited
+
+- The counter-selection vector family and its nested cassette: BsaI and BsmBI cutting the same
+  four bases, `AGGA` on one side of the counter-selection cassette and `TTCC` on the other.
+- The `AGGA`/`TTCC` entry overhang standard itself.
+- The 96-plasmid plate-barcode kit, used as supplied: four groups of 24, one barcode per group
+  per well, their chaining overhangs, and the three primer pairs that read them.
+- Barcoding in heat-lysed lysate on a throwaway aliquot, so a barcoded molecule never grows.
+- The acoustic dispense into a 1536-well plate, and the compression of four 384-well plates
+  into one.
+- The strain rule for the counter-selection cassette, inherited as written. See section 8.
+
+### Qian et al. — ours
+
+- Rebuilding the vector before first use: the marker swap to KanR, removing its four BbsI
+  sites, adding one PmeI site outboard of each BsaI site.
+- The accession formula for the whole kit, inferred from the four plasmids we hold.
+- The mapping of barcode group to primer, derived from the published sequences.
+- Using the kit's BsaI for three jobs rather than one.
+
+### Takacsi-Nagy et al. — inherited
+
+The paper's own account is `docs/research/protein-library-assembly.md`. What this design takes
+from it:
+
+- The round structure: a destination opened internally, a donor released externally, the
+  product reopening for the next round.
+- The idea of an internal stuffer carrying the enzyme that opens the destination, with a blunt
+  cutter inside the piece that leaves.
+- The 11 bp barcode length, and a barcode per part accumulating at the junction.
+- Endura electrocompetent cells, recovery and growth at 30 °C each round.
+- T7 ligase with its branded buffer.
+
+### Takacsi-Nagy et al. — ours
+
+- The enzyme assignment, the stuffer sequence, the entry overhangs, the barcode set, the read
+  platforms and the acronym `iGGA`. None of these is the paper's. Section 4 and the departures
+  note give each one's reason.
+
+### Lund et al. — inherited
+
+- The shape of the pipeline: codon-optimise and domesticate, split the gene into oligo-sized
+  pieces with overhangs chosen on ligation fidelity, pad, append primer sites, order one pool,
+  amplify per gene, assemble by Golden Gate.
+- Fixed terminal overhangs so one acceptor vector serves every design, with the split tool
+  choosing only the internal ones.
+- Adding the Type IIS site and the terminal overhang to the gene **before** the split.
+- The error-free ceiling and the fragment-count curve, as evidence rather than as a rule.
+
+### Lund et al. — ours
+
+- The counter-selection vector as the acceptor, in place of their two acceptors.
+- The nested three-primer scheme in place of their one amplification per pool, which is the
+  Baker lab's variant rather than Lund's.
+
+### Subramanian et al. — inherited
+
+- The orthogonal 20-mer primer set itself, as the inventory the three-primer scheme draws on.
+
+### Subramanian et al. — ours
+
+- The split of that set across the three roles. Undecided; see section 6.3.
+
+### Baker lab — inherited
+
+- The three-primer architecture: an oligo reads `[P1][fragment][P2][P3]`, the outer pair pulls
+  a subpool, the inner pair nested inside it pulls one gene, and the Type IIS cuts sit inboard
+  of P1 and P2.
+- The scale anchors: hundreds of oligos to a well for a subpool, one to eight for one gene.
+
+### Baker lab — ours
+
+- Everything downstream of the second PCR. The diagram is the only description of the scheme we
+  hold and it stops at the Golden Gate.
+
+### Twist — inherited
+
+- Which products exist, their length bands, their pool-size tiers and their prices.
+- The uniformity gate: a pool whose shortest member is more than 15% below the longest is
+  refused by the ordering interface, which is what forces a padding rule.
+- The flank specification, and the amplification rule of a hard maximum of eight cycles with a
+  high-fidelity hot-start polymerase.
+
+### Twist — ours
+
+- Any per-kb figure. Twist prices per pool and states none. See section 5.
+
+### Long et al. (LevSeq) — inherited
+
+- The index-PCR read-out: one barcoded primer pair per well, the reverse barcode naming the
+  plate, pooled per plate and read by nanopore.
+- The published barcode-linked primer plates, which are ordered as given.
+- The read-depth and per-base criteria as one of the two candidate pass rules.
+
+### Long et al. — ours
+
+- Using them against this vector family rather than the paper's. The match was measured; see
+  section 5.
+
+## 4. Departures from a source, and the reason for each
+
+### From Takacsi-Nagy et al. 2026
+
+`docs/research/synthesis-and-assembly-departures.md` works each one through base by base. The
+summary, one line each:
+
+| # | Departure | Reason |
+| --- | --- | --- |
+| D1 | The two enzyme roles move up one enzyme | The plate-barcode kit is used as supplied and fixes BsaI at the cargo interface |
+| D2 | BbsI in the internal stuffer, where the paper has BsaI | D1 pushes the stuffer onto a third enzyme; PaqCI needs an activator oligo on the one digest where a miss is invisible |
+| D3 | One entry overhang pair every round, not one per position | `AGGA`/`TTCC` is the published standard; position-specific overhangs would need a different vector per position |
+| D4 | No external stuffers on the cargo | The vector supplies BsaI in the right places already |
+| D5 | PmeI sits in the vector, not in the cargo | D4 left no external stuffer to carry it; paid once in the backbone rather than on every block |
+| D6 | Cargo must be clear of five enzymes, not zero | Our cargo passes through more hands than theirs |
+| D7 | No position-specific terminal molecule | One fragment rule serves every position, because no fragment of ours ends the protein |
+| D8 | No T2A, so the barcode block is translated inside the protein | A T2A inside the cargo would end translation before the C-terminal part |
+| D10 | Fragments come from an oligo pool, not clonal plasmids | The whole point of the method; costs a sequence-and-reformat step they do not pay |
+| D11 | Both markers change | The last transfer moves cargo between two vectors, which must not share a marker |
+| D12 | The last transfer is one pot with counter-selection | The cargo already presents the working vector's interface |
+| D13 | Bacterial expression host, and a working-cassette layer they have no counterpart for | Different application |
+| D14 | A second barcode system, and BsaI doing three jobs | The plate-barcode kit is added on top of the per-fragment barcode |
+| D15 | Extra strains | Forced by the counter-selection cassette |
+
+Two further departures the review established and the departures note does not yet carry:
+
+- **Both library reads move to nanopore.** The paper ran linkage on PacBio HiFi and
+  representation on Illumina. Our equipment list has one nanopore sequencer. The reason is
+  equipment, not biology, and the move is undocumented in the departures note.
+- **The source contradicts itself on which molecule each digest opens.** Its Methods put
+  BsaI with SrfI on the donor; its own supplementary figure legend puts BsaI on the
+  destination. The design follows the figure, which is the assignment that simulates. The
+  disagreement is recorded here because neither the paper nor the method page records it.
+
+Departures D9 and D16 were open decisions when the departures note was written. D9, the barcode
+rules, is decided and in the method page. D16, whether an assembled clone is sequenced whole,
+is **not** decided and the departures note's claim that it is should not be relied on; the open
+form is section 6.9.
+
+### From Qian et al. 2026
+
+- **The vector is rebuilt rather than used as supplied.** The marker swap is forced by D11. The
+  BbsI removal is forced by D2. The PmeI additions are forced by D5.
+- **The route from a transformation to a clonal well is ours.** Qian goes transformation,
+  dilution plates for a colony count, bulk plate, picker. The method page spots a frozen
+  polyclonal archive and regrows it, which has no counterpart in any source and no stated
+  dilution, titre or plating density. This is invention and should be marked as such or
+  replaced. See section 6.6.
+- **The library primers are replaced.** Qian amplifies a whole pool in one reaction with a
+  primer pair carrying the BsmBI sites that give `AGGA`/`TTCC`. The three-primer scheme replaces
+  that pair with orthogonal 20-mers, which carry no site. Nothing then puts a Type IIS site on
+  the oligo. This is the method's one genuine gap; see section 6.1.
+
+### From Lund et al. 2024
+
+- **One acceptor becomes the counter-selection vector**, so the cargo arrives already able to
+  be barcoded and released.
+- **One amplification per pool becomes two nested ones**, following the Baker lab rather than
+  Lund. It costs more reactions, N plus one per subpool, and buys a primer inventory that stops
+  growing with the library.
+- **The split tool is named but not fixed.** Lund calls NEB's SplitSet tool; they do not
+  implement the design method they cite. The method page names the method, not the tool. See
+  section 6.1.
+
+### From Long et al. (LevSeq)
+
+- **The primers are used against a different backbone.** The published set is specific to the
+  paper's expression vector. Measured against ours they match at full length, so they are
+  ordered unchanged. See section 5.
+
+### From Twist
+
+- **No departure.** The vendor's limits are constraints, not choices. The method page's price
+  and per-kb figures depart from the published tiers, which is an error rather than a design
+  departure; see section 5.
+
+## 5. The review's measurements
+
+Five independent reviewers read the method page and its supporting documents on one lens each.
+Every number below was computed on **2026-10-06** unless another date is given, and the column
+says what each was computed over. Numbers computed earlier and carried in from the drafting
+session are dated separately.
+
+### Computed against the plasmid maps
+
+| Measurement | Computed over | Date |
+| --- | --- | --- |
+| PmeI sites: 0 in each counter-selection vector parent | The two depositor maps, 5,839 bp and 5,842 bp | 2026-10-06 |
+| SrfI sites: 1 in each parent, inside the counter-selection coding sequence | The same two maps | 2026-10-06 |
+| BsaI 3, BsmBI 2, BbsI 4, PaqCI 0 in each parent; one BsaI inside the AmpR marker | The same two maps | 2026-10-05 |
+| Four barcode plasmids: BsaI 2, BsmBI 0, BbsI 0, PaqCI 0, AmpR, no counter-selection cassette | The four maps held | 2026-10-06 |
+| Part carrier: BsmBI 0, **BsaI 1**, and its own selection is the counter-selection cassette | The carrier's map | 2026-10-06 |
+| The barcode chain runs `TTCC`-BC4-`TCAG`-BC3-`CCTT`-BC2-`GTTC`-BC1-`AGGA` on the map strand | BsaI sites in the four barcode maps, against all 96 rows of the barcode table | 2026-10-06 |
+| The published index-PCR primers' two constant backbone tails match both parents at full length, each pair bracketing the counter-selection cassette | The two parents against the published primer tables | 2026-10-06 |
+| Inserting PmeI outboard of the right-hand cassette BsaI lands in or abuts the `6xHis` coding sequence | Annotated features of the first parent | 2026-10-06 |
+
+### Computed against the published sequences
+
+| Measurement | Computed over | Date |
+| --- | --- | --- |
+| The internal stuffer is 34 bp, `AGGA` at 0-3, SrfI at 13-20, BbsI cutting to `TTCC` at 30-33, and 34 + 11 is 0 mod 3 | The 34-mer | 2026-10-05 |
+| SrfI's site lies inside the piece BbsI releases, so after BbsI it cuts only a discarded fragment | The same 34-mer | 2026-10-06 |
+| After the two digests the only complementary end pairs are the two intended ones; one circular product | The destination and donor ends | 2026-10-05 |
+| Six of the paper's 72 barcodes carry a stop at our frame offset; fifteen at offset 1; none at the paper's own offset | All 72 published 11 bp barcodes | 2026-10-05 |
+| The paper's 72 domains, 23,103 bp, carry zero BbsI, BsaI, SrfI and PmeI, against 11 BsmBI and 15 PaqCI | The published domain sequences | 2026-10-05 |
+| An 11-mer drawn to the stated barcode rules alone carries one of the eight enzyme motifs **0.90%** of the time, 1,798 of 200,000 draws; the union bound gives 0.0089 | 200,000 random 11-mers against eight motifs | 2026-10-06 |
+| All 96 barcode rows are 97 bp with the same layout and 96 distinct 25 nt payloads; one overhang pair per group across all 24 members | The barcode table | 2026-10-06 |
+| Two of the eight constant regions flanking the payload match no published primer | All six primers and their reverse complements against all 96 rows | 2026-10-06 |
+| The paper's internal stuffer carries BsaI and SrfI, not PaqCI, which appears nowhere in it | The paper's text, supplement and constants | 2026-10-06 |
+| The orthogonal primer supplement has 165 rows kept of 185; the paper's abstract says 166 | The primer supplement | 2026-10-06 |
+
+### Computed against vendor material
+
+| Measurement | Computed over | Date |
+| --- | --- | --- |
+| 18,000 oligos at 251-300 nt cost **$10,004**; $12,505 is the 301-350 nt band; 18,000 at 20-120 nt cost $4,056 | The oligo pool price table, captured 2026-09-17 | 2026-10-06 |
+| Per-kb cost runs $1.85 (251-300 nt) to $2.82 (301-350 nt), synthesis only | The same table, with Freschlin's 246 usable bp per 300-mer as the denominator | 2026-10-06 |
+
+Three of these settle a claim in the method page rather than inform one, and are the
+corrections ticket #214 carries: PmeI is added and not removed, SrfI needs no edit, and the
+index-PCR primers need no redesign.
+
+## 6. Open design decisions
+
+Each is undecided. None is settled here. Each lists what is actually on the table and the
+evidence for each option, so the decision can be made rather than rediscovered.
+
+### 6.1 Where the Type IIS sites sit on the oligo
+
+The oligo is `[P1][fragment][P2][P3]` and carries no Type IIS site, yet the next step assembles
+it into the vector by BsmBI and the design requires `AGGA`/`TTCC` ends. No step adds them. The
+internal junctions of a split gene need sites too, and none are designed anywhere.
+
+| Option | Evidence |
+| --- | --- |
+| On the gene, before the split | What Lund does: the site and the terminal overhang go on the gene, then the split, then padding, then the primer sites. It makes the site part of the designed sequence, which the split tool then has to respect. |
+| On the amplification primers | What Qian does: the library primer pair carries the BsmBI sites that give `AGGA`/`TTCC`. It costs nothing in oligo length, but the three-primer scheme's inner primers are drawn from an orthogonal set with no site, so the set would have to be retailored or one role exempted. |
+
+The Baker lab diagram puts the Type IIS cuts inboard of P1 and P2, which is the second option.
+The method page dropped that clause. Whichever is chosen also decides where the internal
+junction sites come from.
+
+### 6.2 The padding rule
+
+Oligos come off the split at whatever length it gives and the layout has no slot for filler.
+The vendor refuses a pool whose shortest member is more than 15% below the longest.
+
+| Option | Evidence |
+| --- | --- |
+| Pad every oligo to one length | Freschlin pads to a uniform 300 nt and screens the padding for enzyme sites, having lost whole replicates to a site inside a payload. |
+| Pad to a target, then append constant flanks | Lund pads to about 260 nt before appending the 20 nt primer sites, giving 300 nt oligos. |
+| Bin by length into sub-pools | Romanowicz builds fixed-architecture libraries by length instead. The vendor will discount split sub-pools. |
+
+Whichever is chosen, the padding is sequence that has to obey the same enzyme-site rules as the
+cargo, and the rule has to say where in the layout the filler goes.
+
+### 6.3 The split of the orthogonal primer set across its three roles
+
+165 primers, three roles, no allocation. The plates are declared constants built once, so they
+cannot be laid out until the split is fixed, and the capacity argument depends on it.
+
+| Option | Evidence |
+| --- | --- |
+| Many outer pairs, few inner | The Baker shape implies about 96 inner primers, since the inner pair pulls one gene out of a 96-gene subpool. Batches are then outer pairs times inner primers. |
+| An even three-way split | Nothing supports it; listed because it is the default someone reaches for. |
+
+Unresolved underneath it: the set's own size is 165 or 166 depending on whether the supplement
+or the abstract is believed.
+
+### 6.4 Batch size
+
+The rule is to hold pieces per first-round PCR roughly constant and let batch size fall as
+genes lengthen. No value is given, so the rule cannot be applied to a first batch.
+
+| Option | Evidence |
+| --- | --- |
+| Anchor on the Baker scale | The outer pair pulls a subpool, hundreds of oligos to a well; the inner pair pulls one gene, one to eight oligos to a well. |
+| Anchor on subpool evenness | Freschlin measures that subpools under 16 genes come out overabundant and pools of 20 or more underrepresented, so equal subpool sizes matter more than their absolute size. |
+
+### 6.5 The barcode set's enzyme-site freedom
+
+The stated barcode rules are a distance floor, no in-frame stop, a GC band and a homopolymer
+cap. Enzyme-site freedom is not among them, although the barcode sits inside cargo that must be
+clear of five enzymes.
+
+| Option | Evidence |
+| --- | --- |
+| Add enzyme-site freedom to the rules | Measured, 0.90% of 11-mers drawn to the stated rules carry one of the eight motifs — one library member in 112 cut apart in its own round. Freschlin lost whole replicates to exactly this. |
+| Leave it out and screen afterwards | Cheaper to state, but the screen has to exist and nothing describes it. |
+
+Related and separable: the distance metric. The source's rule is Hamming; the method page says
+edit distance. A Hamming floor does not imply a Sequence-Levenshtein floor, and the glossary
+names edit distance as a term to avoid. Which metric the set is drawn to is itself a decision,
+and `docs/research/barcode-design.md` holds the evidence for it.
+
+### 6.6 The pass criterion for a well
+
+Two routes, both ending in "what counts as a pass", with no rule. The step that selects wells
+depends on it.
+
+| Option | Evidence |
+| --- | --- |
+| Qian's criterion | A consensus called at read depth above 150 with a 51% base threshold, then wells with more than one consensus or any mismatch to the reference filtered out. |
+| LevSeq's criterion | Twenty reads wanted, ten tolerable, wells below marked low, a per-base binomial test at a 5% false discovery rate, and a well with more than one significant mutation called mixed. |
+
+Two decisions sit next to it and are equally open: how a combination of barcodes is assigned to
+a well — Qian generates the combinations randomly in a script and records them, ours says
+neither — and how many colonies are picked per design, where Lund's anchor is four colonies
+each giving 343 of 458 genes error-free.
+
+Underneath all three is the route to clonal wells itself, which section 4 marks as invention.
+
+### 6.7 How donor pools are built
+
+The round step consumes a destination pool and a donor pool and nothing produces either.
+Nothing says which list is the destination in round one, and nothing says a donor must already
+be cloned before it can be one.
+
+| Option | Evidence |
+| --- | --- |
+| Build every donor pool once, up front | What the paper does: individually cloned plasmids combined into equimolar pools, the same pool re-digested every round, only the destination changing. |
+| Build each round's donor pool from that round's validated wells | Fits the per-well validation this method adds and the paper has no counterpart for. Costs a prep per round. |
+
+The constraint either option inherits: our donor carries no release sites of its own, so unlike
+the paper's it cannot be a PCR product or a gene fragment. It must be cloned first.
+
+### 6.8 Clean-up ratios
+
+Digest goes straight to ligation and ligation straight to electroporation. There is no clean-up
+step, yet the design's correctness rests on removing the cut stubs.
+
+| Option | Evidence |
+| --- | --- |
+| The paper's two ratios | Digests purified at a 2X bead ratio, ligations at 1X. The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step removing 17 bp and 13 bp stubs. |
+| One ratio throughout | Simpler to write and unsupported by anything read. |
+
+The materials document lists beads after each digest and after the ligation without the ratios,
+so the decision is only half recorded.
+
+### 6.9 The per-round bound
+
+No round is bounded by anything: no transformant count, no DNA input. The final step then asks
+the reader to derive colonies from the coverage wanted, with no rule and no pointer.
+
+| Option | Evidence |
+| --- | --- |
+| Bound by mass, as the paper does | 20 ng of digested backbone per 200 µL ligation, up to 100 ng of purified ligation product electroporated, with the coverage claim resting on a terminal representation read. |
+| Bound by a transformant count | What Qian does at its one transformation, gating on a colony count times library complexity above 300. Requires plating every round, which the method page currently forbids. |
+
+The forbidding is itself unresolved. "Rounds run unchecked, as the paper runs them" reads a
+silence as a statement — the paper describes recovery and growth and never mentions plating,
+colonies or counts — and it contradicts the representation read two steps later, which measures
+after every bottleneck while every round ends in an electroporation. The mechanism the claim
+rests on, that the ligase will not join blunt ends, is cited to no source read here.
+
+The same paragraph carries D16: whether an assembled clone is sequenced whole before it becomes
+a stock. The departures note says this became a per-round product check; the method page says
+the opposite. It is open.
+
+### 6.10 The primers for the library reads
+
+The linkage read and the representation read have no primers. The primer list covers part
+retailoring, the orthogonal set, the vector's own library pair, the six plate-barcode primers,
+the two universal primers flanking the design, and the index plate. None reads an assembled
+library's barcode block, and the plate-barcode primers are defined by the kit's constant
+regions, which an assembled library does not carry.
+
+| Option | Evidence |
+| --- | --- |
+| Design a pair against the cargo's own constant flanks | The cargo's `AGGA`/`TTCC` ends and its stuffer are constant across the library, so a pair exists. Nothing has been designed or checked. |
+| Reuse the two universal primers flanking the design | They are named in the source but **no sequences are published** for them; they are absent from the published primer table. Listing them as orderable implies sequences we do not hold. |
+
+### Also open, and smaller
+
+- **The read-out route** is a per-project choice with a suggested threshold: at or below one
+  plate of samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed
+  to the primer set is wrong — forward and reverse barcodes combine freely and no dual index is
+  needed, so the limit is reagent and labour cost, one reaction per well.
+- **Which vector parent** to rebuild. The two differ only in which strand carries the cassette
+  and release the same cargo, so the rule as written does not discriminate.
+- **The colony picker model**, two candidates, a purchase decision rather than a design one.
+- **Where the added PmeI sites go**, which has no free space on one parent without sacrificing
+  an annotated tag.
+- **Whether acronyms are expanded on first use**, now that the page is published in the site
+  navigation rather than kept as a working file.
+
+## 7. Provenance of downloaded files
+
+Every file below is under `reference_docs/synthesis_and_assembly/` and is git-ignored. This
+table is what survives the file. Retrieved dates are the local copies' timestamps; a window is
+given where a publisher's own date survived the download.
+
+| File | Source | Retrieved |
+| --- | --- | --- |
+| `dmx/paper/` article and supplementary PDFs, with their text dumps | Qian et al. 2026, doi:10.1038/s41467-026-76740-5 | 2026-10-01 to 2026-10-03 |
+| `dmx/dmx-barcodes.tsv` | Extracted from the same paper's Supplementary Table 3 | 2026-10-05 |
+| `dmx/addgene/addgene-plasmid-247434-*.dna` | Addgene 247434, depositor's map, first vector parent | 2026-10-04 |
+| `dmx/addgene/addgene-plasmid-247435-*.dna` | Addgene 247435, depositor's map, second vector parent | 2026-10-04 |
+| `dmx/addgene/addgene-plasmid-255161-*.dna` and `.dna.seq` | Addgene 255161, barcode kit group 1 index 1 | 2026-10-02 |
+| `dmx/addgene/addgene-plasmid-255185-*.dna` | Addgene 255185, barcode kit group 2 index 1 | 2026-10-05 |
+| `dmx/addgene/addgene-plasmid-255209-*.dna` | Addgene 255209, barcode kit group 3 index 1 | 2026-10-05 |
+| `dmx/addgene/addgene-plasmid-255256-*.dna` and `.dna.seq` | Addgene 255256, barcode kit group 4 index 24 | 2026-10-02 |
+| `dmx/addgene/pCR-Blunt II-TOPO.dna` | The part carrier's published map | 2026-10-05 |
+| `dmx/jason_email.md` | Correspondence with the Baker lab, quoted with permission; not redistributable | 2026-10-05 |
+| `prot-assembly/` article, supplemental figures, Table S1 and its sheet dumps | Takacsi-Nagy et al. 2026, doi:10.1016/j.cell.2026.07.054, CC BY 4.0 | 2026-09-14 |
+| `long_fragment_GGA/Lund2024/` article, supporting information and four supplementary workbooks | Lund et al. 2024, doi:10.1021/acssynbio.3c00694 | 2026-10-01 |
+| `long_fragment_GGA/Lund2024/sb3c00694_suppl-data/*.dat` | The same paper's supplementary vector records; the files carry the publisher's 2025-03-24 date | 2026-10-01 |
+| `long_fragment_GGA/Lund2024/primer set paper*.pdf` and `*.xlsx` | Subramanian et al. 2018, doi:10.1093/synbio/ysx008 | 2026-10-01 |
+| `long_fragment_GGA/Baker Lab Strategy.png` | Sent by the Baker lab; the only description of the three-primer scheme we hold | 2026-10-01 |
+| `LevSeq/papers/` article and supporting information | Long et al. 2025, doi:10.1021/acssynbio.4c00625 | 2026-10-05 |
+| `Freschlin2026/` article, supplement and Data S1 | Freschlin et al. 2026, doi:10.1126/sciadv.ady2279; the workbook carries the publisher's 2026-04-20 date | 2026-10-05 |
+| `Romanowicz2026/` preprint and supplementary figures | Romanowicz et al. 2026, doi:10.64898/2026.05.29.728538, version posted 2026-06-01 | 2026-10-05 |
+| `twist/oligo_pool/*.png`, `twist/GeneFragments/*.png` | Screenshots of Twist's own product and pricing pages | 2026-09-14 to 2026-09-17 |
+| `twist/GeneFragments/MultiplexedGeneFragments/` price sheet, product sheet and order form | Twist product material | 2026-09-14 to 2026-09-17 |
+| `twist/protocol/` four guides, with their text dumps | Twist documents DOC-001498, DOC-001499, DOC4057 and DOC_4045 | 2026-09-14 to 2026-09-17 |
+| `moleculardevices/` two QPix brochures | Molecular Devices product material | 2026-10-03 |
+
+Every `*.txt` beside a PDF is a `pdftotext -layout` dump of it, made so the text can be
+searched; every `dump/` and `form_dump/` is derived the same way. None of these files may be
+redistributed except the two CC BY papers and their supplements.
+
+One file in that tree is ours rather than downloaded: a short script that rebuilds the sheet
+dumps of one supplementary workbook. It stays beside the workbook, because the workbook is what
+it reads and the workbook is not redistributable. Every other document the lab wrote for this
+method is tracked, as the three documents named at the top of this note.
+
+Twist prices move. The screenshots are dated and any figure taken from them carries that date.
+
+## 8. Two things the review got wrong, and one inherited claim
+
+Recorded so they are not acted on.
+
+- **A missing equipment row is not a defect.** One lens compared the equipment table against a
+  five-row version that had been superseded; the instruction afterwards was that an
+  electroporator is basic equipment and should not be listed. The page is right.
+- **The strain claim is inherited, not a transcription error.** The source states that target
+  plasmids must be propagated in a strain resistant to the counter-selection cassette and names
+  one. That strain's published genotype carries no resistance allele. The resolution is not a
+  resistance question at all: the cassette is transcribed from a T7 promoter under a *lac*
+  operator with the repressor on the plasmid, so a strain without T7 polymerase never
+  transcribes it. The consequence the method page does not state is that the strain
+  **receiving** cargo must carry T7 polymerase, or there is no counter-selection.
+- **Two lenses disagreed about which supplementary table holds the index-PCR primers.** They do
+  not conflict: the raw barcodes are in the first two tables, the full-length barcode-linked
+  primers in the next two, and the plate maps in the eight after that. The method page pointed
+  at the plate maps, which is wrong either way, and the source's own main text makes the same
+  mistake.
+
+## Open gaps
+
+Nothing here should become a package default.
+
+- **No source documents the three-primer scheme in text.** One diagram and one email are all we
+  hold; everything downstream of the second PCR is ours.
+- **The split tool is unresolved.** The method it names is not the tool its own source ran, and
+  neither is pointed at.
+- **No source states a per-kb cost.** The figure in the method page is ours and is synthesis
+  only.
+- **The accession formula for the barcode kit is inferred from four points** and is unconfirmed
+  against the depositor's own kit listing. The sequences do not rest on it.
+- **No sequence is published for the two universal primers flanking the design**, although the
+  names are the source's.
+- **The two universal flanking primers, the split of the orthogonal set, and the library-read
+  primers are three separate holes in one primer inventory.** None blocks the others.
+- **No vendor or catalogue number is recorded for any reagent**, and one strain is named only
+  by a property. Identity matters for the branded ligase buffer, the cloning kit and the
+  competent cells.
+- **No polymerase is named anywhere**, for either amplification, the amplicon reactions or the
+  colony PCR, although every source treats the choice as load-bearing.
+- **The protein cost of the assembly junction is never stated** on the page. Three rounds is 45
+  bp, fifteen residues, translated inside every library member, and no rule fits a fragment's
+  boundary codons to the entry overhang.
+- **Two length conventions are in use for the same kind of block**, one counting the 5'
+  overhang only and one counting through both. They agree in effect; applying the wrong one
+  builds a capping block one base short.
+
+## Sources
+
+Read dates are in section 2 and provenance in section 7.
+
+- Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization.
+  *Nat. Commun.* [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5),
+  with its supplementary information, Supplementary Table 3 (the barcode payloads) and
+  Supplementary Table 4 (the primers).
+- Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain
+  recombination enhance CAR T cell antitumor function. *Cell* 189, 1-20.
+  [doi:10.1016/j.cell.2026.07.054](https://doi.org/10.1016/j.cell.2026.07.054). CC BY 4.0.
+  Read in full for `docs/research/protein-library-assembly.md`, which is the account of it.
+- Lund, S., Potapov, V., Johnson, S. R., Buss, J. and Tanner, N. A. (2024) Highly parallelized
+  construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly
+  Design and Golden Gate. *ACS Synth. Biol.* 13, 745-751.
+  [doi:10.1021/acssynbio.3c00694](https://doi.org/10.1021/acssynbio.3c00694). All authors were
+  employed by the enzyme vendor, which funded the work.
+- Subramanian, S. K., Russ, W. P. and Ranganathan, R. (2018) A set of experimentally validated,
+  mutually orthogonal primers for combinatorially specifying genetic components. *Synth. Biol.*
+  3, ysx008. [doi:10.1093/synbio/ysx008](https://doi.org/10.1093/synbio/ysx008), with
+  Supplementary Table 1 (the primers and their keep or drop calls) and Supplementary Table 2
+  (the cross-talk matrix).
+- Long, Y., Mora, A., Li, F.-Z., Gürsoy, E., Johnston, K. E. and Arnold, F. H. (2025) LevSeq:
+  rapid generation of sequence-function data for directed evolution and machine learning.
+  *ACS Synth. Biol.* [doi:10.1021/acssynbio.4c00625](https://doi.org/10.1021/acssynbio.4c00625),
+  with its supporting information. Preprint:
+  [doi:10.1101/2024.09.04.611255](https://doi.org/10.1101/2024.09.04.611255).
+- Freschlin, C. R., Yang, K. K. and Romero, P. A. (2026) Scalable and cost-efficient custom gene
+  library assembly from oligopools. *Sci. Adv.* 12, eady2279.
+  [doi:10.1126/sciadv.ady2279](https://doi.org/10.1126/sciadv.ady2279). Read, not drawn from.
+- Romanowicz, K. J., Hinton, S. R., Villegas, N. and Plesa, C. (2026) DropSynth-Gold: Golden
+  Gate assembly in emulsions extends multiplexed gene libraries to greater lengths. *bioRxiv*
+  [doi:10.64898/2026.05.29.728538](https://doi.org/10.64898/2026.05.29.728538). Read, not drawn
+  from.
+- Twist Bioscience product pages, price sheets, the multiplexed gene fragment order form, and
+  the four protocol guides DOC-001498, DOC-001499, DOC4057 and DOC_4045. Vendor material, not
+  redistributable.
+- Molecular Devices QPix colony picker brochures. Vendor material, not redistributable.
+- The Baker lab's three-primer diagram and the correspondence that came with it. Shared
+  directly, not published.
+- Addgene depositor maps for the two vector parents, four barcode plasmids and the part
+  carrier, by plasmid number.
