@@ -24,6 +24,7 @@ nav:
   - Clone GFP into pUC19 with two enzymes: restriction-ligation.md
   - Move a gene into an expression vector with Gateway: gateway.md
   - Check primers on a genome: genome-check.md
+  - Highly parallel DNA synthesis and assembly: synthesis-and-assembly.md
   - API reference: api.md
 
 # What `--strict` catches. Every row was built against the pinned zensical and watched, not
