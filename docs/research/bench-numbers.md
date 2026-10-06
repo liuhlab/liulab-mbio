@@ -40,15 +40,22 @@ reason in departure D2. Nothing in this note uses PaqCI or its activator oligo.
 | Agencourt AMPure XP instructions for use, B37419AB (2016) and B37419AA (2013) | the SPRI clean-up both pipelines call for | Beckman Coulter, plain `curl` | 2026-10-06 |
 | Oxford Nanopore kit and flow cell pages | the read-out's consumables | `nanoporetech.com`, plain `curl`, text extracted | 2026-10-06 |
 | New England Biolabs manuals and product specifications | every enzyme, buffer and clean-up kit | `neb.com/-/media/nebus/files/manuals/*.pdf` and `neb.com/en/-/media/catalog/specifications/<letter>/<digit>/*.pdf`, both plain `curl`; `nc3.neb.com/NEBcutter/data/enzymes.json` for the cross-check | 2026-10-06 |
+| New England Biolabs product pages, protocol pages and usage guidelines | heat inactivation, the two transformation protocols, the ligase buffer and the electroporation settings | `r.jina.ai/<neb url>` | 2026-10-06 |
 
 `neb.com` returns HTTP 403 to `curl` and WebFetch for its HTML pages. The routes that work are
-recorded in `docs/research/gibson-assembly.md` and `docs/research/restriction-ligation.md`. Two
-of them were used here; the `r.jina.ai` route, which renders the live page, was deliberately
-not, because it proxies around a bot block. **The cost of that choice is visible**: every NEB
-product page, protocol page and FAQ is missing from this note, and five of the twenty-six holes
-below are things that live only on those pages. A wrong filename and a block return the same
-403, so a missing file reads as a block — compare response sizes before concluding a manual is
-unreachable.
+recorded in `docs/research/gibson-assembly.md` and `docs/research/restriction-ligation.md`, and
+all three were used here. A wrong filename and a block return the same 403, so a missing file
+reads as a block — compare response sizes before concluding a manual is unreachable.
+
+Two traps on the `r.jina.ai` route, paid for here:
+
+- **It rate-limits.** Three requests in a row returned HTTP 422 and one returned a Cloudflare
+  "Just a moment" page of 548 bytes. Five seconds between requests, and a retry that rejects a
+  response under 2 kB, fetched twelve of twelve.
+- **A protocol's dated URL renders an empty shell.** The page NEB's own product page links to
+  as `/protocols/2016/06/08/high-efficiency-transformation-protocol-...` comes back with
+  navigation and no protocol. The undated slug, `/protocols/high-efficiency-transformation-
+  protocol-c3040h`, returns the steps. Take the slug from the product page's protocol list.
 
 ---
 
@@ -205,8 +212,15 @@ kit is **NEB #E1602**; the BsaI kit, which stage 5 uses, is **#E1601S/L**.
 | NEB Stable culture | pick a single clone into 50 mL LB — **not** a rich medium such as Terrific Broth — in a 250 mL baffled flask, overnight | Qian SI, "Preparing GGA vector stocks" |
 | Plasmid prep | midiprep; typical yield 50-100 µg | Qian SI, "Preparing GGA vector stocks" |
 | NEB Stable, #C3040H/I | >1 × 10⁹ cfu/µg, measured on 50 µL of cells with 100 pg pUC19 on LB-amp at 37 °C; stored at -80 °C; 12-month shelf life | C3040 product specification PS-C3040H/I v1.0 |
-| NEB Stable transformation volumes, heat shock and outgrowth | **not read.** The C3040 manual filename 403s and the protocol page is blocked. A search summary exists and is **not** a source | — |
-| Why 30 °C | **not read**, same reason | — |
+| NEB Stable thaw | 10 minutes on ice | C3040H high-efficiency transformation protocol |
+| DNA in | 1-5 µL containing 1 pg to 100 ng of plasmid; flick 4-5 times, never vortex | same |
+| Ice | 30 minutes, without mixing | same |
+| Heat shock | **exactly** 42 °C for **exactly** 30 seconds, then 5 minutes on ice, no mixing | same |
+| Outgrowth | 950 µL room-temperature NEB 10-beta/Stable Outgrowth Medium (#B9035), **30 °C for 60 minutes**, horizontal at 250 rpm | same |
+| Plating | 50-100 µL of cells or diluted cells; **24 h at 30 °C**, or overnight at 37 °C | same |
+| When outgrowth can be skipped | an AmpR plasmid needs none; any other selection needs the 60 minutes at 30 °C | C3040 product page, product note 3 |
+| **Why 30 °C** | "30 °C or 37 °C may be used for plate incubation, however 30 °C is recommended as some constructs may be unstable at elevated temperatures" | C3040 product page, product note 3 |
+| Storage | -80 °C; -20 °C costs a significant amount of efficiency, and the cells lose efficiency whenever warmed above -80 °C even without thawing | C3040 product page, product note 1 |
 | The kit's own transformation, as a comparable | 50 µL 10-beta cells thawed on ice 10 min; 2 µL of assembly; ice 30 min; 42 °C 30 s; ice 5 min; 950 µL room-temperature NEB 10-beta/Stable Outgrowth Medium; 37 °C 60 min at 250 rpm | E1601 manual p. 6 |
 | The kit's own plating | 50 µL of a 1:5 dilution for a single insert, or 50-100 µL for a multi-insert assembly; overnight at 37 °C, **or 24-36 h at 30 °C**, or 48 h at 25 °C | E1601 manual p. 6 |
 | What a white colony means here | **ours** — the RFP stuffer and the "a colony that lost it is the one to pick" rule are the method page's. No source gives a false-positive rate, a colonies-to-pick count, or an expected white fraction | — |
@@ -413,11 +427,24 @@ Two blunt-cutter figures bear on the design directly:
 
 Both say a blunt end these enzymes leave **can** religate under a DNA ligase. The method's
 escape route is closed by the ligase refusing blunt ends, not by the cut site resisting them —
-and that refusal is H19 below.
+and that refusal is sourced under
+**Does T7 DNA ligase refuse blunt ends?** below.
+
+| Enzyme | Heat inactivation | Source |
+| --- | --- | --- |
+| BsaI-HFv2 | 80 °C for 20 minutes | NEB heat-inactivation usage guideline |
+| BsmBI-v2 | 80 °C for 20 minutes | same |
+| BbsI-HF | 65 °C for 20 minutes | same, and the R3539 product page |
+| SrfI | 65 °C for 20 minutes | same, and the R0629 product page |
+| PmeI | 65 °C for 20 minutes | same, and the R0560 product page |
+| T7 DNA Ligase | **No** on the product page's property icons. Note 4 adds that 65 °C for 10 minutes inactivates it, **but only in a buffer without PEG** — "do not heat inactivate if there is PEG in the reaction buffer, as transformation will be inhibited" | M0318 product page |
+
+The last row is the reason the iGGA round goes straight from ligation to SPRI: the ligation is
+in StickTogether buffer, which carries PEG 6000, so heat inactivation is ruled out. The source
+does not say this; the vendor's note and the source's practice agree.
 
 | Number | Value | Source |
 | --- | --- | --- |
-| Heat inactivation for any of the five | **not stated.** It is absent from every specification sheet and from `nc3.neb.com/NEBcutter/data/enzymes.json`; it lives on the blocked product pages | — |
 | Time-Saver qualification | `enzymes.json` flags BsaI-HFv2, and a 15-minute functional digest test appears on the BsmBI-v2, BbsI-HF and SrfI sheets | `enzymes.json`; the three specifications |
 
 ### Clean-up, ligation and clean-up again
@@ -435,11 +462,43 @@ and that refusal is H19 below.
 | T7 DNA Ligase, #M0318S/L | 3,000,000 U/mL (1 mg/mL); one unit gives 50% ligation of 100 ng lambda-HindIII in 30 min at 25 °C | M0318 specification PS-M0318S/L v2.0 |
 | T7 ligase assay | 16 h at 37 °C in 1x StickTogether buffer gives >95% ligation of a lambda-HindIII digest — **cohesive ends only** | same |
 | Ligase units per reaction | **not stated by the paper** | — |
-| StickTogether DNA Ligase Buffer catalogue number | **not confirmed.** It is supplied with M0318, and a search summary gives #B0535 as a 2x solution. A search summary is not a source | — |
+| StickTogether DNA Ligase Buffer | **NEB #B0535S**, supplied as a 2x solution, 2 mL; it ships with M0318 as component B0535AVIAL, 1 × 1 mL with M0318S and 3 × 1 mL with M0318L | B0535 product page; M0318 product page, component table |
+| 1x StickTogether buffer | 66 mM Tris-HCl, 10 mM MgCl₂, 1 mM ATP, 1 mM DTT, **7.5% PEG 6000**, pH 7.6 at 25 °C | M0318 product page, reaction conditions |
+| T7 ligase incubation | 25 °C | M0318 product page |
+| T7 ligase in a buffer without PEG | it still works — T4 DNA Ligase Buffer, NEBuffer r1.1-r3.1 and rCutSmart all serve, with 1 mM ATP added for the NEBuffers, at about **10-fold lower activity** | M0318 product page, note 3 |
 | T4 DNA Ligase, #M0202S/L, for the one-pot reactions | 400,000 U/mL (0.4 mg/mL); one unit gives 50% ligation of 6 µg lambda-HindIII in 30 min at 16 °C in 20 µL; stored in 10 mM Tris-HCl, 50 mM KCl, 1 mM DTT, 0.1 mM EDTA, 50% glycerol | M0202 specification PS v1.0 |
 | T4 ligase reaction setup, temperature, time, inactivation | **not stated** on the specification sheet; the manual and protocol page are blocked | — |
 | Why T7 ligase | it will not join blunt ends, which is what removes escapees — the method page's reason, and departure D2's | `docs/research/synthesis-and-assembly-departures.md` |
-| **Whether T7 ligase joins blunt ends** | **no NEB primary text read says so.** The only ligation assay on the M0318 sheet is on cohesive HindIII ends. The claim the method rests on is unverified from the vendor | — |
+
+### Does T7 DNA ligase refuse blunt ends?
+
+**Yes, and NEB says so in its own words.** The method's escape-removal argument is sourced.
+
+> "unlike T4 and T3 DNA Ligases, blunt end ligation is not efficiently catalyzed by T7 DNA
+> Ligase. Addition of high concentrations of PEG 6000 [≥ 20% (w/v)] to the reaction can force
+> T7 DNA Ligase to have measurable activity. However, under typical reaction conditions
+> blunt-end DNA ligation does not occur in the presence of T7 DNA Ligase, making it a good
+> choice for applications in which blunt and cohesive ends of DNA are present but only the
+> cohesive ends are to be joined."
+>
+> — NEB #M0318 product page, read 2026-10-06
+
+That last clause describes this method's reaction exactly. NEB also publishes the measurement
+behind it: blunt fragments (ΦX174-HaeIII, #N3026) and sticky-end fragments (λ-HindIII, #N3012)
+in one tube, 200 ng of each substrate, 1 µL of each ligase, 30 minutes at 25 °C in each
+ligase's own buffer, resolved on a 1% agarose gel. T7 joins the sticky ends and not the blunt.
+
+**One condition is worth carrying into the protocol.** The refusal is a PEG-concentration
+effect, and it is forced at **≥20% (w/v) PEG 6000**. The buffer the method uses,
+StickTogether, contains **7.5% PEG 6000** — well under that, and it is the buffer NEB ran its
+own negative result in, so the margin is measured rather than assumed. The protocol must not
+add PEG to this reaction, and nothing in the method does.
+
+| Number | Value | Source |
+| --- | --- | --- |
+| Blunt-end ligation by T7 ligase | does not occur under typical conditions | M0318 product page |
+| What forces measurable blunt activity | PEG 6000 at ≥20% (w/v) | same |
+| PEG in the buffer the method uses | 7.5% PEG 6000 | same, reaction conditions |
 
 The SPRI steps above are quoted as ratios. Beckman's own instructions for use give the
 procedure those ratios sit inside:
@@ -526,6 +585,20 @@ is this step:
 | SPRI | the AMPure XP procedure in stage 4 | AMPure XP IFU B37419AB |
 | SPRI ratio for this step | **ours** — 1x and 2x are Takacsi-Nagy's for the iGGA round; nothing states one here | — |
 | Electroporation | Endura's settings, or the BL21(DE3) route Qian uses for a library | Endura manual MA133; Qian SI Day 1.2 |
+
+NEB publishes settings for its own electrocompetent strain, #C3020. They are not Endura's, and
+the two disagree on every setting — which is the point: an electroporation program belongs to
+the cells, not to the method.
+
+| Number | Value | Source |
+| --- | --- | --- |
+| Cuvette | 1 mm, chilled | C3020 electroporation protocol |
+| Cells and DNA | 25 µL of cells, 1 µL of DNA | same |
+| Settings | 2.0 kV, 200 Ω, 25 µF, on a BTX ECM 630 or Bio-Rad GenePulser | same |
+| Expected time constant | 4.8-5.1 ms | same |
+| Recovery | 975 µL of 37 °C NEB 10-beta/Stable Outgrowth Medium added immediately; 1 hour at 37 °C, 250 rpm | same |
+| Plates | pre-warmed at 37 °C for 1 hour; incubated overnight at 37 °C | same |
+| Against Endura | Endura is 1800 V, 600 Ω, 10 µF with a 3.5-4.5 ms time constant, in a 0.1 cm cuvette | Endura manual MA133 p. 4 |
 | Mass of cargo pool into the reaction | **ours** | — |
 | Mass of working vector into the reaction | **ours** | — |
 | Colonies the library needs | the package computes this from the coverage asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
@@ -537,7 +610,20 @@ The method page's "Neither by-product needs a check" is a design claim, not a nu
 
 ## The holes, collected
 
-Twenty-six, by stage. Each is a number the generated protocol would otherwise have to invent.
+Twenty-one, by stage. Each is a number the generated protocol would otherwise have to invent.
+
+**The numbering has five gaps, and they are deliberate.** H11, H17, H19, H20 and H26 were holes
+on the first pass and were closed on the second, when the `r.jina.ai` route reached the NEB
+pages that a plain fetch cannot. The numbers are not reused, so a reference to a hole made
+before that pass still resolves. What closed:
+
+| Was | What it asked | Where the answer is now |
+| --- | --- | --- |
+| H11 | NEB Stable's transformation protocol, and why 30 °C | stage 2, and the C3040 product note that gives the reason |
+| H17 | heat inactivation for the five enzymes | stage 4, **The five enzymes** |
+| H19 | whether T7 DNA ligase refuses blunt ends | stage 4, **Does T7 DNA ligase refuse blunt ends?** — it does, in NEB's own words |
+| H20 | the StickTogether buffer's catalogue number | stage 4: #B0535S, with its 1x composition |
+| H26 | electroporation settings for the library strain | stage 5, NEB's #C3020 protocol |
 
 ### Stage 1 — part cloning
 
@@ -566,13 +652,10 @@ Twenty-six, by stage. Each is a number the generated protocol would otherwise ha
   rate, no colonies to pick. *Filled by:* a pilot, or by dropping the RFP route for the
   ccdB counter-selection the DMX vector already uses.
 - **H9.** **Nothing names the strain, medium or antibiotic for this assembly's transformation.**
-  NEB Stable is named; its volumes are not. *Filled by:* H11.
+  NEB Stable is named; its volumes are the C3040H protocol's, above. What this step
+  needs and nobody states is which of them applies here. *Filled by:* a decision.
 - **H10.** **The carrier's own BsaI site and ccdB, in a part added without a digest**, is undecided in
   the method itself. *Filled by:* a decision, not a source.
-- **H11.** **NEB Stable's own transformation protocol was not read, nor the reason for 30 °C.** The
-  #C3040 manual filename 403s and the protocol page is blocked; only the specification sheet
-  came through, and it gives efficiency and shelf life alone. *Filled by:* the C3040 manual,
-  via a route that gets past the block.
 
 ### Stage 3 — cargo and read-out
 
@@ -595,19 +678,9 @@ Twenty-six, by stage. Each is a number the generated protocol would otherwise ha
 
 ### Stage 4 — the iGGA round
 
-- **H17.** **No heat inactivation for any of the five enzymes.** It is on none of the specification
-  sheets and not in `enzymes.json`; it lives on the blocked product pages. The source goes
-  straight to SPRI either way. *Filled by:* NEB's inactivation table, or by accepting SPRI as
-  the step that stops the digest.
 - **H18.** **The SPRI beads are not identified for the cloning steps.** AMPure XP is named only for
   the NGS size selection. Beckman's own default is 1.8x; the paper uses 2x then 1x, with no
   reason given for either. *Filled by:* naming a bead product and a ratio.
-- **H19.** **No NEB document says T7 DNA ligase will not join blunt ends.** The M0318 specification's
-  only ligation assay is on cohesive HindIII ends. The method's whole escape-removal argument
-  rests on this. *Filled by:* the blocked M0318 product page or FAQ, or a measurement.
-- **H20.** **The StickTogether buffer has no confirmed catalogue number.** It ships with M0318; #B0535
-  appears only in a search summary, which is not a source. Its composition and 1x working
-  concentration were not read. *Filled by:* the blocked B0535 page.
 - **H21.** **No electroporation settings in the paper**, and **no vendor document gives a recovery at
   30 °C** — Endura's manual is 37 °C throughout. The 30 °C recovery and the 12-16 hour 30 °C
   growth are the paper's, with no efficiency attached. *Filled by:* Endura's manual for the
@@ -627,9 +700,6 @@ Twenty-six, by stage. Each is a number the generated protocol would otherwise ha
 - **H25.** **Neither kit manual gives a DNA mass for a pooled-library one-pot assembly.** Both give
   0.05 pmol of vector for a defined assembly and a one-hour single-insert program "for
   library preparation", and no pooled-insert mass or colony target. *Filled by:* a pilot.
-- **H26.** **No electroporation settings for the library strain.** NEB's #C3020K specification gives
-  efficiency only; its electroporation protocol page is blocked, and BL21(DE3) was not
-  sourced at all. *Filled by:* the blocked protocol page, or Endura's settings carried over.
 
 ## What this note does not cover
 
@@ -642,7 +712,9 @@ Twenty-six, by stage. Each is a number the generated protocol would otherwise ha
   confirmed against a live page, and the specification sheets date from 2013 to 2020.
 - **One file under `bench/neb/` is not a source.** `NEB_web-pages_blocked_search-snippets.md`
   holds search-engine summaries of the blocked pages. It is labelled unverified, nothing in
-  this note cites it for a value, and the two facts it carries are H19 and H20 instead.
+  this note cites it for a value. Both facts it carried — the StickTogether catalogue number
+  and NEB Stable's transformation protocol — are now sourced from the pages themselves, so the
+  file is kept only as a record of what was unreadable on the first pass.
 
 ## Sources
 
