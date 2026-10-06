@@ -490,8 +490,26 @@ marker separates the two outcomes — the carrier is KanR, the working vector Am
 | Amplify every part out of its carrier | Only the part then enters, and the retailoring primer form already exists for exactly this shape. It costs a reaction per part, which is what entering as the plasmid was written to avoid. |
 | Domesticate the carrier once | One edit to a lab resource built once removes the BsaI site for every part afterwards. The counter-selection cassette is the carrier's own selection and cannot be removed the same way. |
 
+### 6.12 When a design needs validation
+
+Cargo synthesis ends polyclonal by default and the validation section is marked optional, so
+the step that archives a design also decides whether it is ever read. No rule says when the
+option should be taken.
+
+| Option | Evidence |
+| --- | --- |
+| Validate every design | Lund picks four colonies per gene and sequences them all, which gave 343 of 458 genes error-free. It costs a plate of picks and one read per design. |
+| Validate above a fragment count | The only measured anchor: Lund's designs with a perfect clone run 100% at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40.0% at 12 and 0% at 16. A gene in few pieces rarely needs the read; one in many rarely has a clean clone to find. |
+| Stay polyclonal throughout | What the method page does by default. The error load then rides into the assembly and is localised only by the linkage read at the end. |
+
+The fragment-count table is held in `long_fragment_GGA/README.md`, from Lund et al. It appears
+in neither the method page nor any other tracked file.
+
 ### Also open, and smaller
 
+- **The design order.** For iGGA cargo the barcode and the 34 bp stuffer sit inside the
+  synthesised block, so both have to exist before the gene is split; the page splits first.
+  Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
 - **The read-out route** is a per-project choice with a suggested threshold: at or below one
   plate of samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed
   to the primer set is wrong — forward and reverse barcodes combine freely and no dual index is
@@ -591,6 +609,15 @@ Nothing here should become a package default.
 - **The protein cost of the assembly junction is never stated** on the page. Three rounds is 45
   bp, fifteen residues, translated inside every library member, and no rule fits a fragment's
   boundary codons to the entry overhang.
+- **Nothing lyses a culture and nothing is purified before the amplicon reactions.** Qian
+  heat-lyses at 98 °C for 30 minutes as its own step, then minipreps the pooled plate and puts
+  20 ng of purified DNA into each of the three reactions. The page goes from growth to an
+  acoustic transfer to a crude-lysate reaction. Bench detail, owned by the detail protocol.
+- **Route B pools per plate and then consumes one pool.** Nothing combines or normalises the
+  per-plate pools, and nothing tells two plates apart on one flow cell. LevSeq carries plate
+  identity in the reverse barcode and combines each plate's pool in equimolar amounts.
+- **The compacted plate's status is unstated** — whether it is frozen, becomes the archive, or
+  supersedes the one cargo synthesis makes.
 - **Two length conventions are in use for the same kind of block**, one counting the 5'
   overhang only and one counting through both. They agree in effect; applying the wrong one
   builds a capping block one base short.
