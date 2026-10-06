@@ -4,6 +4,11 @@ A combinatorial library over three positions, built from 72 protein sequences an
 Every output file below was written by the command, from the three input files beside it.
 Nothing here is edited by hand.
 
+Read this page to see what a whole run writes. Its [scheme.json](scheme.json) is one published
+library's own architecture, so it carries that project's choices. To start a scheme of your own,
+copy [the other one](../protein-library/scheme.json) instead: it is a scheme and nothing else,
+written to be edited.
+
 ```bash
 pixi run liulab_synbio library plan docs/examples/ap1-library/parts.fasta \
   --scheme docs/examples/ap1-library/scheme.json \

@@ -627,7 +627,9 @@ One stage of an iterative assembly: the library built so far is cut internally t
 round's parts are cut externally to release them, the two ligate, and the product is transformed,
 grown and prepped to become the next round's destination. One round appends one part list and its
 barcode to every member of the library at once. The product keeps the internal enzyme's sites,
-which is what lets the next round open it.
+which is what lets the next round open it. The first round opens the destination vector, which is
+the library before any part list has been appended, so a build over _n_ positions runs _n_ rounds.
+A step that seats one part in a carrier makes no library and is not a round.
 _Avoid_: cycle, iteration, step
 _Package_: liulab_synbio
 

@@ -31,10 +31,14 @@ pixi run liulab_synbio library plan parts.fasta \
 naming it. Pass `--kind dna` where the sequences are already coded: those codons are checked and
 kept, not written again.
 
-The scheme is data the user supplies, not something this package ships;
-`docs/examples/protein-library/scheme.json` is the worked example to copy and edit, and
+The scheme is data the user supplies, not something this package ships, and
 `docs/adr/0005-scheme-data.md` says why. Read it back to the user when they ask what the design
-assumed.
+assumed. Two worked schemes ship, and they are not interchangeable:
+
+- `docs/examples/protein-library/scheme.json` — **copy this one.** It is a scheme and nothing
+  else, written to be edited, with no project's choices in it.
+- `docs/examples/ap1-library/` — **read this one.** A whole run, inputs and outputs, whose scheme
+  is one published library's own architecture.
 
 Files land in the directory you name:
 

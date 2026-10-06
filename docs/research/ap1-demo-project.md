@@ -244,6 +244,14 @@ All 72 parts are cloned into the DMX vector at the seating step, because our don
 release sites of its own and cannot be a donor until it is cloned (the constraint recorded under
 open decision 6.7).
 
+**The pipeline counts differently, and it is right to.** `liulab_synbio.library` models one round
+a position, so it plans three for this project. Measured on 2026-10-06: its first round opens the
+destination with the internal enzyme, ligates the N part list released by the external enzyme,
+transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
+the seating step, which runs BsmBI one well a part and makes no library. The pipeline has no
+carrier to seat a part in, so this table is not reachable through it; the gap is the fifth item
+of #223.
+
 After round 2: the linkage read, then the representation read. Representation is read again
 after the final assembly, after packaging and after transduction — each is a bottleneck that
 resamples the library.
@@ -412,8 +420,22 @@ The metric, the absent GC band, the cap of 5 and the shuffled draw order are the
 the method page's one open barcode decision, which is why this section decides it for this
 project.
 
-The source's 72 barcodes are not reused: six of them carry a stop at this design's frame offset,
-measured.
+The source's 72 barcodes are not reused. The reason is the distance rule and the site screen
+above, and **not** a stop codon: an earlier revision of this section said six of the 72 carry one
+at this design's frame offset, and that is wrong.
+
+**Measured 2026-10-06**, twice. The barcodes were read off each sheet's own barcode column of
+Table S1 — column 6 on the C sheet, column 5 on the N and bZIP sheets — and the frame was read
+off `docs/examples/ap1-library/product.dna`, the record the pipeline wrote. Every barcode sits at
+**codon position 1**: the retained 34-base stuffer starts at a codon boundary, translates
+`RKVFSPGRRQF` and leaves one base over. So the codons wholly inside a barcode are its bases 2-4,
+5-7 and 8-10, and the codon spanning into it opens with the scar's last base — `C` for ours,
+`G` for theirs — which no stop codon does. **None of the 72 carries a stop**, with our scar or
+theirs, in a bare barcode-plus-scar unit or in a whole 41-base block. Translating the product's
+whole reading frame through the tail finds no stop either.
+
+Six is what the same 72 give at **codon position 0**, which is where this design does not put
+them. #220 measured none independently on the same day, and #224 re-measured it.
 
 ### 9.6 What counts as a passing well — LevSeq's criterion, plus an exact match
 

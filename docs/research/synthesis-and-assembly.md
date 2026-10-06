@@ -734,13 +734,24 @@ which is recorded below.
 
 ### Two things the specification says that this run does not reproduce
 
+Both were taken up by #224 on the same day. One correction landed; one turned out to be larger
+than it read.
+
 - **Section 9.5 says six of the source's 72 barcodes carry a stop at our frame offset.**
   Measured here: **none** do, at the retained stuffer's phase of 1, with our scar or theirs, in
   a bare barcode-plus-scar unit and in a whole 41-base block alike. The reason for drawing a
   fresh set stands on the distance rule and the site screen; this one measurement does not.
-- **Section 6 says three positions is two iGGA rounds.** The planner reports three, because its
-  first round is the step that seats position one in its carrier. The substance agrees; the
-  wording in the protocol it writes does not.
+  #224 measured it a third time, reading the frame off `product.dna` rather than off the
+  specification, and found none again: six is what the same 72 give one base out of frame.
+  Section 9.5 now says so.
+- **Section 6 says three positions is two iGGA rounds.** The planner reports three. This run read
+  the difference as wording; #224 measured it and it is not. The planner's first round opens the
+  destination with the internal enzyme, ligates the N part list released by the external enzyme,
+  transforms it and sizes it for 24 products — the same reaction as rounds 2 and 3, and a
+  24-member library at the end of it. The method's seating step is a different reaction: BsmBI,
+  one well a part, 72 parts into a carrier, and no library made. **One round a position is what
+  the pipeline models**, and the method's accounting needs a carrier the pipeline has none of.
+  That is a design question, filed as the fifth item of #223.
 
 ### What the planner could not do
 
