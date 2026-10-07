@@ -336,7 +336,7 @@
       "catalog": "",
       "storage": "",
       "amount": "",
-      "note": "the destination vector's own antibiotic, which this plan does not name",
+      "note": "LB with 100 µg/mL carbenicillin, the destination vector's own marker (AmpR)",
       "contains": [],
       "rules": [],
       "citation": null
@@ -369,7 +369,7 @@
       "catalog": "431111",
       "storage": "",
       "amount": "one spot a design",
-      "note": "the vector's own antibiotic; about 2,500 colonies a plate",
+      "note": "100 µg/mL carbenicillin; about 2,500 colonies a plate",
       "contains": [],
       "rules": [],
       "citation": {
@@ -383,7 +383,7 @@
       "catalog": "c74290",
       "storage": "",
       "amount": "1, one a 384 wells",
-      "note": "60 µL low-salt LB with the vector's own antibiotic a well",
+      "note": "60 µL low-salt LB with 100 µg/mL carbenicillin a well",
       "contains": [],
       "rules": [],
       "citation": {
@@ -579,7 +579,7 @@
       "name": "picked 1",
       "wells": 384,
       "catalog": "Beckman Coulter #c74290",
-      "holds": "one picked colony each in 60 µL low-salt LB with the vector's own antibiotic",
+      "holds": "one picked colony each in 60 µL low-salt LB with 100 µg/mL carbenicillin",
       "seating": {},
       "labels": {
         "A1": "quarter 1",
@@ -1680,7 +1680,7 @@
       "title": "Array 72 design(s) and grow",
       "instructions": [
         "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-        "Grow overnight at 37 °C on the vector's own antibiotic."
+        "Grow overnight at 37 °C on 100 µg/mL carbenicillin."
       ],
       "cautions": [],
       "notes": [
@@ -1706,7 +1706,7 @@
     {
       "title": "Pick 4 colonies of each design",
       "instructions": [
-        "Pick 4 colonies a design into 60 µL low-salt LB with the vector's own antibiotic, with the QPix XE Microbial Colony Picker.",
+        "Pick 4 colonies a design into 60 µL low-salt LB with 100 µg/mL carbenicillin, with the QPix XE Microbial Colony Picker.",
         "Fill one quarter of each 384-well plate before starting the next.",
         "Grow overnight at 37 °C."
       ],
@@ -5936,7 +5936,7 @@
       "title": "Round 1: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on selection as round 1 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 1 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 1 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6373,7 +6373,7 @@
       "title": "Round 2: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on selection as round 2 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 2 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 2 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6810,7 +6810,7 @@
       "title": "Round 3: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on selection as round 3 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 3 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 3 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6903,7 +6903,7 @@
     {
       "title": "Read linkage",
       "instructions": [
-        "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward CTTACTCCGCGAATCACC and Linkage read reverse GGTCTGAAATGGTGTCTAGG, which give a 1185 bp amplicon.",
+        "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward TCCCCTCTAGAAATAATTTTGTTTAACTTT and Linkage read reverse CAGCCGGATCTCATGTTT, which give a 1197 bp amplicon.",
         "Sequence the amplicon as a long read.",
         "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
       ],
@@ -6946,7 +6946,7 @@
     {
       "title": "Read representation",
       "instructions": [
-        "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward AGGAAAGTCTTCAGCCCG and Representation read reverse GGTCTGAAATGGTGTCTAGG, which give a 135 bp amplicon.",
+        "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward AGGAAAGTCTTCAGCCCG and Representation read reverse CAGCCGGATCTCATGTTT, which give a 134 bp amplicon.",
         "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
       ],
       "cautions": [],
@@ -7352,14 +7352,6 @@
     }
   },
   "holes": [
-    {
-      "id": "H22",
-      "missing": "no selection antibiotic for a round",
-      "kind": "undecided",
-      "where": "each round, plating",
-      "filled_by": "the vector's own marker",
-      "issue": "liuhlab/liulab-mbio#264"
-    },
     {
       "id": "H23",
       "missing": "no published document describes the split digest; the one source is the paper itself",

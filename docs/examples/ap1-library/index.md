@@ -45,9 +45,10 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 153 oligos, every one 350 nt |
 | [pool-primers.tsv](pool-primers.tsv) | the 74 primers that amplify the pool, and how many oligos each one pulls out |
 | [barcodes.tsv](barcodes.tsv) | which barcode names which part, and where it sits |
+| [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
-| [product.dna](product.dna) | one member of the finished library, 2,276 bases |
+| [product.dna](product.dna) | one member of the finished library, 6,501 bases |
 | [protocol.json](protocol.json) | the bench protocol as data |
 | [protocol.html](protocol.html) | the same protocol as a page to work from |
 
@@ -84,9 +85,10 @@ leaves a hole rather than a guess. The keys this plan asks for are the bill's ow
 Each record is drawn by the same command, from the file beside it:
 
 ```bash
-pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna -o product-map.pdf
-pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna \
-  --region 1368..1442 --sequence-view -o barcode-block.pdf
+D=docs/examples/ap1-library
+pixi run liulab_mbio plot map $D/product.dna -o $D/product-map.pdf
+pixi run liulab_mbio plot map $D/product.dna \
+  --region 1368..1442 --sequence-view -o $D/barcode-block.pdf
 ```
 
 | File | What it is |
