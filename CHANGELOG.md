@@ -9,6 +9,12 @@ sets one.
 
 ### Added
 
+- The library protocol's bill carries the oligo pool, which is the largest thing a build buys:
+  how many oligos the split spends, the vendor band each quantity falls in, and how much room is
+  left in that band. With no price record loaded the count and the band are still what the design
+  computes and the money cell is a hole, because nothing here is ever estimated.
+- The AP-1 example ships the two sheets its pool is ordered from, `pool.tsv` and
+  `pool-primers.tsv`, and the command that writes them now lists them with the rest.
 - A library project says which of its designs are read back, and how. `validate_from` is a
   fragment count: every design built from that many pieces or more is read back one well at a
   time, and the rest stay polyclonal. Leave it out and nothing is read, which is the default.
@@ -293,6 +299,8 @@ sets one.
 
 ### Fixed
 
+- A whole-number headroom on a bill row reads `350 length` again, not `350.0 length`. The
+  quantity reached it as a float, and the trailing zero showed on every row carrying a band.
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane
   used to come from the product with its insert turned over in place. At an end with an overhang
   the two strands stop at different bases, and that put the overhang's bases on the wrong side of

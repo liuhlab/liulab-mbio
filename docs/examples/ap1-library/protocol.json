@@ -69,6 +69,11 @@
       "detail": "72 judged, worst: the N cargo 1 is 798 bases from its entry overhang, 0 past a whole number of codons, which is what a cargo another part follows is"
     },
     {
+      "name": "well primers",
+      "status": "pass",
+      "detail": "72 judged, worst: no primer that reads a well binds the N cargo 1"
+    },
+    {
       "name": "product opens",
       "status": "pass",
       "detail": "BbsI cuts the library product in the 2 places a further round opens it on"
@@ -5245,6 +5250,23 @@
         }
       },
       {
+        "item": "AP-1 DESynR oligo pool",
+        "quantity": 153,
+        "unit": "oligos",
+        "key": "oligo-pool",
+        "charge": "",
+        "headroom": "153 count, 347 below the next band; 350 length, no slack above it at all",
+        "citation": null,
+        "hole": {
+          "id": "P2",
+          "missing": "no row prices 'oligo-pool' at 153 oligos",
+          "kind": "price",
+          "where": "AP-1 DESynR oligo pool, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
         "item": "BbsI-HF",
         "quantity": 7.5,
         "unit": "µL",
@@ -5253,7 +5275,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P2",
+          "id": "P3",
           "missing": "no row prices 'R3539' at 7.5 µL",
           "kind": "price",
           "where": "BbsI-HF, money",
@@ -5270,7 +5292,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P3",
+          "id": "P4",
           "missing": "no row prices 'R3733' at 7.5 µL",
           "kind": "price",
           "where": "BsaI-HFv2, money",
@@ -5287,7 +5309,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P4",
+          "id": "P5",
           "missing": "no row prices 'R0629' at 7.5 µL",
           "kind": "price",
           "where": "SrfI, money",
@@ -5304,7 +5326,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P5",
+          "id": "P6",
           "missing": "no row prices 'R0560' at 7.5 µL",
           "kind": "price",
           "where": "PmeI, money",
@@ -5321,7 +5343,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P6",
+          "id": "P7",
           "missing": "no row prices '60242-2' at 3 aliquots",
           "kind": "price",
           "where": "Endura ElectroCompetent Cells, money",
@@ -5338,7 +5360,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P7",
+          "id": "P8",
           "missing": "no row prices 'cuvettes' at 3 cuvettes",
           "kind": "price",
           "where": "Electroporation cuvettes, money",
@@ -5355,7 +5377,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P8",
+          "id": "P9",
           "missing": "no row prices 'plasmid prep' at 3 preps",
           "kind": "price",
           "where": "Plasmid preps, money",

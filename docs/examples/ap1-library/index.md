@@ -25,6 +25,7 @@ is the same and only the protocol differs.
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
 | [project.json](project.json) | what this library chose: its three positions, its host, its coverage, its barcode rules, and that every design is read back by index PCR |
 | [project-route-a.json](project-route-a.json) | the same library read back by DMX barcoding instead |
+| [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
 
 The two project files differ in one key. `route` says which of the two read-back routes reads
@@ -41,6 +42,8 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | File | What it is |
 | --- | --- |
 | [parts.tsv](parts.tsv) | the synthesis order sheet: 72 blocks, 133 to 1,149 bases |
+| [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 153 oligos, every one 350 nt |
+| [pool-primers.tsv](pool-primers.tsv) | the 74 primers that amplify the pool, and how many oligos each one pulls out |
 | [barcodes.tsv](barcodes.tsv) | which barcode names which part, and where it sits |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
