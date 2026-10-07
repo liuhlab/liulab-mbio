@@ -65,6 +65,29 @@ def test_pcr_blunt_ii_topo_carries_the_marker_that_goes_in(
     assert [(one.start, one.end) for one in marker.segments] == [(1236, 2031)]
 
 
+def test_the_genbank_written_carries_each_feature_colour(tmp_path: Path) -> None:
+    """A coloured record reads back coloured: the writer spells the note the reader takes."""
+    from liulab_mbio.io import read_record
+    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+
+    features = (
+        Feature("ori", "rep_origin", (Segment(0, 12),), color="#ffff00"),
+        Feature("lacI", "CDS", (Segment(16, 28),), strand=Strand.REVERSE, color="#993366"),
+        Feature("joined", "misc_feature", (Segment(32, 40), Segment(48, 56)), color="#ccffcc"),
+        Feature("plain", "misc_feature", (Segment(44, 48),)),
+    )
+    record = SequenceRecord("ACGT" * 16, name="coloured", features=features)
+    path = tmp_path / "coloured.gb"
+    _script().write_genbank(record, path)
+
+    again = read_record(path)
+    assert [one.color for one in again.features] == [one.color for one in features]
+    assert [one.name for one in again.features] == [one.name for one in features]
+    assert [[(s.start, s.end) for s in one.segments] for one in again.features] == [
+        [(s.start, s.end) for s in one.segments] for one in features
+    ]
+
+
 def test_the_genbank_written_loses_a_segment_name_and_says_which(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

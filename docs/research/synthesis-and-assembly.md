@@ -774,20 +774,24 @@ searched; every `dump/` and `form_dump/` is derived the same way. None of these 
 redistributed except the two CC BY papers and their supplements.
 
 The two tracked files were converted once with `build_dmx_vector.write_genbank`, which writes
-each feature as `/label=` and nothing else. They carry the bases, the topology and the features;
-they drop SnapGene's enzyme set, its auto-matched primer library, the vendor notes, each
-feature's colour and each segment's name, and each record was renamed for the LOCUS line, which
-takes neither a space nor `®`. Redo one by reading the `.dna` with `liulab_mbio.io.read_record`
-and writing it back through that function; the bases, the topology and the one coding sequence
-the rebuild reads are what must survive, and `tests/scripts/test_build_dmx_vector.py` holds the
-rest to it.
+each feature as `/label=` and its colour as `/note="color: #rrggbb"`. They carry the bases, the
+topology, the features and each feature's colour — 14 of 14 on the parent and 12 of 12 on the
+carrier, each the depositor's own; they drop SnapGene's enzyme set, its auto-matched primer
+library, the vendor notes, and each segment's own name and colour. Each record was renamed for
+the LOCUS line, which takes neither a space nor `®`. Redo one by reading the `.dna` with
+`liulab_mbio.io.read_record` and writing it back through that function; the bases, the topology,
+the colours and the one coding sequence the rebuild reads are what must survive, and
+`tests/scripts/test_build_dmx_vector.py` holds the rest to it.
 
-The segment names dropped are `AmpR`'s `signal sequence` on the parent and `lac promoter`'s `-35`
-and `-10` on the carrier. The writer names each one on stderr rather than losing it silently,
-and the loss is in the writer alone: `Segment` holds the name, SnapGene's reader reads it, and
-`liulab_mbio.io` reads it back out of the note SnapGene itself exports to GenBank. That note
-spells one segment a line, and only the line breaks tell a last segment's name from the prose
-SnapGene adds after the list, so a reader cannot be made to take the note whole. Biopython's
+A colour carries because `color: #rrggbb` is one line — the note SnapGene itself exports for a
+feature of one segment, which `liulab_mbio.io` already reads. A segment's own name and colour do
+not, and the names dropped are `AmpR`'s `signal sequence` on the parent and `lac promoter`'s
+`-35` and `-10` on the carrier. The writer names each one on stderr rather than losing it
+silently, and the loss is in the writer alone: `Segment` holds the name, SnapGene's reader reads
+it, and `liulab_mbio.io` reads it back out of the note SnapGene exports for a feature of several
+segments. That note spells one segment a line, and only the line breaks tell a last segment's
+name from the prose SnapGene adds after the list, so a reader cannot be made to take the note
+whole. Biopython's
 GenBank writer wraps a qualifier at a fixed width and does not honour a line break: fed
 SnapGene's own export, it writes a note that no longer reads back. Carrying the name therefore
 means laying out a GenBank qualifier by hand, which is a GenBank writer of our own for a
