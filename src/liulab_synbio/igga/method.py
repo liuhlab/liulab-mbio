@@ -175,6 +175,15 @@ class Scheme:
         return tuple(get_enzyme(name) for name in self.blunt_enzymes)
 
     @property
+    def blunt_for_the_destination(self) -> tuple[Enzyme, ...]:
+        """The choppers acting where the library is opened: those that shred its own stuffer.
+
+        Read off the DNA, like every other overhang here: a chopper is in this tube where it
+        reads the internal stuffer core, which is the piece that tube throws away.
+        """
+        return tuple(one for one in self.blunt if _cuts(self.internal_stuffer_core, one))
+
+    @property
     def reserved_enzymes(self) -> tuple[Enzyme, ...]:
         """The enzymes a step outside the rounds reserves, in the order this method names them."""
         return tuple(get_enzyme(name) for name in self.reserved)

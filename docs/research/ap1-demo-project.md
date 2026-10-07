@@ -61,11 +61,16 @@ attribution. The attribution travels with the design output.
 
 ### 2.1 The DMX vector
 
-The lab-resources build, unchanged: a rebuilt DMX parent, KanR, BbsI-free, one PmeI site
-outboard of each BsaI site. Which parent is a method decision and not this project's; the
-measurement that bears on it — inserting PmeI outboard of the right-hand cassette BsaI lands in
-or abuts the `6xHis` coding sequence of the first parent — is in the research note, and this
-project uses whatever the lab-resources build settles on.
+The lab-resources build: a rebuilt DMX parent, BbsI-free, one PmeI site outboard of each BsaI
+site. Which parent is a method decision and not this project's, and this project uses whatever
+the lab-resources build settles on.
+
+`scripts/build_dmx_vector.py` now builds it from DMX0001 and the demo is planned against the
+result. The worry recorded here — that inserting PmeI outboard of the right-hand cassette BsaI
+lands in or abuts the `6xHis` coding sequence — is measured and wrong: the window runs 416..503
+and `6xHis` ends at 432, so the site goes at 437 and sacrifices nothing. The marker is still
+AmpR, because one synonymous base takes the BsaI site the KanR swap was wanted for.
+`docs/research/dmx-destination.md` carries both.
 
 ### 2.2 The working vector: a Tet-on lentiviral backbone
 

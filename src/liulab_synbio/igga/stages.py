@@ -129,9 +129,9 @@ POOL_HOLES: tuple[Hole, ...] = (
         "nothing names what the assembled pieces close into, or what selects the closure",
         "undecided",
         where="block assembly, the destination",
-        filled_by="a destination the pieces assemble into, as the method's DMX vector is for "
-        "cargo carrying no flanks of its own",
-        issue="liuhlab/liulab-mbio#334",
+        filled_by="splitting the cargo rather than the whole block, so the pieces close into "
+        "the DMX backbone the parent's own BsmBI digest leaves",
+        issue="liuhlab/liulab-mbio#373",
     ),
     Hole(
         "H26",
@@ -140,7 +140,7 @@ POOL_HOLES: tuple[Hole, ...] = (
         where="block assembly, the reaction and its program",
         filled_by="NEB's own Golden Gate table, once the assembly has a destination to be "
         "sized against",
-        issue="liuhlab/liulab-mbio#334",
+        issue="liuhlab/liulab-mbio#373",
     ),
 )
 
