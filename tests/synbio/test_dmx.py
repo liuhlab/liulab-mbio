@@ -291,3 +291,33 @@ def test_the_index_pcr_touches_down_before_it_plateaus():
     assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
     annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
     assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]
+
+
+def said_by(one) -> str:
+    """Every line this read-back prints that could name a drug."""
+    return " ".join(
+        (
+            *(plate.holds for plate in one.picked),
+            *(material.note or "" for material in dmx.validation_materials(one)),
+            *(line for step in dmx.validation_steps(one) for line in step.instructions),
+        )
+    )
+
+
+def test_every_plate_is_selected_on_the_drug_the_caller_read_off_the_vector():
+    """This method rebuilt its DMX vector KanR, so nothing the read-back pours is carbenicillin."""
+    one = dmx.validation(dmx.ROUTE_A, (dmx.Design("one", 2),), 0, selection="50 µg/mL kanamycin")
+    assert one is not None
+
+    said = said_by(one)
+
+    assert "carbenicillin" not in said
+    assert said.count("50 µg/mL kanamycin") == 5
+
+
+def test_a_read_that_cannot_name_the_drug_leaves_it_to_the_record():
+    """A caller naming none prints the vector's own antibiotic rather than the paper's."""
+    said = said_by(sized(dmx.ROUTE_A, (dmx.Design("one", 2),), 0))
+
+    assert "carbenicillin" not in said
+    assert said.count("the vector's own antibiotic") == 5

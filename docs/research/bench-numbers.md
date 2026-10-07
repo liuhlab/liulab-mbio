@@ -283,6 +283,14 @@ text.
 | Plate selection and incubation | 100 µg/mL carbenicillin, overnight at 37 °C | Qian SI Day 2 |
 | Home-made plate drying | ~30 minutes, to stop colonies smearing | Qian SI Day 2 |
 
+**The drug does not carry over.** Qian's DMX plasmid was AmpR. Departure D11 rebuilds ours KanR
+before first use, so carbenicillin on it selects nothing. The plate is **50 µg/mL kanamycin**
+(Zero Blunt TOPO UG p. 13, the guide covering this method's own part carrier) — a cited
+transfer, not a new measurement. The temperature, the colony density and the plating volume are
+properties of the step, not of the plasmid, and carry over unchanged. The package quotes
+neither drug: it reads the marker off the record and names the drug that marker selects, which
+ADR 0014 settles.
+
 ### Day 3 — picking
 
 | Number | Value | Source |
@@ -290,6 +298,7 @@ text.
 | Picker | QPix XE Microbial Colony Picker (Molecular Devices) | Qian SI Day 3 |
 | Destination | ECHO-qualified 384-well plates (Beckman Coulter #c74290) | Qian SI Day 3 |
 | Medium per well | 60 µL low-salt LB + 100 µg/mL carbenicillin | Qian SI Day 3 |
+| Medium per well, ours | 60 µL low-salt LB + the vector's own drug, 50 µg/mL kanamycin for the KanR backbone D11 gives it | Qian SI Day 3 for the volume and the medium; Zero Blunt TOPO UG p. 13 for the drug |
 | Low-salt LB | 10 g tryptone, 5 g yeast extract, 0.5 g NaCl per litre | Qian SI Day 3 |
 | Seal | Breathe Easier seals (Fisher #NC1664397) | Qian SI Day 3 |
 | Growth | 37 °C overnight, shaking at 1,000 rpm | Qian SI Day 3 |
@@ -536,6 +545,7 @@ default and the source gives no reason for either figure.
 | Plasmid prep | ZymoPURE II (Zymo #D4201 midi, #D4203 maxi), eluted in H₂O | same; Key Resources Table |
 | Colonies per round | **not stated** | — |
 | Selection antibiotic and concentration for a round | **not stated** | — |
+| Selection antibiotic for a round, ours | the destination vector's own marker, read off the record: **50 µg/mL kanamycin** for the KanR destination D11 gives this method, and the final transfer on the working vector's own | Zero Blunt TOPO UG p. 13 |
 
 Endura's own manual supplies the settings the paper omits, at 37 °C:
 
@@ -703,6 +713,9 @@ before that pass still resolves. What closed:
 - **H22.** **No colony count and no selection antibiotic for a round.** Endura's manual gives cfu/µg
   and "plate up to 100 µL" and nothing about library complexity, dilution plating or titre
   plates. *Filled by:* the vector's own marker, and the colony floor the package computes.
+  **The marker half is answered** (ADR 0014): a record annotating one is plated on the drug it
+  selects, at the concentration cited above, and the hole is then not raised at all. Only a
+  record annotating no marker still carries it, as the demo's toy vector does.
 - **H23.** **No NEB document describes a split digest.** Both kit manuals cover the one-pot reaction,
   destination and inserts together. The split digest is Takacsi-Nagy's alone. *Filled by:*
   nothing — it is the method's own and the paper is its only source.

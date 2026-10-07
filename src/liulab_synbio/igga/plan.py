@@ -54,6 +54,7 @@ from liulab_synbio.igga.parts import (
 )
 from liulab_synbio.igga.project import Project, read_project
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
+from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
 from liulab_synbio.igga.steps import RoundBench
 from liulab_synbio.igga.steps import protocol as protocol_for
@@ -221,7 +222,8 @@ class LibraryPlan:
 
         The project's floor chooses the designs and its route reads them. The bench is sized
         from that set and not from the part list, so a design the floor leaves out costs no
-        well, no plate and no reagent.
+        well, no plate and no reagent. Every plate it pours is selected on the destination's own
+        marker, which is not the marker the published read-back was written for.
         """
         if self.project.route is None:
             return None
@@ -229,6 +231,7 @@ class LibraryPlan:
             dmx.ROUTES[self.project.route],
             designs(self.parts, self.pool),
             self.project.validate_from,
+            selection=selection_for(self.destination.record),
         )
 
     @property

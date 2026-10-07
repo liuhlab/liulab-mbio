@@ -27,6 +27,7 @@ from liulab_mbio.bench.gels import choose_ladder
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
 from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
+from liulab_mbio.bench.phenotype import selection_marker
 from liulab_mbio.bench.plates import plate
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
@@ -331,6 +332,7 @@ def protocol(
     are what the plan calls the two files those steps point at.
     """
     inside, outside = choppers(scheme)
+    selection = stages.selection_for(vector)
     one = Protocol(
         f"Library assembly: {len(part_lists)} part lists into {vector.name or 'the vector'}",
         summary=(
@@ -407,6 +409,7 @@ def protocol(
             pool_sheet,
             primer_sheet,
             working,
+            selection,
         ),
         references=(
             *_references(scheme),
@@ -414,7 +417,7 @@ def protocol(
             *(dmx.REFERENCES if validation else ()),
         ),
         sources=_sources(prices, validation, pool),
-        holes=stages.HOLES,
+        holes=stages.holes_for(vector),
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
     )
     return citing(one)
@@ -555,6 +558,19 @@ def _enzyme_material(enzyme: Enzyme, note: str) -> Material:
     return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
 
 
+def _selection_note(record: SequenceRecord, which: str) -> str:
+    """Return what this vector's transformants are selected on, read off its own marker.
+
+    A record annotating no marker this method can name a drug for leaves the plate to the reader
+    rather than naming one, and `stages.ROUND_SELECTION` then stands as the protocol's hole.
+    """
+    plate = stages.selection_for(record)
+    marker = selection_marker(record)
+    if not plate or marker is None:
+        return f"the {which} vector's own antibiotic, which this plan does not name"
+    return f"LB with {plate}, the {which} vector's own marker ({marker.name})"
+
+
 def _materials(
     scheme: Scheme,
     positions: Sequence[str],
@@ -642,12 +658,14 @@ def _materials(
         )
     )
     made.append(Material("Recovery medium", amount="one outgrowth per round"))
-    made.append(
-        Material(
-            "Selective broth and plates",
-            note="the destination vector's own antibiotic, which this plan does not name",
+    made.append(Material("Selective broth and plates", note=_selection_note(vector, "destination")))
+    if working is not None:
+        made.append(
+            Material(
+                "Selective plates for the final transfer",
+                note=_selection_note(working.record, "working"),
+            )
         )
-    )
     made.append(Material("Plasmid prep kit", amount="one prep per round"))
     made.append(Material("Electroporation cuvettes", amount=f"{len(part_lists)}, one per round"))
     return tuple(made)
@@ -778,6 +796,7 @@ def _steps(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    selection: str = "",
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another.
 
@@ -793,7 +812,7 @@ def _steps(
         made += dmx.validation_steps(validation)
     made.append(_pool_step(positions, part_lists))
     for one, row in zip(rounds, bench, strict=True):
-        made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
+        made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds), selection))
     made.append(_linkage_step(scheme, positions, barcode_length, rounds, parts, barcodes))
     made.append(
         _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
@@ -1246,6 +1265,7 @@ def _round_steps(
     inside: Sequence[Enzyme],
     outside: Sequence[Enzyme],
     total: int,
+    selection: str = "",
 ) -> list[Step]:
     """Return the eight steps of one round, in the order they happen."""
     number = row.number
@@ -1259,7 +1279,7 @@ def _round_steps(
         _ligation_step(row, opened, released),
         _ligation_cleanup_step(row),
         _electroporation_step(row),
-        _growth_step(row),
+        _growth_step(row, selection),
         _prep_step(scheme, one, row, number == total),
     ]
 
@@ -1446,7 +1466,7 @@ def _electroporation_step(row: RoundBench) -> Step:
     )
 
 
-def _growth_step(row: RoundBench) -> Step:
+def _growth_step(row: RoundBench, selection: str = "") -> Step:
     """Recover and grow, both at 30 °C, and bound the round on net colonies.
 
     Two plates, both growing during the outgrowth: a measured dilution of the recovery, and the
@@ -1459,8 +1479,8 @@ def _growth_step(row: RoundBench) -> Step:
         f"Round {row.number}: recover and grow at {GROWTH_CELSIUS:g} °C",
         instructions=(
             "Add recovery medium straight away and shake for the first hour.",
-            f"Plate a measured dilution of the recovery on selection as {dilution.name}, and "
-            "grow the rest in selective broth.",
+            f"Plate a measured dilution of the recovery on {selection or 'selection'} as "
+            f"{dilution.name}, and grow the rest in selective broth.",
             f"Plate the no-donor ligation from the same digest as {control.name}, at the same "
             "dilution.",
         ),

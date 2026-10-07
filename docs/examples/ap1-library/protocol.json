@@ -364,7 +364,7 @@
       "catalog": "431111",
       "storage": "",
       "amount": "one spot a design",
-      "note": "carbenicillin at 100 µg/mL; about 2,500 colonies a plate",
+      "note": "the vector's own antibiotic; about 2,500 colonies a plate",
       "contains": [],
       "rules": [],
       "citation": {
@@ -378,7 +378,7 @@
       "catalog": "c74290",
       "storage": "",
       "amount": "1, one a 384 wells",
-      "note": "60 µL low-salt LB with carbenicillin a well",
+      "note": "60 µL low-salt LB with the vector's own antibiotic a well",
       "contains": [],
       "rules": [],
       "citation": {
@@ -985,7 +985,7 @@
       "title": "Array 72 design(s) and grow",
       "instructions": [
         "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-        "Grow overnight at 37 °C on 100 µg/mL carbenicillin."
+        "Grow overnight at 37 °C on the vector's own antibiotic."
       ],
       "cautions": [],
       "notes": [
@@ -1011,7 +1011,7 @@
     {
       "title": "Pick 4 colonies of each design",
       "instructions": [
-        "Pick 4 colonies a design into 60 µL low-salt LB with carbenicillin, with the QPix XE Microbial Colony Picker.",
+        "Pick 4 colonies a design into 60 µL low-salt LB with the vector's own antibiotic, with the QPix XE Microbial Colony Picker.",
         "Fill one quarter of each 384-well plate before starting the next.",
         "Grow overnight at 37 °C."
       ],

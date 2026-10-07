@@ -687,7 +687,17 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     return tuple(one for one in designs if one.fragments >= floor)
 
 
-def picked_plate(name: str, colonies: int) -> Plate:
+def _selected_on(selection: str) -> str:
+    """Return what a plate of this read's transformants carries, named or left to the record.
+
+    The drug is the vector's, read off its marker by the caller: this method's own DMX vector is
+    not the one the published protocol was written for, and naming that one sends a reader to an
+    empty plate.
+    """
+    return selection or "the vector's own antibiotic"
+
+
+def picked_plate(name: str, colonies: int, selection: str = "") -> Plate:
     """Return one plate of picked colonies: `colonies` wells of selective medium.
 
     Picking fills one quarter of the plate at a time, in the order a head built for the index
@@ -717,7 +727,8 @@ def picked_plate(name: str, colonies: int) -> Plate:
         name,
         PICKED_WELLS,
         catalog=PICKED_CATALOG,
-        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with carbenicillin",
+        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with "
+        f"{_selected_on(selection)}",
         seating=seating,
         note=f"{colonies} of {PICKED_WELLS} wells picked, a quarter at a time",
     )
@@ -765,7 +776,7 @@ def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
     )
 
 
-def bioassay_plate(name: str) -> Vessel:
+def bioassay_plate(name: str, selection: str = "") -> Vessel:
     """Return the 25 cm plate the colonies are picked from.
 
     It is a vessel and not a plate: its colonies land where they land, so they have no
@@ -776,7 +787,7 @@ def bioassay_plate(name: str) -> Vessel:
         kind="25 cm BioAssay plate",
         catalog=BIOASSAY_CATALOG,
         holds=f"about {BIOASSAY_COLONIES:,} colonies, which is the density picking wants",
-        note="100 µg/mL carbenicillin, overnight at 37 °C",
+        note=f"{_selected_on(selection)}, overnight at 37 °C",
     )
 
 
@@ -877,6 +888,9 @@ class Validation:
         That floor, carried so the protocol can print it beside each design's chance.
     colonies
         Colonies picked per design.
+    selection
+        What to plate on, read off the vector's own marker by the caller. Empty where the record
+        annotates none, and every plate then says so rather than naming a drug.
     """
 
     route: Route
@@ -884,6 +898,7 @@ class Validation:
     _: KW_ONLY
     floor: int
     colonies: int = COLONIES_PER_DESIGN
+    selection: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a read of no design, or of no colony per design."""
@@ -903,7 +918,8 @@ class Validation:
         full, rest = divmod(self.wells, PICKED_WELLS)
         sizes = [PICKED_WELLS] * full + ([rest] if rest else [])
         return tuple(
-            picked_plate(f"picked {number}", size) for number, size in enumerate(sizes, start=1)
+            picked_plate(f"picked {number}", size, self.selection)
+            for number, size in enumerate(sizes, start=1)
         )
 
     @property
@@ -948,11 +964,15 @@ def validation(
     floor: int | None,
     *,
     colonies: int = COLONIES_PER_DESIGN,
+    selection: str = "",
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
     `None` is the answer for a project that states no floor and for one whose floor is above
     every design: either way nothing is read, and a protocol then carries no validation at all.
+
+    `selection` is what the caller read off the vector's marker. Left empty, every plate says
+    the vector's own antibiotic rather than naming one this read cannot know.
 
     Raises
     ------
@@ -971,7 +991,7 @@ def validation(
     read = validated(designs, floor)
     if not read:
         return None
-    return Validation(route, read, floor=floor, colonies=colonies)
+    return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
 def pooling(compressed: Plate, reservoir: Vessel) -> Transfer:
@@ -1130,7 +1150,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Corning",
             catalog=BIOASSAY_CATALOG.split("#")[-1],
             amount="one spot a design",
-            note=f"carbenicillin at 100 µg/mL; about {BIOASSAY_COLONIES:,} colonies a plate",
+            note=f"{_selected_on(one.selection)}; about {BIOASSAY_COLONIES:,} colonies a plate",
             citation=Citation("Qian SI", "Day 2"),
         ),
         Material(
@@ -1138,7 +1158,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Beckman Coulter",
             catalog=PICKED_CATALOG.split("#")[-1],
             amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
-            note=f"{CULTURE_UL:g} µL low-salt LB with carbenicillin a well",
+            note=f"{CULTURE_UL:g} µL low-salt LB with {_selected_on(one.selection)} a well",
             citation=Citation("Qian SI", "Day 3"),
         ),
     ]
@@ -1272,7 +1292,7 @@ def _array_step(one: Validation) -> Step:
         f"Array {len(one.designs)} design(s) and grow",
         instructions=(
             "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-            "Grow overnight at 37 °C on 100 µg/mL carbenicillin.",
+            f"Grow overnight at 37 °C on {_selected_on(one.selection)}.",
         ),
         expected=(
             f"One spot a design, at about {BIOASSAY_COLONIES:,} colonies a plate, which is the "
@@ -1300,7 +1320,7 @@ def _pick_step(one: Validation) -> Step:
         f"Pick {one.colonies} colonies of each design",
         instructions=(
             f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
-            f"carbenicillin, with the {PICKER}.",
+            f"{_selected_on(one.selection)}, with the {PICKER}.",
             f"Fill one quarter of each {PICKED_WELLS}-well plate before starting the next.",
             "Grow overnight at 37 °C.",
         ),
