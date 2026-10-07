@@ -13,6 +13,18 @@ whole job is to rebuild a dump of a file here, because the file it reads cannot 
 Read anything here. Cite the source itself in the research note — its URL, version and page
 — never a path here, which a fresh clone does not have.
 
+## What belongs here, and what does not
+
+A file here is reference material: downloaded, read, cited in a note under `docs/research/`,
+and replaceable by that citation. A file a **shipped artefact is built from** is an input, not
+a reference document. It is tracked — converted to a text format, in `tests/data/`, with its
+provenance in the research note.
+
+The test is whether deleting the file breaks a build. A paper does not; a sequence a shipped
+record is rebuilt from does. `tests/data/dmx0001.gb` and `tests/data/pcr-blunt-ii-topo.gb` are
+that second kind: `scripts/build_dmx_vector.py` rebuilds the iGGA destination from them, so CI
+can check the destination anywhere rather than only on a laptop holding this tree.
+
 ## Adding to it
 
 One directory per method or topic, named for it (`gibson/`, `gateway/`). Inside, sort into
