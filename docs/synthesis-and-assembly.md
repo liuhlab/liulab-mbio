@@ -188,8 +188,8 @@ Check total length and part compatibility before assembling, and check that the 
 acids each junction adds do no harm in this construct. A part that fits its default pair is
 added as the carrier plasmid, with no digest and no PCR of its own.
 
-**Undecided:** what the carrier's own BsaI site and ccdB do to a part added that way —
-`docs/research/synthesis-and-assembly.md`.
+**Undecided:** what the carrier's own BsaI site and ccdB do to a part added that way — one BsaI
+site, inside the counter-selection cassette. See `docs/research/synthesis-and-assembly.md`.
 
 ### Cargo synthesis
 
