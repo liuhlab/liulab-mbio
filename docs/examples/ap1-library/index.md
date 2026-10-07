@@ -54,6 +54,43 @@ stuffer, barcode or codon is given. The planner chooses all four.
 The three part lists make 24 x 24 x 24 = 13,824 members. The product file holds one of them,
 with the rest differing only in which protein and which barcode sits at each position.
 
+The blocks of `parts.tsv` are not bought. The protocol orders the pool and its primers, pulls
+each batch out of the pool, pulls each block out of its batch, and assembles the block from its
+own pieces. The bill buys the oligos and the primers; it never buys the blocks as well.
+
+## What a price costs
+
+Add a price record of your own and the bill carries money beside every quantity:
+
+```bash
+pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
+  --out library/ --prices prices.csv
+```
+
+The package ships no prices, so none are here. A record is a CSV of `key`, `item`, `bands`,
+`charge`, `basis` and `currency`, found the way the ligase matrix is, and a row nobody priced
+leaves a hole rather than a guess. The keys this plan asks for are the bill's own: `oligo-pool`,
+`pool-primers`, each enzyme's catalogue number, `60242-2`, `cuvettes` and `plasmid prep`.
+
+## The figures
+
+Each record is drawn by the same command, from the file beside it:
+
+```bash
+pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna -o product-map.pdf
+pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna \
+  --region 1598..1672 --sequence-view -o barcode-block.pdf
+```
+
+| File | What it is |
+| --- | --- |
+| [vector-map.pdf](vector-map.pdf) | the destination the first round opens |
+| [round-1-map.pdf](round-1-map.pdf), [round-2-map.pdf](round-2-map.pdf) | what each round leaves |
+| [product-map.pdf](product-map.pdf) | one finished member |
+| [barcode-block.pdf](barcode-block.pdf) | the 75 bases the barcode block reads, with the bases shown |
+
+The gel and the plate layout are in `protocol.html`, drawn where the step that uses them is.
+
 ## Where the proteins come from
 
 The 72 sequences are the AP-1 domains of Takacsi-Nagy, O. et al. (2026) Synthetic transcription

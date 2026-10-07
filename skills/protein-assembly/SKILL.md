@@ -25,8 +25,9 @@ pixi run liulab_synbio igga plan project.json --out library/
 ```
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
-`host`, `oligo_length`, `batch_size`, `coverage`, and optionally `seed`, `reserved_extra` and
-`barcode`. It is checked where it is read, so a bad value fails before anything is designed.
+`host`, `oligo_length`, `batch_size`, `coverage`, and optionally `seed`, `reserved_extra`,
+`barcode`, `primers` and `bands` for the pool, and `validate_from` with `route` for the read
+back. It is checked where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.
 
@@ -49,11 +50,23 @@ Files land in the directory you name:
 - `parts.tsv` — the synthesis order sheet: every block 5' to 3', with its barcode on the same row
 - `barcodes.tsv` — which barcode names which part, and its slot in the finished block
 - `changes.tsv` — every amino acid the overhang standard moved, wild type beside synthesised
+- `pool.tsv`, `pool-primers.tsv` — the oligo pool the blocks are built from, and the primers that
+  amplify it. Both appear where the project names a primer set, and the blocks are then not
+  ordered at all
 - `round-1.dna` … `product.dna` — one annotated record a round, the last the whole construct
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from it, covering every round as one experiment
 
 The command prints a summary line and the paths. The same inputs write the same bytes.
+
+## Price, and the figures
+
+`--prices prices.csv` costs the bill from a record the user holds; the package ships none, and
+every row nobody priced carries a hole rather than a guess. Ask the user for their record, never
+for a number. Pass `--prices` only where there is one: the quantities compute without it.
+
+Draw each record the run wrote with `plot-map`, which owns every drawing question. The gel and
+the plate layout are already in `protocol.html`, drawn beside the step that uses them.
 
 ## What the list count and the round count change
 
