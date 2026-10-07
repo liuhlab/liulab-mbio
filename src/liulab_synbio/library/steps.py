@@ -841,34 +841,53 @@ def _electroporation_step(row: RoundBench) -> Step:
 
 
 def _growth_step(row: RoundBench) -> Step:
-    """Recover and grow, both at 30 °C, and count what the round actually got."""
+    """Recover and grow, both at 30 °C, and bound the round on net colonies.
+
+    Two plates, both growing during the outgrowth: a measured dilution of the recovery, and the
+    same cut destination carried through the ligation with no donor added. What grows on the
+    control is parental destination that survived, so the round is judged on the difference.
+    """
     coverage = row.coverage
+    dilution, control = stages.titre_plates(row.number)
     return Step(
         f"Round {row.number}: recover and grow at {GROWTH_CELSIUS:g} °C",
         instructions=(
             "Add recovery medium straight away and shake for the first hour.",
-            "Plate a measured dilution on selection to count the transformants, and grow the "
-            "rest in selective broth.",
+            f"Plate a measured dilution of the recovery on selection as {dilution.name}, and "
+            "grow the rest in selective broth.",
+            f"Plate the no-donor ligation from the same digest as {control.name}, at the same "
+            "dilution.",
         ),
         programs=(growth_program(),),
         expected=(
-            f"At least {coverage.colonies:,} colonies, scaled up from the dilution: "
-            f"{coverage.coverage:g}x over the {coverage.products:,} distinct products this round "
-            "can make.",
+            f"At least {coverage.colonies:,} net colonies, scaled up from the dilution: "
+            f"{coverage.products:,} distinct products this round can make, times the "
+            f"{coverage.coverage:g}x the project asked for, rounded up.",
             f"At that count the chance a named product is missing is "
             f"{coverage.absent_probability:.3g}.",
+            f"{control.name} should be near empty beside it; its colonies come off the count.",
         ),
         notes=(
             f"Both steps run at {GROWTH_CELSIUS:g} °C and not at 37 °C. That is a library "
             "precaution rather than an oversight.",
             f"The program carries the shorter outgrowth; {OUTGROWTH_SECONDS[0] // 3600} to "
             f"{OUTGROWTH_SECONDS[1] // 3600} hours is the range the method gives.",
+            f"{coverage.coverage:g}x is the project's own, and follows from the representation "
+            "the screen downstream asks for. No source sets it, and nothing here defaults it.",
+            "The control measures the chain the design rests on — two cuts, a blunt chopper, a "
+            "ligase that refuses blunt ends and the 2x clean-up — rather than assuming it.",
         ),
         troubleshooting=(
             Troubleshooting(
-                "Fewer colonies than the count above",
+                "Fewer net colonies than the count above",
                 "The round has lost library members and no later round can put them back. "
                 "Electroporate more of the ligation, or run the round again.",
+            ),
+            Troubleshooting(
+                "The no-donor control is not empty",
+                "The destination was not opened to completion, or the blunt chopper missed. "
+                "What grows is the round before's library, one position short, and it reaches "
+                "the linkage read as truncated members.",
             ),
         ),
     )
