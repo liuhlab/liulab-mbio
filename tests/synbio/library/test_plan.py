@@ -9,6 +9,7 @@ from typing import cast
 
 import pytest
 
+from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
 from liulab_mbio.protocol import read_protocol
@@ -322,3 +323,40 @@ def test_each_round_is_sized_for_the_coverage_asked_for(plan):
     assert [row.colonies for row in plan.coverage] == [20, 40, 80]
     assert [one.coverage.colonies for one in plan.bench] == [20, 40, 80]
     assert [one.number for one in plan.bench] == [1, 2, 3]
+
+
+#: A price record as a user writes one: the synthesis order banded by count and by length, and
+#: nothing else priced.
+PRICES = """key,item,bands,charge,basis,currency
+synthesised blocks,gene fragments,count 1-100; length_nt 1-2000,1200.00,per order,USD
+"""
+
+
+def test_the_bill_computes_its_quantities_and_holes_the_money_with_no_record(plan, protocol):
+    bill = protocol.bill
+
+    assert bill is not None
+    blocks = bill.rows[0]
+    assert (blocks.item, blocks.quantity) == ("Synthesised blocks", len(plan.parts))
+    assert blocks.charge == ""
+    assert blocks.hole is not None
+    assert blocks.hole.kind == "price"
+    # A price nobody loaded is a missing input of the user's, not a defect in what we know.
+    assert blocks.hole.issue == ""
+    assert bill.total == ""
+
+
+def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path):
+    record = tmp_path / "prices.csv"
+    record.write_text(PRICES, encoding="utf-8")
+
+    bill = dataclasses.replace(plan, prices=read_prices(record)).protocol().bill
+
+    assert bill is not None
+    blocks = bill.rows[0]
+    assert blocks.charge == "1200.00"
+    assert "94 below the next band" in blocks.headroom
+    assert blocks.citation is not None
+    assert (bill.currency, bill.total) == ("USD", "1200.00")
+    # Everything else the run buys is still a hole, and no figure is estimated for one.
+    assert all(row.hole is not None for row in bill.rows[1:])

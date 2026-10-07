@@ -21,10 +21,13 @@ from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.prices import Item, PriceRecord
+from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.bench.steps import badges, card, enzyme_material, listed
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol.model import (
+    Bill,
     Component,
     Incubation,
     Material,
@@ -232,6 +235,7 @@ def protocol(
     host: str,
     sheet: str,
     barcodes: str,
+    prices: PriceRecord | None = None,
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -239,6 +243,9 @@ def protocol(
     `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
     in the order someone does them: order the blocks, pool each part list, then every round in
     turn, and finally read the barcode block back.
+
+    The bill is always there, because its quantities come from the design. Money comes only from
+    `prices`, and every row it does not price carries a hole.
     """
     inside, outside = choppers(scheme)
     return Protocol(
@@ -288,8 +295,9 @@ def protocol(
             barcodes,
         ),
         references=_references(scheme),
-        sources=stages.SOURCES,
+        sources={**stages.SOURCES, PRICES_SOURCE: prices.source} if prices else stages.SOURCES,
         holes=stages.HOLES,
+        bill=_consumed(scheme, parts, rounds, inside, outside, prices),
     )
 
 
@@ -457,6 +465,70 @@ def _materials(
     made.append(Material("Plasmid prep kit", amount="one prep per round"))
     made.append(Material("Electroporation cuvettes", amount=f"{len(part_lists)}, one per round"))
     return tuple(made)
+
+
+#: What a price record prices the synthesis order and the bill's own source by. Neither has a
+#: catalogue number, so each is keyed by the name the protocol's own row already carries.
+BLOCKS_KEY = "synthesised blocks"
+PRICES_SOURCE = "prices"
+
+
+def _consumed(
+    scheme: Scheme,
+    parts: Sequence[Part],
+    rounds: Sequence[Round],
+    inside: Sequence[Enzyme],
+    outside: Sequence[Enzyme],
+    record: PriceRecord | None,
+) -> Bill:
+    """Return what this build buys, in the quantities the design computes.
+
+    Only what the design fixes is billed. The buffer, the beads and the medium scale with volumes
+    the method leaves to the supplier, so a row for one would be a quantity nobody computed.
+    """
+    digests = [(scheme.internal, len(rounds)), (scheme.external, len(rounds))]
+    digests += [(one, len(rounds) * ((one in inside) + (one in outside))) for one in scheme.blunt]
+    items = [
+        Item(
+            "Synthesised blocks",
+            len(parts),
+            unit="blocks",
+            key=BLOCKS_KEY,
+            quantities={"count": len(parts), "length_nt": max(one.length for one in parts)},
+        ),
+        *(
+            Item(
+                one.commercial_name or one.name,
+                ENZYME_UL * uses,
+                unit="µL",
+                key=one.catalog_number or "",
+                quantities={"volume_ul": ENZYME_UL * uses},
+            )
+            for one, uses in digests
+        ),
+        Item(
+            STRAIN,
+            len(rounds),
+            unit="aliquots",
+            key=STRAIN_CATALOG,
+            quantities={"count": len(rounds)},
+        ),
+        Item(
+            "Electroporation cuvettes",
+            len(rounds),
+            unit="cuvettes",
+            key="cuvettes",
+            quantities={"count": len(rounds)},
+        ),
+        Item(
+            "Plasmid preps",
+            len(rounds),
+            unit="preps",
+            key="plasmid prep",
+            quantities={"count": len(rounds)},
+        ),
+    ]
+    return priced(items, record, source_key=PRICES_SOURCE)
 
 
 def _references(scheme: Scheme) -> tuple[Reference, ...]:

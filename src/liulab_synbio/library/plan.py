@@ -27,6 +27,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
 from liulab_mbio.codons import codon_usage
@@ -145,6 +146,9 @@ class LibraryPlan:
         The codon usage table the coding bases were written for.
     name
         What each round's product is called.
+    prices
+        The price record the protocol's bill is costed against, if the caller holds one. Its
+        quantities compute either way; with no record every money cell is a hole.
     """
 
     project: Project
@@ -160,6 +164,7 @@ class LibraryPlan:
     bench: tuple[RoundBench, ...]
     host: str
     name: str = ""
+    prices: PriceRecord | None = None
 
     @property
     def product(self) -> SequenceRecord:
@@ -213,6 +218,7 @@ class LibraryPlan:
             host=self.host,
             sheet=PARTS_FILE,
             barcodes=BARCODE_FILE,
+            prices=self.prices,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -248,6 +254,7 @@ def plan_library(
     rules: BarcodeRules | None = None,
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
+    prices: PriceRecord | str | os.PathLike[str] | None = None,
 ) -> LibraryPlan:
     """Plan the whole library `project` asks for, by the method `project` is built under.
 
@@ -277,6 +284,10 @@ def plan_library(
         default; see `liulab_synbio.library.parts.barcode_rules`.
     min_distance, allow_uniform
         How far apart the standard's overhangs must stand, and whether one base kind is allowed.
+    prices
+        A price record the user holds, or a path to one;
+        `liulab_mbio.bench.prices.read_prices` reads one. The protocol's bill computes its
+        quantities either way, and prices nothing without this.
 
     Returns
     -------
@@ -289,7 +300,8 @@ def plan_library(
         If a record's name says no position of the project or says more than one, if two records
         share a name, if a part is not a protein or not a coding sequence, if no overhang
         standard fits the part lists, if a block spells a site the method does not expect, if the
-        vector cannot be made a destination, or if a round cannot ligate.
+        vector cannot be made a destination, if a round cannot ligate, or if `prices` names a
+        file that is not a price record.
     KeyError
         If the project names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
@@ -362,6 +374,7 @@ def plan_library(
         _bench(rounds, built, rows),
         chosen.host,
         named,
+        prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
     )
 
 
