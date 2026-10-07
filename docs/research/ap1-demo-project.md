@@ -318,69 +318,78 @@ than the method's. Neither the oligo length nor the number of oligos is fixed by
 
 Change either and every number below changes with it. Nothing below is edited by hand.
 
-### 4.2 Payload per oligo — **derived**
+### 4.2 Span per oligo — **derived**
 
-The oligo is `[P1][BsmBI][payload][BsmBI][pad][P2][P3]` (section 9.1). Its overhead:
+The oligo is `[P1][BsmBI][span][BsmBI][pad][P2][P3]` (section 9.1). Its overhead:
 
 | Part of the oligo | nt | Why |
 | --- | --- | --- |
 | P1, P2, P3 | 3 × 20 = **60** | three mutually orthogonal 20-mers, one per role (section 9.3) |
-| Two BsmBI blocks | 2 × (6 + 1 + 4) = **22** | 6 nt recognition, 1 nt spacer, 4 nt overhang, at each site |
-| Overhead in all | **82** | |
+| Two recognition sites and spacers | 2 × (6 + 1) = **14** | 6 nt recognition and 1 nt spacer at each site |
+| Overhead in all | **74** | |
 
-**None of the 82 scales with oligo length.** The primer count is three at any length and a BsmBI
-block is 11 nt at any length, so the recorded formula and the three-primer layout both hold
-unchanged at 350:
+**The quantity to budget is the templated span, which carries its own overhang at each end**, and
+an overhang is 4 nt of the part rather than overhead. The two are easy to confuse and the
+difference is a fragment:
 
 ```text
-payload = oligo length − 60 nt of primer sites − 22 nt of Type IIS site and overhang
-    at 300 nt:   300 − 60 − 22 = 218 nt
-    at 350 nt:   350 − 60 − 22 = 268 nt
+span  = oligo length − 60 nt of primer sites − 14 nt of recognition site and spacer
+    at 300 nt:   300 − 74 = 226 nt, holding 218 nt between its overhangs
+    at 350 nt:   350 − 74 = 276 nt, holding 268 nt between its overhangs
 ```
 
-**268 nt at 350** (**derived**), against 218 at 300: 50 nt more oligo buys 50 nt more payload,
-because the overhead is fixed. Both are lower than the 246 bp per 300-mer the research note
-quotes from Freschlin, because that figure is measured on a design carrying two primer sites and
-ours carries three. The research note's per-kb cost keeps its own denominator.
+**None of the 74 scales with oligo length**, so the layout holds unchanged at any length.
 
-268 nt is a ceiling, not a length every oligo spends. The padding of section 9.2 is the slack
-between a real payload and 268, and it sits outboard of the 3' cut.
+**Each internal overhang belongs to two fragments at once**, so an oligo contributes
+`span − 4` = **272 nt** of the part at 350, not 268. Summed over *n* pieces,
+`sum(span) = L + 4(n − 1)`, which gives section 4.3's piece count. Counting the overhang as
+overhead instead — the error an earlier revision of this section made — overstates the piece
+count for a part whose length lands just past a multiple of the span.
+
+276 nt is a ceiling, not a length every oligo spends. The padding of section 9.2 is the slack
+between a real span and 276, and it sits outboard of the 3' cut.
+
+The research note quotes 246 bp per 300-mer from Freschlin and `synthesis-and-assembly-departures.md`
+D10 quotes about 235. Both describe a two-primer layout and neither is this project's budget.
 
 ### 4.3 Fragments per part — **derived**, and the reason to prefer 350
 
-A block of *L* bp needs ⌈*L* / payload⌉ fragments. Counted over the 72 blocks of section 4.1:
+A block of *L* bp needs ⌈(*L* − 4) / (span − 4)⌉ fragments, by the sharing rule of section 4.2.
+Counted over the 72 blocks of section 4.1:
 
-| Fragments a part needs | At 218 nt payload (300) | At 268 nt payload (350) | Lund's measured success |
+| Fragments a part needs | At 226 nt span (300) | At 276 nt span (350) | Lund's measured success |
 | --- | --- | --- | --- |
 | 1 | 17 parts | 21 parts | not an assembly |
 | 2 | 34 | 34 | **100%** |
 | 3 | 6 | 6 | **93.8%** |
-| 4 | 5 | 9 | not measured |
-| 5 | 8 | 2 | **84.6%** |
-| 6 | 2 | **none** | not measured |
+| 4 | 6 | 10 | not measured |
+| 5 | 8 | 1 | **84.6%** |
+| 6 | 1 | **none** | not measured |
 | Worst part | **6 fragments** | **5 fragments** | |
-| Oligos in the pool | **175** | **153** | |
+| Oligos in the pool | **173** | **152** | |
 
 Lund's is the only measured curve: of designs assembled from that many fragments, the share with
 a perfect clone among four colonies is 100% at 2, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40.0% at
 12 and 0% at 16. It has no point at 4 or at 6, and nothing here interpolates one.
 
-**The fragment count is the reason to prefer 350.** At 300 two parts need six fragments, past
+**The fragment count is the reason to prefer 350.** At 300 one part needs six fragments, past
 every anchor Lund measured above 84.6%. At 350 no part exceeds five, so **all 72 sit at or above
 Lund's 84.6% point**, and 55 of them need two fragments or fewer — the band Lund measured at
-100%. Nine parts drop from five fragments to four, and 22 oligos leave the pool.
+100%. Seven parts drop a fragment, and 21 oligos leave the pool.
 
 Where the fragment count turns over, since the oligo length is an input (**derived**, over the
-same 72 blocks): any oligo of **312 nt or more** holds every part to five fragments, because the
-longest block is 1,149 bp and 1,149 / 5 = 229.8 needs a payload of 230 nt. 350 clears that by
-38 nt. Holding every part to four would need a payload of 288 nt and so an oligo of **370 nt**,
-which is past the top of the price band (section 4.5).
+same 72 blocks): any oligo of **307 nt or more** holds every part to five fragments. 350 clears
+that by 43 nt. Holding every part to four would need an oligo of **365 nt**, which is past the
+top of the price band (section 4.5).
 
 ### 4.4 Oligo count — **derived**
 
-Summing the fragments per part: **153 oligos at 350 nt**, against 175 at 300. One part takes one
+Summing the fragments per part: **152 oligos at 350 nt**, against 173 at 300. One part takes one
 to five oligos. These are counted over the blocks the design actually wrote rather than
 estimated, which is what #220 was asked for and has now done.
+
+All four counts in sections 4.3 and 4.4 moved when #257 corrected the span arithmetic. They are
+computed by the cargo designer, not typed here; #265 is where that lands.
 
 ### 4.5 Cost — the two bands are close, and the pilot's own cost is still **open**
 
@@ -393,19 +402,20 @@ captured **2026-09-17**:
 | 18,000 oligos | 251-300 nt | $10,004 | $0.556 |
 | 18,000 oligos | 301-350 nt | $12,505 | $0.695 |
 
-Per usable base, at this project's own payload rather than Freschlin's (**derived**):
+Per usable base, at this project's own span rather than Freschlin's (**derived**). An oligo
+delivers `span − 4` bases of the part, by section 4.2:
 
 ```text
-at 300 nt:   $10,004 / 18,000 / 218 nt = $0.00255 per usable base   =  $2.55 per usable kb
-at 350 nt:   $12,505 / 18,000 / 268 nt = $0.00259 per usable base   =  $2.59 per usable kb
+at 300 nt:   $10,004 / 18,000 / 222 nt = $0.00250 per usable base   =  $2.50 per usable kb
+at 350 nt:   $12,505 / 18,000 / 272 nt = $0.00255 per usable base   =  $2.55 per usable kb
 ```
 
-**The two bands are within 1.7% of each other per usable base**, so 350 is not the dearer
+**The two bands are within 2.0% of each other per usable base**, so 350 is not the dearer
 choice. The 301-350 band lists at exactly 1.25× the 251-300 band for the same 18,000 oligos, and
-268 / 218 = 1.229× buys almost all of that back. "350 costs 25% more" is true of the pool and
+272 / 222 = 1.225× buys almost all of that back. "350 costs 25% more" is true of the pool and
 false of the sequence.
 
-**The pilot's own cost is not known, and no tier figure stands in for it.** 153 oligos sit far
+**The pilot's own cost is not known, and no tier figure stands in for it.** 152 oligos sit far
 below 18,000, the smallest pool size any price recorded here covers, so **this project's
 synthesis cost is open** — the figures above price a pool it is not ordering. The project
 exercises the design path, not the pool economics, and should share a pool with other designs if
@@ -592,29 +602,32 @@ Ticket #258 took 9.3 and 9.4 into the method, so the method page now carries tho
 
 ### 9.1 Where the Type IIS sites sit on the oligo — on the oligo, inboard of P1 and P2
 
-Every oligo reads `[P1][BsmBI][payload][BsmBI][pad][P2][P3]`, with both sites inward-facing and
+**#257 promoted this to the method, so this section now reports rather than decides.** Every
+oligo reads `[P1][BsmBI][span][BsmBI][pad][P2][P3]`, with both sites inward-facing and
 templated. The two outermost cuts across a part yield `AGGA` and `TTCC`; every internal cut
 yields the overhang the fragment split chose. One rule serves the vector interface and the
 internal junctions alike.
 
-Why not on the primers: the inner primers come from an orthogonal set carrying no site, and
-retailoring that set or exempting one role costs more than 22 nt of oligo. This is the Baker
-diagram's arrangement, which puts the cuts inboard of P1 and P2.
+Why not on the primers: all of a gene's fragments share one P1 and P2, so a primer-borne site
+would give every fragment of that gene the same overhang and no internal junction could be
+expressed. Oligo length was never the deciding term — #257 measured the saving at two oligos
+across this project's 72 blocks. This is the Baker diagram's arrangement, which draws the cuts
+on the oligo, inboard of P1 and P2.
 
 ### 9.2 The padding rule — pad every oligo to a uniform 350 nt
 
-Filler sits between the 3' BsmBI recognition site and P2, outboard of the cut, so it never
-enters the product. It is screened for the eight enzyme motifs, for the orthogonal primer sites,
+**#257 promoted the rule to the method; the length stays this project's.** Filler sits between
+the 3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is screened for the eight enzyme motifs, for the orthogonal primer sites,
 and at its two junctions for a motif the join creates.
 
 Why uniform: it removes the vendor's 15% uniformity question rather than managing it, and
 Freschlin — which pads to a uniform length — lost whole replicates to an enzyme site inside a
-payload, which is what the screen is for. Binning by length buys nothing at 153 oligos.
+payload, which is what the screen is for. Binning by length buys nothing at 152 oligos.
 
 **Why 350 and not 300: the lab changed it.** This is a project decision and not a method
 constant, and it is the only input section 4 takes besides the block list. What it buys is
-measured in section 4.3 — no part needs more than five fragments at 350, where two need six at
-300 — and what it costs is measured in section 4.5, which is 1.7% per usable base. 350 is the
+measured in section 4.3 — no part needs more than five fragments at 350, where one needs six at
+300 — and what it costs is measured in section 4.5, which is 2.0% per usable base. 350 is the
 top of its price band, so the length cannot drift upward without crossing a tier.
 
 ### 9.3 The orthogonal primer split — 96 inner, 35 and 34 outer
@@ -634,12 +647,12 @@ discrepancy is unresolved in the research note and this project uses the 165 seq
 
 ### 9.4 Batch size — one batch, all 72 parts
 
-One PCR1, then 72 PCR2 reactions using 72 of the 96 inner primers. **153 pieces in the PCR1
+One PCR1, then 72 PCR2 reactions using 72 of the 96 inner primers. **152 pieces in the PCR1
 tube** — section 4.4 derives the count, and this section does not restate it — which is at the
 low end of the Baker anchor of hundreds of oligos to a well.
 
 The method's rule is to hold pieces per PCR1 roughly constant; **this project sets that constant
-at whatever section 4.4 derives**, which at 350 nt is 153 pieces. Freschlin's evenness
+at whatever section 4.4 derives**, which at 350 nt is 152 pieces. Freschlin's evenness
 measurement — subpools under 16 genes overabundant,
 20 or more underrepresented — compares subpools against each other inside one pool, and a single
 batch has none to compare against. If evenness turns out to limit anything, the fallback is four
@@ -788,7 +801,7 @@ Nothing here becomes a package default, and nothing here is guessed at.
   replaces it follows from the representation the screen downstream needs, and no screen is
   stated here. Closed by naming the screen, or by a source measuring diversity loss across an
   iGGA round.
-- **The synthesis cost.** 153 oligos sit far below 18,000, the smallest pool any recorded price
+- **The synthesis cost.** 152 oligos sit far below 18,000, the smallest pool any recorded price
   covers, so no price here is this project's. The list prices and the per-usable-base comparison
   are section 4.5; neither stands in for the pilot's own cost.
 - **The orthogonal set's size**, 165 or 166. The 165 held are what the split uses.

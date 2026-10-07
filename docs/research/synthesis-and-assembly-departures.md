@@ -204,12 +204,16 @@ reopen.
 Paper: each domain codon-optimized and individually synthesized as a clonal plasmid in pTwist
 Kan, then pooled equimolar per family. Measured CDS lengths 27 to 1,046 bp.
 
-Ours: fragments come from a 300-mer Twist pool, assembled by DAD, split into wells by DMX and
-read by ONT (`## Goal`, `### Cargo synthesis`, `### Cargo validation (optional)`).
+Ours: fragments come from a Twist pool, assembled by DAD, split into wells by DMX and read by
+ONT (`## Goal`, `### Cargo synthesis`, `### Cargo validation (optional)`). The oligo length is a
+project input, not a method constant.
 
-The budget fits. About 235 bp usable per 300-mer, so a 2.5 kb fragment is about 11 oligos, and
-the cargo's constant regions are about a quarter of one oligo. What ours carries and the paper's
-did not is a per-clone sequence-and-reformat step before assembly can start.
+The budget fits, and the figure to use is the method page's, not this one. An earlier revision
+read "about 235 bp usable per 300-mer" off a two-primer layout; the three-primer scheme spends
+60 nt on primer sites and 14 nt on recognition sites and spacers, so a 300-mer carries a 226 nt
+span and a 350-mer a 276 nt one. `ap1-demo-project.md` §4.2 derives it and #257 settled where it
+lives. What ours carries and the paper's did not is a per-clone sequence-and-reformat step
+before assembly can start.
 
 ## D11. Both markers had to change
 

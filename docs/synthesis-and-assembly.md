@@ -211,9 +211,31 @@ identity is held by well position.
 
 **Step 3.** `AGGA` and `TTCC` are held out of the overhang set DAD may choose.
 
-**Steps 3 and 5, the three-primer scheme.** Every oligo is `[P1][fragment][P2][P3]`. PCR1 uses
-the pair (P1, P3) shared by a whole batch of genes and pulls that batch out of the pool. PCR2
-uses (P1, P2) to pull one gene out of the batch and drops the P3 region.
+**Steps 3 and 5, the three-primer scheme.** Every oligo is
+`[P1][BsmBI][span][BsmBI][pad][P2][P3]`. PCR1 uses the pair (P1, P3) shared by a whole batch of
+genes and pulls that batch out of the pool. PCR2 uses (P1, P2) to pull one gene out of the batch
+and drops the P3 region.
+
+**Steps 3 and 5, the two BsmBI sites.** Both face inward and are part of the ordered sequence.
+The two outermost cuts across a part give `AGGA` and `TTCC`; every internal cut gives the
+overhang the split chose. They cannot move onto the primers: all of a gene's fragments share one
+P1 and P2, so a primer would give every fragment the same overhang.
+
+**Steps 3 and 5, the budget.** The span between the two cuts carries its own overhang at each
+end, and each internal overhang belongs to two fragments at once. A gene of `L` bases needs:
+
+```text
+span  ≤ oligo length − 60 (three primer sites) − 14 (two recognition sites and spacers)
+pieces = ceil((L − 4) / (span − 4))
+```
+
+At 350 nt the span is 276 bases and holds 268 between its overhangs. **Both numbers are
+computed, never typed:** count the overhangs once and a 1,149 base part needs five pieces, not
+six.
+
+**Step 5, padding.** Every oligo is padded to the same length, which the project sets. Filler
+goes between the second BsmBI site and P2, outside the cut, so it never reaches the product. It
+is screened for the reserved enzyme sites, for the primer sites, and at both of its joins.
 
 **Step 4.** The set is drawn fresh, to the rules in `### iGGA cargo`.
 
