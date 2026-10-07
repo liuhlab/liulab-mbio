@@ -14,7 +14,7 @@ from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
 from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import digest
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import reverse_translate
 from liulab_synbio.igga.gate import check_product
@@ -29,6 +29,7 @@ from liulab_synbio.igga.plan import (
 )
 from liulab_synbio.igga.project import Project
 from liulab_synbio.igga.rounds import ROUND_FILE
+from liulab_synbio.igga.vector import cargo_enzyme
 
 HOST = "e-coli-k12"
 COMPLETENESS = 0.99
@@ -79,13 +80,14 @@ def inputs(tmp_path_factory, scheme):
     return out
 
 
-def project(inputs, *, vector: str = "carrier.dna") -> Project:
+def project(inputs, *, vector: str = "carrier.dna", working: str | None = None) -> Project:
     """The project a test plans, naming the inputs written into `inputs`."""
     return Project(
         "library",
         positions=POSITIONS,
         parts=inputs / "parts.fasta",
         vector=inputs / vector,
+        working_vector=None if working is None else inputs / working,
         host=HOST,
         oligo_length=350,
         batch_size=96,
@@ -226,6 +228,57 @@ def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, in
     assert opened[0].left_overhang == made.standard.entry_overhangs[0]
     assert opened[0].right_overhang == made.standard.scar_overhang
     assert made.status == "pass"
+
+
+#: A coding sequence spelling PaqCI's site, which is the enzyme the bare vector leaves free.
+SPELLS_CARGO = "ATGCACCTGCAAGAAAAA"
+
+
+def coded() -> tuple[dict[str, str], ...]:
+    """The part lists as DNA, the first member spelling the cargo enzyme's site."""
+    first, *rest = LISTS
+    return (
+        {
+            name: SPELLS_CARGO if name == "N_a" else reverse_translate(protein, host="human")
+            for name, protein in first.items()
+        },
+        *(
+            {name: reverse_translate(protein, host="human") for name, protein in one.items()}
+            for one in rest
+        ),
+    )
+
+
+def test_a_working_vector_fixes_the_cargo_enzyme_before_a_block_is_designed(inputs):
+    """The vector is an input and the blocks are an output, so the pipeline does the ordering."""
+    lists = coded()
+    bare = SequenceRecord(pad(200), topology="circular", name="bare")
+    alone = cargo_enzyme([bare], scheme=IGGA).enzyme
+    assert alone is not None
+    assert find_sites(SequenceRecord(lists[0]["N_a"]), alone)
+
+    made = plan_igga(
+        project(inputs, working="bare.dna"), parts=lists, kind="dna", working_site=(100, 140)
+    )
+
+    assert made.working is not None
+    assert made.working.enzyme == alone
+    # Reserved from the vector alone, so the one part that spelled it gives the site up.
+    assert not any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
+    changed = next(one for one in made.parts if one.name == "N_a")
+    assert [one.site.enzyme for one in changed.changes] == [alone]
+
+
+def test_a_project_naming_no_working_vector_reserves_nothing_of_its_own(inputs):
+    """Nothing is added to the reserved set where there is no working vector to read one off."""
+    lists = coded()
+    alone = cargo_enzyme([SequenceRecord(pad(200))], scheme=IGGA).enzyme
+    assert alone is not None
+
+    made = plan_igga(project(inputs), parts=lists, kind="dna")
+
+    assert made.working is None
+    assert any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
 
 
 def test_the_plan_is_judged_by_the_gate_and_by_nothing_of_its_own(plan, inputs):

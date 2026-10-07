@@ -62,7 +62,9 @@ wherever the site itself sits.
 
 Every other enzyme above is fixed by something physical: parts carry BsmBI flanks, the DMX
 vector carries BsaI outboard of BsmBI, the barcode kit releases with BsaI. The working vector
-is the user's own, so its cargo enzyme is not fixed and is searched for per vector.
+is the user's own, so its cargo enzyme is not fixed and is searched for per vector. The search
+reads the working vector alone and runs before any block is designed, because every block has to
+be free of what it returns.
 
 What binds the choice:
 

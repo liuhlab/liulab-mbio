@@ -407,9 +407,25 @@ def test_a_working_vector_chooses_its_enzyme_before_it_builds_the_cassette(plvx)
     assert made.record.extract(made.destination.stuffer).startswith(IGGA.entry_overhang)
 
 
+def test_a_pre_chosen_cargo_enzyme_is_the_only_candidate_the_pot_is_searched_for():
+    """A caller that chose from the backbone alone is taken at its word, not made to rank again."""
+    bare = SequenceRecord(pad(200), topology="circular", name="bare")
+    assert cargo_enzyme([bare], scheme=IGGA).enzyme != get_enzyme("BbsI")
+
+    made = working_vector(bare, [], scheme=IGGA, site=(100, 140), enzyme=get_enzyme("BbsI"))
+
+    assert made.enzyme == get_enzyme("BbsI")
+    assert [one.name for one in made.cargo.search.free] == ["BbsI"]
+    assert not made.cargo.search.blocked
+
+
 def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
     """The AP-1 library spells PaqCI twice, so nothing is left to admit it to pLVX."""
     product = read_record(DEMO.parent / "product.dna")
 
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
         working_vector(plvx, [product], scheme=IGGA, site="EGFP")
+
+    # A pre-chosen enzyme is still held to the pot: that is the net under a composed design.
+    with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
+        working_vector(plvx, [product], scheme=IGGA, site="EGFP", enzyme=get_enzyme(CARGO))

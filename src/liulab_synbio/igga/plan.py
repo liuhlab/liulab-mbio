@@ -61,6 +61,7 @@ from liulab_synbio.igga.vector import (
     Destination,
     Site,
     Working,
+    cargo_enzyme,
     destination_vector,
     working_vector,
 )
@@ -344,6 +345,10 @@ def plan_igga(
     the project's own order and the product of each opens the next. The same inputs return the
     same design: the barcodes are drawn from the project's seed, and nothing else here is random.
 
+    Where the project names a working vector, the enzyme that admits cargo to it is chosen from
+    that vector alone before any block is designed, and reserved so no block spells it. The
+    ordering is the pipeline's, not the user's.
+
     Parameters
     ----------
     project
@@ -403,6 +408,14 @@ def plan_igga(
     design = chosen.scheme
     positions = chosen.positions
     one = as_record(chosen.vector)
+    into = None if chosen.working_vector is None else as_record(chosen.working_vector)
+    # Every block has to be free of the cargo enzyme, so it is read off the working vector alone.
+    admits = None if into is None else cargo_enzyme([into], scheme=design).enzyme
+    reserved = (
+        chosen.reserved_extra
+        if admits is None
+        else tuple(dict.fromkeys((*chosen.reserved_extra, admits.name)))
+    )
     given = (
         parts if parts is not None else read_part_lists(chosen.parts, positions, pattern=pattern)
     )
@@ -425,7 +438,7 @@ def plan_igga(
             design,
             chosen.barcode.length,
             distance=chosen.barcode.min_distance,
-            reserved=chosen.reserved_extra,
+            reserved=reserved,
         )
     )
     built = design_parts(
@@ -437,7 +450,7 @@ def plan_igga(
         rules=held,
         coding=coded,
         seed=chosen.seed,
-        reserved=chosen.reserved_extra,
+        reserved=reserved,
     )
     destination = destination_vector(
         one, design if compatible else _restandardised(design, standard), site=site
@@ -449,12 +462,9 @@ def plan_igga(
     rows = plan_coverage([len(each) for each in lists], completeness=chosen.completeness)
     working = (
         None
-        if chosen.working_vector is None
+        if into is None
         else working_vector(
-            as_record(chosen.working_vector),
-            [rounds[-1].product],
-            scheme=design,
-            site=working_site,
+            into, [rounds[-1].product], scheme=design, site=working_site, enzyme=admits
         )
     )
     judged = check_library(
