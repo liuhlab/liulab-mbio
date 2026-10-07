@@ -278,9 +278,18 @@ Each of these is a real disagreement in the published material, not a reading di
    note records 0.2 µM as what two sources state and flags the third.
 2. **The boundary at exactly 20 reads.** The SI's checklist requires an alignment count **above**
    20 and routes a well at exactly 20 into the suboptimal branch. The article says a warning is
-   issued when **fewer than** 20 reads are assigned, which passes a well at exactly 20.
-   `liulab_synbio.dmx.ROUTE_B` currently takes `inclusive=True`, matching the article. One well in
+   issued when **fewer than** 20 reads are assigned, which passes a well at exactly 20. One well in
    many will land exactly on the line; the two documents judge it differently.
+   **Settled by #310: the SI governs**, because its checklist decides whether a well's data may be
+   used — the question `liulab_synbio.dmx.depth_check` answers — while the article's number is
+   where its software warns. Where that leaves the boundary still contested, the stricter reading
+   stands: a well wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
+   `ROUTE_B` now carries `inclusive=False`, so a well at exactly 20 is called and warns instead of
+   passing, which is where the SI's own suboptimal branch puts it ("Alignment Count is ≤20 … still
+   proceed with data collection", with IGV validation). The flag reads both of a route's marks, so
+   a well at exactly 10 now carries no verdict: the article's "more than 10 reads are assigned to a
+   well" and the same tie-break both put it there, against Figure S1E's "at less than 10 reads we
+   can't detect true positives", which would have kept it.
 3. **200 fmol in nanograms.** LevSeq says 200 fmol "translates to 120 ng for a 1-kb gene" (SI
    step 15). ONT's own amplicon protocol, quoted in `docs/research/bench-numbers.md`, gives the
    same 200 fmol as 130 ng for a 1 kb amplicon. Both are conversions of the same molar figure, so
@@ -321,8 +330,15 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
   and the DMX vector is pET-derived, so LevSeq's own annealing regions bind it verbatim.
 - **Whether the 24 nt barcodes may be re-ordered as oligos.** They come from the ONT native
   barcoding kit; ONT's terms were not read for this note.
-- **The mean-error criterion.** "Mean error < 10% for each well" has no definition in either
-  document beyond what the software computes.
+- **The mean-error criterion.** "Probability Value: Mean error <10% for each well" is the second
+  half of the SI's per-well checklist, and the checklist defines neither the quantity nor how it is
+  estimated. The article's Methods define what its software computes: "for each well we calculate
+  the error rate as the mean rate of non-reference nucleic acids per position", used as the null
+  rate of a per-position binomial test whose default is 10%. Whether the checklist's number is that
+  same rate is never said. **#310 named this a hole rather than modelling it**: a well reaches this
+  package as a read count and a consensus call, and the per-position base counts that rate is a
+  mean over are never among them, so `liulab_synbio.dmx` would have to invent the input before it
+  could judge the criterion. A well that passes `depth_check` may still fail LevSeq's second test.
 - **The preprint's SI was not compared with the published SI.** Only the version-of-record SI was
   read. If a number ever has to be redistributed rather than cited, the CC BY-NC preprint is where
   to check first.

@@ -207,14 +207,20 @@ class Route:
     plate_axis
         How many marks the one axis carrying the plate carries.
     wanted_reads
-        The depth at and above which a well is called. A project may raise it.
+        The mark a well's depth has to meet, by `meets`, before it is called. A project may
+        raise it.
     tolerable_reads
-        The depth below which no read is deep enough to call, so the well carries no verdict.
-        Equal to `wanted_reads` where the route publishes one number rather than two.
+        The mark that same comparison holds a well to for any verdict at all; under it the well
+        carries none. Equal to `wanted_reads` where the route publishes one number rather than
+        two.
     inclusive
-        Whether a depth equal to a mark meets it. Qian publishes a consensus depth *above* 150
-        and LevSeq twenty reads wanted, so the two routes read their own marks differently and
-        neither is rewritten to suit the other.
+        Whether a depth equal to either of a route's marks meets it. Qian publishes a consensus
+        depth *above* 150, and LevSeq's SI checklist an alignment count *above* 20, so neither
+        route calls a well that lands exactly on a mark. LevSeq's article reads the same 20 as a
+        minimum instead; the SI governs, because its checklist decides whether a well's data may
+        be used, which is what this decides, while the article's number is where its software
+        warns. Where two sources still contest a boundary the stricter reading stands: a well
+        wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
     source
         The key of the `SOURCES` entry the two depths were read from.
     """
@@ -262,7 +268,11 @@ ROUTE_A = Route(
 )
 
 #: One barcoded primer pair a well, 96 forward marks addressing the well and 96 reverse the
-#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable.
+#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable, both
+#: depths to exceed, so a well at exactly twenty is called and warns, where the SI's suboptimal
+#: branch puts it. LevSeq pairs the floor with a second criterion, a mean error below 10%, which
+#: nothing here judges — a named hole: it is a mean over per-position base counts, and a well
+#: reaches this package as a read count and a consensus call.
 ROUTE_B = Route(
     "B",
     marking="amplify each well with one barcoded primer pair",
@@ -271,6 +281,7 @@ ROUTE_B = Route(
     wanted_reads=20,
     tolerable_reads=10,
     source="LevSeq",
+    inclusive=False,
 )
 
 #: Both routes, by the name a project names one with.
