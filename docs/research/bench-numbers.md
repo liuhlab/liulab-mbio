@@ -610,8 +610,16 @@ colonies.
 
 The one-pot BsaI reaction, SPRI, and electroporation of a cargo pool.
 
-No published source runs this step. Its three components each have a source, and none of them
-is this step:
+No published source runs this step as we run it. **The paper runs its own last transfer,
+though, and says it ran it on the round's numbers.** Takacsi-Nagy moves the assembled full-gene
+libraries into the CAR vector and writes that they were "similarly cloned"; for the control
+libraries, that "a single digestion and ligation into the CAR vector, bacterial transformation
+and plasmid preparation was performed by the above methods" (METHOD DETAILS, pp. e4-e5). The
+above methods are stage 4's: 1 µg of plasmid pool digested in 50 µL, 2× SPRI after the digest,
+20 ng of backbone per 200 µL ligation at 1:1, 1× SPRI after it, up to 100 ng electroporated.
+
+So the release that opens this stage and the clean-up that closes it are sourced, and what
+departure D12 changes — the assembly itself — is not. Its components:
 
 | Number | Value | Source |
 | --- | --- | --- |
@@ -622,7 +630,8 @@ is this step:
 | E1601 cycling, 2-10 inserts | (37 °C 1 min, 16 °C 1 min) × 30; then 60 °C 5 min | E1601 manual p. 6 |
 | E1601 cycling, 11-20+ inserts | (37 °C 5 min, 16 °C 5 min) × 30; then 60 °C 5 min | E1601 manual p. 6 |
 | SPRI | the AMPure XP procedure in stage 4 | AMPure XP IFU B37419AB |
-| SPRI ratio for this step | **ours** — 1x and 2x are Takacsi-Nagy's for the iGGA round; nothing states one here | — |
+| Mass into the release digest | 1 µg of the finished library in 50 µL with CutSmart, 2.5 µL of each enzyme | METHOD DETAILS p. e4, carried by "the above methods" |
+| SPRI ratio after the assembly | **1x**, eluted in H2O, immediately before the electroporation | METHOD DETAILS pp. e4-e5, same carry |
 | Electroporation | Endura's settings, or the BL21(DE3) route Qian uses for a library | Endura manual MA133; Qian SI Day 1.2 |
 
 NEB publishes settings for its own electrocompetent strain, #C3020. They are not Endura's, and
@@ -638,8 +647,8 @@ the cells, not to the method.
 | Recovery | 975 µL of 37 °C NEB 10-beta/Stable Outgrowth Medium added immediately; 1 hour at 37 °C, 250 rpm | same |
 | Plates | pre-warmed at 37 °C for 1 hour; incubated overnight at 37 °C | same |
 | Against Endura | Endura is 1800 V, 600 Ω, 10 µF with a 3.5-4.5 ms time constant, in a 0.1 cm cuvette | Endura manual MA133 p. 4 |
-| Mass of cargo pool into the reaction | **ours** | — |
-| Mass of working vector into the reaction | **ours** | — |
+| Mass of cargo pool into the reaction | **ours** — it is not pipetted at all. D12 purifies nothing between the release and the assembly, so whatever the release freed is what the pot holds | — |
+| Mass of working vector into the reaction | **ours** — and no published reaction fits this pot. NEB's two-fragment Golden Gate is 15 µL total, less than the release volume alone; Qian's pooled 0.1 pmol vector against 0.3 pmol library is a column-cleaned amplicon GGA; Takacsi-Nagy's 20 ng per 200 µL is a T7 ligation of purified fragments at room temperature | — |
 | Colonies the library needs | the package computes this floor from the completeness asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
 | Expected representation | at least 99.5% of members seen, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member | Joung et al. 2017, quoted in `docs/research/vector-qc-panel.md` section 3.5 |
 
@@ -742,9 +751,13 @@ before that pass still resolves. What closed:
 
 ### Stage 5 — final assembly
 
-- **H24.** **Every mass in this stage is ours** — cargo pool in, working vector in, and the SPRI ratio
-  — and no source runs the step at all. *Filled by:* a pilot, or by carrying stage 4's
-  numbers across and saying that is what was done.
+- **H24.** **Narrowed to the one-pot assembly.** The release that opens this stage and the SPRI that
+  closes it are no longer ours: the paper runs its own last transfer "by the above methods"
+  (METHOD DETAILS, pp. e4-e5), which gives 1 µg into the digest and 1× beads after the ligation,
+  at exactly these two positions. What stays open is the reaction between them, which departure
+  D12 rebuilt: the cargo is never pipetted, because nothing is purified after the release, so
+  neither the working vector's mass nor the ratio it meets the cargo at has a source. No
+  published reaction fits a pot that already holds 50 µL of release. *Filled by:* a pilot.
 - **H25.** **Neither kit manual gives a DNA mass for a pooled-library one-pot assembly.** Both give
   0.05 pmol of vector for a defined assembly and a one-hour single-insert program "for
   library preparation", and no pooled-insert mass or colony target. *Filled by:* a pilot.

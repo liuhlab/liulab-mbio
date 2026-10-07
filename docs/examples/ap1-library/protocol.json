@@ -7125,7 +7125,47 @@
       "notes": [
         "One tube, two stages. Killing the releasing enzymes before the working vector goes in is what keeps them off its backbone."
       ],
-      "tables": [],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "AP-1 DESynR round 3",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.252295 pmol (1000 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "BsaI-HFv2 (R3733)",
+              "volume_ul": 2.5,
+              "stock": "",
+              "final": "",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "PmeI (R0560)",
+              "volume_ul": 2.5,
+              "stock": "",
+              "final": "",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "CutSmart Buffer and nuclease-free water",
+              "volume_ul": 44.0,
+              "stock": "",
+              "final": "to 50 µL",
+              "master_mix": true,
+              "citation": null
+            }
+          ],
+          "title": "Digest with BsaI and PmeI",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
       "programs": [
         {
           "stages": [
@@ -7195,16 +7235,7 @@
           "solution": "The blunt enzyme missed, or the heat kill was short. Both show up as colonies carrying the round's own vector rather than the working one."
         }
       ],
-      "holes": [
-        {
-          "id": "H24",
-          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
-          "kind": "undecided",
-          "where": "final assembly, DNA in",
-          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
-          "issue": "liuhlab/liulab-mbio#264"
-        }
-      ]
+      "holes": []
     },
     {
       "title": "Assemble the cargo into the working vector",
@@ -7235,10 +7266,10 @@
         },
         {
           "id": "H24",
-          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+          "missing": "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector's mass nor the ratio it meets the cargo at is sourced",
           "kind": "undecided",
-          "where": "final assembly, DNA in",
-          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+          "where": "final assembly, the one-pot reaction",
+          "filled_by": "a pilot",
           "issue": "liuhlab/liulab-mbio#264"
         }
       ]
@@ -7246,7 +7277,7 @@
     {
       "title": "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
       "instructions": [
-        "Add SPRI paramagnetic beads and elute in water. The ratio is not a sourced one; see the hole.",
+        "Add SPRI paramagnetic beads at 1x the volume and elute in water, as every round did after its ligation.",
         "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette.",
         "Recover and grow at 30 °C, as every round did."
       ],
@@ -7304,16 +7335,7 @@
           "solution": "The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo."
         }
       ],
-      "holes": [
-        {
-          "id": "H24",
-          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
-          "kind": "undecided",
-          "where": "final assembly, DNA in",
-          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
-          "issue": "liuhlab/liulab-mbio#264"
-        }
-      ]
+      "holes": []
     },
     {
       "title": "Read representation in the final vector",
@@ -7486,10 +7508,10 @@
     },
     {
       "id": "H24",
-      "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+      "missing": "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector's mass nor the ratio it meets the cargo at is sourced",
       "kind": "undecided",
-      "where": "final assembly, DNA in",
-      "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+      "where": "final assembly, the one-pot reaction",
+      "filled_by": "a pilot",
       "issue": "liuhlab/liulab-mbio#264"
     }
   ],
