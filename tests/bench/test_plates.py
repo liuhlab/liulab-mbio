@@ -57,3 +57,27 @@ def test_pooling_runs_many_wells_into_one() -> None:
     assert len(pooled.moves) == 1536
     assert {move.destination for move in pooled.moves} == {Well("reservoir", "1")}
     assert pooled.plates == ("lysate", "reservoir")
+
+
+def test_interleaving_covers_a_plate_in_the_passes_a_smaller_head_makes() -> None:
+    passes = plates.interleave(384, 96)
+    assert len(passes) == 4
+    assert [len(one) for one in passes] == [96] * 4
+    assert sorted(name for one in passes for name in one) == sorted(
+        plates.plate("picked", 384).well_names
+    )
+    assert passes[0][:3] == ("A1", "A3", "A5")
+    assert passes[3][:3] == ("B2", "B4", "B6")
+
+
+def test_interleaving_a_1536_plate_takes_sixteen_passes_of_a_96_head() -> None:
+    assert len(plates.interleave(1536, 96)) == 16
+    assert len(plates.interleave(1536, 384)) == 4
+    assert plates.interleave(96, 96) == (tuple(plates.plate("one", 96).well_names),)
+
+
+def test_interleaving_refuses_a_format_no_head_covers_in_whole_passes() -> None:
+    with pytest.raises(ValueError, match="does not divide"):
+        plates.interleave(96, 384)
+    with pytest.raises(ValueError, match="no format"):
+        plates.interleave(100, 96)

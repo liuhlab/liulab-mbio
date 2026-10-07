@@ -31,6 +31,7 @@ __all__ = [
     "Vessel",
     "Well",
     "compact",
+    "interleave",
     "plate",
     "pool",
     "row_label",
@@ -94,6 +95,46 @@ def seat(names: Iterable[str], wells: int, *, start: int = 0) -> dict[str, str]:
         f"{row_label(row)}{column}" for row in range(rows) for column in range(1, columns + 1)
     ]
     return dict(zip(places[start:], names, strict=False))
+
+
+def interleave(wells: int, into: int) -> tuple[tuple[str, ...], ...]:
+    """Return a `wells` plate's well names grouped into the passes an `into` plate covers it in.
+
+    A denser plate's wells sit at a fraction of a smaller one's spacing, so one well in that many
+    lines up under a head built for the smaller format and the plate is covered in that many
+    passes. Each group is in the smaller format's own reading order, so group *i*'s *j*-th name
+    is where the *j*-th well of pass *i* sits.
+
+    Raises
+    ------
+    ValueError
+        If either count is no format a plate comes in, or the smaller format's rows and columns
+        do not divide the larger one's.
+
+    Examples
+    --------
+    >>> passes = interleave(384, 96)
+    >>> len(passes), len(passes[0]), passes[0][:2], passes[3][:2]
+    (4, 96, ('A1', 'A3'), ('B2', 'B4'))
+    """
+    for count in (wells, into):
+        if count not in FORMATS:
+            raise ValueError(
+                f"{count} wells is no format; one of {', '.join(str(n) for n in FORMATS)}"
+            )
+    rows, columns = FORMATS[wells]
+    small_rows, small_columns = FORMATS[into]
+    if rows % small_rows or columns % small_columns:
+        raise ValueError(
+            f"a {into}-well plate's {small_rows} x {small_columns} does not divide a "
+            f"{wells}-well plate's {rows} x {columns}, so no head covers one in whole passes"
+        )
+    down, across = rows // small_rows, columns // small_columns
+    groups: list[list[str]] = [[] for _ in range(down * across)]
+    for row in range(rows):
+        for column in range(columns):
+            groups[(row % down) * across + column % across].append(f"{row_label(row)}{column + 1}")
+    return tuple(tuple(one) for one in groups)
 
 
 def compact(
