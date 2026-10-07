@@ -408,6 +408,7 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
             polymerase=amplicon.polymerase,
             annealing_temperature=amplicon.report.annealing_temperature,
             extension_seconds=amplicon.report.extension_seconds,
+            cycles=amplicon.polymerase.pcr.cycles,
             notes=(
                 f"Each primer carries a whole attB tail: {len(SPACER)} G residues, the "
                 f"{REGION_BP} bp att site and the frame bases the fusion needs, {len(forward)} "

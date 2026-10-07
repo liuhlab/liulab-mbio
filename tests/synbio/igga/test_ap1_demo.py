@@ -214,14 +214,17 @@ def test_the_same_dna_is_billed_once(plan):
     assert "Pool amplification primers" not in unpooled
 
 
-def test_pcr1_takes_its_cycles_from_the_pool_length_and_pcr2_prints_none(plan):
+def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(plan):
     """A 350 nt pool sits in Twist's top band; nothing sources the count for PCR2's template."""
-    steps = {one.title.split(":")[0]: one for one in plan.protocol().steps}
+    protocol = plan.protocol()
+    steps = {one.title.split(":")[0]: one for one in protocol.steps}
     first, second = steps["PCR1"], steps["PCR2"]
 
-    cycled = [stage.cycles for stage in first.programs[0].stages if stage.cycles > 1]
-    assert cycled == [12]
-    assert not second.programs
+    cycling = first.programs[0].stages[1]
+    assert cycling.cycles == 12
+    assert cycling.citation is not None
+    assert cycling.citation.source in protocol.sources
+    assert second.programs[0].stages[1].cycles is None
     assert [hole.id for hole in second.holes] == ["H30"]
 
 

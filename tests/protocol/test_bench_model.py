@@ -148,6 +148,16 @@ def test_a_hole_renders_and_never_reads_as_a_value() -> None:
     )
 
 
+def test_a_cycle_count_is_cited_like_any_number_and_a_blank_one_prints_as_none() -> None:
+    cited = Stage((Incubation("Denature", 98, 10),), cycles=12, citation=Citation("nowhere"))
+    blank = Stage((Incubation("Denature", 98, 10),), cycles=None)
+    one = protocol(Step("PCR", programs=(ThermocyclerProgram((cited, blank)),)))
+    (check,) = [c for c in one.audit() if c.name == "sources"]
+    assert check.status == "fail"
+    assert "nowhere" in check.detail
+    assert NO_NUMBER in render_html(one)
+
+
 def test_a_price_hole_names_no_issue() -> None:
     with pytest.raises(ValueError, match="missing price is a missing input"):
         Hole("P1", "nothing prices it", "price", issue="#264")

@@ -18,7 +18,7 @@ from liulab_mbio.bench.pcr import colony_pcr_program, colony_pcr_reaction, pcr_p
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers.polymerase import Polymerase
+from liulab_mbio.primers.polymerase import ONETAQ, Polymerase
 from liulab_mbio.protocol.model import (
     OVERVIEW_CHARS,
     Check,
@@ -250,7 +250,7 @@ def pcr_step(
     polymerase: Polymerase,
     annealing_temperature: float,
     extension_seconds: int | None,
-    cycles: int | None = None,
+    cycles: int | None,
     notes: Sequence[str] = (),
 ) -> Step:
     """Return the step that makes one amplicon by PCR.
@@ -266,7 +266,9 @@ def pcr_step(
     polymerase, annealing_temperature, extension_seconds
         The PCR's, as the primer pair's report gives them.
     cycles
-        Replaces the polymerase profile's own count.
+        How many cycles to run, as `liulab_mbio.bench.pcr.pcr_program` takes it: the
+        polymerase's own `PcrProfile.cycles`, a count the method sources itself, or ``None``
+        to leave it blank.
     notes
         The caller's own.
     """
@@ -589,6 +591,7 @@ def colony_pcr_step(
             colony_pcr_program(
                 annealing_temperature=check.annealing_temperature,
                 amplicon_length=max(sizes),
+                cycles=ONETAQ.pcr.cycles,
             ),
         ),
         gels=(check.gel,),

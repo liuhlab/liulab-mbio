@@ -492,6 +492,7 @@ def _pcr_step(part: Part, assembly: Assembly, polymerase: Polymerase) -> Step:
         polymerase=polymerase,
         annealing_temperature=part.report.annealing_temperature,
         extension_seconds=part.report.extension_seconds,
+        cycles=polymerase.pcr.cycles,
         notes=(
             carried,
             "The annealing temperature above is read from the annealing regions alone; a tail "

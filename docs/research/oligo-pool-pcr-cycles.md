@@ -209,7 +209,8 @@ it. Twist's table is for amplifying the pool as delivered; PCR2's template is PC
 Qian's 10-cycle Day 4.1 is a sequencing-amplicon PCR, not this. Freschlin's 35 is a first subpool
 PCR. The honest instruction is the rule alone, with no printed count.
 
-**H27** is the first free id — H1 to H26 are taken across `src/` and `bench-numbers.md`:
+PCR2's hole is **H30**. H27 and H28 were taken before this note reached code, and H29 records the
+polymerase caveat above; H31 is the first free id:
 
 | Field | Value |
 | --- | --- |

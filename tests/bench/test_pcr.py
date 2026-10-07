@@ -13,7 +13,7 @@ from liulab_mbio.bench.pcr import (
     pcr_program,
     pcr_reaction,
 )
-from liulab_mbio.primers import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers import ONETAQ, POLYMERASES, Q5, Polymerase
 
 from ..reactions import total, volumes
 
@@ -23,7 +23,7 @@ def test_the_colony_pcr_master_mix_component_is_the_one_its_reaction_prints() ->
 
 
 def test_a_high_annealing_temperature_combines_annealing_and_extension() -> None:
-    program = pcr_program(Q5, annealing_temperature=72.0, amplicon_length=800)
+    program = pcr_program(Q5, annealing_temperature=72.0, amplicon_length=800, cycles=Q5.pcr.cycles)
     cycled = program.stages[1]
     assert [i.label for i in cycled.incubations] == ["Denature", "Anneal and extend"]
     assert cycled.incubations[1].temperature_c == 72.0
@@ -120,7 +120,12 @@ def test_each_shipped_polymerase_gets_nebs_reaction_and_program(polymerase: Poly
     lines, program, two_step = SHIPPED_PCR[polymerase.name]
     table = pcr_reaction(polymerase)
     assert [(one.name, one.volume_ul, one.stock, one.final) for one in table.components] == lines
-    cycled = pcr_program(polymerase, annealing_temperature=55.0, amplicon_length=1500)
+    cycled = pcr_program(
+        polymerase,
+        annealing_temperature=55.0,
+        amplicon_length=1500,
+        cycles=polymerase.pcr.cycles,
+    )
     assert [stage.cycles for stage in cycled.stages] == [1, 30, 1, 1]
     assert [
         (one.label, one.temperature_c, one.seconds)
@@ -128,7 +133,12 @@ def test_each_shipped_polymerase_gets_nebs_reaction_and_program(polymerase: Poly
         for one in stage.incubations
     ] == program
     for annealing, steps in ((round(two_step - 0.1, 1), 3), (two_step, 2)):
-        split = pcr_program(polymerase, annealing_temperature=annealing, amplicon_length=1500)
+        split = pcr_program(
+            polymerase,
+            annealing_temperature=annealing,
+            amplicon_length=1500,
+            cycles=polymerase.pcr.cycles,
+        )
         assert len(split.stages[1].incubations) == steps
 
 
@@ -141,7 +151,9 @@ def test_the_colony_pcr_reaction_is_half_master_mix() -> None:
 
 
 def test_the_colony_pcr_program_lyses_the_cells_and_holds_at_ten() -> None:
-    program = colony_pcr_program(annealing_temperature=51.5, amplicon_length=137)
+    program = colony_pcr_program(
+        annealing_temperature=51.5, amplicon_length=137, cycles=ONETAQ.pcr.cycles
+    )
     lysis = program.stages[0].incubations[0]
     assert (lysis.label, lysis.temperature_c, lysis.seconds) == ("Lysis", 94.0, 300)
     assert program.stages[1].incubations[2].seconds == 60

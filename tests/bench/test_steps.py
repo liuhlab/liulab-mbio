@@ -34,7 +34,7 @@ def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
     assert step.notes == ()
 
 
-def test_a_pcr_step_takes_the_profiles_cycles_unless_told_and_carries_the_callers_notes() -> None:
+def test_a_pcr_step_leaves_an_unsourced_count_blank_and_carries_the_callers_notes() -> None:
     step = pcr_step(
         "GFP",
         "GFP plasmid",
@@ -42,10 +42,11 @@ def test_a_pcr_step_takes_the_profiles_cycles_unless_told_and_carries_the_caller
         polymerase=Q5,
         annealing_temperature=61.0,
         extension_seconds=20,
+        cycles=None,
         notes=("Why this PCR is special.",),
     )
 
-    assert step.programs[0].stages[1].cycles == 30
+    assert step.programs[0].stages[1].cycles is None
     assert step.notes == ("Why this PCR is special.",)
 
 

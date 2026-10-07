@@ -690,6 +690,7 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             polymerase=polymerase,
             annealing_temperature=report.annealing_temperature,
             extension_seconds=report.extension_seconds,
+            cycles=polymerase.pcr.cycles,
             notes=(
                 f"Each primer's 5' tail is a spacer and a recognition site, {ends}. The tail is "
                 "not on the template, so it does not anneal in the first cycles and the "

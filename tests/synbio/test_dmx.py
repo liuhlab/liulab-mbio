@@ -274,6 +274,6 @@ def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():
 def test_the_index_pcr_touches_down_before_it_plateaus():
     """Ten cycles half a degree apart, then 25 more: 35 in all, as the SI's two loops spell out."""
     stages = dmx.index_pcr_program().stages
-    assert sum(stage.cycles for stage in stages[1:-2]) == 35
+    assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
     annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
     assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]

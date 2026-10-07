@@ -8,6 +8,7 @@ them unchanged.
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL
 from liulab_mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from liulab_mbio.protocol.model import (
+    Citation,
     Component,
     Incubation,
     ReactionTable,
@@ -135,14 +136,23 @@ def pcr_program(
     *,
     annealing_temperature: float,
     amplicon_length: int,
-    cycles: int | None = None,
+    cycles: int | None,
+    cycles_citation: Citation | None = None,
     title: str = "PCR",
 ) -> ThermocyclerProgram:
     """Return the program for this polymerase, annealing temperature and amplicon.
 
     Annealing and extension are combined into one step at the extension temperature once the
-    annealing temperature reaches the polymerase's `PcrProfile.two_step_celsius`. `cycles`, when
-    given, replaces the profile's own count.
+    annealing temperature reaches the polymerase's `PcrProfile.two_step_celsius`.
+
+    Parameters
+    ----------
+    cycles
+        How many cycles to run. `PcrProfile.cycles` is NEB's own count for this polymerase, and
+        ``None`` leaves the count blank where nothing sources it. It has no default: a count
+        nobody chose prints on the page as if someone had.
+    cycles_citation
+        Where `cycles` was read.
     """
     profile = polymerase.pcr
     initial = Incubation(
@@ -155,7 +165,8 @@ def pcr_program(
         initial,
         annealing_temperature=annealing_temperature,
         amplicon_length=amplicon_length,
-        cycles=profile.cycles if cycles is None else cycles,
+        cycles=cycles,
+        cycles_citation=cycles_citation,
         hold_c=profile.hold_c,
         title=title,
     )
@@ -166,9 +177,12 @@ def colony_pcr_program(
     *,
     annealing_temperature: float,
     amplicon_length: int,
-    cycles: int | None = None,
+    cycles: int | None,
 ) -> ThermocyclerProgram:
-    """Return the colony PCR program, which opens the cells before it denatures anything."""
+    """Return the colony PCR program, which opens the cells before it denatures anything.
+
+    `cycles` has no default and reads as `pcr_program`'s does.
+    """
     profile = polymerase.pcr
     lysis = Incubation("Lysis", profile.initial_denaturation_c, COLONY_LYSIS_SECONDS)
     return _program(
@@ -176,7 +190,7 @@ def colony_pcr_program(
         lysis,
         annealing_temperature=annealing_temperature,
         amplicon_length=amplicon_length,
-        cycles=profile.cycles if cycles is None else cycles,
+        cycles=cycles,
         hold_c=COLONY_HOLD_CELSIUS,
         title="Colony PCR",
     )
@@ -188,7 +202,8 @@ def _program(
     *,
     annealing_temperature: float,
     amplicon_length: int,
-    cycles: int,
+    cycles: int | None,
+    cycles_citation: Citation | None = None,
     hold_c: float,
     title: str,
 ) -> ThermocyclerProgram:
@@ -209,7 +224,7 @@ def _program(
     return ThermocyclerProgram(
         (
             Stage((first,)),
-            Stage(inside, cycles=cycles),
+            Stage(inside, cycles=cycles, citation=cycles_citation),
             Stage(
                 (
                     Incubation(

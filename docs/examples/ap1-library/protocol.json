@@ -529,7 +529,7 @@
       ],
       "notes": [
         "Every pair anneals at 65.1 °C, so one block of tubes takes them all.",
-        "Twist's band for a 350 nt pool is 12 to 14 cycles: Amplifying Twist Oligo Pools FRM-001034 REV 8 p. 2, and Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0. Its FAQ answers that more cycles give worse uniformity, so 12 is what prints.",
+        "Twist's band for a 350 nt pool is 12 to 14 cycles; Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ answers that more cycles give worse uniformity, so 12 is what prints.",
         "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block cannot be pulled out of a batch it does not sit in."
       ],
       "tables": [
@@ -609,7 +609,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -632,7 +633,11 @@
                   "citation": null
                 }
               ],
-              "cycles": 12
+              "cycles": 12,
+              "citation": {
+                "source": "FRM-001034",
+                "locator": "p. 2, cycle chart"
+              }
             },
             {
               "incubations": [
@@ -643,7 +648,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -654,7 +660,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "PCR1",
@@ -723,13 +730,13 @@
       "instructions": [
         "Set up one reaction a block, 72 in all, in PCR2 plate.",
         "Give each its batch's PCR1 product as template, that batch's forward primer, and the block's own inner primer.",
-        "Run PCR1's program at 64.3 °C, and stop the reaction on a real-time curve before it plateaus: nobody published a cycle count for this one."
+        "Run the program below. Nobody published a cycle count for this reaction, so run it on a real-time instrument with an intercalating dye and stop before the curve plateaus."
       ],
       "cautions": [
         "Keep the polymerase on ice."
       ],
       "notes": [
-        "The pairs anneal between 64.3 and 65.1 °C. Hold them all at 64.3, the lowest of them, so one block of tubes takes them.",
+        "The pairs anneal between 64.3 and 65.1 °C. The program runs at 64.3, the lowest of them, so one block of tubes takes them all.",
         "A block is named by its well from here on, not by anything in the tube."
       ],
       "tables": [
@@ -797,7 +804,74 @@
           "overage": 0.1
         }
       ],
-      "programs": [],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 98.0,
+                  "seconds": 30,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 98.0,
+                  "seconds": 10,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 64.3,
+                  "seconds": 20,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 72.0,
+                  "seconds": 20,
+                  "citation": null
+                }
+              ],
+              "cycles": null,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 72.0,
+                  "seconds": 120,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "PCR2",
+          "lid_temperature_c": null
+        }
+      ],
       "timers": [],
       "transfers": [],
       "gels": [
@@ -4299,7 +4373,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4331,7 +4406,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4363,7 +4439,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4395,7 +4472,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4427,7 +4505,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4459,7 +4538,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4491,7 +4571,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4523,7 +4604,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4555,7 +4637,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4587,7 +4670,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4619,7 +4703,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4642,7 +4727,8 @@
                   }
                 }
               ],
-              "cycles": 25
+              "cycles": 25,
+              "citation": null
             },
             {
               "incubations": [
@@ -4656,7 +4742,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4670,7 +4757,8 @@
                   }
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Index PCR",
@@ -4851,7 +4939,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4862,7 +4951,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -4948,7 +5038,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -4959,7 +5050,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -5154,7 +5246,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5165,7 +5258,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Recovery and outgrowth at 30 °C",
@@ -5282,7 +5376,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5293,7 +5388,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -5379,7 +5475,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5390,7 +5487,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -5585,7 +5683,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5596,7 +5695,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Recovery and outgrowth at 30 °C",
@@ -5713,7 +5813,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5724,7 +5825,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -5810,7 +5912,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -5821,7 +5924,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -6016,7 +6120,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             },
             {
               "incubations": [
@@ -6027,7 +6132,8 @@
                   "citation": null
                 }
               ],
-              "cycles": 1
+              "cycles": 1,
+              "citation": null
             }
           ],
           "title": "Recovery and outgrowth at 30 °C",
@@ -6261,6 +6367,13 @@
       "url": "",
       "read_as": "held under reference_docs/",
       "date": "2026-10-06"
+    },
+    "FRM-001034": {
+      "document": "Twist Bioscience, Amplifying Twist Oligo Pools",
+      "edition": "REV 8",
+      "url": "https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf",
+      "read_as": "plain curl",
+      "date": "2026-10-07"
     }
   },
   "holes": [
