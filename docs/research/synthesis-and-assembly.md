@@ -345,23 +345,36 @@ says so.
 
 ### 6.1 Where the Type IIS sites sit on the oligo — DAD-GGA-DMX
 
-The oligo is `[P1][fragment][P2][P3]` and carries no Type IIS site, yet the next step assembles
-it into the vector by BsmBI and the design requires `AGGA`/`TTCC` ends. No step adds them. The
-internal junctions of a split gene need sites too, and none are designed anywhere.
+**Decided in #257: templated on the oligo, inboard of P1 and P2.** Every oligo reads
+`[P1][BsmBI][span][BsmBI][pad][P2][P3]`, both sites inward-facing. The two outermost cuts across
+a part yield `AGGA` and `TTCC`; every internal cut yields the overhang the split chose. One rule
+serves the vector interface and the internal junctions alike.
 
 | Option | Evidence |
 | --- | --- |
 | On the gene, before the split | What Lund does: the site and the terminal overhang go on the gene, then the split, then padding, then the primer sites. It makes the site part of the designed sequence, which the split tool then has to respect. |
 | On the amplification primers | What Qian does: the library primer pair carries the BsmBI sites that give `AGGA`/`TTCC`. It costs nothing in oligo length, but the three-primer scheme's inner primers are drawn from an orthogonal set with no site, so the set would have to be retailored or one role exempted. |
 
-The Baker lab diagram puts the Type IIS cuts inboard of P1 and P2, which is the second option.
-The method page dropped that clause. Whichever is chosen also decides where the internal
-junction sites come from.
+**The second option cannot express an internal junction at all.** Every fragment of one gene
+carries the same P1 and P2 — that is what lets one PCR2 pull all of a gene's pieces — so a
+primer-borne site gives every fragment of that gene the same overhang. Qian can do it because
+Qian's members are not split. The cost of retailoring the primer set was never the deciding
+term.
+
+**And the 22 nt it would save buys almost nothing.** Counted over the 72 blocks of
+`ap1-demo-project.md` §4.1 at a 350 nt oligo: 152 oligos templated against 150 with the sites on
+the primers, the worst part at five fragments either way.
+
+An earlier revision of this section read the Baker lab diagram as the second option. That is
+wrong, and `ap1-demo-project.md` §9.1 read the same diagram correctly: the cuts are drawn on the
+oligo, between P1 and the fragment and between the fragment and P2, which is the first option.
 
 ### 6.2 The padding rule — DAD-GGA-DMX
 
-Oligos come off the split at whatever length it gives and the layout has no slot for filler.
-The vendor refuses a pool whose shortest member is more than 15% below the longest.
+**Decided in #257: pad every oligo to the project's one oligo length.** Filler sits between the
+3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is
+screened for the eight enzyme motifs, for the orthogonal primer sites, and at both of its
+junctions for a motif the join creates.
 
 | Option | Evidence |
 | --- | --- |
@@ -369,8 +382,20 @@ The vendor refuses a pool whose shortest member is more than 15% below the longe
 | Pad to a target, then append constant flanks | Lund pads to about 260 nt before appending the 20 nt primer sites, giving 300 nt oligos. |
 | Bin by length into sub-pools | Romanowicz builds fixed-architecture libraries by length instead. The vendor will discount split sub-pools. |
 
-Whichever is chosen, the padding is sequence that has to obey the same enzyme-site rules as the
-cargo, and the rule has to say where in the layout the filler goes.
+Uniform padding removes the vendor's 15% question rather than managing it, and makes a
+pool-uniformity check unfailable, so none is shipped. The second option reaches the same uniform
+oligo by a different route and differs only in where the filler sits. Binning buys nothing at
+153 oligos and costs a second pool and a second PCR1.
+
+**The oligo length itself stays a project input**, so this is a method rule with one project
+number in it, not a method constant.
+
+**Rejected here, and recorded because the argument looked good:** moving the filler outboard of
+P2, between P2 and P3, so PCR2 drops it with the P3 region and every digest stub falls to a
+constant 27 nt instead of up to 170 nt. What competes in a one-pot assembly is the number of cut
+ends, which is one stub per oligo either way; only the stub's length changes. No source measures
+a long stub behaving worse, and the method lists no clean-up between PCR2 and assembly for a
+stub length to matter to.
 
 ### 6.3 The split of the orthogonal primer set across its three roles — DAD-GGA-DMX
 
