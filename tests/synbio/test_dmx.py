@@ -65,9 +65,19 @@ def test_below_the_floor_is_no_verdict_rather_than_a_fail():
     """A well nobody could call carries None, which is what keeps it out of the compaction."""
     assert dmx.depth_check(dmx.ROUTE_A, 151).status == "pass"
     assert dmx.depth_check(dmx.ROUTE_A, 150).status is None
-    assert dmx.depth_check(dmx.ROUTE_B, 20).status == "pass"
-    assert dmx.depth_check(dmx.ROUTE_B, 10).status == "warn"
+    assert dmx.depth_check(dmx.ROUTE_B, 21).status == "pass"
+    assert dmx.depth_check(dmx.ROUTE_B, 11).status == "warn"
     assert dmx.depth_check(dmx.ROUTE_B, 9).status is None
+
+
+def test_a_well_landing_exactly_on_route_bs_marks_has_not_met_them():
+    """LevSeq's SI checklist wants an alignment count above 20, so 20 itself is only tolerated.
+
+    The article reads the same number as a minimum; the SI governs, and the stricter reading
+    stands where the two still contest the boundary.
+    """
+    assert dmx.depth_check(dmx.ROUTE_B, 20).status == "warn"
+    assert dmx.depth_check(dmx.ROUTE_B, 10).status is None
 
 
 def test_the_floor_travels_with_the_route_and_a_project_may_only_raise_it():

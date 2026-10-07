@@ -294,8 +294,9 @@ Two questions, in order.
 
 Is the read deep enough to call? If not, the well has **no verdict**. It is read again or picked
 again, and it is not a failure. The floor comes with the route, because each one was measured on
-its own: above 150 reads for Route A, twenty wanted and ten tolerable for Route B. A project may
-raise either.
+its own. Route A wants more than 150 reads. Route B wants more than twenty, and a well above ten
+is still called, with a warning. Both floors are depths to pass, not to reach: a well landing
+exactly on one has not made it. A project may raise either.
 
 Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
 barcode? Anything less fails, a silent change included, because a barcode that no longer names

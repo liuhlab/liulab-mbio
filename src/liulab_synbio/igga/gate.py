@@ -18,8 +18,9 @@ from liulab_mbio.barcodes import check_barcodes, separation
 from liulab_mbio.checks import STATUSES, Check, Status, worst_of
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.overhangs import fidelity
+from liulab_mbio.primers.placement import find_binding_sites
 from liulab_mbio.reaction import Pool, Reaction, Role
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
@@ -36,6 +37,14 @@ CUTS = 2
 #: How many overhangs one round's ligation joins on: the one a part enters by, and the cloning
 #: scar. Both ends of every molecule in that tube present one of these two.
 LIGATION_OVERHANGS = 2
+
+#: What the primers that read a well anneal to, 5' to 3'. LevSeq publishes them and they bind
+#: the DMX vector unchanged, so a design holds them rather than choosing them:
+#: ``docs/research/route-b-index-primers.md``.
+WELL_PRIMERS: tuple[str, ...] = (
+    "ATCTCGATCCCGCGAAATTAATACGACTCAC",
+    "GCCCCAAGGGGTTATGCTAGTTATTGCTC",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,6 +315,82 @@ def check_product(
         tuple(stops),
     )
     return (opened, block, terminal, reading)
+
+
+def check_dmx_vector(
+    vector: SequenceRecord,
+    *,
+    project: Project,
+    annealing: Sequence[str] = WELL_PRIMERS,
+    where: str = "the DMX vector",
+) -> tuple[Judgement, ...]:
+    """Judge where the DMX vector's blunt sites sit: clear of the primers that read a well.
+
+    The method asks for one blunt site outboard of each site the external enzyme reads, and says
+    no more. Reading a well amplifies the cassette whole with one primer pair, so a blunt site in
+    either primer's footprint leaves that well no product and no verdict either, which no other
+    check would say. The bases such a site may take are therefore read off this record, never
+    stated: each primer's footprint and the releasing cut it faces bound them.
+
+    Only the blunt sites beside the cassette are judged. One inside the cargo is the part's own,
+    and one elsewhere in the backbone reaches no primer.
+
+    Parameters
+    ----------
+    vector
+        The rebuilt DMX vector, as it is held.
+    project
+        What the build chose, which carries the method's enzymes.
+    annealing
+        What each primer that reads a well anneals to, 5' to 3'.
+    where
+        What to call this vector in a message.
+    """
+    external = project.scheme.external
+    flanks, missing = _flanks(vector, external, annealing)
+    if missing:
+        return (
+            Judgement(
+                Check(
+                    "blunt sites",
+                    "fail",
+                    0,
+                    f"nothing in {where} says where a blunt site may sit: {missing}",
+                ),
+                where,
+            ),
+        )
+    judged: list[CutSite] = []
+    stray: list[tuple[CutSite, Segment]] = []
+    for site in find_sites(vector, project.scheme.blunt):
+        for flank, clear in flanks:
+            if not _meets(vector, flank, site.span):
+                continue
+            judged.append(site)
+            if not vector.covers(clear, site.span):
+                stray.append((site, clear))
+            break
+    spans = " or ".join(_printed(vector, clear) for _, clear in flanks)
+    named = ", ".join(
+        f"{one.enzyme.name} at {_printed(vector, one.span)}, outside {_printed(vector, clear)}"
+        for one, clear in stray
+    )
+    return (
+        Judgement(
+            Check(
+                "blunt sites",
+                "pass" if not stray else "fail",
+                len(judged),
+                f"the {len(judged)} blunt site(s) beside {where}'s cassette sit between a "
+                f"{external.name} site and the primer that reads a well, in {spans}"
+                if not stray
+                else f"{len(stray)} blunt site(s) of {where} miss the bases a {external.name} "
+                f"site and the primer that reads a well leave clear: {named}",
+            ),
+            where,
+            tuple(one for one, _ in stray),
+        ),
+    )
 
 
 def check_reaction(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
@@ -587,3 +672,68 @@ def _block(
                 return tuple(read), f"no cloning scar follows the {position} barcode", at
             at += len(scar)
     return tuple(read), "", at
+
+
+def _flanks(
+    record: SequenceRecord, external: Enzyme, annealing: Sequence[str]
+) -> tuple[tuple[tuple[Segment, Segment], ...], str]:
+    """Where a blunt site may sit beside the cassette, read off the record: one pair a primer.
+
+    The first span of a pair runs from the primer's footprint to the nearest releasing cut it
+    faces, so a blunt site there is one placed against that cut; the second is what the first
+    leaves clear of the footprint itself. A footprint is the whole annealing region, counted
+    back from where its 3' end binds, so bases a site already broke are inside it. The phrase
+    says what stopped the reading, empty where nothing did.
+    """
+    opened = find_sites(record, external)
+    found: list[tuple[Segment, Segment]] = []
+    for region in annealing:
+        sites = find_binding_sites(region, record)
+        if len(sites) != 1:
+            return (), (
+                f"a primer that reads a well binds it in {len(sites)} place(s), where one "
+                "amplification binds it in 1"
+            )
+        site = sites[0]
+        forward = site.strand is Strand.FORWARD
+        best: tuple[Segment, Segment] | None = None
+        for cut in opened:
+            clear = _span(record, *((site.end, cut.start) if forward else (cut.end, site.start)))
+            if clear is None or (best and clear.end - clear.start >= best[1].end - best[1].start):
+                continue
+            flank = (
+                _span(record, site.end - len(region), clear.end)
+                if forward
+                else _span(record, clear.start, site.start + len(region))
+            )
+            if flank is not None:
+                best = (flank, clear)
+        if best is None:
+            return (), f"no {external.name} site faces the primer binding at {site.start}"
+        found.append(best)
+    return tuple(found), ""
+
+
+def _span(record: SequenceRecord, start: int, end: int) -> Segment | None:
+    """Return the bases from `start` to `end` as the top strand reads them, or ``None``.
+
+    There are none where the two meet. A span across the origin ends past the record's length.
+    """
+    length = len(record)
+    if record.topology == "circular":
+        start %= length
+        reach = (end - start) % length
+    else:
+        start = max(start, 0)
+        reach = end - start
+    return Segment(start, start + reach) if reach > 0 else None
+
+
+def _meets(record: SequenceRecord, span: Segment, other: Segment) -> bool:
+    """Whether two spans of one record share a base, across the origin too."""
+    return record.covers(span, other.start) or record.covers(other, span.start)
+
+
+def _printed(record: SequenceRecord, span: Segment) -> str:
+    """One span as a person reads it: 1-based, inclusive, and counted round the origin."""
+    return f"{span.start + 1}..{(span.end - 1) % len(record) + 1}"

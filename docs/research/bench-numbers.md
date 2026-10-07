@@ -368,7 +368,7 @@ shape. **They are not Qian's kit.** The barcode-ligation rows are the part that 
 
 The method page's Route B, index PCR, is Long et al. 2025's. Its plate maps and primer plates
 are already inventoried in `docs/research/synthesis-and-assembly-materials.md`; its per-well
-PCR numbers were not read for this note and are the one deliberate omission here.
+PCR numbers are in `docs/research/route-b-index-pcr.md`.
 
 ---
 
@@ -711,8 +711,8 @@ before that pass still resolves. What closed:
 
 ## What this note does not cover
 
-- **Route B, index PCR.** Long et al. 2025's per-well PCR numbers were not read. The plate maps
-  and primer plates are already inventoried in
+- **Route B, index PCR.** Long et al. 2025's per-well PCR numbers are in
+  `docs/research/route-b-index-pcr.md`. The plate maps and primer plates are inventoried in
   `docs/research/synthesis-and-assembly-materials.md`.
 - **Live NEB product pages.** `neb.com` HTML 403s to `curl` and WebFetch, and the agent that
   fetched these documents chose not to route around the block. Everything NEB here is from a
