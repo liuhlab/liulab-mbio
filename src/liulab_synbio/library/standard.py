@@ -12,14 +12,16 @@ first position has the vector upstream rather than a part list, and a vector's s
 so it absorbs those codons and charges no protein for them.
 
 The overhang rules are `liulab_mbio.overhangs`', reached through its `refusal`: length,
-palindrome, one base class, repeat, near-duplicate, and a tail spelling no further site. One rule
-is this module's own: an overhang spelling a stop where the product reads through it is refused
-as ``stop``, whichever part would own the codon. The first position's entry overhang is read
+palindrome, one base class, repeat, reserved, near-duplicate, and a tail spelling no further
+site. An overhang the scheme fixes, and one the caller reserves, are both held out by name, so a
+candidate colliding with either is refused as ``reserved`` and not as a repeat. One rule is this
+module's own: an overhang spelling a stop where the product reads through it is refused as
+``stop``, whichever part would own the codon. The first position's entry overhang is read
 twice — at the junction it admits a part on, and again at the end of the terminal stuffer, which
 is never excised and so is read in frame — so it is scored in both places.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
 from functools import cache
 from itertools import product
@@ -153,6 +155,7 @@ def design_standard(
     part_lists: Sequence[PartList],
     *,
     pinned: Mapping[str, str] | None = None,
+    reserved: Iterable[str] = (),
     usage: CodonUsage | None = None,
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
@@ -176,6 +179,10 @@ def design_standard(
     pinned
         Entry overhangs fixed by hand, keyed by position name. A pinned overhang is held to every
         rule, and a refusal names the rule that refused it.
+    reserved
+        Overhangs a step outside the rounds spends, which no junction here may take: the cargo
+        junction of the vector the product goes on to, for one. They are held out by name, so a
+        candidate colliding with one is refused as ``reserved``.
     usage
         The host's codon usage, which settles which residue stands in where the wild-type one
         cannot be spelled. Defaults to the shipped table.
@@ -196,15 +203,19 @@ def design_standard(
     table = usage if usage is not None else codon_usage()
     enzyme = scheme.internal
     avoid = (scheme.external, *scheme.blunt)
+    held = tuple(one.upper() for one in reserved)
     codons = junction_residues(enzyme.overhang_length)[1]
     sites = _sites(scheme, part_lists, pinned or {}, codons, enzyme.overhang_length)
-    pool = _pool(enzyme, avoid, min_distance, allow_uniform)
+    pool = _pool(enzyme, avoid, held, min_distance, allow_uniform)
     options = [
-        _readings(site, pool, table, enzyme, avoid, min_distance, allow_uniform) for site in sites
+        _readings(site, pool, table, enzyme, avoid, held, min_distance, allow_uniform)
+        for site in sites
     ]
     order = sorted(range(len(sites)), key=lambda index: sites[index].pinned is None)
     chosen = _settle(options, order, sites, enzyme, avoid, min_distance, allow_uniform)
-    return _standard(sites, options, order, chosen, enzyme, avoid, min_distance, allow_uniform)
+    return _standard(
+        sites, options, order, chosen, enzyme, avoid, held, min_distance, allow_uniform
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -298,12 +309,18 @@ def _checked(position: str, parts: PartList, codons: int) -> None:
 
 
 def _pool(
-    enzyme: Enzyme, avoid: Sequence[Enzyme], min_distance: int, allow_uniform: bool
+    enzyme: Enzyme,
+    avoid: Sequence[Enzyme],
+    reserved: Sequence[str],
+    min_distance: int,
+    allow_uniform: bool,
 ) -> tuple[str, ...]:
     """Every overhang the rules allow on its own, the best ligating first.
 
     Ranked by the enzyme's own measured ligation where data covers it, so a tie on amino acids
     is broken the way `design_overhangs` breaks one rather than by a rule of this module's own.
+    A reserved overhang binds the whole set rather than one branch of the search, so it is held
+    out here and never becomes a candidate.
     """
     matrix = ligation_matrix(enzyme)
     every = ("".join(bases) for bases in product("ACGT", repeat=enzyme.overhang_length))
@@ -314,7 +331,14 @@ def _pool(
     return tuple(
         one
         for one in ranked
-        if refusal(one, enzyme, avoid=avoid, min_distance=min_distance, allow_uniform=allow_uniform)
+        if refusal(
+            one,
+            enzyme,
+            reserved=reserved,
+            avoid=avoid,
+            min_distance=min_distance,
+            allow_uniform=allow_uniform,
+        )
         is None
     )
 
@@ -365,6 +389,7 @@ def _readings(
     usage: CodonUsage,
     enzyme: Enzyme,
     avoid: Sequence[Enzyme],
+    reserved: Sequence[str],
     min_distance: int,
     allow_uniform: bool,
 ) -> _Options:
@@ -383,6 +408,7 @@ def _readings(
         broken = refusal(
             site.pinned,
             enzyme,
+            reserved=reserved,
             avoid=avoid,
             min_distance=min_distance,
             allow_uniform=allow_uniform,
@@ -602,7 +628,12 @@ def _settle(
 
 
 def _joiner(enzyme: Enzyme, avoid: Sequence[Enzyme], min_distance: int, allow_uniform: bool):
-    """Return a test of whether a candidate may join a partial set, remembering each pair."""
+    """Return a test of whether a candidate may join a partial set, remembering each pair.
+
+    A reserved overhang binds a candidate exactly as a taken one does, and this answers only
+    whether the pair is allowed, so the two need not be told apart here. `_standard` tells them
+    apart, because it reports the reason.
+    """
     seen: dict[tuple[str, str], bool] = {}
 
     def joins(candidate: str, taken: Sequence[str]) -> bool:
@@ -634,11 +665,18 @@ def _standard(
     chosen: Sequence[str],
     enzyme: Enzyme,
     avoid: Sequence[Enzyme],
+    reserved: Sequence[str],
     min_distance: int,
     allow_uniform: bool,
 ) -> Standard:
-    """Gather the chosen overhangs, the trail of what each junction refused, and the termini."""
+    """Gather the chosen overhangs, the trail of what each junction refused, and the termini.
+
+    An overhang the scheme fixed — a pinned entry overhang, or the cloning scar — is passed as
+    reserved rather than as taken, so the trail says a candidate was held out and not that it
+    duplicated a junction the design was free to move.
+    """
     taken: list[str] = []
+    fixed = list(reserved)
     trails: dict[int, tuple[Rejection, ...]] = {}
     for index in order:
         rejected: list[Rejection] = []
@@ -653,6 +691,7 @@ def _standard(
                 candidate,
                 enzyme,
                 taken=taken,
+                reserved=fixed,
                 avoid=avoid,
                 min_distance=min_distance,
                 allow_uniform=allow_uniform,
@@ -660,7 +699,7 @@ def _standard(
             if broken is not None:
                 rejected.append(broken)
         trails[index] = tuple(rejected)
-        taken.append(chosen[index])
+        (fixed if sites[index].pinned is not None else taken).append(chosen[index])
     choices: list[Choice] = []
     termini: list[Terminus] = []
     forced: list[str] = []

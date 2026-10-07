@@ -280,9 +280,21 @@ def test_the_rejection_trail_names_the_rule_that_refused_a_candidate(made, stand
     wanted = standard.entry_overhangs[0]
 
     # A pinned junction settles first, so pinning the second position to what the first would
-    # otherwise take leaves the first to refuse it as a repeat and say so.
+    # otherwise take leaves the first to refuse it. The scheme fixed that overhang, so the
+    # trail says it is reserved rather than that it duplicates a junction free to move.
     again = design_standard(made, (FIRST, SECOND), pinned={"p2": wanted})
     trail = [one for choice in again.choices for one in choice.rejected]
 
-    assert ("repeat", wanted) in {(one.rule, one.overhang) for one in trail}
+    assert ("reserved", wanted) in {(one.rule, one.overhang) for one in trail}
     assert all(one.detail for one in trail)
+
+
+def test_an_overhang_the_caller_reserves_is_held_out_and_refused_as_reserved(made, standard):
+    wanted = standard.entry_overhangs[0]
+
+    held = design_standard(made, (FIRST, SECOND), reserved=[wanted])
+    refused = refusal(wanted, made.internal, reserved=[wanted])
+
+    assert wanted not in (*held.entry_overhangs, held.scar_overhang)
+    assert refused is not None
+    assert refused.rule == "reserved"

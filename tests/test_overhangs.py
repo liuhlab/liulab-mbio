@@ -6,7 +6,14 @@ Against Pryor 2020's own worked examples: the numbers the paper reports are the 
 import pytest
 
 from liulab_mbio.enzymes import EndType
-from liulab_mbio.overhangs import STRONG_LIGATION, End, compatible, fidelity, ligation_matrix
+from liulab_mbio.overhangs import (
+    STRONG_LIGATION,
+    End,
+    compatible,
+    fidelity,
+    ligation_matrix,
+    refusal,
+)
 
 # Pryor 2020's worked example: the eleven overhangs the plant synthetic biology community
 # standardised on, which the paper scores at 81% with BsmBI-v2 and 42 C / 16 C cycling.
@@ -46,6 +53,17 @@ def test_a_blunt_end_does_not_anneal_to_an_overhang() -> None:
 def test_an_overhang_the_enzyme_would_not_leave_is_refused() -> None:
     with pytest.raises(ValueError, match="4-base"):
         End.cut_by("EcoRI", "AAT")
+
+
+def test_a_reserved_overhang_binds_as_a_taken_one_does_and_is_refused_as_reserved() -> None:
+    # A reserved overhang is held out by its own name, its reverse complement with it, and it
+    # keeps the distance rule the way a junction already taken would.
+    held = refusal("AGGT", "BsaI", reserved=["ACCT"])
+    near = refusal("AGGA", "BsaI", reserved=["AGGT"])
+
+    assert held is not None
+    assert near is not None
+    assert (held.rule, near.rule) == ("reserved", "near-duplicate")
 
 
 @pytest.mark.parametrize(("overhang", "end_type"), [("AATT", "blunt"), ("", "5'")])
