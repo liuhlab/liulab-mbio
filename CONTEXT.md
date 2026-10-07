@@ -552,6 +552,30 @@ its own junction a band, and it is what separates a reversed insert from a corre
 two flanking vector primers cannot do.
 _Avoid_: internal primer, screening primer
 
+### DAD-GGA-DMX
+
+The experiment that makes cargo and reads it back, one design at a time. A gene is split into
+fragments, the fragments come out of an oligo pool by nested PCR and assemble into the DMX
+vector, and one design is archived per well. Reading it back takes that archive to clonal wells,
+marks each well by the DMX barcode kit or by index PCR, sequences it, and calls a pass per well,
+so identity is read per member and stays with well position. It is the only place a member is
+picked or read on its own. Whether a design is read back at all is a project choice, and the
+cargo an **iGGA** round consumes is made here.
+_Avoid_: cargo pipeline, DMX, the validation pipeline
+_Package_: liulab_synbio
+
+### iGGA
+
+The pooled experiment built from the parts DAD-GGA-DMX synthesised: **rounds** of Golden Gate,
+each appending one part list and its barcode to every member of the library at once. Its product
+is a pool that goes straight to a pooled screen or to a downstream experiment. No member of it is
+ever picked, and nothing in it is re-validated for identity. What judges it are representation and
+linkage reads over the whole pool — which combinations are there and how evenly, and which barcode
+combination goes with which cargo — never a read of one member. A bound taken from a gate whose
+purpose was pickable clones does not transfer to it.
+_Avoid_: iterative assembly, library build, the library pipeline
+_Package_: liulab_synbio
+
 ### Part list
 
 The members of one position of a scheme: the protein or coding sequences that may fill it, each

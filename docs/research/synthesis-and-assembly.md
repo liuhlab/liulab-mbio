@@ -327,7 +327,14 @@ index-PCR primers need no redesign.
 Each is undecided. None is settled here. Each lists what is actually on the table and the
 evidence for each option, so the decision can be made rather than rediscovered.
 
-### 6.1 Where the Type IIS sites sit on the oligo
+Each heading names the experiment the decision belongs to, because the two are judged
+differently and a rule written for one does not transfer. **DAD-GGA-DMX** builds cargo and
+reads each well back, so a member is picked and its identity read. **iGGA** mixes those
+parts in rounds and yields a pool nobody picks from, judged by representation and linkage
+reads over the whole of it. `CONTEXT.md` defines both. A decision belonging to neither
+says so.
+
+### 6.1 Where the Type IIS sites sit on the oligo — DAD-GGA-DMX
 
 The oligo is `[P1][fragment][P2][P3]` and carries no Type IIS site, yet the next step assembles
 it into the vector by BsmBI and the design requires `AGGA`/`TTCC` ends. No step adds them. The
@@ -342,7 +349,7 @@ The Baker lab diagram puts the Type IIS cuts inboard of P1 and P2, which is the 
 The method page dropped that clause. Whichever is chosen also decides where the internal
 junction sites come from.
 
-### 6.2 The padding rule
+### 6.2 The padding rule — DAD-GGA-DMX
 
 Oligos come off the split at whatever length it gives and the layout has no slot for filler.
 The vendor refuses a pool whose shortest member is more than 15% below the longest.
@@ -356,7 +363,7 @@ The vendor refuses a pool whose shortest member is more than 15% below the longe
 Whichever is chosen, the padding is sequence that has to obey the same enzyme-site rules as the
 cargo, and the rule has to say where in the layout the filler goes.
 
-### 6.3 The split of the orthogonal primer set across its three roles
+### 6.3 The split of the orthogonal primer set across its three roles — DAD-GGA-DMX
 
 **Decided in #258: 96 inner, 35 P1, 34 P3.** Many outer pairs, few inner.
 
@@ -377,7 +384,7 @@ is the cheapest role to under-order, since 12 and 12 still give 144 batches.
 The set's own size stays 165 or 166: the supplement keeps 165 rows, the abstract says 166. The
 split is over the rows held. A 166th, if it surfaces, is a spare and forces no re-split.
 
-### 6.4 Batch size
+### 6.4 Batch size — DAD-GGA-DMX
 
 **Decided in #258: 96 genes a batch, divided equally.** 96 is the method's cap and it is
 physical — one inner-primer plate, one PCR2 plate. Above 96 genes a library divides into equal
@@ -393,7 +400,7 @@ The cap and the piece rule do not compete: 96 binds for short genes, the budget 
 The band's floor sits under Baker's "hundreds of oligos to a well", which under-loads PCR1
 rather than overloading it, and no source names that as a failure.
 
-### 6.5 The barcode set's enzyme-site freedom
+### 6.5 The barcode set's enzyme-site freedom — iGGA
 
 The stated barcode rules are a distance floor, no in-frame stop and a homopolymer cap.
 Enzyme-site freedom is not among them, although the barcode sits inside cargo that must be
@@ -412,7 +419,7 @@ band of GC 3 to 7 of 11 nor a cap of 3 came from a source: both are the conventi
 traces to one uncited sentence, and the published set meets neither. Section 4 carries the
 departure from the source that is left once they go.
 
-### 6.6 The pass criterion for a well
+### 6.6 The pass criterion for a well — DAD-GGA-DMX
 
 Two routes, both ending in "what counts as a pass", with no rule. The step that selects wells
 depends on it.
@@ -429,7 +436,7 @@ each giving 343 of 458 genes error-free.
 
 Underneath all three is the route to clonal wells itself, which section 4 marks as invention.
 
-### 6.7 How donor pools are built
+### 6.7 How donor pools are built — iGGA
 
 **Decided in #259: one pool per position, pooled equimolar from individually prepped plasmids,
 once.** This is the paper's own structure, read from METHOD DETAILS p. e4: "For each TF family,
@@ -453,7 +460,7 @@ pool of plasmids and asks nothing about their provenance. How a part reaches tha
 whether it is validated on the way, belongs to cargo synthesis and the DMX read-out — 6.6 and
 6.12.
 
-### 6.8 Clean-up ratios
+### 6.8 Clean-up ratios — iGGA
 
 **Decided in #259: the paper's two ratios — 2X after each digest, 1X after the ligation.** Read
 from METHOD DETAILS pp. e4-e5: "Digestion products were SPRI-purified at a 2X volume ratio and
@@ -467,7 +474,7 @@ Both are constants in `liulab_synbio.library.bench`, landed by #280.
 `synthesis-and-assembly-materials.md` now carries them beside the beads, which is the half of
 this decision that was missing.
 
-### 6.9 The per-round bound
+### 6.9 The per-round bound — iGGA
 
 **Decided in #259: mass in, a titre plate out, and no inherited coverage multiple.**
 
@@ -512,7 +519,7 @@ libraries were confirmed by whole plasmid next-generation sequencing (Plasmidsau
 of a finished library, not a per-round product check and not every member. The departures note
 and the method page were describing different objects.
 
-### 6.10 The primers for the library reads
+### 6.10 The primers for the library reads — iGGA
 
 **Decided in #258: two pairs, each against sequence that is already constant.** Nothing is
 added to the oligo — 350 nt is the top of its price band, so a fourth primer role is a tier
@@ -532,7 +539,7 @@ Both pairs are designed by the package against the simulated finished record, an
 written here. Reuse of `dmx0`/`dmx7` was the other option and is not needed; their sequences
 are now identified, and they read a barcoded DMX amplicon, not an assembled library.
 
-### 6.11 What the part carrier brings into the assembly
+### 6.11 What the part carrier brings into the assembly — neither; the working vector
 
 Measured: the part carrier has no BsmBI site and **one BsaI site**, and its own selection is the
 counter-selection cassette. A part that fits its default overhang pair enters the
@@ -545,7 +552,7 @@ marker separates the two outcomes — the carrier is KanR, the working vector Am
 | Amplify every part out of its carrier | Only the part then enters, and the retailoring primer form already exists for exactly this shape. It costs a reaction per part, which is what entering as the plasmid was written to avoid. |
 | Domesticate the carrier once | One edit to a lab resource built once removes the BsaI site for every part afterwards. The counter-selection cassette is the carrier's own selection and cannot be removed the same way. |
 
-### 6.12 When a design needs validation
+### 6.12 When a design needs validation — DAD-GGA-DMX
 
 Cargo synthesis ends polyclonal by default and the validation section is marked optional, so
 the step that archives a design also decides whether it is ever read. No rule says when the
@@ -562,21 +569,25 @@ in neither the method page nor any other tracked file.
 
 ### Also open, and smaller
 
-- **The design order.** For iGGA cargo the barcode and the 34 bp stuffer sit inside the
-  synthesised block, so both have to exist before the gene is split; the page splits first.
+- **The design order** — DAD-GGA-DMX. For iGGA cargo the barcode and the 34 bp stuffer sit
+  inside the synthesised block, so both have to exist before the gene is split; the page
+  splits first.
   Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
-- **The read-out route** is a per-project choice with a suggested threshold: at or below one
-  plate of samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed
-  to the primer set is wrong — forward and reverse barcodes combine freely and no dual index is
-  needed, so the limit is reagent and labour cost, one reaction per well.
-- **Which vector parent** to rebuild. The two differ only in which strand carries the cassette
-  and release the same cargo, so the rule as written does not discriminate.
-- **The colony picker model**, the QPix 420 or the QPix FLEX, a purchase decision rather than a
-  design one. The method page names neither, only that the choice is open.
-- **Where the added PmeI sites go**, which has no free space on one parent without sacrificing
-  an annotated tag.
-- **Whether acronyms are expanded on first use**, now that the page is published in the site
-  navigation rather than kept as a working file.
+- **The read-out route** — DAD-GGA-DMX. A per-project choice with a suggested threshold: at
+  or below one plate of samples, index PCR; above it, plate barcoding. The capacity ceiling
+  once attributed to the primer set is wrong — forward and reverse barcodes combine freely
+  and no dual index is needed, so the limit is reagent and labour cost, one reaction per
+  well.
+- **Which vector parent** to rebuild — both, since both run in the DMX vector. The two
+  differ only in which strand carries the cassette and release the same cargo, so the rule
+  as written does not discriminate.
+- **The colony picker model** — DAD-GGA-DMX. The QPix 420 or the QPix FLEX, a purchase
+  decision rather than a design one. The method page names neither, only that the choice is
+  open.
+- **Where the added PmeI sites go** — iGGA, which blunts the donor backbone with them. There
+  is no free space on one parent without sacrificing an annotated tag.
+- **Whether acronyms are expanded on first use** — neither; the page itself, now published
+  in the site navigation rather than kept as a working file.
 
 ## 7. Provenance of downloaded files
 
