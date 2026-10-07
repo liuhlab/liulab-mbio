@@ -47,10 +47,29 @@ wherever the site itself sits.
 | DMX barcode kit | — | BsaI (release a barcode) |
 | Cargo | BsaI, BsmBI | BsmBI (insert into the DMX vector) |
 | iGGA cargo | BsaI, BsmBI, BbsI, SrfI, PmeI | BsmBI (insert into the DMX vector), BsaI (release as the donor), BbsI (open the destination), SrfI (cut a destination BbsI missed) |
-| Working vector | BsaI, BsmBI | BsmBI (insert the working cassette), BsaI (insert cargo) |
+| Working vector | BsmBI, and the cargo enzyme | BsmBI (insert the working cassette), the cargo enzyme (insert cargo) |
 | Final vector | — | — |
 
 `docs/research/synthesis-and-assembly-barcode-kit.md` has all 96 barcodes.
+
+#### The cargo enzyme is chosen per working vector
+
+Every other enzyme above is fixed by something physical: parts carry BsmBI flanks, the DMX
+vector carries BsaI outboard of BsmBI, the barcode kit releases with BsaI. The working vector
+is the user's own, so its cargo enzyme is not fixed and is searched for per vector.
+
+What binds the choice:
+
+- Distinct from BsmBI, so inserting cargo does not re-open the cassette
+- A 4 nt 5' overhang, so `TATG`/`AGGA`/`TTCC`/`CTAA` are unchanged
+- **No site in any molecule sharing its reaction, outside what it is meant to cut** — the
+  reaction-scoped rule, which the gate reads
+- A reaction and cycling protocol the package ships
+
+The ccdB cassette's inner sites are whichever enzyme this returns, by synthesis or by the same
+re-tailoring PCR a part uses. Where the search returns nothing, the sites that blocked each
+candidate are the finding; see `docs/research/lentiviral-tolerance.md` for one vector class
+where the answer is already known.
 
 ### Parts
 
@@ -74,7 +93,8 @@ wherever the site itself sits.
 
 #### Input working vector
 
-- A backbone with no BsaI or BsmBI site, AmpR/CarbR, carrying `[TATG.BsmBI]─[stuffer cassette]─[BsmBI.CTAA]` at the cassette site
+- A backbone with no BsmBI and no cargo-enzyme site, AmpR/CarbR, carrying `[TATG.BsmBI]─[stuffer cassette]─[BsmBI.CTAA]` at the cassette site
+- Any other enzyme's sites are counted and recorded, not removed. A site only has to go where its enzyme shares a reaction with this vector
 - Stuffer cassette: RFP
 - The `ATG` of `TATG` is the start codon where the backbone carries a promoter and RBS before it. Otherwise the start sits in an N-terminal part
 
@@ -82,11 +102,12 @@ wherever the site itself sits.
 
 - `[TATG]─[N-terminal parts]─[ccdB cassette]─[C-terminal parts]─[CTAA]`
 - Either side is optional, and the ccdB cassette comes in a version to match each case
-- ccdB cassette (for later cargo insertion), supplied as a part in four versions:
-  - N and C parts: `[BsmBI.AGGA.BsaI]─[promoter+ccdB]─[BsaI.TTCC.BsmBI]`
-  - no N part: `[BsmBI.TATG]─GG─[AGGA.BsaI]─[promoter+ccdB]─[BsaI.TTCC.BsmBI]`
-  - no C part: `[BsmBI.AGGA.BsaI]─[promoter+ccdB]─[BsaI.TTCC]─GG─[CTAA.BsmBI]`
-  - neither: `[BsmBI.TATG]─GG─[AGGA.BsaI]─[promoter+ccdB]─[BsaI.TTCC]─GG─[CTAA.BsmBI]`
+- ccdB cassette (for later cargo insertion), supplied as a part in four versions, where `CE` is
+  the cargo enzyme chosen for this working vector:
+  - N and C parts: `[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC.BsmBI]`
+  - no N part: `[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC.BsmBI]`
+  - no C part: `[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
+  - neither: `[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
   - All four expose `AGGA`/`TTCC` for the cargo; a skipped side adds one Gly
 
 ### DMX vector
@@ -143,7 +164,7 @@ slot's primer site moves slot.
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
 | 1 | Choose the cassette's parts | part collection | N-terminal and C-terminal parts, or neither | what each side carries, and whether either is skipped |
-| 2 | Take the matching ccdB cassette | four versions | the one fitting which sides are used | — |
+| 2 | Take the matching ccdB cassette | four versions | the one fitting which sides are used | the cargo enzyme, and so which cassette set |
 | 3 | Retailor an overhang | part plasmid | BsmBI-tailed PCR product | whether a part's default pair fits this cassette |
 | 4 | Assemble | input working vector, parts | working vector | — |
 | 5 | Screen and pick | transformants | candidate clones | — |
@@ -261,9 +282,15 @@ any other.
 | --- | --- | --- | --- | --- |
 | 1 | Pick the working vector | working vector stock | — | which application |
 | 2 | Pick the cargo | DMX library or chosen wells | — | which cargo, and how it is pooled |
-| 3 | Assemble in one pot with BsaI | both | final vector | — |
+| 3 | Assemble with the cargo enzyme | both | final vector | whether the cargo is released in its own tube first |
 | 4 | Clean up and electroporate | reaction | the library | how many colonies |
 | 5 | Read representation | the library | what survived the transfer | screen it, or transfer again |
+
+**Step 3.** One pot where the cargo enzyme is also what releases cargo from the DMX backbone.
+Otherwise two stages in one tube: release with BsaI and PmeI, heat-kill, then add the working
+vector, the cargo enzyme and ligase. A Gibson link or a re-tailoring PCR does the same job at a
+different price. This is the one reaction where the working vector meets DMX-derived material,
+because the iGGA rounds all finish first.
 
 Neither by-product needs a check.
 
@@ -307,7 +334,7 @@ and `docs/research/synthesis-and-assembly-barcode-kit.md`.
 
 | Kind | Items |
 | --- | --- |
-| Type IIS enzymes | BsaI-HFv2, BsmBI, BbsI |
+| Type IIS enzymes | BsaI-HFv2, BsmBI, BbsI, and the cargo enzyme chosen for the working vector (PaqCI needs its activator oligo) |
 | Blunt cutters | SrfI, PmeI |
 | Ligases | T4 DNA ligase; T7 DNA ligase with StickTogether buffer |
 | Clean-up | SPRI beads; a column clean-up kit; a plasmid prep kit |
