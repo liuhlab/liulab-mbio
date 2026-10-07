@@ -680,3 +680,37 @@ An enzyme with one cut site in a sequence record, counted over the whole record 
 draws only a region of it, since that one cut is what opens the record for cloning. A map shows
 the shipped unique cutters unless told which enzymes to show.
 _Avoid_: single cutter, unique site
+
+### Reaction
+
+One tube: the molecules in it, each bound to the role it plays there, and the enzymes acting on
+them. A reaction is a digest, a ligation, or a one-pot that does both, and it carries how many
+vessels differ only in which species fills a role -- one reaction over a 96-well array is one
+reaction, not 96. One reaction's product is the next one's input; a sequence of reactions records
+that order and no constraint of its own.
+_Avoid_: step, tube, assembly, mix
+
+### Role
+
+What a molecule is in a reaction for: the destination opened, the donor cut out of its block, the
+insert going in, or the carrier holding a part until it is wanted. A role binds to one species or
+to a pool of them, and never to two pools in one tube.
+_Avoid_: part type, slot, component
+
+### Gate
+
+What judges a finished design: the predicates `liulab_mbio` holds, called with one method's
+parameters, over the molecules of each reaction. It reads reactions rather than bare records, so
+it is blind to how a design was reached and still says which tube a failure belongs to. A design
+an agent composed and one a pipeline wrote are judged the same way.
+_Avoid_: validator, linter, QC
+_Package_: liulab_synbio
+
+### Judgement
+
+One check the gate made, what it judged, and the findings behind it. A finding is whatever domain
+object `liulab_mbio` already returns where the gate looked -- a cut site, a span -- so a failure
+can be drawn on the record it occurred in. A failing judgement names what is wrong and need not
+name a remedy.
+_Avoid_: violation, error, issue
+_Package_: liulab_synbio
