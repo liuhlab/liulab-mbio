@@ -5,6 +5,7 @@ alone: which primer a block takes, what a sheet or a band may say, and what is r
 """
 
 import random
+from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
 
@@ -169,11 +170,17 @@ def test_an_empty_block_is_refused_by_name(parts, project, primers):
         design_pool([*parts, hollow], project, primers=primers)
 
 
-def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_draw(project, primers):
-    """A hand-built block spelling BsmBI on either strand: the oligo check catches it."""
+def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_offset(project, primers):
+    """A hand-built block spelling BsmBI on its bottom strand: the split refuses it."""
     carrier = block("carrier", bases(random.Random(3), 97) + "GAGACG" + bases(random.Random(4), 97))
-    with pytest.raises(ValueError, match=r"block 'carrier' fragment 1 of 1, filler drawn from "):
+    with pytest.raises(ValueError, match=r"block 'carrier'.*BsmBI site\(s\), the first at 97 "):
         design_pool([carrier], project, primers=primers, seed=7)
+
+
+def test_a_batch_wider_than_the_plate_of_inner_primers_is_refused(parts, project, primers):
+    wide = replace(project, batch_size=INNER + 1)
+    with pytest.raises(ValueError, match=rf"batch_size is {INNER + 1}.*{INNER} .*one plate"):
+        design_pool(parts, wide, primers=primers)
 
 
 def test_a_sheet_allots_its_primers_to_the_roles_in_order(tmp_path):

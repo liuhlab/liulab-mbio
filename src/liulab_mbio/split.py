@@ -34,8 +34,8 @@ from liulab_mbio.overhangs import (
     best_overhang,
     fidelity,
 )
-from liulab_mbio.sequence import Segment, SequenceRecord
-from liulab_mbio.sites import EnzymeLike
+from liulab_mbio.sequence import Segment, SequenceRecord, Strand
+from liulab_mbio.sites import EnzymeLike, find_sites
 
 #: The shortest fragment a vendor's pool and a one-pot assembly are comfortable with. A
 #: fragment shorter than this is mostly overhang, and nothing here needs one.
@@ -220,8 +220,9 @@ def split_cargo(
     Raises
     ------
     ValueError
-        If the cargo is circular, shorter than one fragment, or spells no legal overhang set at
-        any fragment count the budget allows -- which says how far the budget does reach.
+        If the cargo is circular, carries a site of `enzyme` itself, is shorter than one
+        fragment, or spells no legal overhang set at any fragment count the budget allows --
+        which says how far the budget does reach.
 
     Examples
     --------
@@ -233,6 +234,7 @@ def split_cargo(
     one = get_enzyme(enzyme) if isinstance(enzyme, str) else enzyme
     if cargo.topology == "circular":
         raise ValueError("a circular record has no first fragment, so it cannot be split")
+    _check_cutter(cargo, one)
     bases = str(cargo.sequence)
     length = len(bases)
     overhang = one.overhang_length
@@ -268,6 +270,30 @@ def split_cargo(
             continue
         return _split(cargo, one, budget, bases, found, length, overhang, profile, prefer_profile)
     raise ValueError(_ceiling(length, budget, overhang, refused))
+
+
+def _check_cutter(cargo: SequenceRecord, enzyme: Enzyme) -> None:
+    """Refuse a cargo spelling the site of the enzyme that cuts its fragments out.
+
+    The cuts this design places are the two the oligo carries at a fragment's ends, so a site
+    the cargo spells itself is a third one, inside a fragment. No split clears it: it is the
+    cargo's bases, and domestication is what takes it out.
+
+    Raises
+    ------
+    ValueError
+        Naming how many sites, and where the first one reads.
+    """
+    carried = find_sites(cargo, enzyme)
+    if not carried:
+        return
+    first = carried[0]
+    strand = "forward" if first.strand == Strand.FORWARD else "reverse"
+    raise ValueError(
+        f"the cargo spells {len(carried)} {enzyme.name} site(s), the first at {first.start} on "
+        f"the {strand} strand, and {enzyme.name} is what cuts each fragment out of its oligo, "
+        "so that site would cut a fragment apart"
+    )
 
 
 def _ceiling(length: int, budget: Budget, overhang: int, refused: Sequence[str]) -> str:

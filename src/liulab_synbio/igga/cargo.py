@@ -209,9 +209,11 @@ def design_pool(
     Raises
     ------
     ValueError
-        If the primer set is short of what the method allots, or if a block is empty, the split
-        refuses it, or its oligo spells a reserved site -- each naming the block.
+        If the batch is wider than the plate of inner primers, or the primer set is short of
+        what the method allots. Also if a block is empty, the split refuses it, or its oligo
+        spells a reserved site -- each of those naming the block.
     """
+    _check_batch(project.batch_size)
     scheme = project.scheme
     layout = OligoLayout(
         project.oligo_length,
@@ -274,6 +276,22 @@ def design_pool(
 def part_record(part: Part) -> SequenceRecord:
     """Return one block as a record named for its part, which is what the split carries."""
     return SequenceRecord(part.sequence, name=part.name)
+
+
+def _check_batch(size: int) -> None:
+    """Refuse a batch holding more blocks than the method has inner primers to name them by.
+
+    Raises
+    ------
+    ValueError
+        Naming the batch size, the role it outruns and the rule that fixes it.
+    """
+    role, plate = ORTHOGONAL_SPLIT[0]
+    if size > plate:
+        raise ValueError(
+            f"batch_size is {size} and this method allots {plate} {role} primers, one to a "
+            "block, because one batch is exactly one plate of PCR2"
+        )
 
 
 def _roles() -> tuple[str, ...]:

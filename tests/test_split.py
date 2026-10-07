@@ -67,6 +67,15 @@ def test_it_refuses_a_cargo_past_the_ceiling_and_says_where_the_ceiling_is():
         split_cargo(SequenceRecord("AT" * 4000), "BsaI", budget=Budget(120, 74))
 
 
+@pytest.mark.parametrize(("site", "strand"), [("GGTCTC", "forward"), ("GAGACC", "reverse")])
+def test_a_cargo_carrying_the_cutter_s_own_site_is_refused_where_that_site_reads(site, strand):
+    """The split is where it is caught: a layer above knows the block, not the offset."""
+    bases = str(CARGO.sequence)
+    carrying = SequenceRecord(bases[:300] + site + bases[300:])
+    with pytest.raises(ValueError, match=rf"1 BsaI site\(s\), the first at 300 on the {strand}"):
+        split_cargo(carrying, "BsaI", budget=Budget(350, 74))
+
+
 def test_a_circular_record_has_no_first_fragment():
     with pytest.raises(ValueError, match="circular"):
         split_cargo(
