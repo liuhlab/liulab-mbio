@@ -4,16 +4,13 @@ A combinatorial library over three positions, built from 72 protein sequences an
 Every output file below was written by the command, from the three input files beside it.
 Nothing here is edited by hand.
 
-Read this page to see what a whole run writes. Its [scheme.json](scheme.json) is one published
-library's own architecture, so it carries that project's choices. To start a scheme of your own,
-copy [the other one](../protein-library/scheme.json) instead: it is a scheme and nothing else,
-written to be edited.
+Read this page to see what a whole run writes. Its [project.json](project.json) holds every
+choice this library made; copy it to start one of your own. The method it is built by is the
+package's own and is not in the file.
 
 ```bash
-pixi run liulab_synbio library plan docs/examples/ap1-library/parts.fasta \
-  --scheme docs/examples/ap1-library/scheme.json \
-  --vector docs/examples/ap1-library/vector.gb \
-  --host human --coverage 300 --name 'AP-1 DESynR' --out docs/examples/ap1-library
+pixi run liulab_synbio library plan docs/examples/ap1-library/project.json \
+  --out docs/examples/ap1-library
 ```
 
 To change what these files say, change the code and run that command again. The same inputs
@@ -24,7 +21,7 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [scheme.json](scheme.json) | the architecture: which enzyme does which job, and the stuffer each part carries |
+| [project.json](project.json) | what this library chose: its three positions, its host, its coverage and its barcode rules |
 | [vector.gb](vector.gb) | the destination the first round opens |
 
 The names say the position: `N_JUN` fills N, `DBD_JUN` fills DBD, `C_JUN` fills C. No overhang,

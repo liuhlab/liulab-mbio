@@ -1,8 +1,8 @@
 """The AP-1 demo planned end to end, from the amino acid sequences and nothing else.
 
 The inputs are `docs/examples/ap1-library`, specified by `docs/research/ap1-demo-project.md`:
-72 proteins, a scheme and a destination. Every assertion here is on the planned product and the
-blocks that make it, not on how the design reached them.
+72 proteins, a project file and a destination. Every assertion here is on the planned product and
+the blocks that make it, not on how the design reached them.
 """
 
 from collections import Counter
@@ -29,14 +29,7 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 
 @pytest.fixture(scope="module")
 def plan():
-    return plan_library(
-        DEMO / "parts.fasta",
-        DEMO / "scheme.json",
-        DEMO / "vector.gb",
-        host="human",
-        coverage=300.0,
-        name="AP-1 DESynR",
-    )
+    return plan_library(DEMO / "project.json")
 
 
 def test_the_demo_plans_every_part_and_the_whole_library(plan):
@@ -69,5 +62,5 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
     codes = [one.barcode for one in plan.representative_parts]
     assert scar.join(reversed(codes)) in bases
     retained = bases[plan.rounds[-1].retained.start : plan.rounds[-1].retained.end]
-    assert len(retained) == plan.scheme.retained_length == 75
+    assert len(retained) == plan.project.retained_length == 75
     assert "*" not in translate(retained)

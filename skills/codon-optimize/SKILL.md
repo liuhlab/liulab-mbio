@@ -68,7 +68,7 @@ silence would throw away choices they may have reasons for.
 
 A site is found on either strand, because an enzyme reads it on either. A change that would
 clear one site by spelling another forbidden one is passed over — so pass every enzyme the
-scheme uses in one `forbidden` list, rather than one enzyme at a time.
+method uses in one `forbidden` list, rather than one enzyme at a time.
 
 ## When it refuses
 

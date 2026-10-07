@@ -2,7 +2,7 @@
   "title": "Library assembly: 3 part lists into DMX-demo",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "overview": {
-    "Scheme": "AP-1 three-position iGGA",
+    "Method": "iGGA",
     "Part lists": "N 24, DBD 24, C 24",
     "Parts": "72 synthesised blocks",
     "Constructs": "13,824 distinct",
@@ -1474,7 +1474,7 @@
       "url": "https://doi.org/10.1101/gr.121715.111"
     },
     {
-      "text": "The scheme this build was given: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections, as specified for this project by docs/research/ap1-demo-project.md. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+      "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
       "url": ""
     }
   ]

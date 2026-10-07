@@ -1,17 +1,20 @@
-"""One combinatorial library, planned from its part lists, a scheme and a destination vector.
+"""One combinatorial library, planned from a project file and nothing else.
 
-`plan_library` is the one way in. It reads the part lists, chooses the overhang standard the
-proteins cost least, builds every part's synthesis sequence, makes the vector a destination,
-simulates every round, and works out what each round takes at the bench and how many colonies it
-needs. `LibraryPlan.write` puts one directory's worth of output in one place: the synthesis order
-sheet, the barcode table, the amino-acid change table, a record for every round, the protocol as
-JSON data, and the page rendered from that data.
+`plan_library` is the one way in. It reads the project, sorts the part lists, chooses the overhang
+standard the proteins cost least, builds every part's synthesis sequence, makes the vector a
+destination, simulates every round, and works out what each round takes at the bench and how many
+colonies it needs. `LibraryPlan.write` puts one directory's worth of output in one place: the
+synthesis order sheet, the barcode table, the amino-acid change table, a record for every round,
+the protocol as JSON data, and the page rendered from that data.
+
+The method is `liulab_synbio.library.method.IGGA` and is not an argument. What a build chooses is
+the project's, and `docs/adr/0010-method-in-code.md` draws the line between them.
 
 **The vector and the standard have to agree about position one.** A vector already carrying an
 internal stuffer spells an entry overhang in DNA that exists, so position one's overhang is
 pinned to it and the standard designs around that. A vector that has to be retrofitted has its
 stuffer synthesised now, so the standard chooses position one freely and the stuffer put in
-carries what it chose. Nothing else in the scheme moves either way.
+carries what it chose. Nothing else in the method moves either way.
 """
 
 import dataclasses
@@ -22,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from liulab_mbio.barcodes import SEED, BarcodeRules
+from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
@@ -34,15 +37,17 @@ from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
 from liulab_synbio.library.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_synbio.library.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import (
     Part,
+    barcode_rules,
     barcode_table,
     change_table,
     design_parts,
     synthesis_sheet,
 )
+from liulab_synbio.library.project import Project, read_project
 from liulab_synbio.library.rounds import Round, assemble_rounds, representative, write_records
-from liulab_synbio.library.scheme import Scheme, read_scheme
 from liulab_synbio.library.standard import PartList, Standard, design_standard
 from liulab_synbio.library.steps import RoundBench
 from liulab_synbio.library.steps import protocol as protocol_for
@@ -111,14 +116,16 @@ class LibraryPlan:
 
     Parameters
     ----------
+    project
+        What this build chose: its positions, its inputs and its dials.
     scheme
-        The architecture the build was given.
+        The method the build was planned by.
     vector
         The record the plan was made from, before any retrofit.
     destination
         The vector a round can open, and what making it one changed.
     part_lists
-        One per position, in the scheme's order: each member's name and the protein it codes for,
+        One per position, in the project's order: each member's name and the protein it codes for,
         whether it was given as protein or read off DNA.
     coding
         One per position: the coding sequence a member came already coded in, empty for a member
@@ -140,6 +147,7 @@ class LibraryPlan:
         What each round's product is called.
     """
 
+    project: Project
     scheme: Scheme
     vector: SequenceRecord
     destination: Destination
@@ -191,6 +199,8 @@ class LibraryPlan:
         """Return the bench protocol for this plan, covering every round as one experiment."""
         return protocol_for(
             scheme=self.scheme,
+            positions=self.project.positions,
+            barcode_length=self.project.barcode.length,
             vector=self.vector,
             destination=self.destination,
             part_lists=self.part_lists,
@@ -218,7 +228,9 @@ class LibraryPlan:
         sheet = out / PARTS_FILE
         sheet.write_text(synthesis_sheet(self.parts), encoding="utf-8")
         barcodes = out / BARCODE_FILE
-        barcodes.write_text(barcode_table(self.parts, self.scheme), encoding="utf-8")
+        barcodes.write_text(
+            barcode_table(self.parts, self.project.position_count), encoding="utf-8"
+        )
         changes = out / CHANGE_FILE
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
@@ -227,42 +239,31 @@ class LibraryPlan:
 
 
 def plan_library(
-    parts: str | os.PathLike[str] | Sequence[Mapping[str, str]],
-    scheme: Scheme | str | os.PathLike[str],
-    vector: SequenceRecord | str | os.PathLike[str],
+    project: Project | str | os.PathLike[str],
     *,
-    host: str,
-    coverage: float,
+    parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
     site: Site | None = None,
     pattern: str = NAME_PATTERN,
     rules: BarcodeRules | None = None,
-    seed: int = SEED,
-    name: str = "",
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
 ) -> LibraryPlan:
-    """Plan the whole library `parts` makes under `scheme`, built into `vector`.
+    """Plan the whole library `project` asks for, by the method `project` is built under.
 
     One round appends one part list to every member of the library at once, so the rounds run in
-    the scheme's own order and the product of each opens the next. The same inputs return the
-    same design: the barcodes are drawn from `seed`, and nothing else here is random.
+    the project's own order and the product of each opens the next. The same inputs return the
+    same design: the barcodes are drawn from the project's seed, and nothing else here is random.
 
     Parameters
     ----------
+    project
+        What this build chooses, or a path to the JSON holding it;
+        `liulab_synbio.library.project.read_project` reads one. It names the parts FASTA and the
+        vector by path.
     parts
-        A FASTA holding every part list, each record named so that `pattern` says which position
-        it fills, or one already-sorted mapping per position in the scheme's order.
-    scheme
-        The architecture the build is given, or a path to the JSON holding it.
-    vector
-        The destination, circular: a record, or a path to a ``.dna``, GenBank or FASTA file.
-    host
-        The name of the codon usage table the coding bases are written for. Never assumed:
-        `liulab_mbio.codons.codon_tables` lists the tables that ship.
-    coverage
-        How many times over each round's colonies have to hold every product it can make. No
-        default: how much of a library a round may lose is the caller's call.
+        One already-sorted mapping per position, in the project's order. The project's own parts
+        FASTA is read where this is not given.
     kind
         What the part lists hold. ``"dna"`` is checked and kept rather than written again; only a
         codon a junction or a forbidden site moves is this package's.
@@ -272,11 +273,8 @@ def plan_library(
     pattern
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
-        What every barcode holds to. `liulab_synbio.library.parts.barcode_rules` by default.
-    seed
-        The seed the barcodes are drawn with.
-    name
-        What to call each round's product. The vector's own name by default.
+        What every barcode holds to. Built from the project's own barcode length and distance by
+        default; see `liulab_synbio.library.parts.barcode_rules`.
     min_distance, allow_uniform
         How far apart the standard's overhangs must stand, and whether one base kind is allowed.
 
@@ -288,48 +286,70 @@ def plan_library(
     Raises
     ------
     ValueError
-        If a record's name says no position of the scheme or says more than one, if two records
+        If a record's name says no position of the project or says more than one, if two records
         share a name, if a part is not a protein or not a coding sequence, if no overhang
-        standard fits the part lists, if a block spells a site the scheme does not expect, if the
+        standard fits the part lists, if a block spells a site the method does not expect, if the
         vector cannot be made a destination, or if a round cannot ligate.
     KeyError
-        If no shipped codon usage table is called `host`, or the scheme names an enzyme this
-        package does not ship.
+        If the project names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
         If a part list is larger than the barcodes its rules allow.
 
     Examples
     --------
-    >>> plan = plan_library("parts.fasta", "scheme.json", "vector.dna",
-    ...                     host="human", coverage=10)  # doctest: +SKIP
+    >>> plan = plan_library("project.json")  # doctest: +SKIP
     >>> plan.write("library/")  # doctest: +SKIP
     """
-    design = _scheme(scheme)
-    one = as_record(vector)
-    if isinstance(parts, str | os.PathLike):
-        given: Sequence[Mapping[str, str]] = read_part_lists(parts, design, pattern=pattern)
-    else:
-        given = parts
-    lists, coded = _sequences(_checked(given, design), kind)
+    chosen = project if isinstance(project, Project) else read_project(project)
+    design = chosen.scheme
+    positions = chosen.positions
+    one = as_record(chosen.vector)
+    given = (
+        parts if parts is not None else read_part_lists(chosen.parts, positions, pattern=pattern)
+    )
+    lists, coded = _sequences(_checked(given, positions), kind)
     compatible = _compatible(one, design)
-    pinned = {design.positions[0].name: design.entry_overhang(0)} if compatible else {}
+    pinned = {positions[0]: design.entry_overhang} if compatible else {}
     standard = design_standard(
         design,
+        positions,
         lists,
         pinned=pinned,
-        usage=codon_usage(host),
+        usage=codon_usage(chosen.host),
         min_distance=min_distance,
         allow_uniform=allow_uniform,
     )
-    built = design_parts(design, lists, standard, host=host, coding=coded, rules=rules, seed=seed)
+    held = (
+        rules
+        if rules is not None
+        else barcode_rules(
+            design,
+            chosen.barcode.length,
+            distance=chosen.barcode.min_distance,
+            reserved=chosen.reserved_extra,
+        )
+    )
+    built = design_parts(
+        design,
+        positions,
+        lists,
+        standard,
+        host=chosen.host,
+        rules=held,
+        coding=coded,
+        seed=chosen.seed,
+        reserved=chosen.reserved_extra,
+    )
     destination = destination_vector(
         one, design if compatible else _restandardised(design, standard), site=site
     )
+    named = chosen.name or one.name
     rounds = assemble_rounds(
-        destination.record, representative(built, design), design, name=name or one.name
+        destination.record, representative(built, positions), design, positions, name=named
     )
-    rows = plan_coverage([len(each) for each in lists], coverage=coverage)
+    rows = plan_coverage([len(each) for each in lists], coverage=chosen.coverage)
     return LibraryPlan(
+        chosen,
         design,
         one,
         destination,
@@ -340,15 +360,15 @@ def plan_library(
         rounds,
         rows,
         _bench(rounds, built, rows),
-        host,
-        name or one.name,
+        chosen.host,
+        named,
     )
 
 
 def read_part_lists(
-    path: str | os.PathLike[str], scheme: Scheme, *, pattern: str = NAME_PATTERN
+    path: str | os.PathLike[str], positions: Sequence[str], *, pattern: str = NAME_PATTERN
 ) -> tuple[dict[str, str], ...]:
-    """Read one FASTA and sort its records into one part list a position, in the scheme's order.
+    """Read one FASTA and sort its records into one part list a position, in the project's order.
 
     A record is ordered under the name the FASTA gives it, and that name is what says which
     position it fills.
@@ -356,15 +376,15 @@ def read_part_lists(
     Raises
     ------
     ValueError
-        If the file holds no record, if two records share a name, if a name says no position of
-        the scheme or says more than one, or if a position ends up with nothing to fill it.
+        If the file holds no record, if two records share a name, if a name says no position or
+        says more than one, or if a position ends up with nothing to fill it.
 
     Examples
     --------
-    >>> read_part_lists("parts.fasta", scheme)  # doctest: +SKIP
-    ({'N_ATF2': 'MKT...'}, {'bZIP_JUN': 'WQA...'}, {'C_VP64': 'MKT...'})
+    >>> read_part_lists("parts.fasta", ("N", "DBD", "C"))  # doctest: +SKIP
+    ({'N_ATF2': 'MKT...'}, {'DBD_JUN': 'WQA...'}, {'C_VP64': 'MKT...'})
     """
-    return _sorted(_fasta(path), scheme, pattern)
+    return _sorted(_fasta(path), positions, pattern)
 
 
 def _fasta(path: str | os.PathLike[str]) -> dict[str, str]:
@@ -387,7 +407,9 @@ def _fasta(path: str | os.PathLike[str]) -> dict[str, str]:
     return found
 
 
-def _sorted(records: Mapping[str, str], scheme: Scheme, pattern: str) -> tuple[dict[str, str], ...]:
+def _sorted(
+    records: Mapping[str, str], positions: Sequence[str], pattern: str
+) -> tuple[dict[str, str], ...]:
     """Put each record in the one part list its name names.
 
     Raises
@@ -395,7 +417,7 @@ def _sorted(records: Mapping[str, str], scheme: Scheme, pattern: str) -> tuple[d
     ValueError
         If a name says no position or says more than one, or a position is left empty.
     """
-    names = [position.name for position in scheme.positions]
+    names = list(positions)
     matchers = [
         re.compile(pattern.replace("{position}", re.escape(one)), re.IGNORECASE) for one in names
     ]
@@ -404,15 +426,15 @@ def _sorted(records: Mapping[str, str], scheme: Scheme, pattern: str) -> tuple[d
         hit = [index for index, matcher in enumerate(matchers) if matcher.search(named)]
         if not hit:
             raise ValueError(
-                f"the name {named!r} says no position of scheme {scheme.name!r}, whose positions "
-                f"are {', '.join(names)}. Rename the record, or pass a pattern that reads the "
+                f"the name {named!r} says no position of this project, whose positions are "
+                f"{', '.join(names)}. Rename the record, or pass a pattern that reads the "
                 "names you already have"
             )
         if len(hit) > 1:
             said = ", ".join(names[index] for index in hit)
             raise ValueError(
-                f"the name {named!r} says {len(hit)} positions of scheme {scheme.name!r} — "
-                f"{said} — so which part list it belongs to is ambiguous"
+                f"the name {named!r} says {len(hit)} positions of this project — {said} — so "
+                "which part list it belongs to is ambiguous"
             )
         lists[hit[0]][named] = sequence
     if empty := [one for one, parts in zip(names, lists, strict=True) if not parts]:
@@ -422,7 +444,9 @@ def _sorted(records: Mapping[str, str], scheme: Scheme, pattern: str) -> tuple[d
     return tuple(lists)
 
 
-def _checked(given: Sequence[Mapping[str, str]], scheme: Scheme) -> tuple[Mapping[str, str], ...]:
+def _checked(
+    given: Sequence[Mapping[str, str]], positions: Sequence[str]
+) -> tuple[Mapping[str, str], ...]:
     """Refuse part lists that are not one a position, or that name one part twice.
 
     Raises
@@ -431,10 +455,10 @@ def _checked(given: Sequence[Mapping[str, str]], scheme: Scheme) -> tuple[Mappin
         Naming the count, or the name two part lists share.
     """
     lists = tuple(given)
-    if len(lists) != scheme.position_count:
-        said = ", ".join(position.name for position in scheme.positions)
+    if len(lists) != len(positions):
+        said = ", ".join(positions)
         raise ValueError(
-            f"this scheme has {scheme.position_count} position(s) — {said} — and "
+            f"this project has {len(positions)} position(s) — {said} — and "
             f"{len(lists)} part list(s) were given"
         )
     seen: set[str] = set()
@@ -493,12 +517,12 @@ def _protein(name: str, dna: str) -> str:
 
 
 def _compatible(vector: SequenceRecord, scheme: Scheme) -> bool:
-    """Whether the internal enzyme already excises one piece of `vector` on the scheme's overhangs.
+    """Whether the internal enzyme already excises one piece of `vector` on the method's overhangs.
 
     That piece is DNA that physically exists, so the overhang it spells cannot be re-chosen, and
     position one's entry overhang is pinned to it.
     """
-    entry, scar = scheme.entry_overhang(0), scheme.scar_overhang
+    entry, scar = scheme.entry_overhang, scheme.scar_overhang
     return any(
         (piece.left_overhang, piece.right_overhang) == (entry, scar)
         for piece in digest(vector, scheme.internal)
@@ -511,35 +535,30 @@ def _ending(bases: str, overhang: str) -> str:
 
 
 def _restandardised(scheme: Scheme, standard: Standard) -> Scheme:
-    """Return `scheme` with the standard's entry overhangs written into its stuffers.
+    """Return `scheme` with the standard's first entry overhang written into its stuffers.
 
     A vector that has to be retrofitted has its internal stuffer synthesised now, so the stuffer
-    put in carries the overhang the standard chose rather than the one the scheme was written
-    with. Only the bases an overhang occupies move; every other base of every stuffer stays.
+    put in carries the overhang the standard chose for position one rather than the one the
+    method's own DNA carries. Only the bases an overhang occupies move; every other base of every
+    stuffer stays.
 
     Raises
     ------
     ValueError
-        If the stuffers those overhangs make are not ones this scheme allows, naming the
-        invariant that refused them.
+        If the stuffers that overhang makes are not ones the method allows, naming the invariant
+        that refused them.
     """
-    entry = standard.entry_overhangs
-    positions = tuple(
-        dataclasses.replace(
-            position,
-            internal_stuffer_prefix=_ending(
-                position.internal_stuffer_prefix, entry[(index + 1) % len(entry)]
-            ),
-            external_stuffer_5=_ending(position.external_stuffer_5, entry[index]),
-        )
-        for index, position in enumerate(scheme.positions)
-    )
+    first = standard.entry_overhangs[0]
     try:
-        return dataclasses.replace(scheme, positions=positions)
+        return dataclasses.replace(
+            scheme,
+            internal_stuffer_prefix=_ending(scheme.internal_stuffer_prefix, first),
+            external_stuffer_5=_ending(scheme.external_stuffer_5, first),
+        )
     except ValueError as error:
         raise ValueError(
             "this vector has to be retrofitted, and the internal stuffer carrying the entry "
-            f"overhangs this design chose is not one scheme {scheme.name!r} allows: {error}"
+            f"overhang this design chose is not one method {scheme.name!r} allows: {error}"
         ) from error
 
 
@@ -585,8 +604,3 @@ def _bench(
 def _ligation(destination: str, opened: int, donor: str, released: int) -> tuple[Amount, Amount]:
     """Return what one round's ligation takes, the opened destination first."""
     return ligation_amounts((f"{destination}, opened", opened), (f"{donor}, released", released))
-
-
-def _scheme(value: Scheme | str | os.PathLike[str]) -> Scheme:
-    """Read a scheme, or take one already read."""
-    return value if isinstance(value, Scheme) else read_scheme(value)

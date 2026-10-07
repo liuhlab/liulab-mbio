@@ -591,7 +591,7 @@ _Package_: liulab_synbio
 
 The piece at each end of a synthesised part, outside what the part contributes to the product. The
 external enzyme cuts inside it to release the part as a digest fragment, and a blunt enzyme cuts
-further out so that what is left of the block cannot ligate back. The 5' one begins with the
+further out so that what is left of the block cannot ligate back. The 5' one ends with the
 part's own entry overhang.
 _Avoid_: adapter, arm, flank, tail
 _Package_: liulab_synbio

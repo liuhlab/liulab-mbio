@@ -13,7 +13,7 @@ so it absorbs those codons and charges no protein for them.
 
 The overhang rules are `liulab_mbio.overhangs`', reached through its `refusal`: length,
 palindrome, one base class, repeat, reserved, near-duplicate, and a tail spelling no further
-site. An overhang the scheme fixes, and one the caller reserves, are both held out by name, so a
+site. An overhang the method fixes, and one the caller reserves, are both held out by name, so a
 candidate colliding with either is refused as ``reserved`` and not as a repeat. One rule is this
 module's own: an overhang spelling a stop where the product reads through it is refused as
 ``stop``, whichever part would own the codon. The first position's entry overhang is read
@@ -38,7 +38,7 @@ from liulab_mbio.overhangs import (
     refusal,
 )
 from liulab_mbio.sequence import reverse_complement
-from liulab_synbio.library.scheme import Scheme
+from liulab_synbio.library.method import Scheme
 
 #: One part list: the name each member is ordered under, and the protein it codes for.
 type PartList = Mapping[str, str]
@@ -152,6 +152,7 @@ class Standard:
 
 def design_standard(
     scheme: Scheme,
+    positions: Sequence[str],
     part_lists: Sequence[PartList],
     *,
     pinned: Mapping[str, str] | None = None,
@@ -164,18 +165,19 @@ def design_standard(
 
     Every junction is scored across every member of the part lists either side of it, and the
     set with the lowest total is the one chosen, so the standard is the cheapest for the actual
-    sequences rather than the first that passes. The cloning scar is the scheme's own and is held
+    sequences rather than the first that passes. The cloning scar is the method's own and is held
     to the same rules as the overhangs designed around it.
 
     Parameters
     ----------
     scheme
-        The architecture the standard is written into: its enzymes, its positions and the
-        overhang length they leave. Its stuffers are not read for overhangs, which is what this
-        chooses.
+        The method the standard is written into: its enzymes and the overhang length they leave.
+        Its stuffers are not read for overhangs, which is what this chooses.
+    positions
+        The positions, in the order the rounds fill them.
     part_lists
-        One per position, in the scheme's order: each member's name and the protein it codes for,
-        as one-letter amino acids.
+        One per position, in that order: each member's name and the protein it codes for, as
+        one-letter amino acids.
     pinned
         Entry overhangs fixed by hand, keyed by position name. A pinned overhang is held to every
         rule, and a refusal names the rule that refused it.
@@ -194,18 +196,18 @@ def design_standard(
     Raises
     ------
     ValueError
-        If the part lists do not match the scheme's positions, a protein is too short or holds a
-        letter that is not an amino acid, a pinned position is not one of the scheme's, or a
-        junction has no overhang left — which names the rules and the last candidate refused.
+        If the part lists do not match the positions, a protein is too short or holds a letter
+        that is not an amino acid, a pinned position is not one of them, or a junction has no
+        overhang left — which names the rules and the last candidate refused.
     KeyError
-        If the scheme names an enzyme this package does not ship.
+        If the method names an enzyme this package does not ship.
     """
     table = usage if usage is not None else codon_usage()
     enzyme = scheme.internal
     avoid = (scheme.external, *scheme.blunt)
     held = tuple(one.upper() for one in reserved)
     codons = junction_residues(enzyme.overhang_length)[1]
-    sites = _sites(scheme, part_lists, pinned or {}, codons, enzyme.overhang_length)
+    sites = _sites(scheme, positions, part_lists, pinned or {}, codons, enzyme.overhang_length)
     pool = _pool(enzyme, avoid, held, min_distance, allow_uniform)
     options = [
         _readings(site, pool, table, enzyme, avoid, held, min_distance, allow_uniform)
@@ -234,6 +236,7 @@ class _Site:
 
 def _sites(
     scheme: Scheme,
+    positions: Sequence[str],
     part_lists: Sequence[PartList],
     pinned: Mapping[str, str],
     codons: int,
@@ -245,19 +248,19 @@ def _sites(
     ------
     ValueError
         On a part list count, an empty list, an unreadable protein, or a pinned name that is not
-        a position of this scheme.
+        one of the positions.
     """
-    names = [position.name for position in scheme.positions]
+    names = list(positions)
     if len(part_lists) != len(names):
         raise ValueError(
-            f"this scheme has {len(names)} position(s) — {', '.join(names)} — and "
+            f"this build has {len(names)} position(s) — {', '.join(names)} — and "
             f"{len(part_lists)} part list(s) were given"
         )
     if strange := sorted(set(pinned) - set(names)):
-        raise ValueError(f"pinned name(s) {', '.join(strange)} are not positions of this scheme")
+        raise ValueError(f"pinned name(s) {', '.join(strange)} are not positions of this build")
     for name, parts in zip(names, part_lists, strict=True):
         _checked(name, parts, codons)
-    terminal = scheme.positions[-1].internal_stuffer_prefix
+    terminal = scheme.internal_stuffer_prefix
     retained = (terminal[: len(terminal) - length], scheme.internal_stuffer_core)
     made = [
         _Site(
@@ -671,7 +674,7 @@ def _standard(
 ) -> Standard:
     """Gather the chosen overhangs, the trail of what each junction refused, and the termini.
 
-    An overhang the scheme fixed — a pinned entry overhang, or the cloning scar — is passed as
+    An overhang the method fixed — a pinned entry overhang, or the cloning scar — is passed as
     reserved rather than as taken, so the trail says a candidate was held out and not that it
     duplicated a junction the design was free to move.
     """

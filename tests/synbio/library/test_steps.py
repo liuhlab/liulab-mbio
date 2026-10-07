@@ -1,9 +1,5 @@
 """The reactions and the programs one round runs, and which digest each blunt enzyme belongs to."""
 
-from pathlib import Path
-
-import pytest
-
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
 from liulab_synbio.library.bench import (
@@ -16,7 +12,7 @@ from liulab_synbio.library.bench import (
     OUTGROWTH_SECONDS,
     RECOVERY_SECONDS,
 )
-from liulab_synbio.library.scheme import read_scheme
+from liulab_synbio.library.method import IGGA
 from liulab_synbio.library.steps import (
     choppers,
     digest_program,
@@ -24,13 +20,6 @@ from liulab_synbio.library.steps import (
     growth_program,
     ligation_reaction,
 )
-
-EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
-
-
-@pytest.fixture(scope="module")
-def scheme():
-    return read_scheme(EXAMPLE)
 
 
 def test_a_digest_fills_its_volume_and_gives_each_enzyme_its_own_line():
@@ -81,8 +70,8 @@ def test_both_growth_steps_run_at_thirty_degrees():
     assert program.duration_seconds == RECOVERY_SECONDS + OUTGROWTH_SECONDS[0]
 
 
-def test_each_blunt_enzyme_belongs_to_the_digest_whose_piece_it_cuts(scheme):
-    inside, outside = choppers(scheme)
+def test_each_blunt_enzyme_belongs_to_the_digest_whose_piece_it_cuts():
+    inside, outside = choppers(IGGA)
 
     assert [one.name for one in inside] == ["SrfI"]
     assert [one.name for one in outside] == ["PmeI"]

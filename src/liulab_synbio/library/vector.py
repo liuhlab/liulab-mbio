@@ -1,11 +1,11 @@
 """Take the user's own destination vector, and make it one where it is not.
 
-A vector is a destination when the scheme's internal enzyme excises one piece from it, leaving
-position one's entry overhang at one end and the cloning scar at the other. That is what a round
-opens, so it is read off a digest rather than off a string: a vector already carrying an internal
-stuffer is taken as it stands, and one that does not has the terminal position's stuffer put at a
-site the user names. The stuffer a vector carries is not a special shape — it is a position's own,
-the terminal one's, whose prefix ends with the overhang position one enters on.
+A vector is a destination when the method's internal enzyme excises one piece from it, leaving
+the entry overhang at one end and the cloning scar at the other. That is what a round opens, so
+it is read off a digest rather than off a string: a vector already carrying an internal stuffer
+is taken as it stands, and one that does not has one put at a site the user names. The stuffer a
+vector carries is not a special shape — it is the method's own, whose prefix ends with the
+overhang a part enters on.
 
 An insertion is reported as an `liulab_mbio.edits.EditReport`, so the user reads what it changed
 rather than trusting a new file. Coordinates are the model's, and a stuffer across the origin ends
@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from liulab_mbio.edits import EditReport, insert
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
-from liulab_synbio.library.scheme import Scheme
+from liulab_synbio.library.method import Scheme
 
 #: Where the internal stuffer goes: the name of a feature, or a ``(start, end)`` span.
 type Site = str | tuple[int, int]
@@ -47,10 +47,10 @@ class Destination:
 def destination_vector(
     vector: SequenceRecord, scheme: Scheme, *, site: Site | None = None
 ) -> Destination:
-    """Return `vector` as a destination the scheme's first round can open.
+    """Return `vector` as a destination the method's first round can open.
 
-    A vector whose internal enzyme already excises one piece leaving the scheme's two overhangs
-    is returned as it stands, `site` unread. One that does not has the terminal position's
+    A vector whose internal enzyme already excises one piece leaving the method's two overhangs
+    is returned as it stands, `site` unread. One that does not has the method's
     internal stuffer put at the start of `site`, and the result is held to the same rule.
 
     Parameters
@@ -58,7 +58,7 @@ def destination_vector(
     vector
         The user's own vector, circular.
     scheme
-        The architecture the build is given, which says what opens the vector and on what.
+        The method the build is given, which says what opens the vector and on what.
     site
         Where to put a stuffer, as a feature name or a ``(start, end)`` span. Only read where one
         has to be put.
@@ -66,17 +66,17 @@ def destination_vector(
     Raises
     ------
     ValueError
-        If any of the scheme's enzymes reads a site outside the stuffer, if a stuffer has to be
+        If any of the method's enzymes reads a site outside the stuffer, if a stuffer has to be
         put and none is named, if `site` names no feature or does not fit, or if the stuffer is
         not a whole number of codons where it would land inside a coding sequence.
     KeyError
-        If the scheme names an enzyme this package does not ship.
+        If the method names an enzyme this package does not ship.
     """
     found = _stuffer(vector, scheme)
     if found is not None:
         _check_clean(vector, scheme, found)
         return Destination(vector, found)
-    block = scheme.internal_stuffer(-1)
+    block = scheme.internal_stuffer
     at = _position(vector, scheme, site)
     _check_frame(vector, at, block)
     edited, report = insert(vector, at, block)
@@ -84,7 +84,7 @@ def destination_vector(
     if made is None:
         raise ValueError(
             f"the stuffer put at {at} left a vector {scheme.internal.name} does not open on "
-            f"{scheme.entry_overhang(0)!r} and {scheme.scar_overhang!r}: the bases it now joins "
+            f"{scheme.entry_overhang!r} and {scheme.scar_overhang!r}: the bases it now joins "
             "spell a further site. Name another site"
         )
     _check_clean(edited, scheme, made)
@@ -97,7 +97,7 @@ def _stuffer(record: SequenceRecord, scheme: Scheme) -> Segment | None:
     The piece is the one whose two ends are the overhangs a first-round part enters and leaves on,
     which is what makes the vector a destination rather than a plasmid with a stuffer-shaped gap.
     """
-    entry, scar = scheme.entry_overhang(0), scheme.scar_overhang
+    entry, scar = scheme.entry_overhang, scheme.scar_overhang
     for piece in digest(record, scheme.internal):
         if piece.left_overhang == entry and piece.right_overhang == scar:
             return Segment(piece.start, piece.end)
@@ -156,7 +156,7 @@ def _coding(record: SequenceRecord, at: int) -> Feature | None:
 
 
 def _check_clean(record: SequenceRecord, scheme: Scheme, stuffer: Segment) -> None:
-    """Refuse a vector reading any of the scheme's enzymes outside its internal stuffer.
+    """Refuse a vector reading any of the method's enzymes outside its internal stuffer.
 
     Inside it they are the design: the internal enzyme's two cuts and whichever blunt chopper
     shreds the excised piece. Outside, a round would cut the backbone.
@@ -167,5 +167,5 @@ def _check_clean(record: SequenceRecord, scheme: Scheme, stuffer: Segment) -> No
                 f"{site.enzyme.name} reads a site at {site.start} on the "
                 f"{site.strand.name.lower()} strand, outside the internal stuffer at "
                 f"{stuffer.start}-{stuffer.end}: a round would cut the backbone there. Take that "
-                "site out of the vector, or name a scheme whose enzymes it is free of"
+                "site out of the vector, or name a method whose enzymes it is free of"
             )

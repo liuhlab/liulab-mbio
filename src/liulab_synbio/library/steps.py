@@ -57,9 +57,9 @@ from liulab_synbio.library.bench import (
 from liulab_synbio.library.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.library.coverage import REFERENCES as COVERAGE_REFERENCES
 from liulab_synbio.library.coverage import RoundCoverage
+from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import Part
 from liulab_synbio.library.rounds import Round
-from liulab_synbio.library.scheme import Scheme
 from liulab_synbio.library.standard import PartList, Standard
 from liulab_synbio.library.vector import Destination
 
@@ -122,14 +122,12 @@ def choppers(scheme: Scheme) -> tuple[tuple[Enzyme, ...], tuple[Enzyme, ...]]:
 
     A chopper belongs to the digest whose discarded piece it cuts: the internal stuffer core the
     internal digest excises, or the external stuffers the external digest leaves behind. One that
-    reads a site in both is named by both, and the scheme has already refused one that reads a
+    reads a site in both is named by both, and the method has already refused one that reads a
     site in neither.
     """
     core = SequenceRecord(scheme.internal_stuffer_core)
     flanks = [
-        SequenceRecord(bases)
-        for position in scheme.positions
-        for bases in (position.external_stuffer_5, position.external_stuffer_3)
+        SequenceRecord(bases) for bases in (scheme.external_stuffer_5, scheme.external_stuffer_3)
     ]
     inside = tuple(one for one in scheme.blunt if find_sites(core, one))
     outside = tuple(one for one in scheme.blunt if any(find_sites(flank, one) for flank in flanks))
@@ -219,6 +217,8 @@ def growth_program() -> ThermocyclerProgram:
 def protocol(
     *,
     scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
     vector: SequenceRecord,
     destination: Destination,
     part_lists: Sequence[PartList],
@@ -248,18 +248,52 @@ def protocol(
             f"releases one part list with {scheme.external.name}, ligates the two, and "
             "transforms, grows and preps the result for the round after it."
         ),
-        overview=_overview(scheme, standard, rounds, bench, constructs, part_lists, host),
-        highlights=_highlights(scheme, destination, standard, rounds, bench, constructs, barcodes),
+        overview=_overview(
+            scheme,
+            positions,
+            barcode_length,
+            standard,
+            rounds,
+            bench,
+            constructs,
+            part_lists,
+            host,
+        ),
+        highlights=_highlights(
+            scheme,
+            positions,
+            barcode_length,
+            destination,
+            standard,
+            rounds,
+            bench,
+            constructs,
+            barcodes,
+        ),
         checks=badges(checks),
-        materials=_materials(scheme, part_lists, vector, sheet),
+        materials=_materials(scheme, positions, part_lists, vector, sheet),
         equipment=EQUIPMENT,
-        steps=_steps(scheme, parts, part_lists, rounds, bench, inside, outside, sheet, barcodes),
+        steps=_steps(
+            scheme,
+            positions,
+            barcode_length,
+            parts,
+            part_lists,
+            rounds,
+            bench,
+            inside,
+            outside,
+            sheet,
+            barcodes,
+        ),
         references=_references(scheme),
     )
 
 
 def _overview(
     scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
     standard: Standard,
     rounds: Sequence[Round],
     bench: Sequence[RoundBench],
@@ -271,11 +305,10 @@ def _overview(
     last = bench[-1]
     product = rounds[-1].product
     sizes = ", ".join(
-        f"{position.name} {len(parts)}"
-        for position, parts in zip(scheme.positions, part_lists, strict=True)
+        f"{position} {len(parts)}" for position, parts in zip(positions, part_lists, strict=True)
     )
     return {
-        "Scheme": card(scheme.name, f"{scheme.position_count} positions"),
+        "Method": card(scheme.name, f"{len(positions)} positions"),
         "Part lists": card(sizes, f"{len(part_lists)} lists"),
         "Parts": f"{sum(len(one) for one in part_lists)} synthesised blocks",
         "Constructs": f"{constructs:,} distinct",
@@ -285,7 +318,10 @@ def _overview(
         "Blunt enzymes": listed([one.name for one in scheme.blunt]),
         "Entry overhangs": card(listed(standard.entry_overhangs), "one a position"),
         "Cloning scar": standard.scar_overhang,
-        "Barcode": f"{scheme.barcode_length} bp, block {scheme.barcode_block_length} bp",
+        "Barcode": (
+            f"{barcode_length} bp, block "
+            f"{scheme.barcode_block_length(barcode_length, len(positions))} bp"
+        ),
         "Codon usage": host,
         "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
         "Coverage": f"{last.coverage.coverage:g}x, {last.coverage.colonies:,} colonies at the end",
@@ -295,6 +331,8 @@ def _overview(
 
 def _highlights(
     scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
     destination: Destination,
     standard: Standard,
     rounds: Sequence[Round],
@@ -314,7 +352,7 @@ def _highlights(
     if destination.edit is None:
         said.append(
             f"Your vector already carried an internal stuffer, so every part enters position "
-            f"{scheme.positions[0].name} on {standard.entry_overhangs[0]}, which is the overhang "
+            f"{positions[0]} on {standard.entry_overhangs[0]}, which is the overhang "
             "that stuffer spells: DNA that exists cannot be re-chosen."
         )
     else:
@@ -340,7 +378,8 @@ def _highlights(
         "round short of that loses members no later round can put back."
     )
     said.append(
-        f"The finished barcode block is {scheme.barcode_block_length} bp and reads in the "
+        f"The finished barcode block is "
+        f"{scheme.barcode_block_length(barcode_length, len(positions))} bp and reads in the "
         f"reverse of the order the rounds ran; {barcodes} says which barcode names which part."
     )
     return tuple(said)
@@ -353,6 +392,7 @@ def _enzyme_material(enzyme: Enzyme, note: str) -> Material:
 
 def _materials(
     scheme: Scheme,
+    positions: Sequence[str],
     part_lists: Sequence[PartList],
     vector: SequenceRecord,
     sheet: str,
@@ -361,12 +401,12 @@ def _materials(
     inside, outside = choppers(scheme)
     made = [
         Material(
-            f"{position.name} part list",
+            f"{position} part list",
             storage="-20 °C",
             amount=f"{len(one)} members, pooled",
             note=f"synthesised blocks, ordered from {sheet}",
         )
-        for position, one in zip(scheme.positions, part_lists, strict=True)
+        for position, one in zip(positions, part_lists, strict=True)
     ]
     made.append(
         Material(
@@ -425,7 +465,7 @@ def _references(scheme: Scheme) -> tuple[Reference, ...]:
     """Where the numbers come from, and where the scheme itself came from."""
     items = [*BENCH_REFERENCES, *COVERAGE_REFERENCES, *AMOUNT_REFERENCES, *READOUT_REFERENCES]
     if scheme.source:
-        items.append(Reference(f"The scheme this build was given: {scheme.source}"))
+        items.append(Reference(f"The method this build was planned by: {scheme.source}"))
     return tuple(items)
 
 
@@ -450,6 +490,8 @@ READOUT_REFERENCES: tuple[Reference, ...] = (
 
 def _steps(
     scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
     parts: Sequence[Part],
     part_lists: Sequence[PartList],
     rounds: Sequence[Round],
@@ -460,10 +502,10 @@ def _steps(
     barcodes: str,
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another."""
-    made = [_order_step(parts, sheet), _pool_step(scheme, part_lists)]
+    made = [_order_step(parts, sheet), _pool_step(positions, part_lists)]
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
-    made.append(_confirm_step(scheme, rounds, parts, barcodes))
+    made.append(_confirm_step(scheme, positions, barcode_length, rounds, parts, barcodes))
     return tuple(made)
 
 
@@ -496,7 +538,7 @@ def _order_step(parts: Sequence[Part], sheet: str) -> Step:
     )
 
 
-def _pool_step(scheme: Scheme, part_lists: Sequence[PartList]) -> Step:
+def _pool_step(positions: Sequence[str], part_lists: Sequence[PartList]) -> Step:
     """Pool each part list, which is what a round joins in one tube."""
     return Step(
         "Pool each part list",
@@ -505,8 +547,8 @@ def _pool_step(scheme: Scheme, part_lists: Sequence[PartList]) -> Step:
             "Pool the members of each part list in equal molar amounts, one tube per position.",
         ),
         expected=tuple(
-            f"{position.name}: one tube holding {len(one)} member(s)."
-            for position, one in zip(scheme.positions, part_lists, strict=True)
+            f"{position}: one tube holding {len(one)} member(s)."
+            for position, one in zip(positions, part_lists, strict=True)
         ),
         notes=(
             "Library coverage is counted on equally represented members, so an uneven pool loses "
@@ -794,20 +836,26 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
 
 
 def _confirm_step(
-    scheme: Scheme, rounds: Sequence[Round], parts: Sequence[Part], barcodes: str
+    scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
+    rounds: Sequence[Round],
+    parts: Sequence[Part],
+    barcodes: str,
 ) -> Step:
     """Read the barcode block back, which is what links a construct to its parts."""
     final = rounds[-1]
     ambiguous = max(
         deletion_ambiguity([one.barcode for one in parts if one.index == index])
-        for index in range(scheme.position_count)
+        for index in range(len(positions))
     )
     order = listed([one.position for one in reversed(rounds)])
     return Step(
         "Confirm the library",
         instructions=(
-            f"Sequence across the {scheme.barcode_block_length} bp barcode block of the finished "
-            "library, at "
+            f"Sequence across the "
+            f"{scheme.barcode_block_length(barcode_length, len(positions))} bp barcode block of "
+            "the finished library, at "
             f"{final.block.start}-{final.block.end} of the representative construct.",
             f"Decode each read against {barcodes}.",
         ),

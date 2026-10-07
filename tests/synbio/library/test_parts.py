@@ -1,10 +1,8 @@
 """What a part's synthesis sequence holds, what a digest leaves, and what the sheets say.
 
-The scheme is the worked example a user supplies, so every overhang a test asserts is read back
-off the DNA the parts are built from rather than stated here.
+The method is `IGGA` itself, so every overhang a test asserts is read back off the DNA the parts
+are built from rather than stated here.
 """
-
-from pathlib import Path
 
 import pytest
 
@@ -12,6 +10,7 @@ from liulab_mbio.barcodes import BarcodeRules, check_barcodes
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import reverse_translate, translate
+from liulab_synbio.library.method import IGGA
 from liulab_synbio.library.parts import (
     BARCODE_COLUMNS,
     CHANGE_COLUMNS,
@@ -23,13 +22,17 @@ from liulab_synbio.library.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_synbio.library.scheme import read_scheme
 from liulab_synbio.library.standard import design_standard, junction_residues
 
-#: The paper's scheme, as a user supplies one.
-EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
-
 HOST = "e-coli-k12"
+
+#: What one build chooses: the positions it fills and how many bases name a part.
+POSITIONS = ("N", "b", "c")
+BARCODE = 11
+
+#: A seed that draws a barcode spelling a BsaI site once the rule forbidding one is dropped.
+LOOSE_SEED = 164
+LOOSE_PART = r"part 'ATF4'"
 
 #: Three part lists whose junction residues disagree, so the standard has to charge somebody.
 LISTS = (
@@ -48,27 +51,32 @@ AGREED = (
 
 @pytest.fixture(scope="module")
 def scheme():
-    return read_scheme(EXAMPLE)
+    return IGGA
+
+
+@pytest.fixture(scope="module")
+def rules(scheme):
+    return barcode_rules(scheme, BARCODE)
 
 
 @pytest.fixture(scope="module")
 def standard(scheme):
-    return design_standard(scheme, LISTS)
+    return design_standard(scheme, POSITIONS, LISTS)
 
 
 @pytest.fixture(scope="module")
-def parts(scheme, standard):
-    return design_parts(scheme, LISTS, standard, host=HOST)
+def parts(scheme, standard, rules):
+    return design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=rules)
 
 
 @pytest.fixture(scope="module")
 def agreed(scheme):
     """The standard over the part lists that agree at every junction, which charges nobody."""
-    return design_standard(scheme, AGREED)
+    return design_standard(scheme, POSITIONS, AGREED)
 
 
 def enzymes(scheme):
-    """Every enzyme the scheme names."""
+    """Every enzyme the method names."""
     return (scheme.internal, scheme.external, *scheme.blunt)
 
 
@@ -86,27 +94,26 @@ def charged(standard, part, end):
 
 def stuffer_span(scheme, part):
     """Where the internal stuffer lies in a part's block, read off the block's own shape."""
-    ext3 = len(scheme.positions[part.index].external_stuffer_3)
+    ext3 = len(scheme.external_stuffer_3)
     return part.coding.end, part.length - ext3 - len(part.barcode)
 
 
 def test_a_part_is_its_stuffers_its_coding_bases_and_its_barcode_in_order(scheme, standard, parts):
     assert len(parts) == sum(len(one) for one in LISTS)
     for part in parts:
-        position = scheme.positions[part.index]
         assert part.sequence.startswith(
-            position.external_stuffer_5[: -len(standard.entry_overhangs[part.index])]
+            scheme.external_stuffer_5[: -len(standard.entry_overhangs[part.index])]
         )
-        assert part.sequence.endswith(position.external_stuffer_3[len(scheme.cloning_scar) :])
+        assert part.sequence.endswith(scheme.external_stuffer_3[len(scheme.cloning_scar) :])
         start, end = stuffer_span(scheme, part)
         assert part.sequence[start:end].endswith(scheme.internal_stuffer_core)
         assert part.sequence[end : end + len(part.barcode)] == part.barcode
         assert part.length == len(part.sequence)
 
 
-def test_a_part_enters_on_the_standard_s_overhang_and_not_the_scheme_s(scheme, standard, parts):
-    # The scheme's own stuffers spell CTCC, GGAG and CCGA; the standard chooses for the proteins.
-    assert standard.entry_overhangs != scheme.entry_overhangs
+def test_a_part_enters_on_the_standard_s_overhang_and_not_the_method_s(scheme, standard, parts):
+    # The method's own stuffers spell one overhang; the standard chooses for the proteins.
+    assert standard.entry_overhangs != (scheme.entry_overhang,) * len(POSITIONS)
     for part in parts:
         entry = standard.entry_overhangs[part.index]
         assert part.sequence[part.coding.start - len(entry) : part.coding.start] == entry
@@ -145,7 +152,7 @@ def test_the_internal_digest_excises_the_stuffer_on_the_next_round_s_overhangs(
     scheme, standard, parts
 ):
     for part in parts:
-        following = standard.entry_overhangs[(part.index + 1) % scheme.position_count]
+        following = standard.entry_overhangs[(part.index + 1) % len(POSITIONS)]
         pieces = digest(SequenceRecord(part.sequence), scheme.internal)
         excised = [
             piece
@@ -160,11 +167,11 @@ def test_the_internal_digest_excises_the_stuffer_on_the_next_round_s_overhangs(
 def test_the_product_reads_every_part_s_protein_in_one_frame(scheme, standard, parts):
     """Join one part a position the way the rounds do, and read the whole insert as codons.
 
-    This is the frame the scheme charges the proteins for: each part's own bases plus the
+    This is the frame the method charges the proteins for: each part's own bases plus the
     overhangs either side spell its amino acids exactly, and the retained stuffer carries the
     frame to a barcode block that begins `barcode_phase` bases into a codon and holds no stop.
     """
-    chosen = [next(one for one in parts if one.index == at) for at in range(scheme.position_count)]
+    chosen = [next(one for one in parts if one.index == at) for at in range(len(POSITIONS))]
     donated, codons = junction_residues(len(standard.entry_overhangs[0]))
     reading = "".join(standard.entry_overhangs[one.index] + one.coding_sequence for one in chosen)
     last = chosen[-1]
@@ -177,19 +184,20 @@ def test_the_product_reads_every_part_s_protein_in_one_frame(scheme, standard, p
     assert len(trimmed) % 3 == 0
     joined = "".join(one.protein for one in chosen)
     assert translate(trimmed)[codons : codons + len(joined)] == joined
-    # Scoped to the block: what the retained stuffer itself spells is the scheme's own data, and
-    # this worked example's synthetic stuffer does spell a stop.
-    block = len(trimmed) - scheme.barcode_block_length - barcode_phase(scheme)
+    # Scoped to the block: what the retained stuffer itself spells is the method's own DNA.
+    block = (
+        len(trimmed) - scheme.barcode_block_length(BARCODE, len(POSITIONS)) - barcode_phase(scheme)
+    )
     assert block % 3 == 0
     assert "*" not in translate(trimmed[block:])
 
 
 def test_the_barcode_block_begins_one_base_into_a_codon(scheme, parts):
     assert barcode_phase(scheme) == 1
-    # The scheme's own two frame invariants make this the same number as the scar's length.
+    # The method's own two frame invariants make this the same number as the scar's length.
     assert barcode_phase(scheme) == len(scheme.cloning_scar) % 3
-    assert barcode_rules(scheme).phase == 1
-    assert check_barcodes([one.barcode for one in parts], barcode_rules(scheme)) == ()
+    assert barcode_rules(scheme, BARCODE).phase == 1
+    assert check_barcodes([one.barcode for one in parts], barcode_rules(scheme, BARCODE)) == ()
 
 
 def test_the_sheet_holds_one_row_a_part(parts):
@@ -210,8 +218,8 @@ def test_the_sheet_holds_one_row_a_part(parts):
     assert sheet.endswith("\n")
 
 
-def test_the_barcode_table_names_every_part_and_where_it_reads(scheme, parts):
-    rows = barcode_table(parts, scheme).splitlines()
+def test_the_barcode_table_names_every_part_and_where_it_reads(parts):
+    rows = barcode_table(parts, len(POSITIONS)).splitlines()
 
     assert rows[0].split("\t") == list(BARCODE_COLUMNS)
     assert len(rows) == len(parts) + 1
@@ -220,10 +228,10 @@ def test_the_barcode_table_names_every_part_and_where_it_reads(scheme, parts):
         assert (name, position, barcode) == (part.name, part.position, part.barcode)
         # The block reads newest first, so the last round's part is slot one.
         assert int(number) == part.index + 1
-        assert int(slot) == scheme.position_count - part.index
+        assert int(slot) == len(POSITIONS) - part.index
 
 
-def test_coding_bases_given_are_kept_but_for_a_codon_a_site_moves(scheme, standard, parts):
+def test_coding_bases_given_are_kept_but_for_a_codon_a_site_moves(scheme, standard, parts, rules):
     # Coded for another host, so every codon differs from the one this host would have written.
     supplied = {
         name: reverse_translate(protein, host="human")
@@ -232,7 +240,7 @@ def test_coding_bases_given_are_kept_but_for_a_codon_a_site_moves(scheme, standa
     }
     coding = tuple({name: supplied[name] for name in one} for one in LISTS)
 
-    made = design_parts(scheme, LISTS, standard, host=HOST, coding=coding)
+    made = design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=rules, coding=coding)
 
     assert [one.coding_sequence for one in made] != [one.coding_sequence for one in parts]
     for part in made:
@@ -273,49 +281,49 @@ def test_the_change_table_is_empty_where_the_standard_moved_nothing(agreed):
     assert change_table(agreed) == "\t".join(CHANGE_COLUMNS) + "\n"
 
 
-def test_the_same_inputs_write_the_same_bytes(scheme, standard):
-    once = design_parts(scheme, LISTS, standard, host=HOST)
-    twice = design_parts(scheme, LISTS, standard, host=HOST)
+def test_the_same_inputs_write_the_same_bytes(scheme, standard, rules):
+    once = design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=rules)
+    twice = design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=rules)
 
     assert synthesis_sheet(once) == synthesis_sheet(twice)
     assert [one.sequence for one in once] == [one.sequence for one in twice]
 
 
-def test_another_seed_draws_other_barcodes(scheme, standard, parts):
-    other = design_parts(scheme, LISTS, standard, host=HOST, seed=7)
+def test_another_seed_draws_other_barcodes(scheme, standard, parts, rules):
+    other = design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=rules, seed=7)
 
     assert [one.barcode for one in other] != [one.barcode for one in parts]
 
 
-def test_part_lists_must_match_the_scheme(scheme, standard):
+def test_part_lists_must_match_the_positions(scheme, standard, rules):
     with pytest.raises(ValueError, match="part list"):
-        design_parts(scheme, LISTS[:2], standard, host=HOST)
+        design_parts(scheme, POSITIONS, LISTS[:2], standard, host=HOST, rules=rules)
 
 
-def test_a_standard_charging_other_part_lists_is_refused(scheme, agreed):
+def test_a_standard_charging_other_part_lists_is_refused(scheme, agreed, rules):
     with pytest.raises(ValueError, match="design it over these same part lists"):
-        design_parts(scheme, LISTS, agreed, host=HOST)
+        design_parts(scheme, POSITIONS, LISTS, agreed, host=HOST, rules=rules)
 
 
-def test_a_part_spelling_a_site_the_scheme_does_not_expect_is_refused(scheme, standard):
-    """The rules keep a scheme's sites out of a barcode; drop that rule and this seed lets one in.
+def test_a_part_spelling_a_site_the_method_does_not_expect_is_refused(scheme, standard):
+    """The rules keep the method's sites out of a barcode; drop that rule and a seed lets one in.
 
     The refusal names the part and the site, which is what someone has to act on.
     """
     loose = BarcodeRules(
-        scheme.barcode_length,
+        BARCODE,
         scar=scheme.cloning_scar,
         phase=barcode_phase(scheme),
         forbidden=(),
     )
 
-    with pytest.raises(ValueError, match=r"part 'ATF4'") as caught:
-        design_parts(scheme, LISTS, standard, host=HOST, rules=loose, seed=62)
+    with pytest.raises(ValueError, match=LOOSE_PART) as caught:
+        design_parts(scheme, POSITIONS, LISTS, standard, host=HOST, rules=loose, seed=LOOSE_SEED)
 
     assert "BsaI" in str(caught.value)
-    assert "where the scheme expects none" in str(caught.value)
+    assert "where the method expects none" in str(caught.value)
 
 
-def test_an_unshipped_host_is_refused(scheme, standard):
+def test_an_unshipped_host_is_refused(scheme, standard, rules):
     with pytest.raises(KeyError, match="codon usage table"):
-        design_parts(scheme, LISTS, standard, host="nowhere")
+        design_parts(scheme, POSITIONS, LISTS, standard, host="nowhere", rules=rules)
