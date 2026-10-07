@@ -523,7 +523,7 @@ def _materials(
         )
     )
     made.append(_enzyme_material(scheme.internal, "opens the library, excising its stuffer"))
-    made.append(_enzyme_material(scheme.external, "releases a part from its synthesised block"))
+    made.append(_enzyme_material(scheme.external, "releases a part from its own block"))
     for one in scheme.blunt:
         jobs = [
             what
