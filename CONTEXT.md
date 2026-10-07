@@ -802,8 +802,10 @@ _Avoid_: price list, tariff, cost table
 ### Band
 
 A quantity a price row is bounded by, inclusive at both ends, such as 101 to 200 oligos. A row
-may carry more than one, since a vendor may price a pool by count and by length together. A band
-bounds a quantity and is not a span in a sequence, so the coordinate rule does not reach it.
+may carry more than one, since a vendor may price a pool by count and by length together, and
+writes them in one cell: `count 101-200; length_nt 1-200`. A tier with no top leaves its high
+end empty, so nobody writes a sentinel. A band bounds a quantity and is not a span in a
+sequence, so the coordinate rule does not reach it.
 _Avoid_: tier, bracket, range
 
 ### Basis
