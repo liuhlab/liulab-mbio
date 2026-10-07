@@ -366,7 +366,15 @@ Counted over the 72 blocks of section 4.1:
 | 5 | 8 | 1 | **84.6%** |
 | 6 | 1 | **none** | not measured |
 | Worst part | **6 fragments** | **5 fragments** | |
-| Oligos in the pool | **173** | **152** | |
+| Oligos at the floor | **173** | **152** | |
+| Oligos the design spends | **174** | **153** | |
+
+**The two counts differ by one block, and the gap is real.** The row above it is the arithmetic
+floor: the fewest oligos the length budget could ever need. A cut also has to spell a legal
+overhang, and N_ATF7 is 1,092 bp, which is exactly 4 x 276 less the three shared overhangs. At
+four fragments every piece is forced to 276 nt, so all three cut positions are forced, and the
+first spells `GCCG` — one base kind, which is refused because such a junction truncates. No
+legal set exists at four, so that block spends five.
 
 Lund's is the only measured curve: of designs assembled from that many fragments, the share with
 a perfect clone among four colonies is 100% at 2, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40.0% at
@@ -384,8 +392,8 @@ top of the price band (section 4.5).
 
 ### 4.4 Oligo count — **derived**
 
-Summing the fragments per part: **152 oligos at 350 nt**, against 173 at 300. One part takes one
-to five oligos. These are counted over the blocks the design actually wrote rather than
+Summing the fragments per part: **152 oligos at 350 nt** at the floor and **153 as designed**,
+against 173 and 174 at 300. One part takes one to five oligos. These are counted over the blocks the design actually wrote rather than
 estimated, which is what #220 was asked for and has now done.
 
 All four counts in sections 4.3 and 4.4 moved when #257 corrected the span arithmetic. They are
