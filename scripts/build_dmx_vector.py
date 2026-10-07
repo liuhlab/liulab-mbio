@@ -236,7 +236,12 @@ def _annotated(record: SequenceRecord) -> SequenceRecord:
 
 
 def write_genbank(record: SequenceRecord, path: Path) -> None:
-    """Write `record` as GenBank, carrying its features and its topology.
+    """Write `record` as GenBank, carrying its features, their colours and its topology.
+
+    A feature's colour goes out as SnapGene's own one-line ``color:`` note, which `liulab_mbio.io`
+    reads back. A segment's name is dropped, and each one is named on stderr as it goes: GenBank
+    spells a segment name only in the note whose meaning is in its line breaks, and Biopython's
+    writer wraps a qualifier at a fixed width instead of honouring them.
 
     Imported here and not at module scope so that importing this script costs nothing.
     """
@@ -247,6 +252,13 @@ def write_genbank(record: SequenceRecord, path: Path) -> None:
     length = len(record)
     made: list[SeqFeature] = []
     for feature in record.features:
+        for segment in feature.segments:
+            if segment.name:
+                print(
+                    f"{path}: {feature.name} loses the name of its segment "
+                    f"{segment.start}-{segment.end}, {segment.name!r}",
+                    file=sys.stderr,
+                )
         strand = int(feature.strand) or None
         parts = [
             SimpleLocation(start, end, strand=strand)
@@ -257,7 +269,10 @@ def write_genbank(record: SequenceRecord, path: Path) -> None:
         if strand == -1:
             parts.reverse()
         location = parts[0] if len(parts) == 1 else CompoundLocation(parts)
-        made.append(SeqFeature(location, type=feature.type, qualifiers={"label": [feature.name]}))
+        qualifiers: dict[str, list[str]] = {"label": [feature.name]}
+        if feature.color:
+            qualifiers["note"] = [f"color: {feature.color}"]
+        made.append(SeqFeature(location, type=feature.type, qualifiers=qualifiers))
     written = SeqRecord(
         Seq(record.sequence),
         id=record.name,
@@ -284,8 +299,8 @@ def _wrapped(segment: Segment, length: int) -> list[tuple[int, int]]:
 def _check_written(record: SequenceRecord, path: Path) -> None:
     """Refuse to leave behind a file that reads back as a different record.
 
-    The rebuild is only worth what the file carries, and a feature's segments survive a GenBank
-    round trip only where they were written in the order the reader expects. The strand is not
+    The rebuild is only worth what the file carries, and a feature's segments and colour survive
+    a GenBank round trip only where they were written as the reader expects. The strand is not
     compared: GenBank cannot spell a feature belonging to neither strand, so one reads back
     forward.
 
@@ -296,9 +311,16 @@ def _check_written(record: SequenceRecord, path: Path) -> None:
     """
     again = read_record(path)
 
-    def spelled(one: SequenceRecord) -> list[tuple[str, str, tuple[tuple[int, int], ...]]]:
+    def spelled(
+        one: SequenceRecord,
+    ) -> list[tuple[str, str, str | None, tuple[tuple[int, int], ...]]]:
         return [
-            (held.name, held.type, tuple((int(s.start), int(s.end)) for s in held.segments))
+            (
+                held.name,
+                held.type,
+                held.color,
+                tuple((int(s.start), int(s.end)) for s in held.segments),
+            )
             for held in one.features
         ]
 

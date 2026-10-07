@@ -12,28 +12,40 @@ SOURCE      .
 FEATURES             Location/Qualifiers
      CDS             415..432
                      /label="6xHis"
+                     /note="color: #cc99b2"
      terminator      513..560
                      /label="T7 terminator"
+                     /note="color: #ffffff"
      promoter        264..282
                      /label="T7 promoter"
+                     /note="color: #ffffff"
      RBS             322..344
                      /label="RBS"
+                     /note="color: #a6acb3"
      rep_origin      597..1052
                      /label="f1 ori"
+                     /note="color: #ffff00"
      rep_origin      2166..2754
                      /label="ori"
+                     /note="color: #ffff00"
      protein_bind    283..307
                      /label="lac operator"
+                     /note="color: #31849b"
      misc_feature    2940..3082
                      /label="bom"
+                     /note="color: #a6acb3"
      CDS             complement(4184..5266)
                      /label="lacI"
+                     /note="color: #993366"
      promoter        complement(5267..5344)
                      /label="lacI promoter"
+                     /note="color: #ffffff"
      CDS             complement(3184..3375)
                      /label="rop"
+                     /note="color: #993366"
      promoter        complement(1940..2044)
                      /label="KanR promoter"
+                     /note="color: #ffffff"
      CDS             complement(1145..1939)
                      /label="KanR"
      misc_feature    371..404

@@ -128,13 +128,7 @@ def _header(protocol: Protocol) -> str:
         lines = "".join(f"<p>{escape(one)}</p>" for one in protocol.highlights)
         parts.append(f'<div class="highlights">{lines}</div>\n')
     parts.append(_checks(protocol.checks))
-    holes = protocol.all_holes
-    if holes:
-        parts.append(
-            f'<p class="hole-count"><a href="#holes"><strong>{len(holes)}</strong> numbers in '
-            "this protocol have no source.</a> Each is a hole, not a value: no protocol holding "
-            "one is ready to run.</p>\n"
-        )
+    parts.append(_hole_count(protocol.all_holes))
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
@@ -332,6 +326,33 @@ def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
 
 
+def _count(n: int, noun: str) -> str:
+    """`n` with `noun`, given an s where there is more than one."""
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
+
+
+def _hole_count(holes: tuple[Hole, ...]) -> str:
+    """Return the banner: how many numbers have no source, and how many of those are prices.
+
+    A price is missing because no price record prices it, so it is counted apart from the
+    numbers the bench needs. What a hole means is said once, in the section this links to.
+    """
+    if not holes:
+        return ""
+    prices = sum(1 for hole in holes if hole.kind == "price")
+    split = (
+        f": {_count(len(holes) - prices, 'bench number')} and {_count(prices, 'price')}"
+        if prices
+        else ""
+    )
+    one = len(holes) == 1
+    return (
+        f'<p class="hole-count"><a href="#holes"><strong>{len(holes)}</strong> '
+        f"{'number' if one else 'numbers'} in this protocol {'has' if one else 'have'} "
+        f"no source</a>{split}.</p>\n"
+    )
+
+
 def _hole(hole: Hole) -> str:
     """One hole, which reads as a hole and never as a value."""
     where = f"{escape(hole.where)}: " if hole.where else ""
@@ -352,9 +373,9 @@ def _holes(protocol: Protocol) -> str:
     items = "".join(_hole(hole) for hole in holes)
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
-        f"<p>{len(holes)} numbers this protocol would otherwise have to invent. A hole is a "
-        "defect in what the package knows, not a failure of the run, and it is never filled "
-        f"with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
+        f"<p>{_count(len(holes), 'number')} this protocol would otherwise have to invent. A "
+        "hole is a defect in what the package knows, not a failure of the run, and it is "
+        f"never filled with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
     )
 
 
