@@ -668,10 +668,13 @@ before that pass still resolves. What closed:
 
 ### Stage 3 — cargo and read-out
 
-- **H12.** **No cycling for PCR1 or PCR2 of the three-primer scheme.** Qian's 14-cycle and 10-cycle
-  programs are for a different primer layout. The note `synthesis-and-assembly.md` already
-  records that no source documents the scheme in text. *Filled by:* the Baker lab, or a
-  pilot.
+- **H12.** **No cycling for PCR2 of the three-primer scheme.** Half closed by
+  `oligo-pool-pcr-cycles.md`: **PCR1 now has a source.** Twist bands the count by the pool's
+  length, 12-14 cycles at 151-350 nt, and the step prints the fewest of its band. **PCR2 still
+  has none** — Twist's table amplifies the pool as it arrives, this reaction's template is
+  PCR1's product, and Qian's 14-cycle and 10-cycle programs are for a different primer layout.
+  *Filled by:* a pilot titrated against the heteroduplex hump, or a real-time run stopped before
+  plateau.
 - **H13.** **No electroporator settings in Qian**, only "according to the manufacturer's protocol" and
   an expected 4.1 ms time constant. *Filled by:* the Lucigen E. cloni EXPRESS BL21(DE3)
   manual, which was not read for this note.

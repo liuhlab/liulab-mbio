@@ -169,15 +169,22 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     route_a = rerouted(plan, route="A").protocol()
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
+    pcrs = ["H29", "H30"]
     reads = ["H27", "H28"]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
+        *pcrs,
         "H25",
         "H26",
         "B1",
         "B2",
         *reads,
     ]
-    assert [hole.id for step in route_a.steps for hole in step.holes] == ["H25", "H26", *reads]
+    assert [hole.id for step in route_a.steps for hole in step.holes] == [
+        *pcrs,
+        "H25",
+        "H26",
+        *reads,
+    ]
     for one in (route_a, route_b):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
 
@@ -205,6 +212,17 @@ def test_the_same_dna_is_billed_once(plan):
     unpooled = [row.item for row in replace(plan, pool=None).protocol().bill.rows]
     assert unpooled[0] == "Synthesised blocks"
     assert "Pool amplification primers" not in unpooled
+
+
+def test_pcr1_takes_its_cycles_from_the_pool_length_and_pcr2_prints_none(plan):
+    """A 350 nt pool sits in Twist's top band; nothing sources the count for PCR2's template."""
+    steps = {one.title.split(":")[0]: one for one in plan.protocol().steps}
+    first, second = steps["PCR1"], steps["PCR2"]
+
+    cycled = [stage.cycles for stage in first.programs[0].stages if stage.cycles > 1]
+    assert cycled == [12]
+    assert not second.programs
+    assert [hole.id for hole in second.holes] == ["H30"]
 
 
 def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):

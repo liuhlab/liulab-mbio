@@ -123,6 +123,34 @@ READ_PASS_MARK = Hole(
     "reach",
 )
 
+#: What Twist's banded cycle count does not reach. It is stated against KAPA HiFi HotStart or
+#: Twist's own TrueAmp mix, and the same guide's FAQ answers that another polymerase may give
+#: worse uniformity at the same count. This method runs Q5, which nobody has published a count
+#: for. Carried by PCR1, which prints the band's fewest.
+#: ``docs/research/oligo-pool-pcr-cycles.md`` section 2.
+PCR1_POLYMERASE = Hole(
+    "H29",
+    "no cycle count published for Q5 on a Twist oligo pool",
+    "unpublished",
+    where="PCR1, the polymerase the cycle count is stated against",
+    filled_by="a count Twist states against Q5, or a pilot on this pool",
+    issue="liuhlab/liulab-mbio#225",
+)
+
+#: What no source covers at all. Twist's table amplifies the pool as it arrives; PCR2's template
+#: is PCR1's product, and the published subpool counts are first amplifications off a pool. So
+#: PCR2 prints the stopping rule and no number.
+#: ``docs/research/oligo-pool-pcr-cycles.md`` sections 4 and 6.
+PCR2_CYCLES = Hole(
+    "H30",
+    "no cycle count for PCR2, which pulls one block out of an already-amplified batch",
+    "unpublished",
+    where="PCR2, the cycle count",
+    filled_by="a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a "
+    "real-time run stopped before the curve plateaus",
+    issue="liuhlab/liulab-mbio#225",
+)
+
 
 def titre_plates(number: int) -> tuple[Vessel, Vessel]:
     """Return the two plates one round is bounded by: a dilution, and the no-donor control.

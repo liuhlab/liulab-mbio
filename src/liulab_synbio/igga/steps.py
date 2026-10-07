@@ -98,6 +98,11 @@ STRAIN_CATALOG = "60242-2"
 POOL_POLYMERASE: Polymerase = Q5
 POOL_POLYMERASE_PRODUCT = "Q5 High-Fidelity DNA Polymerase (M0491)"
 
+#: Twist's own cycle counts for amplifying an oligo pool: each band's longest oligo in nt, then
+#: the fewest and the most cycles it allows. FRM-001034 REV 8 p. 2 and DOC-4060 REV 1.0 give the
+#: same three. ``docs/research/oligo-pool-pcr-cycles.md`` section 2.
+POOL_CYCLE_BANDS: tuple[tuple[int, int, int], ...] = ((100, 6, 10), (150, 10, 12), (350, 12, 14))
+
 #: How many wells the plate PCR2 runs in holds. One batch is one plate of PCR2, which is what
 #: fixes `liulab_synbio.igga.method.ORTHOGONAL_SPLIT`'s 96 inner primers.
 PCR2_WELLS = 96
@@ -753,8 +758,25 @@ POOL_EQUIPMENT: tuple[str, ...] = (
     "Gel tank and a transilluminator",
 )
 
+#: Where PCR1's cycle count is read. Two independently revised Twist documents give the same
+#: three length bands, and the second's appendix answers what more cycles cost.
+POOL_CYCLE_REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle "
+        "count banded by the pool's length"
+    ),
+    Reference(
+        "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the "
+        "same three bands, and for the FAQ answering that more cycles give worse uniformity"
+    ),
+)
+
 #: What the two PCRs and their gel cite, beside the round's own references.
-POOL_REFERENCES: tuple[Reference, ...] = (*PCR_REFERENCES, *GEL_REFERENCES)
+POOL_REFERENCES: tuple[Reference, ...] = (
+    *PCR_REFERENCES,
+    *GEL_REFERENCES,
+    *POOL_CYCLE_REFERENCES,
+)
 
 
 def _pcr2_plate(pool: PoolPlan) -> Plate:
@@ -860,8 +882,8 @@ def _band_note(low: float, high: float) -> str:
     if low == high:
         return f"Every pair anneals at {low:g} °C, so one block of tubes takes them all."
     return (
-        f"The pairs anneal between {low:g} and {high:g} °C. The program runs at {low:g}, the "
-        "lowest of them, so one block of tubes takes them all."
+        f"The pairs anneal between {low:g} and {high:g} °C. Hold them all at {low:g}, the "
+        "lowest of them, so one block of tubes takes them."
     )
 
 
@@ -928,6 +950,29 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step
     )
 
 
+def pool_cycles(length_nt: int) -> tuple[int, int]:
+    """Return the fewest and the most cycles Twist allows a pool of this length.
+
+    The count is banded by length, so it follows the project's own oligo length rather than
+    sitting fixed in the source. A pool longer than the last band takes that band's count: the
+    table stops where the product does.
+
+    Examples
+    --------
+    >>> pool_cycles(350)
+    (12, 14)
+    >>> pool_cycles(60)
+    (6, 10)
+    >>> pool_cycles(400)
+    (12, 14)
+    """
+    for longest, fewest, most in POOL_CYCLE_BANDS:
+        if length_nt <= longest:
+            return (fewest, most)
+    _, fewest, most = POOL_CYCLE_BANDS[-1]
+    return (fewest, most)
+
+
 def _pcr1_step(
     pool: PoolPlan,
     batches: Sequence[Batch],
@@ -936,13 +981,15 @@ def _pcr1_step(
 ) -> Step:
     """Pull one batch of blocks out of the whole pool, which is what PCR1 is for."""
     low, high = annealing
+    fewest, most = pool_cycles(length_bp)
     pairs = "; ".join(f"batch {one.number}: {one.forward} with {one.outer}" for one in batches)
     return Step(
         f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",
         instructions=(
             f"Set up {_counted(len(batches), 'reaction')}, one a batch, with the pool as template.",
             f"Give each its own pair: {pairs}.",
-            "Run the program below.",
+            "Run the program below. On a real-time instrument, add an intercalating dye and stop "
+            "before the curve plateaus; the printed count is what to run without one.",
         ),
         cautions=("Keep the polymerase on ice.",),
         tables=(
@@ -953,6 +1000,7 @@ def _pcr1_step(
                 POOL_POLYMERASE,
                 annealing_temperature=low,
                 amplicon_length=length_bp,
+                cycles=fewest,
                 title="PCR1",
             ),
         ),
@@ -964,18 +1012,25 @@ def _pcr1_step(
         ),
         notes=(
             _band_note(low, high),
+            f"Twist's band for a {length_bp} nt pool is {fewest} to {most} cycles: Amplifying "
+            "Twist Oligo Pools FRM-001034 REV 8 p. 2, and Twist Oligo Pools Amplification "
+            "Protocol DOC-4060 REV 1.0. Its FAQ answers that more cycles give worse uniformity, "
+            f"so {fewest} is what prints.",
             "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block "
             "cannot be pulled out of a batch it does not sit in.",
         ),
+        holes=(stages.PCR1_POLYMERASE,),
         troubleshooting=(
             Troubleshooting(
                 "No band",
                 "Drop the annealing temperature by 3 °C and check the pool went in.",
             ),
             Troubleshooting(
-                "A smear rather than a band",
-                "Too many cycles over a pool loses the evenness the coverage is counted on. "
-                "Take the fewest cycles that give a visible band.",
+                "A hump after the peak on a Bioanalyzer or TapeStation trace",
+                "Heteroduplexes, which is what over-amplification leaves. Run it again with "
+                "fewer cycles. What too many cycles cost is dropout, chimeras and polymerase "
+                "error; pooling the blocks equimolar later restores the evenness but none of "
+                "those.",
             ),
         ),
     )
@@ -988,7 +1043,12 @@ def _pcr2_step(
     annealing: tuple[float, float],
     length_bp: int,
 ) -> Step:
-    """Pull one block out of its batch, after which a block is named by the well it sits in."""
+    """Pull one block out of its batch, after which a block is named by the well it sits in.
+
+    The step prints no cycle count. Twist's band is for amplifying the pool as it arrives, and
+    this reaction's template is PCR1's product, so the instruction is the stopping rule and
+    `liulab_synbio.igga.stages.PCR2_CYCLES` stands where the number would be.
+    """
     low, high = annealing
     return Step(
         f"PCR2: pull each of the {len(parts)} blocks out of its batch",
@@ -996,19 +1056,12 @@ def _pcr2_step(
             f"Set up one reaction a block, {len(parts)} in all, in {PCR2_PLATE}.",
             "Give each its batch's PCR1 product as template, that batch's forward primer, and "
             "the block's own inner primer.",
-            "Run the program below.",
+            f"Run PCR1's program at {low:g} °C, and stop the reaction on a real-time curve "
+            "before it plateaus: nobody published a cycle count for this one.",
         ),
         cautions=("Keep the polymerase on ice.",),
         tables=(
             pcr_reaction(POOL_POLYMERASE, reactions=len(parts), title="PCR2, one well a block"),
-        ),
-        programs=(
-            pcr_program(
-                POOL_POLYMERASE,
-                annealing_temperature=low,
-                amplicon_length=length_bp,
-                title="PCR2",
-            ),
         ),
         gels=(_one_band("PCR2 product", length_bp, title="PCR2, any well"),),
         expected=(
@@ -1020,11 +1073,18 @@ def _pcr2_step(
             _band_note(low, high),
             "A block is named by its well from here on, not by anything in the tube.",
         ),
+        holes=(stages.PCR2_CYCLES,),
         troubleshooting=(
             Troubleshooting(
                 "A band at PCR1's length",
                 "The outer primer region was not dropped. Check the inner primer went in, and "
                 "that the template is PCR1's product and not the pool.",
+            ),
+            Troubleshooting(
+                "A hump after the peak on a Bioanalyzer or TapeStation trace",
+                "Heteroduplexes, which is what over-amplification leaves. Run it again with "
+                "fewer cycles; the forward primer is the whole batch's, so over-cycling here "
+                "also pulls a neighbour's product into the well.",
             ),
         ),
     )

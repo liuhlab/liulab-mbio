@@ -170,8 +170,11 @@ from it:
 - Which products exist, their length bands, their pool-size tiers and their prices.
 - The uniformity gate: a pool whose shortest member is more than 15% below the longest is
   refused by the ordering interface, which is what forces a padding rule.
-- The flank specification, and the amplification rule of a hard maximum of eight cycles with a
-  high-fidelity hot-start polymerase.
+- The flank specification, and the amplification rule: a high-fidelity hot-start polymerase, and
+  a cycle count banded by the pool's length — 6–10 at 20–100 nt, 10–12 at 100–150 nt, 12–14 at
+  151–350 nt. `oligo-pool-pcr-cycles.md` section 2 gives the two guides it is read from, and its
+  section 3 separates it from the Multiplexed Gene Fragments maximum, which is another product's
+  and does not apply to a pool.
 
 ### Twist — ours
 

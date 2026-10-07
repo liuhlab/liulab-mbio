@@ -522,13 +522,14 @@
       "instructions": [
         "Set up 1 reaction, one a batch, with the pool as template.",
         "Give each its own pair: batch 1: OP107 with OP146.",
-        "Run the program below."
+        "Run the program below. On a real-time instrument, add an intercalating dye and stop before the curve plateaus; the printed count is what to run without one."
       ],
       "cautions": [
         "Keep the polymerase on ice."
       ],
       "notes": [
         "Every pair anneals at 65.1 °C, so one block of tubes takes them all.",
+        "Twist's band for a 350 nt pool is 12 to 14 cycles: Amplifying Twist Oligo Pools FRM-001034 REV 8 p. 2, and Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0. Its FAQ answers that more cycles give worse uniformity, so 12 is what prints.",
         "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block cannot be pulled out of a batch it does not sit in."
       ],
       "tables": [
@@ -631,7 +632,7 @@
                   "citation": null
                 }
               ],
-              "cycles": 30
+              "cycles": 12
             },
             {
               "incubations": [
@@ -702,24 +703,33 @@
           "solution": "Drop the annealing temperature by 3 °C and check the pool went in."
         },
         {
-          "problem": "A smear rather than a band",
-          "solution": "Too many cycles over a pool loses the evenness the coverage is counted on. Take the fewest cycles that give a visible band."
+          "problem": "A hump after the peak on a Bioanalyzer or TapeStation trace",
+          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles. What too many cycles cost is dropout, chimeras and polymerase error; pooling the blocks equimolar later restores the evenness but none of those."
         }
       ],
-      "holes": []
+      "holes": [
+        {
+          "id": "H29",
+          "missing": "no cycle count published for Q5 on a Twist oligo pool",
+          "kind": "unpublished",
+          "where": "PCR1, the polymerase the cycle count is stated against",
+          "filled_by": "a count Twist states against Q5, or a pilot on this pool",
+          "issue": "liuhlab/liulab-mbio#225"
+        }
+      ]
     },
     {
       "title": "PCR2: pull each of the 72 blocks out of its batch",
       "instructions": [
         "Set up one reaction a block, 72 in all, in PCR2 plate.",
         "Give each its batch's PCR1 product as template, that batch's forward primer, and the block's own inner primer.",
-        "Run the program below."
+        "Run PCR1's program at 64.3 °C, and stop the reaction on a real-time curve before it plateaus: nobody published a cycle count for this one."
       ],
       "cautions": [
         "Keep the polymerase on ice."
       ],
       "notes": [
-        "The pairs anneal between 64.3 and 65.1 °C. The program runs at 64.3, the lowest of them, so one block of tubes takes them all.",
+        "The pairs anneal between 64.3 and 65.1 °C. Hold them all at 64.3, the lowest of them, so one block of tubes takes them.",
         "A block is named by its well from here on, not by anything in the tube."
       ],
       "tables": [
@@ -787,70 +797,7 @@
           "overage": 0.1
         }
       ],
-      "programs": [
-        {
-          "stages": [
-            {
-              "incubations": [
-                {
-                  "label": "Initial denaturation",
-                  "temperature_c": 98.0,
-                  "seconds": 30,
-                  "citation": null
-                }
-              ],
-              "cycles": 1
-            },
-            {
-              "incubations": [
-                {
-                  "label": "Denature",
-                  "temperature_c": 98.0,
-                  "seconds": 10,
-                  "citation": null
-                },
-                {
-                  "label": "Anneal",
-                  "temperature_c": 64.3,
-                  "seconds": 20,
-                  "citation": null
-                },
-                {
-                  "label": "Extend",
-                  "temperature_c": 72.0,
-                  "seconds": 20,
-                  "citation": null
-                }
-              ],
-              "cycles": 30
-            },
-            {
-              "incubations": [
-                {
-                  "label": "Final extension",
-                  "temperature_c": 72.0,
-                  "seconds": 120,
-                  "citation": null
-                }
-              ],
-              "cycles": 1
-            },
-            {
-              "incubations": [
-                {
-                  "label": "Hold",
-                  "temperature_c": 4.0,
-                  "seconds": null,
-                  "citation": null
-                }
-              ],
-              "cycles": 1
-            }
-          ],
-          "title": "PCR2",
-          "lid_temperature_c": null
-        }
-      ],
+      "programs": [],
       "timers": [],
       "transfers": [],
       "gels": [
@@ -891,9 +838,22 @@
         {
           "problem": "A band at PCR1's length",
           "solution": "The outer primer region was not dropped. Check the inner primer went in, and that the template is PCR1's product and not the pool."
+        },
+        {
+          "problem": "A hump after the peak on a Bioanalyzer or TapeStation trace",
+          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles; the forward primer is the whole batch's, so over-cycling here also pulls a neighbour's product into the well."
         }
       ],
-      "holes": []
+      "holes": [
+        {
+          "id": "H30",
+          "missing": "no cycle count for PCR2, which pulls one block out of an already-amplified batch",
+          "kind": "unpublished",
+          "where": "PCR2, the cycle count",
+          "filled_by": "a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus",
+          "issue": "liuhlab/liulab-mbio#225"
+        }
+      ]
     },
     {
       "title": "Assemble each block from its 1 to 5 pieces",
@@ -6243,6 +6203,14 @@
     },
     {
       "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
+      "url": ""
+    },
+    {
+      "text": "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool's length",
+      "url": ""
+    },
+    {
+      "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity",
       "url": ""
     },
     {
