@@ -358,26 +358,40 @@ cargo, and the rule has to say where in the layout the filler goes.
 
 ### 6.3 The split of the orthogonal primer set across its three roles
 
-165 primers, three roles, no allocation. The plates are declared constants built once, so they
-cannot be laid out until the split is fixed, and the capacity argument depends on it.
+**Decided in #258: 96 inner, 35 P1, 34 P3.** Many outer pairs, few inner.
 
-| Option | Evidence |
-| --- | --- |
-| Many outer pairs, few inner | The Baker shape implies about 96 inner primers, since the inner pair pulls one gene out of a 96-gene subpool. Batches are then outer pairs times inner primers. |
-| An even three-way split | Nothing supports it; listed because it is the default someone reaches for. |
+| Role | Primers | What it indexes |
+| --- | --- | --- |
+| P2, inner reverse | 96 | one gene inside a batch |
+| P1, shared forward | 35 | the batch, with P3 |
+| P3, outer reverse | 34 | the batch, with P1 |
 
-Unresolved underneath it: the set's own size is 165 or 166 depending on whether the supplement
-or the abstract is believed.
+96 inner primers makes one batch exactly one 96-well PCR2 plate, which is the Baker shape and
+the reason the number is 96 rather than any other. Capacity is 35 × 34 = 1,190 batches, far
+past any library this method reaches. An even three-way split was supported by nothing.
+
+A method constant, not a project choice: the plates are laid out once and a slot always means
+the same pair. The set is **not yet ordered**, so the split is an order specification — and P3
+is the cheapest role to under-order, since 12 and 12 still give 144 batches.
+
+The set's own size stays 165 or 166: the supplement keeps 165 rows, the abstract says 166. The
+split is over the rows held. A 166th, if it surfaces, is a spare and forces no re-split.
 
 ### 6.4 Batch size
 
-The rule is to hold pieces per first-round PCR roughly constant and let batch size fall as
-genes lengthen. No value is given, so the rule cannot be applied to a first batch.
+**Decided in #258: 96 genes a batch, divided equally.** 96 is the method's cap and it is
+physical — one inner-primer plate, one PCR2 plate. Above 96 genes a library divides into equal
+batches rather than full batches plus a remainder, which is what Freschlin's evenness
+measurement argues for.
 
-| Option | Evidence |
-| --- | --- |
-| Anchor on the Baker scale | The outer pair pulls a subpool, hundreds of oligos to a well; the inner pair pulls one gene, one to eight oligos to a well. |
-| Anchor on subpool evenness | Freschlin measures that subpools under 16 genes come out overabundant and pools of 20 or more underrepresented, so equal subpool sizes matter more than their absolute size. |
+The pieces-per-PCR1 budget is a **project input**. No source gives a number, and gene length is
+what a project rationally chooses it from. The method ships the band Baker's own two anchors
+derive — 96 genes at one to eight oligos a gene is 96 to 768 pieces a PCR1 — and a project
+chooses inside it.
+
+The cap and the piece rule do not compete: 96 binds for short genes, the budget for long ones.
+The band's floor sits under Baker's "hundreds of oligos to a well", which under-loads PCR1
+rather than overloading it, and no source names that as a failure.
 
 ### 6.5 The barcode set's enzyme-site freedom
 
@@ -466,16 +480,23 @@ the opposite. It is open.
 
 ### 6.10 The primers for the library reads
 
-The linkage read and the representation read have no primers. The primer list covers part
-retailoring, the orthogonal set, the vector's own library pair, the six plate-barcode primers,
-the two universal primers flanking the design, and the index plate. None reads an assembled
-library's barcode block, and the plate-barcode primers are defined by the kit's constant
-regions, which an assembled library does not carry.
+**Decided in #258: two pairs, each against sequence that is already constant.** Nothing is
+added to the oligo — 350 nt is the top of its price band, so a fourth primer role is a tier
+change, not a rounding error.
 
-| Option | Evidence |
-| --- | --- |
-| Design a pair against the cargo's own constant flanks | The cargo's `AGGA`/`TTCC` ends and its stuffer are constant across the library, so a pair exists. Nothing has been designed or checked. |
-| Reuse the two universal primers flanking the design | They are named in the source but **no sequences are published** for them; they are absent from the published primer table. Listing them as orderable implies sequences we do not hold. |
+| Read | Forward | Reverse |
+| --- | --- | --- |
+| Representation, across the barcode block | the retained 34 bp stuffer — a method constant | the vector past the final `TTCC` — per project |
+| Linkage, design to barcodes | the vector, before the first `AGGA` — per project | the vector, past the final `TTCC` — per project |
+
+The stuffer is constant across every member because the last round keeps it: the C position
+needs its barcode and a capping block carries none. The vector anchors are per project because
+the working vector is the user's own — mbio designs a pair against a record, synbio asks for it
+with the method's constraints.
+
+Both pairs are designed by the package against the simulated finished record, and are not
+written here. Reuse of `dmx0`/`dmx7` was the other option and is not needed; their sequences
+are now identified, and they read a barcoded DMX amplicon, not an assembled library.
 
 ### 6.11 What the part carrier brings into the assembly
 
@@ -597,10 +618,9 @@ Nothing here should become a package default.
   only.
 - **The accession formula for the barcode kit is inferred from four points** and is unconfirmed
   against the depositor's own kit listing. The sequences do not rest on it.
-- **No sequence is published for the two universal primers flanking the design**, although the
-  names are the source's.
-- **The two universal flanking primers, the split of the orthogonal set, and the library-read
-  primers are three separate holes in one primer inventory.** None blocks the others.
+- **The two universal flanking primers' sequences are ours by derivation**, not the source's.
+  The names are the paper's; it publishes no sequence, and the two unmatched constant regions of
+  the barcode kit are the only candidates. A wrong call shows as a failed amplification.
 - **No vendor or catalogue number is recorded for any reagent**, and one strain is named only
   by a property. Identity matters for the branded ligase buffer, the cloning kit and the
   competent cells.

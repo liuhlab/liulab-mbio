@@ -587,7 +587,8 @@ result this project can produce.
 ## 9. Every deferred decision, answered for this project
 
 Each heading names the open decision in `docs/research/synthesis-and-assembly.md` section 6.
-**Each answer is this project's, not the method's.** The method page keeps carrying the question.
+**Each answer is this project's, not the method's**, except where a later ticket promoted one.
+Ticket #258 took 9.3 and 9.4 into the method, so the method page now carries those two.
 
 ### 9.1 Where the Type IIS sites sit on the oligo — on the oligo, inboard of P1 and P2
 
@@ -741,11 +742,11 @@ form from the note before coding it, and the multiple belongs in section 10 as m
   reads, for the library.
 - **DMX parent:** a method decision, not this project's (section 2.1).
 - **Colony picker model:** a purchase decision, untouched.
-- **Library-read primers:** open. The method's primer inventory has no pair that reads an
-  assembled library's barcode block, and the two universal flanking primers have **no published
-  sequence**. A pair must be designed against the cargo's own constant flanks — the entry
-  overhangs and the retained stuffer are constant across all 13,824 members, so one exists. This
-  project does not design it; #220 does, or it is designed as its own ticket.
+- **Library-read primers:** decided in #258, and not by this project. Two pairs against
+  sequence already constant: representation reads from the retained stuffer to the vector past
+  the final `TTCC`, linkage reads the vector either side of the whole cargo. The package designs
+  both against the simulated record. The two universal flanking primers turned out to have
+  sequences after all — they are the barcode kit's two unmatched constant regions.
 
 ## 10. Open, and what would close it
 
