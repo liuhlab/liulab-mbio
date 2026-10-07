@@ -13,10 +13,11 @@ from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
 from liulab_mbio.protocol import read_protocol
-from liulab_mbio.sequence import Segment, SequenceRecord
+from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import reverse_translate
+from liulab_synbio.library.gate import check_product
 from liulab_synbio.library.method import IGGA
 from liulab_synbio.library.plan import (
     BARCODE_FILE,
@@ -215,21 +216,28 @@ def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, in
     assert made.status == "pass"
 
 
-def test_the_plan_s_status_is_the_worst_over_every_round_s_checks(plan):
-    named = [check.name for check in plan.checks]
+def test_the_plan_is_judged_by_the_gate_and_by_nothing_of_its_own(plan, inputs):
+    named = {check.name for check in plan.checks}
 
-    for one in plan.rounds:
-        for check in one.checks:
-            assert f"round {one.number} {check.name}" in named
-    assert "round 3 reading frame" in named
-    assert plan.status == worst(check.status for check in plan.checks)
-    # A stuffer nothing excises is what a surviving site or a lost cut looks like to a round.
-    broken = dataclasses.replace(
-        plan,
-        rounds=(*plan.rounds[:-1], dataclasses.replace(plan.rounds[-1], stuffer=Segment(0, 4))),
+    assert plan.checks == plan.verdict.checks
+    assert plan.status == worst(check.status for check in plan.checks) == "pass"
+    assert {"destination opens", "donor releases", "cargo frame", "terminal stop"} <= named
+    # The protocol prints one badge a check name, not one a molecule judged.
+    assert {check.name for check in plan.verdict.summary} == named
+    assert len(plan.verdict.summary) < len(plan.checks)
+    # A product the internal enzyme no longer opens is what a lost cut looks like to the gate.
+    site = IGGA.internal.site
+    broken = SequenceRecord(
+        str(plan.product.sequence).replace(site, "A" * len(site), 1), topology="circular"
     )
-    assert broken.status == "fail"
-    assert next(one for one in broken.checks if one.name == "round 3 opens").status == "fail"
+    judged = check_product(
+        broken,
+        project=plan.project,
+        barcodes={one.position: [one.barcode] for one in plan.representative_parts},
+    )
+    opens = next(one for one in judged if one.name == "product opens")
+    assert opens.status == "fail"
+    assert opens.check.value == 1
 
 
 def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(inputs, plan):

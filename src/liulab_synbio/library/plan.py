@@ -2,8 +2,9 @@
 
 `plan_library` is the one way in. It reads the project, sorts the part lists, chooses the overhang
 standard the proteins cost least, builds every part's synthesis sequence, makes the vector a
-destination, simulates every round, and works out what each round takes at the bench and how many
-colonies it needs. `LibraryPlan.write` puts one directory's worth of output in one place: the
+destination, simulates every round, works out what each round takes at the bench and how many
+colonies it needs, and hands the finished records to `liulab_synbio.library.gate` to be judged.
+`LibraryPlan.write` puts one directory's worth of output in one place: the
 synthesis order sheet, the barcode table, the amino-acid change table, a record for every round,
 the protocol as JSON data, and the page rendered from that data.
 
@@ -38,6 +39,7 @@ from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
 from liulab_synbio.library.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_synbio.library.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.library.gate import Verdict, check_library
 from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import (
     Part,
@@ -142,6 +144,9 @@ class LibraryPlan:
         What each round has to cover, and what the colonies asked for leave out.
     bench
         What each round takes at the bench, computed from that round's own lengths.
+    verdict
+        What `liulab_synbio.library.gate` made of the finished design: every tube, every cargo,
+        every barcode set and the product.
     host
         The codon usage table the coding bases were written for.
     name
@@ -162,6 +167,7 @@ class LibraryPlan:
     rounds: tuple[Round, ...]
     coverage: tuple[RoundCoverage, ...]
     bench: tuple[RoundBench, ...]
+    verdict: Verdict
     host: str
     name: str = ""
     prices: PriceRecord | None = None
@@ -183,17 +189,12 @@ class LibraryPlan:
 
     @property
     def checks(self) -> tuple[Check, ...]:
-        """Every round's verdicts, each named for the round that made it.
+        """Every check the gate made, in the order it made them.
 
-        A round judges the product it made: whether the next round can open it, whether the
-        enzyme that released the part is gone, and after the last round whether what the product
-        keeps past its final part reads in frame without a stop.
+        The plan judges nothing itself: these are `verdict`'s, so a design this pipeline wrote
+        and one an agent composed are judged by the same code.
         """
-        return tuple(
-            dataclasses.replace(check, name=f"round {one.number} {check.name}")
-            for one in self.rounds
-            for check in one.checks
-        )
+        return self.verdict.checks
 
     @property
     def status(self) -> Status:
@@ -214,7 +215,7 @@ class LibraryPlan:
             rounds=self.rounds,
             bench=self.bench,
             constructs=self.constructs,
-            checks=self.checks,
+            checks=self.verdict.summary,
             host=self.host,
             sheet=PARTS_FILE,
             barcodes=BARCODE_FILE,
@@ -292,16 +293,18 @@ def plan_library(
     Returns
     -------
     LibraryPlan
-        The design, the simulated rounds, and what the bench has to do.
+        The design, the simulated rounds, what the bench has to do, and the gate's verdict on all
+        of it. `liulab_synbio.library.gate.check_library` judges the finished records, so this
+        plan and a design an agent composed are judged by the same code.
 
     Raises
     ------
     ValueError
         If a record's name says no position of the project or says more than one, if two records
         share a name, if a part is not a protein or not a coding sequence, if no overhang
-        standard fits the part lists, if a block spells a site the method does not expect, if the
-        vector cannot be made a destination, if a round cannot ligate, or if `prices` names a
-        file that is not a price record.
+        standard fits the part lists, if a block spells a site the method does not expect or
+        gives up no cargo, if the vector cannot be made a destination, if a round cannot ligate,
+        or if `prices` names a file that is not a price record.
     KeyError
         If the project names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
@@ -360,6 +363,13 @@ def plan_library(
         destination.record, representative(built, positions), design, positions, name=named
     )
     rows = plan_coverage([len(each) for each in lists], coverage=chosen.coverage)
+    judged = check_library(
+        chosen,
+        destination=destination.record,
+        blocks=_blocks(built, positions),
+        products=[one.product for one in rounds],
+        barcodes=_barcodes(built, positions),
+    )
     return LibraryPlan(
         chosen,
         design,
@@ -372,6 +382,7 @@ def plan_library(
         rounds,
         rows,
         _bench(rounds, built, rows),
+        judged,
         chosen.host,
         named,
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
@@ -573,6 +584,24 @@ def _restandardised(scheme: Scheme, standard: Standard) -> Scheme:
             "this vector has to be retrofitted, and the internal stuffer carrying the entry "
             f"overhang this design chose is not one method {scheme.name!r} allows: {error}"
         ) from error
+
+
+def _blocks(parts: Sequence[Part], positions: Sequence[str]) -> dict[str, list[SequenceRecord]]:
+    """Every part's synthesis block as a record, keyed by the position it fills."""
+    return {
+        position: [
+            SequenceRecord(part.sequence, name=part.name) for part in parts if part.index == index
+        ]
+        for index, position in enumerate(positions)
+    }
+
+
+def _barcodes(parts: Sequence[Part], positions: Sequence[str]) -> dict[str, list[str]]:
+    """Every part's barcode, keyed by the position it fills: the table that decodes a read."""
+    return {
+        position: [part.barcode for part in parts if part.index == index]
+        for index, position in enumerate(positions)
+    }
 
 
 def _mean(lengths: Sequence[int]) -> int:

@@ -118,6 +118,7 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
         "barcode spacing",
         "barcode reading",
         "barcode block",
+        "product opens",
         "terminal block",
         "terminal stop",
     }

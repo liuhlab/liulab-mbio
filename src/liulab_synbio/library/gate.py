@@ -15,7 +15,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.barcodes import check_barcodes, separation
-from liulab_mbio.checks import Check, Status, worst_of
+from liulab_mbio.checks import STATUSES, Check, Status, worst_of
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.overhangs import fidelity
 from liulab_mbio.reaction import Pool, Reaction, Role
@@ -102,6 +102,18 @@ class Verdict:
     def failures(self) -> tuple[Judgement, ...]:
         """The judgements that failed, which is what a report leads with."""
         return tuple(one for one in self.judgements if one.status == "fail")
+
+    @property
+    def summary(self) -> tuple[Check, ...]:
+        """One check a name, carrying the worst judgement of that name and how many there were.
+
+        A design is judged once a molecule and read once, so a page that prints a badge a check
+        prints this rather than `checks`.
+        """
+        grouped: dict[str, list[Check]] = {}
+        for one in self.judgements:
+            grouped.setdefault(one.name, []).append(one.check)
+        return tuple(_worst(name, group) for name, group in grouped.items())
 
     def __getitem__(self, name: str) -> Judgement:
         """Return the first judgement of that check name.
@@ -223,13 +235,16 @@ def check_product(
     barcodes: Mapping[str, Sequence[str]],
     where: str = "the library product",
 ) -> tuple[Judgement, ...]:
-    """Judge the finished product: its barcode block, and what it keeps past its last part.
+    """Judge the finished product: whether it opens, its barcode block, and what it keeps.
 
-    The block is read off the record rather than stated: the terminal stuffer is found, then one
-    barcode a round follows it joined by the cloning scar, in the reverse of the order the rounds
-    ran. What the product keeps past its last part -- that stuffer and that block -- is then read
-    as codons, because every library member translates through it.
+    The last round's product is the one molecule no round opens, so the chain of reactions never
+    judges it as a destination; it is judged here instead, on the same rule. The block is read off
+    the record rather than stated: the terminal stuffer is found, then one barcode a round follows
+    it joined by the cloning scar, in the reverse of the order the rounds ran. What the product
+    keeps past its last part -- that stuffer and that block -- is then read as codons, because
+    every library member translates through it.
     """
+    opened = _opening(product, project, where)
     bases = str(product.sequence)
     circular = product.topology == "circular"
     haystack = bases * 2 if circular else bases
@@ -238,6 +253,7 @@ def check_product(
     opens = at - len(project.scheme.internal_stuffer_prefix)
     if at < 0 or opens < 0:
         return (
+            opened,
             Judgement(
                 Check(
                     "barcode block",
@@ -289,7 +305,7 @@ def check_product(
         where,
         tuple(stops),
     )
-    return (block, terminal, reading)
+    return (opened, block, terminal, reading)
 
 
 def check_reaction(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
@@ -411,6 +427,37 @@ def check_library(
             )
     made.extend(check_product(products[-1], project=project, barcodes=barcodes))
     return Verdict(made)
+
+
+def _opening(product: SequenceRecord, project: Project, where: str) -> Judgement:
+    """Whether the internal enzyme still cuts the finished product where a further round opens it.
+
+    The method leaves the library openable after its last round, which is what a further round or
+    a transfer into a working vector reads.
+    """
+    enzyme = project.scheme.internal
+    found = find_sites(product, (enzyme,))
+    opens = len(found) == CUTS
+    return Judgement(
+        Check(
+            "product opens",
+            "pass" if opens else "fail",
+            len(found),
+            f"{enzyme.name} cuts {where} in the {CUTS} places a further round opens it on"
+            if opens
+            else f"{enzyme.name} reads {len(found)} site(s) in {where}, where a further round "
+            f"opens it on {CUTS}",
+        ),
+        where,
+        () if opens else tuple(found),
+    )
+
+
+def _worst(name: str, group: Sequence[Check]) -> Check:
+    """Return the worst check of one name, saying how many carried it where more than one did."""
+    kept = max(group, key=lambda one: STATUSES.index(one.status) if one.status else -1)
+    detail = kept.detail if len(group) == 1 else f"{len(group)} judged, worst: {kept.detail}"
+    return Check(name, kept.status, kept.value, detail)
 
 
 def _cargo(block: SequenceRecord, project: Project) -> SequenceRecord:
