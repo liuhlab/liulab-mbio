@@ -5,10 +5,10 @@
 # the reason in the commit message. An ADR that will not fit is usually two ADRs.
 #
 # `metric` rules are summary-scoped: the variables are computed over the whole file and
-# the alert is reported at 1:1. The condition must be floating point — "> 400.0" and not
-# "> 400", which vale does not parse.
+# the alert is reported at 1:1. The condition must be floating point — "> 500.0" and not
+# "> 500", which vale does not parse.
 extends: metric
-message: "This ADR is %s words; the cap is 400. Split the decision."
+message: "This ADR is %s words; the cap is 500. Split the decision."
 level: error
 formula: words
-condition: "> 400.0"
+condition: "> 500.0"

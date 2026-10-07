@@ -1,6 +1,6 @@
 # Word cap for agent-facing documents: AGENTS.md, docs/agents/*, and every markdown file
 # under skills/ — a skill's own SKILL.md and the method files it discloses. The
-# companion rule for ADRs is Lab.LengthAdr, at 400. Not CONTEXT.md: a glossary only ever
+# companion rule for ADRs is Lab.LengthAdr, at 500. Not CONTEXT.md: a glossary only ever
 # grows, so conformance caps it per entry instead and no file cap applies.
 #
 # This is a dial, not a law. Raising it is a one-line diff here, made deliberately, with
