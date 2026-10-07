@@ -45,18 +45,41 @@ overhang pair per group across all 24 members, not only from the four maps.
 
 ## Each group primes a different read
 
-Six of the eight constant regions either side of the UMI are landing sites for the DMX primers.
-The other two, group 1's 5' constant and group 4's 3' constant, match no published primer, as
-the dashes in the table show and as a search of all six primers and their reverse complements
-across all 96 rows confirmed on 2026-10-06. The mapping below is ours, derived from the
-published sequences, not stated by the paper:
+All eight constant regions either side of the UMI are primer landing sites. Six carry a
+published DMX primer; the other two, group 1's 5' constant and group 4's 3' constant, are
+`dmx0` and `dmx7`, for which the paper publishes a name and no sequence. The mapping below is
+ours, derived from the published sequences, not stated by the paper:
 
 | Group | 5' constant is | 3' constant is |
 | --- | --- | --- |
-| 1 | — | DMX 1_rv |
+| 1 | `dmx0` | DMX 1_rv |
 | 2 | DMX 2_fw | DMX 3_rv |
 | 3 | DMX 4_fw | DMX 5_rv |
-| 4 | DMX 6_fw | — |
+| 4 | DMX 6_fw | `dmx7` |
+
+Each region is one sequence across all 24 members of its group, and each published primer
+matches its region exactly, forward or reverse-complemented. Measured over all 96 rows of
+`dmx-barcodes.tsv` on 2026-10-06, then again on 2026-10-06 for the two unmatched.
+
+## The two universal primers
+
+`dmx0` and `dmx7` flank the design. The chain closes through it, so reading round the circle
+gives `BC4`'s 3' constant, `GGAA`, the design, `TCCT`, then `BC1`'s 5' constant — which is the
+`dmx7-design-dmx0` the amplicon table names. They exist only after barcoding, because they come
+from the barcodes.
+
+| Primer | Sequence | Reads |
+| --- | --- | --- |
+| `dmx7` | `ATCGGTGACGGCGATTCTCACATTT` | forward, into the design |
+| `dmx0` | `TTTGATACGCAGGAAGATGGCCCAC` | reverse, into the design |
+
+`dmx7` is group 4's 3' constant as the table holds it; `dmx0` is the reverse complement of
+group 1's 5' constant. Both are 25 nt, like all six published primers, at 48% and 52% GC and
+within 0.8 °C of each other — 70.7 and 71.5 °C in Q5 buffer.
+
+**The names are the paper's, the sequences are ours by derivation.** The paper publishes no
+sequence for either, so a mismatch against the authors' intent would show as a failed
+amplification, not a wrong result.
 
 That is why there are three primer pairs rather than three separate assays. Each pair enters
 the same circle at a different rotation, so every amplicon carries the design plus all four

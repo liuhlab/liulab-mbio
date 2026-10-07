@@ -207,9 +207,10 @@ uses (P1, P2) to pull one gene out of the batch and drops the P3 region.
 
 **Step 4.** The set is drawn fresh, to the rules in `### iGGA cargo`.
 
-**Step 5, batch size.** Hold pieces per PCR1 tube roughly constant and let batch size fall as
-genes lengthen. **Undecided:** the number to hold constant at —
-`docs/research/synthesis-and-assembly.md`.
+**Step 5, batch size.** At most 96 genes a batch — one inner-primer plate, one PCR2 plate — and
+a larger library divides into equal batches, never full batches plus a remainder. Hold pieces
+per PCR1 tube roughly constant and let batch size fall as genes lengthen; the budget is a
+project input, inside the 96 to 768 pieces the Baker anchors derive.
 
 **Step 10.** Polyclonal by default.
 
@@ -328,10 +329,11 @@ and `docs/research/synthesis-and-assembly-barcode-kit.md`.
 | Class | What it is | Source |
 | --- | --- | --- |
 | Part retailoring primers | `5'-[spacer]-CGTCTC-N-[new overhang]-[annealing]-3'` | designed per part |
-| Orthogonal set, roles P1 / P2 / P3 | 185 twenty-mers, 165 of them in the orthogonal set | Subramanian 2018, Supplementary Table 1 |
+| Orthogonal set, roles P1 / P2 / P3 | 165 twenty-mers of a tested 185, split 96 inner P2 / 35 P1 / 34 P3 | Subramanian 2018, Supplementary Table 1 |
 | DMX library pair | carries the BsmBI sites giving `AGGA`/`TTCC` | Qian 2026, Supplementary Table 4 |
 | DMX1–DMX6 | three pairs for the barcoded amplicon | Qian 2026, Supplementary Table 4 |
-| dmx0 / dmx7 | universal primers flanking the design | Qian 2026 |
+| dmx0 / dmx7 | universal primers flanking the design | named by Qian 2026, sequences derived in `docs/research/synthesis-and-assembly-barcode-kit.md` |
+| Library read pairs | representation and linkage, across the barcode block | designed per library |
 | Index PCR plate | one pair per well, ordered as published | Long 2025, Tables S3 and S4 |
 
 ### Reagent list
