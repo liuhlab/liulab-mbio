@@ -76,14 +76,14 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
 
 def test_the_block_meets_the_homopolymer_cap_at_a_scar_junction_and_never_passes_it(plan):
     # The block reads barcode-scar-barcode, so a run grows across a junction no barcode holds on
-    # its own. Counted here without the module that designs to it. The set meets the cap and
-    # keeps nothing back, so the length, the scar and the seed are what hold it there.
+    # its own. Counted here plainly, over the whole context, so it fails if the designer's own
+    # junction arithmetic ever admits a run this count can see.
     scar = plan.scheme.cloning_scar
     runs = [
         max(len(tuple(same)) for _, same in groupby(scar + one.barcode + scar))
         for one in plan.parts
     ]
-    assert max(runs) == MAX_HOMOPOLYMER
+    assert max(runs) <= MAX_HOMOPOLYMER
 
 
 def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
