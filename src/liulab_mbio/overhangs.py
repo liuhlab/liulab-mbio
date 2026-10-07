@@ -8,8 +8,9 @@ inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
   `End` holds and `compatible` weighs. The bases alone do not decide it: a 5' overhang and a 3'
   overhang spelling the same bases run the wrong way for each other.
 - **Which overhangs a set may hold.** A palindrome would let a fragment ligate to itself, a
-  repeat would let two junctions swap, and a near-duplicate is what mis-ligates. `refusal`
-  weighs one candidate against the set so far and names the rule that refuses it.
+  repeat would let two junctions swap, and a near-duplicate is what mis-ligates. An overhang a
+  step outside the set already spends is reserved, and held out by name. `refusal` weighs one
+  candidate against the set so far and names the rule that refuses it.
 - **How well the set should ligate.** Pryor et al. 2020 measured every overhang pair for five
   enzymes, and that data ships here: fidelity is the product over the junctions of correct
   ligations over all ligations. An enzyme they did not measure is scored against a ligase
@@ -58,7 +59,7 @@ _RULE_SOURCE = "rule-based estimate: no published ligation data covers this enzy
 #: Why a candidate overhang was refused. `refusal` returns every one but ``"stop"``, which belongs
 #: to a caller reading a candidate in frame, as the library pipeline's overhang choice does.
 type RejectionRule = Literal[
-    "length", "palindrome", "uniform", "repeat", "near-duplicate", "site", "stop"
+    "length", "palindrome", "uniform", "repeat", "reserved", "near-duplicate", "site", "stop"
 ]
 
 #: What a set of overhangs is scored against: the enzyme's own matrix, or a ligase's profile.
@@ -397,6 +398,7 @@ def refusal(
     enzyme: EnzymeLike,
     *,
     taken: Iterable[str] = (),
+    reserved: Iterable[str] = (),
     avoid: Iterable[EnzymeLike] = (),
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
@@ -404,8 +406,13 @@ def refusal(
     """Why `candidate` will not join `taken`, or ``None`` when it will.
 
     Every rule a set of overhangs is held to, weighed one candidate at a time: its length, a
-    palindrome, one base class, a repeat, a near-duplicate, and a primer tail spelling a further
-    site.
+    palindrome, one base class, a repeat, a reserved overhang, a near-duplicate, and a primer
+    tail spelling a further site.
+
+    `taken` is what this set already holds; `reserved` is what a step outside it spends, which
+    the set is to leave alone. Both bind the candidate the same way — it may neither take one
+    nor sit nearer than `min_distance` to one — and taking a reserved one is refused as
+    ``"reserved"`` rather than as a repeat, so a caller is told what actually happened.
 
     Examples
     --------
@@ -413,11 +420,14 @@ def refusal(
     True
     >>> refusal("AGGT", "BsaI", taken=["AGGT"]).rule
     'repeat'
+    >>> refusal("AGGT", "BsaI", reserved=["AGGT"]).rule
+    'reserved'
     """
     return _refuse(
         candidate.upper(),
         _type_iis(_one(enzyme)),
         tuple(one.upper() for one in taken),
+        tuple(one.upper() for one in reserved),
         _resolve(avoid),
         min_distance,
         allow_uniform,
@@ -428,6 +438,7 @@ def _refuse(
     candidate: str,
     enzyme: Enzyme,
     taken: Sequence[str],
+    reserved: Sequence[str],
     avoid: Sequence[Enzyme],
     min_distance: int,
     allow_uniform: bool,
@@ -460,7 +471,15 @@ def _refuse(
                 "repeat",
                 f"{other} is already a junction, and two junctions sharing an overhang swap",
             )
-    for other in taken:
+    for other in reserved:
+        if candidate in (other, reverse_complement(other)):
+            return Rejection(
+                candidate,
+                "reserved",
+                f"{other} is reserved, and a junction taking it would ligate to whatever "
+                "reserved it",
+            )
+    for other in (*taken, *reserved):
         for partner in (other, reverse_complement(other)):
             distance = _distance(candidate, partner)
             if distance < min_distance:

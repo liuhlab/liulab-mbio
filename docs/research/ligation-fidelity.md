@@ -264,11 +264,16 @@ no test fixture is copied from it, and no number of it is transcribed into the c
 The package reads a matrix from a file **the user already holds**, so nothing is redistributed
 and nothing needs licence marking. Whoever downloads the archive accepts its terms themselves.
 
+Not to be confused with EGF's `tatapov_data` package, which redistributes a **CC BY-ND**
+repackaging of this data: a different artifact under a different licence, and not what is read
+here.
+
 ### Where the archive is
 
 figshare item 7267505, `sb8b00333_si_002.zip`, the Supporting Data of
-[doi:10.1021/acssynbio.8b00333](https://doi.org/10.1021/acssynbio.8b00333). Six of its files are
-count matrices over every overhang pair, one per condition:
+[doi:10.1021/acssynbio.8b00333](https://doi.org/10.1021/acssynbio.8b00333). It holds fifteen
+files. Six of them are count matrices over every overhang pair, one per condition, and those six
+are the only ones this package can read:
 
 | File | Ligase | Incubation |
 | --- | --- | --- |
@@ -283,27 +288,67 @@ count matrices over every overhang pair, one per condition:
 conditions are ligation at 25°C for 18 hours; these conditions have been shown to well predict
 the results of Golden Gate assembly using typical cycled conditions."
 
-The `*_cycled` files in the same archive are **per-assembly summaries, not matrices**. They are
-refused rather than read as fidelity data, because their labels are assembly compositions and
-not overhangs.
+### The other nine files, and why none of them is a seventh matrix
+
+The remaining nine divide into three groups, and **not one of them is a count matrix over
+overhang pairs**:
+
+| File | What it is |
+| --- | --- |
+| `FileS05_HF_cycled.xlsx`, `FileS07_LF_cycled.xlsx`, `FileS09_DP_cycled.xlsx`, `FileS10_FP_cycled.xlsx` | the four ten-fragment test assemblies, cycled 5 min 37 °C / 5 min 16 °C, 30 times |
+| `FileS11_HF_01h_37C.xlsx`, `FileS12_LF_18h_37C.xlsx`, `FileS13_DP_18h_37C.xlsx`, `FileS14_FP_18h_37C.xlsx` | the same four assemblies, held at 37 °C instead of cycled |
+| `lac.fasta` | one 4,851-base record, the lac cassette of the twelve- and twenty-four-fragment assemblies |
+
+**`HF`, `LF`, `DP` and `FP` are not ligases and not buffers. They name the four junction sets**
+the paper designed for its ten-fragment assembly of inserts A to J: high-fidelity,
+low-fidelity, deletion-prone and failure-prone. The preprint of the same work states it:
+
+> The junctions between fragment pairs (Junctions 1 – 9) were selected to either be 9
+> high-fidelity (HF) junctions, or a low-fidelity (LF) set where 9 junction pairs were chosen
+> such that many mismatch ligation events were predicted (Table 1).
+
+And, on the same page:
+
+> Two additional sets were designed: a deletion-prone (DP) set, where junction 7 of the HF set
+> was changed [...] such that deletion (and to a lesser extent, duplication) of insert G was
+> predicted to result; a failure-prone (FP) set where junction 7 was replaced with the high
+> fidelity but low efficiency pair.
+
+So `FileS11` to `FileS14` are **the same kind of file as the `*_cycled` ones**, differing only in
+the reaction they summarise: `_cycled` was thermocycled, the others were held at 37 °C. Opening
+them confirms it. `FileS03` has one sheet, `18h @ 25C`, carrying 256 overhang labels; each of
+these eight has five, `table_01` to `table_05`, labelled `Insert`, `Count`, `Fraction` and the
+inserts `A` to `J`. `read_profile` refuses all eight with one message, naming the label `B` as
+one that is not an overhang.
+
+**Verdict: the four are excluded, for the reason the `*_cycled` files are excluded** — they
+count assemblies, not ligation events between overhang pairs, so there is nothing in them to
+score a set of overhangs against. `FileS05`, `FileS07`, `FileS09` and `FileS10` are all the
+`*_cycled` files there are. `lac.fasta` is a sequence file nothing here reads, and needs no
+entry above. The archive holds six matrices, not ten.
 
 ### Pointing the tool at a copy
+
+A path under `~` is not one this project may depend on, so the example reads the copy under
+`reference_docs/`, which `reference_docs/ligation-fidelity/README.md` says how to fetch. That
+directory is git-ignored: the download is the reader's own, and **nothing of it ships**.
 
 ```python
 from liulab_mbio.cloning.goldengate import plan_assembly
 from liulab_mbio.ligase import read_profile
 
-profile = read_profile("~/potapov/FileS03_T4_18h_25C.xlsx")
+profile = read_profile("reference_docs/ligation-fidelity/potapov2018/FileS03_T4_18h_25C.xlsx")
 plan_assembly(vector, insert, enzyme="PaqCI", profile=profile)
 ```
 
 On the command line, as an option or as an environment variable:
 
 ```sh
-liulab_mbio cloning goldengate plan vector.dna insert.dna --out run \
-    --ligase-matrix ~/potapov/FileS03_T4_18h_25C.xlsx
+matrix=reference_docs/ligation-fidelity/potapov2018/FileS03_T4_18h_25C.xlsx
 
-export LIULAB_MBIO_LIGASE_MATRIX=~/potapov/FileS03_T4_18h_25C.xlsx
+liulab_mbio cloning goldengate plan vector.dna insert.dna --out run --ligase-matrix "$matrix"
+
+export LIULAB_MBIO_LIGASE_MATRIX="$matrix"
 liulab_mbio cloning goldengate plan vector.dna insert.dna --out run
 ```
 
@@ -375,6 +420,10 @@ All read on 2026-09-12.
 - Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by
   T4 DNA Ligase and application to DNA assembly. *ACS Synth. Biol.* 7, 2665-2674.
   [doi:10.1021/acssynbio.8b00333](https://doi.org/10.1021/acssynbio.8b00333) (CC BY-NC 4.0)
+- Potapov, V. et al. (2018) Optimization of Golden Gate assembly through application of ligation
+  sequence-dependent fidelity and bias profiling. *bioRxiv* 322297.
+  [doi:10.1101/322297](https://doi.org/10.1101/322297) (CC BY-ND), the preprint of the paper
+  above, read for what `HF`, `LF`, `DP` and `FP` name. Read 2026-10-06
 - Potapov, V. et al. (2018) A single-molecule sequencing assay for the comprehensive profiling
   of T4 DNA ligase fidelity and bias during DNA end-joining. *Nucleic Acids Res.* 46, e79.
   [doi:10.1093/nar/gky303](https://doi.org/10.1093/nar/gky303) (CC BY-NC 4.0)
