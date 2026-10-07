@@ -235,22 +235,58 @@ matters for a scarless junction, where the sequence chooses the overhang and not
 
 ## 7. The fallback for an enzyme nobody measured
 
-PaqCI, AarI, BspQI, BpiI and BtgZI have no published matrix. Their overhangs are scored by the
-rules instead, and `FidelityReport.measured` is `False` so that nothing mistakes the number for
-a measurement.
+PaqCI, AarI, BspQI, BpiI and BtgZI have no published matrix. **A shipped matrix of the same
+overhang length stands in**, and the report names whose: `measured` is `True`,
+`enzyme_specific` is `False`, and the label reads `measured with Esp3I, not specific to PaqCI`.
+Decided in #320 on the measurement below, built in #366.
 
-The two weights, 0.05 for each near-duplicate partner and 0.02 for an overhang of one base
-kind, are **ranking choices and not measurements**. They are module constants saying so. A set
-scored this way compares with another set scored this way and with nothing else; it must never
-be printed beside a measured fidelity as though the two were the same kind of number.
+Which matrix stands in is read off the shipped data, not listed in a table the code carries:
 
-A tempting alternative was rejected: scoring PaqCI on BsaI's matrix, on the argument that
-ligation fidelity belongs to T4 ligase and the cycling temperature rather than to the Type IIS
-enzyme. It is a reasonable argument and it is still a substitution of one enzyme's measurement
-for another's, so `choose_enzyme` prefers an enzyme that has its own matrix instead, and says
-so in its ranking. Section 8 does the different thing that argument actually licenses: score the
-overhangs against a measurement of **the ligase itself**, and label the number as the ligase's
-and not the enzyme's.
+| Unmeasured | Overhang | Stands in | On what ground |
+| --- | --- | --- | --- |
+| BspQI (GCTCTTC) | 3 | SapI | reads and cuts the same site |
+| BpiI (GAAGAC) | 4 | BbsI-HF | reads and cuts the same site |
+| PaqCI, AarI (CACCTGC) | 4 | Esp3I | the four-base matrix with the most ligations behind it |
+| BtgZI (GCGATG) | 4 | Esp3I | the same |
+
+The first two are barely substitutions: an isoschizomer cuts the same site the same way, so the
+measurement is of both enzymes under two names. For the rest the authority is Pryor 2020's own
+Discussion sentence, quoted in section 10 — the predicted fidelity "is unlikely to be
+significantly impacted by the choice of Type IIS restriction enzyme".
+
+**An earlier draft of this section rejected exactly this**, as a substitution of one enzyme's
+measurement for another's, and sent the question to section 8's ligase profile instead. The
+objection was never about the number but about what the package may **claim**, and
+`enzyme_specific` and `label` already answer that. The measurement settles which substitution is
+smaller. Reproduced independently at seed 0, 200 random sets per size:
+
+| Overhangs | Cross-enzyme spread, mean / max | Profile deviation, mean / max |
+| --- | --- | --- |
+| 8 | 0.0542 / 0.1815 | 0.0763 / 0.2606 |
+| 12 | 0.0785 / 0.1766 | 0.1435 / 0.3032 |
+| 20 | 0.0762 / 0.1548 | 0.1930 / 0.3819 |
+
+The gap widens with set size — 1.4x at eight overhangs and 2.5x at twenty — because the two
+reactions differ systematically and the error compounds over a product of per-junction
+probabilities. Section 10 reproduces the same effect from the other direction, at mean 0.052 and
+worst 0.148 over the four four-base matrices. On Pryor's own eleven plant overhangs, every
+shipped matrix lands within 1.9 points of the 81% the paper reports, including the three that
+were not the enzyme used, while every pure-ligation profile reads 8 to 10 points high.
+
+So the stand-in is taken ahead of a ligase profile, and only `prefer_profile` puts a profile
+first. One substitution is licensed by an author; the other is licensed by nobody.
+
+The rules remain as the last resort, and their two weights — 0.05 for each near-duplicate
+partner and 0.02 for an overhang of one base kind — are **ranking choices and not
+measurements**. They are module constants saying so, and a set scored that way must never be
+printed beside a measured fidelity as though the two were the same kind of number. In practice
+nothing shipped reaches them: every Type IIS enzyme the package holds leaves three or four
+bases, and shipped matrices cover both lengths, so the rules now score only an enzyme outside
+that range. That is a reachability note, not a reason to delete them.
+
+`choose_enzyme` still prefers an enzyme with its own matrix, which stays right: an enzyme's own
+measurement outranks a stand-in. Its wording may no longer say an unmeasured enzyme cannot be
+scored.
 
 ## 8. A matrix the user holds
 
@@ -366,13 +402,17 @@ The conditions are read off the file name where it is named the way the archive 
 ### What the report then says
 
 A profile belongs to the ligase and the conditions, not to the Type IIS enzyme, and
-`FidelityReport` keeps the three kinds of number apart:
+`FidelityReport` keeps the four kinds of number apart:
 
 | Scored by | `measured` | `enzyme_specific` | `label` |
 | --- | --- | --- | --- |
 | the enzyme's own shipped matrix | `True` | `True` | `measured` |
+| another enzyme's, standing in | `True` | `False` | `measured with Esp3I, not specific to PaqCI` |
 | a ligase profile | `True` | `False` | `measured ligase profile, not specific to PaqCI` |
 | the rules | `False` | `True` | `rule-based estimate` |
+
+`FidelityReport.stand_in` is what tells the middle two apart: it carries the product whose
+matrix stood in, and is empty for a profile.
 
 `source` names the conditions and the file, so the protocol cites the file the number came from
 and the overview prints the label beside the percentage. **A ligase profile is never presented as
@@ -380,11 +420,14 @@ a measurement of the enzyme**, and a rule-based score is still never printed bes
 one as though the two were the same kind of number.
 
 The enzyme's own matrix wins where there is one, because a profile stands in for a measurement
-nobody has made rather than replacing one somebody has. `prefer_profile` overrides that, for a
-designer who wants one set of conditions across several enzymes.
+nobody has made rather than replacing one somebody has. **A profile is now the third fallback,
+not the second**: section 7's stand-in comes first, since it measures the same reaction, and a
+profile is reached only for an enzyme no shipped matrix shares an overhang length with.
+`prefer_profile` overrides all of that, for a designer who wants one set of conditions across
+several enzymes, and it is how a caller who passed `--ligase-matrix` on purpose keeps it.
 
-**Without such a file nothing changes.** PaqCI is scored by the rules exactly as it was before,
-which a test pins.
+**Without such a file, PaqCI is scored on Esp3I's matrix** rather than by the rules, which a
+test pins.
 
 ### A second ligase's matrix, and what it may not replace
 
@@ -551,13 +594,13 @@ is mean 0.052, median 0.047, worst 0.148. Against that, the profile was 7 to 9 p
 paper's own benchmark and up to 0.19 off at twenty overhangs.
 
 **So section 7's rejected idea is the better-conditioned one of the two fallbacks, on this
-measurement and on the paper's own sentence.** Section 7 rejected scoring PaqCI on BsaI's matrix
-as a substitution of one enzyme's measurement for another's, and section 8 then adopted a
-substitution of a different reaction's measurement instead — which is the larger error and is the
-one the authors do not license. This note records the measurement; it does not change the code.
-A recommendation, not a decision: prefer a four-base Type IIS matrix over the T4 pure-ligation
-profile for an unmeasured four-base enzyme, keep `enzyme_specific=False` and keep the label
-saying whose measurement it is.
+measurement and on the paper's own sentence.** It was rejected as a substitution of one enzyme's
+measurement for another's, and a substitution of a different reaction's measurement was adopted
+instead — the larger error, and the one the authors do not license.
+
+**This was decided in #320 and built in #366, and section 7 now records it**: a shipped matrix of
+the same overhang length stands in ahead of a pure-ligation profile, `enzyme_specific` stays
+`False`, and the label says whose measurement it is.
 
 **PaqCI is no longer an enzyme nobody measured** — it is one whose measurement is unpublished and
 unshippable (section 10). That strengthens the recommendation rather than weakening it: the gap

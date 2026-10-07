@@ -5,7 +5,7 @@ Against Pryor 2020's own worked examples: the numbers the paper reports are the 
 
 import pytest
 
-from liulab_mbio.enzymes import EndType
+from liulab_mbio.enzymes import EndType, Enzyme
 from liulab_mbio.overhangs import (
     MIN_DISTANCE,
     MODEST_MISMATCH,
@@ -27,6 +27,11 @@ HIGH_FIDELITY = (
     "TGCC", "GCAA", "ACTA", "TTAC", "CAGA", "TGTG", "GAGC", "AGGA",
     "ATTC", "CGAA", "ATAG", "AAGG", "AACT", "AAAA", "ACCG",
 )  # fmt: skip
+
+# Every Type IIS enzyme the package ships leaves three or four bases, and shipped matrices cover
+# both, so a stand-in always exists for one of them. This record is what an enzyme outside that
+# range would be, and it is the only way left to reach the rules.
+WIDE = Enzyme("five-base cutter", "CTGGAG", top_cut=20, bottom_cut=25)
 
 
 def test_two_enzymes_leaving_the_same_overhang_anneal() -> None:
@@ -128,8 +133,33 @@ def test_an_overhang_the_enzyme_could_not_leave_is_refused_by_the_scorer() -> No
         fidelity(("AAAA", "CCGT"), "SapI")
 
 
-def test_an_enzyme_with_no_matrix_falls_back_to_the_rules_and_says_so() -> None:
+def test_an_enzyme_nobody_measured_is_scored_on_a_matrix_of_its_own_overhang_length() -> None:
     report = fidelity(("AATG", "GCTT", "TACA"), "PaqCI")
+
+    assert report.measured
+    assert not report.enzyme_specific
+    # Esp3I is the four-base matrix with the most ligations behind it.
+    assert report.label == "measured with Esp3I, not specific to PaqCI"
+    assert "PaqCI" in report.source
+    assert len(report.ligations) == 3
+
+
+@pytest.mark.parametrize(("enzyme", "standing_in"), [("BspQI", "SapI"), ("BpiI", "BbsI-HF")])
+def test_an_enzyme_reading_a_shipped_enzyme_s_site_takes_that_enzyme_s_matrix(
+    enzyme: str, standing_in: str
+) -> None:
+    # An isoschizomer cuts the same site the same way, so the measurement is of both of them.
+    overhangs = ("AAT", "GCT") if enzyme == "BspQI" else ("AATG", "GCTT")
+
+    report = fidelity(overhangs, enzyme)
+
+    assert report.measured
+    assert not report.enzyme_specific
+    assert report.label == f"measured with {standing_in}, not specific to {enzyme}"
+
+
+def test_the_rules_score_an_enzyme_no_shipped_matrix_shares_an_overhang_length_with() -> None:
+    report = fidelity(("AATGC", "GCTTA", "TACAG"), WIDE)
 
     assert not report.measured
     assert report.enzyme_specific
@@ -139,8 +169,8 @@ def test_an_enzyme_with_no_matrix_falls_back_to_the_rules_and_says_so() -> None:
 
 
 def test_the_rule_based_fallback_marks_a_set_of_near_duplicates_down() -> None:
-    spread = fidelity(("AATG", "GCTT", "TACA"), "PaqCI").value
-    crowded = fidelity(("AATG", "AATC", "TACA"), "PaqCI").value
+    spread = fidelity(("AATGC", "GCTTA", "TACAG"), WIDE).value
+    crowded = fidelity(("AATGC", "AATCC", "TACAG"), WIDE).value
 
     assert crowded < spread <= 1.0
 

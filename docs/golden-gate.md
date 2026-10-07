@@ -112,10 +112,15 @@ The plan above is published here, exactly as the command wrote it:
 ## Point it at your own ligase data
 
 Fidelity says how likely the joins are to pair correctly. For five enzymes that number is
-measured, and the measurements ship with the package. For the rest, it is worked out from
-rules.
+measured, and the measurements ship with the package. For the rest, one of those five stands
+in: an enzyme that reads the same site as a measured one takes its numbers outright, and
+otherwise the matrix of the same overhang length with the most ligations behind it is used.
+Pryor and colleagues report that the choice of Type IIS enzyme is unlikely to move the number
+much, so a stand-in is the smaller error. The report always says which enzyme it used.
 
-You can do better if you hold a copy of the T4 ligase data from Potapov and colleagues. That
+You may prefer a copy of the T4 ligase data from Potapov and colleagues. It measures a
+different reaction -- ligase alone, not a one-pot assembly -- so the package reaches for it
+only after a stand-in, and `--prefer-ligase-matrix` puts it first instead. That
 archive is not ours to ship, so nothing from it is in this package. Point the command at your
 own copy instead:
 
@@ -133,16 +138,19 @@ export LIULAB_MBIO_LIGASE_MATRIX=~/potapov/FileS03_T4_18h_25C.xlsx
 Reach for `FileS03` first: 25 °C for 18 hours is what NEB's own viewer assumes. Both `.xlsx`
 and `.csv` are read.
 
-The report then says where its number came from, and keeps the three kinds apart:
+The report then says where its number came from, and keeps the four kinds apart:
 
 | Scored against | What the protocol prints |
 | --- | --- |
 | the enzyme's own measurements | `measured` |
+| another enzyme's, standing in | `measured with Esp3I, not specific to PaqCI` |
 | your ligase file | `measured ligase profile, not specific to PaqCI` |
 | the rules | `rule-based estimate` |
 
-The enzyme's own measurements win where they exist. A ligase file stands in for a measurement
-nobody has made; it does not replace one somebody has. Without such a file nothing changes.
+The enzyme's own measurements win where they exist. A file of yours does not replace one
+somebody has already made, unless you ask for that. Every Type IIS enzyme here leaves three or
+four bases and the shipped data covers both, so the last row is what an enzyme outside that
+range would get, and nothing you can order today falls to it.
 
 ## Before you order
 
