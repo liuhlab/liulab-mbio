@@ -7,10 +7,12 @@ the blocks that make it, not on how the design reached them.
 
 from collections import Counter
 from dataclasses import replace
+from itertools import groupby
 from pathlib import Path
 
 import pytest
 
+from liulab_mbio.barcodes import MAX_HOMOPOLYMER
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
@@ -68,6 +70,18 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
     retained = bases[plan.rounds[-1].retained.start : plan.rounds[-1].retained.end]
     assert len(retained) == plan.project.retained_length == 75
     assert "*" not in translate(retained)
+
+
+def test_the_block_meets_the_homopolymer_cap_at_a_scar_junction_and_never_passes_it(plan):
+    # The block reads barcode-scar-barcode, so a run grows across a junction no barcode holds on
+    # its own. Counted here without the module that designs to it. The set meets the cap and
+    # keeps nothing back, so the length, the scar and the seed are what hold it there.
+    scar = plan.scheme.cloning_scar
+    runs = [
+        max(len(tuple(same)) for _, same in groupby(scar + one.barcode + scar))
+        for one in plan.parts
+    ]
+    assert max(runs) == MAX_HOMOPOLYMER
 
 
 def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
