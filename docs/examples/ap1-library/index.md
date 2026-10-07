@@ -1,7 +1,7 @@
 # Example: an AP-1 domain library
 
 A combinatorial library over three positions, built from 72 protein sequences and nothing else.
-Every output file below was written by the command, from the three input files beside it.
+Every output file below was written by the command, from the input files beside it.
 Nothing here is edited by hand.
 
 Read this page to see what a whole run writes. Its [project.json](project.json) holds every

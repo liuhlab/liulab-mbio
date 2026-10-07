@@ -361,7 +361,9 @@ def _overview(
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
         "Designs read back": (
             card(
-                f"{len(validation.designs)} from {validation.floor} fragment(s)",
+                f"{len(validation.designs)}, every one"
+                if validation.floor == 0
+                else f"{len(validation.designs)}, from {validation.floor} fragment(s)",
                 f"route {validation.route.name}",
             )
             if validation

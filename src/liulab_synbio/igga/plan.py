@@ -214,7 +214,7 @@ class LibraryPlan:
             return None
         return dmx.validation(
             dmx.ROUTES[self.project.route],
-            designs(self.parts, self.project.oligo_length),
+            designs(self.parts, self.pool),
             self.project.validate_from,
         )
 
@@ -283,25 +283,29 @@ class LibraryPlan:
         return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
 
 
-def designs(parts: Sequence[Part], oligo_length: int) -> tuple[dmx.Design, ...]:
-    """Return one design a part, in as many pieces as the project's oligo length forces it into.
+def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, ...]:
+    """Return one design a part, in the pieces the pool was actually split into.
 
-    A block no longer than one oligo of the pool is ordered whole; a longer one is ordered in
-    pieces and joined, and that count is what a design's chance of a clean colony falls with.
+    That count is what a design's chance of a clean colony falls with, so it is read off the
+    split rather than guessed from the block's length: a fragment gives up bases to the overhang
+    either side, so arithmetic on the oligo length alone only ever bounds it from below. A
+    project naming no primer set writes no pool, and each block is then one ordered piece.
 
     Raises
     ------
     ValueError
-        If the oligo length is not positive.
+        If the pool was not split from these parts.
 
     Examples
     --------
-    >>> [one.fragments for one in designs(plan.parts, 350)]  # doctest: +SKIP
-    [1, 2, 4]
+    >>> [one.fragments for one in designs(plan.parts, plan.pool)]  # doctest: +SKIP
+    [1, 2, 5]
     """
-    if oligo_length < 1:
-        raise ValueError(f"an oligo is at least one base, got {oligo_length}")
-    return tuple(dmx.Design(one.name, -(-one.length // oligo_length)) for one in parts)
+    if pool is None:
+        return tuple(dmx.Design(one.name, 1) for one in parts)
+    return tuple(
+        dmx.Design(part.name, split.pieces) for part, split in zip(parts, pool.splits, strict=True)
+    )
 
 
 def plan_igga(

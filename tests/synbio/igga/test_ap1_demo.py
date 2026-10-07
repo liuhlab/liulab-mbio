@@ -126,9 +126,20 @@ def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out
     whole = plan.validation
     fewer = rerouted(plan, validate_from=2).validation
     left_out = len(whole.designs) - len(fewer.designs)
-    assert left_out == 40
-    assert fewer.wells == whole.wells - left_out * whole.colonies == 128
-    assert sum(len(one.seating) for one in fewer.picked) == 128
+    assert left_out == 21
+    assert fewer.wells == whole.wells - left_out * whole.colonies == 204
+    assert sum(len(one.seating) for one in fewer.picked) == 204
+    fewest = rerouted(plan, validate_from=3).validation
+    assert (len(fewest.designs), fewest.wells) == (17, 68)
+    assert len(fewest.index) == 1 < len(whole.index)
+    assert rerouted(plan, validate_from=6).validation is None
+
+
+def test_a_design_is_read_in_the_pieces_the_pool_was_split_into(plan):
+    """The count is the split's own, because arithmetic on the oligo length only bounds it."""
+    counted = Counter(one.fragments for one in plan.validation.designs)
+    assert dict(plan.pool.pool.fragment_counts()) == counted
+    assert max(counted) == 5
 
 
 def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):

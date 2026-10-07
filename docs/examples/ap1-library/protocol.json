@@ -17,7 +17,7 @@
     "Product": "AP-1 DESynR round 3, 2276 bp",
     "Coverage": "300x, 4,147,200 colonies at the end",
     "Amino acids changed": "27 over 26 part end(s)",
-    "Designs read back": "72 from 0 fragment(s)"
+    "Designs read back": "72, every one"
   },
   "highlights": [
     "One round appends one part list to every member of the library at once, so 3 rounds make 13824 constructs out of 72 synthesised parts.",
@@ -444,10 +444,11 @@
       "cautions": [],
       "notes": [
         "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
-        "1 fragment(s): 40 design(s), 100.0% of picks clean",
-        "2 fragment(s): 18 design(s), 100.0% of picks clean",
-        "3 fragment(s): 11 design(s), 93.8% of picks clean",
-        "4 fragment(s): 3 design(s), 89.2% of picks clean",
+        "1 fragment(s): 21 design(s), 100.0% of picks clean",
+        "2 fragment(s): 34 design(s), 100.0% of picks clean",
+        "3 fragment(s): 6 design(s), 93.8% of picks clean",
+        "4 fragment(s): 9 design(s), 89.2% of picks clean",
+        "5 fragment(s): 2 design(s), 84.6% of picks clean",
         "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
       ],
       "tables": [],
