@@ -269,7 +269,11 @@ drawing. The protocol prints each design's own chance beside it.
 | 1 | Spot the archive as an array | archive plate | one spot per design | spots per tray |
 | 2 | Grow | tray | colonies per spot | — |
 | 3 | Pick into 384-well plates | tray | clonal cultures, position kept | colonies per design |
-| 4 | Grow | 384-well plates | cultures ready to lyse | — |
+| 4 | Grow | 384-well plates | cultures ready to sample | — |
+
+The picked plate is where the shared section ends, on both routes. Each route's own first step is
+the move out of it: Route A takes four of these plates into one 1536-well plate, Route B takes one
+into 96-well plates. Neither route amplifies or lyses in the plate the colonies were picked into.
 
 **Step 3, colonies per design.** Four by default, which is Lund's anchor and the only measured
 one, and a project may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
@@ -294,11 +298,22 @@ plates are poured.
 
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
-| 5 | Amplify each well with one barcoded primer pair | cultures | barcoded amplicon per well | — |
-| 6 | Pool per plate and clean up | amplicons | one pool per plate | — |
-| 7 | Sequence | pool | reads | — |
-| 8 | Demultiplex | reads | a sequence per well | the depth floor |
-| 9 | Reformat | per-well calls | compacted plate | — |
+| 5 | Sample one picked plate into 96-well plates | picked plate | a plate of reactions per 96 wells | — |
+| 6 | Amplify each well with one barcoded primer pair | reactions, prepared primer plate | barcoded amplicon per well | — |
+| 7 | Pool per plate and clean up | amplicons | one pool per plate | — |
+| 8 | Sequence | pool | reads | — |
+| 9 | Demultiplex | reads | a sequence per well | the depth floor |
+| 10 | Reformat | per-well calls | compacted plate | — |
+
+**Step 5.** One quarter of the picked plate goes to one 96-well plate. A 384-well plate's wells
+sit at half a 96-well plate's spacing, so one well in four lines up under a standard multichannel
+head, and the plate is covered in four passes. Picking fills one quarter at a time for the same
+reason: a part-filled picked plate then gives full 96-well plates, no reverse barcode is spent on a
+plate that is mostly empty, and a design's colonies stay together on one plate. An acoustic handler
+does the same move where one is already booked, which is how Route A moves out of the same plate.
+
+**Step 6, the primer plate.** The barcoded pairs are built once and kept as lab stock, by their
+own preparation protocol. A run calls for a prepared plate and does not build one.
 
 #### Which barcodes mark a well
 
