@@ -14,7 +14,7 @@ from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
-from liulab_synbio.library import plan_library
+from liulab_synbio.igga import plan_igga
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
@@ -29,7 +29,7 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 
 @pytest.fixture(scope="module")
 def plan():
-    return plan_library(DEMO / "project.json")
+    return plan_igga(DEMO / "project.json")
 
 
 def test_the_demo_plans_every_part_and_the_whole_library(plan):

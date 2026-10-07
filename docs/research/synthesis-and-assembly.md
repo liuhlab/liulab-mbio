@@ -516,7 +516,7 @@ H2O."
 The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step
 removing the 17 bp and 13 bp stubs. One ratio throughout is supported by nothing read.
 
-Both are constants in `liulab_synbio.library.bench`, landed by #280.
+Both are constants in `liulab_synbio.igga.bench`, landed by #280.
 `synthesis-and-assembly-materials.md` now carries them beside the beads, which is the half of
 this decision that was missing.
 
@@ -526,7 +526,7 @@ this decision that was missing.
 
 **In — the paper's masses, and nothing to choose.** 1 µg of plasmid pool per digest, 20 ng of
 digested destination per 200 µL ligation, up to 100 ng of purified ligation product
-electroporated. All three are constants in `liulab_synbio.library.bench`.
+electroporated. All three are constants in `liulab_synbio.igga.bench`.
 
 **Out — a departure, recorded as one.** The paper plates nothing. Digest, SPRI, ligate, SPRI,
 electroporate, recover, grow, prep, next round: no colony count appears anywhere in it, and no
@@ -544,7 +544,7 @@ read as truncated members. A round that collapsed cannot be repaired by a later 
 purpose was pickable clones for an arrayed collection. iGGA yields a pool that goes to a pooled
 screen; no member is ever picked or re-identified, so the gate does not transfer. What a round
 needs follows from the representation the downstream experiment asks for, which is a project
-input. `liulab_synbio.library.coverage` already refuses a default, and reports the colonies a
+input. `liulab_synbio.igga.coverage` already refuses a default, and reports the colonies a
 stated multiple takes beside the chance a named product is missing.
 
 **What judges the library is the read, not the plate.** The paper's own quality claim is barcode

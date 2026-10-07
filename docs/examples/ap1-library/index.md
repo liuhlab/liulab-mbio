@@ -9,7 +9,7 @@ choice this library made; copy it to start one of your own. The method it is bui
 package's own and is not in the file.
 
 ```bash
-pixi run liulab_synbio library plan docs/examples/ap1-library/project.json \
+pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
   --out docs/examples/ap1-library
 ```
 

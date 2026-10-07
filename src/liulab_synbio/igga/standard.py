@@ -38,7 +38,7 @@ from liulab_mbio.overhangs import (
     refusal,
 )
 from liulab_mbio.sequence import reverse_complement
-from liulab_synbio.library.method import Scheme
+from liulab_synbio.igga.method import Scheme
 
 #: One part list: the name each member is ordered under, and the protein it codes for.
 type PartList = Mapping[str, str]

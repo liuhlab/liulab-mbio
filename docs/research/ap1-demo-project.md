@@ -453,7 +453,7 @@ All 72 parts are cloned into the DMX vector at the seating step, because our don
 release sites of its own and cannot be a donor until it is cloned (the constraint recorded under
 open decision 6.7).
 
-**The pipeline counts differently, and it is right to.** `liulab_synbio.library` models one round
+**The pipeline counts differently, and it is right to.** `liulab_synbio.igga` models one round
 a position, so it plans three for this project. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
@@ -740,7 +740,7 @@ justifies any of the three.
 
 What the number should follow from is the representation the screen downstream needs, and this
 project has not stated a screen. Until it does, the target is the completeness floor
-`liulab_synbio.library.coverage` computes — the colonies for a stated chance that no member is
+`liulab_synbio.igga.coverage` computes — the colonies for a stated chance that no member is
 missing — recorded as a **floor, not a sufficiency claim**, because it assumes every member is
 equally represented and synthesis skew breaks that. It belongs in section 10.
 

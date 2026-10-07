@@ -7,7 +7,7 @@ search:
 
 `liulab_mbio.reaction` holds one tube: the molecules in it, each bound to a role, the enzymes
 acting there, and how many vessels differ only in which species fills a role. It carries no
-verdict. `liulab_synbio.library.gate` composes this method's reactions from a finished design and
+verdict. `liulab_synbio.igga.gate` composes this method's reactions from a finished design and
 judges each one, calling `liulab_mbio`'s predicates — `sites.find_sites`, `sites.digest`,
 `translate.in_frame`, `translate.stop_codons`, `barcodes.separation`, `barcodes.check_barcodes`,
 `overhangs.fidelity` — with this method's own parameters, and reporting in this method's words.
@@ -23,7 +23,7 @@ everyone who writes a check afterwards; a hole stays a hole and goes to an issue
 
 ## The pipeline judges nothing of its own
 
-`plan_library` reports the gate's verdict, and `rounds.py`'s three checks are retired. Two were
+`plan_igga` reports the gate's verdict, and `rounds.py`'s three checks are retired. Two were
 already bounded, by `donor releases` with `destination_vector`, and by `terminal block` with
 `terminal stop`. The third found a gap: no round opens the last product, so `check_product`
 gains `product opens`, the two-cut rule every destination is held to. What a round also checked,
@@ -41,7 +41,7 @@ the stuffer's exact span, is a plan's coordinate, which a gate may not read.
 
 ## Consequences
 
-A design an agent composed and one `plan_library` wrote are judged identically, because both
+A design an agent composed and one `plan_igga` wrote are judged identically, because both
 arrive as finished records bound to roles. What must be true inside one tube is the method's, so
 nothing in `liulab_mbio` knows one. The regression corpus is the proof: `docs/examples/ap1-library`
 passes, and one deliberate break per rule fails on the check that should catch it.

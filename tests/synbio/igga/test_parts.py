@@ -10,8 +10,8 @@ from liulab_mbio.barcodes import BarcodeRules, check_barcodes
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import reverse_translate, translate
-from liulab_synbio.library.method import IGGA
-from liulab_synbio.library.parts import (
+from liulab_synbio.igga.method import IGGA
+from liulab_synbio.igga.parts import (
     BARCODE_COLUMNS,
     CHANGE_COLUMNS,
     SHEET_COLUMNS,
@@ -22,7 +22,7 @@ from liulab_synbio.library.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_synbio.library.standard import design_standard, junction_residues
+from liulab_synbio.igga.standard import design_standard, junction_residues
 
 HOST = "e-coli-k12"
 

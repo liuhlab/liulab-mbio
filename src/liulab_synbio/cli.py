@@ -8,7 +8,7 @@ command, and a pipeline mounted as a sub-app with `app.add_typer`.
 import typer
 
 from liulab_synbio import __version__ as _package_version
-from liulab_synbio.library.cli import app as _library_app
+from liulab_synbio.igga.cli import app as _igga_app
 
 #: What `[project.scripts]` registers. Typer builds the parser from the signatures below, so
 #: a verb is a function and its help is the docstring.
@@ -17,7 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-app.add_typer(_library_app, name="library")
+app.add_typer(_igga_app, name="igga")
 
 
 @app.command()

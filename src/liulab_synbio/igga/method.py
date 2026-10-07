@@ -3,7 +3,7 @@
 `IGGA` is the method. Its overhangs, enzymes and stuffers are the DNA of molecules already on the
 shelf — the four ccdB cassettes, the DMX vector, the part carrier — so turning one of them would
 not change the tube, which is what makes it a constant rather than an input.
-`docs/adr/0010-method-in-code.md` says why, and `liulab_synbio.library.project` holds what a
+`docs/adr/0010-method-in-code.md` says why, and `liulab_synbio.igga.project` holds what a
 project chooses instead.
 
 Nothing here states the overhang a design works from. A part's entry overhang is read off the 5'

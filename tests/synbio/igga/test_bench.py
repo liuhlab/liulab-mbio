@@ -5,7 +5,7 @@ The defaults are the method's own, through `docs/research/protein-library-assemb
 
 import pytest
 
-from liulab_synbio.library.bench import (
+from liulab_synbio.igga.bench import (
     SPRI_AFTER_DIGEST,
     SPRI_AFTER_LIGATION,
     digest_amount,

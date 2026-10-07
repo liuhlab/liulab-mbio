@@ -1,14 +1,14 @@
 """One combinatorial library, planned from a project file and nothing else.
 
-`plan_library` is the one way in. It reads the project, sorts the part lists, chooses the overhang
+`plan_igga` is the one way in. It reads the project, sorts the part lists, chooses the overhang
 standard the proteins cost least, builds every part's synthesis sequence, makes the vector a
 destination, simulates every round, works out what each round takes at the bench and how many
-colonies it needs, and hands the finished records to `liulab_synbio.library.gate` to be judged.
+colonies it needs, and hands the finished records to `liulab_synbio.igga.gate` to be judged.
 `LibraryPlan.write` puts one directory's worth of output in one place: the
 synthesis order sheet, the barcode table, the amino-acid change table, a record for every round,
 the protocol as JSON data, and the page rendered from that data.
 
-The method is `liulab_synbio.library.method.IGGA` and is not an argument. What a build chooses is
+The method is `liulab_synbio.igga.method.IGGA` and is not an argument. What a build chooses is
 the project's, and `docs/adr/0010-method-in-code.md` draws the line between them.
 
 **The vector and the standard have to agree about position one.** A vector already carrying an
@@ -37,11 +37,11 @@ from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
-from liulab_synbio.library.bench import digest_amount, ligation_amounts, transformation_amount
-from liulab_synbio.library.coverage import RoundCoverage, constructs, plan_coverage
-from liulab_synbio.library.gate import Verdict, check_library
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.parts import (
+from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.igga.gate import Verdict, check_library
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.parts import (
     Part,
     barcode_rules,
     barcode_table,
@@ -49,12 +49,12 @@ from liulab_synbio.library.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_synbio.library.project import Project, read_project
-from liulab_synbio.library.rounds import Round, assemble_rounds, representative, write_records
-from liulab_synbio.library.standard import PartList, Standard, design_standard
-from liulab_synbio.library.steps import RoundBench
-from liulab_synbio.library.steps import protocol as protocol_for
-from liulab_synbio.library.vector import Destination, Site, destination_vector
+from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
+from liulab_synbio.igga.standard import PartList, Standard, design_standard
+from liulab_synbio.igga.steps import RoundBench
+from liulab_synbio.igga.steps import protocol as protocol_for
+from liulab_synbio.igga.vector import Destination, Site, destination_vector
 
 #: What a part list holds: the proteins each member codes for, or the DNA it is already coded in.
 type Kind = Literal["protein", "dna"]
@@ -65,7 +65,7 @@ type Kind = Literal["protein", "dna"]
 NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 
 #: What `LibraryPlan.write` calls the sheets it writes. The records are named by
-#: `liulab_synbio.library.rounds`, which writes one for each round and the product for the
+#: `liulab_synbio.igga.rounds`, which writes one for each round and the product for the
 #: last, and the protocol pair by `liulab_mbio.cloning.plan`.
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
@@ -145,7 +145,7 @@ class LibraryPlan:
     bench
         What each round takes at the bench, computed from that round's own lengths.
     verdict
-        What `liulab_synbio.library.gate` made of the finished design: every tube, every cargo,
+        What `liulab_synbio.igga.gate` made of the finished design: every tube, every cargo,
         every barcode set and the product.
     host
         The codon usage table the coding bases were written for.
@@ -226,7 +226,7 @@ class LibraryPlan:
         """Write the sheets, the records, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
-        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_synbio.library.rounds` for the records
+        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_synbio.igga.rounds` for the records
         and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run over the
         same inputs writes the same bytes.
         """
@@ -245,7 +245,7 @@ class LibraryPlan:
         return Files(sheet, barcodes, changes, records, written.data, written.page)
 
 
-def plan_library(
+def plan_igga(
     project: Project | str | os.PathLike[str],
     *,
     parts: Sequence[Mapping[str, str]] | None = None,
@@ -267,7 +267,7 @@ def plan_library(
     ----------
     project
         What this build chooses, or a path to the JSON holding it;
-        `liulab_synbio.library.project.read_project` reads one. It names the parts FASTA and the
+        `liulab_synbio.igga.project.read_project` reads one. It names the parts FASTA and the
         vector by path.
     parts
         One already-sorted mapping per position, in the project's order. The project's own parts
@@ -282,7 +282,7 @@ def plan_library(
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
         What every barcode holds to. Built from the project's own barcode length and distance by
-        default; see `liulab_synbio.library.parts.barcode_rules`.
+        default; see `liulab_synbio.igga.parts.barcode_rules`.
     min_distance, allow_uniform
         How far apart the standard's overhangs must stand, and whether one base kind is allowed.
     prices
@@ -294,7 +294,7 @@ def plan_library(
     -------
     LibraryPlan
         The design, the simulated rounds, what the bench has to do, and the gate's verdict on all
-        of it. `liulab_synbio.library.gate.check_library` judges the finished records, so this
+        of it. `liulab_synbio.igga.gate.check_library` judges the finished records, so this
         plan and a design an agent composed are judged by the same code.
 
     Raises
@@ -312,7 +312,7 @@ def plan_library(
 
     Examples
     --------
-    >>> plan = plan_library("project.json")  # doctest: +SKIP
+    >>> plan = plan_igga("project.json")  # doctest: +SKIP
     >>> plan.write("library/")  # doctest: +SKIP
     """
     chosen = project if isinstance(project, Project) else read_project(project)

@@ -355,7 +355,7 @@ DNA starts and stops is `Recombination.boundaries` rather than the junction's ow
 
 ## Libraries
 
-`plan_library` is the way in. It builds a barcoded library of every combination of the part
+`plan_igga` is the way in. It builds a barcoded library of every combination of the part
 lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
 barcode and amino-acid change tables, a record for each round, the product and the protocol pair
 in one directory. The modules under it are its steps. `method` holds `IGGA`, the one method,
@@ -371,33 +371,33 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 `liulab_mbio`'s. The method is code and a project is a file — see
 [the method decision](adr/0010-method-in-code.md).
 
-::: liulab_synbio.library
+::: liulab_synbio.igga
     options:
       members: false
 
-::: liulab_synbio.library.plan
+::: liulab_synbio.igga.plan
 
-::: liulab_synbio.library.method
+::: liulab_synbio.igga.method
 
-::: liulab_synbio.library.project
+::: liulab_synbio.igga.project
 
-::: liulab_synbio.library.gate
+::: liulab_synbio.igga.gate
 
-::: liulab_synbio.library.standard
+::: liulab_synbio.igga.standard
 
-::: liulab_synbio.library.parts
+::: liulab_synbio.igga.parts
 
-::: liulab_synbio.library.vector
+::: liulab_synbio.igga.vector
 
-::: liulab_synbio.library.rounds
+::: liulab_synbio.igga.rounds
 
-::: liulab_synbio.library.coverage
+::: liulab_synbio.igga.coverage
 
-::: liulab_synbio.library.bench
+::: liulab_synbio.igga.bench
 
-::: liulab_synbio.library.steps
+::: liulab_synbio.igga.steps
 
-::: liulab_synbio.library.stages
+::: liulab_synbio.igga.stages
 
 ::: liulab_synbio.dmx
 
@@ -424,7 +424,7 @@ and every plan verb is the same spine: plan, write, and report what was written.
 
 ::: liulab_synbio.cli
 
-::: liulab_synbio.library.cli
+::: liulab_synbio.igga.cli
 
 ::: liulab_mbio.protocol.cli
 

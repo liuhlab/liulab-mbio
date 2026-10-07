@@ -390,7 +390,7 @@ Everything DAD names as its objective is here, already cited, already licensed.
 | Where | Shape | Decides | Optimises |
 | --- | --- | --- | --- |
 | `cloning/goldengate/design.design_overhangs` | greedy, first-fit, one pass, **no backtracking**; junctions ordered least-free first | one overhang per junction; the junction may move within its own `window` | **nothing.** Free candidates are ranked by `table.count(one, reverse_complement(one))` — the overhang's own on-target count, a per-overhang proxy — and the first that `refusal` accepts is taken. `fidelity` is called once at the end to *report*, not to choose. |
-| `liulab_synbio.library.standard._settle` | **exhaustive depth-first with a lower bound** — branch and bound — over per-junction candidate lists | one overhang per junction; positions fixed | minimum total amino-acid cost. Fidelity is not in the objective. |
+| `liulab_synbio.igga.standard._settle` | **exhaustive depth-first with a lower bound** — branch and bound — over per-junction candidate lists | one overhang per junction; positions fixed | minimum total amino-acid cost. Fidelity is not in the objective. |
 
 `_settle`'s own docstring states the structural fact the split problem shares: *"every rule is
 either about one overhang or about a pair of them, so a set is allowed exactly when each of its

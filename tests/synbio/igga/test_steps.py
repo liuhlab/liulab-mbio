@@ -2,7 +2,7 @@
 
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
-from liulab_synbio.library.bench import (
+from liulab_synbio.igga.bench import (
     DIGEST_CELSIUS,
     DIGEST_SECONDS,
     DIGEST_VOLUME_UL,
@@ -12,8 +12,8 @@ from liulab_synbio.library.bench import (
     OUTGROWTH_SECONDS,
     RECOVERY_SECONDS,
 )
-from liulab_synbio.library.method import IGGA
-from liulab_synbio.library.steps import (
+from liulab_synbio.igga.method import IGGA
+from liulab_synbio.igga.steps import (
     choppers,
     digest_program,
     digest_reaction,

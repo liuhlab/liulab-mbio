@@ -2,7 +2,7 @@
 
 This is the **validating** experiment, not the pooled one. A design sits one per well, the well
 is marked, sequenced and called on its own, and identity stays with well position throughout.
-`liulab_synbio.library` is iGGA, whose product is a pool nothing re-identifies per member, so
+`liulab_synbio.igga` is iGGA, whose product is a pool nothing re-identifies per member, so
 nothing here is a gate on a library.
 
 Two routes mark a well and one judgement reads them. Route A ligates four DMX barcodes into the

@@ -17,7 +17,7 @@ read before the next is run. A stuffer is drawn over what the internal enzyme ex
 round that opens it leaves none of it behind.
 
 Nothing here carries a verdict. A round refuses what it cannot build, and what it did build is
-judged by `liulab_synbio.library.gate`, which reads the finished records rather than these
+judged by `liulab_synbio.igga.gate`, which reads the finished records rather than these
 coordinates, so a design an agent composed is judged the same way.
 
 Coordinates are the model's, 0-based and half-open, and a span across the origin of a circular
@@ -40,8 +40,8 @@ from liulab_mbio.sequence import (
 )
 from liulab_mbio.sites import Fragment, digest
 from liulab_mbio.snapgene import write_dna
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.parts import Part
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.parts import Part
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -129,7 +129,7 @@ class Round:
 
         After the terminal round this is the region the whole construct reads through, and its
         length is the method's
-        `liulab_synbio.library.method.Scheme.retained_length`.
+        `liulab_synbio.igga.method.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
         return _span(self.coding.end, carried + _length(self.block), len(self.product))
@@ -155,7 +155,7 @@ def assemble_round(
         The library the round opens, circular: the vector for the first round, and the round
         before's product after that.
     part
-        The part this round appends, as `liulab_synbio.library.parts.design_parts` built it.
+        The part this round appends, as `liulab_synbio.igga.parts.design_parts` built it.
     scheme
         The method the build is given.
     number
@@ -246,7 +246,7 @@ def assemble_rounds(
     Parameters
     ----------
     destination
-        The vector the first round opens, circular. `liulab_synbio.library.vector` makes one.
+        The vector the first round opens, circular. `liulab_synbio.igga.vector` makes one.
     parts
         One part a position, in the order the rounds fill them: `representative` picks a set.
     scheme

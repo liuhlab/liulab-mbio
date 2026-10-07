@@ -11,7 +11,7 @@ chooses the set the part lists cost least. Nothing else in a stuffer moves.
 
 A block's coding bases stop where the overhang either side of it spells the rest: an overhang
 finishes the upstream part's last codon and spells whole codons of its own, so a part's own bases
-are its amino acids less the ones charged to a junction. `liulab_synbio.library.standard` decides
+are its amino acids less the ones charged to a junction. `liulab_synbio.igga.standard` decides
 which those are, and this writes them.
 """
 
@@ -34,8 +34,8 @@ from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import CutSite, Domestication, domesticate, find_sites
 from liulab_mbio.translate import SiteNotRemovableError, reverse_translate, translate
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.standard import End, PartList, Standard, Terminus, junction_residues
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.standard import End, PartList, Standard, Terminus, junction_residues
 
 #: The columns of the synthesis order sheet.
 SHEET_COLUMNS = ("name", "sequence", "length", "position", "barcode")
@@ -160,7 +160,7 @@ def design_parts(
         One per position, in that order: each member's name and the protein it codes for.
     standard
         The overhang standard the build works to, and what it charges each part. Design it with
-        `liulab_synbio.library.standard.design_standard` over these same part lists.
+        `liulab_synbio.igga.standard.design_standard` over these same part lists.
     host
         The name of the codon usage table the coding bases are written for.
     rules

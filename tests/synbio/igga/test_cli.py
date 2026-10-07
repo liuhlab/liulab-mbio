@@ -1,4 +1,4 @@
-"""The `library plan` verb: one command runs the whole thing and prints a summary and the paths."""
+"""The `igga plan` verb: one command runs the whole thing and prints a summary and the paths."""
 
 import json
 import re
@@ -62,8 +62,8 @@ def project(tmp_path_factory):
 
 
 def run(project: Path, out: Path, *extra: str):
-    """Invoke `library plan` over that project."""
-    return CliRunner().invoke(app, ["library", "plan", str(project), "--out", str(out), *extra])
+    """Invoke `igga plan` over that project."""
+    return CliRunner().invoke(app, ["igga", "plan", str(project), "--out", str(out), *extra])
 
 
 def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):

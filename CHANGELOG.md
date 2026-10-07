@@ -217,6 +217,12 @@ sets one.
 
 ### Changed
 
+- The combinatorial library pipeline is named after its method rather than its product:
+  `liulab_synbio.igga`, with `plan_igga` as its way in and `liulab_synbio igga plan` on the
+  command line. Every cloning pipeline already names its way in after the method —
+  `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` — and iGGA is what this one
+  does. Nothing else changed: the same modules, the same tests, the same files written with the
+  same bytes. "Library" still names the product everywhere it means the pool of constructs.
 - The combinatorial library pipeline moved to `liulab_synbio`, the package for one named
   method's pipelines. It fixes one method's enzymes, stuffers and round order, so it sits on
   synbio's side of the boundary. Nothing was rewritten: the same eleven modules, the same tests,
