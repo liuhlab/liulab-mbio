@@ -244,12 +244,15 @@ These are not polish. Each is a correctness defect, verified against the commit 
    position exists — the genuine "this gene cannot be split here" case — and that is
    indistinguishable from a typo. `SAPool.optimize` tests for the `None`; `Pool.optimize`
    (`library_classes.py:356`) does not.
-6. **No minimum-distance rule, and a sparse matrix rewards its absence.** OMEGA refuses exact
-   repeats, reverse-complement repeats and (most) palindromes, and otherwise trusts the data. A
-   pair of overhangs one base apart whose cross-ligation was never observed contributes nothing to
-   the denominator, so it scores as perfectly orthogonal: **the product of ratios rewards gaps in
-   the measurement.** `MIN_DISTANCE = 2` in `overhangs.py` is the guard against exactly that, and
-   its comment already says it is a rule rather than a measurement.
+6. **No minimum-distance rule.** OMEGA refuses exact repeats, reverse-complement repeats and
+   (most) palindromes, and otherwise trusts the data. `MIN_DISTANCE = 2` in `overhangs.py` is the
+   guard it has no equivalent of. An earlier draft of this note argued the guard is needed because
+   the matrix is sparse — a pair whose cross-ligation was never observed contributes nothing to
+   the denominator, so it would score as perfectly orthogonal. That mechanism is real but it has
+   nothing to bite on here: #327 counted the shipped BsmBI matrix at **65,536 of 65,536 cells
+   present**, 4,130 of them nonzero, and only 4.4% of the pairs one base apart measure zero. What
+   justifies the rule is what the data says, not what it omits — a third to a half of all pairs
+   one base apart cross-ligate at or above `MODEST_MISMATCH`, and two bases apart almost none do.
 
 ### 2.6 Where it breaks on a 2.3 kb cargo
 
@@ -454,11 +457,22 @@ ranks candidates by a per-overhang proxy and never consults the set score it the
 - Whether a junction may recode to reach a better overhang. OMEGA never recodes; Lund recodes once,
   before the split; `liulab_mbio.codons` could. Allowing it widens every candidate list and changes
   the problem.
-- Whether the splitter should enforce `MIN_DISTANCE` at all when a measured matrix is available.
-  OMEGA does not, and a measurement outranks a hypothesis — but the matrix is sparse, and the
-  sparsity biases the score upward. Needs a measurement, not an argument.
+
+### Settled since
+
+Whether the splitter should enforce `MIN_DISTANCE` at all when a measured matrix is available was
+open here, on the ground that the matrix is sparse and the sparsity biases the score upward.
+**#327 measured it, and it should.** The premise was wrong — the matrix is complete, as §2.5.6 now
+records. Two bases is the smallest separation at which every shipped matrix holds its measured
+cross-ligations under `MODEST_MISMATCH`, and it is not a free rule: on the 72 AP-1 parts at a
+200 nt oligo it takes the worst part from 0.7065 to 0.9829 for eight extra oligos out of 288,
+while three bases refuses 32 of those parts outright. It is the lookahead the one-pass greedy
+does not have, which is why dropping the branch and bound cost so little.
 
 ## 6. Provenance of files read
+
+The branch and bound #261 measured the greedy against lives on the `origin/prototype/261-dad-split`
+branch, kept there as evidence rather than as a tool.
 
 | File | Source | Read |
 | --- | --- | --- |

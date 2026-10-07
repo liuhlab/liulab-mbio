@@ -62,6 +62,36 @@ def test_a_cargo_fitting_one_oligo_is_one_fragment_with_no_junction():
     assert split.reassembled() == str(short.sequence)
 
 
+def test_the_fragment_floor_chooses_nothing_the_design_actually_reaches():
+    """Which is why the floor is derived from the enzyme rather than tuned.
+
+    The shortest fragment a design of this budget produces stands far above any floor a caller
+    would set, so the floor never picks between two designs -- it only bounds what may be asked
+    for, and the arithmetic floor bounds that as well as a guessed number does.
+    """
+    designs = [
+        split_cargo(CARGO, "BsaI", budget=Budget(350, 74, minimum=one))
+        for one in (8, 40, 120, None)
+    ]
+
+    assert len({(one.pieces, one.overhangs) for one in designs}) == 1
+    assert designs[0].pieces > 1
+
+
+def test_a_cargo_shorter_than_the_floor_is_one_oligo_s_worth_and_not_a_refusal():
+    tiny = SequenceRecord(str(CARGO.sequence)[:28])
+
+    split = split_cargo(tiny, "BsaI", budget=Budget(350, 74, minimum=40))
+
+    assert split.pieces == 1
+    assert split.reassembled() == str(tiny.sequence)
+
+
+def test_a_cargo_with_no_duplex_core_between_its_two_overhangs_is_refused():
+    with pytest.raises(ValueError, match="between its two overhangs"):
+        split_cargo(SequenceRecord("ACGTACGT"), "BsaI", budget=Budget(350, 74))
+
+
 def test_it_refuses_a_cargo_past_the_ceiling_and_says_where_the_ceiling_is():
     with pytest.raises(ValueError, match="supply"):
         split_cargo(SequenceRecord("AT" * 4000), "BsaI", budget=Budget(120, 74))

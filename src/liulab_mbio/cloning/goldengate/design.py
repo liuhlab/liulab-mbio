@@ -75,7 +75,8 @@ class EnzymeChoice:
     sites
         How many sites it reads across the parts.
     measured
-        Whether shipped ligation data can score its overhangs.
+        Whether shipped ligation data measured this enzyme itself. Every Type IIS enzyme here
+        can be scored on shipped data, by `liulab_mbio.overhangs.stand_in_matrix` where not.
     changes
         The synonymous codon changes that would take its sites away. Empty while another
         candidate is free, because domestication is proposed only when none is.
@@ -141,8 +142,8 @@ def choose_enzyme(
     the enzyme would cut during assembly. An enzyme with no site is preferred; only when none
     is free is domestication proposed, and then every candidate carries what it would change.
 
-    A tie between free enzymes goes to the one whose overhangs shipped data can score, then to
-    the one leaving the longer overhang. `LAST_RESORT` enzymes rank behind everything.
+    A tie between free enzymes goes to the one shipped data measured itself, then to the one
+    leaving the longer overhang. `LAST_RESORT` enzymes rank behind everything.
 
     Parameters
     ----------

@@ -37,9 +37,21 @@ from liulab_mbio.overhangs import (
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand
 from liulab_mbio.sites import EnzymeLike, find_sites
 
-#: The shortest fragment a vendor's pool and a one-pot assembly are comfortable with. A
-#: fragment shorter than this is mostly overhang, and nothing here needs one.
-MIN_FRAGMENT = 40
+
+def shortest_fragment(overhang: int) -> int:
+    """Return the shortest fragment an enzyme leaving `overhang` bases cuts out of an oligo.
+
+    A fragment carries an overhang at each end, so a shorter one is overhang throughout and has
+    no double-stranded core between them. Nothing published sets a floor on a Golden Gate
+    fragment, so this is the package's own arithmetic and `Budget.minimum` is where a caller
+    sets a longer one.
+
+    Examples
+    --------
+    >>> shortest_fragment(4)
+    9
+    """
+    return 2 * overhang + 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,30 +66,38 @@ class Budget:
         What that oligo spends on anything but the cargo: its primer sites, the recognition
         sites that cut the fragment out, and their spacers.
     minimum
-        The shortest fragment to design.
-
-    Raises
-    ------
-    ValueError
-        If the overhead leaves no room for a fragment of the minimum length.
+        The shortest fragment to design, or ``None`` to take the enzyme's own floor.
     """
 
     oligo: int
     overhead: int
-    minimum: int = MIN_FRAGMENT
-
-    def __post_init__(self) -> None:
-        """Refuse a budget no fragment fits in."""
-        if self.span < self.minimum:
-            raise ValueError(
-                f"an oligo of {self.oligo} nt spending {self.overhead} nt on overhead carries "
-                f"{self.span} nt of cargo, short of the {self.minimum} nt minimum fragment"
-            )
+    minimum: int | None = None
 
     @property
     def span(self) -> int:
         """The templated span: the most of the cargo one oligo carries, overhangs included."""
         return self.oligo - self.overhead
+
+    def floor(self, overhang: int) -> int:
+        """Return the shortest fragment to design, for an enzyme leaving `overhang` bases.
+
+        Raises
+        ------
+        ValueError
+            If the overhead leaves no room for a fragment that long.
+
+        Examples
+        --------
+        >>> Budget(350, 74).floor(4)
+        9
+        """
+        minimum = self.minimum if self.minimum is not None else shortest_fragment(overhang)
+        if self.span < minimum:
+            raise ValueError(
+                f"an oligo of {self.oligo} nt spending {self.overhead} nt on overhead carries "
+                f"{self.span} nt of cargo, short of the {minimum} nt minimum fragment"
+            )
+        return minimum
 
 
 @dataclass(frozen=True, slots=True)
@@ -238,17 +258,19 @@ def split_cargo(
     bases = str(cargo.sequence)
     length = len(bases)
     overhang = one.overhang_length
-    if length < budget.minimum:
+    minimum = budget.floor(overhang)
+    if length < shortest_fragment(overhang):
         raise ValueError(
-            f"a cargo of {length} bases is shorter than the {budget.minimum}-base minimum "
-            "fragment, so it is already one oligo's worth"
+            f"a cargo of {length} bases is shorter than the {shortest_fragment(overhang)} bases "
+            f"a {one.name} fragment needs between its two overhangs"
         )
     if length <= budget.span:
         return _whole(cargo, one, budget, bases, profile, prefer_profile)
     held = tuple(str(one).upper() for one in reserved)
     refused: list[str] = []
-    for pieces in range(fewest_pieces(length, budget), length // budget.minimum + 1):
-        windows = _windows(length, pieces, budget, overhang)
+    most = min(length // minimum, _supply(overhang, min_distance))
+    for pieces in range(fewest_pieces(length, budget), most + 1):
+        windows = _windows(length, pieces, budget, minimum, overhang)
         if windows is None:
             continue
         found = _choose(
@@ -258,6 +280,7 @@ def split_cargo(
             windows,
             pieces,
             budget,
+            minimum,
             held,
             avoid,
             min_distance,
@@ -269,7 +292,7 @@ def split_cargo(
             refused.append(f"at {pieces} fragments, {found}")
             continue
         return _split(cargo, one, budget, bases, found, length, overhang, profile, prefer_profile)
-    raise ValueError(_ceiling(length, budget, overhang, refused))
+    raise ValueError(_ceiling(length, budget, overhang, min_distance, refused))
 
 
 def _check_cutter(cargo: SequenceRecord, enzyme: Enzyme) -> None:
@@ -296,16 +319,28 @@ def _check_cutter(cargo: SequenceRecord, enzyme: Enzyme) -> None:
     )
 
 
-def _ceiling(length: int, budget: Budget, overhang: int, refused: Sequence[str]) -> str:
+def _supply(overhang: int, min_distance: int) -> int:
+    """Return the most fragments the overhang supply holds, whatever the cargo.
+
+    The internal overhangs of a split into `pieces` fragments, their reverse complements with
+    them, are ``2 * (pieces - 1)`` words of a distance-`min_distance` code of length `overhang`
+    over four bases. The Singleton bound holds such a code to
+    ``4 ** (overhang - min_distance + 1)`` words.
+    """
+    return 4 ** max(overhang - min_distance + 1, 0) // 2 + 1
+
+
+def _ceiling(
+    length: int, budget: Budget, overhang: int, min_distance: int, refused: Sequence[str]
+) -> str:
     """Say how far this budget reaches and why this cargo is past it."""
-    supply = 4**overhang
     reason = "; ".join(refused) if refused else "no fragment count fits the length budget"
     return (
         f"a cargo of {length} bases needs at least {fewest_pieces(length, budget)} fragments at "
-        f"{budget.span} bases an oligo, and no legal overhang set exists: {reason}. The supply "
-        f"is {supply} overhangs of {overhang} bases, less the palindromes, the uniform ones and "
-        f"everything within {MIN_DISTANCE} bases of one already taken, so a longer oligo is what "
-        "lifts this and a longer search is not"
+        f"{budget.span} bases an oligo, and no legal overhang set exists: {reason}. The supply of "
+        f"{overhang}-base overhangs standing {min_distance} bases from one another and from every "
+        f"reverse complement runs out at {_supply(overhang, min_distance)} fragments, so a longer "
+        "oligo is what lifts this and a longer search is not"
     )
 
 
@@ -341,7 +376,9 @@ def _spread(mask: int, width: int) -> int:
     return out
 
 
-def _windows(length: int, pieces: int, budget: Budget, overhang: int) -> tuple[int, ...] | None:
+def _windows(
+    length: int, pieces: int, budget: Budget, minimum: int, overhang: int
+) -> tuple[int, ...] | None:
     """Every position each internal cut could take, as a bitmask, or ``None`` for none at all.
 
     A cut at `p` opens an overhang at ``p`` to ``p + overhang``, so the fragment before it runs
@@ -349,7 +386,7 @@ def _windows(length: int, pieces: int, budget: Budget, overhang: int) -> tuple[i
     end of the cargo. Both are held to the budget, which is what keeps the final fragment inside
     the oligo as well as every other.
     """
-    low = budget.minimum - overhang
+    low = minimum - overhang
     high = budget.span - overhang
     if low < 1 or high < low:
         return None
@@ -357,7 +394,7 @@ def _windows(length: int, pieces: int, budget: Budget, overhang: int) -> tuple[i
     forward = [1]
     for _ in range(pieces - 1):
         forward.append((_spread(forward[-1], high - low + 1) << low) & whole)
-    last = ((1 << (length - budget.minimum + 1)) - 1) ^ ((1 << max(length - budget.span, 0)) - 1)
+    last = ((1 << (length - minimum + 1)) - 1) ^ ((1 << max(length - budget.span, 0)) - 1)
     backward = [last]
     for _ in range(pieces - 2):
         backward.append(_spread(backward[-1] >> high, high - low + 1) & whole)
@@ -373,6 +410,7 @@ def _choose(
     windows: Sequence[int],
     pieces: int,
     budget: Budget,
+    minimum: int,
     reserved: Sequence[str],
     avoid: Iterable[EnzymeLike],
     min_distance: int,
@@ -387,7 +425,7 @@ def _choose(
     and the last fragment is inside the oligo as surely as the first.
     """
     overhang = enzyme.overhang_length
-    low = budget.minimum - overhang
+    low = minimum - overhang
     high = budget.span - overhang
     others = tuple(avoid)
     taken: list[str] = []
