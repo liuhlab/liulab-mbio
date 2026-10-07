@@ -624,9 +624,20 @@ counter-selection cassette. A part that fits its default overhang pair enters th
 working-cassette reaction as the whole carrier plasmid, so both of those enter with it. Only the
 marker separates the two outcomes — the carrier is KanR, the working vector AmpR or CarbR.
 
+The seated plasmid itself is no longer unsimulated. The carrier is supplied opened at one blunt
+point: `dmx/addgene/pCR-Blunt II-TOPO.dna` carries a single head-to-head `GCCCTT`/`AAGGGC` run,
+and the Zero Blunt TOPO user guide (`bench/thermo/zeroblunttopo_man.pdf`) says topoisomerase I
+cleaves after 5'-CCCTT on each strand, which puts the blunt point at **offset 336** of the
+3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.seating.seat` inserts a
+part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
+keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
+overhang pair, backbone whole. The carrier's one BsaI site is at **797**, inside `ccdB`
+**585-888**, so an edit removing it would fall in the counter-selection cassette's own coding
+sequence. What is still unmeasured is the reaction, not the record.
+
 | Option | Evidence |
 | --- | --- |
-| Leave it, and let the marker do the work | The method page already adds a default-pair part as the carrier plasmid, with no digest and no PCR of its own, which is the whole saving of holding parts as plasmids. Nothing has been simulated to show what the carrier's BsaI site and counter-selection cassette do in that reaction. |
+| Leave it, and let the marker do the work | The method page already adds a default-pair part as the carrier plasmid, with no digest and no PCR of its own, which is the whole saving of holding parts as plasmids. Nothing yet shows what the carrier's BsaI site and counter-selection cassette do once they are in that reaction. |
 | Amplify every part out of its carrier | Only the part then enters, and the retailoring primer form already exists for exactly this shape. It costs a reaction per part, which is what entering as the plasmid was written to avoid. |
 | Domesticate the carrier once | One edit to a lab resource built once removes the BsaI site for every part afterwards. The counter-selection cassette is the carrier's own selection and cannot be removed the same way. |
 
@@ -702,7 +713,7 @@ given where a publisher's own date survived the download.
 | `dmx/addgene/addgene-plasmid-255185-*.dna` | Addgene 255185, barcode kit group 2 index 1 | 2026-10-05 |
 | `dmx/addgene/addgene-plasmid-255209-*.dna` | Addgene 255209, barcode kit group 3 index 1 | 2026-10-05 |
 | `dmx/addgene/addgene-plasmid-255256-*.dna` and `.dna.seq` | Addgene 255256, barcode kit group 4 index 24 | 2026-10-02 |
-| `dmx/addgene/pCR-Blunt II-TOPO.dna` | The part carrier's published map | 2026-10-05 |
+| `dmx/addgene/pCR-Blunt II-TOPO.dna` | The part carrier's published map: Thermo Fisher / Invitrogen catalogue map, Zero Blunt TOPO kit | 2026-10-05 |
 | `dmx/jason_email.md` | Correspondence with the Baker lab, quoted with permission; not redistributable | 2026-10-05 |
 | `prot-assembly/` article, supplemental figures, Table S1 and its sheet dumps | Takacsi-Nagy et al. 2026, doi:10.1016/j.cell.2026.07.054, CC BY 4.0 | 2026-09-14 |
 | `long_fragment_GGA/Lund2024/` article, supporting information and four supplementary workbooks | Lund et al. 2024, doi:10.1021/acssynbio.3c00694 | 2026-10-01 |
