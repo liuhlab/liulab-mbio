@@ -168,6 +168,32 @@ def test_a_protocol_keeps_the_sources_it_cites_and_drops_the_rest() -> None:
     assert [c.status for c in one.audit() if c.name == "sources"] == ["pass"]
 
 
+def test_a_hole_the_run_and_a_step_both_carry_is_collected_once() -> None:
+    hole = Hole("H24", "no mass for the one-pot assembly", "undecided")
+    one = protocol(Step("Assemble", holes=(hole,)), holes=(hole,))
+    assert [each.id for each in one.all_holes] == ["H24"]
+    detail = next(c.detail for c in one.audit() if c.name == "holes")
+    assert "1 number has no source" in detail
+
+
+def test_the_banner_counts_bench_numbers_apart_from_prices() -> None:
+    """A missing price is a missing input, so it never reads as an unsourced bench number."""
+    one = protocol(
+        Step(
+            "Assemble",
+            holes=(
+                Hole("H24", "no mass is sourced", "undecided"),
+                Hole("H31", "no working vector is named", "lab"),
+            ),
+        ),
+        holes=(Hole("P1", "nothing prices the kit", "price"),),
+    )
+    page = render_html(one)
+    assert "<strong>3</strong> numbers in this protocol have no source" in page
+    assert "2 bench numbers and 1 price." in page
+    assert "ready to run" not in page
+
+
 def test_a_price_hole_names_no_issue() -> None:
     with pytest.raises(ValueError, match="missing price is a missing input"):
         Hole("P1", "nothing prices it", "price", issue="#264")

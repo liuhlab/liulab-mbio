@@ -971,13 +971,17 @@ class Protocol:
     def all_holes(self) -> tuple[Hole, ...]:
         """Every hole the protocol carries, the run's own first, then each step's, then the bill's.
 
-        Collected with their stable ids, in the order they are shown.
+        One id is one hole: a number the run and a step both miss is the same number, so it is
+        collected once, where it is first shown.
         """
-        return (
+        found: dict[str, Hole] = {}
+        for hole in (
             *self.holes,
             *(hole for step in self.steps for hole in step.holes),
             *(row.hole for row in (self.bill.rows if self.bill else ()) if row.hole),
-        )
+        ):
+            found.setdefault(hole.id, hole)
+        return tuple(found.values())
 
     def rules_for(self, step: Step) -> tuple[tuple[Material, Rule], ...]:
         """Return each rule that bears on `step`, with the material carrying it.
