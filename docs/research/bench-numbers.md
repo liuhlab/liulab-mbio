@@ -289,7 +289,7 @@ before first use, so carbenicillin on it selects nothing. The plate is **50 µg/
 transfer, not a new measurement. The temperature, the colony density and the plating volume are
 properties of the step, not of the plasmid, and carry over unchanged. The package quotes
 neither drug: it reads the marker off the record and names the drug that marker selects, which
-ADR 0014 settles.
+ADR 0016 settles.
 
 ### Day 3 — picking
 
@@ -733,9 +733,9 @@ before that pass still resolves. What closed:
 - **H22.** **No colony count and no selection antibiotic for a round.** Endura's manual gives cfu/µg
   and "plate up to 100 µL" and nothing about library complexity, dilution plating or titre
   plates. *Filled by:* the vector's own marker, and the colony floor the package computes.
-  **The marker half is answered** (ADR 0014): a record annotating one is plated on the drug it
+  **The marker half is answered** (ADR 0016): a record annotating one is plated on the drug it
   selects, at the concentration cited above, and the hole is then not raised at all. Only a
-  record annotating no marker still carries it, as the demo's toy vector does.
+  record annotating no marker still carries it.
 - **H23.** **No NEB document describes a split digest.** Both kit manuals cover the one-pot reaction,
   destination and inserts together. The split digest is Takacsi-Nagy's alone. *Filled by:*
   nothing — it is the method's own and the paper is its only source.

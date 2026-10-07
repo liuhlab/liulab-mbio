@@ -231,7 +231,7 @@ marker. One of DMX0001's three BsaI sites sits inside AmpR, so the swap removes 
 The read-back plates follow: every plate, well and broth before the final transfer takes the
 KanR backbone's own drug, so Qian's carbenicillin does not carry over with the rest of that
 protocol. The package reads the marker off the record rather than quoting either drug, which
-ADR 0014 settles and `bench-numbers.md` Stage 3 sources.
+ADR 0016 settles and `bench-numbers.md` Stage 3 sources.
 
 ## D12. The last transfer is a different reaction
 
