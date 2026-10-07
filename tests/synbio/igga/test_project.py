@@ -171,3 +171,12 @@ def test_the_ap1_project_reads_every_design_back_by_index_pcr():
     made = read_project(DEMO)
 
     assert (made.validate_from, made.route) == (0, "B")
+
+
+def test_a_project_names_the_working_vector_it_moves_into_or_none(tmp_path):
+    """The vector the library ends in is an application's choice, so a project may name one."""
+    (tmp_path / "pWORK.fasta").write_text(">pWORK\nACGT\n", encoding="utf-8")
+
+    assert read_project(write(tmp_path)).working_vector is None
+    named = read_project(write(tmp_path, working_vector="pWORK.fasta"))
+    assert named.working_vector == tmp_path / "pWORK.fasta"

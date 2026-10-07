@@ -58,6 +58,10 @@ class Project:
         The FASTA of every part list, each record named for the position it fills.
     vector
         The destination vector, circular: a ``.dna``, GenBank or FASTA file.
+    working_vector
+        The vector the finished library is moved into, circular, before its ccdB cassette: a
+        stock the lab holds and an application chooses. Omitted, the library stays in the
+        destination vector and the final assembly is written as what it cannot say.
     host
         The codon usage table the coding bases are written for.
     oligo_length
@@ -112,6 +116,7 @@ class Project:
     batch_size: int
     coverage: float
     primers: Path | None = None
+    working_vector: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     validate_from: int | None = None
     route: str | None = None
@@ -126,6 +131,8 @@ class Project:
         object.__setattr__(self, "reserved_extra", tuple(self.reserved_extra))
         object.__setattr__(self, "parts", Path(self.parts))
         object.__setattr__(self, "vector", Path(self.vector))
+        if self.working_vector is not None:
+            object.__setattr__(self, "working_vector", Path(self.working_vector))
         object.__setattr__(self, "bands", dict(self.bands))
         self._check_positions()
         self._check_numbers()
@@ -223,7 +230,7 @@ class Project:
 
 
 def read_project(path: str | os.PathLike[str]) -> Project:
-    """Read a project from JSON, resolving its two file paths against the file's own directory.
+    """Read a project from JSON, resolving every file path against the file's own directory.
 
     Raises
     ------
@@ -261,6 +268,11 @@ def read_project(path: str | os.PathLike[str]) -> Project:
             if "primers" in given
             else None
         ),
+        working_vector=(
+            _file(file, _text(given, "working_vector", "a project"), "working_vector")
+            if "working_vector" in given
+            else None
+        ),
         bands=_bands(given.get("bands")),
         validate_from=(
             _whole(given, "validate_from", "a project") if "validate_from" in given else None
@@ -291,7 +303,16 @@ _PROJECT_KEYS = frozenset(
     }
 )
 _PROJECT_OPTIONAL = frozenset(
-    {"seed", "reserved_extra", "barcode", "primers", "bands", "validate_from", "route"}
+    {
+        "seed",
+        "reserved_extra",
+        "barcode",
+        "primers",
+        "working_vector",
+        "bands",
+        "validate_from",
+        "route",
+    }
 )
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
 

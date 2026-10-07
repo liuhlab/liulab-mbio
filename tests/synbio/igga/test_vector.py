@@ -15,6 +15,7 @@ import pytest
 
 from liulab_mbio.edits import replace, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.io import read_record
 from liulab_mbio.reaction import Pool, Reaction
 from liulab_mbio.sequence import (
     BindingSite,
@@ -43,6 +44,7 @@ from liulab_synbio.igga.vector import (
     destination_vector,
     domesticate_vector,
     round_cassette,
+    working_vector,
 )
 
 #: The jobs the test schemes give their enzymes. All four are free of sites in pUC19.
@@ -388,3 +390,26 @@ def test_a_bsmbi_site_the_working_vector_still_reads_is_refused(plvx: SequenceRe
         destination_vector(
             held.record, IGGA, site="EGFP", cassette=ccdb_cassette(get_enzyme(CARGO))
         )
+
+
+def test_a_working_vector_chooses_its_enzyme_before_it_builds_the_cassette(plvx):
+    """`working_vector` is the chain in one call: choose, write the cassette, put it in."""
+    held = domesticate_vector(plvx, (get_enzyme("BsmBI"),))
+    (left,) = held.remaining
+    cleared, _ = replace(
+        held.record, left.start, left.start + len(left.enzyme.site), pad(len(left.enzyme.site))
+    )
+
+    made = working_vector(cleared, [], scheme=IGGA, site="EGFP")
+
+    assert made.enzyme == get_enzyme(CARGO)
+    assert made.cassette.bases == ccdb_cassette(get_enzyme(CARGO)).bases
+    assert made.record.extract(made.destination.stuffer).startswith(IGGA.entry_overhang)
+
+
+def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
+    """The AP-1 library spells PaqCI twice, so nothing is left to admit it to pLVX."""
+    product = read_record(DEMO.parent / "product.dna")
+
+    with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
+        working_vector(plvx, [product], scheme=IGGA, site="EGFP")

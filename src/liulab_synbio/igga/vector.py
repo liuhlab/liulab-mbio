@@ -207,14 +207,14 @@ def destination_vector(
         If the method names an enzyme this package does not ship.
     """
     held = round_cassette(scheme) if cassette is None else cassette
-    found = _stuffer(vector, scheme, held)
+    found = _stuffer(vector, scheme, held.enzyme)
     if found is not None:
         _check_clean(vector, held, found)
         return Destination(vector, found)
     at = _position(vector, held, site)
     _check_frame(vector, at, held.bases)
     edited, report = insert(vector, at, held.bases)
-    made = _stuffer(edited, scheme, held)
+    made = _stuffer(edited, scheme, held.enzyme)
     if made is None:
         raise ValueError(
             f"the cassette put at {at} left a vector {held.enzyme.name} does not open on "
@@ -225,14 +225,29 @@ def destination_vector(
     return Destination(edited, made, report)
 
 
-def _stuffer(record: SequenceRecord, scheme: Scheme, cassette: Cassette) -> Segment | None:
-    """Return the piece `cassette`'s enzyme excises from `record`, or ``None`` where none is.
+def released_cargo(record: SequenceRecord, scheme: Scheme = IGGA) -> Segment | None:
+    """Return the span `scheme`'s external enzyme frees from `record`, or ``None`` where none.
+
+    What the final assembly moves: the piece bounded by the entry overhang and the cloning scar,
+    which is the whole cargo a library's rounds built. It is read off a digest rather than off a
+    length, so a record carrying no such site answers ``None`` and the step says so.
+
+    Examples
+    --------
+    >>> released_cargo(SequenceRecord("ACGT")) is None
+    True
+    """
+    return _stuffer(record, scheme, scheme.external)
+
+
+def _stuffer(record: SequenceRecord, scheme: Scheme, enzyme: Enzyme) -> Segment | None:
+    """Return the piece `enzyme` excises from `record`, or ``None`` where none is.
 
     The piece is the one whose two ends are the overhangs a part enters and leaves on, which is
     what makes the vector a destination rather than a plasmid with a cassette-shaped gap.
     """
     entry, scar = scheme.entry_overhang, scheme.scar_overhang
-    for piece in digest(record, cassette.enzyme):
+    for piece in digest(record, enzyme):
         if piece.left_overhang == entry and piece.right_overhang == scar:
             return Segment(piece.start, piece.end)
     return None
@@ -399,6 +414,75 @@ def cargo_enzyme(
         search,
         Check("cargo enzyme", "pass" if chosen else "fail", len(search.free), detail),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class Working:
+    """The vector a finished library moves into, and the enzyme that admits it.
+
+    Parameters
+    ----------
+    destination
+        The working vector, and what putting its ccdB cassette in changed.
+    cargo
+        Which enzyme admits the library, and what ruled the others out.
+    cassette
+        The ccdB cassette that enzyme releases, which is what the library displaces.
+    """
+
+    destination: Destination
+    cargo: Cargo
+    cassette: Cassette
+
+    @property
+    def record(self) -> SequenceRecord:
+        """The working vector itself."""
+        return self.destination.record
+
+    @property
+    def enzyme(self) -> Enzyme:
+        """The cargo enzyme. A `Working` is only built where one was found."""
+        found = self.cargo.enzyme
+        if found is None:  # pragma: no cover - working_vector refuses before building one
+            raise ValueError("this working vector has no cargo enzyme")
+        return found
+
+
+def working_vector(
+    backbone: SequenceRecord,
+    cargo: Iterable[SequenceRecord],
+    *,
+    scheme: Scheme = IGGA,
+    site: Site | None = None,
+) -> Working:
+    """Return `backbone` as the working vector `cargo` is assembled into.
+
+    The enzyme is chosen first, over every molecule sharing the final-assembly pot, and the ccdB
+    cassette is then written with that enzyme's sites and put in. A backbone already carrying one
+    is taken as it stands.
+
+    Parameters
+    ----------
+    backbone
+        The user's own vector, circular, before its ccdB cassette.
+    cargo
+        The finished library, and anything else sharing the final-assembly pot.
+    scheme
+        The method, which says what the cassette's two ends are.
+    site
+        Where the cassette goes, read only where the backbone carries none.
+
+    Raises
+    ------
+    ValueError
+        If no candidate enzyme is free of every molecule, or for any reason
+        `destination_vector` refuses the backbone.
+    """
+    chosen = cargo_enzyme((backbone, *cargo), scheme=scheme)
+    if chosen.enzyme is None:
+        raise ValueError(chosen.check.detail)
+    held = ccdb_cassette(chosen.enzyme, scheme=scheme)
+    return Working(destination_vector(backbone, scheme, site=site, cassette=held), chosen, held)
 
 
 @dataclass(frozen=True, slots=True)
