@@ -53,7 +53,9 @@ defines one — a `Junction` and a `Files` belong to the cloning method that def
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
-forbids it — a ligase matrix is read from a copy the user holds.
+forbids it — a ligase matrix is read from a copy the user holds. A file a shipped artefact is
+built from is an input, not a reference document: it is tracked, converted to a text format, in
+`tests/data/`, with its provenance in the research note.
 
 **A DNA sequence carries no licence.** An MTA or UBMTA governs a plasmid, never its bases. Never
 weigh one when choosing a sequence, and never hold a sequence outside the package for it.

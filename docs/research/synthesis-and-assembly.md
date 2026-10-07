@@ -738,21 +738,23 @@ site; the rule only asks for a site between that cut and the primer's footprint.
 
 ## 7. Provenance of downloaded files
 
-Every file below is under `reference_docs/synthesis_and_assembly/` and is git-ignored. This
-table is what survives the file. Retrieved dates are the local copies' timestamps; a window is
-given where a publisher's own date survived the download.
+Every file below is under `reference_docs/synthesis_and_assembly/` and is git-ignored, except
+the two marked **tracked**, which the destination's rebuild reads and which therefore ship
+converted to GenBank. For the rest, this table is what survives the file. Retrieved dates are
+the local copies' timestamps; a window is given where a publisher's own date survived the
+download.
 
 | File | Source | Retrieved |
 | --- | --- | --- |
 | `dmx/paper/` article and supplementary PDFs, with their text dumps | Qian et al. 2026, doi:10.1038/s41467-026-76740-5 | 2026-10-01 to 2026-10-03 |
 | `dmx/dmx-barcodes.tsv` | Extracted from the same paper's Supplementary Table 3 | 2026-10-05 |
-| `dmx/addgene/addgene-plasmid-247434-*.dna` | Addgene 247434, depositor's map, first vector parent | 2026-10-04 |
+| `dmx/addgene/addgene-plasmid-247434-*.dna`, **tracked** as `tests/data/dmx0001.gb` | Addgene 247434, depositor's map, first vector parent | 2026-10-04 |
 | `dmx/addgene/addgene-plasmid-247435-*.dna` | Addgene 247435, depositor's map, second vector parent | 2026-10-04 |
 | `dmx/addgene/addgene-plasmid-255161-*.dna` and `.dna.seq` | Addgene 255161, barcode kit group 1 index 1 | 2026-10-02 |
 | `dmx/addgene/addgene-plasmid-255185-*.dna` | Addgene 255185, barcode kit group 2 index 1 | 2026-10-05 |
 | `dmx/addgene/addgene-plasmid-255209-*.dna` | Addgene 255209, barcode kit group 3 index 1 | 2026-10-05 |
 | `dmx/addgene/addgene-plasmid-255256-*.dna` and `.dna.seq` | Addgene 255256, barcode kit group 4 index 24 | 2026-10-02 |
-| `dmx/addgene/pCR-Blunt II-TOPO.dna` | The part carrier's published map: Thermo Fisher / Invitrogen catalogue map, Zero Blunt TOPO kit | 2026-10-05 |
+| `dmx/addgene/pCR-Blunt II-TOPO.dna`, **tracked** as `tests/data/pcr-blunt-ii-topo.gb` | The part carrier's published map: Thermo Fisher / Invitrogen catalogue map, Zero Blunt TOPO kit | 2026-10-05 |
 | `dmx/jason_email.md` | Correspondence with the Baker lab, quoted with permission; not redistributable | 2026-10-05 |
 | `prot-assembly/` article, supplemental figures, Table S1 and its sheet dumps | Takacsi-Nagy et al. 2026, doi:10.1016/j.cell.2026.07.054, CC BY 4.0 | 2026-09-14 |
 | `long_fragment_GGA/Lund2024/` article, supporting information and four supplementary workbooks | Lund et al. 2024, doi:10.1021/acssynbio.3c00694 | 2026-10-01 |
@@ -770,6 +772,14 @@ given where a publisher's own date survived the download.
 Every `*.txt` beside a PDF is a `pdftotext -layout` dump of it, made so the text can be
 searched; every `dump/` and `form_dump/` is derived the same way. None of these files may be
 redistributed except the two CC BY papers and their supplements.
+
+The two tracked files were converted once with `build_dmx_vector.write_genbank`, which writes
+each feature as `/label=` and nothing else. They carry the bases, the topology and the features;
+they drop SnapGene's enzyme set, its auto-matched primer library and the vendor notes, and each
+record was renamed for the LOCUS line, which takes neither a space nor `®`. Redo one by reading
+the `.dna` with `liulab_mbio.io.read_record` and writing it back through that function; the
+bases, the topology and the one coding sequence the rebuild reads are what must survive, and
+`tests/scripts/test_build_dmx_vector.py` holds the rest to it.
 
 One file in that tree is ours rather than downloaded: a short script that rebuilds the sheet
 dumps of one supplementary workbook. It stays beside the workbook, because the workbook is what

@@ -14,11 +14,8 @@ check never writes into `docs/examples/`.
 The generators are named below rather than discovered. One of them is a script rather than a
 documented command, and another writes files that `tests/synbio/igga/test_gate.py` reads as its
 known-good corpus; neither is reachable by reading a page. A fifth generator is a line added
-here.
-
-A generator whose inputs this checkout does not carry is reported unchecked and does not fail
-the run, which is how the destination's rebuild reads everywhere but a laptop holding
-`reference_docs/`. Unchecked is printed, never passed over.
+here, and an example that grows a file fails here until `writes` names it. That is the check
+working: knowing what a command writes without running it is what no discovery rule can do.
 
 This is a step of the `docs` CI job and not of `pixi run check`, so the gate pays nothing for
 the seconds the example commands take.
@@ -41,10 +38,6 @@ AP1 = "docs/examples/ap1-library"
 #: the one its example's page prints, so the two can be read against each other.
 OUT = "<out>"
 
-#: Where `scripts/build_dmx_vector.py` reads its parent from. That tree is not in the
-#: repository, so on a checkout without it that one generator is reported unchecked.
-REFERENCES = REPO / "reference_docs" / "synthesis_and_assembly" / "dmx" / "addgene"
-
 
 @dataclass(frozen=True)
 class Generator:
@@ -54,7 +47,6 @@ class Generator:
     directory: Path
     commands: tuple[str, ...]
     writes: tuple[str, ...]
-    needs: tuple[Path, ...] = ()
 
 
 GENERATORS: tuple[Generator, ...] = (
@@ -112,7 +104,6 @@ GENERATORS: tuple[Generator, ...] = (
         directory=REPO / AP1,
         commands=(f"python scripts/build_dmx_vector.py --out {OUT}/vector.gb",),
         writes=("vector.gb",),
-        needs=(REFERENCES,),
     ),
 )
 
@@ -160,12 +151,6 @@ def main() -> int:
     """Check every generator, print all of them, and fail if any example has drifted."""
     drifted = 0
     for generator in GENERATORS:
-        absent = [path for path in generator.needs if not path.exists()]
-        if absent:
-            print(f"UNCHECKED  {generator.what}")
-            for path in absent:
-                print(f"           {_said(path)} is not in this checkout")
-            continue
         with TemporaryDirectory() as made:
             into = Path(made)
             reported = run(generator, into) or compare(generator, into)
