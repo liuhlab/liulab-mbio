@@ -233,6 +233,13 @@ The cargo sits in the DMX vector either way; this section only reads each well. 
 with well position throughout. Choose the route per project: at or below one plate of samples,
 index PCR; above it, DMX barcoding.
 
+**Which designs are read.** None, unless the project asks. A library headed for a pooled screen
+takes its identity from that screen, so most libraries are never read back one design at a time.
+A project that wants the read names a fragment count. Every design in that many pieces or more
+is read, and the rest stay polyclonal. Set the count to zero to read every design. The chance of
+a clean colony falls as a gene is cut into more pieces, so this is the line the project is really
+drawing. The protocol prints each design's own chance beside it.
+
 #### Getting to clonal wells
 
 | # | Step | In | Out | Decision |
