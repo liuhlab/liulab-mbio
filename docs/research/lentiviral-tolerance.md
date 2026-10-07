@@ -427,127 +427,24 @@ Two leads were found and **not** read, both likely to matter:
 
 ## 6. If a permissive change is wrong, how would you know?
 
-The map above calls several things permissive. This section says how each would fail and what
-catches it. For a pooled library the ordering principle is not cost but **loudness**: a change
-that halves titre announces itself in no readout the bench normally runs.
+**This section now lives in its own note.** Read
+[`vector-qc-panel.md`](vector-qc-panel.md) — issue #271 — which supersedes the panel that used
+to sit here and goes well past it: every failure mode in turn, what each assay is blind to, the
+panel ordered cheapest first, the one assay to run if you can afford exactly one, and the
+arithmetic on whether a quiet titre loss skews a pooled library.
 
-All sources read **2026-10-06**.
+Three things from it that change how you *domesticate*, rather than how you test:
 
-### The two results that should change how you think about this
-
-**A restriction site inserted near psi cost 82% of titre, and the same insertion three bases
-further out cost nothing.** Kim, S. H., Jun, H. J., Jang, S. I. & You, J. C. *PLoS One* **7**,
-e50148 (2012). PMID 23185560, PMC3503997,
-[doi:10.1371/journal.pone.0050148](https://doi.org/10.1371/journal.pone.0050148). They put
-restriction sites around psi in a lentiviral transfer vector — the closest published thing to a
-domestication edit — and titred:
-
-| Vector | p24 (ng/mL) | Titre (CFU/mL) | Transduction, % of parent |
-| --- | --- | --- | --- |
-| parent | 298 ± 12 | 235,000 | 100 |
-| ES2.psi | 252 ± 3 | 41,333 | 18 |
-| ES3.psi | 293 ± 8 | 215,000 | 91 |
-| PBS.MAp | 282 ± 13 | 60 | 0.03 |
-
-**p24 varies 1.2-fold across the panel while functional titre spans 3,900-fold.** Two lessons:
-position matters at a resolution of a few bases, and **p24 alone would have told them nothing**.
-
-**A two-base change can cost what neither base costs alone.** Sakuragi, S. *et al.*
-*Int. J. Mol. Sci.* **22**, 3435 (2021). PMID 33810482,
-[doi:10.3390/ijms22073435](https://doi.org/10.3390/ijms22073435). A two-base substitution
-downstream of the PBS inside psi, in no reading frame, measurably lowered packaging — while
-**either single base alone changed nothing**. If an edit lands in the 5' UTR or psi, assay it
-rather than reasoning about it.
-
-### The panel
-
-| # | Failure | How it shows | The assay | Source |
-| --- | --- | --- | --- | --- |
-| 1 | **Lost titre** | In a library, as nothing: you transduce the planned cells, get fewer transductants, and believe you are at 500× coverage when you are at 100× | Functional titre by flow, and **ddPCR**. The universal assay targets **RRE** duplexed with GAPDH, so one assay serves a whole library; LLOQ 1.16 copies/µL, 3.6% CV against the NIST one-copy standard, agreeing with flow within 30% | Kandell, J. *et al.* *Mol. Ther. Methods Clin. Dev.* **31**, 101120 (2023). PMID 37841416, [doi:10.1016/j.omtm.2023.101120](https://doi.org/10.1016/j.omtm.2023.101120) |
-| 1b | **Assay precision** | — | ddPCR CV **4–8%** against qPCR **10–15%** on cloned standards at VCN 1, 2, 3. **Use a provirus-specific design**: a psi-targeting assay also amplifies carried-over transfer plasmid and inflates titre | Corre, G. *et al.* *Gene Ther.* (2022). PMID 35194185, [doi:10.1038/s41434-022-00315-8](https://doi.org/10.1038/s41434-022-00315-8) |
-| 1c | **Where it broke** | Normal particle yield, few transductions | **The p24-to-TU ratio**, as Kim 2012 above and Dull 1998 (section 4) both use it | — |
-| 2 | **Truncated genome, cryptic poly(A), cryptic splicing** | A fraction of packaged RNA is not full length. Silent in every bulk assay | **Nanopore direct RNA sequencing of virion RNA** — each read's 3' terminus is the RNA's 3' end, so truncation sites fall out directly. Measured on a clinical vector: a cryptic poly(A) inside **WPRE** used by 4.44% of reads (up to 10% across vectors), two hairpin truncation sites totalling 19.88%, and **full-length RNA only ~60–75% even in a working vector**. Only ~1.5–3% of reads are on-target, so run deep | Pal, A. *et al.* *Genome Res.* **34**, 1966 (2024). PMID 39467647, [doi:10.1101/gr.279405.124](https://doi.org/10.1101/gr.279405.124) |
-| 2b | **Read-through past the 3' LTR** | Transcription into flanking DNA | **A warning for domestication specifically: termination and promoter are the same bases.** 70–80% of termination activity sits in a 124-nt region overlapping the NF-κB, Sp1 and TATA sites, and deleting NF-κB, Sp1 or TATA **each raised read-through**. The HIV-1 SIN poly(A) is already as leaky as MLV's | Yang, Q. *et al.* *Retrovirology* **4**, 4 (2007). PMID 17241475, [doi:10.1186/1742-4690-4-4](https://doi.org/10.1186/1742-4690-4-4); Zaiss, A. K. *et al.* *J. Virol.* **76**, 7209 (2002). PMID 12072520 |
-| 3 | **Silent provirus** | The member is in the pool, amplifies normally in a barcode readout, and contributes no phenotype. It reads as "this variant is inactive", not "this variant is broken" — **the worst failure for a screen** | **VCN and percent expressing, on the same cells, over time. The gap between them is the signature.** Measured: VCN flat at 1.1 ± 0.004 → 0.9 ± 0.3 while eGFP+ marrow fell from 5.4–17.6% at 4 weeks to 0.0–0.6% at 36 weeks, with 18 of 18 promoter CpGs over 90% methylated. **Promoter choice dominates**: CMV fell 3.6–5.2×, PGK and EF1α only 1.5–1.7× | Herbst, F. *et al.* *Mol. Ther.* **20**, 1014 (2012). PMID 22434137, [doi:10.1038/mt.2012.46](https://doi.org/10.1038/mt.2012.46) |
-| 3b | **Baseline to compare against** | — | ~1.5% of integrations (1 in 66) land silent even with a good vector, and much of that is integration site rather than vector sequence. HDAC-inhibitor rescue fires on only some clones, so **a negative result does not prove the provirus is absent** | Jordan, A. *et al.* *EMBO J.* **22**, 1868 (2003), [doi:10.1093/emboj/cdg188](https://doi.org/10.1093/emboj/cdg188); Contreras, X. *et al.* *J. Biol. Chem.* **284**, 6782 (2009), [doi:10.1074/jbc.M807898200](https://doi.org/10.1074/jbc.M807898200) |
-| 4 | **Lost induction or new leak** (Tet-on) | Lower induced signal, or expression without doxycycline | Fold induction and leak as **separate** numbers, judged **at single integrated copy** — regulation collapses on integration: one promoter went from ~50,000-fold transient to ~7,900-fold single-copy. **Flow cannot measure the leak**: the off state sat too close to a 1.83 mfu background for any conclusion, and luciferase on the same cells resolved it | Loew, R. *et al.* *BMC Biotechnol.* **10**, 81 (2010). PMID 21106052, [doi:10.1186/1472-6750-10-81](https://doi.org/10.1186/1472-6750-10-81) |
-| 5 | **Skewed representation** | The screen runs and the answer is wrong | NGS of the barcode amplicon at **plasmid pool, then after transduction, then endpoint** — use the plasmid pool as reference, not the first timepoint. Report the 90th/10th percentile ratio; a published acceptance bar is **under 10**, with over 70% perfect-match reads. A low-skew library held its skew flat from 200× down to 50× coverage | Heo, S. J. *et al.* *Genome Biol.* **25**, 19 (2024), [doi:10.1186/s13059-023-03132-3](https://doi.org/10.1186/s13059-023-03132-3); Joung, J. *et al.* *Nat. Protoc.* (2017) |
-| 6 | **Packaging or dimerisation defect** | Normal transcription, less genome per particle | **Competitive RT-qPCR packaging ratio**: virion RNA over cytoplasmic RNA, against an internal control differing only by silent changes, so transfection and recovery variation cancel. A **native-gel Northern** separates a dimerisation defect from a packaging one — SL1 loop mutants lose infectivity at **normal virion RNA content**, which the packaging ratio alone would miss | Sakuragi 2021, above; Clever, J. L. & Parslow, T. G. *J. Virol.* **71**, 3407 (1997). PMID 9094610 |
-| 7 | **Recombination between repeats** | A deletion between the LTRs, or a barcode uncoupled from the part it names | Whole-plasmid nanopore sequencing. At the reverse-transcription level the rate is high — roughly 5.5 to 9 crossovers per genome per cycle in T cells and primary CD4+. **But it depends on co-packaging two different genomes, so it scales with MOI and pooling, not with your edits.** The mitigation is low MOI, not sequence design | Levy, D. N. *et al.* *PNAS* **101**, 4204 (2004), [doi:10.1073/pnas.0306764101](https://doi.org/10.1073/pnas.0306764101); Rhode, B. W. *et al.* *J. Virol.* **61**, 925 (1987) |
-
-### Does a titre drop actually skew a library?
-
-Less than instinct suggests, and the arithmetic is worth carrying. Titre enters a pooled library
-only through coverage. Counts are Poisson, so at 500× the sampling contribution to the 90/10 skew
-ratio is about 1.12; at 250× — a **2-fold** titre loss — about 1.18; at 50× about 1.44. Against a
-cloning-derived skew of 2 to 10, a 2-fold titre loss is **invisible in the skew metric**. The
-Poisson floor starts to dominate only below roughly 10–25×, which is a 20- to 50-fold titre loss.
-This is a calculation, **not a measurement**, but it agrees with Heo's coverage titration and with
-the finding that cell-splitting coverage, not transduction, is the dominant bias term
-(Imkeller, K. *et al.* *Genome Biol.* **21**, 53 (2020),
-[doi:10.1186/s13059-020-1939-1](https://doi.org/10.1186/s13059-020-1939-1)).
-
-**So the risk from a quiet titre loss is operational, not statistical.** You do not see it in the
-skew; you see it as believing you were at 500× when you were at 100×, and then the split-and-grow
-bottleneck acts on a smaller population than planned. **Measure the titre; the skew will not tell
-you.**
-
-### The panel, cheapest first
-
-1. **Whole-plasmid sequencing of the new prep and the parent.** Catches every unintended edit and
-   any rearrangement between the LTRs, before anything is spent on virus. It is also the only
-   step that catches a **reverting** element (section 4) — sequence the prep, not the design.
-2. **One paired packaging run: parent and domesticated, same day, same mix, n ≥ 3. p24 and
-   functional titre from the same harvest.** Two numbers, and their ratio localises any loss to
-   before or after entry.
-3. **ddPCR vector copy number on transduced cells**, provirus-specific. Resolves a 2-fold change
-   at n = 2.
-4. **Flow for expression; for a Tet vector, induction and leak — and put a luminescent reporter
-   on it if the leak matters.**
-5. **Percent expressing divided by copy number, at four or more timepoints over six weeks**, for
-   silencing.
-6. **For a library, always: barcode NGS at the plasmid stage and after transduction.** Plus one
-   cheap addition that closes this lab's specific blind spot — **sort expressing from
-   non-expressing cells out of the same pool and sequence barcodes from both.** A member enriched
-   in the non-expressing fraction at unchanged total abundance is silenced, not lost.
-7. **Conditional on where the edits landed:** the packaging ratio if anything sits in the 5' UTR
-   or psi; direct RNA sequencing if anything sits in WPRE, psi or the U3 control region;
-   read-through if anything sits in U3.
-
-**The one design rule that matters more than the panel:** keep every comparison **paired and
-same-day against the undomesticated parent**. Every effect in this literature is a ratio to a
-parent, and batch variance in lentiviral packaging is larger than any of these assays' CV.
-
-### The nearest thing to a worked precedent
-
-**No paper was found that removes a restriction site from a lentiviral transfer vector and
-reports what it checked afterwards.** The nearest four, in descending usefulness: Kim 2012 and
-Sakuragi 2021 above; Cui 1999 (section 4), which shows titre and RNA level are decoupled — a dead
-splice donor cost 10–30% of titre despite losing over 70% of cytoplasmic full-length RNA; and
-**Koldej, R. M. & Anson, D. S.** *BMC Biotechnol.* **9**, 86 (2009). PMID 19811661,
-[doi:10.1186/1472-6750-9-86](https://doi.org/10.1186/1472-6750-9-86) — a whole-backbone recoding
-that reduced LTR-to-LTR homology, then measured titre at n = 6, 3'-LTR read-through by TaqMan
-across the vector-to-flank junction, and SIN-repair rate by colony PCR. **That is the QC panel to
-copy.** Its sting: SIN repair still happened with *zero* U3–U3 homology, so reducing homology is
-not a cure.
-
-### What nothing measures here
-
-- **How much titre loss a pooled library tolerates before representation skews measurably.** The
-  table above is a calculation, not an experiment. *Closes it:* titrate a barcoded pool at
-  several coverages and measure recovery against input.
-- **The 5'/3' RT-qPCR ratio on packaged RNA.** No primary source defines it, calibrates it
-  against a known-truncated control, or states a detection limit. *Closes it:* spike a
-  3'-truncated transcript into full-length RNA at 0, 5, 10, 25 and 50% and find the smallest
-  distinguishable fraction.
-- **Per-base sensitivity of 3'-LTR read-through.** Yang 2007 measured deletions, not
-  substitutions — which is exactly the resolution a domestication edit works at.
-- **The smallest fold change flow can resolve.** No source states one; it is instrument- and
-  fluorophore-specific. *Closes it:* a 2-fold ladder on the lab's own cytometer.
-- **How a silenced member behaves in a pooled barcode readout.** Nobody measured it. The sort
-  experiment in step 6 above would.
-- **Plasmid-level recombination frequency for modern SIN transfer plasmids.** The only primary
-  measurement is from 1987, MLV-based, at kilobase scale, and states no number.
+- **Position matters at a resolution of a few bases.** Restriction sites placed around psi in a
+  lentiviral transfer vector cost 82% of titre in one position and nothing three bases further
+  out, while p24 varied 1.2-fold across the whole panel. That is the closest published thing to
+  a domestication edit, and **p24 alone would have told them nothing**.
+- **A two-base change can cost what neither base costs alone.** Two substitutions downstream of
+  the PBS inside psi, in no reading frame, lowered packaging — either one alone changed nothing.
+  An edit landing in the 5' UTR or psi gets assayed, not reasoned about.
+- **Keep every comparison paired and same-day against the undomesticated parent.** Every effect
+  in this literature is a ratio to a parent, and batch variance in lentiviral packaging is
+  larger than any of these assays' CV.
 
 ## 7. Using this map on the next backbone
 
@@ -567,9 +464,9 @@ A procedure, in the order that spends least.
 4. **Count the copies before you count the edits.** A site in R or U5 exists in both LTRs. A site
    in U3 exists in both only if the vector is not ΔU3 SIN — check, as section 1 does, rather than
    assuming.
-5. **Decide what failure you could not afford to miss, and run that assay.** Section 6 orders
-   them. For a pooled library the answer is usually titre plus representation, because those are
-   the two that fail quietly.
+5. **Decide what failure you could not afford to miss, and run that assay.**
+   [`vector-qc-panel.md`](vector-qc-panel.md) orders them. For a pooled library the answer is
+   usually titre plus representation, because those are the two that fail quietly.
 
 ### The general lesson
 
@@ -637,8 +534,9 @@ is which and what was left out.
 
 ## 9. What this note did not settle
 
-Collected here so the next reader sees the whole hole at once. Sections 2, 3, 4 and 6 each repeat
-their own entries in place.
+Collected here so the next reader sees the whole hole at once. Sections 2, 3 and 4 each repeat
+their own entries in place; what section 6 used to list is now in
+[`vector-qc-panel.md`](vector-qc-panel.md).
 
 | Open | What would close it |
 | --- | --- |
