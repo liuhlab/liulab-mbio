@@ -20,6 +20,7 @@ from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_synbio.dmx import ROUTES
+from liulab_synbio.igga.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a project takes unless it states another.
@@ -89,6 +90,14 @@ class Project:
         The seed the barcodes are drawn with.
     reserved_extra
         Further enzymes this project needs a block kept clear of, added to the method's own.
+    representation_seen, representation_skew, reads_per_member
+        What this build holds the representation read to: the share of combinations that must be
+        read at all, the skew ratio the counts must stay under, and the depth both are judged at.
+        Each takes `liulab_synbio.igga.coverage.REPRESENTATION_MARKS` where the project states
+        none, and each may only be tightened.
+    linkage_fidelity
+        The share of reads whose barcode must still name its part. No default: nothing published
+        sets a mark for it, so a project that states none is read against no mark at all.
     barcode
         What one part's barcode holds to.
     scheme
@@ -99,8 +108,9 @@ class Project:
     ValueError
         If a position is repeated or missing, a number is not positive, the completeness does not
         lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
-        the route are not both there or both absent, or the barcode and the method's cloning scar
-        are not whole codons together — which names ``barcode-frame``.
+        the route are not both there or both absent, a representation mark loosens the sourced
+        one, or the barcode and the method's cloning scar are not whole codons together — which
+        names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -122,6 +132,10 @@ class Project:
     route: str | None = None
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
+    representation_seen: float | None = None
+    representation_skew: float | None = None
+    reads_per_member: int | None = None
+    linkage_fidelity: float | None = None
     barcode: Barcode = field(default_factory=Barcode)
     scheme: Scheme = IGGA
 
@@ -137,6 +151,7 @@ class Project:
         self._check_positions()
         self._check_numbers()
         self._check_validation()
+        self._check_marks()
         self._check_barcode_frame()
         if self.host not in codon_tables():
             raise KeyError(
@@ -221,6 +236,61 @@ class Project:
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
             )
 
+    def _check_marks(self) -> None:
+        """Refuse a representation mark that loosens the sourced one, or a share outside 0 to 1.
+
+        A project tightens and never loosens, the same rule `liulab_synbio.dmx.depth_check`
+        holds a read depth to: the sourced mark is the floor the method stands on.
+        """
+        for named, value in (
+            ("representation_seen", self.representation_seen),
+            ("linkage_fidelity", self.linkage_fidelity),
+        ):
+            if value is not None and not 0.0 < value <= 1.0:
+                raise ValueError(f"{named} is {value}, and a project states a share of 1 or less")
+        sourced = REPRESENTATION_MARKS
+        if self.representation_seen is not None and self.representation_seen < sourced.seen:
+            raise ValueError(
+                f"representation_seen is {self.representation_seen}, and a project may only "
+                f"raise the {sourced.seen} share Joung sets, not lower it"
+            )
+        if self.representation_skew is not None and self.representation_skew > sourced.skew:
+            raise ValueError(
+                f"representation_skew is {self.representation_skew}, and a project may only "
+                f"lower the skew ratio of {sourced.skew} Joung allows, not raise it"
+            )
+        if self.representation_skew is not None and self.representation_skew < 1.0:
+            raise ValueError(
+                f"representation_skew is {self.representation_skew}, and the evenest library "
+                "a count can describe has a ratio of 1"
+            )
+        if self.reads_per_member is not None and self.reads_per_member < sourced.reads_per_member:
+            raise ValueError(
+                f"reads_per_member is {self.reads_per_member}, and a project may only raise the "
+                f"{sourced.reads_per_member} reads a member Joung judges at, not lower it"
+            )
+
+    @property
+    def marks(self) -> RepresentationMarks:
+        """What this build holds its representation reads to: the sourced marks, as tightened."""
+        return RepresentationMarks(
+            seen=(
+                REPRESENTATION_MARKS.seen
+                if self.representation_seen is None
+                else self.representation_seen
+            ),
+            skew=(
+                REPRESENTATION_MARKS.skew
+                if self.representation_skew is None
+                else self.representation_skew
+            ),
+            reads_per_member=(
+                REPRESENTATION_MARKS.reads_per_member
+                if self.reads_per_member is None
+                else self.reads_per_member
+            ),
+        )
+
     def _check_barcode_frame(self) -> None:
         """Check a barcode and the scar joining it to the last make whole codons together."""
         scar = len(self.scheme.cloning_scar)
@@ -282,6 +352,22 @@ def read_project(path: str | os.PathLike[str]) -> Project:
             _whole(given, "validate_from", "a project") if "validate_from" in given else None
         ),
         route=_text(given, "route", "a project") if "route" in given else None,
+        representation_seen=(
+            _number(given, "representation_seen", "a project")
+            if "representation_seen" in given
+            else None
+        ),
+        representation_skew=(
+            _number(given, "representation_skew", "a project")
+            if "representation_skew" in given
+            else None
+        ),
+        reads_per_member=(
+            _whole(given, "reads_per_member", "a project") if "reads_per_member" in given else None
+        ),
+        linkage_fidelity=(
+            _number(given, "linkage_fidelity", "a project") if "linkage_fidelity" in given else None
+        ),
         seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
@@ -316,6 +402,10 @@ _PROJECT_OPTIONAL = frozenset(
         "bands",
         "validate_from",
         "route",
+        "representation_seen",
+        "representation_skew",
+        "reads_per_member",
+        "linkage_fidelity",
     }
 )
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})

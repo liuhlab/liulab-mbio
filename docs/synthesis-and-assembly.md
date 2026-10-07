@@ -361,7 +361,7 @@ any other.
 | 6 | Prep the pool | the round's pool | next round's destination | — |
 | 7 | Repeat steps 2 to 6 | — | finished library | whether a last round swaps the stuffer for a capping block |
 | 8 | Read linkage | finished library | barcode combination → cargo table | carry it forward, or rebuild a round |
-| 9 | Read representation | finished library | combinations seen, and how evenly | — |
+| 9 | Read representation | finished library | combinations seen, and how evenly | at least 99.5% seen, skew under 10 |
 
 **Step 1.** A pool is one position's parts. Each part is prepped on its own, then mixed in equal
 amounts of DNA. A pool is built once, and cut again each round it supplies.
@@ -378,7 +378,11 @@ extra day. How many colonies a round needs is set by the project, not here: it f
 well the work downstream has to see each member. The source plates nothing at all, and
 `docs/research/synthesis-and-assembly.md` says why this page does.
 
-**Step 9.** Representation is read again after every later bottleneck.
+**Step 8.** The amplicon spans the whole cargo, so linkage is a long read: a barcode and the
+coding bases it names have to arrive in one molecule. The plan designs the pair.
+
+**Step 9.** Representation is read again after every later bottleneck. The amplicon spans the
+barcode block alone, so it is a short read and cheap to repeat; the plan designs that pair too.
 
 ### Final assembly
 
@@ -388,7 +392,7 @@ well the work downstream has to see each member. The source plates nothing at al
 | 2 | Pick the cargo | DMX library or chosen wells | — | which cargo, and how it is pooled |
 | 3 | Assemble with the cargo enzyme | both | final vector | whether the cargo is released in its own tube first |
 | 4 | Clean up and electroporate | reaction | the library | how many colonies |
-| 5 | Read representation | the library | what survived the transfer | screen it, or transfer again |
+| 5 | Read representation | the library | what survived the transfer | at least 99.5% seen, skew under 10: screen it, or transfer again |
 
 **Step 3.** One pot where the cargo enzyme is also what releases cargo from the DMX backbone.
 Otherwise two stages in one tube: release with BsaI and PmeI, heat-kill, then add the working

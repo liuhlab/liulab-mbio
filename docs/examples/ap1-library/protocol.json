@@ -6199,14 +6199,13 @@
     {
       "title": "Read linkage",
       "instructions": [
-        "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together.",
+        "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward CTTACTCCGCGAATCACC and Linkage read reverse GGTCTGAAATGGTGTCTAGG, which give a 1185 bp amplicon.",
         "Sequence the amplicon as a long read.",
         "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
       ],
       "cautions": [],
       "notes": [
         "The block reads in the reverse of the order the rounds ran: each round inserted its barcode ahead of the ones already there.",
-        "This plan designs no sequencing primers.",
         "0.0% of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
         "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid barcode at every position, and nearly 90% of the library correctly linked. That is what one source reached, not a mark this library is held to."
       ],
@@ -6231,20 +6230,20 @@
       ],
       "holes": [
         {
-          "id": "H27",
-          "missing": "no primer pair, amplicon length or read depth for either library read",
+          "id": "H28",
+          "missing": "no pass mark for the linkage read: what share of reads must carry a barcode that still names its part",
           "kind": "undecided",
-          "where": "the linkage and representation reads",
-          "filled_by": "whichever way #343 is decided: the plan designs both pairs against the finished record, or the step says what each must span and leaves the pair to the reader",
-          "issue": "liuhlab/liulab-mbio#343"
+          "where": "the linkage read",
+          "filled_by": "the project, or a source that sets a mark rather than reporting what it reached",
+          "issue": "liuhlab/liulab-mbio#346"
         }
       ]
     },
     {
       "title": "Read representation",
       "instructions": [
-        "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC.",
-        "Sequence the amplicon, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
+        "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward AGGAAAGTCTTCAGCCCG and Representation read reverse GGTCTGAAATGGTGTCTAGG, which give a 135 bp amplicon.",
+        "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
       ],
       "cautions": [],
       "notes": [
@@ -6259,7 +6258,8 @@
       "gels": [],
       "expected": [
         "A count for each of up to 13,824 distinct combinations: how many of them are seen at all, and how evenly they are read.",
-        "A combination with no reads is a member the library has lost."
+        "A combination with no reads is a member the library has lost.",
+        "At least 99.5% of the combinations seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations."
       ],
       "troubleshooting": [
         {
@@ -6268,19 +6268,10 @@
         },
         {
           "problem": "The counts are heavily skewed",
-          "solution": "Members differ in length and a bottleneck can favour the short ones. This read measures the skew; nothing here says how much of it is tolerable."
+          "solution": "Members differ in length and a bottleneck can favour the short ones. Imkeller's Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs cells downstream rather than failing here."
         }
       ],
-      "holes": [
-        {
-          "id": "H28",
-          "missing": "no pass mark for either library read: what share of the library must be seen, how even the counts must be, or what linkage fidelity passes",
-          "kind": "undecided",
-          "where": "the linkage and representation reads, what carries the library forward",
-          "filled_by": "the screen downstream, which is what sets the representation the library has to reach",
-          "issue": ""
-        }
-      ]
+      "holes": []
     },
     {
       "title": "Pick the working vector",
@@ -6462,13 +6453,13 @@
     {
       "title": "Read representation in the final vector",
       "instructions": [
-        "Amplify across the barcode block again, exactly as the read before the move did.",
+        "Amplify across the barcode block again.",
         "Sequence, decode each read against barcodes.tsv, and compare the counts with the read taken in the library backbone."
       ],
       "cautions": [],
       "notes": [
         "Linkage is read once, in the library backbone; a barcode still names the same part after the move, because the move carries the whole cargo in one piece.",
-        "This read is what the final assembly is judged on, and nothing says what share of the library has to survive it."
+        "The forward anchor is the same retained internal stuffer, which travels with the cargo; the reverse anchor moved with the vector, so this pair is designed against the final record rather than reused from the read before the move."
       ],
       "tables": [],
       "programs": [],
@@ -6476,7 +6467,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into the working vector."
+        "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into the working vector.",
+        "At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations."
       ],
       "troubleshooting": [
         {
@@ -6484,24 +6476,7 @@
           "solution": "The transfer was the bottleneck, not the rounds. Compare the colony count with the step above before rebuilding anything."
         }
       ],
-      "holes": [
-        {
-          "id": "H27",
-          "missing": "no primer pair, amplicon length or read depth for either library read",
-          "kind": "undecided",
-          "where": "the linkage and representation reads",
-          "filled_by": "whichever way #343 is decided: the plan designs both pairs against the finished record, or the step says what each must span and leaves the pair to the reader",
-          "issue": "liuhlab/liulab-mbio#343"
-        },
-        {
-          "id": "H28",
-          "missing": "no pass mark for either library read: what share of the library must be seen, how even the counts must be, or what linkage fidelity passes",
-          "kind": "undecided",
-          "where": "the linkage and representation reads, what carries the library forward",
-          "filled_by": "the screen downstream, which is what sets the representation the library has to reach",
-          "issue": ""
-        }
-      ]
+      "holes": []
     }
   ],
   "references": [
@@ -6512,6 +6487,18 @@
     {
       "text": "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member",
       "url": "https://doi.org/10.1016/0092-8674(76)90055-6"
+    },
+    {
+      "text": "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library's acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member",
+      "url": "https://doi.org/10.1038/nprot.2017.016"
+    },
+    {
+      "text": "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library's own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x",
+      "url": "https://doi.org/10.1186/s13059-020-1939-1"
+    },
+    {
+      "text": "Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage",
+      "url": "https://doi.org/10.1186/s13059-023-03132-3"
     },
     {
       "text": "NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion",

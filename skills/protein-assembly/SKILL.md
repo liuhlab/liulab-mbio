@@ -125,8 +125,9 @@ It raises rather than guessing, and the message names the cause.
 ## The neighbouring skills
 
 `barcode-design` owns barcode rules and why there is no GC band. `codon-optimize` owns writing or
-checking one coding sequence for a host. `primer-design` owns every primer question, including
-the primers that read the barcode block — this plan designs none. `build-protocol` owns the page:
+checking one coding sequence for a host. `primer-design` owns every primer question this plan does not
+already answer; the plan designs the two library read pairs against the simulated record and
+writes them with the other sheets. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol.json` and render again.
 A change to what the plan computes — the project's vector, host or completeness — goes back through
 `igga plan`, which writes `protocol.json` afresh.
