@@ -500,6 +500,13 @@ and its barcodes for linkage: about 95% of reads carried three valid barcodes, n
 library was correctly linked, and over 90% of it held above 80% fidelity. Those are the method
 page's steps 7 and 8. The titre plate gates a round; the reads judge the library.
 
+**How many electroporations a round takes is not predicted.** One takes up to 100 ng, and the
+paper names no count. No source read gives a ligation-product efficiency for Endura, and the 30 °C
+recovery the method uses has no vendor figure at all — `bench-numbers.md` already records that
+gap. So the protocol states the round's colony target and says to pool electroporations until the
+measured titre reaches it, and the package predicts no number. A lab that measures its own
+efficiency holds it the way it holds a ligase matrix or a price record.
+
 **D16 is answered by the paper.** "The sequences of a sample of individual clones from both
 libraries were confirmed by whole plasmid next-generation sequencing (Plasmidsaurus)" — a sample
 of a finished library, not a per-round product check and not every member. The departures note
