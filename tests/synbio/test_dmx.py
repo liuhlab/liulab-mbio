@@ -110,7 +110,7 @@ def test_the_clean_colony_curve_returns_its_measured_anchors():
         assert dmx.clean_colony_chance(fragments) == pytest.approx(chance)
     assert dmx.clean_colony_chance(1) == 1.0
     assert dmx.clean_colony_chance(20) == 0.0
-    assert 0.40 < dmx.clean_colony_chance(8) < 0.846
+    assert 0.846 < dmx.clean_colony_chance(4) < 0.938
 
 
 def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):

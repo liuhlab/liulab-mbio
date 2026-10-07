@@ -46,7 +46,14 @@ DMX7 = "ATCGGTGACGGCGATTCTCACATTT"
 #: Colonies picked per design, and the fragment counts Lund measured a clean colony at. Four is
 #: the only measured anchor and is a project input, not a constant of the method.
 COLONIES_PER_DESIGN = 4
-CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = ((2, 1.0), (5, 0.846), (12, 0.40), (16, 0.0))
+CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
+    (2, 1.0),
+    (3, 0.938),
+    (5, 0.846),
+    (8, 0.667),
+    (12, 0.40),
+    (16, 0.0),
+)
 
 #: The plate each stage uses. Colonies are picked into 384-well plates and four of those are
 #: compressed into one 1536-well plate, which is why the format parameter has to reach 1536.
@@ -529,10 +536,10 @@ def reformat(verdicts: Sequence[WellVerdict]) -> tuple[WellVerdict, ...]:
 def clean_colony_chance(fragments: int) -> float:
     """Return the chance one picked colony carries a clean copy of a design of this many pieces.
 
-    Linear interpolation between Lund's measured anchors, `CLEAN_COLONY_CURVE`: a design in two
-    pieces came out clean every time, one in five 84.6% of the time, one in twelve 40%, and one
-    in sixteen never. Fewer pieces than the first anchor takes the first anchor's value and more
-    than the last takes the last's, because nothing was measured outside them.
+    Linear interpolation between Lund's six measured anchors, `CLEAN_COLONY_CURVE`: a design in
+    two pieces came out clean every time, one in sixteen never. Fewer pieces than the first
+    anchor takes the first anchor's value and more than the last takes the last's, because
+    nothing was measured outside them.
 
     Raises
     ------
@@ -541,8 +548,8 @@ def clean_colony_chance(fragments: int) -> float:
 
     Examples
     --------
-    >>> round(clean_colony_chance(5), 3), clean_colony_chance(16)
-    (0.846, 0.0)
+    >>> clean_colony_chance(8), clean_colony_chance(16)
+    (0.667, 0.0)
     """
     if fragments < 1:
         raise ValueError(f"a design is built from at least one fragment, got {fragments}")
