@@ -8,21 +8,40 @@ from importlib.resources import files
 from pathlib import Path
 
 from liulab_mbio.checks import Status
+from liulab_mbio.plot.drawing import draw_plate
 from liulab_mbio.protocol.model import (
+    Bill,
     Check,
+    Citation,
     Gel,
+    Hole,
     Material,
     Oligo,
+    Plate,
     Protocol,
     ReactionTable,
     Reference,
+    Rule,
     Step,
     ThermocyclerProgram,
     Timer,
+    Transfer,
 )
 
 #: What the page reads where a check carries no verdict, so it is never taken for a pass.
 NO_VERDICT = "not judged"
+
+#: What stands where a number would, so a hole can never be read as a figure.
+NO_NUMBER = "no sourced number"
+
+#: What each kind of hole says it is waiting on.
+HOLE_KINDS = {
+    "undecided": "the method has not decided",
+    "unpublished": "nobody published it",
+    "lab": "the lab's own stock",
+    "unread": "a source was not read",
+    "price": "no price record prices it",
+}
 
 
 def render_html(protocol: Protocol) -> str:
@@ -37,7 +56,11 @@ def render_html(protocol: Protocol) -> str:
             _header(protocol),
             _materials(protocol.materials, protocol.equipment),
             _oligos(protocol.oligos),
-            *(_step(n, step) for n, step in enumerate(protocol.steps, 1)),
+            _plates(protocol),
+            _bill(protocol.bill),
+            *(_step(n, step, protocol) for n, step in enumerate(protocol.steps, 1)),
+            _holes(protocol),
+            _sources(protocol),
             _references(protocol.references),
         ]
     )
@@ -105,6 +128,13 @@ def _header(protocol: Protocol) -> str:
         lines = "".join(f"<p>{escape(one)}</p>" for one in protocol.highlights)
         parts.append(f'<div class="highlights">{lines}</div>\n')
     parts.append(_checks(protocol.checks))
+    holes = protocol.all_holes
+    if holes:
+        parts.append(
+            f'<p class="hole-count"><a href="#holes"><strong>{len(holes)}</strong> numbers in '
+            "this protocol have no source.</a> Each is a hole, not a value: no protocol holding "
+            "one is ready to run.</p>\n"
+        )
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
@@ -164,13 +194,19 @@ def _materials(materials: tuple[Material, ...], equipment: tuple[str, ...]) -> s
         ("Per run", lambda m: m.amount),
         ("Note", lambda m: m.note),
     ]
+    cited = any(m.citation for m in materials)
     shown = [(label, get) for label, get in columns if any(get(m) for m in materials)]
     table = ""
     if materials:
-        head = "<th>Name</th>" + "".join(f"<th>{escape(label)}</th>" for label, _ in shown)
+        head = (
+            "<th>Name</th>"
+            + "".join(f"<th>{escape(label)}</th>" for label, _ in shown)
+            + ("<th>Source</th>" if cited else "")
+        )
         rows = "".join(
             f"<tr><td>{escape(material.name)}</td>"
             + "".join(f"<td>{escape(get(material))}</td>" for _, get in shown)
+            + (f"<td>{_cite(material.citation)}</td>" if cited else "")
             + "</tr>"
             for material in materials
         )
@@ -178,12 +214,16 @@ def _materials(materials: tuple[Material, ...], equipment: tuple[str, ...]) -> s
             f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
             f"<tbody>{rows}</tbody></table></div>"
         )
+    carried = [(m, rule) for m in materials for rule in m.rules]
     line = ""
     if equipment:
         line = (
             f'<p class="equipment"><strong>Equipment:</strong> {escape(", ".join(equipment))}</p>'
         )
-    return f'<section class="block materials">\n<h2>Materials</h2>\n{table}{line}\n</section>\n'
+    return (
+        '<section class="block materials">\n<h2>Materials</h2>\n'
+        f"{table}{line}{_rules(carried)}\n</section>\n"
+    )
 
 
 def _oligos(oligos: tuple[Oligo, ...]) -> str:
@@ -257,13 +297,193 @@ def _oligo_checks(oligos: tuple[Oligo, ...]) -> str:
     )
 
 
-def _step(n: int, step: Step) -> str:
+def _cite(citation: Citation | None) -> str:
+    """One citation, as the page shows it beside the number it carries."""
+    if citation is None:
+        return ""
+    where = f" {citation.locator}" if citation.locator else ""
+    return (
+        f'<a class="cite" href="#source-{escape(_slug(citation.source))}">'
+        f"{escape(citation.source + where)}</a>"
+    )
+
+
+def _slug(text: str) -> str:
+    return "".join(char if char.isalnum() else "-" for char in text.casefold())
+
+
+def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
+    """Every rule the materials in this step carry, computed from the material, never stored.
+
+    A rule hangs on the material, so it shows wherever the material is and no edit to a step's
+    prose can drop it.
+    """
+    items = "".join(
+        f'<li class="rule is-{rule.kind}"><strong>{escape(material.name)}: '
+        f"{escape('never' if rule.kind == 'forbids' else 'always')} "
+        f"{escape(rule.subject)}</strong> {escape(rule.detail)} {_cite(rule.citation)}</li>"
+        for material, rule in rules
+    )
+    return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
+
+
+def _hole(hole: Hole) -> str:
+    """One hole, which reads as a hole and never as a value."""
+    where = f"{escape(hole.where)}: " if hole.where else ""
+    filled = f" <em>Filled by {escape(hole.filled_by)}.</em>" if hole.filled_by else ""
+    issue = f' <span class="hole-issue">{escape(hole.issue)}</span>' if hole.issue else ""
+    return (
+        f'<li class="hole" id="hole-{escape(hole.id)}"><span class="hole-id">{escape(hole.id)}'
+        f'</span> <span class="hole-none">{NO_NUMBER}</span> — {where}{escape(hole.missing)} '
+        f'<span class="hole-kind">{escape(HOLE_KINDS[hole.kind])}</span>{filled}{issue}</li>'
+    )
+
+
+def _holes(protocol: Protocol) -> str:
+    """Every hole the protocol carries, collected under its stable id."""
+    holes = protocol.all_holes
+    if not holes:
+        return ""
+    items = "".join(_hole(hole) for hole in holes)
+    return (
+        '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
+        f"<p>{len(holes)} numbers this protocol would otherwise have to invent. A hole is a "
+        "defect in what the package knows, not a failure of the run, and it is never filled "
+        f"with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
+    )
+
+
+def _plates(protocol: Protocol) -> str:
+    """Each plate drawn as its wells, and each vessel named beside them."""
+    if not protocol.plates and not protocol.vessels:
+        return ""
+    figures = "".join(_plate(one) for one in protocol.plates)
+    vessels = ""
+    if protocol.vessels:
+        items = "".join(
+            f"<li><strong>{escape(v.name)}</strong>"
+            + "".join(f" · {escape(text)}" for text in (v.kind, v.catalog, v.holds, v.note) if text)
+            + "</li>"
+            for v in protocol.vessels
+        )
+        vessels = f'<ul class="vessels">{items}</ul>'
+    return f'<section class="block plates">\n<h2>Plates</h2>\n{figures}{vessels}\n</section>\n'
+
+
+def _plate(one: Plate) -> str:
+    drawn = draw_plate(one.name, one.rows, one.columns, one.row_labels, seating=one.seating)
+    legend = "".join(
+        f'<li><span class="swatch" style="background:{fill}"></span>{escape(kind)}</li>'
+        for kind, fill in drawn.layout.legend
+    )
+    facts = " · ".join(
+        text for text in (f"{one.wells} wells", one.catalog, one.holds, one.note) if text
+    )
+    return (
+        f'<figure class="plate" data-plate="{escape(one.name)}">{drawn.element()}'
+        f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
+        + (f'<ul class="plate-legend">{legend}</ul>' if legend else "")
+        + "</figure>\n"
+    )
+
+
+def _transfer(transfer: Transfer) -> str:
+    """Return a transfer as a table: where each thing goes, so no step describes it."""
+    rows = "".join(
+        f"<tr><td>{escape(move.source.plate)} {escape(move.source.well)}</td>"
+        f"<td>{escape(move.destination.plate)} {escape(move.destination.well)}</td>"
+        f'<td class="num">{_num(move.volume_ul)}</td></tr>'
+        for move in transfer.moves
+    )
+    meta = " · ".join(
+        text
+        for text in (
+            transfer.instrument,
+            f"{len(transfer.moves)} wells",
+            " → ".join(transfer.plates),
+            transfer.note,
+        )
+        if text
+    )
+    return (
+        f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
+        f'<span class="muted">{escape(meta)}</span> {_cite(transfer.citation)}</figcaption>'
+        '<div class="scroll"><table><thead><tr><th>From</th><th>To</th>'
+        f'<th class="num">µL</th></tr></thead><tbody>{rows}</tbody></table></div></figure>\n'
+    )
+
+
+def _bill(bill: Bill | None) -> str:
+    """Return the bill: what the run consumes, and a hole wherever no row priced it."""
+    if bill is None:
+        return ""
+    money = f"Charge ({escape(bill.currency)})" if bill.currency else "Charge"
+    headroom = any(row.headroom for row in bill.rows)
+    rows = []
+    for row in bill.rows:
+        charge = (
+            f'<span class="hole-none">{NO_NUMBER}</span>'
+            if row.hole
+            else escape(row.charge) + " " + _cite(row.citation)
+        )
+        cells = [
+            f"<td>{escape(row.item)}</td>",
+            f"<td>{escape(row.key)}</td>",
+            f'<td class="num">{_num(row.quantity)} {escape(row.unit)}</td>',
+            f'<td class="num">{charge}</td>',
+        ]
+        if headroom:
+            cells.append(f"<td>{escape(row.headroom)}</td>")
+        rows.append(f"<tr{' class="is-holed"' if row.hole else ''}>{''.join(cells)}</tr>")
+    head = f'<th>Item</th><th>Key</th><th class="num">Quantity</th><th class="num">{money}</th>' + (
+        "<th>Headroom</th>" if headroom else ""
+    )
+    total = (
+        f'<tfoot><tr><th>Total</th><td></td><td></td><td class="num">{escape(bill.total)}</td>'
+        + ("<td></td>" if headroom else "")
+        + "</tr></tfoot>"
+        if bill.total
+        else ""
+    )
+    return (
+        f'<section class="block bill">\n<h2>{escape(bill.title or "Bill")}</h2>\n'
+        "<p>Quantities come from the design and are here whatever is loaded. A charge comes "
+        "only from a price record; where none prices a row, the money is a hole and no figure "
+        "is estimated. Price steers no part of the design.</p>\n"
+        f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
+        f"<tbody>{''.join(rows)}</tbody>{total}</table></div>\n</section>\n"
+    )
+
+
+def _sources(protocol: Protocol) -> str:
+    """Every document a number was read from, so a citation resolves on the page itself."""
+    if not protocol.sources:
+        return ""
+    items = "".join(
+        f'<li id="source-{escape(_slug(key))}"><strong>{escape(key)}</strong> '
+        f"{escape(source.document)}"
+        + "".join(
+            f" · {escape(text)}" for text in (source.edition, source.read_as, source.date) if text
+        )
+        + (
+            f' <a href="{escape(source.url)}" rel="noreferrer">{escape(source.url)}</a>'
+            if source.url
+            else ""
+        )
+        + "</li>"
+        for key, source in protocol.sources.items()
+    )
+    return f'<section class="block sources">\n<h2>Sources</h2>\n<ul>{items}</ul>\n</section>\n'
+
+
+def _step(n: int, step: Step, protocol: Protocol) -> str:
     key = f"step-{n}"
     parts = [
         f'<section class="step" id="{key}">\n<h2 class="step-title"><label>'
         f'<input type="checkbox" class="done" data-key="{key}">'
         f'<span class="step-n">{n}</span><span>{escape(step.title)}</span></label></h2>\n'
     ]
+    parts.append(_rules(protocol.rules_for(step)))
     parts += [
         f'<p class="caution"><strong>Caution:</strong> {escape(c)}</p>\n' for c in step.cautions
     ]
@@ -276,6 +496,10 @@ def _step(n: int, step: Step) -> str:
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_table(f"{key}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
     parts += [_program(p) for p in step.programs]
+    parts += [_transfer(t) for t in step.transfers]
+    if step.holes:
+        items = "".join(_hole(hole) for hole in step.holes)
+        parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')
     if step.timers:
         parts.append(f'<div class="timers">{"".join(_timer(t) for t in step.timers)}</div>\n')
     if step.expected or step.gels:
@@ -301,7 +525,7 @@ def _table(key: str, table: ReactionTable) -> str:
     scale = table.reactions * (1 + table.overage)
     rows = []
     for component, mix in zip(table.components, table.mix_volumes(table.reactions), strict=True):
-        cells = [f"<td>{escape(component.name)}</td>"]
+        cells = [f"<td>{escape(component.name)} {_cite(component.citation)}</td>"]
         cells += [f"<td>{escape(component.stock)}</td>"] if stock else []
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
         cells.append(f'<td class="num">{_num(component.volume_ul)}</td>')
@@ -360,7 +584,7 @@ def _program(program: ThermocyclerProgram) -> str:
                 else ""
             )
             rows.append(
-                f"<tr><td>{escape(step.label)}</td>"
+                f"<tr><td>{escape(step.label)} {_cite(step.citation)}</td>"
                 f'<td class="num">{_num(step.temperature_c)} °C</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )

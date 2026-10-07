@@ -185,6 +185,27 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   h2 { font-size: 1.15rem; }
 }
 
+
+/* A rule travels with its material, so it is shown and not written into a step. */
+.rules { list-style: none; margin: 0 0 0.8rem; padding: 0; display: grid; gap: 0.4rem; }
+.rule { border-left: 3px solid var(--caution); background: var(--caution-soft); padding: 0.45rem 0.7rem; border-radius: var(--radius); }
+.rule.is-requires { border-left-color: var(--accent); background: var(--accent-soft); }
+
+/* A hole is never a value: it is struck through where a number would stand and says so. */
+.hole-count { background: var(--fail-soft); border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.hole-none { font-variant: all-small-caps; letter-spacing: 0.04em; color: var(--fail); border-bottom: 2px dotted var(--fail); }
+.holes ul, .holes-here { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.hole { border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.45rem 0.7rem; background: var(--fail-soft); }
+.hole-id { font-weight: 700; }
+.hole-kind, .hole-issue { color: var(--muted); }
+.is-holed .num { color: var(--fail); }
+
+/* The plate, drawn by `plot` and embedded here, beside the map, the sequence view and the gel. */
+.plate svg { max-width: 100%; height: auto; }
+.plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
+.cite { color: var(--muted); font-size: 0.85em; }
+
 @media print {
   :root {
     color-scheme: light;

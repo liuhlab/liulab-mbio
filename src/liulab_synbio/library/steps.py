@@ -39,6 +39,7 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
+from liulab_synbio.library import stages
 from liulab_synbio.library.bench import (
     DIGEST_CELSIUS,
     DIGEST_SECONDS,
@@ -287,6 +288,8 @@ def protocol(
             barcodes,
         ),
         references=_references(scheme),
+        sources=stages.SOURCES,
+        holes=stages.HOLES,
     )
 
 
@@ -425,13 +428,8 @@ def _materials(
         ]
         made.append(_enzyme_material(one, f"cuts {listed(jobs)}, so it cannot ligate back"))
     made.append(Material(CUTSMART, storage="-20 °C", note="both digests run in it"))
-    made.append(
-        Material(
-            f"{LIGASE} and {LIGASE_BUFFER}",
-            storage="-20 °C",
-            note="the method names neither the units nor the volume; follow the supplier",
-        )
-    )
+    # Both carry their own rules, so neither can appear in a protocol that does not show them.
+    made += list(stages.method_materials())
     made.append(
         Material(
             SPRI_BEADS,
