@@ -172,24 +172,27 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
-    reads = ["H28"]
-    # The final assembly: this project names no working vector, so what one would fix is H31.
-    # The backbone the rounds ran in frees the cargo itself, so nothing is held open there.
-    final = ["H31", "H24", "H31", "H24", "H24", *reads]
+    # A block's pieces still have no destination to close into, and no reaction sized against one.
+    blocks = ["H25", "H26"]
+    # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
+    # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
+    linkage = ["H28"]
+    # The final assembly: this project names no working vector, so what one would fix is H31. The
+    # backbone the rounds ran in frees the cargo itself, so the release is written rather than
+    # held open, and every hole left in the stage is H24, the masses nobody published.
+    final = ["H31", "H24", "H31", "H24", "H24"]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
-        "H25",
-        "H26",
+        *blocks,
         "B1",
         "B2",
-        *reads,
+        *linkage,
         *final,
     ]
     assert [hole.id for step in route_a.steps for hole in step.holes] == [
         *pcrs,
-        "H25",
-        "H26",
-        *reads,
+        *blocks,
+        *linkage,
         *final,
     ]
     for one in (route_a, route_b):
