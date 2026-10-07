@@ -4846,7 +4846,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "A well read more than 20 times is called; route B tolerates 10 and warns between the two.",
+        "A well read more than 20 times is called; route B tolerates 10 reads and warns between the two.",
         "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
       ],
       "troubleshooting": [
@@ -6554,7 +6554,7 @@
       "url": "https://doi.org/10.1038/s41467-026-76740-5"
     },
     {
-      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable",
+      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach",
       "url": "https://doi.org/10.1021/acssynbio.4c00625"
     },
     {

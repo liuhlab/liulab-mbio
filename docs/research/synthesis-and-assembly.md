@@ -473,7 +473,9 @@ so the judgement is shared and only the floor travels with the route.
 consensus depth above 150 was measured on a pooled amplicon carrying four UMIs, where 1,536 wells
 demultiplex in-read. LevSeq's twenty wanted and ten tolerable were measured on one amplicon per
 well, with the index on the primer. Picking one of the two for both routes would apply a figure
-to a library prep that never produced it. Each is a default a project may raise.
+to a library prep that never produced it. Each is a default a project may raise. The wanted depth
+is exceeded; the tolerable one is reached, so a well at exactly ten reads warns rather than going
+unjudged.
 
 **Below the floor a well gets no verdict, not a fail.** That is already `CONTEXT.md`'s rule for a
 `Check` — one no sourced threshold judges carries no verdict and says so — and here it reaches

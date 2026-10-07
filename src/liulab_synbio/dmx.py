@@ -266,22 +266,16 @@ class Route:
     plate_axis
         How many marks the one axis carrying the plate carries.
     wanted_reads
-        The mark a well's depth has to meet, by `meets`, before it is called. A project may
-        raise it.
+        A well is called **above** this mark. Qian publishes a consensus depth above 150 and
+        LevSeq's SI checklist an alignment count above 20, so neither route calls a well landing
+        exactly on it. A project may raise it.
     tolerable_reads
-        The mark that same comparison holds a well to for any verdict at all; under it the well
-        carries none. Equal to `wanted_reads` where the route publishes one number rather than
-        two.
-    inclusive
-        Whether a depth equal to either of a route's marks meets it. Qian publishes a consensus
-        depth *above* 150, and LevSeq's SI checklist an alignment count *above* 20, so neither
-        route calls a well that lands exactly on a mark. LevSeq's article reads the same 20 as a
-        minimum instead; the SI governs, because its checklist decides whether a well's data may
-        be used, which is what this decides, while the article's number is where its software
-        warns. Where two sources still contest a boundary the stricter reading stands: a well
-        wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
+        The mark at or above which a well still carries a verdict; `None` where the route
+        publishes one number and has no warn band. LevSeq's SI routes a well at ``<=20`` into a
+        proceed-with-validation branch and its Figure S1E puts the floor of detection at 10
+        reads, so a well at exactly 10 warns rather than going unjudged.
     source
-        The key of the `SOURCES` entry the two depths were read from.
+        The key of the `SOURCES` entry the depths were read from.
     """
 
     name: str
@@ -290,13 +284,8 @@ class Route:
     well_axes: tuple[int, ...]
     plate_axis: int
     wanted_reads: int
-    tolerable_reads: int
+    tolerable_reads: int | None
     source: str
-    inclusive: bool = True
-
-    def meets(self, reads: int, mark: int) -> bool:
-        """Whether this many reads meet `mark`, by the comparison this route publishes."""
-        return reads >= mark if self.inclusive else reads > mark
 
     @property
     def wells_per_plate(self) -> int:
@@ -321,17 +310,16 @@ ROUTE_A = Route(
     well_axes=(GROUP_SIZE, GROUP_SIZE, GROUP_SIZE),
     plate_axis=GROUP_SIZE,
     wanted_reads=150,
-    tolerable_reads=150,
+    tolerable_reads=None,
     source="Qian SI",
-    inclusive=False,
 )
 
 #: One barcoded primer pair a well, 96 forward marks addressing the well and 96 reverse the
-#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable, both
-#: depths to exceed, so a well at exactly twenty is called and warns, where the SI's suboptimal
-#: branch puts it. LevSeq pairs the floor with a second criterion, a mean error below 10%, which
-#: nothing here judges — a named hole: it is a mean over per-position base counts, and a well
-#: reaches this package as a read count and a consensus call.
+#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable,
+#: twenty to exceed and ten to reach, so a well at exactly twenty is called and warns, where the
+#: SI's suboptimal branch puts it. LevSeq pairs the floor with a second criterion, a mean error
+#: below 10%, which nothing here judges — a named hole: it is a mean over per-position base
+#: counts, and a well reaches this package as a read count and a consensus call.
 ROUTE_B = Route(
     "B",
     marking="amplify each well with one barcoded primer pair",
@@ -340,7 +328,6 @@ ROUTE_B = Route(
     wanted_reads=20,
     tolerable_reads=10,
     source="LevSeq",
-    inclusive=False,
 )
 
 #: Both routes, by the name a project names one with.
@@ -465,9 +452,10 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     """Return the verdict on whether a well was read deeply enough to call.
 
     A well below the route's tolerable depth carries **no verdict**, not a failure: it is read
-    again or picked again, and reformatting does not compact it out. Between tolerable and
-    wanted it is called and warns. `wanted` raises the route's own mark, which a project may do
-    and may not lower.
+    again or picked again, and reformatting does not compact it out. From the tolerable mark up
+    to the wanted one it warns; above the wanted one it passes. A route with no tolerable mark
+    has no warn band. `wanted` raises the route's own mark, which a project may do and may not
+    lower.
 
     Raises
     ------
@@ -478,6 +466,8 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     --------
     >>> depth_check(ROUTE_B, 12).status, depth_check(ROUTE_B, 4).status
     ('warn', None)
+    >>> depth_check(ROUTE_B, 10).status
+    'warn'
     """
     if reads < 0:
         raise ValueError(f"a well cannot carry {reads} reads")
@@ -488,16 +478,17 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
             f"raise that, not lower it to {mark}"
         )
     status: Status | None = None
-    if route.meets(reads, mark):
+    if reads > mark:
         status = "pass"
-    elif route.meets(reads, route.tolerable_reads):
+    elif route.tolerable_reads is not None and reads >= route.tolerable_reads:
         status = "warn"
+    tolerated = "" if route.tolerable_reads is None else f" and tolerates {route.tolerable_reads}"
     return Check(
         "reads_per_well",
         status,
         float(reads),
-        f"route {route.name} wants {mark} reads a well and tolerates "
-        f"{route.tolerable_reads}; below that no read is deep enough to call",
+        f"route {route.name} wants more than {mark} reads a well{tolerated}; below that no read "
+        f"is deep enough to call",
     )
 
 
@@ -1456,7 +1447,12 @@ def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
 
 def _call_step(one: Validation) -> Step:
     """Demultiplex, judge each well on depth and then identity, and compact out what failed."""
-    mark = "at least" if one.route.inclusive else "more than"
+    tolerated = (
+        "."
+        if one.route.tolerable_reads is None
+        else f"; route {one.route.name} tolerates {one.route.tolerable_reads} reads and warns "
+        "between the two."
+    )
     return Step(
         "Call every well",
         instructions=(
@@ -1465,8 +1461,7 @@ def _call_step(one: Validation) -> Step:
             "Reformat, compacting out the wells that failed.",
         ),
         expected=(
-            f"A well read {mark} {one.route.wanted_reads} times is called; route "
-            f"{one.route.name} tolerates {one.route.tolerable_reads} and warns between the two.",
+            f"A well read more than {one.route.wanted_reads} times is called{tolerated}",
             "A pass matches across the whole designed region: both entry overhangs, the "
             "fragment, the stuffer and the barcode.",
         ),
@@ -1558,7 +1553,7 @@ REFERENCES: tuple[Reference, ...] = (
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "
         "directed evolution and machine learning, for index PCR marking a well on one "
         "barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and "
-        "ten tolerable",
+        "ten tolerable, twenty to exceed and ten to reach",
         url="https://doi.org/10.1021/acssynbio.4c00625",
     ),
     Reference(
