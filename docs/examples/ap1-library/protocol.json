@@ -14,7 +14,7 @@
     "Cloning scar": "TTCC",
     "Barcode": "11 bp, block 41 bp",
     "Codon usage": "human",
-    "Product": "AP-1 DESynR round 3, 6501 bp",
+    "Product": "AP-1 DESynR round 3, 6435 bp",
     "Completeness": "P 0.99, 195,386 colonies at the end",
     "Amino acids changed": "27 over 26 part end(s)",
     "Designs read back": "72, every one"
@@ -336,7 +336,7 @@
       "catalog": "",
       "storage": "",
       "amount": "",
-      "note": "LB with 100 µg/mL carbenicillin, the destination vector's own marker (AmpR)",
+      "note": "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)",
       "contains": [],
       "rules": [],
       "citation": null
@@ -369,7 +369,7 @@
       "catalog": "431111",
       "storage": "",
       "amount": "one spot a design",
-      "note": "100 µg/mL carbenicillin; about 2,500 colonies a plate",
+      "note": "50 µg/mL kanamycin; about 2,500 colonies a plate",
       "contains": [],
       "rules": [],
       "citation": {
@@ -383,7 +383,7 @@
       "catalog": "c74290",
       "storage": "",
       "amount": "1, one a 384 wells",
-      "note": "60 µL low-salt LB with 100 µg/mL carbenicillin a well",
+      "note": "60 µL low-salt LB with 50 µg/mL kanamycin a well",
       "contains": [],
       "rules": [],
       "citation": {
@@ -579,7 +579,7 @@
       "name": "picked 1",
       "wells": 384,
       "catalog": "Beckman Coulter #c74290",
-      "holds": "one picked colony each in 60 µL low-salt LB with 100 µg/mL carbenicillin",
+      "holds": "one picked colony each in 60 µL low-salt LB with 50 µg/mL kanamycin",
       "seating": {},
       "labels": {
         "A1": "quarter 1",
@@ -1680,7 +1680,7 @@
       "title": "Array 72 design(s) and grow",
       "instructions": [
         "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-        "Grow overnight at 37 °C on 100 µg/mL carbenicillin."
+        "Grow overnight at 37 °C on 50 µg/mL kanamycin."
       ],
       "cautions": [],
       "notes": [
@@ -1706,7 +1706,7 @@
     {
       "title": "Pick 4 colonies of each design",
       "instructions": [
-        "Pick 4 colonies a design into 60 µL low-salt LB with 100 µg/mL carbenicillin, with the QPix XE Microbial Colony Picker.",
+        "Pick 4 colonies a design into 60 µL low-salt LB with 50 µg/mL kanamycin, with the QPix XE Microbial Colony Picker.",
         "Fill one quarter of each 384-well plate before starting the next.",
         "Grow overnight at 37 °C."
       ],
@@ -5606,7 +5606,7 @@
               "name": "DMX-iGGA",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.297402 pmol (1000 ng)",
+              "final": "0.301042 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5676,7 +5676,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "DMX-iGGA opens on AGGA and TTCC, leaving 5429 bp of backbone.",
+        "DMX-iGGA opens on AGGA and TTCC, leaving 5363 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -5802,8 +5802,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "DMX-iGGA, opened: 0.00598091 pmol is 20 ng at 5429 bp.",
-        "N part list, released: 0.00598091 pmol is 2.06 ng at 559 bp."
+        "DMX-iGGA, opened: 0.00605451 pmol is 20 ng at 5363 bp.",
+        "N part list, released: 0.00605451 pmol is 2.08 ng at 559 bp."
       ],
       "troubleshooting": [
         {
@@ -5831,7 +5831,7 @@
               "name": "DMX-iGGA, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00598091 pmol (20 ng)",
+              "final": "0.00605451 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5839,7 +5839,7 @@
               "name": "N part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00598091 pmol (2.06 ng)",
+              "final": "0.00605451 pmol (2.08 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5867,7 +5867,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.00598091 pmol of the released part list against 0.00598091 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00605451 pmol of the released part list against 0.00605451 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -5893,7 +5893,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0260723 pmol at 6227 bp."
+        "Enough for one electroporation: 100 ng is 0.0263516 pmol at 6161 bp."
       ],
       "troubleshooting": [
         {
@@ -5936,7 +5936,7 @@
       "title": "Round 1: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 1 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 1 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 1 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6015,7 +6015,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 6227 bp per molecule. This is the destination round 2 opens.",
+        "One pool of plasmid, 6161 bp per molecule. This is the destination round 2 opens.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -6043,7 +6043,7 @@
               "name": "AP-1 DESynR round 1",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.260723 pmol (1000 ng)",
+              "final": "0.263516 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6113,7 +6113,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 6197 bp of backbone.",
+        "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 6131 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -6239,8 +6239,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 1, opened: 0.00523969 pmol is 20 ng at 6197 bp.",
-        "DBD part list, released: 0.00523969 pmol is 0.82 ng at 255 bp."
+        "AP-1 DESynR round 1, opened: 0.0052961 pmol is 20 ng at 6131 bp.",
+        "DBD part list, released: 0.0052961 pmol is 0.83 ng at 255 bp."
       ],
       "troubleshooting": [
         {
@@ -6268,7 +6268,7 @@
               "name": "AP-1 DESynR round 1, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00523969 pmol (20 ng)",
+              "final": "0.0052961 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6276,7 +6276,7 @@
               "name": "DBD part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00523969 pmol (0.82 ng)",
+              "final": "0.0052961 pmol (0.83 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6304,7 +6304,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.00523969 pmol of the released part list against 0.00523969 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.0052961 pmol of the released part list against 0.0052961 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -6330,7 +6330,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0252334 pmol at 6434 bp."
+        "Enough for one electroporation: 100 ng is 0.025495 pmol at 6368 bp."
       ],
       "troubleshooting": [
         {
@@ -6373,7 +6373,7 @@
       "title": "Round 2: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 2 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 2 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 2 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6452,7 +6452,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 6434 bp per molecule. This is the destination round 3 opens.",
+        "One pool of plasmid, 6368 bp per molecule. This is the destination round 3 opens.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -6480,7 +6480,7 @@
               "name": "AP-1 DESynR round 2",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.252334 pmol (1000 ng)",
+              "final": "0.25495 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6550,7 +6550,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 6404 bp of backbone.",
+        "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 6338 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -6676,8 +6676,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 2, opened: 0.00507033 pmol is 20 ng at 6404 bp.",
-        "C part list, released: 0.00507033 pmol is 0.92 ng at 296 bp."
+        "AP-1 DESynR round 2, opened: 0.00512313 pmol is 20 ng at 6338 bp.",
+        "C part list, released: 0.00512313 pmol is 0.93 ng at 296 bp."
       ],
       "troubleshooting": [
         {
@@ -6705,7 +6705,7 @@
               "name": "AP-1 DESynR round 2, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00507033 pmol (20 ng)",
+              "final": "0.00512313 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6713,7 +6713,7 @@
               "name": "C part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00507033 pmol (0.92 ng)",
+              "final": "0.00512313 pmol (0.93 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6741,7 +6741,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.00507033 pmol of the released part list against 0.00507033 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00512313 pmol of the released part list against 0.00512313 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -6767,7 +6767,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0249734 pmol at 6501 bp."
+        "Enough for one electroporation: 100 ng is 0.0252295 pmol at 6435 bp."
       ],
       "troubleshooting": [
         {
@@ -6810,7 +6810,7 @@
       "title": "Round 3: recover and grow at 30 °C",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
-        "Plate a measured dilution of the recovery on 100 µg/mL carbenicillin as round 3 titre, and grow the rest in selective broth.",
+        "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 3 titre, and grow the rest in selective broth.",
         "Plate the no-donor ligation from the same digest as round 3 no-donor control, at the same dilution."
       ],
       "cautions": [],
@@ -6889,7 +6889,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 6501 bp per molecule. This is the finished library.",
+        "One pool of plasmid, 6435 bp per molecule. This is the finished library.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -7078,7 +7078,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "The whole 1076 bp cargo free, on AGGA and TTCC, out of 6501 bp of library.",
+        "The whole 1076 bp cargo free, on AGGA and TTCC, out of 6435 bp of library.",
         "PmeI cuts the backbone it came out of, so that backbone cannot close again."
       ],
       "troubleshooting": [

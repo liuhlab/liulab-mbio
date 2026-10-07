@@ -48,7 +48,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
-| [product.dna](product.dna) | one member of the finished library, 6,501 bases |
+| [product.dna](product.dna) | one member of the finished library, 6,435 bases |
 | [protocol.json](protocol.json) | the bench protocol as data |
 | [protocol.html](protocol.html) | the same protocol as a page to work from |
 

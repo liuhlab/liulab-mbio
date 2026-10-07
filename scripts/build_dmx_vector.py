@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rebuild the iGGA destination vector from its Addgene parent.
 
-    pixi run python scripts/build_dmx_vector.py [--from PATH] [--out PATH]
+    pixi run python scripts/build_dmx_vector.py [--from PATH] [--marker-from PATH] [--out PATH]
 
 The method's rounds run in a DMX vector, which the lab builds from DMX0001 by the steps
 `docs/synthesis-and-assembly.md` lists under *Lab resources*. Those steps are this script, so the
@@ -9,8 +9,9 @@ record ships as a measurement of the parent rather than as a sequence someone ty
 `docs/research/dmx-destination.md` records what each one does and why, and every number the
 script prints is reproduced from the parent on each run.
 
-The parent is a `.dna` file under `reference_docs/`, which is not in the repository. Without it
-the script says so and stops; it never reaches the network.
+The parent and the plasmid the marker comes out of are `.dna` files under `reference_docs/`,
+which is not in the repository. Without either the script says so and stops; it never reaches
+the network.
 
 A DNA sequence carries no licence. The parent is deposited and the rebuild is the lab's own
 molecule, which is why it ships: #287 settled the same question for the ccdB cassette.
@@ -19,6 +20,7 @@ molecule, which is why it ships: #287 settled the same question for the ccdB cas
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,7 +28,7 @@ from pathlib import Path
 from liulab_mbio.edits import insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import CutSite, domesticate, find_sites
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.vector import released_cargo, round_cassette
@@ -38,14 +40,24 @@ PARENT = REPO / (
     "reference_docs/synthesis_and_assembly/dmx/addgene/addgene-plasmid-247434-sequence-494299.dna"
 )
 
+#: pCR-Blunt II-TOPO, the Zero Blunt TOPO carrier, where the marker that goes in comes from.
+MARKER_SOURCE = REPO / "reference_docs/synthesis_and_assembly/dmx/addgene/pCR-Blunt II-TOPO.dna"
+
+#: The marker the rebuild takes out, the coding sequence the source map draws it in place of,
+#: and what the result calls that one. `liulab_mbio.bench.phenotype.SELECTION` reads the last
+#: and names kanamycin for it, which is what a round then plates on.
+MARKER_OUT = "AmpR"
+MARKER_SOURCE_FEATURE = "NeoR/KanR"
+MARKER_IN = "KanR"
+
 #: Where the rebuilt record goes: the destination the worked example is planned against.
 OUT = REPO / "docs/examples/ap1-library/vector.gb"
 
 NAME = "DMX-iGGA"
 DESCRIPTION = (
     "iGGA destination rebuilt from DMX0001 (Addgene 247434): the method's internal stuffer "
-    "where the parent's cassette was, PmeI outboard of each BsaI site, and no BbsI left in the "
-    "backbone. Built by scripts/build_dmx_vector.py."
+    "where the parent's cassette was, PmeI outboard of each BsaI site, KanR where the parent's "
+    "AmpR was, and no BbsI left in the backbone. Built by scripts/build_dmx_vector.py."
 )
 
 #: Every enzyme the method names. No step may spell a new site of one of these.
@@ -72,14 +84,16 @@ class Change:
     enzyme: str
 
 
-def rebuild(parent: SequenceRecord) -> tuple[SequenceRecord, list[Change]]:
+def rebuild(
+    parent: SequenceRecord, marker_source: SequenceRecord
+) -> tuple[SequenceRecord, list[Change]]:
     """Return the rebuilt destination, and every base changed outside a coding sequence.
 
-    Four steps, in order. The parent's cassette is read off a digest and replaced by the method's
+    Five steps, in order. The parent's cassette is read off a digest and replaced by the method's
     internal stuffer, so a round opens the result on the overhangs its parts carry. A blunt site
-    then goes outboard of each releasing cut. What is left of the method's enzymes in the
-    backbone goes last, synonymously where a coding sequence spells it and by one stated base
-    where none does.
+    then goes outboard of each releasing cut. The marker is swapped for `marker_source`'s. What
+    is left of the method's enzymes in the backbone goes last, synonymously where a coding
+    sequence spells it and by one stated base where none does.
     """
     span = released_cargo(parent)
     if span is None:
@@ -92,8 +106,49 @@ def rebuild(parent: SequenceRecord) -> tuple[SequenceRecord, list[Change]]:
     record, _ = insert(record, stuffer.start - BLUNT_BEFORE, PMEI_SITE)
     stuffer = _cassette(record)
     record, _ = insert(record, stuffer.end + BLUNT_AFTER, PMEI_SITE)
+    record = _marked(record, marker_source)
     record, changes = _domesticated(record)
     return _annotated(record), changes
+
+
+def _marked(record: SequenceRecord, source: SequenceRecord) -> SequenceRecord:
+    """Put `source`'s kanamycin marker where the parent's own marker was.
+
+    The coding sequence alone moves. The promoter driving it and the ribosome binding site
+    inside it stay where the parent put them, so both ends of the swap are a boundary one of
+    the two maps already draws and the new start codon keeps the old one's spacing. Departure
+    D11 forces the swap: the final transfer moves cargo into an AmpR or CarbR working vector,
+    and the two must not share a marker.
+    """
+    out = _one_cds(record, MARKER_OUT)
+    into = _one_cds(source, MARKER_SOURCE_FEATURE)
+    coding = source.extract(into)
+    if out.strand == Strand.REVERSE:
+        coding = reverse_complement(coding)
+    start = min(segment.start for segment in out.segments)
+    swapped, _ = replace(record, start, max(segment.end for segment in out.segments), coding)
+    marker = Feature(MARKER_IN, "CDS", (Segment(start, start + len(coding)),), strand=out.strand)
+    return dataclasses.replace(
+        swapped, features=(*(_renamed(one) for one in swapped.features), marker)
+    )
+
+
+def _one_cds(record: SequenceRecord, name: str) -> Feature:
+    """Return the record's one coding sequence of this name, refusing any other count."""
+    found = [one for one in record.features if one.name == name and one.type == "CDS"]
+    if len(found) != 1:
+        raise ValueError(
+            f"{record.name or 'the record'} annotates {len(found)} coding sequences named "
+            f"{name}, and the swap needs exactly one"
+        )
+    return found[0]
+
+
+def _renamed(feature: Feature) -> Feature:
+    """Rename what drove the marker that left, because it now drives the one that arrived."""
+    if feature.name != f"{MARKER_OUT} promoter":
+        return feature
+    return dataclasses.replace(feature, name=f"{MARKER_IN} promoter")
 
 
 def _cassette(record: SequenceRecord) -> Segment:
@@ -261,16 +316,21 @@ def main(argv: list[str] | None = None) -> int:
     """Rebuild the destination and write it, printing what the result measures."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--from", dest="source", type=Path, default=PARENT, help="the parent")
+    parser.add_argument(
+        "--marker-from", type=Path, default=MARKER_SOURCE, help="where the marker comes from"
+    )
     parser.add_argument("--out", type=Path, default=OUT, help="where the record goes")
     args = parser.parse_args(argv)
-    if not args.source.exists():
-        print(
-            f"{args.source} is not here. The parent is a reference document, which this "
-            "repository does not carry; reference_docs/README.md says where it comes from.",
-            file=sys.stderr,
-        )
+    missing = [path for path in (args.source, args.marker_from) if not path.exists()]
+    if missing:
+        for path in missing:
+            print(
+                f"{path} is not here. It is a reference document, which this repository does "
+                "not carry; reference_docs/README.md says where it comes from.",
+                file=sys.stderr,
+            )
         return 1
-    record, changes = rebuild(read_record(args.source))
+    record, changes = rebuild(read_record(args.source), read_record(args.marker_from))
     write_genbank(record, args.out)
     _check_written(record, args.out)
     print(f"{args.out}: {record.name}, {len(record)} bp {record.topology}")
@@ -279,6 +339,9 @@ def main(argv: list[str] | None = None) -> int:
         where = ", ".join(f"{one.start} {one.strand.name[0]}" for one in found)
         print(f"  {enzyme.name:6} {len(found)}  {where}")
     print(f"  cassette {_cassette(record)}")
+    marker = _one_cds(record, MARKER_IN)
+    at = marker.segments[0]
+    print(f"  marker {marker.name} {at.start}-{at.end} {marker.strand.name.lower()}")
     for change in changes:
         print(f"  {change.enzyme} at {change.position}: {change.before} -> {change.after}")
     return 0

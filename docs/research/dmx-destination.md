@@ -6,8 +6,9 @@ search:
 # The rebuilt DMX destination
 
 What `scripts/build_dmx_vector.py` does to DMX0001, why each step is there, and what the result
-measures. Written for #358, which is #331 absorbing #334 and #353. Every number below was
-produced by running the script; none was typed in from somewhere else.
+measures. Written for #358, which is #331 absorbing #334 and #353; #374 added the marker swap
+of §2.3. Every number below was produced by running the script; none was typed in from
+somewhere else.
 
 ## 1. The parent
 
@@ -32,7 +33,7 @@ Both enzymes give up the same piece: `BsaI 362-792 (430 bp) AGGA/TTCC`, and
 makes the parent a destination already — and what lets the script find the cassette by digesting
 rather than by a coordinate.
 
-## 2. The four steps
+## 2. The five steps
 
 ### 2.1 The parent's cassette becomes the method's internal stuffer
 
@@ -64,39 +65,59 @@ rebuilt record and the right-hand window runs to 503, so a site at 437 sacrifice
 worry came from inserting immediately outboard of the BsaI site; the rule only asks for a site
 between that cut and the primer's footprint, which leaves 87 bases to choose from.
 
-### 2.3 BbsI leaves the backbone
+### 2.3 AmpR leaves, KanR arrives, and the third BsaI site goes with them
 
-Four parental sites. Two (4878, 5217 on the parent; 4498, 4837 after the edits above) lie inside
+Departure D11 forces this step. The final transfer moves cargo out of this vector and into a
+working vector that is AmpR or CarbR, so the two must not share a marker. The marker is read as
+well as plated: `igga.stages.selection_for` names the drug off the record's own marker, so an
+AmpR destination would plate every round on the carbenicillin D11 says does not carry over.
+
+**What goes in.** The `NeoR/KanR` of `pCR-Blunt II-TOPO`, in the same reference directory —
+the Zero Blunt TOPO carrier, whose guide `bench-numbers.md` already sources this method's
+50 µg/mL kanamycin from. Measured off that map and the bases under it: `[1236, 2031)` forward,
+**795 bp**, `ATG` to `TGA`, no internal stop, and **no site of any of the six method enzymes**
+in either orientation.
+
+**Where it starts and ends.** Exactly where the parent's `AmpR` coding sequence did: `[1144,
+2005)` on the record as the three steps above leave it, which is DMX0001's `[1524, 2385)`
+carried through them. Both ends are a boundary one of the two deposited maps already draws, so
+this step chooses no coordinate of its own.
+
+**Which promoter drives it.** DMX0001's own. The parent draws `AmpR promoter` at `[2385, 2490)`
+butted against the coding sequence it drives, and the end of it is the native *bla* ribosome
+binding site: `AATATTGAAAAAGGAAGAGT` reads straight into `ATGAGTATTCAA`. Only the reading frame
+behind that changes, so the new start codon keeps the old one's spacing from the binding site
+and nothing is claimed about expression that the parent was not already carrying. The feature
+is renamed `KanR promoter`, because a map that still said `AmpR` on a kanamycin vector is the
+confusion this step exists to remove.
+
+**Which orientation.** The parent's. `AmpR` reads on the reverse strand, so the coding sequence
+goes in reverse-complemented and reads on the reverse strand under the promoter already pointing
+at it. The script takes the strand off the feature it replaces rather than naming one, so the
+step holds on DMX0002 too, whose `AmpR` reads forward.
+
+**What it takes with it.** The parent's third BsaI site, at 1664, is the only site of any method
+enzyme in the whole of `[1524, 2490)`, so the swap removes it. The synonymous codon that used to
+stand in for the swap is no longer changed, and `domesticate` is left with nothing to do for
+BsaI. The four parental BbsI sites — 4130, 4490, 4878 and 5217 — all lie outside the swapped
+span, so the swap does not touch them and the next step still has all four to clear.
+
+### 2.4 BbsI leaves the backbone
+
+Four parental sites. Two (4878, 5217 on the parent; 4432, 4771 after the edits above) lie inside
 `lacI`, and `liulab_mbio.sites.domesticate` takes both away with one synonymous codon each,
 `GAC` to `GAT`.
 
-The other two (4130, 4490 on the parent; 3750, 4110 after) lie in **no annotated feature at
+The other two (4130, 4490 on the parent; 3684, 4044 after) lie in **no annotated feature at
 all** — backbone between `rop` and `lacI`. `domesticate` reports such a site and leaves it,
 because changing it changes what the record spells and no method decides that on its own. Here
-the script decides it, and says so: one base each, `G` to `A` at 3750 and at 4110. It reads the
+the script decides it, and says so: one base each, `G` to `A` at 3684 and at 4044. It reads the
 site left to right and A, C, G, T in turn and takes the first change that removes the site
 without spelling a new site of any method enzyme, so the same parent gives the same record.
 
-### 2.4 The third BsaI site leaves AmpR
-
-The remaining BsaI site is at 1284, inside `AmpR`, and `domesticate` takes it away with one
-synonymous codon, `GGG` to `GGC`.
-
-**The marker is not swapped, and that is a defect rather than a choice.** The method page's step 2
-swaps AmpR for KanR, and names the third BsaI site as what that swap takes with it. One
-synonymous base takes the same site, so the site is not the reason to swap. The bench is:
-departure D11 is forced, because the final transfer moves cargo from this vector into a working
-vector that is AmpR or CarbR, and the two must not share a marker.
-
-The marker is also read now. `igga.stages.selection_for` names the drug a record's marker
-selects and `stages.holes_for` answers `H22` wherever it can, so this record plates every round
-on carbenicillin — the drug D11 says does not carry over. A KanR cassette is available offline:
-`pCR-Blunt II-TOPO` in the same reference directory carries one, 795 bp and free of every method
-enzyme. #374 carries the swap and the numbers it moves.
-
 ## 3. What the result measures
 
-**5,459 bp circular**, named `DMX-iGGA`.
+**5,393 bp circular**, named `DMX-iGGA`.
 
 | | sites |
 | --- | --- |
@@ -109,6 +130,9 @@ enzyme. #374 carries the swap and the numbers it moves.
 
 - `BbsI digest` → 370-400 (30 bp) AGGA/TTCC: what a round opens it on.
 - `BsaI digest` → 370-404 (34 bp) AGGA/TTCC, so `vector.released_cargo` is `Segment(370, 404)`.
+- `KanR` is at `[1144, 1939)` reverse, with `KanR promoter` at `[1939, 2044)` reverse behind it.
+- `bench.phenotype.selection_marker` reads that `KanR`, `stages.selection_for` names
+  **50 µg/mL kanamycin** for it, and `stages.holes_for` raises no `H22`.
 - `vector.destination_vector` takes it as it stands, with its outboard BsaI and PmeI.
 - `vector.donor_cassette` takes it as a donor backbone, the same record in the other tube.
 - `gate.check_dmx_vector` passes with two blunt sites, "in 277..363 or 416..503".
