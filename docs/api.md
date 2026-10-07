@@ -107,7 +107,8 @@ record draws, with its names and colours. `circular` places those items round a 
 `linear` along a line, and `sequence_view` base by base in rows with the map. `labels` keeps
 their labels apart. `fonts` measures text in the faces the page embeds, `svg` writes the shapes,
 and `page` wraps them in the page. `convert` turns the shapes into a PNG or a PDF, with every
-letter drawn as its outline.
+letter drawn as its outline. `draw_plate` draws a plate's wells the same way, and `plate` lays
+the wells out.
 
 ::: liulab_mbio.plot
     options:
@@ -132,6 +133,8 @@ letter drawn as its outline.
 ::: liulab_mbio.plot.page
 
 ::: liulab_mbio.plot.convert
+
+::: liulab_mbio.plot.plate
 
 ## Primers
 
@@ -173,8 +176,9 @@ refused rather than truncated.
 ## Bench
 
 The numbers any cloning pipeline shares: DNA amounts, the reaction table filled to volume, PCR
-and colony PCR, gels, the checks that confirm a clone, heat inactivation, the phenotype a clone
-should show, the primer order sheet, and the protocol steps any pipeline reuses. Every public
+and colony PCR, gels, the checks that confirm a clone, heat inactivation, what each material
+brings with it, a plate and the moves between its wells, a price record and the bill it makes,
+the phenotype a clone should show, the primer order sheet, and the protocol steps any pipeline reuses. Every public
 name in the modules below imports from `liulab_mbio.bench` too. A module that cites a source
 keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the
 one exception: a protocol cites its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the
@@ -195,6 +199,12 @@ step they belong to.
 ::: liulab_mbio.bench.validation
 
 ::: liulab_mbio.bench.inactivation
+
+::: liulab_mbio.bench.materials
+
+::: liulab_mbio.bench.plates
+
+::: liulab_mbio.bench.prices
 
 ::: liulab_mbio.bench.phenotype
 
@@ -352,7 +362,8 @@ in one directory. The modules under it are its steps. `method` holds `IGGA`, the
 checked when it is imported; `project` holds what one build chooses, checked as it is read;
 `standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
 takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the
-colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps.
+colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps, and `stages` says what
+each stage asks of the bench model.
 
 A library is a pipeline over Golden Gate rather than a cloning method of its own — see
 [the library rounds decision](adr/0004-library-rounds.md). It is `liulab_synbio`'s, because it
@@ -385,6 +396,8 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 ::: liulab_synbio.library.bench
 
 ::: liulab_synbio.library.steps
+
+::: liulab_synbio.library.stages
 
 ## The command line
 
