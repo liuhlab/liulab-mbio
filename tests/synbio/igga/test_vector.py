@@ -3,14 +3,19 @@
 Every method here is laid out from the shipped enzyme definitions: the internal stuffer puts that
 enzyme's two sites where its own cut offsets ask for them, so the overhangs a test asserts are read
 back off the DNA rather than copied from whatever wrote it.
+
+The working vector is the one real record here. It is pLVX with its ccdB cassette where EGFP was,
+and the gate judges the tube that opens it.
 """
 
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from liulab_mbio.edits import rotate
+from liulab_mbio.edits import replace, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.reaction import Pool, Reaction
 from liulab_mbio.sequence import (
     BindingSite,
     Feature,
@@ -20,12 +25,24 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_synbio.igga.method import Scheme
+from liulab_mbio.sites import find_sites
+from liulab_mbio.translate import translate
+from liulab_synbio.igga.gate import check_reaction
+from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme
+from liulab_synbio.igga.project import read_project
 from liulab_synbio.igga.vector import (
+    B0034,
+    BIOBRICK_SCAR,
+    CCDB,
+    CCDB_PAYLOAD,
+    J23119,
+    Destination,
     cargo_candidates,
     cargo_enzyme,
+    ccdb_cassette,
     destination_vector,
     domesticate_vector,
+    round_cassette,
 )
 
 #: The jobs the test schemes give their enzymes. All four are free of sites in pUC19.
@@ -40,6 +57,14 @@ SCAR = "AGCG"
 
 #: A stretch of pUC19 annotated by no feature, between the lac promoter and the origin.
 GAP = (600, 700)
+
+#: The enzyme that admits cargo to pLVX, which carries no site of it: #256's choice, which
+#: `test_the_cargo_enzyme_search_leaves_plvx_only_paqci` measures again.
+CARGO = "PaqCI"
+
+#: Where the project the gate reads lives. A digest is judged on the acting enzymes alone, so any
+#: project answers, and this is the one the suite already has.
+DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
 
 
 def pad(length: int) -> str:
@@ -266,3 +291,100 @@ def test_an_empty_search_is_a_finding_and_not_an_error(plvx: SequenceRecord) -> 
     assert chosen.check.status == "fail"
     assert "cannot be one pot" in chosen.check.detail
     assert {site.start for site in chosen.sites} >= {454, 7112, 24}
+
+
+def test_the_ccdb_payload_is_the_359_bases_287_decided():
+    """#287: promoter, ribosome binding site, scar and the toxin, clean but for one SrfI."""
+    assert CCDB_PAYLOAD == J23119 + B0034 + BIOBRICK_SCAR + CCDB
+    assert len(CCDB_PAYLOAD) == 359
+    assert translate(CCDB) == (
+        "MQFKVYTYKRESRYRLFVDVQSDIIDTPGRRMVIPLASARLLSDKVSRELYPVVHIGDESWRMMTTDMASVP"
+        "VSVIGEEVADLSHRENDIKNAINLMFWGI*"
+    )
+    read = SequenceRecord(CCDB_PAYLOAD)
+    assert find_sites(read, ("BsaI", "BsmBI", "BbsI", "PaqCI", "SapI", "PmeI")) == ()
+    assert [site.start for site in find_sites(read, CORE_CHOPPER)] == [133]
+
+
+def test_a_skipped_side_of_the_working_cassette_carries_the_end_its_part_would_have():
+    start, end = INTERFACE_OVERHANGS["working cassette"]
+    both = ccdb_cassette(get_enzyme(CARGO))
+    neither = ccdb_cassette(get_enzyme(CARGO), n_part=False, c_part=False)
+
+    assert both.bases.startswith(IGGA.entry_overhang)
+    assert both.bases.endswith(IGGA.scar_overhang)
+    assert neither.bases.startswith(start + "GG")
+    assert neither.bases.endswith("GG" + end)
+    assert neither.bases[len(start) + 2 : -len(end) - 2] == both.bases
+    assert both.free_of == (get_enzyme(CARGO), *IGGA.reserved_enzymes)
+
+
+def test_an_enzyme_reading_a_site_inside_the_payload_is_refused():
+    """SrfI's site is the one the payload carries, so it cannot be the enzyme that releases it."""
+    with pytest.raises(ValueError, match="reads 3 site\\(s\\) in this ccdB cassette"):
+        ccdb_cassette(get_enzyme(CORE_CHOPPER))
+
+
+@pytest.fixture(scope="module")
+def working(plvx: SequenceRecord) -> Destination:
+    """pLVX as a working vector: no BsmBI left, and the ccdB cassette where EGFP was.
+
+    `docs/research/working-vector-plvx-tetone.md` counts two BsmBI sites. The one in PuroR is
+    coding, so `domesticate_vector` takes it out; #256 left the other, in the hPGK promoter, for
+    a person to edit, and this stands in for that edit.
+    """
+    held = domesticate_vector(plvx, (get_enzyme("BsmBI"),))
+    (left,) = held.remaining
+    cleared, _ = replace(
+        held.record, left.start, left.start + len(left.enzyme.site), pad(len(left.enzyme.site))
+    )
+    return destination_vector(cleared, IGGA, site="EGFP", cassette=ccdb_cassette(get_enzyme(CARGO)))
+
+
+def test_a_working_vector_gives_up_its_ccdb_cassette_to_the_cargo_enzyme(working: Destination):
+    excised = working.record.extract(working.stuffer)
+    after = working.stuffer.end
+
+    assert excised.startswith(IGGA.entry_overhang)
+    assert CCDB_PAYLOAD in excised
+    assert working.record.sequence[after : after + len(IGGA.scar_overhang)] == IGGA.scar_overhang
+    assert working.edit is not None
+    # The working vector is held to the rule that accepts a vector already carrying a cassette.
+    again = destination_vector(working.record, IGGA, cassette=ccdb_cassette(get_enzyme(CARGO)))
+    assert again.record is working.record
+    assert again.stuffer == working.stuffer
+
+
+def test_the_gate_passes_the_tube_the_cargo_enzyme_opens_a_working_vector_in(working: Destination):
+    reaction = Reaction(
+        "the final assembly",
+        "digest",
+        pools=[Pool("destination", [working.record])],
+        enzymes=[CARGO],
+    )
+
+    judged = check_reaction(reaction, project=read_project(DEMO))
+
+    assert [one.status for one in judged] == ["pass"]
+    assert "in 2 places" in judged[0].check.detail
+
+
+def test_a_working_vector_keeps_the_sites_only_a_round_bars(working: Destination):
+    """BsaI never shares a tube with this vector, so its six sites are counted and left."""
+    bsai = get_enzyme("BsaI")
+    assert len(find_sites(working.record, bsai)) == 6
+    assert bsai not in ccdb_cassette(get_enzyme(CARGO)).free_of
+    assert bsai in round_cassette(IGGA).free_of
+
+    with pytest.raises(ValueError, match="outside the cassette"):
+        destination_vector(working.record, IGGA, site=(0, 10))
+
+
+def test_a_bsmbi_site_the_working_vector_still_reads_is_refused(plvx: SequenceRecord):
+    """#256 left one site in the hPGK promoter; without it the backbone is cut twice."""
+    held = domesticate_vector(plvx, (get_enzyme("BsmBI"),))
+
+    with pytest.raises(ValueError, match="BsmBI reads a site at 4265 on the forward strand"):
+        destination_vector(
+            held.record, IGGA, site="EGFP", cassette=ccdb_cassette(get_enzyme(CARGO))
+        )

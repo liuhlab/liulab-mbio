@@ -1,15 +1,18 @@
 """Take the user's own destination vector, and make it one where it is not.
 
-A vector is a destination when the method's internal enzyme excises one piece from it, leaving
-the entry overhang at one end and the cloning scar at the other. That is what a round opens, so
-it is read off a digest rather than off a string: a vector already carrying an internal stuffer
-is taken as it stands, and one that does not has one put at a site the user names. The stuffer a
-vector carries is not a special shape — it is the method's own, whose prefix ends with the
-overhang a part enters on.
+A vector is a destination when one enzyme excises one piece from it, leaving the entry overhang
+at one end and the cloning scar at the other. That is what a round opens, so it is read off a
+digest rather than off a string: a vector already carrying such a piece is taken as it stands,
+and one that does not has one put at a site the user names.
+
+Two vectors are destinations in that sense, and a `Cassette` says which. A round's destination
+gives up the method's internal stuffer to the internal enzyme. The working vector gives up its
+ccdB cassette to the cargo enzyme, and that cassette is the method's own DNA — `CCDB_PAYLOAD`
+between two of that enzyme's sites.
 
 An insertion is reported as an `liulab_mbio.edits.EditReport`, so the user reads what it changed
-rather than trusting a new file. Coordinates are the model's, and a stuffer across the origin ends
-past the record's length.
+rather than trusting a new file. Coordinates are the model's, and a cassette across the origin
+ends past the record's length.
 """
 
 from collections.abc import Iterable
@@ -19,7 +22,7 @@ from liulab_mbio.checks import Check
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.edits import EditReport, insert
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import (
     OLIGO_REACH,
     CutSite,
@@ -33,23 +36,133 @@ from liulab_mbio.sites import (
 )
 from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme, refuse
 
-#: Where the internal stuffer goes: the name of a feature, or a ``(start, end)`` span.
+#: Where a cassette goes: the name of a feature, or a ``(start, end)`` span.
 type Site = str | tuple[int, int]
+
+#: ``BBa_J23119``, the promoter the working vector's cassette reads ccdB from, and ``BBa_B0034``,
+#: its ribosome binding site, as the iGEM Registry publishes them. The promoter's ``TTGACA`` and
+#: ``TATAAT`` are the sigma-70 consensus, so the cassette kills in any ccdB-sensitive strain
+#: rather than only in one carrying T7 polymerase. #287 decided both.
+J23119 = "TTGACAGCTAGCTCAGTCCTAGGTATAATGCTAGC"
+B0034 = "AAAGAGGAGAAA"
+
+#: What spaces the ribosome binding site from the start codon: the RFC10 scar, the de facto
+#: BioBrick spacing. No scar-free ``J23119``-``B0034``-CDS spacer is published, so #287 records
+#: this as a choice and not a citation.
+BIOBRICK_SCAR = "TACTAG"
+
+#: The ccdB coding sequence the cassette counter-selects with, read off SnapGene's own offline
+#: ``pET-53-DEST`` map. It is Invitrogen's Gateway ccdB, which it agrees with over its first 45
+#: bases, carrying one synonymous change that takes a BsaI site out of it. #287 decided it and
+#: names the lab's own copy, DMX0001, Addgene 247434.
+CCDB = (
+    "ATGCAGTTTAAGGTTTACACCTATAAAAGAGAGAGCCGTTATCGTCTGTTTGTGGATGTACAGAGTGATATT"
+    "ATTGACACGCCCGGGCGACGGATGGTGATCCCCCTGGCCAGTGCACGTCTGCTGTCAGATAAAGTCTCCCGT"
+    "GAACTTTACCCGGTGGTGCATATCGGGGATGAAAGCTGGCGCATGATGACCACCGATATGGCCAGTGTGCCG"
+    "GTTTCCGTTATCGGGGAAGAAGTGGCTGATCTCAGCCACCGCGAAAATGACATCAAAAACGCCATTAACCTG"
+    "ATGTTCTGGGGAATATAA"
+)
+
+#: What the working vector's cassette carries between the two cargo-enzyme sites that release it:
+#: promoter, ribosome binding site, scar and ccdB, 359 bases (#287). #287 measured it free of
+#: BsaI, BsmBI, BbsI, PaqCI, SapI and PmeI on both strands, with one SrfI inside ccdB, which the
+#: method permits inside a cassette.
+CCDB_PAYLOAD = J23119 + B0034 + BIOBRICK_SCAR + CCDB
+
+
+@dataclass(frozen=True, slots=True)
+class Cassette:
+    """The piece a vector gives up to admit a part, and what may not be read outside it.
+
+    Parameters
+    ----------
+    bases
+        The piece as the vector carries it: the entry overhang first, the cloning scar last.
+    enzyme
+        The enzyme that excises it, which is what opens the vector.
+    free_of
+        The enzymes no site of which may lie outside it, because each shares a reaction with this
+        vector.
+    """
+
+    bases: str
+    enzyme: Enzyme
+    free_of: tuple[Enzyme, ...]
+
+
+def round_cassette(scheme: Scheme = IGGA) -> Cassette:
+    """Return the cassette a round's destination gives up: the method's internal stuffer.
+
+    Every enzyme the method names is barred outside it, because a round runs them all in one tube.
+    """
+    return Cassette(
+        scheme.internal_stuffer,
+        scheme.internal,
+        (scheme.internal, scheme.external, *scheme.blunt),
+    )
+
+
+def ccdb_cassette(
+    cargo: Enzyme, *, scheme: Scheme = IGGA, n_part: bool = True, c_part: bool = True
+) -> Cassette:
+    """Return the cassette a working vector gives up when `cargo` admits the library.
+
+    `CCDB_PAYLOAD` between two of `cargo`'s sites, each facing out, so the digest leaves the
+    entry overhang at one end and the cloning scar at the other -- the pair the library already
+    presents. Only BsmBI and `cargo` are barred outside it: those are the two enzymes that ever
+    share a tube with this vector, and holding it to the rest would turn away a backbone whose
+    other sites never meet them.
+
+    Parameters
+    ----------
+    cargo
+        The enzyme `cargo_enzyme` chose for this vector.
+    scheme
+        The method, which says what the cassette's two ends are and which enzyme is reserved.
+    n_part
+        Whether the working cassette carries a part 5' of this one. Where it does not, the
+        cassette carries that end itself, over the one glycine codon the method's layout spells
+        there.
+    c_part
+        The same, 3' of it.
+
+    Raises
+    ------
+    ValueError
+        If `cargo` does not read exactly the two sites that release the payload.
+    """
+    entry, scar = scheme.entry_overhang, scheme.scar_overhang
+    start, end = INTERFACE_OVERHANGS["working cassette"]
+    reach = ("TA" * cargo.top_cut)[: cargo.top_cut - len(cargo.site)]
+    bases = (
+        entry + reach + reverse_complement(cargo.site) + CCDB_PAYLOAD + cargo.site + reach + scar
+    )
+    if not n_part:
+        bases = start + "GG" + bases
+    if not c_part:
+        bases = bases + "GG" + end
+    read = find_sites(SequenceRecord(bases), cargo)
+    if len(read) != len(INTERFACE_OVERHANGS["cargo"]):
+        raise ValueError(
+            f"{cargo.name} reads {len(read)} site(s) in this ccdB cassette, where the two that "
+            "release the payload are all it may read: choose another cargo enzyme"
+        )
+    return Cassette(bases, cargo, (cargo, *scheme.reserved_enzymes))
 
 
 @dataclass(frozen=True, slots=True)
 class Destination:
-    """A vector a round can open, and what making it one changed.
+    """A vector one enzyme can open, and what making it one changed.
 
     Parameters
     ----------
     record
-        The vector. The record it was given, unchanged, where that already carried a stuffer.
+        The vector. The record it was given, unchanged, where that already carried a cassette.
     stuffer
-        The piece the internal enzyme excises to open the vector, bounded by its two cuts. It
+        The piece the cassette's enzyme excises to open the vector, bounded by its two cuts. It
         ends past the record's length when it runs across the origin.
     edit
-        What inserting the stuffer did to the features and primer binding sites it did not simply
+        What inserting the cassette did to the features and primer binding sites it did not simply
         shift, or ``None`` where the vector already carried one.
     """
 
@@ -59,71 +172,78 @@ class Destination:
 
 
 def destination_vector(
-    vector: SequenceRecord, scheme: Scheme, *, site: Site | None = None
+    vector: SequenceRecord,
+    scheme: Scheme,
+    *,
+    site: Site | None = None,
+    cassette: Cassette | None = None,
 ) -> Destination:
-    """Return `vector` as a destination the method's first round can open.
+    """Return `vector` as a destination `cassette`'s enzyme can open.
 
-    A vector whose internal enzyme already excises one piece leaving the method's two overhangs
-    is returned as it stands, `site` unread. One that does not has the method's
-    internal stuffer put at the start of `site`, and the result is held to the same rule.
+    A vector that already gives up one piece leaving the method's two overhangs is returned as it
+    stands, `site` unread. One that does not has `cassette` put at the start of `site`, and the
+    result is held to the same rule. The default is `round_cassette`, which is what a round's own
+    destination gives up; `ccdb_cassette` is what a working vector gives up instead.
 
     Parameters
     ----------
     vector
         The user's own vector, circular.
     scheme
-        The method the build is given, which says what opens the vector and on what.
+        The method the build is given, which says what the two overhangs are.
     site
-        Where to put a stuffer, as a feature name or a ``(start, end)`` span. Only read where one
+        Where to put a cassette, as a feature name or a ``(start, end)`` span. Only read where one
         has to be put.
+    cassette
+        What the vector gives up, and the enzymes its backbone must be free of.
 
     Raises
     ------
     ValueError
-        If any of the method's enzymes reads a site outside the stuffer, if a stuffer has to be
-        put and none is named, if `site` names no feature or does not fit, or if the stuffer is
-        not a whole number of codons where it would land inside a coding sequence.
+        If one of the barred enzymes reads a site outside the cassette, if a cassette has to be
+        put and no site is named, if `site` names no feature or does not fit, or if the cassette
+        is not a whole number of codons where it would land inside a coding sequence.
     KeyError
         If the method names an enzyme this package does not ship.
     """
-    found = _stuffer(vector, scheme)
+    held = round_cassette(scheme) if cassette is None else cassette
+    found = _stuffer(vector, scheme, held)
     if found is not None:
-        _check_clean(vector, scheme, found)
+        _check_clean(vector, held, found)
         return Destination(vector, found)
-    block = scheme.internal_stuffer
-    at = _position(vector, scheme, site)
-    _check_frame(vector, at, block)
-    edited, report = insert(vector, at, block)
-    made = _stuffer(edited, scheme)
+    at = _position(vector, held, site)
+    _check_frame(vector, at, held.bases)
+    edited, report = insert(vector, at, held.bases)
+    made = _stuffer(edited, scheme, held)
     if made is None:
         raise ValueError(
-            f"the stuffer put at {at} left a vector {scheme.internal.name} does not open on "
+            f"the cassette put at {at} left a vector {held.enzyme.name} does not open on "
             f"{scheme.entry_overhang!r} and {scheme.scar_overhang!r}: the bases it now joins "
             "spell a further site. Name another site"
         )
-    _check_clean(edited, scheme, made)
+    _check_clean(edited, held, made)
     return Destination(edited, made, report)
 
 
-def _stuffer(record: SequenceRecord, scheme: Scheme) -> Segment | None:
-    """Return the piece the internal enzyme excises to open `record`, or ``None`` where none is.
+def _stuffer(record: SequenceRecord, scheme: Scheme, cassette: Cassette) -> Segment | None:
+    """Return the piece `cassette`'s enzyme excises from `record`, or ``None`` where none is.
 
-    The piece is the one whose two ends are the overhangs a first-round part enters and leaves on,
-    which is what makes the vector a destination rather than a plasmid with a stuffer-shaped gap.
+    The piece is the one whose two ends are the overhangs a part enters and leaves on, which is
+    what makes the vector a destination rather than a plasmid with a cassette-shaped gap.
     """
     entry, scar = scheme.entry_overhang, scheme.scar_overhang
-    for piece in digest(record, scheme.internal):
+    for piece in digest(record, cassette.enzyme):
         if piece.left_overhang == entry and piece.right_overhang == scar:
             return Segment(piece.start, piece.end)
     return None
 
 
-def _position(vector: SequenceRecord, scheme: Scheme, site: Site | None) -> int:
-    """Return where the stuffer goes, from the feature or the span the user names."""
+def _position(vector: SequenceRecord, cassette: Cassette, site: Site | None) -> int:
+    """Return where the cassette goes, from the feature or the span the user names."""
     if site is None:
         raise ValueError(
-            f"this vector carries no internal stuffer for {scheme.internal.name} to excise: name "
-            "the site to put one at, as a feature name or a (start, end) span"
+            f"this vector carries no cassette for {cassette.enzyme.name} to excise: name the "
+            "site to put one at, as a feature name or a (start, end) span"
         )
     if isinstance(site, tuple):
         start, end = site
@@ -141,13 +261,13 @@ def _position(vector: SequenceRecord, scheme: Scheme, site: Site | None) -> int:
 
 
 def _check_frame(vector: SequenceRecord, at: int, block: str) -> None:
-    """Refuse a stuffer that is not whole codons where it would land inside a coding sequence."""
+    """Refuse a cassette that is not whole codons where it would land inside a coding sequence."""
     if len(block) % 3 == 0:
         return
     coding = _coding(vector, at)
     if coding is not None:
         raise ValueError(
-            f"the internal stuffer is {len(block)} bases, which is not a whole number of codons, "
+            f"the cassette is {len(block)} bases, which is not a whole number of codons, "
             f"and {at} lies inside the coding sequence {coding.name!r}: putting it there would "
             "shift the reading frame. Name a site outside that coding sequence"
         )
@@ -169,19 +289,19 @@ def _coding(record: SequenceRecord, at: int) -> Feature | None:
     return None
 
 
-def _check_clean(record: SequenceRecord, scheme: Scheme, stuffer: Segment) -> None:
-    """Refuse a vector reading any of the method's enzymes outside its internal stuffer.
+def _check_clean(record: SequenceRecord, cassette: Cassette, stuffer: Segment) -> None:
+    """Refuse a vector reading one of the barred enzymes outside its cassette.
 
-    Inside it they are the design: the internal enzyme's two cuts and whichever blunt chopper
-    shreds the excised piece. Outside, a round would cut the backbone.
+    Inside it they are the design: the cuts that excise the cassette, and whichever blunt chopper
+    shreds the excised piece. Outside, the reaction would cut the backbone.
     """
-    for site in find_sites(record, (scheme.internal, scheme.external, *scheme.blunt)):
+    for site in find_sites(record, cassette.free_of):
         if not record.covers(stuffer, site.span):
             raise ValueError(
                 f"{site.enzyme.name} reads a site at {site.start} on the "
-                f"{site.strand.name.lower()} strand, outside the internal stuffer at "
-                f"{stuffer.start}-{stuffer.end}: a round would cut the backbone there. Take that "
-                "site out of the vector, or name a method whose enzymes it is free of"
+                f"{site.strand.name.lower()} strand, outside the cassette at "
+                f"{stuffer.start}-{stuffer.end}: a reaction would cut the backbone there. Take "
+                "that site out of the vector, or name a method whose enzymes it is free of"
             )
 
 
