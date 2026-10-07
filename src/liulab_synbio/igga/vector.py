@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 from liulab_mbio.checks import Check
 from liulab_mbio.codons import CodonUsage
-from liulab_mbio.edits import EditReport, insert
+from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import (
@@ -260,6 +260,29 @@ def destination_vector(
         )
     _check_clean(edited, held, made)
     return Destination(edited, made, report)
+
+
+def entry_destination(destination: Destination, scheme: Scheme) -> Destination:
+    """Return `destination` respelt so the piece it gives up enters on `scheme`'s entry overhang.
+
+    A part enters on its own position's overhang, so a build over several positions needs one
+    destination each. They differ in the bases that overhang spells and in nothing else: those
+    bases lie between the two cuts, not in the sites that make them, so the enzyme still opens
+    the vector there. Four new bases can still spell a site the backbone did not read before,
+    so the result goes back through `destination_vector` rather than being taken on trust.
+
+    Raises
+    ------
+    ValueError
+        For any reason `destination_vector` refuses the respelt vector.
+    """
+    at = destination.stuffer.start
+    entry = scheme.entry_overhang
+    if destination.record.bases(at, at + len(entry)) == entry:
+        return destination
+    record, _ = replace(destination.record, at, at + len(entry), entry)
+    made = destination_vector(record, scheme)
+    return Destination(made.record, made.stuffer, destination.edit)
 
 
 def released_cargo(record: SequenceRecord, scheme: Scheme = IGGA) -> Segment | None:

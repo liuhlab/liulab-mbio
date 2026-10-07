@@ -49,6 +49,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
 | [product.dna](product.dna) | one member of the finished library, 6,435 bases |
+| [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
 | [protocol.json](protocol.json) | the bench protocol as data |
 | [protocol.html](protocol.html) | the same protocol as a page to work from |
 
@@ -57,9 +58,13 @@ with the rest differing only in which protein and which barcode sits at each pos
 
 The blocks of `parts.tsv` are not bought. The protocol orders the pool and its primers, pulls
 each batch out of the pool, pulls each block out of its batch, and clones that block's cargo
-into the vector the first round opens. Only the cargo is synthesised: the stuffers either side
-of it are the vector's own bases. The bill buys the oligos and the primers; it never buys the
-blocks as well.
+into the vector of the position it fills. Only the cargo is synthesised: the stuffers either
+side of it are the vector's own bases. The bill buys the oligos and the primers; it never buys
+the blocks as well.
+
+A part enters on the overhang the round before it leaves behind, so each position needs a vector
+offering that overhang. The three `block-vector` files are one vector written three times, four
+bases apart. The first is `vector.gb` itself, which is also what round one opens.
 
 The protocol ends by moving the finished library into a working vector, which is where an
 application gets it. Add a `working_vector` key to name the backbone yours ends in and the

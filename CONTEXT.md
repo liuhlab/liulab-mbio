@@ -656,6 +656,16 @@ part's own entry overhang.
 _Avoid_: adapter, arm, flank, tail
 _Package_: liulab_synbio
 
+### Block vector
+
+The vector one position's synthesised cargo closes into, which is then the donor a round
+releases that part from. It supplies the external stuffers the cargo is not synthesised with,
+so it has to be opened on the overhang that position's parts enter on: one backbone offers one
+pair, and a build over several positions needs one block vector each. They are the build's own
+destination vector, differing only in the bases of that overhang.
+_Avoid_: block backbone, donor plasmid, part vector
+_Package_: liulab_synbio
+
 ### Barcode
 
 A short stretch of DNA naming one part, so that sequencing a product says which member of each
