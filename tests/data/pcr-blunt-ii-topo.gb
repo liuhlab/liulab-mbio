@@ -10,28 +10,40 @@ SOURCE      .
 FEATURES             Location/Qualifiers
      CDS             217..576
                      /label="lacZα"
+                     /note="color: #993366"
      primer_bind     complement(432..448)
                      /label="M13 fwd"
+                     /note="color: #a020f0"
      primer_bind     205..221
                      /label="M13 rev"
+                     /note="color: #a020f0"
      protein_bind    181..197
                      /label="lac operator"
+                     /note="color: #31849b"
      promoter        complement(407..425)
                      /label="T7 promoter"
+                     /note="color: #ffffff"
      promoter        239..257
                      /label="SP6 promoter"
+                     /note="color: #ffffff"
      protein_bind    107..128
                      /label="CAP binding site"
+                     /note="color: #31849b"
      promoter        join(143..148,149..166,167..173)
                      /label="lac promoter"
+                     /note="color: #ffffff"
      CDS             586..888
                      /label="ccdB"
+                     /note="color: #993366"
      CDS             2238..2612
                      /label="BleoR"
+                     /note="color: #ccffcc"
      rep_origin      2750..3338
                      /label="ori"
+                     /note="color: #ffff00"
      CDS             1237..2031
                      /label="NeoR/KanR"
+                     /note="color: #ccffcc"
 ORIGIN
         1 agcgcccaat acgcaaaccg cctctccccg cgcgttggcc gattcattaa tgcagctggc
        61 acgacaggtt tcccgactgg aaagcgggca gtgagcgcaa cgcaattaat gtgagttagc

@@ -9,32 +9,46 @@ SOURCE      .
 FEATURES             Location/Qualifiers
      CDS             803..820
                      /label="6xHis"
+                     /note="color: #cc99b2"
      terminator      893..940
                      /label="T7 terminator"
+                     /note="color: #ffffff"
      promoter        264..282
                      /label="T7 promoter"
+                     /note="color: #ffffff"
      RBS             322..344
                      /label="RBS"
+                     /note="color: #a6acb3"
      rep_origin      977..1432
                      /label="f1 ori"
+                     /note="color: #ffff00"
      rep_origin      2612..3200
                      /label="ori"
+                     /note="color: #ffff00"
      protein_bind    283..307
                      /label="lac operator"
+                     /note="color: #31849b"
      misc_feature    3386..3528
                      /label="bom"
+                     /note="color: #a6acb3"
      CDS             complement(4630..5712)
                      /label="lacI"
+                     /note="color: #993366"
      promoter        complement(5713..5790)
                      /label="lacI promoter"
+                     /note="color: #ffffff"
      CDS             478..783
                      /label="ccdB"
+                     /note="color: #993366"
      CDS             complement(3630..3821)
                      /label="rop"
+                     /note="color: #993366"
      CDS             complement(join(1525..2316,2317..2385))
                      /label="AmpR"
+                     /note="color: #ccffcc"
      promoter        complement(2386..2490)
                      /label="AmpR promoter"
+                     /note="color: #ffffff"
 ORIGIN
         1 cagtagtagg ttgaggccgt tgagcaccgc cgccgcaagg aatggtgcat gcaaggagat
        61 ggcgcccaac agtcccccgg ccacggggcc tgccaccata cccacgccga aacaagcgct
