@@ -238,6 +238,10 @@ def _annotated(record: SequenceRecord) -> SequenceRecord:
 def write_genbank(record: SequenceRecord, path: Path) -> None:
     """Write `record` as GenBank, carrying its features and its topology.
 
+    A segment's name is dropped, and each one is named on stderr as it goes. GenBank spells a
+    segment name only in the note SnapGene exports, whose meaning is in its line breaks, and
+    Biopython's writer wraps a qualifier at a fixed width instead of honouring them.
+
     Imported here and not at module scope so that importing this script costs nothing.
     """
     from Bio.Seq import Seq
@@ -247,6 +251,13 @@ def write_genbank(record: SequenceRecord, path: Path) -> None:
     length = len(record)
     made: list[SeqFeature] = []
     for feature in record.features:
+        for segment in feature.segments:
+            if segment.name:
+                print(
+                    f"{path}: {feature.name} loses the name of its segment "
+                    f"{segment.start}-{segment.end}, {segment.name!r}",
+                    file=sys.stderr,
+                )
         strand = int(feature.strand) or None
         parts = [
             SimpleLocation(start, end, strand=strand)

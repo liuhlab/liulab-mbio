@@ -67,7 +67,8 @@ class Segment:
         0-based, half-open. `end` passes the length of a circular record when the segment
         crosses the origin.
     name
-        A label for this segment alone, such as a promoter's ``"-10"``.
+        A label for this segment alone, such as a promoter's ``"-10"``. A ``.dna`` file carries
+        it both ways; a GenBank file read here carries it in, and nothing here writes it out.
     color
         ``"#rrggbb"``, or ``None`` to take the feature's colour.
 
