@@ -1638,7 +1638,7 @@
       "instructions": [
         "Open DMX-iGGA with BbsI and SrfI, the digest the first round runs on it, and clean it up.",
         "Set up one assembly a well, holding that block's own PCR2 pieces, the opened destination, and nothing from another well.",
-        "Transform, plate on 100 µg/mL carbenicillin, and pick one colony a block."
+        "Transform, plate on 50 µg/mL kanamycin, and pick one colony a block."
       ],
       "cautions": [],
       "notes": [
@@ -1652,7 +1652,7 @@
               "name": "DMX-iGGA, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.05 pmol (167.2 ng)",
+              "final": "0.05 pmol (165.17 ng)",
               "master_mix": false,
               "citation": null
             },
