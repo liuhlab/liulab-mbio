@@ -233,7 +233,8 @@ marker. One of DMX0001's three BsaI sites sits inside AmpR, so the swap removes 
 Paper: the assembled library goes into the CAR vector by the same two-digest chemistry, using
 that vector's own internal stuffer. No counter-selection; `ccdB` appears nowhere in the paper.
 
-Ours: one pot, BsaI only, into a working vector whose ccdB cassette the cargo replaces
+Ours: staged in one tube. BsaI and PmeI release the cargo, heat kills them, then PaqCI and ligase
+place it in a working vector whose ccdB cassette the cargo replaces
 (`### Final assembly`).
 
 Why: the cargo already presents `AGGA`/`TTCC`, which is the working vector's interface. Both
