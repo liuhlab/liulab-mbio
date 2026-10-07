@@ -15,11 +15,12 @@ from liulab_mbio.bench.pools import PrimerSite
 from liulab_mbio.sequence import Segment
 from liulab_synbio.igga.cargo import (
     PRIMER_LENGTH,
+    cargo_record,
     design_pool,
     read_bands,
     read_primers,
 )
-from liulab_synbio.igga.method import ORTHOGONAL_SPLIT
+from liulab_synbio.igga.method import IGGA, ORTHOGONAL_SPLIT
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import Project
 
@@ -33,14 +34,16 @@ def bases(rng, length):
 
 
 def block(name, sequence, index=0):
+    """Wrap a core in the method's own stuffers, which is the shape a block is split from."""
+    head = IGGA.external_stuffer_5
     return Part(
         name,
         "N",
         index=index,
-        sequence=sequence,
+        sequence=head + sequence + IGGA.external_stuffer_3,
         barcode="",
         protein="",
-        coding=Segment(0, len(sequence)),
+        coding=Segment(len(head), len(head) + len(sequence)),
     )
 
 
@@ -91,6 +94,21 @@ def parts():
 @pytest.fixture(scope="module")
 def pooled(parts, project, primers):
     return design_pool(parts, project, primers=primers)
+
+
+def test_the_cargo_split_is_the_block_without_the_stuffers_its_destination_carries(parts):
+    """What is synthesised runs from the overhang a part enters on to its cloning scar."""
+    one = parts[0]
+    cargo = str(cargo_record(one, IGGA).sequence)
+    assert cargo.startswith(IGGA.entry_overhang)
+    assert cargo.endswith(IGGA.scar_overhang)
+    assert cargo in one.sequence
+    assert (
+        one.sequence
+        == IGGA.external_stuffer_5[: -len(IGGA.entry_overhang)]
+        + cargo
+        + (IGGA.external_stuffer_3[len(IGGA.scar_overhang) :])
+    )
 
 
 def test_a_block_becomes_one_named_oligo_a_fragment(pooled):
@@ -173,7 +191,7 @@ def test_an_empty_block_is_refused_by_name(parts, project, primers):
 def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_offset(project, primers):
     """A hand-built block spelling BsmBI on its bottom strand: the split refuses it."""
     carrier = block("carrier", bases(random.Random(3), 97) + "GAGACG" + bases(random.Random(4), 97))
-    with pytest.raises(ValueError, match=r"block 'carrier'.*BsmBI site\(s\), the first at 97 "):
+    with pytest.raises(ValueError, match=r"block 'carrier'.*BsmBI site\(s\), the first at 101 "):
         design_pool([carrier], project, primers=primers, seed=7)
 
 
