@@ -465,8 +465,8 @@ def library_reactions(
         if position not in blocks:
             raise ValueError(f"no block was given for position {position!r}")
         donors = tuple(blocks[position])
-        opened = Pool("destination", (standing,))
-        donated = Pool("donor", donors)
+        opened = Pool("destination", (standing,), enzyme=project.scheme.internal)
+        donated = Pool("donor", donors, enzyme=project.scheme.external)
         made.extend(
             (
                 Reaction(
@@ -488,6 +488,27 @@ def library_reactions(
     return tuple(made)
 
 
+def final_assembly_reactions(
+    project: Project, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
+) -> tuple[Reaction, ...]:
+    """Compose the final assembly: two digests and the ligation that joins what they leave.
+
+    One tube, staged. The external enzyme frees the cargo from the backbone the rounds ran in and
+    is killed; the working vector then gives its ccdB cassette up to `cargo`, and the ligase joins
+    the two. The gate reads it as three reactions because the ends meeting at the end were made by
+    two different enzymes, which is the one thing a round never does.
+    """
+    freed = Pool("donor", (library,), enzyme=project.scheme.external)
+    opened = Pool("destination", (working,), enzyme=cargo)
+    return (
+        Reaction(
+            "final assembly release", "digest", pools=(freed,), enzymes=(project.scheme.external,)
+        ),
+        Reaction("final assembly opening", "digest", pools=(opened,), enzymes=(cargo,)),
+        Reaction("final assembly ligation", "ligation", pools=(opened, freed)),
+    )
+
+
 def check_library(
     project: Project,
     *,
@@ -495,6 +516,8 @@ def check_library(
     blocks: Mapping[str, Sequence[SequenceRecord]],
     products: Sequence[SequenceRecord],
     barcodes: Mapping[str, Sequence[str]],
+    working: SequenceRecord | None = None,
+    cargo: Enzyme | None = None,
 ) -> Verdict:
     """Judge a whole build: its vector, every tube, every cargo, every barcode set and the product.
 
@@ -519,18 +542,33 @@ def check_library(
         One record a round, in the order the rounds ran. The last is the library product.
     barcodes
         Each position's barcodes, keyed by position name.
+    working, cargo
+        The working vector the library is moved into and the enzyme that admits it, where the
+        build names one. Both or neither: the final assembly is judged only where there is a
+        vector to judge it in.
 
     Raises
     ------
     ValueError
-        If there is not one product, one part list and one barcode list a position.
+        If there is not one product, one part list and one barcode list a position, or if one of
+        `working` and `cargo` is given without the other.
     """
+    if (working is None) != (cargo is None):
+        raise ValueError(
+            "a final assembly is judged on a working vector and the enzyme that admits cargo to "
+            "it: name both, or neither"
+        )
     made: list[Judgement] = []
     if _read_by_a_well_primer(destination, WELL_PRIMERS):
         made.extend(check_dmx_vector(destination, project=project))
-    for reaction in library_reactions(
+    reactions = library_reactions(
         project, destination=destination, blocks=blocks, products=products
-    ):
+    )
+    if working is not None and cargo is not None:
+        reactions += final_assembly_reactions(
+            project, library=products[-1], working=working, cargo=cargo
+        )
+    for reaction in reactions:
         made.extend(check_reaction(reaction, project=project))
     last = project.positions[-1]
     for position in project.positions:
@@ -681,7 +719,13 @@ def _ligation(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
 
 
 def _ends(reaction: Reaction, project: Project) -> set[str]:
-    """Every overhang the molecules of a ligation present, read off the digest that made it."""
+    """Every overhang the molecules of a ligation present, read off the digest that made it.
+
+    A pool naming its own cutter is read off that one. The method's round is what the rest fall
+    back to, where the internal enzyme opens the destination and the external releases everything
+    else; a final assembly does not follow it, because the working vector gives its cassette up to
+    the cargo enzyme instead.
+    """
     cutters: dict[Role, Enzyme] = {
         "destination": project.scheme.internal,
         "donor": project.scheme.external,
@@ -690,8 +734,9 @@ def _ends(reaction: Reaction, project: Project) -> set[str]:
     }
     found: set[str] = set()
     for pool in reaction.pools:
+        enzyme = pool.cutter or cutters[pool.role]
         for record in pool:
-            for piece in _released(record, cutters[pool.role]):
+            for piece in _released(record, enzyme):
                 found.update((piece.left_overhang, piece.right_overhang))
     return found
 

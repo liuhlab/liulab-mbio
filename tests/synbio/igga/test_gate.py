@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite
@@ -27,10 +28,13 @@ from liulab_synbio.igga.gate import (
     Verdict,
     check_dmx_vector,
     check_library,
+    check_reaction,
+    final_assembly_reactions,
     library_reactions,
 )
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.project import read_project
+from liulab_synbio.igga.vector import Cassette
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
@@ -335,3 +339,69 @@ def test_a_dmx_destination_a_blunt_site_breaks_fails_the_build(judge):
     verdict = judge(destination=_dmx_vector(broken="GTTTAAAC"))
     assert verdict.status == "fail"
     assert verdict["blunt sites"].status == "fail"
+
+
+#: The enzyme that admits cargo to a working vector here, as #256 chose for pLVX.
+CARGO = "PaqCI"
+
+
+def _carrying(cassette: Cassette) -> SequenceRecord:
+    """A circular plasmid of filler giving `cassette` up to its own enzyme."""
+    return SequenceRecord(cassette.bases + FILLER, topology="circular", name="stand-in")
+
+
+def _cassette(enzyme: Enzyme, payload: str, *, left: str = "", right: str = "") -> Cassette:
+    """A piece `enzyme` frees, cutting out onto `left` at one end and `right` at the other."""
+    reach = ("TA" * enzyme.top_cut)[: enzyme.top_cut - len(enzyme.site)]
+    bases = (
+        (left or IGGA.entry_overhang)
+        + reach
+        + reverse_complement(enzyme.site)
+        + payload
+        + enzyme.site
+        + reach
+        + (right or IGGA.scar_overhang)
+    )
+    return Cassette(bases, enzyme, ())
+
+
+@pytest.fixture(scope="module")
+def final():
+    """The two molecules of a final assembly: a library to free cargo from, and a working vector."""
+    library = _carrying(_cassette(IGGA.external, "ACGTTGCA" * 12))
+    working = _carrying(_cassette(get_enzyme(CARGO), "ACGTTGCA" * 20))
+    return library, working
+
+
+def test_the_final_assembly_is_two_digests_and_a_ligation(project, final):
+    library, working = final
+    made = final_assembly_reactions(
+        project, library=library, working=working, cargo=get_enzyme(CARGO)
+    )
+    judged = [one for reaction in made for one in check_reaction(reaction, project=project)]
+
+    assert [one.kind for one in made] == ["digest", "digest", "ligation"]
+    assert made[-1]["destination"].cutter == get_enzyme(CARGO)
+    assert made[-1]["donor"].cutter == IGGA.external
+    assert [one.status for one in judged] == ["pass", "pass", "pass", None]
+    assert "AGGA, TTCC" in judged[2].check.detail
+
+
+def test_a_working_vector_opening_on_the_wrong_ends_fails_the_ligation(project, final):
+    """The digest passes it: two cuts is two cuts. Only the ends it leaves say it is wrong."""
+    library, _ = final
+    askew = _carrying(_cassette(get_enzyme(CARGO), "ACGTTGCA" * 20, left="AAAA", right="TTTT"))
+    made = final_assembly_reactions(
+        project, library=library, working=askew, cargo=get_enzyme(CARGO)
+    )
+    judged = [one for reaction in made for one in check_reaction(reaction, project=project)]
+
+    assert [one.status for one in judged[:2]] == ["pass", "pass"]
+    assert judged[2].status == "fail"
+    assert "AAAA, AGGA, TTCC, TTTT" in judged[2].check.detail
+
+
+def test_a_build_names_both_the_working_vector_and_its_enzyme_or_neither(judge, final):
+    _, working = final
+    with pytest.raises(ValueError, match="name both, or neither"):
+        judge(working=working)
