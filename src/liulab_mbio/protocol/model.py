@@ -8,7 +8,7 @@ import json
 import math
 import os
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass
+from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -1016,8 +1016,16 @@ class Protocol:
         """
         return (self._sources(), self._wells(), self._rules(), self._holes())
 
-    def _sources(self) -> Check:
-        cited = {
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this protocol's own citations name.
+
+        Examples
+        --------
+        >>> Protocol("Demo").cited
+        frozenset()
+        """
+        return frozenset(
             citation.source
             for citation in (
                 *(m.citation for m in self.materials),
@@ -1035,7 +1043,10 @@ class Protocol:
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
-        }
+        )
+
+    def _sources(self) -> Check:
+        cited = self.cited
         dangling = sorted(cited - set(self.sources))
         if dangling:
             return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
@@ -1093,6 +1104,23 @@ class Protocol:
             or on a value the model refuses.
         """
         return _PROTOCOL(data, "protocol")
+
+
+def citing(protocol: Protocol) -> Protocol:
+    """Return `protocol` with the sources its own citations name, and no others.
+
+    A builder hands in every document the method might read from; which of them this run cited
+    depends on the steps it built. Dropping the rest is what keeps the reference list to
+    documents the reader can follow back to a row on the page.
+
+    Examples
+    --------
+    >>> one = citing(Protocol("Demo", sources={"M0491": Source("NEB M0491")}))
+    >>> dict(one.sources)
+    {}
+    """
+    kept = {key: source for key, source in protocol.sources.items() if key in protocol.cited}
+    return replace(protocol, sources=kept)
 
 
 def read_protocol(path: str | os.PathLike[str]) -> Protocol:

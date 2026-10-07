@@ -42,7 +42,11 @@ class PcrProfile:
     two_step_celsius
         The lowest annealing temperature that gets a two-step program, annealing and extension
         combined. Taq's rule is "above 65 °C", which at a tenth of a degree is 65.1.
-    cycles, dntp_um_each, hold_c
+    cycles, cycles_source
+        NEB's own cycle count for this polymerase, and the key of the
+        `liulab_mbio.bench.pcr.SOURCES` entry it was read from. Neither has a default: a count
+        a new polymerase inherited prints on the page as if someone had chosen it.
+    dntp_um_each, hold_c
         The rest of NEB's table.
     """
 
@@ -57,7 +61,8 @@ class PcrProfile:
     annealing_seconds: int
     final_extension_seconds: int
     two_step_celsius: float
-    cycles: int = 30
+    cycles: int
+    cycles_source: str
     initial_denaturation_seconds: int = 30
     dntp_um_each: float = 200.0
     hold_c: float = 4.0
@@ -144,6 +149,8 @@ Q5 = Polymerase(
         annealing_seconds=20,
         final_extension_seconds=120,
         two_step_celsius=72.0,
+        cycles=30,
+        cycles_source="M0491",
     ),
 )
 
@@ -172,6 +179,8 @@ PHUSION = Polymerase(
         annealing_seconds=20,
         final_extension_seconds=300,
         two_step_celsius=72.0,
+        cycles=30,
+        cycles_source="E0553",
     ),
 )
 
@@ -199,6 +208,8 @@ TAQ = Polymerase(
         annealing_seconds=30,
         final_extension_seconds=300,
         two_step_celsius=65.1,
+        cycles=30,
+        cycles_source="M0273",
     ),
 )
 
@@ -226,6 +237,8 @@ ONETAQ = Polymerase(
         annealing_seconds=30,
         final_extension_seconds=300,
         two_step_celsius=68.0,
+        cycles=30,
+        cycles_source="M0480",
     ),
 )
 

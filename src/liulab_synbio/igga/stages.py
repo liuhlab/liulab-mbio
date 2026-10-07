@@ -16,8 +16,10 @@ its own numbers.
 from liulab_mbio.bench import materials
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
 
-#: The documents a citation in this protocol resolves against: the ones a material brings with
-#: it. The round's own numbers are the paper's and travel as references, not as cited rows.
+#: The documents a citation in this protocol could resolve against: the ones a material brings
+#: with it. The round's own numbers are the paper's and travel as references, not as cited rows.
+#: Copied whole rather than picked over, because which of them a run cites depends on the steps
+#: it builds; `liulab_mbio.protocol.citing` drops the rest before the protocol is returned.
 SOURCES: dict[str, Source] = dict(materials.SOURCES)
 
 #: The ligase this method's round runs on, and the buffer it runs in. Both carry their own

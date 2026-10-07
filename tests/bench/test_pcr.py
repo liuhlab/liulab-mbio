@@ -7,9 +7,11 @@ import pytest
 
 from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
+    SOURCES,
     colony_pcr_master_mix_component,
     colony_pcr_program,
     colony_pcr_reaction,
+    cycle_citation,
     pcr_program,
     pcr_reaction,
 )
@@ -140,6 +142,14 @@ def test_each_shipped_polymerase_gets_nebs_reaction_and_program(polymerase: Poly
             cycles=polymerase.pcr.cycles,
         )
         assert len(split.stages[1].incubations) == steps
+
+
+@pytest.mark.parametrize("polymerase", POLYMERASES, ids=lambda one: one.name)
+def test_each_shipped_polymerases_cycle_count_names_a_document(polymerase: Polymerase) -> None:
+    """A count a new polymerase could inherit in silence is what this stops."""
+    citation = cycle_citation(polymerase)
+    assert citation.source == polymerase.pcr.cycles_source
+    assert citation.source in SOURCES
 
 
 def test_the_colony_pcr_reaction_is_half_master_mix() -> None:

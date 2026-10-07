@@ -24,9 +24,10 @@ from liulab_mbio.bench import (
 )
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.cloning.goldengate import plan_assembly
+from liulab_mbio.cloning.goldengate.bench import GOLDEN_GATE_PCR_CYCLES
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.edits import rotate
-from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from liulab_mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
@@ -205,6 +206,21 @@ def test_a_material_carries_a_catalogue_number_only_where_the_package_knows_one(
     # Nothing is invented for a reagent no product name names.
     assert materials["Agarose and 1X TAE or TBE"].catalog == ""
     assert materials["PCR and gel cleanup spin columns"].supplier == ""
+
+
+def test_every_cycle_count_cites_the_document_it_came_from(plan):
+    """The kit manual sets the part PCR's count; the polymerase's own protocol sets the rest."""
+    protocol = plan.protocol()
+    cited = {
+        (step.title, stage.cycles): stage.citation
+        for step in protocol.steps
+        for program in step.programs
+        for stage in program.stages
+        if stage.citation
+    }
+    assert cited[("Amplify GFP", GOLDEN_GATE_PCR_CYCLES)] == Citation("E1601", "FAQ 11")
+    assert cited[("Screen colonies by PCR", 30)] == Citation("M0480", "thermocycling conditions")
+    assert set(protocol.sources) == {"E1601", "M0480"}
 
 
 def test_the_equipment_is_named_apart_from_the_reagents(plan):

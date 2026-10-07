@@ -19,6 +19,7 @@ from liulab_mbio.bench.pcr import (
     DNTP_STOCK_MM,
     colony_pcr_master_mix_component,
 )
+from liulab_mbio.bench.pcr import SOURCES as PCR_SOURCES
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     CELLS_UL,
@@ -53,7 +54,9 @@ from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from liulab_mbio.cloning.goldengate.bench import (
     GOLDEN_GATE_PCR_CYCLES,
+    GOLDEN_GATE_PCR_CYCLES_CITATION,
     REFERENCES,
+    SOURCES,
     assembly_program,
     assembly_reaction,
     enzyme_component,
@@ -72,6 +75,7 @@ from liulab_mbio.protocol.model import (
     Reference,
     Step,
     Troubleshooting,
+    citing,
 )
 from liulab_mbio.sequence import SequenceRecord
 
@@ -132,7 +136,7 @@ def protocol(
     names = tuple(part.name for part in insert_parts)
     enzyme = assembly.enzyme
     inserts = listed(names)
-    return Protocol(
+    one = Protocol(
         f"Golden Gate assembly: {inserts} into {vector.name}",
         summary=(
             f"Open {vector.name} by PCR across {span[0]}-{span[1]}, amplify "
@@ -170,7 +174,9 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, overhangs, phenotype),
+        sources={**PCR_SOURCES, **SOURCES},
     )
+    return citing(one)
 
 
 def _overview(
@@ -397,9 +403,10 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
         annealing_temperature=part.report.annealing_temperature,
         extension_seconds=part.report.extension_seconds,
         cycles=GOLDEN_GATE_PCR_CYCLES,
+        cycles_citation=GOLDEN_GATE_PCR_CYCLES_CITATION,
         notes=(
-            f"{GOLDEN_GATE_PCR_CYCLES} cycles, which is the fewest NEB finds enough for an "
-            "amplicon going into an assembly; fewer cycles means fewer PCR errors.",
+            "The cycle count is the fewest NEB finds enough for an amplicon going into an "
+            "assembly; fewer cycles means fewer PCR errors.",
             f"The primers carry a {enzyme.name} site pointing back into the part, so "
             f"cutting the amplicon leaves {part.left_overhang} and {part.right_overhang}.",
         ),

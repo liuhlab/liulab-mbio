@@ -2,9 +2,11 @@
 
 import pytest
 
+from liulab_mbio.bench.pcr import cycle_citation
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import dpni_step, pcr_step, phenotype_sentences
 from liulab_mbio.primers import Q5
+from liulab_mbio.protocol.model import Citation
 from liulab_mbio.sequence import Feature, Segment, Strand
 
 
@@ -17,6 +19,7 @@ def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
         annealing_temperature=61.0,
         extension_seconds=20,
         cycles=20,
+        cycles_citation=cycle_citation(Q5),
     )
 
     assert step.title == "Amplify GFP"
@@ -28,6 +31,7 @@ def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
     assert program.title == "GFP PCR"
     cycled = program.stages[1]
     assert cycled.cycles == 20
+    assert cycled.citation == Citation("M0491", "thermocycling conditions")
     assert [(one.label, one.temperature_c) for one in cycled.incubations][1] == ("Anneal", 61.0)
     assert step.expected == ("One band at 749 bp.",)
     assert "GFP plasmid template" in step.troubleshooting[0].solution
@@ -43,10 +47,12 @@ def test_a_pcr_step_leaves_an_unsourced_count_blank_and_carries_the_callers_note
         annealing_temperature=61.0,
         extension_seconds=20,
         cycles=None,
+        cycles_citation=None,
         notes=("Why this PCR is special.",),
     )
 
     assert step.programs[0].stages[1].cycles is None
+    assert step.programs[0].stages[1].citation is None
     assert step.notes == ("Why this PCR is special.",)
 
 

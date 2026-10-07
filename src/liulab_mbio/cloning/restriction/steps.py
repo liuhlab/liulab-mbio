@@ -25,7 +25,9 @@ from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
     DNTP_STOCK_MM,
     colony_pcr_master_mix_component,
+    cycle_citation,
 )
+from liulab_mbio.bench.pcr import SOURCES as PCR_SOURCES
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     CELLS_UL,
@@ -107,6 +109,7 @@ from liulab_mbio.protocol.model import (
     Step,
     Timer,
     Troubleshooting,
+    citing,
 )
 from liulab_mbio.sequence import SequenceRecord
 
@@ -164,7 +167,7 @@ def protocol(
     named = listed([enzyme.name for enzyme in enzymes])
     digested = source if amplicon is None else amplicon.record
     dephosphorylate = self_closing(backbone)
-    return Protocol(
+    one = Protocol(
         f"Restriction and ligation: {insert.name} into {vector.name}",
         summary=(
             f"{_first(amplicon, source)}Cut {vector.name} and {digested.name} with {named}, "
@@ -212,7 +215,9 @@ def protocol(
             dephosphorylate=dephosphorylate,
         ),
         references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
+        sources=PCR_SOURCES,
     )
+    return citing(one)
 
 
 def _first(amplicon: Amplicon | None, source: SequenceRecord) -> str:
@@ -691,6 +696,7 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             annealing_temperature=report.annealing_temperature,
             extension_seconds=report.extension_seconds,
             cycles=polymerase.pcr.cycles,
+            cycles_citation=cycle_citation(polymerase),
             notes=(
                 f"Each primer's 5' tail is a spacer and a recognition site, {ends}. The tail is "
                 "not on the template, so it does not anneal in the first cycles and the "

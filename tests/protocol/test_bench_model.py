@@ -15,11 +15,13 @@ from liulab_mbio.protocol.model import (
     Oligo,
     Protocol,
     ReactionTable,
+    Source,
     Stage,
     Step,
     ThermocyclerProgram,
     Vessel,
     Well,
+    citing,
     read_protocol,
     write_protocol,
 )
@@ -156,6 +158,14 @@ def test_a_cycle_count_is_cited_like_any_number_and_a_blank_one_prints_as_none()
     assert check.status == "fail"
     assert "nowhere" in check.detail
     assert NO_NUMBER in render_html(one)
+
+
+def test_a_protocol_keeps_the_sources_it_cites_and_drops_the_rest() -> None:
+    """A reference list a reader cannot follow back to a row on the page is what this stops."""
+    catalogue = {"M0318": Source("NEB #M0318"), "C3020": Source("NEB #C3020")}
+    one = citing(Protocol("x", materials=(LIGASE,), sources=catalogue))
+    assert list(one.sources) == ["M0318"]
+    assert [c.status for c in one.audit() if c.name == "sources"] == ["pass"]
 
 
 def test_a_price_hole_names_no_issue() -> None:

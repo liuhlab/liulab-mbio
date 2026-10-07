@@ -50,6 +50,7 @@ from liulab_mbio.protocol.model import (
     ThermocyclerProgram,
     Timer,
     Troubleshooting,
+    citing,
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
@@ -304,7 +305,7 @@ def protocol(
     are what the plan calls the two files those steps point at.
     """
     inside, outside = choppers(scheme)
-    return Protocol(
+    one = Protocol(
         f"Library assembly: {len(part_lists)} part lists into {vector.name or 'the vector'}",
         summary=(
             f"Join {len(parts)} synthesised parts into {constructs} distinct constructs in "
@@ -381,12 +382,13 @@ def protocol(
         holes=stages.HOLES,
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
     )
+    return citing(one)
 
 
 def _sources(
     prices: PriceRecord | None, validation: dmx.Validation | None, pool: PoolPlan | None
 ) -> dict[str, Source]:
-    """Return every document this run's citations resolve against, and no document it never cites."""
+    """Return every document this run could cite; `citing` drops the ones it did not."""
     found = dict(stages.SOURCES)
     if validation:
         found |= dmx.SOURCES
