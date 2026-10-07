@@ -6281,6 +6281,227 @@
           "issue": ""
         }
       ]
+    },
+    {
+      "title": "Pick the working vector",
+      "instructions": [
+        "Take one tube of the working vector stock for the application this library is built for.",
+        "Confirm its own cargo enzyme opens it on AGGA and TTCC, giving up the ccdB cassette the library displaces."
+      ],
+      "cautions": [],
+      "notes": [
+        "The cargo enzyme is chosen against every molecule in this pot, so it has to be settled before the blocks are designed: a project names it under reserved_extra and no block then spells it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "One opened backbone and the ccdB cassette beside it, and nothing else cut."
+      ],
+      "troubleshooting": [],
+      "holes": [
+        {
+          "id": "H31",
+          "missing": "no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector's length",
+          "kind": "lab",
+          "where": "final assembly, the vector the library moves into",
+          "filled_by": "the project naming a working vector, which is a stock the lab holds and an application chooses",
+          "issue": ""
+        }
+      ]
+    },
+    {
+      "title": "Release the cargo from the library backbone",
+      "instructions": [
+        "Digest the finished library with BsaI and the blunt enzyme that shreds the backbone it leaves.",
+        "Heat-kill both. Nothing is purified: the working vector goes into this tube."
+      ],
+      "cautions": [],
+      "notes": [
+        "The sites that free the cargo belong to the vector the rounds ran in, not to the cargo, so a backbone without them cannot release it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "The whole cargo free, on AGGA and TTCC."
+      ],
+      "troubleshooting": [],
+      "holes": [
+        {
+          "id": "H32",
+          "missing": "the backbone this library was built in presents no cut that frees its cargo, so no release digest can be written",
+          "kind": "undecided",
+          "where": "final assembly, releasing the cargo",
+          "filled_by": "a destination vector carrying the releasing sites outboard of the cargo, as the method's own DMX vector does",
+          "issue": "liuhlab/liulab-mbio#225"
+        },
+        {
+          "id": "H24",
+          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+          "kind": "undecided",
+          "where": "final assembly, DNA in",
+          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+          "issue": "liuhlab/liulab-mbio#264"
+        }
+      ]
+    },
+    {
+      "title": "Assemble the cargo into the working vector",
+      "instructions": [
+        "Add the working vector, its cargo enzyme and the ligase to the release tube, and run the enzyme's own Golden Gate cycling."
+      ],
+      "cautions": [],
+      "notes": [
+        "This is the one reaction where the working vector meets material the rounds made; the rounds all finish first."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "One circular final vector a member, the ccdB cassette displaced by the cargo."
+      ],
+      "troubleshooting": [],
+      "holes": [
+        {
+          "id": "H31",
+          "missing": "no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector's length",
+          "kind": "lab",
+          "where": "final assembly, the vector the library moves into",
+          "filled_by": "the project naming a working vector, which is a stock the lab holds and an application chooses",
+          "issue": ""
+        },
+        {
+          "id": "H24",
+          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+          "kind": "undecided",
+          "where": "final assembly, DNA in",
+          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+          "issue": "liuhlab/liulab-mbio#264"
+        }
+      ]
+    },
+    {
+      "title": "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
+      "instructions": [
+        "Add SPRI paramagnetic beads and elute in water. The ratio is not a sourced one; see the hole.",
+        "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette.",
+        "Recover and grow at 30 °C, as every round did."
+      ],
+      "cautions": [
+        "Keep the cells and the cuvette on ice; a warm cuvette arcs."
+      ],
+      "notes": [
+        "This is a bottleneck like a round's, and the library can only lose members here. Electroporate all of the assembly rather than a measured part of it.",
+        "The settings are the cells' own and are keyed by their catalogue number, not set by this method."
+      ],
+      "tables": [],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Recovery, shaking",
+                  "temperature_c": 30.0,
+                  "seconds": 3600,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Outgrowth",
+                  "temperature_c": 30.0,
+                  "seconds": 43200,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "Recovery and outgrowth at 30 °C",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "At least 4,147,200 net colonies: 13,824 distinct members times the 300x the project asked for, rounded up.",
+        "At that count the chance a named member is missing is 5.09e-131.",
+        "Near-empty plates from a no-cargo control beside it; what grows there is working vector that kept its ccdB cassette."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Fewer net colonies than the count above",
+          "solution": "The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo."
+        }
+      ],
+      "holes": [
+        {
+          "id": "H24",
+          "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+          "kind": "undecided",
+          "where": "final assembly, DNA in",
+          "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+          "issue": "liuhlab/liulab-mbio#264"
+        }
+      ]
+    },
+    {
+      "title": "Read representation in the final vector",
+      "instructions": [
+        "Amplify across the barcode block again, exactly as the read before the move did.",
+        "Sequence, decode each read against barcodes.tsv, and compare the counts with the read taken in the library backbone."
+      ],
+      "cautions": [],
+      "notes": [
+        "Linkage is read once, in the library backbone; a barcode still names the same part after the move, because the move carries the whole cargo in one piece.",
+        "This read is what the final assembly is judged on, and nothing says what share of the library has to survive it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into the working vector."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Markedly fewer combinations than before the move",
+          "solution": "The transfer was the bottleneck, not the rounds. Compare the colony count with the step above before rebuilding anything."
+        }
+      ],
+      "holes": [
+        {
+          "id": "H27",
+          "missing": "no primer pair, amplicon length or read depth for either library read",
+          "kind": "undecided",
+          "where": "the linkage and representation reads",
+          "filled_by": "whichever way #343 is decided: the plan designs both pairs against the finished record, or the step says what each must span and leaves the pair to the reader",
+          "issue": "liuhlab/liulab-mbio#343"
+        },
+        {
+          "id": "H28",
+          "missing": "no pass mark for either library read: what share of the library must be seen, how even the counts must be, or what linkage fidelity passes",
+          "kind": "undecided",
+          "where": "the linkage and representation reads, what carries the library forward",
+          "filled_by": "the screen downstream, which is what sets the representation the library has to reach",
+          "issue": ""
+        }
+      ]
     }
   ],
   "references": [

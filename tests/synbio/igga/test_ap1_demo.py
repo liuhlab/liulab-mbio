@@ -17,6 +17,7 @@ from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
+from liulab_synbio.igga.vector import working_vector
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
@@ -172,6 +173,9 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
     reads = ["H27", "H28"]
+    # The final assembly: this project names no working vector, so what one would fix is H31,
+    # and this library's own backbone presents no cut that frees its cargo, which is H32.
+    final = ["H31", "H32", "H24", "H31", "H24", "H24", *reads]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
         "H25",
@@ -179,12 +183,14 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
         "B1",
         "B2",
         *reads,
+        *final,
     ]
     assert [hole.id for step in route_a.steps for hole in step.holes] == [
         *pcrs,
         "H25",
         "H26",
         *reads,
+        *final,
     ]
     for one in (route_a, route_b):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
@@ -247,3 +253,40 @@ def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):
     assert not step.tables
     assert not step.programs
     assert all(hole.kind == "undecided" for hole in step.holes)
+
+
+def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
+    """Five steps, every one of them there, and a hole wherever no number is sourced."""
+    steps = plan.protocol().steps[-5:]
+
+    assert [one.title for one in steps] == [
+        "Pick the working vector",
+        "Release the cargo from the library backbone",
+        "Assemble the cargo into the working vector",
+        "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
+        "Read representation in the final vector",
+    ]
+    for step in steps:
+        assert step.instructions, step.title
+        assert step.expected, step.title
+    assert "4,147,200 net colonies" in " ".join(steps[3].expected)
+
+
+def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
+    """With a vector to move into, H31 goes and the cargo enzyme's own cycling takes its place."""
+    stock = SequenceRecord("ACGATCGTTA" * 20, topology="circular", name="pWORK")
+    working = working_vector(stock, [], site=(0, 1))
+
+    steps = replace(plan, working=working).protocol().steps[-5:]
+
+    assert working.enzyme.name in steps[0].title
+    assert steps[2].programs[0].title == "Golden Gate assembly"
+    # H32 stays: this library's own backbone still presents no cut that frees its cargo.
+    assert [hole.id for step in steps for hole in step.holes] == [
+        "H32",
+        "H24",
+        "H24",
+        "H24",
+        "H27",
+        "H28",
+    ]

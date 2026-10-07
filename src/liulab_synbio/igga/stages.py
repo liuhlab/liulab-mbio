@@ -42,6 +42,19 @@ LIGASE_BUFFER = materials.material(
     citation=Citation("M0318", "reaction conditions"),
 )
 
+#: What no source sets for the final assembly: no published document runs the step, so the DNA
+#: into it and the ratio it is cleaned up at are the method's own. Carried by the steps it bites
+#: in, and listed among the protocol's holes.
+FINAL_MASSES = Hole(
+    "H24",
+    "every mass in the final assembly is unsourced, the SPRI ratio with them",
+    "undecided",
+    where="final assembly, DNA in",
+    filled_by="a pilot, or carrying the round's own numbers across and saying so",
+    issue="liuhlab/liulab-mbio#264",
+)
+
+
 #: What this method cannot write completely. Each is a number nobody published, routed to the
 #: ticket that would decide it; the ids are the research note's own, so a reference still
 #: resolves.
@@ -62,14 +75,7 @@ HOLES: tuple[Hole, ...] = (
         filled_by="nothing; it is the method's own",
         issue="liuhlab/liulab-mbio#264",
     ),
-    Hole(
-        "H24",
-        "every mass in the final assembly is unsourced, the SPRI ratio with them",
-        "undecided",
-        where="final assembly, DNA in",
-        filled_by="a pilot, or carrying the round's own numbers across and saying so",
-        issue="liuhlab/liulab-mbio#264",
-    ),
+    FINAL_MASSES,
 )
 
 
@@ -123,6 +129,33 @@ READ_PASS_MARK = Hole(
     where="the linkage and representation reads, what carries the library forward",
     filled_by="the screen downstream, which is what sets the representation the library has to "
     "reach",
+)
+
+#: What a build that names no working vector cannot say. The working vector is the user's own
+#: stock, chosen per application, and the cargo enzyme, the assembly's cycling and the final
+#: vector's length all follow from it. Carried by the step that picks it.
+WORKING_VECTOR = Hole(
+    "H31",
+    "no working vector is named, so nothing names the cargo enzyme, its cycling or the final "
+    "vector's length",
+    "lab",
+    where="final assembly, the vector the library moves into",
+    filled_by="the project naming a working vector, which is a stock the lab holds and an "
+    "application chooses",
+)
+
+#: What a library whose backbone does not present the cargo cannot say. The cargo is released by
+#: the enzyme the method releases a part with, and the sites that free it belong to the vector the
+#: rounds ran in, not to the cargo. Carried by the release step.
+CARGO_RELEASE = Hole(
+    "H32",
+    "the backbone this library was built in presents no cut that frees its cargo, so no release "
+    "digest can be written",
+    "undecided",
+    where="final assembly, releasing the cargo",
+    filled_by="a destination vector carrying the releasing sites outboard of the cargo, as the "
+    "method's own DMX vector does",
+    issue="liuhlab/liulab-mbio#225",
 )
 
 #: What Twist's banded cycle count does not reach. It is stated against KAPA HiFi HotStart or

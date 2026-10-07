@@ -57,7 +57,13 @@ from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, wr
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
 from liulab_synbio.igga.steps import RoundBench
 from liulab_synbio.igga.steps import protocol as protocol_for
-from liulab_synbio.igga.vector import Destination, Site, destination_vector
+from liulab_synbio.igga.vector import (
+    Destination,
+    Site,
+    Working,
+    destination_vector,
+    working_vector,
+)
 
 #: What a part list holds: the proteins each member codes for, or the DNA it is already coded in.
 type Kind = Literal["protein", "dna"]
@@ -171,6 +177,9 @@ class LibraryPlan:
     pool
         The oligo pool every block is synthesised from, where the project names a primer set.
         `liulab_synbio.igga.cargo` designs it.
+    working
+        The vector the finished library is moved into, where the project names one, and the
+        enzyme chosen to admit it. `None` leaves the library in the destination vector.
     """
 
     project: Project
@@ -189,6 +198,7 @@ class LibraryPlan:
     name: str = ""
     prices: PriceRecord | None = None
     pool: PoolPlan | None = None
+    working: Working | None = None
 
     @property
     def product(self) -> SequenceRecord:
@@ -258,6 +268,7 @@ class LibraryPlan:
             pool=self.pool,
             pool_sheet=POOL_FILE,
             primer_sheet=POOL_PRIMER_FILE,
+            working=self.working,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -320,6 +331,7 @@ def plan_igga(
     parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
     site: Site | None = None,
+    working_site: Site | None = None,
     pattern: str = NAME_PATTERN,
     rules: BarcodeRules | None = None,
     min_distance: int = MIN_DISTANCE,
@@ -347,6 +359,9 @@ def plan_igga(
     site
         Where to put an internal stuffer, as a feature name or a ``(start, end)`` span. Read only
         where the vector carries none.
+    working_site
+        The same, for the ccdB cassette of the working vector the project names. Read only where
+        that vector carries none.
     pattern
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
@@ -432,12 +447,24 @@ def plan_igga(
         destination.record, representative(built, positions), design, positions, name=named
     )
     rows = plan_coverage([len(each) for each in lists], coverage=chosen.coverage)
+    working = (
+        None
+        if chosen.working_vector is None
+        else working_vector(
+            as_record(chosen.working_vector),
+            [rounds[-1].product],
+            scheme=design,
+            site=working_site,
+        )
+    )
     judged = check_library(
         chosen,
         destination=destination.record,
         blocks=_blocks(built, positions),
         products=[one.product for one in rounds],
         barcodes=_barcodes(built, positions),
+        working=None if working is None else working.record,
+        cargo=None if working is None else working.enzyme,
     )
     return LibraryPlan(
         chosen,
@@ -456,6 +483,7 @@ def plan_igga(
         named,
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
         _pool(chosen, built),
+        working,
     )
 
 

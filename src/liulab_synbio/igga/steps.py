@@ -54,7 +54,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     citing,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_synbio import dmx
 from liulab_synbio.igga import stages
@@ -76,12 +76,12 @@ from liulab_synbio.igga.bench import (
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
-from liulab_synbio.igga.coverage import RoundCoverage
+from liulab_synbio.igga.coverage import RoundCoverage, absent_probability, colonies_for_coverage
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
-from liulab_synbio.igga.vector import Destination
+from liulab_synbio.igga.vector import Destination, Working, released_cargo
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
 #: names all three and publishes neither the ligase's units nor either buffer's strength.
@@ -301,6 +301,7 @@ def protocol(
     pool: PoolPlan | None = None,
     pool_sheet: str = "",
     primer_sheet: str = "",
+    working: Working | None = None,
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -315,6 +316,10 @@ def protocol(
 
     The bill is always there, because its quantities come from the design. Money comes only from
     `prices`, and every row it does not price carries a hole.
+
+    `working` is the vector the finished library is moved into, and `None` for a project naming
+    none. Without one the final assembly's steps still run, because it is a stage of the method,
+    and what the vector would have fixed is a hole instead.
 
     `pool` is the oligo pool the blocks are built from, and `None` for a project that writes
     none. With one, the blocks are not ordered: they are amplified out of the pool and
@@ -357,7 +362,15 @@ def protocol(
         checks=badges(checks),
         materials=(
             *_materials(
-                scheme, positions, part_lists, vector, sheet, pool, pool_sheet, primer_sheet
+                scheme,
+                positions,
+                part_lists,
+                vector,
+                sheet,
+                pool,
+                pool_sheet,
+                primer_sheet,
+                working,
             ),
             *(dmx.validation_materials(validation) if validation else ()),
         ),
@@ -389,6 +402,7 @@ def protocol(
             pool,
             pool_sheet,
             primer_sheet,
+            working,
         ),
         references=(
             *_references(scheme),
@@ -542,6 +556,7 @@ def _materials(
     pool: PoolPlan | None = None,
     pool_sheet: str = "",
     primer_sheet: str = "",
+    working: Working | None = None,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for.
 
@@ -573,6 +588,18 @@ def _materials(
             note="opened by the internal digest in round 1",
         )
     )
+    if working is not None:
+        made.append(
+            Material(
+                f"{working.record.name or 'Working'} vector",
+                storage="-20 °C",
+                note=f"the library's final home; {working.enzyme.name} releases its ccdB "
+                "cassette to admit the cargo",
+            )
+        )
+        made.append(
+            _enzyme_material(working.enzyme, "admits the finished cargo to the working vector")
+        )
     made.append(_enzyme_material(scheme.internal, "opens the library, excising its stuffer"))
     made.append(_enzyme_material(scheme.external, "releases a part from its own block"))
     for one in scheme.blunt:
@@ -742,6 +769,7 @@ def _steps(
     pool: PoolPlan | None = None,
     pool_sheet: str = "",
     primer_sheet: str = "",
+    working: Working | None = None,
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another.
 
@@ -762,6 +790,7 @@ def _steps(
     made.append(
         _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
     )
+    made += _final_steps(scheme, rounds, constructs, bench[-1].coverage.coverage, barcodes, working)
     return tuple(made)
 
 
@@ -1554,6 +1583,312 @@ def _linkage_step(
             ),
         ),
         holes=(stages.READ_PRIMERS,),
+    )
+
+
+def _final_steps(
+    scheme: Scheme,
+    rounds: Sequence[Round],
+    constructs: int,
+    coverage: float,
+    barcodes: str,
+    working: Working | None,
+) -> list[Step]:
+    """Return the five steps that move the finished library into the working vector.
+
+    One tube, staged: the cargo is freed and the enzymes that freed it are killed before the
+    working vector, the cargo enzyme and the ligase go in. Every mass in the stage is `H24`, and
+    a build naming no working vector carries `H31` in place of the enzyme and its cycling.
+    """
+    product = rounds[-1].product
+    span = released_cargo(product, scheme)
+    freeing = (scheme.external, *_shredders(scheme, product, span))
+    return [
+        _pick_working_step(scheme, working),
+        _release_step_final(scheme, product, span, freeing),
+        _assemble_step(scheme, product, span, working),
+        _final_growth_step(constructs, coverage, working),
+        _final_representation_step(scheme, rounds, barcodes, working),
+    ]
+
+
+def _shredders(scheme: Scheme, product: SequenceRecord, span: Segment | None) -> tuple[Enzyme, ...]:
+    """Return the blunt enzymes cutting the backbone the cargo leaves, read off the record."""
+    if span is None:
+        return ()
+    return tuple(
+        one
+        for one in scheme.blunt
+        if any(not product.covers(span, site.span) for site in find_sites(product, one))
+    )
+
+
+def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
+    """Pick the vector the library moves into, which is what fixes the cargo enzyme."""
+    entry, scar = scheme.entry_overhang, scheme.scar_overhang
+    if working is None:
+        return Step(
+            "Pick the working vector",
+            instructions=(
+                "Take one tube of the working vector stock for the application this library is "
+                "built for.",
+                f"Confirm its own cargo enzyme opens it on {entry} and {scar}, giving up the "
+                "ccdB cassette the library displaces.",
+            ),
+            expected=(
+                "One opened backbone and the ccdB cassette beside it, and nothing else cut.",
+            ),
+            notes=(
+                "The cargo enzyme is chosen against every molecule in this pot, so it has to be "
+                "settled before the blocks are designed: a project names it under "
+                "reserved_extra and no block then spells it.",
+            ),
+            holes=(stages.WORKING_VECTOR,),
+        )
+    record, cargo = working.record, working.enzyme
+    stuffer = working.destination.stuffer
+    return Step(
+        f"Pick the working vector and confirm {cargo.name} opens it",
+        instructions=(
+            f"Take one tube of {record.name or 'the working vector'} stock.",
+            f"Digest a little of it with {cargo.supplier_label} and run it on a gel.",
+        ),
+        expected=(
+            f"{len(record)} bp opens on {entry} and {scar}, giving up its "
+            f"{stuffer.end - stuffer.start} bp ccdB cassette.",
+            f"Two bands and no more: {cargo.name} reads this vector nowhere else.",
+        ),
+        notes=(
+            f"{working.cargo.check.detail}.",
+            "ccdB is what makes the assembly self-selecting: a vector that took no cargo keeps "
+            "the cassette and kills its host.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "The stock will not open",
+                "The cassette is not where the record says, or the enzyme has lost activity. "
+                "Sequence the stock before assembling into it.",
+            ),
+        ),
+    )
+
+
+def _release_step_final(
+    scheme: Scheme,
+    product: SequenceRecord,
+    span: Segment | None,
+    enzymes: Sequence[Enzyme],
+) -> Step:
+    """Free the cargo from the backbone the rounds ran in, then kill what freed it."""
+    if span is None:
+        return Step(
+            "Release the cargo from the library backbone",
+            instructions=(
+                f"Digest the finished library with {scheme.external.name} and the blunt enzyme "
+                "that shreds the backbone it leaves.",
+                "Heat-kill both. Nothing is purified: the working vector goes into this tube.",
+            ),
+            expected=(
+                f"The whole cargo free, on {scheme.entry_overhang} and {scheme.scar_overhang}.",
+            ),
+            notes=(
+                "The sites that free the cargo belong to the vector the rounds ran in, not to "
+                "the cargo, so a backbone without them cannot release it.",
+            ),
+            holes=(stages.CARGO_RELEASE, stages.FINAL_MASSES),
+        )
+    named = listed([one.name for one in enzymes])
+    return Step(
+        f"Release the cargo with {named}",
+        instructions=(
+            f"Digest the finished library with {named} at {DIGEST_CELSIUS:g} °C.",
+            "Heat-kill, then leave the tube alone: nothing is purified between the two stages.",
+        ),
+        programs=(
+            ThermocyclerProgram(
+                (Stage((Incubation(named, DIGEST_CELSIUS, DIGEST_SECONDS),)),),
+                title=f"Digest with {named}",
+            ),
+            *_kill(enzymes),
+        ),
+        expected=(
+            f"The whole {span.end - span.start} bp cargo free, on {scheme.entry_overhang} and "
+            f"{scheme.scar_overhang}, out of {len(product)} bp of library.",
+            f"{listed([one.name for one in enzymes[1:]]) or 'Nothing else'} cuts the backbone it "
+            "came out of, so that backbone cannot close again.",
+        ),
+        notes=(
+            "One tube, two stages. Killing the releasing enzymes before the working vector goes "
+            "in is what keeps them off its backbone.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "The library backbone survives the assembly",
+                "The blunt enzyme missed, or the heat kill was short. Both show up as colonies "
+                "carrying the round's own vector rather than the working one.",
+            ),
+        ),
+        holes=(stages.FINAL_MASSES,),
+    )
+
+
+def _kill(enzymes: Sequence[Enzyme]) -> tuple[ThermocyclerProgram, ...]:
+    """Return the suppliers' heat inactivations, enzymes agreeing on one sharing a program."""
+    shared: dict[tuple[int, int], list[Enzyme]] = {}
+    for one in enzymes:
+        celsius, minutes = one.heat_inactivation_celsius, one.heat_inactivation_minutes
+        if celsius is not None and minutes is not None:
+            shared.setdefault((celsius, minutes), []).append(one)
+    return tuple(
+        ThermocyclerProgram(
+            (Stage((Incubation("Heat inactivation", float(celsius), minutes * 60),)),),
+            title=f"{listed([one.name for one in named])} heat inactivation",
+        )
+        for (celsius, minutes), named in shared.items()
+    )
+
+
+def _assemble_step(
+    scheme: Scheme, product: SequenceRecord, span: Segment | None, working: Working | None
+) -> Step:
+    """Join the freed cargo to the opened working vector, in the tube the release left."""
+    from liulab_mbio.cloning.goldengate.bench import assembly_program
+
+    if working is None:
+        return Step(
+            "Assemble the cargo into the working vector",
+            instructions=(
+                "Add the working vector, its cargo enzyme and the ligase to the release tube, "
+                "and run the enzyme's own Golden Gate cycling.",
+            ),
+            expected=(
+                "One circular final vector a member, the ccdB cassette displaced by the cargo.",
+            ),
+            notes=(
+                "This is the one reaction where the working vector meets material the rounds "
+                "made; the rounds all finish first.",
+            ),
+            holes=(stages.WORKING_VECTOR, stages.FINAL_MASSES),
+        )
+    cargo = working.enzyme
+    joined = (
+        f"about {len(working.record) - _cassette_length(working) + span.end - span.start} bp, "
+        if span is not None
+        else ""
+    )
+    return Step(
+        f"Assemble the cargo into {working.record.name or 'the working vector'} with {cargo.name}",
+        instructions=(
+            f"Add the working vector, {cargo.supplier_label} and {LIGASE} in "
+            f"{LIGASE_BUFFER} to the release tube.",
+            "Run the cycling below without purifying anything first.",
+        ),
+        programs=(assembly_program(cargo, fragments=2, library=True),),
+        expected=(
+            f"One circular final vector a member, {joined}joined on "
+            f"{scheme.entry_overhang} and {scheme.scar_overhang}.",
+            "The ccdB cassette is displaced, so a vector that took no cargo kills its host.",
+        ),
+        notes=(
+            f"{len(product)} bp of library goes in and the cargo alone comes out: the backbone "
+            "the rounds ran in is shredded and stays behind.",
+            "The cycling is NEB's longer single-insert program, which it gives for library "
+            "preparation rather than for cloning one gene.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "Colonies that are still ccdB-positive",
+                "The working vector was not opened to completion. Check the pick step's gel "
+                "before repeating.",
+            ),
+        ),
+        holes=(stages.FINAL_MASSES,),
+    )
+
+
+def _cassette_length(working: Working) -> int:
+    """How many bases the ccdB cassette takes out of the working vector."""
+    stuffer = working.destination.stuffer
+    return stuffer.end - stuffer.start
+
+
+def _final_growth_step(constructs: int, coverage: float, working: Working | None) -> Step:
+    """Clean the assembly up and get all of it into cells, which is the library's last bottleneck."""
+    pulse = _pulse()
+    colonies = colonies_for_coverage(constructs, coverage)
+    return Step(
+        f"Clean the assembly up and electroporate into {STRAIN}",
+        instructions=(
+            f"Add {SPRI_BEADS} and elute in water. The ratio is not a sourced one; see the hole.",
+            f"Pulse at {pulse.volts:g} V, {pulse.ohms:g} Ω and {pulse.microfarads:g} µF in a "
+            f"{pulse.cuvette_mm:g} mm cuvette.",
+            f"Recover and grow at {GROWTH_CELSIUS:g} °C, as every round did.",
+        ),
+        programs=(growth_program(),),
+        cautions=("Keep the cells and the cuvette on ice; a warm cuvette arcs.",),
+        expected=(
+            f"At least {colonies:,} net colonies: {constructs:,} distinct members times the "
+            f"{coverage:g}x the project asked for, rounded up.",
+            f"At that count the chance a named member is missing is "
+            f"{absent_probability(constructs, colonies):.3g}.",
+            "Near-empty plates from a no-cargo control beside it; what grows there is working "
+            "vector that kept its ccdB cassette.",
+        ),
+        notes=(
+            "This is a bottleneck like a round's, and the library can only lose members here. "
+            "Electroporate all of the assembly rather than a measured part of it.",
+            "The settings are the cells' own and are keyed by their catalogue number, not set "
+            "by this method.",
+        )
+        + (
+            ()
+            if working is None
+            else (
+                f"ccdB does the selecting here, so the plates carry "
+                f"{working.record.name or 'the working vector'}'s own marker.",
+            )
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "Fewer net colonies than the count above",
+                "The library has lost members in the transfer. Nothing downstream puts them "
+                "back; repeat the assembly from more of the released cargo.",
+            ),
+        ),
+        holes=(stages.FINAL_MASSES,),
+    )
+
+
+def _final_representation_step(
+    scheme: Scheme, rounds: Sequence[Round], barcodes: str, working: Working | None
+) -> Step:
+    """Read the library again on the other side of the move, which is the only way to size the loss."""
+    where = working.record.name if working is not None else "the working vector"
+    return Step(
+        "Read representation in the final vector",
+        instructions=(
+            "Amplify across the barcode block again, exactly as the read before the move did.",
+            f"Sequence, decode each read against {barcodes}, and compare the counts with the "
+            "read taken in the library backbone.",
+        ),
+        expected=(
+            "The same combinations, at a similar evenness. A combination seen before the move "
+            f"and not after it was lost in the transfer into {where or 'the working vector'}.",
+        ),
+        notes=(
+            "Linkage is read once, in the library backbone; a barcode still names the same part "
+            "after the move, because the move carries the whole cargo in one piece.",
+            "This read is what the final assembly is judged on, and nothing says what share of "
+            "the library has to survive it.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "Markedly fewer combinations than before the move",
+                "The transfer was the bottleneck, not the rounds. Compare the colony count with "
+                "the step above before rebuilding anything.",
+            ),
+        ),
+        holes=(stages.READ_PRIMERS, stages.READ_PASS_MARK),
     )
 
 

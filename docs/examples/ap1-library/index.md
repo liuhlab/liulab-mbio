@@ -58,6 +58,12 @@ The blocks of `parts.tsv` are not bought. The protocol orders the pool and its p
 each batch out of the pool, pulls each block out of its batch, and assembles the block from its
 own pieces. The bill buys the oligos and the primers; it never buys the blocks as well.
 
+The protocol ends by moving the finished library into a working vector, which is where an
+application gets it. Add a `working_vector` key to name the backbone yours ends in and the
+steps carry its enzyme and that enzyme's cycling; this project names none, so those steps say
+what a vector would have fixed instead. Choose it before the blocks are designed and list it
+under `reserved_extra`: an enzyme a block spells cannot be the one that admits the library.
+
 ## What a price costs
 
 Add a price record of your own and the bill carries money beside every quantity:
