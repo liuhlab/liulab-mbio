@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from liulab_mbio.bench.phenotype import selection_marker
 from liulab_mbio.edits import replace, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
@@ -28,6 +29,7 @@ from liulab_mbio.sequence import (
 )
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
+from liulab_synbio.igga import stages
 from liulab_synbio.igga.gate import check_reaction
 from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme
 from liulab_synbio.igga.project import read_project
@@ -552,3 +554,13 @@ def test_the_cargo_a_library_built_in_that_backbone_gives_up_is_found(dmx):
     assert product.extract(span).startswith(IGGA.entry_overhang)
     assert product.extract(span).endswith(IGGA.scar_overhang)
     assert released_cargo(dmx, IGGA) == Segment(370, 404)
+
+
+def test_the_rebuilt_dmx_vector_plates_on_its_own_drug_and_not_the_paper_s(dmx):
+    """Departure D11 swaps the marker, so the drug follows the record and H22 stays answered."""
+    marker = selection_marker(dmx)
+
+    assert marker is not None
+    assert (marker.name, marker.strand) == ("KanR", Strand.REVERSE)
+    assert stages.selection_for(dmx) == "50 µg/mL kanamycin"
+    assert stages.ROUND_SELECTION not in stages.holes_for(dmx)

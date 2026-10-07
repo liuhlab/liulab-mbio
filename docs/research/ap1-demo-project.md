@@ -68,9 +68,9 @@ the lab-resources build settles on.
 `scripts/build_dmx_vector.py` now builds it from DMX0001 and the demo is planned against the
 result. The worry recorded here — that inserting PmeI outboard of the right-hand cassette BsaI
 lands in or abuts the `6xHis` coding sequence — is measured and wrong: the window runs 416..503
-and `6xHis` ends at 432, so the site goes at 437 and sacrifices nothing. The marker is still
-AmpR, because one synonymous base takes the BsaI site the KanR swap was wanted for.
-`docs/research/dmx-destination.md` carries both.
+and `6xHis` ends at 432, so the site goes at 437 and sacrifices nothing. The marker is KanR:
+departure D11 forces the swap, because the final transfer moves cargo into an AmpR or CarbR
+working vector. `docs/research/dmx-destination.md` carries both.
 
 ### 2.2 The working vector: a Tet-on lentiviral backbone
 

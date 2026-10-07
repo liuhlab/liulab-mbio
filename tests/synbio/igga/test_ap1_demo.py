@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.protocol.model import Citation
+from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
@@ -325,3 +325,15 @@ def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
     assert drawn["picked 1"].labels["A1"] == "quarter 1"
     assert not drawn["picked 1"].seating
     assert [c.status for c in one.audit() if c.name == "wells"] == ["pass"]
+
+
+def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(plan, tmp_path):
+    """The destination is KanR, so no plate, well or broth carries the drug D11 rules out.
+
+    Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too.
+    """
+    written = write_protocol(plan.protocol(), tmp_path / "protocol.json").read_text()
+
+    assert "kanamycin" in written
+    assert "carbenicillin" not in written
+    assert "ampicillin" not in written
