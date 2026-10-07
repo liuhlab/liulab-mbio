@@ -255,7 +255,9 @@ class LibraryPlan:
             barcodes=BARCODE_FILE,
             validation=self.validation,
             prices=self.prices,
-            pool=None if self.pool is None else self.pool.item,
+            pool=self.pool,
+            pool_sheet=POOL_FILE,
+            primer_sheet=POOL_PRIMER_FILE,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:

@@ -71,6 +71,30 @@ HOLES: tuple[Hole, ...] = (
 )
 
 
+#: What the pool route cannot write, and would have to invent a number to fill. A block is
+#: split for synthesis and nothing says what puts it back together: the method assembles cargo
+#: into the DMX vector, and a block already carries the flanks that vector would supply, so the
+#: pieces have no destination to close into and no reaction sized against one.
+POOL_HOLES: tuple[Hole, ...] = (
+    Hole(
+        "H25",
+        "nothing names what the assembled pieces close into, or what selects the closure",
+        "undecided",
+        where="block assembly, the destination",
+        filled_by="a destination the pieces assemble into, as the method's DMX vector is for "
+        "cargo carrying no flanks of its own",
+    ),
+    Hole(
+        "H26",
+        "no source sets the DNA in, the enzyme, the ligase or the cycling for a block assembly",
+        "undecided",
+        where="block assembly, the reaction and its program",
+        filled_by="NEB's own Golden Gate table, once the assembly has a destination to be "
+        "sized against",
+    ),
+)
+
+
 def titre_plates(number: int) -> tuple[Vessel, Vessel]:
     """Return the two plates one round is bounded by: a dilution, and the no-donor control.
 

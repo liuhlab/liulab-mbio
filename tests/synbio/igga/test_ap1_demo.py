@@ -159,7 +159,8 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     assert polyclonal.validation is None
     titles = [step.title for step in polyclonal.protocol().steps]
     assert "Pick 4 colonies of each design" not in titles
-    assert titles[:2] == ["Order the synthesised parts", "Pool each part list"]
+    assert titles[0] == "Order the oligo pool and the primers that amplify it"
+    assert titles[4] == "Pool each part list"
 
 
 def test_the_demo_emits_a_protocol_on_each_route(plan):
@@ -168,7 +169,41 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     route_a = rerouted(plan, route="A").protocol()
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
-    assert [hole.id for step in route_b.steps for hole in step.holes] == ["B1"]
-    assert [hole.id for step in route_a.steps for hole in step.holes] == []
+    assert [hole.id for step in route_b.steps for hole in step.holes] == ["H25", "H26", "B1"]
+    assert [hole.id for step in route_a.steps for hole in step.holes] == ["H25", "H26"]
     for one in (route_a, route_b):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
+
+
+def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(plan):
+    """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
+    titles = [step.title for step in plan.protocol().steps]
+    assert titles[:4] == [
+        "Order the oligo pool and the primers that amplify it",
+        "PCR1: pull 1 batch out of the pool",
+        "PCR2: pull each of the 72 blocks out of its batch",
+        "Assemble each block from its 1 to 5 pieces",
+    ]
+    note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
+    assert note == "assembled from the oligo pool; pool.tsv says which oligos"
+
+
+def test_the_same_dna_is_billed_once(plan):
+    """A pool buys oligos and primers; a project without one buys blocks. Never both."""
+    pooled = [row.item for row in plan.protocol().bill.rows]
+    assert "Synthesised blocks" not in pooled
+    assert pooled[:2] == ["AP-1 DESynR oligo pool", "Pool amplification primers"]
+    primers = next(row for row in plan.protocol().bill.rows if row.item.endswith("primers"))
+    assert (primers.quantity, primers.unit) == (74, "primers")
+    unpooled = [row.item for row in replace(plan, pool=None).protocol().bill.rows]
+    assert unpooled[0] == "Synthesised blocks"
+    assert "Pool amplification primers" not in unpooled
+
+
+def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):
+    """A block is split for synthesis and nothing says what puts it back together."""
+    step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
+    assert [hole.id for hole in step.holes] == ["H25", "H26"]
+    assert not step.tables
+    assert not step.programs
+    assert all(hole.kind == "undecided" for hole in step.holes)

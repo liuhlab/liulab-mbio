@@ -46,6 +46,29 @@ QUANTITIES = ("count", "length")
 
 
 @dataclass(frozen=True, slots=True)
+class Batch:
+    """One PCR1 tube, and the plate of PCR2 reactions it feeds.
+
+    Parameters
+    ----------
+    number
+        Which batch it is, counting from one.
+    forward, outer
+        The pair PCR1 pulls the whole batch out of the pool by, named as the inventory names
+        them.
+    blocks
+        The blocks in it, in the order their inner primers were allotted, which is the order
+        they sit in the PCR2 plate.
+    """
+
+    number: int
+    _: KW_ONLY
+    forward: str
+    outer: str
+    blocks: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class PoolPlan:
     """One library's oligo pool, what it was split from, and what it is banded by.
 
@@ -76,6 +99,32 @@ class PoolPlan:
             str(split.cargo.name)
             for split in self.splits
             if split.pieces > fewest_pieces(len(split.cargo.sequence), split.budget)
+        )
+
+    @property
+    def batches(self) -> tuple[Batch, ...]:
+        """Which blocks share one PCR1, and the pair that pulls them out of the pool together.
+
+        Read back off the oligos rather than worked out again: the forward and outer pair every
+        one of a block's oligos carries is the pair PCR1 amplifies that block's batch by, so a
+        batch here and an oligo on the sheet cannot disagree.
+        """
+        found: dict[tuple[str, str], list[str]] = {}
+        for oligo in self.pool.oligos:
+            forward, _, outer = oligo.primers
+            blocks = found.setdefault((forward, outer), [])
+            if oligo.source not in blocks:
+                blocks.append(oligo.source)
+        return tuple(
+            Batch(number, forward=forward, outer=outer, blocks=tuple(blocks))
+            for number, ((forward, outer), blocks) in enumerate(found.items(), 1)
+        )
+
+    @property
+    def inner_pairs(self) -> tuple[tuple[str, str], ...]:
+        """Each pair PCR2 pulls one block out of its batch by: the batch forward, the block inner."""
+        return tuple(
+            dict.fromkeys((oligo.primers[0], oligo.primers[1]) for oligo in self.pool.oligos)
         )
 
     def against_lund(self) -> tuple[tuple[int, int, float | None], ...]:

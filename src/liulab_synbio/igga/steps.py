@@ -9,28 +9,37 @@ sourced in ``docs/research/protein-library-assembly.md``, or from the design the
 What the method leaves unpublished -- the ligase's units, the buffer's strength, the
 electroporation settings -- is one line saying so rather than a number invented here.
 
-The shared step builders in `liulab_mbio.bench.steps` are shaped for a PCR, a gel and a
-heat-shock transformation, and this method runs none of the three. What it does share is the
-reaction table and the smaller pieces of a protocol.
+The shared step builders in `liulab_mbio.bench.steps` are shaped for a heat-shock
+transformation, which this method does not run. What it does share is the reaction table, the
+PCR that pulls a block out of the oligo pool, and the smaller pieces of a protocol.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.gels import REFERENCES as GEL_REFERENCES
+from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
+from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
+from liulab_mbio.bench.plates import plate
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
-from liulab_mbio.bench.steps import badges, card, enzyme_material, listed
-from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.bench.steps import badges, card, catalogued, enzyme_material, listed
+from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
 from liulab_mbio.protocol.model import (
     Bill,
     Component,
+    Gel,
     Incubation,
+    Lane,
     Material,
+    Plate,
     Protocol,
     ReactionTable,
     Reference,
@@ -61,9 +70,10 @@ from liulab_synbio.igga.bench import (
     TRANSFORMATION_NG,
 )
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
+from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
 from liulab_synbio.igga.coverage import RoundCoverage
-from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
@@ -82,6 +92,16 @@ SPRI_BEADS = "SPRI paramagnetic beads"
 STRAIN = "Endura ElectroCompetent Cells"
 STRAIN_SUPPLIER = "Lucigen"
 STRAIN_CATALOG = "60242-2"
+
+#: What amplifies the pool. The package's high-fidelity default, named here so the two PCRs
+#: and the material agree about which buffer the annealing temperatures were computed in.
+POOL_POLYMERASE: Polymerase = Q5
+POOL_POLYMERASE_PRODUCT = "Q5 High-Fidelity DNA Polymerase (M0491)"
+
+#: How many wells the plate PCR2 runs in holds. One batch is one plate of PCR2, which is what
+#: fixes `liulab_synbio.igga.method.ORTHOGONAL_SPLIT`'s 96 inner primers.
+PCR2_WELLS = 96
+PCR2_PLATE = "PCR2 plate"
 
 #: The hardware a round needs, which no reagent table covers.
 EQUIPMENT: tuple[str, ...] = (
@@ -239,7 +259,9 @@ def protocol(
     barcodes: str,
     validation: dmx.Validation | None = None,
     prices: PriceRecord | None = None,
-    pool: Item | None = None,
+    pool: PoolPlan | None = None,
+    pool_sheet: str = "",
+    primer_sheet: str = "",
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -254,8 +276,10 @@ def protocol(
     The bill is always there, because its quantities come from the design. Money comes only from
     `prices`, and every row it does not price carries a hole.
 
-    `pool` is `liulab_synbio.igga.cargo.PoolPlan.item`, the oligo pool as one line of that bill,
-    and `None` for a project that writes no pool.
+    `pool` is the oligo pool the blocks are built from, and `None` for a project that writes
+    none. With one, the blocks are not ordered: they are amplified out of the pool and
+    assembled, so the first steps and the bill say that instead. `pool_sheet` and `primer_sheet`
+    are what the plan calls the two files those steps point at.
     """
     inside, outside = choppers(scheme)
     return Protocol(
@@ -277,6 +301,7 @@ def protocol(
             part_lists,
             host,
             validation,
+            pool,
         ),
         highlights=_highlights(
             scheme,
@@ -291,10 +316,17 @@ def protocol(
         ),
         checks=badges(checks),
         materials=(
-            *_materials(scheme, positions, part_lists, vector, sheet),
+            *_materials(
+                scheme, positions, part_lists, vector, sheet, pool, pool_sheet, primer_sheet
+            ),
             *(dmx.validation_materials(validation) if validation else ()),
         ),
-        equipment=(*EQUIPMENT, *(dmx.validation_equipment(validation) if validation else ())),
+        equipment=(
+            *EQUIPMENT,
+            *(POOL_EQUIPMENT if pool else ()),
+            *(dmx.validation_equipment(validation) if validation else ()),
+        ),
+        plates=(_pcr2_plate(pool),) if pool else (),
         steps=_steps(
             scheme,
             positions,
@@ -308,8 +340,15 @@ def protocol(
             sheet,
             barcodes,
             validation,
+            pool,
+            pool_sheet,
+            primer_sheet,
         ),
-        references=(*_references(scheme), *(dmx.REFERENCES if validation else ())),
+        references=(
+            *_references(scheme),
+            *(POOL_REFERENCES if pool else ()),
+            *(dmx.REFERENCES if validation else ()),
+        ),
         sources=_sources(prices, validation),
         holes=stages.HOLES,
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
@@ -337,17 +376,23 @@ def _overview(
     part_lists: Sequence[PartList],
     host: str,
     validation: dmx.Validation | None,
+    pool: PoolPlan | None,
 ) -> dict[str, str]:
     """Return the facts to check before starting, each short enough to be a card."""
     last = bench[-1]
     product = rounds[-1].product
+    blocks = sum(len(one) for one in part_lists)
     sizes = ", ".join(
         f"{position} {len(parts)}" for position, parts in zip(positions, part_lists, strict=True)
     )
     return {
         "Method": card(scheme.name, f"{len(positions)} positions"),
         "Part lists": card(sizes, f"{len(part_lists)} lists"),
-        "Parts": f"{sum(len(one) for one in part_lists)} synthesised blocks",
+        "Parts": (
+            f"{blocks} blocks, assembled from {pool.pool.count} oligos"
+            if pool
+            else f"{blocks} synthesised blocks"
+        ),
         "Constructs": f"{constructs:,} distinct",
         "Rounds": f"{len(rounds)}, one a part list",
         "Opened with": scheme.internal.supplier_label,
@@ -443,18 +488,33 @@ def _materials(
     part_lists: Sequence[PartList],
     vector: SequenceRecord,
     sheet: str,
+    pool: PoolPlan | None = None,
+    pool_sheet: str = "",
+    primer_sheet: str = "",
 ) -> tuple[Material, ...]:
-    """Every reagent and consumable the protocol asks for. The parts are the order sheet."""
+    """Every reagent and consumable the protocol asks for.
+
+    Where there is a pool the blocks are not bought, so the part lists say what they are built
+    from and the pool, its primers, its polymerase and its assembly enzyme are the materials
+    bought instead.
+    """
     inside, outside = choppers(scheme)
+    came_from = (
+        f"assembled from the oligo pool; {pool_sheet} says which oligos"
+        if pool
+        else f"synthesised blocks, ordered from {sheet}"
+    )
     made = [
         Material(
             f"{position} part list",
             storage="-20 °C",
             amount=f"{len(one)} members, pooled",
-            note=f"synthesised blocks, ordered from {sheet}",
+            note=came_from,
         )
         for position, one in zip(positions, part_lists, strict=True)
     ]
+    if pool:
+        made += list(_pool_materials(pool, pool_sheet, primer_sheet))
     made.append(
         Material(
             f"{vector.name or 'destination'} vector",
@@ -504,8 +564,10 @@ def _materials(
 
 
 #: What a price record prices the synthesis order and the bill's own source by. Neither has a
-#: catalogue number, so each is keyed by the name the protocol's own row already carries.
+#: catalogue number, so each is keyed by the name the protocol's own row already carries. The
+#: pool's own key is the project's, through `liulab_synbio.igga.cargo.design_pool`.
 BLOCKS_KEY = "synthesised blocks"
+POOL_PRIMER_KEY = "pool-primers"
 PRICES_SOURCE = "prices"
 
 
@@ -516,27 +578,36 @@ def _consumed(
     inside: Sequence[Enzyme],
     outside: Sequence[Enzyme],
     record: PriceRecord | None,
-    pool: Item | None,
+    pool: PoolPlan | None,
 ) -> Bill:
     """Return what this build buys, in the quantities the design computes.
 
     Only what the design fixes is billed. The buffer, the beads and the medium scale with volumes
     the method leaves to the supplier, so a row for one would be a quantity nobody computed.
 
-    The pool is the one row the design does not compute here: `liulab_synbio.igga.cargo` builds
-    it, carrying the count and the band it was split to, and it is billed wherever there is one.
+    **The blocks are bought once or not at all.** A project with a pool buys oligos and the
+    primers that amplify them, and assembles its blocks from those; one without buys the blocks
+    themselves. Billing both would charge the same DNA twice.
     """
     digests = [(scheme.internal, len(rounds)), (scheme.external, len(rounds))]
     digests += [(one, len(rounds) * ((one in inside) + (one in outside))) for one in scheme.blunt]
     items = [
-        Item(
-            "Synthesised blocks",
-            len(parts),
-            unit="blocks",
-            key=BLOCKS_KEY,
-            quantities={"count": len(parts), "length_nt": max(one.length for one in parts)},
+        *(
+            (
+                Item(
+                    "Synthesised blocks",
+                    len(parts),
+                    unit="blocks",
+                    key=BLOCKS_KEY,
+                    quantities={
+                        "count": len(parts),
+                        "length_nt": max(one.length for one in parts),
+                    },
+                ),
+            )
+            if pool is None
+            else (pool.item, _primer_item(pool))
         ),
-        *((pool,) if pool is not None else ()),
         *(
             Item(
                 one.commercial_name or one.name,
@@ -612,9 +683,20 @@ def _steps(
     sheet: str,
     barcodes: str,
     validation: dmx.Validation | None,
+    pool: PoolPlan | None = None,
+    pool_sheet: str = "",
+    primer_sheet: str = "",
 ) -> tuple[Step, ...]:
-    """Return every step in the order it happens, the rounds one after another."""
-    made = [_order_step(parts, sheet)]
+    """Return every step in the order it happens, the rounds one after another.
+
+    A pool replaces the order step with the four it takes to get the same blocks: order the
+    pool, pull each batch out of it, pull each block out of its batch, and assemble the block.
+    """
+    made = (
+        list(_pool_steps(pool, parts, sheet, pool_sheet, primer_sheet))
+        if pool
+        else [_order_step(parts, sheet)]
+    )
     if validation:
         made += dmx.validation_steps(validation)
     made.append(_pool_step(positions, part_lists))
@@ -648,6 +730,319 @@ def _order_step(parts: Sequence[Part], sheet: str) -> Step:
                 "The vendor cannot synthesise a block",
                 "It is usually a repeat or a GC run in the coding bases. Plan again with another "
                 "codon usage table; the stuffers and the overhangs are fixed by the scheme.",
+            ),
+        ),
+    )
+
+
+#: The hardware the pool route needs on top of a round's, which no reagent table covers.
+POOL_EQUIPMENT: tuple[str, ...] = (
+    "Thermocycler taking a 96-well plate",
+    "Gel tank and a transilluminator",
+)
+
+#: What the two PCRs and their gel cite, beside the round's own references.
+POOL_REFERENCES: tuple[Reference, ...] = (*PCR_REFERENCES, *GEL_REFERENCES)
+
+
+def _pcr2_plate(pool: PoolPlan) -> Plate:
+    """Return the plate PCR2 runs in, one block a well.
+
+    The seating is not declared. Which block sits in which well follows from the order its
+    batch allotted the inner primers, and `liulab_mbio.bench.plates.seat` would write it, but
+    `liulab_mbio.protocol.model.Protocol.audit` resolves every seated well against a declared
+    material, oligo, vessel or plate, and a block is none of those. Issue 330 is open on that
+    rule, so the plate says what it holds and the wells stay unnamed rather than being named
+    wrongly.
+    """
+    batches = pool.batches
+    return plate(
+        PCR2_PLATE,
+        PCR2_WELLS,
+        holds="one block a well, in the order its batch allotted the inner primers",
+        note=(
+            f"{_counted(len(batches), 'plate')}, one a batch; "
+            f"{', '.join(f'batch {one.number} holds {len(one.blocks)}' for one in batches)}"
+        ),
+    )
+
+
+def _pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[Material, ...]:
+    """Return what the pool route buys that a project ordering its blocks does not."""
+    layout = pool.pool.layout
+    roles = ", ".join(f"{count} {role}" for role, count in _primer_roles(pool).items())
+    return (
+        Material(
+            "Oligo pool",
+            storage="-20 °C",
+            amount=f"{pool.pool.count} oligos, every one {layout.length} nt",
+            note=f"ordered from {pool_sheet}, which says which block each oligo is a piece of",
+        ),
+        Material(
+            "Pool amplification primers",
+            storage="-20 °C",
+            amount=f"{len(pool.pool.primers)} primers: {roles}",
+            note=f"ordered from {primer_sheet}; a pair a batch, an inner primer a block",
+        ),
+        catalogued(
+            POOL_POLYMERASE_PRODUCT,
+            supplier="NEB",
+            storage="-20 °C",
+            amount="one reaction per batch, then one per block",
+            note="the buffer the annealing temperatures below were computed in",
+        ),
+        enzyme_material(
+            get_enzyme(SYNTHESIS_ENZYME),
+            amount="one assembly per block",
+            note="cuts every oligo back to its own fragment, and is reserved for that",
+        ),
+    )
+
+
+def _primer_roles(pool: PoolPlan) -> dict[str, int]:
+    """How many primers of the pool take each role, in the order the set allots them."""
+    counted: dict[str, int] = {}
+    for one in pool.pool.primers:
+        counted[one.role] = counted.get(one.role, 0) + 1
+    return counted
+
+
+def _primer_item(pool: PoolPlan) -> Item:
+    """Return the amplification primers as one line of the bill, beside the pool's own."""
+    primers = pool.pool.primers
+    return Item(
+        "Pool amplification primers",
+        len(primers),
+        unit="primers",
+        key=POOL_PRIMER_KEY,
+        quantities={"count": len(primers), "length": max(len(one) for one in primers)},
+    )
+
+
+def _annealing(
+    pairs: Iterable[tuple[str, str]], sequences: Mapping[str, str]
+) -> tuple[float, float]:
+    """Return the lowest and the highest annealing temperature these primer pairs ask for, °C."""
+    found = [
+        POOL_POLYMERASE.annealing_temperature(
+            melting_temperature(sequences[one], POOL_POLYMERASE),
+            melting_temperature(sequences[other], POOL_POLYMERASE),
+        )
+        for one, other in pairs
+    ]
+    return min(found), max(found)
+
+
+def _counted(number: int, word: str) -> str:
+    """Say a count and its noun, the noun plural only where the count is not one."""
+    return f"{number} {word}" if number == 1 else f"{number} {word}s"
+
+
+def _one_band(name: str, length_bp: int, *, title: str) -> Gel:
+    """Return the gel one lane of a PCR makes, which is the same lane in every tube of it."""
+    return Gel(choose_ladder((length_bp,)), (Lane(name, (length_bp,)),), title=title)
+
+
+def _band_note(low: float, high: float) -> str:
+    """Say what annealing temperature a block of tubes runs at, and the spread it covers."""
+    if low == high:
+        return f"Every pair anneals at {low:g} °C, so one block of tubes takes them all."
+    return (
+        f"The pairs anneal between {low:g} and {high:g} °C. The program runs at {low:g}, the "
+        "lowest of them, so one block of tubes takes them all."
+    )
+
+
+def _pool_steps(
+    pool: PoolPlan,
+    parts: Sequence[Part],
+    sheet: str,
+    pool_sheet: str,
+    primer_sheet: str,
+) -> tuple[Step, ...]:
+    """Return the steps that turn an oligo pool into the blocks a round's part list holds."""
+    sequences = {one.name: one.sequence for one in pool.pool.primers}
+    layout = pool.pool.layout
+    batches = pool.batches
+    first = _annealing(((one.forward, one.outer) for one in batches), sequences)
+    second = _annealing(pool.inner_pairs, sequences)
+    inner_length = layout.length - layout.primer_length
+    return (
+        _pool_order_step(pool, pool_sheet, primer_sheet),
+        _pcr1_step(pool, batches, first, layout.length),
+        _pcr2_step(pool, batches, parts, second, inner_length),
+        _assembly_step(pool, parts, sheet),
+    )
+
+
+def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step:
+    """Order the pool and its primers, which is what the whole design comes down to."""
+    layout = pool.pool.layout
+    roles = ", ".join(f"{count} {role}" for role, count in _primer_roles(pool).items())
+    over = pool.over_floor
+    spent = (
+        f"{pool.floor} oligos is what the length budget allows for; this design spends "
+        f"{pool.pool.count}, one more on {listed(list(over))}, whose forced cuts spell no legal "
+        "overhang."
+        if over
+        else f"{pool.pool.count} oligos is the fewest the length budget allows for."
+    )
+    return Step(
+        "Order the oligo pool and the primers that amplify it",
+        instructions=(
+            f"Order every row of {pool_sheet} as one synthesised oligo pool, {pool.pool.count} "
+            f"members at {layout.length} nt.",
+            f"Order every row of {primer_sheet} as an ordinary oligo: {roles}.",
+        ),
+        expected=(
+            f"One pool, {pool.pool.count} oligos, every one {layout.length} nt and no length "
+            "spread, which is what the padding is for.",
+            f"{len(pool.pool.primers)} primers, each "
+            f"{min(len(one) for one in pool.pool.primers)} nt.",
+        ),
+        notes=(
+            f"{pool_sheet} names each oligo's block, which piece of it that is, and the primers "
+            "that pull it out, so an oligo is traceable to its protein.",
+            spent,
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "The vendor bins the pool by length",
+                "Every oligo is padded to one length, so the spread is zero. A vendor asking "
+                "for a different length wants the project's oligo length changed and the "
+                "design run again.",
+            ),
+        ),
+    )
+
+
+def _pcr1_step(
+    pool: PoolPlan,
+    batches: Sequence[Batch],
+    annealing: tuple[float, float],
+    length_bp: int,
+) -> Step:
+    """Pull one batch of blocks out of the whole pool, which is what PCR1 is for."""
+    low, high = annealing
+    pairs = "; ".join(f"batch {one.number}: {one.forward} with {one.outer}" for one in batches)
+    return Step(
+        f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",
+        instructions=(
+            f"Set up {_counted(len(batches), 'reaction')}, one a batch, with the pool as template.",
+            f"Give each its own pair: {pairs}.",
+            "Run the program below.",
+        ),
+        cautions=("Keep the polymerase on ice.",),
+        tables=(
+            pcr_reaction(POOL_POLYMERASE, reactions=len(batches), title="PCR1, one tube a batch"),
+        ),
+        programs=(
+            pcr_program(
+                POOL_POLYMERASE,
+                annealing_temperature=low,
+                amplicon_length=length_bp,
+                title="PCR1",
+            ),
+        ),
+        gels=(_one_band("PCR1 product", length_bp, title="PCR1, any batch"),),
+        expected=(
+            f"One band at {length_bp} bp in every batch, which is the whole oligo.",
+            f"Batch sizes: "
+            f"{', '.join(f'{one.number} holds {len(one.blocks)}' for one in batches)}.",
+        ),
+        notes=(
+            _band_note(low, high),
+            "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block "
+            "cannot be pulled out of a batch it does not sit in.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "No band",
+                "Drop the annealing temperature by 3 °C and check the pool went in.",
+            ),
+            Troubleshooting(
+                "A smear rather than a band",
+                "Too many cycles over a pool loses the evenness the coverage is counted on. "
+                "Take the fewest cycles that give a visible band.",
+            ),
+        ),
+    )
+
+
+def _pcr2_step(
+    pool: PoolPlan,
+    batches: Sequence[Batch],
+    parts: Sequence[Part],
+    annealing: tuple[float, float],
+    length_bp: int,
+) -> Step:
+    """Pull one block out of its batch, after which a block is named by the well it sits in."""
+    low, high = annealing
+    return Step(
+        f"PCR2: pull each of the {len(parts)} blocks out of its batch",
+        instructions=(
+            f"Set up one reaction a block, {len(parts)} in all, in {PCR2_PLATE}.",
+            "Give each its batch's PCR1 product as template, that batch's forward primer, and "
+            "the block's own inner primer.",
+            "Run the program below.",
+        ),
+        cautions=("Keep the polymerase on ice.",),
+        tables=(
+            pcr_reaction(POOL_POLYMERASE, reactions=len(parts), title="PCR2, one well a block"),
+        ),
+        programs=(
+            pcr_program(
+                POOL_POLYMERASE,
+                annealing_temperature=low,
+                amplicon_length=length_bp,
+                title="PCR2",
+            ),
+        ),
+        gels=(_one_band("PCR2 product", length_bp, title="PCR2, any well"),),
+        expected=(
+            f"One band at {length_bp} bp in every well, the outer primer's "
+            f"{pool.pool.layout.primer_length} nt shorter than PCR1's.",
+            f"{len(parts)} wells filled across {_counted(len(batches), 'plate')}.",
+        ),
+        notes=(
+            _band_note(low, high),
+            "A block is named by its well from here on, not by anything in the tube.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "A band at PCR1's length",
+                "The outer primer region was not dropped. Check the inner primer went in, and "
+                "that the template is PCR1's product and not the pool.",
+            ),
+        ),
+    )
+
+
+def _assembly_step(pool: PoolPlan, parts: Sequence[Part], sheet: str) -> Step:
+    """Assemble each block out of its own pieces, which is the step the model cannot finish."""
+    pieces = {split.pieces for split in pool.splits}
+    lengths = [part.length for part in parts]
+    return Step(
+        f"Assemble each block from its {min(pieces)} to {max(pieces)} pieces",
+        instructions=(
+            f"Set up one {SYNTHESIS_ENZYME} assembly a well, holding that block's own PCR2 "
+            "pieces and nothing from another well.",
+        ),
+        expected=(
+            f"{len(parts)} blocks, {min(lengths)} to {max(lengths)} bp, as {sheet} spells them.",
+            "Each block reads: 5' external stuffer, coding bases, internal stuffer, barcode, "
+            "3' external stuffer.",
+        ),
+        notes=(
+            f"{SYNTHESIS_ENZYME} cuts each oligo back to its fragment, so the primer sites, the "
+            "recognition sites and the padding all stay outside the block.",
+        ),
+        holes=stages.POOL_HOLES,
+        troubleshooting=(
+            Troubleshooting(
+                "A block comes out short",
+                "A piece was missing from the well. Check that well's PCR2 lane before "
+                "assembling it again; the pieces of one block are not interchangeable.",
             ),
         ),
     )

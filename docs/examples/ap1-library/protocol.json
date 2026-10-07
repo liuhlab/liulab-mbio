@@ -4,7 +4,7 @@
   "overview": {
     "Method": "iGGA",
     "Part lists": "N 24, DBD 24, C 24",
-    "Parts": "72 synthesised blocks",
+    "Parts": "72 blocks, assembled from 153 oligos",
     "Constructs": "13,824 distinct",
     "Rounds": "3, one a part list",
     "Opened with": "BbsI-HF (R3539)",
@@ -101,7 +101,7 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv",
+      "note": "assembled from the oligo pool; pool.tsv says which oligos",
       "contains": [],
       "rules": [],
       "citation": null
@@ -112,7 +112,7 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv",
+      "note": "assembled from the oligo pool; pool.tsv says which oligos",
       "contains": [],
       "rules": [],
       "citation": null
@@ -123,7 +123,51 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv",
+      "note": "assembled from the oligo pool; pool.tsv says which oligos",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "Oligo pool",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "153 oligos, every one 350 nt",
+      "note": "ordered from pool.tsv, which says which block each oligo is a piece of",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "Pool amplification primers",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "74 primers: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer",
+      "note": "ordered from pool-primers.tsv; a pair a batch, an inner primer a block",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "Q5 High-Fidelity DNA Polymerase",
+      "supplier": "NEB",
+      "catalog": "M0491",
+      "storage": "-20 °C",
+      "amount": "one reaction per batch, then one per block",
+      "note": "the buffer the annealing temperatures below were computed in",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "BsmBI-v2",
+      "supplier": "New England Biolabs",
+      "catalog": "R0739",
+      "storage": "-20 °C",
+      "amount": "one assembly per block",
+      "note": "cuts every oligo back to its own fragment, and is reserved for that",
       "contains": [],
       "rules": [],
       "citation": null
@@ -377,23 +421,35 @@
     "Electroporator and cuvettes",
     "Shaking incubator at 30 °C",
     "Spectrophotometer or fluorometer",
+    "Thermocycler taking a 96-well plate",
+    "Gel tank and a transilluminator",
     "QPix XE Microbial Colony Picker",
     "multichannel pipette on 96-well spacing",
     "Incubator at 37 °C",
     "A sequencer, and a demultiplexer that can check an address"
   ],
   "vessels": [],
-  "plates": [],
+  "plates": [
+    {
+      "name": "PCR2 plate",
+      "wells": 96,
+      "catalog": "",
+      "holds": "one block a well, in the order its batch allotted the inner primers",
+      "seating": {},
+      "note": "1 plate, one a batch; batch 1 holds 72"
+    }
+  ],
   "steps": [
     {
-      "title": "Order the synthesised parts",
+      "title": "Order the oligo pool and the primers that amplify it",
       "instructions": [
-        "Order every row of parts.tsv as a double-stranded synthesised block.",
-        "Ask for sequence-verified material: a block carries the scheme's sites at fixed offsets, and a base out of place stops it being cut where the design says."
+        "Order every row of pool.tsv as one synthesised oligo pool, 153 members at 350 nt.",
+        "Order every row of pool-primers.tsv as an ordinary oligo: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer."
       ],
       "cautions": [],
       "notes": [
-        "parts.tsv carries each block's barcode on its own row, so the sheet you order from is also what decodes the sequencing afterwards."
+        "pool.tsv names each oligo's block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.",
+        "152 oligos is what the length budget allows for; this design spends 153, one more on N_ATF7, whose forced cuts spell no legal overhang."
       ],
       "tables": [],
       "programs": [],
@@ -401,16 +457,437 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "72 blocks, 133 to 1149 bp.",
+        "One pool, 153 oligos, every one 350 nt and no length spread, which is what the padding is for.",
+        "74 primers, each 20 nt."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The vendor bins the pool by length",
+          "solution": "Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants the project's oligo length changed and the design run again."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "PCR1: pull 1 batch out of the pool",
+      "instructions": [
+        "Set up 1 reaction, one a batch, with the pool as template.",
+        "Give each its own pair: batch 1: OP107 with OP146.",
+        "Run the program below."
+      ],
+      "cautions": [
+        "Keep the polymerase on ice."
+      ],
+      "notes": [
+        "Every pair anneals at 65.1 °C, so one block of tubes takes them all.",
+        "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block cannot be pulled out of a batch it does not sit in."
+      ],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "Q5 Reaction Buffer",
+              "volume_ul": 10.0,
+              "stock": "5X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "dNTP mix",
+              "volume_ul": 1.0,
+              "stock": "10 mM each",
+              "final": "200 µM each",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Forward primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Reverse primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Template DNA",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "Q5 DNA Polymerase",
+              "volume_ul": 0.5,
+              "stock": "2 U/µL",
+              "final": "1 units",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 32.5,
+              "stock": "",
+              "final": "to 50 µL",
+              "master_mix": true,
+              "citation": null
+            }
+          ],
+          "title": "PCR1, one tube a batch",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 98.0,
+                  "seconds": 30,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 98.0,
+                  "seconds": 10,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 65.1,
+                  "seconds": 20,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 72.0,
+                  "seconds": 20,
+                  "citation": null
+                }
+              ],
+              "cycles": 30
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 72.0,
+                  "seconds": 120,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            }
+          ],
+          "title": "PCR1",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "transfers": [],
+      "gels": [
+        {
+          "ladder": {
+            "name": "NEB 100 bp DNA Ladder (N3231)",
+            "bands_bp": [
+              100,
+              200,
+              300,
+              400,
+              500,
+              600,
+              700,
+              800,
+              900,
+              1000,
+              1200,
+              1517
+            ]
+          },
+          "lanes": [
+            {
+              "label": "PCR1 product",
+              "bands_bp": [
+                350
+              ]
+            }
+          ],
+          "title": "PCR1, any batch"
+        }
+      ],
+      "expected": [
+        "One band at 350 bp in every batch, which is the whole oligo.",
+        "Batch sizes: 1 holds 72."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No band",
+          "solution": "Drop the annealing temperature by 3 °C and check the pool went in."
+        },
+        {
+          "problem": "A smear rather than a band",
+          "solution": "Too many cycles over a pool loses the evenness the coverage is counted on. Take the fewest cycles that give a visible band."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "PCR2: pull each of the 72 blocks out of its batch",
+      "instructions": [
+        "Set up one reaction a block, 72 in all, in PCR2 plate.",
+        "Give each its batch's PCR1 product as template, that batch's forward primer, and the block's own inner primer.",
+        "Run the program below."
+      ],
+      "cautions": [
+        "Keep the polymerase on ice."
+      ],
+      "notes": [
+        "The pairs anneal between 64.3 and 65.1 °C. The program runs at 64.3, the lowest of them, so one block of tubes takes them all.",
+        "A block is named by its well from here on, not by anything in the tube."
+      ],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "Q5 Reaction Buffer",
+              "volume_ul": 10.0,
+              "stock": "5X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "dNTP mix",
+              "volume_ul": 1.0,
+              "stock": "10 mM each",
+              "final": "200 µM each",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Forward primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Reverse primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Template DNA",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "Q5 DNA Polymerase",
+              "volume_ul": 0.5,
+              "stock": "2 U/µL",
+              "final": "1 units",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 32.5,
+              "stock": "",
+              "final": "to 50 µL",
+              "master_mix": true,
+              "citation": null
+            }
+          ],
+          "title": "PCR2, one well a block",
+          "reactions": 72,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 98.0,
+                  "seconds": 30,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 98.0,
+                  "seconds": 10,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 64.3,
+                  "seconds": 20,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 72.0,
+                  "seconds": 20,
+                  "citation": null
+                }
+              ],
+              "cycles": 30
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 72.0,
+                  "seconds": 120,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1
+            }
+          ],
+          "title": "PCR2",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "transfers": [],
+      "gels": [
+        {
+          "ladder": {
+            "name": "NEB 100 bp DNA Ladder (N3231)",
+            "bands_bp": [
+              100,
+              200,
+              300,
+              400,
+              500,
+              600,
+              700,
+              800,
+              900,
+              1000,
+              1200,
+              1517
+            ]
+          },
+          "lanes": [
+            {
+              "label": "PCR2 product",
+              "bands_bp": [
+                330
+              ]
+            }
+          ],
+          "title": "PCR2, any well"
+        }
+      ],
+      "expected": [
+        "One band at 330 bp in every well, the outer primer's 20 nt shorter than PCR1's.",
+        "72 wells filled across 1 plate."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A band at PCR1's length",
+          "solution": "The outer primer region was not dropped. Check the inner primer went in, and that the template is PCR1's product and not the pool."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Assemble each block from its 1 to 5 pieces",
+      "instructions": [
+        "Set up one BsmBI assembly a well, holding that block's own PCR2 pieces and nothing from another well."
+      ],
+      "cautions": [],
+      "notes": [
+        "BsmBI cuts each oligo back to its fragment, so the primer sites, the recognition sites and the padding all stay outside the block."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "72 blocks, 133 to 1149 bp, as parts.tsv spells them.",
         "Each block reads: 5' external stuffer, coding bases, internal stuffer, barcode, 3' external stuffer."
       ],
       "troubleshooting": [
         {
-          "problem": "The vendor cannot synthesise a block",
-          "solution": "It is usually a repeat or a GC run in the coding bases. Plan again with another codon usage table; the stuffers and the overhangs are fixed by the scheme."
+          "problem": "A block comes out short",
+          "solution": "A piece was missing from the well. Check that well's PCR2 lane before assembling it again; the pieces of one block are not interchangeable."
         }
       ],
-      "holes": []
+      "holes": [
+        {
+          "id": "H25",
+          "missing": "nothing names what the assembled pieces close into, or what selects the closure",
+          "kind": "undecided",
+          "where": "block assembly, the destination",
+          "filled_by": "a destination the pieces assemble into, as the method's DMX vector is for cargo carrying no flanks of its own",
+          "issue": ""
+        },
+        {
+          "id": "H26",
+          "missing": "no source sets the DNA in, the enzyme, the ligase or the cycling for a block assembly",
+          "kind": "undecided",
+          "where": "block assembly, the reaction and its program",
+          "filled_by": "NEB's own Golden Gate table, once the assembly has a destination to be sized against",
+          "issue": ""
+        }
+      ]
     },
     {
       "title": "Array 72 design(s) and grow",
@@ -5155,6 +5632,18 @@
       "url": ""
     },
     {
+      "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
+      "url": ""
+    },
+    {
+      "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
+      "url": ""
+    },
+    {
+      "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
+      "url": ""
+    },
+    {
       "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
       "url": "https://doi.org/10.1038/s41467-026-76740-5"
     },
@@ -5233,23 +5722,6 @@
   "bill": {
     "rows": [
       {
-        "item": "Synthesised blocks",
-        "quantity": 72,
-        "unit": "blocks",
-        "key": "synthesised blocks",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P1",
-          "missing": "no row prices 'synthesised blocks' at 72 blocks",
-          "kind": "price",
-          "where": "Synthesised blocks, money",
-          "filled_by": "a price record holding a row for this key",
-          "issue": ""
-        }
-      },
-      {
         "item": "AP-1 DESynR oligo pool",
         "quantity": 153,
         "unit": "oligos",
@@ -5258,10 +5730,27 @@
         "headroom": "153 count, 347 below the next band; 350 length, no slack above it at all",
         "citation": null,
         "hole": {
-          "id": "P2",
+          "id": "P1",
           "missing": "no row prices 'oligo-pool' at 153 oligos",
           "kind": "price",
           "where": "AP-1 DESynR oligo pool, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "Pool amplification primers",
+        "quantity": 74,
+        "unit": "primers",
+        "key": "pool-primers",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P2",
+          "missing": "no row prices 'pool-primers' at 74 primers",
+          "kind": "price",
+          "where": "Pool amplification primers, money",
           "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
