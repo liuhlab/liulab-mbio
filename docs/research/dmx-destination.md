@@ -82,13 +82,17 @@ without spelling a new site of any method enzyme, so the same parent gives the s
 The remaining BsaI site is at 1284, inside `AmpR`, and `domesticate` takes it away with one
 synonymous codon, `GGG` to `GGC`.
 
-**The marker is not swapped.** The method page's step 2 swaps AmpR for KanR, and names the third
-BsaI site as what that swap takes with it. One synonymous base takes the same site, and nothing
-in the package reads the marker: the swap changes the record's length and no predicate's answer.
-A KanR cassette is available offline — `pCR-Blunt II-TOPO` in the same reference directory
-carries one, 795 bp and free of every method enzyme — so the swap is a small job whenever the
-bench reason for it is written down. The selection antibiotic a round plates on is `H22`, which
-is open, and that is where the marker question belongs.
+**The marker is not swapped, and that is a defect rather than a choice.** The method page's step 2
+swaps AmpR for KanR, and names the third BsaI site as what that swap takes with it. One
+synonymous base takes the same site, so the site is not the reason to swap. The bench is:
+departure D11 is forced, because the final transfer moves cargo from this vector into a working
+vector that is AmpR or CarbR, and the two must not share a marker.
+
+The marker is also read now. `igga.stages.selection_for` names the drug a record's marker
+selects and `stages.holes_for` answers `H22` wherever it can, so this record plates every round
+on carbenicillin — the drug D11 says does not carry over. A KanR cassette is available offline:
+`pCR-Blunt II-TOPO` in the same reference directory carries one, 795 bp and free of every method
+enzyme. #374 carries the swap and the numbers it moves.
 
 ## 3. What the result measures
 
