@@ -376,7 +376,15 @@ def _plates(protocol: Protocol) -> str:
 
 
 def _plate(one: Plate) -> str:
-    drawn = draw_plate(one.name, one.rows, one.columns, one.row_labels, seating=one.seating)
+    # Labels are drawn beside the seating and resolve against nothing, so a well a step names
+    # keeps its own entry where a plate carries both.
+    drawn = draw_plate(
+        one.name,
+        one.rows,
+        one.columns,
+        one.row_labels,
+        seating={**one.labels, **one.seating},
+    )
     legend = "".join(
         f'<li><span class="swatch" style="background:{fill}"></span>{escape(kind)}</li>'
         for kind, fill in drawn.layout.legend

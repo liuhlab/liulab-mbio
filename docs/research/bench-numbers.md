@@ -408,6 +408,26 @@ over unchanged; which tube holds which blunt cutter does not.
 | Units per µL for any of the four | **not stated by the paper** — it gives volumes, never units. NEB's specifications below convert them | — |
 | Heat inactivation | **not stated** — the source goes straight to SPRI | — |
 
+### Pooling the part list
+
+The step before the digest, and every number it states is the digest's own read backwards. The
+pool's **total** is the 1 µg above; its members are pooled in **equal picomoles**, so each gives
+that total over the member count, weighed at its own length; and its **concentration floor** is
+what the digest leaves room for.
+
+| Number | Value | Source |
+| --- | --- | --- |
+| Resuspension buffer | nuclease-free TE pH 8.0, or 10 mM Tris-HCl pH 8.0 | Twist, *How should Multiplexed Gene Fragments be resuspended?* |
+| Resuspension, IDT's own | IDTE or molecular-grade water, vortex, 50 °C for 15-20 min, then verify | IDT, gBlocks resuspension |
+| Vendor concentration | **a floor, not a value**: "at least 10 ng/µL is recommended for the stock dilution" (Twist); 10 ng/µL (IDT) | both, above |
+| The pool's own floor | **computed, not quoted**: 1 µg over the 45 µL the 50 µL digest leaves after its two 2.5 µL enzymes, so **≥ 22.3 ng/µL** | the split-digest row above |
+
+**The vendor default does not reach it, and that is the trap.** At 10 ng/µL an equimolar 1,000 ng
+pool occupies 100 µL, more than twice the 45 µL the digest has for it. Following the vendor
+figure literally makes the next step impossible, so the number the pool is brought to is set by
+the digest and never typed into a step: `liulab_synbio.igga.bench.pool_floor_ng_ul` computes it
+from the three constants already in that row, and the step states what it returns.
+
 The two digests never share a tube. That is the method page's rule and the source's practice.
 
 ### The five enzymes

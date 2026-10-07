@@ -5,6 +5,7 @@ The part lists are three of two members, so a whole build stays small enough for
 """
 
 import dataclasses
+import math
 from typing import cast
 
 import pytest
@@ -17,6 +18,12 @@ from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import reverse_translate
+from liulab_synbio.igga.bench import (
+    DIGEST_NG,
+    DIGEST_VOLUME_UL,
+    ENZYME_UL,
+    pool_floor_ng_ul,
+)
 from liulab_synbio.igga.gate import check_product
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.plan import (
@@ -420,3 +427,22 @@ def test_a_vector_that_names_its_marker_plates_every_round_on_it(plan, carrier):
     assert "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)" in said
     assert "Plate a measured dilution of the recovery on 50 µg/mL kanamycin" in said
     assert "H22" not in [one.id for one in protocol.holes]
+
+
+def test_the_pooling_step_states_the_mass_the_round_then_digests(plan, protocol):
+    """One number, said twice: a pool sized against anything else would not fit the digest."""
+    step = next(one for one in protocol.steps if one.title == "Pool each part list")
+    said = " ".join((*step.instructions, *step.expected))
+
+    for row in plan.bench:
+        assert f"{row.donor_digest.nanograms:,.0f} ng" in said
+
+
+def test_the_pooling_floor_is_computed_from_the_digest_and_never_typed(protocol):
+    """The floor is what the digest leaves room for, so the two can never disagree."""
+    step = next(one for one in protocol.steps if one.title == "Pool each part list")
+
+    floor = DIGEST_NG / (DIGEST_VOLUME_UL - 2 * ENZYME_UL)
+
+    assert round(pool_floor_ng_ul(), 10) == round(floor, 10)
+    assert f"at least {math.ceil(floor * 10) / 10:g} ng/µL" in " ".join(step.instructions)

@@ -15,20 +15,21 @@ transformation, which this method does not run. What it does share is the reacti
 PCR that pulls a block out of the oligo pool, and the smaller pieces of a protocol.
 """
 
+import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
-from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.amounts import Amount, to_nanograms
 from liulab_mbio.bench.gels import REFERENCES as GEL_REFERENCES
 from liulab_mbio.bench.gels import choose_ladder
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
 from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
 from liulab_mbio.bench.phenotype import selection_marker
-from liulab_mbio.bench.plates import plate
+from liulab_mbio.bench.plates import plate, seat
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
@@ -73,6 +74,7 @@ from liulab_synbio.igga.bench import (
     SPRI_AFTER_DIGEST,
     SPRI_AFTER_LIGATION,
     TRANSFORMATION_NG,
+    pool_floor_ng_ul,
 )
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import Batch, PoolPlan
@@ -390,7 +392,10 @@ def protocol(
                 )
             )
         ),
-        plates=(_pcr2_plate(pool),) if pool else (),
+        plates=(
+            *((_pcr2_plate(pool),) if pool else ()),
+            *(_validation_plates(validation) if validation else ()),
+        ),
         steps=_steps(
             scheme,
             positions,
@@ -753,10 +758,33 @@ def _consumed(
 
 def _references(scheme: Scheme) -> tuple[Reference, ...]:
     """Where the numbers come from, and where the scheme itself came from."""
-    items = [*BENCH_REFERENCES, *COVERAGE_REFERENCES, *AMOUNT_REFERENCES, *READOUT_REFERENCES]
+    items = [
+        *BENCH_REFERENCES,
+        *COVERAGE_REFERENCES,
+        *AMOUNT_REFERENCES,
+        *READOUT_REFERENCES,
+        *POOL_RESUSPENSION_REFERENCES,
+    ]
     if scheme.source:
         items.append(Reference(f"The method this build was planned by: {scheme.source}"))
     return tuple(items)
+
+
+#: What a synthesised block is resuspended in, and the floor both vendors publish for it. Each
+#: gives 10 ng/µL as a least, not a value: at it a 1,000 ng pool fills 100 µL, more than twice
+#: what the round's digest leaves, so the pool's own floor is computed and these set the buffer.
+POOL_RESUSPENSION_REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free "
+        "TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution",
+        url="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended",
+    ),
+    Reference(
+        "Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE "
+        "or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify",
+        url="https://www.idtdna.com/page/?p=890",
+    ),
+)
 
 
 #: What the two readout cautions of the confirming step are measured by.
@@ -810,7 +838,7 @@ def _steps(
     )
     if validation:
         made += dmx.validation_steps(validation)
-    made.append(_pool_step(positions, part_lists))
+    made.append(_pool_step(bench, parts, pool))
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds), selection))
     made.append(_linkage_step(scheme, positions, barcode_length, rounds, parts, barcodes))
@@ -879,21 +907,23 @@ POOL_REFERENCES: tuple[Reference, ...] = (
 )
 
 
-def _pcr2_plate(pool: PoolPlan) -> Plate:
-    """Return the plate PCR2 runs in, one block a well.
+def _validation_plates(one: dmx.Validation) -> tuple[Plate, ...]:
+    """Return the plates the read-back fills, so every well a transfer names has one."""
+    return (*one.picked, *(one.index if one.route is dmx.ROUTE_B else ()))
 
-    The seating is not declared. Which block sits in which well follows from the order its
-    batch allotted the inner primers, and `liulab_mbio.bench.plates.seat` would write it, but
-    `liulab_mbio.protocol.model.Protocol.audit` resolves every seated well against a declared
-    material, oligo, vessel or plate, and a block is none of those. Issue 330 is open on that
-    rule, so the plate says what it holds and the wells stay unnamed rather than being named
-    wrongly.
+
+def _pcr2_plate(pool: PoolPlan) -> Plate:
+    """Return the plate PCR2 runs in, one block a well, drawn as the first batch fills it.
+
+    The wells are labelled rather than seated: a block is no material, oligo, vessel or plate,
+    so its name describes the well instead of naming an occupant the protocol declares.
     """
     batches = pool.batches
     return plate(
         PCR2_PLATE,
         PCR2_WELLS,
         holds="one block a well, in the order its batch allotted the inner primers",
+        labels=seat(batches[0].blocks, PCR2_WELLS) if batches else {},
         note=(
             f"{_counted(len(batches), 'plate')}, one a batch; "
             f"{', '.join(f'batch {one.number} holds {len(one.blocks)}' for one in batches)}"
@@ -1232,21 +1262,46 @@ def _assembly_step(pool: PoolPlan, parts: Sequence[Part], sheet: str) -> Step:
     )
 
 
-def _pool_step(positions: Sequence[str], part_lists: Sequence[PartList]) -> Step:
-    """Pool each part list, which is what a round joins in one tube."""
+def _pool_step(bench: Sequence[RoundBench], parts: Sequence[Part], pool: PoolPlan | None) -> Step:
+    """Pool each part list, which is what a round joins in one tube.
+
+    Every number here is the round's own donor digest read backwards. That digest takes
+    `DIGEST_NG` of the pool in the volume its two enzymes leave it, so the pool's total, its
+    concentration floor and each member's share are fixed downstream rather than chosen.
+    """
+    floor = _stated_floor()
+    left = DIGEST_VOLUME_UL - 2 * ENZYME_UL
+    members = {position: _at(parts, position) for position in {row.position for row in bench}}
+    first = (
+        "Clean up each assembly and measure each concentration."
+        if pool
+        else "Spin each tube down, resuspend in TE pH 8.0 or 10 mM Tris-HCl pH 8.0, 50 °C for "
+        "15-20 min, and measure each concentration."
+    )
     return Step(
         "Pool each part list",
         instructions=(
-            "Resuspend every block and measure each concentration.",
-            "Pool the members of each part list in equal molar amounts, one tube per position.",
+            first,
+            "Pool the members of each part list in equal picomoles, one tube a position: each "
+            "member gives the position's total divided by its member count, which is unequal "
+            "masses because the members differ in length.",
+            f"Bring each pool to at least {floor:g} ng/µL. The round's {DIGEST_VOLUME_UL:g} µL "
+            f"digest leaves {left:g} µL for the DNA after its two {ENZYME_UL:g} µL enzymes, and "
+            "the whole total has to arrive in it.",
         ),
         expected=tuple(
-            f"{position}: one tube holding {len(one)} member(s)."
-            for position, one in zip(positions, part_lists, strict=True)
+            f"{row.position}: one tube, {len(members[row.position])} member(s), at least "
+            f"{row.donor_digest.nanograms:,.0f} ng at {floor:g} ng/µL or above, "
+            f"{row.donor_digest.pmol / len(members[row.position]):.3g} pmol of each member."
+            for row in bench
+            if members[row.position]
         ),
         notes=(
             "Library coverage is counted on equally represented members, so an uneven pool loses "
             "members that no later round can put back.",
+            "Equal picomoles are unequal masses: a short member weighs less than a long one for "
+            "the same number of molecules, and weighing them equally would not pool them equally.",
+            *_pool_masses(bench, members),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1254,8 +1309,48 @@ def _pool_step(positions: Sequence[str], part_lists: Sequence[PartList]) -> Step
                 "Pool to the lowest member rather than to the mean; a member short here is short "
                 "in every round after it.",
             ),
+            Troubleshooting(
+                f"The pool is below {floor:g} ng/µL",
+                f"Concentrate it, by SPRI at the round's own {SPRI_AFTER_DIGEST:g}x ratio, or "
+                "scale the digest up so the same mass arrives in a larger volume.",
+            ),
         ),
     )
+
+
+def _at(parts: Sequence[Part], position: str) -> tuple[Part, ...]:
+    """Return the parts filling one position, in the order they were designed."""
+    return tuple(one for one in parts if one.position == position)
+
+
+def _stated_floor() -> float:
+    """Return the pool's floor as a page states it, rounded up so it is never below the real one."""
+    return math.ceil(pool_floor_ng_ul() * 10) / 10
+
+
+def _pool_masses(
+    bench: Sequence[RoundBench], members: Mapping[str, Sequence[Part]]
+) -> tuple[str, ...]:
+    """Return what a position's equal picomoles weigh, shortest member to longest."""
+    said = []
+    for row in bench:
+        each = members[row.position]
+        if not each:
+            continue
+        pmol = row.donor_digest.pmol / len(each)
+        shortest, longest = min(each, key=_len_of), max(each, key=_len_of)
+        said.append(
+            f"{row.position}: {pmol:.3g} pmol a member is "
+            f"{to_nanograms(pmol, shortest.length):.3g} ng of its shortest at "
+            f"{shortest.length:,} bp and {to_nanograms(pmol, longest.length):.3g} ng of its "
+            f"longest at {longest.length:,} bp."
+        )
+    return tuple(said)
+
+
+def _len_of(one: Part) -> int:
+    """How many bases the part is ordered as."""
+    return one.length
 
 
 def _round_steps(
