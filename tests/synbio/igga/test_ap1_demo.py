@@ -64,3 +64,44 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
     retained = bases[plan.rounds[-1].retained.start : plan.rounds[-1].retained.end]
     assert len(retained) == plan.project.retained_length == 75
     assert "*" not in translate(retained)
+
+
+def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
+    pool = plan.pool.pool
+    assert {len(one) for one in pool.oligos} == {plan.project.oligo_length}
+    assert pool.spread == 0.0
+    assert pool.count == len(pool.oligos)
+
+
+def test_the_arithmetic_floor_is_152_and_the_design_spends_one_more_on_one_block(plan):
+    """152 is what the length budget allows for; 153 is what a legal overhang set costs.
+
+    N_ATF7 is 1,092 bp, exactly four spans of 276 less the three shared overhangs, so its four
+    cut positions are forced and the first spells GCCG, which is refused as one base kind.
+    """
+    assert plan.pool.floor == 152
+    assert plan.pool.pool.count == 153
+    assert plan.pool.over_floor == ("N_ATF7",)
+
+
+def test_every_oligo_traces_to_its_protein_and_its_fragment(plan):
+    names = {one.name for one in plan.parts}
+    for oligo in plan.pool.pool.oligos:
+        assert oligo.source in names
+        assert 1 <= oligo.fragment <= oligo.fragments
+
+
+def test_every_block_reassembles_from_its_own_fragments(plan):
+    for split, part in zip(plan.pool.splits, plan.parts, strict=True):
+        assert split.reassembled() == part.sequence
+
+
+def test_the_fragment_counts_sit_at_or_above_lund_s_measured_84_6_per_cent_point(plan):
+    counted = dict(plan.pool.pool.fragment_counts())
+    assert max(counted) == 5
+    assert sum(blocks for pieces, blocks in counted.items() if pieces <= 2) == 55
+    assert [row[2] for row in plan.pool.against_lund() if row[0] == 5] == [0.846]
+
+
+def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
+    assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)

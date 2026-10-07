@@ -9,6 +9,19 @@
   "vector": "vector.gb",
   "host": "human",
   "oligo_length": 350,
+  "primers": "primers.tsv",
+  "bands": {
+    "count": [
+      "1-100",
+      "101-500",
+      "501-"
+    ],
+    "length": [
+      "1-250",
+      "251-300",
+      "301-350"
+    ]
+  },
   "batch_size": 96,
   "coverage": 300,
   "seed": 0,

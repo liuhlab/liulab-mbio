@@ -61,6 +61,13 @@ class Project:
         The codon usage table the coding bases are written for.
     oligo_length
         How long one synthesised oligo of the pool may be.
+    primers
+        The orthogonal primer set the pool is amplified by, as a two-column sheet the user
+        holds. Without one no oligo can be written, because the sites are templated on it.
+    bands
+        The vendor's bands for each quantity the pool is banded by, written ``low-high`` with an
+        empty top for a tier with no top. They are what headroom is measured against, and they
+        are reported whether or not anyone holds a price.
     batch_size
         How many parts one batch of the bench work carries.
     coverage
@@ -93,6 +100,8 @@ class Project:
     oligo_length: int
     batch_size: int
     coverage: float
+    primers: Path | None = None
+    bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
     barcode: Barcode = field(default_factory=Barcode)
@@ -104,6 +113,7 @@ class Project:
         object.__setattr__(self, "reserved_extra", tuple(self.reserved_extra))
         object.__setattr__(self, "parts", Path(self.parts))
         object.__setattr__(self, "vector", Path(self.vector))
+        object.__setattr__(self, "bands", dict(self.bands))
         self._check_positions()
         self._check_numbers()
         self._check_barcode_frame()
@@ -210,6 +220,12 @@ def read_project(path: str | os.PathLike[str]) -> Project:
         oligo_length=_whole(given, "oligo_length", "a project"),
         batch_size=_whole(given, "batch_size", "a project"),
         coverage=_number(given, "coverage", "a project"),
+        primers=(
+            _file(file, _text(given, "primers", "a project"), "primers")
+            if "primers" in given
+            else None
+        ),
+        bands=_bands(given.get("bands")),
         seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
@@ -234,8 +250,29 @@ _PROJECT_KEYS = frozenset(
         "coverage",
     }
 )
-_PROJECT_OPTIONAL = frozenset({"seed", "reserved_extra", "barcode"})
+_PROJECT_OPTIONAL = frozenset({"seed", "reserved_extra", "barcode", "primers", "bands"})
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
+
+
+def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
+    """Read the vendor's bands a project states, as a quantity naming its tiers.
+
+    Raises
+    ------
+    ValueError
+        If it is not an object of lists of strings.
+    """
+    if entry is None:
+        return {}
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"a project's bands are {type(entry).__name__}, not an object")
+    return {
+        quantity: tuple(
+            _one_text(one, f"bands {quantity}[{index}]")
+            for index, one in enumerate(_sequence(entry, quantity, "a project's"))
+        )
+        for quantity in entry
+    }
 
 
 def _barcode(entry: Any) -> Barcode:

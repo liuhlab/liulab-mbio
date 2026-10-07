@@ -1,0 +1,282 @@
+"""The oligo pool a library's blocks are synthesised from, and the primers that amplify it.
+
+A block longer than one oligo is ordered as several and assembled in one pot before it is a
+part. This is where that happens for this method: each block is split by `liulab_mbio.split`,
+each fragment is dressed as an oligo by `liulab_mbio.bench.pools`, and the method's own choices
+are what this module supplies -- which enzyme cuts the oligo, which two overhangs are held out
+by name, and which primer of the orthogonal set serves which role.
+
+The two reserved overhangs are the method's own interface, read off its stuffers rather than
+stated: a part enters the vector on one and leaves its cloning scar as the other, so an internal
+junction spelling either would ligate a fragment straight into the vector.
+
+**The pool's count is reported twice on purpose.** `PoolPlan.floor` is the arithmetic: the
+fewest oligos the length budget could ever need. `Pool.count` is the design: what the split
+actually spends, which is one more wherever a block's forced cuts spell no legal overhang. The
+two differing is a fact about a block, not a defect, and the report names which block.
+"""
+
+import os
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import KW_ONLY, dataclass
+from decimal import Decimal
+from math import ceil
+from pathlib import Path
+
+from liulab_mbio.bench.pools import (
+    Oligo,
+    OligoLayout,
+    Pool,
+    PrimerSite,
+    build_oligo,
+    pool_item,
+)
+from liulab_mbio.bench.prices import Band, Item
+from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.split import CargoSplit, fewest_pieces, split_cargo
+from liulab_synbio.igga.method import LUND_SUCCESS, ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME
+from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.project import Project
+
+#: How long one primer of the orthogonal set is.
+PRIMER_LENGTH = 20
+
+#: What the pool is priced and banded by: how many oligos, and how long each one is.
+QUANTITIES = ("count", "length")
+
+
+@dataclass(frozen=True, slots=True)
+class PoolPlan:
+    """One library's oligo pool, what it was split from, and what it is banded by.
+
+    Parameters
+    ----------
+    pool
+        Every oligo to order, with the primers that pull each one out.
+    splits
+        One per block, in the order the parts were given.
+    floor
+        The fewest oligos the length budget could need, summed over the blocks. The design
+        spends this or more.
+    item
+        The pool as one line of a bill: its count, its bands and its headroom. The money is
+        `liulab_mbio.bench.prices.bill`'s, and a hole wherever nobody holds a tariff.
+    """
+
+    pool: Pool
+    _: KW_ONLY
+    splits: tuple[CargoSplit, ...]
+    floor: int
+    item: Item
+
+    @property
+    def over_floor(self) -> tuple[str, ...]:
+        """Each block the design spends an oligo more on than the arithmetic allows for."""
+        return tuple(
+            str(split.cargo.name)
+            for split in self.splits
+            if split.pieces > fewest_pieces(len(split.cargo.sequence), split.budget)
+        )
+
+    def against_lund(self) -> tuple[tuple[int, int, float | None], ...]:
+        """How many blocks take each fragment count, beside the share Lund saw clone perfectly.
+
+        A count Lund did not measure carries ``None``: nothing here interpolates one.
+        """
+        counted = self.pool.fragment_counts()
+        return tuple(
+            (pieces, blocks, LUND_SUCCESS.get(pieces)) for pieces, blocks in counted.items()
+        )
+
+
+def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:
+    """Read the orthogonal primer set from a two-column sheet the user holds.
+
+    The columns are ``name`` and ``sequence``, tab separated, one primer a row, in the order the
+    roles are allotted. `ORTHOGONAL_SPLIT` says how many each role takes.
+
+    Raises
+    ------
+    ValueError
+        If the file is not that sheet, or holds too few primers for the split.
+    """
+    rows = Path(path).read_text(encoding="utf-8-sig").splitlines()
+    if not rows or rows[0].split("\t")[:2] != ["name", "sequence"]:
+        raise ValueError(
+            f"{os.fspath(path)} is not a primer sheet; expected tab-separated columns "
+            "name, sequence"
+        )
+    found: list[PrimerSite] = []
+    allotted = _roles()
+    for line, row in enumerate(rows[1:], 2):
+        if not row.strip():
+            continue
+        cells = row.split("\t")
+        if len(cells) < 2 or not cells[1].strip():
+            raise ValueError(f"line {line} of {os.fspath(path)} names a primer with no sequence")
+        place = len(found)
+        if place >= len(allotted):
+            break
+        found.append(PrimerSite(allotted[place], cells[0].strip(), cells[1].strip()))
+    if len(found) < len(allotted):
+        raise ValueError(
+            f"{os.fspath(path)} holds {len(found)} primers and this method allots "
+            f"{len(allotted)} across its {len(ORTHOGONAL_SPLIT)} roles"
+        )
+    return tuple(found)
+
+
+def design_pool(
+    parts: Sequence[Part],
+    project: Project,
+    *,
+    primers: Sequence[PrimerSite],
+    bands: Mapping[str, Sequence[Band]] | None = None,
+    key: str = "oligo-pool",
+    seed: int = 0,
+) -> PoolPlan:
+    """Split every block of `parts` and dress each fragment as one oligo of one pool.
+
+    A batch is one PCR1 and one plate of PCR2, so a gene takes its own inner primer from the
+    batch it sits in and the batch takes a forward and an outer primer of its own. The batches
+    are equal, which is what the evenness measurement behind `Project.batch_size` argues for.
+
+    Parameters
+    ----------
+    parts
+        Every block to synthesise, as `liulab_synbio.igga.parts.design_parts` wrote them.
+    project
+        What this build chose: the oligo length, the batch size and the reserved enzymes.
+    primers
+        The orthogonal set, already in role order; `read_primers` reads one.
+    bands
+        The vendor's bands for each of `QUANTITIES`, which the headroom is measured against.
+        A quantity with no band carries none, and nothing is estimated.
+    key
+        What a price record prices the pool by.
+    seed
+        What the filler is drawn from, so a second run writes the same oligos.
+
+    Raises
+    ------
+    ValueError
+        If a block spells no legal overhang set at any fragment count the oligo length allows,
+        which says how far that length reaches, or if an oligo comes out spelling a site the
+        layout did not put there.
+    """
+    scheme = project.scheme
+    layout = OligoLayout(
+        project.oligo_length,
+        enzyme=SYNTHESIS_ENZYME,
+        primers=len(ORTHOGONAL_SPLIT),
+        primer_length=PRIMER_LENGTH,
+    )
+    held = (scheme.entry_overhang, scheme.scar_overhang)
+    avoid = tuple(one.name for one in project.reserved_enzymes)
+    batches = _batches(len(parts), project.batch_size)
+    inner, forward, outer = _allot(primers)
+    oligos: list[Oligo] = []
+    splits: list[CargoSplit] = []
+    floor = 0
+    used: list[PrimerSite] = []
+    for index, part in enumerate(parts):
+        batch, place = batches[index]
+        record = part_record(part)
+        split = split_cargo(
+            record,
+            layout.cutter,
+            budget=layout.budget,
+            reserved=held,
+            avoid=avoid,
+        )
+        splits.append(split)
+        floor += fewest_pieces(len(record.sequence), layout.budget)
+        head = (forward[batch % len(forward)],)
+        tail = (inner[place], outer[batch % len(outer)])
+        used.extend((*head, *tail))
+        for fragment in split.fragments:
+            oligos.append(
+                build_oligo(
+                    split,
+                    fragment,
+                    name=f"{part.name}_f{fragment.index + 1}",
+                    source=part.name,
+                    layout=layout,
+                    forward=head,
+                    reverse=tail,
+                    avoid=avoid,
+                    seed=seed + index,
+                )
+            )
+    pool = Pool(
+        project.name,
+        layout=layout,
+        oligos=tuple(oligos),
+        primers=tuple(dict.fromkeys(used)),
+    )
+    return PoolPlan(
+        pool, splits=tuple(splits), floor=floor, item=pool_item(pool, key=key, bands=bands)
+    )
+
+
+def part_record(part: Part) -> SequenceRecord:
+    """Return one block as a record named for its part, which is what the split carries."""
+    return SequenceRecord(part.sequence, name=part.name)
+
+
+def _roles() -> tuple[str, ...]:
+    """Which role each primer of the set takes, in the order the set lists them."""
+    return tuple(role for role, count in ORTHOGONAL_SPLIT for _ in range(count))
+
+
+def _allot(
+    primers: Sequence[PrimerSite],
+) -> tuple[Sequence[PrimerSite], Sequence[PrimerSite], Sequence[PrimerSite]]:
+    """Cut the set into its three roles, in the order it is allotted in."""
+    inner, forward, outer = (count for _, count in ORTHOGONAL_SPLIT)
+    return (
+        primers[:inner],
+        primers[inner : inner + forward],
+        primers[inner + forward : inner + forward + outer],
+    )
+
+
+def _batches(parts: int, size: int) -> tuple[tuple[int, int], ...]:
+    """Which batch each part sits in and where in it, over batches of equal size.
+
+    A larger library divides into equal batches rather than full ones and a remainder, because
+    the evenness a pool is judged on compares subpools against each other.
+    """
+    count = max(1, ceil(parts / size))
+    each = ceil(parts / count)
+    return tuple((index // each, index % each) for index in range(parts))
+
+
+def read_bands(stated: Mapping[str, Iterable[str]]) -> Mapping[str, tuple[Band, ...]]:
+    """Read the vendor's bands for each quantity, written ``low-high`` with no top left empty.
+
+    Raises
+    ------
+    ValueError
+        If a quantity is not one the pool is banded by, or a band is not written that way.
+
+    Examples
+    --------
+    >>> read_bands({"length": ["301-350"]})["length"][0].holds(Decimal(350))
+    True
+    """
+    out: dict[str, tuple[Band, ...]] = {}
+    for quantity, written in stated.items():
+        if quantity not in QUANTITIES:
+            raise ValueError(
+                f"a pool is banded by {', '.join(QUANTITIES)}, and not by {quantity!r}"
+            )
+        bands: list[Band] = []
+        for one in written:
+            low, dash, high = str(one).partition("-")
+            if not dash or not low.strip():
+                raise ValueError(f"band {one!r} of {quantity} is not written 'low-high'")
+            top = high.strip()
+            bands.append(Band(quantity, Decimal(low.strip()), Decimal(top) if top else None))
+        out[quantity] = tuple(bands)
+    return out

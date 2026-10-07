@@ -28,6 +28,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.pools import pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
@@ -38,6 +39,7 @@ from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme
@@ -70,6 +72,8 @@ NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
+POOL_FILE = "pool.tsv"
+POOL_PRIMER_FILE = "pool-primers.tsv"
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +95,10 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    pool, pool_primers
+        The oligo pool to order and the primers that amplify it. Both are ``None`` where the
+        project names no primer set, because the primer sites are templated on the oligo and
+        nothing can be written without them.
     """
 
     parts: Path
@@ -99,6 +107,8 @@ class Files:
     records: tuple[Path, ...]
     protocol_data: Path
     protocol: Path
+    pool: Path | None = None
+    pool_primers: Path | None = None
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -154,6 +164,9 @@ class LibraryPlan:
     prices
         The price record the protocol's bill is costed against, if the caller holds one. Its
         quantities compute either way; with no record every money cell is a hole.
+    pool
+        The oligo pool every block is synthesised from, where the project names a primer set.
+        `liulab_synbio.igga.cargo` designs it.
     """
 
     project: Project
@@ -171,6 +184,7 @@ class LibraryPlan:
     host: str
     name: str = ""
     prices: PriceRecord | None = None
+    pool: PoolPlan | None = None
 
     @property
     def product(self) -> SequenceRecord:
@@ -242,7 +256,13 @@ class LibraryPlan:
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
         written = write_protocol_files(self.protocol(), out)
-        return Files(sheet, barcodes, changes, records, written.data, written.page)
+        pool = primers = None
+        if self.pool is not None:
+            pool = out / POOL_FILE
+            pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
+            primers = out / POOL_PRIMER_FILE
+            primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
+        return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
 
 
 def plan_igga(
@@ -386,6 +406,25 @@ def plan_igga(
         chosen.host,
         named,
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
+        _pool(chosen, built),
+    )
+
+
+def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
+    """Design the oligo pool, or none where the project names no primer set.
+
+    The sites that cut a fragment out are templated on the oligo rather than carried by a
+    primer, so a pool cannot be written at all without the set. A project naming none still
+    plans every other output.
+    """
+    if project.primers is None:
+        return None
+    return design_pool(
+        parts,
+        project,
+        primers=read_primers(project.primers),
+        bands=read_bands(project.bands),
+        seed=project.seed,
     )
 
 
