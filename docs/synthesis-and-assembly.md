@@ -42,11 +42,11 @@ wherever the site itself sits.
 | Item | Sites to remove | Cut by |
 | --- | --- | --- |
 | Part carrier vector | BsmBI | — |
-| Parts | BsaI, BsmBI | BsmBI (release the part) |
+| Parts | BsaI, BsmBI, the cargo enzyme | BsmBI (release the part) |
 | DMX vector | BsaI, BsmBI, BbsI | BsmBI (insert cargo), BsaI (add a plate barcode, release cargo, release the iGGA donor), PmeI (blunt the donor backbone) |
 | DMX barcode kit | — | BsaI (release a barcode) |
-| Cargo | BsaI, BsmBI | BsmBI (insert into the DMX vector) |
-| iGGA cargo | BsaI, BsmBI, BbsI, SrfI, PmeI | BsmBI (insert into the DMX vector), BsaI (release as the donor), BbsI (open the destination), SrfI (cut a destination BbsI missed) |
+| Cargo | BsaI, BsmBI, the cargo enzyme | BsmBI (insert into the DMX vector) |
+| iGGA cargo | BsaI, BsmBI, BbsI, SrfI, PmeI, the cargo enzyme | BsmBI (insert into the DMX vector), BsaI (release as the donor), BbsI (open the destination), SrfI (cut a destination BbsI missed) |
 | Working vector | BsmBI, and the cargo enzyme | BsmBI (insert the working cassette), the cargo enzyme (insert cargo) |
 | Final vector | — | — |
 
@@ -65,6 +65,10 @@ What binds the choice:
 - **No site in any molecule sharing its reaction, outside what it is meant to cut** — the
   reaction-scoped rule, which the gate reads
 - A reaction and cycling protocol the package ships
+
+Three other molecules share the final-assembly pot and so inherit the choice: cargo, iGGA cargo,
+and any part in the working cassette. A 7 bp cutter costs them little — PaqCI's site is about
+four times rarer than the 6 bp sites already on their lists.
 
 The ccdB cassette's inner sites are whichever enzyme this returns, by synthesis or by the same
 re-tailoring PCR a part uses. Where the search returns nothing, the sites that blocked each
