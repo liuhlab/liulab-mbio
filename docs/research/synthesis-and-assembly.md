@@ -480,7 +480,9 @@ so the judgement is shared and only the floor travels with the route.
 consensus depth above 150 was measured on a pooled amplicon carrying four UMIs, where 1,536 wells
 demultiplex in-read. LevSeq's twenty wanted and ten tolerable were measured on one amplicon per
 well, with the index on the primer. Picking one of the two for both routes would apply a figure
-to a library prep that never produced it. Each is a default a project may raise.
+to a library prep that never produced it. Each is a default a project may raise. The wanted depth
+is exceeded; the tolerable one is reached, so a well at exactly ten reads warns rather than going
+unjudged.
 
 **Below the floor a well gets no verdict, not a fail.** That is already `CONTEXT.md`'s rule for a
 `Check` — one no sourced threshold judges carries no verdict and says so — and here it reaches
@@ -680,6 +682,30 @@ two-fragment design that never needs it, or skip every long one that does.
 The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
 `liulab_synbio.dmx.CLEAN_COLONY_CURVE` carries it. #306 restores the two anchors it dropped,
 and #305 builds the floor.
+
+### 6.13 The pass mark for the library reads — iGGA
+
+**Decided in #346. The representation read takes the pooled-screen bar; linkage fidelity stays
+open.** Joung et al. 2017 set it for a plasmid library counted by a barcode amplicon before a
+screen — under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at
+over 100 reads a member — and section 3.5 of `docs/research/vector-qc-panel.md` quotes it with
+its citation. Each is a default a project may tighten and may not loosen, as a read depth is in
+`liulab_synbio.dmx`.
+
+**It transfers because the counted amplicon is length-matched.** The usual objection is that this
+library's members span about 0.5 to 2.3 kb where an sgRNA is 20 nt, so amplification bias differs.
+It does not apply: the representation read amplifies the barcode block alone, anchored on the
+retained internal stuffer, so every member's amplicon is the same length. The size skew lives in
+the library, and this read is what measures it.
+
+**The read depth is computed, not stated.** At 100 reads a member, AP-1's 13,824 combinations
+take about 1.4 M reads — a fraction of one run. Imkeller's Table 2 then prices the skew in screen
+coverage downstream: p90/p10 2.5 wants 200-fold, 5 wants 300-fold, 10 wants 400-fold.
+
+**Linkage fidelity keeps no mark.** Joung's ">70% perfectly matching guides" measures a guide's
+synthesis fidelity, not whether a barcode still names its part, so it does not transfer.
+Takacsi-Nagy's Figures 1D and 1E stay attribution: what one library reached, not a bar. H28 keeps
+that one quantity and loses the other two.
 
 ### Also open, and smaller
 

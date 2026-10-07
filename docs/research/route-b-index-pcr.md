@@ -284,12 +284,15 @@ Each of these is a real disagreement in the published material, not a reading di
    used — the question `liulab_synbio.dmx.depth_check` answers — while the article's number is
    where its software warns. Where that leaves the boundary still contested, the stricter reading
    stands: a well wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
-   `ROUTE_B` now carries `inclusive=False`, so a well at exactly 20 is called and warns instead of
-   passing, which is where the SI's own suboptimal branch puts it ("Alignment Count is ≤20 … still
-   proceed with data collection", with IGV validation). The flag reads both of a route's marks, so
-   a well at exactly 10 now carries no verdict: the article's "more than 10 reads are assigned to a
-   well" and the same tie-break both put it there, against Figure S1E's "at less than 10 reads we
-   can't detect true positives", which would have kept it.
+   So a well at exactly 20 is called and warns instead of passing, which is where the SI's own
+   suboptimal branch puts it ("Alignment Count is ≤20 … still proceed with data collection", with
+   IGV validation).
+   **Settled again by #317 at the lower mark: 10 is inside the tolerated band.** The SI's `≤20`
+   proceed-branch and Figure S1E's "at less than 10 reads we can't detect true positives" both
+   put 10 there, and the tie-break above does not reach a mark below which nothing is called at
+   all: a thin well carries no verdict rather than a fail, so strictness there only costs rework.
+   `Route` therefore carries no per-route flag; the wanted mark is exceeded and the tolerable one
+   reached, by what each mark means.
 3. **200 fmol in nanograms.** LevSeq says 200 fmol "translates to 120 ng for a 1-kb gene" (SI
    step 15). ONT's own amplicon protocol, quoted in `docs/research/bench-numbers.md`, gives the
    same 200 fmol as 130 ng for a 1 kb amplicon. Both are conversions of the same molar figure, so

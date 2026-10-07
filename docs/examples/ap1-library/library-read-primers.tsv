@@ -1,0 +1,5 @@
+read	name	sequence	length	amplicon_bp	platform
+linkage	Linkage read forward	CTTACTCCGCGAATCACC	18	1185	long read
+linkage	Linkage read reverse	GGTCTGAAATGGTGTCTAGG	20	1185	long read
+representation	Representation read forward	AGGAAAGTCTTCAGCCCG	18	135	short read
+representation	Representation read reverse	GGTCTGAAATGGTGTCTAGG	20	135	short read

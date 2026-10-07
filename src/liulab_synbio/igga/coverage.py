@@ -190,12 +190,130 @@ def plan_coverage(
     return tuple(rows)
 
 
-#: Where the completeness rule comes from, ready for a protocol's reference list.
+def skew_ratio(counts: Sequence[float]) -> float:
+    """Return a count distribution's skew: its 90th percentile over its 10th.
+
+    Joung's measure of how evenly a pooled library is represented, read off the counts one
+    member at a time. A perfectly even library answers 1.
+
+    Raises
+    ------
+    ValueError
+        If no count is given, one of them is negative, or the 10th percentile is zero — a
+        library a tenth of whose members went unread carries no ratio, only a share seen.
+
+    Examples
+    --------
+    >>> skew_ratio([5, 5, 5, 5])
+    1.0
+    >>> skew_ratio([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    5.0
+    """
+    if not counts:
+        raise ValueError("a skew ratio is measured over at least one count")
+    for one in counts:
+        if one < 0:
+            raise ValueError(f"a member cannot be read {one} times")
+    ranked = sorted(float(one) for one in counts)
+    low = _percentile(ranked, 0.10)
+    if low == 0.0:
+        raise ValueError(
+            "the 10th percentile of these counts is zero, so they carry no skew ratio: report "
+            "the share of members seen instead"
+        )
+    return _percentile(ranked, 0.90) / low
+
+
+def _percentile(ranked: Sequence[float], fraction: float) -> float:
+    """Return a percentile of already sorted counts, interpolating between neighbours."""
+    if len(ranked) == 1:
+        return ranked[0]
+    at = fraction * (len(ranked) - 1)
+    below = math.floor(at)
+    above = math.ceil(at)
+    return ranked[below] + (ranked[above] - ranked[below]) * (at - below)
+
+
+def reads_for_representation(constructs: int, per_member: int = 100) -> int:
+    """Return the reads a representation read takes: one member's share, over every member.
+
+    Joung judges a pooled library at over 100 reads a member, so the depth follows from the
+    library's width and is computed rather than stated.
+
+    Raises
+    ------
+    ValueError
+        If either number is not positive.
+
+    Examples
+    --------
+    >>> reads_for_representation(13824)
+    1382400
+    """
+    if constructs < 1:
+        raise ValueError(f"a library holds at least one construct, got {constructs}")
+    if per_member < 1:
+        raise ValueError(f"a member is read at least once, got {per_member}")
+    return constructs * per_member
+
+
+@dataclass(frozen=True, slots=True)
+class RepresentationMarks:
+    """What a pooled library's representation read has to reach.
+
+    Every one is Joung's, measured on an sgRNA library counted by a barcode amplicon before a
+    screen. They transfer because the iGGA representation read amplifies the barcode block
+    alone, so every member's counted amplicon is the same length. A project may tighten each
+    and may not loosen it.
+
+    Parameters
+    ----------
+    seen
+        The share of the library's combinations that have to be read at all.
+    skew
+        The 90th/10th percentile ratio the counts have to stay under.
+    reads_per_member
+        The depth the other two are judged at.
+    """
+
+    seen: float
+    skew: float
+    reads_per_member: int
+
+
+#: Joung's acceptance bar for a pooled library, quoted in `docs/research/vector-qc-panel.md`
+#: section 3.5: fewer than 0.5% of members undetected, a skew ratio under 10, judged at over 100
+#: reads a member.
+REPRESENTATION_MARKS = RepresentationMarks(seen=0.995, skew=10.0, reads_per_member=100)
+
+
+#: Where the completeness rule and the representation marks come from, ready for a protocol's
+#: reference list.
 REFERENCES: tuple[Reference, ...] = (
     Reference(
         "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid "
         "plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a "
         "library needs to represent every member",
         url="https://doi.org/10.1016/0092-8674(76)90055-6",
+    ),
+    Reference(
+        "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional "
+        "activation screening. Nat. Protoc. 12, 828-863, for a pooled library's acceptance "
+        "bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, "
+        "judged at over 100 reads a member",
+        url="https://doi.org/10.1038/nprot.2017.016",
+    ),
+    Reference(
+        "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR "
+        "screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, "
+        "53, Table 2, for the screen coverage a library's own skew demands: p90/p10 2.5 at "
+        "200x, 5 at 300x, 10 at 400x",
+        url="https://doi.org/10.1186/s13059-020-1939-1",
+    ),
+    Reference(
+        "Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA "
+        "library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a "
+        "1,000-fold screen at 100-fold coverage",
+        url="https://doi.org/10.1186/s13059-023-03132-3",
     ),
 )

@@ -197,13 +197,42 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
 
 def test_the_finished_library_is_read_for_linkage_and_for_representation(protocol):
     """The method's last two steps, and its rule that only one of them repeats."""
-    last = protocol.steps[-7:-5]
+    linkage, representation = protocol.steps[-7:-5]
 
-    assert [step.title for step in last] == ["Read linkage", "Read representation"]
-    for step in last:
-        assert step.holes
+    assert [linkage.title, representation.title] == ["Read linkage", "Read representation"]
+    # Linkage keeps H28: no source sets a mark for barcode-to-part fidelity. Representation is
+    # held to Joung's bar, so it carries none.
+    assert [hole.id for hole in linkage.holes] == ["H28"]
+    assert representation.holes == ()
     said = " ".join(note for step in protocol.steps for note in step.notes)
     assert said.count("after every later bottleneck") == 1
+
+
+def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
+    """The plan designs the pairs, so neither step sends anyone to the bench without one."""
+    linkage, representation = protocol.steps[-7:-5]
+    pairs = plan.reads
+
+    for step, pair in ((linkage, pairs.linkage), (representation, pairs.representation)):
+        said = " ".join(step.instructions)
+        assert pair.forward.sequence in said
+        assert pair.reverse.sequence in said
+        assert f"{pair.amplicon_length} bp amplicon" in said
+    assert "long read" in " ".join(linkage.instructions)
+
+
+def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):
+    """Joung's three, and the read depth that follows from the library's own width."""
+    said = " ".join(protocol.steps[-6].expected)
+
+    assert "99.5%" in said
+    assert "skew ratio below 10" in said
+    assert "100 or more reads a member" in said
+
+
+def test_no_emitted_protocol_carries_the_read_primer_hole(protocol):
+    """H27 is closed: the plan designs both pairs rather than naming none."""
+    assert "H27" not in [hole.id for step in protocol.steps for hole in step.holes]
 
 
 def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spells(

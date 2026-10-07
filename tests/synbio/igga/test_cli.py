@@ -104,6 +104,7 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
         "product.dna",
         "protocol.json",
         "protocol.html",
+        "library-read-primers.tsv",
     ]
     for path in written:
         assert path.is_file()

@@ -80,12 +80,16 @@ from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
 from liulab_synbio.igga.coverage import (
+    REPRESENTATION_MARKS,
+    RepresentationMarks,
     RoundCoverage,
     absent_probability,
     colonies_for_completeness,
+    reads_for_representation,
 )
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
 from liulab_synbio.igga.vector import Destination, Working, released_cargo
@@ -309,6 +313,9 @@ def protocol(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    reads: ReadPairs | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
+    linkage_fidelity: float | None = None,
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -415,6 +422,9 @@ def protocol(
             primer_sheet,
             working,
             selection,
+            reads,
+            marks,
+            linkage_fidelity,
         ),
         references=(
             *_references(scheme),
@@ -825,6 +835,9 @@ def _steps(
     primer_sheet: str = "",
     working: Working | None = None,
     selection: str = "",
+    reads: ReadPairs | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
+    linkage_fidelity: float | None = None,
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another.
 
@@ -841,12 +854,39 @@ def _steps(
     made.append(_pool_step(bench, parts, pool))
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds), selection))
-    made.append(_linkage_step(scheme, positions, barcode_length, rounds, parts, barcodes))
     made.append(
-        _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
+        _linkage_step(
+            scheme,
+            positions,
+            barcode_length,
+            rounds,
+            parts,
+            barcodes,
+            None if reads is None else reads.linkage,
+            linkage_fidelity,
+        )
+    )
+    made.append(
+        _representation_step(
+            scheme,
+            positions,
+            barcode_length,
+            rounds,
+            constructs,
+            barcodes,
+            None if reads is None else reads.representation,
+            marks,
+        )
     )
     made += _final_steps(
-        scheme, rounds, constructs, bench[-1].coverage.completeness, barcodes, working
+        scheme,
+        rounds,
+        constructs,
+        bench[-1].coverage.completeness,
+        barcodes,
+        working,
+        None if reads is None else reads.final_representation,
+        marks,
     )
     return tuple(made)
 
@@ -1646,6 +1686,31 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
     )
 
 
+def _with(pair: ReadPair | None) -> str:
+    """Name the designed pair and its amplicon, or say nothing where none was designed."""
+    if pair is None:
+        return ""
+    return (
+        f", on {pair.forward.name} {pair.forward.sequence} and {pair.reverse.name} "
+        f"{pair.reverse.sequence}, which give a {pair.amplicon_length} bp amplicon"
+    )
+
+
+def _as_platform(pair: ReadPair | None) -> str:
+    """Say what the amplicon asks of the sequencing, which follows from what it has to carry."""
+    return "" if pair is None else f" as a {pair.platform}"
+
+
+def _marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> str:
+    """State the three marks the counts are judged on, and the depth they are judged at."""
+    depth = reads_for_representation(constructs, marks.reads_per_member) if constructs else 0
+    at = f", which is {depth:,} reads over {constructs:,} combinations" if depth else ""
+    return (
+        f"At least {marks.seen:.1%} {what} seen; a 90th/10th percentile skew ratio below "
+        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}."
+    )
+
+
 def _linkage_step(
     scheme: Scheme,
     positions: Sequence[str],
@@ -1653,6 +1718,8 @@ def _linkage_step(
     rounds: Sequence[Round],
     parts: Sequence[Part],
     barcodes: str,
+    pair: ReadPair | None = None,
+    fidelity: float | None = None,
 ) -> Step:
     """Read the whole cargo back, which is what says the barcode block still names its parts.
 
@@ -1671,8 +1738,8 @@ def _linkage_step(
             f"Amplify the whole cargo out of the finished library, from the vector before the "
             f"first {rounds[0].entry_overhang} to the vector past the final "
             f"{rounds[0].scar_overhang}, so one read carries a member's parts and its barcode "
-            "block together.",
-            "Sequence the amplicon as a long read.",
+            f"block together{_with(pair)}.",
+            f"Sequence the amplicon{_as_platform(pair)}.",
             f"Decode each read's block against {barcodes}, then read the coding bases beside it "
             "against the member that block names.",
         ),
@@ -1687,13 +1754,17 @@ def _linkage_step(
         notes=(
             "The block reads in the reverse of the order the rounds ran: each round inserted its "
             "barcode ahead of the ones already there.",
-            "This plan designs no sequencing primers.",
             f"{ambiguous:.1%} of the single-base deletions a barcode can carry leave a read "
             "another barcode of the same part list could leave, which no read can be assigned "
             "through.",
-            "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid "
-            "barcode at every position, and nearly 90% of the library correctly linked. That is "
-            "what one source reached, not a mark this library is held to.",
+            (
+                f"This build passes the linkage read at {fidelity:.1%} of reads carrying a "
+                "barcode that still names its part."
+                if fidelity is not None
+                else "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a "
+                "valid barcode at every position, and nearly 90% of the library correctly "
+                "linked. That is what one source reached, not a mark this library is held to."
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1708,7 +1779,7 @@ def _linkage_step(
                 "forward; no later round repairs it.",
             ),
         ),
-        holes=(stages.READ_PRIMERS,),
+        holes=(stages.READ_PASS_MARK,),
     )
 
 
@@ -1719,6 +1790,8 @@ def _final_steps(
     completeness: float,
     barcodes: str,
     working: Working | None,
+    pair: ReadPair | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> list[Step]:
     """Return the five steps that move the finished library into the working vector.
 
@@ -1734,7 +1807,7 @@ def _final_steps(
         _release_step_final(scheme, product, span, freeing),
         _assemble_step(scheme, product, span, working),
         _final_growth_step(constructs, completeness, working),
-        _final_representation_step(scheme, rounds, barcodes, working),
+        _final_representation_step(barcodes, working, pair, constructs, marks),
     ]
 
 
@@ -1987,26 +2060,32 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
 
 
 def _final_representation_step(
-    scheme: Scheme, rounds: Sequence[Round], barcodes: str, working: Working | None
+    barcodes: str,
+    working: Working | None,
+    pair: ReadPair | None = None,
+    constructs: int = 0,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> Step:
     """Read the library again on the other side of the move, which is the only way to size the loss."""
     where = working.record.name if working is not None else "the working vector"
     return Step(
         "Read representation in the final vector",
         instructions=(
-            "Amplify across the barcode block again, exactly as the read before the move did.",
+            f"Amplify across the barcode block again{_with(pair)}.",
             f"Sequence, decode each read against {barcodes}, and compare the counts with the "
             "read taken in the library backbone.",
         ),
         expected=(
             "The same combinations, at a similar evenness. A combination seen before the move "
             f"and not after it was lost in the transfer into {where or 'the working vector'}.",
+            _marks_sentence(constructs, marks, "of what survived the move"),
         ),
         notes=(
             "Linkage is read once, in the library backbone; a barcode still names the same part "
             "after the move, because the move carries the whole cargo in one piece.",
-            "This read is what the final assembly is judged on, and nothing says what share of "
-            "the library has to survive it.",
+            "The forward anchor is the same retained internal stuffer, which travels with the "
+            "cargo; the reverse anchor moved with the vector, so this pair is designed against "
+            "the final record rather than reused from the read before the move.",
         ),
         troubleshooting=(
             Troubleshooting(
@@ -2015,7 +2094,6 @@ def _final_representation_step(
                 "the step above before rebuilding anything.",
             ),
         ),
-        holes=(stages.READ_PRIMERS, stages.READ_PASS_MARK),
     )
 
 
@@ -2026,6 +2104,8 @@ def _representation_step(
     rounds: Sequence[Round],
     constructs: int,
     barcodes: str,
+    pair: ReadPair | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> Step:
     """Count which combinations the library holds and how evenly, over the barcode block alone.
 
@@ -2038,14 +2118,15 @@ def _representation_step(
         instructions=(
             f"Amplify across the {block} bp barcode block alone, forward from the "
             f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "
-            f"from the vector past the final {rounds[0].scar_overhang}.",
-            f"Sequence the amplicon, decode each read against {barcodes}, and count the reads "
-            "each barcode combination gets.",
+            f"from the vector past the final {rounds[0].scar_overhang}{_with(pair)}.",
+            f"Sequence the amplicon{_as_platform(pair)}, decode each read against {barcodes}, "
+            "and count the reads each barcode combination gets.",
         ),
         expected=(
             f"A count for each of up to {constructs:,} distinct combinations: how many of them "
             "are seen at all, and how evenly they are read.",
             "A combination with no reads is a member the library has lost.",
+            _marks_sentence(constructs, marks, "of the combinations"),
         ),
         notes=(
             "Read representation again after every later bottleneck — the final assembly, and "
@@ -2065,9 +2146,10 @@ def _representation_step(
             ),
             Troubleshooting(
                 "The counts are heavily skewed",
-                "Members differ in length and a bottleneck can favour the short ones. This read "
-                "measures the skew; nothing here says how much of it is tolerable.",
+                "Members differ in length and a bottleneck can favour the short ones. Imkeller's "
+                "Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants "
+                "200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs "
+                "cells downstream rather than failing here.",
             ),
         ),
-        holes=(stages.READ_PASS_MARK,),
     )

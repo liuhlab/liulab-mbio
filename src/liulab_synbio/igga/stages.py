@@ -145,30 +145,18 @@ POOL_HOLES: tuple[Hole, ...] = (
 )
 
 
-#: What neither read of the finished library can write. The method says what each one spans and
-#: that it is a long read, and names no primer against it: #343 is open on that, and the two
-#: reads hit the same wall. Carried by the linkage read, where the amplicon is longest.
-READ_PRIMERS = Hole(
-    "H27",
-    "no primer pair, amplicon length or read depth for either library read",
-    "undecided",
-    where="the linkage and representation reads",
-    filled_by="whichever way #343 is decided: the plan designs both pairs against the finished "
-    "record, or the step says what each must span and leaves the pair to the reader",
-    issue="liuhlab/liulab-mbio#343",
-)
-
-#: What neither read can be judged by. The source's own figures are what it reached, not a mark
-#: it set, and what this library must reach follows from the screen downstream, which the method
-#: cannot see. Carried by the representation read, which is the one repeated.
+#: What the linkage read alone cannot be judged by. The representation read is held to Joung's
+#: pooled-library bar, in `liulab_synbio.igga.coverage`; nothing published says what share of
+#: reads must carry a barcode that still names its part, and the source's own figure is what one
+#: library reached rather than a mark it set.
 READ_PASS_MARK = Hole(
     "H28",
-    "no pass mark for either library read: what share of the library must be seen, how even the "
-    "counts must be, or what linkage fidelity passes",
+    "no pass mark for the linkage read: what share of reads must carry a barcode that still "
+    "names its part",
     "undecided",
-    where="the linkage and representation reads, what carries the library forward",
-    filled_by="the screen downstream, which is what sets the representation the library has to "
-    "reach",
+    where="the linkage read",
+    filled_by="the project, or a source that sets a mark rather than reporting what it reached",
+    issue="liuhlab/liulab-mbio#346",
 )
 
 #: What a build that names no working vector cannot say. The working vector is the user's own

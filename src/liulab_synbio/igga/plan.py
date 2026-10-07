@@ -53,6 +53,7 @@ from liulab_synbio.igga.parts import (
     synthesis_sheet,
 )
 from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.reads import ReadPairs, read_pairs, read_sheet
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
 from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
@@ -83,6 +84,7 @@ BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
 POOL_FILE = "pool.tsv"
 POOL_PRIMER_FILE = "pool-primers.tsv"
+READ_PRIMER_FILE = "library-read-primers.tsv"
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +110,9 @@ class Files:
         The oligo pool to order and the primers that amplify it. Both are ``None`` where the
         project names no primer set, because the primer sites are templated on the oligo and
         nothing can be written without them.
+    read_primers
+        The pairs that read the finished library back, designed against the simulated records:
+        linkage, representation, and representation again after the move into a working vector.
     """
 
     parts: Path
@@ -118,6 +123,7 @@ class Files:
     protocol: Path
     pool: Path | None = None
     pool_primers: Path | None = None
+    read_primers: Path | None = None
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -131,6 +137,7 @@ class Files:
             self.protocol,
             self.pool,
             self.pool_primers,
+            self.read_primers,
         )
         return tuple(path for path in written if path is not None)
 
@@ -218,6 +225,11 @@ class LibraryPlan:
         return tuple(one.part for one in self.rounds)
 
     @property
+    def reads(self) -> ReadPairs:
+        """The pairs that read this library back, designed against the records it simulated."""
+        return read_pairs(self.scheme, self.rounds, self.working)
+
+    @property
     def validation(self) -> dmx.Validation | None:
         """What reading these designs back takes, or `None` where the project reads none.
 
@@ -273,6 +285,9 @@ class LibraryPlan:
             pool_sheet=POOL_FILE,
             primer_sheet=POOL_PRIMER_FILE,
             working=self.working,
+            reads=self.reads,
+            marks=self.project.marks,
+            linkage_fidelity=self.project.linkage_fidelity,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -301,7 +316,11 @@ class LibraryPlan:
             pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
             primers = out / POOL_PRIMER_FILE
             primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
-        return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
+        reads = out / READ_PRIMER_FILE
+        reads.write_text(read_sheet(self.reads), encoding="utf-8")
+        return Files(
+            sheet, barcodes, changes, records, written.data, written.page, pool, primers, reads
+        )
 
 
 def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, ...]:

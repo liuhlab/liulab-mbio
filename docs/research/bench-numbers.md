@@ -641,7 +641,7 @@ the cells, not to the method.
 | Mass of cargo pool into the reaction | **ours** | — |
 | Mass of working vector into the reaction | **ours** | — |
 | Colonies the library needs | the package computes this floor from the completeness asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
-| Expected representation | **ours** — "read representation" is a step with no sourced pass mark | — |
+| Expected representation | at least 99.5% of members seen, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member | Joung et al. 2017, quoted in `docs/research/vector-qc-panel.md` section 3.5 |
 
 The method page's "Neither by-product needs a check" is a design claim, not a number.
 
@@ -649,7 +649,7 @@ The method page's "Neither by-product needs a check" is a design claim, not a nu
 
 ## The holes, collected
 
-Twenty-one, by stage. Each is a number the generated protocol would otherwise have to invent.
+Twenty, by stage. Each is a number the generated protocol would otherwise have to invent.
 
 **The numbering has five gaps, and they are deliberate.** H11, H17, H19, H20 and H26 were holes
 on the first pass and were closed on the second, when the `r.jina.ai` route reached the NEB

@@ -172,10 +172,10 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
-    reads = ["H27", "H28"]
+    reads = ["H28"]
     # The final assembly: this project names no working vector, so what one would fix is H31,
     # and this library's own backbone presents no cut that frees its cargo, which is H32.
-    final = ["H31", "H32", "H24", "H31", "H24", "H24", *reads]
+    final = ["H31", "H32", "H24", "H31", "H24", "H24"]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
         "H25",
@@ -289,8 +289,6 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
         "H24",
         "H24",
         "H24",
-        "H27",
-        "H28",
     ]
 
 
