@@ -21,11 +21,13 @@ import pytest
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
+from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite
 from liulab_synbio.igga.gate import (
     WELL_PRIMERS,
     Verdict,
+    _released,
     check_dmx_vector,
     check_library,
     check_reaction,
@@ -162,6 +164,7 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
         "cargo sites",
         "cargo frame",
         "well primers",
+        "blunt sites",
         "barcode spacing",
         "barcode reading",
         "barcode block",
@@ -176,6 +179,53 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
 def test_a_fidelity_nothing_judges_carries_no_verdict(good):
     assert good["ligation fidelity"].status is None
     assert good["ligation fidelity"].check.value > 0.9
+
+
+# A ligase matrix the user holds. The rates are this file's own, chosen either side of
+# `STRONG_LIGATION`; the sheet name is the one Bilotti 2022's workbook carries, and none of
+# that workbook is here.
+AP1_OVERHANGS = ("AGGA", "AGAT", "GCAT", "TTCC")
+SHEET = "File S7. T7 PEG"
+
+
+def _t7_peg(**rates: float):
+    """A sheet of a workbook the user holds, joining each AP-1 overhang at the rate asked for.
+
+    A rate is per 100,000 events, which the filler row makes exact.
+    """
+    joined = {one: rates.get(one, 300.0) for one in AP1_OVERHANGS}
+    counts = {one: {reverse_complement(one): round(rate * 10)} for one, rate in joined.items()}
+    counts["AAAA"] = {"TTTT": 1_000_000 - sum(row[one] for row in counts.values() for one in row)}
+    return LigaseProfile(
+        Path("File S1_NAR.xlsx"),
+        conditions=SHEET,
+        overhang_length=4,
+        observations=1_000_000,
+        counts=counts,
+    )
+
+
+def test_without_a_ligase_matrix_the_ligation_is_judged_as_it_always_was(good):
+    assert "ligation on-target rate" not in {one.name for one in good.judgements}
+
+
+def test_a_ligase_matrix_adds_a_check_and_moves_the_fidelity_score_not_at_all(good, judge):
+    judged = judge(profile=_t7_peg())
+
+    assert judged["ligation fidelity"].check == good["ligation fidelity"].check
+    assert judged["ligation on-target rate"].status == "pass"
+    assert judged.status == "pass"
+
+
+def test_an_overhang_the_ligase_joins_rarely_warns_and_names_the_sheet(judge):
+    judged = judge(profile=_t7_peg(AGGA=60.8))
+
+    one = judged["ligation on-target rate"]
+    assert one.status == "warn"
+    assert "AGGA at 60.8" in one.check.detail
+    assert SHEET in one.check.detail
+    assert judged.status == "warn"
+    assert not judged.failures
 
 
 def test_the_chain_is_two_digests_and_a_ligation_a_round(project, destination, blocks, products):
@@ -325,10 +375,14 @@ def test_a_cargo_carrying_an_annealing_region_is_caught(judge, blocks):
     assert isinstance(finding, Segment)
 
 
-def test_a_destination_no_well_primer_reads_is_not_judged_as_one(good):
-    """The AP-1 destination is a stand-in with no DMX backbone, so no blunt site reaches a primer."""
+def test_a_destination_no_well_primer_reads_is_not_judged_as_one(judge):
+    """A destination carrying a cassette and nothing else: no primer reads it, so nothing judges it."""
+    stand_in = SequenceRecord(
+        FILLER + IGGA.internal_stuffer + FILLER, topology="circular", name="stand-in"
+    )
+
     with pytest.raises(KeyError):
-        good["blunt sites"]
+        judge(destination=stand_in)["blunt sites"]
 
 
 def test_a_dmx_destination_is_judged_where_a_build_accepts_one(judge):
@@ -362,7 +416,7 @@ def _cassette(enzyme: Enzyme, payload: str, *, left: str = "", right: str = "") 
         + reach
         + (right or IGGA.scar_overhang)
     )
-    return Cassette(bases, enzyme, ())
+    return Cassette(bases, enzyme, (), "the digest this stand-in is cut in")
 
 
 @pytest.fixture(scope="module")
@@ -405,3 +459,29 @@ def test_a_build_names_both_the_working_vector_and_its_enzyme_or_neither(judge, 
     _, working = final
     with pytest.raises(ValueError, match="name both, or neither"):
         judge(working=working)
+
+
+def test_a_donor_held_in_a_circular_backbone_is_judged_on_its_cargo(judge, blocks):
+    """Two pieces come off a circular donor, and the cloning scar says which one is the part."""
+    one = blocks["N"][0]
+    entry, scar = IGGA.entry_overhang, IGGA.scar_overhang
+    cargo = one.sequence[len(IGGA.external_stuffer_5) - len(entry) :]
+    cargo = cargo[: len(cargo) - len(IGGA.external_stuffer_3) + len(scar)]
+    circular = SequenceRecord(
+        IGGA.external_stuffer_5[: -len(entry)]
+        + cargo
+        + IGGA.external_stuffer_3[len(scar) :]
+        + FILLER,
+        topology="circular",
+        name="N in a DMX backbone",
+    )
+
+    assert len(_released(circular, IGGA.external)) == 2
+    assert judge(blocks=_swap_record(blocks, "N", 0, circular)).status == "pass"
+
+
+def _swap_record(blocks, position, index, record):
+    """Return the blocks with one of them replaced by a record as it stands."""
+    changed = {name: list(found) for name, found in blocks.items()}
+    changed[position][index] = record
+    return changed

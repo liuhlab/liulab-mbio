@@ -637,6 +637,11 @@ class Plate:
         Well name to the name of what sits there. Each name resolves against the protocol's
         materials, oligos, vessels and other plates, and `Protocol.audit` reports one that does
         not; a dangling name is a defect the protocol can report.
+    labels
+        Well name to text describing that well, such as ``"quarter 3"`` or its printed address.
+        A label resolves against nothing and is drawn on the layout as it stands: it is what
+        `holds` is for a plate, said a well at a time. A well a step has to name occupies
+        `seating`, never this.
     """
 
     name: str
@@ -645,6 +650,7 @@ class Plate:
     catalog: str = ""
     holds: str = ""
     seating: Mapping[str, str] = field(default_factory=dict, hash=False)
+    labels: Mapping[str, str] = field(default_factory=dict, hash=False)
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -656,7 +662,7 @@ class Plate:
             f"one of {', '.join(str(n) for n in FORMATS)}",
         )
         known = set(self.well_names)
-        for well in self.seating:
+        for well in (*self.seating, *self.labels):
             _require(well in known, f"plate {self.name!r} has no well {well!r}")
 
     @property

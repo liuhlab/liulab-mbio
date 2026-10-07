@@ -42,12 +42,14 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | File | What it is |
 | --- | --- |
 | [parts.tsv](parts.tsv) | the synthesis order sheet: 72 blocks, 133 to 1,149 bases |
-| [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 153 oligos, every one 350 nt |
+| [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 131 oligos, every one 350 nt |
 | [pool-primers.tsv](pool-primers.tsv) | the 74 primers that amplify the pool, and how many oligos each one pulls out |
 | [barcodes.tsv](barcodes.tsv) | which barcode names which part, and where it sits |
+| [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
-| [product.dna](product.dna) | one member of the finished library, 2,276 bases |
+| [product.dna](product.dna) | one member of the finished library, 6,435 bases |
+| [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
 | [protocol.json](protocol.json) | the bench protocol as data |
 | [protocol.html](protocol.html) | the same protocol as a page to work from |
 
@@ -55,14 +57,21 @@ The three part lists make 24 x 24 x 24 = 13,824 members. The product file holds 
 with the rest differing only in which protein and which barcode sits at each position.
 
 The blocks of `parts.tsv` are not bought. The protocol orders the pool and its primers, pulls
-each batch out of the pool, pulls each block out of its batch, and assembles the block from its
-own pieces. The bill buys the oligos and the primers; it never buys the blocks as well.
+each batch out of the pool, pulls each block out of its batch, and clones that block's cargo
+into the vector of the position it fills. Only the cargo is synthesised: the stuffers either
+side of it are the vector's own bases. The bill buys the oligos and the primers; it never buys
+the blocks as well.
+
+A part enters on the overhang the round before it leaves behind, so each position needs a vector
+offering that overhang. The three `block-vector` files are one vector written three times, four
+bases apart. The first is `vector.gb` itself, which is also what round one opens.
 
 The protocol ends by moving the finished library into a working vector, which is where an
 application gets it. Add a `working_vector` key to name the backbone yours ends in and the
 steps carry its enzyme and that enzyme's cycling; this project names none, so those steps say
-what a vector would have fixed instead. Choose it before the blocks are designed and list it
-under `reserved_extra`: an enzyme a block spells cannot be the one that admits the library.
+what a vector would have fixed instead. Name one and the plan reads its cargo enzyme off that
+backbone first, then keeps every block clear of it: an enzyme a block spells cannot be the one
+that admits the library.
 
 ## What a price costs
 
@@ -83,9 +92,10 @@ leaves a hole rather than a guess. The keys this plan asks for are the bill's ow
 Each record is drawn by the same command, from the file beside it:
 
 ```bash
-pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna -o product-map.pdf
-pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna \
-  --region 1598..1672 --sequence-view -o barcode-block.pdf
+D=docs/examples/ap1-library
+pixi run liulab_mbio plot map $D/product.dna -o $D/product-map.pdf
+pixi run liulab_mbio plot map $D/product.dna \
+  --region 1368..1442 --sequence-view -o $D/barcode-block.pdf
 ```
 
 | File | What it is |

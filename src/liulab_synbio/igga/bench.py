@@ -92,6 +92,35 @@ def digest_amount(
     return amount
 
 
+def pool_floor_ng_ul(
+    *,
+    nanograms: float = DIGEST_NG,
+    volume_ul: float = DIGEST_VOLUME_UL,
+    taken_ul: float = 2 * ENZYME_UL,
+) -> float:
+    """Return the least a pooled part list may be concentrated at, ng/µL.
+
+    The round's digest takes `nanograms` of the pool in `volume_ul`, and its two enzymes take
+    `taken_ul` of that, so the DNA has to arrive in what is left. No source states this: it is
+    the digest's own numbers read backwards, which is why the vendors' 10 ng/µL resuspension
+    floor does not settle it.
+
+    Raises
+    ------
+    ValueError
+        If the enzymes leave no volume for the DNA.
+
+    Examples
+    --------
+    >>> round(pool_floor_ng_ul(), 2)
+    22.22
+    """
+    left = volume_ul - taken_ul
+    if left <= 0:
+        raise ValueError(f"{taken_ul:g} µL of enzyme leaves a {volume_ul:g} µL digest no room")
+    return nanograms / left
+
+
 def ligation_amounts(
     destination: tuple[str, int],
     donor: tuple[str, int],

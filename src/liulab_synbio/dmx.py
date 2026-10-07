@@ -43,7 +43,6 @@ from liulab_mbio.protocol.model import (
     ThermocyclerProgram,
     Transfer,
     Troubleshooting,
-    Vessel,
     Well,
 )
 
@@ -266,22 +265,16 @@ class Route:
     plate_axis
         How many marks the one axis carrying the plate carries.
     wanted_reads
-        The mark a well's depth has to meet, by `meets`, before it is called. A project may
-        raise it.
+        A well is called **above** this mark. Qian publishes a consensus depth above 150 and
+        LevSeq's SI checklist an alignment count above 20, so neither route calls a well landing
+        exactly on it. A project may raise it.
     tolerable_reads
-        The mark that same comparison holds a well to for any verdict at all; under it the well
-        carries none. Equal to `wanted_reads` where the route publishes one number rather than
-        two.
-    inclusive
-        Whether a depth equal to either of a route's marks meets it. Qian publishes a consensus
-        depth *above* 150, and LevSeq's SI checklist an alignment count *above* 20, so neither
-        route calls a well that lands exactly on a mark. LevSeq's article reads the same 20 as a
-        minimum instead; the SI governs, because its checklist decides whether a well's data may
-        be used, which is what this decides, while the article's number is where its software
-        warns. Where two sources still contest a boundary the stricter reading stands: a well
-        wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
+        The mark at or above which a well still carries a verdict; `None` where the route
+        publishes one number and has no warn band. LevSeq's SI routes a well at ``<=20`` into a
+        proceed-with-validation branch and its Figure S1E puts the floor of detection at 10
+        reads, so a well at exactly 10 warns rather than going unjudged.
     source
-        The key of the `SOURCES` entry the two depths were read from.
+        The key of the `SOURCES` entry the depths were read from.
     """
 
     name: str
@@ -290,13 +283,8 @@ class Route:
     well_axes: tuple[int, ...]
     plate_axis: int
     wanted_reads: int
-    tolerable_reads: int
+    tolerable_reads: int | None
     source: str
-    inclusive: bool = True
-
-    def meets(self, reads: int, mark: int) -> bool:
-        """Whether this many reads meet `mark`, by the comparison this route publishes."""
-        return reads >= mark if self.inclusive else reads > mark
 
     @property
     def wells_per_plate(self) -> int:
@@ -321,17 +309,16 @@ ROUTE_A = Route(
     well_axes=(GROUP_SIZE, GROUP_SIZE, GROUP_SIZE),
     plate_axis=GROUP_SIZE,
     wanted_reads=150,
-    tolerable_reads=150,
+    tolerable_reads=None,
     source="Qian SI",
-    inclusive=False,
 )
 
 #: One barcoded primer pair a well, 96 forward marks addressing the well and 96 reverse the
-#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable, both
-#: depths to exceed, so a well at exactly twenty is called and warns, where the SI's suboptimal
-#: branch puts it. LevSeq pairs the floor with a second criterion, a mean error below 10%, which
-#: nothing here judges — a named hole: it is a mean over per-position base counts, and a well
-#: reaches this package as a read count and a consensus call.
+#: plate: 9,216 wells on the 192 primers already held. Twenty reads wanted, ten tolerable,
+#: twenty to exceed and ten to reach, so a well at exactly twenty is called and warns, where the
+#: SI's suboptimal branch puts it. LevSeq pairs the floor with a second criterion, a mean error
+#: below 10%, which nothing here judges — a named hole: it is a mean over per-position base
+#: counts, and a well reaches this package as a read count and a consensus call.
 ROUTE_B = Route(
     "B",
     marking="amplify each well with one barcoded primer pair",
@@ -340,7 +327,6 @@ ROUTE_B = Route(
     wanted_reads=20,
     tolerable_reads=10,
     source="LevSeq",
-    inclusive=False,
 )
 
 #: Both routes, by the name a project names one with.
@@ -465,9 +451,10 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     """Return the verdict on whether a well was read deeply enough to call.
 
     A well below the route's tolerable depth carries **no verdict**, not a failure: it is read
-    again or picked again, and reformatting does not compact it out. Between tolerable and
-    wanted it is called and warns. `wanted` raises the route's own mark, which a project may do
-    and may not lower.
+    again or picked again, and reformatting does not compact it out. From the tolerable mark up
+    to the wanted one it warns; above the wanted one it passes. A route with no tolerable mark
+    has no warn band. `wanted` raises the route's own mark, which a project may do and may not
+    lower.
 
     Raises
     ------
@@ -478,6 +465,8 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     --------
     >>> depth_check(ROUTE_B, 12).status, depth_check(ROUTE_B, 4).status
     ('warn', None)
+    >>> depth_check(ROUTE_B, 10).status
+    'warn'
     """
     if reads < 0:
         raise ValueError(f"a well cannot carry {reads} reads")
@@ -488,16 +477,17 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
             f"raise that, not lower it to {mark}"
         )
     status: Status | None = None
-    if route.meets(reads, mark):
+    if reads > mark:
         status = "pass"
-    elif route.meets(reads, route.tolerable_reads):
+    elif route.tolerable_reads is not None and reads >= route.tolerable_reads:
         status = "warn"
+    tolerated = "" if route.tolerable_reads is None else f" and tolerates {route.tolerable_reads}"
     return Check(
         "reads_per_well",
         status,
         float(reads),
-        f"route {route.name} wants {mark} reads a well and tolerates "
-        f"{route.tolerable_reads}; below that no read is deep enough to call",
+        f"route {route.name} wants more than {mark} reads a well{tolerated}; below that no read "
+        f"is deep enough to call",
     )
 
 
@@ -687,7 +677,17 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     return tuple(one for one in designs if one.fragments >= floor)
 
 
-def picked_plate(name: str, colonies: int) -> Plate:
+def _selected_on(selection: str) -> str:
+    """Return what a plate of this read's transformants carries, named or left to the record.
+
+    The drug is the vector's, read off its marker by the caller: this method's own DMX vector is
+    not the one the published protocol was written for, and naming that one sends a reader to an
+    empty plate.
+    """
+    return selection or "the vector's own antibiotic"
+
+
+def picked_plate(name: str, colonies: int, selection: str = "") -> Plate:
     """Return one plate of picked colonies: `colonies` wells of selective medium.
 
     Picking fills one quarter of the plate at a time, in the order a head built for the index
@@ -703,22 +703,23 @@ def picked_plate(name: str, colonies: int) -> Plate:
     Examples
     --------
     >>> picked = picked_plate("picked 1", 288)
-    >>> picked.wells, len(picked.seating), picked.seating["B1"]
+    >>> picked.wells, len(picked.labels), picked.labels["B1"]
     (384, 288, 'quarter 3')
     """
     if colonies > PICKED_WELLS:
         raise ValueError(f"{colonies} colonies do not fit a {PICKED_WELLS}-well plate")
-    seating: dict[str, str] = {}
+    labels: dict[str, str] = {}
     left = colonies
     for number, quarter in enumerate(plates.interleave(PICKED_WELLS, INDEX_WELLS), start=1):
-        seating |= dict.fromkeys(quarter[: max(left, 0)], f"quarter {number}")
+        labels |= dict.fromkeys(quarter[: max(left, 0)], f"quarter {number}")
         left -= len(quarter)
     return plates.plate(
         name,
         PICKED_WELLS,
         catalog=PICKED_CATALOG,
-        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with carbenicillin",
-        seating=seating,
+        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with "
+        f"{_selected_on(selection)}",
+        labels=labels,
         note=f"{colonies} of {PICKED_WELLS} wells picked, a quarter at a time",
     )
 
@@ -745,38 +746,23 @@ def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
 
     Examples
     --------
-    >>> index_plate("index 1", 3, plate=1).seating["A2"]
+    >>> index_plate("index 1", 3, plate=1).labels["A2"]
     'forward 2, reverse 2'
     """
     if samples > INDEX_WELLS:
         raise ValueError(f"{samples} samples do not fit a {INDEX_WELLS}-well plate")
-    seating = {}
+    labels = {}
     names = plates.plate(name, INDEX_WELLS).well_names
     for well in range(samples):
         one = address(ROUTE_B, plate=plate, well=well)
-        seating[names[well]] = f"forward {one.well_marks[0]}, reverse {one.plate_mark}"
+        labels[names[well]] = f"forward {one.well_marks[0]}, reverse {one.plate_mark}"
     return plates.plate(
         name,
         INDEX_WELLS,
         catalog=INDEX_CATALOG,
         holds="one barcoded PCR each, the pair its own address names",
-        seating=seating,
+        labels=labels,
         note=f"plate mark {plate + 1}; {samples} of {INDEX_WELLS} wells used",
-    )
-
-
-def bioassay_plate(name: str) -> Vessel:
-    """Return the 25 cm plate the colonies are picked from.
-
-    It is a vessel and not a plate: its colonies land where they land, so they have no
-    positions to seat.
-    """
-    return Vessel(
-        name,
-        kind="25 cm BioAssay plate",
-        catalog=BIOASSAY_CATALOG,
-        holds=f"about {BIOASSAY_COLONIES:,} colonies, which is the density picking wants",
-        note="100 µg/mL carbenicillin, overnight at 37 °C",
     )
 
 
@@ -800,7 +786,7 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
     wells = [
         Well(plate.name, name)
         for plate in picked
-        for name in (plate.seating or dict.fromkeys(plate.well_names))
+        for name in (plate.labels or dict.fromkeys(plate.well_names))
     ]
     return plates.compact(
         wells,
@@ -832,7 +818,7 @@ def sampling(picked: Plate, index: Sequence[Plate]) -> tuple[Transfer, ...]:
     >>> len(moves), len(moves[0].moves), moves[0].instrument
     (3, 96, 'multichannel pipette')
     """
-    filled = picked.seating or dict.fromkeys(picked.well_names)
+    filled = picked.labels or dict.fromkeys(picked.well_names)
     quarters = [
         tuple(name for name in quarter if name in filled)
         for quarter in plates.interleave(picked.wells, INDEX_WELLS)
@@ -877,6 +863,9 @@ class Validation:
         That floor, carried so the protocol can print it beside each design's chance.
     colonies
         Colonies picked per design.
+    selection
+        What to plate on, read off the vector's own marker by the caller. Empty where the record
+        annotates none, and every plate then says so rather than naming a drug.
     """
 
     route: Route
@@ -884,6 +873,7 @@ class Validation:
     _: KW_ONLY
     floor: int
     colonies: int = COLONIES_PER_DESIGN
+    selection: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a read of no design, or of no colony per design."""
@@ -903,7 +893,8 @@ class Validation:
         full, rest = divmod(self.wells, PICKED_WELLS)
         sizes = [PICKED_WELLS] * full + ([rest] if rest else [])
         return tuple(
-            picked_plate(f"picked {number}", size) for number, size in enumerate(sizes, start=1)
+            picked_plate(f"picked {number}", size, self.selection)
+            for number, size in enumerate(sizes, start=1)
         )
 
     @property
@@ -919,7 +910,7 @@ class Validation:
         self._only(ROUTE_B)
         made: list[Plate] = []
         for one in self.picked:
-            left = len(one.seating)
+            left = len(one.labels)
             while left > 0:
                 made.append(
                     index_plate(f"index {len(made) + 1}", min(left, INDEX_WELLS), plate=len(made))
@@ -948,11 +939,15 @@ def validation(
     floor: int | None,
     *,
     colonies: int = COLONIES_PER_DESIGN,
+    selection: str = "",
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
     `None` is the answer for a project that states no floor and for one whose floor is above
     every design: either way nothing is read, and a protocol then carries no validation at all.
+
+    `selection` is what the caller read off the vector's marker. Left empty, every plate says
+    the vector's own antibiotic rather than naming one this read cannot know.
 
     Raises
     ------
@@ -971,26 +966,7 @@ def validation(
     read = validated(designs, floor)
     if not read:
         return None
-    return Validation(route, read, floor=floor, colonies=colonies)
-
-
-def pooling(compressed: Plate, reservoir: Vessel) -> Transfer:
-    """Return every barcoded well run into one reservoir, which is what a pool is.
-
-    Examples
-    --------
-    >>> pooled = pooling(compressed_plate("lysate"), Vessel("reservoir"))
-    >>> len(pooled.moves)
-    1536
-    """
-    return plates.pool(
-        plates.wells_of(compressed),
-        Well(reservoir.name, "1"),
-        WELL_UL,
-        title=f"Pool {compressed.name}",
-        note=f"Invert and spin at 200 x g; {POOL_COLUMNS} miniprep columns, because one saturates",
-        citation=Citation("Qian SI", "Day 4.1"),
-    )
+    return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
 #: Route B's marks, which the package holds none of. The two annealing regions are published and
@@ -1130,7 +1106,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Corning",
             catalog=BIOASSAY_CATALOG.split("#")[-1],
             amount="one spot a design",
-            note=f"carbenicillin at 100 µg/mL; about {BIOASSAY_COLONIES:,} colonies a plate",
+            note=f"{_selected_on(one.selection)}; about {BIOASSAY_COLONIES:,} colonies a plate",
             citation=Citation("Qian SI", "Day 2"),
         ),
         Material(
@@ -1138,7 +1114,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Beckman Coulter",
             catalog=PICKED_CATALOG.split("#")[-1],
             amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
-            note=f"{CULTURE_UL:g} µL low-salt LB with carbenicillin a well",
+            note=f"{CULTURE_UL:g} µL low-salt LB with {_selected_on(one.selection)} a well",
             citation=Citation("Qian SI", "Day 3"),
         ),
     ]
@@ -1272,7 +1248,7 @@ def _array_step(one: Validation) -> Step:
         f"Array {len(one.designs)} design(s) and grow",
         instructions=(
             "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-            "Grow overnight at 37 °C on 100 µg/mL carbenicillin.",
+            f"Grow overnight at 37 °C on {_selected_on(one.selection)}.",
         ),
         expected=(
             f"One spot a design, at about {BIOASSAY_COLONIES:,} colonies a plate, which is the "
@@ -1295,12 +1271,12 @@ def _array_step(one: Validation) -> Step:
 
 def _pick_step(one: Validation) -> Step:
     """Pick the colonies, a quarter of a plate at a time, and print what each pick is worth."""
-    sizes = ", ".join(f"{len(plate.seating)}" for plate in one.picked)
+    sizes = ", ".join(f"{len(plate.labels)}" for plate in one.picked)
     return Step(
         f"Pick {one.colonies} colonies of each design",
         instructions=(
             f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
-            f"carbenicillin, with the {PICKER}.",
+            f"{_selected_on(one.selection)}, with the {PICKER}.",
             f"Fill one quarter of each {PICKED_WELLS}-well plate before starting the next.",
             "Grow overnight at 37 °C.",
         ),
@@ -1374,7 +1350,7 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
     at = 0
     moves: list[Transfer] = []
     for plate in one.picked:
-        many = -(-len(plate.seating) // INDEX_WELLS)
+        many = -(-len(plate.labels) // INDEX_WELLS)
         moves += sampling(plate, one.index[at : at + many])
         at += many
     return (
@@ -1456,7 +1432,12 @@ def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
 
 def _call_step(one: Validation) -> Step:
     """Demultiplex, judge each well on depth and then identity, and compact out what failed."""
-    mark = "at least" if one.route.inclusive else "more than"
+    tolerated = (
+        "."
+        if one.route.tolerable_reads is None
+        else f"; route {one.route.name} tolerates {one.route.tolerable_reads} reads and warns "
+        "between the two."
+    )
     return Step(
         "Call every well",
         instructions=(
@@ -1465,8 +1446,7 @@ def _call_step(one: Validation) -> Step:
             "Reformat, compacting out the wells that failed.",
         ),
         expected=(
-            f"A well read {mark} {one.route.wanted_reads} times is called; route "
-            f"{one.route.name} tolerates {one.route.tolerable_reads} and warns between the two.",
+            f"A well read more than {one.route.wanted_reads} times is called{tolerated}",
             "A pass matches across the whole designed region: both entry overhangs, the "
             "fragment, the stuffer and the barcode.",
         ),
@@ -1558,7 +1538,7 @@ REFERENCES: tuple[Reference, ...] = (
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "
         "directed evolution and machine learning, for index PCR marking a well on one "
         "barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and "
-        "ten tolerable",
+        "ten tolerable, twenty to exceed and ten to reach",
         url="https://doi.org/10.1021/acssynbio.4c00625",
     ),
     Reference(

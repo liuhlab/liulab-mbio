@@ -99,9 +99,14 @@ mkdocstrings-python = ">=2.0.7,<3"
 
 # On the feature, so these resolve in the `docs` environment with no `-e` flag.
 # `serve` ignores `--strict` and says so, hence its absence.
+#
+# `examples-check` is here and not in `[tool.pixi.tasks]` deliberately. It regenerates every
+# published example and compares the bytes, which costs seconds the gate should not pay; the
+# `docs` job is already a job of its own, and both CLIs resolve in this environment.
 [tool.pixi.feature.docs.tasks]
 docs = "zensical serve"
 docs-build = "zensical build --clean --strict"
+examples-check = "python scripts/check_examples.py"
 
 # Only `scripts/build_fonts.py` reads a font file. The package reads the tables it writes and
 # imports neither, so a rebuild is the one thing that installs these.
@@ -128,11 +133,12 @@ fmt-check = "ruff format --check ."
 typecheck = "pyright"
 test = "pytest"
 build = "python -m build"
-# `.`, never an absolute path: an absolute path matches no `.vale.ini` section and exits 0.
-# The globs stop vale walking trees it never lints — check.sh runs steps concurrently, so a
-# walk of .pixi/ races pytest writing __pycache__ there, and a walk of a tool's cache races
-# that tool writing a temp file it then renames away.
-vale = "vale --glob='!{.pixi,site,dist,build,.ruff_cache,.pytest_cache}/**' ."
+# The arguments are the roots `.vale.ini` names: every top-level Markdown file, `docs/` and
+# `skills/`. Add a section there, add its root here. Never `.`: a glob decides only what vale
+# lints, so vale walks and stats every tree it is handed anyway — and check.sh runs steps
+# concurrently, so a walk of .pixi/ races pytest writing __pycache__ there and dies on a temp
+# file that was renamed away. Never an absolute path: it matches no section and exits 0.
+vale = "vale *.md docs skills"
 markdownlint = "markdownlint-cli2"
 conformance = "python scripts/conformance.py"
 # The static step list lives here and nowhere else; `check.sh` takes it as arguments.

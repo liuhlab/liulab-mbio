@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_synbio.igga.coverage import REPRESENTATION_MARKS
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.project import Barcode, Project, read_project
 
@@ -181,3 +182,43 @@ def test_a_project_names_the_working_vector_it_moves_into_or_none(tmp_path):
     assert read_project(write(tmp_path)).working_vector is None
     named = read_project(write(tmp_path, working_vector="pWORK.fasta"))
     assert named.working_vector == tmp_path / "pWORK.fasta"
+
+
+def test_a_project_may_tighten_each_representation_mark(tmp_path):
+    """The sourced mark is a floor the method stands on, as a read depth is in `dmx`."""
+    made = read_project(
+        write(
+            tmp_path,
+            representation_seen=0.999,
+            representation_skew=4.0,
+            reads_per_member=200,
+        )
+    )
+
+    assert made.marks.seen == 0.999
+    assert made.marks.skew == 4.0
+    assert made.marks.reads_per_member == 200
+
+
+def test_a_project_stating_no_mark_takes_joungs(tmp_path):
+    assert read_project(write(tmp_path)).marks == REPRESENTATION_MARKS
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "says"),
+    [
+        ("representation_seen", 0.9, "raise"),
+        ("representation_skew", 20.0, "lower the skew ratio"),
+        ("reads_per_member", 50, "raise"),
+    ],
+)
+def test_a_project_may_not_loosen_a_representation_mark(tmp_path, field, value, says):
+    """Each one is Joung's, and a project that loosened it would be judged by nothing."""
+    with pytest.raises(ValueError, match=says):
+        read_project(write(tmp_path, **{field: value}))
+
+
+def test_linkage_fidelity_has_no_default(tmp_path):
+    """Nothing published sets a mark for it, so a project stating none is held to none."""
+    assert read_project(write(tmp_path)).linkage_fidelity is None
+    assert read_project(write(tmp_path, linkage_fidelity=0.9)).linkage_fidelity == 0.9

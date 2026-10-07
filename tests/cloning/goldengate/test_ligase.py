@@ -14,9 +14,8 @@ from typer.testing import CliRunner
 
 from liulab_mbio.cli import app
 from liulab_mbio.cloning.goldengate import plan_assembly
-from liulab_mbio.cloning.goldengate.cli import LIGASE_MATRIX_ENV
 from liulab_mbio.cloning.goldengate.design import design_overhangs
-from liulab_mbio.ligase import SPREADSHEET_NS, read_profile
+from liulab_mbio.ligase import LIGASE_MATRIX_ENV, SPREADSHEET_NS, read_profile
 from liulab_mbio.overhangs import Junction, fidelity, ligation_matrix
 
 #: Two Watson-Crick pairs seen often, and one cross pair seen rarely. A row pairs with the
@@ -183,19 +182,31 @@ def test_a_matrix_holding_no_counts_is_refused(tmp_path: Path) -> None:
         read_profile(path)
 
 
-def test_an_enzyme_with_no_matrix_of_its_own_is_scored_on_the_profile(profile_path: Path) -> None:
+def test_a_shipped_matrix_stands_in_ahead_of_a_profile_of_another_reaction(
+    profile_path: Path,
+) -> None:
+    """A profile measures a different reaction, which #320 measured as the larger error.
+
+    A caller who wants their own file anyway says so, and `prefer_profile` is how.
+    """
     profile = read_profile(profile_path)
 
     report = fidelity(("AAAA", "GGAA"), "PaqCI", profile=profile)
+    preferred = fidelity(("AAAA", "GGAA"), "PaqCI", profile=profile, prefer_profile=True)
 
     assert report.measured
     assert not report.enzyme_specific
-    assert report.value > 0.99
+    assert report.stand_in == "Esp3I"
+    assert NAMED not in report.source
     assert len(report.ligations) == 2
+    assert NAMED in preferred.source
+    assert preferred.value > 0.99
 
 
 def test_the_report_says_a_profile_is_not_a_measurement_of_the_enzyme(profile_path: Path) -> None:
-    report = fidelity(("AAAA", "GGAA"), "PaqCI", profile=read_profile(profile_path))
+    report = fidelity(
+        ("AAAA", "GGAA"), "PaqCI", profile=read_profile(profile_path), prefer_profile=True
+    )
 
     assert NAMED in report.source
     assert "25 °C" in report.source
@@ -227,14 +238,17 @@ def test_a_profile_of_the_wrong_overhang_length_for_the_enzyme_is_refused(
     profile_path: Path,
 ) -> None:
     with pytest.raises(ValueError, match="3"):
-        fidelity(("AAA", "GGA"), "BspQI", profile=read_profile(profile_path))
+        fidelity(("AAA", "GGA"), "BspQI", profile=read_profile(profile_path), prefer_profile=True)
 
 
 def test_a_design_ranks_free_candidates_by_the_profile_where_no_matrix_exists(
     profile_path: Path,
 ) -> None:
     designed = design_overhangs(
-        [Junction("left"), Junction("right")], "PaqCI", profile=read_profile(profile_path)
+        [Junction("left"), Junction("right")],
+        "PaqCI",
+        profile=read_profile(profile_path),
+        prefer_profile=True,
     )
 
     assert designed.overhangs[0] == "GGAA"
@@ -245,7 +259,7 @@ def test_a_design_ranks_free_candidates_by_the_profile_where_no_matrix_exists(
 def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
     puc19, gfp, profile_path: Path
 ) -> None:
-    made = plan_assembly(puc19, gfp, enzyme="PaqCI", profile=profile_path)
+    made = plan_assembly(puc19, gfp, enzyme="PaqCI", profile=profile_path, prefer_profile=True)
 
     scored = made.overhangs.fidelity
     assert scored.measured
@@ -255,11 +269,14 @@ def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
     assert NAMED in " ".join(one.text for one in protocol.references)
 
 
-def test_without_a_matrix_the_pipeline_scores_that_enzyme_as_it_did_before(puc19, gfp) -> None:
+def test_without_a_matrix_the_pipeline_scores_that_enzyme_on_a_stand_in(puc19, gfp) -> None:
+    """Which is the change #366 made: a stand-in displaces the rules, not a user's file."""
     made = plan_assembly(puc19, gfp, enzyme="PaqCI")
 
-    assert not made.overhangs.fidelity.measured
-    assert "rule-based estimate" in made.protocol().overview["Fidelity"]
+    scored = made.overhangs.fidelity
+    assert scored.measured
+    assert not scored.enzyme_specific
+    assert "measured with Esp3I, not specific to PaqCI" in made.protocol().overview["Fidelity"]
 
 
 def test_the_command_line_takes_the_matrix_as_an_option(

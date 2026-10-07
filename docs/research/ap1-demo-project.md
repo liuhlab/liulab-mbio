@@ -61,11 +61,16 @@ attribution. The attribution travels with the design output.
 
 ### 2.1 The DMX vector
 
-The lab-resources build, unchanged: a rebuilt DMX parent, KanR, BbsI-free, one PmeI site
-outboard of each BsaI site. Which parent is a method decision and not this project's; the
-measurement that bears on it — inserting PmeI outboard of the right-hand cassette BsaI lands in
-or abuts the `6xHis` coding sequence of the first parent — is in the research note, and this
-project uses whatever the lab-resources build settles on.
+The lab-resources build: a rebuilt DMX parent, BbsI-free, one PmeI site outboard of each BsaI
+site. Which parent is a method decision and not this project's, and this project uses whatever
+the lab-resources build settles on.
+
+`scripts/build_dmx_vector.py` now builds it from DMX0001 and the demo is planned against the
+result. The worry recorded here — that inserting PmeI outboard of the right-hand cassette BsaI
+lands in or abuts the `6xHis` coding sequence — is measured and wrong: the window runs 416..503
+and `6xHis` ends at 432, so the site goes at 437 and sacrifices nothing. The marker is KanR:
+departure D11 forces the swap, because the final transfer moves cargo into an AmpR or CarbR
+working vector. `docs/research/dmx-destination.md` carries both.
 
 ### 2.2 The working vector: a Tet-on lentiviral backbone
 
@@ -630,9 +635,14 @@ on the oligo, inboard of P1 and P2.
 the 3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is screened for the eight enzyme motifs, for the orthogonal primer sites,
 and at its two junctions for a motif the join creates.
 
-Why uniform: it removes the vendor's 15% uniformity question rather than managing it, and
-Freschlin — which pads to a uniform length — lost whole replicates to an enzyme site inside a
-payload, which is what the screen is for. Binning by length buys nothing at 152 oligos.
+Why uniform: Freschlin — which pads to a uniform length — lost whole replicates to an enzyme
+site inside a payload, which is what the screen is for, and one length makes a pool-uniformity
+check unfailable. Not the vendor's 15% uniformity rule: that belongs to Multiplexed Gene
+Fragments, a different product, and no vendor publishes a length-spread rule for an ssDNA oligo
+pool. The rule was argued against that floor in #261 — the widest within-part spread, 16%,
+measured against a 15% gate that never applied — and the conclusion is unchanged, since every
+oligo is padded to one length anyway. Only its justification was borrowed. Binning by length
+buys nothing at 152 oligos.
 
 **Why 350 and not 300: the lab changed it.** This is a project decision and not a method
 constant, and it is the only input section 4 takes besides the block list. What it buys is

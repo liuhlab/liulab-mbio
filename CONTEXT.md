@@ -656,6 +656,16 @@ part's own entry overhang.
 _Avoid_: adapter, arm, flank, tail
 _Package_: liulab_synbio
 
+### Block vector
+
+The vector one position's synthesised cargo closes into, which is then the donor a round
+releases that part from. It supplies the external stuffers the cargo is not synthesised with,
+so it has to be opened on the overhang that position's parts enter on: one backbone offers one
+pair, and a build over several positions needs one block vector each. They are the build's own
+destination vector, differing only in the bases of that overhang.
+_Avoid_: block backbone, donor plasmid, part vector
+_Package_: liulab_synbio
+
 ### Barcode
 
 A short stretch of DNA naming one part, so that sequencing a product says which member of each
@@ -795,6 +805,15 @@ Where each thing sits in a plate: a map from a well to the name of what it holds
 resolve against the protocol's own materials, oligos, vessels and plates, so a dangling one is
 reported. A seating never restates what a reaction already says differs between its vessels.
 _Avoid_: layout, plate map, well assignment
+
+### Label
+
+What a well is described as, as against what sits in it: a grouping such as `quarter 3`, a
+printed address, or the name of something the protocol does not declare. A label resolves
+against nothing and is drawn as it stands, so it is never a dangling reference. A well a step
+has to name carries a **seating**; a well that only has something to say about itself carries
+this.
+_Avoid_: annotation, caption, tag
 
 ### Transfer
 

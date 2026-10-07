@@ -13,8 +13,12 @@ and which materials carry which rule — a different method would call the same 
 its own numbers.
 """
 
+from collections.abc import Mapping
+
 from liulab_mbio.bench import materials
+from liulab_mbio.bench.phenotype import SELECTION, selection_marker
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
+from liulab_mbio.sequence import SequenceRecord
 
 #: The documents a citation in this protocol could resolve against: the ones a material brings
 #: with it. The round's own numbers are the paper's and travel as references, not as cited rows.
@@ -42,6 +46,41 @@ LIGASE_BUFFER = materials.material(
     citation=Citation("M0318", "reaction conditions"),
 )
 
+#: What a plate carries for each drug `liulab_mbio.bench.phenotype.SELECTION` names, where this
+#: method has a concentration sourced for it. Kanamycin is Zero Blunt TOPO UG p. 13, the guide
+#: for this method's own part carrier; carbenicillin is Qian SI Day 2. A drug absent from here is
+#: named without a concentration rather than given one nobody published.
+SELECTION_PLATE: Mapping[str, str] = {
+    "kanamycin": "50 µg/mL kanamycin",
+    "ampicillin or carbenicillin": "100 µg/mL carbenicillin",
+}
+
+
+def selection_for(record: SequenceRecord) -> str:
+    """Return what to select this vector's transformants on, or ``""`` where nothing names it.
+
+    The marker is a fact in the record, so the drug follows from it rather than from the
+    document the rest of the stage was quoted from: departure D11 rebuilds this method's DMX
+    vector AmpR to KanR, and the paper's carbenicillin does not carry over with it.
+    """
+    marker = selection_marker(record)
+    if marker is None:
+        return ""
+    drug = SELECTION.get(marker.name.lower(), "")
+    return SELECTION_PLATE.get(drug, drug)
+
+
+#: What a round has no drug to plate on, raised only where `selection_for` cannot name one.
+ROUND_SELECTION = Hole(
+    "H22",
+    "no selection antibiotic for a round",
+    "undecided",
+    where="each round, plating",
+    filled_by="the vector's own marker",
+    issue="liuhlab/liulab-mbio#264",
+)
+
+
 #: What no source sets for the final assembly: no published document runs the step, so the DNA
 #: into it and the ratio it is cleaned up at are the method's own. Carried by the steps it bites
 #: in, and listed among the protocol's holes.
@@ -60,14 +99,6 @@ FINAL_MASSES = Hole(
 #: resolves.
 HOLES: tuple[Hole, ...] = (
     Hole(
-        "H22",
-        "no selection antibiotic for a round",
-        "undecided",
-        where="each round, plating",
-        filled_by="the vector's own marker",
-        issue="liuhlab/liulab-mbio#264",
-    ),
-    Hole(
         "H23",
         "no published document describes the split digest; the one source is the paper itself",
         "unpublished",
@@ -79,56 +110,27 @@ HOLES: tuple[Hole, ...] = (
 )
 
 
-#: What the pool route cannot write, and would have to invent a number to fill. A block is
-#: split for synthesis and nothing says what puts it back together: the method assembles cargo
-#: into the DMX vector, and a block already carries the flanks that vector would supply, so the
-#: pieces have no destination to close into and no reaction sized against one.
-POOL_HOLES: tuple[Hole, ...] = (
-    Hole(
-        "H25",
-        "nothing names what the assembled pieces close into, or what selects the closure",
-        "undecided",
-        where="block assembly, the destination",
-        filled_by="a destination the pieces assemble into, as the method's DMX vector is for "
-        "cargo carrying no flanks of its own",
-        issue="liuhlab/liulab-mbio#334",
-    ),
-    Hole(
-        "H26",
-        "no source sets the DNA in, the enzyme, the ligase or the cycling for a block assembly",
-        "undecided",
-        where="block assembly, the reaction and its program",
-        filled_by="NEB's own Golden Gate table, once the assembly has a destination to be "
-        "sized against",
-        issue="liuhlab/liulab-mbio#334",
-    ),
-)
+def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
+    """Return the holes a run against this vector carries.
+
+    `ROUND_SELECTION` joins them only where the record names no marker to plate on: a vector
+    that names one answers the hole rather than carrying it.
+    """
+    return HOLES if selection_for(record) else (ROUND_SELECTION, *HOLES)
 
 
-#: What neither read of the finished library can write. The method says what each one spans and
-#: that it is a long read, and names no primer against it: #343 is open on that, and the two
-#: reads hit the same wall. Carried by the linkage read, where the amplicon is longest.
-READ_PRIMERS = Hole(
-    "H27",
-    "no primer pair, amplicon length or read depth for either library read",
-    "undecided",
-    where="the linkage and representation reads",
-    filled_by="whichever way #343 is decided: the plan designs both pairs against the finished "
-    "record, or the step says what each must span and leaves the pair to the reader",
-    issue="liuhlab/liulab-mbio#343",
-)
-
-#: What neither read can be judged by. The source's own figures are what it reached, not a mark
-#: it set, and what this library must reach follows from the screen downstream, which the method
-#: cannot see. Carried by the representation read, which is the one repeated.
+#: What the linkage read alone cannot be judged by. The representation read is held to Joung's
+#: pooled-library bar, in `liulab_synbio.igga.coverage`; nothing published says what share of
+#: reads must carry a barcode that still names its part, and the source's own figure is what one
+#: library reached rather than a mark it set.
 READ_PASS_MARK = Hole(
     "H28",
-    "no pass mark for either library read: what share of the library must be seen, how even the "
-    "counts must be, or what linkage fidelity passes",
+    "no pass mark for the linkage read: what share of reads must carry a barcode that still "
+    "names its part",
     "undecided",
-    where="the linkage and representation reads, what carries the library forward",
-    filled_by="the screen downstream, which is what sets the representation the library has to "
-    "reach",
+    where="the linkage read",
+    filled_by="the project, or a source that sets a mark rather than reporting what it reached",
+    issue="liuhlab/liulab-mbio#346",
 )
 
 #: What a build that names no working vector cannot say. The working vector is the user's own

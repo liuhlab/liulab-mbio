@@ -15,19 +15,21 @@ transformation, which this method does not run. What it does share is the reacti
 PCR that pulls a block out of the oligo pool, and the smaller pieces of a protocol.
 """
 
+import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
-from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.amounts import Amount, to_nanograms
 from liulab_mbio.bench.gels import REFERENCES as GEL_REFERENCES
 from liulab_mbio.bench.gels import choose_ladder
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
 from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
-from liulab_mbio.bench.plates import plate
+from liulab_mbio.bench.phenotype import selection_marker
+from liulab_mbio.bench.plates import plate, seat
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
@@ -72,17 +74,22 @@ from liulab_synbio.igga.bench import (
     SPRI_AFTER_DIGEST,
     SPRI_AFTER_LIGATION,
     TRANSFORMATION_NG,
+    pool_floor_ng_ul,
 )
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
 from liulab_synbio.igga.coverage import (
+    REPRESENTATION_MARKS,
+    RepresentationMarks,
     RoundCoverage,
     absent_probability,
     colonies_for_completeness,
+    reads_for_representation,
 )
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
 from liulab_synbio.igga.vector import Destination, Working, released_cargo
@@ -306,6 +313,10 @@ def protocol(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    reads: ReadPairs | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
+    linkage_fidelity: float | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -329,8 +340,14 @@ def protocol(
     none. With one, the blocks are not ordered: they are amplified out of the pool and
     assembled, so the first steps and the bill say that instead. `pool_sheet` and `primer_sheet`
     are what the plan calls the two files those steps point at.
+
+    `block_vectors` is what a block closes into, one a position: what each is called and the file
+    the plan wrote it to. A part enters on its own position's entry overhang, so one destination
+    serves one position. Given none, the steps name the destination the first round opens and
+    say nothing about the rest.
     """
     inside, outside = choppers(scheme)
+    selection = stages.selection_for(vector)
     one = Protocol(
         f"Library assembly: {len(part_lists)} part lists into {vector.name or 'the vector'}",
         summary=(
@@ -375,6 +392,7 @@ def protocol(
                 pool_sheet,
                 primer_sheet,
                 working,
+                block_vectors,
             ),
             *(dmx.validation_materials(validation) if validation else ()),
         ),
@@ -388,7 +406,10 @@ def protocol(
                 )
             )
         ),
-        plates=(_pcr2_plate(pool),) if pool else (),
+        plates=(
+            *((_pcr2_plate(pool),) if pool else ()),
+            *(_validation_plates(validation) if validation else ()),
+        ),
         steps=_steps(
             scheme,
             positions,
@@ -407,6 +428,11 @@ def protocol(
             pool_sheet,
             primer_sheet,
             working,
+            selection,
+            reads,
+            marks,
+            linkage_fidelity,
+            block_vectors,
         ),
         references=(
             *_references(scheme),
@@ -414,7 +440,7 @@ def protocol(
             *(dmx.REFERENCES if validation else ()),
         ),
         sources=_sources(prices, validation, pool),
-        holes=stages.HOLES,
+        holes=stages.holes_for(vector),
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
     )
     return citing(one)
@@ -550,9 +576,33 @@ def _highlights(
     return tuple(said)
 
 
+def _destination_note(block_vectors: Sequence[tuple[str, str]]) -> str:
+    """Say what the destination is for, and that a later position has one of its own."""
+    opened = "opened by the internal digest in round 1"
+    if len(block_vectors) < 2:
+        return opened
+    return (
+        f"{opened}, and to take each block's cargo. A part enters on its own position's entry "
+        f"overhang, so there is one a position: {listed(_vector_names(block_vectors))}"
+    )
+
+
 def _enzyme_material(enzyme: Enzyme, note: str) -> Material:
     """Return one enzyme as a material, carrying what every digest takes of it."""
     return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
+
+
+def _selection_note(record: SequenceRecord, which: str) -> str:
+    """Return what this vector's transformants are selected on, read off its own marker.
+
+    A record annotating no marker this method can name a drug for leaves the plate to the reader
+    rather than naming one, and `stages.ROUND_SELECTION` then stands as the protocol's hole.
+    """
+    plate = stages.selection_for(record)
+    marker = selection_marker(record)
+    if not plate or marker is None:
+        return f"the {which} vector's own antibiotic, which this plan does not name"
+    return f"LB with {plate}, the {which} vector's own marker ({marker.name})"
 
 
 def _materials(
@@ -565,6 +615,7 @@ def _materials(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for.
 
@@ -593,7 +644,8 @@ def _materials(
         Material(
             f"{vector.name or 'destination'} vector",
             storage="-20 °C",
-            note="opened by the internal digest in round 1",
+            amount="" if len(block_vectors) < 2 else f"{len(block_vectors)}, one a position",
+            note=_destination_note(block_vectors),
         )
     )
     if working is not None:
@@ -642,12 +694,14 @@ def _materials(
         )
     )
     made.append(Material("Recovery medium", amount="one outgrowth per round"))
-    made.append(
-        Material(
-            "Selective broth and plates",
-            note="the destination vector's own antibiotic, which this plan does not name",
+    made.append(Material("Selective broth and plates", note=_selection_note(vector, "destination")))
+    if working is not None:
+        made.append(
+            Material(
+                "Selective plates for the final transfer",
+                note=_selection_note(working.record, "working"),
+            )
         )
-    )
     made.append(Material("Plasmid prep kit", amount="one prep per round"))
     made.append(Material("Electroporation cuvettes", amount=f"{len(part_lists)}, one per round"))
     return tuple(made)
@@ -735,10 +789,36 @@ def _consumed(
 
 def _references(scheme: Scheme) -> tuple[Reference, ...]:
     """Where the numbers come from, and where the scheme itself came from."""
-    items = [*BENCH_REFERENCES, *COVERAGE_REFERENCES, *AMOUNT_REFERENCES, *READOUT_REFERENCES]
+    from liulab_mbio.cloning.goldengate.bench import REFERENCES as GOLDEN_GATE_REFERENCES
+
+    items = [
+        *BENCH_REFERENCES,
+        *COVERAGE_REFERENCES,
+        *AMOUNT_REFERENCES,
+        *READOUT_REFERENCES,
+        *POOL_RESUSPENSION_REFERENCES,
+        *GOLDEN_GATE_REFERENCES,
+    ]
     if scheme.source:
         items.append(Reference(f"The method this build was planned by: {scheme.source}"))
     return tuple(items)
+
+
+#: What a synthesised block is resuspended in, and the floor both vendors publish for it. Each
+#: gives 10 ng/µL as a least, not a value: at it a 1,000 ng pool fills 100 µL, more than twice
+#: what the round's digest leaves, so the pool's own floor is computed and these set the buffer.
+POOL_RESUSPENSION_REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free "
+        "TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution",
+        url="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended",
+    ),
+    Reference(
+        "Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE "
+        "or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify",
+        url="https://www.idtdna.com/page/?p=890",
+    ),
+)
 
 
 #: What the two readout cautions of the confirming step are measured by.
@@ -778,28 +858,73 @@ def _steps(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    selection: str = "",
+    reads: ReadPairs | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
+    linkage_fidelity: float | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another.
 
     A pool replaces the order step with the four it takes to get the same blocks: order the
-    pool, pull each batch out of it, pull each block out of its batch, and assemble the block.
+    pool, pull each batch out of it, pull each block out of its batch, and clone that block's
+    cargo into its own position's destination.
     """
     made = (
-        list(_pool_steps(pool, parts, sheet, pool_sheet, primer_sheet))
+        list(
+            _pool_steps(
+                pool,
+                parts,
+                sheet,
+                pool_sheet,
+                primer_sheet,
+                scheme,
+                block_vectors or ((rounds[0].destination.name or "the destination", ""),),
+                bench[0].ligation[0],
+                selection,
+            )
+        )
         if pool
         else [_order_step(parts, sheet)]
     )
     if validation:
         made += dmx.validation_steps(validation)
-    made.append(_pool_step(positions, part_lists))
+    made.append(_pool_step(bench, parts, pool))
     for one, row in zip(rounds, bench, strict=True):
-        made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
-    made.append(_linkage_step(scheme, positions, barcode_length, rounds, parts, barcodes))
+        made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds), selection))
     made.append(
-        _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
+        _linkage_step(
+            scheme,
+            positions,
+            barcode_length,
+            rounds,
+            parts,
+            barcodes,
+            None if reads is None else reads.linkage,
+            linkage_fidelity,
+        )
+    )
+    made.append(
+        _representation_step(
+            scheme,
+            positions,
+            barcode_length,
+            rounds,
+            constructs,
+            barcodes,
+            None if reads is None else reads.representation,
+            marks,
+        )
     )
     made += _final_steps(
-        scheme, rounds, constructs, bench[-1].coverage.completeness, barcodes, working
+        scheme,
+        rounds,
+        constructs,
+        bench[-1].coverage.completeness,
+        barcodes,
+        working,
+        None if reads is None else reads.final_representation,
+        marks,
     )
     return tuple(made)
 
@@ -860,21 +985,23 @@ POOL_REFERENCES: tuple[Reference, ...] = (
 )
 
 
-def _pcr2_plate(pool: PoolPlan) -> Plate:
-    """Return the plate PCR2 runs in, one block a well.
+def _validation_plates(one: dmx.Validation) -> tuple[Plate, ...]:
+    """Return the plates the read-back fills, so every well a transfer names has one."""
+    return (*one.picked, *(one.index if one.route is dmx.ROUTE_B else ()))
 
-    The seating is not declared. Which block sits in which well follows from the order its
-    batch allotted the inner primers, and `liulab_mbio.bench.plates.seat` would write it, but
-    `liulab_mbio.protocol.model.Protocol.audit` resolves every seated well against a declared
-    material, oligo, vessel or plate, and a block is none of those. Issue 330 is open on that
-    rule, so the plate says what it holds and the wells stay unnamed rather than being named
-    wrongly.
+
+def _pcr2_plate(pool: PoolPlan) -> Plate:
+    """Return the plate PCR2 runs in, one block a well, drawn as the first batch fills it.
+
+    The wells are labelled rather than seated: a block is no material, oligo, vessel or plate,
+    so its name describes the well instead of naming an occupant the protocol declares.
     """
     batches = pool.batches
     return plate(
         PCR2_PLATE,
         PCR2_WELLS,
         holds="one block a well, in the order its batch allotted the inner primers",
+        labels=seat(batches[0].blocks, PCR2_WELLS) if batches else {},
         note=(
             f"{_counted(len(batches), 'plate')}, one a batch; "
             f"{', '.join(f'batch {one.number} holds {len(one.blocks)}' for one in batches)}"
@@ -906,10 +1033,13 @@ def _pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple
             amount="one reaction per batch, then one per block",
             note="the buffer the annealing temperatures below were computed in",
         ),
-        enzyme_material(
-            get_enzyme(SYNTHESIS_ENZYME),
+        catalogued(
+            "NEBridge Golden Gate Assembly Kit, BsmBI-v2 (E1602)",
+            supplier="NEB",
+            storage="-20 °C",
             amount="one assembly per block",
-            note="cuts every oligo back to its own fragment, and is reserved for that",
+            note=f"its mix carries the {SYNTHESIS_ENZYME} that cuts every oligo back to its own "
+            "fragment, which this method reserves, and the T4 DNA Ligase that joins them",
         ),
     )
 
@@ -974,6 +1104,10 @@ def _pool_steps(
     sheet: str,
     pool_sheet: str,
     primer_sheet: str,
+    scheme: Scheme,
+    destinations: Sequence[tuple[str, str]],
+    opened: Amount,
+    selection: str,
 ) -> tuple[Step, ...]:
     """Return the steps that turn an oligo pool into the blocks a round's part list holds."""
     sequences = {one.name: one.sequence for one in pool.pool.primers}
@@ -986,7 +1120,7 @@ def _pool_steps(
         _pool_order_step(pool, pool_sheet, primer_sheet),
         _pcr1_step(pool, batches, first, layout.length),
         _pcr2_step(pool, batches, parts, second, inner_length),
-        _assembly_step(pool, parts, sheet),
+        _assembly_step(pool, parts, sheet, scheme, destinations, opened, selection),
     )
 
 
@@ -1183,51 +1317,130 @@ def _pcr2_step(
     )
 
 
-def _assembly_step(pool: PoolPlan, parts: Sequence[Part], sheet: str) -> Step:
-    """Assemble each block out of its own pieces, which is the step the model cannot finish."""
+def _vector_names(destinations: Sequence[tuple[str, str]]) -> list[str]:
+    """Say each destination as the bench reads it: what it is called, and the file holding it."""
+    return [f"{name} ({file})" if file else name for name, file in destinations]
+
+
+def _assembly_step(
+    pool: PoolPlan,
+    parts: Sequence[Part],
+    sheet: str,
+    scheme: Scheme,
+    destinations: Sequence[tuple[str, str]],
+    opened: Amount,
+    selection: str,
+) -> Step:
+    """Clone each block's cargo into its position's opened destination, one well a block.
+
+    The destination supplies the stuffers the cargo is no longer synthesised with, and its own
+    marker is what selects a well that closed. A part enters on its own position's entry
+    overhang, so there is one destination a position and a block goes into its own. The reaction
+    and its cycling are NEB's kit table for the most pieces any block takes, so one master mix
+    covers the plate.
+    """
+    from liulab_mbio.cloning.goldengate.bench import (
+        KIT,
+        assembly_amounts,
+        assembly_program,
+        assembly_reaction,
+    )
+
+    enzyme = get_enzyme(SYNTHESIS_ENZYME)
     pieces = {split.pieces for split in pool.splits}
-    lengths = [part.length for part in parts]
+    most = max(pieces)
+    piece_bp = pool.pool.layout.length - pool.pool.layout.primer_length
+    cargo = [len(split.cargo.sequence) for split in pool.splits]
+    amounts = assembly_amounts(
+        (opened.name, opened.length_bp),
+        tuple((f"PCR2 piece {number}", piece_bp) for number in range(1, most + 1)),
+    )
+    named = listed(_vector_names(destinations))
+    plated = selection or "the destinations' own marker, which this plan does not name"
     return Step(
-        f"Assemble each block from its {min(pieces)} to {max(pieces)} pieces",
+        f"Assemble each cargo into its position's destination, from its {min(pieces)} to "
+        f"{most} pieces",
         instructions=(
-            f"Set up one {SYNTHESIS_ENZYME} assembly a well, holding that block's own PCR2 "
-            "pieces and nothing from another well.",
+            f"Open {named} with {scheme.internal.name} and "
+            f"{listed([one.name for one in choppers(scheme)[0]])}, the digest a round opens the "
+            "library with, and clean each up.",
+            "Set up one assembly a well, holding that block's own PCR2 pieces, the opened "
+            "destination of the position that block fills, and nothing from another well.",
+            f"Transform, plate on {plated}, and pick one colony a block.",
         ),
+        tables=(assembly_reaction(enzyme, amounts, system=KIT, reactions=len(parts)),),
+        programs=(assembly_program(enzyme, fragments=most + 1, system=KIT),),
         expected=(
-            f"{len(parts)} blocks, {min(lengths)} to {max(lengths)} bp, as {sheet} spells them.",
-            "Each block reads: 5' external stuffer, coding bases, internal stuffer, barcode, "
-            "3' external stuffer.",
+            f"{len(parts)} plasmids, one a block: its position's destination carrying that "
+            f"block's cargo, {min(cargo):,} to {max(cargo):,} bp of it.",
+            f"Each cargo reads: the overhang its part enters on, its coding bases, the internal "
+            f"stuffer, its barcode, and the {scheme.cloning_scar} cloning scar. The external "
+            f"stuffers {sheet} spells either side of it are the destination's own bases.",
         ),
         notes=(
             f"{SYNTHESIS_ENZYME} cuts each oligo back to its fragment, so the primer sites, the "
-            "recognition sites and the padding all stay outside the block.",
+            "recognition sites and the padding all stay outside the cargo.",
+            "The table is sized at the most pieces any block takes, so one master mix covers "
+            "the plate; a well with fewer pieces fills fewer of its DNA rows.",
+            f"A part enters on its own position's entry overhang, so there is one destination a "
+            f"position. They are one vector differing in the {len(scheme.entry_overhang)} bases "
+            "of that overhang; a block put in the wrong one cannot close.",
         ),
-        holes=stages.POOL_HOLES,
         troubleshooting=(
             Troubleshooting(
                 "A block comes out short",
                 "A piece was missing from the well. Check that well's PCR2 lane before "
                 "assembling it again; the pieces of one block are not interchangeable.",
             ),
+            Troubleshooting(
+                "Colonies carrying the destination with no cargo",
+                "The destination was not opened to completion. Run a little of its digest on a "
+                "gel before setting the plate up again.",
+            ),
         ),
     )
 
 
-def _pool_step(positions: Sequence[str], part_lists: Sequence[PartList]) -> Step:
-    """Pool each part list, which is what a round joins in one tube."""
+def _pool_step(bench: Sequence[RoundBench], parts: Sequence[Part], pool: PoolPlan | None) -> Step:
+    """Pool each part list, which is what a round joins in one tube.
+
+    Every number here is the round's own donor digest read backwards. That digest takes
+    `DIGEST_NG` of the pool in the volume its two enzymes leave it, so the pool's total, its
+    concentration floor and each member's share are fixed downstream rather than chosen.
+    """
+    floor = _stated_floor()
+    left = DIGEST_VOLUME_UL - 2 * ENZYME_UL
+    members = {position: _at(parts, position) for position in {row.position for row in bench}}
+    first = (
+        "Clean up each assembly and measure each concentration."
+        if pool
+        else "Spin each tube down, resuspend in TE pH 8.0 or 10 mM Tris-HCl pH 8.0, 50 °C for "
+        "15-20 min, and measure each concentration."
+    )
     return Step(
         "Pool each part list",
         instructions=(
-            "Resuspend every block and measure each concentration.",
-            "Pool the members of each part list in equal molar amounts, one tube per position.",
+            first,
+            "Pool the members of each part list in equal picomoles, one tube a position: each "
+            "member gives the position's total divided by its member count, which is unequal "
+            "masses because the members differ in length.",
+            f"Bring each pool to at least {floor:g} ng/µL. The round's {DIGEST_VOLUME_UL:g} µL "
+            f"digest leaves {left:g} µL for the DNA after its two {ENZYME_UL:g} µL enzymes, and "
+            "the whole total has to arrive in it.",
         ),
         expected=tuple(
-            f"{position}: one tube holding {len(one)} member(s)."
-            for position, one in zip(positions, part_lists, strict=True)
+            f"{row.position}: one tube, {len(members[row.position])} member(s), at least "
+            f"{row.donor_digest.nanograms:,.0f} ng at {floor:g} ng/µL or above, "
+            f"{row.donor_digest.pmol / len(members[row.position]):.3g} pmol of each member."
+            for row in bench
+            if members[row.position]
         ),
         notes=(
             "Library coverage is counted on equally represented members, so an uneven pool loses "
             "members that no later round can put back.",
+            "Equal picomoles are unequal masses: a short member weighs less than a long one for "
+            "the same number of molecules, and weighing them equally would not pool them equally.",
+            *_pool_masses(bench, members),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1235,8 +1448,48 @@ def _pool_step(positions: Sequence[str], part_lists: Sequence[PartList]) -> Step
                 "Pool to the lowest member rather than to the mean; a member short here is short "
                 "in every round after it.",
             ),
+            Troubleshooting(
+                f"The pool is below {floor:g} ng/µL",
+                f"Concentrate it, by SPRI at the round's own {SPRI_AFTER_DIGEST:g}x ratio, or "
+                "scale the digest up so the same mass arrives in a larger volume.",
+            ),
         ),
     )
+
+
+def _at(parts: Sequence[Part], position: str) -> tuple[Part, ...]:
+    """Return the parts filling one position, in the order they were designed."""
+    return tuple(one for one in parts if one.position == position)
+
+
+def _stated_floor() -> float:
+    """Return the pool's floor as a page states it, rounded up so it is never below the real one."""
+    return math.ceil(pool_floor_ng_ul() * 10) / 10
+
+
+def _pool_masses(
+    bench: Sequence[RoundBench], members: Mapping[str, Sequence[Part]]
+) -> tuple[str, ...]:
+    """Return what a position's equal picomoles weigh, shortest member to longest."""
+    said = []
+    for row in bench:
+        each = members[row.position]
+        if not each:
+            continue
+        pmol = row.donor_digest.pmol / len(each)
+        shortest, longest = min(each, key=_len_of), max(each, key=_len_of)
+        said.append(
+            f"{row.position}: {pmol:.3g} pmol a member is "
+            f"{to_nanograms(pmol, shortest.length):.3g} ng of its shortest at "
+            f"{shortest.length:,} bp and {to_nanograms(pmol, longest.length):.3g} ng of its "
+            f"longest at {longest.length:,} bp."
+        )
+    return tuple(said)
+
+
+def _len_of(one: Part) -> int:
+    """How many bases the part is ordered as."""
+    return one.length
 
 
 def _round_steps(
@@ -1246,6 +1499,7 @@ def _round_steps(
     inside: Sequence[Enzyme],
     outside: Sequence[Enzyme],
     total: int,
+    selection: str = "",
 ) -> list[Step]:
     """Return the eight steps of one round, in the order they happen."""
     number = row.number
@@ -1259,7 +1513,7 @@ def _round_steps(
         _ligation_step(row, opened, released),
         _ligation_cleanup_step(row),
         _electroporation_step(row),
-        _growth_step(row),
+        _growth_step(row, selection),
         _prep_step(scheme, one, row, number == total),
     ]
 
@@ -1446,7 +1700,7 @@ def _electroporation_step(row: RoundBench) -> Step:
     )
 
 
-def _growth_step(row: RoundBench) -> Step:
+def _growth_step(row: RoundBench, selection: str = "") -> Step:
     """Recover and grow, both at 30 °C, and bound the round on net colonies.
 
     Two plates, both growing during the outgrowth: a measured dilution of the recovery, and the
@@ -1459,8 +1713,8 @@ def _growth_step(row: RoundBench) -> Step:
         f"Round {row.number}: recover and grow at {GROWTH_CELSIUS:g} °C",
         instructions=(
             "Add recovery medium straight away and shake for the first hour.",
-            f"Plate a measured dilution of the recovery on selection as {dilution.name}, and "
-            "grow the rest in selective broth.",
+            f"Plate a measured dilution of the recovery on {selection or 'selection'} as "
+            f"{dilution.name}, and grow the rest in selective broth.",
             f"Plate the no-donor ligation from the same digest as {control.name}, at the same "
             "dilution.",
         ),
@@ -1531,6 +1785,31 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
     )
 
 
+def _with(pair: ReadPair | None) -> str:
+    """Name the designed pair and its amplicon, or say nothing where none was designed."""
+    if pair is None:
+        return ""
+    return (
+        f", on {pair.forward.name} {pair.forward.sequence} and {pair.reverse.name} "
+        f"{pair.reverse.sequence}, which give a {pair.amplicon_length} bp amplicon"
+    )
+
+
+def _as_platform(pair: ReadPair | None) -> str:
+    """Say what the amplicon asks of the sequencing, which follows from what it has to carry."""
+    return "" if pair is None else f" as a {pair.platform}"
+
+
+def _marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> str:
+    """State the three marks the counts are judged on, and the depth they are judged at."""
+    depth = reads_for_representation(constructs, marks.reads_per_member) if constructs else 0
+    at = f", which is {depth:,} reads over {constructs:,} combinations" if depth else ""
+    return (
+        f"At least {marks.seen:.1%} {what} seen; a 90th/10th percentile skew ratio below "
+        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}."
+    )
+
+
 def _linkage_step(
     scheme: Scheme,
     positions: Sequence[str],
@@ -1538,6 +1817,8 @@ def _linkage_step(
     rounds: Sequence[Round],
     parts: Sequence[Part],
     barcodes: str,
+    pair: ReadPair | None = None,
+    fidelity: float | None = None,
 ) -> Step:
     """Read the whole cargo back, which is what says the barcode block still names its parts.
 
@@ -1556,8 +1837,8 @@ def _linkage_step(
             f"Amplify the whole cargo out of the finished library, from the vector before the "
             f"first {rounds[0].entry_overhang} to the vector past the final "
             f"{rounds[0].scar_overhang}, so one read carries a member's parts and its barcode "
-            "block together.",
-            "Sequence the amplicon as a long read.",
+            f"block together{_with(pair)}.",
+            f"Sequence the amplicon{_as_platform(pair)}.",
             f"Decode each read's block against {barcodes}, then read the coding bases beside it "
             "against the member that block names.",
         ),
@@ -1572,13 +1853,17 @@ def _linkage_step(
         notes=(
             "The block reads in the reverse of the order the rounds ran: each round inserted its "
             "barcode ahead of the ones already there.",
-            "This plan designs no sequencing primers.",
             f"{ambiguous:.1%} of the single-base deletions a barcode can carry leave a read "
             "another barcode of the same part list could leave, which no read can be assigned "
             "through.",
-            "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid "
-            "barcode at every position, and nearly 90% of the library correctly linked. That is "
-            "what one source reached, not a mark this library is held to.",
+            (
+                f"This build passes the linkage read at {fidelity:.1%} of reads carrying a "
+                "barcode that still names its part."
+                if fidelity is not None
+                else "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a "
+                "valid barcode at every position, and nearly 90% of the library correctly "
+                "linked. That is what one source reached, not a mark this library is held to."
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1593,7 +1878,7 @@ def _linkage_step(
                 "forward; no later round repairs it.",
             ),
         ),
-        holes=(stages.READ_PRIMERS,),
+        holes=(stages.READ_PASS_MARK,),
     )
 
 
@@ -1604,6 +1889,8 @@ def _final_steps(
     completeness: float,
     barcodes: str,
     working: Working | None,
+    pair: ReadPair | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> list[Step]:
     """Return the five steps that move the finished library into the working vector.
 
@@ -1619,7 +1906,7 @@ def _final_steps(
         _release_step_final(scheme, product, span, freeing),
         _assemble_step(scheme, product, span, working),
         _final_growth_step(constructs, completeness, working),
-        _final_representation_step(scheme, rounds, barcodes, working),
+        _final_representation_step(barcodes, working, pair, constructs, marks),
     ]
 
 
@@ -1651,8 +1938,8 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
             ),
             notes=(
                 "The cargo enzyme is chosen against every molecule in this pot, so it has to be "
-                "settled before the blocks are designed: a project names it under "
-                "reserved_extra and no block then spells it.",
+                "settled before the blocks are designed: the pipeline reads it off the working "
+                "vector before it designs any block, so no block spells it.",
             ),
             holes=(stages.WORKING_VECTOR,),
         )
@@ -1872,26 +2159,32 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
 
 
 def _final_representation_step(
-    scheme: Scheme, rounds: Sequence[Round], barcodes: str, working: Working | None
+    barcodes: str,
+    working: Working | None,
+    pair: ReadPair | None = None,
+    constructs: int = 0,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> Step:
     """Read the library again on the other side of the move, which is the only way to size the loss."""
     where = working.record.name if working is not None else "the working vector"
     return Step(
         "Read representation in the final vector",
         instructions=(
-            "Amplify across the barcode block again, exactly as the read before the move did.",
+            f"Amplify across the barcode block again{_with(pair)}.",
             f"Sequence, decode each read against {barcodes}, and compare the counts with the "
             "read taken in the library backbone.",
         ),
         expected=(
             "The same combinations, at a similar evenness. A combination seen before the move "
             f"and not after it was lost in the transfer into {where or 'the working vector'}.",
+            _marks_sentence(constructs, marks, "of what survived the move"),
         ),
         notes=(
             "Linkage is read once, in the library backbone; a barcode still names the same part "
             "after the move, because the move carries the whole cargo in one piece.",
-            "This read is what the final assembly is judged on, and nothing says what share of "
-            "the library has to survive it.",
+            "The forward anchor is the same retained internal stuffer, which travels with the "
+            "cargo; the reverse anchor moved with the vector, so this pair is designed against "
+            "the final record rather than reused from the read before the move.",
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1900,7 +2193,6 @@ def _final_representation_step(
                 "the step above before rebuilding anything.",
             ),
         ),
-        holes=(stages.READ_PRIMERS, stages.READ_PASS_MARK),
     )
 
 
@@ -1911,6 +2203,8 @@ def _representation_step(
     rounds: Sequence[Round],
     constructs: int,
     barcodes: str,
+    pair: ReadPair | None = None,
+    marks: RepresentationMarks = REPRESENTATION_MARKS,
 ) -> Step:
     """Count which combinations the library holds and how evenly, over the barcode block alone.
 
@@ -1923,14 +2217,15 @@ def _representation_step(
         instructions=(
             f"Amplify across the {block} bp barcode block alone, forward from the "
             f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "
-            f"from the vector past the final {rounds[0].scar_overhang}.",
-            f"Sequence the amplicon, decode each read against {barcodes}, and count the reads "
-            "each barcode combination gets.",
+            f"from the vector past the final {rounds[0].scar_overhang}{_with(pair)}.",
+            f"Sequence the amplicon{_as_platform(pair)}, decode each read against {barcodes}, "
+            "and count the reads each barcode combination gets.",
         ),
         expected=(
             f"A count for each of up to {constructs:,} distinct combinations: how many of them "
             "are seen at all, and how evenly they are read.",
             "A combination with no reads is a member the library has lost.",
+            _marks_sentence(constructs, marks, "of the combinations"),
         ),
         notes=(
             "Read representation again after every later bottleneck — the final assembly, and "
@@ -1950,9 +2245,10 @@ def _representation_step(
             ),
             Troubleshooting(
                 "The counts are heavily skewed",
-                "Members differ in length and a bottleneck can favour the short ones. This read "
-                "measures the skew; nothing here says how much of it is tolerable.",
+                "Members differ in length and a bottleneck can favour the short ones. Imkeller's "
+                "Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants "
+                "200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs "
+                "cells downstream rather than failing here.",
             ),
         ),
-        holes=(stages.READ_PASS_MARK,),
     )

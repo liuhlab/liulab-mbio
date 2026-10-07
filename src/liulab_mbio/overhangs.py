@@ -13,9 +13,10 @@ inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
   candidate against the set so far and names the rule that refuses it.
 - **How well the set should ligate.** Pryor et al. 2020 measured every overhang pair for five
   enzymes, and that data ships here: fidelity is the product over the junctions of correct
-  ligations over all ligations. An enzyme they did not measure is scored against a ligase
-  profile the caller holds (`liulab_mbio.ligase`) where there is one and by the rules where
-  there is not, and the report says which of the three scored it.
+  ligations over all ligations. An enzyme they did not measure is scored on a shipped matrix of
+  the same overhang length standing in, then on a ligase profile the caller holds
+  (`liulab_mbio.ligase`), then by the rules, and the report says which of the four scored it
+  and whether it is specific to the enzyme.
 
 The fidelity data is `src/liulab_mbio/data/ligation_fidelity.json`, from the supplementary
 tables of Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S.
@@ -35,9 +36,11 @@ from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.sites import EnzymeLike, primer_tail
 
-#: How many bases two overhangs in one set must differ by. The two-mismatch rule is the one
-#: modular cloning standards state; Potapov 2018 measured it as stricter than it needs to be,
-#: which is why it is an argument and not a constant.
+#: How many bases two overhangs in one set must differ by, counting each one's reverse complement
+#: too. Two is read off the shipped matrices rather than taken from a standard: it is the smallest
+#: separation at which every one of them holds its measured cross-ligations below
+#: `MODEST_MISMATCH`, where a one-base separation leaves a third to a half of its pairs at or
+#: above it. It is an argument because a caller may hold a set to more.
 MIN_DISTANCE = 2
 
 #: Ligations per 100,000 events at or above which NEB's Ligase Fidelity Viewer calls a
@@ -234,8 +237,11 @@ class FidelityReport:
         Top overhang, bottom overhang and normalised count, for every cross pair seen at least
         `MODEST_MISMATCH` times per 100,000 ligation events, the worst first.
     enzyme_specific
-        ``False`` when a ligase profile scored the set: a measurement of the ligase and the
-        conditions, and not of this enzyme.
+        ``False`` when the number is not a measurement of this enzyme: a ligase profile, which
+        measures the ligase and the conditions, or another Type IIS enzyme's matrix standing in.
+    stand_in
+        The product whose matrix stood in, where one did. Empty otherwise, which is what keeps
+        a stand-in apart from a ligase profile in `label`.
     """
 
     enzyme: str
@@ -247,15 +253,79 @@ class FidelityReport:
     weak: tuple[str, ...] = ()
     mismatches: tuple[tuple[str, str, float], ...] = ()
     enzyme_specific: bool = True
+    stand_in: str = ""
 
     @property
     def label(self) -> str:
         """What kind of number this is, for a report printing it beside the value."""
         if not self.measured:
             return "rule-based estimate"
-        if not self.enzyme_specific:
-            return f"measured ligase profile, not specific to {self.enzyme}"
-        return "measured"
+        if self.enzyme_specific:
+            return "measured"
+        if self.stand_in:
+            return f"measured with {self.stand_in}, not specific to {self.enzyme}"
+        return f"measured ligase profile, not specific to {self.enzyme}"
+
+
+@dataclass(frozen=True, slots=True)
+class OnTarget:
+    """How often one ligase was seen joining one overhang to its own partner.
+
+    Parameters
+    ----------
+    overhang
+        The overhang, written on the top strand.
+    rate
+        Its correct Watson-Crick pair, per 100,000 ligation events.
+    floor
+        The rate it is held to.
+    """
+
+    overhang: str
+    rate: float
+    floor: float
+
+    @property
+    def weak(self) -> bool:
+        """Whether this ligase joins it below the floor."""
+        return self.rate < self.floor
+
+
+@dataclass(frozen=True, slots=True)
+class OnTargetReport:
+    """How often one ligase joins each overhang of a set, and where the numbers came from.
+
+    Fidelity asks whether a set's junctions can be told apart. This asks how often each one is
+    made at all, which is a different measurement of a different thing: a rate below the floor
+    costs correct joins, so it costs colonies rather than giving the wrong product. Nothing here
+    is a score, and nothing ranks on it.
+
+    Parameters
+    ----------
+    source
+        The conditions the profile was measured under and the file it was read from.
+    floor
+        The rate each overhang was held to.
+    rates
+        One entry per overhang, in the order given.
+    """
+
+    source: str
+    _: KW_ONLY
+    floor: float
+    rates: tuple[OnTarget, ...] = ()
+
+    @property
+    def weak(self) -> tuple[str, ...]:
+        """The overhangs this ligase joins below the floor, the worst first."""
+        return tuple(
+            one.overhang for one in sorted(self.rates, key=lambda one: one.rate) if one.weak
+        )
+
+    @property
+    def label(self) -> str:
+        """Which measurement this is, for a report printing it beside a fidelity score."""
+        return f"measured on {self.source}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -515,11 +585,12 @@ def fidelity(
     presenting its reverse complement, and both are counted — which is what reproduces the
     fidelity the paper reports for its own worked examples.
 
-    A `profile` stands in where no shipped matrix covers the enzyme, and `prefer_profile` uses
-    it even where one does. A profile is a measurement of the ligase and the conditions and not
-    of the enzyme, so `FidelityReport.enzyme_specific` is then ``False`` and the source says so.
+    Where no shipped matrix covers the enzyme, `stand_in_matrix` scores it instead, and a
+    `profile` the caller holds comes after that; `prefer_profile` lifts the profile above
+    everything. Neither is a measurement of this enzyme, so `FidelityReport.enzyme_specific` is
+    then ``False`` and both the source and the label say which stood in.
 
-    With neither, the rules score the set instead and `FidelityReport.measured` is ``False``.
+    With none of them, the rules score the set instead and `FidelityReport.measured` is ``False``.
     Those numbers are a ranking, not a prediction: they compare one candidate set with another
     scored the same way and with nothing else.
 
@@ -572,7 +643,11 @@ def fidelity(
         key=lambda entry: (-entry[2], entry[0], entry[1]),
     )
     source = table.source
-    if not specific:
+    stood_in = ""
+    if not specific and isinstance(table, LigationMatrix):
+        stood_in = table.product
+        source = f"{source}, standing in for {one.name}, which nobody has measured"
+    elif not specific:
         source = f"{source}, a ligase profile and not a measurement of {one.name}"
     return FidelityReport(
         one.name,
@@ -583,6 +658,7 @@ def fidelity(
         weak=tuple(weak),
         mismatches=tuple(mismatches),
         enzyme_specific=specific,
+        stand_in=stood_in,
     )
 
 
@@ -603,6 +679,42 @@ def _by_rule(enzyme: Enzyme, chosen: Sequence[str]) -> FidelityReport:
         )
         value *= max(0.0, 1.0 - penalty)
     return FidelityReport(enzyme.name, _RULE_SOURCE, measured=False, value=value)
+
+
+def on_target(
+    overhangs: Iterable[str], profile: LigaseProfile, *, floor: float = STRONG_LIGATION
+) -> OnTargetReport:
+    """Report how often the ligase `profile` measured joined each overhang to its own partner.
+
+    A set is scored for fidelity on the enzyme's own matrix, which is T4's chemistry. A method
+    ligating with another ligase joins the same overhangs at its own rates, and the two disagree
+    most on the A/T-rich ones. This reads one cell an overhang and says which fall below `floor`,
+    so a caller holding a profile sees what the score could not. It returns no score, because
+    what is at risk is how many correct joins are made and not which product they make.
+
+    `floor` defaults to `STRONG_LIGATION`, the rate NEB's Viewer calls a Watson-Crick pair strong
+    at; `docs/research/ligation-fidelity.md` section 8 holds what it warns on.
+
+    Raises
+    ------
+    ValueError
+        If an overhang is not as long as the ones the profile covers.
+    """
+    chosen = tuple(overhang.upper() for overhang in overhangs)
+    for overhang in chosen:
+        if len(overhang) != profile.overhang_length or set(overhang) - set("ACGT"):
+            raise ValueError(
+                f"{profile.source} covers {profile.overhang_length}-base overhangs, "
+                f"and {overhang!r} is {len(overhang)}"
+            )
+    return OnTargetReport(
+        profile.source,
+        floor=floor,
+        rates=tuple(
+            OnTarget(overhang, profile.normalised(overhang, reverse_complement(overhang)), floor)
+            for overhang in chosen
+        ),
+    )
 
 
 def best_overhang(
@@ -682,6 +794,40 @@ def best_overhang(
     return Choice(junction, best[2], offset, tuple(rejected)), tuple(rejected)
 
 
+def stand_in_matrix(enzyme: EnzymeLike) -> LigationMatrix | None:
+    """Return the shipped matrix that stands in for an enzyme nobody measured, or ``None``.
+
+    An isoschizomer first: an enzyme reading the same site cuts it the same way, so a matrix
+    measured with one is a measurement of the other under another name. Otherwise the shipped
+    matrix of the same overhang length with the most ligations behind it, which Pryor 2020's
+    Discussion is what licenses: the predicted fidelity "is unlikely to be significantly
+    impacted by the choice of Type IIS restriction enzyme". Both are read off the shipped data
+    rather than listed, so a matrix added later stands in without a table to edit.
+
+    An enzyme with its own matrix needs no stand-in and gets ``None``.
+
+    Examples
+    --------
+    >>> stand_in_matrix("PaqCI").enzyme
+    'Esp3I'
+    >>> stand_in_matrix("BspQI").enzyme
+    'SapI'
+    >>> stand_in_matrix("BsaI") is None
+    True
+    """
+    one = _one(enzyme)
+    if ligation_matrix(one) is not None:
+        return None
+    shipped = [(matrix, get_enzyme(matrix.enzyme)) for matrix in _shipped().values()]
+    same_site = [matrix for matrix, other in shipped if other.site == one.site]
+    if same_site:
+        return min(same_site, key=lambda matrix: matrix.enzyme)
+    length = [matrix for matrix, other in shipped if other.overhang_length == one.overhang_length]
+    if not length:
+        return None
+    return max(length, key=lambda matrix: (matrix.observations, matrix.enzyme))
+
+
 def scoring(
     enzyme: EnzymeLike,
     *,
@@ -690,9 +836,12 @@ def scoring(
 ) -> tuple[Scoring | None, bool]:
     """Return what scores this enzyme's overhangs, and whether the enzyme itself was measured.
 
-    The enzyme's own matrix wins unless the caller asks for the profile, because a ligase
-    profile stands in for a measurement nobody has made rather than replacing one they have.
-    Neither: ``None``, and the rules score the set.
+    The enzyme's own matrix wins unless the caller asks for the profile. Where nobody measured
+    the enzyme, `stand_in_matrix` is next: a matrix of the same reaction run with another Type
+    IIS enzyme is a smaller error than one of a different reaction, measured either way. A
+    profile is the third fallback, for an enzyme no shipped matrix shares an overhang length
+    with, and `prefer_profile` lifts it above everything. None of the three: ``None``, and the
+    rules score the set.
 
     Raises
     ------
@@ -704,17 +853,38 @@ def scoring(
     >>> table, specific = scoring("BsaI")
     >>> table.enzyme, specific
     ('BsaI', True)
+    >>> table, specific = scoring("PaqCI")
+    >>> table.enzyme, specific
+    ('Esp3I', False)
     """
     one = _one(enzyme)
+    if profile is not None and prefer_profile:
+        return _fitting(profile, one), False
     matrix = ligation_matrix(one)
-    if profile is not None and (prefer_profile or matrix is None):
-        if profile.overhang_length != one.overhang_length:
-            raise ValueError(
-                f"{profile.path.name} covers {profile.overhang_length}-base overhangs and "
-                f"{one.name} leaves {one.overhang_length}"
-            )
-        return profile, False
-    return matrix, matrix is not None
+    if matrix is not None:
+        return matrix, True
+    stand_in = stand_in_matrix(one)
+    if stand_in is not None:
+        return stand_in, False
+    if profile is not None:
+        return _fitting(profile, one), False
+    return None, False
+
+
+def _fitting(profile: LigaseProfile, enzyme: Enzyme) -> LigaseProfile:
+    """Return the profile, refusing one whose overhangs this enzyme could not leave.
+
+    Raises
+    ------
+    ValueError
+        If the profile covers overhangs of another length than the enzyme leaves.
+    """
+    if profile.overhang_length != enzyme.overhang_length:
+        raise ValueError(
+            f"{profile.path.name} covers {profile.overhang_length}-base overhangs and "
+            f"{enzyme.name} leaves {enzyme.overhang_length}"
+        )
+    return profile
 
 
 def _one(enzyme: EnzymeLike) -> Enzyme:

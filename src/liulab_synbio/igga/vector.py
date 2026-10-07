@@ -5,10 +5,13 @@ at one end and the cloning scar at the other. That is what a round opens, so it 
 digest rather than off a string: a vector already carrying such a piece is taken as it stands,
 and one that does not has one put at a site the user names.
 
-Two vectors are destinations in that sense, and a `Cassette` says which. A round's destination
-gives up the method's internal stuffer to the internal enzyme. The working vector gives up its
-ccdB cassette to the cargo enzyme, and that cassette is the method's own DNA — `CCDB_PAYLOAD`
-between two of that enzyme's sites.
+A `Cassette` says which piece, to which enzyme, and in which tube. A round's destination gives up
+the method's internal stuffer to the internal enzyme; a donor backbone gives the same stuffer up
+to the external enzyme; the working vector gives up its ccdB cassette to the cargo enzyme, and
+that cassette is the method's own DNA — `CCDB_PAYLOAD` between two of that enzyme's sites. What
+a record may not read outside its cassette is the enzymes of its own tube and no others, which
+is what lets a destination carry outboard the sites that release its cargo:
+`docs/adr/0014-one-record-one-tube.md`.
 
 An insertion is reported as an `liulab_mbio.edits.EditReport`, so the user reads what it changed
 rather than trusting a new file. Coordinates are the model's, and a cassette across the origin
@@ -20,7 +23,7 @@ from dataclasses import dataclass
 
 from liulab_mbio.checks import Check
 from liulab_mbio.codons import CodonUsage
-from liulab_mbio.edits import EditReport, insert
+from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import (
@@ -81,24 +84,55 @@ class Cassette:
     enzyme
         The enzyme that excises it, which is what opens the vector.
     free_of
-        The enzymes no site of which may lie outside it, because each shares a reaction with this
-        vector.
+        The enzymes no site of which may lie outside it: the ones acting in `tube` that would cut
+        what this record keeps. An enzyme acting in another tube never meets this record, and a
+        chopper aimed at the piece this tube throws away is meant to cut outside.
+    tube
+        The digest this record is cut in, named as a message can say it.
     """
 
     bases: str
     enzyme: Enzyme
     free_of: tuple[Enzyme, ...]
+    tube: str
 
 
 def round_cassette(scheme: Scheme = IGGA) -> Cassette:
     """Return the cassette a round's destination gives up: the method's internal stuffer.
 
-    Every enzyme the method names is barred outside it, because a round runs them all in one tube.
+    Barred outside it are the enzymes of that one digest: the internal enzyme, which opens the
+    library, and the chopper that shreds the stuffer it gives up. The external enzyme and the
+    donor's own chopper act in the donor's tube, and the destination carries their sites outboard
+    of the cassette on purpose -- that is what releases the cargo once the rounds are done.
     """
     return Cassette(
         scheme.internal_stuffer,
         scheme.internal,
-        (scheme.internal, scheme.external, *scheme.blunt),
+        (scheme.internal, *scheme.blunt_for_the_destination),
+        "the digest that opens a round's destination",
+    )
+
+
+def donor_cassette(scheme: Scheme = IGGA) -> Cassette:
+    """Return the cassette a donor backbone gives up: the same stuffer, to the external enzyme.
+
+    One stuffer, two tubes. A part is held in a DMX backbone whose flanks carry the external
+    enzyme's sites, so what that backbone gives up is the piece between them.
+
+    Nothing is barred outside it, because this is the one tube that keeps nothing outside it: the
+    backbone is what the digest throws away. The releasing cuts lie outboard of the cassette, and
+    so does the blunt chopper aimed at the backbone they leave. A third releasing site is caught
+    where it does harm, by the gate counting the cuts in the tube, and where a chopper may sit is
+    `liulab_synbio.igga.gate.check_dmx_vector`'s question.
+
+    The sites that excise this cassette lie in the backbone and not in the cassette, so a backbone
+    carrying none cannot be made a donor by putting one in.
+    """
+    return Cassette(
+        scheme.internal_stuffer,
+        scheme.external,
+        (),
+        "the digest that releases a part from its donor",
     )
 
 
@@ -147,7 +181,9 @@ def ccdb_cassette(
             f"{cargo.name} reads {len(read)} site(s) in this ccdB cassette, where the two that "
             "release the payload are all it may read: choose another cargo enzyme"
         )
-    return Cassette(bases, cargo, (cargo, *scheme.reserved_enzymes))
+    return Cassette(
+        bases, cargo, (cargo, *scheme.reserved_enzymes), "the digest that opens the working vector"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,7 +219,8 @@ def destination_vector(
     A vector that already gives up one piece leaving the method's two overhangs is returned as it
     stands, `site` unread. One that does not has `cassette` put at the start of `site`, and the
     result is held to the same rule. The default is `round_cassette`, which is what a round's own
-    destination gives up; `ccdb_cassette` is what a working vector gives up instead.
+    destination gives up; `donor_cassette` and `ccdb_cassette` are what a donor backbone and a
+    working vector give up instead, each barring the enzymes of its own tube.
 
     Parameters
     ----------
@@ -223,6 +260,29 @@ def destination_vector(
         )
     _check_clean(edited, held, made)
     return Destination(edited, made, report)
+
+
+def entry_destination(destination: Destination, scheme: Scheme) -> Destination:
+    """Return `destination` respelt so the piece it gives up enters on `scheme`'s entry overhang.
+
+    A part enters on its own position's overhang, so a build over several positions needs one
+    destination each. They differ in the bases that overhang spells and in nothing else: those
+    bases lie between the two cuts, not in the sites that make them, so the enzyme still opens
+    the vector there. Four new bases can still spell a site the backbone did not read before,
+    so the result goes back through `destination_vector` rather than being taken on trust.
+
+    Raises
+    ------
+    ValueError
+        For any reason `destination_vector` refuses the respelt vector.
+    """
+    at = destination.stuffer.start
+    entry = scheme.entry_overhang
+    if destination.record.bases(at, at + len(entry)) == entry:
+        return destination
+    record, _ = replace(destination.record, at, at + len(entry), entry)
+    made = destination_vector(record, scheme)
+    return Destination(made.record, made.stuffer, destination.edit)
 
 
 def released_cargo(record: SequenceRecord, scheme: Scheme = IGGA) -> Segment | None:
@@ -305,18 +365,21 @@ def _coding(record: SequenceRecord, at: int) -> Feature | None:
 
 
 def _check_clean(record: SequenceRecord, cassette: Cassette, stuffer: Segment) -> None:
-    """Refuse a vector reading one of the barred enzymes outside its cassette.
+    """Refuse a vector reading outside its cassette an enzyme of the tube it is digested in.
 
-    Inside it they are the design: the cuts that excise the cassette, and whichever blunt chopper
-    shreds the excised piece. Outside, the reaction would cut the backbone.
+    Only that one tube is asked about. Inside the cassette its enzymes are the design: the cuts
+    that excise the cassette, and whichever blunt chopper shreds the excised piece. Outside, that
+    digest would cut the backbone. A method enzyme acting in some other tube is not barred, and a
+    destination carries the ones that release its cargo outboard of the cassette on purpose.
     """
     for site in find_sites(record, cassette.free_of):
         if not record.covers(stuffer, site.span):
             raise ValueError(
                 f"{site.enzyme.name} reads a site at {site.start} on the "
                 f"{site.strand.name.lower()} strand, outside the cassette at "
-                f"{stuffer.start}-{stuffer.end}: a reaction would cut the backbone there. Take "
-                "that site out of the vector, or name a method whose enzymes it is free of"
+                f"{stuffer.start}-{stuffer.end}: {site.enzyme.name} acts in {cassette.tube}, "
+                "which would cut the backbone there. Take that site out of the vector, or name a "
+                "method whose enzymes it is free of"
             )
 
 
@@ -454,6 +517,7 @@ def working_vector(
     *,
     scheme: Scheme = IGGA,
     site: Site | None = None,
+    enzyme: Enzyme | None = None,
 ) -> Working:
     """Return `backbone` as the working vector `cargo` is assembled into.
 
@@ -471,6 +535,9 @@ def working_vector(
         The method, which says what the cassette's two ends are.
     site
         Where the cassette goes, read only where the backbone carries none.
+    enzyme
+        The cargo enzyme, where a caller chose it from `backbone` alone before designing what is
+        in `cargo`. It is the only candidate searched, so the pot still has to be free of it.
 
     Raises
     ------
@@ -478,7 +545,9 @@ def working_vector(
         If no candidate enzyme is free of every molecule, or for any reason
         `destination_vector` refuses the backbone.
     """
-    chosen = cargo_enzyme((backbone, *cargo), scheme=scheme)
+    chosen = cargo_enzyme(
+        (backbone, *cargo), scheme=scheme, candidates=None if enzyme is None else (enzyme.name,)
+    )
     if chosen.enzyme is None:
         raise ValueError(chosen.check.detail)
     held = ccdb_cassette(chosen.enzyme, scheme=scheme)

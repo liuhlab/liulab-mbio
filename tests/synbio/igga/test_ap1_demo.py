@@ -7,17 +7,22 @@ the blocks that make it, not on how the design reached them.
 
 from collections import Counter
 from dataclasses import replace
+from itertools import groupby
 from pathlib import Path
 
 import pytest
 
+from liulab_mbio.barcodes import MAX_HOMOPOLYMER
+from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.protocol.model import Citation
+from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import find_sites
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
-from liulab_synbio.igga.vector import working_vector
+from liulab_synbio.igga.cargo import cargo_record
+from liulab_synbio.igga.reads import ALLOWANCE, FLANK
+from liulab_synbio.igga.vector import released_cargo, working_vector
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
@@ -69,6 +74,18 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
     assert "*" not in translate(retained)
 
 
+def test_the_block_meets_the_homopolymer_cap_at_a_scar_junction_and_never_passes_it(plan):
+    # The block reads barcode-scar-barcode, so a run grows across a junction no barcode holds on
+    # its own. Counted here plainly, over the whole context, so it fails if the designer's own
+    # junction arithmetic ever admits a run this count can see.
+    scar = plan.scheme.cloning_scar
+    runs = [
+        max(len(tuple(same)) for _, same in groupby(scar + one.barcode + scar))
+        for one in plan.parts
+    ]
+    assert max(runs) <= MAX_HOMOPOLYMER
+
+
 def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
     pool = plan.pool.pool
     assert {len(one) for one in pool.oligos} == {plan.project.oligo_length}
@@ -76,15 +93,15 @@ def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
     assert pool.count == len(pool.oligos)
 
 
-def test_the_arithmetic_floor_is_152_and_the_design_spends_one_more_on_one_block(plan):
-    """152 is what the length budget allows for; 153 is what a legal overhang set costs.
+def test_the_design_lands_on_the_arithmetic_floor_of_131(plan):
+    """Splitting the cargo rather than the block leaves no block over its own floor.
 
-    N_ATF7 is 1,092 bp, exactly four spans of 276 less the three shared overhangs, so its four
-    cut positions are forced and the first spells GCCG, which is refused as one base kind.
+    N_ATF7 overran while the stuffers were synthesised with it: they forced its cut positions,
+    and the first forced one spelled GCCG, which is refused as one base kind.
     """
-    assert plan.pool.floor == 152
-    assert plan.pool.pool.count == 153
-    assert plan.pool.over_floor == ("N_ATF7",)
+    assert plan.pool.floor == 131
+    assert plan.pool.pool.count == 131
+    assert plan.pool.over_floor == ()
 
 
 def test_every_oligo_traces_to_its_protein_and_its_fragment(plan):
@@ -94,15 +111,37 @@ def test_every_oligo_traces_to_its_protein_and_its_fragment(plan):
         assert 1 <= oligo.fragment <= oligo.fragments
 
 
-def test_every_block_reassembles_from_its_own_fragments(plan):
+def test_every_cargo_reassembles_from_its_own_fragments(plan):
+    """What is synthesised is the cargo; the stuffers either side are the destination's."""
     for split, part in zip(plan.pool.splits, plan.parts, strict=True):
-        assert split.reassembled() == part.sequence
+        assert split.reassembled() == str(cargo_record(part, plan.scheme).sequence)
+        assert split.reassembled() in part.sequence
+
+
+def test_every_position_has_a_block_vector_its_whole_part_list_closes_into(plan):
+    """A part enters on its own position's overhang, and one backbone presents one pair."""
+    assert [one.record.name for one in plan.block_vectors] == [
+        "DMX-iGGA N",
+        "DMX-iGGA DBD",
+        "DMX-iGGA C",
+    ]
+    for index, one in enumerate(plan.block_vectors):
+        backbone = next(
+            piece
+            for piece in digest(one.record, plan.scheme.internal)
+            if (piece.start, piece.end) != (one.stuffer.start, one.stuffer.end)
+        )
+        cargo = [cargo_record(part, plan.scheme) for part in plan.parts if part.index == index]
+        assert len(cargo) == 24
+        assert {(str(each.sequence)[:4], str(each.sequence)[-4:]) for each in cargo} == {
+            (backbone.right_overhang, backbone.left_overhang)
+        }
 
 
 def test_the_fragment_counts_sit_at_or_above_lund_s_measured_84_6_per_cent_point(plan):
     counted = dict(plan.pool.pool.fragment_counts())
     assert max(counted) == 5
-    assert sum(blocks for pieces, blocks in counted.items() if pieces <= 2) == 55
+    assert sum(blocks for pieces, blocks in counted.items() if pieces <= 2) == 56
     assert [row[2] for row in plan.pool.against_lund() if row[0] == 5] == [0.846]
 
 
@@ -113,12 +152,26 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
 def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
     """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
     row = next(one for one in plan.protocol().bill.rows if one.item.endswith("oligo pool"))
-    assert (row.quantity, row.unit) == (153, "oligos")
-    assert "153 count, 347 below the next band" in row.headroom
+    assert (row.quantity, row.unit) == (131, "oligos")
+    assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
     assert row.charge == ""
     assert row.hole is not None
     assert row.hole.kind == "price"
+
+
+def test_the_cargo_the_reads_run_across_is_the_cargo_the_release_digest_frees(plan):
+    """Two derivations of one span, and they have to agree.
+
+    The reads place the cargo by arithmetic over the rounds, because a destination is not
+    obliged to free its own; the release step digests for it, because this destination does. A
+    drift would hand the bench a pair that does not span what the digest put in the tube.
+    """
+    freed = released_cargo(plan.rounds[-1].product, plan.scheme)
+
+    assert freed is not None
+    over = plan.reads.linkage.amplicon_length - (freed.end - freed.start)
+    assert 2 * (FLANK - ALLOWANCE) <= over <= 2 * (FLANK + ALLOWANCE)
 
 
 def rerouted(plan, **changes):
@@ -130,7 +183,7 @@ def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
     one = plan.validation
     assert (one.route.name, one.floor, len(one.designs)) == ("B", 0, 72)
     assert one.wells == 288 == 72 * 4
-    assert [len(picked.seating) for picked in one.picked] == [288]
+    assert [len(picked.labels) for picked in one.picked] == [288]
     assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
 
 
@@ -139,11 +192,11 @@ def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out
     whole = plan.validation
     fewer = rerouted(plan, validate_from=2).validation
     left_out = len(whole.designs) - len(fewer.designs)
-    assert left_out == 21
-    assert fewer.wells == whole.wells - left_out * whole.colonies == 204
-    assert sum(len(one.seating) for one in fewer.picked) == 204
+    assert left_out == 40
+    assert fewer.wells == whole.wells - left_out * whole.colonies == 128
+    assert sum(len(one.labels) for one in fewer.picked) == 128
     fewest = rerouted(plan, validate_from=3).validation
-    assert (len(fewest.designs), fewest.wells) == (17, 68)
+    assert (len(fewest.designs), fewest.wells) == (16, 64)
     assert len(fewest.index) == 1 < len(whole.index)
     assert rerouted(plan, validate_from=6).validation is None
 
@@ -172,24 +225,28 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
-    reads = ["H27", "H28"]
-    # The final assembly: this project names no working vector, so what one would fix is H31,
-    # and this library's own backbone presents no cut that frees its cargo, which is H32.
-    final = ["H31", "H32", "H24", "H31", "H24", "H24", *reads]
+    # Block assembly holds nothing open: every position has a destination presenting its own
+    # entry overhang, and NEB's kit table sizes the reaction.
+    blocks: list[str] = []
+    # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
+    # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
+    linkage = ["H28"]
+    # The final assembly: this project names no working vector, so what one would fix is H31. The
+    # backbone the rounds ran in frees the cargo itself, so the release is written rather than
+    # held open, and every hole left in the stage is H24, the masses nobody published.
+    final = ["H31", "H24", "H31", "H24", "H24"]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
-        "H25",
-        "H26",
+        *blocks,
         "B1",
         "B2",
-        *reads,
+        *linkage,
         *final,
     ]
     assert [hole.id for step in route_a.steps for hole in step.holes] == [
         *pcrs,
-        "H25",
-        "H26",
-        *reads,
+        *blocks,
+        *linkage,
         *final,
     ]
     for one in (route_a, route_b):
@@ -203,7 +260,7 @@ def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_t
         "Order the oligo pool and the primers that amplify it",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
-        "Assemble each block from its 1 to 5 pieces",
+        "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
     note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
@@ -246,13 +303,26 @@ def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
     assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
-def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):
-    """A block is split for synthesis and nothing says what puts it back together."""
+def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(plan):
+    """Each cargo closes into its own position's vector, in NEB's own kit reaction."""
     step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
-    assert [hole.id for hole in step.holes] == ["H25", "H26"]
-    assert not step.tables
-    assert not step.programs
-    assert all(hole.kind == "undecided" for hole in step.holes)
+    opened = len(plan.rounds[0].destination) - plan.rounds[0].excised.length
+
+    table = step.tables[0]
+    assert "E1602" in table.title
+    rows = {one.name: one for one in table.components}
+    weighed = dna_amount("backbone", opened, pmol=0.05).nanograms
+    assert rows["DMX-iGGA, opened"].final == f"0.05 pmol ({weighed:g} ng)"
+    assert rows["T4 DNA Ligase Buffer"].stock == "10X"
+    assert [one.name for one in table.components if one.name.startswith("PCR2 piece")] == [
+        f"PCR2 piece {number}" for number in range(1, 6)
+    ]
+    assert step.programs[0].stages[-1].incubations[0].temperature_c == 60.0
+    assert not step.holes
+    assert step.instructions[0].startswith(
+        "Open DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and "
+        "DMX-iGGA C (block-vector-3.dna) with BbsI"
+    )
 
 
 def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
@@ -261,7 +331,7 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
 
     assert [one.title for one in steps] == [
         "Pick the working vector",
-        "Release the cargo from the library backbone",
+        "Release the cargo with BsaI and PmeI",
         "Assemble the cargo into the working vector",
         "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
         "Read representation in the final vector",
@@ -283,12 +353,39 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
 
     assert working.enzyme.name in steps[0].title
     assert steps[2].programs[0].title == "Golden Gate assembly"
-    # H32 stays: this library's own backbone still presents no cut that frees its cargo.
     assert [hole.id for step in steps for hole in step.holes] == [
-        "H32",
         "H24",
         "H24",
         "H24",
-        "H27",
-        "H28",
     ]
+
+
+def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
+    """Route B pours picked and index plates, and each now belongs to a plate the page draws."""
+    one = plan.protocol()
+    named = {
+        well.plate
+        for step in one.steps
+        for transfer in step.transfers
+        for move in transfer.moves
+        for well in (move.source, move.destination)
+    }
+    drawn = {plate.name: plate for plate in one.plates}
+
+    assert named <= set(drawn)
+    assert {"picked 1", "index 1"} <= set(drawn)
+    assert drawn["picked 1"].labels["A1"] == "quarter 1"
+    assert not drawn["picked 1"].seating
+    assert [c.status for c in one.audit() if c.name == "wells"] == ["pass"]
+
+
+def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(plan, tmp_path):
+    """The destination is KanR, so no plate, well or broth carries the drug D11 rules out.
+
+    Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too.
+    """
+    written = write_protocol(plan.protocol(), tmp_path / "protocol.json").read_text()
+
+    assert "kanamycin" in written
+    assert "carbenicillin" not in written
+    assert "ampicillin" not in written

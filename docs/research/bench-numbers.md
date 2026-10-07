@@ -283,6 +283,14 @@ text.
 | Plate selection and incubation | 100 µg/mL carbenicillin, overnight at 37 °C | Qian SI Day 2 |
 | Home-made plate drying | ~30 minutes, to stop colonies smearing | Qian SI Day 2 |
 
+**The drug does not carry over.** Qian's DMX plasmid was AmpR. Departure D11 rebuilds ours KanR
+before first use, so carbenicillin on it selects nothing. The plate is **50 µg/mL kanamycin**
+(Zero Blunt TOPO UG p. 13, the guide covering this method's own part carrier) — a cited
+transfer, not a new measurement. The temperature, the colony density and the plating volume are
+properties of the step, not of the plasmid, and carry over unchanged. The package quotes
+neither drug: it reads the marker off the record and names the drug that marker selects, which
+ADR 0016 settles.
+
 ### Day 3 — picking
 
 | Number | Value | Source |
@@ -290,6 +298,7 @@ text.
 | Picker | QPix XE Microbial Colony Picker (Molecular Devices) | Qian SI Day 3 |
 | Destination | ECHO-qualified 384-well plates (Beckman Coulter #c74290) | Qian SI Day 3 |
 | Medium per well | 60 µL low-salt LB + 100 µg/mL carbenicillin | Qian SI Day 3 |
+| Medium per well, ours | 60 µL low-salt LB + the vector's own drug, 50 µg/mL kanamycin for the KanR backbone D11 gives it | Qian SI Day 3 for the volume and the medium; Zero Blunt TOPO UG p. 13 for the drug |
 | Low-salt LB | 10 g tryptone, 5 g yeast extract, 0.5 g NaCl per litre | Qian SI Day 3 |
 | Seal | Breathe Easier seals (Fisher #NC1664397) | Qian SI Day 3 |
 | Growth | 37 °C overnight, shaking at 1,000 rpm | Qian SI Day 3 |
@@ -398,6 +407,26 @@ over unchanged; which tube holds which blunt cutter does not.
 | The other tube | BbsI-HF (NEB #R3539L) and PmeI (NEB #R0560L), "using the same protocol" | same |
 | Units per µL for any of the four | **not stated by the paper** — it gives volumes, never units. NEB's specifications below convert them | — |
 | Heat inactivation | **not stated** — the source goes straight to SPRI | — |
+
+### Pooling the part list
+
+The step before the digest, and every number it states is the digest's own read backwards. The
+pool's **total** is the 1 µg above; its members are pooled in **equal picomoles**, so each gives
+that total over the member count, weighed at its own length; and its **concentration floor** is
+what the digest leaves room for.
+
+| Number | Value | Source |
+| --- | --- | --- |
+| Resuspension buffer | nuclease-free TE pH 8.0, or 10 mM Tris-HCl pH 8.0 | Twist, *How should Multiplexed Gene Fragments be resuspended?* |
+| Resuspension, IDT's own | IDTE or molecular-grade water, vortex, 50 °C for 15-20 min, then verify | IDT, gBlocks resuspension |
+| Vendor concentration | **a floor, not a value**: "at least 10 ng/µL is recommended for the stock dilution" (Twist); 10 ng/µL (IDT) | both, above |
+| The pool's own floor | **computed, not quoted**: 1 µg over the 45 µL the 50 µL digest leaves after its two 2.5 µL enzymes, so **≥ 22.3 ng/µL** | the split-digest row above |
+
+**The vendor default does not reach it, and that is the trap.** At 10 ng/µL an equimolar 1,000 ng
+pool occupies 100 µL, more than twice the 45 µL the digest has for it. Following the vendor
+figure literally makes the next step impossible, so the number the pool is brought to is set by
+the digest and never typed into a step: `liulab_synbio.igga.bench.pool_floor_ng_ul` computes it
+from the three constants already in that row, and the step states what it returns.
 
 The two digests never share a tube. That is the method page's rule and the source's practice.
 
@@ -536,6 +565,7 @@ default and the source gives no reason for either figure.
 | Plasmid prep | ZymoPURE II (Zymo #D4201 midi, #D4203 maxi), eluted in H₂O | same; Key Resources Table |
 | Colonies per round | **not stated** | — |
 | Selection antibiotic and concentration for a round | **not stated** | — |
+| Selection antibiotic for a round, ours | the destination vector's own marker, read off the record: **50 µg/mL kanamycin** for the KanR destination D11 gives this method, and the final transfer on the working vector's own | Zero Blunt TOPO UG p. 13 |
 
 Endura's own manual supplies the settings the paper omits, at 37 °C:
 
@@ -611,7 +641,7 @@ the cells, not to the method.
 | Mass of cargo pool into the reaction | **ours** | — |
 | Mass of working vector into the reaction | **ours** | — |
 | Colonies the library needs | the package computes this floor from the completeness asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
-| Expected representation | **ours** — "read representation" is a step with no sourced pass mark | — |
+| Expected representation | at least 99.5% of members seen, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member | Joung et al. 2017, quoted in `docs/research/vector-qc-panel.md` section 3.5 |
 
 The method page's "Neither by-product needs a check" is a design claim, not a number.
 
@@ -619,7 +649,7 @@ The method page's "Neither by-product needs a check" is a design claim, not a nu
 
 ## The holes, collected
 
-Twenty-one, by stage. Each is a number the generated protocol would otherwise have to invent.
+Twenty, by stage. Each is a number the generated protocol would otherwise have to invent.
 
 **The numbering has five gaps, and they are deliberate.** H11, H17, H19, H20 and H26 were holes
 on the first pass and were closed on the second, when the `r.jina.ai` route reached the NEB
@@ -703,6 +733,9 @@ before that pass still resolves. What closed:
 - **H22.** **No colony count and no selection antibiotic for a round.** Endura's manual gives cfu/µg
   and "plate up to 100 µL" and nothing about library complexity, dilution plating or titre
   plates. *Filled by:* the vector's own marker, and the colony floor the package computes.
+  **The marker half is answered** (ADR 0016): a record annotating one is plated on the drug it
+  selects, at the concentration cited above, and the hole is then not raised at all. Only a
+  record annotating no marker still carries it.
 - **H23.** **No NEB document describes a split digest.** Both kit manuals cover the one-pot reaction,
   destination and inserts together. The split digest is Takacsi-Nagy's alone. *Filled by:*
   nothing — it is the method's own and the paper is its only source.

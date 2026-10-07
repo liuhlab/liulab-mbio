@@ -6,7 +6,7 @@ destination, simulates every round, works out what each round takes at the bench
 colonies it needs, and hands the finished records to `liulab_synbio.igga.gate` to be judged.
 `LibraryPlan.write` puts one directory's worth of output in one place: the
 synthesis order sheet, the barcode table, the amino-acid change table, a record for every round,
-the protocol as JSON data, and the page rendered from that data.
+a block vector for every position, the protocol as JSON data, and the page rendered from it.
 
 The method is `liulab_synbio.igga.method.IGGA` and is not an argument. What a build chooses is
 the project's, and `docs/adr/0010-method-in-code.md` draws the line between them.
@@ -16,6 +16,10 @@ internal stuffer spells an entry overhang in DNA that exists, so position one's 
 pinned to it and the standard designs around that. A vector that has to be retrofitted has its
 stuffer synthesised now, so the standard chooses position one freely and the stuffer put in
 carries what it chose. Nothing else in the method moves either way.
+
+**Every position needs a vector of its own.** A part enters on its own entry overhang, and one
+backbone offers one pair, so a block vector is this destination with those four bases respelt for
+the position whose cargo closes into it.
 """
 
 import dataclasses
@@ -33,10 +37,12 @@ from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
 from liulab_mbio.codons import codon_usage
+from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
+from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
 from liulab_synbio import dmx
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
@@ -53,7 +59,9 @@ from liulab_synbio.igga.parts import (
     synthesis_sheet,
 )
 from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.reads import ReadPairs, read_pairs, read_sheet
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
+from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
 from liulab_synbio.igga.steps import RoundBench
 from liulab_synbio.igga.steps import protocol as protocol_for
@@ -61,7 +69,9 @@ from liulab_synbio.igga.vector import (
     Destination,
     Site,
     Working,
+    cargo_enzyme,
     destination_vector,
+    entry_destination,
     working_vector,
 )
 
@@ -81,6 +91,11 @@ BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
 POOL_FILE = "pool.tsv"
 POOL_PRIMER_FILE = "pool-primers.tsv"
+READ_PRIMER_FILE = "library-read-primers.tsv"
+
+#: What `LibraryPlan.write` calls one position's block vector, numbered by the position it
+#: serves, as the round records are numbered by their round.
+BLOCK_VECTOR_FILE = "block-vector-{number}.dna"
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +121,13 @@ class Files:
         The oligo pool to order and the primers that amplify it. Both are ``None`` where the
         project names no primer set, because the primer sites are templated on the oligo and
         nothing can be written without them.
+    read_primers
+        The pairs that read the finished library back, designed against the simulated records:
+        linkage, representation, and representation again after the move into a working vector.
+    block_vectors
+        One position's block vector a file, in the project's order. Empty where the project names
+        no primer set, because a block ordered whole carries its own external stuffers and needs
+        no vector to supply them.
     """
 
     parts: Path
@@ -116,6 +138,8 @@ class Files:
     protocol: Path
     pool: Path | None = None
     pool_primers: Path | None = None
+    read_primers: Path | None = None
+    block_vectors: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -125,10 +149,12 @@ class Files:
             self.barcodes,
             self.changes,
             *self.records,
+            *self.block_vectors,
             self.protocol_data,
             self.protocol,
             self.pool,
             self.pool_primers,
+            self.read_primers,
         )
         return tuple(path for path in written if path is not None)
 
@@ -147,6 +173,11 @@ class LibraryPlan:
         The record the plan was made from, before any retrofit.
     destination
         The vector a round can open, and what making it one changed.
+    block_vectors
+        The block vector a position's cargo closes into, one a position in the project's order. A
+        part enters on its own position's entry overhang, so each offers that overhang and nothing
+        else about them differs. Empty where the project names no primer set and the blocks are
+        ordered whole.
     part_lists
         One per position, in the project's order: each member's name and the protein it codes for,
         whether it was given as protein or read off DNA.
@@ -186,6 +217,7 @@ class LibraryPlan:
     scheme: Scheme
     vector: SequenceRecord
     destination: Destination
+    block_vectors: tuple[Destination, ...]
     part_lists: tuple[PartList, ...]
     coding: tuple[Mapping[str, str], ...]
     standard: Standard
@@ -216,12 +248,26 @@ class LibraryPlan:
         return tuple(one.part for one in self.rounds)
 
     @property
+    def named_block_vectors(self) -> tuple[tuple[str, str], ...]:
+        """Each block vector as the protocol says it: what it is called, and the file holding it."""
+        return tuple(
+            (one.record.name or f"block vector {number}", BLOCK_VECTOR_FILE.format(number=number))
+            for number, one in enumerate(self.block_vectors, 1)
+        )
+
+    @property
+    def reads(self) -> ReadPairs:
+        """The pairs that read this library back, designed against the records it simulated."""
+        return read_pairs(self.scheme, self.rounds, self.working)
+
+    @property
     def validation(self) -> dmx.Validation | None:
         """What reading these designs back takes, or `None` where the project reads none.
 
         The project's floor chooses the designs and its route reads them. The bench is sized
         from that set and not from the part list, so a design the floor leaves out costs no
-        well, no plate and no reagent.
+        well, no plate and no reagent. Every plate it pours is selected on the destination's own
+        marker, which is not the marker the published read-back was written for.
         """
         if self.project.route is None:
             return None
@@ -229,6 +275,7 @@ class LibraryPlan:
             dmx.ROUTES[self.project.route],
             designs(self.parts, self.pool),
             self.project.validate_from,
+            selection=selection_for(self.destination.record),
         )
 
     @property
@@ -268,16 +315,20 @@ class LibraryPlan:
             pool=self.pool,
             pool_sheet=POOL_FILE,
             primer_sheet=POOL_PRIMER_FILE,
+            block_vectors=self.named_block_vectors,
             working=self.working,
+            reads=self.reads,
+            marks=self.project.marks,
+            linkage_fidelity=self.project.linkage_fidelity,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the sheets, the records, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
-        `BARCODE_FILE` and `CHANGE_FILE`, by `liulab_synbio.igga.rounds` for the records
-        and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run over the
-        same inputs writes the same bytes.
+        `BARCODE_FILE`, `CHANGE_FILE` and `BLOCK_VECTOR_FILE`, by `liulab_synbio.igga.rounds`
+        for the records and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run
+        over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -290,6 +341,10 @@ class LibraryPlan:
         changes = out / CHANGE_FILE
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
+        blocks: list[Path] = []
+        for number, one in enumerate(self.block_vectors, 1):
+            blocks.append(out / BLOCK_VECTOR_FILE.format(number=number))
+            write_dna(one.record, blocks[-1])
         written = write_protocol_files(self.protocol(), out)
         pool = primers = None
         if self.pool is not None:
@@ -297,7 +352,20 @@ class LibraryPlan:
             pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
             primers = out / POOL_PRIMER_FILE
             primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
-        return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
+        reads = out / READ_PRIMER_FILE
+        reads.write_text(read_sheet(self.reads), encoding="utf-8")
+        return Files(
+            sheet,
+            barcodes,
+            changes,
+            records,
+            written.data,
+            written.page,
+            pool,
+            primers,
+            reads,
+            tuple(blocks),
+        )
 
 
 def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, ...]:
@@ -337,12 +405,18 @@ def plan_igga(
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
     prices: PriceRecord | str | os.PathLike[str] | None = None,
+    profile: LigaseProfile | str | os.PathLike[str] | None = None,
+    profile_sheet: str | int | None = None,
 ) -> LibraryPlan:
     """Plan the whole library `project` asks for, by the method `project` is built under.
 
     One round appends one part list to every member of the library at once, so the rounds run in
     the project's own order and the product of each opens the next. The same inputs return the
     same design: the barcodes are drawn from the project's seed, and nothing else here is random.
+
+    Where the project names a working vector, the enzyme that admits cargo to it is chosen from
+    that vector alone before any block is designed, and reserved so no block spells it. The
+    ordering is the pipeline's, not the user's.
 
     Parameters
     ----------
@@ -373,6 +447,11 @@ def plan_igga(
         A price record the user holds, or a path to one;
         `liulab_mbio.bench.prices.read_prices` reads one. The protocol's bill computes its
         quantities either way, and prices nothing without this.
+    profile, profile_sheet
+        A ligase's own matrix the user holds, or a path to one, and which sheet of it to read;
+        `liulab_mbio.ligase.read_profile` reads one. Every round then carries how often that
+        ligase joins its overhangs. Nothing is designed or ranked on it, so a build plans the
+        same design with it and without it.
 
     Returns
     -------
@@ -388,7 +467,8 @@ def plan_igga(
         share a name, if a part is not a protein or not a coding sequence, if no overhang
         standard fits the part lists, if a block spells a site the method does not expect or
         gives up no cargo, if the vector cannot be made a destination, if a round cannot ligate,
-        or if `prices` names a file that is not a price record.
+        if `prices` names a file that is not a price record, or if `profile` names one that is
+        not a ligation count matrix.
     KeyError
         If the project names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
@@ -400,9 +480,19 @@ def plan_igga(
     >>> plan.write("library/")  # doctest: +SKIP
     """
     chosen = project if isinstance(project, Project) else read_project(project)
+    # Read before anything is designed, so a file that is not a matrix is refused at once.
+    ligase = _profile(profile, profile_sheet)
     design = chosen.scheme
     positions = chosen.positions
     one = as_record(chosen.vector)
+    into = None if chosen.working_vector is None else as_record(chosen.working_vector)
+    # Every block has to be free of the cargo enzyme, so it is read off the working vector alone.
+    admits = None if into is None else cargo_enzyme([into], scheme=design).enzyme
+    reserved = (
+        chosen.reserved_extra
+        if admits is None
+        else tuple(dict.fromkeys((*chosen.reserved_extra, admits.name)))
+    )
     given = (
         parts if parts is not None else read_part_lists(chosen.parts, positions, pattern=pattern)
     )
@@ -425,7 +515,7 @@ def plan_igga(
             design,
             chosen.barcode.length,
             distance=chosen.barcode.min_distance,
-            reserved=chosen.reserved_extra,
+            reserved=reserved,
         )
     )
     built = design_parts(
@@ -437,11 +527,15 @@ def plan_igga(
         rules=held,
         coding=coded,
         seed=chosen.seed,
-        reserved=chosen.reserved_extra,
+        reserved=reserved,
     )
     destination = destination_vector(
-        one, design if compatible else _restandardised(design, standard), site=site
+        one,
+        design if compatible else _restandardised(design, standard.entry_overhangs[0]),
+        site=site,
     )
+    pool = _pool(chosen, built)
+    blocks = () if pool is None else _block_vectors(destination, design, standard, positions)
     named = chosen.name or one.name
     rounds = assemble_rounds(
         destination.record, representative(built, positions), design, positions, name=named
@@ -449,12 +543,9 @@ def plan_igga(
     rows = plan_coverage([len(each) for each in lists], completeness=chosen.completeness)
     working = (
         None
-        if chosen.working_vector is None
+        if into is None
         else working_vector(
-            as_record(chosen.working_vector),
-            [rounds[-1].product],
-            scheme=design,
-            site=working_site,
+            into, [rounds[-1].product], scheme=design, site=working_site, enzyme=admits
         )
     )
     judged = check_library(
@@ -465,12 +556,14 @@ def plan_igga(
         barcodes=_barcodes(built, positions),
         working=None if working is None else working.record,
         cargo=None if working is None else working.enzyme,
+        profile=ligase,
     )
     return LibraryPlan(
         chosen,
         design,
         one,
         destination,
+        blocks,
         tuple(lists),
         tuple(coded) if coded is not None else tuple({} for _ in lists),
         standard,
@@ -482,9 +575,40 @@ def plan_igga(
         chosen.host,
         named,
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
-        _pool(chosen, built),
+        pool,
         working,
     )
+
+
+def _profile(
+    value: LigaseProfile | str | os.PathLike[str] | None, sheet: str | int | None
+) -> LigaseProfile | None:
+    """Read a ligase profile, or take one already read."""
+    if value is None or isinstance(value, LigaseProfile):
+        return value
+    return read_profile(value, sheet=sheet)
+
+
+def _block_vectors(
+    destination: Destination, scheme: Scheme, standard: Standard, positions: Sequence[str]
+) -> tuple[Destination, ...]:
+    """Return the block vector a position's cargo closes into, one a position.
+
+    A part enters on its own position's entry overhang, so the vector its cargo closes into has
+    to offer that overhang: one backbone offers one pair, and the first position's alone would
+    leave every later one with nothing to close into. Each is this build's own destination with
+    those bases respelt, named for the position whose blocks it holds.
+    """
+    made: list[Destination] = []
+    for position, overhang in zip(positions, standard.entry_overhangs, strict=True):
+        one = entry_destination(destination, _restandardised(scheme, overhang))
+        made.append(dataclasses.replace(one, record=_named(one.record, position)))
+    return tuple(made)
+
+
+def _named(record: SequenceRecord, position: str) -> SequenceRecord:
+    """Return `record` named for the position whose blocks it holds."""
+    return dataclasses.replace(record, name=f"{record.name} {position}".strip())
 
 
 def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
@@ -674,13 +798,13 @@ def _ending(bases: str, overhang: str) -> str:
     return bases[: len(bases) - len(overhang)] + overhang
 
 
-def _restandardised(scheme: Scheme, standard: Standard) -> Scheme:
-    """Return `scheme` with the standard's first entry overhang written into its stuffers.
+def _restandardised(scheme: Scheme, overhang: str) -> Scheme:
+    """Return `scheme` with `overhang` written into its stuffers as the entry overhang.
 
     A vector that has to be retrofitted has its internal stuffer synthesised now, so the stuffer
-    put in carries the overhang the standard chose for position one rather than the one the
-    method's own DNA carries. Only the bases an overhang occupies move; every other base of every
-    stuffer stays.
+    put in carries the overhang the standard chose rather than the one the method's own DNA
+    carries, and a position after the first asks the same of the vector its blocks close into.
+    Only the bases an overhang occupies move; every other base of every stuffer stays.
 
     Raises
     ------
@@ -688,17 +812,16 @@ def _restandardised(scheme: Scheme, standard: Standard) -> Scheme:
         If the stuffers that overhang makes are not ones the method allows, naming the invariant
         that refused them.
     """
-    first = standard.entry_overhangs[0]
     try:
         return dataclasses.replace(
             scheme,
-            internal_stuffer_prefix=_ending(scheme.internal_stuffer_prefix, first),
-            external_stuffer_5=_ending(scheme.external_stuffer_5, first),
+            internal_stuffer_prefix=_ending(scheme.internal_stuffer_prefix, overhang),
+            external_stuffer_5=_ending(scheme.external_stuffer_5, overhang),
         )
     except ValueError as error:
         raise ValueError(
-            "this vector has to be retrofitted, and the internal stuffer carrying the entry "
-            f"overhang this design chose is not one method {scheme.name!r} allows: {error}"
+            f"the internal stuffer carrying the entry overhang {overhang!r}, which this design "
+            f"chose for one of its positions, is not one method {scheme.name!r} allows: {error}"
         ) from error
 
 

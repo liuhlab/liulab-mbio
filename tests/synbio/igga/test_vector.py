@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from liulab_mbio.bench.phenotype import selection_marker
 from liulab_mbio.edits import replace, rotate
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
@@ -26,8 +27,9 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import find_sites
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
+from liulab_synbio.igga import stages
 from liulab_synbio.igga.gate import check_reaction
 from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme
 from liulab_synbio.igga.project import read_project
@@ -43,6 +45,9 @@ from liulab_synbio.igga.vector import (
     ccdb_cassette,
     destination_vector,
     domesticate_vector,
+    donor_cassette,
+    entry_destination,
+    released_cargo,
     round_cassette,
     working_vector,
 )
@@ -153,6 +158,59 @@ def test_a_stuffer_across_the_origin_is_found_where_it_lies():
     assert taken.stuffer.end > len(vector)
     assert taken.record is vector
     assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+
+
+#: The overhang a second position enters on, which differs from `ENTRY` in every base.
+LATER_ENTRY = "AGAG"
+
+
+def restandardised(made: Scheme, overhang: str) -> Scheme:
+    """`made` with `overhang` as the entry overhang, which is what a later position enters on."""
+    cutter, chopper = get_enzyme(EXTERNAL), get_enzyme(FLANK_CHOPPER)
+    return scheme(
+        internal_stuffer_prefix=overhang,
+        external_stuffer_5=external_5(overhang, cutter, chopper),
+    )
+
+
+def test_a_destination_is_respelt_for_the_overhang_a_later_position_enters_on():
+    made = scheme()
+    taken = destination_vector(carrier(made), made)
+
+    later = entry_destination(taken, restandardised(made, LATER_ENTRY))
+
+    opened = [
+        piece
+        for piece in digest(later.record, made.internal)
+        if (piece.start, piece.end) == (later.stuffer.start, later.stuffer.end)
+    ]
+    assert len(opened) == 1
+    assert (opened[0].left_overhang, opened[0].right_overhang) == (LATER_ENTRY, made.scar_overhang)
+    changed = [
+        one
+        for one, other in zip(taken.record.sequence, later.record.sequence, strict=True)
+        if one != other
+    ]
+    assert len(changed) == len(LATER_ENTRY)
+
+
+def test_a_destination_already_entering_on_that_overhang_is_left_as_it_stands():
+    made = scheme()
+    taken = destination_vector(carrier(made), made)
+
+    assert entry_destination(taken, made) is taken
+
+
+def test_an_entry_overhang_across_the_origin_is_respelt_where_it_lies():
+    """The overhang's own bases are a span like any other, so the coordinate rule holds."""
+    made = scheme()
+    taken = destination_vector(rotate(carrier(made), 82), made)
+    assert taken.stuffer.start + len(ENTRY[0]) > len(taken.record)
+
+    later = entry_destination(taken, restandardised(made, LATER_ENTRY))
+
+    assert later.record.extract(later.stuffer).startswith(LATER_ENTRY)
+    assert len(later.record) == len(taken.record)
 
 
 def test_puc19_is_made_compatible_at_a_named_span(puc19):
@@ -371,15 +429,13 @@ def test_the_gate_passes_the_tube_the_cargo_enzyme_opens_a_working_vector_in(wor
     assert "in 2 places" in judged[0].check.detail
 
 
-def test_a_working_vector_keeps_the_sites_only_a_round_bars(working: Destination):
+def test_a_working_vector_keeps_the_sites_no_tube_it_meets_bars(working: Destination):
     """BsaI never shares a tube with this vector, so its six sites are counted and left."""
     bsai = get_enzyme("BsaI")
     assert len(find_sites(working.record, bsai)) == 6
     assert bsai not in ccdb_cassette(get_enzyme(CARGO)).free_of
-    assert bsai in round_cassette(IGGA).free_of
-
-    with pytest.raises(ValueError, match="outside the cassette"):
-        destination_vector(working.record, IGGA, site=(0, 10))
+    assert bsai not in round_cassette(IGGA).free_of
+    assert donor_cassette(IGGA).enzyme == bsai
 
 
 def test_a_bsmbi_site_the_working_vector_still_reads_is_refused(plvx: SequenceRecord):
@@ -407,9 +463,158 @@ def test_a_working_vector_chooses_its_enzyme_before_it_builds_the_cassette(plvx)
     assert made.record.extract(made.destination.stuffer).startswith(IGGA.entry_overhang)
 
 
+def test_a_pre_chosen_cargo_enzyme_is_the_only_candidate_the_pot_is_searched_for():
+    """A caller that chose from the backbone alone is taken at its word, not made to rank again."""
+    bare = SequenceRecord(pad(200), topology="circular", name="bare")
+    assert cargo_enzyme([bare], scheme=IGGA).enzyme != get_enzyme("BbsI")
+
+    made = working_vector(bare, [], scheme=IGGA, site=(100, 140), enzyme=get_enzyme("BbsI"))
+
+    assert made.enzyme == get_enzyme("BbsI")
+    assert [one.name for one in made.cargo.search.free] == ["BbsI"]
+    assert not made.cargo.search.blocked
+
+
 def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
     """The AP-1 library spells PaqCI twice, so nothing is left to admit it to pLVX."""
     product = read_record(DEMO.parent / "product.dna")
 
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
         working_vector(plvx, [product], scheme=IGGA, site="EGFP")
+
+    # A pre-chosen enzyme is still held to the pot: that is the net under a composed design.
+    with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
+        working_vector(plvx, [product], scheme=IGGA, site="EGFP", enzyme=get_enzyme(CARGO))
+
+
+def donor_carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
+    """A circular donor backbone: the method's stuffer between the two external stuffers.
+
+    What the external enzyme frees from it is the same piece the internal enzyme frees from a
+    round's destination, which is the point: one stuffer, two tubes.
+    """
+    entry, scar = made.entry_overhang, made.scar_overhang
+    between = made.internal_stuffer[len(entry) : len(made.internal_stuffer) - len(scar)]
+    return SequenceRecord(
+        pad(flank) + made.external_stuffer_5 + between + made.external_stuffer_3 + pad(flank),
+        topology="circular",
+        name="donor",
+    )
+
+
+def test_each_cassette_bars_the_enzymes_of_its_own_tube_and_no_others():
+    made = scheme()
+    internal, external = made.internal, made.external
+    core_chopper, flank_chopper = get_enzyme(CORE_CHOPPER), get_enzyme(FLANK_CHOPPER)
+
+    assert round_cassette(made).free_of == (internal, core_chopper)
+    assert made.blunt_for_the_destination == (core_chopper,)
+    # The donor throws its backbone away, so nothing it reads outside the cassette is a defect.
+    assert donor_cassette(made).free_of == ()
+    assert donor_cassette(made).enzyme == external
+    assert flank_chopper not in round_cassette(made).free_of
+
+
+def test_a_destination_carrying_the_sites_that_release_its_cargo_is_accepted():
+    """The outboard external and blunt sites are what frees the cargo once the rounds are done."""
+    made = scheme()
+    vector = donor_carrier(made)
+
+    taken = destination_vector(vector, made)
+
+    assert taken.record is vector
+    assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+    assert find_sites(vector, made.external)
+
+
+def test_the_same_record_is_a_donor_to_the_other_tube():
+    made = scheme()
+    vector = donor_carrier(made)
+
+    taken = destination_vector(vector, made, cassette=donor_cassette(made))
+
+    end = taken.stuffer.end
+    assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+    assert vector.sequence[end : end + len(SCAR)] == made.scar_overhang
+
+
+def test_a_refusal_names_the_tube_the_site_would_be_cut_in():
+    made = scheme()
+    at = 20
+    vector = donor_carrier(made)
+    strayed, _ = replace(vector, at, at + len(made.internal.site), made.internal.site)
+
+    with pytest.raises(ValueError, match="acts in the digest that opens a round's destination"):
+        destination_vector(strayed, made)
+
+
+def test_a_donor_backbone_keeps_the_releasing_and_blunt_sites_it_is_built_on():
+    """Both lie outboard of the cargo, which is the whole point of holding a part in a backbone."""
+    made = scheme()
+    vector = donor_carrier(made)
+    held = donor_cassette(made)
+    taken = destination_vector(vector, made, cassette=held)
+
+    outboard = [
+        site
+        for site in find_sites(vector, (made.external, *made.blunt))
+        if not vector.covers(taken.stuffer, site.span)
+    ]
+
+    assert {site.enzyme for site in outboard} == {made.external, get_enzyme(FLANK_CHOPPER)}
+
+
+@pytest.fixture(scope="module")
+def dmx() -> SequenceRecord:
+    """The rebuilt DMX destination the worked example is planned against.
+
+    `scripts/build_dmx_vector.py` writes it from DMX0001 and
+    `docs/research/dmx-destination.md` records what each step does.
+    """
+    return read_record(DEMO.parent / "vector.gb")
+
+
+def test_the_rebuilt_dmx_vector_is_a_destination_carrying_what_frees_its_cargo(dmx):
+    """Outboard BsaI and PmeI are the method's design, and the shipped predicate refused them."""
+    taken = destination_vector(dmx, IGGA)
+
+    assert taken.record is dmx
+    assert taken.edit is None
+    assert dmx.extract(taken.stuffer).startswith(IGGA.entry_overhang)
+    outboard = [
+        site.enzyme.name
+        for site in find_sites(dmx, (IGGA.external, *IGGA.blunt))
+        if not dmx.covers(taken.stuffer, site.span)
+    ]
+    assert sorted(set(outboard)) == ["BsaI", "PmeI"]
+
+
+def test_the_rebuilt_dmx_vector_is_still_refused_where_the_round_would_cut_its_backbone(dmx):
+    at = 2000
+    site = IGGA.internal.site
+    strayed, _ = replace(dmx, at, at + len(site), site)
+
+    with pytest.raises(ValueError, match="BbsI reads a site at 2000"):
+        destination_vector(strayed, IGGA)
+
+
+def test_the_cargo_a_library_built_in_that_backbone_gives_up_is_found(dmx):
+    """`released_cargo` answered None on the old stand-in, which was H32."""
+    product = read_record(DEMO.parent / "product.dna")
+
+    span = released_cargo(product, IGGA)
+
+    assert span is not None
+    assert product.extract(span).startswith(IGGA.entry_overhang)
+    assert product.extract(span).endswith(IGGA.scar_overhang)
+    assert released_cargo(dmx, IGGA) == Segment(370, 404)
+
+
+def test_the_rebuilt_dmx_vector_plates_on_its_own_drug_and_not_the_paper_s(dmx):
+    """Departure D11 swaps the marker, so the drug follows the record and H22 stays answered."""
+    marker = selection_marker(dmx)
+
+    assert marker is not None
+    assert (marker.name, marker.strand) == ("KanR", Strand.REVERSE)
+    assert stages.selection_for(dmx) == "50 µg/mL kanamycin"
+    assert stages.ROUND_SELECTION not in stages.holes_for(dmx)

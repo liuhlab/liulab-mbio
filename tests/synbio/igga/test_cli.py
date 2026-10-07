@@ -1,12 +1,16 @@
 """The `igga plan` verb: one command runs the whole thing and prints a summary and the paths."""
 
+import io
 import json
 import re
+import zipfile
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
+from liulab_mbio.ligase import RELATIONSHIP_NS, SPREADSHEET_NS
 from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
@@ -104,6 +108,7 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
         "product.dna",
         "protocol.json",
         "protocol.html",
+        "library-read-primers.tsv",
     ]
     for path in written:
         assert path.is_file()
@@ -112,6 +117,102 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     assert bill is not None
     assert bill.rows[0].charge == "1200.00"
     assert bill.currency == "USD"
+
+
+# A ligase matrix as a supplement serves one: several sheets, one per ligase and buffer, so a
+# run that names none would answer a question about T7 with T4's numbers. Nothing of such a
+# workbook is here -- the two sheet names below label a matrix this file writes.
+SHEETS = ("File S6. T4 PEG", "File S7. T7 PEG")
+
+
+@pytest.fixture(scope="module")
+def ligase_matrix(tmp_path_factory) -> Path:
+    """A matrix workbook as the user holds one, written once for every test here."""
+    path = tmp_path_factory.mktemp("ligase") / "File S1_NAR.xlsx"
+    path.write_bytes(_workbook(SHEETS))
+    return path
+
+
+def test_a_ligase_matrix_reports_each_round_on_the_sheet_it_names(project, tmp_path, ligase_matrix):
+    out = tmp_path / "library"
+
+    result = run(
+        project,
+        out,
+        "--site",
+        "100-140",
+        "--ligase-matrix",
+        str(ligase_matrix),
+        "--ligase-sheet",
+        SHEETS[1],
+    )
+
+    assert result.exit_code == 0, result.output
+    checks = [one for one in read_protocol(out / "protocol.json").checks if "on-target" in one.name]
+    assert checks
+    assert all(SHEETS[1] in one.detail for one in checks)
+    assert SHEETS[0] not in checks[0].detail
+
+
+def test_a_workbook_of_several_sheets_is_refused_until_one_is_named(
+    project, tmp_path, ligase_matrix
+):
+    result = run(project, tmp_path / "library", "--ligase-matrix", str(ligase_matrix))
+
+    assert result.exit_code == 1
+    assert all(name in plain(result.output) for name in SHEETS)
+
+
+def _workbook(names: Sequence[str]) -> bytes:
+    """The three XML parts a workbook needs, one count matrix a sheet and nothing else.
+
+    Each sheet names its own part through a relationship, which is how a supplement writes one.
+    """
+    parts = [f"xl/worksheets/sheet{number}.xml" for number, _ in enumerate(names, start=1)]
+    package = "http://schemas.openxmlformats.org/package/2006/relationships"
+    worksheet = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "xl/workbook.xml",
+            f'<workbook xmlns="{SPREADSHEET_NS[1:-1]}" xmlns:r="{RELATIONSHIP_NS[1:-1]}"><sheets>'
+            + "".join(
+                f'<sheet name="{name}" sheetId="{number}" r:id="rId{number}"/>'
+                for number, name in enumerate(names, start=1)
+            )
+            + "</sheets></workbook>",
+        )
+        archive.writestr(
+            "xl/_rels/workbook.xml.rels",
+            f'<Relationships xmlns="{package}">'
+            + "".join(
+                f'<Relationship Id="rId{number}" Type="{worksheet}" '
+                f'Target="{part.removeprefix("xl/")}"/>'
+                for number, part in enumerate(parts, start=1)
+            )
+            + "</Relationships>",
+        )
+        archive.writestr(
+            "xl/sharedStrings.xml",
+            f'<sst xmlns="{SPREADSHEET_NS[1:-1]}">'
+            + "".join(f"<si><t>{label}</t></si>" for label in ("Overhang", "AAAA", "TTTT"))
+            + "</sst>",
+        )
+        for number, part in enumerate(parts, start=1):
+            archive.writestr(part, _sheet(number))
+    return buffer.getvalue()
+
+
+def _sheet(count: int) -> str:
+    """One count matrix: two overhangs, each seen joining the other `count` times."""
+    return (
+        f'<worksheet xmlns="{SPREADSHEET_NS[1:-1]}"><sheetData>'
+        '<row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c>'
+        '<c r="C1" t="s"><v>2</v></c></row>'
+        f'<row r="2"><c r="A2" t="s"><v>1</v></c><c r="C2"><v>{count}</v></c></row>'
+        f'<row r="3"><c r="A3" t="s"><v>2</v></c><c r="B3"><v>{count}</v></c></row>'
+        "</sheetData></worksheet>"
+    )
 
 
 def test_a_kind_that_is_neither_protein_nor_dna_is_refused(project, tmp_path):

@@ -235,22 +235,58 @@ matters for a scarless junction, where the sequence chooses the overhang and not
 
 ## 7. The fallback for an enzyme nobody measured
 
-PaqCI, AarI, BspQI, BpiI and BtgZI have no published matrix. Their overhangs are scored by the
-rules instead, and `FidelityReport.measured` is `False` so that nothing mistakes the number for
-a measurement.
+PaqCI, AarI, BspQI, BpiI and BtgZI have no published matrix. **A shipped matrix of the same
+overhang length stands in**, and the report names whose: `measured` is `True`,
+`enzyme_specific` is `False`, and the label reads `measured with Esp3I, not specific to PaqCI`.
+Decided in #320 on the measurement below, built in #366.
 
-The two weights, 0.05 for each near-duplicate partner and 0.02 for an overhang of one base
-kind, are **ranking choices and not measurements**. They are module constants saying so. A set
-scored this way compares with another set scored this way and with nothing else; it must never
-be printed beside a measured fidelity as though the two were the same kind of number.
+Which matrix stands in is read off the shipped data, not listed in a table the code carries:
 
-A tempting alternative was rejected: scoring PaqCI on BsaI's matrix, on the argument that
-ligation fidelity belongs to T4 ligase and the cycling temperature rather than to the Type IIS
-enzyme. It is a reasonable argument and it is still a substitution of one enzyme's measurement
-for another's, so `choose_enzyme` prefers an enzyme that has its own matrix instead, and says
-so in its ranking. Section 8 does the different thing that argument actually licenses: score the
-overhangs against a measurement of **the ligase itself**, and label the number as the ligase's
-and not the enzyme's.
+| Unmeasured | Overhang | Stands in | On what ground |
+| --- | --- | --- | --- |
+| BspQI (GCTCTTC) | 3 | SapI | reads and cuts the same site |
+| BpiI (GAAGAC) | 4 | BbsI-HF | reads and cuts the same site |
+| PaqCI, AarI (CACCTGC) | 4 | Esp3I | the four-base matrix with the most ligations behind it |
+| BtgZI (GCGATG) | 4 | Esp3I | the same |
+
+The first two are barely substitutions: an isoschizomer cuts the same site the same way, so the
+measurement is of both enzymes under two names. For the rest the authority is Pryor 2020's own
+Discussion sentence, quoted in section 10 — the predicted fidelity "is unlikely to be
+significantly impacted by the choice of Type IIS restriction enzyme".
+
+**An earlier draft of this section rejected exactly this**, as a substitution of one enzyme's
+measurement for another's, and sent the question to section 8's ligase profile instead. The
+objection was never about the number but about what the package may **claim**, and
+`enzyme_specific` and `label` already answer that. The measurement settles which substitution is
+smaller. Reproduced independently at seed 0, 200 random sets per size:
+
+| Overhangs | Cross-enzyme spread, mean / max | Profile deviation, mean / max |
+| --- | --- | --- |
+| 8 | 0.0542 / 0.1815 | 0.0763 / 0.2606 |
+| 12 | 0.0785 / 0.1766 | 0.1435 / 0.3032 |
+| 20 | 0.0762 / 0.1548 | 0.1930 / 0.3819 |
+
+The gap widens with set size — 1.4x at eight overhangs and 2.5x at twenty — because the two
+reactions differ systematically and the error compounds over a product of per-junction
+probabilities. Section 10 reproduces the same effect from the other direction, at mean 0.052 and
+worst 0.148 over the four four-base matrices. On Pryor's own eleven plant overhangs, every
+shipped matrix lands within 1.9 points of the 81% the paper reports, including the three that
+were not the enzyme used, while every pure-ligation profile reads 8 to 10 points high.
+
+So the stand-in is taken ahead of a ligase profile, and only `prefer_profile` puts a profile
+first. One substitution is licensed by an author; the other is licensed by nobody.
+
+The rules remain as the last resort, and their two weights — 0.05 for each near-duplicate
+partner and 0.02 for an overhang of one base kind — are **ranking choices and not
+measurements**. They are module constants saying so, and a set scored that way must never be
+printed beside a measured fidelity as though the two were the same kind of number. In practice
+nothing shipped reaches them: every Type IIS enzyme the package holds leaves three or four
+bases, and shipped matrices cover both lengths, so the rules now score only an enzyme outside
+that range. That is a reachability note, not a reason to delete them.
+
+`choose_enzyme` still prefers an enzyme with its own matrix, which stays right: an enzyme's own
+measurement outranks a stand-in. Its wording may no longer say an unmeasured enzyme cannot be
+scored.
 
 ## 8. A matrix the user holds
 
@@ -366,13 +402,17 @@ The conditions are read off the file name where it is named the way the archive 
 ### What the report then says
 
 A profile belongs to the ligase and the conditions, not to the Type IIS enzyme, and
-`FidelityReport` keeps the three kinds of number apart:
+`FidelityReport` keeps the four kinds of number apart:
 
 | Scored by | `measured` | `enzyme_specific` | `label` |
 | --- | --- | --- | --- |
 | the enzyme's own shipped matrix | `True` | `True` | `measured` |
+| another enzyme's, standing in | `True` | `False` | `measured with Esp3I, not specific to PaqCI` |
 | a ligase profile | `True` | `False` | `measured ligase profile, not specific to PaqCI` |
 | the rules | `False` | `True` | `rule-based estimate` |
+
+`FidelityReport.stand_in` is what tells the middle two apart: it carries the product whose
+matrix stood in, and is empty for a profile.
 
 `source` names the conditions and the file, so the protocol cites the file the number came from
 and the overview prints the label beside the percentage. **A ligase profile is never presented as
@@ -380,17 +420,33 @@ a measurement of the enzyme**, and a rule-based score is still never printed bes
 one as though the two were the same kind of number.
 
 The enzyme's own matrix wins where there is one, because a profile stands in for a measurement
-nobody has made rather than replacing one somebody has. `prefer_profile` overrides that, for a
-designer who wants one set of conditions across several enzymes.
+nobody has made rather than replacing one somebody has. **A profile is now the third fallback,
+not the second**: section 7's stand-in comes first, since it measures the same reaction, and a
+profile is reached only for an enzyme no shipped matrix shares an overhang length with.
+`prefer_profile` overrides all of that, for a designer who wants one set of conditions across
+several enzymes, and it is how a caller who passed `--ligase-matrix` on purpose keeps it.
 
-**Without such a file nothing changes.** PaqCI is scored by the rules exactly as it was before,
-which a test pins.
+**Without such a file, PaqCI is scored on Esp3I's matrix** rather than by the rules, which a
+test pins.
 
 ### A second ligase's matrix, and what it may not replace
 
 Bilotti 2022 is read the same way, and it is CC BY 4.0 rather than CC BY-NC, so a user holding it
-carries no licence question at all. It is one workbook of eight sheets (section 11), so anything
-but its T4 sheet is out of reach of a reader that takes the first sheet of a file.
+carries no licence question at all. It is one workbook of eight sheets (section 11), so the sheet
+is named:
+
+```python
+profile = read_profile(
+    "reference_docs/ligation-fidelity/bilotti2022/File S1_NAR.xlsx", sheet="File S2. T7"
+)
+```
+
+A workbook of several sheets, asked for none, is refused and names them, so a question about T7
+cannot be answered with T4's numbers. The sheet is resolved through the workbook's own
+relationships rather than by the number in `sheetN.xml`, which need not follow the order the
+sheets are listed in. Its name also stands in for the conditions where the file name states none,
+as `File S1_NAR.xlsx` does: `"File S7. T7 PEG"` already carries the ligase and the buffer, so
+`LigaseProfile` gained no buffer field of its own.
 
 **A T7 profile may not replace an enzyme's own one-pot matrix.** The temptation is real: an iGGA
 round ligates with T7 in PEG, so a T7 PEG matrix looks like the closer match to the bench. It is
@@ -401,6 +457,68 @@ profile does. Pure ligation without the Type IIS enzyme and without cycling read
 against one-pot numbers whichever ligase it measures, so swapping in the matching ligase trades a
 labelling problem for an accuracy problem in the loose direction. The enzyme's own one-pot matrix
 stays the score; a second ligase's matrix is read for what it compares, not for what it scores.
+
+### What it is read for instead: one overhang's on-target rate
+
+`liulab_mbio.overhangs.on_target` is what such a profile is read for. It reports, per overhang,
+the correct Watson-Crick pair per 100,000 events on the profile's own sheet, and names the ones
+below `STRONG_LIGATION`. It returns no score, nothing ranks on it, and the fidelity number above
+does not move.
+
+**The comparison is only honest at matched buffer.** The paragraphs above this sub-section reason
+from T7 against T4 in standard T4 buffer, and that is the wrong pair of cells for a reaction run
+in PEG. PEG raises both ligases, so a T7 PEG number read against T4 in standard buffer flatters
+T7 and a T7 standard-buffer number read against T4 PEG damns it. The sheets to compare are
+`File S6. T4 PEG` against `File S7. T7 PEG`, and `File S1. T4` against `File S2. T7`. Measured on
+a user-held copy of `File S1_NAR.xlsx`, correct Watson-Crick pair per 100,000 events:
+
+| Overhang | T4 | T7 | T4 PEG | T7 PEG | T7 PEG / T4 PEG |
+| --- | --- | --- | --- | --- | --- |
+| `AGGA` | 325.3 | 95.5 | 302.3 | 275.7 | 0.91 |
+| `AGAT` | 336.7 | 66.5 | 284.6 | 175.8 | 0.62 |
+| `GCAT` | 343.3 | 497.2 | 282.4 | 458.9 | 1.62 |
+| `TTCC` | 400.0 | 165.0 | 358.9 | 335.7 | 0.94 |
+
+Those four are the AP-1 example's three entry overhangs and its cloning scar. At matched buffer
+T7 costs `AGAT` 38% of its rate and leaves `GCAT` better than T4 — which is why the check is an
+absolute floor and not a ratio. A ratio rewards `GCAT` for no bench reason and condemns `AGAT`,
+which at 175.8 is in no trouble at all.
+
+**The A/T-rich overhangs usually cited are unreachable, so they do not justify the floor.** The
+seven-fold losses quoted for `TTAA`, `TATA`, `TAAA`, `TTTA` and `AAAA` describe overhangs
+`liulab_mbio.overhangs.refusal` already refuses — the first two as palindromes, the last three as
+uniform. Of the 256 four-base overhangs, 216 are reachable and 40 are not (16 palindrome, 24
+uniform). The whole reachable tail below the floor is nine strand pairs:
+
+| Overhang | T4 PEG | T7 PEG | ratio |
+| --- | --- | --- | --- |
+| `TAGA` / `TCTA` | 173.8 | 60.8 | 0.35 |
+| `TCAA` / `TTGA` | 165.2 | 63.2 | 0.38 |
+| `TGAA` / `TTCA` | 212.6 | 69.3 | 0.33 |
+| `CTAA` / `TTAG` | 204.2 | 71.8 | 0.35 |
+| `CTTA` / `TAAG` | 238.9 | 74.2 | 0.31 |
+| `ACTA` / `TAGT` | 205.9 | 85.7 | 0.42 |
+| `AGAA` / `TTCT` | 276.4 | 86.1 | 0.31 |
+| `AAGA` / `TCTT` | 256.8 | 86.5 | 0.34 |
+| `TACA` / `TGTA` | 275.2 | 99.9 | 0.36 |
+
+About threefold, not sevenfold, and every one of the nine is three A/T bases plus one G or C.
+**The floor is `STRONG_LIGATION`**, NEB's own threshold for a strong Watson-Crick pair, already
+sourced in section 5 and reused rather than added to. Over the 216 reachable overhangs on
+`File S7. T7 PEG` it warns on 18 — those nine pairs, counted on both strands — leaves AP-1's
+worst at 175.8 silent, and a floor of 50 would warn on nothing at all.
+
+**What a low rate costs is colonies, not product.** Bilotti's counts are of the *correct* pair,
+so a threefold loss is threefold fewer good joins. Each iGGA round's tube holds one entry overhang
+and the cloning scar and nothing else — `liulab_synbio.igga.gate.LIGATION_OVERHANGS` — so its
+fidelity saturates and a set comparison has nothing to discriminate at two. Yield is what is at
+risk, and section 11 records
+Strzelecki 2024 attributing it to duplex strength with no count matrix capturing it.
+
+**Nothing is designed on it.** `liulab_synbio.igga.standard` keeps ranking candidates on the
+enzyme's own shipped matrix. The profile is a file the user holds, so ranking on it would make the
+same project yield different overhangs depending on whether that file is present, and a design
+that is not reproducible from the project alone costs more than the overhangs it would save.
 
 ## 9. Regeneration
 
@@ -551,13 +669,13 @@ is mean 0.052, median 0.047, worst 0.148. Against that, the profile was 7 to 9 p
 paper's own benchmark and up to 0.19 off at twenty overhangs.
 
 **So section 7's rejected idea is the better-conditioned one of the two fallbacks, on this
-measurement and on the paper's own sentence.** Section 7 rejected scoring PaqCI on BsaI's matrix
-as a substitution of one enzyme's measurement for another's, and section 8 then adopted a
-substitution of a different reaction's measurement instead — which is the larger error and is the
-one the authors do not license. This note records the measurement; it does not change the code.
-A recommendation, not a decision: prefer a four-base Type IIS matrix over the T4 pure-ligation
-profile for an unmeasured four-base enzyme, keep `enzyme_specific=False` and keep the label
-saying whose measurement it is.
+measurement and on the paper's own sentence.** It was rejected as a substitution of one enzyme's
+measurement for another's, and a substitution of a different reaction's measurement was adopted
+instead — the larger error, and the one the authors do not license.
+
+**This was decided in #320 and built in #366, and section 7 now records it**: a shipped matrix of
+the same overhang length stands in ahead of a pure-ligation profile, `enzyme_specific` stays
+`False`, and the label says whose measurement it is.
 
 **PaqCI is no longer an enzyme nobody measured** — it is one whose measurement is unpublished and
 unshippable (section 10). That strengthens the recommendation rather than weakening it: the gap
@@ -670,8 +788,9 @@ Pryor added Type IIS enzymes under one ligase, Bilotti adds ligases.
 The deposit was downloaded and opened on 2026-10-07, and it is not the shape the paper describes.
 Its Data Availability says "Raw ligation product observation counts were provided as CSV formatted
 data tables"; what is deposited is **one workbook, `File S1_NAR.xlsx`, of eight 256 x 256 sheets**.
-That distinction is load-bearing here, because `read_profile` reads the first sheet of a workbook
-and nothing else, so every sheet but T4 is out of reach until it takes a sheet selector.
+That distinction was load-bearing here, because `read_profile` read the first sheet of a workbook
+and nothing else, so a request for T7 returned T4 without erring. It now names the sheet, and
+refuses a workbook of several sheets that names none; section 8 gives the selector.
 
 | Sheet | Ligase | Buffer | Observations |
 | --- | --- | --- | --- |
@@ -687,7 +806,9 @@ and nothing else, so every sheet but T4 is out of reach until it takes a sheet s
 The second condition axis is the buffer: standard T4 buffer against NEBNext Quick Ligation buffer,
 which has PEG, and PEG changes bias. It covers **three of the five ligases, not all five** — T4, T7
 and hLig3 have a PEG sheet, T3 and PBCV-1 do not. A matrix from here needs its **buffer** recorded
-next to temperature and time, which the current `LigaseProfile` conditions string has no field for.
+next to temperature and time; the sheet name carries both, so it supplies the free-form conditions
+string where the file name states none, and no buffer field was added for a value nothing computes
+on.
 
 All eight sheets are **pure ligation: 1 h at 25 °C, no Type IIS enzyme and no cycling** — the same
 chemistry as Potapov 2018 and not the chemistry of a Golden Gate reaction. Section 10's measurement

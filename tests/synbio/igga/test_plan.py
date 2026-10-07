@@ -5,6 +5,8 @@ The part lists are three of two members, so a whole build stays small enough for
 """
 
 import dataclasses
+import math
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -12,15 +14,23 @@ import pytest
 from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
+from liulab_mbio.io import read_record
 from liulab_mbio.protocol import read_protocol
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import digest
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import reverse_translate
+from liulab_synbio.igga.bench import (
+    DIGEST_NG,
+    DIGEST_VOLUME_UL,
+    ENZYME_UL,
+    pool_floor_ng_ul,
+)
 from liulab_synbio.igga.gate import check_product
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.plan import (
     BARCODE_FILE,
+    BLOCK_VECTOR_FILE,
     CHANGE_FILE,
     PARTS_FILE,
     Kind,
@@ -29,6 +39,7 @@ from liulab_synbio.igga.plan import (
 )
 from liulab_synbio.igga.project import Project
 from liulab_synbio.igga.rounds import ROUND_FILE
+from liulab_synbio.igga.vector import cargo_enzyme
 
 HOST = "e-coli-k12"
 COMPLETENESS = 0.99
@@ -79,17 +90,21 @@ def inputs(tmp_path_factory, scheme):
     return out
 
 
-def project(inputs, *, vector: str = "carrier.dna") -> Project:
+def project(
+    inputs, *, vector: str = "carrier.dna", working: str | None = None, primers: Path | None = None
+) -> Project:
     """The project a test plans, naming the inputs written into `inputs`."""
     return Project(
         "library",
         positions=POSITIONS,
         parts=inputs / "parts.fasta",
         vector=inputs / vector,
+        working_vector=None if working is None else inputs / working,
         host=HOST,
         oligo_length=350,
         batch_size=96,
         completeness=COMPLETENESS,
+        primers=primers,
     )
 
 
@@ -109,6 +124,18 @@ def plan(inputs):
 @pytest.fixture(scope="module")
 def written(plan, tmp_path_factory):
     return plan, plan.write(tmp_path_factory.mktemp("library"))
+
+
+#: The orthogonal primer set the demo's pool is amplified by, which is the one set this repo
+#: ships. A pool is what makes the blocks need a vector to supply their stuffers.
+PRIMERS = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "primers.tsv"
+
+
+@pytest.fixture(scope="module")
+def pooled(inputs, tmp_path_factory):
+    """The same build with a pool designed, and the files it writes."""
+    made = plan_igga(project(inputs, primers=PRIMERS), parts=LISTS)
+    return made, made.write(tmp_path_factory.mktemp("pooled"))
 
 
 @pytest.fixture(scope="module")
@@ -143,6 +170,30 @@ def test_write_puts_every_file_in_one_directory_and_the_protocol_reads_back(writ
     assert back.title
     assert back.steps
     assert files.protocol.read_text(encoding="utf-8")
+
+
+def test_a_pool_writes_the_block_vector_each_position_closes_into(pooled):
+    """Only the cargo is synthesised, so a vector has to supply the stuffers either side of it."""
+    made, files = pooled
+
+    assert [path.name for path in files.block_vectors] == [
+        BLOCK_VECTOR_FILE.format(number=number) for number in (1, 2, 3)
+    ]
+    assert [one.record.name for one in made.block_vectors] == [
+        f"carrier {position}" for position in POSITIONS
+    ]
+    for one, path in zip(made.block_vectors, files.block_vectors, strict=True):
+        assert read_record(path).sequence == one.record.sequence
+    assert set(files.block_vectors) <= set(files.paths)
+
+
+def test_a_project_naming_no_primer_set_writes_no_block_vector(written):
+    """A block ordered whole carries its own stuffers, so nothing has to supply them."""
+    made, files = written
+
+    assert made.pool is None
+    assert made.block_vectors == ()
+    assert files.block_vectors == ()
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, tmp_path):
@@ -188,13 +239,42 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
 
 def test_the_finished_library_is_read_for_linkage_and_for_representation(protocol):
     """The method's last two steps, and its rule that only one of them repeats."""
-    last = protocol.steps[-7:-5]
+    linkage, representation = protocol.steps[-7:-5]
 
-    assert [step.title for step in last] == ["Read linkage", "Read representation"]
-    for step in last:
-        assert step.holes
+    assert [linkage.title, representation.title] == ["Read linkage", "Read representation"]
+    # Linkage keeps H28: no source sets a mark for barcode-to-part fidelity. Representation is
+    # held to Joung's bar, so it carries none.
+    assert [hole.id for hole in linkage.holes] == ["H28"]
+    assert representation.holes == ()
     said = " ".join(note for step in protocol.steps for note in step.notes)
     assert said.count("after every later bottleneck") == 1
+
+
+def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
+    """The plan designs the pairs, so neither step sends anyone to the bench without one."""
+    linkage, representation = protocol.steps[-7:-5]
+    pairs = plan.reads
+
+    for step, pair in ((linkage, pairs.linkage), (representation, pairs.representation)):
+        said = " ".join(step.instructions)
+        assert pair.forward.sequence in said
+        assert pair.reverse.sequence in said
+        assert f"{pair.amplicon_length} bp amplicon" in said
+    assert "long read" in " ".join(linkage.instructions)
+
+
+def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):
+    """Joung's three, and the read depth that follows from the library's own width."""
+    said = " ".join(protocol.steps[-6].expected)
+
+    assert "99.5%" in said
+    assert "skew ratio below 10" in said
+    assert "100 or more reads a member" in said
+
+
+def test_no_emitted_protocol_carries_the_read_primer_hole(protocol):
+    """H27 is closed: the plan designs both pairs rather than naming none."""
+    assert "H27" not in [hole.id for step in protocol.steps for hole in step.holes]
 
 
 def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spells(
@@ -226,6 +306,57 @@ def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, in
     assert opened[0].left_overhang == made.standard.entry_overhangs[0]
     assert opened[0].right_overhang == made.standard.scar_overhang
     assert made.status == "pass"
+
+
+#: A coding sequence spelling PaqCI's site, which is the enzyme the bare vector leaves free.
+SPELLS_CARGO = "ATGCACCTGCAAGAAAAA"
+
+
+def coded() -> tuple[dict[str, str], ...]:
+    """The part lists as DNA, the first member spelling the cargo enzyme's site."""
+    first, *rest = LISTS
+    return (
+        {
+            name: SPELLS_CARGO if name == "N_a" else reverse_translate(protein, host="human")
+            for name, protein in first.items()
+        },
+        *(
+            {name: reverse_translate(protein, host="human") for name, protein in one.items()}
+            for one in rest
+        ),
+    )
+
+
+def test_a_working_vector_fixes_the_cargo_enzyme_before_a_block_is_designed(inputs):
+    """The vector is an input and the blocks are an output, so the pipeline does the ordering."""
+    lists = coded()
+    bare = SequenceRecord(pad(200), topology="circular", name="bare")
+    alone = cargo_enzyme([bare], scheme=IGGA).enzyme
+    assert alone is not None
+    assert find_sites(SequenceRecord(lists[0]["N_a"]), alone)
+
+    made = plan_igga(
+        project(inputs, working="bare.dna"), parts=lists, kind="dna", working_site=(100, 140)
+    )
+
+    assert made.working is not None
+    assert made.working.enzyme == alone
+    # Reserved from the vector alone, so the one part that spelled it gives the site up.
+    assert not any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
+    changed = next(one for one in made.parts if one.name == "N_a")
+    assert [one.site.enzyme for one in changed.changes] == [alone]
+
+
+def test_a_project_naming_no_working_vector_reserves_nothing_of_its_own(inputs):
+    """Nothing is added to the reserved set where there is no working vector to read one off."""
+    lists = coded()
+    alone = cargo_enzyme([SequenceRecord(pad(200))], scheme=IGGA).enzyme
+    assert alone is not None
+
+    made = plan_igga(project(inputs), parts=lists, kind="dna")
+
+    assert made.working is None
+    assert any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
 
 
 def test_the_plan_is_judged_by_the_gate_and_by_nothing_of_its_own(plan, inputs):
@@ -394,3 +525,48 @@ def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path)
     assert (bill.currency, bill.total) == ("USD", "1200.00")
     # Everything else the run buys is still a hole, and no figure is estimated for one.
     assert all(row.hole is not None for row in bill.rows[1:])
+
+
+def said_by(protocol) -> str:
+    """Every line of the protocol that could name a drug."""
+    return " ".join(
+        [one.note or "" for one in protocol.materials]
+        + [line for step in protocol.steps for line in step.instructions]
+    )
+
+
+def test_a_vector_naming_no_marker_keeps_the_hole_rather_than_naming_a_drug(protocol):
+    """The toy vector annotates none, so nothing invents the published carbenicillin for it."""
+    assert "carbenicillin" not in said_by(protocol)
+    assert "H22" in [one.id for one in protocol.holes]
+
+
+def test_a_vector_that_names_its_marker_plates_every_round_on_it(plan, carrier):
+    """The marker is a fact in the record, so the drug follows from it and the hole is answered."""
+    kanr = dataclasses.replace(carrier, features=(Feature("KanR", "CDS", (Segment(10, 100),)),))
+
+    protocol = dataclasses.replace(plan, vector=kanr).protocol()
+
+    said = said_by(protocol)
+    assert "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)" in said
+    assert "Plate a measured dilution of the recovery on 50 µg/mL kanamycin" in said
+    assert "H22" not in [one.id for one in protocol.holes]
+
+
+def test_the_pooling_step_states_the_mass_the_round_then_digests(plan, protocol):
+    """One number, said twice: a pool sized against anything else would not fit the digest."""
+    step = next(one for one in protocol.steps if one.title == "Pool each part list")
+    said = " ".join((*step.instructions, *step.expected))
+
+    for row in plan.bench:
+        assert f"{row.donor_digest.nanograms:,.0f} ng" in said
+
+
+def test_the_pooling_floor_is_computed_from_the_digest_and_never_typed(protocol):
+    """The floor is what the digest leaves room for, so the two can never disagree."""
+    step = next(one for one in protocol.steps if one.title == "Pool each part list")
+
+    floor = DIGEST_NG / (DIGEST_VOLUME_UL - 2 * ENZYME_UL)
+
+    assert round(pool_floor_ng_ul(), 10) == round(floor, 10)
+    assert f"at least {math.ceil(floor * 10) / 10:g} ng/µL" in " ".join(step.instructions)
