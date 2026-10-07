@@ -80,8 +80,8 @@ class BarcodeRules:
         How many bases name one part.
     scar
         The cloning scar joining one barcode to the next, ``""`` where a barcode stands alone.
-        A barcode is read with the scar on either side of it, so a forbidden site or a stop
-        spanning that junction is found rather than missed.
+        A barcode is read with the scar on either side of it, so a forbidden site, a stop or a
+        homopolymer run spanning that junction is found rather than missed.
     phase
         The reading frame at a barcode's first base: how many bases of that codon were read
         before it, 0, 1 or 2. ``None`` where the construct never translates the barcode, which
@@ -92,7 +92,7 @@ class BarcodeRules:
     distance
         The fewest mismatches, or edits, two barcodes of one part list may stand apart.
     max_homopolymer
-        The longest run of one base a barcode may carry, or ``None`` for no cap.
+        The longest run of one base a barcode may carry, scar included, or ``None`` for no cap.
     gc_band
         The share of G and C a barcode must hold, low and high inclusive, each 0 to 1. ``None``
         is no band at all, which is the default.
@@ -341,13 +341,8 @@ def _problem(
         return "length", f"is {len(barcode)} bases, not the {rules.length} asked for"
     if bad := sorted(set(barcode) - set(BASES)):
         return "bases", f"holds {''.join(bad)}, which is not one of ACGT"
-    if rules.max_homopolymer is not None:
-        base, run = _longest_run(barcode)
-        if run > rules.max_homopolymer:
-            return (
-                "homopolymer",
-                f"carries a run of {run} {base}, over the cap of {rules.max_homopolymer}",
-            )
+    if (run := _homopolymer(barcode, rules)) is not None:
+        return run
     if rules.gc_band is not None:
         low, high = rules.gc_band
         share = sum(base in "GC" for base in barcode) / len(barcode)
@@ -362,6 +357,28 @@ def _problem(
     if enzymes and (site := _site(barcode, rules, enzymes)) is not None:
         return site
     return None
+
+
+def _homopolymer(barcode: str, rules: BarcodeRules) -> tuple[str, str] | None:
+    """Whether a run of one base through this barcode is over the cap, the cloning scar included.
+
+    The block reads barcode-scar-barcode, so a run can grow across the junction the ligation
+    makes, and the run that matters is the longest one the block carries at or through this
+    barcode. A run inside the scar alone is the scar's and belongs to no barcode.
+    """
+    if rules.max_homopolymer is None:
+        return None
+    start = len(rules.scar)
+    base, run, crosses = _longest_run(
+        rules.scar + barcode + rules.scar, (start, start + rules.length)
+    )
+    if run <= rules.max_homopolymer:
+        return None
+    where = " across the junction with the cloning scar" if crosses else ""
+    return (
+        "homopolymer",
+        f"carries a run of {run} {base}{where}, over the cap of {rules.max_homopolymer}",
+    )
 
 
 def _site(barcode: str, rules: BarcodeRules, enzymes: tuple[Enzyme, ...]) -> tuple[str, str] | None:
@@ -441,11 +458,21 @@ def _sequence_levenshtein(one: str, other: str) -> int:
     return min(least, *previous)
 
 
-def _longest_run(barcode: str) -> tuple[str, int]:
-    """Return the base with the longest run in this barcode, and how long that run is."""
-    runs = [(base, len(tuple(same))) for base, same in groupby(barcode)]
-    base, run = max(runs, key=lambda one: one[1])
-    return base, run
+def _longest_run(sequence: str, span: tuple[int, int]) -> tuple[str, int, bool]:
+    """Return the longest run of one base holding a base of `span`, and where it reaches.
+
+    The base, how long the run is, and whether any of it falls outside `span`. Equal runs go to
+    the one nearest the start.
+    """
+    start, end = span
+    found = ("", 0, False)
+    at = 0
+    for base, same in groupby(sequence):
+        run = len(tuple(same))
+        if at < end and at + run > start and run > found[1]:
+            found = (base, run, at < start or at + run > end)
+        at += run
+    return found
 
 
 def _spell(index: int, length: int) -> str:

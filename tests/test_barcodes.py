@@ -40,6 +40,12 @@ JUNCTION_STOP = "CACCATTA"
 # The reverse complement of the BsaI site, GGTCTC, inside the barcode itself.
 REVERSE_SITE = "GAGACCAAGTT"
 
+# GGGGG is at the cap on its own; the scar ahead of it ends in G, which makes six.
+JUNCTION_RUN = "GGGGGATCTAC"
+
+# TTTTT is at the cap and sits where the scar meets it, but the scar opens on A and leaves it.
+CAPPED_RUN = "ACGATCTTTTT"
+
 
 def distance(one: str, other: str) -> int:
     """Count the mismatches, independently of the module under test."""
@@ -174,6 +180,20 @@ def test_the_dials_default_to_a_homopolymer_cap_and_to_no_gc_band() -> None:
     assert check_barcodes([lean], RULES) == ()
     banded = BarcodeRules(LENGTH, scar=SCAR, gc_band=(0.4, 0.6))
     assert check_barcodes([lean], banded)[0].endswith("outside the band 40% to 60%")
+
+
+def test_the_cap_reads_the_run_the_block_carries_through_the_barcode() -> None:
+    # The block reads barcode-scar-barcode, so the scar either side is part of the run, and a
+    # barcode legal alone is refused for what the junction makes of it.
+    refusal = check_barcodes([JUNCTION_RUN], RULES)[0]
+    assert refusal.endswith(
+        "carries a run of 6 G across the junction with the cloning scar, over the cap of 5"
+    )
+    assert check_barcodes([JUNCTION_RUN], BarcodeRules(LENGTH, phase=None)) == ()
+    # A run at the cap that the scar does not reach is still legal.
+    assert check_barcodes([CAPPED_RUN], RULES) == ()
+    # A run inside the scar alone is the scar's, and refuses no barcode.
+    assert check_barcodes(["CGTCGTCGTCG"], BarcodeRules(LENGTH, scar="AAAAAA", phase=None)) == ()
 
 
 def test_the_same_request_returns_the_same_set_and_another_seed_another() -> None:
