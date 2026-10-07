@@ -8,10 +8,13 @@ from liulab_mbio.sites import (
     digest,
     domesticate,
     find_sites,
+    free_enzyme_search,
     free_enzymes,
     has_site,
     insert_site,
+    out_of_reach,
     primer_tail,
+    repeat_context,
     site_counts,
 )
 
@@ -153,6 +156,41 @@ def test_site_counts_and_free_enzymes_rank_the_type_iis_set(
         "PaqCI": 0,
     }
     assert [e.name for e in free_enzymes([puc19, gfp], names)] == ["BbsI", "PaqCI"]
+
+
+def test_a_search_ranks_the_free_enzymes_and_says_what_blocked_the_rest(
+    puc19: SequenceRecord, gfp: SequenceRecord
+) -> None:
+    search = free_enzyme_search(
+        [puc19, gfp], ["BsaI", "BbsI", "SapI", "PaqCI"], overhang_length=4, end="5'"
+    )
+    assert [e.name for e in search.free] == ["PaqCI", "BbsI"]
+    assert search.best is not None
+    assert search.best.name == "PaqCI"
+    blocked = {one.enzyme.name: one for one in search.blocked}
+    assert set(blocked) == {"BsaI", "SapI"}
+    assert [site.start for site in blocked["BsaI"].sites] == [
+        site.start for site in (*find_sites(puc19, "BsaI"), *find_sites(gfp, "BsaI"))
+    ]
+    assert not blocked["SapI"].sites
+    assert "3 bases" in blocked["SapI"].reason
+
+
+def test_a_search_finding_nothing_free_is_an_answer_and_not_an_error() -> None:
+    search = free_enzyme_search([SequenceRecord("AAAAGGTCTCGTTTT")], ["BsaI"])
+    assert search.free == ()
+    assert search.best is None
+    assert search.blocked[0].sites[0].start == 4
+
+
+def test_a_site_inside_a_long_repeat_is_out_of_every_oligos_reach() -> None:
+    flank = "ACGTTGCA" * 20
+    record = SequenceRecord(flank + "GGTCTC" + flank + "TT" + flank + "GGTCTC" + flank)
+    sites = find_sites(record, "BsaI")
+    assert [site.start for site in sites] == [160, 488]
+    assert repeat_context(record, sites[0].span) == len(flank)
+    assert [site.start for site in out_of_reach(record, sites)] == [160, 488]
+    assert out_of_reach(record, sites, reach=len(flank) + 1) == ()
 
 
 def test_an_unknown_enzyme_name_is_refused() -> None:

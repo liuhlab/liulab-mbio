@@ -465,6 +465,20 @@ An enzyme with no recognition site in any of the parts, so an assembly can use i
 changing a base. A design prefers one; only when none is free does it propose domestication.
 _Avoid_: clean enzyme, available enzyme
 
+### Site out of reach
+
+A site carried more than once in a record, with so much identical sequence on both sides that no
+oligo placed there is unique to one copy. It is counted before anything else a domestication
+route decides, because it is not a bench job at all: the enzyme changes, or the plasmid is
+bought whole.
+_Avoid_: repeat site, untouchable site
+
+### Cargo enzyme
+
+The enzyme that admits cargo to a working vector. Every other enzyme a method names is fixed by
+DNA already on the shelf; this one is searched for per vector, the vector being the user's own.
+_Avoid_: insertion enzyme, final enzyme
+
 ### Domestication candidate
 
 A site an enzyme reads inside a coding sequence, which a synonymous codon change could take

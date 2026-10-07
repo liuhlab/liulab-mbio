@@ -23,7 +23,7 @@ from itertools import islice, product
 
 from liulab_mbio.codons import CodonUsage, codon_usage
 from liulab_mbio.edits import EditReport, insert, replace
-from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
@@ -41,6 +41,11 @@ DAM_SITE = "GATC"
 
 #: How many candidate spacers or fillers to try before giving up on an overhang.
 _TRIES = 4096
+
+#: How much identical sequence either side of a site puts it past every oligo placed there —
+#: mutagenic primer, assembly overlap or Type IIS overhang — because none is unique to one copy.
+#: `docs/research/domestication-methods.md`, the rule and section 3.
+OLIGO_REACH = 100
 
 _RUN = re.compile(r"(.)\1{3}")
 
@@ -187,6 +192,47 @@ class DomesticationReport:
     unchanged: tuple[CutSite, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class Blocked:
+    """One candidate enzyme a search ruled out, and what ruled it out.
+
+    Parameters
+    ----------
+    enzyme
+        The candidate.
+    reason
+        Why it is not free, in the terms the search was given.
+    sites
+        The sites standing in its way, empty where the ends it leaves ruled it out instead.
+    """
+
+    enzyme: Enzyme
+    reason: str
+    sites: tuple[CutSite, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class EnzymeSearch:
+    """Which candidates are free to cut alongside a set of records, and what blocked the rest.
+
+    Attributes
+    ----------
+    free
+        The free enzymes, the rarest recognition site first and ties in the order they were
+        given. Empty is a finding, not an error.
+    blocked
+        Every candidate that is not free, in the order they were given.
+    """
+
+    free: tuple[Enzyme, ...] = ()
+    blocked: tuple[Blocked, ...] = ()
+
+    @property
+    def best(self) -> Enzyme | None:
+        """The first free enzyme, or ``None`` where none is free."""
+        return self.free[0] if self.free else None
+
+
 def find_sites(
     record: SequenceRecord, enzymes: EnzymeLike | Iterable[EnzymeLike]
 ) -> tuple[CutSite, ...]:
@@ -256,6 +302,117 @@ def free_enzymes(
     chosen = shipped() if enzymes is None else _resolve(enzymes)
     counts = site_counts(records, chosen)
     return tuple(enzyme for enzyme in chosen if counts[enzyme.name] == 0)
+
+
+def free_enzyme_search(
+    records: Iterable[SequenceRecord],
+    enzymes: Iterable[EnzymeLike] | None = None,
+    *,
+    overhang_length: int | None = None,
+    end: EndType | None = None,
+) -> EnzymeSearch:
+    """Search `enzymes` for the ones free to cut alongside `records`, and say what blocked the rest.
+
+    A candidate is free when it leaves the end the caller asked for and reads no site in any of
+    the records. An empty result is an answer: `EnzymeSearch.blocked` then names the sites that
+    stand in each candidate's way, which is what a caller reads before reaching for a staged
+    digest, a bridging assembly or a re-tailoring PCR.
+
+    Parameters
+    ----------
+    records
+        The molecules the enzyme would share a reaction with, outside what it is meant to cut.
+    enzymes
+        The candidates, defaulting to every enzyme the package ships.
+    overhang_length
+        How many bases the cut must leave single-stranded, where a design's overhangs are fixed.
+    end
+        The end the cut must leave: ``"5'"``, ``"3'"`` or ``"blunt"``.
+
+    Examples
+    --------
+    >>> search = free_enzyme_search([SequenceRecord("AAAAGGTCTCGTTTT")], ("BsaI", "PaqCI"))
+    >>> [enzyme.name for enzyme in search.free], search.blocked[0].sites[0].start
+    (['PaqCI'], 4)
+    """
+    pool = tuple(records)
+    free: list[Enzyme] = []
+    blocked: list[Blocked] = []
+    for enzyme in shipped() if enzymes is None else _resolve(enzymes):
+        if overhang_length is not None and enzyme.overhang_length != overhang_length:
+            blocked.append(
+                Blocked(
+                    enzyme,
+                    f"leaves {enzyme.overhang_length} bases single-stranded, not {overhang_length}",
+                )
+            )
+            continue
+        if end is not None and enzyme.end != end:
+            blocked.append(Blocked(enzyme, f"leaves a {enzyme.end} end, not a {end} one"))
+            continue
+        found = {
+            record.name or f"record {index + 1}": find_sites(record, enzyme)
+            for index, record in enumerate(pool)
+        }
+        if sites := tuple(site for hits in found.values() for site in hits):
+            where = ", ".join(f"{len(hits)} in {name}" for name, hits in found.items() if hits)
+            blocked.append(Blocked(enzyme, f"reads {len(sites)} site(s): {where}", sites))
+        else:
+            free.append(enzyme)
+    return EnzymeSearch(tuple(sorted(free, key=lambda one: -len(one.site))), tuple(blocked))
+
+
+def repeat_context(record: SequenceRecord, span: Segment) -> int:
+    """Return how much identical sequence flanks the best other copy of `span` in `record`.
+
+    Walking outwards from each further copy of the bases `span` spells, this is the largest
+    flank the two copies share on **both** sides. Zero where the bases appear only once.
+
+    No oligo shorter than this reaches one copy and not the other, which is what puts a site
+    inside a long repeat past domestication: see `OLIGO_REACH`.
+
+    Examples
+    --------
+    >>> repeat_context(SequenceRecord("TTGGCCAATTGGCCAA"), Segment(2, 6))
+    2
+    """
+    bases = record.bases(span.start, span.end)
+    length = len(record)
+    circular = record.topology == "circular"
+    here = span.start % length
+
+    def base(index: int) -> str | None:
+        """Return the base at `index`, or ``None`` off the end of a linear record."""
+        if circular:
+            return record.sequence[index % length]
+        return record.sequence[index] if 0 <= index < length else None
+
+    best = 0
+    for start in _starts(record, bases):
+        if start % length == here:
+            continue
+        shared = 0
+        while shared < (length - len(bases)) // 2:
+            pairs = (
+                (base(here - shared - 1), base(start - shared - 1)),
+                (base(here + len(bases) + shared), base(start + len(bases) + shared)),
+            )
+            if any(one is None or one != other for one, other in pairs):
+                break
+            shared += 1
+        best = max(best, shared)
+    return best
+
+
+def out_of_reach(
+    record: SequenceRecord, sites: Iterable[CutSite], *, reach: int = OLIGO_REACH
+) -> tuple[CutSite, ...]:
+    """Return the sites no oligo can reach, because a long repeat carries each more than once.
+
+    Checked before anything else a domestication route decides: a site here is not a bench job
+    at all, whatever its codon context says.
+    """
+    return tuple(site for site in sites if repeat_context(record, site.span) >= reach)
 
 
 def digest(

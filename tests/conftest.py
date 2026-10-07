@@ -51,6 +51,20 @@ def gfp(gfp_file: Path) -> SequenceRecord:
 
 
 @pytest.fixture(scope="session")
+def plvx(data_dir: Path) -> SequenceRecord:
+    """pLVX-TetOne-Puro-GFP, the Tet-on lentiviral parent, circular.
+
+    Addgene 171123, sequence 336792, with the 32 Addgene annotations.
+    `docs/research/working-vector-plvx-tetone.md` holds its provenance and every site counted
+    on it, and `reference_docs/synthesis_and_assembly/working-vector/` the files it was built
+    from.
+    """
+    from liulab_mbio.io import read_record
+
+    return read_record(data_dir / "pLVX-TetOne-Puro-GFP.gb")
+
+
+@pytest.fixture(scope="session")
 def across_origin() -> SequenceRecord:
     """100 bases, circular: C at 2..8 and G at 91..98 as a person counts them, A elsewhere.
 

@@ -21,7 +21,12 @@ from liulab_mbio.sequence import (
     reverse_complement,
 )
 from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.vector import destination_vector
+from liulab_synbio.library.vector import (
+    cargo_candidates,
+    cargo_enzyme,
+    destination_vector,
+    domesticate_vector,
+)
 
 #: The jobs the test schemes give their enzymes. All four are free of sites in pUC19.
 INTERNAL = "BbsI"
@@ -200,3 +205,62 @@ def test_a_site_naming_no_feature_is_refused():
 
     with pytest.raises(ValueError, match="annotates no feature called 'nope'"):
         destination_vector(SequenceRecord(pad(200), topology="circular"), made, site="nope")
+
+
+def test_the_cargo_enzyme_search_leaves_plvx_only_paqci(plvx: SequenceRecord) -> None:
+    """The measurement `docs/research/working-vector-plvx-tetone.md` made, as the rule reads it."""
+    chosen = cargo_enzyme([plvx])
+    assert chosen.enzyme is not None
+    assert chosen.enzyme.name == "PaqCI"
+    assert [one.name for one in chosen.search.free] == ["PaqCI"]
+    assert chosen.check.status == "pass"
+    assert "BsmBI" not in cargo_candidates()
+    assert "Esp3I" not in cargo_candidates()
+
+
+def test_a_three_base_overhang_is_blocked_before_its_sites_are_counted(
+    plvx: SequenceRecord,
+) -> None:
+    blocked = {one.enzyme.name: one for one in cargo_enzyme([plvx]).search.blocked}
+    assert not blocked["SapI"].sites
+    assert "3 bases" in blocked["SapI"].reason
+
+
+def test_bsai_is_rejected_naming_the_two_ltr_sites(plvx: SequenceRecord) -> None:
+    """#256's collision: BsaI shared the final-assembly pot with the LTRs at 454 and 7112."""
+    blocked = {one.enzyme.name: one for one in cargo_enzyme([plvx]).search.blocked}
+    assert [site.start for site in blocked["BsaI"].sites] == [
+        454,
+        3724,
+        5730,
+        6472,
+        7112,
+        8720,
+    ]
+
+
+def test_the_two_ltr_bsai_sites_are_refused_as_past_every_oligos_reach(
+    plvx: SequenceRecord,
+) -> None:
+    held = domesticate_vector(plvx, (get_enzyme("BsaI"),))
+    assert [site.start for site in held.unreachable] == [454, 7112]
+    assert held.check.status == "fail"
+    assert "No oligo reaches 454, 7112" in held.check.detail
+
+
+def test_a_vector_free_of_the_enzymes_passes_domestication_unchanged(
+    puc19: SequenceRecord,
+) -> None:
+    held = domesticate_vector(puc19, (get_enzyme("PaqCI"),))
+    assert held.check.status == "pass"
+    assert held.record.sequence == puc19.sequence
+    assert held.unreachable == ()
+    assert held.remaining == ()
+
+
+def test_an_empty_search_is_a_finding_and_not_an_error(plvx: SequenceRecord) -> None:
+    chosen = cargo_enzyme([plvx], candidates=("BsaI", "BbsI"))
+    assert chosen.enzyme is None
+    assert chosen.check.status == "fail"
+    assert "cannot be one pot" in chosen.check.detail
+    assert {site.start for site in chosen.sites} >= {454, 7112, 24}
