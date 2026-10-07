@@ -725,16 +725,21 @@ Both, because they bound different things.
   only when the colony count reaches the coverage target for that round's own complexity: 576
   distinct products after round 1, 13,824 after round 2 and at the final assembly.
 
-**This reverses the method page's "rounds run unchecked" for this project.** The research note
-already records that sentence as reading a silence as a statement and as contradicting the
-representation read two steps later, and that the mechanism it rests on is cited to no source
-read here. A dilution plate is cheap; losing a round's diversity is not.
+Each round also plates a no-donor control, carried through the ligation from the same digest,
+and the gate is net colonies. **Both plates are a departure**, settled in #259: the source plates
+nothing at any round. The reason is there, not here.
 
-The coverage **multiple** is where this answer is weakest. The only gate read is Qian's, at its
-one transformation, stated in the research note as a colony count against library complexity
-above 300. This project inherits that multiple and marks it as inherited: it was measured for a
-single transformation of a different library, not for an iGGA round. #220 should read the exact
-form from the note before coding it, and the multiple belongs in section 10 as much as here.
+**The coverage multiple is open, and 300x is not the answer.** It is Qian's, measured at one
+transformation whose purpose was pickable clones for an arrayed collection. This library is
+never picked: it goes to a pooled screen as a pool, and no member is re-identified. At 300x the
+three rounds would ask for 7,200, then 172,800, then 4,147,200 colonies, and nothing read here
+justifies any of the three.
+
+What the number should follow from is the representation the screen downstream needs, and this
+project has not stated a screen. Until it does, the target is the completeness floor
+`liulab_synbio.library.coverage` computes — the colonies for a stated chance that no member is
+missing — recorded as a **floor, not a sufficiency claim**, because it assumes every member is
+equally represented and synthesis skew breaks that. It belongs in section 10.
 
 ### 9.10 Also open, answered here
 
@@ -775,8 +780,11 @@ Nothing here becomes a package default, and nothing here is guessed at.
   list rather than only an enzyme list.
 - **The substitution table in section 3.1.** Chosen by chemical class, justified by no matrix.
   Closed by naming the matrix and re-deriving the eight picks from it.
-- **The coverage multiple in section 9.9.** Inherited from a single-transformation gate in
-  another method.
+- **The coverage multiple in section 9.9.** Qian's 300x is dropped (#259): it gated a
+  transformation run to yield pickable clones, and this library is never picked. The number that
+  replaces it follows from the representation the screen downstream needs, and no screen is
+  stated here. Closed by naming the screen, or by a source measuring diversity loss across an
+  iGGA round.
 - **The synthesis cost.** 153 oligos sit far below 18,000, the smallest pool any recorded price
   covers, so no price here is this project's. The list prices and the per-usable-base comparison
   are section 4.5; neither stands in for the pilot's own cost.

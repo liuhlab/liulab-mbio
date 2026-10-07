@@ -269,17 +269,28 @@ any other.
 | 2 | Digest the destination and the donor apart | destination pool, donor pool | opened destination, released donor | — |
 | 3 | Ligate | cut ends | circular product | — |
 | 4 | Electroporate, recover and grow | ligation | the round's pool | — |
-| 5 | Prep the pool | the round's pool | next round's destination | — |
-| 6 | Repeat steps 2 to 5 | — | finished library | whether a last round swaps the stuffer for a capping block |
-| 7 | Read linkage | finished library | barcode combination → cargo table | carry it forward, or rebuild a round |
-| 8 | Read representation | finished library | combinations seen, and how evenly | — |
+| 5 | Plate a dilution, and a no-donor control | the recovery | the round's colony count | run the round again, or carry it on |
+| 6 | Prep the pool | the round's pool | next round's destination | — |
+| 7 | Repeat steps 2 to 6 | — | finished library | whether a last round swaps the stuffer for a capping block |
+| 8 | Read linkage | finished library | barcode combination → cargo table | carry it forward, or rebuild a round |
+| 9 | Read representation | finished library | combinations seen, and how evenly | — |
+
+**Step 1.** A pool is one position's parts. Each part is prepped on its own, then mixed in equal
+amounts of DNA. A pool is built once, and cut again each round it supplies.
 
 **Step 2.** Destination BbsI + SrfI, donor BsaI + PmeI, in separate tubes.
 
-**Step 8.** Representation is read again after every later bottleneck.
+**Step 3.** 20 ng of cut destination per 200 µL, with donor at a 1:1 molar ratio.
 
-**Undecided:** whether the rounds run unchecked, and what bounds each one —
-`docs/research/synthesis-and-assembly.md`.
+**Step 4.** Up to 100 ng of the cleaned ligation goes into the cells.
+
+**Step 5.** The control is the cut destination taken through the ligation with no donor added.
+Subtract its colonies from the count. Both plates grow while the pool does, so they cost no
+extra day. How many colonies a round needs is set by the project, not here: it follows from how
+well the work downstream has to see each member. The source plates nothing at all, and
+`docs/research/synthesis-and-assembly.md` says why this page does.
+
+**Step 9.** Representation is read again after every later bottleneck.
 
 ### Final assembly
 

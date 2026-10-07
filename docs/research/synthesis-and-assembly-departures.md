@@ -12,11 +12,10 @@ sources, and every decision still open, are in `docs/research/synthesis-and-asse
 Drafted by one agent, then checked by two more working apart: one re-derived every fact, one
 attacked every reason. Corrections from both are folded in.
 
-Seventeen differences were found. The fifteen below are checked and sound, with nothing left to
-decide. The other two were open decisions. D9, the barcode rules, is decided and lives in the
-method document. D16, whether assembled clones get whole-plasmid sequencing, is **still open**:
-the method document says the opposite of a per-round check, so the question is recorded with
-its options in the research note instead.
+Eighteen differences were found. The sixteen below are checked and sound, with nothing left to
+decide. D9, the barcode rules, is decided and lives in the method document. D16 is **withdrawn**:
+the paper answers it and our design matches, so it was never a difference. D18 was added by the
+decision in #259 on what bounds a round.
 
 Pointers into the method document name its sections, so they survive an edit to it. Everything
 here was simulated with `liulab_mbio`, not read off the page.
@@ -275,6 +274,18 @@ page), exactly as the paper. The extra strains belong to the DMX entry step and 
 final transfer, which are layers the paper has no counterpart for. A ccdB-sensitive strain
 and NEB Stable for anything carrying ccdB, both in `## Reagents and equipment`.
 
+## D16. Withdrawn: the paper sequences whole plasmids too
+
+Carried first as a difference and then as an open question, because the method document and an
+earlier draft of this note were describing different objects. The paper settles it: "The
+sequences of a sample of individual clones from both libraries were confirmed by whole plasmid
+next-generation sequencing (Plasmidsaurus)" — a sample of a finished library, not a check on
+each round's product, and not every member.
+
+Ours does the same, so nothing departs. A round's product is a pool and holds no clone to read.
+The objects that get a whole-plasmid read are the validated part wells and any single construct
+archived as a stock.
+
 ## D17. The working vector's stuffer is the parent's own EGFP, not an RFP
 
 Method page: `Stuffer cassette: RFP` (`#### Input working vector`). Ours: the EGFP already
@@ -306,3 +317,22 @@ read measures TRE3GS activity in *E. coli*.
 
 Every count above is from `docs/research/working-vector-plvx-tetone.md` section 5, and none is
 recomputed here.
+
+## D18. Every round is plated; the paper plates none
+
+Paper: digest, SPRI, ligate, SPRI, electroporate, recover one hour at 30 °C, grow 12-16 hours,
+prep, next round. No colony count appears anywhere in it. Ours plates a dilution of each round's
+recovery, and a no-donor control carried through the ligation from the same digest, and gates
+the round on net colonies (`### iGGA pipeline`, step 5).
+
+Why. The design's correctness rests on the parental destination not surviving: BbsI cuts twice,
+SrfI cuts whatever BbsI missed, T7 refuses the resulting blunt ends, and the 2X SPRI takes the
+stubs. The control plate measures that chain rather than assuming it. What survives is not
+noise — it is the previous round's library, one position short, and it would reach the linkage
+read as truncated members. A round that collapsed cannot be repaired by a later one.
+
+Cost: two plates a round, both growing during the outgrowth, so no extra day.
+
+What it does not change. The library is still never read per member, and no colony is ever
+picked from these plates. It goes to a pooled screen as a pool. The plate bounds a round; the
+representation and linkage reads judge the library.
