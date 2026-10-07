@@ -266,7 +266,8 @@ and nothing needs licence marking. Whoever downloads the archive accepts its ter
 
 Not to be confused with EGF's `tatapov_data` package, which redistributes a **CC BY-ND**
 repackaging of this data: a different artifact under a different licence, and not what is read
-here.
+here. **Section 11 flags this sentence** — `tatapov` itself is MIT and downloads its tables rather
+than carrying them, and whether a separate CC BY-ND deposit exists was not re-checked.
 
 ### Where the archive is
 
@@ -399,18 +400,293 @@ redirecting to signed storage, which `urllib` follows. Nothing else is fetched.
 Tests never touch the network: `tests/scripts/test_build_ligation_fidelity.py` writes the three XML
 parts of a workbook itself and reads them back, which is also what makes the guards testable.
 
-## 10. Open gaps
+### Which supplementary file each matrix came from
+
+`source.url` in the data file is that template, `sNNN` and all, because one URL cannot name five
+files. **The resolved id is not missing**: each matrix carries its own `file`, and
+`scripts/build_ligation_fidelity.py` holds the suffix in its `TABLES` tuple. Checked on
+2026-10-06 by downloading all five and reading `xl/workbook.xml`:
+
+| Enzyme | `matrices[].file` | Suffix | The one sheet in that workbook | sha256, first 16 |
+| --- | --- | --- | --- | --- |
+| BsaI | `pone.0238592.s001.xlsx` | `s001` | `S1 Table. BsaI-HFv2` | `320dd058f3ca6372` |
+| BsmBI | `pone.0238592.s002.xlsx` | `s002` | `Table S2. BsmBI-v2` | `7c444e99e5e4d245` |
+| Esp3I | `pone.0238592.s003.xlsx` | `s003` | `Table S3. Esp3I` | `1557e62cfa4f89cd` |
+| BbsI | `pone.0238592.s004.xlsx` | `s004` | `Table S4. BbsI-HF` | `56143bb445e6d84b` |
+| SapI | `pone.0238592.s005.xlsx` | `s005` | `Table S5. SapI` | `dfa2df906bd306e3` |
+
+All five addresses answered 302 to storage and then 200 with the spreadsheet content type, so a
+reviewer can repeat this. **The mapping is verified rather than asserted**, and by the build
+itself: section 3's first guard refuses a workbook whose sheet name does not carry the product
+the table is supposed to measure, so a shipped matrix under the wrong enzyme could not have been
+built. The sheet names above are what that guard matched.
+
+The copies are under `reference_docs/ligation-fidelity/pryor2020/`, which is git-ignored, so a
+fresh clone has none of them; the table above is the record. They were downloaded only to resolve
+the mapping. Nothing was copied out of them — the shipped JSON is still the build script's own
+output from those same addresses.
+
+## 10. Which dataset is authoritative, and what the two numbers each mean
+
+Read 2026-10-06. A prototype scored one design at **1.0000** on the shipped Pryor BsaI matrix and
+**0.9978** on the user-held Potapov `FileS03_T4_18h_25C.xlsx`, and called the shipped matrix
+"more generous and far easier to satisfy" — the implication being that it is the weaker evidence.
+**That characterisation is wrong, in both directions**, and the papers and the data each say so.
+
+### The two datasets measure different reactions
+
+Pryor 2020, Materials and Methods, "Golden Gate assembly fidelity and bias assay". The Type IIS
+enzyme is **in the tube** and the reaction is **thermocycled**:
+
+> Reactions (20 μL final volume) with T4 DNA ligase and BsaIHF-v2 or BsmBI-v2 were carried out
+> using their respective NEB Golden Gate Enzyme Mixes (2 μL) in 1X T4 DNA ligase buffer. [...]
+> The reactions were cycled between 37°C and 16°C (SapI, Esp3I, BsaI-HFv2, BbsI-HF) or 42°C and
+> 16°C (BsmBI-v2) for 5 minutes at each temperature for 30 cycles, and then subjected to a final
+> heat-soak for 5 minutes at 60°C.
+
+Its S1-S5 Table legends say the same in one line: "Ligation frequency for each overhang pair in
+assembly reactions with BsaI-HFv2 and T4 DNA ligase", and so on for the other four.
+
+Potapov 2018, Methods, ligation reaction. **No restriction enzyme, and a static hold**:
+
+> In a typical ligation reaction, substrate (100 nM) was combined with 2.5 μL high concentration
+> T4 DNA ligase (2000 U, 1.75 μM final concentration) in 1× T4 DNA ligase buffer in a 50 μL total
+> reaction volume and incubated for 1 h or 18 h at 25°C or 37°C.
+
+The site is cut during substrate preparation and the cut substrate purified before ligation
+("confirmed to be >95% cut"), so the ligase meets ready-made ends. Cycling appears in that paper
+only in its separate validation assemblies, which are real Golden Gate reactions.
+
+The readout is the same PacBio SMRT hairpin assay in both — Pryor's substrates were "prepared as
+previously described" from Potapov — so the two are comparable numbers from different chemistry.
+**So the first half of the hypothesis holds: these are different reactions, and the
+enzyme-specific set is the one that matches what this package actually plans.**
+
+### The re-cutting mechanism is not in either paper — do not claim it
+
+A tempting explanation for the gap is that in a one-pot reaction the Type IIS enzyme re-cuts a
+mis-ligated junction, which is then retried, so one-pot fidelity should read higher. **Neither
+paper says this.** Pryor 2020's full text was searched for `re-cut`, `recut`, `re-cleav`,
+`reversib` and `proofread`: no hits. The only adjacent sentence is about yield, not fidelity:
+
+> Suboptimal conditions, such as temperature or buffer conditions where the activity of the
+> restriction enzyme is poor and cutting is inefficient relative to re-ligation, could decrease
+> the assembly yield.
+
+The caveat the papers do raise runs the other way — cutting and overhang melting are steps the
+ligation-only assay does not capture, so an all-G/C overhang may under-assemble relative to what
+ligation data predicts. That is the same observation `uniform` already rests on (section 6).
+
+### And the direction is the opposite of "more generous"
+
+Pryor 2020, Results, comparing its own one-pot data with Potapov's pure ligation:
+
+> However, in comparison with our previous ligation fidelity study, we note **higher frequencies
+> of mismatch pairs** and less bias against A/T-rich overhang sequences under Golden Gate assembly
+> conditions. Presumably, this is due to differences in the reaction temperatures and buffer
+> conditions between the two studies.
+
+More mismatching means **lower** computed fidelity. The one-pot enzyme-specific data is the
+stricter of the two, not the looser one. Measured on this branch, 2026-10-06, the shipped matrices
+reproduce the paper's own published Golden Gate fidelities and the pure-ligation profile does not:
+
+| Pryor 2020's own example, BsmBI-v2 | Paper | Shipped matrix | Potapov T4 18 h / 25 °C |
+| --- | --- | --- | --- |
+| 11 plant overhangs (Fig 4A) | 81% | 80.93% | 89.65% |
+| the same set without the `GGTA` mispair (Fig 4A) | 92% | 92.11% | 96.80% |
+| the same set extended to 20 by GetSet (Fig 4B) | 80% | 80.48% | 87.19% |
+
+The profile reads 7 to 9 points **high** on all three. Over 280 random BsaI sets, seed 0, the
+shipped matrix is the lower score in 220 of them, and the gap grows with the set:
+
+| Overhangs in the set | Mean shipped minus profile | Shipped higher |
+| --- | --- | --- |
+| 2 | -0.0008 | 27/40 |
+| 4 | -0.0184 | 16/40 |
+| 6 | -0.0452 | 7/40 |
+| 8 | -0.0613 | 7/40 |
+| 12 | -0.1395 | 2/40 |
+| 16 | -0.1633 | 1/40 |
+| 20 | -0.1898 | 0/40 |
+
+At two overhangs the two agree to a thousandth and which one is higher is a coin flip. **That is
+the regime the prototype measured**: a 0.0022 difference on one small set, generalised into a
+claim that reverses by six overhangs and is wrong in all forty sets at twenty.
+
+**The one sense in which the shipped data is more forgiving** is the weak-pair floor, and it is
+narrow. The lowest normalised Watson-Crick pair is 118.0 (`TTAA`) in shipped BsaI-HFv2 against
+18.5 (`TTAA`) in the T4 profile, so `FidelityReport.weak` can fire on a profile and never fires on
+shipped data — which is what section 5 records. That is a different statement from set fidelity,
+and it is the only one the prototype's wording fits.
+
+### What this says about the fallback
+
+Pryor 2020's Discussion licenses carrying a matrix across Type IIS enzymes:
+
+> Thus, the predicted fidelity of overhang sets is unlikely to be significantly impacted by the
+> choice of Type IIS restriction enzyme, and this is likely broadly applicable to all Type IIS
+> restriction enzymes that generate the same overhang structure including enzymes not explicitly
+> tested here.
+
+Measured here, substituting one enzyme's matrix for another's is a smaller error than substituting
+the pure-ligation profile. The plant set scores 81.78% on BsaI, 80.93% on BsmBI, 81.24% on Esp3I
+and 79.90% on BbsI; across 200 random eight-overhang sets the spread between those four matrices
+is mean 0.052, median 0.047, worst 0.148. Against that, the profile was 7 to 9 points off on the
+paper's own benchmark and up to 0.19 off at twenty overhangs.
+
+**So section 7's rejected idea is the better-conditioned one of the two fallbacks, on this
+measurement and on the paper's own sentence.** Section 7 rejected scoring PaqCI on BsaI's matrix
+as a substitution of one enzyme's measurement for another's, and section 8 then adopted a
+substitution of a different reaction's measurement instead — which is the larger error and is the
+one the authors do not license. This note records the measurement; it does not change the code.
+A recommendation, not a decision: prefer a four-base Type IIS matrix over the T4 pure-ligation
+profile for an unmeasured four-base enzyme, keep `enzyme_specific=False` and keep the label
+saying whose measurement it is.
+
+Pryor 2020 also sets the ceiling on all of this:
+
+> Importantly, predicted assembly fidelity should be taken as a qualitative prediction, most
+> useful for comparing expected performance between alternative junction sets.
+
+### What NEB's own tool defaults to
+
+The v1 help page **loads today**, so the 403 this note recorded a month earlier is stale. It has
+**no Type IIS enzyme selector at all**; it offers T4 conditions only, and defaults to Potapov
+2018's pure-ligation profile, justified by cross-validation rather than by matching:
+
+> The default conditions are ligation at 25°C for 18 hours; these conditions have been shown to
+> well predict the results of Golden Gate assembly using typical cycled conditions (16°C 5
+> min/37°C 5 min, 30 cycles).
+
+The same page is careful that it does not serve the whole of either paper:
+
+> The data used comes from recent publications on ligation fidelity using T4 DNA Ligase (1, 2) and
+> **represents subsets** of the data sets discussed in those papers.
+
+The enzyme selector belongs to the **current** NEBridge tool, which Pryor 2020 describes:
+
+> To use this tool, users input a set of three-base or four-base overhang sequences and select the
+> desired Type IIS restriction enzyme and thermocycling protocol.
+
+**The current tool's own pages could not be read** — see section 12. So which dataset the current
+tool defaults to is recorded here as unknown, not guessed.
+
+## 11. Other fidelity data sources, and whether each may ship
+
+Surveyed 2026-10-06. The repo holds Pryor 2020 (shipped) and reads Potapov 2018 (user-held).
+
+| Source | What it adds | Licence | Obtainable | May ship |
+| --- | --- | --- | --- | --- |
+| **Bilotti et al. 2022**, *NAR* 50(8):4647-4658, [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241) | **Five ligases** — T4, T3, T7, PBCV-1 (SplintR), human Ligase 3 — over all 256 four-base overhangs, by the same SMRT assay. Also with and without PEG | **CC BY 4.0** (Europe PMC `license: cc by`, `isOpenAccess: Y`, PMC9071435) | Yes: "Raw ligation product observation counts were provided as CSV formatted data tables in Supplementary Data", `gkac241_supplemental_files.zip` at PMC | **Yes** |
+| Pryor et al. 2022, *ACS Synth Biol* 11(6):2036-2042, [doi:10.1021/acssynbio.1c00525](https://doi.org/10.1021/acssynbio.1c00525) | No new matrices — applies Pryor 2020 to a 40 kb, 52-part build | CC BY-NC-ND 4.0 | Supplement only | No |
+| Strzelecki et al. 2024, *NAR* 52(19):e95, [doi:10.1093/nar/gkae809](https://doi.org/10.1093/nar/gkae809) | The one independent non-NEB re-measurement. Gel kinetics on 6 overhangs, BsaI-HFv2 + T4. Finds **overhang duplex strength**, not only mismatch fidelity, drives efficiency — a factor no matrix here captures | CC BY-NC (the bioRxiv preprint is no-reuse) | Paper yes, no matrix deposit | No |
+| Mukundan & Madhusudhan 2025, OOGGA, [doi:10.1101/2025.06.16.659877](https://doi.org/10.1101/2025.06.16.659877) | No new measurement; scores against Potapov 2018 | Unstated | Code on GitHub | n/a |
+| NEBridge Ligase Fidelity Tools, `ligasefidelity.neb.com` | Appears to cover **PaqCI**, which no paper does | Vendor tool, all rights reserved | **No** — matrices are not downloadable, and the pages are 403 | No |
+| `tatapov` (Edinburgh Genome Foundry) | Nothing new. Its code is MIT and it **downloads the tables at run time** rather than vendoring them; its upstream is exactly Potapov 2018 and Pryor 2020 | MIT (code only) | Yes | The data's own licence still governs |
+| GoldenHinges, DNA Chisel, kappagate | No independent dataset; annealing data via `tatapov` | MIT (code) | Yes | n/a |
+| Duckworth 2023, Sikkema 2023, Lund 2024 (Springer methods chapters) | Protocols for measuring or applying this data. No dataset | All rights reserved | — | No |
+| NEB patents US 12,188,011 and US 12,435,332 | PaqCI plus activator oligo beating AarI on assembly performance, and the matrix *shapes*. **No overhang-pair table found** | Patent text; claims enforceable | Text yes | No |
+
+Four things worth carrying forward.
+
+**Bilotti 2022 is the find, and it closes a gap this note listed as open.** Section 10's old table
+said T7 ligase was covered "only [by] Potapov 2018, CC BY-NC" and therefore could not ship. That
+is **no longer true**: T7, T3, PBCV-1/SplintR and human Ligase 3 are all in Bilotti 2022 under
+CC BY 4.0, over all 256 four-base overhangs. It extends coverage along the axis Pryor does not —
+Pryor added Type IIS enzymes under one ligase, Bilotti adds ligases. Note its second condition
+axis: standard T4 buffer against NEBNext Quick Ligation buffer, which has PEG, and PEG changes
+bias. A matrix from it needs its **buffer** recorded next to temperature and time, which the
+current `LigaseProfile` conditions string does not have a field for.
+
+**Taq ligase and E. coli ligase have no such data and probably cannot.** Taq ligase is
+nick-selective rather than end-joining, so an end-joining overhang matrix for it is not a
+meaningful object. Nothing post-2020 covers E. coli ligase at overhang level.
+
+**There is no published PaqCI matrix.** It is absent from Potapov 2018, Pryor 2020, Pryor 2022 and
+Bilotti 2022. The only primary PaqCI evidence found is the two NEB patents, which give aggregate
+assembly performance against AarI and describe matrix shapes but carry no pair table. AarI is in
+the same position. **Section 10's old claim that nobody has published one is confirmed, today.**
+Two independent search-index snippets suggest NEB's current tool does serve a PaqCI matrix, one of
+them dated "As of May 27, 2025, the datasets for PaqCI have been updated using a new substrate" —
+but **neither was read off a live page**, so that is recorded as a lead, not a fact. Even if the
+tool has one it is not downloadable and not licensed for redistribution.
+
+**The open tooling ecosystem rests entirely on the two datasets this repo already knows.** Every
+Golden Gate overhang designer checked — `tatapov`, GoldenHinges, DNA Chisel, OOGGA — scores against
+Potapov 2018 or Pryor 2020 and nothing else. No vendor other than NEB publishes overhang-pair
+ligation data: nothing from IDT, Twist, Thermo, Promega or Takara.
+
+One correction to section 8 falls out of this. That section calls `tatapov` a package that
+"redistributes a **CC BY-ND** repackaging of this data". `tatapov`'s own README says the opposite
+of the redistribution half — "Tatapov provides these tables (it will download them automatically
+[...])" — and its licence file is MIT. **Whether a separate CC BY-ND deposit exists was not
+re-checked**, so the sentence is flagged rather than rewritten.
+
+## 12. Open gaps
 
 | Item | Why it is missing | What is done instead |
 | --- | --- | --- |
-| The exact query set NEB's own tool uses | The Viewer v2 help page is 403 and the v1 page does not spell the arithmetic | The reading above, checked against three published numbers |
+| The exact query set NEB's own tool uses | The current tool's pages are 403 behind Cloudflare and are a JavaScript shell; the v1 page loads but has no enzyme selector and does not spell the arithmetic | The reading above, checked against three published numbers |
 | Why two GetSet table sets score 1.5 and 4 points low | The sets as printed may not be the whole reaction | Recorded in section 5, untouched |
-| T7 DNA ligase, and static 25 °C conditions | Only Potapov 2018 covers them, CC BY-NC | Not shipped; read from the user's own copy (section 8) |
-| A matrix for PaqCI, AarI, BspQI, BtgZI | Nobody has published one | A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled |
+| A matrix for PaqCI, AarI, BspQI, BtgZI | Nobody has published one. **Re-verified 2026-10-06** against Potapov 2018, Pryor 2020, Pryor 2022 and Bilotti 2022 | A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled. Section 10 recommends preferring another four-base Type IIS matrix over the pure-ligation profile |
+| Whether NEB's current tool serves a PaqCI matrix | Its pages are 403 and the matrices are not downloadable in any case | Two search-index snippets suggest it does; recorded in section 11 as a lead, not a fact. Settling it needs a JavaScript-capable fetch |
+
+Closed since 2026-09-12:
+
+| Item | What closed it |
+| --- | --- |
+| T7 DNA ligase, and ligases other than T4 | **Bilotti 2022 covers T4, T3, T7, PBCV-1/SplintR and human Ligase 3 under CC BY 4.0**, so this no longer depends on a CC BY-NC copy. Section 11 |
+| Which supplementary file each shipped matrix came from | Resolved and verified by sheet name and checksum. Section 9 |
+| Whether the shipped matrix is the weaker evidence | It is not, and it is the stricter of the two on every set above four overhangs. Section 10 |
+| The Viewer help page returning 403 | It loads. The current tool's pages are the ones that do not |
+
+Still unmeasured by anything here: **overhang duplex strength** as a driver of assembly efficiency,
+which Strzelecki 2024 reports and which no count matrix captures.
 
 ## Sources
 
-All read on 2026-09-12.
+Sections 1 to 9 were read on 2026-09-12. Sections 10 to 12 were read on **2026-10-06**, and each
+source below says which.
+
+Added 2026-10-06:
+
+- Bilotti, K., Potapov, V., Pryor, J.M., Duckworth, A.T., Keck, J.L. and Lohman, G.J.S. (2022)
+  Mismatch discrimination and sequence bias during end-joining by DNA ligases.
+  *Nucleic Acids Research* 50(8), 4647-4658.
+  [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241). **CC BY 4.0**, per Europe PMC's
+  record for PMC9071435 (`license: cc by`, `isOpenAccess: Y`). Supplementary Data holds the counts
+  as CSV. **The licence should be confirmed on the publisher's own page before anything ships**
+- Pryor, J.M., Potapov, V., Bilotti, K., Pokhrel, N. and Lohman, G.J.S. (2022) Rapid 40 kb genome
+  construction from 52 parts through data-optimized assembly design. *ACS Synth. Biol.* 11(6),
+  2036-2042. [doi:10.1021/acssynbio.1c00525](https://doi.org/10.1021/acssynbio.1c00525)
+  (CC BY-NC-ND 4.0). No new matrices
+- Strzelecki, P., Joly, N., Hébraud, P., Hoffmann, E., Cech, G.M., Kloska, A., Busi, F. and
+  Grange, W. (2024) Enhanced Golden Gate Assembly: evaluating overhang strength for improved
+  ligation efficiency. *Nucleic Acids Research* 52(19), e95.
+  [doi:10.1093/nar/gkae809](https://doi.org/10.1093/nar/gkae809) (CC BY-NC; the bioRxiv preprint,
+  [doi:10.1101/2022.09.09.507109](https://doi.org/10.1101/2022.09.09.507109), is no-reuse)
+- Pryor et al. 2020's full text as JATS XML, read for the Methods and Results quoted in section 10:
+  `https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0238592&type=manuscript`
+- The five S1-S5 supplementary workbooks themselves, read for the mapping in section 9. Copies
+  under `reference_docs/ligation-fidelity/pryor2020/`, which is git-ignored
+- `tatapov`, Edinburgh Genome Foundry: its `README.rst` and `LICENSE` (MIT), read for whether it
+  vendors or downloads its tables
+- NEB patents US 12,188,011 and US 12,435,332, read for PaqCI; no overhang-pair table found
+- NEB, *Ligase Fidelity Viewer: Help Page*,
+  [tools.neb.com](https://tools.neb.com/~potapov/ligase-fidelity-viewer/help.html) — **loads now**,
+  by plain request; the 403 recorded on 2026-09-12 is stale
+
+Could not be read on 2026-10-06, and why:
+
+| What | Status |
+| --- | --- |
+| `ligasefidelity.neb.com/viewset/www/help.html` — the current tool's help page, and the one place the live enzyme list and the PaqCI question would be settled | **403**, a Cloudflare human-verification interstitial, by plain request and by fetch alike |
+| `ligasefidelity.neb.com`, `/viewset/run.html`, `goldengate.neb.com` | 403 bare, 200 with a browser agent, but a JavaScript shell with no enzyme names, condition labels or script sources in the served markup |
+| `nebridgetools.neb.com` | DNS does not resolve; the host does not exist |
+| Potapov et al. 2018 as published in *ACS Synth. Biol.* | Not open access. Europe PMC gives PMID 30335370, no PMCID, "Subscription required". **The bioRxiv preprint, [doi:10.1101/322297](https://doi.org/10.1101/322297), was read instead**, and section 10's Methods quotes are from it |
+| A PaqCI or AarI overhang-pair matrix, from anywhere | Does not exist in the published literature. Not downloadable from NEB's tool either |
+
+All other sources read on 2026-09-12.
 
 - Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020)
   Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized
