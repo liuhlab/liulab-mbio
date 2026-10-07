@@ -361,7 +361,7 @@ primer-borne site gives every fragment of that gene the same overhang. Qian can 
 Qian's members are not split. The cost of retailoring the primer set was never the deciding
 term.
 
-**And the 22 nt it would save buys almost nothing.** Counted over the 72 blocks of
+**And the 14 nt it would save buys almost nothing.** Counted over the 72 blocks of
 `ap1-demo-project.md` §4.1 at a 350 nt oligo: 152 oligos templated against 150 with the sites on
 the primers, the worst part at five fragments either way.
 
