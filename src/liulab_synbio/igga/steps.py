@@ -1839,8 +1839,8 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
             ),
             notes=(
                 "The cargo enzyme is chosen against every molecule in this pot, so it has to be "
-                "settled before the blocks are designed: a project names it under "
-                "reserved_extra and no block then spells it.",
+                "settled before the blocks are designed: the pipeline reads it off the working "
+                "vector before it designs any block, so no block spells it.",
             ),
             holes=(stages.WORKING_VECTOR,),
         )
