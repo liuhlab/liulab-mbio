@@ -79,9 +79,14 @@ against all four requirements, on 2026-10-06, in the package's own coordinates.
 requirements are restated below in the form that measurement left them in, and no number is
 recomputed here.
 
-1. **No BsaI and no BsmBI site outside the designed cassette; domesticate any that are there.**
-   Measured: six BsaI, two BsmBI. Which are removable, and what to do about the two sitting in
-   the LTRs, is a design decision and belongs to #256 rather than to this note.
+1. **No BsmBI and no cargo-enzyme site outside the designed cassette.** Measured: six BsaI, two
+   BsmBI. #256 settled the requirement by narrowing it — a site only has to go where its enzyme
+   shares a reaction with this vector — and chose **PaqCI as the cargo enzyme**, which this map
+   carries **zero** of across all 9,895 bp. **Two sites remain to remove, both BsmBI:** 5636 in
+   PuroR, synonymous and free; 3876 in the hPGK promoter, edited in place, the only untested
+   change on the vector and readable as the stuffer's doxycycline response. All six BsaI sites
+   stay, the two in the LTRs included, because BsaI never shares a reaction with this vector.
+   **Passes, at two edits.**
 2. **AmpR or CarbR**, because the DMX backbone the cargo leaves is KanR and the last transfer
    must not share a marker (departure D11). Measured: AmpR, intact, translating with one stop
    and it the last codon. **Passes.**
@@ -473,11 +478,12 @@ inside the backbone, upstream of the TRE promoter and its assembly cassette.
 
 Why:
 
-- **The alternative is not committable in this run.** Putting the marker in a part means a
-  second internal promoter inside the packaged transcript, and the read-through and
-  promoter-interference cost of that is a known trade that needs a source before it is
-  committed. No source for it was read here and this run downloads none, so choosing it would
-  put an uncited claim in the first project built against the method.
+- **The source now exists, and it argues against the alternative.** Putting the marker in a part
+  means a second internal promoter inside the packaged transcript. When this was first written
+  the cost of that was uncited, so the placement was rejected as not committable; #231 has since
+  measured it, and the measurement is a cost **against** a second internal promoter — Curtin et
+  al. 2008 find interference between two internal promoters running both ways and large. The
+  decision stands, on better grounds than it was made on.
 - **It needs no new part class.** The marker-as-a-part placement needs the terminal part exempted
   from the no-stop-codon and in-frame rules, which is a change to the method, not a choice
   inside it. The first project to exercise the method should not also be the first to bend it.
@@ -498,15 +504,44 @@ no-stop-codon and in-frame rules — a new part class or a stated exception for 
 — and the cassette must carry no internal polyadenylation signal, since an internal promoter in
 a lentivirus works by relying on the 3' LTR and a terminator would truncate the packaged genome.
 
-### 7.3 The read-through question is open
+**That last premise is defeated, and recorded here so it is not reused.** Tian and Andreadis
+2009 clone both internal cassettes **antisense to the LTRs**, which puts an internal
+polyadenylation signal on the strand the producer cell does not package. A terminator is
+therefore possible in a lentiviral vector. It is not free — see section 7.3 — but "impossible"
+was wrong.
 
-Both placements put two promoters between the LTRs, so read-through from the upstream promoter
-into the downstream one, and the interference that can follow, is a question either way. The
-backbone placement is the arrangement with a track record; the part placement is not. **No
-source read in this run measures read-through or promoter interference for either.** It is
-recorded as open, not answered. What would close it: one primary source measuring expression
-from an internal constitutive promoter downstream of an induced one in a lentiviral vector,
-read into `docs/research/`, before any project commits to the part placement.
+### 7.3 Read-through is measured; the number this project wants is not
+
+Most of this is closed by #231; `docs/research/promoter-readthrough-lentivirus.md` has the
+detail.
+
+Measured: transcription from an upstream internal promoter reaches the downstream unit in a SIN
+lentiviral vector and contributes to its output (Tian and Andreadis 2009); interference between
+two internal promoters runs **both ways** and is large (Curtin et al. 2008); and which upstream
+constitutive promoter drives the regulator changes how much a downstream inducible promoter
+leaks, and not through the regulator's own level (Benabdellah et al. 2016).
+
+Still unmeasured by anyone: the uninduced background of a TRE promoter downstream of a
+constitutive one, against a matched control with the upstream promoter removed.
+
+**#256 decided not to wait for it.** Eszterhas et al. 2002 is why: the magnitude *and the sign*
+of interference move with integration site, so in a pooled library with random integration leak
+is a distribution, not a number, and no option makes it a constant. The read-out has to survive
+the spread either way. So this project carries **a no-doxycycline arm for every screen**, and
+reads each member against its own uninduced well rather than a pooled baseline. That is a
+requirement here, not an option.
+
+Three mitigations stay reachable, with what they cost, should the first screen show leak
+dominating:
+
+| Mitigation | Measured | Cost |
+| --- | --- | --- |
+| Is2 insulator in the 3' LTR | 293T leak 66.2 → 7.4, induction 5.7 → 38.8 | **titre down 2–3 fold**, and measured with a TetR repressor, not an rtTA activator |
+| Both cassettes antisense to the LTRs, terminator between | Restores the suppressed unit, cuts read-through | Never measured with an inducible downstream promoter; rebuilds the vector |
+| Weaken the upstream constitutive promoter | hEF-1α for SFFV lowered leak | Lowers induced output with it |
+
+Section 5 of #231's note gives the experiment that would close the number, if it is ever worth
+running.
 
 ## 8. The comparison against the source
 
