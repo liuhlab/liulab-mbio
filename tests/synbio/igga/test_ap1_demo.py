@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.protocol.model import Citation
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
@@ -226,6 +227,17 @@ def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(p
     assert cycling.citation.source in protocol.sources
     assert second.programs[0].stages[1].cycles is None
     assert [hole.id for hole in second.holes] == ["H30"]
+
+
+def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
+    """The program belongs to the cells, so the settings and their source sit on one row."""
+    protocol = plan.protocol()
+    cells = next(one for one in protocol.materials if one.catalog == "60242-2")
+    assert cells.citation == Citation("MA133", "p. 4-5")
+    assert "1800 V, 600 Ω and 10 µF" in cells.note
+    step = next(one for one in protocol.steps if "electroporate" in one.title)
+    assert any("1800 V, 600 Ω and 10 µF" in line for line in step.instructions)
+    assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
 def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):

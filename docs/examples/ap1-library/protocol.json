@@ -305,11 +305,14 @@
       "supplier": "Lucigen",
       "catalog": "60242-2",
       "storage": "-80 °C",
-      "amount": "one aliquot per round",
-      "note": "",
+      "amount": "one aliquot per round, 25 µL a pulse",
+      "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
       "contains": [],
       "rules": [],
-      "citation": null
+      "citation": {
+        "source": "MA133",
+        "locator": "p. 4-5"
+      }
     },
     {
       "name": "Recovery medium",
@@ -364,7 +367,10 @@
       "note": "carbenicillin at 100 µg/mL; about 2,500 colonies a plate",
       "contains": [],
       "rules": [],
-      "citation": null
+      "citation": {
+        "source": "Qian SI",
+        "locator": "Day 2"
+      }
     },
     {
       "name": "384-well culture plate",
@@ -375,7 +381,10 @@
       "note": "60 µL low-salt LB with carbenicillin a well",
       "contains": [],
       "rules": [],
-      "citation": null
+      "citation": {
+        "source": "Qian SI",
+        "locator": "Day 3"
+      }
     },
     {
       "name": "96-well half-skirted PCR plate",
@@ -5193,15 +5202,15 @@
     {
       "title": "Round 1: electroporate into Endura ElectroCompetent Cells",
       "instructions": [
-        "Thaw one aliquot of Endura ElectroCompetent Cells on ice.",
+        "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
-        "Pulse with the settings the cell supplier gives for your cuvette."
+        "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette."
       ],
       "cautions": [
         "Keep the cells and the cuvette on ice; a warm cuvette arcs."
       ],
       "notes": [
-        "The method names the instrument and not the voltage, the capacitance, the resistance or the cuvette gap, so the settings are the cell supplier's."
+        "The method names the instrument and none of the settings, so the program is the cells' own: it is keyed by 60242-2 and changes when the cells do. The materials table says where it was read."
       ],
       "tables": [],
       "programs": [],
@@ -5209,7 +5218,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
+        "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
       ],
       "troubleshooting": [
         {
@@ -5630,15 +5639,15 @@
     {
       "title": "Round 2: electroporate into Endura ElectroCompetent Cells",
       "instructions": [
-        "Thaw one aliquot of Endura ElectroCompetent Cells on ice.",
+        "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
-        "Pulse with the settings the cell supplier gives for your cuvette."
+        "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette."
       ],
       "cautions": [
         "Keep the cells and the cuvette on ice; a warm cuvette arcs."
       ],
       "notes": [
-        "The method names the instrument and not the voltage, the capacitance, the resistance or the cuvette gap, so the settings are the cell supplier's."
+        "The method names the instrument and none of the settings, so the program is the cells' own: it is keyed by 60242-2 and changes when the cells do. The materials table says where it was read."
       ],
       "tables": [],
       "programs": [],
@@ -5646,7 +5655,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
+        "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
       ],
       "troubleshooting": [
         {
@@ -6067,15 +6076,15 @@
     {
       "title": "Round 3: electroporate into Endura ElectroCompetent Cells",
       "instructions": [
-        "Thaw one aliquot of Endura ElectroCompetent Cells on ice.",
+        "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
-        "Pulse with the settings the cell supplier gives for your cuvette."
+        "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette."
       ],
       "cautions": [
         "Keep the cells and the cuvette on ice; a warm cuvette arcs."
       ],
       "notes": [
-        "The method names the instrument and not the voltage, the capacitance, the resistance or the cuvette gap, so the settings are the cell supplier's."
+        "The method names the instrument and none of the settings, so the program is the cells' own: it is keyed by 60242-2 and changes when the cells do. The materials table says where it was read."
       ],
       "tables": [],
       "programs": [],
@@ -6083,7 +6092,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
+        "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
       ],
       "troubleshooting": [
         {
@@ -6338,6 +6347,20 @@
       "edition": "",
       "url": "https://www.neb.com/en/products/m0318-t7-dna-ligase",
       "read_as": "r.jina.ai",
+      "date": "2026-10-06"
+    },
+    "MA133": {
+      "document": "Endura Competent Cells manual, Lucigen / Biosearch Technologies",
+      "edition": "MA133 26Feb2018",
+      "url": "",
+      "read_as": "plain curl",
+      "date": "2026-10-06"
+    },
+    "Qian SI": {
+      "document": "Qian et al. 2026, Supplementary Information",
+      "edition": "Nat. Commun. 10.1038/s41467-026-76740-5",
+      "url": "",
+      "read_as": "held under reference_docs/",
       "date": "2026-10-06"
     },
     "LevSeq": {

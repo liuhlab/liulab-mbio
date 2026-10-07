@@ -187,7 +187,7 @@ def pcr_program(
     annealing_temperature: float,
     amplicon_length: int,
     cycles: int | None,
-    cycles_citation: Citation | None = None,
+    cycles_citation: Citation | None,
     title: str = "PCR",
 ) -> ThermocyclerProgram:
     """Return the program for this polymerase, annealing temperature and amplicon.
@@ -202,7 +202,9 @@ def pcr_program(
         ``None`` leaves the count blank where nothing sources it. It has no default: a count
         nobody chose prints on the page as if someone had.
     cycles_citation
-        Where `cycles` was read.
+        Where `cycles` was read, `cycle_citation` for the polymerase's own count. It has no
+        default either, for the same reason `cycles` has none: a default lets a caller leave
+        provenance off without saying so, where ``None`` says the count has no source to give.
     """
     profile = polymerase.pcr
     initial = Incubation(
@@ -228,11 +230,11 @@ def colony_pcr_program(
     annealing_temperature: float,
     amplicon_length: int,
     cycles: int | None,
-    cycles_citation: Citation | None = None,
+    cycles_citation: Citation | None,
 ) -> ThermocyclerProgram:
     """Return the colony PCR program, which opens the cells before it denatures anything.
 
-    `cycles` and `cycles_citation` read as `pcr_program`'s do.
+    `cycles` and `cycles_citation` read as `pcr_program`'s do, neither with a default.
     """
     profile = polymerase.pcr
     lysis = Incubation("Lysis", profile.initial_denaturation_c, COLONY_LYSIS_SECONDS)
@@ -255,7 +257,7 @@ def _program(
     annealing_temperature: float,
     amplicon_length: int,
     cycles: int | None,
-    cycles_citation: Citation | None = None,
+    cycles_citation: Citation | None,
     hold_c: float,
     title: str,
 ) -> ThermocyclerProgram:

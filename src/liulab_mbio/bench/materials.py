@@ -108,7 +108,8 @@ ELECTROPORATION: Mapping[str, Electroporation] = MappingProxyType(
             1800.0,
             600.0,
             10.0,
-            cuvette_mm=0.1,
+            # The manual writes the gap in centimetres; this field is millimetres.
+            cuvette_mm=1.0,
             cells_ul=25.0,
             time_constant_ms=(3.5, 4.5),
             recovery="975 µL of the supplied Recovery Medium within 10 seconds of the pulse, "

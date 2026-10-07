@@ -6,8 +6,9 @@ order the scheme fills its positions.
 
 Every number comes from `liulab_synbio.igga.bench` and `liulab_synbio.igga.coverage`, each
 sourced in ``docs/research/protein-library-assembly.md``, or from the design the plan computed.
-What the method leaves unpublished -- the ligase's units, the buffer's strength, the
-electroporation settings -- is one line saying so rather than a number invented here.
+What the method leaves unpublished -- the ligase's units, the buffer's strength -- is one line
+saying so rather than a number invented here. The pulse is the cells' own, read from their
+catalogue number and printed with the manual it came from.
 
 The shared step builders in `liulab_mbio.bench.steps` are shaped for a heat-shock
 transformation, which this method does not run. What it does share is the reaction table, the
@@ -23,6 +24,7 @@ from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import REFERENCES as GEL_REFERENCES
 from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
 from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
 from liulab_mbio.bench.plates import plate
@@ -94,6 +96,21 @@ SPRI_BEADS = "SPRI paramagnetic beads"
 STRAIN = "Endura ElectroCompetent Cells"
 STRAIN_SUPPLIER = "Lucigen"
 STRAIN_CATALOG = "60242-2"
+
+
+def _pulse() -> Electroporation:
+    """Return the strain's own program, which belongs to the cells and not to the step.
+
+    Raises
+    ------
+    LookupError
+        If the package stops shipping a program for these cells, rather than printing none.
+    """
+    found = electroporation(STRAIN_CATALOG)
+    if found is None:
+        raise LookupError(f"no electroporation program ships for {STRAIN_CATALOG}")
+    return found
+
 
 #: What amplifies the pool. The package's high-fidelity default, named here so the two PCRs
 #: and the material agree about which buffer the annealing temperatures were computed in.
@@ -576,13 +593,17 @@ def _materials(
             note="the two ratios differ; both elute in water",
         )
     )
+    pulse = _pulse()
     made.append(
         Material(
             STRAIN,
             supplier=STRAIN_SUPPLIER,
             catalog=STRAIN_CATALOG,
             storage="-80 °C",
-            amount="one aliquot per round",
+            amount=f"one aliquot per round, {pulse.cells_ul:g} µL a pulse",
+            note=f"pulsed at {pulse.volts:g} V, {pulse.ohms:g} Ω and {pulse.microfarads:g} µF "
+            f"in a {pulse.cuvette_mm:g} mm cuvette",
+            citation=pulse.citation,
         )
     )
     made.append(Material("Recovery medium", amount="one outgrowth per round"))
@@ -1090,7 +1111,9 @@ def _pcr2_step(
                 POOL_POLYMERASE,
                 annealing_temperature=low,
                 amplicon_length=length_bp,
+                # A blank count has nothing to cite; `stages.PCR2_CYCLES` stands where it would.
                 cycles=None,
+                cycles_citation=None,
                 title="PCR2",
             ),
         ),
@@ -1356,22 +1379,23 @@ def _ligation_cleanup_step(row: RoundBench) -> Step:
 
 def _electroporation_step(row: RoundBench) -> Step:
     """Get the whole ligation into cells, which is where the library's size is won or lost."""
+    pulse = _pulse()
+    low, high = pulse.time_constant_ms
     return Step(
         f"Round {row.number}: electroporate into {STRAIN}",
         instructions=(
-            f"Thaw one aliquot of {STRAIN} on ice.",
+            f"Thaw one aliquot of {STRAIN} on ice, {pulse.cells_ul:g} µL a pulse.",
             f"Add at most {TRANSFORMATION_NG:g} ng of the purified ligation and mix without "
             "making bubbles.",
-            "Pulse with the settings the cell supplier gives for your cuvette.",
+            f"Pulse at {pulse.volts:g} V, {pulse.ohms:g} Ω and {pulse.microfarads:g} µF in a "
+            f"{pulse.cuvette_mm:g} mm cuvette.",
         ),
         cautions=("Keep the cells and the cuvette on ice; a warm cuvette arcs.",),
-        expected=(
-            "A pulse with no arc, and a time constant in the range the cell supplier's manual "
-            "gives.",
-        ),
+        expected=(f"A pulse with no arc, and a time constant of {low:g} to {high:g} ms.",),
         notes=(
-            "The method names the instrument and not the voltage, the capacitance, the "
-            "resistance or the cuvette gap, so the settings are the cell supplier's.",
+            "The method names the instrument and none of the settings, so the program is the "
+            f"cells' own: it is keyed by {STRAIN_CATALOG} and changes when the cells do. The "
+            "materials table says where it was read.",
         ),
         troubleshooting=(
             Troubleshooting(

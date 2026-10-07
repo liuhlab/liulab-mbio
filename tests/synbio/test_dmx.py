@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.protocol.model import Well
+from liulab_mbio.protocol.model import Citation, Well
 from liulab_synbio import dmx
 
 KIT = """name\tgroup\tindex\toverhang5\tumi\toverhang3\tfinal_seq
@@ -260,6 +260,20 @@ def test_route_b_carries_a_hole_at_the_marks_and_route_a_carries_none():
     assert [hole.id for step in route_b for hole in step.holes] == ["B1", "B2"]
     route_a = dmx.validation_steps(sized(dmx.ROUTE_A, some, 0))
     assert [hole.id for step in route_a for hole in step.holes] == []
+
+
+def test_the_plates_a_pick_fills_name_where_their_numbers_were_read():
+    """Both routes pick into these two, so a reader of either page can follow the numbers back."""
+    some = (dmx.Design("one", 2),)
+    for route in (dmx.ROUTE_A, dmx.ROUTE_B):
+        cited = {
+            one.name: one.citation
+            for one in dmx.validation_materials(sized(route, some, 0))
+            if one.citation
+        }
+        assert cited["25 cm BioAssay plate"] == Citation("Qian SI", "Day 2")
+        assert cited[f"{dmx.PICKED_WELLS}-well culture plate"] == Citation("Qian SI", "Day 3")
+        assert all(one.source in dmx.SOURCES for one in cited.values())
 
 
 def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():

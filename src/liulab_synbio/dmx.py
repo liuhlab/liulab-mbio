@@ -98,7 +98,9 @@ WATER_UL = 0.5
 MASTERMIX_UL = 0.5
 WELL_UL = LYSATE_UL + BARCODE_UL + WATER_UL + MASTERMIX_UL
 
-#: What moves the liquid, and what the colonies are picked with. Qian SI Days 3 and 4.1.
+#: What moves the liquid, and what the colonies are picked with, both Qian's. The handler is
+#: cited on the move it makes; the picker is equipment, which carries no citation, so the page
+#: reaches it through the Qian reference alone.
 ACOUSTIC = "ECHO 525 acoustic liquid handler"
 PICKER = "QPix XE Microbial Colony Picker"
 
@@ -1129,6 +1131,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             catalog=BIOASSAY_CATALOG.split("#")[-1],
             amount="one spot a design",
             note=f"carbenicillin at 100 µg/mL; about {BIOASSAY_COLONIES:,} colonies a plate",
+            citation=Citation("Qian SI", "Day 2"),
         ),
         Material(
             f"{PICKED_WELLS}-well culture plate",
@@ -1136,6 +1139,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             catalog=PICKED_CATALOG.split("#")[-1],
             amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
             note=f"{CULTURE_UL:g} µL low-salt LB with carbenicillin a well",
+            citation=Citation("Qian SI", "Day 3"),
         ),
     ]
     if one.route is ROUTE_A:
@@ -1145,6 +1149,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 supplier="Greiner",
                 catalog=COMPRESSED_CATALOG.split("#")[-1],
                 amount=f"{len(one.compressed)}, one a {PLATES_COMPRESSED} picked plates",
+                citation=Citation("Qian SI", "Day 4.1"),
             ),
             Material(
                 "DMX barcode kit",
@@ -1156,6 +1161,8 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 "Barcoding master mix",
                 storage="-20 °C",
                 amount=f"{MASTERMIX_UL:g} µL a well",
+                note=f"a well is {WELL_UL:g} µL: {LYSATE_UL:g} µL lysate, {BARCODE_UL:g} µL "
+                f"barcodes, {WATER_UL:g} µL water and {MASTERMIX_UL:g} µL master mix",
                 citation=Citation("Qian SI", "Day 4.1"),
             ),
         ]
