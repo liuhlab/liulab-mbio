@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from liulab_mbio.bench.prices import PRICES_ENV
 from liulab_mbio.cloning.cli import plan_command
 from liulab_synbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
 from liulab_synbio.library.vector import Site
@@ -42,10 +43,24 @@ def plan(
         str,
         typer.Option("--pattern", help="Regex matching a record name, {position} for a position."),
     ] = NAME_PATTERN,
+    prices: Annotated[
+        Path | None,
+        typer.Option(
+            "--prices",
+            envvar=PRICES_ENV,
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A banded price record you hold (.csv), to cost the protocol's bill. The "
+            "quantities compute without one; the money is then a hole.",
+        ),
+    ] = None,
 ) -> None:
     """Plan the library PROJECT asks for, and write its sheets, records and protocol into OUT."""
     plan_command(
-        lambda: plan_library(project, kind=_kind(kind), site=_site(site), pattern=pattern),
+        lambda: plan_library(
+            project, kind=_kind(kind), site=_site(site), pattern=pattern, prices=prices
+        ),
         out,
         _summary,
     )

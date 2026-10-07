@@ -21,6 +21,14 @@ the check with the findings behind it, so a map can draw a failure on the record
 A failing check names what is wrong and need not name a remedy. Requiring one is a cost paid by
 everyone who writes a check afterwards; a hole stays a hole and goes to an issue.
 
+## The pipeline judges nothing of its own
+
+`plan_library` reports the gate's verdict, and `rounds.py`'s three checks are retired. Two were
+already bounded, by `donor releases` with `destination_vector`, and by `terminal block` with
+`terminal stop`. The third found a gap: no round opens the last product, so `check_product`
+gains `product opens`, the two-cut rule every destination is held to. What a round also checked,
+the stuffer's exact span, is a plan's coordinate, which a gate may not read.
+
 ## Considered options
 
 - **The gate reads bare records.** Nothing then says which tube a failure belongs to, and a

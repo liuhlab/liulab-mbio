@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
 from liulab_synbio.cli import app
@@ -16,6 +17,11 @@ LISTS = (
     {"bZIP_a": "WQAFAK", "bZIP_b": "WQAYAK"},
     {"C_a": "MKTHGK", "C_b": "MKTWGK"},
 )
+
+#: A price record as a user holds one, naming the synthesis order and nothing else.
+PRICES = """key,item,bands,charge,basis,currency
+synthesised blocks,gene fragments,count 1-100; length_nt 1-2000,1200.00,per order,USD
+"""
 
 #: The project every test here plans, as a user writes one.
 PROJECT = {
@@ -63,10 +69,23 @@ def run(project: Path, out: Path, *extra: str):
 def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     out = tmp_path / "library"
 
+    prices = tmp_path / "prices.csv"
+    prices.write_text(PRICES, encoding="utf-8")
+
     # One run for the wiring of every option: what the FASTA holds, the span a stuffer goes at,
-    # and the pattern the part names are read with. The rest is the project file's own.
+    # the pattern the part names are read with, and the price record the bill is costed against.
+    # The rest is the project file's own.
     result = run(
-        project, out, "--kind", "protein", "--site", "100-140", "--pattern", r"^{position}_"
+        project,
+        out,
+        "--kind",
+        "protein",
+        "--site",
+        "100-140",
+        "--pattern",
+        r"^{position}_",
+        "--prices",
+        str(prices),
     )
 
     assert result.exit_code == 0, result.output
@@ -89,6 +108,10 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     for path in written:
         assert path.is_file()
         assert path.read_bytes()
+    bill = read_protocol(out / "protocol.json").bill
+    assert bill is not None
+    assert bill.rows[0].charge == "1200.00"
+    assert bill.currency == "USD"
 
 
 def test_a_kind_that_is_neither_protein_nor_dna_is_refused(project, tmp_path):

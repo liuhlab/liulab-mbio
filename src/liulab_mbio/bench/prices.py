@@ -27,14 +27,20 @@ from liulab_mbio.protocol.model import Bill, BillRow, Citation, Hole, Source
 type Basis = Literal["per order", "per unit"]
 
 #: The columns a price record holds, in any order. `bands` is empty for an item that is not
-#: banded, and otherwise holds ``quantity low-high`` separated by semicolons.
+#: banded, and otherwise holds ``quantity low-high`` separated by semicolons. One cell and not a
+#: column pair a quantity: ``docs/adr/0011-bench-model.md`` says why.
 COLUMNS = ("key", "item", "bands", "charge", "basis", "currency")
+
+#: Where a price record is read from when a caller names none. The package ships none; this
+#: points at a copy the user holds.
+PRICES_ENV = "LIULAB_MBIO_PRICES"
 
 #: What a file has to hold to be one of these, said in the refusal so a caller need not guess.
 EXPECTED = (
     f"a CSV file with the columns {', '.join(COLUMNS)}, one currency throughout, a charge that "
     "is a number, a basis of 'per order' or 'per unit', and each band written "
-    "'quantity low-high' with both ends inclusive"
+    "'quantity low-high' with both ends inclusive, the high end left empty for a top tier with "
+    "no top"
 )
 
 
@@ -43,22 +49,27 @@ class Band:
     """One quantity a row is bounded by, inclusive at both ends.
 
     Both ends are inclusive because that is how every vendor writes a tier, and a transcription
-    slip here is a wrong price. This is a quantity, not a span in a sequence, so
+    slip here is a wrong price. A `high` of ``None`` is a top tier with no top, so nobody writes
+    a sentinel for one. This is a quantity, not a span in a sequence, so
     ``docs/adr/0001-coordinates.md`` does not reach it.
     """
 
     quantity: str
     low: Decimal
-    high: Decimal
+    high: Decimal | None = None
 
     def __post_init__(self) -> None:
         """Refuse a band whose ends are the wrong way round."""
-        if self.high < self.low:
+        if self.high is not None and self.high < self.low:
             raise ValueError(f"band {self.quantity}: {self.low} to {self.high} is backwards")
 
     def holds(self, value: Decimal) -> bool:
         """Return whether `value` falls in the band."""
-        return self.low <= value <= self.high
+        return self.low <= value and (self.high is None or value <= self.high)
+
+    def __str__(self) -> str:
+        """Say the band as the record's own cell writes it, the high end empty for no top."""
+        return f"{self.quantity} {self.low}-{self.high if self.high is not None else ''}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +93,7 @@ class PriceRow:
     @property
     def locator(self) -> str:
         """Where in the record this row is, as a `Citation` says it."""
-        bands = "; ".join(f"{b.quantity} {b.low}-{b.high}" for b in self.bands)
+        bands = "; ".join(str(band) for band in self.bands)
         return f"{self.key} {bands}".strip() if bands else self.key
 
 
@@ -95,15 +106,18 @@ class Headroom:
     band: Band
 
     @property
-    def above(self) -> Decimal:
-        """How much more the quantity may grow before the band changes."""
-        return self.band.high - self.value
+    def above(self) -> Decimal | None:
+        """How much more the quantity may grow before the band changes, or no top at all."""
+        return None if self.band.high is None else self.band.high - self.value
 
     def __str__(self) -> str:
         """Say the fact the way a protocol shows it."""
-        if self.above == 0:
+        gap = self.above
+        if gap is None:
+            return f"{self.value:f} {self.quantity}, no band above it"
+        if gap == 0:
             return f"{self.value:f} {self.quantity}, no slack above it at all"
-        return f"{self.value:f} {self.quantity}, {self.above:f} below the next band"
+        return f"{self.value:f} {self.quantity}, {gap:f} below the next band"
 
 
 @dataclass(frozen=True, slots=True)
@@ -235,10 +249,11 @@ def _bands(cell: str, line: int) -> tuple[Band, ...]:
     bands: list[Band] = []
     for one in (part.strip() for part in cell.split(";") if part.strip()):
         quantity, _, span = one.partition(" ")
-        low, _, high = span.partition("-")
-        if not quantity or not low or not high:
+        low, dash, high = span.partition("-")
+        if not quantity or not dash or not low.strip():
             raise ValueError(f"line {line}: band {one!r} is not 'quantity low-high'")
-        bands.append(Band(quantity, Decimal(low.strip()), Decimal(high.strip())))
+        top = high.strip()
+        bands.append(Band(quantity, Decimal(low.strip()), Decimal(top) if top else None))
     return tuple(bands)
 
 

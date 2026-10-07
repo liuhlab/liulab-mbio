@@ -16,6 +16,10 @@ internal stuffer and barcode lie, and at the two junctions the ligation made, so
 read before the next is run. A stuffer is drawn over what the internal enzyme excises, so the
 round that opens it leaves none of it behind.
 
+Nothing here carries a verdict. A round refuses what it cannot build, and what it did build is
+judged by `liulab_synbio.library.gate`, which reads the finished records rather than these
+coordinates, so a design an agent composed is judged the same way.
+
 Coordinates are the model's, 0-based and half-open, and a span across the origin of a circular
 record ends past the record's length.
 """
@@ -25,7 +29,6 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 from pathlib import Path
 
-from liulab_mbio.checks import Check, Status, worst_of
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.edits import EditReport, ordered, replace
 from liulab_mbio.sequence import (
@@ -35,9 +38,8 @@ from liulab_mbio.sequence import (
     Strand,
     across_the_origin,
 )
-from liulab_mbio.sites import Fragment, digest, find_sites
+from liulab_mbio.sites import Fragment, digest
 from liulab_mbio.snapgene import write_dna
-from liulab_mbio.translate import translate
 from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import Part
 
@@ -131,98 +133,6 @@ class Round:
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
         return _span(self.coding.end, carried + _length(self.block), len(self.product))
-
-    @property
-    def checks(self) -> tuple[Check, ...]:
-        """Judge the product, as data a protocol can print.
-
-        Whether the next round can open it comes first, then whether the enzyme that released the
-        part still cuts it, and after the terminal round whether what the product keeps past its
-        last part reads in frame without a stop.
-        """
-        made = [self._opens(), self._external()]
-        if self.terminal:
-            made.append(self._frame())
-        return tuple(made)
-
-    @property
-    def status(self) -> Status:
-        """The worst status of any check."""
-        return worst_of(self.checks)
-
-    def __getitem__(self, name: str) -> Check:
-        """Return the check of that name.
-
-        Raises
-        ------
-        KeyError
-            If no check has it.
-        """
-        for check in self.checks:
-            if check.name == name:
-                return check
-        raise KeyError(name)
-
-    def _opens(self) -> Check:
-        """Whether the internal enzyme still excises the stuffer this round's part brought.
-
-        Every piece of a circular digest is bounded by two cuts, so what says the next round can
-        open the product is that one of those pieces is that stuffer itself.
-        """
-        enzyme = self.scheme.internal
-        pieces = digest(self.product, enzyme)
-        found = [
-            piece
-            for piece in pieces
-            if (piece.start, piece.end) == (self.stuffer.start, self.stuffer.end)
-        ]
-        where = f"{self.stuffer.start}-{self.stuffer.end}"
-        if len(found) == 1:
-            detail = (
-                f"{enzyme.name} excises the stuffer at {where}, on {found[0].left_overhang} and "
-                f"{found[0].right_overhang}"
-            )
-        else:
-            detail = (
-                f"{enzyme.name} cuts the product in {len(pieces)} place(s), none of which excises "
-                f"the stuffer at {where}"
-            )
-        return Check("opens", "pass" if len(found) == 1 else "fail", len(found), detail)
-
-    def _external(self) -> Check:
-        """Whether the enzyme that released the part is gone from the product, as it should be."""
-        enzyme = self.scheme.external
-        left = len(find_sites(self.product, enzyme))
-        return Check(
-            "external sites",
-            "pass" if left == 0 else "fail",
-            left,
-            f"{enzyme.name} no longer cuts the product"
-            if left == 0
-            else f"{enzyme.name} reads {left} site(s) the external stuffers should have taken away",
-        )
-
-    def _frame(self) -> Check:
-        """Whether the retained region is whole codons and spells no stop in the product's frame."""
-        bases = self.product.extract(self.retained)
-        if len(bases) % 3:
-            return Check(
-                "reading frame",
-                "fail",
-                len(bases),
-                f"the {len(bases)} bases the product keeps past its last part are not a whole "
-                "number of codons",
-            )
-        spelled = translate(bases)
-        stops = spelled.count("*")
-        return Check(
-            "reading frame",
-            "pass" if stops == 0 else "fail",
-            stops,
-            f"{len(bases)} bases, {len(spelled)} codons, no stop"
-            if stops == 0
-            else f"{stops} stop codon(s) in the {len(spelled)} the product keeps past its last part",
-        )
 
 
 def assemble_round(

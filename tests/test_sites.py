@@ -8,10 +8,13 @@ from liulab_mbio.sites import (
     digest,
     domesticate,
     find_sites,
+    free_enzyme_search,
     free_enzymes,
     has_site,
     insert_site,
+    out_of_reach,
     primer_tail,
+    repeat_context,
     site_counts,
 )
 
@@ -27,6 +30,9 @@ ACROSS = "CTC" + "A" * 14 + "GGT"
 # A coding sequence whose BsaI site straddles two codons, built so that the leucine codon
 # E. coli prefers, CTC -> CTG, spells an EcoRI site that was not there before.
 FORCED = "ATG" + "GGTCTC" + "AATTC" + "A" + "TAA"
+
+# Five codons spelling a whole protein, the BsaI site across the second and third.
+ORF = "ATG" + "GGTCTC" + "AAA" + "TAA"
 
 BSAI = get_enzyme("BsaI")
 # An invented enzyme whose site carries an IUPAC code and is not its own reverse complement.
@@ -115,6 +121,14 @@ def test_several_enzymes_are_searched_at_once_and_the_hits_come_back_in_order() 
     ]
 
 
+def test_an_enzyme_listed_twice_is_searched_and_counted_once() -> None:
+    """#289: a doubled listing doubled every count a caller read off the search."""
+    record = SequenceRecord(FORWARD)
+    assert len(find_sites(record, ["BsaI", "BsaI"])) == 1
+    assert site_counts([record], ["BsaI", "BsaI"]) == {"BsaI": 1}
+    assert [one.name for one in free_enzymes([record], ["PaqCI", "PaqCI"])] == ["PaqCI"]
+
+
 def test_the_fixture_tables_hold_the_sites_issue_1_lists(
     puc19: SequenceRecord, gfp: SequenceRecord
 ) -> None:
@@ -153,6 +167,41 @@ def test_site_counts_and_free_enzymes_rank_the_type_iis_set(
         "PaqCI": 0,
     }
     assert [e.name for e in free_enzymes([puc19, gfp], names)] == ["BbsI", "PaqCI"]
+
+
+def test_a_search_ranks_the_free_enzymes_and_says_what_blocked_the_rest(
+    puc19: SequenceRecord, gfp: SequenceRecord
+) -> None:
+    search = free_enzyme_search(
+        [puc19, gfp], ["BsaI", "BbsI", "SapI", "PaqCI"], overhang_length=4, end="5'"
+    )
+    assert [e.name for e in search.free] == ["PaqCI", "BbsI"]
+    assert search.best is not None
+    assert search.best.name == "PaqCI"
+    blocked = {one.enzyme.name: one for one in search.blocked}
+    assert set(blocked) == {"BsaI", "SapI"}
+    assert [site.start for site in blocked["BsaI"].sites] == [
+        site.start for site in (*find_sites(puc19, "BsaI"), *find_sites(gfp, "BsaI"))
+    ]
+    assert not blocked["SapI"].sites
+    assert "3 bases" in blocked["SapI"].reason
+
+
+def test_a_search_finding_nothing_free_is_an_answer_and_not_an_error() -> None:
+    search = free_enzyme_search([SequenceRecord("AAAAGGTCTCGTTTT")], ["BsaI"])
+    assert search.free == ()
+    assert search.best is None
+    assert search.blocked[0].sites[0].start == 4
+
+
+def test_a_site_inside_a_long_repeat_is_out_of_every_oligos_reach() -> None:
+    flank = "ACGTTGCA" * 20
+    record = SequenceRecord(flank + "GGTCTC" + flank + "TT" + flank + "GGTCTC" + flank)
+    sites = find_sites(record, "BsaI")
+    assert [site.start for site in sites] == [160, 488]
+    assert repeat_context(record, sites[0].span) == len(flank)
+    assert [site.start for site in out_of_reach(record, sites)] == [160, 488]
+    assert out_of_reach(record, sites, reach=len(flank) + 1) == ()
 
 
 def test_an_unknown_enzyme_name_is_refused() -> None:
@@ -332,6 +381,18 @@ def test_the_favourite_codon_is_passed_over_when_it_spells_a_site_to_avoid() -> 
     assert not has_site(edited, ["BsaI", "EcoRI"])
 
 
+def test_an_enzyme_both_targeted_and_avoided_is_domesticated_just_the_same(
+    gfp: SequenceRecord,
+) -> None:
+    """#289: naming one enzyme twice counted each of its sites twice and refused every change."""
+    edited, report = domesticate(gfp, "BsaI", avoid=["BsaI"])
+
+    plain, _ = domesticate(gfp, "BsaI")
+    assert edited == plain
+    assert len(report.changes) == 1
+    assert (report.unchanged, report.outside_cds) == ((), ())
+
+
 def test_a_site_no_synonymous_change_can_remove_is_reported_unchanged() -> None:
     # Methionine and tryptophan have one codon each, so this site cannot be changed silently.
     enzyme = Enzyme("MetTrpI", "ATGTGG", top_cut=6, bottom_cut=10)
@@ -355,10 +416,69 @@ def test_a_linear_coding_sequence_cut_apart_at_its_two_ends_reads_its_codons_in_
     assert not find_sites(edited, "BsaI")
 
 
+def test_a_feature_whose_bases_spell_a_protein_is_coding_whatever_its_type_says() -> None:
+    edited, report = domesticate(_misc(ORF), "BsaI")
+
+    (change,) = report.changes
+    assert change.feature.type == "misc_feature"
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("CTC", "CTG", "L")
+    assert not find_sites(edited, "BsaI")
+    assert _protein(edited.sequence) == _protein(ORF)
+
+
+def test_a_feature_whose_last_codon_is_not_a_stop_is_not_read_as_coding() -> None:
+    # The same bases and the same frame, the closing stop swapped for a lysine codon.
+    record = _misc(ORF[:-3] + "AAA")
+
+    edited, report = domesticate(record, "BsaI")
+
+    assert report.changes == ()
+    assert [site.start for site in report.outside_cds] == [3]
+    assert edited == record
+
+
+def test_plvx_reads_puror_as_coding_though_the_file_types_it_misc_feature(
+    plvx: SequenceRecord,
+) -> None:
+    """#285: every pLVX feature is a `misc_feature`, and BsmBI 5636 is still a free change."""
+    edited, report = domesticate(plvx, "BsmBI")
+
+    (change,) = report.changes
+    assert (change.site.start, change.feature.name) == (5636, "PuroR")
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("GTC", "GTG", "V")
+    assert [site.start for site in find_sites(edited, "BsmBI")] == [3876]
+    # The hPGK promoter codes for nothing, so its site is still reported and left alone.
+    assert [site.start for site in report.outside_cds] == [3876]
+    before = next(one for one in plvx.features if one.name == "PuroR")
+    after = next(one for one in edited.features if one.name == "PuroR")
+    assert _protein(edited.extract(after)) == _protein(plvx.extract(before))
+
+
+def test_plvx_gives_up_both_coding_bsai_sites_with_bsai_named_to_avoid_as_well(
+    plvx: SequenceRecord,
+) -> None:
+    """#289: the working vector names its held enzyme as a target and as one to avoid."""
+    edited, report = domesticate(plvx, "BsaI", avoid=["BsaI"])
+
+    assert [
+        (one.site.start, one.feature.name, one.old_codon, one.new_codon) for one in report.changes
+    ] == [(5730, "PuroR", "GAG", "GAA"), (8720, "AmpR", "GGG", "GGC")]
+    assert report.unchanged == ()
+    # The four left are in the LTRs, the hPGK promoter and no feature at all: none codes.
+    assert [site.start for site in find_sites(edited, "BsaI")] == [454, 3724, 6472, 7112]
+
+
 def _cds(sequence: str) -> SequenceRecord:
     segments = (Segment(0, len(sequence)),)
     return SequenceRecord(
         sequence, features=(Feature("test", "CDS", segments, strand=Strand.FORWARD),)
+    )
+
+
+def _misc(sequence: str) -> SequenceRecord:
+    segments = (Segment(0, len(sequence)),)
+    return SequenceRecord(
+        sequence, features=(Feature("orf", "misc_feature", segments, strand=Strand.FORWARD),)
     )
 
 

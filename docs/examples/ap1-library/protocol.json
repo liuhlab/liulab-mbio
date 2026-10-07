@@ -28,39 +28,64 @@
   ],
   "checks": [
     {
-      "name": "round 1 opens",
+      "name": "destination opens",
       "status": "pass",
-      "detail": "BbsI excises the stuffer at 1353-1383, on AGAT and TTCC"
+      "detail": "3 judged, worst: BbsI cuts each of the 1 destination(s) of round 1 opening in 2 places"
     },
     {
-      "name": "round 1 external sites",
+      "name": "donor releases",
       "status": "pass",
-      "detail": "BsaI no longer cuts the product"
+      "detail": "3 judged, worst: BsaI cuts each of the 24 donor(s) of round 1 release in 2 places"
     },
     {
-      "name": "round 2 opens",
+      "name": "ends distinguishable",
       "status": "pass",
-      "detail": "BbsI excises the stuffer at 1545-1575, on GCAT and TTCC"
+      "detail": "3 judged, worst: the ends meeting in round 1 ligation read as AGGA, TTCC, which a ligation pairs one way"
     },
     {
-      "name": "round 2 external sites",
-      "status": "pass",
-      "detail": "BsaI no longer cuts the product"
+      "name": "ligation fidelity",
+      "status": null,
+      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF"
     },
     {
-      "name": "round 3 opens",
+      "name": "barcode spacing",
       "status": "pass",
-      "detail": "BbsI excises the stuffer at 1597-1627, on AGGA and TTCC"
+      "detail": "3 judged, worst: the closest two barcodes of N stand 3 apart, at the 3 two parts of one list need to be told apart"
     },
     {
-      "name": "round 3 external sites",
+      "name": "barcode reading",
       "status": "pass",
-      "detail": "BsaI no longer cuts the product"
+      "detail": "3 judged, worst: every barcode of N reads as the method needs it to"
     },
     {
-      "name": "round 3 reading frame",
+      "name": "cargo sites",
       "status": "pass",
-      "detail": "75 bases, 25 codons, no stop"
+      "detail": "72 judged, worst: the N cargo 1 carries no site of BsmBI"
+    },
+    {
+      "name": "cargo frame",
+      "status": "pass",
+      "detail": "72 judged, worst: the N cargo 1 is 798 bases from its entry overhang, 0 past a whole number of codons, which is what a cargo another part follows is"
+    },
+    {
+      "name": "product opens",
+      "status": "pass",
+      "detail": "BbsI cuts the library product in the 2 places a further round opens it on"
+    },
+    {
+      "name": "barcode block",
+      "status": "pass",
+      "detail": "the library product keeps one barcode a round, ACTATTCACAT then CACATAGTCGA then TACCATTGTCT, in the reverse of the order the rounds ran"
+    },
+    {
+      "name": "terminal block",
+      "status": "pass",
+      "detail": "the 75 bases the library product keeps past its last part are whole codons"
+    },
+    {
+      "name": "terminal stop",
+      "status": "pass",
+      "detail": "the library product reads through what it keeps without a stop"
     }
   ],
   "materials": [
@@ -70,7 +95,10 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv"
+      "note": "synthesised blocks, ordered from parts.tsv",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "DBD part list",
@@ -78,7 +106,10 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv"
+      "note": "synthesised blocks, ordered from parts.tsv",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "C part list",
@@ -86,7 +117,10 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "24 members, pooled",
-      "note": "synthesised blocks, ordered from parts.tsv"
+      "note": "synthesised blocks, ordered from parts.tsv",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "DMX-demo vector",
@@ -94,7 +128,10 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "",
-      "note": "opened by the internal digest in round 1"
+      "note": "opened by the internal digest in round 1",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "BbsI-HF",
@@ -102,7 +139,10 @@
       "catalog": "R3539",
       "storage": "-20 °C",
       "amount": "2.5 µL per digest",
-      "note": "opens the library, excising its stuffer"
+      "note": "opens the library, excising its stuffer",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "BsaI-HFv2",
@@ -110,7 +150,10 @@
       "catalog": "R3733",
       "storage": "-20 °C",
       "amount": "2.5 µL per digest",
-      "note": "releases a part from its synthesised block"
+      "note": "releases a part from its synthesised block",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "SrfI",
@@ -118,7 +161,10 @@
       "catalog": "R0629",
       "storage": "-20 °C",
       "amount": "2.5 µL per digest",
-      "note": "cuts the excised stuffer, so it cannot ligate back"
+      "note": "cuts the excised stuffer, so it cannot ligate back",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "PmeI",
@@ -126,7 +172,10 @@
       "catalog": "R0560",
       "storage": "-20 °C",
       "amount": "2.5 µL per digest",
-      "note": "cuts the donor backbone, so it cannot ligate back"
+      "note": "cuts the donor backbone, so it cannot ligate back",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "CutSmart Buffer",
@@ -134,15 +183,61 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "",
-      "note": "both digests run in it"
+      "note": "both digests run in it",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
-      "name": "T7 DNA Ligase and StickTogether DNA Ligase Buffer",
-      "supplier": "",
-      "catalog": "",
+      "name": "T7 DNA Ligase",
+      "supplier": "NEB",
+      "catalog": "#M0318L",
       "storage": "-20 °C",
       "amount": "",
-      "note": "the method names neither the units nor the volume; follow the supplier"
+      "note": "3,000,000 U/mL. Refuses blunt ends, which is what removes escapees.",
+      "contains": [],
+      "rules": [
+        {
+          "kind": "forbids",
+          "subject": "PEG",
+          "detail": "Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more.",
+          "when": "",
+          "citation": {
+            "source": "M0318",
+            "locator": "reaction conditions"
+          }
+        },
+        {
+          "kind": "forbids",
+          "subject": "heat inactivation",
+          "detail": "Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up.",
+          "when": "PEG",
+          "citation": {
+            "source": "M0318",
+            "locator": "note 4"
+          }
+        }
+      ],
+      "citation": {
+        "source": "M0318",
+        "locator": "reaction conditions"
+      }
+    },
+    {
+      "name": "StickTogether DNA Ligase Buffer",
+      "supplier": "NEB",
+      "catalog": "#B0535S",
+      "storage": "-20 °C",
+      "amount": "",
+      "note": "Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.",
+      "contains": [
+        "PEG 6000"
+      ],
+      "rules": [],
+      "citation": {
+        "source": "M0318",
+        "locator": "reaction conditions"
+      }
     },
     {
       "name": "SPRI paramagnetic beads",
@@ -150,7 +245,10 @@
       "catalog": "",
       "storage": "",
       "amount": "2 volumes after a digest, 1 after a ligation",
-      "note": "the two ratios differ; both elute in water"
+      "note": "the two ratios differ; both elute in water",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "Endura ElectroCompetent Cells",
@@ -158,7 +256,10 @@
       "catalog": "60242-2",
       "storage": "-80 °C",
       "amount": "one aliquot per round",
-      "note": ""
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "Recovery medium",
@@ -166,7 +267,10 @@
       "catalog": "",
       "storage": "",
       "amount": "one outgrowth per round",
-      "note": ""
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "Selective broth and plates",
@@ -174,7 +278,10 @@
       "catalog": "",
       "storage": "",
       "amount": "",
-      "note": "the destination vector's own antibiotic, which this plan does not name"
+      "note": "the destination vector's own antibiotic, which this plan does not name",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "Plasmid prep kit",
@@ -182,7 +289,10 @@
       "catalog": "",
       "storage": "",
       "amount": "one prep per round",
-      "note": ""
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": null
     },
     {
       "name": "Electroporation cuvettes",
@@ -190,7 +300,10 @@
       "catalog": "",
       "storage": "",
       "amount": "3, one per round",
-      "note": ""
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": null
     }
   ],
   "oligos": [],
@@ -201,6 +314,8 @@
     "Shaking incubator at 30 °C",
     "Spectrophotometer or fluorometer"
   ],
+  "vessels": [],
+  "plates": [],
   "steps": [
     {
       "title": "Order the synthesised parts",
@@ -215,6 +330,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "72 blocks, 133 to 1149 bp.",
@@ -225,7 +341,8 @@
           "problem": "The vendor cannot synthesise a block",
           "solution": "It is usually a repeat or a GC run in the coding bases. Plan again with another codon usage table; the stuffers and the overhangs are fixed by the scheme."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Pool each part list",
@@ -240,6 +357,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "N: one tube holding 24 member(s).",
@@ -251,7 +369,8 @@
           "problem": "One member is much more dilute than the rest",
           "solution": "Pool to the lowest member rather than to the mean; a member short here is short in every round after it."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: open DMX-demo with BbsI",
@@ -271,28 +390,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "1.31561 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BbsI-HF (R3539)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "SrfI (R0629)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -308,7 +431,8 @@
                 {
                   "label": "BbsI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -318,7 +442,8 @@
                 {
                   "label": "BbsI and SrfI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -329,6 +454,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "DMX-demo opens on AGGA and TTCC, leaving 1204 bp of backbone.",
@@ -339,7 +465,8 @@
           "problem": "Mostly empty library later",
           "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: release the N part list with BsaI",
@@ -360,28 +487,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "2.64825 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BsaI-HFv2 (R3733)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "PmeI (R0560)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -397,7 +528,8 @@
                 {
                   "label": "BsaI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -407,7 +539,8 @@
                 {
                   "label": "BsaI and PmeI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -418,6 +551,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Every member of the N part list is released, about 559 bp, on the same two overhangs the destination now offers.",
@@ -428,7 +562,8 @@
           "problem": "A member is missing from the library later",
           "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: clean both digests up",
@@ -443,6 +578,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "DMX-demo, opened: 0.0269677 pmol is 20 ng at 1204 bp.",
@@ -453,7 +589,8 @@
           "problem": "Too dilute for the ligation",
           "solution": "Elute in a smaller volume, or scale the ligation up."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: ligate the N part list into the library",
@@ -474,21 +611,24 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0269677 pmol (20 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "N part list, released",
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0269677 pmol (9.29 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
               "volume_ul": 198.0,
               "stock": "",
               "final": "to 200 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Ligation",
@@ -503,6 +643,7 @@
           "seconds": 1800
         }
       ],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Nothing visible. 0.0269677 pmol of the released part list against 0.0269677 pmol of the opened library is the 1:1 molar ratio."
@@ -512,7 +653,8 @@
           "problem": "Few colonies after this round",
           "solution": "Check that both digests went to completion; an uncut end cannot ligate."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: clean the ligation up",
@@ -527,6 +669,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Enough for one electroporation: 100 ng is 0.0810933 pmol at 2002 bp."
@@ -536,7 +679,8 @@
           "problem": "The eluate is still salty",
           "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: electroporate into Endura ElectroCompetent Cells",
@@ -554,6 +698,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
@@ -563,7 +708,8 @@
           "problem": "The cuvette arcs",
           "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: recover and grow at 30 °C",
@@ -585,7 +731,8 @@
                 {
                   "label": "Recovery, shaking",
                   "temperature_c": 30.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -595,7 +742,8 @@
                 {
                   "label": "Outgrowth",
                   "temperature_c": 30.0,
-                  "seconds": 43200
+                  "seconds": 43200,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -606,6 +754,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "At least 7,200 colonies, scaled up from the dilution: 300x over the 24 distinct products this round can make.",
@@ -616,7 +765,8 @@
           "problem": "Fewer colonies than the count above",
           "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 1: prep the library",
@@ -631,6 +781,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "One pool of plasmid, 2002 bp per molecule. This is the destination round 2 opens.",
@@ -641,7 +792,8 @@
           "problem": "A low yield",
           "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: open AP-1 DESynR round 1 with BbsI",
@@ -661,28 +813,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.810933 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BbsI-HF (R3539)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "SrfI (R0629)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -698,7 +854,8 @@
                 {
                   "label": "BbsI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -708,7 +865,8 @@
                 {
                   "label": "BbsI and SrfI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -719,6 +877,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 1972 bp of backbone.",
@@ -729,7 +888,8 @@
           "problem": "Mostly empty library later",
           "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: release the DBD part list with BsaI",
@@ -750,28 +910,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "5.25316 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BsaI-HFv2 (R3733)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "PmeI (R0560)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -787,7 +951,8 @@
                 {
                   "label": "BsaI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -797,7 +962,8 @@
                 {
                   "label": "BsaI and PmeI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -808,6 +974,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Every member of the DBD part list is released, about 255 bp, on the same two overhangs the destination now offers.",
@@ -818,7 +985,8 @@
           "problem": "A member is missing from the library later",
           "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: clean both digests up",
@@ -833,6 +1001,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "AP-1 DESynR round 1, opened: 0.0164654 pmol is 20 ng at 1972 bp.",
@@ -843,7 +1012,8 @@
           "problem": "Too dilute for the ligation",
           "solution": "Elute in a smaller volume, or scale the ligation up."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: ligate the DBD part list into the library",
@@ -864,21 +1034,24 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0164654 pmol (20 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "DBD part list, released",
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0164654 pmol (2.59 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
               "volume_ul": 198.0,
               "stock": "",
               "final": "to 200 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Ligation",
@@ -893,6 +1066,7 @@
           "seconds": 1800
         }
       ],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Nothing visible. 0.0164654 pmol of the released part list against 0.0164654 pmol of the opened library is the 1:1 molar ratio."
@@ -902,7 +1076,8 @@
           "problem": "Few colonies after this round",
           "solution": "Check that both digests went to completion; an uncut end cannot ligate."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: clean the ligation up",
@@ -917,6 +1092,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Enough for one electroporation: 100 ng is 0.0734944 pmol at 2209 bp."
@@ -926,7 +1102,8 @@
           "problem": "The eluate is still salty",
           "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: electroporate into Endura ElectroCompetent Cells",
@@ -944,6 +1121,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
@@ -953,7 +1131,8 @@
           "problem": "The cuvette arcs",
           "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: recover and grow at 30 °C",
@@ -975,7 +1154,8 @@
                 {
                   "label": "Recovery, shaking",
                   "temperature_c": 30.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -985,7 +1165,8 @@
                 {
                   "label": "Outgrowth",
                   "temperature_c": 30.0,
-                  "seconds": 43200
+                  "seconds": 43200,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -996,6 +1177,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "At least 172,800 colonies, scaled up from the dilution: 300x over the 576 distinct products this round can make.",
@@ -1006,7 +1188,8 @@
           "problem": "Fewer colonies than the count above",
           "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 2: prep the library",
@@ -1021,6 +1204,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "One pool of plasmid, 2209 bp per molecule. This is the destination round 3 opens.",
@@ -1031,7 +1215,8 @@
           "problem": "A low yield",
           "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: open AP-1 DESynR round 2 with BbsI",
@@ -1051,28 +1236,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.734944 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BbsI-HF (R3539)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "SrfI (R0629)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BbsI and SrfI",
@@ -1088,7 +1277,8 @@
                 {
                   "label": "BbsI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1098,7 +1288,8 @@
                 {
                   "label": "BbsI and SrfI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1109,6 +1300,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 2179 bp of backbone.",
@@ -1119,7 +1311,8 @@
           "problem": "Mostly empty library later",
           "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: release the C part list with BsaI",
@@ -1140,28 +1333,32 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "4.6379 pmol (1000 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "BsaI-HFv2 (R3733)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "PmeI (R0560)",
               "volume_ul": 2.5,
               "stock": "",
               "final": "",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             },
             {
               "name": "CutSmart Buffer and nuclease-free water",
               "volume_ul": 44.0,
               "stock": "",
               "final": "to 50 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Digest with BsaI and PmeI",
@@ -1177,7 +1374,8 @@
                 {
                   "label": "BsaI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1187,7 +1385,8 @@
                 {
                   "label": "BsaI and PmeI",
                   "temperature_c": 37.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1198,6 +1397,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Every member of the C part list is released, about 296 bp, on the same two overhangs the destination now offers.",
@@ -1208,7 +1408,8 @@
           "problem": "A member is missing from the library later",
           "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: clean both digests up",
@@ -1223,6 +1424,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "AP-1 DESynR round 2, opened: 0.0149012 pmol is 20 ng at 2179 bp.",
@@ -1233,7 +1435,8 @@
           "problem": "Too dilute for the ligation",
           "solution": "Elute in a smaller volume, or scale the ligation up."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: ligate the C part list into the library",
@@ -1254,21 +1457,24 @@
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0149012 pmol (20 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "C part list, released",
               "volume_ul": 1.0,
               "stock": "",
               "final": "0.0149012 pmol (2.72 ng)",
-              "master_mix": false
+              "master_mix": false,
+              "citation": null
             },
             {
               "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
               "volume_ul": 198.0,
               "stock": "",
               "final": "to 200 µL",
-              "master_mix": true
+              "master_mix": true,
+              "citation": null
             }
           ],
           "title": "Ligation",
@@ -1283,6 +1489,7 @@
           "seconds": 1800
         }
       ],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Nothing visible. 0.0149012 pmol of the released part list against 0.0149012 pmol of the opened library is the 1:1 molar ratio."
@@ -1292,7 +1499,8 @@
           "problem": "Few colonies after this round",
           "solution": "Check that both digests went to completion; an uncut end cannot ligate."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: clean the ligation up",
@@ -1307,6 +1515,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "Enough for one electroporation: 100 ng is 0.071331 pmol at 2276 bp."
@@ -1316,7 +1525,8 @@
           "problem": "The eluate is still salty",
           "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: electroporate into Endura ElectroCompetent Cells",
@@ -1334,6 +1544,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "A pulse with no arc, and a time constant in the range the cell supplier's manual gives."
@@ -1343,7 +1554,8 @@
           "problem": "The cuvette arcs",
           "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: recover and grow at 30 °C",
@@ -1365,7 +1577,8 @@
                 {
                   "label": "Recovery, shaking",
                   "temperature_c": 30.0,
-                  "seconds": 3600
+                  "seconds": 3600,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1375,7 +1588,8 @@
                 {
                   "label": "Outgrowth",
                   "temperature_c": 30.0,
-                  "seconds": 43200
+                  "seconds": 43200,
+                  "citation": null
                 }
               ],
               "cycles": 1
@@ -1386,6 +1600,7 @@
         }
       ],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "At least 4,147,200 colonies, scaled up from the dilution: 300x over the 13,824 distinct products this round can make.",
@@ -1396,7 +1611,8 @@
           "problem": "Fewer colonies than the count above",
           "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Round 3: prep the library",
@@ -1411,6 +1627,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "One pool of plasmid, 2276 bp per molecule. This is the finished library.",
@@ -1421,7 +1638,8 @@
           "problem": "A low yield",
           "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
         }
-      ]
+      ],
+      "holes": []
     },
     {
       "title": "Confirm the library",
@@ -1439,6 +1657,7 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "transfers": [],
       "gels": [],
       "expected": [
         "The block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC.",
@@ -1449,7 +1668,8 @@
           "problem": "A read carries fewer barcodes than there are rounds",
           "solution": "A round did not go in. Check that round's prep against its own record before blaming the sequencing."
         }
-      ]
+      ],
+      "holes": []
     }
   ],
   "references": [
@@ -1477,5 +1697,213 @@
       "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
       "url": ""
     }
-  ]
+  ],
+  "sources": {
+    "Qian SI": {
+      "document": "Qian et al. 2026, Supplementary Information",
+      "edition": "Nat. Commun. 10.1038/s41467-026-76740-5",
+      "url": "",
+      "read_as": "held under reference_docs/",
+      "date": "2026-10-06"
+    },
+    "M0318": {
+      "document": "New England Biolabs #M0318 T7 DNA Ligase product page",
+      "edition": "",
+      "url": "https://www.neb.com/en/products/m0318-t7-dna-ligase",
+      "read_as": "r.jina.ai",
+      "date": "2026-10-06"
+    },
+    "C3020": {
+      "document": "New England Biolabs #C3020 NEB 10-beta electrocompetent cells, electroporation protocol",
+      "edition": "",
+      "url": "https://www.neb.com/en/products/c3020-neb-10-beta-electrocompetent-e-coli",
+      "read_as": "r.jina.ai",
+      "date": "2026-10-06"
+    },
+    "MA133": {
+      "document": "Endura Competent Cells manual, Lucigen / Biosearch Technologies",
+      "edition": "MA133 26Feb2018",
+      "url": "",
+      "read_as": "plain curl",
+      "date": "2026-10-06"
+    }
+  },
+  "holes": [
+    {
+      "id": "H14",
+      "missing": "no reads-per-well pass mark anywhere",
+      "kind": "unpublished",
+      "where": "read-out, what counts as a pass",
+      "filled_by": "the lab, from a first run",
+      "issue": "liuhlab/liulab-mbio#264"
+    },
+    {
+      "id": "H22",
+      "missing": "no colony count and no selection antibiotic for a round",
+      "kind": "undecided",
+      "where": "each round, plating",
+      "filled_by": "the vector's own marker, and the coverage the package computes",
+      "issue": "liuhlab/liulab-mbio#264"
+    },
+    {
+      "id": "H23",
+      "missing": "no published document describes the split digest; the one source is the paper itself",
+      "kind": "unpublished",
+      "where": "the split digest, units per reaction",
+      "filled_by": "nothing; it is the method's own",
+      "issue": "liuhlab/liulab-mbio#264"
+    },
+    {
+      "id": "H24",
+      "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",
+      "kind": "undecided",
+      "where": "final assembly, DNA in",
+      "filled_by": "a pilot, or carrying the round's own numbers across and saying so",
+      "issue": "liuhlab/liulab-mbio#264"
+    }
+  ],
+  "bill": {
+    "rows": [
+      {
+        "item": "Synthesised blocks",
+        "quantity": 72,
+        "unit": "blocks",
+        "key": "synthesised blocks",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P1",
+          "missing": "no row prices 'synthesised blocks' at 72 blocks",
+          "kind": "price",
+          "where": "Synthesised blocks, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "BbsI-HF",
+        "quantity": 7.5,
+        "unit": "µL",
+        "key": "R3539",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P2",
+          "missing": "no row prices 'R3539' at 7.5 µL",
+          "kind": "price",
+          "where": "BbsI-HF, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "BsaI-HFv2",
+        "quantity": 7.5,
+        "unit": "µL",
+        "key": "R3733",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P3",
+          "missing": "no row prices 'R3733' at 7.5 µL",
+          "kind": "price",
+          "where": "BsaI-HFv2, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "SrfI",
+        "quantity": 7.5,
+        "unit": "µL",
+        "key": "R0629",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P4",
+          "missing": "no row prices 'R0629' at 7.5 µL",
+          "kind": "price",
+          "where": "SrfI, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "PmeI",
+        "quantity": 7.5,
+        "unit": "µL",
+        "key": "R0560",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P5",
+          "missing": "no row prices 'R0560' at 7.5 µL",
+          "kind": "price",
+          "where": "PmeI, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "Endura ElectroCompetent Cells",
+        "quantity": 3,
+        "unit": "aliquots",
+        "key": "60242-2",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P6",
+          "missing": "no row prices '60242-2' at 3 aliquots",
+          "kind": "price",
+          "where": "Endura ElectroCompetent Cells, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "Electroporation cuvettes",
+        "quantity": 3,
+        "unit": "cuvettes",
+        "key": "cuvettes",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P7",
+          "missing": "no row prices 'cuvettes' at 3 cuvettes",
+          "kind": "price",
+          "where": "Electroporation cuvettes, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      },
+      {
+        "item": "Plasmid preps",
+        "quantity": 3,
+        "unit": "preps",
+        "key": "plasmid prep",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P8",
+          "missing": "no row prices 'plasmid prep' at 3 preps",
+          "kind": "price",
+          "where": "Plasmid preps, money",
+          "filled_by": "a price record holding a row for this key",
+          "issue": ""
+        }
+      }
+    ],
+    "title": "What this run consumes",
+    "currency": "",
+    "total": "",
+    "record": ""
+  }
 }

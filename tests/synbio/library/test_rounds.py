@@ -6,6 +6,7 @@ back off the DNA rather than copied from whatever wrote it. Position one's entry
 pinned, which is what keeps the vector's own stuffer and the parts speaking the same standard.
 """
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -16,8 +17,10 @@ from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
+from liulab_synbio.library.gate import check_product
 from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import barcode_rules, design_parts
+from liulab_synbio.library.project import Barcode, Project
 from liulab_synbio.library.rounds import (
     PRODUCT_FILE,
     ROUND_FILE,
@@ -108,6 +111,22 @@ def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
     """A circular vector already carrying the method's internal stuffer."""
     return SequenceRecord(
         pad(flank) + made.internal_stuffer + pad(flank), topology="circular", name="carrier"
+    )
+
+
+def project(made: Scheme) -> Project:
+    """A project built under `made`, for the gate to read this build's own choices off."""
+    return Project(
+        "test",
+        positions=POSITIONS,
+        parts=Path("parts.fasta"),
+        vector=Path("vector.gb"),
+        host=HOST,
+        oligo_length=350,
+        batch_size=96,
+        coverage=300,
+        barcode=Barcode(length=BARCODE, min_distance=3),
+        scheme=made,
     )
 
 
@@ -211,11 +230,9 @@ def test_the_retained_region_is_frame_correct_and_free_of_in_phase_stops(rounds,
     assert len(bases) == made.retained_length(BARCODE, len(POSITIONS))
     assert len(bases) % 3 == 0
     assert "*" not in translate(bases)
-    assert final["reading frame"].status == "pass"
-    assert final.status == "pass"
 
 
-def test_a_stop_in_the_retained_region_is_reported_rather_than_hidden():
+def test_a_stop_in_the_retained_region_is_the_gate_s_to_report_not_a_round_s():
     # A terminal prefix spelling TGA where the product reads through it, which nothing excises.
     stopping = scheme(internal_stuffer_prefix="TGAT" + ENTRY[0])
     parts = built(stopping)[1]
@@ -224,17 +241,20 @@ def test_a_stop_in_the_retained_region_is_reported_rather_than_hidden():
 
     final = made[-1]
     assert translate(final.product.extract(final.retained)).startswith("*")
-    assert final["reading frame"].status == "fail"
-    assert final["reading frame"].value >= 1
-    assert final.status == "fail"
+    judged = check_product(
+        final.product,
+        project=project(stopping),
+        barcodes={one.position: [one.barcode] for one in representative(parts, POSITIONS)},
+    )
+    stops = next(one for one in judged if one.name == "terminal stop")
+    assert stops.status == "fail"
+    assert stops.check.value >= 1
 
 
 def test_every_product_keeps_the_internal_sites_and_loses_the_external_ones(rounds, made):
     for one in rounds:
         assert find_sites(one.product, made.internal)
         assert find_sites(one.product, made.external) == ()
-        assert one["opens"].status == "pass"
-        assert one["external sites"].status == "pass"
 
 
 def test_the_last_product_opens_on_position_one_s_overhang_again(rounds, made, standard):
@@ -297,7 +317,6 @@ def test_a_stuffer_across_the_origin_is_opened_where_it_lies(vector, parts, made
     assert same_circle(made_rounds[-1].product, rounds[-1].product)
     final = made_rounds[-1]
     assert final.product.extract(final.block) == rounds[-1].product.extract(rounds[-1].block)
-    assert final.status == "pass"
 
 
 def test_parts_out_of_the_build_s_order_are_refused(vector, parts, made):

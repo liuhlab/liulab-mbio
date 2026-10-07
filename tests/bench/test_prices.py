@@ -96,3 +96,22 @@ def test_a_loaded_record_prices_the_bill_and_cites_the_row(record: prices.PriceR
     assert unpriced.hole is not None
     assert bill.total == "12505.00"
     assert bill.currency == "USD"
+
+
+def test_a_tier_with_no_top_leaves_its_high_end_empty(tmp_path: Path) -> None:
+    path = tmp_path / "open.csv"
+    path.write_text(RECORD.replace("count 101-200", "count 101-"), encoding="utf-8")
+
+    record = prices.read_prices(path)
+
+    assert record.charge("POOL", {"count": 5000, "length_nt": 200}) == Decimal("12505.00")
+    count, _length = record.headroom("POOL", {"count": 5000, "length_nt": 200})
+    assert str(count) == "5000 count, no band above it"
+
+
+def test_a_band_that_names_no_span_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "bad.csv"
+    path.write_text(RECORD.replace("count 1-100", "count 100"), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="is not 'quantity low-high'"):
+        prices.read_prices(path)

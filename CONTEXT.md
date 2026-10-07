@@ -244,7 +244,10 @@ _Avoid_: test digest, check digest, analytical digest
 Taking a recognition site out of a coding sequence by changing one codon for another spelling
 the same amino acid, so the reading frame and the protein survive. The replacement is the one
 the host uses most often among those that create no new site. A site outside a coding sequence
-cannot be domesticated, and is reported for someone to decide about.
+cannot be domesticated, and is reported for someone to decide about. What counts as a coding
+sequence is a feature the record types `CDS`, or one whose own bases spell a whole protein —
+`ATG`, whole codons, one closing stop — because most files type an open reading frame loosely.
+`docs/adr/0013-coding-by-bases.md` holds that rule.
 _Avoid_: silent mutation, site removal
 
 ### Codon usage
@@ -464,6 +467,20 @@ _Avoid_: fusion junction, translational junction
 An enzyme with no recognition site in any of the parts, so an assembly can use it without
 changing a base. A design prefers one; only when none is free does it propose domestication.
 _Avoid_: clean enzyme, available enzyme
+
+### Site out of reach
+
+A site carried more than once in a record, with so much identical sequence on both sides that no
+oligo placed there is unique to one copy. It is counted before anything else a domestication
+route decides, because it is not a bench job at all: the enzyme changes, or the plasmid is
+bought whole.
+_Avoid_: repeat site, untouchable site
+
+### Cargo enzyme
+
+The enzyme that admits cargo to a working vector. Every other enzyme a method names is fixed by
+DNA already on the shelf; this one is searched for per vector, the vector being the user's own.
+_Avoid_: insertion enzyme, final enzyme
 
 ### Domestication candidate
 
@@ -802,8 +819,10 @@ _Avoid_: price list, tariff, cost table
 ### Band
 
 A quantity a price row is bounded by, inclusive at both ends, such as 101 to 200 oligos. A row
-may carry more than one, since a vendor may price a pool by count and by length together. A band
-bounds a quantity and is not a span in a sequence, so the coordinate rule does not reach it.
+may carry more than one, since a vendor may price a pool by count and by length together, and
+writes them in one cell: `count 101-200; length_nt 1-200`. A tier with no top leaves its high
+end empty, so nobody writes a sentinel. A band bounds a quantity and is not a span in a
+sequence, so the coordinate rule does not reach it.
 _Avoid_: tier, bracket, range
 
 ### Basis
