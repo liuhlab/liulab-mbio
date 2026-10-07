@@ -605,6 +605,83 @@ def _by_rule(enzyme: Enzyme, chosen: Sequence[str]) -> FidelityReport:
     return FidelityReport(enzyme.name, _RULE_SOURCE, measured=False, value=value)
 
 
+def best_overhang(
+    junction: Junction,
+    candidates: Iterable[tuple[int, str]],
+    enzyme: EnzymeLike,
+    *,
+    taken: Sequence[str] = (),
+    reserved: Iterable[str] = (),
+    avoid: Iterable[EnzymeLike] = (),
+    min_distance: int = MIN_DISTANCE,
+    allow_uniform: bool = False,
+    profile: LigaseProfile | None = None,
+    prefer_profile: bool = False,
+) -> tuple[Choice | None, tuple[Rejection, ...]]:
+    """Take the candidate the whole set scores best with, and say what every rule refused.
+
+    A candidate is ranked by `fidelity` over `taken` and itself together, not by its own
+    on-target count: what a junction costs is what it does to the junctions beside it, and a
+    candidate that scores well alone can be the one that mis-ligates. A tie goes to the
+    candidate nearest the position asked for, then to the bases, so the answer does not depend
+    on the order the candidates arrive in.
+
+    Parameters
+    ----------
+    junction
+        What the choice is for, which the answer carries.
+    candidates
+        How far each candidate moves the junction, and the overhang it would leave.
+    enzyme
+        The enzyme cutting it, which sets the overhang length.
+    taken
+        The overhangs the set already holds.
+    reserved, avoid, min_distance, allow_uniform
+        What `refusal` holds each candidate to.
+    profile, prefer_profile
+        A ligase's own matrix, and whether to score with it where shipped data covers the
+        enzyme.
+
+    Returns
+    -------
+    The choice, or ``None`` where every candidate was refused, and the refusals either way.
+
+    Examples
+    --------
+    >>> choice, refused = best_overhang(Junction("one"), [(0, "AGGT"), (0, "ACGT")], "BsaI")
+    >>> choice.overhang, refused[0].rule
+    ('AGGT', 'palindrome')
+    """
+    one = _type_iis(_one(enzyme))
+    others = _resolve(avoid)
+    held = tuple(taken)
+    rejected: list[Rejection] = []
+    best: tuple[float, int, str] | None = None
+    offset = 0
+    for moved, candidate in candidates:
+        refused = refusal(
+            candidate,
+            one,
+            taken=held,
+            reserved=reserved,
+            avoid=others,
+            min_distance=min_distance,
+            allow_uniform=allow_uniform,
+        )
+        if refused is not None:
+            rejected.append(refused)
+            continue
+        scored = fidelity(
+            [*held, candidate.upper()], one, profile=profile, prefer_profile=prefer_profile
+        )
+        key = (-scored.value, abs(moved), candidate.upper())
+        if best is None or key < best:
+            best, offset = key, moved
+    if best is None:
+        return None, tuple(rejected)
+    return Choice(junction, best[2], offset, tuple(rejected)), tuple(rejected)
+
+
 def scoring(
     enzyme: EnzymeLike,
     *,
