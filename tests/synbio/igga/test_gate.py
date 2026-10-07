@@ -7,8 +7,10 @@ the BsmBI sites that reached designed coding regions before #220, a fragment out
 barcode spelling a stop where the construct reads it, two barcodes inside the distance rule, and
 a block one base short of the length convention it was built to.
 
-The DMX vector is judged on its own, because no library build hands one to the gate. It is built
-here from the method's own stuffers, which is where its cassette comes from.
+The rounds run in the DMX vector, so the gate judges the destination as one where a primer that
+reads a well binds it. The AP-1 destination is a minimal stand-in no such primer reads, so the
+DMX vector is also built here from the method's own stuffers, which is where its cassette comes
+from.
 """
 
 import csv
@@ -18,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.io import read_record
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite
 from liulab_synbio.igga.gate import (
     WELL_PRIMERS,
@@ -155,6 +157,7 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
         "ligation fidelity",
         "cargo sites",
         "cargo frame",
+        "well primers",
         "barcode spacing",
         "barcode reading",
         "barcode block",
@@ -302,3 +305,33 @@ def test_a_vector_a_primer_no_longer_reads_says_so_rather_than_passing(project):
     )
     assert judged.status == "fail"
     assert "binds it in 0 place(s)" in judged.check.detail
+
+
+def test_a_cargo_carrying_an_annealing_region_is_caught(judge, blocks):
+    """A second priming site in a well leaves that well's read uncallable."""
+    one = str(blocks["N"][0].sequence)
+    region = WELL_PRIMERS[0]
+    broken = one[:INSIDE_CODING] + region + one[INSIDE_CODING + len(region) :]
+    verdict = judge(blocks=_swap(blocks, "N", 0, broken))
+    assert verdict.status == "fail"
+    failed = verdict["well primers"]
+    assert failed.status == "fail"
+    assert "a second priming site" in failed.check.detail
+    (finding,) = failed.findings
+    assert isinstance(finding, Segment)
+
+
+def test_a_destination_no_well_primer_reads_is_not_judged_as_one(good):
+    """The AP-1 destination is a stand-in with no DMX backbone, so no blunt site reaches a primer."""
+    with pytest.raises(KeyError):
+        good["blunt sites"]
+
+
+def test_a_dmx_destination_is_judged_where_a_build_accepts_one(judge):
+    assert judge(destination=_dmx_vector())["blunt sites"].status == "pass"
+
+
+def test_a_dmx_destination_a_blunt_site_breaks_fails_the_build(judge):
+    verdict = judge(destination=_dmx_vector(broken="GTTTAAAC"))
+    assert verdict.status == "fail"
+    assert verdict["blunt sites"].status == "fail"

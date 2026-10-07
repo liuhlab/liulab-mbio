@@ -143,15 +143,24 @@ class Verdict:
 
 
 def check_cargo(
-    cargo: SequenceRecord, *, project: Project, where: str = "cargo", ends_chain: bool = False
+    cargo: SequenceRecord,
+    *,
+    project: Project,
+    where: str = "cargo",
+    ends_chain: bool = False,
+    annealing: Sequence[str] = WELL_PRIMERS,
 ) -> tuple[Judgement, ...]:
-    """Judge one cargo: the sites it must not carry, and the frame it has to keep.
+    """Judge one cargo: the sites it must not carry, the frame it keeps, and what it must not read.
 
     A cargo is what the external enzyme releases from a synthesised block, counted from the
     first base of the overhang a part enters on. Every enzyme the project reserves is one no
     block spells anywhere, its stuffers included, because the step that reserved it cuts the
     cargo in a tube of its own. A cargo another part follows is whole codons; the one that ends
     the chain is one base past them, which is the method's capping block.
+
+    A cargo also gives the primers that read a well nowhere to bind. One that carries an
+    annealing region hands its well a second priming site, and that well's read is no longer one
+    anybody can call: ``docs/research/route-b-index-primers.md`` §2.7.
 
     Parameters
     ----------
@@ -163,6 +172,8 @@ def check_cargo(
         What to call this cargo in a message.
     ends_chain
         Whether no further part follows this one.
+    annealing
+        What each primer that reads a well anneals to, 5' to 3'.
     """
     held = project.reserved_enzymes
     found = find_sites(cargo, held)
@@ -192,7 +203,25 @@ def check_cargo(
         ),
         where,
     )
-    return (sites, frame)
+    bound = tuple(
+        Segment(site.start, site.end)
+        for region in annealing
+        for site in find_binding_sites(region, cargo)
+    )
+    primed = Judgement(
+        Check(
+            "well primers",
+            "pass" if not bound else "fail",
+            len(bound),
+            f"no primer that reads a well binds {where}"
+            if not bound
+            else f"a primer that reads a well binds {where} in {len(bound)} place(s), which "
+            "leaves that well a second priming site and no read anyone can call",
+        ),
+        where,
+        bound,
+    )
+    return (sites, frame, primed)
 
 
 def check_barcode_set(
@@ -467,18 +496,23 @@ def check_library(
     products: Sequence[SequenceRecord],
     barcodes: Mapping[str, Sequence[str]],
 ) -> Verdict:
-    """Judge a whole build: every tube of it, every cargo, every barcode set and the product.
+    """Judge a whole build: its vector, every tube, every cargo, every barcode set and the product.
 
     Nothing here is read off a plan. The molecules are finished records, the barcodes are the
     table that decodes the sequencing, and the reactions are composed from the chain's own order,
     so a design an agent wrote is judged exactly as one `plan_igga` wrote is.
+
+    The rounds run in the DMX vector, so the destination is where a build accepts one and
+    `check_dmx_vector` judges it here. A destination no primer that reads a well binds carries no
+    DMX backbone -- a minimal stand-in -- and has no blunt site any primer could reach, so
+    nothing judges it.
 
     Parameters
     ----------
     project
         What the build chose.
     destination
-        The vector the first round opens.
+        The vector the first round opens, judged as a rebuilt DMX vector where one is given.
     blocks
         The synthesised blocks of each position, keyed by position name.
     products
@@ -492,6 +526,8 @@ def check_library(
         If there is not one product, one part list and one barcode list a position.
     """
     made: list[Judgement] = []
+    if _read_by_a_well_primer(destination, WELL_PRIMERS):
+        made.extend(check_dmx_vector(destination, project=project))
     for reaction in library_reactions(
         project, destination=destination, blocks=blocks, products=products
     ):
@@ -536,6 +572,16 @@ def _opening(product: SequenceRecord, project: Project, where: str) -> Judgement
         where,
         () if opens else tuple(found),
     )
+
+
+def _read_by_a_well_primer(record: SequenceRecord, annealing: Sequence[str]) -> bool:
+    """Whether a primer that reads a well binds this record at all.
+
+    Both bind a rebuilt DMX vector, and neither binds a stand-in carrying a cassette and nothing
+    else. Where one binds and the other does not, the rebuild broke a primer site and
+    `check_dmx_vector` says so rather than passing.
+    """
+    return any(find_binding_sites(region, record) for region in annealing)
 
 
 def _worst(name: str, group: Sequence[Check]) -> Check:
