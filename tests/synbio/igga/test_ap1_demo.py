@@ -17,7 +17,8 @@ from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
-from liulab_synbio.igga.vector import working_vector
+from liulab_synbio.igga.reads import ALLOWANCE, FLANK
+from liulab_synbio.igga.vector import released_cargo, working_vector
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
@@ -119,6 +120,20 @@ def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
     assert row.charge == ""
     assert row.hole is not None
     assert row.hole.kind == "price"
+
+
+def test_the_cargo_the_reads_run_across_is_the_cargo_the_release_digest_frees(plan):
+    """Two derivations of one span, and they have to agree.
+
+    The reads place the cargo by arithmetic over the rounds, because a destination is not
+    obliged to free its own; the release step digests for it, because this destination does. A
+    drift would hand the bench a pair that does not span what the digest put in the tube.
+    """
+    freed = released_cargo(plan.rounds[-1].product, plan.scheme)
+
+    assert freed is not None
+    over = plan.reads.linkage.amplicon_length - (freed.end - freed.start)
+    assert 2 * (FLANK - ALLOWANCE) <= over <= 2 * (FLANK + ALLOWANCE)
 
 
 def rerouted(plan, **changes):

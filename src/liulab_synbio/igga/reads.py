@@ -132,6 +132,11 @@ def _cargo(rounds: Sequence[Round]) -> Segment:
     length. Each end is checked against the bases there, because a later round that ran across
     the origin would have moved them.
 
+    `vector.released_cargo` answers the same question off a digest, and the two agree wherever
+    both answer. It is not used here because a destination is not obliged to free its own cargo:
+    a round's destination bars only the enzymes of its own tube, so a library built in one
+    carrying no outboard releasing site is read by these pairs and freed by nothing.
+
     Raises
     ------
     ValueError
