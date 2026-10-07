@@ -3,9 +3,12 @@
 Against Pryor 2020's own worked examples: the numbers the paper reports are the specification.
 """
 
+from pathlib import Path
+
 import pytest
 
 from liulab_mbio.enzymes import EndType, Enzyme
+from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.overhangs import (
     MIN_DISTANCE,
     MODEST_MISMATCH,
@@ -14,6 +17,7 @@ from liulab_mbio.overhangs import (
     compatible,
     fidelity,
     ligation_matrix,
+    on_target,
     refusal,
 )
 
@@ -213,6 +217,57 @@ def test_the_distance_rule_is_read_off_the_shipped_data_and_not_off_a_standard(n
     assert len(far) == (2 if name == "BsaI" else 0)
     assert len(near) > 100
     assert max(far, default=0.0) < max(near) / 5
+
+
+# Bilotti 2022's `File S7. T7 PEG`, correct Watson-Crick pairs per 100,000 events: the best of
+# the overhangs the AP-1 example chose, and the worst T7 punishes that the rules still allow.
+# Nothing of that workbook is here -- two numbers from a CC BY paper, cited, and the profile
+# holding them is written by this file.
+AGAT_ON_T7_PEG = 175.8
+TAGA_ON_T7_PEG = 60.8
+
+
+def t7_peg(**rates: float) -> LigaseProfile:
+    """A sheet of a workbook the user holds, joining each overhang at the rate asked for.
+
+    A rate is per 100,000 events, which the filler row makes exact.
+    """
+    counts = {one: {_reverse(one): round(rate * 10)} for one, rate in rates.items()}
+    counts["AAAA"] = {"TTTT": 1_000_000 - sum(row[one] for row in counts.values() for one in row)}
+    return LigaseProfile(
+        Path("File S1_NAR.xlsx"),
+        conditions="File S7. T7 PEG",
+        overhang_length=4,
+        observations=1_000_000,
+        counts=counts,
+    )
+
+
+def test_an_overhang_above_the_floor_is_silent_and_one_below_it_is_named() -> None:
+    profile = t7_peg(AGAT=AGAT_ON_T7_PEG, TAGA=TAGA_ON_T7_PEG)
+
+    report = on_target(("AGAT", "TAGA"), profile)
+
+    assert [round(one.rate, 1) for one in report.rates] == [AGAT_ON_T7_PEG, TAGA_ON_T7_PEG]
+    assert report.weak == ("TAGA",)
+    assert report.floor == STRONG_LIGATION
+
+
+def test_the_report_says_which_profile_and_which_sheet_the_rates_came_from() -> None:
+    report = on_target(("AGAT",), t7_peg(AGAT=AGAT_ON_T7_PEG))
+
+    assert report.label == "measured on File S7. T7 PEG, read from File S1_NAR.xlsx"
+
+
+def test_a_caller_may_hold_a_set_to_a_floor_of_its_own() -> None:
+    profile = t7_peg(AGAT=AGAT_ON_T7_PEG)
+
+    assert on_target(("AGAT",), profile, floor=200).weak == ("AGAT",)
+
+
+def test_an_overhang_the_profile_does_not_measure_is_refused_by_length() -> None:
+    with pytest.raises(ValueError, match="4-base overhangs"):
+        on_target(("AGATC",), t7_peg(AGAT=AGAT_ON_T7_PEG))
 
 
 def _apart(one: str, other: str) -> int:

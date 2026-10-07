@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from liulab_mbio.barcodes import check_barcodes, separation
 from liulab_mbio.checks import STATUSES, Check, Status, worst_of
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.overhangs import fidelity
+from liulab_mbio.ligase import LigaseProfile
+from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
 from liulab_mbio.reaction import Pool, Reaction, Role
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
@@ -431,7 +432,9 @@ def check_dmx_vector(
     )
 
 
-def check_reaction(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
+def check_reaction(
+    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+) -> tuple[Judgement, ...]:
     """Judge one tube: whether every molecule in it is cut where this method cuts it.
 
     In a digest, each molecule carries the acting enzymes' sites exactly where it is meant to be
@@ -441,9 +444,12 @@ def check_reaction(reaction: Reaction, *, project: Project) -> tuple[Judgement, 
     the cuts that are counted and not the pieces. In a ligation, the ends meeting in the tube are
     mutually distinguishable, which for this method is the entry overhang and the cloning scar and
     nothing else.
+
+    A `profile` the user holds adds one check and moves none: how often the ligase it measured
+    joins each of those overhangs. With no profile a ligation carries its two checks alone.
     """
     if reaction.kind == "ligation":
-        return _ligation(reaction, project=project)
+        return _ligation(reaction, project=project, profile=profile)
     return tuple(_cutting(reaction, pool) for pool in reaction.pools)
 
 
@@ -529,6 +535,7 @@ def check_library(
     barcodes: Mapping[str, Sequence[str]],
     working: SequenceRecord | None = None,
     cargo: Enzyme | None = None,
+    profile: LigaseProfile | None = None,
 ) -> Verdict:
     """Judge a whole build: its vector, every tube, every cargo, every barcode set and the product.
 
@@ -557,6 +564,10 @@ def check_library(
         The working vector the library is moved into and the enzyme that admits it, where the
         build names one. Both or neither: the final assembly is judged only where there is a
         vector to judge it in.
+    profile
+        A ligase's own matrix the user holds, read by `liulab_mbio.ligase.read_profile`. Every
+        ligation then carries how often that ligase joins its overhangs, beside the fidelity
+        score, which this does not move. Nothing is judged on it without one.
 
     Raises
     ------
@@ -580,7 +591,7 @@ def check_library(
             project, library=products[-1], working=working, cargo=cargo
         )
     for reaction in reactions:
-        made.extend(check_reaction(reaction, project=project))
+        made.extend(check_reaction(reaction, project=project, profile=profile))
     last = project.positions[-1]
     for position in project.positions:
         if position not in barcodes:
@@ -701,7 +712,9 @@ def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
     )
 
 
-def _ligation(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
+def _ligation(
+    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+) -> tuple[Judgement, ...]:
     """Whether the ends meeting in one tube can be told apart, and how well they ligate."""
     ends = sorted(_ends(reaction, project))
     distinguishable = len(ends) == LIGATION_OVERHANGS and not any(
@@ -724,18 +737,46 @@ def _ligation(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
     if not ends:
         return (told,)
     report = fidelity(ends, project.scheme.internal)
-    return (
-        told,
-        Judgement(
-            Check(
-                "ligation fidelity",
-                None,
-                report.value,
-                f"{reaction.name} scores {report.value:.3f} on {report.source}"
-                f"{ANOTHER_LIGASE if report.measured else ''}",
-            ),
-            reaction.name,
+    scored = Judgement(
+        Check(
+            "ligation fidelity",
+            None,
+            report.value,
+            f"{reaction.name} scores {report.value:.3f} on {report.source}"
+            f"{ANOTHER_LIGASE if report.measured else ''}",
         ),
+        reaction.name,
+    )
+    if profile is None:
+        return (told, scored)
+    return (told, scored, _on_target(reaction, ends, profile))
+
+
+def _on_target(reaction: Reaction, ends: Sequence[str], profile: LigaseProfile) -> Judgement:
+    """How often the ligase the user measured joins each of this tube's overhangs.
+
+    A second measurement beside the fidelity score, which it leaves alone. A round's own ligase
+    can make a correct join far more rarely than the matrix that scored the set, which costs
+    colonies rather than product, so this warns and ranks nothing.
+    """
+    report = on_target(ends, profile)
+    joined = ", ".join(f"{one.overhang} at {one.rate:.1f}" for one in report.rates)
+    short = ", ".join(report.weak)
+    return Judgement(
+        Check(
+            "ligation on-target rate",
+            "warn" if report.weak else "pass",
+            min(one.rate for one in report.rates),
+            f"the ends meeting in {reaction.name} join at {joined} correct pairs per 100,000 "
+            f"events, {report.label}"
+            + (
+                f"; {short} below the {report.floor:g} a strong pair is called at, which costs "
+                "colonies and not product"
+                if short
+                else ""
+            ),
+        ),
+        reaction.name,
     )
 
 

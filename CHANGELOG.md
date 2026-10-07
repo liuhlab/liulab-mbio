@@ -9,6 +9,14 @@ sets one.
 
 ### Added
 
+- A ligase joins some overhangs far more rarely than another does, and that costs colonies rather
+  than product. `liulab_mbio.overhangs.on_target` reports how often the ligase a matrix measured
+  joined each overhang of a set to its own partner, and names the ones below the rate NEB calls a
+  strong pair. A library plan reads one where you point it at a matrix you hold, with
+  `--ligase-matrix` and `--ligase-sheet` or the `LIULAB_MBIO_LIGASE_MATRIX` variable, and every
+  round then carries that number beside its fidelity score. Nothing is chosen or ranked on it and
+  the fidelity score does not move, so a build designs the same library with the file and without
+  it. The matrix stays on your own disk; none of it ships here.
 - The library protocol's bill carries the oligo pool, which is the largest thing a build buys:
   how many oligos the split spends, the vendor band each quantity falls in, and how much room is
   left in that band. With no price record loaded the count and the band are still what the design

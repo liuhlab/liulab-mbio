@@ -33,6 +33,7 @@ from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
 from liulab_mbio.codons import codon_usage
+from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
 from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
@@ -360,6 +361,8 @@ def plan_igga(
     min_distance: int = MIN_DISTANCE,
     allow_uniform: bool = False,
     prices: PriceRecord | str | os.PathLike[str] | None = None,
+    profile: LigaseProfile | str | os.PathLike[str] | None = None,
+    profile_sheet: str | int | None = None,
 ) -> LibraryPlan:
     """Plan the whole library `project` asks for, by the method `project` is built under.
 
@@ -400,6 +403,11 @@ def plan_igga(
         A price record the user holds, or a path to one;
         `liulab_mbio.bench.prices.read_prices` reads one. The protocol's bill computes its
         quantities either way, and prices nothing without this.
+    profile, profile_sheet
+        A ligase's own matrix the user holds, or a path to one, and which sheet of it to read;
+        `liulab_mbio.ligase.read_profile` reads one. Every round then carries how often that
+        ligase joins its overhangs. Nothing is designed or ranked on it, so a build plans the
+        same design with it and without it.
 
     Returns
     -------
@@ -415,7 +423,8 @@ def plan_igga(
         share a name, if a part is not a protein or not a coding sequence, if no overhang
         standard fits the part lists, if a block spells a site the method does not expect or
         gives up no cargo, if the vector cannot be made a destination, if a round cannot ligate,
-        or if `prices` names a file that is not a price record.
+        if `prices` names a file that is not a price record, or if `profile` names one that is
+        not a ligation count matrix.
     KeyError
         If the project names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
@@ -427,6 +436,8 @@ def plan_igga(
     >>> plan.write("library/")  # doctest: +SKIP
     """
     chosen = project if isinstance(project, Project) else read_project(project)
+    # Read before anything is designed, so a file that is not a matrix is refused at once.
+    ligase = _profile(profile, profile_sheet)
     design = chosen.scheme
     positions = chosen.positions
     one = as_record(chosen.vector)
@@ -497,6 +508,7 @@ def plan_igga(
         barcodes=_barcodes(built, positions),
         working=None if working is None else working.record,
         cargo=None if working is None else working.enzyme,
+        profile=ligase,
     )
     return LibraryPlan(
         chosen,
@@ -517,6 +529,15 @@ def plan_igga(
         _pool(chosen, built),
         working,
     )
+
+
+def _profile(
+    value: LigaseProfile | str | os.PathLike[str] | None, sheet: str | int | None
+) -> LigaseProfile | None:
+    """Read a ligase profile, or take one already read."""
+    if value is None or isinstance(value, LigaseProfile):
+        return value
+    return read_profile(value, sheet=sheet)
 
 
 def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:

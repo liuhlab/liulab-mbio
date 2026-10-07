@@ -8,13 +8,10 @@ import typer
 from liulab_mbio.cloning.cli import plan_command, read_orientations
 from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, Site, plan_assembly
 from liulab_mbio.codons import DEFAULT_TABLE
+from liulab_mbio.ligase import LIGASE_MATRIX_ENV
 from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
-
-#: Where a ligase fidelity matrix is read from when `--ligase-matrix` names none. The package
-#: ships no such matrix; this points at a copy the user holds.
-LIGASE_MATRIX_ENV = "LIULAB_MBIO_LIGASE_MATRIX"
 
 
 @app.command()
