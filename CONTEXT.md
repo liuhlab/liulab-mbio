@@ -244,7 +244,10 @@ _Avoid_: test digest, check digest, analytical digest
 Taking a recognition site out of a coding sequence by changing one codon for another spelling
 the same amino acid, so the reading frame and the protein survive. The replacement is the one
 the host uses most often among those that create no new site. A site outside a coding sequence
-cannot be domesticated, and is reported for someone to decide about.
+cannot be domesticated, and is reported for someone to decide about. What counts as a coding
+sequence is a feature the record types `CDS`, or one whose own bases spell a whole protein —
+`ATG`, whole codons, one closing stop — because most files type an open reading frame loosely.
+`docs/adr/0013-coding-by-bases.md` holds that rule.
 _Avoid_: silent mutation, site removal
 
 ### Codon usage

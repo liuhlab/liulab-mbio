@@ -21,7 +21,7 @@ from dataclasses import KW_ONLY, dataclass
 from functools import cache
 from itertools import islice, product
 
-from liulab_mbio.codons import CodonUsage, codon_usage
+from liulab_mbio.codons import CodonUsage, amino_acid, codon_usage
 from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
 from liulab_mbio.enzymes import enzymes as shipped
@@ -609,6 +609,12 @@ def domesticate(
     `avoid`. A site lying in no coding sequence is reported and **not** edited: removing it
     would change what the record spells, which is the caller's decision to make.
 
+    A coding sequence is one the record types ``CDS``, **or** any feature whose own bases spell
+    a whole protein: `ATG`, whole codons of definite bases, and one stop as the last codon. So a
+    vector whose open reading frames arrive as `misc_feature` is still domesticated, while an
+    annotation too loose to read in one frame is left outside. `docs/adr/0013-coding-by-bases.md`
+    says why the bases decide and no frame is searched for.
+
     Parameters
     ----------
     record
@@ -655,11 +661,24 @@ def domesticate(
 def _coding_feature(record: SequenceRecord, site: CutSite) -> Feature | None:
     """Return the first coding sequence the site touches, or ``None`` when it touches none."""
     for feature in record.features:
-        if feature.type == "CDS" and any(
-            record.covers(feature, at) for at in range(site.start, site.end)
+        if any(record.covers(feature, at) for at in range(site.start, site.end)) and (
+            feature.type == "CDS" or _reads_as_coding(record, feature)
         ):
             return feature
     return None
+
+
+def _reads_as_coding(record: SequenceRecord, feature: Feature) -> bool:
+    """Whether a feature's own bases spell a whole protein, whatever the record types it.
+
+    `ATG`, then whole codons of definite bases, then one stop as the last codon and none before
+    it. The feature gives the frame and the strand, so nothing is searched for.
+    """
+    bases = record.extract(feature)
+    if len(bases) < 6 or len(bases) % 3 or set(bases) - set("ACGT") or bases[:3] != "ATG":
+        return False
+    codons = [bases[at : at + 3] for at in range(0, len(bases), 3)]
+    return amino_acid(codons[-1]) == "*" and all(amino_acid(one) != "*" for one in codons[:-1])
 
 
 def _coding_positions(feature: Feature) -> list[int]:

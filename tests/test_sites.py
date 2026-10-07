@@ -31,6 +31,9 @@ ACROSS = "CTC" + "A" * 14 + "GGT"
 # E. coli prefers, CTC -> CTG, spells an EcoRI site that was not there before.
 FORCED = "ATG" + "GGTCTC" + "AATTC" + "A" + "TAA"
 
+# Five codons spelling a whole protein, the BsaI site across the second and third.
+ORF = "ATG" + "GGTCTC" + "AAA" + "TAA"
+
 BSAI = get_enzyme("BsaI")
 # An invented enzyme whose site carries an IUPAC code and is not its own reverse complement.
 FOOI = Enzyme("FooI", "GGWCA", top_cut=1, bottom_cut=5)
@@ -393,10 +396,55 @@ def test_a_linear_coding_sequence_cut_apart_at_its_two_ends_reads_its_codons_in_
     assert not find_sites(edited, "BsaI")
 
 
+def test_a_feature_whose_bases_spell_a_protein_is_coding_whatever_its_type_says() -> None:
+    edited, report = domesticate(_misc(ORF), "BsaI")
+
+    (change,) = report.changes
+    assert change.feature.type == "misc_feature"
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("CTC", "CTG", "L")
+    assert not find_sites(edited, "BsaI")
+    assert _protein(edited.sequence) == _protein(ORF)
+
+
+def test_a_feature_whose_last_codon_is_not_a_stop_is_not_read_as_coding() -> None:
+    # The same bases and the same frame, the closing stop swapped for a lysine codon.
+    record = _misc(ORF[:-3] + "AAA")
+
+    edited, report = domesticate(record, "BsaI")
+
+    assert report.changes == ()
+    assert [site.start for site in report.outside_cds] == [3]
+    assert edited == record
+
+
+def test_plvx_reads_puror_as_coding_though_the_file_types_it_misc_feature(
+    plvx: SequenceRecord,
+) -> None:
+    """#285: every pLVX feature is a `misc_feature`, and BsmBI 5636 is still a free change."""
+    edited, report = domesticate(plvx, "BsmBI")
+
+    (change,) = report.changes
+    assert (change.site.start, change.feature.name) == (5636, "PuroR")
+    assert (change.old_codon, change.new_codon, change.amino_acid) == ("GTC", "GTG", "V")
+    assert [site.start for site in find_sites(edited, "BsmBI")] == [3876]
+    # The hPGK promoter codes for nothing, so its site is still reported and left alone.
+    assert [site.start for site in report.outside_cds] == [3876]
+    before = next(one for one in plvx.features if one.name == "PuroR")
+    after = next(one for one in edited.features if one.name == "PuroR")
+    assert _protein(edited.extract(after)) == _protein(plvx.extract(before))
+
+
 def _cds(sequence: str) -> SequenceRecord:
     segments = (Segment(0, len(sequence)),)
     return SequenceRecord(
         sequence, features=(Feature("test", "CDS", segments, strand=Strand.FORWARD),)
+    )
+
+
+def _misc(sequence: str) -> SequenceRecord:
+    segments = (Segment(0, len(sequence)),)
+    return SequenceRecord(
+        sequence, features=(Feature("orf", "misc_feature", segments, strand=Strand.FORWARD),)
     )
 
 
