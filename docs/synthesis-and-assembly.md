@@ -140,7 +140,7 @@ Runs in the DMX vector; the working vector takes only the finished cargo.
 - iGGA cargo: `[AGGA]─[fragment]─[internal stuffer]─[11 bp barcode]─[TTCC]`
 - Each fragment, counted from the first base of its `AGGA`, is a multiple of 3
 - Internal stuffer `[AGGA.BbsI]─[SrfI]─[BbsI.TTCC]`, 34 bp: `AGGAAAGTCTTCAGCCCGGGCAGAAGACAATTCC`
-- Barcode: 11 bp, minimum Sequence-Levenshtein distance 3 within a part list, no in-frame stop codon, no homopolymer run over 5
+- Barcode: 11 bp, minimum Sequence-Levenshtein distance 3 within a part list, no in-frame stop codon, no homopolymer run over 5, and no site of the five cargo enzymes on either strand, read with the scar either side of it
 - The stuffer is retained every round
 - A capping block is any `AGGA`/`TTCC` block that is 1 mod 3 counted from its `AGGA`, such as T2A. It ends the chain
 
@@ -238,31 +238,64 @@ index PCR; above it, DMX barcoding.
 | 3 | Pick into 384-well plates | tray | clonal cultures, position kept | colonies per design |
 | 4 | Grow | 384-well plates | cultures ready to lyse | — |
 
+**Step 3, colonies per design.** Four by default, which is Lund's anchor and the only measured
+one, and a project may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
+work shows why four is not always right: a gene in two pieces came out clean every time, one in
+five pieces 84.6% of the time, one in twelve 40%, and one in sixteen never. The protocol prints
+each design's own chance from that table, so a project that needs more picks knows it before the
+plates are poured.
+
 #### Route A — DMX barcoding
 
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
 | 5 | Compress four 384-well plates into one 1536-well plate | cultures | cell lysate per well | — |
-| 6 | Add one barcode from each of the four groups | DMX barcode kit | a combination per well | which combination marks which well |
+| 6 | Add one barcode from each of the four groups | DMX barcode kit | a combination per well | — |
 | 7 | Barcode in lysate | lysate, barcodes | barcoded construct per well | — |
 | 8 | Pool, then amplify the three primer pairs separately | barcoded pool | three amplicon pools | — |
 | 9 | Sequence | amplicons | reads | — |
-| 10 | Basecall and demultiplex | reads | a sequence per well | what counts as a pass |
-| 11 | Reformat | per-well calls | compacted plate | which wells carry forward |
+| 10 | Basecall and demultiplex | reads | a sequence per well | the depth floor |
+| 11 | Reformat | per-well calls | compacted plate | — |
 
 #### Route B — index PCR
 
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
-| 5 | Amplify each well with one barcoded primer pair | cultures | barcoded amplicon per well | which pair marks which well |
+| 5 | Amplify each well with one barcoded primer pair | cultures | barcoded amplicon per well | — |
 | 6 | Pool per plate and clean up | amplicons | one pool per plate | — |
 | 7 | Sequence | pool | reads | — |
-| 8 | Demultiplex | reads | a sequence per well | what counts as a pass |
-| 9 | Reformat | per-well calls | compacted plate | which wells carry forward |
+| 8 | Demultiplex | reads | a sequence per well | the depth floor |
+| 9 | Reformat | per-well calls | compacted plate | — |
+
+#### Which barcodes mark a well
+
+The well's address is split across the barcode sets, and one set carries the plate. Route B uses
+96 forward barcodes for the well and 96 reverse for the plate, which reaches 9,216 wells on the
+192 primers already held. Route A uses three DMX groups for the well and the fourth for the
+plate, so one barcode goes across a whole plate from a reservoir.
+
+Two plates on one flow cell are told apart this way. The combination is worked out from the
+well, not looked up in a file, so a demultiplexer can check an address instead of trusting one.
+
+#### What counts as a pass
+
+Two questions, in order.
+
+Is the read deep enough to call? If not, the well has **no verdict**. It is read again or picked
+again, and it is not a failure. The floor comes with the route, because each one was measured on
+its own: above 150 reads for Route A, twenty wanted and ten tolerable for Route B. A project may
+raise either.
+
+Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
+barcode? Anything less fails, a silent change included, because a barcode that no longer names
+its member cannot be put right later. A well with more than one consensus is mixed, and mixed
+fails.
 
 #### After either route
 
-Reformatting compacts out the wells that failed. The polyclonal route skips this section.
+Reformatting compacts out the wells that failed. A well with no verdict is not compacted out.
+A design with no passing well is picked again from the same archive spot before anyone
+re-synthesises it. The polyclonal route skips this section.
 
 ### iGGA pipeline
 

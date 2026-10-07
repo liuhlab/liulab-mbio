@@ -664,9 +664,9 @@ one of the eight motifs 0.90% of the time, which is one library member in 112 cu
 own round, and Freschlin lost whole replicates to exactly that.
 
 The metric, the absent GC band, the cap of 5 and the shuffled draw order are the verdicts of
-`docs/research/barcode-design.md`, and the method page now carries them. Enzyme-site freedom is
-the method page's one open barcode decision, which is why this section decides it for this
-project.
+`docs/research/barcode-design.md`, and the method page now carries them. Enzyme-site freedom was
+the method page's one open barcode decision; #260 closed it **on**, so every row above is now the
+method's and this project restates rather than chooses them.
 
 The source's 72 barcodes are not reused. The reason is the distance rule and the site screen
 above, and **not** a stop codon: an earlier revision of this section said six of the 72 carry one
@@ -687,14 +687,17 @@ them. #220 measured none independently on the same day, and #224 re-measured it.
 
 ### 9.6 What counts as a passing well — LevSeq's criterion, plus an exact match
 
-The read-out is LevSeq's, so the criterion is LevSeq's: twenty reads wanted and ten tolerable,
-wells below that marked low, a per-base binomial test at a 5% false discovery rate, and a well
-with more than one significant mutation called mixed.
+**#260 made both halves of this the method's rule, so this section now reports rather than
+decides.** The depth floor travels with the route: the read-out is Route B, so the floor is
+LevSeq's — twenty reads wanted and ten tolerable, a per-base binomial test at a 5% false
+discovery rate, and a well with more than one significant mutation called mixed.
 
-**On top of it, this project requires an exact match to the designed part** across the whole
+**On top of it, a well passes only on an exact match to the designed part** across the whole
 designed region — both entry overhangs, the fragment, the stuffer and the barcode. A silent
 mismatch inside a barcode mislabels a library member for the rest of the project, and the
-linkage read cannot recover what the barcode no longer names. Low and mixed wells fail.
+linkage read cannot recover what the barcode no longer names. Mixed wells fail. A well below the
+floor is **low**, which is no verdict rather than a failure: it is read again or picked again,
+and reformatting does not compact it out.
 
 Four colonies per part are picked (section 5); a part with no passing well is re-picked from the
 same archive spot before it is re-synthesised.

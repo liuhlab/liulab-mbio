@@ -248,6 +248,10 @@ form is section 6.9.
   dilution, titre or plating density. Its handling is ours as well: duplicate plates, drawn one
   way and never re-frozen. This is invention and should be marked as such or replaced. See
   section 6.6.
+- **A well's barcode combination is derived, not drawn.** Qian generates the combinations
+  randomly in a script and records them. Ours factorises the well's address across the four
+  groups, group 4 carrying the plate, so the combination is arithmetic and two plates stay apart
+  on one flow cell without a file to keep. See section 6.6.
 - **The library primers are replaced.** Qian amplifies a whole pool in one reaction with a
   primer pair carrying the BsmBI sites that give `AGGA`/`TTCC`. The three-primer scheme replaces
   that pair with orthogonal 20-mers, which carry no site. Nothing then puts a Type IIS site on
@@ -269,6 +273,10 @@ form is section 6.9.
 - **The primers are used against a different backbone.** The published set is specific to the
   paper's expression vector. Measured against ours they match at full length, so they are
   ordered unchanged. See section 5.
+- **An exact match is required on top of the criterion.** LevSeq calls mutations it does not know
+  in advance, so its per-base test is what it has. We know the design, so a well passes only on
+  an exact match across the whole designed region, and a silent mismatch inside a barcode
+  mislabels a member for the rest of the project. See section 6.6.
 
 ### From Twist
 
@@ -324,8 +332,9 @@ index-PCR primers need no redesign.
 
 ## 6. Open design decisions
 
-Each is undecided. None is settled here. Each lists what is actually on the table and the
-evidence for each option, so the decision can be made rather than rediscovered.
+Each lists what is on the table and the evidence for each option, so a decision is made rather
+than rediscovered. A section opening **Decided in #N** is closed and that ticket is where the
+argument was had; the rest are open.
 
 Each heading names the experiment the decision belongs to, because the two are judged
 differently and a rule written for one does not transfer. **DAD-GGA-DMX** builds cargo and
@@ -402,14 +411,21 @@ rather than overloading it, and no source names that as a failure.
 
 ### 6.5 The barcode set's enzyme-site freedom — iGGA
 
-The stated barcode rules are a distance floor, no in-frame stop and a homopolymer cap.
-Enzyme-site freedom is not among them, although the barcode sits inside cargo that must be
-clear of five enzymes.
+**Decided in #260: on. The barcode is cargo, so it obeys the cargo's enzyme rule.** One list, not
+two: the barcode is read against D6's five enzymes, in both orientations, with its flanking scar.
+A shorter list of its own would be a second rule to keep in step with the first.
 
-| Option | Evidence |
-| --- | --- |
-| Add enzyme-site freedom to the rules | Measured, 0.90% of 11-mers drawn to the stated rules carry one of the eight motifs — one library member in 112 cut apart in its own round. Freschlin lost whole replicates to exactly this. |
-| Leave it out and screen afterwards | Cheaper to state, but the screen has to exist and nothing describes it. |
+The measurement decides it. An 11-mer drawn to the distance rules alone carries one of the eight
+motifs 0.90% of the time, 1,798 of 200,000 draws — one library member in 112 cut apart in its own
+round — and Freschlin lost whole replicates to exactly that. The alternative was to screen
+afterwards, which is cheaper to state and needs a screen nobody has described.
+
+**The code already does this; the method page is what changes.** `BarcodeRules` carries
+`forbidden`, `scar` and `phase`, `find_sites` searches both strands, and
+`library.parts.barcode_rules` passes the scheme's enzymes and the method's scar, naming a
+junction hit as one. The page listed three rules and not this one. The known limit stays: a site
+needing bases from two different barcodes is not found, because those are neighbours only once
+the block is built.
 
 Related and separable, and no longer open: the distance metric, the GC band and the homopolymer
 cap. A Hamming floor does not imply a Sequence-Levenshtein floor, so the metric is a decision of
@@ -421,20 +437,50 @@ departure from the source that is left once they go.
 
 ### 6.6 The pass criterion for a well — DAD-GGA-DMX
 
-Two routes, both ending in "what counts as a pass", with no rule. The step that selects wells
-depends on it.
+**Decided in #260, and it is two rules rather than one.** A read is either good enough to call or
+it is not, and a call either matches the design or it does not. Neither route changes the second,
+so the judgement is shared and only the floor travels with the route.
 
-| Option | Evidence |
-| --- | --- |
-| Qian's criterion | A consensus called at read depth above 150 with a 51% base threshold, then wells with more than one consensus or any mismatch to the reference filtered out. |
-| LevSeq's criterion | Twenty reads wanted, ten tolerable, wells below marked low, a per-base binomial test at a 5% false discovery rate, and a well with more than one significant mutation called mixed. |
+**The floor travels with the route, because each number was measured on its own.** Qian's
+consensus depth above 150 was measured on a pooled amplicon carrying four UMIs, where 1,536 wells
+demultiplex in-read. LevSeq's twenty wanted and ten tolerable were measured on one amplicon per
+well, with the index on the primer. Picking one of the two for both routes would apply a figure
+to a library prep that never produced it. Each is a default a project may raise.
 
-Two decisions sit next to it and are equally open: how a combination of barcodes is assigned to
-a well — Qian generates the combinations randomly in a script and records them, ours says
-neither — and how many colonies are picked per design, where Lund's anchor is four colonies
-each giving 343 of 458 genes error-free.
+**Below the floor a well gets no verdict, not a fail.** That is already `CONTEXT.md`'s rule for a
+`Check` — one no sourced threshold judges carries no verdict and says so — and here it reaches
+the bench, because reformatting compacts out the wells that failed. Compacting out a well nobody
+read throws away a design that may be clean. LevSeq's "low" is this state, and a low well is
+re-read or re-picked rather than discarded.
 
-Underneath all three is the route to clonal wells itself, which section 4 marks as invention.
+**A pass is an exact match across the whole designed region** — both entry overhangs, the
+fragment, the stuffer and the barcode. A well with more than one consensus, or more than one
+significant mutation, is mixed and fails. A silent mismatch is not a pass: it leaves the protein
+right and the barcode wrong, and a barcode that no longer names its member cannot be recovered by
+the linkage read, which is the only thing that reads the finished pool. This is Qian's exactness
+over LevSeq's statistics, and section 4 records it as a departure from LevSeq.
+
+**A barcode combination reaches a well by arithmetic, not by a recorded draw.** The well's
+address factorises across the barcode axes, and one axis is the plate. Route B's is published:
+LevSeq uses 96 forward barcodes for the well and 96 reverse for the plate, 9,216 wells from 192
+primers. Route A's follows the same shape — three DMX groups address the well, 13,824
+combinations against the 1,536 needed, and group 4 is the plate, one barcode across a whole plate
+from a reservoir. That is what tells two plates apart on one flow cell, by construction rather
+than by a file, and it lets a demultiplexer check an address instead of trusting one. Qian
+generates the combinations randomly in a script and records them; section 4 carries the
+departure.
+
+**Colonies per design: four by default, and a project input.** Lund's four gave 343 of 458 genes
+error-free and it is the only measured anchor, but it is not fixed anywhere. The same table runs
+100% clean at 2 fragments, 84.6% at 5, 40% at 12 and 0% at 16, so four is right for a short gene
+and thin for a long one. The protocol states each design's predicted chance of a clean colony
+from that curve and that design's own fragment count, so a project raising the number reads the
+reason rather than guessing it. A design with no passing well is re-picked from the same archive
+spot before it is re-synthesised.
+
+Underneath all of it is the route to clonal wells itself, which section 4 marks as invention.
+That stands: this decision judges wells, it does not source the spot-and-regrow step that fills
+them.
 
 ### 6.7 How donor pools are built — iGGA
 
@@ -573,11 +619,12 @@ in neither the method page nor any other tracked file.
   inside the synthesised block, so both have to exist before the gene is split; the page
   splits first.
   Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
-- **The read-out route** — DAD-GGA-DMX. A per-project choice with a suggested threshold: at
-  or below one plate of samples, index PCR; above it, plate barcoding. The capacity ceiling
-  once attributed to the primer set is wrong — forward and reverse barcodes combine freely
-  and no dual index is needed, so the limit is reagent and labour cost, one reaction per
-  well.
+- **The read-out route** — DAD-GGA-DMX. **Decided in #260: the toolkit models both**, as two
+  marking steps behind one judgement, and the threshold stands — at or below one plate of
+  samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed to the
+  primer set is wrong: forward and reverse barcodes combine freely and no dual index is needed,
+  so Route B reaches 9,216 wells on 192 owned primers and Route A 24⁴ on the kit, and what binds
+  either is the flow cell and one reaction per well.
 - **Which vector parent** to rebuild — both, since both run in the DMX vector. The two
   differ only in which strand carries the cassette and release the same cargo, so the rule
   as written does not discriminate.
