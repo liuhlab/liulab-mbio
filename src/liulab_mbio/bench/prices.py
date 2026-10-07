@@ -274,6 +274,11 @@ class Item:
         quantity where it is not given.
     units
         What a ``per unit`` row is multiplied by. The item's own quantity where it is not given.
+    headroom
+        How far a quantity sits from its band's top edge, where the caller knows the bands
+        without a tariff. A vendor's bands are a fact about the catalogue, so a quantity carries
+        its band whether or not anyone holds a price for it. The record's own headroom is used
+        instead wherever a row prices the item.
     """
 
     item: str
@@ -283,6 +288,7 @@ class Item:
     key: str = ""
     quantities: Mapping[str, float] | None = None
     units: float | None = None
+    headroom: tuple[Headroom, ...] = ()
 
 
 def bill(
@@ -322,6 +328,7 @@ def bill(
                     one.quantity,
                     unit=one.unit,
                     key=one.key,
+                    headroom="; ".join(str(gap) for gap in one.headroom),
                     hole=Hole(
                         f"P{n}",
                         f"no row prices {one.key or one.item!r} at "
