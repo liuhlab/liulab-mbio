@@ -119,6 +119,8 @@ where the answer is already known.
   - no C part: `[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
   - neither: `[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
   - All four expose `AGGA`/`TTCC` for the cargo; a skipped side adds one Gly
+- The cassette's promoter is `J23119` with a `B0034` RBS, so it counter-selects in any
+  ccdB-sensitive strain. The DMX cassette's T7 arrangement below does not
 
 ### DMX vector
 
@@ -397,7 +399,7 @@ and `docs/research/synthesis-and-assembly-barcode-kit.md`.
 | Ligases | T4 DNA ligase; T7 DNA ligase with StickTogether buffer |
 | Clean-up | SPRI beads; a column clean-up kit; a plasmid prep kit |
 | Cloning kit | Zero Blunt TOPO |
-| Strains | DB3.1 or ccdB Survival 2 T1R (growing a stock whose ccdB is expressed); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); NEB Stable or Endura (iGGA rounds) |
+| Strains | DB3.1 or ccdB Survival 2 T1R (growing a stock whose ccdB is expressed); NEB Stable (a DMX stock, whose ccdB is T7-silent); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds) |
 | Media and selection | low-salt LB; carbenicillin, kanamycin; glycerol for the archive |
 
 **NEB Stable and Endura are ccdB-sensitive.** Neither published genotype carries a resistance
