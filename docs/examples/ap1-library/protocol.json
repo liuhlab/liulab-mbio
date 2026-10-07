@@ -46,7 +46,7 @@
     {
       "name": "ligation fidelity",
       "status": null,
-      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF"
+      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
     },
     {
       "name": "barcode spacing",
