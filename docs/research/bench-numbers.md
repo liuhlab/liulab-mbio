@@ -208,7 +208,7 @@ kit is **NEB #E1602**; the BsaI kit, which stage 5 uses, is **#E1601S/L**.
 
 | Number | Value | Source |
 | --- | --- | --- |
-| Strain for anything carrying ccdB | NEB Stable | Qian SI, "GGA cloning"; the method page |
+| Strain for a stock whose ccdB is expressed | DB3.1 or ccdB Survival 2 T1R | the method page. Qian SI, "GGA cloning", names NEB Stable, which is ccdB-sensitive; it works there because DMX0001's ccdB is T7-silent — #300 |
 | NEB Stable culture | pick a single clone into 50 mL LB — **not** a rich medium such as Terrific Broth — in a 250 mL baffled flask, overnight | Qian SI, "Preparing GGA vector stocks" |
 | Plasmid prep | midiprep; typical yield 50-100 µg | Qian SI, "Preparing GGA vector stocks" |
 | NEB Stable, #C3040H/I | >1 × 10⁹ cfu/µg, measured on 50 µL of cells with 100 pg pUC19 on LB-amp at 37 °C; stored at -80 °C; 12-month shelf life | C3040 product specification PS-C3040H/I v1.0 |

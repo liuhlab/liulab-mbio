@@ -119,6 +119,8 @@ where the answer is already known.
   - no C part: `[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
   - neither: `[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]`
   - All four expose `AGGA`/`TTCC` for the cargo; a skipped side adds one Gly
+- The cassette's promoter is `J23119` with a `B0034` RBS, so it counter-selects in any
+  ccdB-sensitive strain. The DMX cassette's T7 arrangement below does not
 
 ### DMX vector
 
@@ -127,6 +129,8 @@ where the answer is already known.
 - DMX ccdB cassette: `[PmeI]─[BsaI.AGGA.BsmBI]─[promoter+ccdB]─[BsmBI.TTCC.BsaI]─[PmeI]`
 - The ccdB cassette reads from a T7 promoter under a *lac* operator, with the repressor on the
   plasmid. Only a strain carrying T7 polymerase counter-selects
+- So a DMX stock grows in an ordinary strain because its toxin is silent there, not because the
+  strain resists ccdB. Those are two different things, and only the first one holds here
 
 ### Final vector
 
@@ -395,8 +399,13 @@ and `docs/research/synthesis-and-assembly-barcode-kit.md`.
 | Ligases | T4 DNA ligase; T7 DNA ligase with StickTogether buffer |
 | Clean-up | SPRI beads; a column clean-up kit; a plasmid prep kit |
 | Cloning kit | Zero Blunt TOPO |
-| Strains | NEB Stable (anything with ccdB); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds) |
+| Strains | DB3.1 or ccdB Survival 2 T1R (growing a stock whose ccdB is expressed); NEB Stable (a DMX stock, whose ccdB is T7-silent); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds) |
 | Media and selection | low-salt LB; carbenicillin, kanamycin; glycerol for the archive |
+
+**NEB Stable and Endura are ccdB-sensitive.** Neither published genotype carries a resistance
+allele. That sensitivity is the point: it is why the ccdB cassette kills every vector that keeps
+it after assembly. So a stock whose ccdB is expressed has to be grown in DB3.1 or ccdB Survival
+2 T1R instead. Neither vendor names the allele those two are sold on.
 
 ## References
 

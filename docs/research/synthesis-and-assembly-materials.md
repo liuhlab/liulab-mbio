@@ -23,7 +23,7 @@ and marked with it; anything still unknown is marked **pending** rather than gue
 | ccdB cassette, four versions | N and C, no N, no C, neither |
 | Orthogonal primer set | 185 primers of 20 nt, 165 of them in the orthogonal set; Subramanian et al. 2018, Supplementary Table 1 |
 | DMX barcode kit | 96 plasmids, four groups of 24; `docs/research/synthesis-and-assembly-barcode-kit.md` |
-| NEB Stable | Propagating anything carrying ccdB |
+| DB3.1 or ccdB Survival 2 T1R | Propagating a stock whose ccdB is expressed. NEB Stable is ccdB-sensitive and will not grow one — #300 |
 
 The DMX vector is rebuilt from its parent before first use: AmpR replaced with KanR, the four
 BbsI sites removed (two in `lacI`, two in the backbone), one PmeI site added outboard of each
@@ -40,7 +40,7 @@ plates holding each slot's pair. A slot always means the same pair.
 | Parts | from the part collection |
 | BsmBI, ligase | one reaction cuts every part |
 | Retailoring primers | only for a part whose default pair is wrong: `5'-[spacer]-CGTCTC-N-[new overhang]-[annealing]-3'` |
-| NEB Stable | while ccdB is present |
+| DB3.1 or ccdB Survival 2 T1R | while an expressed ccdB is present |
 
 ## Cargo synthesis
 
