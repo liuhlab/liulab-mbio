@@ -15,6 +15,7 @@ from liulab_mbio.barcodes import (
     check_barcodes,
     deletion_ambiguity,
     design_barcodes,
+    separation,
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import has_site
@@ -260,3 +261,31 @@ def test_the_published_block_is_read_one_base_into_a_codon(
         stops[phase] = sum("a stop" in problem for problem in check_barcodes(every, rules))
     assert stops == {0: 16, 1: 0, 2: 30}
     assert PHASE == 1
+
+
+def test_how_far_apart_a_set_stands_is_the_closest_pair_in_it() -> None:
+    assert separation(["ACGTT", "ACGAA", "TTTTT"]) == 2
+    assert separation(["ACGTT", "ACGAT"]) == 1
+
+
+def test_a_designed_set_stands_at_least_as_far_apart_as_it_was_asked_to() -> None:
+    designed = design_barcodes(40, RULES)
+    assert separation(designed, metric=RULES.metric) >= RULES.distance
+
+
+def test_a_set_stands_apart_by_the_metric_it_is_measured_with() -> None:
+    # One deletion reads as the other, which Hamming counts as four mismatches and the
+    # sequence-Levenshtein metric as the one edit a read would actually make.
+    pair = ["ACGTT", "CGTTA"]
+    assert separation(pair, metric="hamming") == 4
+    assert separation(pair, metric="sequence-levenshtein") == 1
+
+
+def test_a_set_with_no_pair_has_no_distance_to_measure() -> None:
+    with pytest.raises(ValueError, match="two barcodes up"):
+        separation(["ACGTT"])
+
+
+def test_a_metric_nothing_counts_by_is_refused() -> None:
+    with pytest.raises(ValueError, match="a metric is"):
+        separation(["ACGTT", "TTTTT"], metric="guesswork")  # type: ignore[arg-type]

@@ -9,6 +9,9 @@ left in, because a part carrying it would cut itself.
 The host is named and never assumed: `liulab_mbio.codons.codon_tables` lists the tables that
 ship. A coding sequence the caller already holds is checked and left as it is, not written
 again.
+
+`in_frame` and `stop_codons` read a span a record already carries rather than writing one: what
+a design has to be held to once its bases are fixed.
 """
 
 from collections.abc import Iterable, Mapping
@@ -81,6 +84,46 @@ def translate(dna: str) -> str:
     """
     bases = _checked_dna(dna)
     return "".join(amino_acid(bases[at : at + 3]) for at in range(0, len(bases), 3))
+
+
+def in_frame(span: Segment, *, offset: int = 0) -> bool:
+    """Whether `span` reads as whole codons in the frame `offset` opens.
+
+    `offset` is where that frame begins, in `span`'s own coordinates: the span is in frame when
+    it starts on one of that frame's codon boundaries and carries whole codons. A span across
+    the origin of a circular record ends past the record's length, which changes nothing here.
+
+    Examples
+    --------
+    >>> in_frame(Segment(3, 9))
+    True
+    >>> in_frame(Segment(4, 9))
+    False
+    >>> in_frame(Segment(4, 10), offset=1)
+    True
+    """
+    return (span.start - offset) % 3 == 0 and (span.end - span.start) % 3 == 0
+
+
+def stop_codons(record: SequenceRecord, span: Segment) -> tuple[Segment, ...]:
+    """Return a span for each stop codon in `span`, read as codons from its first base.
+
+    A trailing base or two that fills no codon is not read. The spans are the record's own, so
+    one past the origin of a circular record ends past the record's length.
+
+    Examples
+    --------
+    >>> record = SequenceRecord("AAATAACCCTGA")
+    >>> [(span.start, span.end) for span in stop_codons(record, Segment(0, 12))]
+    [(3, 6), (9, 12)]
+    """
+    bases = record.extract(span)
+    whole = len(bases) - len(bases) % 3
+    return tuple(
+        Segment(span.start + at, span.start + at + 3)
+        for at in range(0, whole, 3)
+        if amino_acid(bases[at : at + 3]) == "*"
+    )
 
 
 def reverse_translate(protein: str, *, host: str) -> str:

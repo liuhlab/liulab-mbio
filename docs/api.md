@@ -91,6 +91,14 @@ with the package.
 
 ::: liulab_mbio.ligase
 
+## Reactions
+
+One tube: the molecules in it, each bound to the role it plays there, and the enzymes acting on
+them. A reaction holds no verdict — what must be true inside one is the method's to judge, which
+is what lets a gate say which tube a failure belongs to.
+
+::: liulab_mbio.reaction
+
 ## Maps
 
 `draw_map` draws a sequence record as a map. `Drawing.write` writes it as one HTML page that
@@ -361,6 +369,8 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 ::: liulab_synbio.library.method
 
 ::: liulab_synbio.library.project
+
+::: liulab_synbio.library.gate
 
 ::: liulab_synbio.library.standard
 

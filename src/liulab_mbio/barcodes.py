@@ -275,6 +275,34 @@ def check_barcodes(barcodes: Iterable[str], rules: BarcodeRules) -> tuple[str, .
     return tuple(problems)
 
 
+def separation(barcodes: Iterable[str], *, metric: Metric = METRIC) -> int:
+    """Return the fewest units any two of these barcodes stand apart: how far apart the set is.
+
+    The unit is the metric's — mismatches for ``"hamming"``, edits for
+    ``"sequence-levenshtein"`` — and the answer is the number a distance rule is read against.
+    `check_barcodes` says which pair it is and which rule that breaks.
+
+    Raises
+    ------
+    ValueError
+        If fewer than two barcodes are given, which have no pair to measure, or if `metric` is
+        neither. `"hamming"` also refuses two barcodes of different lengths.
+
+    Examples
+    --------
+    >>> separation(["ACGTT", "ACGAA", "TTTTT"])
+    2
+    """
+    if metric not in _COUNTING:
+        named = " or ".join(repr(one) for one in _COUNTING)
+        raise ValueError(f"a metric is {named}, got {metric!r}")
+    held = [barcode.upper() for barcode in barcodes]
+    if len(held) < 2:
+        raise ValueError(f"a set stands apart from two barcodes up, and {len(held)} were given")
+    measure = _COUNTING[metric].measure
+    return min(measure(one, other) for one, other in combinations(held, 2))
+
+
 def deletion_ambiguity(barcodes: Iterable[str]) -> float:
     """Return the share of one-base deletions that leave a read another barcode could leave too.
 
