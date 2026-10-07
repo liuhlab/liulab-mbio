@@ -396,22 +396,70 @@
       "supplier": "",
       "catalog": "",
       "storage": "-20 °C",
-      "amount": "one pair a well, 96 forward and 96 reverse",
-      "note": "prepared once as lab stock, by its own protocol; a run calls for it",
+      "amount": "2 µL a well at 1 µM each, 96 forward and 96 reverse",
+      "note": "prepared once as lab stock, by its own protocol; a run calls for it. The SI's plate preparation ends at 0.1 µM, where its own protocol and the article both stamp 1 µM, which is what this takes",
       "contains": [],
       "rules": [],
-      "citation": null
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 3"
+      }
     },
     {
-      "name": "PCR master mix",
-      "supplier": "",
-      "catalog": "",
+      "name": "ThermoPol Reaction Buffer",
+      "supplier": "NEB",
+      "catalog": "B9004",
       "storage": "-20 °C",
-      "amount": "one reaction a well",
+      "amount": "1 µL a reaction, 10X",
       "note": "",
       "contains": [],
       "rules": [],
-      "citation": null
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 1"
+      }
+    },
+    {
+      "name": "dNTP mix",
+      "supplier": "NEB",
+      "catalog": "N0447",
+      "storage": "-20 °C",
+      "amount": "0.2 µL a reaction, 10 mM each",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 1"
+      }
+    },
+    {
+      "name": "Taq DNA Polymerase",
+      "supplier": "NEB",
+      "catalog": "M0267",
+      "storage": "-20 °C",
+      "amount": "0.05 µL a reaction",
+      "note": "LevSeq gives the volume and no source gives the stock, so the reaction carries no unit count",
+      "contains": [],
+      "rules": [],
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 1"
+      }
+    },
+    {
+      "name": "DMSO, molecular biology grade",
+      "supplier": "MP Biomedicals",
+      "catalog": "194819",
+      "storage": "",
+      "amount": "0.4 µL a reaction, 4% (v/v) in the well",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 1"
+      }
     }
   ],
   "oligos": [],
@@ -4175,23 +4223,512 @@
     {
       "title": "Amplify each well with its own pair",
       "instructions": [
-        "Add the pair its address names to each well from the prepared primer plate.",
-        "Run the index PCR, then hold the plate."
+        "Add 7 µL of the master mix below to each well, which already holds its 1 µL of culture.",
+        "Add 2 µL of the pair its address names from the prepared primer plate, for 10 µL a well.",
+        "Seal the plate, spin it down, and run the program below."
       ],
-      "cautions": [],
+      "cautions": [
+        "Keep the polymerase on ice."
+      ],
       "notes": [
         "96 forward marks and 96 reverse reach 9,216 wells, so the pairs already held cover far more than this run needs.",
-        "The primer plate is built once as lab stock and a run calls for it; this protocol does not build one."
+        "The primer plate is built once as lab stock and a run calls for it; this protocol does not build one.",
+        "The first 10 cycles touch down from 68 to 63.5 °C, 0.5 °C a cycle, and 25 more run at 68 °C.",
+        "Extension is 2 minutes, what the authors ran for a gene below 1 kb. The published rule is at least one minute a kilobase, so a longer design wants it raised.",
+        "The mix is made 1.5 times what the wells take, which is what LevSeq's own per-plate table spells out. Nothing says what the surplus is for."
       ],
-      "tables": [],
-      "programs": [],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "ThermoPol Reaction Buffer",
+              "volume_ul": 1.0,
+              "stock": "10X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 1"
+              }
+            },
+            {
+              "name": "dNTP mix",
+              "volume_ul": 0.2,
+              "stock": "10 mM each",
+              "final": "0.2 mM each",
+              "master_mix": true,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 1"
+              }
+            },
+            {
+              "name": "Taq DNA Polymerase",
+              "volume_ul": 0.05,
+              "stock": "",
+              "final": "",
+              "master_mix": true,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 1"
+              }
+            },
+            {
+              "name": "DMSO",
+              "volume_ul": 0.4,
+              "stock": "100%",
+              "final": "4% (v/v)",
+              "master_mix": true,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 1"
+              }
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 5.35,
+              "stock": "",
+              "final": "",
+              "master_mix": true,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 1"
+              }
+            },
+            {
+              "name": "Barcoded primer mix",
+              "volume_ul": 2.0,
+              "stock": "1 µM each",
+              "final": "0.2 µM each",
+              "master_mix": false,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 3"
+              }
+            },
+            {
+              "name": "Overnight culture",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": false,
+              "citation": {
+                "source": "LevSeq",
+                "locator": "step 4"
+              }
+            }
+          ],
+          "title": "Index PCR, one well a sample",
+          "reactions": 288,
+          "overage": 0.5
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 95.0,
+                  "seconds": 300,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 68.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 67.5,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 67.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 66.5,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 66.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 65.5,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 65.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 64.5,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 64.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 63.5,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 95.0,
+                  "seconds": 20,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                },
+                {
+                  "label": "Anneal and extend",
+                  "temperature_c": 68.0,
+                  "seconds": 120,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 25
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 68.0,
+                  "seconds": 300,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "citation": {
+                    "source": "LevSeq",
+                    "locator": "thermal cycler table"
+                  }
+                }
+              ],
+              "cycles": 1
+            }
+          ],
+          "title": "Index PCR",
+          "lid_temperature_c": null
+        }
+      ],
       "timers": [],
       "transfers": [],
       "gels": [],
       "expected": [
-        "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark."
+        "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark.",
+        "One band a well, the design plus about 100 bp: the two marks, and the stretch between the primer sites and the reading frame."
       ],
-      "troubleshooting": [],
+      "troubleshooting": [
+        {
+          "problem": "A plate reads back far fewer wells than the others",
+          "solution": "LevSeq traces that to the amplification, not the sequencing: on a run of ten plates three returned under 60% of their variants. Check each pool on a gel before the library prep."
+        }
+      ],
       "holes": [
         {
           "id": "B1",
@@ -4199,6 +4736,14 @@
           "kind": "lab",
           "where": "route B, the pair marking one well",
           "filled_by": "the prepared primer plate the lab holds",
+          "issue": "liuhlab/liulab-mbio#225"
+        },
+        {
+          "id": "B2",
+          "missing": "the units of Taq one index PCR takes",
+          "kind": "unread",
+          "where": "route B, the index PCR's polymerase",
+          "filled_by": "NEB's own specification for M0267, which gives the stock concentration",
           "issue": "liuhlab/liulab-mbio#225"
         }
       ]
@@ -5648,7 +6193,7 @@
       "url": "https://doi.org/10.1038/s41467-026-76740-5"
     },
     {
-      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, twenty reads wanted and ten tolerable",
+      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable",
       "url": "https://doi.org/10.1021/acssynbio.4c00625"
     },
     {

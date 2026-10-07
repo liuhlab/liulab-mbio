@@ -30,12 +30,17 @@ from liulab_mbio.bench import plates
 from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.protocol.model import (
     Citation,
+    Component,
     Hole,
+    Incubation,
     Material,
     Plate,
+    ReactionTable,
     Reference,
     Source,
+    Stage,
     Step,
+    ThermocyclerProgram,
     Transfer,
     Troubleshooting,
     Vessel,
@@ -101,6 +106,38 @@ PICKER = "QPix XE Microbial Colony Picker"
 #: each well goes. LevSeq SI step 4. An acoustic handler does the same move where one is booked.
 SAMPLE_UL = 1.0
 MULTICHANNEL = "multichannel pipette"
+
+#: Route B's index PCR: a colony PCR straight from overnight culture, cycled with a touchdown.
+#: The master mix is one well's share of the mix LevSeq states per plate, and the cycling is its
+#: thermal-cycler table with the two loop lines spelled out: ten touchdown cycles and 25 more,
+#: 35 in all. ``docs/research/route-b-index-pcr.md`` section 2.
+INDEX_PCR_UL = 10.0
+INDEX_MIX_UL = 7.0
+INDEX_PRIMER_UL = 2.0
+INDEX_DENATURE_C = 95.0
+INDEX_TOUCHDOWN_C = (68.0, 63.5)
+INDEX_TOUCHDOWN_STEP_C = 0.5
+INDEX_PLATEAU_CYCLES = 25
+
+#: The cycles the touchdown takes, which is every step from one end of it to the other.
+INDEX_TOUCHDOWN_CYCLES = (
+    round((INDEX_TOUCHDOWN_C[0] - INDEX_TOUCHDOWN_C[1]) / INDEX_TOUCHDOWN_STEP_C) + 1
+)
+
+#: The mix is made 1.5 times what a full plate takes, which is what LevSeq's per-plate table
+#: spells out. Nothing published says what the surplus is for, or how to scale a part plate.
+INDEX_OVERAGE = 0.5
+
+#: Extension at the top of the touchdown, seconds: what the authors ran for a gene below 1 kb.
+#: The rule is minimally one minute a kilobase, so a longer design wants it raised. SI note 5b.
+INDEX_EXTENSION_SECONDS = 120
+
+#: What the index PCR is pipetted from, LevSeq SI step 1. A catalogue number is ordered as
+#: written, so each is the SI's own.
+THERMOPOL_CATALOG = "NEB #B9004"
+DNTP_CATALOG = "NEB #N0447"
+TAQ_CATALOG = "NEB #M0267"
+DMSO_CATALOG = "MP Biomedicals #194819"
 
 #: Colonies a 25 cm BioAssay plate carries before picking gets hard. Qian SI Day 2.
 BIOASSAY_COLONIES = 2500
@@ -966,6 +1003,103 @@ INDEX_MARKS = Hole(
     issue="liuhlab/liulab-mbio#225",
 )
 
+#: What 0.05 µL of Taq is worth. LevSeq states the volume and never the enzyme's concentration,
+#: and NEB's specification for M0267 could not be read, so the table prints the volume and the
+#: unit count stands empty. ``docs/research/route-b-index-pcr.md`` section 8.
+INDEX_TAQ_UNITS = Hole(
+    "B2",
+    "the units of Taq one index PCR takes",
+    "unread",
+    where="route B, the index PCR's polymerase",
+    filled_by="NEB's own specification for M0267, which gives the stock concentration",
+    issue="liuhlab/liulab-mbio#225",
+)
+
+
+def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
+    """Return LevSeq's index PCR, one `INDEX_PCR_UL` µL reaction a well.
+
+    The first five lines are the master mix, each one well's share of the mix LevSeq states per
+    plate; at `INDEX_OVERAGE` they scale back to that table. The pair and the culture go in a
+    well at a time, because each well takes its own pair. How many units 0.05 µL of Taq is
+    nobody published, so `INDEX_TAQ_UNITS` stands where the unit count would.
+
+    Examples
+    --------
+    >>> round(sum(one.volume_ul for one in index_pcr_reaction().components), 2)
+    10.0
+    >>> index_pcr_reaction().mix_volumes(96)[:4]
+    (144.0, 28.8, 7.2, 57.6)
+    """
+    mix = Citation("LevSeq", "step 1")
+    return ReactionTable(
+        (
+            Component("ThermoPol Reaction Buffer", 1.0, stock="10X", final="1X", citation=mix),
+            Component("dNTP mix", 0.2, stock="10 mM each", final="0.2 mM each", citation=mix),
+            Component("Taq DNA Polymerase", 0.05, citation=mix),
+            Component("DMSO", 0.4, stock="100%", final="4% (v/v)", citation=mix),
+            Component("Nuclease-free water", 5.35, citation=mix),
+            Component(
+                "Barcoded primer mix",
+                INDEX_PRIMER_UL,
+                stock="1 µM each",
+                final="0.2 µM each",
+                master_mix=False,
+                citation=Citation("LevSeq", "step 3"),
+            ),
+            Component(
+                "Overnight culture",
+                SAMPLE_UL,
+                master_mix=False,
+                citation=Citation("LevSeq", "step 4"),
+            ),
+        ),
+        title="Index PCR, one well a sample",
+        reactions=reactions,
+        overage=INDEX_OVERAGE,
+    )
+
+
+def index_pcr_program() -> ThermocyclerProgram:
+    """Return LevSeq's touchdown program, the SI's two loop lines spelled out.
+
+    Ten cycles drop the annealing temperature `INDEX_TOUCHDOWN_STEP_C` each, over
+    `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more anneal and extend together at the top of it.
+    The touchdown is one stage a cycle, because a stage holds one temperature.
+
+    Examples
+    --------
+    >>> stages = index_pcr_program().stages
+    >>> stages[1].incubations[1].temperature_c, stages[10].incubations[1].temperature_c
+    (68.0, 63.5)
+    """
+    cite = Citation("LevSeq", "thermal cycler table")
+    top = INDEX_TOUCHDOWN_C[0]
+    denature = Incubation("Denature", INDEX_DENATURE_C, 20, cite)
+    extend = Incubation("Extend", top, INDEX_EXTENSION_SECONDS, cite)
+    return ThermocyclerProgram(
+        (
+            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, cite),)),
+            *(
+                Stage(
+                    (
+                        denature,
+                        Incubation("Anneal", top - at * INDEX_TOUCHDOWN_STEP_C, 20, cite),
+                        extend,
+                    )
+                )
+                for at in range(INDEX_TOUCHDOWN_CYCLES)
+            ),
+            Stage(
+                (denature, Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, cite)),
+                cycles=INDEX_PLATEAU_CYCLES,
+            ),
+            Stage((Incubation("Final extension", top, 300, cite),)),
+            Stage((Incubation("Hold", 4.0, None, cite),)),
+        ),
+        title="Index PCR",
+    )
+
 
 def chances(designs: Sequence[Design]) -> tuple[str, ...]:
     """Return one line a fragment count: how many designs it covers, and each one's chance.
@@ -1037,19 +1171,63 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             Material(
                 "Barcoded index primer plate",
                 storage="-20 °C",
-                amount=f"one pair a well, {INDEX_WELLS} forward and {INDEX_WELLS} reverse",
-                note="prepared once as lab stock, by its own protocol; a run calls for it",
+                amount=f"{INDEX_PRIMER_UL:g} µL a well at 1 µM each, {INDEX_WELLS} forward and "
+                f"{INDEX_WELLS} reverse",
+                note="prepared once as lab stock, by its own protocol; a run calls for it. The "
+                "SI's plate preparation ends at 0.1 µM, where its own protocol and the article "
+                "both stamp 1 µM, which is what this takes",
+                citation=Citation("LevSeq", "step 3"),
             ),
-            Material("PCR master mix", storage="-20 °C", amount="one reaction a well"),
+            Material(
+                "ThermoPol Reaction Buffer",
+                supplier="NEB",
+                catalog=THERMOPOL_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="1 µL a reaction, 10X",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "dNTP mix",
+                supplier="NEB",
+                catalog=DNTP_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="0.2 µL a reaction, 10 mM each",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "Taq DNA Polymerase",
+                supplier="NEB",
+                catalog=TAQ_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="0.05 µL a reaction",
+                note="LevSeq gives the volume and no source gives the stock, so the reaction "
+                "carries no unit count",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "DMSO, molecular biology grade",
+                supplier="MP Biomedicals",
+                catalog=DMSO_CATALOG.split("#")[-1],
+                amount="0.4 µL a reaction, 4% (v/v) in the well",
+                citation=Citation("LevSeq", "step 1"),
+            ),
         ]
     return tuple(made)
 
 
 def validation_equipment(one: Validation) -> tuple[str, ...]:
     """Return the hardware reading these designs back needs and no reagent table covers."""
+    route = (
+        (ACOUSTIC,)
+        if one.route is ROUTE_A
+        else (
+            f"{MULTICHANNEL} on {INDEX_WELLS}-well spacing",
+            f"Thermocycler taking a {INDEX_WELLS}-well plate",
+        )
+    )
     return (
         PICKER,
-        ACOUSTIC if one.route is ROUTE_A else f"{MULTICHANNEL} on {INDEX_WELLS}-well spacing",
+        *route,
         "Incubator at 37 °C",
         "A sequencer, and a demultiplexer that can check an address",
     )
@@ -1209,12 +1387,20 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
         Step(
             "Amplify each well with its own pair",
             instructions=(
-                "Add the pair its address names to each well from the prepared primer plate.",
-                "Run the index PCR, then hold the plate.",
+                f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
+                f"holds its {SAMPLE_UL:g} µL of culture.",
+                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from the prepared "
+                f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
+                "Seal the plate, spin it down, and run the program below.",
             ),
+            cautions=("Keep the polymerase on ice.",),
+            tables=(index_pcr_reaction(one.wells),),
+            programs=(index_pcr_program(),),
             expected=(
                 "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and "
                 "every well of one plate takes that plate's own reverse mark.",
+                "One band a well, the design plus about 100 bp: the two marks, and the stretch "
+                "between the primer sites and the reading frame.",
             ),
             notes=(
                 f"{INDEX_WELLS} forward marks and {INDEX_WELLS} reverse reach "
@@ -1222,8 +1408,25 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
                 "run needs.",
                 "The primer plate is built once as lab stock and a run calls for it; this "
                 "protocol does not build one.",
+                f"The first {INDEX_TOUCHDOWN_CYCLES} cycles touch down from "
+                f"{INDEX_TOUCHDOWN_C[0]:g} to {INDEX_TOUCHDOWN_C[1]:g} °C, "
+                f"{INDEX_TOUCHDOWN_STEP_C:g} °C a cycle, and {INDEX_PLATEAU_CYCLES} more run at "
+                f"{INDEX_TOUCHDOWN_C[0]:g} °C.",
+                f"Extension is {INDEX_EXTENSION_SECONDS // 60} minutes, what the authors ran for "
+                "a gene below 1 kb. The published rule is at least one minute a kilobase, so a "
+                "longer design wants it raised.",
+                f"The mix is made {1 + INDEX_OVERAGE:g} times what the wells take, which is what "
+                "LevSeq's own per-plate table spells out. Nothing says what the surplus is for.",
             ),
-            holes=(INDEX_MARKS,),
+            troubleshooting=(
+                Troubleshooting(
+                    "A plate reads back far fewer wells than the others",
+                    "LevSeq traces that to the amplification, not the sequencing: on a run of "
+                    "ten plates three returned under 60% of their variants. Check each pool on "
+                    "a gel before the library prep.",
+                ),
+            ),
+            holes=(INDEX_MARKS, INDEX_TAQ_UNITS),
         ),
         _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
     )
@@ -1347,7 +1550,8 @@ REFERENCES: tuple[Reference, ...] = (
     Reference(
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "
         "directed evolution and machine learning, for index PCR marking a well on one "
-        "barcoded primer pair, twenty reads wanted and ten tolerable",
+        "barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and "
+        "ten tolerable",
         url="https://doi.org/10.1021/acssynbio.4c00625",
     ),
     Reference(

@@ -321,10 +321,15 @@ def protocol(
             ),
             *(dmx.validation_materials(validation) if validation else ()),
         ),
-        equipment=(
-            *EQUIPMENT,
-            *(POOL_EQUIPMENT if pool else ()),
-            *(dmx.validation_equipment(validation) if validation else ()),
+        # Deduplicated: the pool route and the read-back route each ask for a thermocycler.
+        equipment=tuple(
+            dict.fromkeys(
+                (
+                    *EQUIPMENT,
+                    *(POOL_EQUIPMENT if pool else ()),
+                    *(dmx.validation_equipment(validation) if validation else ()),
+                )
+            )
         ),
         plates=(_pcr2_plate(pool),) if pool else (),
         steps=_steps(
