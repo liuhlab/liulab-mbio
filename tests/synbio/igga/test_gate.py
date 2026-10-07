@@ -26,6 +26,7 @@ from liulab_mbio.sites import CutSite
 from liulab_synbio.igga.gate import (
     WELL_PRIMERS,
     Verdict,
+    _released,
     check_dmx_vector,
     check_library,
     check_reaction,
@@ -162,6 +163,7 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
         "cargo sites",
         "cargo frame",
         "well primers",
+        "blunt sites",
         "barcode spacing",
         "barcode reading",
         "barcode block",
@@ -325,10 +327,14 @@ def test_a_cargo_carrying_an_annealing_region_is_caught(judge, blocks):
     assert isinstance(finding, Segment)
 
 
-def test_a_destination_no_well_primer_reads_is_not_judged_as_one(good):
-    """The AP-1 destination is a stand-in with no DMX backbone, so no blunt site reaches a primer."""
+def test_a_destination_no_well_primer_reads_is_not_judged_as_one(judge):
+    """A destination carrying a cassette and nothing else: no primer reads it, so nothing judges it."""
+    stand_in = SequenceRecord(
+        FILLER + IGGA.internal_stuffer + FILLER, topology="circular", name="stand-in"
+    )
+
     with pytest.raises(KeyError):
-        good["blunt sites"]
+        judge(destination=stand_in)["blunt sites"]
 
 
 def test_a_dmx_destination_is_judged_where_a_build_accepts_one(judge):
@@ -405,3 +411,29 @@ def test_a_build_names_both_the_working_vector_and_its_enzyme_or_neither(judge, 
     _, working = final
     with pytest.raises(ValueError, match="name both, or neither"):
         judge(working=working)
+
+
+def test_a_donor_held_in_a_circular_backbone_is_judged_on_its_cargo(judge, blocks):
+    """Two pieces come off a circular donor, and the cloning scar says which one is the part."""
+    one = blocks["N"][0]
+    entry, scar = IGGA.entry_overhang, IGGA.scar_overhang
+    cargo = one.sequence[len(IGGA.external_stuffer_5) - len(entry) :]
+    cargo = cargo[: len(cargo) - len(IGGA.external_stuffer_3) + len(scar)]
+    circular = SequenceRecord(
+        IGGA.external_stuffer_5[: -len(entry)]
+        + cargo
+        + IGGA.external_stuffer_3[len(scar) :]
+        + FILLER,
+        topology="circular",
+        name="N in a DMX backbone",
+    )
+
+    assert len(_released(circular, IGGA.external)) == 2
+    assert judge(blocks=_swap_record(blocks, "N", 0, circular)).status == "pass"
+
+
+def _swap_record(blocks, position, index, record):
+    """Return the blocks with one of them replaced by a record as it stands."""
+    changed = {name: list(found) for name, found in blocks.items()}
+    changed[position][index] = record
+    return changed

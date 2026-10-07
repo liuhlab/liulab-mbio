@@ -85,7 +85,7 @@ Each record is drawn by the same command, from the file beside it:
 ```bash
 pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna -o product-map.pdf
 pixi run liulab_mbio plot map docs/examples/ap1-library/product.dna \
-  --region 1598..1672 --sequence-view -o barcode-block.pdf
+  --region 1368..1442 --sequence-view -o barcode-block.pdf
 ```
 
 | File | What it is |

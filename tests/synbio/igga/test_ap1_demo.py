@@ -173,9 +173,9 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
     reads = ["H27", "H28"]
-    # The final assembly: this project names no working vector, so what one would fix is H31,
-    # and this library's own backbone presents no cut that frees its cargo, which is H32.
-    final = ["H31", "H32", "H24", "H31", "H24", "H24", *reads]
+    # The final assembly: this project names no working vector, so what one would fix is H31.
+    # The backbone the rounds ran in frees the cargo itself, so nothing is held open there.
+    final = ["H31", "H24", "H31", "H24", "H24", *reads]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
         "H25",
@@ -261,7 +261,7 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
 
     assert [one.title for one in steps] == [
         "Pick the working vector",
-        "Release the cargo from the library backbone",
+        "Release the cargo with BsaI and PmeI",
         "Assemble the cargo into the working vector",
         "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
         "Read representation in the final vector",
@@ -283,9 +283,7 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
 
     assert working.enzyme.name in steps[0].title
     assert steps[2].programs[0].title == "Golden Gate assembly"
-    # H32 stays: this library's own backbone still presents no cut that frees its cargo.
     assert [hole.id for step in steps for hole in step.holes] == [
-        "H32",
         "H24",
         "H24",
         "H24",

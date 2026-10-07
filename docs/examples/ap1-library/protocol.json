@@ -1,5 +1,5 @@
 {
-  "title": "Library assembly: 3 part lists into DMX-demo",
+  "title": "Library assembly: 3 part lists into DMX-iGGA",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "overview": {
     "Method": "iGGA",
@@ -14,7 +14,7 @@
     "Cloning scar": "TTCC",
     "Barcode": "11 bp, block 41 bp",
     "Codon usage": "human",
-    "Product": "AP-1 DESynR round 3, 2276 bp",
+    "Product": "AP-1 DESynR round 3, 6501 bp",
     "Completeness": "P 0.99, 195,386 colonies at the end",
     "Amino acids changed": "27 over 26 part end(s)",
     "Designs read back": "72, every one"
@@ -28,6 +28,11 @@
     "The finished barcode block is 41 bp and reads in the reverse of the order the rounds ran; barcodes.tsv says which barcode names which part."
   ],
   "checks": [
+    {
+      "name": "blunt sites",
+      "status": "pass",
+      "detail": "the 2 blunt site(s) beside the DMX vector's cassette sit between a BsaI site and the primer that reads a well, in 277..363 or 416..503"
+    },
     {
       "name": "destination opens",
       "status": "pass",
@@ -173,7 +178,7 @@
       "citation": null
     },
     {
-      "name": "DMX-demo vector",
+      "name": "DMX-iGGA vector",
       "supplier": "",
       "catalog": "",
       "storage": "-20 °C",
@@ -4886,7 +4891,7 @@
       "holes": []
     },
     {
-      "title": "Round 1: open DMX-demo with BbsI",
+      "title": "Round 1: open DMX-iGGA with BbsI",
       "instructions": [
         "Set the digest below up with BbsI alone, and start the program.",
         "After the first hour add SrfI and run the second."
@@ -4899,10 +4904,10 @@
         {
           "components": [
             {
-              "name": "DMX-demo",
+              "name": "DMX-iGGA",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "1.31561 pmol (1000 ng)",
+              "final": "0.297402 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -4972,7 +4977,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "DMX-demo opens on AGGA and TTCC, leaving 1204 bp of backbone.",
+        "DMX-iGGA opens on AGGA and TTCC, leaving 5429 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -5098,8 +5103,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "DMX-demo, opened: 0.0269677 pmol is 20 ng at 1204 bp.",
-        "N part list, released: 0.0269677 pmol is 9.29 ng at 559 bp."
+        "DMX-iGGA, opened: 0.00598091 pmol is 20 ng at 5429 bp.",
+        "N part list, released: 0.00598091 pmol is 2.06 ng at 559 bp."
       ],
       "troubleshooting": [
         {
@@ -5124,10 +5129,10 @@
         {
           "components": [
             {
-              "name": "DMX-demo, opened",
+              "name": "DMX-iGGA, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0269677 pmol (20 ng)",
+              "final": "0.00598091 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5135,7 +5140,7 @@
               "name": "N part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0269677 pmol (9.29 ng)",
+              "final": "0.00598091 pmol (2.06 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5163,7 +5168,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.0269677 pmol of the released part list against 0.0269677 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00598091 pmol of the released part list against 0.00598091 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -5189,7 +5194,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0810933 pmol at 2002 bp."
+        "Enough for one electroporation: 100 ng is 0.0260723 pmol at 6227 bp."
       ],
       "troubleshooting": [
         {
@@ -5311,7 +5316,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 2002 bp per molecule. This is the destination round 2 opens.",
+        "One pool of plasmid, 6227 bp per molecule. This is the destination round 2 opens.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -5339,7 +5344,7 @@
               "name": "AP-1 DESynR round 1",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.810933 pmol (1000 ng)",
+              "final": "0.260723 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5409,7 +5414,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 1972 bp of backbone.",
+        "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 6197 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -5535,8 +5540,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 1, opened: 0.0164654 pmol is 20 ng at 1972 bp.",
-        "DBD part list, released: 0.0164654 pmol is 2.59 ng at 255 bp."
+        "AP-1 DESynR round 1, opened: 0.00523969 pmol is 20 ng at 6197 bp.",
+        "DBD part list, released: 0.00523969 pmol is 0.82 ng at 255 bp."
       ],
       "troubleshooting": [
         {
@@ -5564,7 +5569,7 @@
               "name": "AP-1 DESynR round 1, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0164654 pmol (20 ng)",
+              "final": "0.00523969 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5572,7 +5577,7 @@
               "name": "DBD part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0164654 pmol (2.59 ng)",
+              "final": "0.00523969 pmol (0.82 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5600,7 +5605,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.0164654 pmol of the released part list against 0.0164654 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00523969 pmol of the released part list against 0.00523969 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -5626,7 +5631,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0734944 pmol at 2209 bp."
+        "Enough for one electroporation: 100 ng is 0.0252334 pmol at 6434 bp."
       ],
       "troubleshooting": [
         {
@@ -5748,7 +5753,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 2209 bp per molecule. This is the destination round 3 opens.",
+        "One pool of plasmid, 6434 bp per molecule. This is the destination round 3 opens.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -5776,7 +5781,7 @@
               "name": "AP-1 DESynR round 2",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.734944 pmol (1000 ng)",
+              "final": "0.252334 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5846,7 +5851,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 2179 bp of backbone.",
+        "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 6404 bp of backbone.",
         "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
       ],
       "troubleshooting": [
@@ -5972,8 +5977,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 2, opened: 0.0149012 pmol is 20 ng at 2179 bp.",
-        "C part list, released: 0.0149012 pmol is 2.72 ng at 296 bp."
+        "AP-1 DESynR round 2, opened: 0.00507033 pmol is 20 ng at 6404 bp.",
+        "C part list, released: 0.00507033 pmol is 0.92 ng at 296 bp."
       ],
       "troubleshooting": [
         {
@@ -6001,7 +6006,7 @@
               "name": "AP-1 DESynR round 2, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0149012 pmol (20 ng)",
+              "final": "0.00507033 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6009,7 +6014,7 @@
               "name": "C part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0149012 pmol (2.72 ng)",
+              "final": "0.00507033 pmol (0.92 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6037,7 +6042,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.0149012 pmol of the released part list against 0.0149012 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00507033 pmol of the released part list against 0.00507033 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -6063,7 +6068,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.071331 pmol at 2276 bp."
+        "Enough for one electroporation: 100 ng is 0.0249734 pmol at 6501 bp."
       ],
       "troubleshooting": [
         {
@@ -6185,7 +6190,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool of plasmid, 2276 bp per molecule. This is the finished library.",
+        "One pool of plasmid, 6501 bp per molecule. This is the finished library.",
         "BbsI still cuts it and BsaI no longer does."
       ],
       "troubleshooting": [
@@ -6217,7 +6222,7 @@
       "gels": [],
       "expected": [
         "A table from barcode combination to cargo: each read decodes to one member of each part list, and the coding bases it carries are that member's.",
-        "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1631-1672 of the representative construct."
+        "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1401-1442 of the representative construct."
       ],
       "troubleshooting": [
         {
@@ -6313,33 +6318,86 @@
       ]
     },
     {
-      "title": "Release the cargo from the library backbone",
+      "title": "Release the cargo with BsaI and PmeI",
       "instructions": [
-        "Digest the finished library with BsaI and the blunt enzyme that shreds the backbone it leaves.",
-        "Heat-kill both. Nothing is purified: the working vector goes into this tube."
+        "Digest the finished library with BsaI and PmeI at 37 °C.",
+        "Heat-kill, then leave the tube alone: nothing is purified between the two stages."
       ],
       "cautions": [],
       "notes": [
-        "The sites that free the cargo belong to the vector the rounds ran in, not to the cargo, so a backbone without them cannot release it."
+        "One tube, two stages. Killing the releasing enzymes before the working vector goes in is what keeps them off its backbone."
       ],
       "tables": [],
-      "programs": [],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "BsaI and PmeI",
+                  "temperature_c": 37.0,
+                  "seconds": 3600,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "Digest with BsaI and PmeI",
+          "lid_temperature_c": null
+        },
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Heat inactivation",
+                  "temperature_c": 80.0,
+                  "seconds": 1200,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "BsaI heat inactivation",
+          "lid_temperature_c": null
+        },
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Heat inactivation",
+                  "temperature_c": 65.0,
+                  "seconds": 1200,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "PmeI heat inactivation",
+          "lid_temperature_c": null
+        }
+      ],
       "timers": [],
       "transfers": [],
       "gels": [],
       "expected": [
-        "The whole cargo free, on AGGA and TTCC."
+        "The whole 1076 bp cargo free, on AGGA and TTCC, out of 6501 bp of library.",
+        "PmeI cuts the backbone it came out of, so that backbone cannot close again."
       ],
-      "troubleshooting": [],
-      "holes": [
+      "troubleshooting": [
         {
-          "id": "H32",
-          "missing": "the backbone this library was built in presents no cut that frees its cargo, so no release digest can be written",
-          "kind": "undecided",
-          "where": "final assembly, releasing the cargo",
-          "filled_by": "a destination vector carrying the releasing sites outboard of the cargo, as the method's own DMX vector does",
-          "issue": "liuhlab/liulab-mbio#225"
-        },
+          "problem": "The library backbone survives the assembly",
+          "solution": "The blunt enzyme missed, or the heat kill was short. Both show up as colonies carrying the round's own vector rather than the working one."
+        }
+      ],
+      "holes": [
         {
           "id": "H24",
           "missing": "every mass in the final assembly is unsourced, the SPRI ratio with them",

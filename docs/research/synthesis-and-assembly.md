@@ -681,10 +681,16 @@ and #305 builds the floor.
 - **The colony picker model** — DAD-GGA-DMX. The QPix 420 or the QPix FLEX, a purchase
   decision rather than a design one. The method page names neither, only that the choice is
   open.
-- **Where the added PmeI sites go** — iGGA, which blunts the donor backbone with them. There
-  is no free space on one parent without sacrificing an annotated tag.
 - **Whether acronyms are expanded on first use** — neither; the page itself, now published
   in the site navigation rather than kept as a working file.
+
+**Where the added PmeI sites go is closed.** It recorded that there is no free space on one
+parent without sacrificing an annotated tag. Measured on the rebuilt DMX0001, the windows a
+blunt site may sit in — each bounded by a releasing cut and the primer that reads a well — are
+**277..363 and 416..503**. `6xHis` ends at 432, so 433..503 is free of every annotation and a
+site at 437 sacrifices nothing. The worry came from inserting immediately outboard of the BsaI
+site; the rule only asks for a site between that cut and the primer's footprint.
+`docs/research/dmx-destination.md` carries the rebuild and what it measures.
 
 ## 7. Provenance of downloaded files
 

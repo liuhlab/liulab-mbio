@@ -44,6 +44,7 @@ from liulab_synbio.igga.vector import (
     destination_vector,
     domesticate_vector,
     donor_cassette,
+    released_cargo,
     round_cassette,
     working_vector,
 )
@@ -489,3 +490,49 @@ def test_a_donor_backbone_keeps_the_releasing_and_blunt_sites_it_is_built_on():
     ]
 
     assert {site.enzyme for site in outboard} == {made.external, get_enzyme(FLANK_CHOPPER)}
+
+
+@pytest.fixture(scope="module")
+def dmx() -> SequenceRecord:
+    """The rebuilt DMX destination the worked example is planned against.
+
+    `scripts/build_dmx_vector.py` writes it from DMX0001 and
+    `docs/research/dmx-destination.md` records what each step does.
+    """
+    return read_record(DEMO.parent / "vector.gb")
+
+
+def test_the_rebuilt_dmx_vector_is_a_destination_carrying_what_frees_its_cargo(dmx):
+    """Outboard BsaI and PmeI are the method's design, and the shipped predicate refused them."""
+    taken = destination_vector(dmx, IGGA)
+
+    assert taken.record is dmx
+    assert taken.edit is None
+    assert dmx.extract(taken.stuffer).startswith(IGGA.entry_overhang)
+    outboard = [
+        site.enzyme.name
+        for site in find_sites(dmx, (IGGA.external, *IGGA.blunt))
+        if not dmx.covers(taken.stuffer, site.span)
+    ]
+    assert sorted(set(outboard)) == ["BsaI", "PmeI"]
+
+
+def test_the_rebuilt_dmx_vector_is_still_refused_where_the_round_would_cut_its_backbone(dmx):
+    at = 2000
+    site = IGGA.internal.site
+    strayed, _ = replace(dmx, at, at + len(site), site)
+
+    with pytest.raises(ValueError, match="BbsI reads a site at 2000"):
+        destination_vector(strayed, IGGA)
+
+
+def test_the_cargo_a_library_built_in_that_backbone_gives_up_is_found(dmx):
+    """`released_cargo` answered None on the old stand-in, which was H32."""
+    product = read_record(DEMO.parent / "product.dna")
+
+    span = released_cargo(product, IGGA)
+
+    assert span is not None
+    assert product.extract(span).startswith(IGGA.entry_overhang)
+    assert product.extract(span).endswith(IGGA.scar_overhang)
+    assert released_cargo(dmx, IGGA) == Segment(370, 404)
