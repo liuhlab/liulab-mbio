@@ -152,8 +152,28 @@ def test_the_bill_line_carries_its_key_and_the_headroom_of_the_bands_it_is_given
 
 
 def test_a_block_that_spells_no_legal_overhang_set_is_refused_and_says_so(project, primers):
-    with pytest.raises(ValueError, match="no legal overhang set exists"):
+    with pytest.raises(ValueError, match=r"block 'flat'.*no legal overhang set exists"):
         design_pool([block("flat", "A" * 600)], project, primers=primers)
+
+
+def test_a_primer_set_short_of_the_allotment_is_refused_and_says_what_it_allots(
+    parts, project, primers
+):
+    with pytest.raises(ValueError, match=rf"allots {TOTAL} primers .* {TOTAL - 1} were given"):
+        design_pool(parts, project, primers=primers[:-1])
+
+
+def test_an_empty_block_is_refused_by_name(parts, project, primers):
+    hollow = Part("hollow", "N", index=3, sequence="", barcode="", protein="", coding=Segment(0, 1))
+    with pytest.raises(ValueError, match="block 'hollow' is empty"):
+        design_pool([*parts, hollow], project, primers=primers)
+
+
+def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_draw(project, primers):
+    """A hand-built block spelling BsmBI on either strand: the oligo check catches it."""
+    carrier = block("carrier", bases(random.Random(3), 97) + "GAGACG" + bases(random.Random(4), 97))
+    with pytest.raises(ValueError, match=r"block 'carrier' fragment 1 of 1, filler drawn from "):
+        design_pool([carrier], project, primers=primers, seed=7)
 
 
 def test_a_sheet_allots_its_primers_to_the_roles_in_order(tmp_path):

@@ -33,7 +33,7 @@ from liulab_mbio.bench.pools import (
 )
 from liulab_mbio.bench.prices import Band, Item
 from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.split import CargoSplit, fewest_pieces, split_cargo
+from liulab_mbio.split import CargoSplit, Fragment, fewest_pieces, split_cargo
 from liulab_synbio.igga.method import LUND_SUCCESS, ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import Project
@@ -209,9 +209,8 @@ def design_pool(
     Raises
     ------
     ValueError
-        If a block spells no legal overhang set at any fragment count the oligo length allows,
-        which says how far that length reaches, or if an oligo comes out spelling a site the
-        layout did not put there.
+        If the primer set is short of what the method allots, or if a block is empty, the split
+        refuses it, or its oligo spells a reserved site -- each naming the block.
     """
     scheme = project.scheme
     layout = OligoLayout(
@@ -230,14 +229,19 @@ def design_pool(
     used: list[PrimerSite] = []
     for index, part in enumerate(parts):
         batch, place = batches[index]
+        if not part.sequence:
+            raise ValueError(f"block {part.name!r} is empty, so there is nothing to synthesise")
         record = part_record(part)
-        split = split_cargo(
-            record,
-            layout.cutter,
-            budget=layout.budget,
-            reserved=held,
-            avoid=avoid,
-        )
+        try:
+            split = split_cargo(
+                record,
+                layout.cutter,
+                budget=layout.budget,
+                reserved=held,
+                avoid=avoid,
+            )
+        except ValueError as refusal:
+            raise ValueError(f"block {part.name!r}: {refusal}") from refusal
         splits.append(split)
         floor += fewest_pieces(len(record.sequence), layout.budget)
         head = (forward[batch % len(forward)],)
@@ -245,10 +249,9 @@ def design_pool(
         used.extend((*head, *tail))
         for fragment in split.fragments:
             oligos.append(
-                build_oligo(
+                _oligo(
                     split,
                     fragment,
-                    name=f"{part.name}_f{fragment.index + 1}",
                     source=part.name,
                     layout=layout,
                     forward=head,
@@ -281,13 +284,66 @@ def _roles() -> tuple[str, ...]:
 def _allot(
     primers: Sequence[PrimerSite],
 ) -> tuple[Sequence[PrimerSite], Sequence[PrimerSite], Sequence[PrimerSite]]:
-    """Cut the set into its three roles, in the order it is allotted in."""
+    """Cut the set into its three roles, in the order it is allotted in.
+
+    Raises
+    ------
+    ValueError
+        If the set is short of the allotment, which `read_primers` holds a sheet to as well.
+    """
     inner, forward, outer = (count for _, count in ORTHOGONAL_SPLIT)
+    allotted = inner + forward + outer
+    if len(primers) < allotted:
+        raise ValueError(
+            f"this method allots {allotted} primers across its {len(ORTHOGONAL_SPLIT)} roles "
+            f"and {len(primers)} were given"
+        )
     return (
         primers[:inner],
         primers[inner : inner + forward],
         primers[inner + forward : inner + forward + outer],
     )
+
+
+def _oligo(
+    split: CargoSplit,
+    fragment: Fragment,
+    *,
+    source: str,
+    layout: OligoLayout,
+    forward: Sequence[PrimerSite],
+    reverse: Sequence[PrimerSite],
+    avoid: Sequence[str],
+    seed: int,
+) -> Oligo:
+    """Dress one fragment as an oligo, naming the block and the draw where it is refused.
+
+    A refusal and not a fresh draw: `liulab_mbio.bench.pools.pad_bases` already screens the
+    filler against the reserved sites in the context it sits in, so a site reaching the oligo's
+    own check is one the block carries on a strand, which no redraw clears.
+
+    Raises
+    ------
+    ValueError
+        Naming the block, which fragment of it, and the seed the filler was drawn from.
+    """
+    try:
+        return build_oligo(
+            split,
+            fragment,
+            name=f"{source}_f{fragment.index + 1}",
+            source=source,
+            layout=layout,
+            forward=forward,
+            reverse=reverse,
+            avoid=avoid,
+            seed=seed,
+        )
+    except ValueError as refusal:
+        raise ValueError(
+            f"block {source!r} fragment {fragment.index + 1} of {split.pieces}, filler drawn "
+            f"from seed {seed}: {refusal}"
+        ) from refusal
 
 
 def _batches(parts: int, size: int) -> tuple[tuple[int, int], ...]:
