@@ -5,7 +5,6 @@ from typing import Annotated
 
 import typer
 
-from liulab_mbio.barcodes import SEED
 from liulab_mbio.cloning.cli import plan_command
 from liulab_synbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
 from liulab_synbio.library.vector import Site
@@ -15,48 +14,21 @@ app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=
 
 @app.command()
 def plan(
-    parts: Annotated[
+    project: Annotated[
         Path,
         typer.Argument(
             exists=True,
             dir_okay=False,
             readable=True,
-            help="FASTA of every part list, each record named for the position it fills.",
+            help="Project JSON: the positions, the parts and vector files, and the dials.",
         ),
-    ],
-    scheme: Annotated[
-        Path,
-        typer.Option(
-            "--scheme",
-            exists=True,
-            dir_okay=False,
-            readable=True,
-            help="Scheme JSON the build is given.",
-        ),
-    ],
-    vector: Annotated[
-        Path,
-        typer.Option(
-            "--vector",
-            exists=True,
-            dir_okay=False,
-            readable=True,
-            help="Destination vector sequence file, circular.",
-        ),
-    ],
-    host: Annotated[
-        str, typer.Option("--host", help="Codon usage table the coding bases are written for.")
-    ],
-    coverage: Annotated[
-        float,
-        typer.Option("--coverage", help="Colonies over products each round is sized for."),
     ],
     out: Annotated[
         Path,
         typer.Option("--out", "-o", file_okay=False, help="Directory to write the outputs into."),
     ],
     kind: Annotated[
-        str, typer.Option("--kind", help="What the FASTA holds: protein or dna.")
+        str, typer.Option("--kind", help="What the parts FASTA holds: protein or dna.")
     ] = "protein",
     site: Annotated[
         str,
@@ -70,23 +42,10 @@ def plan(
         str,
         typer.Option("--pattern", help="Regex matching a record name, {position} for a position."),
     ] = NAME_PATTERN,
-    seed: Annotated[int, typer.Option("--seed", help="Seed the barcodes are drawn with.")] = SEED,
-    name: Annotated[str, typer.Option("--name", help="What to call each round's product.")] = "",
 ) -> None:
-    """Plan a library and write the sheets, the records and the protocol into OUT."""
+    """Plan the library PROJECT asks for, and write its sheets, records and protocol into OUT."""
     plan_command(
-        lambda: plan_library(
-            parts,
-            scheme,
-            vector,
-            host=host,
-            coverage=coverage,
-            kind=_kind(kind),
-            site=_site(site),
-            pattern=pattern,
-            seed=seed,
-            name=name,
-        ),
+        lambda: plan_library(project, kind=_kind(kind), site=_site(site), pattern=pattern),
         out,
         _summary,
     )

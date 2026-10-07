@@ -340,15 +340,17 @@ DNA starts and stops is `Recombination.boundaries` rather than the junction's ow
 `plan_library` is the way in. It builds a barcoded library of every combination of the part
 lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
 barcode and amino-acid change tables, a record for each round, the product and the protocol pair
-in one directory. The modules under it are its steps. `scheme` holds the design the user
-supplies, `standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
+in one directory. The modules under it are its steps. `method` holds `IGGA`, the one method,
+checked when it is imported; `project` holds what one build chooses, checked as it is read;
+`standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
 takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the
 colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps.
 
 A library is a pipeline over Golden Gate rather than a cloning method of its own — see
 [the library rounds decision](adr/0004-library-rounds.md). It is `liulab_synbio`'s, because it
 fixes one method's enzymes, stuffers and round order; everything it builds on is
-`liulab_mbio`'s.
+`liulab_mbio`'s. The method is code and a project is a file — see
+[the method decision](adr/0010-method-in-code.md).
 
 ::: liulab_synbio.library
     options:
@@ -356,7 +358,9 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 
 ::: liulab_synbio.library.plan
 
-::: liulab_synbio.library.scheme
+::: liulab_synbio.library.method
+
+::: liulab_synbio.library.project
 
 ::: liulab_synbio.library.standard
 

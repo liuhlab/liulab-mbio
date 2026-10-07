@@ -13,38 +13,36 @@ description: >-
 
 # Protein library assembly
 
-`liulab_synbio.library` does the design. This skill is the way in: one command turns lists of
-proteins, a scheme and a vector into a synthesis order sheet, annotated records and a bench
-protocol. Never invent a block, a barcode, an overhang, an amount or a colony count: the package
+`liulab_synbio.library` does the design. This skill is the way in: one command turns a project
+file naming lists of proteins and a vector into a synthesis order sheet, annotated records and a
+bench protocol. Never invent a block, a barcode, an overhang, an amount or a colony count: the package
 works each one out and checks it, and nothing checks a number you made up.
 
 ## Run it
 
 ```bash
-pixi run liulab_synbio library plan parts.fasta \
-  --scheme scheme.json --vector vector.dna \
-  --host human --coverage 10 --out library/
+pixi run liulab_synbio library plan project.json --out library/
 ```
+
+`project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
+`host`, `oligo_length`, `batch_size`, `coverage`, and optionally `seed`, `reserved_extra` and
+`barcode`. It is checked where it is read, so a bad value fails before anything is designed.
+Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
+inputs and outputs beside it.
+
+The method itself is code, not a file, and `docs/adr/0010-method-in-code.md` says why: its
+overhangs, enzymes and stuffers are the DNA of molecules already on the shelf. Never ask the user
+for them and never write them into a project.
 
 `parts.fasta` holds every part list in one file. A record's name says which position it fills —
 `N_ATF2`, `bZIP_JUN`, `C_VP64` — and a name that says no position, or two of them, is refused
 naming it. Pass `--kind dna` where the sequences are already coded: those codons are checked and
 kept, not written again.
 
-The scheme is data the user supplies, not something this package ships, and
-`docs/adr/0005-scheme-data.md` says why. Read it back to the user when they ask what the design
-assumed. Two worked schemes ship, and they are not interchangeable:
-
-- `docs/examples/protein-library/scheme.json` — **copy this one.** It is a scheme and nothing
-  else, written to be edited, with no project's choices in it.
-- `docs/examples/ap1-library/` — **read this one.** A whole run, inputs and outputs, whose scheme
-  is one published library's own architecture.
-
-A scheme's `reserved` list names any further enzyme a step outside the rounds cuts the cargo
-with — seating a part in a carrier, or a last transfer into a working vector. Every block is held
-clear of all of them, its stuffers included. Ask the user what cuts their cargo outside the
-rounds, and write `[]` where nothing does: the ap1 scheme reserves `BsmBI`, the one to copy
-reserves nothing and says so.
+`reserved_extra` names any further enzyme a step outside the rounds cuts the cargo with — seating
+a part in a carrier, or a last transfer into a working vector. It **adds** to the method's own
+list and never replaces it, and every block is held clear of the union, its stuffers included.
+Ask the user what cuts their cargo outside the rounds, and leave it out where nothing does.
 
 Files land in the directory you name:
 
@@ -67,7 +65,7 @@ The command prints a summary line and the paths. The same inputs write the same 
 - **The overhang standard is charged to the proteins.** One standard serves the whole library, so
   a junction forces terminal residues on every member either side. `changes.tsv` is what the user
   is paying for — show it to them before they order.
-- **More positions means more overhangs from one set**, so a long scheme is likelier to refuse.
+- **More positions means more overhangs from one set**, so a long project is likelier to refuse.
 
 ## The vector decides one overhang
 
@@ -82,7 +80,7 @@ The command prints a summary line and the paths. The same inputs write the same 
 ```python
 from liulab_synbio.library.plan import plan_library
 
-plan = plan_library("parts.fasta", "scheme.json", "vector.dna", host="human", coverage=10)
+plan = plan_library("project.json")
 plan.status  # "pass", "warn" or "fail" over every round's checks
 plan.write("library/")
 ```
@@ -104,7 +102,7 @@ It raises rather than guessing, and the message names the cause.
 
 - **A record's name says no position, or says two.** Rename it, or pass `--pattern`.
 - **No overhang standard fits.** Every candidate was refused at some junction and the message
-  names the rule. Fewer positions, or a scheme with a different scar, is the fix.
+  names the rule. Fewer positions is the fix.
 - **A part spells a site no synonymous change can remove.** The part would cut itself; the user
   decides whether to change the protein.
 - **A part list is larger than its barcodes allow.** A longer barcode, or a dial turned off —
@@ -117,5 +115,5 @@ It raises rather than guessing, and the message names the cause.
 checking one coding sequence for a host. `primer-design` owns every primer question, including
 the primers that read the barcode block — this plan designs none. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol.json` and render again.
-A change to what the plan computes — the scheme, the vector, the host, the coverage — goes back
-through `library plan`, which writes `protocol.json` afresh.
+A change to what the plan computes — the project's vector, host or coverage — goes back through
+`library plan`, which writes `protocol.json` afresh.

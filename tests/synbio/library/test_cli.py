@@ -1,5 +1,6 @@
 """The `library plan` verb: one command runs the whole thing and prints a summary and the paths."""
 
+import json
 import re
 from pathlib import Path
 
@@ -10,13 +11,24 @@ from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
 from liulab_synbio.cli import app
 
-EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
-
 LISTS = (
     {"N_a": "MKTAEK", "N_b": "MKTCEK"},
     {"bZIP_a": "WQAFAK", "bZIP_b": "WQAYAK"},
     {"C_a": "MKTHGK", "C_b": "MKTWGK"},
 )
+
+#: The project every test here plans, as a user writes one.
+PROJECT = {
+    "name": "pool",
+    "positions": ["N", "bZIP", "C"],
+    "parts": "parts.fasta",
+    "vector": "vector.dna",
+    "host": "e-coli-k12",
+    "oligo_length": 350,
+    "batch_size": 96,
+    "coverage": 10,
+    "seed": 7,
+}
 
 
 def plain(text: str) -> str:
@@ -24,61 +36,37 @@ def plain(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
-@pytest.fixture(scope="module")
-def inputs(tmp_path_factory):
-    """A parts FASTA and a vector carrying no stuffer, written once for every test here."""
-    directory = tmp_path_factory.mktemp("inputs")
-    fasta = directory / "parts.fasta"
-    fasta.write_text(
+def write_inputs(directory: Path, *, parts: str = "parts.fasta") -> Path:
+    """Write a parts FASTA, a vector carrying no stuffer, and the project naming both."""
+    (directory / parts).write_text(
         "".join(f">{name}\n{protein}\n" for one in LISTS for name, protein in one.items())
     )
-    vector = directory / "vector.dna"
-    write_dna(SequenceRecord("TA" * 100, topology="circular", name="bare"), vector)
-    return fasta, vector
-
-
-def run(inputs, out: Path, *extra: str):
-    """Invoke `library plan` over those inputs."""
-    fasta, vector = inputs
-    return CliRunner().invoke(
-        app,
-        [
-            "library",
-            "plan",
-            str(fasta),
-            "--scheme",
-            str(EXAMPLE),
-            "--vector",
-            str(vector),
-            "--host",
-            "e-coli-k12",
-            "--coverage",
-            "10",
-            "--out",
-            str(out),
-            *extra,
-        ],
+    write_dna(
+        SequenceRecord("TA" * 100, topology="circular", name="bare"), directory / "vector.dna"
     )
+    project = directory / "project.json"
+    project.write_text(json.dumps({**PROJECT, "parts": parts}), encoding="utf-8")
+    return project
 
 
-def test_one_command_plans_the_library_and_prints_the_paths(inputs, tmp_path):
+@pytest.fixture(scope="module")
+def project(tmp_path_factory):
+    """The project file, written once for every test here."""
+    return write_inputs(tmp_path_factory.mktemp("inputs"))
+
+
+def run(project: Path, out: Path, *extra: str):
+    """Invoke `library plan` over that project."""
+    return CliRunner().invoke(app, ["library", "plan", str(project), "--out", str(out), *extra])
+
+
+def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     out = tmp_path / "library"
 
-    # One run for the wiring of every option: the span a stuffer goes at, the pattern the part
-    # names are read with, the seed the barcodes are drawn from, and what the products are called.
+    # One run for the wiring of every option: what the FASTA holds, the span a stuffer goes at,
+    # and the pattern the part names are read with. The rest is the project file's own.
     result = run(
-        inputs,
-        out,
-        "--kind",
-        "protein",
-        "--site",
-        "100-140",
-        "--pattern",
-        r"^{position}_",
-        "--seed",
-        "7",
-        "--name",
-        "pool",
+        project, out, "--kind", "protein", "--site", "100-140", "--pattern", r"^{position}_"
     )
 
     assert result.exit_code == 0, result.output
@@ -103,19 +91,28 @@ def test_one_command_plans_the_library_and_prints_the_paths(inputs, tmp_path):
         assert path.read_bytes()
 
 
-def test_a_kind_that_is_neither_protein_nor_dna_is_refused(inputs, tmp_path):
-    result = run(inputs, tmp_path / "library", "--kind", "rna")
+def test_a_kind_that_is_neither_protein_nor_dna_is_refused(project, tmp_path):
+    result = run(project, tmp_path / "library", "--kind", "rna")
 
     assert result.exit_code == 1
     assert "--kind is 'protein' or 'dna'" in plain(result.output)
 
 
-def test_a_name_that_says_no_position_is_refused_naming_it(inputs, tmp_path):
-    _, vector = inputs
-    fasta = tmp_path / "strange.fasta"
-    fasta.write_text(">Q_zero\nMKTAEK\n")
+def test_a_name_that_says_no_position_is_refused_naming_it(tmp_path):
+    strange = write_inputs(tmp_path, parts="strange.fasta")
+    (tmp_path / "strange.fasta").write_text(">Q_zero\nMKTAEK\n")
 
-    result = run((fasta, vector), tmp_path / "library")
+    result = run(strange, tmp_path / "library")
 
     assert result.exit_code == 1
     assert "'Q_zero' says no position" in plain(result.output)
+
+
+def test_a_project_the_barcode_frame_rule_refuses_fails_where_it_is_read(tmp_path):
+    project = write_inputs(tmp_path)
+    project.write_text(json.dumps({**PROJECT, "barcode": {"length": 12}}), encoding="utf-8")
+
+    result = run(project, tmp_path / "library")
+
+    assert result.exit_code == 1
+    assert "barcode-frame" in plain(result.output)

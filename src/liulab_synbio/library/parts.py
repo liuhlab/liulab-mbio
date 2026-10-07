@@ -2,12 +2,12 @@
 
 One part is one synthesised block: the 5' external stuffer, the coding sequence, the internal
 stuffer for its position, the barcode naming it, and the 3' external stuffer. The external enzyme
-releases the part from the block on the scheme's two overhangs, and the internal enzyme excises
+releases the part from the block on the method's two overhangs, and the internal enzyme excises
 the stuffer the part carries, which is what the next round opens it on.
 
-The overhangs written into a block are the standard's rather than the scheme's own, because a
-scheme's stuffers carry whatever overhangs it was written with and `design_standard` chooses the
-set the part lists cost least. Nothing else in a stuffer moves.
+The overhangs written into a block are the standard's rather than the method's own, because the
+method's stuffers carry the overhangs its shelved DNA was ordered with and `design_standard`
+chooses the set the part lists cost least. Nothing else in a stuffer moves.
 
 A block's coding bases stop where the overhang either side of it spells the rest: an overhang
 finishes the upstream part's last codon and spells whole codons of its own, so a part's own bases
@@ -30,11 +30,11 @@ from liulab_mbio.barcodes import (
     design_barcodes,
 )
 from liulab_mbio.codons import CodonUsage, codon_usage
-from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import CutSite, Domestication, domesticate, find_sites
 from liulab_mbio.translate import SiteNotRemovableError, reverse_translate, translate
-from liulab_synbio.library.scheme import Scheme
+from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.standard import End, PartList, Standard, Terminus, junction_residues
 
 #: The columns of the synthesis order sheet.
@@ -101,27 +101,30 @@ def barcode_phase(scheme: Scheme) -> int:
     codons, so the block opens that stuffer's length into a codon. Every barcode of the block sits
     at this phase, a barcode and its scar being whole codons together.
     """
-    return len(scheme.internal_stuffer(-1)) % 3
+    return len(scheme.internal_stuffer) % 3
 
 
 def barcode_rules(
     scheme: Scheme,
+    length: int,
     *,
     distance: int = MIN_DISTANCE,
+    reserved: Sequence[str] = (),
     max_homopolymer: int | None = MAX_HOMOPOLYMER,
     gc_band: tuple[float, float] | None = GC_BAND,
     metric: Metric = METRIC,
 ) -> BarcodeRules:
-    """Return the rules this scheme's barcodes hold to, its phase read off its own geometry.
+    """Return the rules a barcode of `length` holds to, its phase read off the method's geometry.
 
-    The dials are `liulab_mbio.barcodes`' own; the length, the scar, the phase and the forbidden
-    enzymes are the scheme's and are not for a caller to restate.
+    The dials are `liulab_mbio.barcodes`' own; the scar, the phase and the forbidden enzymes are
+    the method's and are not for a caller to restate. `reserved` names the further enzymes a
+    project keeps a block clear of.
     """
     return BarcodeRules(
-        scheme.barcode_length,
+        length,
         scar=scheme.cloning_scar,
         phase=barcode_phase(scheme),
-        forbidden=_enzymes(scheme),
+        forbidden=_enzymes(scheme, reserved),
         distance=distance,
         max_homopolymer=max_homopolymer,
         gc_band=gc_band,
@@ -131,69 +134,75 @@ def barcode_rules(
 
 def design_parts(
     scheme: Scheme,
+    positions: Sequence[str],
     part_lists: Sequence[PartList],
     standard: Standard,
     *,
     host: str,
+    rules: BarcodeRules,
     coding: Sequence[Mapping[str, str]] | None = None,
-    rules: BarcodeRules | None = None,
     seed: int = SEED,
+    reserved: Sequence[str] = (),
 ) -> tuple[Part, ...]:
     """Build every part's synthesis sequence, in position order and then list order.
 
-    Each part is written into the scheme's stuffers with the standard's overhangs, given a barcode
-    of its own, and checked to carry the scheme's sites and no others. The same inputs return the
+    Each part is written into the method's stuffers with the standard's overhangs, given a barcode
+    of its own, and checked to carry the method's sites and no others. The same inputs return the
     same bases: the barcodes are drawn from `seed`, and nothing else here is random.
 
     Parameters
     ----------
     scheme
-        The architecture the parts are built into.
+        The method the parts are built into.
+    positions
+        The positions, in the order the rounds fill them.
     part_lists
-        One per position, in the scheme's order: each member's name and the protein it codes for.
+        One per position, in that order: each member's name and the protein it codes for.
     standard
         The overhang standard the build works to, and what it charges each part. Design it with
         `liulab_synbio.library.standard.design_standard` over these same part lists.
     host
         The name of the codon usage table the coding bases are written for.
+    rules
+        What every barcode holds to; `barcode_rules` builds them.
     coding
         One mapping per position, naming the coding sequence a member is already coded in. Those
         codons are kept rather than written again, and only a forbidden site moves one. A member
         with no entry is written for `host`.
-    rules
-        What every barcode holds to. `barcode_rules` for this scheme by default.
     seed
         The seed the barcodes are drawn with, offset by the position, so one seed settles a build.
+    reserved
+        Further enzymes a block is kept clear of, beyond the method's own.
 
     Raises
     ------
     ValueError
-        If the part lists do not match the scheme, the standard was not designed for them, a
+        If the part lists do not match the positions, the standard was not designed for them, a
         junction leaves a part no coding bases of its own, a given coding sequence does not spell
-        its part, or a block spells a site the scheme does not expect.
+        its part, or a block spells a site the method does not expect.
         `liulab_mbio.translate.SiteNotRemovableError` where that site lies in a part's coding
         bases, naming the part and the site.
     KeyError
-        If no shipped codon usage table is called `host`, or the scheme names an enzyme this
-        package does not ship.
+        If no shipped codon usage table is called `host`, or an enzyme named is not one this
+        package ships.
     liulab_mbio.barcodes.SpaceExhaustedError
         If a part list is larger than the barcodes its rules allow.
     """
-    _check_lists(scheme, part_lists)
-    _check_standard(scheme, standard)
+    _check_lists(positions, part_lists)
+    _check_standard(scheme, positions, standard)
     design = _Design(
         scheme,
         standard,
+        positions=tuple(positions),
         table=codon_usage(host),
         host=host,
-        enzymes=_enzymes(scheme),
+        enzymes=_enzymes(scheme, reserved),
         charged={(one.position, one.part, one.end): one for one in standard.termini},
-        coding=_given(scheme, coding),
+        coding=_given(positions, coding),
     )
-    held = rules if rules is not None else barcode_rules(scheme)
     made: list[Part] = []
     for index, parts in enumerate(part_lists):
-        codes = design_barcodes(len(parts), held, seed=seed + index)
+        codes = design_barcodes(len(parts), rules, seed=seed + index)
         made.extend(
             _built(design, index, name, protein, barcode)
             for (name, protein), barcode in zip(parts.items(), codes, strict=True)
@@ -229,7 +238,7 @@ def change_table(standard: Standard) -> str:
     return "\n".join(rows) + "\n"
 
 
-def barcode_table(parts: Sequence[Part], scheme: Scheme) -> str:
+def barcode_table(parts: Sequence[Part], positions: int) -> str:
     """Return which barcode names which part, and where it sits in the finished block.
 
     The columns are `BARCODE_COLUMNS`. Every round inserts its barcode ahead of the ones already
@@ -244,7 +253,7 @@ def barcode_table(parts: Sequence[Part], scheme: Scheme) -> str:
                 part.name,
                 part.position,
                 str(part.index + 1),
-                str(scheme.position_count - part.index),
+                str(positions - part.index),
                 part.barcode,
             )
         )
@@ -260,6 +269,7 @@ class _Design:
     scheme: Scheme
     standard: Standard
     _: KW_ONLY
+    positions: tuple[str, ...]
     table: CodonUsage
     host: str
     enzymes: tuple[Enzyme, ...]
@@ -267,21 +277,28 @@ class _Design:
     coding: tuple[Mapping[str, str], ...]
 
 
-def _enzymes(scheme: Scheme) -> tuple[Enzyme, ...]:
-    """Every enzyme a block is held clear of, the scheme's own three roles and what it reserves.
+def _enzymes(scheme: Scheme, reserved: Sequence[str] = ()) -> tuple[Enzyme, ...]:
+    """Every enzyme a block is held clear of: the method's three roles, and what is reserved.
 
     The first three are allowed in a block's stuffers and nowhere else; a reserved enzyme is
-    allowed nowhere at all, which the scheme checks of its own stuffers when it is read.
+    allowed nowhere at all, which the method checks of its own stuffers when it is built. A
+    project adds to the reserved list and never replaces it.
     """
-    return (scheme.internal, scheme.external, *scheme.blunt, *scheme.reserved_enzymes)
+    held = dict.fromkeys((*scheme.reserved, *reserved))
+    return (
+        scheme.internal,
+        scheme.external,
+        *scheme.blunt,
+        *(get_enzyme(name) for name in held),
+    )
 
 
-def _check_lists(scheme: Scheme, part_lists: Sequence[PartList]) -> None:
+def _check_lists(positions: Sequence[str], part_lists: Sequence[PartList]) -> None:
     """Refuse part lists that are not one per position, or a position with nothing to fill it."""
-    names = [position.name for position in scheme.positions]
+    names = list(positions)
     if len(part_lists) != len(names):
         raise ValueError(
-            f"this scheme has {len(names)} position(s) — {', '.join(names)} — and "
+            f"this build has {len(names)} position(s) — {', '.join(names)} — and "
             f"{len(part_lists)} part list(s) were given"
         )
     for name, parts in zip(names, part_lists, strict=True):
@@ -290,7 +307,7 @@ def _check_lists(scheme: Scheme, part_lists: Sequence[PartList]) -> None:
 
 
 def _given(
-    scheme: Scheme, coding: Sequence[Mapping[str, str]] | None
+    positions: Sequence[str], coding: Sequence[Mapping[str, str]] | None
 ) -> tuple[Mapping[str, str], ...]:
     """Return one coding-sequence mapping a position, empty where the caller gave none.
 
@@ -300,46 +317,46 @@ def _given(
         If there is not one mapping a position.
     """
     if coding is None:
-        return tuple({} for _ in scheme.positions)
+        return tuple({} for _ in positions)
     given = tuple(coding)
-    if len(given) != scheme.position_count:
+    if len(given) != len(positions):
         raise ValueError(
-            f"this scheme has {scheme.position_count} position(s) and {len(given)} coding "
+            f"this build has {len(positions)} position(s) and {len(given)} coding "
             "mapping(s) were given, one a position"
         )
     return given
 
 
-def _check_standard(scheme: Scheme, standard: Standard) -> None:
-    """Refuse a standard that was not designed for this scheme."""
-    if len(standard.entry_overhangs) != scheme.position_count:
+def _check_standard(scheme: Scheme, positions: Sequence[str], standard: Standard) -> None:
+    """Refuse a standard that was not designed for these positions."""
+    if len(standard.entry_overhangs) != len(positions):
         raise ValueError(
-            f"this scheme has {scheme.position_count} position(s) and the standard holds "
+            f"this build has {len(positions)} position(s) and the standard holds "
             f"{len(standard.entry_overhangs)} entry overhang(s)"
         )
     if standard.scar_overhang != scheme.cloning_scar:
         raise ValueError(
-            f"the standard's cloning scar {standard.scar_overhang!r} is not this scheme's "
-            f"{scheme.cloning_scar!r}: every part's 3' end leaves the scheme's own"
+            f"the standard's cloning scar {standard.scar_overhang!r} is not this method's "
+            f"{scheme.cloning_scar!r}: every part's 3' end leaves the method's own"
         )
 
 
 def _built(design: _Design, index: int, name: str, protein: str, barcode: str) -> Part:
     """Write one part's block, take any forbidden site out of its coding bases, and check it."""
     scheme, standard = design.scheme, design.standard
-    position = scheme.positions[index]
+    position = design.positions[index]
     entry = standard.entry_overhangs[index]
-    following = standard.entry_overhangs[(index + 1) % scheme.position_count]
+    following = standard.entry_overhangs[(index + 1) % len(design.positions)]
     donated = junction_residues(len(entry))[0]
-    head = design.charged.get((position.name, name, "5'"))
-    tail = design.charged.get((position.name, name, "3'"))
-    _check_charged(design, index, name, position.name, tail, donated)
+    head = design.charged.get((position, name, "5'"))
+    tail = design.charged.get((position, name, "3'"))
+    _check_charged(design, index, name, position, tail, donated)
     protein = protein.upper()
     synthesised = _synthesised(protein, head, tail)
     coding = _coding(
         design,
         name,
-        position.name,
+        position,
         synthesised,
         head,
         tail,
@@ -347,22 +364,22 @@ def _built(design: _Design, index: int, name: str, protein: str, barcode: str) -
         donated,
         design.coding[index].get(name),
     )
-    stuffer = position.internal_stuffer_prefix[: -len(following)] + following
+    stuffer = scheme.internal_stuffer_prefix[: -len(following)] + following
     regions = (
-        position.external_stuffer_5[: -len(entry)] + entry,
+        scheme.external_stuffer_5[: -len(entry)] + entry,
         coding,
         stuffer + scheme.internal_stuffer_core,
         barcode,
-        standard.scar_overhang + position.external_stuffer_3[len(standard.scar_overhang) :],
+        standard.scar_overhang + scheme.external_stuffer_3[len(standard.scar_overhang) :],
     )
     at = _offsets(regions)
     span = Segment(at[1], at[2])
     record = _record(name, "".join(regions), span, 3 * _residues(synthesised, head, tail))
     cleaned, report = domesticate(record, design.enzymes, usage=design.table)
-    _check_sites(design, cleaned, name, position.name, regions, at)
+    _check_sites(design, cleaned, name, position, regions, at)
     return Part(
         name,
-        position.name,
+        position,
         index=index,
         sequence=cleaned.sequence,
         barcode=barcode,
@@ -472,11 +489,11 @@ def _check_charged(
     donated: int,
 ) -> None:
     """Refuse a standard that charges this part no residue where its junction must take one."""
-    terminal = index == design.scheme.position_count - 1
+    terminal = index == len(design.positions) - 1
     if donated and not terminal and tail is None:
         raise ValueError(
             f"the standard charges part {name!r} at position {position!r} nothing at its 3' end, "
-            "where this scheme's junction takes a residue: design it over these same part lists"
+            "where this method's junction takes a residue: design it over these same part lists"
         )
 
 
@@ -501,7 +518,7 @@ def _check_sites(
     regions: Sequence[str],
     at: Sequence[int],
 ) -> None:
-    """Refuse a block spelling a site anywhere but where the scheme's stuffers put one.
+    """Refuse a block spelling a site anywhere but where the method's stuffers put one.
 
     The stuffers are searched on their own and their hits moved to where the block puts them, so
     a site the coding bases, the barcode or a junction between regions spells is the difference.
@@ -521,7 +538,7 @@ def _check_sites(
         enzyme, start, _ = missing[0]
         raise ValueError(
             f"part {name!r} at position {position!r} lost the {enzyme} site its stuffer puts at "
-            f"{start}: the block cannot be cut as the scheme says"
+            f"{start}: the block cannot be cut as the method says"
         )
 
 
@@ -538,6 +555,6 @@ def _refuse(name: str, position: str, site: CutSite, at: Sequence[int]) -> NoRet
     strand = "forward" if site.strand == Strand.FORWARD else "reverse"
     message = (
         f"part {name!r} at position {position!r}: {site.enzyme.name} reads a site at "
-        f"{site.start} on the {strand} strand, in {where}, where the scheme expects none"
+        f"{site.start} on the {strand} strand, in {where}, where the method expects none"
     )
     raise SiteNotRemovableError(message) if coding else ValueError(message)

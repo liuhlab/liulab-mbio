@@ -5,6 +5,9 @@ search:
 
 # The scheme is data the user supplies, and the paper's is a worked example
 
+**Superseded by `docs/adr/0010-method-in-code.md`.** synbio is the method, so there is no general
+path for a default to stop exercising, and the argument below inverts.
+
 The positions, the enzymes that cut internally, externally and bluntly, the stuffers, the cloning
 scar and the barcode length are one scheme object, loaded from JSON the user supplies and validated
 as it is loaded. The scheme the paper used ships as a worked example under `docs/`, with its values
@@ -36,6 +39,5 @@ every signature above them has assumed one scheme.
 ## Consequences
 
 The pipeline cannot run without a scheme file, and the worked example is what a user copies and
-edits. An invalid scheme fails where it is loaded and not at the bench. An agent can read the
-scheme and show the user what a design assumed. Being documentation rather than package data, the
-example owes no builder in `scripts/`.
+edits. An invalid scheme fails where it is loaded and not at the bench. Being documentation
+rather than package data, the example owes no builder in `scripts/`.

@@ -1,0 +1,20 @@
+{
+  "name": "AP-1 DESynR",
+  "positions": [
+    "N",
+    "DBD",
+    "C"
+  ],
+  "parts": "parts.fasta",
+  "vector": "vector.gb",
+  "host": "human",
+  "oligo_length": 350,
+  "batch_size": 96,
+  "coverage": 300,
+  "seed": 0,
+  "reserved_extra": [],
+  "barcode": {
+    "length": 11,
+    "min_distance": 3
+  }
+}

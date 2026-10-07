@@ -1,6 +1,6 @@
 """Accepting a destination vector, and making one that is not compatible.
 
-Every scheme here is laid out from the shipped enzyme definitions: the internal stuffer puts that
+Every method here is laid out from the shipped enzyme definitions: the internal stuffer puts that
 enzyme's two sites where its own cut offsets ask for them, so the overhangs a test asserts are read
 back off the DNA rather than copied from whatever wrote it.
 """
@@ -20,7 +20,7 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_synbio.library.scheme import Position, Scheme
+from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.vector import destination_vector
 
 #: The jobs the test schemes give their enzymes. All four are free of sites in pUC19.
@@ -29,8 +29,8 @@ EXTERNAL = "PaqCI"
 CORE_CHOPPER = "SrfI"
 FLANK_CHOPPER = "PmeI"
 
-#: Three entry overhangs and the cloning scar every part's 3' end leaves.
-ENTRY = ("CTCC", "GGAG", "CCGA")
+#: The overhang a part enters on, and the cloning scar every part's 3' end leaves.
+ENTRY = ("CTCC",)
 SCAR = "AGCG"
 
 #: A stretch of pUC19 annotated by no feature, between the lac promoter and the origin.
@@ -38,7 +38,7 @@ GAP = (600, 700)
 
 
 def pad(length: int) -> str:
-    """`length` bases spelling no site any of the schemes' enzymes reads."""
+    """`length` bases spelling no site any of the methods' enzymes reads."""
     return ("TA" * length)[:length]
 
 
@@ -74,34 +74,26 @@ def external_3(cutter: Enzyme, chopper: Enzyme) -> str:
 
 
 def scheme(*, internal: str = INTERNAL, **changes: Any) -> Scheme:
-    """A valid scheme of three positions, with any field replaced."""
+    """A valid method, with any field replaced."""
     cutter, chopper = get_enzyme(EXTERNAL), get_enzyme(FLANK_CHOPPER)
-    positions = tuple(
-        Position(
-            f"p{index + 1}",
-            internal_stuffer_prefix=ENTRY[(index + 1) % len(ENTRY)],
-            external_stuffer_5=external_5(overhang, cutter, chopper),
-            external_stuffer_3=external_3(cutter, chopper),
-        )
-        for index, overhang in enumerate(ENTRY)
-    )
     fields: dict[str, Any] = {
-        "positions": positions,
         "internal_enzyme": internal,
         "external_enzyme": EXTERNAL,
         "blunt_enzymes": (CORE_CHOPPER, FLANK_CHOPPER),
+        "internal_stuffer_prefix": ENTRY[0],
         "internal_stuffer_core": core(get_enzyme(internal), get_enzyme(CORE_CHOPPER)),
+        "external_stuffer_5": external_5(ENTRY[0], cutter, chopper),
+        "external_stuffer_3": external_3(cutter, chopper),
         "cloning_scar": SCAR,
-        "barcode_length": 11,
     }
     fields.update(changes)
     return Scheme("test", **fields)
 
 
 def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
-    """A circular vector already carrying the scheme's internal stuffer."""
+    """A circular vector already carrying the method's internal stuffer."""
     return SequenceRecord(
-        pad(flank) + made.internal_stuffer(-1) + pad(flank),
+        pad(flank) + made.internal_stuffer + pad(flank),
         topology="circular",
         name="carrier",
     )
@@ -116,7 +108,7 @@ def test_a_vector_carrying_a_stuffer_is_accepted_unchanged():
     assert taken.record is vector
     assert taken.edit is None
     excised = vector.extract(taken.stuffer)
-    assert excised.startswith(made.entry_overhang(0))
+    assert excised.startswith(made.entry_overhang)
     assert vector.sequence[taken.stuffer.end : taken.stuffer.end + len(SCAR)] == made.scar_overhang
 
 
@@ -128,12 +120,12 @@ def test_a_stuffer_across_the_origin_is_found_where_it_lies():
 
     assert taken.stuffer.end > len(vector)
     assert taken.record is vector
-    assert vector.extract(taken.stuffer).startswith(made.entry_overhang(0))
+    assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
 
 
 def test_puc19_is_made_compatible_at_a_named_span(puc19):
     made = scheme()
-    stuffer = made.internal_stuffer(-1)
+    stuffer = made.internal_stuffer
 
     taken = destination_vector(puc19, made, site=GAP)
 

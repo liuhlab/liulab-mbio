@@ -1,11 +1,10 @@
 """Planning a whole library: the way in, the files it writes, and the vector-standard seam.
 
-The scheme is the worked example a user supplies, and the part lists are three of two members,
-so a whole build stays small enough for the gate.
+The method is `IGGA` and the project is written into a temporary directory, as a user writes one.
+The part lists are three of two members, so a whole build stays small enough for the gate.
 """
 
 import dataclasses
-from pathlib import Path
 from typing import cast
 
 import pytest
@@ -15,7 +14,9 @@ from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_
 from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import digest
+from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import reverse_translate
+from liulab_synbio.library.method import IGGA
 from liulab_synbio.library.plan import (
     BARCODE_FILE,
     CHANGE_FILE,
@@ -24,15 +25,16 @@ from liulab_synbio.library.plan import (
     plan_library,
     read_part_lists,
 )
+from liulab_synbio.library.project import Project
 from liulab_synbio.library.rounds import ROUND_FILE
-from liulab_synbio.library.scheme import read_scheme
-
-EXAMPLE = Path(__file__).parents[3] / "docs" / "examples" / "protein-library" / "scheme.json"
 
 HOST = "e-coli-k12"
 COVERAGE = 10.0
 
-#: Three part lists of two members, each name saying which of the scheme's positions it fills.
+#: The positions one build fills, named so a record's own name says which it belongs to.
+POSITIONS = ("N", "bZIP", "C")
+
+#: Three part lists of two members, each name saying which position it fills.
 LISTS = (
     {"N_a": "MKTAEK", "N_b": "MKTCEK"},
     {"bZIP_a": "WQAFAK", "bZIP_b": "WQAYAK"},
@@ -41,32 +43,65 @@ LISTS = (
 
 
 def pad(length: int) -> str:
-    """`length` bases spelling no site any of the scheme's enzymes reads."""
+    """`length` bases spelling no site any of the method's enzymes reads."""
     return ("TA" * length)[:length]
 
 
-@pytest.fixture(scope="module")
-def scheme():
-    return read_scheme(EXAMPLE)
-
-
-@pytest.fixture(scope="module")
-def carrier(scheme):
-    """A circular vector already carrying the scheme's own terminal internal stuffer."""
-    return SequenceRecord(
-        pad(80) + scheme.internal_stuffer(-1) + pad(80), topology="circular", name="carrier"
+def fasta(lists=LISTS) -> str:
+    """These part lists as one FASTA, each record named for the position it fills."""
+    return "".join(
+        f">{name} a description\n{sequence}\n" for one in lists for name, sequence in one.items()
     )
 
 
 @pytest.fixture(scope="module")
-def bare():
-    """A circular vector carrying no internal stuffer at all."""
-    return SequenceRecord(pad(200), topology="circular", name="bare")
+def scheme():
+    return IGGA
 
 
 @pytest.fixture(scope="module")
-def plan(scheme, carrier):
-    return plan_library(LISTS, scheme, carrier, host=HOST, coverage=COVERAGE)
+def inputs(tmp_path_factory, scheme):
+    """A parts FASTA, a vector already carrying a stuffer, and a bare one, all on disk."""
+    out = tmp_path_factory.mktemp("inputs")
+    (out / "parts.fasta").write_text(fasta(), encoding="utf-8")
+    write_dna(
+        SequenceRecord(
+            pad(80) + scheme.internal_stuffer + pad(80), topology="circular", name="carrier"
+        ),
+        out / "carrier.dna",
+    )
+    write_dna(
+        SequenceRecord(pad(200), topology="circular", name="bare"),
+        out / "bare.dna",
+    )
+    return out
+
+
+def project(inputs, *, vector: str = "carrier.dna") -> Project:
+    """The project a test plans, naming the inputs written into `inputs`."""
+    return Project(
+        "library",
+        positions=POSITIONS,
+        parts=inputs / "parts.fasta",
+        vector=inputs / vector,
+        host=HOST,
+        oligo_length=350,
+        batch_size=96,
+        coverage=COVERAGE,
+    )
+
+
+@pytest.fixture(scope="module")
+def carrier(inputs):
+    """The vector the plan was made from, as the plan read it."""
+    from liulab_mbio.io import read_record
+
+    return read_record(inputs / "carrier.dna")
+
+
+@pytest.fixture(scope="module")
+def plan(inputs):
+    return plan_library(project(inputs), parts=LISTS)
 
 
 @pytest.fixture(scope="module")
@@ -79,8 +114,8 @@ def protocol(plan):
     return plan.protocol()
 
 
-def test_one_call_plans_every_round_and_every_part(plan, scheme):
-    assert len(plan.rounds) == scheme.position_count == 3
+def test_one_call_plans_every_round_and_every_part(plan):
+    assert len(plan.rounds) == len(POSITIONS) == 3
     assert len(plan.parts) == sum(len(one) for one in LISTS) == 6
     assert plan.constructs == 8
     assert [one.position for one in plan.rounds] == ["N", "bZIP", "C"]
@@ -151,9 +186,9 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
 def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spells(
     plan, scheme, carrier
 ):
-    assert plan.destination.record is carrier
+    assert plan.destination.record.sequence == carrier.sequence
     assert plan.destination.edit is None
-    assert plan.standard.entry_overhangs[0] == scheme.entry_overhang(0)
+    assert plan.standard.entry_overhangs[0] == scheme.entry_overhang
     excised = [
         piece
         for piece in digest(carrier, scheme.internal)
@@ -163,11 +198,10 @@ def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spell
     assert len(excised) == 1
 
 
-def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, bare):
-    made = plan_library(LISTS, scheme, bare, host=HOST, coverage=COVERAGE, site=(100, 140))
+def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, inputs):
+    made = plan_library(project(inputs, vector="bare.dna"), parts=LISTS, site=(100, 140))
 
     assert made.destination.edit is not None
-    assert made.destination.record is not bare
     opened = [
         piece
         for piece in digest(made.destination.record, scheme.internal)
@@ -197,7 +231,7 @@ def test_the_plan_s_status_is_the_worst_over_every_round_s_checks(plan):
     assert next(one for one in broken.checks if one.name == "round 3 opens").status == "fail"
 
 
-def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(scheme, carrier, plan):
+def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(inputs, plan):
     # Coded for another host, so every codon differs from the one this host would have written.
     supplied = {
         name: reverse_translate(protein, host="human")
@@ -206,7 +240,7 @@ def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(scheme,
     }
     lists = tuple({name: supplied[name] for name in one} for one in LISTS)
 
-    made = plan_library(lists, scheme, carrier, host=HOST, coverage=COVERAGE, kind="dna")
+    made = plan_library(project(inputs), parts=lists, kind="dna")
 
     assert [one.protein for one in made.parts] == [one.protein for one in plan.parts]
     # The bases handed over are the ones kept; which codons survive is `design_parts`'s promise.
@@ -217,74 +251,70 @@ def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(scheme,
         assert part.coding_sequence in supplied[part.name] or part.changes
 
 
-def test_dna_that_is_not_a_coding_sequence_is_refused(scheme, carrier):
+def test_dna_that_is_not_a_coding_sequence_is_refused(inputs):
     lists = ({"N_a": "ATGAA", "N_b": "ATGAAA"}, LISTS[1], LISTS[2])
 
     with pytest.raises(ValueError, match="part 'N_a' is not a coding sequence"):
-        plan_library(lists, scheme, carrier, host=HOST, coverage=COVERAGE, kind="dna")
+        plan_library(project(inputs), parts=lists, kind="dna")
 
 
-def test_a_stop_inside_a_coded_part_is_refused(scheme, carrier):
+def test_a_stop_inside_a_coded_part_is_refused(inputs):
     lists = ({"N_a": "ATGTAAAAA", "N_b": "ATGAAAAAA"}, LISTS[1], LISTS[2])
 
     with pytest.raises(ValueError, match="part 'N_a' spells a stop"):
-        plan_library(lists, scheme, carrier, host=HOST, coverage=COVERAGE, kind="dna")
+        plan_library(project(inputs), parts=lists, kind="dna")
 
 
-def test_a_fasta_is_sorted_into_one_part_list_a_position(scheme, tmp_path):
+def test_a_fasta_is_sorted_into_one_part_list_a_position(tmp_path):
     path = tmp_path / "parts.fasta"
-    path.write_text(
-        "".join(
-            f">{name} a description\n{protein}\n" for one in LISTS for name, protein in one.items()
-        )
-    )
+    path.write_text(fasta())
 
-    lists = read_part_lists(path, scheme)
+    lists = read_part_lists(path, POSITIONS)
 
     assert [sorted(one) for one in lists] == [sorted(one) for one in LISTS]
 
 
-def test_a_name_that_says_no_position_is_refused_naming_it(scheme, tmp_path):
+def test_a_name_that_says_no_position_is_refused_naming_it(tmp_path):
     path = tmp_path / "parts.fasta"
     path.write_text(">Q_zero\nMKTAEK\n")
 
     with pytest.raises(ValueError, match="the name 'Q_zero' says no position"):
-        read_part_lists(path, scheme)
+        read_part_lists(path, POSITIONS)
 
 
-def test_a_name_that_says_two_positions_is_refused_as_ambiguous(scheme, tmp_path):
+def test_a_name_that_says_two_positions_is_refused_as_ambiguous(tmp_path):
     path = tmp_path / "parts.fasta"
     path.write_text(">N_C_both\nMKTAEK\n")
 
     with pytest.raises(ValueError, match="says 2 positions"):
-        read_part_lists(path, scheme)
+        read_part_lists(path, POSITIONS)
 
 
-def test_a_position_no_record_names_is_refused(scheme, tmp_path):
+def test_a_position_no_record_names_is_refused(tmp_path):
     path = tmp_path / "parts.fasta"
     path.write_text(">N_a\nMKTAEK\n>bZIP_a\nWQAFAK\n")
 
     with pytest.raises(ValueError, match="no record names position"):
-        read_part_lists(path, scheme)
+        read_part_lists(path, POSITIONS)
 
 
-def test_one_name_cannot_fill_two_part_lists(scheme, carrier):
+def test_one_name_cannot_fill_two_part_lists(inputs):
     lists = (LISTS[0], LISTS[1], {"N_a": "MKTHGK", "C_b": "MKTWGK"})
 
     with pytest.raises(ValueError, match="names a part in two part lists"):
-        plan_library(lists, scheme, carrier, host=HOST, coverage=COVERAGE)
+        plan_library(project(inputs), parts=lists)
 
 
-def test_part_lists_must_be_one_a_position(scheme, carrier):
+def test_part_lists_must_be_one_a_position(inputs):
     with pytest.raises(ValueError, match="part list"):
-        plan_library(LISTS[:2], scheme, carrier, host=HOST, coverage=COVERAGE)
+        plan_library(project(inputs), parts=LISTS[:2])
 
 
-def test_a_kind_that_is_neither_is_refused(scheme, carrier):
+def test_a_kind_that_is_neither_is_refused(inputs):
     # Cast deliberately: the annotation already forbids this, and the runtime guard is what a
     # caller reaching the function from the command line or from JSON actually meets.
     with pytest.raises(ValueError, match="kind is 'protein' or 'dna'"):
-        plan_library(LISTS, scheme, carrier, host=HOST, coverage=COVERAGE, kind=cast(Kind, "rna"))
+        plan_library(project(inputs), parts=LISTS, kind=cast(Kind, "rna"))
 
 
 def test_each_round_is_sized_for_the_coverage_asked_for(plan):

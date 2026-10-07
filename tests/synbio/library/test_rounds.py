@@ -1,6 +1,6 @@
 """What one round joins, what the records annotate, and what a mismatch is refused with.
 
-The scheme here is laid out from the shipped enzyme definitions: each stuffer puts an enzyme's
+The method here is laid out from the shipped enzyme definitions: each stuffer puts an enzyme's
 site at the offset that enzyme's own cut offsets ask for, so every overhang a test asserts is read
 back off the DNA rather than copied from whatever wrote it. Position one's entry overhang is
 pinned, which is what keeps the vector's own stuffer and the parts speaking the same standard.
@@ -16,7 +16,8 @@ from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
-from liulab_synbio.library.parts import design_parts
+from liulab_synbio.library.method import Scheme
+from liulab_synbio.library.parts import barcode_rules, design_parts
 from liulab_synbio.library.rounds import (
     PRODUCT_FILE,
     ROUND_FILE,
@@ -25,7 +26,6 @@ from liulab_synbio.library.rounds import (
     representative,
     write_records,
 )
-from liulab_synbio.library.scheme import Position, Scheme
 from liulab_synbio.library.standard import design_standard
 
 #: The jobs the test scheme gives its enzymes.
@@ -34,11 +34,16 @@ EXTERNAL = "BbsI"
 CORE_CHOPPER = "SrfI"
 FLANK_CHOPPER = "PmeI"
 
-#: Three entry overhangs and the cloning scar every part's 3' end leaves.
-ENTRY = ("CTCC", "GGAG", "CCGA")
+#: The positions one build fills, the overhang a part enters on, and the cloning scar its 3' end
+#: leaves. Every position carries the method's own stuffers, so one entry overhang is stated.
+POSITIONS = ("p1", "p2", "p3")
+ENTRY = ("CTCC",)
 SCAR = "AGCG"
 
 HOST = "e-coli-k12"
+
+#: How many bases name one part, as a project states.
+BARCODE = 11
 
 #: Three part lists, two members each, so a whole build stays small.
 LISTS = (
@@ -49,7 +54,7 @@ LISTS = (
 
 
 def pad(length: int) -> str:
-    """`length` bases spelling no site any of the scheme's enzymes reads."""
+    """`length` bases spelling no site any of the method's enzymes reads."""
     return ("TA" * length)[:length]
 
 
@@ -78,55 +83,39 @@ def external_3(cutter: Enzyme, chopper: Enzyme) -> str:
     return SCAR + reach + reverse_complement(cutter.site) + pad(3) + chopper.site + pad(3)
 
 
-def positions(terminal_prefix: str = "") -> tuple[Position, ...]:
-    """One position an entry overhang, each admitting the next and the last admitting the first.
+def scheme(**changes: Any) -> Scheme:
+    """A valid method, with any field replaced.
 
-    The terminal prefix is longer than an overhang, which is what buys the frame back over a
+    The stuffer prefix is longer than an overhang, which is what buys the frame back over the
     stuffer the product keeps whole.
     """
     cutter, chopper = get_enzyme(EXTERNAL), get_enzyme(FLANK_CHOPPER)
-    made: list[Position] = []
-    for index, overhang in enumerate(ENTRY):
-        following = ENTRY[(index + 1) % len(ENTRY)]
-        terminal = index == len(ENTRY) - 1
-        prefix = (terminal_prefix or pad(1) + following) if terminal else following
-        made.append(
-            Position(
-                f"p{index + 1}",
-                internal_stuffer_prefix=prefix,
-                external_stuffer_5=external_5(overhang, cutter, chopper),
-                external_stuffer_3=external_3(cutter, chopper),
-            )
-        )
-    return tuple(made)
-
-
-def scheme(**changes: Any) -> Scheme:
-    """A valid scheme of three positions, with any field replaced."""
     fields: dict[str, Any] = {
-        "positions": positions(),
         "internal_enzyme": INTERNAL,
         "external_enzyme": EXTERNAL,
         "blunt_enzymes": (CORE_CHOPPER, FLANK_CHOPPER),
+        "internal_stuffer_prefix": pad(1) + ENTRY[0],
         "internal_stuffer_core": core(get_enzyme(INTERNAL), get_enzyme(CORE_CHOPPER)),
+        "external_stuffer_5": external_5(ENTRY[0], cutter, chopper),
+        "external_stuffer_3": external_3(cutter, chopper),
         "cloning_scar": SCAR,
-        "barcode_length": 11,
     }
     fields.update(changes)
     return Scheme("test", **fields)
 
 
 def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
-    """A circular vector already carrying the scheme's terminal internal stuffer."""
+    """A circular vector already carrying the method's internal stuffer."""
     return SequenceRecord(
-        pad(flank) + made.internal_stuffer(-1) + pad(flank), topology="circular", name="carrier"
+        pad(flank) + made.internal_stuffer + pad(flank), topology="circular", name="carrier"
     )
 
 
 def built(made: Scheme):
     """The standard and the parts one build works from, position one's overhang pinned."""
-    one = design_standard(made, LISTS, pinned={"p1": ENTRY[0]})
-    return one, design_parts(made, LISTS, one, host=HOST)
+    one = design_standard(made, POSITIONS, LISTS, pinned={"p1": ENTRY[0]})
+    rules = barcode_rules(made, BARCODE)
+    return one, design_parts(made, POSITIONS, LISTS, one, host=HOST, rules=rules)
 
 
 def same_circle(one: SequenceRecord, other: SequenceRecord) -> bool:
@@ -151,7 +140,7 @@ def standard(build):
 
 @pytest.fixture(scope="module")
 def parts(build, made):
-    return representative(build[1], made)
+    return representative(build[1], POSITIONS)
 
 
 @pytest.fixture(scope="module")
@@ -161,7 +150,7 @@ def vector(made):
 
 @pytest.fixture(scope="module")
 def rounds(vector, parts, made):
-    return assemble_rounds(vector, parts, made, name="library")
+    return assemble_rounds(vector, parts, made, POSITIONS, name="library")
 
 
 def test_a_round_replaces_the_destination_s_stuffer_with_the_part(vector, parts, made):
@@ -210,7 +199,8 @@ def test_each_round_appends_its_barcode_to_the_front_of_the_block(rounds, parts,
         assert block == SCAR.join(part.barcode for part in reversed(parts[:number]))
         assert one.block.end - one.block.start == len(block)
     # Three barcodes and two scars: the vector's own barcode is not one of them.
-    assert len(rounds[-1].product.extract(rounds[-1].block)) == made.barcode_block_length == 41
+    block = made.barcode_block_length(BARCODE, len(POSITIONS))
+    assert len(rounds[-1].product.extract(rounds[-1].block)) == block == 41
 
 
 def test_the_retained_region_is_frame_correct_and_free_of_in_phase_stops(rounds, made):
@@ -218,7 +208,7 @@ def test_the_retained_region_is_frame_correct_and_free_of_in_phase_stops(rounds,
 
     bases = final.product.extract(final.retained)
 
-    assert len(bases) == made.retained_length
+    assert len(bases) == made.retained_length(BARCODE, len(POSITIONS))
     assert len(bases) % 3 == 0
     assert "*" not in translate(bases)
     assert final["reading frame"].status == "pass"
@@ -227,10 +217,10 @@ def test_the_retained_region_is_frame_correct_and_free_of_in_phase_stops(rounds,
 
 def test_a_stop_in_the_retained_region_is_reported_rather_than_hidden():
     # A terminal prefix spelling TGA where the product reads through it, which nothing excises.
-    stopping = scheme(positions=positions(terminal_prefix="TGAT" + ENTRY[0]))
+    stopping = scheme(internal_stuffer_prefix="TGAT" + ENTRY[0])
     parts = built(stopping)[1]
 
-    made = assemble_rounds(carrier(stopping), representative(parts, stopping), stopping)
+    made = assemble_rounds(carrier(stopping), representative(parts, POSITIONS), stopping, POSITIONS)
 
     final = made[-1]
     assert translate(final.product.extract(final.retained)).startswith("*")
@@ -302,7 +292,7 @@ def test_a_stuffer_across_the_origin_is_opened_where_it_lies(vector, parts, made
     turned = rotate(vector, 90)
     assert turned.sequence != vector.sequence
 
-    made_rounds = assemble_rounds(turned, parts, made)
+    made_rounds = assemble_rounds(turned, parts, made, POSITIONS)
 
     assert same_circle(made_rounds[-1].product, rounds[-1].product)
     final = made_rounds[-1]
@@ -310,14 +300,14 @@ def test_a_stuffer_across_the_origin_is_opened_where_it_lies(vector, parts, made
     assert final.status == "pass"
 
 
-def test_parts_out_of_the_scheme_s_order_are_refused(vector, parts, made):
-    with pytest.raises(ValueError, match="the rounds run in the scheme's own order"):
-        assemble_rounds(vector, (parts[1], parts[0], parts[2]), made)
+def test_parts_out_of_the_build_s_order_are_refused(vector, parts, made):
+    with pytest.raises(ValueError, match="the rounds run in the build's own order"):
+        assemble_rounds(vector, (parts[1], parts[0], parts[2]), made, POSITIONS)
 
 
 def test_one_part_a_position_is_required(vector, parts, made):
     with pytest.raises(ValueError, match="one a round"):
-        assemble_rounds(vector, parts[:2], made)
+        assemble_rounds(vector, parts[:2], made, POSITIONS)
 
 
 def test_a_linear_destination_is_refused(vector, parts, made):
@@ -330,7 +320,7 @@ def test_a_linear_destination_is_refused(vector, parts, made):
 def test_a_representative_needs_a_part_for_every_position(build, made):
     # Both of these fill position one, so nothing is left to fill position two.
     with pytest.raises(ValueError, match="no part fills position 'p2'"):
-        representative(build[1][:2], made)
+        representative(build[1][:2], POSITIONS)
 
 
 def test_no_round_is_nothing_to_write(tmp_path):

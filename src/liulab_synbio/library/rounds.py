@@ -38,8 +38,8 @@ from liulab_mbio.sequence import (
 from liulab_mbio.sites import Fragment, digest, find_sites
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
+from liulab_synbio.library.method import Scheme
 from liulab_synbio.library.parts import Part
-from liulab_synbio.library.scheme import Scheme
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `liulab_mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -60,7 +60,9 @@ class Round:
     part
         The member of this round's part list that the record represents.
     scheme
-        The architecture the build is given, which says which enzyme does which job.
+        The method the build is given, which says which enzyme does which job.
+    terminal
+        Whether this is the last round, whose stuffer the product keeps.
     destination
         The library the round opened: the vector for the first round, the round before's product
         after that.
@@ -91,6 +93,7 @@ class Round:
     part: Part
     _: KW_ONLY
     scheme: Scheme
+    terminal: bool
     destination: SequenceRecord
     product: SequenceRecord
     released: Fragment
@@ -119,16 +122,12 @@ class Round:
         return self.released.right_overhang
 
     @property
-    def terminal(self) -> bool:
-        """Whether this is the last round, whose stuffer the product keeps."""
-        return self.part.index == self.scheme.position_count - 1
-
-    @property
     def retained(self) -> Segment:
         """What the product keeps past this round's part: its stuffer and the barcode block.
 
         After the terminal round this is the region the whole construct reads through, and its
-        length is the scheme's `liulab_synbio.library.scheme.Scheme.retained_length`.
+        length is the method's
+        `liulab_synbio.library.method.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
         return _span(self.coding.end, carried + _length(self.block), len(self.product))
@@ -232,11 +231,12 @@ def assemble_round(
     scheme: Scheme,
     *,
     number: int = 1,
+    terminal: bool = False,
     name: str = "",
 ) -> Round:
     """Open `destination`, release `part` from its block, and ligate the two into one circle.
 
-    Both digests are simulated with the enzyme that does the joining; the scheme's blunt enzymes
+    Both digests are simulated with the enzyme that does the joining; the method's blunt enzymes
     cut only the pieces the round throws away, so the product is the same with or without them.
 
     Parameters
@@ -247,9 +247,11 @@ def assemble_round(
     part
         The part this round appends, as `liulab_synbio.library.parts.design_parts` built it.
     scheme
-        The architecture the build is given.
+        The method the build is given.
     number
         Which round this is, counting from one. The barcode block's length is counted from it.
+    terminal
+        Whether this is the last round, after which the product reads through what it keeps.
     name
         What to call the product; the round number is added to it.
 
@@ -262,10 +264,10 @@ def assemble_round(
     ------
     ValueError
         If `destination` is not circular, if the external enzyme does not release one part from
-        the block, if the part does not carry its barcode where the scheme puts it, or if the two
+        the block, if the part does not carry its barcode where the method puts it, or if the two
         molecules do not present the same pair of overhangs — which names both.
     KeyError
-        If the scheme names an enzyme this package does not ship.
+        If the method names an enzyme this package does not ship.
     """
     if destination.topology != "circular":
         raise ValueError(
@@ -292,7 +294,7 @@ def assemble_round(
     barcode = _span(moved(barcode_at), len(part.barcode), total)
     block = _span(
         barcode.start,
-        number * scheme.barcode_length + (number - 1) * len(scheme.cloning_scar),
+        number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar),
         total,
     )
     entry = _span(at, len(released.left_overhang), total)
@@ -304,6 +306,7 @@ def assemble_round(
         number,
         part,
         scheme=scheme,
+        terminal=terminal,
         destination=destination,
         product=ordered(
             dataclasses.replace(product, name=titled, features=(*product.features, *drawn, *joins))
@@ -324,6 +327,7 @@ def assemble_rounds(
     destination: SequenceRecord,
     parts: Sequence[Part],
     scheme: Scheme,
+    positions: Sequence[str],
     *,
     name: str = "",
 ) -> tuple[Round, ...]:
@@ -336,7 +340,9 @@ def assemble_rounds(
     parts
         One part a position, in the order the rounds fill them: `representative` picks a set.
     scheme
-        The architecture the build is given.
+        The method the build is given.
+    positions
+        The positions, in that same order.
     name
         What to call each product; the round number is added to it.
 
@@ -349,20 +355,29 @@ def assemble_rounds(
     Raises
     ------
     ValueError
-        If the parts are not one a position in the scheme's own order, or for any reason
+        If the parts are not one a position in the build's own order, or for any reason
         `assemble_round` refuses.
     KeyError
-        If the scheme names an enzyme this package does not ship.
+        If the method names an enzyme this package does not ship.
     """
-    _check_parts(parts, scheme)
+    _check_parts(parts, positions)
     made: list[Round] = []
     for number, part in enumerate(parts, start=1):
-        made.append(assemble_round(destination, part, scheme, number=number, name=name))
+        made.append(
+            assemble_round(
+                destination,
+                part,
+                scheme,
+                number=number,
+                terminal=number == len(parts),
+                name=name,
+            )
+        )
         destination = made[-1].product
     return tuple(made)
 
 
-def representative(parts: Sequence[Part], scheme: Scheme) -> tuple[Part, ...]:
+def representative(parts: Sequence[Part], positions: Sequence[str]) -> tuple[Part, ...]:
     """Pick one part a position, the first of each part list, in the order the rounds run.
 
     Every member of a part list carries the same stuffers and differs only in what it codes for
@@ -372,13 +387,13 @@ def representative(parts: Sequence[Part], scheme: Scheme) -> tuple[Part, ...]:
     Raises
     ------
     ValueError
-        If no part fills one of the scheme's positions.
+        If no part fills one of the positions.
     """
     chosen: list[Part] = []
-    for index, position in enumerate(scheme.positions):
+    for index, position in enumerate(positions):
         found = next((part for part in parts if part.index == index), None)
         if found is None:
-            raise ValueError(f"no part fills position {position.name!r}")
+            raise ValueError(f"no part fills position {position!r}")
         chosen.append(found)
     return tuple(chosen)
 
@@ -418,19 +433,19 @@ def _span(start: int, length: int, total: int) -> Segment:
     return Segment(first, first + length)
 
 
-def _check_parts(parts: Sequence[Part], scheme: Scheme) -> None:
+def _check_parts(parts: Sequence[Part], positions: Sequence[str]) -> None:
     """Refuse parts that are not one a position, in the order the rounds fill them."""
-    if len(parts) != scheme.position_count:
-        names = ", ".join(position.name for position in scheme.positions)
+    if len(parts) != len(positions):
+        names = ", ".join(positions)
         raise ValueError(
-            f"this scheme has {scheme.position_count} position(s) — {names} — and "
+            f"this build has {len(positions)} position(s) — {names} — and "
             f"{len(parts)} part(s) were given, one a round"
         )
     for index, part in enumerate(parts):
         if part.index != index:
             raise ValueError(
                 f"part {part.name!r} fills position {part.position!r}, which is not position "
-                f"{scheme.positions[index].name!r}: the rounds run in the scheme's own order"
+                f"{positions[index]!r}: the rounds run in the build's own order"
             )
 
 
@@ -454,7 +469,7 @@ def _released(donor: SequenceRecord, part: Part, scheme: Scheme) -> Fragment:
         raise ValueError(
             f"{scheme.external.name} releases {len(pieces)} piece(s) with an overhang at each end "
             f"from part {part.name!r}, where one of them is the part: the block was not built for "
-            "this scheme"
+            "this method"
         )
     return pieces[0]
 
@@ -524,13 +539,13 @@ def _barcode_at(part: Part, scheme: Scheme) -> int:
     Raises
     ------
     ValueError
-        If the part does not spell its barcode where its position's 3' external stuffer puts it.
+        If the part does not spell its barcode where the 3' external stuffer puts it.
     """
-    at = part.length - len(scheme.positions[part.index].external_stuffer_3) - len(part.barcode)
+    at = part.length - len(scheme.external_stuffer_3) - len(part.barcode)
     if part.sequence[at : at + len(part.barcode)] != part.barcode:
         raise ValueError(
             f"part {part.name!r} does not carry its barcode where position "
-            f"{part.position!r} puts one: the part and the scheme disagree about its block"
+            f"{part.position!r} puts one: the part and the method disagree about its block"
         )
     return at
 
