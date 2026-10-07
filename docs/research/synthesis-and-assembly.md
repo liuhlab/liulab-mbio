@@ -600,18 +600,36 @@ marker separates the two outcomes — the carrier is KanR, the working vector Am
 
 ### 6.12 When a design needs validation — DAD-GGA-DMX
 
-Cargo synthesis ends polyclonal by default and the validation section is marked optional, so
-the step that archives a design also decides whether it is ever read. No rule says when the
-option should be taken.
+**Decided in #295: polyclonal stands, and a project that wants a read names a fragment-count
+floor.** The three options this section carried were never three choices. Whether a design is
+read back is already a project choice — `CONTEXT.md` says so — so what was open was the default
+and how the project states it.
 
-| Option | Evidence |
-| --- | --- |
-| Validate every design | Lund picks four colonies per gene and sequences them all, which gave 343 of 458 genes error-free. It costs a plate of picks and one read per design. |
-| Validate above a fragment count | The only measured anchor: Lund's designs with a perfect clone run 100% at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40.0% at 12 and 0% at 16. A gene in few pieces rarely needs the read; one in many rarely has a clean clone to find. |
-| Stay polyclonal throughout | What the method page does by default. The error load then rides into the assembly and is localised only by the linkage read at the end. |
+**Polyclonal by default, because the common case never reads a member.** A library headed for a
+pooled screen takes its identity from that screen's own sequencing, so a per-design read buys a
+cleaner input rather than a verdict. The Baker lab skips validation for most of its libraries for
+exactly that reason, by correspondence with the group relayed to this repo. That is **practice,
+not a rule**, which is why it sets a default and constrains nothing: Lund read all 458 of their
+genes, and the AP-1 demo reads all 72 of its designs.
 
-The fragment-count table is held in `long_fragment_GGA/README.md`, from Lund et al. It appears
-in neither the method page nor any other tracked file.
+**One fragment-count floor replaces the fork.** A project states the fragment count at or above
+which a design is read. Omitted, nothing is read; `0` reads every design. The three options
+become its three settings, so none of them has to win.
+
+**The floor is the project's number, and none ships.** Lund's curve gives a design's chance of a
+clean colony, not the chance worth paying to check. That second number needs what an error costs
+downstream, which is the screen, which the method cannot see — the same missing input that
+made #267 refuse a coverage multiple, and #299 a route threshold. A shipped floor would be an
+invented constant. The curve is what a project reads to pick the number, and the protocol prints
+it per design.
+
+**It is a per-design quantity, which is why the switch is not a boolean.** The chance runs from
+certain to hopeless across one project's own designs, so a project-wide on-off would read every
+two-fragment design that never needs it, or skip every long one that does.
+
+The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
+`liulab_synbio.dmx.CLEAN_COLONY_CURVE` carries it. #306 restores the two anchors it dropped,
+and #305 builds the floor.
 
 ### Also open, and smaller
 
