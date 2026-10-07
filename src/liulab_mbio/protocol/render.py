@@ -308,6 +308,11 @@ def _cite(citation: Citation | None) -> str:
     )
 
 
+def _after(citation: Citation | None) -> str:
+    """`_cite`, set off from the text before it; nothing when uncited."""
+    return f" {_cite(citation)}" if citation else ""
+
+
 def _slug(text: str) -> str:
     return "".join(char if char.isalnum() else "-" for char in text.casefold())
 
@@ -321,7 +326,7 @@ def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
     items = "".join(
         f'<li class="rule is-{rule.kind}"><strong>{escape(material.name)}: '
         f"{escape('never' if rule.kind == 'forbids' else 'always')} "
-        f"{escape(rule.subject)}</strong> {escape(rule.detail)} {_cite(rule.citation)}</li>"
+        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation)}</li>"
         for material, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
@@ -407,7 +412,7 @@ def _transfer(transfer: Transfer) -> str:
     )
     return (
         f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
-        f'<span class="muted">{escape(meta)}</span> {_cite(transfer.citation)}</figcaption>'
+        f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>From</th><th>To</th>'
         f'<th class="num">µL</th></tr></thead><tbody>{rows}</tbody></table></div></figure>\n'
     )
@@ -424,7 +429,7 @@ def _bill(bill: Bill | None) -> str:
         charge = (
             f'<span class="hole-none">{NO_NUMBER}</span>'
             if row.hole
-            else escape(row.charge) + " " + _cite(row.citation)
+            else escape(row.charge) + _after(row.citation)
         )
         cells = [
             f"<td>{escape(row.item)}</td>",
@@ -525,7 +530,7 @@ def _table(key: str, table: ReactionTable) -> str:
     scale = table.reactions * (1 + table.overage)
     rows = []
     for component, mix in zip(table.components, table.mix_volumes(table.reactions), strict=True):
-        cells = [f"<td>{escape(component.name)} {_cite(component.citation)}</td>"]
+        cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
         cells += [f"<td>{escape(component.stock)}</td>"] if stock else []
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
         cells.append(f'<td class="num">{_num(component.volume_ul)}</td>')
@@ -584,7 +589,7 @@ def _program(program: ThermocyclerProgram) -> str:
                 else ""
             )
             rows.append(
-                f"<tr><td>{escape(step.label)} {_cite(step.citation)}</td>"
+                f"<tr><td>{escape(step.label)}{_after(step.citation)}</td>"
                 f'<td class="num">{_num(step.temperature_c)} °C</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
