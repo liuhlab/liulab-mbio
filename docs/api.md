@@ -399,6 +399,10 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 
 ::: liulab_synbio.library.stages
 
+::: liulab_synbio.dmx
+
+::: liulab_synbio.seating
+
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
