@@ -6,6 +6,9 @@ half breaks one rule of that same design, and every break is one that was actual
 the BsmBI sites that reached designed coding regions before #220, a fragment out of frame, a
 barcode spelling a stop where the construct reads it, two barcodes inside the distance rule, and
 a block one base short of the length convention it was built to.
+
+The DMX vector is judged on its own, because no library build hands one to the gate. It is built
+here from the method's own stuffers, which is where its cassette comes from.
 """
 
 import csv
@@ -15,8 +18,16 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.io import read_record
-from liulab_mbio.sequence import SequenceRecord
-from liulab_synbio.igga.gate import Verdict, check_library, library_reactions
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from liulab_mbio.sites import CutSite
+from liulab_synbio.igga.gate import (
+    WELL_PRIMERS,
+    Verdict,
+    check_dmx_vector,
+    check_library,
+    library_reactions,
+)
+from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.project import read_project
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
@@ -27,6 +38,9 @@ INSIDE_CODING = 100
 
 #: BsmBI's recognition site, which is the one no block may spell anywhere.
 BSMBI = "CGTCTC"
+
+#: Bases spelling no site of the method's enzymes, laid round the DMX vector's cassette.
+FILLER = "ACGATCGTTA" * 20
 
 
 @pytest.fixture(scope="module")
@@ -96,6 +110,32 @@ def _codes(barcodes, position, index, code):
     changed = {name: list(found) for name, found in barcodes.items()}
     changed[position][index] = code
     return changed
+
+
+def _dmx_vector(broken=""):
+    """A DMX-shaped vector, with `broken` laid inside the forward primer's footprint.
+
+    The cassette is the method's own external stuffers, which carry a blunt site outboard of
+    each releasing site, and a primer that reads a well binds either side of it. The cargo
+    carries an internal stuffer, so the blunt site a part brings is there to be judged too.
+    """
+    forward, reverse = WELL_PRIMERS
+    cargo = FILLER[:100] + IGGA.internal_stuffer + FILLER[:100]
+    return SequenceRecord(
+        FILLER
+        + forward[:10]
+        + broken
+        + forward[10:]
+        + FILLER[:20]
+        + IGGA.external_stuffer_5
+        + cargo
+        + IGGA.external_stuffer_3
+        + FILLER[:20]
+        + reverse_complement(reverse)
+        + FILLER,
+        topology="circular",
+        name="DMX-test",
+    )
 
 
 # The known-good half.
@@ -223,3 +263,42 @@ def test_a_destination_the_round_cannot_open_cleanly_is_caught(judge, destinatio
     failed = verdict["destination opens"]
     assert failed.status == "fail"
     assert "are not cut by BbsI in the 2 places this method cuts them" in failed.check.detail
+
+
+# The DMX vector, which the validating experiment amplifies a well of.
+
+
+def test_a_blunt_site_between_a_releasing_site_and_the_primer_is_where_it_belongs(project):
+    """The two the cassette carries are judged; the one the cargo's stuffer carries is not."""
+    vector = _dmx_vector()
+    bases = str(vector.sequence)
+    forward = WELL_PRIMERS[0]
+    clear = f"{bases.index(forward) + len(forward) + 1}..{bases.index('GGTCTC')}"
+    (judged,) = check_dmx_vector(vector, project=project)
+    assert judged.status == "pass"
+    assert "GCCCGGGC" in bases
+    assert judged.check.value == bases.count("GTTTAAAC")
+    assert clear in judged.check.detail
+
+
+def test_a_blunt_site_inside_a_primers_footprint_is_caught(project):
+    vector = _dmx_vector(broken="GTTTAAAC")
+    bases = str(vector.sequence)
+    reads = WELL_PRIMERS[0][10:]
+    clear = bases.index(reads) + len(reads) + 1
+    (judged,) = check_dmx_vector(vector, project=project)
+    assert judged.status == "fail"
+    assert f"PmeI at {bases.index('GTTTAAAC') + 1}.." in judged.check.detail
+    assert f"outside {clear}.." in judged.check.detail
+    (finding,) = judged.findings
+    assert isinstance(finding, CutSite)
+    assert finding.enzyme.name == "PmeI"
+
+
+def test_a_vector_a_primer_no_longer_reads_says_so_rather_than_passing(project):
+    bases = str(_dmx_vector().sequence).replace(WELL_PRIMERS[0], FILLER[: len(WELL_PRIMERS[0])])
+    (judged,) = check_dmx_vector(
+        SequenceRecord(bases, topology="circular", name="unread"), project=project
+    )
+    assert judged.status == "fail"
+    assert "binds it in 0 place(s)" in judged.check.detail
