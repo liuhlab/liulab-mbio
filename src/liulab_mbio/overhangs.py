@@ -268,6 +268,67 @@ class FidelityReport:
 
 
 @dataclass(frozen=True, slots=True)
+class OnTarget:
+    """How often one ligase was seen joining one overhang to its own partner.
+
+    Parameters
+    ----------
+    overhang
+        The overhang, written on the top strand.
+    rate
+        Its correct Watson-Crick pair, per 100,000 ligation events.
+    floor
+        The rate it is held to.
+    """
+
+    overhang: str
+    rate: float
+    floor: float
+
+    @property
+    def weak(self) -> bool:
+        """Whether this ligase joins it below the floor."""
+        return self.rate < self.floor
+
+
+@dataclass(frozen=True, slots=True)
+class OnTargetReport:
+    """How often one ligase joins each overhang of a set, and where the numbers came from.
+
+    Fidelity asks whether a set's junctions can be told apart. This asks how often each one is
+    made at all, which is a different measurement of a different thing: a rate below the floor
+    costs correct joins, so it costs colonies rather than giving the wrong product. Nothing here
+    is a score, and nothing ranks on it.
+
+    Parameters
+    ----------
+    source
+        The conditions the profile was measured under and the file it was read from.
+    floor
+        The rate each overhang was held to.
+    rates
+        One entry per overhang, in the order given.
+    """
+
+    source: str
+    _: KW_ONLY
+    floor: float
+    rates: tuple[OnTarget, ...] = ()
+
+    @property
+    def weak(self) -> tuple[str, ...]:
+        """The overhangs this ligase joins below the floor, the worst first."""
+        return tuple(
+            one.overhang for one in sorted(self.rates, key=lambda one: one.rate) if one.weak
+        )
+
+    @property
+    def label(self) -> str:
+        """Which measurement this is, for a report printing it beside a fidelity score."""
+        return f"measured on {self.source}"
+
+
+@dataclass(frozen=True, slots=True)
 class Junction:
     """A junction as it is asked for, before anything is cut: where two parts are to meet.
 
@@ -618,6 +679,42 @@ def _by_rule(enzyme: Enzyme, chosen: Sequence[str]) -> FidelityReport:
         )
         value *= max(0.0, 1.0 - penalty)
     return FidelityReport(enzyme.name, _RULE_SOURCE, measured=False, value=value)
+
+
+def on_target(
+    overhangs: Iterable[str], profile: LigaseProfile, *, floor: float = STRONG_LIGATION
+) -> OnTargetReport:
+    """Report how often the ligase `profile` measured joined each overhang to its own partner.
+
+    A set is scored for fidelity on the enzyme's own matrix, which is T4's chemistry. A method
+    ligating with another ligase joins the same overhangs at its own rates, and the two disagree
+    most on the A/T-rich ones. This reads one cell an overhang and says which fall below `floor`,
+    so a caller holding a profile sees what the score could not. It returns no score, because
+    what is at risk is how many correct joins are made and not which product they make.
+
+    `floor` defaults to `STRONG_LIGATION`, the rate NEB's Viewer calls a Watson-Crick pair strong
+    at; `docs/research/ligation-fidelity.md` section 8 holds what it warns on.
+
+    Raises
+    ------
+    ValueError
+        If an overhang is not as long as the ones the profile covers.
+    """
+    chosen = tuple(overhang.upper() for overhang in overhangs)
+    for overhang in chosen:
+        if len(overhang) != profile.overhang_length or set(overhang) - set("ACGT"):
+            raise ValueError(
+                f"{profile.source} covers {profile.overhang_length}-base overhangs, "
+                f"and {overhang!r} is {len(overhang)}"
+            )
+    return OnTargetReport(
+        profile.source,
+        floor=floor,
+        rates=tuple(
+            OnTarget(overhang, profile.normalised(overhang, reverse_complement(overhang)), floor)
+            for overhang in chosen
+        ),
+    )
 
 
 def best_overhang(

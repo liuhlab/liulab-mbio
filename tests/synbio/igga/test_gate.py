@@ -21,6 +21,7 @@ import pytest
 
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
+from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite
 from liulab_synbio.igga.gate import (
@@ -178,6 +179,53 @@ def test_the_gate_judges_every_molecule_of_the_design(good, project):
 def test_a_fidelity_nothing_judges_carries_no_verdict(good):
     assert good["ligation fidelity"].status is None
     assert good["ligation fidelity"].check.value > 0.9
+
+
+# A ligase matrix the user holds. The rates are this file's own, chosen either side of
+# `STRONG_LIGATION`; the sheet name is the one Bilotti 2022's workbook carries, and none of
+# that workbook is here.
+AP1_OVERHANGS = ("AGGA", "AGAT", "GCAT", "TTCC")
+SHEET = "File S7. T7 PEG"
+
+
+def _t7_peg(**rates: float):
+    """A sheet of a workbook the user holds, joining each AP-1 overhang at the rate asked for.
+
+    A rate is per 100,000 events, which the filler row makes exact.
+    """
+    joined = {one: rates.get(one, 300.0) for one in AP1_OVERHANGS}
+    counts = {one: {reverse_complement(one): round(rate * 10)} for one, rate in joined.items()}
+    counts["AAAA"] = {"TTTT": 1_000_000 - sum(row[one] for row in counts.values() for one in row)}
+    return LigaseProfile(
+        Path("File S1_NAR.xlsx"),
+        conditions=SHEET,
+        overhang_length=4,
+        observations=1_000_000,
+        counts=counts,
+    )
+
+
+def test_without_a_ligase_matrix_the_ligation_is_judged_as_it_always_was(good):
+    assert "ligation on-target rate" not in {one.name for one in good.judgements}
+
+
+def test_a_ligase_matrix_adds_a_check_and_moves_the_fidelity_score_not_at_all(good, judge):
+    judged = judge(profile=_t7_peg())
+
+    assert judged["ligation fidelity"].check == good["ligation fidelity"].check
+    assert judged["ligation on-target rate"].status == "pass"
+    assert judged.status == "pass"
+
+
+def test_an_overhang_the_ligase_joins_rarely_warns_and_names_the_sheet(judge):
+    judged = judge(profile=_t7_peg(AGGA=60.8))
+
+    one = judged["ligation on-target rate"]
+    assert one.status == "warn"
+    assert "AGGA at 60.8" in one.check.detail
+    assert SHEET in one.check.detail
+    assert judged.status == "warn"
+    assert not judged.failures
 
 
 def test_the_chain_is_two_digests_and_a_ligation_a_round(project, destination, blocks, products):
