@@ -14,15 +14,24 @@ pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
 ```
 
 To change what these files say, change the code and run that command again. The same inputs
-write the same bytes, so a run that changes nothing leaves them alone.
+write the same bytes, so a run that changes nothing leaves them alone. Point the command at
+`project-route-a.json` and an `--out` of your own to see the other read-back route; the design
+is the same and only the protocol differs.
 
 ## What goes in
 
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its coverage and its barcode rules |
+| [project.json](project.json) | what this library chose: its three positions, its host, its coverage, its barcode rules, and that every design is read back by index PCR |
+| [project-route-a.json](project-route-a.json) | the same library read back by DMX barcoding instead |
 | [vector.gb](vector.gb) | the destination the first round opens |
+
+The two project files differ in one key. `route` says which of the two read-back routes reads
+the picked wells, and `validate_from` says which designs are read at all: a fragment count, at
+or above which a design is read back. Both files set it to `0`, so all 72 designs are read — 288
+wells, one 384-well pick plate and three 96-well index plates. Leave the two keys out and
+nothing is read, which is what a library headed for a pooled screen wants.
 
 The names say the position: `N_JUN` fills N, `DBD_JUN` fills DBD, `C_JUN` fills C. No overhang,
 stuffer, barcode or codon is given. The planner chooses all four.

@@ -9,6 +9,23 @@ sets one.
 
 ### Added
 
+- A library project says which of its designs are read back, and how. `validate_from` is a
+  fragment count: every design built from that many pieces or more is read back one well at a
+  time, and the rest stay polyclonal. Leave it out and nothing is read, which is the default.
+  Set it to `0` and every design is read. There is no shipped floor — the measured curve gives a
+  design's chance of a clean colony, not the chance worth paying to check. `route` says which of
+  the two read-back routes reads the wells, `"A"` for DMX barcoding or `"B"` for index PCR, and
+  the two keys are stated together. The protocol prints each design's chance beside the floor, so
+  the number reads as a choice.
+- The bench is sized from the designs actually read. The picked plates, Route A's compression
+  into 1536 wells, Route B's index plates and the reagents all follow from that set, so a design
+  the floor leaves out costs no well. Picking fills one quarter of a picked plate at a time, which
+  is what makes a part-filled plate give full index plates: the AP-1 demo's 288 wells give three
+  index plates at 96, not four at 72. `liulab_mbio.bench.plates.interleave` is the general move
+  behind it.
+- The AP-1 example ships a project file for each route, `project.json` and
+  `project-route-a.json`, over one set of parts. A second project is a second set of input files
+  and never a second branch in the code.
 - Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
   cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
   is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the

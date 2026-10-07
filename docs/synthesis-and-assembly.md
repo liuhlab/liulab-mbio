@@ -252,8 +252,8 @@ prep for the set. No per-well normalisation.
 ### Cargo validation (optional)
 
 The cargo sits in the DMX vector either way; this section only reads each well. Identity stays
-with well position throughout. Choose the route per project: at or below one plate of samples,
-index PCR; above it, DMX barcoding.
+with well position throughout. Choose the route per project. Each route states its own capacity
+below, and a project that reads designs back names one.
 
 **Which designs are read.** None, unless the project asks. A library headed for a pooled screen
 takes its identity from that screen, so most libraries are never read back one design at a time.

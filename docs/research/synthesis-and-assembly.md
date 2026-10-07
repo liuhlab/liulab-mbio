@@ -663,8 +663,8 @@ and #305 builds the floor.
   splits first.
   Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
 - **The read-out route** — DAD-GGA-DMX. **Decided in #260: the toolkit models both**, as two
-  marking steps behind one judgement, and the threshold stands — at or below one plate of
-  samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed to the
+  marking steps behind one judgement, and in #299: nothing picks between them, so a project
+  names its route. The capacity ceiling once attributed to the
   primer set is wrong: forward and reverse barcodes combine freely and no dual index is needed,
   so Route B reaches 9,216 wells on 192 owned primers and Route A 24⁴ on the kit, and what binds
   either is the flow cell and one reaction per well.

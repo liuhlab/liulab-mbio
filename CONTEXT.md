@@ -581,6 +581,16 @@ cargo an **iGGA** round consumes is made here.
 _Avoid_: cargo pipeline, DMX, the validation pipeline
 _Package_: liulab_synbio
 
+### Validation floor
+
+The **fragment count** at or above which a design is read back one well at a time. A project
+states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
+reads every design. No floor ships, because the measured curve gives a design's chance of a clean
+colony and not the chance worth paying to check. A project that states one also names which of
+the two marking routes reads its wells.
+_Avoid_: validation threshold, QC cutoff, validation level
+_Package_: liulab_synbio
+
 ### iGGA
 
 The pooled experiment built from the parts DAD-GGA-DMX synthesised: **rounds** of Golden Gate,

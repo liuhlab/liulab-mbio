@@ -444,9 +444,11 @@ Route: **index PCR**, the method page's Route B.
 
 - Four colonies picked per part, which is Lund's anchor and the only one measured: 343 of 458
   genes error-free at four colonies.
-- 72 parts × 4 = **288 wells**, which is one 384-well pick plate and three 96-well index plates.
-  288 ≤ 384, so the route rule — at or below one plate of samples, index PCR — puts this project
-  on index PCR (**derived**).
+- 72 parts × 4 = **288 wells**, which is one 384-well pick plate and three 96-well index plates
+  (**derived**). Picking fills a quarter of the pick plate at a time, which is what gives three
+  full index plates rather than four part-filled ones.
+- Nothing picks the route (#299): the project names it, and this demo ships a project file for
+  each so both are exercised.
 - Well-to-barcode mapping is the published LevSeq plate map, ordered as given, recorded per
   plate.
 - The pass criterion is section 9.6.
