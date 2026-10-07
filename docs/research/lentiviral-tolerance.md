@@ -24,8 +24,10 @@ means what it says, and is followed by what would close it.
 2. **BsaI's site in the LTR is not a quirk of one plasmid.** `GGTCTC` is the first six bases of
    R in the HIV-1 reference genome, which is to say the first six bases the vector transcribes.
    Every HIV-1-derived transfer vector inherits it, twice, unless someone has removed it.
-3. **Nothing measures a substitution at those six bases.** Section 3 says so plainly and says
-   what experiment would settle it.
+3. **One group has already made the substitution, and nobody has measured what it cost.**
+   VAMSyB killed the BsaI site with a single C→T at R+4, in both LTRs, and the vector still
+   packages and transduces. No titre was reported, for that vector or any other with a changed
+   R. Section 2 has the edit; section 3 says what experiment would price it.
 
 ## 1. Choose the enzyme first — the cheapest domestication is the one you skip
 
@@ -122,10 +124,10 @@ backbone should count BbsI themselves and may take BsaI-in-R as given.
 This was the ticket's highest-value question. The answer has two halves and the second one is
 the useful one.
 
-**No one has published a BsaI-domesticated lentiviral transfer vector.** No paper was found that
-mutates an LTR to remove `GGTCTC`, and therefore **no titre measurement after such a mutation
-exists to cite anywhere**. A lab that wants BsaI assembly directly into a lentiviral backbone is
-breaking new ground.
+**One group has published a BsaI-domesticated lentiviral transfer vector — VAMSyB — and reported
+no titre for it.** The edit is below, read out of the deposited sequence base by base. **No titre
+measurement after such a mutation exists to cite anywhere**, so a lab that wants BsaI assembly
+directly into a lentiviral backbone now has a precedent but still no price.
 
 **BsmBI-clean lentiviral transfer vectors are in universal use, and nobody had to domesticate
 anything to get them** — because, as section 1 measures, the HIV-1 LTR never had a BsmBI site.
@@ -148,38 +150,87 @@ because the LTR has a BsaI site" — but the sequence in section 1 explains it, 
 any BsaI-based lentiviral toolkit is consistent with it. **Marked as inference.** What would
 close it: a methods section or a correspondence from one of these groups saying why.
 
-### One lead that could overturn this answer, and could not be verified
+### The one published precedent: VAMSyB, read first-hand
 
-**Haellman, V. *et al.* A versatile plasmid architecture for mammalian synthetic biology
-(VAMSyB). *Metab. Eng.* **66**, 41–50 (2021). PMID 33857582,
+**Haellman, V., Strittmatter, T., Bertschi, A., Stücheli, P. & Fussenegger, M. A versatile
+plasmid architecture for mammalian synthetic biology (VAMSyB). *Metab. Eng.* **66**, 41–50
+(2021). PMID 33857582,
 [doi:10.1016/j.ymben.2021.04.003](https://doi.org/10.1016/j.ymben.2021.04.003).**
 
-A search summary states that VAMSyB removed **BsaI and BsmBI sites from the LTRs and the WPRE**
-of its Tier-3 lentiviral vectors. **If that is true it is the published precedent this section
-says does not exist, and it is the most valuable single reference for anyone domesticating a
-lentiviral backbone.**
+Issue #244 recorded this as an unverified search summary. **It is true, and it is now read
+first-hand.** The published CC-BY PDF was retrieved on **2026-10-06** from the ETH Research
+Collection, handle [20.500.11850/480636](https://doi.org/10.3929/ethz-b-000480636), by way of
+the DSpace REST API — ScienceDirect still answers a direct fetch and an `r.jina.ai` fetch with
+a captcha page.
 
-It could not be checked. The abstract was read in full on 2026-10-06 through Europe PMC and
-**does not mention Type IIS sites, the LTRs or WPRE** — it describes only a three-tier vector
-family whose Tier-3 enables stable integration by viral transduction, transposon or CRISPR.
-Europe PMC reports the record as not open access and holds no full text; ScienceDirect and the
-ETH repository both refused an automated fetch, though OpenAlex lists the article as hybrid open
-access.
+The paper says it in one sentence. Their Tier-3 lentiviral vectors "were adapted from a
+publicly available third-generation lentiviral transfer vector (Sanjana et al., 2014)" — that
+is lentiCRISPR v2 — and:
 
-**So the claim is recorded here as unverified, and nothing in this note depends on it.** What
-would close it, and it is ten minutes of someone's time: open the PDF and its supplement at the
-DOI above and look for the Tier-3 backbone's site list, and for any titre or transduction number
-measured after the removal. VAMSyB plasmids are stated to be available through Addgene, so the
-Tier-3 sequence can also be scanned directly, which would settle whether the sites are gone
-without settling what it cost.
+> Furthermore, these vectors were mutated to remove BsaI and BsmBI cut sites within the LTRs'
+> and WPRE enhancer. However, HindIII cut sites are too abundant to be easily removed, and we
+> refrained from testing all mutations for functionality.
+
+#### What actually moved, base by base
+
+A scan run here on **2026-10-06** over the Addgene-verified full sequences of the child,
+pTS1106_Tier3(Lenti) ([Addgene 169661](https://www.addgene.org/169661/), 5,259 bp), and of its
+parent, lentiCRISPR v2 ([Addgene 52961](https://www.addgene.org/52961/), 14,873 bp), both
+compared against GenBank K03455.1. **Measured:**
+
+| | lentiCRISPR v2 | pTS1106_Tier3(Lenti) |
+| --- | --- | --- |
+| R+U5, both copies | identical to HXB2 455–634 at every base | two substitutions, the **same two in both copies** |
+| R+1..+6 | `GGTCTC` — BsaI | `GGTTTC` — **C→T at R+4** |
+| R+77..+82 | `AAGCTT` — HindIII | `AAGTTT` — **C→T at R+80** |
+| BsaI sites, whole plasmid | 4 | 2, both in the designed A2 acceptor site |
+| BsmBI sites, whole plasmid | 2 | 2, both in the designed A3 acceptor site |
+
+So the LTR edit is **one base per site, in both copies**: `GGTCTC` → `GGTTTC` at R+4, which is
+exactly the shape section 3 arrives at independently — a single change at nt 4, 5 or 6, nt 1
+left alone, made in both LTRs.
+
+Two corrections to the paper's own sentence, and both matter:
+
+- **BsmBI was never in the LTRs** to remove, as section 1 measures. The two BsmBI sites in the
+  parent are the sgRNA cloning sites, not viral sequence.
+- **The WPRE did not change.** Its 589 annotated bases are byte-identical in parent and child,
+  and carry no BsaI, BsmBI or HindIII site in either. Nothing was removed there.
+- The **HindIII** site inside R *was* removed, in both copies, by the second C→T — which the
+  paper does not say, and which sits two bases 3' of the `AATAAA` poly(A) hexamer at R+73..+78.
+  The hexamer itself is untouched.
+
+#### And nobody measured it
+
+**This is the half that does not close.** The words "titre", "titer" and "MOI" do not appear in
+the paper. The lentiviral method says only that "HEK-293T cells were transduced by adding
+various amounts of virus-containing supernatant to the culture medium", then describes a
+puromycin ramp to 2 µg/mL over 14 days. The whole lentiviral result is Fig. 3E–G: a polyclonal
+line that answers doxycycline with SEAP and with iRFP670, N = 3 in quadruplicate.
+
+**There is no titre, no transduction efficiency, and no side-by-side against the undomesticated
+parent anywhere in the paper.** Puromycin selection hides exactly the quantity at issue: a
+vector at 1% of parental titre and one at 100% both give a resistant polyclonal pool.
+
+#### What this is worth
+
+**Measured, and it is a real precedent:** a third-generation transfer vector carrying C→T at
+R+4 in both LTRs packages into VSV-G particles with a third-generation packaging system,
+transduces HEK-293T, integrates, and drives a three-cassette Tet-ON circuit that responds to
+dose. The change is not lethal. That is more than this note had.
+
+**Not measured, and the gap is unchanged:** what it costs. Section 3's gap 2 — functional titre
+of any lentiviral vector with a modified R — survives VAMSyB intact. Anyone copying this edit
+copies a vector that works, not a vector whose yield is known.
 
 **Not established.** "LentiMoClo" does not exist as a published toolkit. Mobius/Loop mammalian,
 MTK2, GoldenBraid mammalian and CIDAR mammalian lentiviral variants were not settled either way
 — they ran past the time budget. **No Tet-on (TRE / TetOne / Tet3G) lentiviral backbone already
 clean for BsaI was found.** Clean for BsmBI is expected to be common, since the LTRs contribute
 none, but no specific TRE vector sequence was scanned. What would close it: scan the Addgene
-sequences of the TRE lentiviral vectors directly, which needs an Addgene login this run did not
-have.
+sequences of the TRE lentiviral vectors directly. **Correction, 2026-10-06:** this does not need
+a login. The bases and the enzyme list behind an Addgene map are served to anyone, and that is
+how section 2's base-by-base comparison was run.
 
 ## 3. TAR, and the six bases
 
@@ -276,6 +327,13 @@ One position deserves separate treatment. **Nucleotide 1 is +1**, the transcript
 cap status, which is a different failure from a broken hairpin, and **nothing measures it**
 (gap 1 below). Killing `GGTCTC` needs only one base; **inference, marked:** prefer a single
 transversion at nt 4, 5 or 6 over a rewrite of all six, and leave nt 1 alone.
+
+**One group has done this, and section 2 reads their sequence.** VAMSyB's Tier-3 lentiviral
+vector carries C→T at R+4 in both LTRs, and the vector packages and transduces. It is a
+transition, not a transversion, and no second change was made inside TAR — so it does **not**
+satisfy the compensation condition above, and it still worked. **What it does not supply is
+a number:** they reported no titre, so the precedent says the change is survivable and says
+nothing about the cost. Gap 2 below is unchanged by it.
 
 The partner base must be read off a fold of the **real** R sequence of the backbone in hand. A
 complementarity scan run here on 2026-10-06 over HXB2 TAR +1..+59 finds the best 6-nt partner
@@ -547,6 +605,14 @@ is which and what was left out.
 - Martella, A. *et al.* EMMA: an extensible mammalian modular assembly toolkit. *ACS Synth. Biol.*
   **6**, 1380–1392 (2017). PMID 28418644,
   [doi:10.1021/acssynbio.7b00016](https://doi.org/10.1021/acssynbio.7b00016).
+- Haellman, V. *et al.* VAMSyB. *Metab. Eng.* **66**, 41–50 (2021). PMID 33857582,
+  [doi:10.1016/j.ymben.2021.04.003](https://doi.org/10.1016/j.ymben.2021.04.003). **Published
+  CC-BY PDF read in full**, from the ETH Research Collection copy at
+  [doi:10.3929/ethz-b-000480636](https://doi.org/10.3929/ethz-b-000480636). The supplement was
+  not retrieved — it is served only from ScienceDirect, which refuses an automated fetch.
+- Addgene-verified full sequences of [pTS1106_Tier3(Lenti)](https://www.addgene.org/169661/)
+  (Addgene 169661) and [lentiCRISPR v2](https://www.addgene.org/52961/) (Addgene 52961), both
+  read 2026-10-06 through the public sequence viewer.
 
 ### TAR
 
@@ -581,8 +647,8 @@ their own entries in place.
 | A designed compensatory lower-stem double mutant in a **vector** | Build it and titre it |
 | How many 5'/3' R mismatches first strand transfer tolerates | The Berkhout 2001 *in vitro* donor/acceptor assay with a changed donor and wild-type acceptor |
 | Whether a BsaI-based lentiviral toolkit avoided BsaI for the reason section 1 gives | A methods section or correspondence from the MTK or lentiCRISPR groups |
-| **Whether VAMSyB already removed BsaI and BsmBI from a lentiviral LTR** (section 2) — the one claim that would overturn the headline answer | Open the paywalled PDF and supplement at doi:10.1016/j.ymben.2021.04.003, or scan the Tier-3 sequence on Addgene |
-| Whether any Tet-on lentiviral backbone is already BsaI-clean | Scan the Addgene sequences of TRE lentiviral vectors — needs an Addgene login |
+| ~~Whether VAMSyB already removed BsaI from a lentiviral LTR~~ — **closed 2026-10-06, issue #262.** They did: C→T at R+4 in both copies. They reported no titre, so this closes the precedent question and leaves the titre gap above exactly as it was | — |
+| Whether any Tet-on lentiviral backbone is already BsaI-clean | Scan the Addgene sequences of TRE lentiviral vectors — no login needed, see section 2 |
 | Whether pLVX-TetOne is intended to be self-inactivating | The manufacturer's map, or an LTR-transcription assay on the provirus |
 | The effect of base changes in the hPGK promoter, where two of pLVX's sites sit | A reporter assay for promoter strength before and after |
 
