@@ -543,33 +543,89 @@ A recommendation, not a decision: prefer a four-base Type IIS matrix over the T4
 profile for an unmeasured four-base enzyme, keep `enzyme_specific=False` and keep the label
 saying whose measurement it is.
 
+**PaqCI is no longer an enzyme nobody measured** — it is one whose measurement is unpublished and
+unshippable (section 10). That strengthens the recommendation rather than weakening it: the gap
+being filled is in what is *available*, not in what is *known*, so there is no published number
+the package is approximating badly and no prospect of one arriving. It also means
+`choose_enzyme`'s premise holds for a reason worth stating. Preferring an enzyme that has its own
+matrix is not a claim that PaqCI ligates less predictably; it is a claim that this package can
+show its work for BsaI and cannot for PaqCI.
+
 Pryor 2020 also sets the ceiling on all of this:
 
 > Importantly, predicted assembly fidelity should be taken as a qualitative prediction, most
 > useful for comparing expected performance between alternative junction sets.
 
-### What NEB's own tool defaults to
+### What NEB's own tool defaults to, and what it serves
 
-The v1 help page **loads today**, so the 403 this note recorded a month earlier is stale. It has
-**no Type IIS enzyme selector at all**; it offers T4 conditions only, and defaults to Potapov
-2018's pure-ligation profile, justified by cross-validation rather than by matching:
+**Read in a real browser on 2026-10-06.** The tools are `.cgi`, not `.html`, which is why fetching
+`run.html` failed: the Viewer is `https://ligasefidelity.neb.com/viewset/run.cgi`, and the live
+site is **version 1.0**. `help.html` loads normally from a browser — **the 403 is bot-blocking,
+not a missing page**, and `nebridgetools.neb.com` genuinely does not exist.
+
+It defaults to Potapov 2018's pure-ligation profile, justified by cross-validation rather than by
+matching the reaction:
 
 > The default conditions are ligation at 25°C for 18 hours; these conditions have been shown to
 > well predict the results of Golden Gate assembly using typical cycled conditions (16°C 5
 > min/37°C 5 min, 30 cycles).
 
-The same page is careful that it does not serve the whole of either paper:
+The help page also states the axis convention independently of the sentence section 4 quotes:
+rows are the top strand, columns the bottom strand, both written 5' to 3'. **That corroborates
+section 4** from a second place on the same site.
+
+An earlier draft of this section said the tool has no Type IIS enzyme selector. **That was wrong**
+— it was read off the help page rather than the tool. The `dataset` select offers **fifteen**
+four-base conditions, verbatim from its option labels:
+
+| # | Condition |
+| --- | --- |
+| 1-4 | T4 DNA Ligase at 25 °C / 1 h, 25 °C / 18 h, 37 °C / 1 h, 37 °C / 18 h |
+| 5-6 | T7 DNA Ligase at 25 °C / 18 h, 37 °C / 18 h |
+| 7 | `BsaI-HFv2 37-16 cycling` |
+| 8 | `BsaI-HFv2 37 static` |
+| 9 | `BsmBI-v2 42-16 cycling` |
+| 10 | `Esp3I, 1x T4 DNA Ligase buffer, 37-16 cycling` |
+| 11 | `BsaI-HFv2, 1x NEBridge Ligase MM, 37-16 cycling` |
+| 12 | `PaqCI, 1x T4 DNA Ligase buffer, 37-16 cycling` |
+| 13 | `PaqCI, 1x NEBridge Ligase MM, 37-16 cycling` |
+| 14 | `BsmBI-v2, 1x NEBridge Ligase MM, 42-16 cycling` |
+| 15 | `BbsI-HF, 1x NEBridge Ligase MM, 37-16 cycling` |
+
+The `ohlen` select also offers three-base overhangs. **That list was not enumerated**, so what
+three-base conditions exist is unchecked here rather than guessed.
+
+### A PaqCI matrix exists, and it is unpublished vendor data
+
+Rows 12 and 13 carry the internal identifiers `NBC_20250411_PaqCI_60_Cycles_T4Buffer` and
+`NBC_20250411_PaqCI_60_Cycles_LigaseMM`. **So a PaqCI matrix exists and NEB holds it**, dated
+2025-04-11 by its own identifier. The search-index lead section 11 recorded is now a fact.
+
+The provenance is the decisive part. The help page cites exactly three references: both Potapov
+2018 papers, [doi:10.1093/nar/gky303](https://doi.org/10.1093/nar/gky303) and
+[doi:10.1021/acssynbio.8b00333](https://doi.org/10.1021/acssynbio.8b00333), and a Current
+Protocols protocol, [doi:10.1002/cpz1.882](https://doi.org/10.1002/cpz1.882). **Pryor 2020 is not
+cited there at all**, yet rows 7 to 10 are Pryor's enzyme-cycling sets. Rows 11 to 15 — the two
+PaqCI sets and the three NEBridge Ligase Master Mix sets — **are cited to nothing**, and carry only
+those identifiers.
+
+So the help page's own description of its data is now **stale**:
 
 > The data used comes from recent publications on ligation fidelity using T4 DNA Ligase (1, 2) and
 > **represents subsets** of the data sets discussed in those papers.
 
-The enzyme selector belongs to the **current** NEBridge tool, which Pryor 2020 describes:
+Six of the fifteen conditions are in neither cited paper. That bears on trusting the tool as a
+reference: it is a vendor tool serving a mix of published and unpublished data without saying
+which is which.
 
-> To use this tool, users input a set of three-base or four-base overhang sequences and select the
-> desired Type IIS restriction enzyme and thermocycling protocol.
+**NEB data is all rights reserved, and section 2's standing position already covers this: cited,
+never mirrored.** Nothing was downloaded from the tool, and nothing here implies the package would
+take any of it. A PaqCI matrix being measured does not make it available.
 
-**The current tool's own pages could not be read** — see section 12. So which dataset the current
-tool defaults to is recorded here as unknown, not guessed.
+The buffer axis is worth noting for its own sake. The same enzyme appears twice, under plain T4
+ligase buffer and under NEBridge Ligase Master Mix — **exactly the axis Bilotti 2022 varies**
+(section 11). Two independent sources now treat buffer as a condition that changes the matrix,
+which is support for giving `LigaseProfile`'s conditions a buffer field.
 
 ## 11. Other fidelity data sources, and whether each may ship
 
@@ -581,7 +637,7 @@ Surveyed 2026-10-06. The repo holds Pryor 2020 (shipped) and reads Potapov 2018 
 | Pryor et al. 2022, *ACS Synth Biol* 11(6):2036-2042, [doi:10.1021/acssynbio.1c00525](https://doi.org/10.1021/acssynbio.1c00525) | No new matrices — applies Pryor 2020 to a 40 kb, 52-part build | CC BY-NC-ND 4.0 | Supplement only | No |
 | Strzelecki et al. 2024, *NAR* 52(19):e95, [doi:10.1093/nar/gkae809](https://doi.org/10.1093/nar/gkae809) | The one independent non-NEB re-measurement. Gel kinetics on 6 overhangs, BsaI-HFv2 + T4. Finds **overhang duplex strength**, not only mismatch fidelity, drives efficiency — a factor no matrix here captures | CC BY-NC (the bioRxiv preprint is no-reuse) | Paper yes, no matrix deposit | No |
 | Mukundan & Madhusudhan 2025, OOGGA, [doi:10.1101/2025.06.16.659877](https://doi.org/10.1101/2025.06.16.659877) | No new measurement; scores against Potapov 2018 | Unstated | Code on GitHub | n/a |
-| NEBridge Ligase Fidelity Tools, `ligasefidelity.neb.com` | Appears to cover **PaqCI**, which no paper does | Vendor tool, all rights reserved | **No** — matrices are not downloadable, and the pages are 403 | No |
+| NEBridge Ligase Fidelity Viewer v1.0, `ligasefidelity.neb.com/viewset/run.cgi` | Fifteen four-base conditions, of which **six are in no paper** — two **PaqCI** sets and three NEBridge Ligase Master Mix sets (section 10) | Vendor tool, all rights reserved | **No** — the matrices are not downloadable | No |
 | `tatapov` (Edinburgh Genome Foundry) | Nothing new. Its code is MIT and it **downloads the tables at run time** rather than vendoring them; its upstream is exactly Potapov 2018 and Pryor 2020 | MIT (code only) | Yes | The data's own licence still governs |
 | GoldenHinges, DNA Chisel, kappagate | No independent dataset; annealing data via `tatapov` | MIT (code) | Yes | n/a |
 | Duckworth 2023, Sikkema 2023, Lund 2024 (Springer methods chapters) | Protocols for measuring or applying this data. No dataset | All rights reserved | — | No |
@@ -602,14 +658,16 @@ current `LigaseProfile` conditions string does not have a field for.
 nick-selective rather than end-joining, so an end-joining overhang matrix for it is not a
 meaningful object. Nothing post-2020 covers E. coli ligase at overhang level.
 
-**There is no published PaqCI matrix.** It is absent from Potapov 2018, Pryor 2020, Pryor 2022 and
-Bilotti 2022. The only primary PaqCI evidence found is the two NEB patents, which give aggregate
-assembly performance against AarI and describe matrix shapes but carry no pair table. AarI is in
-the same position. **Section 10's old claim that nobody has published one is confirmed, today.**
-Two independent search-index snippets suggest NEB's current tool does serve a PaqCI matrix, one of
-them dated "As of May 27, 2025, the datasets for PaqCI have been updated using a new substrate" —
-but **neither was read off a live page**, so that is recorded as a lead, not a fact. Even if the
-tool has one it is not downloadable and not licensed for redistribution.
+**No publication carries a PaqCI matrix, and one exists anyway.** PaqCI is absent from Potapov
+2018, Pryor 2020, Pryor 2022 and Bilotti 2022; the only PaqCI evidence in the literature is the two
+NEB patents, which give aggregate assembly performance against AarI and describe matrix shapes but
+carry no pair table. AarI is in the same position, with no matrix anywhere.
+
+But NEB's live Viewer serves **two PaqCI datasets**, under internal identifiers dated 2025-04-11
+and cited to no publication at all (section 10). So the old wording "nobody has published one" is
+true and materially incomplete: **the measurement has been made and is not public.** It is all
+rights reserved, not downloadable from the tool, and so citable but never shippable — which is
+where section 2 already puts anything of NEB's.
 
 **The open tooling ecosystem rests entirely on the two datasets this repo already knows.** Every
 Golden Gate overhang designer checked — `tatapov`, GoldenHinges, DNA Chisel, OOGGA — scores against
@@ -626,10 +684,11 @@ re-checked**, so the sentence is flagged rather than rewritten.
 
 | Item | Why it is missing | What is done instead |
 | --- | --- | --- |
-| The exact query set NEB's own tool uses | The current tool's pages are 403 behind Cloudflare and are a JavaScript shell; the v1 page loads but has no enzyme selector and does not spell the arithmetic | The reading above, checked against three published numbers |
+| The exact query set NEB's own tool uses | The help page states the axis convention and the default, but not the arithmetic | The reading in section 5, checked against three published numbers |
 | Why two GetSet table sets score 1.5 and 4 points low | The sets as printed may not be the whole reaction | Recorded in section 5, untouched |
-| A matrix for PaqCI, AarI, BspQI, BtgZI | Nobody has published one. **Re-verified 2026-10-06** against Potapov 2018, Pryor 2020, Pryor 2022 and Bilotti 2022 | A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled. Section 10 recommends preferring another four-base Type IIS matrix over the pure-ligation profile |
-| Whether NEB's current tool serves a PaqCI matrix | Its pages are 403 and the matrices are not downloadable in any case | Two search-index snippets suggest it does; recorded in section 11 as a lead, not a fact. Settling it needs a JavaScript-capable fetch |
+| A **shippable** matrix for PaqCI, and any matrix for AarI, BspQI, BtgZI | No publication carries one, re-verified 2026-10-06 against Potapov 2018, Pryor 2020, Pryor 2022 and Bilotti 2022. For PaqCI the measurement exists but is NEB's, unpublished and all rights reserved | A ligase profile where the user holds one, the rule-based fallback otherwise, each labelled. Section 10 recommends preferring another four-base Type IIS matrix over the pure-ligation profile |
+| Which three-base conditions NEB's Viewer offers | The `ohlen` select was not enumerated | Nothing. Unchecked rather than guessed, and the four-base list is in section 10 |
+| Whether anyone will publish the PaqCI data | Not knowable from here | Nothing. Worth re-checking if NEB publishes a successor to Pryor 2020 |
 
 Closed since 2026-09-12:
 
@@ -638,7 +697,8 @@ Closed since 2026-09-12:
 | T7 DNA ligase, and ligases other than T4 | **Bilotti 2022 covers T4, T3, T7, PBCV-1/SplintR and human Ligase 3 under CC BY 4.0**, so this no longer depends on a CC BY-NC copy. Section 11 |
 | Which supplementary file each shipped matrix came from | Resolved and verified by sheet name and checksum. Section 9 |
 | Whether the shipped matrix is the weaker evidence | It is not, and it is the stricter of the two on every set above four overhangs. Section 10 |
-| The Viewer help page returning 403 | It loads. The current tool's pages are the ones that do not |
+| Whether NEB's tool serves a PaqCI matrix | **It serves two**, under internal identifiers citing no publication. Read in a browser; section 10 |
+| The Viewer help page returning 403 | **Bot-blocking, not a missing page.** It loads in a browser, and the tools are `.cgi` rather than `.html`. Section 10 |
 
 Still unmeasured by anything here: **overhang duplex strength** as a driver of assembly efficiency,
 which Strzelecki 2024 reports and which no count matrix captures.
@@ -675,16 +735,29 @@ Added 2026-10-06:
 - NEB, *Ligase Fidelity Viewer: Help Page*,
   [tools.neb.com](https://tools.neb.com/~potapov/ligase-fidelity-viewer/help.html) — **loads now**,
   by plain request; the 403 recorded on 2026-09-12 is stale
+- NEB, **NEBridge Ligase Fidelity Viewer v1.0**,
+  `https://ligasefidelity.neb.com/viewset/run.cgi`, and its help page — **read in a browser**,
+  which is the only way past the bot-blocking. Source of the fifteen four-base conditions, the two
+  PaqCI identifiers and the axis convention in section 10. All rights reserved; nothing downloaded
+- Current Protocols, [doi:10.1002/cpz1.882](https://doi.org/10.1002/cpz1.882) — the third and only
+  other reference the Viewer's help page cites. Noted for completeness; not read
 
 Could not be read on 2026-10-06, and why:
 
 | What | Status |
 | --- | --- |
-| `ligasefidelity.neb.com/viewset/www/help.html` — the current tool's help page, and the one place the live enzyme list and the PaqCI question would be settled | **403**, a Cloudflare human-verification interstitial, by plain request and by fetch alike |
-| `ligasefidelity.neb.com`, `/viewset/run.html`, `goldengate.neb.com` | 403 bare, 200 with a browser agent, but a JavaScript shell with no enzyme names, condition labels or script sources in the served markup |
-| `nebridgetools.neb.com` | DNS does not resolve; the host does not exist |
 | Potapov et al. 2018 as published in *ACS Synth. Biol.* | Not open access. Europe PMC gives PMID 30335370, no PMCID, "Subscription required". **The bioRxiv preprint, [doi:10.1101/322297](https://doi.org/10.1101/322297), was read instead**, and section 10's Methods quotes are from it |
-| A PaqCI or AarI overhang-pair matrix, from anywhere | Does not exist in the published literature. Not downloadable from NEB's tool either |
+| A PaqCI or AarI overhang-pair matrix, as a file | PaqCI's exists but is NEB's, unpublished and not downloadable from the tool. AarI's does not exist anywhere |
+| NEB's three-base condition list | Not enumerated. See section 12 |
+
+Two entries that were here have been **withdrawn**, because a browser reached both:
+
+| What | What it turned out to be |
+| --- | --- |
+| `ligasefidelity.neb.com` and its help page returning 403 | **Bot-blocking only.** The pages load in a real browser, and the tools are `.cgi`, not `.html`: the Viewer is `/viewset/run.cgi`. Section 10 reads the condition list off it |
+| `goldengate.neb.com` serving "a JavaScript shell" | The same mis-read. Nothing was missing from the markup; the fetch was being refused |
+
+`nebridgetools.neb.com` still does not resolve, and that host does not exist.
 
 All other sources read on 2026-09-12.
 
