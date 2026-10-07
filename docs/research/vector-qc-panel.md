@@ -466,6 +466,24 @@ happened in *E. coli*; it says nothing about what reverse transcription will do 
 cells. Nothing in the panel measures per-library recombination rate for a modern SIN transfer
 plasmid. **Nothing measures this.**
 
+### 3.8 A ccdB cassette that stopped killing
+
+This one is not a domestication failure. It is a propagation failure, in the same prep, found the
+same way — the vector arrives intact by sequence and dead as a counter-selection.
+
+**Scholz *et al.*** *BMC Biotechnol.* **13**, 12 (2013).
+[doi:10.1186/1472-6750-13-12](https://doi.org/10.1186/1472-6750-13-12) observed ccdB inactivation
+during propagation in ccdB Survival cells "under high selective pressure such as plasmids with
+high copy number", and concluded that killing activity has to be verified for every single batch
+of vector DNA. A lentiviral transfer plasmid on a high-copy origin is that case.
+
+**The assay.** Transform a ccdB-sensitive strain with the vector stock and plate it. Near-zero
+colonies means the cassette still kills. Per batch, before the stock is used.
+
+**What it would not catch.** A minority of escape mutants, which is the population that matters:
+the assembly's own selection enriches exactly the molecules this plate failed to see. It also says
+nothing about the rest of the vector — a stock can kill and still carry a broken LTR.
+
 ### What each assay is blind to, in one table
 
 The point of the panel is this column, so here it is alone.
@@ -482,6 +500,7 @@ The point of the panel is this column, so here it is alone.
 | Packaging ratio | A dimerisation defect at normal RNA content |
 | Non-denaturing Northern | A packaging defect |
 | Whole-plasmid sequencing | Anything that happens during reverse transcription |
+| ccdB killing on a sensitive strain | A minority of escape mutants in the stock, and everything about the vector other than the toxin |
 
 ## 4. Why that column is the point: titre and RNA come apart
 
@@ -617,7 +636,8 @@ combination is not the sum.
 
 Twenty-eight files were gathered under
 `reference_docs/synthesis_and_assembly/lentiviral-tolerance/assays/` and all twenty-eight were
-read first-hand for this note. Every citation above is read off the article text, not recalled.
+read first-hand for this note. Every citation above but one is read off the article text, not
+recalled; the exception is named below.
 Two sources outside that directory are cited and were read the same way: Cui 1999 from
 `elements/`, and Haellman 2021 with its sequence scan from `toolkits/`.
 
@@ -640,6 +660,8 @@ Two sources outside that directory are cited and were read the same way: Cui 199
   factor of 100; neither endpoint is used here.
 - **Yang 2007 states no absolute read-through percentage.** Every value is a bar. Section 3.2 uses
   Koldej's TaqMan ratio for an absolute number instead.
+- **One source was not read here.** Scholz 2013, in section 3.8, is not among the gathered files.
+  It is quoted as #287 cites it, and wants reading first-hand before anything else is drawn from it.
 - **One PMID is corrected.** Zaiss *et al.* 2002 is **PMID 12072520**, not 12072521 — which is
   Lecellier *et al.*, equine foamy virus, the adjacent article in the same issue. An earlier copy
   of the source file held the wrong abstract.
