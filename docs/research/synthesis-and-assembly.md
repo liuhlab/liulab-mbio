@@ -168,8 +168,14 @@ from it:
 ### Twist — inherited
 
 - Which products exist, their length bands, their pool-size tiers and their prices.
-- The uniformity gate: a pool whose shortest member is more than 15% below the longest is
-  refused by the ordering interface, which is what forces a padding rule.
+- The uniformity gate, and the product it belongs to. A pool whose shortest member is more than
+  15% below the longest is refused by the ordering interface — but that is a **Multiplexed Gene
+  Fragments** rule, dsDNA at 301–500 bp, not an oligo-pool one. Verbatim, from
+  `twist/protocol/dump/DOC4057_Multiplexed_Gene_Fragments_Design_Guidelines_REV1.txt` lines
+  43–45: "Length Variation | ≤ 15%\* | The shortest fragment in your pool must be no more than
+  15% shorter than the longest fragment." **No vendor publishes a length-spread rule for an
+  ssDNA oligo pool at all.** Both Twist Oligo Pools documents held here give only "20–350
+  nucleotides" and state no spread, so nothing a pool is ordered against forces a padding rule.
 - The flank specification, and the amplification rule: a high-fidelity hot-start polymerase, and
   a cycle count banded by the pool's length — 6–10 at 20–100 nt, 10–12 at 100–150 nt, 12–14 at
   151–350 nt. `oligo-pool-pcr-cycles.md` section 2 gives the two guides it is read from, and its
@@ -385,10 +391,11 @@ junctions for a motif the join creates.
 | Pad to a target, then append constant flanks | Lund pads to about 260 nt before appending the 20 nt primer sites, giving 300 nt oligos. |
 | Bin by length into sub-pools | Romanowicz builds fixed-architecture libraries by length instead. The vendor will discount split sub-pools. |
 
-Uniform padding removes the vendor's 15% question rather than managing it, and makes a
-pool-uniformity check unfailable, so none is shipped. The second option reaches the same uniform
-oligo by a different route and differs only in where the filler sits. Binning buys nothing at
-153 oligos and costs a second pool and a second PCR1.
+Uniform padding makes a pool-uniformity check unfailable, so none is shipped. That reason is the
+package's own: the vendor's 15% spread rule is a Multiplexed Gene Fragments rule and does not
+reach an ssDNA oligo pool, which is ordered against no spread rule at all (section 3). The second
+option reaches the same uniform oligo by a different route and differs only in where the filler
+sits. Binning buys nothing at 153 oligos and costs a second pool and a second PCR1.
 
 **The oligo length itself stays a project input**, so this is a method rule with one project
 number in it, not a method constant.
