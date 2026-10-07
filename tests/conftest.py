@@ -65,6 +65,32 @@ def plvx(data_dir: Path) -> SequenceRecord:
 
 
 @pytest.fixture(scope="session")
+def dmx0001(data_dir: Path) -> SequenceRecord:
+    """DMX0001, the iGGA destination's parent, 5,839 bp circular.
+
+    Addgene 247434, the depositor's own map, converted from SnapGene to GenBank.
+    `scripts/build_dmx_vector.py` rebuilds `docs/examples/ap1-library/vector.gb` from it, and
+    `docs/research/synthesis-and-assembly.md` holds its provenance.
+    """
+    from liulab_mbio.io import read_record
+
+    return read_record(data_dir / "dmx0001.gb")
+
+
+@pytest.fixture(scope="session")
+def pcr_blunt_ii_topo(data_dir: Path) -> SequenceRecord:
+    """pCR-Blunt II-TOPO, the Zero Blunt TOPO carrier, 3,519 bp circular.
+
+    The Thermo Fisher (Invitrogen) catalogue map, converted from SnapGene to GenBank. The same
+    rebuild takes its `NeoR/KanR` coding sequence as the marker that replaces the parent's
+    `AmpR`, and the same note holds its provenance.
+    """
+    from liulab_mbio.io import read_record
+
+    return read_record(data_dir / "pcr-blunt-ii-topo.gb")
+
+
+@pytest.fixture(scope="session")
 def across_origin() -> SequenceRecord:
     """100 bases, circular: C at 2..8 and G at 91..98 as a person counts them, A elsewhere.
 

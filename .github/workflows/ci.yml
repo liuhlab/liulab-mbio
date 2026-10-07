@@ -104,8 +104,8 @@ jobs:
       # into a temporary directory and compares the bytes; a red step is fixed by running
       # the command the example's own page prints and committing what it writes. It is a
       # task on the `docs` feature so that `pixi run check` never pays for it (#372), and
-      # it reports every example it reaches, including the one whose parent lives in
-      # `reference_docs/` and so can only be checked on a laptop that holds that tree.
+      # it reports every example, the destination's rebuild included: its two parents ship
+      # in `tests/data/`, so this runs everywhere rather than only where they were read.
       - run: pixi run examples-check
       # `docs-build` is a task on the `docs` FEATURE, so pixi finds it in the one
       # environment that has zensical and no `-e` flag is needed. The task carries

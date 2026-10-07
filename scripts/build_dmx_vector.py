@@ -9,9 +9,9 @@ record ships as a measurement of the parent rather than as a sequence someone ty
 `docs/research/dmx-destination.md` records what each one does and why, and every number the
 script prints is reproduced from the parent on each run.
 
-The parent and the plasmid the marker comes out of are `.dna` files under `reference_docs/`,
-which is not in the repository. Without either the script says so and stops; it never reaches
-the network.
+The parent and the plasmid the marker comes out of ship as GenBank in `tests/data/`, converted
+from the depositors' own SnapGene maps: a file a shipped record is built from is an input, not
+a reference document. The script never reaches the network.
 
 A DNA sequence carries no licence. The parent is deposited and the rebuild is the lab's own
 molecule, which is why it ships: #287 settled the same question for the ccdB cassette.
@@ -36,12 +36,10 @@ from liulab_synbio.igga.vector import released_cargo, round_cassette
 REPO = Path(__file__).resolve().parents[1]
 
 #: DMX0001, Addgene 247434, the depositor's own map. 5,839 bp circular.
-PARENT = REPO / (
-    "reference_docs/synthesis_and_assembly/dmx/addgene/addgene-plasmid-247434-sequence-494299.dna"
-)
+PARENT = REPO / "tests/data/dmx0001.gb"
 
 #: pCR-Blunt II-TOPO, the Zero Blunt TOPO carrier, where the marker that goes in comes from.
-MARKER_SOURCE = REPO / "reference_docs/synthesis_and_assembly/dmx/addgene/pCR-Blunt II-TOPO.dna"
+MARKER_SOURCE = REPO / "tests/data/pcr-blunt-ii-topo.gb"
 
 #: The marker the rebuild takes out, the coding sequence the source map draws it in place of,
 #: and what the result calls that one. `liulab_mbio.bench.phenotype.SELECTION` reads the last
@@ -325,8 +323,8 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         for path in missing:
             print(
-                f"{path} is not here. It is a reference document, which this repository does "
-                "not carry; reference_docs/README.md says where it comes from.",
+                f"{path} is not here. The parent and the marker's source ship in tests/data/; "
+                "docs/research/synthesis-and-assembly.md says where each one came from.",
                 file=sys.stderr,
             )
         return 1
