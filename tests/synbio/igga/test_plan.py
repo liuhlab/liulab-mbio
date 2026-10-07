@@ -6,6 +6,7 @@ The part lists are three of two members, so a whole build stays small enough for
 
 import dataclasses
 import math
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -13,6 +14,7 @@ import pytest
 from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
+from liulab_mbio.io import read_record
 from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
@@ -28,6 +30,7 @@ from liulab_synbio.igga.gate import check_product
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.plan import (
     BARCODE_FILE,
+    BLOCK_VECTOR_FILE,
     CHANGE_FILE,
     PARTS_FILE,
     Kind,
@@ -87,7 +90,9 @@ def inputs(tmp_path_factory, scheme):
     return out
 
 
-def project(inputs, *, vector: str = "carrier.dna", working: str | None = None) -> Project:
+def project(
+    inputs, *, vector: str = "carrier.dna", working: str | None = None, primers: Path | None = None
+) -> Project:
     """The project a test plans, naming the inputs written into `inputs`."""
     return Project(
         "library",
@@ -99,6 +104,7 @@ def project(inputs, *, vector: str = "carrier.dna", working: str | None = None) 
         oligo_length=350,
         batch_size=96,
         completeness=COMPLETENESS,
+        primers=primers,
     )
 
 
@@ -118,6 +124,18 @@ def plan(inputs):
 @pytest.fixture(scope="module")
 def written(plan, tmp_path_factory):
     return plan, plan.write(tmp_path_factory.mktemp("library"))
+
+
+#: The orthogonal primer set the demo's pool is amplified by, which is the one set this repo
+#: ships. A pool is what makes the blocks need a vector to supply their stuffers.
+PRIMERS = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "primers.tsv"
+
+
+@pytest.fixture(scope="module")
+def pooled(inputs, tmp_path_factory):
+    """The same build with a pool designed, and the files it writes."""
+    made = plan_igga(project(inputs, primers=PRIMERS), parts=LISTS)
+    return made, made.write(tmp_path_factory.mktemp("pooled"))
 
 
 @pytest.fixture(scope="module")
@@ -152,6 +170,30 @@ def test_write_puts_every_file_in_one_directory_and_the_protocol_reads_back(writ
     assert back.title
     assert back.steps
     assert files.protocol.read_text(encoding="utf-8")
+
+
+def test_a_pool_writes_the_block_vector_each_position_closes_into(pooled):
+    """Only the cargo is synthesised, so a vector has to supply the stuffers either side of it."""
+    made, files = pooled
+
+    assert [path.name for path in files.block_vectors] == [
+        BLOCK_VECTOR_FILE.format(number=number) for number in (1, 2, 3)
+    ]
+    assert [one.record.name for one in made.block_vectors] == [
+        f"carrier {position}" for position in POSITIONS
+    ]
+    for one, path in zip(made.block_vectors, files.block_vectors, strict=True):
+        assert read_record(path).sequence == one.record.sequence
+    assert set(files.block_vectors) <= set(files.paths)
+
+
+def test_a_project_naming_no_primer_set_writes_no_block_vector(written):
+    """A block ordered whole carries its own stuffers, so nothing has to supply them."""
+    made, files = written
+
+    assert made.pool is None
+    assert made.block_vectors == ()
+    assert files.block_vectors == ()
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, tmp_path):

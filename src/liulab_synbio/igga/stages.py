@@ -119,23 +119,6 @@ def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
     return HOLES if selection_for(record) else (ROUND_SELECTION, *HOLES)
 
 
-#: What the pool route still cannot write. Only the cargo is synthesised now, so the pieces
-#: close into the vector the first round opens and NEB's kit table sizes the reaction. What is
-#: left is that a part enters on its own position's overhang and one backbone presents one pair.
-POOL_HOLES: tuple[Hole, ...] = (
-    Hole(
-        "H25",
-        "only the first position's cargo closes into this build's destination; a later position "
-        "enters on an overhang no backbone here presents",
-        "undecided",
-        where="block assembly, the destination for every position after the first",
-        filled_by="one destination a position, each this vector carrying that position's own "
-        "entry overhang, as a retrofit already writes one",
-        issue="liuhlab/liulab-mbio#376",
-    ),
-)
-
-
 #: What the linkage read alone cannot be judged by. The representation read is held to Joung's
 #: pooled-library bar, in `liulab_synbio.igga.coverage`; nothing published says what share of
 #: reads must carry a barcode that still names its part, and the source's own figure is what one

@@ -15,7 +15,7 @@ from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import find_sites
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.cargo import cargo_record
@@ -102,6 +102,26 @@ def test_every_cargo_reassembles_from_its_own_fragments(plan):
     for split, part in zip(plan.pool.splits, plan.parts, strict=True):
         assert split.reassembled() == str(cargo_record(part, plan.scheme).sequence)
         assert split.reassembled() in part.sequence
+
+
+def test_every_position_has_a_block_vector_its_whole_part_list_closes_into(plan):
+    """A part enters on its own position's overhang, and one backbone presents one pair."""
+    assert [one.record.name for one in plan.block_vectors] == [
+        "DMX-iGGA N",
+        "DMX-iGGA DBD",
+        "DMX-iGGA C",
+    ]
+    for index, one in enumerate(plan.block_vectors):
+        backbone = next(
+            piece
+            for piece in digest(one.record, plan.scheme.internal)
+            if (piece.start, piece.end) != (one.stuffer.start, one.stuffer.end)
+        )
+        cargo = [cargo_record(part, plan.scheme) for part in plan.parts if part.index == index]
+        assert len(cargo) == 24
+        assert {(str(each.sequence)[:4], str(each.sequence)[-4:]) for each in cargo} == {
+            (backbone.right_overhang, backbone.left_overhang)
+        }
 
 
 def test_the_fragment_counts_sit_at_or_above_lund_s_measured_84_6_per_cent_point(plan):
@@ -191,9 +211,9 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
-    # The cargo has a destination and NEB's table sizes the reaction; what is left open is the
-    # destination for every position after the first, which no backbone here presents.
-    blocks = ["H25"]
+    # Block assembly holds nothing open: every position has a destination presenting its own
+    # entry overhang, and NEB's kit table sizes the reaction.
+    blocks: list[str] = []
     # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
     # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
     linkage = ["H28"]
@@ -226,7 +246,7 @@ def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_t
         "Order the oligo pool and the primers that amplify it",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
-        "Assemble each cargo into DMX-iGGA from its 1 to 5 pieces",
+        "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
     note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
@@ -269,8 +289,8 @@ def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
     assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
-def test_the_assembly_step_names_its_destination_and_sizes_itself_from_nebs_table(plan):
-    """The cargo closes into the vector the first round opens, in NEB's own kit reaction."""
+def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(plan):
+    """Each cargo closes into its own position's vector, in NEB's own kit reaction."""
     step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
     opened = len(plan.rounds[0].destination) - plan.rounds[0].excised.length
 
@@ -284,7 +304,11 @@ def test_the_assembly_step_names_its_destination_and_sizes_itself_from_nebs_tabl
         f"PCR2 piece {number}" for number in range(1, 6)
     ]
     assert step.programs[0].stages[-1].incubations[0].temperature_c == 60.0
-    assert [hole.id for hole in step.holes] == ["H25"]
+    assert not step.holes
+    assert step.instructions[0].startswith(
+        "Open DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and "
+        "DMX-iGGA C (block-vector-3.dna) with BbsI"
+    )
 
 
 def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):

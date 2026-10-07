@@ -3,7 +3,8 @@
 `plan_igga` is the way in: it takes one project file naming lists of proteins or coding DNA
 and a destination vector, and runs the whole design. `LibraryPlan.write` puts the synthesis order
 sheet, the barcode table, the amino-acid change table, a record for each round, the assembled
-product, the protocol as data and the page rendered from it in one directory.
+product, the block vector each position's cargo closes into, the protocol as data and the page
+rendered from it in one directory.
 
 The submodules are the steps it is made of -- `method`, `project`, `standard`, `parts`, `vector`,
 `rounds`, `coverage`, `bench` and `steps` -- and `gate`, which judges a finished design whoever

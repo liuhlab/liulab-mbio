@@ -316,6 +316,7 @@ def protocol(
     reads: ReadPairs | None = None,
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -339,6 +340,11 @@ def protocol(
     none. With one, the blocks are not ordered: they are amplified out of the pool and
     assembled, so the first steps and the bill say that instead. `pool_sheet` and `primer_sheet`
     are what the plan calls the two files those steps point at.
+
+    `block_vectors` is what a block closes into, one a position: what each is called and the file
+    the plan wrote it to. A part enters on its own position's entry overhang, so one destination
+    serves one position. Given none, the steps name the destination the first round opens and
+    say nothing about the rest.
     """
     inside, outside = choppers(scheme)
     selection = stages.selection_for(vector)
@@ -386,6 +392,7 @@ def protocol(
                 pool_sheet,
                 primer_sheet,
                 working,
+                block_vectors,
             ),
             *(dmx.validation_materials(validation) if validation else ()),
         ),
@@ -425,6 +432,7 @@ def protocol(
             reads,
             marks,
             linkage_fidelity,
+            block_vectors,
         ),
         references=(
             *_references(scheme),
@@ -568,6 +576,17 @@ def _highlights(
     return tuple(said)
 
 
+def _destination_note(block_vectors: Sequence[tuple[str, str]]) -> str:
+    """Say what the destination is for, and that a later position has one of its own."""
+    opened = "opened by the internal digest in round 1"
+    if len(block_vectors) < 2:
+        return opened
+    return (
+        f"{opened}, and to take each block's cargo. A part enters on its own position's entry "
+        f"overhang, so there is one a position: {listed(_vector_names(block_vectors))}"
+    )
+
+
 def _enzyme_material(enzyme: Enzyme, note: str) -> Material:
     """Return one enzyme as a material, carrying what every digest takes of it."""
     return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
@@ -596,6 +615,7 @@ def _materials(
     pool_sheet: str = "",
     primer_sheet: str = "",
     working: Working | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for.
 
@@ -624,7 +644,8 @@ def _materials(
         Material(
             f"{vector.name or 'destination'} vector",
             storage="-20 °C",
-            note="opened by the internal digest in round 1",
+            amount="" if len(block_vectors) < 2 else f"{len(block_vectors)}, one a position",
+            note=_destination_note(block_vectors),
         )
     )
     if working is not None:
@@ -841,12 +862,13 @@ def _steps(
     reads: ReadPairs | None = None,
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
+    block_vectors: Sequence[tuple[str, str]] = (),
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another.
 
     A pool replaces the order step with the four it takes to get the same blocks: order the
     pool, pull each batch out of it, pull each block out of its batch, and clone that block's
-    cargo into the destination the first round opens.
+    cargo into its own position's destination.
     """
     made = (
         list(
@@ -857,7 +879,7 @@ def _steps(
                 pool_sheet,
                 primer_sheet,
                 scheme,
-                rounds[0].destination.name or "the destination",
+                block_vectors or ((rounds[0].destination.name or "the destination", ""),),
                 bench[0].ligation[0],
                 selection,
             )
@@ -1083,7 +1105,7 @@ def _pool_steps(
     pool_sheet: str,
     primer_sheet: str,
     scheme: Scheme,
-    destination: str,
+    destinations: Sequence[tuple[str, str]],
     opened: Amount,
     selection: str,
 ) -> tuple[Step, ...]:
@@ -1098,7 +1120,7 @@ def _pool_steps(
         _pool_order_step(pool, pool_sheet, primer_sheet),
         _pcr1_step(pool, batches, first, layout.length),
         _pcr2_step(pool, batches, parts, second, inner_length),
-        _assembly_step(pool, parts, sheet, scheme, destination, opened, selection),
+        _assembly_step(pool, parts, sheet, scheme, destinations, opened, selection),
     )
 
 
@@ -1295,20 +1317,27 @@ def _pcr2_step(
     )
 
 
+def _vector_names(destinations: Sequence[tuple[str, str]]) -> list[str]:
+    """Say each destination as the bench reads it: what it is called, and the file holding it."""
+    return [f"{name} ({file})" if file else name for name, file in destinations]
+
+
 def _assembly_step(
     pool: PoolPlan,
     parts: Sequence[Part],
     sheet: str,
     scheme: Scheme,
-    destination: str,
+    destinations: Sequence[tuple[str, str]],
     opened: Amount,
     selection: str,
 ) -> Step:
-    """Clone each block's cargo into the opened destination, one well a block.
+    """Clone each block's cargo into its position's opened destination, one well a block.
 
     The destination supplies the stuffers the cargo is no longer synthesised with, and its own
-    marker is what selects a well that closed. The reaction and its cycling are NEB's kit table
-    for the most pieces any block takes, so one master mix covers the plate.
+    marker is what selects a well that closed. A part enters on its own position's entry
+    overhang, so there is one destination a position and a block goes into its own. The reaction
+    and its cycling are NEB's kit table for the most pieces any block takes, so one master mix
+    covers the plate.
     """
     from liulab_mbio.cloning.goldengate.bench import (
         KIT,
@@ -1326,22 +1355,24 @@ def _assembly_step(
         (opened.name, opened.length_bp),
         tuple((f"PCR2 piece {number}", piece_bp) for number in range(1, most + 1)),
     )
-    plated = selection or f"{destination}'s own marker, which this plan does not name"
+    named = listed(_vector_names(destinations))
+    plated = selection or "the destinations' own marker, which this plan does not name"
     return Step(
-        f"Assemble each cargo into {destination} from its {min(pieces)} to {most} pieces",
+        f"Assemble each cargo into its position's destination, from its {min(pieces)} to "
+        f"{most} pieces",
         instructions=(
-            f"Open {destination} with {scheme.internal.name} and "
-            f"{listed([one.name for one in choppers(scheme)[0]])}, the digest the first round "
-            "runs on it, and clean it up.",
+            f"Open {named} with {scheme.internal.name} and "
+            f"{listed([one.name for one in choppers(scheme)[0]])}, the digest a round opens the "
+            "library with, and clean each up.",
             "Set up one assembly a well, holding that block's own PCR2 pieces, the opened "
-            "destination, and nothing from another well.",
+            "destination of the position that block fills, and nothing from another well.",
             f"Transform, plate on {plated}, and pick one colony a block.",
         ),
         tables=(assembly_reaction(enzyme, amounts, system=KIT, reactions=len(parts)),),
         programs=(assembly_program(enzyme, fragments=most + 1, system=KIT),),
         expected=(
-            f"{len(parts)} plasmids, one a block: {destination} carrying that block's cargo, "
-            f"{min(cargo):,} to {max(cargo):,} bp of it.",
+            f"{len(parts)} plasmids, one a block: its position's destination carrying that "
+            f"block's cargo, {min(cargo):,} to {max(cargo):,} bp of it.",
             f"Each cargo reads: the overhang its part enters on, its coding bases, the internal "
             f"stuffer, its barcode, and the {scheme.cloning_scar} cloning scar. The external "
             f"stuffers {sheet} spells either side of it are the destination's own bases.",
@@ -1351,8 +1382,10 @@ def _assembly_step(
             "recognition sites and the padding all stay outside the cargo.",
             "The table is sized at the most pieces any block takes, so one master mix covers "
             "the plate; a well with fewer pieces fills fewer of its DNA rows.",
+            f"A part enters on its own position's entry overhang, so there is one destination a "
+            f"position. They are one vector differing in the {len(scheme.entry_overhang)} bases "
+            "of that overhang; a block put in the wrong one cannot close.",
         ),
-        holes=stages.POOL_HOLES,
         troubleshooting=(
             Troubleshooting(
                 "A block comes out short",

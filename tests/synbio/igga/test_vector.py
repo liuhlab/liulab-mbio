@@ -27,7 +27,7 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import find_sites
+from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.gate import check_reaction
@@ -46,6 +46,7 @@ from liulab_synbio.igga.vector import (
     destination_vector,
     domesticate_vector,
     donor_cassette,
+    entry_destination,
     released_cargo,
     round_cassette,
     working_vector,
@@ -157,6 +158,59 @@ def test_a_stuffer_across_the_origin_is_found_where_it_lies():
     assert taken.stuffer.end > len(vector)
     assert taken.record is vector
     assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+
+
+#: The overhang a second position enters on, which differs from `ENTRY` in every base.
+LATER_ENTRY = "AGAG"
+
+
+def restandardised(made: Scheme, overhang: str) -> Scheme:
+    """`made` with `overhang` as the entry overhang, which is what a later position enters on."""
+    cutter, chopper = get_enzyme(EXTERNAL), get_enzyme(FLANK_CHOPPER)
+    return scheme(
+        internal_stuffer_prefix=overhang,
+        external_stuffer_5=external_5(overhang, cutter, chopper),
+    )
+
+
+def test_a_destination_is_respelt_for_the_overhang_a_later_position_enters_on():
+    made = scheme()
+    taken = destination_vector(carrier(made), made)
+
+    later = entry_destination(taken, restandardised(made, LATER_ENTRY))
+
+    opened = [
+        piece
+        for piece in digest(later.record, made.internal)
+        if (piece.start, piece.end) == (later.stuffer.start, later.stuffer.end)
+    ]
+    assert len(opened) == 1
+    assert (opened[0].left_overhang, opened[0].right_overhang) == (LATER_ENTRY, made.scar_overhang)
+    changed = [
+        one
+        for one, other in zip(taken.record.sequence, later.record.sequence, strict=True)
+        if one != other
+    ]
+    assert len(changed) == len(LATER_ENTRY)
+
+
+def test_a_destination_already_entering_on_that_overhang_is_left_as_it_stands():
+    made = scheme()
+    taken = destination_vector(carrier(made), made)
+
+    assert entry_destination(taken, made) is taken
+
+
+def test_an_entry_overhang_across_the_origin_is_respelt_where_it_lies():
+    """The overhang's own bases are a span like any other, so the coordinate rule holds."""
+    made = scheme()
+    taken = destination_vector(rotate(carrier(made), 82), made)
+    assert taken.stuffer.start + len(ENTRY[0]) > len(taken.record)
+
+    later = entry_destination(taken, restandardised(made, LATER_ENTRY))
+
+    assert later.record.extract(later.stuffer).startswith(LATER_ENTRY)
+    assert len(later.record) == len(taken.record)
 
 
 def test_puc19_is_made_compatible_at_a_named_span(puc19):
