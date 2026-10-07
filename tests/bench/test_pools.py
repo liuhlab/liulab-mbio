@@ -113,4 +113,4 @@ def test_the_bill_line_carries_the_count_and_the_band_without_any_price(pool):
     )
     assert item.quantity == pool.count
     assert item.unit == "oligos"
-    assert [str(one) for one in item.headroom] == ["350.0 length, no slack above it at all"]
+    assert [str(one) for one in item.headroom] == ["350 length, no slack above it at all"]

@@ -108,6 +108,17 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
 
 
+def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
+    """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
+    row = next(one for one in plan.protocol().bill.rows if one.item.endswith("oligo pool"))
+    assert (row.quantity, row.unit) == (153, "oligos")
+    assert "153 count, 347 below the next band" in row.headroom
+    assert "350 length, no slack above it at all" in row.headroom
+    assert row.charge == ""
+    assert row.hole is not None
+    assert row.hole.kind == "price"
+
+
 def rerouted(plan, **changes):
     """Return the same plan with the project's validation keys replaced."""
     return replace(plan, project=replace(plan.project, **changes))

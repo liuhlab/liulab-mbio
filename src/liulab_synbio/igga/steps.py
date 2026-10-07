@@ -239,6 +239,7 @@ def protocol(
     barcodes: str,
     validation: dmx.Validation | None = None,
     prices: PriceRecord | None = None,
+    pool: Item | None = None,
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
@@ -252,6 +253,9 @@ def protocol(
 
     The bill is always there, because its quantities come from the design. Money comes only from
     `prices`, and every row it does not price carries a hole.
+
+    `pool` is `liulab_synbio.igga.cargo.PoolPlan.item`, the oligo pool as one line of that bill,
+    and `None` for a project that writes no pool.
     """
     inside, outside = choppers(scheme)
     return Protocol(
@@ -308,7 +312,7 @@ def protocol(
         references=(*_references(scheme), *(dmx.REFERENCES if validation else ())),
         sources=_sources(prices, validation),
         holes=stages.HOLES,
-        bill=_consumed(scheme, parts, rounds, inside, outside, prices),
+        bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
     )
 
 
@@ -512,11 +516,15 @@ def _consumed(
     inside: Sequence[Enzyme],
     outside: Sequence[Enzyme],
     record: PriceRecord | None,
+    pool: Item | None,
 ) -> Bill:
     """Return what this build buys, in the quantities the design computes.
 
     Only what the design fixes is billed. The buffer, the beads and the medium scale with volumes
     the method leaves to the supplier, so a row for one would be a quantity nobody computed.
+
+    The pool is the one row the design does not compute here: `liulab_synbio.igga.cargo` builds
+    it, carrying the count and the band it was split to, and it is billed wherever there is one.
     """
     digests = [(scheme.internal, len(rounds)), (scheme.external, len(rounds))]
     digests += [(one, len(rounds) * ((one in inside) + (one in outside))) for one in scheme.blunt]
@@ -528,6 +536,7 @@ def _consumed(
             key=BLOCKS_KEY,
             quantities={"count": len(parts), "length_nt": max(one.length for one in parts)},
         ),
+        *((pool,) if pool is not None else ()),
         *(
             Item(
                 one.commercial_name or one.name,

@@ -97,6 +97,11 @@ class PriceRow:
         return f"{self.key} {bands}".strip() if bands else self.key
 
 
+def _plain(value: Decimal) -> str:
+    """Say a quantity without the trailing zeros a `Decimal` built from a float carries."""
+    return f"{value.normalize():f}"
+
+
 @dataclass(frozen=True, slots=True)
 class Headroom:
     """How far a quantity sits from the edges of the band it fell in."""
@@ -111,13 +116,19 @@ class Headroom:
         return None if self.band.high is None else self.band.high - self.value
 
     def __str__(self) -> str:
-        """Say the fact the way a protocol shows it."""
+        """Say the fact the way a protocol shows it.
+
+        Examples
+        --------
+        >>> str(Headroom("length", Decimal("350.0"), Band("length", Decimal(301), Decimal(350))))
+        '350 length, no slack above it at all'
+        """
         gap = self.above
         if gap is None:
-            return f"{self.value:f} {self.quantity}, no band above it"
+            return f"{_plain(self.value)} {self.quantity}, no band above it"
         if gap == 0:
-            return f"{self.value:f} {self.quantity}, no slack above it at all"
-        return f"{self.value:f} {self.quantity}, {gap:f} below the next band"
+            return f"{_plain(self.value)} {self.quantity}, no slack above it at all"
+        return f"{_plain(self.value)} {self.quantity}, {_plain(gap)} below the next band"
 
 
 @dataclass(frozen=True, slots=True)

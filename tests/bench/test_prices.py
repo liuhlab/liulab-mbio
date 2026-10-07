@@ -49,6 +49,13 @@ def test_headroom_says_how_far_a_quantity_sits_from_the_band_edge(
     assert str(length) == "200 length_nt, no slack above it at all"
 
 
+def test_a_whole_quantity_reads_without_a_trailing_zero() -> None:
+    band = prices.Band("length", Decimal(301), Decimal(400))
+    assert str(prices.Headroom("length", Decimal("350.0"), band)) == (
+        "350 length, 50 below the next band"
+    )
+
+
 def test_a_file_that_is_not_a_record_is_refused_and_says_what_one_is(tmp_path: Path) -> None:
     path = tmp_path / "wrong.csv"
     path.write_text("a,b\n1,2\n", encoding="utf-8")

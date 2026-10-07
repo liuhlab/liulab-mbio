@@ -113,15 +113,18 @@ class Files:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file, in the order they were written: the sheets, the records, the protocol."""
-        return (
+        """Every file written, in that order: the sheets, the records, the protocol, the pool."""
+        written = (
             self.parts,
             self.barcodes,
             self.changes,
             *self.records,
             self.protocol_data,
             self.protocol,
+            self.pool,
+            self.pool_primers,
         )
+        return tuple(path for path in written if path is not None)
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,6 +255,7 @@ class LibraryPlan:
             barcodes=BARCODE_FILE,
             validation=self.validation,
             prices=self.prices,
+            pool=None if self.pool is None else self.pool.item,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
