@@ -47,21 +47,33 @@ def plate(
     catalog: str = "",
     holds: str = "",
     seating: Mapping[str, str] | None = None,
+    labels: Mapping[str, str] | None = None,
     note: str = "",
 ) -> Plate:
-    """Return a plate of `wells` wells, seating `seating`.
+    """Return a plate of `wells` wells, seating `seating` and labelled `labels`.
+
+    `seating` names what sits in a well and resolves against the protocol; `labels` describes a
+    well and resolves against nothing. `seat` writes either.
 
     Raises
     ------
     ValueError
-        If `wells` is no format a plate comes in, or a seated well is off the array.
+        If `wells` is no format a plate comes in, or a seated or labelled well is off the array.
 
     Examples
     --------
     >>> plate("barcodes", 384, seating={"A1": "UMI-1"}).columns
     24
     """
-    return Plate(name, wells, catalog=catalog, holds=holds, seating=dict(seating or {}), note=note)
+    return Plate(
+        name,
+        wells,
+        catalog=catalog,
+        holds=holds,
+        seating=dict(seating or {}),
+        labels=dict(labels or {}),
+        note=note,
+    )
 
 
 def wells_of(one: Plate, *, start: int = 0, count: int | None = None) -> tuple[Well, ...]:

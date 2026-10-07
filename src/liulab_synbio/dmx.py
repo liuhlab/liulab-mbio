@@ -43,7 +43,6 @@ from liulab_mbio.protocol.model import (
     ThermocyclerProgram,
     Transfer,
     Troubleshooting,
-    Vessel,
     Well,
 )
 
@@ -687,7 +686,17 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     return tuple(one for one in designs if one.fragments >= floor)
 
 
-def picked_plate(name: str, colonies: int) -> Plate:
+def _selected_on(selection: str) -> str:
+    """Return what a plate of this read's transformants carries, named or left to the record.
+
+    The drug is the vector's, read off its marker by the caller: this method's own DMX vector is
+    not the one the published protocol was written for, and naming that one sends a reader to an
+    empty plate.
+    """
+    return selection or "the vector's own antibiotic"
+
+
+def picked_plate(name: str, colonies: int, selection: str = "") -> Plate:
     """Return one plate of picked colonies: `colonies` wells of selective medium.
 
     Picking fills one quarter of the plate at a time, in the order a head built for the index
@@ -703,22 +712,23 @@ def picked_plate(name: str, colonies: int) -> Plate:
     Examples
     --------
     >>> picked = picked_plate("picked 1", 288)
-    >>> picked.wells, len(picked.seating), picked.seating["B1"]
+    >>> picked.wells, len(picked.labels), picked.labels["B1"]
     (384, 288, 'quarter 3')
     """
     if colonies > PICKED_WELLS:
         raise ValueError(f"{colonies} colonies do not fit a {PICKED_WELLS}-well plate")
-    seating: dict[str, str] = {}
+    labels: dict[str, str] = {}
     left = colonies
     for number, quarter in enumerate(plates.interleave(PICKED_WELLS, INDEX_WELLS), start=1):
-        seating |= dict.fromkeys(quarter[: max(left, 0)], f"quarter {number}")
+        labels |= dict.fromkeys(quarter[: max(left, 0)], f"quarter {number}")
         left -= len(quarter)
     return plates.plate(
         name,
         PICKED_WELLS,
         catalog=PICKED_CATALOG,
-        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with carbenicillin",
-        seating=seating,
+        holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with "
+        f"{_selected_on(selection)}",
+        labels=labels,
         note=f"{colonies} of {PICKED_WELLS} wells picked, a quarter at a time",
     )
 
@@ -745,38 +755,23 @@ def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
 
     Examples
     --------
-    >>> index_plate("index 1", 3, plate=1).seating["A2"]
+    >>> index_plate("index 1", 3, plate=1).labels["A2"]
     'forward 2, reverse 2'
     """
     if samples > INDEX_WELLS:
         raise ValueError(f"{samples} samples do not fit a {INDEX_WELLS}-well plate")
-    seating = {}
+    labels = {}
     names = plates.plate(name, INDEX_WELLS).well_names
     for well in range(samples):
         one = address(ROUTE_B, plate=plate, well=well)
-        seating[names[well]] = f"forward {one.well_marks[0]}, reverse {one.plate_mark}"
+        labels[names[well]] = f"forward {one.well_marks[0]}, reverse {one.plate_mark}"
     return plates.plate(
         name,
         INDEX_WELLS,
         catalog=INDEX_CATALOG,
         holds="one barcoded PCR each, the pair its own address names",
-        seating=seating,
+        labels=labels,
         note=f"plate mark {plate + 1}; {samples} of {INDEX_WELLS} wells used",
-    )
-
-
-def bioassay_plate(name: str) -> Vessel:
-    """Return the 25 cm plate the colonies are picked from.
-
-    It is a vessel and not a plate: its colonies land where they land, so they have no
-    positions to seat.
-    """
-    return Vessel(
-        name,
-        kind="25 cm BioAssay plate",
-        catalog=BIOASSAY_CATALOG,
-        holds=f"about {BIOASSAY_COLONIES:,} colonies, which is the density picking wants",
-        note="100 µg/mL carbenicillin, overnight at 37 °C",
     )
 
 
@@ -800,7 +795,7 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
     wells = [
         Well(plate.name, name)
         for plate in picked
-        for name in (plate.seating or dict.fromkeys(plate.well_names))
+        for name in (plate.labels or dict.fromkeys(plate.well_names))
     ]
     return plates.compact(
         wells,
@@ -832,7 +827,7 @@ def sampling(picked: Plate, index: Sequence[Plate]) -> tuple[Transfer, ...]:
     >>> len(moves), len(moves[0].moves), moves[0].instrument
     (3, 96, 'multichannel pipette')
     """
-    filled = picked.seating or dict.fromkeys(picked.well_names)
+    filled = picked.labels or dict.fromkeys(picked.well_names)
     quarters = [
         tuple(name for name in quarter if name in filled)
         for quarter in plates.interleave(picked.wells, INDEX_WELLS)
@@ -877,6 +872,9 @@ class Validation:
         That floor, carried so the protocol can print it beside each design's chance.
     colonies
         Colonies picked per design.
+    selection
+        What to plate on, read off the vector's own marker by the caller. Empty where the record
+        annotates none, and every plate then says so rather than naming a drug.
     """
 
     route: Route
@@ -884,6 +882,7 @@ class Validation:
     _: KW_ONLY
     floor: int
     colonies: int = COLONIES_PER_DESIGN
+    selection: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a read of no design, or of no colony per design."""
@@ -903,7 +902,8 @@ class Validation:
         full, rest = divmod(self.wells, PICKED_WELLS)
         sizes = [PICKED_WELLS] * full + ([rest] if rest else [])
         return tuple(
-            picked_plate(f"picked {number}", size) for number, size in enumerate(sizes, start=1)
+            picked_plate(f"picked {number}", size, self.selection)
+            for number, size in enumerate(sizes, start=1)
         )
 
     @property
@@ -919,7 +919,7 @@ class Validation:
         self._only(ROUTE_B)
         made: list[Plate] = []
         for one in self.picked:
-            left = len(one.seating)
+            left = len(one.labels)
             while left > 0:
                 made.append(
                     index_plate(f"index {len(made) + 1}", min(left, INDEX_WELLS), plate=len(made))
@@ -948,11 +948,15 @@ def validation(
     floor: int | None,
     *,
     colonies: int = COLONIES_PER_DESIGN,
+    selection: str = "",
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
     `None` is the answer for a project that states no floor and for one whose floor is above
     every design: either way nothing is read, and a protocol then carries no validation at all.
+
+    `selection` is what the caller read off the vector's marker. Left empty, every plate says
+    the vector's own antibiotic rather than naming one this read cannot know.
 
     Raises
     ------
@@ -971,26 +975,7 @@ def validation(
     read = validated(designs, floor)
     if not read:
         return None
-    return Validation(route, read, floor=floor, colonies=colonies)
-
-
-def pooling(compressed: Plate, reservoir: Vessel) -> Transfer:
-    """Return every barcoded well run into one reservoir, which is what a pool is.
-
-    Examples
-    --------
-    >>> pooled = pooling(compressed_plate("lysate"), Vessel("reservoir"))
-    >>> len(pooled.moves)
-    1536
-    """
-    return plates.pool(
-        plates.wells_of(compressed),
-        Well(reservoir.name, "1"),
-        WELL_UL,
-        title=f"Pool {compressed.name}",
-        note=f"Invert and spin at 200 x g; {POOL_COLUMNS} miniprep columns, because one saturates",
-        citation=Citation("Qian SI", "Day 4.1"),
-    )
+    return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
 #: Route B's marks, which the package holds none of. The two annealing regions are published and
@@ -1130,7 +1115,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Corning",
             catalog=BIOASSAY_CATALOG.split("#")[-1],
             amount="one spot a design",
-            note=f"carbenicillin at 100 µg/mL; about {BIOASSAY_COLONIES:,} colonies a plate",
+            note=f"{_selected_on(one.selection)}; about {BIOASSAY_COLONIES:,} colonies a plate",
             citation=Citation("Qian SI", "Day 2"),
         ),
         Material(
@@ -1138,7 +1123,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Beckman Coulter",
             catalog=PICKED_CATALOG.split("#")[-1],
             amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
-            note=f"{CULTURE_UL:g} µL low-salt LB with carbenicillin a well",
+            note=f"{CULTURE_UL:g} µL low-salt LB with {_selected_on(one.selection)} a well",
             citation=Citation("Qian SI", "Day 3"),
         ),
     ]
@@ -1272,7 +1257,7 @@ def _array_step(one: Validation) -> Step:
         f"Array {len(one.designs)} design(s) and grow",
         instructions=(
             "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-            "Grow overnight at 37 °C on 100 µg/mL carbenicillin.",
+            f"Grow overnight at 37 °C on {_selected_on(one.selection)}.",
         ),
         expected=(
             f"One spot a design, at about {BIOASSAY_COLONIES:,} colonies a plate, which is the "
@@ -1295,12 +1280,12 @@ def _array_step(one: Validation) -> Step:
 
 def _pick_step(one: Validation) -> Step:
     """Pick the colonies, a quarter of a plate at a time, and print what each pick is worth."""
-    sizes = ", ".join(f"{len(plate.seating)}" for plate in one.picked)
+    sizes = ", ".join(f"{len(plate.labels)}" for plate in one.picked)
     return Step(
         f"Pick {one.colonies} colonies of each design",
         instructions=(
             f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
-            f"carbenicillin, with the {PICKER}.",
+            f"{_selected_on(one.selection)}, with the {PICKER}.",
             f"Fill one quarter of each {PICKED_WELLS}-well plate before starting the next.",
             "Grow overnight at 37 °C.",
         ),
@@ -1374,7 +1359,7 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
     at = 0
     moves: list[Transfer] = []
     for plate in one.picked:
-        many = -(-len(plate.seating) // INDEX_WELLS)
+        many = -(-len(plate.labels) // INDEX_WELLS)
         moves += sampling(plate, one.index[at : at + many])
         at += many
     return (

@@ -13,8 +13,12 @@ and which materials carry which rule — a different method would call the same 
 its own numbers.
 """
 
+from collections.abc import Mapping
+
 from liulab_mbio.bench import materials
+from liulab_mbio.bench.phenotype import SELECTION, selection_marker
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
+from liulab_mbio.sequence import SequenceRecord
 
 #: The documents a citation in this protocol could resolve against: the ones a material brings
 #: with it. The round's own numbers are the paper's and travel as references, not as cited rows.
@@ -42,6 +46,41 @@ LIGASE_BUFFER = materials.material(
     citation=Citation("M0318", "reaction conditions"),
 )
 
+#: What a plate carries for each drug `liulab_mbio.bench.phenotype.SELECTION` names, where this
+#: method has a concentration sourced for it. Kanamycin is Zero Blunt TOPO UG p. 13, the guide
+#: for this method's own part carrier; carbenicillin is Qian SI Day 2. A drug absent from here is
+#: named without a concentration rather than given one nobody published.
+SELECTION_PLATE: Mapping[str, str] = {
+    "kanamycin": "50 µg/mL kanamycin",
+    "ampicillin or carbenicillin": "100 µg/mL carbenicillin",
+}
+
+
+def selection_for(record: SequenceRecord) -> str:
+    """Return what to select this vector's transformants on, or ``""`` where nothing names it.
+
+    The marker is a fact in the record, so the drug follows from it rather than from the
+    document the rest of the stage was quoted from: departure D11 rebuilds this method's DMX
+    vector AmpR to KanR, and the paper's carbenicillin does not carry over with it.
+    """
+    marker = selection_marker(record)
+    if marker is None:
+        return ""
+    drug = SELECTION.get(marker.name.lower(), "")
+    return SELECTION_PLATE.get(drug, drug)
+
+
+#: What a round has no drug to plate on, raised only where `selection_for` cannot name one.
+ROUND_SELECTION = Hole(
+    "H22",
+    "no selection antibiotic for a round",
+    "undecided",
+    where="each round, plating",
+    filled_by="the vector's own marker",
+    issue="liuhlab/liulab-mbio#264",
+)
+
+
 #: What no source sets for the final assembly: no published document runs the step, so the DNA
 #: into it and the ratio it is cleaned up at are the method's own. Carried by the steps it bites
 #: in, and listed among the protocol's holes.
@@ -60,14 +99,6 @@ FINAL_MASSES = Hole(
 #: resolves.
 HOLES: tuple[Hole, ...] = (
     Hole(
-        "H22",
-        "no selection antibiotic for a round",
-        "undecided",
-        where="each round, plating",
-        filled_by="the vector's own marker",
-        issue="liuhlab/liulab-mbio#264",
-    ),
-    Hole(
         "H23",
         "no published document describes the split digest; the one source is the paper itself",
         "unpublished",
@@ -77,6 +108,15 @@ HOLES: tuple[Hole, ...] = (
     ),
     FINAL_MASSES,
 )
+
+
+def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
+    """Return the holes a run against this vector carries.
+
+    `ROUND_SELECTION` joins them only where the record names no marker to plate on: a vector
+    that names one answers the hole rather than carrying it.
+    """
+    return HOLES if selection_for(record) else (ROUND_SELECTION, *HOLES)
 
 
 #: What the pool route cannot write, and would have to invent a number to fill. A block is

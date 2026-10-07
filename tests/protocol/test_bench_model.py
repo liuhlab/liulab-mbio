@@ -193,3 +193,34 @@ def test_everything_new_round_trips_through_json(tmp_path: Path) -> None:
 
 def test_the_row_label_follows_the_plate_past_the_alphabet() -> None:
     assert [model.row_label(n) for n in (0, 25, 26, 31)] == ["A", "Z", "AA", "AF"]
+
+
+def test_a_labelled_well_describes_itself_and_resolves_against_nothing() -> None:
+    """A label is what `holds` is for a plate, said a well at a time, so it never dangles."""
+    one = protocol(
+        ligation(),
+        plates=(plates.plate("picked", 96, labels={"A1": "quarter 1", "A2": "quarter 2"}),),
+    )
+
+    (check,) = [c for c in one.audit() if c.name == "wells"]
+
+    assert check.status == "pass"
+    assert "quarter 1" in render_html(one)
+
+
+def test_a_label_does_not_excuse_a_seated_well_naming_nothing_declared() -> None:
+    """The one defect the check catches survives the new channel."""
+    one = protocol(
+        ligation(),
+        plates=(plates.plate("picked", 96, seating={"A1": "ghost"}, labels={"A2": "quarter 1"}),),
+    )
+
+    (check,) = [c for c in one.audit() if c.name == "wells"]
+
+    assert check.status == "fail"
+    assert "ghost" in check.detail
+
+
+def test_a_label_off_the_array_is_refused_as_a_seating_is() -> None:
+    with pytest.raises(ValueError, match="has no well"):
+        plates.plate("picked", 96, labels={"Z1": "quarter 1"})

@@ -151,8 +151,8 @@ def test_route_b_seats_each_sample_under_the_pair_its_address_names(tmp_path):
     """The plate is derived from the address, so there is no plate map to carry."""
     plate = dmx.index_plate("index", 96, plate=3)
     assert plate.wells == dmx.INDEX_WELLS
-    assert plate.seating["A1"] == "forward 1, reverse 4"
-    assert plate.seating["H12"] == "forward 96, reverse 4"
+    assert plate.labels["A1"] == "forward 1, reverse 4"
+    assert plate.labels["H12"] == "forward 96, reverse 4"
     with pytest.raises(ValueError, match="do not fit"):
         dmx.index_plate("index", 97)
 
@@ -160,12 +160,12 @@ def test_route_b_seats_each_sample_under_the_pair_its_address_names(tmp_path):
 def test_picking_fills_one_quarter_of_the_plate_at_a_time():
     """288 wells give three full index plates, not four part-filled ones."""
     picked = dmx.picked_plate("picked 1", 288)
-    assert len(picked.seating) == 288
+    assert len(picked.labels) == 288
     assert picked.catalog == dmx.PICKED_CATALOG
-    assert set(picked.seating.values()) == {"quarter 1", "quarter 2", "quarter 3"}
-    assert picked.seating["A1"] == "quarter 1"
-    assert picked.seating["B1"] == "quarter 3"
-    assert "B2" not in picked.seating
+    assert set(picked.labels.values()) == {"quarter 1", "quarter 2", "quarter 3"}
+    assert picked.labels["A1"] == "quarter 1"
+    assert picked.labels["B1"] == "quarter 3"
+    assert "B2" not in picked.labels
     with pytest.raises(ValueError, match="do not fit"):
         dmx.picked_plate("picked 1", 385)
 
@@ -210,11 +210,11 @@ def test_the_bench_is_sized_from_the_designs_read_and_not_from_the_design_list()
     some = tuple(dmx.Design(f"d{n}", 1 + n % 4) for n in range(72))
     whole = sized(dmx.ROUTE_B, some, 0)
     assert (whole.wells, len(whole.picked), len(whole.index)) == (288, 1, 3)
-    assert [len(one.seating) for one in whole.picked] == [288]
+    assert [len(one.labels) for one in whole.picked] == [288]
     fewer = sized(dmx.ROUTE_B, some, 4)
     assert len(fewer.designs) == 18
     assert fewer.wells == 72
-    assert [len(one.seating) for one in fewer.picked] == [72]
+    assert [len(one.labels) for one in fewer.picked] == [72]
     assert len(fewer.index) == 1
     assert dmx.validation(dmx.ROUTE_B, some, 5) is None
     assert dmx.validation(dmx.ROUTE_B, some, None) is None
@@ -231,7 +231,7 @@ def test_route_a_compresses_four_picked_plates_into_one_and_route_b_neither():
         assert route_a.index
     route_b = sized(dmx.ROUTE_B, many, 0)
     assert len(route_b.index) == 17
-    assert [one.seating["A1"] for one in route_b.index[:2]] == [
+    assert [one.labels["A1"] for one in route_b.index[:2]] == [
         "forward 1, reverse 1",
         "forward 1, reverse 2",
     ]
@@ -291,3 +291,33 @@ def test_the_index_pcr_touches_down_before_it_plateaus():
     assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
     annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
     assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]
+
+
+def said_by(one) -> str:
+    """Every line this read-back prints that could name a drug."""
+    return " ".join(
+        (
+            *(plate.holds for plate in one.picked),
+            *(material.note or "" for material in dmx.validation_materials(one)),
+            *(line for step in dmx.validation_steps(one) for line in step.instructions),
+        )
+    )
+
+
+def test_every_plate_is_selected_on_the_drug_the_caller_read_off_the_vector():
+    """This method rebuilt its DMX vector KanR, so nothing the read-back pours is carbenicillin."""
+    one = dmx.validation(dmx.ROUTE_A, (dmx.Design("one", 2),), 0, selection="50 µg/mL kanamycin")
+    assert one is not None
+
+    said = said_by(one)
+
+    assert "carbenicillin" not in said
+    assert said.count("50 µg/mL kanamycin") == 5
+
+
+def test_a_read_that_cannot_name_the_drug_leaves_it_to_the_record():
+    """A caller naming none prints the vector's own antibiotic rather than the paper's."""
+    said = said_by(sized(dmx.ROUTE_A, (dmx.Design("one", 2),), 0))
+
+    assert "carbenicillin" not in said
+    assert said.count("the vector's own antibiotic") == 5

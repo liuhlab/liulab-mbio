@@ -130,7 +130,7 @@ def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
     one = plan.validation
     assert (one.route.name, one.floor, len(one.designs)) == ("B", 0, 72)
     assert one.wells == 288 == 72 * 4
-    assert [len(picked.seating) for picked in one.picked] == [288]
+    assert [len(picked.labels) for picked in one.picked] == [288]
     assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
 
 
@@ -141,7 +141,7 @@ def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out
     left_out = len(whole.designs) - len(fewer.designs)
     assert left_out == 21
     assert fewer.wells == whole.wells - left_out * whole.colonies == 204
-    assert sum(len(one.seating) for one in fewer.picked) == 204
+    assert sum(len(one.labels) for one in fewer.picked) == 204
     fewest = rerouted(plan, validate_from=3).validation
     assert (len(fewest.designs), fewest.wells) == (17, 68)
     assert len(fewest.index) == 1 < len(whole.index)
@@ -292,3 +292,22 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
         "H27",
         "H28",
     ]
+
+
+def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
+    """Route B pours picked and index plates, and each now belongs to a plate the page draws."""
+    one = plan.protocol()
+    named = {
+        well.plate
+        for step in one.steps
+        for transfer in step.transfers
+        for move in transfer.moves
+        for well in (move.source, move.destination)
+    }
+    drawn = {plate.name: plate for plate in one.plates}
+
+    assert named <= set(drawn)
+    assert {"picked 1", "index 1"} <= set(drawn)
+    assert drawn["picked 1"].labels["A1"] == "quarter 1"
+    assert not drawn["picked 1"].seating
+    assert [c.status for c in one.audit() if c.name == "wells"] == ["pass"]

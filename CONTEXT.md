@@ -796,6 +796,15 @@ resolve against the protocol's own materials, oligos, vessels and plates, so a d
 reported. A seating never restates what a reaction already says differs between its vessels.
 _Avoid_: layout, plate map, well assignment
 
+### Label
+
+What a well is described as, as against what sits in it: a grouping such as `quarter 3`, a
+printed address, or the name of something the protocol does not declare. A label resolves
+against nothing and is drawn as it stands, so it is never a dangling reference. A well a step
+has to name carries a **seating**; a well that only has something to say about itself carries
+this.
+_Avoid_: annotation, caption, tag
+
 ### Transfer
 
 Material moved from one well to another, with a volume and the instrument that moves it. One
