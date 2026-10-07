@@ -1,6 +1,7 @@
 """The ligation fidelity build script, on a workbook built here rather than fetched.
 
-The workbook reader it calls is the package's, `liulab_mbio.ligase`.
+The workbook reader it calls is the package's, `liulab_mbio.ligase`, so the sheet a matrix of
+several is read from is pinned here too, on a workbook built here the same way.
 """
 
 import importlib.util
@@ -8,13 +9,21 @@ import io
 import json
 import sys
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from itertools import product
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 
-from liulab_mbio.ligase import SPREADSHEET_NS, column_index, read_workbook
+from liulab_mbio.ligase import (
+    RELATIONSHIP_NS,
+    SPREADSHEET_NS,
+    column_index,
+    read_profile,
+    read_workbook,
+)
+from liulab_mbio.sequence import reverse_complement
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -167,3 +176,164 @@ def test_one_row_per_line_is_still_json() -> None:
 
     assert json.loads(rendered) == document
     assert '"TTTT": {"AAAA":635,"TTTT":4}' in rendered
+
+
+# Bilotti 2022's supplement is one workbook of eight matrices, one per ligase and buffer, so a
+# reader taking the first sheet of a file answers a question about T7 with T4's numbers.
+BILOTTI = (
+    "File S1. T4",
+    "File S2. T7",
+    "File S3. hLig3",
+    "File S4. T3",
+    "File S5. PBCV-1",
+    "File S6. T4 PEG",
+    "File S7. T7 PEG",
+    "File S8. hLig3 PEG",
+)
+T7 = BILOTTI[1]
+
+#: The two numbers that sheet is recognised by: every four-base overhang, and its own total.
+T7_OVERHANGS = 256
+T7_OBSERVATIONS = 338_272
+
+
+def bilotti() -> bytes:
+    """A workbook shaped as that supplement is: eight sheets, one count matrix each.
+
+    The T7 sheet carries every four-base overhang and the rest a two-overhang stub of its own
+    size, so a sheet read in place of another is plain. The parts are numbered against the
+    order the sheets are listed in, which an `.xlsx` allows, so only the relationships resolve
+    them.
+    """
+    return sheets_workbook(
+        {
+            name: _overhang_matrix()
+            if name == T7
+            else {"AAAA": {"TTTT": number}, "TTTT": {"AAAA": number}}
+            for number, name in enumerate(BILOTTI, start=1)
+        }
+    )
+
+
+def sheets_workbook(sheets: Mapping[str, Mapping[str, Mapping[str, int]]]) -> bytes:
+    """Write a workbook holding one count matrix per named sheet."""
+    labels: dict[str, int] = {"Overhang": 0}
+    for counts in sheets.values():
+        for row, columns in counts.items():
+            for label in (row, *columns):
+                labels.setdefault(label, len(labels))
+    parts = [f"xl/worksheets/sheet{len(sheets) - number}.xml" for number in range(len(sheets))]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("xl/workbook.xml", _workbook_xml(tuple(sheets)))
+        archive.writestr("xl/_rels/workbook.xml.rels", _rels_xml(parts))
+        archive.writestr(
+            "xl/sharedStrings.xml",
+            f'<sst xmlns="{SPREADSHEET_NS[1:-1]}">'
+            + "".join(f"<si><t>{label}</t></si>" for label in labels)
+            + "</sst>",
+        )
+        for part, counts in zip(parts, sheets.values(), strict=True):
+            archive.writestr(part, _worksheet_xml(counts, labels))
+    return buffer.getvalue()
+
+
+def _overhang_matrix() -> dict[str, dict[str, int]]:
+    """Every four-base overhang against its own partner, totalling the T7 sheet's own count."""
+    overhangs = ["".join(bases) for bases in product("ACGT", repeat=4)]
+    each, extra = divmod(T7_OBSERVATIONS, len(overhangs))
+    counts = {one: {reverse_complement(one): each} for one in overhangs}
+    counts[overhangs[0]][reverse_complement(overhangs[0])] += extra
+    return counts
+
+
+def _workbook_xml(names: Sequence[str]) -> str:
+    """The part listing the sheets, each pointing at its own part by relationship."""
+    sheets = "".join(
+        f'<sheet name="{name}" sheetId="{number}" r:id="rId{number}"/>'
+        for number, name in enumerate(names, start=1)
+    )
+    return (
+        f'<workbook xmlns="{SPREADSHEET_NS[1:-1]}" xmlns:r="{RELATIONSHIP_NS[1:-1]}">'
+        f"<sheets>{sheets}</sheets></workbook>"
+    )
+
+
+def _rels_xml(parts: Sequence[str]) -> str:
+    """The part saying which file each relationship id points at."""
+    package = "http://schemas.openxmlformats.org/package/2006/relationships"
+    kind = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
+    entries = "".join(
+        f'<Relationship Id="rId{number}" Type="{kind}" Target="{part.removeprefix("xl/")}"/>'
+        for number, part in enumerate(parts, start=1)
+    )
+    return f'<Relationships xmlns="{package}">{entries}</Relationships>'
+
+
+def _worksheet_xml(counts: Mapping[str, Mapping[str, int]], labels: Mapping[str, int]) -> str:
+    """One sheet: the labels across the top and down the side, a count in each cell."""
+    columns = sorted({label for row, one in counts.items() for label in (row, *one)})
+    place = {label: number for number, label in enumerate(columns, start=2)}
+    header = "".join(
+        f'<c r="{_reference(number, 1)}" t="s"><v>{labels[label]}</v></c>'
+        for number, label in enumerate(("Overhang", *columns), start=1)
+    )
+    rows = [f'<row r="1">{header}</row>']
+    for line, (label, row) in enumerate(counts.items(), start=2):
+        body = f'<c r="A{line}" t="s"><v>{labels[label]}</v></c>' + "".join(
+            f'<c r="{_reference(place[one], line)}"><v>{value}</v></c>'
+            for one, value in row.items()
+        )
+        rows.append(f'<row r="{line}">{body}</row>')
+    return (
+        f'<worksheet xmlns="{SPREADSHEET_NS[1:-1]}"><sheetData>{"".join(rows)}</sheetData>'
+        "</worksheet>"
+    )
+
+
+def _reference(column: int, row: int) -> str:
+    """A cell reference, for a matrix wider than the alphabet."""
+    letters = ""
+    while column:
+        column, remainder = divmod(column - 1, 26)
+        letters = chr(ord("A") + remainder) + letters
+    return f"{letters}{row}"
+
+
+def test_a_workbook_of_several_matrices_is_refused_until_a_sheet_is_named(tmp_path: Path) -> None:
+    path = tmp_path / "File S1_NAR.xlsx"
+    path.write_bytes(bilotti())
+
+    with pytest.raises(ValueError, match="none was asked for") as refused:
+        read_profile(path)
+
+    assert all(name in str(refused.value) for name in BILOTTI)
+
+
+def test_the_sheet_named_is_the_one_read_and_not_the_first(tmp_path: Path) -> None:
+    path = tmp_path / "File S1_NAR.xlsx"
+    path.write_bytes(bilotti())
+
+    profile = read_profile(path, sheet=T7)
+
+    assert len(profile.overhangs) == T7_OVERHANGS
+    assert profile.observations == T7_OBSERVATIONS
+
+
+def test_a_sheet_names_the_conditions_a_file_name_does_not(tmp_path: Path) -> None:
+    path = tmp_path / "File S1_NAR.xlsx"
+    path.write_bytes(bilotti())
+
+    assert read_profile(path, sheet=T7).conditions == T7
+
+
+def test_a_sheet_is_found_through_its_relationship_and_not_its_part_number() -> None:
+    name, counts = read_workbook(bilotti(), sheet=0)
+
+    assert name == BILOTTI[0]
+    assert counts == {"AAAA": {"TTTT": 1}, "TTTT": {"AAAA": 1}}
+
+
+def test_a_sheet_the_workbook_does_not_hold_is_refused_by_name() -> None:
+    with pytest.raises(ValueError, match="no sheet named"):
+        read_workbook(bilotti(), sheet="File S9. T7")

@@ -25,6 +25,7 @@ from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
 from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.stages import LIGASE, LIGASE_BUFFER
 
 #: What stands behind a check: a domain object `liulab_mbio` already returns, so `plot` can draw
 #: a failure on the record it occurred in. No finding type of its own.
@@ -37,6 +38,14 @@ CUTS = 2
 #: How many overhangs one round's ligation joins on: the one a part enters by, and the cloning
 #: scar. Both ends of every molecule in that tube present one of these two.
 LIGATION_OVERHANGS = 2
+
+#: What a measured fidelity score does not say on its own. Every matrix the package ships was
+#: read on T4 ligase, cycled with the Type IIS enzyme present, where this round ligates with
+#: another ligase and does not cycle. `docs/research/ligation-fidelity.md` holds the comparison.
+ANOTHER_LIGASE = (
+    f", a T4 ligase measurement cycled with the enzyme present; this round ligates with "
+    f"{LIGASE.name} in {LIGASE_BUFFER.name}"
+)
 
 #: What the primers that read a well anneal to, 5' to 3'. LevSeq publishes them and they bind
 #: the DMX vector unchanged, so a design holds them rather than choosing them:
@@ -711,7 +720,8 @@ def _ligation(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
                 "ligation fidelity",
                 None,
                 report.value,
-                f"{reaction.name} scores {report.value:.3f} on {report.source}",
+                f"{reaction.name} scores {report.value:.3f} on {report.source}"
+                f"{ANOTHER_LIGASE if report.measured else ''}",
             ),
             reaction.name,
         ),

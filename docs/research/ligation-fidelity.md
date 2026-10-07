@@ -389,8 +389,21 @@ which a test pins.
 ### A second ligase's matrix, and what it may not replace
 
 Bilotti 2022 is read the same way, and it is CC BY 4.0 rather than CC BY-NC, so a user holding it
-carries no licence question at all. It is one workbook of eight sheets (section 11), so anything
-but its T4 sheet is out of reach of a reader that takes the first sheet of a file.
+carries no licence question at all. It is one workbook of eight sheets (section 11), so the sheet
+is named:
+
+```python
+profile = read_profile(
+    "reference_docs/ligation-fidelity/bilotti2022/File S1_NAR.xlsx", sheet="File S2. T7"
+)
+```
+
+A workbook of several sheets, asked for none, is refused and names them, so a question about T7
+cannot be answered with T4's numbers. The sheet is resolved through the workbook's own
+relationships rather than by the number in `sheetN.xml`, which need not follow the order the
+sheets are listed in. Its name also stands in for the conditions where the file name states none,
+as `File S1_NAR.xlsx` does: `"File S7. T7 PEG"` already carries the ligase and the buffer, so
+`LigaseProfile` gained no buffer field of its own.
 
 **A T7 profile may not replace an enzyme's own one-pot matrix.** The temptation is real: an iGGA
 round ligates with T7 in PEG, so a T7 PEG matrix looks like the closer match to the bench. It is
@@ -670,8 +683,9 @@ Pryor added Type IIS enzymes under one ligase, Bilotti adds ligases.
 The deposit was downloaded and opened on 2026-10-07, and it is not the shape the paper describes.
 Its Data Availability says "Raw ligation product observation counts were provided as CSV formatted
 data tables"; what is deposited is **one workbook, `File S1_NAR.xlsx`, of eight 256 x 256 sheets**.
-That distinction is load-bearing here, because `read_profile` reads the first sheet of a workbook
-and nothing else, so every sheet but T4 is out of reach until it takes a sheet selector.
+That distinction was load-bearing here, because `read_profile` read the first sheet of a workbook
+and nothing else, so a request for T7 returned T4 without erring. It now names the sheet, and
+refuses a workbook of several sheets that names none; section 8 gives the selector.
 
 | Sheet | Ligase | Buffer | Observations |
 | --- | --- | --- | --- |
@@ -687,7 +701,9 @@ and nothing else, so every sheet but T4 is out of reach until it takes a sheet s
 The second condition axis is the buffer: standard T4 buffer against NEBNext Quick Ligation buffer,
 which has PEG, and PEG changes bias. It covers **three of the five ligases, not all five** — T4, T7
 and hLig3 have a PEG sheet, T3 and PBCV-1 do not. A matrix from here needs its **buffer** recorded
-next to temperature and time, which the current `LigaseProfile` conditions string has no field for.
+next to temperature and time; the sheet name carries both, so it supplies the free-form conditions
+string where the file name states none, and no buffer field was added for a value nothing computes
+on.
 
 All eight sheets are **pure ligation: 1 h at 25 °C, no Type IIS enzyme and no cycling** — the same
 chemistry as Potapov 2018 and not the chemistry of a Golden Gate reaction. Section 10's measurement
