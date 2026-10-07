@@ -431,6 +431,14 @@ enzyme nobody has measured. It is still not a measurement of that enzyme, and a 
 against one says so. This package ships none: it reads a file the user already holds.
 _Avoid_: ligase data, T4 table
 
+### Reserved overhang
+
+An overhang a step outside a selection already spends, so the set being designed leaves it
+alone: the cargo junction a finished library goes on to, for one. It binds a candidate the way
+a junction already taken does — neither that overhang nor a near-duplicate of it — but it is
+not a junction of this set, so taking one is refused as reserved rather than as a repeat.
+_Avoid_: excluded overhang, forbidden overhang, blacklist
+
 ### Near-duplicate
 
 Of two overhangs in one set: differing in fewer bases than the set's distance rule allows. Two

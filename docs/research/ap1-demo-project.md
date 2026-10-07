@@ -17,7 +17,9 @@ The evidence behind every option is in `docs/research/synthesis-and-assembly.md`
 cargo comes from is in `docs/research/protein-library-assembly.md`; the barcode rules are in
 `docs/research/barcode-design.md`. Those notes are cited rather than restated, and no
 measurement in them is contradicted here. Numbers this note derives are arithmetic over the
-layout in section 3 and are marked **derived** where they appear.
+layout in section 3 and the two inputs in section 4.1, and are marked **derived** where they
+appear. A price is a list price with its date, which is a reference and never a fact about what
+this project pays.
 
 ## 1. The cargo input, and what is held back
 
@@ -68,22 +70,90 @@ project uses whatever the lab-resources build settles on.
 ### 2.2 The working vector: a Tet-on lentiviral backbone
 
 A third-generation lentiviral transfer plasmid carrying the assembly cassette
-`[TATG.BsmBI]─[RFP stuffer]─[BsmBI.CTAA]` under a TRE promoter, with the transactivator and the
+`[TATG.BsmBI]─[stuffer]─[BsmBI.CTAA]` under a TRE promoter, with the transactivator and the
 transduction marker expressed constitutively from a second promoter between the LTRs.
 
-Requirements the backbone has to meet, all checkable on its own map:
+**The parent is named: pLVX-TetOne-Puro-GFP, Addgene 171123.** #230 measured the real map
+against all four requirements, on 2026-10-06, in the package's own coordinates.
+`docs/research/working-vector-plvx-tetone.md` holds every count and where it came from; the
+requirements are restated below in the form that measurement left them in, and no number is
+recomputed here.
 
-- No BsaI and no BsmBI site outside the designed cassette; domesticate any that are there.
-- AmpR or CarbR, because the DMX backbone the cargo leaves is KanR and the last transfer must
-  not share a marker (departure D11).
-- No polyadenylation signal anywhere between the 5' LTR and the 3' LTR, the stuffer included.
-  The genome is packaged as one transcript from the 5' LTR, so an internal terminator truncates
-  it.
-- Room for a cargo of up to about 2.4 kb (**derived**, section 3) plus the working cassette.
+1. **No BsaI and no BsmBI site outside the designed cassette; domesticate any that are there.**
+   Measured: six BsaI, two BsmBI. Which are removable, and what to do about the two sitting in
+   the LTRs, is a design decision and belongs to #256 rather than to this note.
+2. **AmpR or CarbR**, because the DMX backbone the cargo leaves is KanR and the last transfer
+   must not share a marker (departure D11). Measured: AmpR, intact, translating with one stop
+   and it the last codon. **Passes.**
+3. **No polyadenylation signal between the LTRs on the plus strand**, the stuffer included. The
+   genome is packaged as one transcript from the 5' LTR, so an internal terminator on that
+   strand truncates it. **The plus strand is a narrowing, and the reason is below.**
+4. **Room for a cargo of up to about 2.4 kb** (**derived**, section 3) plus the working
+   cassette. **This is a cost, not a gate** — also below.
 
-**No parent is fixed here.** No lentiviral map was read in this run, so naming one would be an
-uncited choice. #220 picks the parent from a real map against the four requirements
-above and records which.
+#### Why requirement 3 reads one strand and not two
+
+**A two-strand hexamer screen cannot pass any lentiviral vector.** The LTR's own R region
+carries `AATAAA` by design — on this map at 526 and again at 7184, the same offset in both
+copies — and the 3' LTR's copy is the signal the vector has to use. A screen that fails on the
+thing making the vector work is the screen being wrong, not the vector. Narrowed to the plus
+strand it tests what it was written for: termination of the packaged transcript.
+
+Run literally, `AATAAA`/`ATTAAA` on both strands gives 16 hexamers on the plasmid and six
+strictly between the LTRs. **Two of the six are in scope**, both plus-strand, both unannotated,
+both inside the native HIV-1 gag/RRE segment every third-generation transfer plasmid carries:
+
+| Position | Motif | Where it sits |
+| --- | --- | --- |
+| 880 | `ATTAAA` | gag fragment, no annotated element |
+| 1603 | `AATAAA` | between the RRE and gp41, no annotated element |
+
+**Whether either is functional is open.** A hexamer is not a signal — a working poly(A) site
+also needs a downstream GU/U-rich element — and nothing read in either run measures either
+position. The other four hits are minus-strand and do not terminate a plus-strand transcript;
+one of them is the SV40 signal doing the job the stuffer cassette needs it for (section 2.3).
+Neither hexamer is replaceable in any case, because both sit in the segment the vector needs, so
+what the open item decides is whether this parent carries a known risk or an inert six-mer — not
+what gets built.
+
+#### Why requirement 4 is a cost and not a gate
+
+| | bp | From |
+| --- | --- | --- |
+| The parent | **9,895** | the sequence render; see the length disagreement below |
+| The stuffer span replaced, `EGFP` | **720** | the annotation at 2513-3233 |
+| LTR outer edge to outer edge, before | **7,292** | the two 634 bp LTR annotations |
+| The insert that replaces the stuffer | about **2,416** | sections 2.3 and 3, at the largest member |
+| LTR to LTR, after | about **8,988** | 7,292 − 720 + 2,416 |
+
+Kumar et al. 2001, *Hum. Gene Ther.* **12**, 1893–1905 — **abstract only; the full text is
+paywalled and was not read** — reports titres falling "semi-logarithmically with increasing
+vector length" and finds **no absolute packaging limit**, measurable past 18 kb. There is no
+cliff to clear at about 9.0 kb between the LTRs, so the requirement buys a price rather than a
+pass: some titre, paid against a parent already 7.3 kb empty.
+
+**Why the price lands harder here than it would elsewhere: a pooled library pays titre loss as
+representation.** Every bottleneck resamples 13,824 members, and a lower titre is a smaller
+sample of them. Section 9.9 sets that bound and should be revisited once the slope is known.
+**How much titre is open** — the abstract gives the curve's shape and not its slope, which is in
+the paywalled figures.
+
+#### Two findings recorded, neither of them settled
+
+- **pLVX's LTRs appear not to be ΔU3 SIN.** #244 read an intact U3 enhancer-promoter in both
+  copies — two NF-κB sites, an Sp1 GC-box and a TATA box — where a self-inactivating vector has
+  U3 deleted from its 3' LTR. This section assumed a SIN parent, and the reading is against that
+  assumption. It bears on copy-counting during domestication, on read-through, and on the
+  poly(A) screen above. **Measured and open, not settled:** the read is of an on-screen
+  reconstruction of the Addgene-verified sequence and may be an artifact of it. What would close
+  it: the manufacturer's own map or sequence, or an assay for LTR-driven transcription from the
+  integrated provirus.
+- **The parent's length disagrees with itself by up to 2 bp.** The render gives **9,895**;
+  Addgene's *Total vector size* field says **9,894**; its *Backbone size w/o insert* 9,173 plus
+  *Insert Size* 720 gives **9,893**. Every length above is the render's, the only one of the
+  three that is a sequence rather than a typed-in field. In a repo where every span is 0-based
+  and half-open, a 2 bp disagreement is not cosmetic. **Closed by the login-gated GenBank file,
+  which only the lab can pull.**
 
 ### 2.3 The working cassette
 
@@ -101,6 +171,40 @@ frame. 78 is a multiple of three, as the part rule requires (**derived**).
 because the part is a lab resource whose later uses put something after the tag, and because the
 same part serves the marker-as-a-part placement section 7 rejects. Whether the project would
 rather have an induction reporter there is in section 10.
+
+#### Which way the cassette points
+
+**The induced cassette reads on the minus strand**, measured on the parent: `TRE3GS` (3242-3610)
+and `EGFP` (2513-3233) are both annotated reverse, with the SV40 poly(A) signal at 2186-2321
+beyond them. The transactivator and puromycin cassettes read forward and end at the WPRE with no
+terminator of their own.
+
+So the one terminator on the plasmid points away from the packaged genome. That is what makes
+requirement 3 pass in substance, and not merely on a narrowed screen: the only element whose job
+is to stop transcription is pointed the other way. It is a property of the parent the lab chose,
+not something the method arranged.
+
+#### The stuffer is the parent's own EGFP
+
+The method page asks for RFP. Section 7.1 chose a red transduction marker, and red against red
+means colour cannot separate a vector whose cassette was never replaced from a cell that was
+only transduced. The EGFP already in the parent is being cut out anyway, so it serves instead.
+
+Measured across its 720 bp, both strands: **0 BsaI, 0 BsmBI, 0 BbsI, 0 PaqCI, 0 SapI**. It
+translates `MVSKGEELFTGV…GMDELYK*`, one stop and it the last codon. It carries **no poly(A)
+hexamer on either strand**, so retaining it reintroduces nothing requirement 3 is about. It is
+already under the TRE promoter in the right orientation, so only its two flanks are replaced —
+one PCR off the parent with tailed primers, against sourcing and inserting an RFP.
+
+This is departure **D17** in `docs/research/synthesis-and-assembly-departures.md`.
+
+**The caveat, because it changes what the stuffer is for.** The stuffer sits under a TRE
+promoter, which is a minimal CMV promoter and is not read in *E. coli*. **No stuffer colour
+screens a bacterial colony** — an RFP stuffer would not have screened one either. The colour
+reads in the transduced cell after induction: green means the cassette was never replaced,
+red-only means it was. A colony-level screen would need a bacterial promoter on the stuffer or a
+counter-selection marker, and that is a separate decision. Nothing read measures TRE3GS activity
+in *E. coli*.
 
 ## 3. The cargo layout, and what it costs the protein
 
@@ -197,19 +301,119 @@ the expression host is a human cell line — and then cleared of:
 One oligo pool holds all 72 parts. The oligo layout is section 9.1, the padding section 9.2, the
 primer split section 9.3 and the batch size section 9.4.
 
-Payload per 300 nt oligo: 300 − 60 nt of primer sites − 22 nt of Type IIS site and overhang =
-**218 nt** (**derived**). This is lower than the 246 bp per 300-mer the research note quotes
-from Freschlin, because that figure is measured on a design carrying two primer sites and ours
-carries three. The research note's per-kb cost keeps its own denominator.
+### 4.1 The two inputs
 
-Oligos needed: 30,087 bp of designed sequence over 72 parts at 218 nt of payload each, with
-per-part rounding, gives **roughly 150 to 210 oligos** (**derived**, an estimate; #220 computes
-the exact count from the real sequences). Each part takes one to six oligos.
+Everything in this section is arithmetic over two numbers, and both are the project's rather
+than the method's. Neither the oligo length nor the number of oligos is fixed by the method.
 
-**The pool is far below the smallest tier priced.** The only prices recorded are for 18,000
-oligos — $10,004 at 251-300 nt — so this project's synthesis cost is **open**, and ~200 oligos
-in an 18,000-oligo pool is mostly empty space. The project exercises the design path, not the
-pool economics, and should share a pool with other designs if one is going out.
+| Input | This project | Where it is set |
+| --- | --- | --- |
+| Oligo length, counting the whole oligo | **350 nt** | section 9.2 — a project decision, changed from 300 because the lab changed it |
+| Blocks to be synthesised | **72**, 133 to 1,149 bp, 30,519 bp in all | the design the pipeline wrote, measured 2026-10-06 and tabled in `docs/research/synthesis-and-assembly.md` |
+
+Change either and every number below changes with it. Nothing below is edited by hand.
+
+### 4.2 Payload per oligo — **derived**
+
+The oligo is `[P1][BsmBI][payload][BsmBI][pad][P2][P3]` (section 9.1). Its overhead:
+
+| Part of the oligo | nt | Why |
+| --- | --- | --- |
+| P1, P2, P3 | 3 × 20 = **60** | three mutually orthogonal 20-mers, one per role (section 9.3) |
+| Two BsmBI blocks | 2 × (6 + 1 + 4) = **22** | 6 nt recognition, 1 nt spacer, 4 nt overhang, at each site |
+| Overhead in all | **82** | |
+
+**None of the 82 scales with oligo length.** The primer count is three at any length and a BsmBI
+block is 11 nt at any length, so the recorded formula and the three-primer layout both hold
+unchanged at 350:
+
+```text
+payload = oligo length − 60 nt of primer sites − 22 nt of Type IIS site and overhang
+    at 300 nt:   300 − 60 − 22 = 218 nt
+    at 350 nt:   350 − 60 − 22 = 268 nt
+```
+
+**268 nt at 350** (**derived**), against 218 at 300: 50 nt more oligo buys 50 nt more payload,
+because the overhead is fixed. Both are lower than the 246 bp per 300-mer the research note
+quotes from Freschlin, because that figure is measured on a design carrying two primer sites and
+ours carries three. The research note's per-kb cost keeps its own denominator.
+
+268 nt is a ceiling, not a length every oligo spends. The padding of section 9.2 is the slack
+between a real payload and 268, and it sits outboard of the 3' cut.
+
+### 4.3 Fragments per part — **derived**, and the reason to prefer 350
+
+A block of *L* bp needs ⌈*L* / payload⌉ fragments. Counted over the 72 blocks of section 4.1:
+
+| Fragments a part needs | At 218 nt payload (300) | At 268 nt payload (350) | Lund's measured success |
+| --- | --- | --- | --- |
+| 1 | 17 parts | 21 parts | not an assembly |
+| 2 | 34 | 34 | **100%** |
+| 3 | 6 | 6 | **93.8%** |
+| 4 | 5 | 9 | not measured |
+| 5 | 8 | 2 | **84.6%** |
+| 6 | 2 | **none** | not measured |
+| Worst part | **6 fragments** | **5 fragments** | |
+| Oligos in the pool | **175** | **153** | |
+
+Lund's is the only measured curve: of designs assembled from that many fragments, the share with
+a perfect clone among four colonies is 100% at 2, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40.0% at
+12 and 0% at 16. It has no point at 4 or at 6, and nothing here interpolates one.
+
+**The fragment count is the reason to prefer 350.** At 300 two parts need six fragments, past
+every anchor Lund measured above 84.6%. At 350 no part exceeds five, so **all 72 sit at or above
+Lund's 84.6% point**, and 55 of them need two fragments or fewer — the band Lund measured at
+100%. Nine parts drop from five fragments to four, and 22 oligos leave the pool.
+
+Where the fragment count turns over, since the oligo length is an input (**derived**, over the
+same 72 blocks): any oligo of **312 nt or more** holds every part to five fragments, because the
+longest block is 1,149 bp and 1,149 / 5 = 229.8 needs a payload of 230 nt. 350 clears that by
+38 nt. Holding every part to four would need a payload of 288 nt and so an oligo of **370 nt**,
+which is past the top of the price band (section 4.5).
+
+### 4.4 Oligo count — **derived**
+
+Summing the fragments per part: **153 oligos at 350 nt**, against 175 at 300. One part takes one
+to five oligos. These are counted over the blocks the design actually wrote rather than
+estimated, which is what #220 was asked for and has now done.
+
+### 4.5 Cost — the two bands are close, and the pilot's own cost is still **open**
+
+Every figure here is a **list price with its date**. A list price is a reference, not a fact
+about what this project would pay. The two recorded, from the vendor's oligo-pool price table
+captured **2026-09-17**:
+
+| Pool | Length band | List price | Per oligo |
+| --- | --- | --- | --- |
+| 18,000 oligos | 251-300 nt | $10,004 | $0.556 |
+| 18,000 oligos | 301-350 nt | $12,505 | $0.695 |
+
+Per usable base, at this project's own payload rather than Freschlin's (**derived**):
+
+```text
+at 300 nt:   $10,004 / 18,000 / 218 nt = $0.00255 per usable base   =  $2.55 per usable kb
+at 350 nt:   $12,505 / 18,000 / 268 nt = $0.00259 per usable base   =  $2.59 per usable kb
+```
+
+**The two bands are within 1.7% of each other per usable base**, so 350 is not the dearer
+choice. The 301-350 band lists at exactly 1.25× the 251-300 band for the same 18,000 oligos, and
+268 / 218 = 1.229× buys almost all of that back. "350 costs 25% more" is true of the pool and
+false of the sequence.
+
+**The pilot's own cost is not known, and no tier figure stands in for it.** 153 oligos sit far
+below 18,000, the smallest pool size any price recorded here covers, so **this project's
+synthesis cost is open** — the figures above price a pool it is not ordering. The project
+exercises the design path, not the pool economics, and should share a pool with other designs if
+one is going out.
+
+**Two things to flag rather than bury:**
+
+- **350 nt is the top of its price band.** One base past it, 351 nt, is a different band whose
+  price is not recorded here. The design has **no slack above 350 at all**, so anything that
+  lengthens the oligo — a fourth primer role, a longer recognition site, a wider overhang — is a
+  tier change and not a rounding error. Section 9.2's padding rule is what holds the line.
+- **The length is the lab's, not the method's.** Section 9.2 reads 350 because the lab moved it
+  from 300. The method page fixes neither number.
 
 ## 5. Validation of the parts
 
@@ -361,15 +565,21 @@ Why not on the primers: the inner primers come from an orthogonal set carrying n
 retailoring that set or exempting one role costs more than 22 nt of oligo. This is the Baker
 diagram's arrangement, which puts the cuts inboard of P1 and P2.
 
-### 9.2 The padding rule — pad every oligo to a uniform 300 nt
+### 9.2 The padding rule — pad every oligo to a uniform 350 nt
 
 Filler sits between the 3' BsmBI recognition site and P2, outboard of the cut, so it never
 enters the product. It is screened for the eight enzyme motifs, for the orthogonal primer sites,
 and at its two junctions for a motif the join creates.
 
-Why: uniform length removes the vendor's 15% uniformity question rather than managing it, and
-Freschlin — which pads to a uniform 300 nt — lost whole replicates to an enzyme site inside a
-payload, which is what the screen is for. Binning by length buys nothing at ~200 oligos.
+Why uniform: it removes the vendor's 15% uniformity question rather than managing it, and
+Freschlin — which pads to a uniform length — lost whole replicates to an enzyme site inside a
+payload, which is what the screen is for. Binning by length buys nothing at 153 oligos.
+
+**Why 350 and not 300: the lab changed it.** This is a project decision and not a method
+constant, and it is the only input section 4 takes besides the block list. What it buys is
+measured in section 4.3 — no part needs more than five fragments at 350, where two need six at
+300 — and what it costs is measured in section 4.5, which is 1.7% per usable base. 350 is the
+top of its price band, so the length cannot drift upward without crossing a tier.
 
 ### 9.3 The orthogonal primer split — 96 inner, 35 and 34 outer
 
@@ -388,11 +598,13 @@ discrepancy is unresolved in the research note and this project uses the 165 seq
 
 ### 9.4 Batch size — one batch, all 72 parts
 
-One PCR1, then 72 PCR2 reactions using 72 of the 96 inner primers. About 200 pieces in the PCR1
-tube, which is inside the Baker anchor of hundreds of oligos to a well.
+One PCR1, then 72 PCR2 reactions using 72 of the 96 inner primers. **153 pieces in the PCR1
+tube** — section 4.4 derives the count, and this section does not restate it — which is at the
+low end of the Baker anchor of hundreds of oligos to a well.
 
 The method's rule is to hold pieces per PCR1 roughly constant; **this project sets that constant
-at about 200 pieces**. Freschlin's evenness measurement — subpools under 16 genes overabundant,
+at whatever section 4.4 derives**, which at 350 nt is 153 pieces. Freschlin's evenness
+measurement — subpools under 16 genes overabundant,
 20 or more underrepresented — compares subpools against each other inside one pool, and a single
 batch has none to compare against. If evenness turns out to limit anything, the fallback is four
 equal batches of 18, since equal sizes are what that measurement actually argues for.
@@ -504,8 +716,22 @@ form from the note before coding it, and the multiple belongs in section 10 as m
 
 Nothing here becomes a package default, and nothing here is guessed at.
 
-- **The lentiviral parent.** No map read. Closed by reading one against the four requirements in
-  section 2.2.
+- **The parent's own length, by up to 2 bp.** 9,895 from the render, 9,894 from Addgene's size
+  field, 9,893 from its backbone-plus-insert fields (section 2.2). Every span here is 0-based
+  and half-open, so this is not cosmetic. **Closed only by the login-gated GenBank file, which
+  the lab can pull and this run cannot.**
+- **Whether the two in-scope poly(A) hexamers are functional**, `ATTAAA` at 880 and `AATAAA` at
+  1603 (section 2.2). Closed by a source measuring 3'-end processing in a transfer vector's
+  gag/RRE segment, or by a full-length-genome measurement on this backbone.
+- **Whether the hPGK promoter tolerates a change at 3724 or 3876**, the two sites domestication
+  would touch there. hPGK drives the transactivator, a base change in a promoter is synonymous
+  in no sense the package can check, and nothing read measures either position. The decision
+  built on it is #256's.
+- **Whether pLVX is self-inactivating.** #244 read an intact U3 in both LTRs (section 2.2).
+  Measured and open: closed by the manufacturer's own sequence, or by an assay for LTR-driven
+  transcription from the integrated provirus.
+- **How much titre the cargo costs.** Kumar et al. give the curve's shape and not its slope, and
+  the figures are paywalled. A pooled library pays it as representation (section 2.2).
 - **Read-through and promoter interference.** No source read. Closed by one primary source,
   before any project uses the marker-as-a-part placement.
 - **The polyadenylation screen.** The motif list `AATAAA`/`ATTAAA` is standard practice and
@@ -515,8 +741,9 @@ Nothing here becomes a package default, and nothing here is guessed at.
   Closed by naming the matrix and re-deriving the eight picks from it.
 - **The coverage multiple in section 9.9.** Inherited from a single-transformation gate in
   another method.
-- **The synthesis cost.** The pool is far below the smallest tier priced; no price is recorded
-  for a ~200-oligo pool.
+- **The synthesis cost.** 153 oligos sit far below 18,000, the smallest pool any recorded price
+  covers, so no price here is this project's. The list prices and the per-usable-base comparison
+  are section 4.5; neither stands in for the pilot's own cost.
 - **The orthogonal set's size**, 165 or 166. The 165 held are what the split uses.
 - **The MOI and the cell number at transduction.** The coverage rule gives the number of
   integrants wanted; the MOI that delivers them at mostly one integrant per cell is not fixed
@@ -537,6 +764,10 @@ Every measurement cited above is recorded in one of these, and none is recompute
   measured sequences and its CC BY 4.0 licence, which is what lets the AP-1 sequences be used.
 - `docs/research/synthesis-and-assembly-departures.md` — departures D1 to D15, worked base by
   base.
+- `docs/research/working-vector-plvx-tetone.md` — pLVX-TetOne-Puro-GFP measured against the four
+  requirements of section 2.2, with Kumar et al. 2001 on packaging length.
+- `docs/research/lentiviral-tolerance.md` — what a lentiviral vector tolerates, and the reading
+  that pLVX's LTRs are not ΔU3 SIN.
 - `docs/research/barcode-design.md` — the distance metric, the absent GC band, the homopolymer
   cap and the draw order.
 - `docs/research/codon-usage.md` — the `human` table, counted from hg38 through liulab-genome.
