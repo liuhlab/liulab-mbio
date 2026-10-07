@@ -12,7 +12,7 @@ sources, and every decision still open, are in `docs/research/synthesis-and-asse
 Drafted by one agent, then checked by two more working apart: one re-derived every fact, one
 attacked every reason. Corrections from both are folded in.
 
-Sixteen differences were found. The fourteen below are checked and sound, with nothing left to
+Seventeen differences were found. The fifteen below are checked and sound, with nothing left to
 decide. The other two were open decisions. D9, the barcode rules, is decided and lives in the
 method document. D16, whether assembled clones get whole-plasmid sequencing, is **still open**:
 the method document says the opposite of a per-round check, so the question is recorded with
@@ -274,3 +274,35 @@ The iGGA rounds themselves are unchanged: Endura, recover and grow at 30 °C eve
 page), exactly as the paper. The extra strains belong to the DMX entry step and the
 final transfer, which are layers the paper has no counterpart for. A ccdB-sensitive strain
 and NEB Stable for anything carrying ccdB, both in `## Reagents and equipment`.
+
+## D17. The working vector's stuffer is the parent's own EGFP, not an RFP
+
+Method page: `Stuffer cassette: RFP` (`#### Input working vector`). Ours: the EGFP already
+carried by pLVX-TetOne-Puro-GFP, the parent #230 measured. The paper has no counterpart — it
+builds no working vector and its destination carries no stuffer cassette — so this departs from
+the method page rather than from Takacsi-Nagy et al.
+
+Why: the transduction marker is mCherry (`docs/research/ap1-demo-project.md` section 7.1). A red
+stuffer against a red marker means colour cannot separate a vector whose cassette was never
+replaced from a cell that was simply transduced. The EGFP is being cut out of the parent anyway.
+
+Measured on the parent, 2026-10-06, across the 720 bp the method replaces, both strands: **0
+BsaI, 0 BsmBI, 0 BbsI, 0 PaqCI, 0 SapI**, so it sits between the cassette's two BsmBI sites
+without being cut in the middle. It translates `MVSKGEELFTGV…GMDELYK*`, one stop and it the last
+codon. It carries **no `AATAAA` or `ATTAAA` on either strand**, so retaining it reintroduces
+nothing the poly(A) requirement is about. It is already under the TRE3GS promoter in the right
+orientation, with the SV40 poly(A) signal beyond it.
+
+Cheaper to build, too: an RFP stuffer is sourced and inserted, while the EGFP needs only its two
+flanks replaced — `TATG` and a BsmBI site at one end, a BsmBI site and `CTAA` at the other —
+which is one PCR off the parent with tailed primers.
+
+**The caveat, and it applies to the RFP equally.** The stuffer sits under a TRE promoter, which
+is a minimal CMV promoter and is not read in *E. coli*. **No stuffer colour screens a bacterial
+colony**, green or red. The colour reads in the transduced cell after induction: green means the
+cassette was never replaced, red-only means it was. A colony-level screen needs a bacterial
+promoter on the stuffer or a counter-selection marker, which is a separate decision. Nothing
+read measures TRE3GS activity in *E. coli*.
+
+Every count above is from `docs/research/working-vector-plvx-tetone.md` section 5, and none is
+recomputed here.

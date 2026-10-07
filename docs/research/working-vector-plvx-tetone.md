@@ -242,7 +242,8 @@ it is a separate decision. **Nothing read here measures TRE3GS activity in *E. c
 **This is a departure from the method page** — section 2.2 says RFP — and wants an entry in
 `docs/research/synthesis-and-assembly-departures.md` saying: the stuffer is the parent's own
 EGFP, not an RFP, because the transduction marker section 7.1 chose is red and two reds cannot
-be told apart. That file was not edited here.
+be told apart. That file was not edited here; #269 recorded it there as **D17**, with the
+colony-screen caveat below.
 
 ## 6. The verdict, and what it would take
 
