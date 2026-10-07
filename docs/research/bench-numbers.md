@@ -341,7 +341,8 @@ amplicons on Day 4. Both are the source's.
 | Small-library alternative | a Flongle flow cell, FLO-FLG114 | Qian SI Day 4.2 |
 | Everything between input and loading | "according to the manufacturer's protocol" — end prep, ligation, bead ratios, loading mass and priming volumes are **not restated by Qian** | Qian SI Day 4.2 |
 | Basecalling | Dorado 0.9.1, super-accuracy model; samtools 1.21, chopper 0.9.0, nanoq 0.10.0, cutadapt 4.9, minimap2 2.28, python 3.11.3 | Qian SI, "Generation of consensus sequences" |
-| Reads per well to call a pass | **ours** — the method page's step 10 decision "what counts as a pass" has no sourced number | — |
+| Reads per well to call a pass, Route A | consensus called only where depth is above 150 — Qian's, a consensus-calling cutoff that the method page reads as the floor ("What counts as a pass") | Qian SI, "Generation of consensus sequences" |
+| Reads per well to call a pass, Route B | above 20 wanted, above 10 tolerable | LevSeq SI checklist; `route-b-index-pcr.md` section 6 |
 | Reads per flow cell to budget | **ours** — no public ONT page gives an output figure for a flow cell | — |
 
 What Qian defers to is ONT's own protocol. **Our route does not need ONT's barcodes** — the
@@ -674,9 +675,12 @@ before that pass still resolves. What closed:
 - **H13.** **No electroporator settings in Qian**, only "according to the manufacturer's protocol" and
   an expected 4.1 ms time constant. *Filled by:* the Lucigen E. cloni EXPRESS BL21(DE3)
   manual, which was not read for this note.
-- **H14.** **No reads-per-well pass mark.** The method page's step 10 decision "what counts as a pass"
-  has no number anywhere, and no ONT document gives a per-sample depth target for plate-scale
-  amplicon barcoding. *Filled by:* the lab, from a first run.
+- **H14.** **No reads-per-well pass mark for Route A that Qian states as one.** Qian's SI gives 150 only
+  as the depth above which its pipeline writes a consensus; nobody there calls it a pass mark. The
+  method page's "What counts as a pass" reads it as the Route A floor, which is our adaptation.
+  Route B has none of this hole: LevSeq's SI checklist sets it (above 20, with 10 tolerable).
+  No ONT document gives a per-sample depth target for plate-scale amplicon barcoding. *Filled by:*
+  the lab, from a first Route A run.
 - **H15.** **No run length and no expected output per flow cell** on any public ONT page read; the
   protocol says only to start MinKNOW at default settings. *Filled by:* an ONT flow cell
   specification sheet, or a first run.
