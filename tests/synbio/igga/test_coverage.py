@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_synbio.library.coverage import (
+from liulab_synbio.igga.coverage import (
     RoundCoverage,
     absent_probability,
     colonies_for_completeness,

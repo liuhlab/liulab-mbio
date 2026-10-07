@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from liulab_synbio.library.method import IGGA
-from liulab_synbio.library.project import Barcode, Project, read_project
+from liulab_synbio.igga.method import IGGA
+from liulab_synbio.igga.project import Barcode, Project, read_project
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
 

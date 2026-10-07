@@ -13,7 +13,7 @@ import pytest
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import reverse_complement
 from liulab_mbio.translate import translate
-from liulab_synbio.library.method import IGGA, INTERFACE_OVERHANGS, Scheme
+from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme
 
 #: The four enzymes a built method gives each job, and the overhangs its stuffers spell.
 INTERNAL = "BsaI"

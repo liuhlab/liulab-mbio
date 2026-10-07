@@ -13,7 +13,7 @@ description: >-
 
 # Protein library assembly
 
-`liulab_synbio.library` does the design. This skill is the way in: one command turns a project
+`liulab_synbio.igga` does the design. This skill is the way in: one command turns a project
 file naming lists of proteins and a vector into a synthesis order sheet, annotated records and a
 bench protocol. Never invent a block, a barcode, an overhang, an amount or a colony count: the package
 works each one out and checks it, and nothing checks a number you made up.
@@ -21,7 +21,7 @@ works each one out and checks it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_synbio library plan project.json --out library/
+pixi run liulab_synbio igga plan project.json --out library/
 ```
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
@@ -78,9 +78,9 @@ The command prints a summary line and the paths. The same inputs write the same 
 ## From Python
 
 ```python
-from liulab_synbio.library.plan import plan_library
+from liulab_synbio.igga.plan import plan_igga
 
-plan = plan_library("project.json")
+plan = plan_igga("project.json")
 plan.status  # "pass", "warn" or "fail" over every round's checks
 plan.write("library/")
 ```
@@ -116,4 +116,4 @@ checking one coding sequence for a host. `primer-design` owns every primer quest
 the primers that read the barcode block — this plan designs none. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol.json` and render again.
 A change to what the plan computes — the project's vector, host or coverage — goes back through
-`library plan`, which writes `protocol.json` afresh.
+`igga plan`, which writes `protocol.json` afresh.

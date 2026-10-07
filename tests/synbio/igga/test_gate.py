@@ -16,8 +16,8 @@ import pytest
 
 from liulab_mbio.io import read_record
 from liulab_mbio.sequence import SequenceRecord
-from liulab_synbio.library.gate import Verdict, check_library, library_reactions
-from liulab_synbio.library.project import read_project
+from liulab_synbio.igga.gate import Verdict, check_library, library_reactions
+from liulab_synbio.igga.project import read_project
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 

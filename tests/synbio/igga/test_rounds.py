@@ -17,11 +17,11 @@ from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
-from liulab_synbio.library.gate import check_product
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.parts import barcode_rules, design_parts
-from liulab_synbio.library.project import Barcode, Project
-from liulab_synbio.library.rounds import (
+from liulab_synbio.igga.gate import check_product
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.parts import barcode_rules, design_parts
+from liulab_synbio.igga.project import Barcode, Project
+from liulab_synbio.igga.rounds import (
     PRODUCT_FILE,
     ROUND_FILE,
     assemble_round,
@@ -29,7 +29,7 @@ from liulab_synbio.library.rounds import (
     representative,
     write_records,
 )
-from liulab_synbio.library.standard import design_standard
+from liulab_synbio.igga.standard import design_standard
 
 #: The jobs the test scheme gives its enzymes.
 INTERNAL = "BsaI"

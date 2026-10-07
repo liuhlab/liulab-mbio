@@ -20,8 +20,8 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.vector import (
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.vector import (
     cargo_candidates,
     cargo_enzyme,
     destination_vector,

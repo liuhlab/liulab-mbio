@@ -1,4 +1,4 @@
-"""The `library` verbs, mounted on the package command line."""
+"""The `igga` verbs, mounted on the package command line."""
 
 from pathlib import Path
 from typing import Annotated
@@ -7,8 +7,8 @@ import typer
 
 from liulab_mbio.bench.prices import PRICES_ENV
 from liulab_mbio.cloning.cli import plan_command
-from liulab_synbio.library.plan import NAME_PATTERN, Kind, LibraryPlan, plan_library
-from liulab_synbio.library.vector import Site
+from liulab_synbio.igga.plan import NAME_PATTERN, Kind, LibraryPlan, plan_igga
+from liulab_synbio.igga.vector import Site
 
 app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=True)
 
@@ -58,7 +58,7 @@ def plan(
 ) -> None:
     """Plan the library PROJECT asks for, and write its sheets, records and protocol into OUT."""
     plan_command(
-        lambda: plan_library(
+        lambda: plan_igga(
             project, kind=_kind(kind), site=_site(site), pattern=pattern, prices=prices
         ),
         out,

@@ -12,8 +12,8 @@ from liulab_mbio.codons import amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.overhangs import refusal
 from liulab_mbio.sequence import reverse_complement
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.standard import (
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.standard import (
     _attempt,
     _Reading,
     _sites,

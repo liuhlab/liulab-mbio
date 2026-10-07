@@ -19,7 +19,7 @@ from typing import Any
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_synbio.library.method import IGGA, Scheme, refuse
+from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a project takes unless it states another.
 BARCODE_LENGTH = 11

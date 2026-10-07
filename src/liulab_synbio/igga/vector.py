@@ -31,7 +31,7 @@ from liulab_mbio.sites import (
     free_enzyme_search,
     out_of_reach,
 )
-from liulab_synbio.library.method import IGGA, INTERFACE_OVERHANGS, Scheme, refuse
+from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme, refuse
 
 #: Where the internal stuffer goes: the name of a feature, or a ``(start, end)`` span.
 type Site = str | tuple[int, int]

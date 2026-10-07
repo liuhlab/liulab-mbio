@@ -1,6 +1,6 @@
 """A barcoded combinatorial library, assembled one round at a time.
 
-`plan_library` is the way in: it takes one project file naming lists of proteins or coding DNA
+`plan_igga` is the way in: it takes one project file naming lists of proteins or coding DNA
 and a destination vector, and runs the whole design. `LibraryPlan.write` puts the synthesis order
 sheet, the barcode table, the amino-acid change table, a record for each round, the assembled
 product, the protocol as data and the page rendered from it in one directory.
@@ -24,10 +24,10 @@ Only the way in, the method, the project and the gate are re-exported. Everythin
 imported by module, as `liulab_mbio.cloning.goldengate.design` is.
 """
 
-from liulab_synbio.library.gate import Judgement, Verdict, check_library
-from liulab_synbio.library.method import IGGA, Scheme
-from liulab_synbio.library.plan import Files, LibraryPlan, plan_library
-from liulab_synbio.library.project import Project, read_project
+from liulab_synbio.igga.gate import Judgement, Verdict, check_library
+from liulab_synbio.igga.method import IGGA, Scheme
+from liulab_synbio.igga.plan import Files, LibraryPlan, plan_igga
+from liulab_synbio.igga.project import Project, read_project
 
 __all__ = [
     "IGGA",
@@ -38,6 +38,6 @@ __all__ = [
     "Scheme",
     "Verdict",
     "check_library",
-    "plan_library",
+    "plan_igga",
     "read_project",
 ]

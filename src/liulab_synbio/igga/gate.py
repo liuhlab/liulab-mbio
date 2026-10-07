@@ -4,7 +4,7 @@ Every rule here is one of `liulab_mbio`'s predicates called with this method's o
 and every message is in the method's words. The gate reads a reaction -- the molecules in one
 tube, each in its role, and the enzymes acting there -- so it is blind to how a design was
 reached and says which tube a failure belongs to. A design an agent composed and one
-`plan_library` wrote are judged the same way.
+`plan_igga` wrote are judged the same way.
 
 A `Judgement` carries the `liulab_mbio.checks.Check` and the findings behind it, each a domain
 object mbio already returns, so a failure can be drawn on the record it occurred in. A failing
@@ -22,8 +22,8 @@ from liulab_mbio.reaction import Pool, Reaction, Role
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
 from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
 from liulab_mbio.translate import stop_codons
-from liulab_synbio.library.parts import barcode_rules
-from liulab_synbio.library.project import Project
+from liulab_synbio.igga.parts import barcode_rules
+from liulab_synbio.igga.project import Project
 
 #: What stands behind a check: a domain object `liulab_mbio` already returns, so `plot` can draw
 #: a failure on the record it occurred in. No finding type of its own.
@@ -386,7 +386,7 @@ def check_library(
 
     Nothing here is read off a plan. The molecules are finished records, the barcodes are the
     table that decodes the sequencing, and the reactions are composed from the chain's own order,
-    so a design an agent wrote is judged exactly as one `plan_library` wrote is.
+    so a design an agent wrote is judged exactly as one `plan_igga` wrote is.
 
     Parameters
     ----------

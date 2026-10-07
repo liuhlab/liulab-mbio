@@ -4,7 +4,7 @@ The protocol covers every round as one experiment. A round is two digests, a cle
 ligation, a second clean-up, an electroporation, a growth and a prep, and the rounds run in the
 order the scheme fills its positions.
 
-Every number comes from `liulab_synbio.library.bench` and `liulab_synbio.library.coverage`, each
+Every number comes from `liulab_synbio.igga.bench` and `liulab_synbio.igga.coverage`, each
 sourced in ``docs/research/protein-library-assembly.md``, or from the design the plan computed.
 What the method leaves unpublished -- the ligase's units, the buffer's strength, the
 electroporation settings -- is one line saying so rather than a number invented here.
@@ -42,8 +42,8 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
-from liulab_synbio.library import stages
-from liulab_synbio.library.bench import (
+from liulab_synbio.igga import stages
+from liulab_synbio.igga.bench import (
     DIGEST_CELSIUS,
     DIGEST_SECONDS,
     DIGEST_VOLUME_UL,
@@ -58,14 +58,14 @@ from liulab_synbio.library.bench import (
     SPRI_AFTER_LIGATION,
     TRANSFORMATION_NG,
 )
-from liulab_synbio.library.bench import REFERENCES as BENCH_REFERENCES
-from liulab_synbio.library.coverage import REFERENCES as COVERAGE_REFERENCES
-from liulab_synbio.library.coverage import RoundCoverage
-from liulab_synbio.library.method import Scheme
-from liulab_synbio.library.parts import Part
-from liulab_synbio.library.rounds import Round
-from liulab_synbio.library.standard import PartList, Standard
-from liulab_synbio.library.vector import Destination
+from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
+from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
+from liulab_synbio.igga.coverage import RoundCoverage
+from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.rounds import Round
+from liulab_synbio.igga.standard import PartList, Standard
+from liulab_synbio.igga.vector import Destination
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
 #: names all three and publishes neither the ligase's units nor either buffer's strength.
@@ -239,7 +239,7 @@ def protocol(
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
-    Each argument is the `liulab_synbio.library.plan.LibraryPlan` field or property of that name;
+    Each argument is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
     `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
     in the order someone does them: order the blocks, pool each part list, then every round in
     turn, and finally read the barcode block back.
