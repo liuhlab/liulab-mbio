@@ -467,7 +467,7 @@ right number of reactions:
 | Seat every part | DMX vector | all 72 parts, one design per well | BsmBI | 72 designs |
 | Round 1 | N part list | DBD part list | BbsI + SrfI / BsaI + PmeI | 576 |
 | Round 2 | N+DBD library | C part list | BbsI + SrfI / BsaI + PmeI | 13,824 |
-| Final assembly | working vector | the finished library | BsaI, one pot | 13,824 |
+| Final assembly | working vector | the finished library | PaqCI, one pot | 13,824 |
 
 All 72 parts are cloned into the DMX vector at the seating step, because our donor carries no
 release sites of its own and cannot be a donor until it is cloned (the constraint recorded under

@@ -19,7 +19,7 @@ and marked with it; anything still unknown is marked **pending** rather than gue
 | pCR-Blunt II-TOPO | Part carrier. KanR + Zeocin, ccdB, no BsmBI site |
 | DMX0001 / DMX0002 | Parent of the DMX vector, modified before first use |
 | Working vector backbone | Chosen per application; must have no BsaI or BsmBI and use AmpR/CarbR |
-| RFP stuffer cassette | Fills the cassette site of the input working vector; long enough that the cut backbone separates on a gel, and fluorescent, so a colony that lost it is the one to pick |
+| Working-vector stuffer | The parent vector's own EGFP fills the cassette site of the input working vector (D17); the transduction marker is mCherry, so green cannot be mistaken for it |
 | ccdB cassette, four versions | N and C, no N, no C, neither |
 | Orthogonal primer set | 185 primers of 20 nt, 165 of them in the orthogonal set; Subramanian et al. 2018, Supplementary Table 1 |
 | DMX barcode kit | 96 plasmids, four groups of 24; `docs/research/synthesis-and-assembly-barcode-kit.md` |
