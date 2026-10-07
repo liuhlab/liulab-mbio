@@ -373,9 +373,9 @@ def _holes(protocol: Protocol) -> str:
     items = "".join(_hole(hole) for hole in holes)
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
-        f"<p>{len(holes)} numbers this protocol would otherwise have to invent. A hole is a "
-        "defect in what the package knows, not a failure of the run, and it is never filled "
-        f"with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
+        f"<p>{_count(len(holes), 'number')} this protocol would otherwise have to invent. A "
+        "hole is a defect in what the package knows, not a failure of the run, and it is "
+        f"never filled with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
     )
 
 

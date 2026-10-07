@@ -174,6 +174,7 @@ def test_a_hole_the_run_and_a_step_both_carry_is_collected_once() -> None:
     assert [each.id for each in one.all_holes] == ["H24"]
     detail = next(c.detail for c in one.audit() if c.name == "holes")
     assert "1 number has no source" in detail
+    assert "1 number this protocol would otherwise have to invent" in render_html(one)
 
 
 def test_the_banner_counts_bench_numbers_apart_from_prices() -> None:
