@@ -6,6 +6,12 @@ own, not work forgotten. The evidence behind each choice, and every open decisio
 `docs/research/synthesis-and-assembly.md`. One project that answers each open decision for
 itself is `docs/research/ap1-demo-project.md`.
 
+**This page covers two experiments.** **DAD-GGA-DMX** builds cargo from an oligo pool and reads
+each well back, so one design can be named at a time. **iGGA** mixes those parts in rounds and
+gives a pool. Nobody picks a member of that pool, and nothing in it is read for identity again.
+Reads across the whole pool judge it. Keep the two apart: a rule that suits picked wells does not
+suit a pool. `CONTEXT.md` defines both.
+
 ## Goal
 
 1. Synthesise fragments up to 2.5 kb, at a scale of 10³ to 10⁴ designs, from the cheapest oligo
