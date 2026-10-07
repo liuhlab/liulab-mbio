@@ -430,6 +430,7 @@ def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
         working_vector(plvx, [product], scheme=IGGA, site="EGFP", enzyme=get_enzyme(CARGO))
 
+
 def donor_carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
     """A circular donor backbone: the method's stuffer between the two external stuffers.
 
