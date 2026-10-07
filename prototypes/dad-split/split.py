@@ -87,6 +87,8 @@ class Split:
         Wall time the search took.
     scored
         How many times `fidelity` was called.
+    nodes
+        How many search nodes were visited, 0 where the search does not branch.
     feasible
         Whether every cut found a legal overhang.
     edits
@@ -103,6 +105,7 @@ class Split:
     fragments: int
     seconds: float
     scored: int = 0
+    nodes: int = 0
     feasible: bool = True
     edits: int = 0
     sequence: str = ""
@@ -360,6 +363,7 @@ def clever_split(
             start,
             note or "no set of overhangs satisfies every rule and the length bound at once",
             scorer.calls,
+            nodes,
         )
     settled = list(best)
     built = sequence
@@ -374,16 +378,25 @@ def clever_split(
         fragments,
         seconds,
         scorer.calls,
+        nodes,
         edits=sum(edit is not None for _, _, edit in settled),
         sequence=built,
         note=note,
     )
 
 
-def _nothing(fragments: int, start: float, note: str, scored: int = 0) -> Split:
+def _nothing(fragments: int, start: float, note: str, scored: int = 0, nodes: int = 0) -> Split:
     """Say there is no answer, which is a real outcome and names why."""
     return Split(
-        (), (), 0.0, fragments, time.perf_counter() - start, scored, feasible=False, note=note
+        (),
+        (),
+        0.0,
+        fragments,
+        time.perf_counter() - start,
+        scored,
+        nodes,
+        feasible=False,
+        note=note,
     )
 
 
@@ -442,6 +455,63 @@ def simple_split(
         fragments,
         time.perf_counter() - start,
         1,
+        sequence=sequence,
+    )
+
+
+def greedy_set_split(
+    sequence: str,
+    *,
+    budget: Budget = DEFAULT,
+    enzyme: str = "BsaI",
+    profile: LigaseProfile | None = None,
+    reserved: Sequence[str] = ("AGGA", "TTCC"),
+    min_distance: int = overhangs.MIN_DISTANCE,
+    count: int | None = None,
+    window: int = 16,
+) -> Split:
+    """`simple_split`, ranking each candidate by the fidelity of the set it would make.
+
+    One pass, first-fit, no backtracking — the same cuts, the same window, the same rules. The
+    only change is the key: the set score of everything taken so far plus this candidate, in
+    place of the candidate's own on-target count.
+    """
+    start = time.perf_counter()
+    fragments = count or fewest_fragments(len(sequence), budget)
+    span = len(sequence) - OVERHANG
+    anchors = [round(span * at / fragments) for at in range(1, fragments)]
+    scorer = _Scorer(enzyme, profile)
+    taken: list[str] = []
+    places: list[int] = []
+    for anchor in anchors:
+        previous = places[-1] if places else 0
+        offsets = [0, *(sign * step for step in range(1, window + 1) for sign in (-1, 1))]
+        found = [
+            (at, sequence[at : at + OVERHANG])
+            for offset in offsets
+            if 0 <= (at := anchor + offset) <= span
+            and budget.floor <= at - previous <= budget.ceiling
+        ]
+        ranked = sorted(found, key=lambda pair: -scorer(sorted([*taken, pair[1]])))
+        for at, bases in ranked:
+            if _joins(bases, taken, enzyme, reserved, min_distance):
+                taken.append(bases)
+                places.append(at)
+                break
+        else:
+            return _nothing(
+                fragments,
+                start,
+                f"no overhang within {window} bases of {anchor} joins the set",
+                scorer.calls,
+            )
+    return Split(
+        tuple(places),
+        tuple(taken),
+        scorer(sorted(taken)),
+        fragments,
+        time.perf_counter() - start,
+        scorer.calls,
         sequence=sequence,
     )
 

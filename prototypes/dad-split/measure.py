@@ -27,6 +27,7 @@ from split import (
     clever_split,
     fewest_fragments,
     fragment_windows,
+    greedy_set_split,
     simple_split,
 )
 
@@ -224,13 +225,11 @@ def spread(sequence: str, answer: Split) -> float:
     return 100 * (1 - min(lengths) / max(lengths)) if lengths else 0.0
 
 
-def runner(
-    search: Callable[..., Split], **extra: object
-) -> Callable[[str, LigaseProfile | None], Split]:
-    """Bind one search to the shared inputs."""
+def runner(search: Callable[..., Split], **extra: object) -> Callable[..., Split]:
+    """Bind one search to the shared inputs, letting a caller override per run."""
 
-    def run(sequence: str, ligase: LigaseProfile | None) -> Split:
-        return search(sequence, profile=ligase, reserved=RESERVED, **extra)
+    def run(sequence: str, ligase: LigaseProfile | None, **more: object) -> Split:
+        return search(sequence, profile=ligase, reserved=RESERVED, **{**extra, **more})
 
     return run
 
@@ -382,23 +381,244 @@ def nearest(total: int) -> str:
     return f"above 500 ({total - 500} over)"
 
 
+SEARCHES = (
+    ("proxy greedy", runner(simple_split)),
+    ("set-fidelity greedy", runner(greedy_set_split)),
+    ("branch and bound, cap 8", runner(clever_split, cap=8, seconds_limit=10.0)),
+)
+
+
+def sweep_three_parts(ligase: LigaseProfile | None, oligo: int, number: str) -> None:
+    """All three searches over the 72 AP-1 parts, at one oligo length (M1a)."""
+    budget = Budget(oligo=oligo)
+    rows = []
+    for name, run in SEARCHES:
+        began = time.perf_counter()
+        answers = [(sequence, run(sequence, ligase, budget=budget)) for _, sequence in parts()]
+        seconds = time.perf_counter() - began
+        values = [answer.value for _, answer in answers if answer.feasible]
+        rows.append(
+            [
+                name,
+                f"{sum(answer.feasible for _, answer in answers)}/{len(answers)}",
+                sum(answer.fragments for _, answer in answers),
+                f"{min(values):.4f}",
+                f"{statistics.median(values):.4f}",
+                f"{seconds * 1000 / len(answers):.1f}",
+                f"{sum(assembles(sequence, answer) for sequence, answer in answers)}/{len(answers)}",
+            ]
+        )
+    table(
+        f"{number}. Three searches over all 72 AP-1 parts, 133 to 1,149 bp, {oligo} nt oligo",
+        [
+            "search",
+            "parts solved",
+            "oligos in total",
+            "worst fidelity",
+            "median fidelity",
+            "ms per part",
+            "parts that reassemble",
+        ],
+        rows,
+    )
+
+
+def sweep_three_counts(ligase: LigaseProfile | None, number: str) -> None:
+    """All three searches across the 2,276 bp cargo's fragment-count range (M1b)."""
+    sequence = product()
+    span = len(sequence) - 4
+    rows = []
+    for count in range(2, 17):
+        budget = Budget(oligo=54 + 24 + -(-span // count))
+        row: list[object] = [count, budget.oligo]
+        for _, run in SEARCHES:
+            answer = run(sequence, ligase, budget=budget, count=count)
+            row += [show(answer), f"{answer.seconds * 1000:.0f}", yes(assembles(sequence, answer))]
+        row.append(lund(count))
+        rows.append(row)
+    table(
+        f"{number}. Three searches against fragment count — 2,276 bp cargo, oligo widened per "
+        "row so the fragment count is the only thing that moves",
+        [
+            "fragments",
+            "oligo needed (nt)",
+            "proxy fidelity",
+            "proxy ms",
+            "round trip",
+            "set-greedy fidelity",
+            "set-greedy ms",
+            "round trip",
+            "B&B fidelity",
+            "B&B ms",
+            "round trip",
+            "Lund error-free clones (%)",
+        ],
+        rows,
+    )
+
+
+def yes(ok: bool) -> str:
+    """A round-trip cell."""
+    return "yes" if ok else "no"
+
+
+def outcome(answer: Split) -> str:
+    """How a search ended: solved, out of time, or no legal set at all."""
+    if not answer.feasible:
+        return "refused"
+    return "stopped early" if answer.note else "ok"
+
+
+def sweep_budgets(ligase: LigaseProfile | None, number: str) -> None:
+    """Does a bigger wall-clock budget turn `stopped early` into `proved optimal`? (M2)
+
+    One row per budget at the fragment count and cap the earlier run showed stopping early.
+    Node count is reported for every cell, abandoned or not: its growth is the finding.
+    """
+    sequence = product()
+    rows = []
+    for count, cap in ((12, 8),):
+        for limit in (10.0, 60.0, 300.0):
+            answer = clever_split(
+                sequence,
+                profile=ligase,
+                count=count,
+                reserved=RESERVED,
+                cap=cap,
+                seconds_limit=limit,
+            )
+            rows.append(
+                [
+                    count,
+                    cap,
+                    f"{limit:.0f}",
+                    show(answer),
+                    "stopped early" if answer.note else "PROVED optimal over kept candidates",
+                    answer.nodes,
+                    answer.scored,
+                    f"{answer.seconds:.1f}",
+                ]
+            )
+            print(f"<progress> {count} frag cap {cap} limit {limit}: {rows[-1]}", flush=True)
+    table(
+        f"{number}. What a generous time budget buys — 2,276 bp cargo, 300 nt oligo",
+        [
+            "fragments",
+            "candidates per cut",
+            "budget (s)",
+            "fidelity",
+            "outcome",
+            "nodes",
+            "fidelity calls",
+            "wall (s)",
+        ],
+        rows,
+    )
+
+
+def grown(target: int) -> str:
+    """Realistic cargo of about `target` bases: AP-1 parts concatenated in frame, cycling."""
+    blocks = [sequence[: len(sequence) // 3 * 3] for _, sequence in parts()]
+    built: list[str] = []
+    total = 0
+    at = 0
+    while total < target:
+        block = blocks[at % len(blocks)]
+        built.append(block)
+        total += len(block)
+        at += 1
+    return "".join(built)
+
+
+def sweep_scale(ligase: LigaseProfile | None, number: str) -> None:
+    """How every stage scales with cargo length, at two oligo lengths (M3)."""
+    import resource
+
+    rows = []
+    for target in (2300, 5000, 10000, 20000):
+        cargo = grown(target)
+        for oligo in (300, 1000):
+            budget = Budget(oligo=oligo)
+            began = time.perf_counter()
+            try:
+                least = fewest_fragments(len(cargo), budget)
+            except ValueError:
+                rows.append([len(cargo), oligo, "none", "-", "-", "-", "-", "-", "-", "-", "-"])
+                continue
+            dp = time.perf_counter() - began
+            row: list[object] = [len(cargo), oligo, least, f"{dp * 1000:.0f}"]
+            for name, run in SEARCHES:
+                answer = run(
+                    cargo,
+                    ligase,
+                    budget=budget,
+                    **({"seconds_limit": 60.0} if "bound" in name else {}),
+                )
+                row += [
+                    show(answer),
+                    f"{answer.seconds * 1000:.0f}",
+                    "stopped early" if answer.note else "ok",
+                ]
+            peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6
+            row += [f"{peak:.0f}", lund(least) or "off their scale"]
+            rows.append(row)
+            print(f"<progress> {len(cargo)} bp {oligo} nt: {row}", flush=True)
+    table(
+        f"{number}. Scaling — AP-1 parts concatenated in frame, B&B at cap 8 with a 60 s budget",
+        [
+            "cargo (bp)",
+            "oligo (nt)",
+            "fewest fragments",
+            "DP ms",
+            "proxy fidelity",
+            "proxy ms",
+            "outcome",
+            "set-greedy fidelity",
+            "set-greedy ms",
+            "outcome",
+            "B&B fidelity",
+            "B&B ms",
+            "outcome",
+            "peak RSS (MB)",
+            "Lund error-free clones (%)",
+        ],
+        rows,
+    )
+
+
+def heading(ligase: LigaseProfile | None) -> None:
+    """Say what scored the tables below."""
+    held = "FileS03_T4_18h_25C.xlsx (user-held T4 18 h 25 C)"
+    print(f"- Scored by: {held if ligase else 'shipped BsaI matrix, the T4 file is ABSENT'}")
+    print(f"- Reserved overhangs held out by name: {', '.join(RESERVED)}")
+    print(f"- Overhead per oligo: {Budget().overhead} nt; shortest fragment {Budget().floor} nt")
+
+
 def main() -> None:
-    """Print every table."""
+    """Print the tables the argument names, or every table."""
+    wanted = sys.argv[1:] or ["old", "m1", "m2", "m3"]
     ligase = profile()
     print("# Prototype measurements for issue #261\n")
-    print(f"- Ligase profile: {'held' if ligase else 'ABSENT, shipped BsaI matrix used'}")
-    print(f"- Reserved overhangs held out by name: {', '.join(RESERVED)}")
-    print(f"- Budget: {Budget()}, cargo per oligo {Budget().ceiling} nt")
+    heading(ligase)
     large = product()
-    print(f"- Largest cargo: product.dna, {len(large)} bp")
-    sweep_fragments(large, ligase)
-    sweep_caps(large, ligase)
-    sweep_parts(ligase)
-    sweep_oligo(ligase)
-    sweep_pressure(ligase)
-    sweep_reserved(ligase)
-    sweep_scoring(large)
-    oligo_count()
+    print(f"- Largest shipped cargo: product.dna, {len(large)} bp")
+    if "old" in wanted:
+        sweep_fragments(large, ligase)
+        sweep_caps(large, ligase)
+        sweep_parts(ligase)
+        sweep_oligo(ligase)
+        sweep_pressure(ligase)
+        sweep_reserved(ligase)
+        sweep_scoring(large)
+        oligo_count()
+    if "m1" in wanted:
+        sweep_three_parts(ligase, 300, "M1a")
+        sweep_three_parts(ligase, 350, "M1b")
+        sweep_three_counts(ligase, "M1c")
+    if "m2" in wanted:
+        sweep_budgets(ligase, "M2")
+    if "m3" in wanted:
+        sweep_scale(ligase, "M3")
 
 
 if __name__ == "__main__":

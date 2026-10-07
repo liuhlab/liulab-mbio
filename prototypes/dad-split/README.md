@@ -12,14 +12,18 @@ the gate does not collect it. It exists to produce the measurements the human de
 pixi run python prototypes/dad-split/measure.py
 ```
 
-`split.py` holds two searches over the same inputs. `measure.py` runs them over
+That one command prints every table. An argument prints a subset — `old`, `m1`, `m2` or `m3`,
+in any combination — which is how the long tables were run side by side.
+
+`split.py` holds three searches over the same inputs. `measure.py` runs them over
 `docs/examples/ap1-library/` and prints the tables.
 
-## The two searches
+## The three searches
 
 | Name | Shape |
 | --- | --- |
 | `simple_split` | Cuts spaced evenly, then one greedy first-fit pass over a window of 16 bases, ranking candidates by their own on-target count. This is what `cloning.goldengate.design.design_overhangs` does today, lifted to positions it picks itself. |
+| `greedy_set_split` | The same pass — same cuts, same window, first-fit, no backtracking — ranking each candidate by the fidelity of the set it would make instead of by its own on-target count. One knob changes: the key. |
 | `clever_split` | An interval dynamic program over fragment length pins the fewest fragments and the exact window each cut may take, then depth-first branch and bound over the per-cut candidates maximises Pryor 2020 fidelity. |
 
 The bound is admissible. Adding an overhang to a set can only raise the denominators of the
@@ -54,6 +58,22 @@ against, so the decision has evidence rather than an assumption.
 
 Two smaller assumptions, both parameters: the shortest fragment is 40 bases, as OMEGA uses, and
 `min_distance` stays at the package's `MIN_DISTANCE` of 2 unless a table says otherwise.
+
+## The tables
+
+Tables 1 to 8 measure the first two searches. Three more answer what the first round could not.
+
+| Table | Question |
+| --- | --- |
+| M1a, M1b | All three searches over the 72 parts, at a 300 nt and at a 350 nt oligo. |
+| M1c | All three against fragment count on the 2,276 bp cargo. |
+| M2 | Whether a wall-clock budget of 10, 60 or 300 seconds turns the branch and bound's `stopped early` into a proof, and what the nodes do meanwhile. |
+| M3 | How the dynamic program, the greedies and the branch and bound scale to 20 kb of cargo, at a 300 nt and at a 1,000 nt oligo. |
+
+M3's cargo is AP-1 parts concatenated in frame, each trimmed to a codon boundary and the list
+cycled. Random DNA would change the base composition, and the answer with it.
+
+Every runtime is indicative: one machine, one run, three searches sharing it.
 
 ## Inputs
 
