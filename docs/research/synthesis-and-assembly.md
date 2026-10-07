@@ -431,52 +431,79 @@ Underneath all three is the route to clonal wells itself, which section 4 marks 
 
 ### 6.7 How donor pools are built
 
-The round step consumes a destination pool and a donor pool and nothing produces either.
-Nothing says which list is the destination in round one, and nothing says a donor must already
-be cloned before it can be one.
+**Decided in #259: one pool per position, pooled equimolar from individually prepped plasmids,
+once.** This is the paper's own structure, read from METHOD DETAILS p. e4: "For each TF family,
+individual plasmids were combined into equimolar pools of 'N', 'DBD' (bZIP, Forkhead, or ETS)
+and 'C' domain sequences or of full-length gene sequences."
 
-| Option | Evidence |
-| --- | --- |
-| Build every donor pool once, up front | What the paper does: individually cloned plasmids combined into equimolar pools, the same pool re-digested every round, only the destination changing. |
-| Build each round's donor pool from that round's validated wells | Fits the per-well validation this method adds and the paper has no counterpart for. Costs a prep per round. |
+The up-front-or-per-round fork dissolves. A pool belongs to a position, not to a round: N is the
+round-1 destination, DBD donates once, C donates once. Both options name the same three pools.
 
-The constraint either option inherits: our donor carries no release sites of its own, so unlike
-the paper's it cannot be a PCR product or a gene fragment. It must be cloned first.
+Pooling is by DNA mass from one prep per part, not by culture volume. Every part sits in the
+same backbone and differs only by insert, so pooling equal volumes of culture is equimolar in
+cells rather than in plasmid — and a prep per part leaves a reusable part collection rather than
+a cost.
+
+**The constraint either option inherited stands:** our donor carries no release sites of its
+own, so unlike the paper's it cannot be a PCR product or a gene fragment. It must be cloned
+first.
+
+**Whether a pool's members were read first is not an iGGA question.** An iGGA round consumes a
+pool of plasmids and asks nothing about their provenance. How a part reaches that pool, and
+whether it is validated on the way, belongs to cargo synthesis and the DMX read-out — 6.6 and
+6.12.
 
 ### 6.8 Clean-up ratios
 
-Digest goes straight to ligation and ligation straight to electroporation. There is no clean-up
-step, yet the design's correctness rests on removing the cut stubs.
+**Decided in #259: the paper's two ratios — 2X after each digest, 1X after the ligation.** Read
+from METHOD DETAILS pp. e4-e5: "Digestion products were SPRI-purified at a 2X volume ratio and
+eluted in H2O", then "Ligation products were SPRI-purified at a 1X volume ratio and eluted in
+H2O."
 
-| Option | Evidence |
-| --- | --- |
-| The paper's two ratios | Digests purified at a 2X bead ratio, ligations at 1X. The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step removing 17 bp and 13 bp stubs. |
-| One ratio throughout | Simpler to write and unsupported by anything read. |
+The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step
+removing the 17 bp and 13 bp stubs. One ratio throughout is supported by nothing read.
 
-The materials document lists beads after each digest and after the ligation without the ratios,
-so the decision is only half recorded.
+Both are constants in `liulab_synbio.library.bench`, landed by #280.
+`synthesis-and-assembly-materials.md` now carries them beside the beads, which is the half of
+this decision that was missing.
 
 ### 6.9 The per-round bound
 
-No round is bounded by anything: no transformant count, no DNA input. The final step then asks
-the reader to derive colonies from the coverage wanted, with no rule and no pointer.
+**Decided in #259: mass in, a titre plate out, and no inherited coverage multiple.**
 
-| Option | Evidence |
-| --- | --- |
-| Bound by mass, as the paper does | 20 ng of digested backbone per 200 µL ligation, up to 100 ng of purified ligation product electroporated, with the coverage claim resting on a terminal representation read. |
-| Bound by a transformant count | What Qian does at its one transformation, gating on a colony count times library complexity above 300. Requires plating every round, which the method page's earlier wording forbade. |
+**In — the paper's masses, and nothing to choose.** 1 µg of plasmid pool per digest, 20 ng of
+digested destination per 200 µL ligation, up to 100 ng of purified ligation product
+electroporated. All three are constants in `liulab_synbio.library.bench`.
 
-Whether the rounds are checked at all is itself unresolved, which is why the method page now
-carries it as an undecided line rather than as a decision. The earlier claim, "rounds run
-unchecked, as the paper runs them", read a silence as a statement — the paper describes recovery
-and growth and never mentions plating, colonies or counts — and it contradicted the
-representation read two steps later, which measures after every bottleneck while every round
-ends in an electroporation. The mechanism that claim rested on, that the ligase will not join
-blunt ends, is cited to no source read here.
+**Out — a departure, recorded as one.** The paper plates nothing. Digest, SPRI, ligate, SPRI,
+electroporate, recover, grow, prep, next round: no colony count appears anywhere in it, and no
+round is gated on one. Ours plates a dilution of each round's recovery, and a no-donor control
+carried through the ligation from the same digest, and gates the round on net colonies. Both
+plates grow during the 12-16 hour outgrowth, so the cost is two plates and no extra day.
 
-The same paragraph carries D16: whether an assembled clone is sequenced whole before it becomes
-a stock. The departures note says this became a per-round product check; the method page says
-the opposite. It is open.
+Why depart. The design argues parental background away — BbsI cuts twice, SrfI cuts whatever
+BbsI missed, T7 refuses the resulting blunt ends, and the 2X SPRI takes the stubs — and the
+control plate is what measures that argument rather than trusting it. Residual parental is not
+noise: it is the previous round's library, one position short, and it rides into the linkage
+read as truncated members. A round that collapsed cannot be repaired by a later one.
+
+**The 300x multiple is dropped.** It is Qian's, measured at a single transformation whose
+purpose was pickable clones for an arrayed collection. iGGA yields a pool that goes to a pooled
+screen; no member is ever picked or re-identified, so the gate does not transfer. What a round
+needs follows from the representation the downstream experiment asks for, which is a project
+input. `liulab_synbio.library.coverage` already refuses a default, and reports the colonies a
+stated multiple takes beside the chance a named product is missing.
+
+**What judges the library is the read, not the plate.** The paper's own quality claim is barcode
+sequencing of the plasmid library for representation, and a long-read amplicon spanning the gene
+and its barcodes for linkage: about 95% of reads carried three valid barcodes, nearly 90% of the
+library was correctly linked, and over 90% of it held above 80% fidelity. Those are the method
+page's steps 7 and 8. The titre plate gates a round; the reads judge the library.
+
+**D16 is answered by the paper.** "The sequences of a sample of individual clones from both
+libraries were confirmed by whole plasmid next-generation sequencing (Plasmidsaurus)" — a sample
+of a finished library, not a per-round product check and not every member. The departures note
+and the method page were describing different objects.
 
 ### 6.10 The primers for the library reads
 
@@ -713,7 +740,7 @@ sheets. They agree on all 48. No overhang, stuffer, barcode or codon was given t
 | Coding bases over the 72 parts | 23,103 |
 | Blocks | 133 to 1,149 bp, 30,519 bp in all |
 | Product | 2,276 bp, 13,824 distinct constructs, every check passing |
-| Colonies asked for at 300x | 7,200, then 172,800, then 4,147,200 |
+| Colonies asked for at 300x | 7,200, then 172,800, then 4,147,200 — the multiple 6.9 has since dropped |
 
 23,103 bp is the source's own published total, to the base. The retained tail reads 75 bases,
 25 codons, no stop, opening `RKVFSPGRRQF` — the specification's section 3.2 derived both.

@@ -107,11 +107,14 @@ because its barcodes attach by Type IIS and ignore the backbone.
 | BbsI + SrfI | opens the destination |
 | BsaI + PmeI | releases the donor and blunts its backbone |
 | T7 ligase, StickTogether buffer | will not join blunt ends, which is what removes escapees |
-| SPRI beads | after each digest and after the ligation |
+| SPRI beads | 2X after each digest, 1X after the ligation; both eluted in water |
 | Endura electrocompetent cells | recombination-deficient |
+| LB agar plates, selection for the destination | one dilution plate and one no-donor control plate per round |
 | Capping block | optional last round; any `AGGA`/`TTCC` block that is 1 mod 3, such as T2A |
 
-The two digests never share a tube.
+The two digests never share a tube. The two bead ratios are not one ratio used twice: the 2X
+step is what removes the 17 bp and 13 bp cut stubs, and the PmeI argument in the departures note
+rests on it.
 
 ## Final assembly
 

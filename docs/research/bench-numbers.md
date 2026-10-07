@@ -561,9 +561,17 @@ kind, not in fact: a 50 µL vial is two transformations. Both figures are the ma
 
 ### What a round is bounded by
 
-**Unresolved in the method itself.** Whether the rounds run unchecked and what bounds each one
-is already an open question in `docs/research/synthesis-and-assembly.md`. No source answers it,
-so no number can.
+**Decided in #259**, and recorded in `docs/research/synthesis-and-assembly.md` 6.9. In: the
+masses above. Out: a plated dilution of the recovery and a no-donor control, gated on net
+colonies.
+
+| Number | Value | Source |
+| --- | --- | --- |
+| Colonies per round the source asks for | **none.** It plates nothing at any round | Takacsi-Nagy STAR Methods |
+| What the source judges the library by instead | barcode sequencing of the plasmid library for representation, and a long-read amplicon over the gene and its barcodes for linkage | Takacsi-Nagy, Figures 1D and 1E |
+| Linkage the source reached | ~95% of reads carried three valid barcodes; nearly 90% of the library correctly linked; >90% of it above 80% fidelity | same |
+| Whole-plasmid sequencing | a **sample** of individual clones from the finished libraries, Plasmidsaurus | Takacsi-Nagy METHOD DETAILS p. e4 |
+| The colony target for a round | **ours, and a project input.** It follows from the representation the screen downstream needs. Qian's >300 gated a transformation run to yield pickable clones and does not transfer | — |
 
 ---
 
