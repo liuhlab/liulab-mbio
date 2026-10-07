@@ -386,6 +386,22 @@ designer who wants one set of conditions across several enzymes.
 **Without such a file nothing changes.** PaqCI is scored by the rules exactly as it was before,
 which a test pins.
 
+### A second ligase's matrix, and what it may not replace
+
+Bilotti 2022 is read the same way, and it is CC BY 4.0 rather than CC BY-NC, so a user holding it
+carries no licence question at all. It is one workbook of eight sheets (section 11), so anything
+but its T4 sheet is out of reach of a reader that takes the first sheet of a file.
+
+**A T7 profile may not replace an enzyme's own one-pot matrix.** The temptation is real: an iGGA
+round ligates with T7 in PEG, so a T7 PEG matrix looks like the closer match to the bench. It is
+not. Scored on this branch against the shipped BbsI-HF matrix, 200 random sets per size, seed 1, a
+Bilotti T7 PEG profile reads **+0.080 at six overhangs, +0.135 at eight and +0.249 at twelve** —
+higher, which is to say more permissive, and growing with set size exactly as section 10's T4
+profile does. Pure ligation without the Type IIS enzyme and without cycling reads optimistic
+against one-pot numbers whichever ligase it measures, so swapping in the matching ligase trades a
+labelling problem for an accuracy problem in the loose direction. The enzyme's own one-pot matrix
+stays the score; a second ligase's matrix is read for what it compares, not for what it scores.
+
 ## 9. Regeneration
 
 ```sh
@@ -633,7 +649,7 @@ Surveyed 2026-10-06. The repo holds Pryor 2020 (shipped) and reads Potapov 2018 
 
 | Source | What it adds | Licence | Obtainable | May ship |
 | --- | --- | --- | --- | --- |
-| **Bilotti et al. 2022**, *NAR* 50(8):4647-4658, [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241) | **Five ligases** — T4, T3, T7, PBCV-1 (SplintR), human Ligase 3 — over all 256 four-base overhangs, by the same SMRT assay. Also with and without PEG | **CC BY 4.0** (Europe PMC `license: cc by`, `isOpenAccess: Y`, PMC9071435) | Yes: "Raw ligation product observation counts were provided as CSV formatted data tables in Supplementary Data", `gkac241_supplemental_files.zip` at PMC | **Yes** |
+| **Bilotti et al. 2022**, *NAR* 50(8):4647-4658, [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241) | **Five ligases** — T4, T3, T7, PBCV-1 (SplintR), human Ligase 3 — over all 256 four-base overhangs, by the same SMRT assay. PEG for three of the five | **CC BY 4.0**, confirmed on the publisher's own deposited permissions block and on Crossref (Sources) | Yes, and downloaded: `gkac241_supplemental_files.zip` at PMC, holding **one workbook of eight sheets** | **Yes** |
 | Pryor et al. 2022, *ACS Synth Biol* 11(6):2036-2042, [doi:10.1021/acssynbio.1c00525](https://doi.org/10.1021/acssynbio.1c00525) | No new matrices — applies Pryor 2020 to a 40 kb, 52-part build | CC BY-NC-ND 4.0 | Supplement only | No |
 | Strzelecki et al. 2024, *NAR* 52(19):e95, [doi:10.1093/nar/gkae809](https://doi.org/10.1093/nar/gkae809) | The one independent non-NEB re-measurement. Gel kinetics on 6 overhangs, BsaI-HFv2 + T4. Finds **overhang duplex strength**, not only mismatch fidelity, drives efficiency — a factor no matrix here captures | CC BY-NC (the bioRxiv preprint is no-reuse) | Paper yes, no matrix deposit | No |
 | Mukundan & Madhusudhan 2025, OOGGA, [doi:10.1101/2025.06.16.659877](https://doi.org/10.1101/2025.06.16.659877) | No new measurement; scores against Potapov 2018 | Unstated | Code on GitHub | n/a |
@@ -649,10 +665,35 @@ Four things worth carrying forward.
 said T7 ligase was covered "only [by] Potapov 2018, CC BY-NC" and therefore could not ship. That
 is **no longer true**: T7, T3, PBCV-1/SplintR and human Ligase 3 are all in Bilotti 2022 under
 CC BY 4.0, over all 256 four-base overhangs. It extends coverage along the axis Pryor does not —
-Pryor added Type IIS enzymes under one ligase, Bilotti adds ligases. Note its second condition
-axis: standard T4 buffer against NEBNext Quick Ligation buffer, which has PEG, and PEG changes
-bias. A matrix from it needs its **buffer** recorded next to temperature and time, which the
-current `LigaseProfile` conditions string does not have a field for.
+Pryor added Type IIS enzymes under one ligase, Bilotti adds ligases.
+
+The deposit was downloaded and opened on 2026-10-07, and it is not the shape the paper describes.
+Its Data Availability says "Raw ligation product observation counts were provided as CSV formatted
+data tables"; what is deposited is **one workbook, `File S1_NAR.xlsx`, of eight 256 x 256 sheets**.
+That distinction is load-bearing here, because `read_profile` reads the first sheet of a workbook
+and nothing else, so every sheet but T4 is out of reach until it takes a sheet selector.
+
+| Sheet | Ligase | Buffer | Observations |
+| --- | --- | --- | --- |
+| `File S1. T4` | T4 | 1x T4 DNA ligase buffer | 317,228 |
+| `File S2. T7` | T7 | 1x T4 DNA ligase buffer | 338,272 |
+| `File S3. hLig3` | human Ligase 3 | 1x T4 DNA ligase buffer | 643,492 |
+| `File S4. T3` | T3 | 1x T4 DNA ligase buffer | 344,420 |
+| `File S5. PBCV-1` | PBCV-1 (SplintR) | 1x T4 DNA ligase buffer | 227,846 |
+| `File S6. T4 PEG` | T4 | NEBNext Quick Ligation, 6% PEG 6000 | 418,184 |
+| `File S7. T7 PEG` | T7 | NEBNext Quick Ligation, 6% PEG 6000 | 245,162 |
+| `File S8. hLig3 PEG` | human Ligase 3 | NEBNext Quick Ligation, 6% PEG 6000 | 394,032 |
+
+The second condition axis is the buffer: standard T4 buffer against NEBNext Quick Ligation buffer,
+which has PEG, and PEG changes bias. It covers **three of the five ligases, not all five** — T4, T7
+and hLig3 have a PEG sheet, T3 and PBCV-1 do not. A matrix from here needs its **buffer** recorded
+next to temperature and time, which the current `LigaseProfile` conditions string has no field for.
+
+All eight sheets are **pure ligation: 1 h at 25 °C, no Type IIS enzyme and no cycling** — the same
+chemistry as Potapov 2018 and not the chemistry of a Golden Gate reaction. Section 10's measurement
+therefore applies to every one of them, whichever ligase it names: a profile from this source reads
+high against a one-pot matrix and must never be taken for a Golden Gate measurement. Section 8 says
+what follows for the T7 sheets in particular.
 
 **Taq ligase and E. coli ligase have no such data and probably cannot.** Taq ligase is
 nick-selective rather than end-joining, so an end-joining overhang matrix for it is not a
@@ -713,9 +754,24 @@ Added 2026-10-06:
 - Bilotti, K., Potapov, V., Pryor, J.M., Duckworth, A.T., Keck, J.L. and Lohman, G.J.S. (2022)
   Mismatch discrimination and sequence bias during end-joining by DNA ligases.
   *Nucleic Acids Research* 50(8), 4647-4658.
-  [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241). **CC BY 4.0**, per Europe PMC's
-  record for PMC9071435 (`license: cc by`, `isOpenAccess: Y`). Supplementary Data holds the counts
-  as CSV. **The licence should be confirmed on the publisher's own page before anything ships**
+  [doi:10.1093/nar/gkac241](https://doi.org/10.1093/nar/gkac241). **CC BY 4.0, confirmed
+  2026-10-07 on the publisher's own deposit**, not only on Europe PMC's `license: cc by` for
+  PMC9071435. The permissions block in OUP's deposited JATS, served at
+  `https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9071435/fullTextXML`:
+
+  > © The Author(s) 2022. Published by Oxford University Press on behalf of Nucleic Acids
+  > Research. This is an Open Access article distributed under the terms of the Creative Commons
+  > Attribution License (<https://creativecommons.org/licenses/by/4.0/>), which permits
+  > unrestricted reuse, distribution, and reproduction in any medium, provided the original work
+  > is properly cited.
+
+  Crossref's publisher-deposited record for the same DOI carries
+  `license[0].URL = https://creativecommons.org/licenses/by/4.0/`, with `content-version: vor` and
+  `delay-in-days: 0`, so the version of record is CC BY from the day of publication. Attribution is
+  the only condition — the same footing as Pryor 2020, which already ships. The Supplementary Data
+  is **one workbook, `File S1_NAR.xlsx`, of eight sheets**, not the CSV tables the paper's own Data
+  Availability describes; a copy is under `reference_docs/ligation-fidelity/bilotti2022/`, which is
+  git-ignored
 - Pryor, J.M., Potapov, V., Bilotti, K., Pokhrel, N. and Lohman, G.J.S. (2022) Rapid 40 kb genome
   construction from 52 parts through data-optimized assembly design. *ACS Synth. Biol.* 11(6),
   2036-2042. [doi:10.1021/acssynbio.1c00525](https://doi.org/10.1021/acssynbio.1c00525)
