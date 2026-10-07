@@ -6,6 +6,7 @@ the blocks that make it, not on how the design reached them.
 """
 
 from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -105,3 +106,47 @@ def test_the_fragment_counts_sit_at_or_above_lund_s_measured_84_6_per_cent_point
 
 def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
+
+
+def rerouted(plan, **changes):
+    """Return the same plan with the project's validation keys replaced."""
+    return replace(plan, project=replace(plan.project, **changes))
+
+
+def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
+    one = plan.validation
+    assert (one.route.name, one.floor, len(one.designs)) == ("B", 0, 72)
+    assert one.wells == 288 == 72 * 4
+    assert [len(picked.seating) for picked in one.picked] == [288]
+    assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
+
+
+def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out(plan):
+    """The bench is sized from the designs read, not from the part list."""
+    whole = plan.validation
+    fewer = rerouted(plan, validate_from=2).validation
+    left_out = len(whole.designs) - len(fewer.designs)
+    assert left_out == 40
+    assert fewer.wells == whole.wells - left_out * whole.colonies == 128
+    assert sum(len(one.seating) for one in fewer.picked) == 128
+
+
+def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
+    """Cargo validation is optional, and a project that asks for none gets none."""
+    polyclonal = rerouted(plan, validate_from=None, route=None)
+    assert polyclonal.validation is None
+    titles = [step.title for step in polyclonal.protocol().steps]
+    assert "Pick 4 colonies of each design" not in titles
+    assert titles[:2] == ["Order the synthesised parts", "Pool each part list"]
+
+
+def test_the_demo_emits_a_protocol_on_each_route(plan):
+    """One set of parts, two project files: a second project is never a second branch."""
+    route_b = plan.protocol()
+    route_a = rerouted(plan, route="A").protocol()
+    assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
+    assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
+    assert [hole.id for step in route_b.steps for hole in step.holes] == ["B1"]
+    assert [hole.id for step in route_a.steps for hole in step.holes] == []
+    for one in (route_a, route_b):
+        assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]

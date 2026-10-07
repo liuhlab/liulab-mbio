@@ -19,6 +19,7 @@ from typing import Any
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_synbio.dmx import ROUTES
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a project takes unless it states another.
@@ -72,6 +73,14 @@ class Project:
         How many parts one batch of the bench work carries.
     coverage
         Colonies over products each round is sized for.
+    validate_from
+        The fragment-count floor at or above which a design is read back one well at a time.
+        Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
+        There is no default: `liulab_synbio.dmx.clean_colony_chance` gives a design's chance of
+        a clean colony, not the chance worth paying to check.
+    route
+        Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
+        `validate_from` is, because an unread project needs no route.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
@@ -84,8 +93,10 @@ class Project:
     Raises
     ------
     ValueError
-        If a position is repeated or missing, a number is not positive, or the barcode and the
-        method's cloning scar are not whole codons together — which names ``barcode-frame``.
+        If a position is repeated or missing, a number is not positive, the floor is negative,
+        the route is neither of the two, the floor and the route are not both there or both
+        absent, or the barcode and the method's cloning scar are not whole codons together —
+        which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -102,6 +113,8 @@ class Project:
     coverage: float
     primers: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    validate_from: int | None = None
+    route: str | None = None
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
     barcode: Barcode = field(default_factory=Barcode)
@@ -116,6 +129,7 @@ class Project:
         object.__setattr__(self, "bands", dict(self.bands))
         self._check_positions()
         self._check_numbers()
+        self._check_validation()
         self._check_barcode_frame()
         if self.host not in codon_tables():
             raise KeyError(
@@ -174,6 +188,28 @@ class Project:
             if value <= 0:
                 raise ValueError(f"{named} is {value}, and a project states a positive one")
 
+    def _check_validation(self) -> None:
+        """Refuse a negative floor, an unknown route, or one of the two without the other.
+
+        The two travel together: a floor with no route says which designs are read and not how,
+        and a route with no floor names a read nobody asked for.
+        """
+        if self.validate_from is not None and self.validate_from < 0:
+            raise ValueError(
+                f"validate_from is {self.validate_from}, and a fragment-count floor counts "
+                "fragments; omit it to read nothing, or set 0 to read every design"
+            )
+        if self.route is not None and self.route not in ROUTES:
+            raise ValueError(
+                f"route is {self.route!r}, and a project reads its wells back on one of "
+                f"{', '.join(repr(one) for one in ROUTES)}"
+            )
+        if (self.validate_from is None) != (self.route is None):
+            raise ValueError(
+                "validate_from and route are stated together: a project that reads designs back "
+                f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+
     def _check_barcode_frame(self) -> None:
         """Check a barcode and the scar joining it to the last make whole codons together."""
         scar = len(self.scheme.cloning_scar)
@@ -226,6 +262,10 @@ def read_project(path: str | os.PathLike[str]) -> Project:
             else None
         ),
         bands=_bands(given.get("bands")),
+        validate_from=(
+            _whole(given, "validate_from", "a project") if "validate_from" in given else None
+        ),
+        route=_text(given, "route", "a project") if "route" in given else None,
         seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
@@ -250,7 +290,9 @@ _PROJECT_KEYS = frozenset(
         "coverage",
     }
 )
-_PROJECT_OPTIONAL = frozenset({"seed", "reserved_extra", "barcode", "primers", "bands"})
+_PROJECT_OPTIONAL = frozenset(
+    {"seed", "reserved_extra", "barcode", "primers", "bands", "validate_from", "route"}
+)
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
 
 

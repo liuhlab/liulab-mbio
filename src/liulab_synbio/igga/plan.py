@@ -38,6 +38,7 @@ from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
+from liulab_synbio import dmx
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
@@ -202,6 +203,22 @@ class LibraryPlan:
         return tuple(one.part for one in self.rounds)
 
     @property
+    def validation(self) -> dmx.Validation | None:
+        """What reading these designs back takes, or `None` where the project reads none.
+
+        The project's floor chooses the designs and its route reads them. The bench is sized
+        from that set and not from the part list, so a design the floor leaves out costs no
+        well, no plate and no reagent.
+        """
+        if self.project.route is None:
+            return None
+        return dmx.validation(
+            dmx.ROUTES[self.project.route],
+            designs(self.parts, self.project.oligo_length),
+            self.project.validate_from,
+        )
+
+    @property
     def checks(self) -> tuple[Check, ...]:
         """Every check the gate made, in the order it made them.
 
@@ -233,6 +250,7 @@ class LibraryPlan:
             host=self.host,
             sheet=PARTS_FILE,
             barcodes=BARCODE_FILE,
+            validation=self.validation,
             prices=self.prices,
         )
 
@@ -263,6 +281,27 @@ class LibraryPlan:
             primers = out / POOL_PRIMER_FILE
             primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
         return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
+
+
+def designs(parts: Sequence[Part], oligo_length: int) -> tuple[dmx.Design, ...]:
+    """Return one design a part, in as many pieces as the project's oligo length forces it into.
+
+    A block no longer than one oligo of the pool is ordered whole; a longer one is ordered in
+    pieces and joined, and that count is what a design's chance of a clean colony falls with.
+
+    Raises
+    ------
+    ValueError
+        If the oligo length is not positive.
+
+    Examples
+    --------
+    >>> [one.fragments for one in designs(plan.parts, 350)]  # doctest: +SKIP
+    [1, 2, 4]
+    """
+    if oligo_length < 1:
+        raise ValueError(f"an oligo is at least one base, got {oligo_length}")
+    return tuple(dmx.Design(one.name, -(-one.length // oligo_length)) for one in parts)
 
 
 def plan_igga(

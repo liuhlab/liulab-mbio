@@ -16,7 +16,8 @@
     "Codon usage": "human",
     "Product": "AP-1 DESynR round 3, 2276 bp",
     "Coverage": "300x, 4,147,200 colonies at the end",
-    "Amino acids changed": "27 over 26 part end(s)"
+    "Amino acids changed": "27 over 26 part end(s)",
+    "Designs read back": "72 from 0 fragment(s)"
   },
   "highlights": [
     "One round appends one part list to every member of the library at once, so 3 rounds make 13824 constructs out of 72 synthesised parts.",
@@ -304,6 +305,64 @@
       "contains": [],
       "rules": [],
       "citation": null
+    },
+    {
+      "name": "25 cm BioAssay plate",
+      "supplier": "Corning",
+      "catalog": "431111",
+      "storage": "",
+      "amount": "one spot a design",
+      "note": "carbenicillin at 100 µg/mL; about 2,500 colonies a plate",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "384-well culture plate",
+      "supplier": "Beckman Coulter",
+      "catalog": "c74290",
+      "storage": "",
+      "amount": "1, one a 384 wells",
+      "note": "60 µL low-salt LB with carbenicillin a well",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "96-well half-skirted PCR plate",
+      "supplier": "USA Scientific",
+      "catalog": "1402-9700",
+      "storage": "",
+      "amount": "3, one a quarter of a picked plate",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": {
+        "source": "LevSeq",
+        "locator": "step 2"
+      }
+    },
+    {
+      "name": "Barcoded index primer plate",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "one pair a well, 96 forward and 96 reverse",
+      "note": "prepared once as lab stock, by its own protocol; a run calls for it",
+      "contains": [],
+      "rules": [],
+      "citation": null
+    },
+    {
+      "name": "PCR master mix",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "one reaction a well",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "citation": null
     }
   ],
   "oligos": [],
@@ -312,7 +371,11 @@
     "Magnetic rack for the bead clean-ups",
     "Electroporator and cuvettes",
     "Shaking incubator at 30 °C",
-    "Spectrophotometer or fluorometer"
+    "Spectrophotometer or fluorometer",
+    "QPix XE Microbial Colony Picker",
+    "multichannel pipette on 96-well spacing",
+    "Incubator at 37 °C",
+    "A sequencer, and a demultiplexer that can check an address"
   ],
   "vessels": [],
   "plates": [],
@@ -340,6 +403,3370 @@
         {
           "problem": "The vendor cannot synthesise a block",
           "solution": "It is usually a repeat or a GC run in the coding bases. Plan again with another codon usage table; the stuffers and the overhangs are fixed by the scheme."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Array 72 design(s) and grow",
+      "instructions": [
+        "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
+        "Grow overnight at 37 °C on 100 µg/mL carbenicillin."
+      ],
+      "cautions": [],
+      "notes": [
+        "This project reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
+        "The archive is untouched: this reads a copy of it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A spot grows nothing",
+          "solution": "That design has no clone to read. Re-transform it from the archive before anyone re-synthesises it."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Pick 4 colonies of each design",
+      "instructions": [
+        "Pick 4 colonies a design into 60 µL low-salt LB with carbenicillin, with the QPix XE Microbial Colony Picker.",
+        "Fill one quarter of each 384-well plate before starting the next.",
+        "Grow overnight at 37 °C."
+      ],
+      "cautions": [],
+      "notes": [
+        "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
+        "1 fragment(s): 40 design(s), 100.0% of picks clean",
+        "2 fragment(s): 18 design(s), 100.0% of picks clean",
+        "3 fragment(s): 11 design(s), 93.8% of picks clean",
+        "4 fragment(s): 3 design(s), 89.2% of picks clean",
+        "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "288 wells over 1 plate(s): 288 picked.",
+        "Every colony of one design sits on one plate."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A design in many fragments gives no clean colony",
+          "solution": "The chances above say which designs that is likeliest for. Pick more colonies of those designs before the plates are poured, not after."
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Sample the picked plates into index plates",
+      "instructions": [
+        "Move 1 µL of each well into its 96-well plate, one quarter of the picked plate a pass."
+      ],
+      "cautions": [],
+      "notes": [
+        "One well in four lines up under a head built for the smaller format, so a quarter moves in one pass."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [
+        {
+          "title": "Sample a quarter of picked 1 into index 1",
+          "moves": [
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "A12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "B12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "C12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "D12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "E12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "F12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "G12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O1"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O3"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O5"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O7"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O9"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O11"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O13"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O15"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O17"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O19"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O21"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O23"
+              },
+              "destination": {
+                "plate": "index 1",
+                "well": "H12"
+              },
+              "volume_ul": 1.0
+            }
+          ],
+          "instrument": "multichannel pipette",
+          "note": "one well in four, which is the spacing a head built for the index format reads",
+          "citation": {
+            "source": "LevSeq",
+            "locator": "step 4"
+          }
+        },
+        {
+          "title": "Sample a quarter of picked 1 into index 2",
+          "moves": [
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "A24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "A12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "C24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "B12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "E24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "C12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "G24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "D12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "I24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "E12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "K24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "F12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "M24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "G12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O2"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O4"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O6"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O8"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O10"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O12"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O14"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O16"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O18"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O20"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O22"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "O24"
+              },
+              "destination": {
+                "plate": "index 2",
+                "well": "H12"
+              },
+              "volume_ul": 1.0
+            }
+          ],
+          "instrument": "multichannel pipette",
+          "note": "one well in four, which is the spacing a head built for the index format reads",
+          "citation": {
+            "source": "LevSeq",
+            "locator": "step 4"
+          }
+        },
+        {
+          "title": "Sample a quarter of picked 1 into index 3",
+          "moves": [
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "B23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "A12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "D23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "B12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "F23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "C12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "H23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "D12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "J23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "E12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "L23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "F12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "N23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "G12"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P1"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H1"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P3"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H2"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P5"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H3"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P7"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H4"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P9"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H5"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P11"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H6"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P13"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H7"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P15"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H8"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P17"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H9"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P19"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H10"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P21"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H11"
+              },
+              "volume_ul": 1.0
+            },
+            {
+              "source": {
+                "plate": "picked 1",
+                "well": "P23"
+              },
+              "destination": {
+                "plate": "index 3",
+                "well": "H12"
+              },
+              "volume_ul": 1.0
+            }
+          ],
+          "instrument": "multichannel pipette",
+          "note": "one well in four, which is the spacing a head built for the index format reads",
+          "citation": {
+            "source": "LevSeq",
+            "locator": "step 4"
+          }
+        }
+      ],
+      "gels": [],
+      "expected": [
+        "3 index plate(s), 288 reactions in all."
+      ],
+      "troubleshooting": [],
+      "holes": []
+    },
+    {
+      "title": "Amplify each well with its own pair",
+      "instructions": [
+        "Add the pair its address names to each well from the prepared primer plate.",
+        "Run the index PCR, then hold the plate."
+      ],
+      "cautions": [],
+      "notes": [
+        "96 forward marks and 96 reverse reach 9,216 wells, so the pairs already held cover far more than this run needs.",
+        "The primer plate is built once as lab stock and a run calls for it; this protocol does not build one."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark."
+      ],
+      "troubleshooting": [],
+      "holes": [
+        {
+          "id": "B1",
+          "missing": "no index mark set is named for the barcoded primer pairs",
+          "kind": "lab",
+          "where": "route B, the pair marking one well",
+          "filled_by": "the prepared primer plate the lab holds",
+          "issue": "liuhlab/liulab-mbio#225"
+        }
+      ]
+    },
+    {
+      "title": "Pool and sequence",
+      "instructions": [
+        "Pool each index plate on its own and clean the pool up.",
+        "Sequence the pool."
+      ],
+      "cautions": [],
+      "notes": [
+        "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "Reads for 288 wells, every well told from the rest by the marks it carries."
+      ],
+      "troubleshooting": [],
+      "holes": []
+    },
+    {
+      "title": "Call every well",
+      "instructions": [
+        "Demultiplex the reads by address, checking each address rather than trusting a file.",
+        "Call a consensus a well, then compare it with that well's design base for base.",
+        "Reformat, compacting out the wells that failed."
+      ],
+      "cautions": [],
+      "notes": [
+        "A well read too thinly carries no verdict and is not a failure, so reformatting does not compact it out.",
+        "More than one consensus is mixed, and mixed fails.",
+        "A design with no passing well is picked again from the same archive spot before anyone re-synthesises it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "A well read more than 20 times is called; route B tolerates 10 and warns between the two.",
+        "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A well's call is the right protein and the wrong barcode",
+          "solution": "It fails. A barcode that no longer names its member cannot be put right by the linkage read later."
         }
       ],
       "holes": []
@@ -1720,6 +5147,18 @@
     {
       "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
       "url": ""
+    },
+    {
+      "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
+      "url": "https://doi.org/10.1038/s41467-026-76740-5"
+    },
+    {
+      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, twenty reads wanted and ten tolerable",
+      "url": "https://doi.org/10.1021/acssynbio.4c00625"
+    },
+    {
+      "text": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from",
+      "url": "https://doi.org/10.1021/acssynbio.3c00694"
     }
   ],
   "sources": {
@@ -1742,6 +5181,20 @@
       "edition": "MA133 26Feb2018",
       "url": "",
       "read_as": "plain curl",
+      "date": "2026-10-06"
+    },
+    "Qian SI": {
+      "document": "Qian et al. 2026, Supplementary Information",
+      "edition": "Nat. Commun. 10.1038/s41467-026-76740-5",
+      "url": "",
+      "read_as": "held under reference_docs/",
+      "date": "2026-10-06"
+    },
+    "LevSeq": {
+      "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
+      "edition": "",
+      "url": "",
+      "read_as": "held under reference_docs/",
       "date": "2026-10-06"
     }
   },

@@ -34,6 +34,7 @@ from liulab_mbio.protocol.model import (
     Protocol,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     Step,
     ThermocyclerProgram,
@@ -42,6 +43,7 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
+from liulab_synbio import dmx
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import (
     DIGEST_CELSIUS,
@@ -235,14 +237,18 @@ def protocol(
     host: str,
     sheet: str,
     barcodes: str,
+    validation: dmx.Validation | None = None,
     prices: PriceRecord | None = None,
 ) -> Protocol:
     """Return the bench protocol for one planned library, ready to render.
 
     Each argument is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
     `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
-    in the order someone does them: order the blocks, pool each part list, then every round in
-    turn, and finally read the barcode block back.
+    in the order someone does them: order the blocks, read back the designs the project asks for,
+    pool each part list, then every round in turn, and finally read the barcode block back.
+
+    `validation` is `None` for a project that states no fragment-count floor, and the protocol
+    then carries no validation at all: the library stays polyclonal, which is the default.
 
     The bill is always there, because its quantities come from the design. Money comes only from
     `prices`, and every row it does not price carries a hole.
@@ -266,6 +272,7 @@ def protocol(
             constructs,
             part_lists,
             host,
+            validation,
         ),
         highlights=_highlights(
             scheme,
@@ -279,8 +286,11 @@ def protocol(
             barcodes,
         ),
         checks=badges(checks),
-        materials=_materials(scheme, positions, part_lists, vector, sheet),
-        equipment=EQUIPMENT,
+        materials=(
+            *_materials(scheme, positions, part_lists, vector, sheet),
+            *(dmx.validation_materials(validation) if validation else ()),
+        ),
+        equipment=(*EQUIPMENT, *(dmx.validation_equipment(validation) if validation else ())),
         steps=_steps(
             scheme,
             positions,
@@ -293,12 +303,23 @@ def protocol(
             outside,
             sheet,
             barcodes,
+            validation,
         ),
-        references=_references(scheme),
-        sources={**stages.SOURCES, PRICES_SOURCE: prices.source} if prices else stages.SOURCES,
+        references=(*_references(scheme), *(dmx.REFERENCES if validation else ())),
+        sources=_sources(prices, validation),
         holes=stages.HOLES,
         bill=_consumed(scheme, parts, rounds, inside, outside, prices),
     )
+
+
+def _sources(prices: PriceRecord | None, validation: dmx.Validation | None) -> dict[str, Source]:
+    """Return every document this run's citations resolve against, and no document it never cites."""
+    found = dict(stages.SOURCES)
+    if validation:
+        found |= dmx.SOURCES
+    if prices:
+        found[PRICES_SOURCE] = prices.source
+    return found
 
 
 def _overview(
@@ -311,6 +332,7 @@ def _overview(
     constructs: int,
     part_lists: Sequence[PartList],
     host: str,
+    validation: dmx.Validation | None,
 ) -> dict[str, str]:
     """Return the facts to check before starting, each short enough to be a card."""
     last = bench[-1]
@@ -337,6 +359,14 @@ def _overview(
         "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
         "Coverage": f"{last.coverage.coverage:g}x, {last.coverage.colonies:,} colonies at the end",
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
+        "Designs read back": (
+            card(
+                f"{len(validation.designs)} from {validation.floor} fragment(s)",
+                f"route {validation.route.name}",
+            )
+            if validation
+            else "none; the library stays polyclonal"
+        ),
     }
 
 
@@ -570,9 +600,13 @@ def _steps(
     outside: Sequence[Enzyme],
     sheet: str,
     barcodes: str,
+    validation: dmx.Validation | None,
 ) -> tuple[Step, ...]:
     """Return every step in the order it happens, the rounds one after another."""
-    made = [_order_step(parts, sheet), _pool_step(positions, part_lists)]
+    made = [_order_step(parts, sheet)]
+    if validation:
+        made += dmx.validation_steps(validation)
+    made.append(_pool_step(positions, part_lists))
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
     made.append(_confirm_step(scheme, positions, barcode_length, rounds, parts, barcodes))
