@@ -324,7 +324,9 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
   leftover pool; no hold time is given, for it or for the gel-extracted product.
 - **Plate format other than 96.** A 384-well block is named for cycling only. Every barcode,
   pooling and plate-map number in both documents is 96-well, so Route B at 384 wells per plate is
-  not published.
+  not published. **This no longer has to be answered (#313):** the method picks into 384 and
+  samples each picked plate into 96-well plates, so nothing of LevSeq's runs at any other format.
+  The 384-well block LevSeq allows is not used.
 - **Primers for our vector.** ~~None exist.~~ **Closed by `docs/research/route-b-index-primers.md`
   (#312)**, which found the premise wrong: Route B reads the DMX vector, not the working vector,
   and the DMX vector is pET-derived, so LevSeq's own annealing regions bind it verbatim.
