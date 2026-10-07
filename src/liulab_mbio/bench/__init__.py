@@ -9,6 +9,10 @@ it as its own `REFERENCES`; `REFERENCES` here gathers them.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
 - `inactivation`: an enzyme's heat inactivation.
+- `materials`: what a material brings with it -- its own program, what it puts in the tube, and
+  the rules it carries. A number attaches to the thing that changes it.
+- `plates`: a plate at any format, where each thing sits in it, and the moves between wells.
+- `prices`: a banded price record the user holds, the charge it gives a quantity, and the bill.
 - `phenotype`: what a clone is expected to show, read off the product's own features.
 - `oligos`: the primer order sheet.
 - `steps`: the protocol steps any pipeline reuses, built from plain facts, and the smaller
@@ -29,6 +33,7 @@ from liulab_mbio.bench.amounts import (
 )
 from liulab_mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
 from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.materials import Electroporation, electroporation, material
 from liulab_mbio.bench.oligos import (
     SHEET_COLUMNS,
     OrderedOligo,
@@ -56,6 +61,8 @@ from liulab_mbio.bench.phenotype import (
     read_phenotype,
     selection_marker,
 )
+from liulab_mbio.bench.plates import compact, plate, pool, seat, wells_of
+from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
 from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
 from liulab_mbio.bench.steps import (
     ASSEMBLY_UL,
@@ -170,12 +177,17 @@ __all__ = [
     "Amount",
     "Clone",
     "ColonyCheck",
+    "Electroporation",
+    "Item",
     "OrderedOligo",
     "Phenotype",
+    "PriceRecord",
+    "PriceRow",
     "SangerRead",
     "Transformation",
     "agarose_percent",
     "badges",
+    "bill",
     "card",
     "catalogued",
     "choose_ladder",
@@ -185,15 +197,18 @@ __all__ = [
     "colony_pcr_program",
     "colony_pcr_reaction",
     "colony_pcr_step",
+    "compact",
     "dam_sites",
     "dna_amount",
     "dna_components",
     "dpni_step",
+    "electroporation",
     "enzyme_material",
     "fits",
     "gel_step",
     "heat_inactivation",
     "listed",
+    "material",
     "molecular_weight",
     "oligo_row",
     "ordered_row",
@@ -202,14 +217,19 @@ __all__ = [
     "pcr_step",
     "pcr_title",
     "phenotype_sentences",
+    "plate",
+    "pool",
     "primer_sheet",
     "quantify_step",
     "reaction_table",
     "read_phenotype",
+    "read_prices",
     "sanger_primers",
+    "seat",
     "selection_marker",
     "sequencing_step",
     "to_nanograms",
     "to_pmol",
     "transform_step",
+    "wells_of",
 ]

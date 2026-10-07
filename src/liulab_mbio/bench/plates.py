@@ -1,0 +1,168 @@
+"""Plates, where each thing sits in one, and the moves between them.
+
+Format is one parameter — the well count — and `liulab_mbio.protocol.model.FORMATS` holds the
+rows and columns of each, 1536 included. A plate says where a thing sits and nothing else; what
+differs between the reactions stays on the reaction, so the two can never disagree.
+
+Two functions cover every move the bench makes, because they are all one shape. `compact`
+re-lays a set of wells out densely into a destination, which is a plain or an acoustic transfer
+when the sources are a whole plate in order, and a compaction when the wells that failed are
+left out of the sources. `pool` runs many wells into one, which is a pool and a per-plate donor
+pool both.
+"""
+
+from collections.abc import Iterable, Mapping, Sequence
+
+from liulab_mbio.protocol.model import (
+    FORMATS,
+    Citation,
+    Move,
+    Plate,
+    Transfer,
+    Vessel,
+    Well,
+    row_label,
+)
+
+__all__ = [
+    "FORMATS",
+    "Plate",
+    "Transfer",
+    "Vessel",
+    "Well",
+    "compact",
+    "plate",
+    "pool",
+    "row_label",
+    "seat",
+    "wells_of",
+]
+
+
+def plate(
+    name: str,
+    wells: int,
+    *,
+    catalog: str = "",
+    holds: str = "",
+    seating: Mapping[str, str] | None = None,
+    note: str = "",
+) -> Plate:
+    """Return a plate of `wells` wells, seating `seating`.
+
+    Raises
+    ------
+    ValueError
+        If `wells` is no format a plate comes in, or a seated well is off the array.
+
+    Examples
+    --------
+    >>> plate("barcodes", 384, seating={"A1": "UMI-1"}).columns
+    24
+    """
+    return Plate(name, wells, catalog=catalog, holds=holds, seating=dict(seating or {}), note=note)
+
+
+def wells_of(one: Plate, *, start: int = 0, count: int | None = None) -> tuple[Well, ...]:
+    """Return `count` of the plate's wells in reading order, from `start`."""
+    names = one.well_names[start : None if count is None else start + count]
+    return tuple(Well(one.name, name) for name in names)
+
+
+def seat(names: Iterable[str], wells: int, *, start: int = 0) -> dict[str, str]:
+    """Return `names` seated in reading order from the `start`-th well of a `wells` format.
+
+    Raises
+    ------
+    ValueError
+        If `wells` is no format, or the names run past the last well.
+
+    Examples
+    --------
+    >>> seat(["UMI-1", "UMI-2"], 96)
+    {'A1': 'UMI-1', 'A2': 'UMI-2'}
+    """
+    if wells not in FORMATS:
+        raise ValueError(f"{wells} wells is no format; one of {', '.join(str(n) for n in FORMATS)}")
+    rows, columns = FORMATS[wells]
+    names = tuple(names)
+    if start + len(names) > wells:
+        raise ValueError(
+            f"{len(names)} names from well {start + 1} run past a {wells}-well plate's last well"
+        )
+    places = [
+        f"{row_label(row)}{column}" for row in range(rows) for column in range(1, columns + 1)
+    ]
+    return dict(zip(places[start:], names, strict=False))
+
+
+def compact(
+    sources: Sequence[Well],
+    destination: Plate,
+    volume_ul: float,
+    *,
+    title: str,
+    instrument: str = "",
+    start: int = 0,
+    note: str = "",
+    citation: Citation | None = None,
+) -> Transfer:
+    """Return `sources` moved into `destination`'s wells densely, in reading order from `start`.
+
+    The caller passes the wells that still hold something, so the ones that failed are simply
+    absent and the destination is dense. Hand it a whole plate's wells in order and it is a
+    plain or an acoustic transfer; hand it four plates' good wells and it is a compaction.
+
+    Raises
+    ------
+    ValueError
+        If there are no sources, or they run past the destination's last well.
+
+    Examples
+    --------
+    >>> big, small = plate("picked", 384), plate("pooled", 96)
+    >>> compact(wells_of(big, count=2), small, 2.0, title="Compact").moves[1].destination
+    Well(plate='pooled', well='A2')
+    """
+    if not sources:
+        raise ValueError(f"{title}: a transfer needs at least one source well")
+    places = destination.well_names[start:]
+    if len(sources) > len(places):
+        raise ValueError(
+            f"{title}: {len(sources)} wells do not fit a {destination.wells}-well plate "
+            f"from well {start + 1}"
+        )
+    moves = tuple(
+        Move(source, Well(destination.name, place), volume_ul)
+        for source, place in zip(sources, places, strict=False)
+    )
+    return Transfer(title, moves, instrument=instrument, note=note, citation=citation)
+
+
+def pool(
+    sources: Sequence[Well],
+    destination: Well,
+    volume_ul: float,
+    *,
+    title: str,
+    instrument: str = "",
+    note: str = "",
+    citation: Citation | None = None,
+) -> Transfer:
+    """Return every well of `sources` run into the one `destination`.
+
+    Raises
+    ------
+    ValueError
+        If there are no sources.
+
+    Examples
+    --------
+    >>> one = plate("lysate", 1536)
+    >>> pool(wells_of(one, count=3), Well("reservoir", "1"), 3.5, title="Pool").plates
+    ('lysate', 'reservoir')
+    """
+    if not sources:
+        raise ValueError(f"{title}: a pool needs at least one source well")
+    moves = tuple(Move(source, destination, volume_ul) for source in sources)
+    return Transfer(title, moves, instrument=instrument, note=note, citation=citation)

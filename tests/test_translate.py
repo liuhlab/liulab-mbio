@@ -1,13 +1,15 @@
 import pytest
 
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import SequenceRecord, Strand
+from liulab_mbio.sequence import Segment, SequenceRecord, Strand
 from liulab_mbio.sites import has_site
 from liulab_mbio.translate import (
     SiteNotRemovableError,
+    in_frame,
     optimize_coding_sequence,
     optimize_protein,
     reverse_translate,
+    stop_codons,
     translate,
 )
 
@@ -139,3 +141,40 @@ def test_a_host_the_package_does_not_ship_is_refused() -> None:
 def test_an_enzyme_the_package_does_not_ship_is_refused() -> None:
     with pytest.raises(KeyError, match="NotAnEnzyme"):
         optimize_protein("MW*", host=HOST, forbidden=["NotAnEnzyme"])
+
+
+def test_a_span_is_in_frame_when_it_starts_on_a_boundary_and_carries_whole_codons() -> None:
+    assert in_frame(Segment(0, 9))
+    assert in_frame(Segment(3, 9))
+    assert not in_frame(Segment(4, 9))
+    assert not in_frame(Segment(3, 10))
+
+
+def test_the_frame_a_span_is_read_in_is_a_parameter() -> None:
+    assert in_frame(Segment(4, 10), offset=1)
+    assert not in_frame(Segment(4, 10), offset=0)
+
+
+def test_a_span_across_the_origin_is_measured_by_its_own_length() -> None:
+    # The convention of ADR 0001: the span ends past the record's length, and nothing branches.
+    assert in_frame(Segment(99, 105))
+    assert not in_frame(Segment(99, 104))
+
+
+def test_every_stop_a_span_spells_is_found_where_it_lies() -> None:
+    record = SequenceRecord("AAATAACCCTGA")
+    assert [(one.start, one.end) for one in stop_codons(record, Segment(0, 12))] == [
+        (3, 6),
+        (9, 12),
+    ]
+
+
+def test_a_trailing_base_that_fills_no_codon_is_not_read() -> None:
+    record = SequenceRecord("AAACCCT")
+    assert stop_codons(record, Segment(0, 7)) == ()
+
+
+def test_a_stop_across_the_origin_is_read_and_reported_past_the_length() -> None:
+    record = SequenceRecord("GACCCCCCCT", topology="circular")
+    found = stop_codons(record, Segment(9, 12))
+    assert [(one.start, one.end) for one in found] == [(9, 12)]
