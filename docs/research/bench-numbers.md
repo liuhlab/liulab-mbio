@@ -610,7 +610,7 @@ the cells, not to the method.
 | Against Endura | Endura is 1800 V, 600 Ω, 10 µF with a 3.5-4.5 ms time constant, in a 0.1 cm cuvette | Endura manual MA133 p. 4 |
 | Mass of cargo pool into the reaction | **ours** | — |
 | Mass of working vector into the reaction | **ours** | — |
-| Colonies the library needs | the package computes this from the coverage asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
+| Colonies the library needs | the package computes this floor from the completeness asked for; Qian's own rule, CFU × complexity > 300, is the nearest sourced figure | Qian SI Day 2 |
 | Expected representation | **ours** — "read representation" is a step with no sourced pass mark | — |
 
 The method page's "Neither by-product needs a check" is a design claim, not a number.
@@ -702,7 +702,7 @@ before that pass still resolves. What closed:
   settings; the 30 °C penalty is unmeasured anywhere.
 - **H22.** **No colony count and no selection antibiotic for a round.** Endura's manual gives cfu/µg
   and "plate up to 100 µL" and nothing about library complexity, dilution plating or titre
-  plates. *Filled by:* the vector's own marker, and the coverage the package computes.
+  plates. *Filled by:* the vector's own marker, and the colony floor the package computes.
 - **H23.** **No NEB document describes a split digest.** Both kit manuals cover the one-pot reaction,
   destination and inserts together. The split digest is Takacsi-Nagy's alone. *Filled by:*
   nothing — it is the method's own and the paper is its only source.

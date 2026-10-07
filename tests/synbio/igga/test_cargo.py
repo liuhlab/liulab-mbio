@@ -64,7 +64,7 @@ def project():
         host="human",
         oligo_length=350,
         batch_size=2,
-        coverage=1.0,
+        completeness=0.99,
     )
 
 

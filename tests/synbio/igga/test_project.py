@@ -19,7 +19,7 @@ WRITTEN = {
     "host": "human",
     "oligo_length": 350,
     "batch_size": 96,
-    "coverage": 300,
+    "completeness": 0.99,
 }
 
 
@@ -39,7 +39,7 @@ def test_the_ap1_project_reads_as_what_the_demo_plans():
     assert made.positions == ("N", "DBD", "C")
     assert made.parts.name == "parts.fasta"
     assert made.vector.is_file()
-    assert (made.host, made.coverage, made.seed) == ("human", 300.0, 0)
+    assert (made.host, made.completeness, made.seed) == ("human", 0.99, 0)
     assert (made.oligo_length, made.batch_size) == (350, 96)
     assert (made.barcode.length, made.barcode.min_distance) == (11, 3)
     assert made.scheme is IGGA
@@ -86,9 +86,10 @@ def test_a_project_with_no_position_is_refused(tmp_path):
         read_project(write(tmp_path, positions=[]))
 
 
-def test_a_coverage_that_is_not_positive_is_refused(tmp_path):
-    with pytest.raises(ValueError, match="coverage"):
-        read_project(write(tmp_path, coverage=0))
+@pytest.mark.parametrize("given", [0, 1, 1.5])
+def test_a_completeness_that_is_not_a_chance_is_refused(tmp_path, given):
+    with pytest.raises(ValueError, match="completeness"):
+        read_project(write(tmp_path, completeness=given))
 
 
 def test_a_path_naming_no_file_is_refused(tmp_path):
@@ -134,7 +135,7 @@ def test_a_project_built_in_code_is_checked_the_same_way(tmp_path):
             host="human",
             oligo_length=350,
             batch_size=96,
-            coverage=10.0,
+            completeness=0.99,
             barcode=Barcode(12),
         )
 

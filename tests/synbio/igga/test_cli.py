@@ -32,7 +32,7 @@ PROJECT = {
     "host": "e-coli-k12",
     "oligo_length": 350,
     "batch_size": 96,
-    "coverage": 10,
+    "completeness": 0.99,
     "seed": 7,
 }
 

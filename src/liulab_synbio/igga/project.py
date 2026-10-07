@@ -75,8 +75,8 @@ class Project:
         are reported whether or not anyone holds a price.
     batch_size
         How many parts one batch of the bench work carries.
-    coverage
-        Colonies over products each round is sized for.
+    completeness
+        The chance each round is sized for that none of its products is missing.
     validate_from
         The fragment-count floor at or above which a design is read back one well at a time.
         Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
@@ -97,10 +97,10 @@ class Project:
     Raises
     ------
     ValueError
-        If a position is repeated or missing, a number is not positive, the floor is negative,
-        the route is neither of the two, the floor and the route are not both there or both
-        absent, or the barcode and the method's cloning scar are not whole codons together —
-        which names ``barcode-frame``.
+        If a position is repeated or missing, a number is not positive, the completeness does not
+        lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
+        the route are not both there or both absent, or the barcode and the method's cloning scar
+        are not whole codons together — which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -114,7 +114,7 @@ class Project:
     host: str
     oligo_length: int
     batch_size: int
-    coverage: float
+    completeness: float
     primers: Path | None = None
     working_vector: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
@@ -184,16 +184,20 @@ class Project:
             raise ValueError(f"the positions {', '.join(self.positions)} name one of them twice")
 
     def _check_numbers(self) -> None:
-        """Refuse a project whose lengths, counts or coverage are not positive."""
+        """Refuse a project whose lengths or counts are not positive, or whose chance is not one."""
         for named, value in (
             ("oligo_length", self.oligo_length),
             ("batch_size", self.batch_size),
-            ("coverage", self.coverage),
             ("barcode.length", self.barcode.length),
             ("barcode.min_distance", self.barcode.min_distance),
         ):
             if value <= 0:
                 raise ValueError(f"{named} is {value}, and a project states a positive one")
+        if not 0.0 < self.completeness < 1.0:
+            raise ValueError(
+                f"completeness is {self.completeness}, and a project states a chance between "
+                "0 and 1"
+            )
 
     def _check_validation(self) -> None:
         """Refuse a negative floor, an unknown route, or one of the two without the other.
@@ -262,7 +266,7 @@ def read_project(path: str | os.PathLike[str]) -> Project:
         host=_text(given, "host", "a project"),
         oligo_length=_whole(given, "oligo_length", "a project"),
         batch_size=_whole(given, "batch_size", "a project"),
-        coverage=_number(given, "coverage", "a project"),
+        completeness=_number(given, "completeness", "a project"),
         primers=(
             _file(file, _text(given, "primers", "a project"), "primers")
             if "primers" in given
@@ -299,7 +303,7 @@ _PROJECT_KEYS = frozenset(
         "host",
         "oligo_length",
         "batch_size",
-        "coverage",
+        "completeness",
     }
 )
 _PROJECT_OPTIONAL = frozenset(

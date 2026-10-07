@@ -124,7 +124,7 @@ def project(made: Scheme) -> Project:
         host=HOST,
         oligo_length=350,
         batch_size=96,
-        coverage=300,
+        completeness=0.99,
         barcode=Barcode(length=BARCODE, min_distance=3),
         scheme=made,
     )

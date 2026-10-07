@@ -62,6 +62,6 @@ method in the table above would do the same job, offer it and say what changes f
 ## Every combination of two or more lists is a library
 
 `protein-assembly` owns that job and this skill does not: it builds a barcoded combinatorial
-library by iterative Golden Gate, sizes each round's colonies for the coverage asked for, and
+library by iterative Golden Gate, sizes each round's colonies for the completeness asked for, and
 writes one protocol covering every round. Send someone who wants every combination of lists of
 domains there.

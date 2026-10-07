@@ -161,7 +161,7 @@ class LibraryPlan:
         One a position, in the order they run. The last round's product is the representative
         construct and the ones before it are the intermediates.
     coverage
-        What each round has to cover, and what the colonies asked for leave out.
+        What each round has to cover, and what its colony floor leaves out.
     bench
         What each round takes at the bench, computed from that round's own lengths.
     verdict
@@ -446,7 +446,7 @@ def plan_igga(
     rounds = assemble_rounds(
         destination.record, representative(built, positions), design, positions, name=named
     )
-    rows = plan_coverage([len(each) for each in lists], coverage=chosen.coverage)
+    rows = plan_coverage([len(each) for each in lists], completeness=chosen.completeness)
     working = (
         None
         if chosen.working_vector is None
