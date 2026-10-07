@@ -28,6 +28,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.pools import pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
@@ -37,7 +38,9 @@ from liulab_mbio.protocol.model import Protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.translate import translate
+from liulab_synbio import dmx
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme
@@ -54,7 +57,13 @@ from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, wr
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
 from liulab_synbio.igga.steps import RoundBench
 from liulab_synbio.igga.steps import protocol as protocol_for
-from liulab_synbio.igga.vector import Destination, Site, destination_vector
+from liulab_synbio.igga.vector import (
+    Destination,
+    Site,
+    Working,
+    destination_vector,
+    working_vector,
+)
 
 #: What a part list holds: the proteins each member codes for, or the DNA it is already coded in.
 type Kind = Literal["protein", "dna"]
@@ -70,6 +79,8 @@ NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
+POOL_FILE = "pool.tsv"
+POOL_PRIMER_FILE = "pool-primers.tsv"
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +102,10 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    pool, pool_primers
+        The oligo pool to order and the primers that amplify it. Both are ``None`` where the
+        project names no primer set, because the primer sites are templated on the oligo and
+        nothing can be written without them.
     """
 
     parts: Path
@@ -99,18 +114,23 @@ class Files:
     records: tuple[Path, ...]
     protocol_data: Path
     protocol: Path
+    pool: Path | None = None
+    pool_primers: Path | None = None
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file, in the order they were written: the sheets, the records, the protocol."""
-        return (
+        """Every file written, in that order: the sheets, the records, the protocol, the pool."""
+        written = (
             self.parts,
             self.barcodes,
             self.changes,
             *self.records,
             self.protocol_data,
             self.protocol,
+            self.pool,
+            self.pool_primers,
         )
+        return tuple(path for path in written if path is not None)
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,6 +174,12 @@ class LibraryPlan:
     prices
         The price record the protocol's bill is costed against, if the caller holds one. Its
         quantities compute either way; with no record every money cell is a hole.
+    pool
+        The oligo pool every block is synthesised from, where the project names a primer set.
+        `liulab_synbio.igga.cargo` designs it.
+    working
+        The vector the finished library is moved into, where the project names one, and the
+        enzyme chosen to admit it. `None` leaves the library in the destination vector.
     """
 
     project: Project
@@ -171,6 +197,8 @@ class LibraryPlan:
     host: str
     name: str = ""
     prices: PriceRecord | None = None
+    pool: PoolPlan | None = None
+    working: Working | None = None
 
     @property
     def product(self) -> SequenceRecord:
@@ -186,6 +214,22 @@ class LibraryPlan:
     def representative_parts(self) -> tuple[Part, ...]:
         """The one part a position the records were simulated from."""
         return tuple(one.part for one in self.rounds)
+
+    @property
+    def validation(self) -> dmx.Validation | None:
+        """What reading these designs back takes, or `None` where the project reads none.
+
+        The project's floor chooses the designs and its route reads them. The bench is sized
+        from that set and not from the part list, so a design the floor leaves out costs no
+        well, no plate and no reagent.
+        """
+        if self.project.route is None:
+            return None
+        return dmx.validation(
+            dmx.ROUTES[self.project.route],
+            designs(self.parts, self.pool),
+            self.project.validate_from,
+        )
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -219,7 +263,12 @@ class LibraryPlan:
             host=self.host,
             sheet=PARTS_FILE,
             barcodes=BARCODE_FILE,
+            validation=self.validation,
             prices=self.prices,
+            pool=self.pool,
+            pool_sheet=POOL_FILE,
+            primer_sheet=POOL_PRIMER_FILE,
+            working=self.working,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -242,7 +291,38 @@ class LibraryPlan:
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
         written = write_protocol_files(self.protocol(), out)
-        return Files(sheet, barcodes, changes, records, written.data, written.page)
+        pool = primers = None
+        if self.pool is not None:
+            pool = out / POOL_FILE
+            pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
+            primers = out / POOL_PRIMER_FILE
+            primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
+        return Files(sheet, barcodes, changes, records, written.data, written.page, pool, primers)
+
+
+def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, ...]:
+    """Return one design a part, in the pieces the pool was actually split into.
+
+    That count is what a design's chance of a clean colony falls with, so it is read off the
+    split rather than guessed from the block's length: a fragment gives up bases to the overhang
+    either side, so arithmetic on the oligo length alone only ever bounds it from below. A
+    project naming no primer set writes no pool, and each block is then one ordered piece.
+
+    Raises
+    ------
+    ValueError
+        If the pool was not split from these parts.
+
+    Examples
+    --------
+    >>> [one.fragments for one in designs(plan.parts, plan.pool)]  # doctest: +SKIP
+    [1, 2, 5]
+    """
+    if pool is None:
+        return tuple(dmx.Design(one.name, 1) for one in parts)
+    return tuple(
+        dmx.Design(part.name, split.pieces) for part, split in zip(parts, pool.splits, strict=True)
+    )
 
 
 def plan_igga(
@@ -251,6 +331,7 @@ def plan_igga(
     parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
     site: Site | None = None,
+    working_site: Site | None = None,
     pattern: str = NAME_PATTERN,
     rules: BarcodeRules | None = None,
     min_distance: int = MIN_DISTANCE,
@@ -278,6 +359,9 @@ def plan_igga(
     site
         Where to put an internal stuffer, as a feature name or a ``(start, end)`` span. Read only
         where the vector carries none.
+    working_site
+        The same, for the ccdB cassette of the working vector the project names. Read only where
+        that vector carries none.
     pattern
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
@@ -363,12 +447,24 @@ def plan_igga(
         destination.record, representative(built, positions), design, positions, name=named
     )
     rows = plan_coverage([len(each) for each in lists], coverage=chosen.coverage)
+    working = (
+        None
+        if chosen.working_vector is None
+        else working_vector(
+            as_record(chosen.working_vector),
+            [rounds[-1].product],
+            scheme=design,
+            site=working_site,
+        )
+    )
     judged = check_library(
         chosen,
         destination=destination.record,
         blocks=_blocks(built, positions),
         products=[one.product for one in rounds],
         barcodes=_barcodes(built, positions),
+        working=None if working is None else working.record,
+        cargo=None if working is None else working.enzyme,
     )
     return LibraryPlan(
         chosen,
@@ -386,6 +482,26 @@ def plan_igga(
         chosen.host,
         named,
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
+        _pool(chosen, built),
+        working,
+    )
+
+
+def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
+    """Design the oligo pool, or none where the project names no primer set.
+
+    The sites that cut a fragment out are templated on the oligo rather than carried by a
+    primer, so a pool cannot be written at all without the set. A project naming none still
+    plans every other output.
+    """
+    if project.primers is None:
+        return None
+    return design_pool(
+        parts,
+        project,
+        primers=read_primers(project.primers),
+        bands=read_bands(project.bands),
+        seed=project.seed,
     )
 
 

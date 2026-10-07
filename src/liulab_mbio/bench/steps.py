@@ -14,14 +14,21 @@ from dataclasses import KW_ONLY, dataclass
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
-from liulab_mbio.bench.pcr import colony_pcr_program, colony_pcr_reaction, pcr_program, pcr_reaction
+from liulab_mbio.bench.pcr import (
+    colony_pcr_program,
+    colony_pcr_reaction,
+    cycle_citation,
+    pcr_program,
+    pcr_reaction,
+)
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.primers.polymerase import Polymerase
+from liulab_mbio.primers.polymerase import ONETAQ, Polymerase
 from liulab_mbio.protocol.model import (
     OVERVIEW_CHARS,
     Check,
+    Citation,
     Gel,
     Incubation,
     Lane,
@@ -250,7 +257,8 @@ def pcr_step(
     polymerase: Polymerase,
     annealing_temperature: float,
     extension_seconds: int | None,
-    cycles: int | None = None,
+    cycles: int | None,
+    cycles_citation: Citation | None,
     notes: Sequence[str] = (),
 ) -> Step:
     """Return the step that makes one amplicon by PCR.
@@ -266,7 +274,12 @@ def pcr_step(
     polymerase, annealing_temperature, extension_seconds
         The PCR's, as the primer pair's report gives them.
     cycles
-        Replaces the polymerase profile's own count.
+        How many cycles to run, as `liulab_mbio.bench.pcr.pcr_program` takes it: the
+        polymerase's own `PcrProfile.cycles`, a count the method sources itself, or ``None``
+        to leave it blank.
+    cycles_citation
+        Where `cycles` was read, which has no default either: `liulab_mbio.bench.pcr`'s
+        `cycle_citation` for the profile's own count, the method's own for a count it chose.
     notes
         The caller's own.
     """
@@ -286,6 +299,7 @@ def pcr_step(
                 annealing_temperature=annealing_temperature,
                 amplicon_length=length_bp,
                 cycles=cycles,
+                cycles_citation=cycles_citation,
                 title=f"{name} PCR",
             ),
         ),
@@ -589,6 +603,8 @@ def colony_pcr_step(
             colony_pcr_program(
                 annealing_temperature=check.annealing_temperature,
                 amplicon_length=max(sizes),
+                cycles=ONETAQ.pcr.cycles,
+                cycles_citation=cycle_citation(ONETAQ),
             ),
         ),
         gels=(check.gel,),

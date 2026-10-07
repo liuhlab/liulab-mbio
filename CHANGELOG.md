@@ -9,6 +9,29 @@ sets one.
 
 ### Added
 
+- The library protocol's bill carries the oligo pool, which is the largest thing a build buys:
+  how many oligos the split spends, the vendor band each quantity falls in, and how much room is
+  left in that band. With no price record loaded the count and the band are still what the design
+  computes and the money cell is a hole, because nothing here is ever estimated.
+- The AP-1 example ships the two sheets its pool is ordered from, `pool.tsv` and
+  `pool-primers.tsv`, and the command that writes them now lists them with the rest.
+- A library project says which of its designs are read back, and how. `validate_from` is a
+  fragment count: every design built from that many pieces or more is read back one well at a
+  time, and the rest stay polyclonal. Leave it out and nothing is read, which is the default.
+  Set it to `0` and every design is read. There is no shipped floor — the measured curve gives a
+  design's chance of a clean colony, not the chance worth paying to check. `route` says which of
+  the two read-back routes reads the wells, `"A"` for DMX barcoding or `"B"` for index PCR, and
+  the two keys are stated together. The protocol prints each design's chance beside the floor, so
+  the number reads as a choice.
+- The bench is sized from the designs actually read. The picked plates, Route A's compression
+  into 1536 wells, Route B's index plates and the reagents all follow from that set, so a design
+  the floor leaves out costs no well. Picking fills one quarter of a picked plate at a time, which
+  is what makes a part-filled plate give full index plates: the AP-1 demo's 288 wells give three
+  index plates at 96, not four at 72. `liulab_mbio.bench.plates.interleave` is the general move
+  behind it.
+- The AP-1 example ships a project file for each route, `project.json` and
+  `project-route-a.json`, over one set of parts. A second project is a second set of input files
+  and never a second branch in the code.
 - Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
   cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
   is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the
@@ -276,6 +299,8 @@ sets one.
 
 ### Fixed
 
+- A whole-number headroom on a bill row reads `350 length` again, not `350.0 length`. The
+  quantity reached it as a float, and the trailing zero showed on every row carrying a band.
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane
   used to come from the product with its insert turned over in place. At an end with an overhang
   the two strands stop at different bases, and that put the overhang's bases on the wrong side of

@@ -1,8 +1,9 @@
 """A reaction: one tube, the molecules in it, and the enzymes acting on them.
 
 A reaction is a digest, a ligation, or a one-pot that does both. It binds each role to the
-molecules that fill it, names the enzymes acting there, and carries how many vessels differ only
-in which species fills a role — one reaction over a 96-well array is one reaction, not 96.
+molecules that fill it, names the enzymes acting there and, for a ligation, which enzyme made
+each role's ends, and carries how many vessels differ only in which species fills a role — one
+reaction over a 96-well array is one reaction, not 96.
 
 It holds no verdict and no intent. What must be true inside one is the method's to judge, which
 is why a gate reads reactions rather than bare records: the composition says which tube a
@@ -36,21 +37,37 @@ class Pool:
         What these molecules are in the tube for.
     records
         The species, in the order the design names them. A pool holds at least one.
+    enzyme
+        The enzyme whose digest made these molecules' ends, where one did. A ligation joins
+        ends it did not cut, and the roles meeting in it need not have been cut by the same
+        enzyme, so the pool says which rather than the tube.
 
     Raises
     ------
     ValueError
         If no molecule fills the role.
+    KeyError
+        If a named enzyme is not one this package ships.
     """
 
     role: Role
     records: Sequence[SequenceRecord]
+    enzyme: EnzymeLike | None = None
 
     def __post_init__(self) -> None:
         """Fix the order, and refuse a role nothing fills."""
         object.__setattr__(self, "records", tuple(self.records))
         if not self.records:
             raise ValueError(f"the {self.role} role of this reaction holds no molecule")
+        if self.enzyme is not None and not isinstance(self.enzyme, Enzyme):
+            get_enzyme(self.enzyme)
+
+    @property
+    def cutter(self) -> Enzyme | None:
+        """The enzyme that made these ends, read into a record, or ``None`` where none is named."""
+        if self.enzyme is None or isinstance(self.enzyme, Enzyme):
+            return self.enzyme
+        return get_enzyme(self.enzyme)
 
     @property
     def one(self) -> SequenceRecord:

@@ -17,6 +17,8 @@ def test_the_electroporation_program_belongs_to_the_cells_and_not_to_the_step() 
     # They disagree on every setting, which is the point: swapping the cells changes the number
     # while the step stays as it was.
     assert not any(one == other for one, other in zip(*settings, strict=True))
+    # Both manuals give the same gap, NEB's in millimetres and Endura's as 0.1 cm.
+    assert (neb.cuvette_mm, endura.cuvette_mm) == (1.0, 1.0)
 
 
 def test_cells_nobody_shipped_a_program_for_have_none_rather_than_a_guess() -> None:

@@ -24,6 +24,7 @@ from liulab_mbio.overhangs import (
     Junction,
     Rejection,
     Scoring,
+    best_overhang,
     fidelity,
     ligation_matrix,
     refusal,
@@ -270,6 +271,23 @@ def design_overhangs(
     taken: list[str] = []
     for index in order:
         junction = wanted[index]
+        if not (junction.fixed or junction.scarless or junction.in_frame):
+            choice, refusals = best_overhang(
+                junction,
+                _candidates(junction, one, table),
+                one,
+                taken=taken,
+                avoid=others,
+                min_distance=min_distance,
+                allow_uniform=allow_uniform,
+                profile=profile,
+                prefer_profile=prefer_profile,
+            )
+            if choice is None:
+                raise _stuck(junction, refusals)
+            chosen[index] = choice
+            taken.append(choice.overhang)
+            continue
         rejected: list[Rejection] = []
         for offset, candidate in _candidates(junction, one, table):
             refused = refusal(

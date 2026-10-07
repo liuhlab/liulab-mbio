@@ -19,6 +19,7 @@ from typing import Any
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
+from liulab_synbio.dmx import ROUTES
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a project takes unless it states another.
@@ -57,14 +58,33 @@ class Project:
         The FASTA of every part list, each record named for the position it fills.
     vector
         The destination vector, circular: a ``.dna``, GenBank or FASTA file.
+    working_vector
+        The vector the finished library is moved into, circular, before its ccdB cassette: a
+        stock the lab holds and an application chooses. Omitted, the library stays in the
+        destination vector and the final assembly is written as what it cannot say.
     host
         The codon usage table the coding bases are written for.
     oligo_length
         How long one synthesised oligo of the pool may be.
+    primers
+        The orthogonal primer set the pool is amplified by, as a two-column sheet the user
+        holds. Without one no oligo can be written, because the sites are templated on it.
+    bands
+        The vendor's bands for each quantity the pool is banded by, written ``low-high`` with an
+        empty top for a tier with no top. They are what headroom is measured against, and they
+        are reported whether or not anyone holds a price.
     batch_size
         How many parts one batch of the bench work carries.
     coverage
         Colonies over products each round is sized for.
+    validate_from
+        The fragment-count floor at or above which a design is read back one well at a time.
+        Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
+        There is no default: `liulab_synbio.dmx.clean_colony_chance` gives a design's chance of
+        a clean colony, not the chance worth paying to check.
+    route
+        Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
+        `validate_from` is, because an unread project needs no route.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
@@ -77,8 +97,10 @@ class Project:
     Raises
     ------
     ValueError
-        If a position is repeated or missing, a number is not positive, or the barcode and the
-        method's cloning scar are not whole codons together — which names ``barcode-frame``.
+        If a position is repeated or missing, a number is not positive, the floor is negative,
+        the route is neither of the two, the floor and the route are not both there or both
+        absent, or the barcode and the method's cloning scar are not whole codons together —
+        which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -93,6 +115,11 @@ class Project:
     oligo_length: int
     batch_size: int
     coverage: float
+    primers: Path | None = None
+    working_vector: Path | None = None
+    bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    validate_from: int | None = None
+    route: str | None = None
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
     barcode: Barcode = field(default_factory=Barcode)
@@ -104,8 +131,12 @@ class Project:
         object.__setattr__(self, "reserved_extra", tuple(self.reserved_extra))
         object.__setattr__(self, "parts", Path(self.parts))
         object.__setattr__(self, "vector", Path(self.vector))
+        if self.working_vector is not None:
+            object.__setattr__(self, "working_vector", Path(self.working_vector))
+        object.__setattr__(self, "bands", dict(self.bands))
         self._check_positions()
         self._check_numbers()
+        self._check_validation()
         self._check_barcode_frame()
         if self.host not in codon_tables():
             raise KeyError(
@@ -164,6 +195,28 @@ class Project:
             if value <= 0:
                 raise ValueError(f"{named} is {value}, and a project states a positive one")
 
+    def _check_validation(self) -> None:
+        """Refuse a negative floor, an unknown route, or one of the two without the other.
+
+        The two travel together: a floor with no route says which designs are read and not how,
+        and a route with no floor names a read nobody asked for.
+        """
+        if self.validate_from is not None and self.validate_from < 0:
+            raise ValueError(
+                f"validate_from is {self.validate_from}, and a fragment-count floor counts "
+                "fragments; omit it to read nothing, or set 0 to read every design"
+            )
+        if self.route is not None and self.route not in ROUTES:
+            raise ValueError(
+                f"route is {self.route!r}, and a project reads its wells back on one of "
+                f"{', '.join(repr(one) for one in ROUTES)}"
+            )
+        if (self.validate_from is None) != (self.route is None):
+            raise ValueError(
+                "validate_from and route are stated together: a project that reads designs back "
+                f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+
     def _check_barcode_frame(self) -> None:
         """Check a barcode and the scar joining it to the last make whole codons together."""
         scar = len(self.scheme.cloning_scar)
@@ -177,7 +230,7 @@ class Project:
 
 
 def read_project(path: str | os.PathLike[str]) -> Project:
-    """Read a project from JSON, resolving its two file paths against the file's own directory.
+    """Read a project from JSON, resolving every file path against the file's own directory.
 
     Raises
     ------
@@ -210,6 +263,21 @@ def read_project(path: str | os.PathLike[str]) -> Project:
         oligo_length=_whole(given, "oligo_length", "a project"),
         batch_size=_whole(given, "batch_size", "a project"),
         coverage=_number(given, "coverage", "a project"),
+        primers=(
+            _file(file, _text(given, "primers", "a project"), "primers")
+            if "primers" in given
+            else None
+        ),
+        working_vector=(
+            _file(file, _text(given, "working_vector", "a project"), "working_vector")
+            if "working_vector" in given
+            else None
+        ),
+        bands=_bands(given.get("bands")),
+        validate_from=(
+            _whole(given, "validate_from", "a project") if "validate_from" in given else None
+        ),
+        route=_text(given, "route", "a project") if "route" in given else None,
         seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
@@ -234,8 +302,40 @@ _PROJECT_KEYS = frozenset(
         "coverage",
     }
 )
-_PROJECT_OPTIONAL = frozenset({"seed", "reserved_extra", "barcode"})
+_PROJECT_OPTIONAL = frozenset(
+    {
+        "seed",
+        "reserved_extra",
+        "barcode",
+        "primers",
+        "working_vector",
+        "bands",
+        "validate_from",
+        "route",
+    }
+)
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
+
+
+def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
+    """Read the vendor's bands a project states, as a quantity naming its tiers.
+
+    Raises
+    ------
+    ValueError
+        If it is not an object of lists of strings.
+    """
+    if entry is None:
+        return {}
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"a project's bands are {type(entry).__name__}, not an object")
+    return {
+        quantity: tuple(
+            _one_text(one, f"bands {quantity}[{index}]")
+            for index, one in enumerate(_sequence(entry, quantity, "a project's"))
+        )
+        for quantity in entry
+    }
 
 
 def _barcode(entry: Any) -> Barcode:

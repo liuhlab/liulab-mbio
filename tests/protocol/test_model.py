@@ -100,6 +100,16 @@ def test_a_program_duration_counts_cycles_and_skips_an_indefinite_hold() -> None
     assert program.duration_seconds == 30 + 30 * (10 + 20)
 
 
+def test_a_blank_cycle_count_leaves_the_run_time_unknown() -> None:
+    program = ThermocyclerProgram(
+        (
+            Stage((Incubation("Denature", 98, 30),)),
+            Stage((Incubation("Denature", 98, 10),), cycles=None),
+        )
+    )
+    assert program.duration_seconds is None
+
+
 def test_gel_migration_is_linear_in_the_log_of_band_size() -> None:
     gel = Gel(Ladder("marker", (100, 1000, 10000)), (Lane("sample", (500,)),))
     assert gel.migration(10000) == pytest.approx(0.0)

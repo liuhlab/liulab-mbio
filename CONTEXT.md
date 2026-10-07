@@ -482,6 +482,15 @@ The enzyme that admits cargo to a working vector. Every other enzyme a method na
 DNA already on the shelf; this one is searched for per vector, the vector being the user's own.
 _Avoid_: insertion enzyme, final enzyme
 
+### Cassette
+
+The piece a vector gives up to admit a part, bounded by one enzyme's two cuts: the entry overhang
+at one end and the cloning scar at the other. A round's destination gives up the method's
+internal stuffer; a working vector gives up a ccdB cassette, which kills anything that keeps it.
+What a cassette bars outside itself is whatever shares that vector's tube, and the two vectors do
+not share a list.
+_Avoid_: insert site, cloning site, landing pad
+
 ### Domestication candidate
 
 A site an enzyme reads inside a coding sequence, which a synonymous codon change could take
@@ -579,6 +588,16 @@ so identity is read per member and stays with well position. It is the only plac
 picked or read on its own. Whether a design is read back at all is a project choice, and the
 cargo an **iGGA** round consumes is made here.
 _Avoid_: cargo pipeline, DMX, the validation pipeline
+_Package_: liulab_synbio
+
+### Validation floor
+
+The **fragment count** at or above which a design is read back one well at a time. A project
+states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
+reads every design. No floor ships, because the measured curve gives a design's chance of a clean
+colony and not the chance worth paying to check. A project that states one also names which of
+the two marking routes reads its wells.
+_Avoid_: validation threshold, QC cutoff, validation level
 _Package_: liulab_synbio
 
 ### iGGA

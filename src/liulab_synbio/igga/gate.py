@@ -143,15 +143,24 @@ class Verdict:
 
 
 def check_cargo(
-    cargo: SequenceRecord, *, project: Project, where: str = "cargo", ends_chain: bool = False
+    cargo: SequenceRecord,
+    *,
+    project: Project,
+    where: str = "cargo",
+    ends_chain: bool = False,
+    annealing: Sequence[str] = WELL_PRIMERS,
 ) -> tuple[Judgement, ...]:
-    """Judge one cargo: the sites it must not carry, and the frame it has to keep.
+    """Judge one cargo: the sites it must not carry, the frame it keeps, and what it must not read.
 
     A cargo is what the external enzyme releases from a synthesised block, counted from the
     first base of the overhang a part enters on. Every enzyme the project reserves is one no
     block spells anywhere, its stuffers included, because the step that reserved it cuts the
     cargo in a tube of its own. A cargo another part follows is whole codons; the one that ends
     the chain is one base past them, which is the method's capping block.
+
+    A cargo also gives the primers that read a well nowhere to bind. One that carries an
+    annealing region hands its well a second priming site, and that well's read is no longer one
+    anybody can call: ``docs/research/route-b-index-primers.md`` §2.7.
 
     Parameters
     ----------
@@ -163,6 +172,8 @@ def check_cargo(
         What to call this cargo in a message.
     ends_chain
         Whether no further part follows this one.
+    annealing
+        What each primer that reads a well anneals to, 5' to 3'.
     """
     held = project.reserved_enzymes
     found = find_sites(cargo, held)
@@ -192,7 +203,25 @@ def check_cargo(
         ),
         where,
     )
-    return (sites, frame)
+    bound = tuple(
+        Segment(site.start, site.end)
+        for region in annealing
+        for site in find_binding_sites(region, cargo)
+    )
+    primed = Judgement(
+        Check(
+            "well primers",
+            "pass" if not bound else "fail",
+            len(bound),
+            f"no primer that reads a well binds {where}"
+            if not bound
+            else f"a primer that reads a well binds {where} in {len(bound)} place(s), which "
+            "leaves that well a second priming site and no read anyone can call",
+        ),
+        where,
+        bound,
+    )
+    return (sites, frame, primed)
 
 
 def check_barcode_set(
@@ -436,8 +465,8 @@ def library_reactions(
         if position not in blocks:
             raise ValueError(f"no block was given for position {position!r}")
         donors = tuple(blocks[position])
-        opened = Pool("destination", (standing,))
-        donated = Pool("donor", donors)
+        opened = Pool("destination", (standing,), enzyme=project.scheme.internal)
+        donated = Pool("donor", donors, enzyme=project.scheme.external)
         made.extend(
             (
                 Reaction(
@@ -459,6 +488,27 @@ def library_reactions(
     return tuple(made)
 
 
+def final_assembly_reactions(
+    project: Project, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
+) -> tuple[Reaction, ...]:
+    """Compose the final assembly: two digests and the ligation that joins what they leave.
+
+    One tube, staged. The external enzyme frees the cargo from the backbone the rounds ran in and
+    is killed; the working vector then gives its ccdB cassette up to `cargo`, and the ligase joins
+    the two. The gate reads it as three reactions because the ends meeting at the end were made by
+    two different enzymes, which is the one thing a round never does.
+    """
+    freed = Pool("donor", (library,), enzyme=project.scheme.external)
+    opened = Pool("destination", (working,), enzyme=cargo)
+    return (
+        Reaction(
+            "final assembly release", "digest", pools=(freed,), enzymes=(project.scheme.external,)
+        ),
+        Reaction("final assembly opening", "digest", pools=(opened,), enzymes=(cargo,)),
+        Reaction("final assembly ligation", "ligation", pools=(opened, freed)),
+    )
+
+
 def check_library(
     project: Project,
     *,
@@ -466,35 +516,59 @@ def check_library(
     blocks: Mapping[str, Sequence[SequenceRecord]],
     products: Sequence[SequenceRecord],
     barcodes: Mapping[str, Sequence[str]],
+    working: SequenceRecord | None = None,
+    cargo: Enzyme | None = None,
 ) -> Verdict:
-    """Judge a whole build: every tube of it, every cargo, every barcode set and the product.
+    """Judge a whole build: its vector, every tube, every cargo, every barcode set and the product.
 
     Nothing here is read off a plan. The molecules are finished records, the barcodes are the
     table that decodes the sequencing, and the reactions are composed from the chain's own order,
     so a design an agent wrote is judged exactly as one `plan_igga` wrote is.
+
+    The rounds run in the DMX vector, so the destination is where a build accepts one and
+    `check_dmx_vector` judges it here. A destination no primer that reads a well binds carries no
+    DMX backbone -- a minimal stand-in -- and has no blunt site any primer could reach, so
+    nothing judges it.
 
     Parameters
     ----------
     project
         What the build chose.
     destination
-        The vector the first round opens.
+        The vector the first round opens, judged as a rebuilt DMX vector where one is given.
     blocks
         The synthesised blocks of each position, keyed by position name.
     products
         One record a round, in the order the rounds ran. The last is the library product.
     barcodes
         Each position's barcodes, keyed by position name.
+    working, cargo
+        The working vector the library is moved into and the enzyme that admits it, where the
+        build names one. Both or neither: the final assembly is judged only where there is a
+        vector to judge it in.
 
     Raises
     ------
     ValueError
-        If there is not one product, one part list and one barcode list a position.
+        If there is not one product, one part list and one barcode list a position, or if one of
+        `working` and `cargo` is given without the other.
     """
+    if (working is None) != (cargo is None):
+        raise ValueError(
+            "a final assembly is judged on a working vector and the enzyme that admits cargo to "
+            "it: name both, or neither"
+        )
     made: list[Judgement] = []
-    for reaction in library_reactions(
+    if _read_by_a_well_primer(destination, WELL_PRIMERS):
+        made.extend(check_dmx_vector(destination, project=project))
+    reactions = library_reactions(
         project, destination=destination, blocks=blocks, products=products
-    ):
+    )
+    if working is not None and cargo is not None:
+        reactions += final_assembly_reactions(
+            project, library=products[-1], working=working, cargo=cargo
+        )
+    for reaction in reactions:
         made.extend(check_reaction(reaction, project=project))
     last = project.positions[-1]
     for position in project.positions:
@@ -536,6 +610,16 @@ def _opening(product: SequenceRecord, project: Project, where: str) -> Judgement
         where,
         () if opens else tuple(found),
     )
+
+
+def _read_by_a_well_primer(record: SequenceRecord, annealing: Sequence[str]) -> bool:
+    """Whether a primer that reads a well binds this record at all.
+
+    Both bind a rebuilt DMX vector, and neither binds a stand-in carrying a cassette and nothing
+    else. Where one binds and the other does not, the rebuild broke a primer site and
+    `check_dmx_vector` says so rather than passing.
+    """
+    return any(find_binding_sites(region, record) for region in annealing)
 
 
 def _worst(name: str, group: Sequence[Check]) -> Check:
@@ -635,7 +719,13 @@ def _ligation(reaction: Reaction, *, project: Project) -> tuple[Judgement, ...]:
 
 
 def _ends(reaction: Reaction, project: Project) -> set[str]:
-    """Every overhang the molecules of a ligation present, read off the digest that made it."""
+    """Every overhang the molecules of a ligation present, read off the digest that made it.
+
+    A pool naming its own cutter is read off that one. The method's round is what the rest fall
+    back to, where the internal enzyme opens the destination and the external releases everything
+    else; a final assembly does not follow it, because the working vector gives its cassette up to
+    the cargo enzyme instead.
+    """
     cutters: dict[Role, Enzyme] = {
         "destination": project.scheme.internal,
         "donor": project.scheme.external,
@@ -644,8 +734,9 @@ def _ends(reaction: Reaction, project: Project) -> set[str]:
     }
     found: set[str] = set()
     for pool in reaction.pools:
+        enzyme = pool.cutter or cutters[pool.role]
         for record in pool:
-            for piece in _released(record, cutters[pool.role]):
+            for piece in _released(record, enzyme):
                 found.update((piece.left_overhang, piece.right_overhang))
     return found
 

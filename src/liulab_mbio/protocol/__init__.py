@@ -17,7 +17,8 @@ fields without a default are required; `write_protocol` writes every field::
          "tables": [{"title", "reactions", "overage",
              "components": [{"name", "volume_ul", "stock", "final", "master_mix"}]}],
          "programs": [{"title", "lid_temperature_c",
-             "stages": [{"cycles", "incubations": [{"label", "temperature_c", "seconds"}]}]}],
+             "stages": [{"cycles", "citation",
+                 "incubations": [{"label", "temperature_c", "seconds"}]}]}],
          "timers": [{"label", "seconds"}],
          "transfers": [{"title", "instrument", "note", "citation",
              "moves": [{"volume_ul", "source": {"plate", "well"},
@@ -32,7 +33,8 @@ fields without a default are required; `write_protocol` writes every field::
          "rows": [{"item", "quantity", "unit", "key", "charge", "headroom", "citation",
              "hole"}]}}
 
-An incubation's ``"seconds": null`` holds indefinitely. A check's ``"status"`` is ``"pass"``,
+An incubation's ``"seconds": null`` holds indefinitely, and a stage's ``"cycles": null`` leaves
+the count blank where nothing sources it. A check's ``"status"`` is ``"pass"``,
 ``"warn"`` or ``"fail"``; an oligo's may also be absent, which says nothing judged that row. An
 ``"overview"`` value is a card: a few words, never a sentence.
 
@@ -72,6 +74,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     Vessel,
     Well,
+    citing,
     read_protocol,
     row_label,
     write_protocol,
@@ -108,6 +111,7 @@ __all__ = [
     "Troubleshooting",
     "Vessel",
     "Well",
+    "citing",
     "read_protocol",
     "render_html",
     "row_label",

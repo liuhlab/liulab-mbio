@@ -170,8 +170,11 @@ from it:
 - Which products exist, their length bands, their pool-size tiers and their prices.
 - The uniformity gate: a pool whose shortest member is more than 15% below the longest is
   refused by the ordering interface, which is what forces a padding rule.
-- The flank specification, and the amplification rule of a hard maximum of eight cycles with a
-  high-fidelity hot-start polymerase.
+- The flank specification, and the amplification rule: a high-fidelity hot-start polymerase, and
+  a cycle count banded by the pool's length — 6–10 at 20–100 nt, 10–12 at 100–150 nt, 12–14 at
+  151–350 nt. `oligo-pool-pcr-cycles.md` section 2 gives the two guides it is read from, and its
+  section 3 separates it from the Multiplexed Gene Fragments maximum, which is another product's
+  and does not apply to a pool.
 
 ### Twist — ours
 
@@ -361,7 +364,7 @@ primer-borne site gives every fragment of that gene the same overhang. Qian can 
 Qian's members are not split. The cost of retailoring the primer set was never the deciding
 term.
 
-**And the 22 nt it would save buys almost nothing.** Counted over the 72 blocks of
+**And the 14 nt it would save buys almost nothing.** Counted over the 72 blocks of
 `ap1-demo-project.md` §4.1 at a 350 nt oligo: 152 oligos templated against 150 with the sites on
 the primers, the worst part at five fragments either way.
 
@@ -663,8 +666,8 @@ and #305 builds the floor.
   splits first.
   Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
 - **The read-out route** — DAD-GGA-DMX. **Decided in #260: the toolkit models both**, as two
-  marking steps behind one judgement, and the threshold stands — at or below one plate of
-  samples, index PCR; above it, plate barcoding. The capacity ceiling once attributed to the
+  marking steps behind one judgement, and in #299: nothing picks between them, so a project
+  names its route. The capacity ceiling once attributed to the
   primer set is wrong: forward and reverse barcodes combine freely and no dual index is needed,
   so Route B reaches 9,216 wells on 192 owned primers and Route A 24⁴ on the kit, and what binds
   either is the flow cell and one reaction per well.

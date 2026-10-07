@@ -17,7 +17,9 @@ from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
     DNTP_STOCK_MM,
     colony_pcr_master_mix_component,
+    cycle_citation,
 )
+from liulab_mbio.bench.pcr import SOURCES as PCR_SOURCES
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     CELLS_UL,
@@ -70,6 +72,7 @@ from liulab_mbio.protocol.model import (
     Step,
     Timer,
     Troubleshooting,
+    citing,
 )
 from liulab_mbio.sequence import SequenceRecord
 
@@ -170,7 +173,7 @@ def protocol(
         if any(one.bridge for one in assembly.junctions)
         else "with the overlap at each junction carried as a primer tail"
     )
-    return Protocol(
+    one = Protocol(
         f"Gibson assembly: {inserts} into {vector.name}",
         summary=(
             f"{opening}, {making} {inserts} {joining}, join the {len(parts)} fragments in one "
@@ -210,7 +213,9 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, product, phenotype),
+        sources=PCR_SOURCES,
     )
+    return citing(one)
 
 
 def _overview(
@@ -492,6 +497,8 @@ def _pcr_step(part: Part, assembly: Assembly, polymerase: Polymerase) -> Step:
         polymerase=polymerase,
         annealing_temperature=part.report.annealing_temperature,
         extension_seconds=part.report.extension_seconds,
+        cycles=polymerase.pcr.cycles,
+        cycles_citation=cycle_citation(polymerase),
         notes=(
             carried,
             "The annealing temperature above is read from the annealing regions alone; a tail "

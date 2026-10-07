@@ -168,21 +168,33 @@ def test_every_step_says_what_a_good_result_looks_like_and_carries_its_mixes(pla
         assert step.expected, step.title
         assert step.instructions, step.title
     # Two digests and one ligation a round, and a program for each digest and for the growth.
+    # The final assembly adds one more growth; without a working vector it names no other.
     assert len(tables) == 3 * len(plan.rounds)
-    assert len(programs) == 3 * len(plan.rounds)
+    assert len(programs) == 3 * len(plan.rounds) + 1
     for program in programs:
         assert program.stages
 
 
 def test_the_protocol_carries_the_traps_this_method_has(protocol):
     said = " ".join(note for step in protocol.steps for note in step.notes)
-    confirm = " ".join(protocol.steps[-1].notes)
+    linkage, representation = (" ".join(step.notes) for step in protocol.steps[-7:-5])
 
     assert "2 volumes here and 1 after the ligation" in said
     # The designed set is indel-aware, so the share is nil — and it is printed rather than implied,
     # because a set designed on mismatches alone leaves a share that is not.
-    assert "0.0% of the single-base deletions" in confirm
-    assert "keep the barcodes away from where a primer anneals" in confirm
+    assert "0.0% of the single-base deletions" in linkage
+    assert "keep the barcodes away from where a primer anneals" in representation
+
+
+def test_the_finished_library_is_read_for_linkage_and_for_representation(protocol):
+    """The method's last two steps, and its rule that only one of them repeats."""
+    last = protocol.steps[-7:-5]
+
+    assert [step.title for step in last] == ["Read linkage", "Read representation"]
+    for step in last:
+        assert step.holes
+    said = " ".join(note for step in protocol.steps for note in step.notes)
+    assert said.count("after every later bottleneck") == 1
 
 
 def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spells(

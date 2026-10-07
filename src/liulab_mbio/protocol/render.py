@@ -576,17 +576,22 @@ def _program(program: ThermocyclerProgram) -> str:
     meta = []
     if program.lid_temperature_c is not None:
         meta.append(f"lid {_num(program.lid_temperature_c)} °C")
-    meta.append(f"{_duration(program.duration_seconds)} plus ramps")
+    if program.duration_seconds is not None:
+        meta.append(f"{_duration(program.duration_seconds)} plus ramps")
     title = escape(program.title or "Thermocycler program")
+    caption = f' <span class="muted">· {escape(" · ".join(meta))}</span>' if meta else ""
     bodies = []
     for stage in program.stages:
+        count = (
+            f'<span class="hole-none">{NO_NUMBER}</span>'
+            if stage.cycles is None
+            else str(stage.cycles)
+        ) + _after(stage.citation)
         rows = []
         for i, step in enumerate(stage.incubations):
             time = "∞" if step.seconds is None else _duration(step.seconds)
             cycles = (
-                f'<td class="num" rowspan="{len(stage.incubations)}">{stage.cycles}</td>'
-                if i == 0
-                else ""
+                f'<td class="num" rowspan="{len(stage.incubations)}">{count}</td>' if i == 0 else ""
             )
             rows.append(
                 f"<tr><td>{escape(step.label)}{_after(step.citation)}</td>"
@@ -595,8 +600,7 @@ def _program(program: ThermocyclerProgram) -> str:
             )
         bodies.append(f'<tbody class="stage">{"".join(rows)}</tbody>')
     return (
-        f'<figure class="program"><figcaption>{title} '
-        f'<span class="muted">· {escape(" · ".join(meta))}</span></figcaption>'
+        f'<figure class="program"><figcaption>{title}{caption}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th>'
         f'<th class="num">Time</th><th class="num">Cycles</th></tr></thead>{"".join(bodies)}'
         "</table></div></figure>\n"

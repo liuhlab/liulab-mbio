@@ -90,3 +90,14 @@ def test_a_role_bound_twice_is_refused(one: SequenceRecord, other: SequenceRecor
 def test_a_role_this_reaction_does_not_bind_is_a_key_error(one: SequenceRecord) -> None:
     with pytest.raises(KeyError):
         Reaction("cut", "digest", pools=(Pool("donor", [one]),))["destination"]
+
+
+def test_a_pool_names_the_enzyme_that_made_its_ends():
+    """A ligation joins ends it did not cut, so the pool says which enzyme left them."""
+    one = SequenceRecord("ACGT")
+
+    assert Pool("donor", [one]).cutter is None
+    assert Pool("donor", [one], enzyme="BsaI").cutter == get_enzyme("BsaI")
+    assert Pool("donor", [one], enzyme=get_enzyme("BsaI")).cutter == get_enzyme("BsaI")
+    with pytest.raises(KeyError):
+        Pool("donor", [one], enzyme="NotAnEnzyme")

@@ -8,7 +8,7 @@ import json
 import math
 import os
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass
+from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -88,7 +88,7 @@ class Citation:
     """Where in a source one row's number stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the material or the bill row that carries the number.
+    the cycling stage, the material or the bill row that carries the number.
 
     Parameters
     ----------
@@ -441,16 +441,28 @@ class Incubation:
 
 @dataclass(frozen=True, slots=True)
 class Stage:
-    """Incubations run in order, repeated `cycles` times."""
+    """Incubations run in order, repeated `cycles` times.
+
+    Parameters
+    ----------
+    incubations
+        In run order; at least one.
+    cycles
+        How many times the stage runs. ``None`` leaves the count blank, for a stage nothing
+        sources: the reader is given the rule that stops it instead of an invented number.
+    citation
+        Where the count was read.
+    """
 
     incubations: tuple[Incubation, ...]
     _: KW_ONLY
-    cycles: int = 1
+    cycles: int | None = 1
+    citation: Citation | None = None
 
     def __post_init__(self) -> None:
         """Refuse an empty stage or fewer than one cycle."""
         _require(bool(self.incubations), "a stage needs at least one incubation")
-        _require(self.cycles >= 1, "cycles must be at least 1")
+        _require(self.cycles is None or self.cycles >= 1, "cycles must be at least 1, or null")
 
 
 @dataclass(frozen=True, slots=True)
@@ -477,11 +489,17 @@ class ThermocyclerProgram:
         _require(bool(self.stages), f"program {self.title!r} has no stage")
 
     @property
-    def duration_seconds(self) -> float:
-        """Run time at the block temperatures, leaving out ramps and indefinite holds."""
-        return sum(
-            stage.cycles * sum(i.seconds or 0 for i in stage.incubations) for stage in self.stages
-        )
+    def duration_seconds(self) -> float | None:
+        """Run time at the block temperatures, leaving out ramps and indefinite holds.
+
+        ``None`` where a stage's cycle count is blank, since nothing then bounds the run.
+        """
+        total = 0.0
+        for stage in self.stages:
+            if stage.cycles is None:
+                return None
+            total += stage.cycles * sum(i.seconds or 0 for i in stage.incubations)
+        return total
 
 
 def _check_bands(bands_bp: tuple[int, ...], owner: str) -> None:
@@ -998,13 +1016,22 @@ class Protocol:
         """
         return (self._sources(), self._wells(), self._rules(), self._holes())
 
-    def _sources(self) -> Check:
-        cited = {
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this protocol's own citations name.
+
+        Examples
+        --------
+        >>> Protocol("Demo").cited
+        frozenset()
+        """
+        return frozenset(
             citation.source
             for citation in (
                 *(m.citation for m in self.materials),
                 *(r.citation for m in self.materials for r in m.rules),
                 *(c.citation for s in self.steps for t in s.tables for c in t.components),
+                *(g.citation for s in self.steps for p in s.programs for g in p.stages),
                 *(
                     i.citation
                     for s in self.steps
@@ -1016,7 +1043,10 @@ class Protocol:
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
-        }
+        )
+
+    def _sources(self) -> Check:
+        cited = self.cited
         dangling = sorted(cited - set(self.sources))
         if dangling:
             return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
@@ -1074,6 +1104,23 @@ class Protocol:
             or on a value the model refuses.
         """
         return _PROTOCOL(data, "protocol")
+
+
+def citing(protocol: Protocol) -> Protocol:
+    """Return `protocol` with the sources its own citations name, and no others.
+
+    A builder hands in every document the method might read from; which of them this run cited
+    depends on the steps it built. Dropping the rest is what keeps the reference list to
+    documents the reader can follow back to a row on the page.
+
+    Examples
+    --------
+    >>> one = citing(Protocol("Demo", sources={"M0491": Source("NEB M0491")}))
+    >>> dict(one.sources)
+    {}
+    """
+    kept = {key: source for key, source in protocol.sources.items() if key in protocol.cited}
+    return replace(protocol, sources=kept)
 
 
 def read_protocol(path: str | os.PathLike[str]) -> Protocol:

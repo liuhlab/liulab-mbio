@@ -18,7 +18,9 @@ from liulab_mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
     PRIMER_STOCK_UM,
     colony_pcr_master_mix_component,
+    cycle_citation,
 )
+from liulab_mbio.bench.pcr import SOURCES as PCR_SOURCES
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.steps import (
     COLONY_PCR_TITLE,
@@ -88,7 +90,15 @@ from liulab_mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
 from liulab_mbio.cloning.gateway.oligos import DesignedOligo
 from liulab_mbio.cloning.gateway.recombination import Junction, PlannedReaction
 from liulab_mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from liulab_mbio.protocol.model import Material, Oligo, Protocol, Step, Timer, Troubleshooting
+from liulab_mbio.protocol.model import (
+    Material,
+    Oligo,
+    Protocol,
+    Step,
+    Timer,
+    Troubleshooting,
+    citing,
+)
 from liulab_mbio.sequence import SequenceRecord
 
 #: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
@@ -128,7 +138,7 @@ def protocol(
     steps and the miniprep that follows them in front of LR's, an attB PCR puts its own two in
     front of those, and the colony PCR and the sequencing that confirm the clone come last.
     """
-    return Protocol(
+    one = Protocol(
         _title(lr, bp),
         summary=_summary(lr, bp),
         overview=_overview(lr, bp, amplicon),
@@ -144,7 +154,9 @@ def protocol(
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
         references=(*REFERENCES, *BENCH_REFERENCES),
+        sources=PCR_SOURCES,
     )
+    return citing(one)
 
 
 def _carrier(reaction: PlannedReaction) -> SequenceRecord:
@@ -408,6 +420,8 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
             polymerase=amplicon.polymerase,
             annealing_temperature=amplicon.report.annealing_temperature,
             extension_seconds=amplicon.report.extension_seconds,
+            cycles=amplicon.polymerase.pcr.cycles,
+            cycles_citation=cycle_citation(amplicon.polymerase),
             notes=(
                 f"Each primer carries a whole attB tail: {len(SPACER)} G residues, the "
                 f"{REGION_BP} bp att site and the frame bases the fusion needs, {len(forward)} "

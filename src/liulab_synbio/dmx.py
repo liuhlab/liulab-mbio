@@ -21,13 +21,31 @@ The 96 barcode sequences are not shipped. They are read from a copy the user hol
 import csv
 import itertools
 import os
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 from pathlib import Path
 
 from liulab_mbio.bench import plates
 from liulab_mbio.checks import Check, Status, worst
-from liulab_mbio.protocol.model import Citation, Plate, Reference, Source, Transfer, Vessel, Well
+from liulab_mbio.protocol.model import (
+    Citation,
+    Component,
+    Hole,
+    Incubation,
+    Material,
+    Plate,
+    ReactionTable,
+    Reference,
+    Source,
+    Stage,
+    Step,
+    ThermocyclerProgram,
+    Transfer,
+    Troubleshooting,
+    Vessel,
+    Well,
+)
 
 #: The kit: 96 plasmids in four groups of 24, used as supplied.
 #: ``docs/research/synthesis-and-assembly-barcode-kit.md``.
@@ -57,12 +75,14 @@ CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
 
 #: The plate each stage uses. Colonies are picked into 384-well plates and four of those are
 #: compressed into one 1536-well plate, which is why the format parameter has to reach 1536.
-#: Qian SI Day 3 and Day 4.1. Route B amplifies in the 96-well plate its barcodes address.
+#: Qian SI Day 3 and Day 4.1. Route B amplifies in the half-skirted 96-well PCR plate its
+#: barcodes address, LevSeq SI step 2.
 PICKED_WELLS = 384
 COMPRESSED_WELLS = 1536
 INDEX_WELLS = 96
 PICKED_CATALOG = "Beckman Coulter #c74290"
 COMPRESSED_CATALOG = "Greiner #782270"
+INDEX_CATALOG = "USA Scientific #1402-9700"
 
 #: How many picked plates one compressed plate holds.
 PLATES_COMPRESSED = COMPRESSED_WELLS // PICKED_WELLS
@@ -78,9 +98,48 @@ WATER_UL = 0.5
 MASTERMIX_UL = 0.5
 WELL_UL = LYSATE_UL + BARCODE_UL + WATER_UL + MASTERMIX_UL
 
-#: What moves the liquid, and what the colonies are picked with. Qian SI Days 3 and 4.1.
+#: What moves the liquid, and what the colonies are picked with, both Qian's. The handler is
+#: cited on the move it makes; the picker is equipment, which carries no citation, so the page
+#: reaches it through the Qian reference alone.
 ACOUSTIC = "ECHO 525 acoustic liquid handler"
 PICKER = "QPix XE Microbial Colony Picker"
+
+#: What a quarter of a picked plate is sampled into a Route B index plate with, and how much of
+#: each well goes. LevSeq SI step 4. An acoustic handler does the same move where one is booked.
+SAMPLE_UL = 1.0
+MULTICHANNEL = "multichannel pipette"
+
+#: Route B's index PCR: a colony PCR straight from overnight culture, cycled with a touchdown.
+#: The master mix is one well's share of the mix LevSeq states per plate, and the cycling is its
+#: thermal-cycler table with the two loop lines spelled out: ten touchdown cycles and 25 more,
+#: 35 in all. ``docs/research/route-b-index-pcr.md`` section 2.
+INDEX_PCR_UL = 10.0
+INDEX_MIX_UL = 7.0
+INDEX_PRIMER_UL = 2.0
+INDEX_DENATURE_C = 95.0
+INDEX_TOUCHDOWN_C = (68.0, 63.5)
+INDEX_TOUCHDOWN_STEP_C = 0.5
+INDEX_PLATEAU_CYCLES = 25
+
+#: The cycles the touchdown takes, which is every step from one end of it to the other.
+INDEX_TOUCHDOWN_CYCLES = (
+    round((INDEX_TOUCHDOWN_C[0] - INDEX_TOUCHDOWN_C[1]) / INDEX_TOUCHDOWN_STEP_C) + 1
+)
+
+#: The mix is made 1.5 times what a full plate takes, which is what LevSeq's per-plate table
+#: spells out. Nothing published says what the surplus is for, or how to scale a part plate.
+INDEX_OVERAGE = 0.5
+
+#: Extension at the top of the touchdown, seconds: what the authors ran for a gene below 1 kb.
+#: The rule is minimally one minute a kilobase, so a longer design wants it raised. SI note 5b.
+INDEX_EXTENSION_SECONDS = 120
+
+#: What the index PCR is pipetted from, LevSeq SI step 1. A catalogue number is ordered as
+#: written, so each is the SI's own.
+THERMOPOL_CATALOG = "NEB #B9004"
+DNTP_CATALOG = "NEB #N0447"
+TAQ_CATALOG = "NEB #M0267"
+DMSO_CATALOG = "MP Biomedicals #194819"
 
 #: Colonies a 25 cm BioAssay plate carries before picking gets hard. Qian SI Day 2.
 BIOASSAY_COLONIES = 2500
@@ -573,8 +632,68 @@ def clean_colony_chance(fragments: int) -> float:
     return anchors[-1][1]
 
 
+@dataclass(frozen=True, slots=True)
+class Design:
+    """One design a well may be read back for, and how many pieces it was assembled from.
+
+    Parameters
+    ----------
+    name
+        What the design is called.
+    fragments
+        How many pieces were joined to build it, which is what its chance of a clean colony
+        falls with.
+    """
+
+    name: str
+    fragments: int
+
+    def __post_init__(self) -> None:
+        """Refuse a design built from no piece at all."""
+        if self.fragments < 1:
+            raise ValueError(
+                f"{self.name} is built from at least one fragment, got {self.fragments}"
+            )
+
+    @property
+    def chance(self) -> float:
+        """The chance one picked colony carries a clean copy, by `clean_colony_chance`."""
+        return clean_colony_chance(self.fragments)
+
+
+def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...]:
+    """Return the designs a fragment-count floor reads back, in the order they were given.
+
+    No floor reads nothing, because validation is optional and a library headed for a pooled
+    screen takes its identity from that screen. A floor of zero reads every design. Nothing here
+    supplies a default: `clean_colony_chance` gives a design's chance of a clean colony, not the
+    chance worth paying to check, and that is the project's own call.
+
+    Raises
+    ------
+    ValueError
+        If the floor is negative.
+
+    Examples
+    --------
+    >>> some = (Design("short", 2), Design("long", 8))
+    >>> [one.name for one in validated(some, 5)], validated(some, None)
+    (['long'], ())
+    """
+    if floor is None:
+        return ()
+    if floor < 0:
+        raise ValueError(f"a fragment-count floor counts fragments, and {floor} is below none")
+    return tuple(one for one in designs if one.fragments >= floor)
+
+
 def picked_plate(name: str, colonies: int) -> Plate:
     """Return one plate of picked colonies: `colonies` wells of selective medium.
+
+    Picking fills one quarter of the plate at a time, in the order a head built for the index
+    format covers it. A part-filled plate then gives full index plates rather than part-filled
+    ones, no reverse mark is spent on a plate that is mostly empty, and a design's colonies stay
+    together.
 
     Raises
     ------
@@ -583,17 +702,24 @@ def picked_plate(name: str, colonies: int) -> Plate:
 
     Examples
     --------
-    >>> picked_plate("picked 1", 300).wells
-    384
+    >>> picked = picked_plate("picked 1", 288)
+    >>> picked.wells, len(picked.seating), picked.seating["B1"]
+    (384, 288, 'quarter 3')
     """
     if colonies > PICKED_WELLS:
         raise ValueError(f"{colonies} colonies do not fit a {PICKED_WELLS}-well plate")
+    seating: dict[str, str] = {}
+    left = colonies
+    for number, quarter in enumerate(plates.interleave(PICKED_WELLS, INDEX_WELLS), start=1):
+        seating |= dict.fromkeys(quarter[: max(left, 0)], f"quarter {number}")
+        left -= len(quarter)
     return plates.plate(
         name,
         PICKED_WELLS,
         catalog=PICKED_CATALOG,
         holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with carbenicillin",
-        note=f"{colonies} of {PICKED_WELLS} wells picked",
+        seating=seating,
+        note=f"{colonies} of {PICKED_WELLS} wells picked, a quarter at a time",
     )
 
 
@@ -632,6 +758,7 @@ def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
     return plates.plate(
         name,
         INDEX_WELLS,
+        catalog=INDEX_CATALOG,
         holds="one barcoded PCR each, the pair its own address names",
         seating=seating,
         note=f"plate mark {plate + 1}; {samples} of {INDEX_WELLS} wells used",
@@ -686,6 +813,167 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
     )
 
 
+def sampling(picked: Plate, index: Sequence[Plate]) -> tuple[Transfer, ...]:
+    """Return Route B's move out of one picked plate: one quarter of it into each index plate.
+
+    A 384-well plate's wells sit at half a 96-well plate's spacing, so one well in four lines up
+    under a standard multichannel head and the plate is covered in four passes. A quarter nobody
+    picked into is no index plate and no move, which is what keeps a part-filled picked plate
+    giving full index plates.
+
+    Raises
+    ------
+    ValueError
+        If the picked plate holds no colony, or `index` is not one plate per filled quarter.
+
+    Examples
+    --------
+    >>> moves = sampling(picked_plate("picked 1", 288), [index_plate("index 1", 96)] * 3)
+    >>> len(moves), len(moves[0].moves), moves[0].instrument
+    (3, 96, 'multichannel pipette')
+    """
+    filled = picked.seating or dict.fromkeys(picked.well_names)
+    quarters = [
+        tuple(name for name in quarter if name in filled)
+        for quarter in plates.interleave(picked.wells, INDEX_WELLS)
+    ]
+    taken = [one for one in quarters if one]
+    if not taken:
+        raise ValueError(f"{picked.name} holds no picked colony to sample")
+    if len(taken) != len(index):
+        raise ValueError(
+            f"{picked.name} was picked into {len(taken)} quarter(s) and {len(index)} index "
+            "plate(s) were given; one index plate covers one quarter"
+        )
+    return tuple(
+        plates.compact(
+            [Well(picked.name, name) for name in quarter],
+            plate,
+            SAMPLE_UL,
+            title=f"Sample a quarter of {picked.name} into {plate.name}",
+            instrument=MULTICHANNEL,
+            note="one well in four, which is the spacing a head built for the index format reads",
+            citation=Citation("LevSeq", "step 4"),
+        )
+        for quarter, plate in zip(taken, index, strict=True)
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Validation:
+    """Which designs are read back, on which route, and the plates that takes.
+
+    Picking is shared and sized once, because the picking format no longer differs by route: one
+    well a colony a design, filled a quarter of a plate at a time. Each route's own plates follow
+    from those wells.
+
+    Parameters
+    ----------
+    route
+        The route the project named.
+    designs
+        The designs read back, which `validated` chose from the project's floor.
+    floor
+        That floor, carried so the protocol can print it beside each design's chance.
+    colonies
+        Colonies picked per design.
+    """
+
+    route: Route
+    designs: tuple[Design, ...]
+    _: KW_ONLY
+    floor: int
+    colonies: int = COLONIES_PER_DESIGN
+
+    def __post_init__(self) -> None:
+        """Refuse a read of no design, or of no colony per design."""
+        if not self.designs:
+            raise ValueError("a validation reads at least one design; a floor reading none is None")
+        if self.colonies < 1:
+            raise ValueError(f"{self.colonies} colonies a design reads nothing back")
+
+    @property
+    def wells(self) -> int:
+        """How many wells the read takes: one a colony a design."""
+        return len(self.designs) * self.colonies
+
+    @property
+    def picked(self) -> tuple[Plate, ...]:
+        """The picked plates, each filled a quarter at a time and the last one part-filled."""
+        full, rest = divmod(self.wells, PICKED_WELLS)
+        sizes = [PICKED_WELLS] * full + ([rest] if rest else [])
+        return tuple(
+            picked_plate(f"picked {number}", size) for number, size in enumerate(sizes, start=1)
+        )
+
+    @property
+    def compressed(self) -> tuple[Plate, ...]:
+        """Route A's 1536-well plates, `PLATES_COMPRESSED` picked plates compressed into one."""
+        self._only(ROUTE_A)
+        many = -(-len(self.picked) // PLATES_COMPRESSED)
+        return tuple(compressed_plate(f"lysate {number}") for number in range(1, many + 1))
+
+    @property
+    def index(self) -> tuple[Plate, ...]:
+        """Route B's 96-well plates, one a filled quarter, marked in one run across the run."""
+        self._only(ROUTE_B)
+        made: list[Plate] = []
+        for one in self.picked:
+            left = len(one.seating)
+            while left > 0:
+                made.append(
+                    index_plate(f"index {len(made) + 1}", min(left, INDEX_WELLS), plate=len(made))
+                )
+                left -= INDEX_WELLS
+        return tuple(made)
+
+    def _only(self, route: Route) -> None:
+        """Refuse a plate the other route never pours.
+
+        Raises
+        ------
+        ValueError
+            If this validation runs the other route.
+        """
+        if self.route is not route:
+            raise ValueError(
+                f"only route {route.name} pours this plate, and this read runs route "
+                f"{self.route.name}"
+            )
+
+
+def validation(
+    route: Route,
+    designs: Sequence[Design],
+    floor: int | None,
+    *,
+    colonies: int = COLONIES_PER_DESIGN,
+) -> Validation | None:
+    """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
+
+    `None` is the answer for a project that states no floor and for one whose floor is above
+    every design: either way nothing is read, and a protocol then carries no validation at all.
+
+    Raises
+    ------
+    ValueError
+        If the floor is negative, or fewer than one colony a design is picked.
+
+    Examples
+    --------
+    >>> validation(ROUTE_B, (Design("one", 4),), 2).wells
+    4
+    >>> validation(ROUTE_B, (Design("one", 4),), None) is None
+    True
+    """
+    if floor is None:
+        return None
+    read = validated(designs, floor)
+    if not read:
+        return None
+    return Validation(route, read, floor=floor, colonies=colonies)
+
+
 def pooling(compressed: Plate, reservoir: Vessel) -> Transfer:
     """Return every barcoded well run into one reservoir, which is what a pool is.
 
@@ -702,6 +990,500 @@ def pooling(compressed: Plate, reservoir: Vessel) -> Transfer:
         title=f"Pool {compressed.name}",
         note=f"Invert and spin at 200 x g; {POOL_COLUMNS} miniprep columns, because one saturates",
         citation=Citation("Qian SI", "Day 4.1"),
+    )
+
+
+#: Route B's marks, which the package holds none of. The two annealing regions are published and
+#: bind the DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab
+#: buys and holds, as Route A's kit is. ``docs/research/route-b-index-primers.md`` section 7.
+INDEX_MARKS = Hole(
+    "B1",
+    "no index mark set is named for the barcoded primer pairs",
+    "lab",
+    where="route B, the pair marking one well",
+    filled_by="the prepared primer plate the lab holds",
+    issue="liuhlab/liulab-mbio#225",
+)
+
+#: What 0.05 µL of Taq is worth. LevSeq states the volume and never the enzyme's concentration,
+#: and NEB's specification for M0267 could not be read, so the table prints the volume and the
+#: unit count stands empty. ``docs/research/route-b-index-pcr.md`` section 8.
+INDEX_TAQ_UNITS = Hole(
+    "B2",
+    "the units of Taq one index PCR takes",
+    "unread",
+    where="route B, the index PCR's polymerase",
+    filled_by="NEB's own specification for M0267, which gives the stock concentration",
+    issue="liuhlab/liulab-mbio#225",
+)
+
+
+def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
+    """Return LevSeq's index PCR, one `INDEX_PCR_UL` µL reaction a well.
+
+    The first five lines are the master mix, each one well's share of the mix LevSeq states per
+    plate; at `INDEX_OVERAGE` they scale back to that table. The pair and the culture go in a
+    well at a time, because each well takes its own pair. How many units 0.05 µL of Taq is
+    nobody published, so `INDEX_TAQ_UNITS` stands where the unit count would.
+
+    Examples
+    --------
+    >>> round(sum(one.volume_ul for one in index_pcr_reaction().components), 2)
+    10.0
+    >>> index_pcr_reaction().mix_volumes(96)[:4]
+    (144.0, 28.8, 7.2, 57.6)
+    """
+    mix = Citation("LevSeq", "step 1")
+    return ReactionTable(
+        (
+            Component("ThermoPol Reaction Buffer", 1.0, stock="10X", final="1X", citation=mix),
+            Component("dNTP mix", 0.2, stock="10 mM each", final="0.2 mM each", citation=mix),
+            Component("Taq DNA Polymerase", 0.05, citation=mix),
+            Component("DMSO", 0.4, stock="100%", final="4% (v/v)", citation=mix),
+            Component("Nuclease-free water", 5.35, citation=mix),
+            Component(
+                "Barcoded primer mix",
+                INDEX_PRIMER_UL,
+                stock="1 µM each",
+                final="0.2 µM each",
+                master_mix=False,
+                citation=Citation("LevSeq", "step 3"),
+            ),
+            Component(
+                "Overnight culture",
+                SAMPLE_UL,
+                master_mix=False,
+                citation=Citation("LevSeq", "step 4"),
+            ),
+        ),
+        title="Index PCR, one well a sample",
+        reactions=reactions,
+        overage=INDEX_OVERAGE,
+    )
+
+
+def index_pcr_program() -> ThermocyclerProgram:
+    """Return LevSeq's touchdown program, the SI's two loop lines spelled out.
+
+    Ten cycles drop the annealing temperature `INDEX_TOUCHDOWN_STEP_C` each, over
+    `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more anneal and extend together at the top of it.
+    The touchdown is one stage a cycle, because a stage holds one temperature.
+
+    Examples
+    --------
+    >>> stages = index_pcr_program().stages
+    >>> stages[1].incubations[1].temperature_c, stages[10].incubations[1].temperature_c
+    (68.0, 63.5)
+    """
+    cite = Citation("LevSeq", "thermal cycler table")
+    top = INDEX_TOUCHDOWN_C[0]
+    denature = Incubation("Denature", INDEX_DENATURE_C, 20, cite)
+    extend = Incubation("Extend", top, INDEX_EXTENSION_SECONDS, cite)
+    return ThermocyclerProgram(
+        (
+            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, cite),)),
+            *(
+                Stage(
+                    (
+                        denature,
+                        Incubation("Anneal", top - at * INDEX_TOUCHDOWN_STEP_C, 20, cite),
+                        extend,
+                    )
+                )
+                for at in range(INDEX_TOUCHDOWN_CYCLES)
+            ),
+            Stage(
+                (denature, Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, cite)),
+                cycles=INDEX_PLATEAU_CYCLES,
+            ),
+            Stage((Incubation("Final extension", top, 300, cite),)),
+            Stage((Incubation("Hold", 4.0, None, cite),)),
+        ),
+        title="Index PCR",
+    )
+
+
+def chances(designs: Sequence[Design]) -> tuple[str, ...]:
+    """Return one line a fragment count: how many designs it covers, and each one's chance.
+
+    Grouped rather than listed, because every design of one fragment count carries the same
+    chance and a library has more designs than a page has room for.
+
+    Examples
+    --------
+    >>> chances((Design("a", 2), Design("b", 2), Design("c", 8)))
+    ('2 fragment(s): 2 design(s), 100.0% of picks clean', '8 fragment(s): 1 design(s), 66.7% of picks clean')
+    """
+    counted = Counter(one.fragments for one in designs)
+    return tuple(
+        f"{pieces} fragment(s): {number} design(s), "
+        f"{clean_colony_chance(pieces):.1%} of picks clean"
+        for pieces, number in sorted(counted.items())
+    )
+
+
+def validation_materials(one: Validation) -> tuple[Material, ...]:
+    """Return what reading these designs back consumes, beyond the designs themselves."""
+    made = [
+        Material(
+            "25 cm BioAssay plate",
+            supplier="Corning",
+            catalog=BIOASSAY_CATALOG.split("#")[-1],
+            amount="one spot a design",
+            note=f"carbenicillin at 100 µg/mL; about {BIOASSAY_COLONIES:,} colonies a plate",
+            citation=Citation("Qian SI", "Day 2"),
+        ),
+        Material(
+            f"{PICKED_WELLS}-well culture plate",
+            supplier="Beckman Coulter",
+            catalog=PICKED_CATALOG.split("#")[-1],
+            amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
+            note=f"{CULTURE_UL:g} µL low-salt LB with carbenicillin a well",
+            citation=Citation("Qian SI", "Day 3"),
+        ),
+    ]
+    if one.route is ROUTE_A:
+        made += [
+            Material(
+                f"{COMPRESSED_WELLS}-well barcoding plate",
+                supplier="Greiner",
+                catalog=COMPRESSED_CATALOG.split("#")[-1],
+                amount=f"{len(one.compressed)}, one a {PLATES_COMPRESSED} picked plates",
+                citation=Citation("Qian SI", "Day 4.1"),
+            ),
+            Material(
+                "DMX barcode kit",
+                storage="-20 °C",
+                amount=f"{GROUPS * GROUP_SIZE} plasmids, {GROUPS} groups of {GROUP_SIZE}",
+                note="the lab's own stock; its sequences are read from the copy you hold",
+            ),
+            Material(
+                "Barcoding master mix",
+                storage="-20 °C",
+                amount=f"{MASTERMIX_UL:g} µL a well",
+                note=f"a well is {WELL_UL:g} µL: {LYSATE_UL:g} µL lysate, {BARCODE_UL:g} µL "
+                f"barcodes, {WATER_UL:g} µL water and {MASTERMIX_UL:g} µL master mix",
+                citation=Citation("Qian SI", "Day 4.1"),
+            ),
+        ]
+    else:
+        made += [
+            Material(
+                f"{INDEX_WELLS}-well half-skirted PCR plate",
+                supplier="USA Scientific",
+                catalog=INDEX_CATALOG.split("#")[-1],
+                amount=f"{len(one.index)}, one a quarter of a picked plate",
+                citation=Citation("LevSeq", "step 2"),
+            ),
+            Material(
+                "Barcoded index primer plate",
+                storage="-20 °C",
+                amount=f"{INDEX_PRIMER_UL:g} µL a well at 1 µM each, {INDEX_WELLS} forward and "
+                f"{INDEX_WELLS} reverse",
+                note="prepared once as lab stock, by its own protocol; a run calls for it. The "
+                "SI's plate preparation ends at 0.1 µM, where its own protocol and the article "
+                "both stamp 1 µM, which is what this takes",
+                citation=Citation("LevSeq", "step 3"),
+            ),
+            Material(
+                "ThermoPol Reaction Buffer",
+                supplier="NEB",
+                catalog=THERMOPOL_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="1 µL a reaction, 10X",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "dNTP mix",
+                supplier="NEB",
+                catalog=DNTP_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="0.2 µL a reaction, 10 mM each",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "Taq DNA Polymerase",
+                supplier="NEB",
+                catalog=TAQ_CATALOG.split("#")[-1],
+                storage="-20 °C",
+                amount="0.05 µL a reaction",
+                note="LevSeq gives the volume and no source gives the stock, so the reaction "
+                "carries no unit count",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+            Material(
+                "DMSO, molecular biology grade",
+                supplier="MP Biomedicals",
+                catalog=DMSO_CATALOG.split("#")[-1],
+                amount="0.4 µL a reaction, 4% (v/v) in the well",
+                citation=Citation("LevSeq", "step 1"),
+            ),
+        ]
+    return tuple(made)
+
+
+def validation_equipment(one: Validation) -> tuple[str, ...]:
+    """Return the hardware reading these designs back needs and no reagent table covers."""
+    route = (
+        (ACOUSTIC,)
+        if one.route is ROUTE_A
+        else (
+            f"{MULTICHANNEL} on {INDEX_WELLS}-well spacing",
+            f"Thermocycler taking a {INDEX_WELLS}-well plate",
+        )
+    )
+    return (
+        PICKER,
+        *route,
+        "Incubator at 37 °C",
+        "A sequencer, and a demultiplexer that can check an address",
+    )
+
+
+def validation_steps(one: Validation) -> tuple[Step, ...]:
+    """Return the steps that read these designs back, the route's own in the middle.
+
+    The picking is shared and the calling is shared; between them sits the route's own marking.
+
+    Examples
+    --------
+    >>> one = validation(ROUTE_B, (Design("a", 4),), 0)
+    >>> for step in validation_steps(one):
+    ...     print(step.title)
+    Array 1 design(s) and grow
+    Pick 4 colonies of each design
+    Sample the picked plates into index plates
+    Amplify each well with its own pair
+    Pool and sequence
+    Call every well
+    """
+    marking = _route_a_steps(one) if one.route is ROUTE_A else _route_b_steps(one)
+    return (_array_step(one), _pick_step(one), *marking, _call_step(one))
+
+
+def _array_step(one: Validation) -> Step:
+    """Spot every design the floor reads back, which is where the read-back set is chosen."""
+    floor = (
+        "every design, which a floor of zero does"
+        if one.floor == 0
+        else f"every design in {one.floor} fragment(s) or more"
+    )
+    return Step(
+        f"Array {len(one.designs)} design(s) and grow",
+        instructions=(
+            "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
+            "Grow overnight at 37 °C on 100 µg/mL carbenicillin.",
+        ),
+        expected=(
+            f"One spot a design, at about {BIOASSAY_COLONIES:,} colonies a plate, which is the "
+            "density picking wants.",
+        ),
+        notes=(
+            f"This project reads back {floor}: {len(one.designs)} design(s). The rest stay "
+            "polyclonal and are never read one design at a time.",
+            "The archive is untouched: this reads a copy of it.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "A spot grows nothing",
+                "That design has no clone to read. Re-transform it from the archive before "
+                "anyone re-synthesises it.",
+            ),
+        ),
+    )
+
+
+def _pick_step(one: Validation) -> Step:
+    """Pick the colonies, a quarter of a plate at a time, and print what each pick is worth."""
+    sizes = ", ".join(f"{len(plate.seating)}" for plate in one.picked)
+    return Step(
+        f"Pick {one.colonies} colonies of each design",
+        instructions=(
+            f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
+            f"carbenicillin, with the {PICKER}.",
+            f"Fill one quarter of each {PICKED_WELLS}-well plate before starting the next.",
+            "Grow overnight at 37 °C.",
+        ),
+        expected=(
+            f"{one.wells} wells over {len(one.picked)} plate(s): {sizes} picked.",
+            "Every colony of one design sits on one plate.",
+        ),
+        notes=(
+            f"{one.colonies} colonies a design is Lund's anchor and the only measured one; four "
+            "gave a clean copy of 343 of 458 genes.",
+            *chances(one.designs),
+            "A quarter at a time is what makes a part-filled plate give full plates downstream, "
+            "and what keeps a mark off a plate that is mostly empty.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "A design in many fragments gives no clean colony",
+                "The chances above say which designs that is likeliest for. Pick more colonies "
+                "of those designs before the plates are poured, not after.",
+            ),
+        ),
+    )
+
+
+def _route_a_steps(one: Validation) -> tuple[Step, ...]:
+    """Compress into 1536, barcode in lysate, then pool and sequence."""
+    moves = tuple(
+        compression(one.picked[at : at + PLATES_COMPRESSED], plate)
+        for at, plate in zip(
+            range(0, len(one.picked), PLATES_COMPRESSED), one.compressed, strict=True
+        )
+    )
+    return (
+        Step(
+            f"Compress the picked plates into {len(one.compressed)} barcoding plate(s)",
+            instructions=(
+                "Invert the picked plates for 30 minutes so the cells gather at the meniscus.",
+                f"Move {LYSATE_UL:g} µL of each well into the {COMPRESSED_WELLS}-well plate.",
+            ),
+            transfers=moves,
+            expected=(f"{one.wells} wells of lysate, {PLATES_COMPRESSED} picked plates to one.",),
+        ),
+        Step(
+            "Barcode each well in lysate",
+            instructions=(
+                f"Add one barcode from each of the {GROUPS} kit groups to every well, by the "
+                "address that well's position gives.",
+                f"Make each well up to {WELL_UL:g} µL with {BARCODE_UL:g} µL barcodes, "
+                f"{WATER_UL:g} µL water and {MASTERMIX_UL:g} µL master mix.",
+                "Run the ligation, then pool.",
+            ),
+            expected=(
+                "One barcoded construct a well, carrying four barcodes chained head to tail.",
+            ),
+            notes=(
+                "The address is worked out from where the well is, not looked up: three groups "
+                "name the well and the fourth goes across the whole plate from a reservoir.",
+                "The kit's sequences are not shipped. Read them from the copy you hold.",
+            ),
+        ),
+        _sequencing_step(
+            one,
+            f"Pool every well and amplify the three primer pairs separately. {POOL_COLUMNS} "
+            "miniprep columns, because one saturates.",
+        ),
+    )
+
+
+def _route_b_steps(one: Validation) -> tuple[Step, ...]:
+    """Sample a quarter at a time into index plates, amplify on the pair each well's address names."""
+    at = 0
+    moves: list[Transfer] = []
+    for plate in one.picked:
+        many = -(-len(plate.seating) // INDEX_WELLS)
+        moves += sampling(plate, one.index[at : at + many])
+        at += many
+    return (
+        Step(
+            "Sample the picked plates into index plates",
+            instructions=(
+                f"Move {SAMPLE_UL:g} µL of each well into its {INDEX_WELLS}-well plate, one "
+                "quarter of the picked plate a pass.",
+            ),
+            transfers=tuple(moves),
+            expected=(f"{len(one.index)} index plate(s), {one.wells} reactions in all.",),
+            notes=(
+                "One well in four lines up under a head built for the smaller format, so a "
+                "quarter moves in one pass.",
+            ),
+        ),
+        Step(
+            "Amplify each well with its own pair",
+            instructions=(
+                f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
+                f"holds its {SAMPLE_UL:g} µL of culture.",
+                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from the prepared "
+                f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
+                "Seal the plate, spin it down, and run the program below.",
+            ),
+            cautions=("Keep the polymerase on ice.",),
+            tables=(index_pcr_reaction(one.wells),),
+            programs=(index_pcr_program(),),
+            expected=(
+                "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and "
+                "every well of one plate takes that plate's own reverse mark.",
+                "One band a well, the design plus about 100 bp: the two marks, and the stretch "
+                "between the primer sites and the reading frame.",
+            ),
+            notes=(
+                f"{INDEX_WELLS} forward marks and {INDEX_WELLS} reverse reach "
+                f"{ROUTE_B.capacity:,} wells, so the pairs already held cover far more than this "
+                "run needs.",
+                "The primer plate is built once as lab stock and a run calls for it; this "
+                "protocol does not build one.",
+                f"The first {INDEX_TOUCHDOWN_CYCLES} cycles touch down from "
+                f"{INDEX_TOUCHDOWN_C[0]:g} to {INDEX_TOUCHDOWN_C[1]:g} °C, "
+                f"{INDEX_TOUCHDOWN_STEP_C:g} °C a cycle, and {INDEX_PLATEAU_CYCLES} more run at "
+                f"{INDEX_TOUCHDOWN_C[0]:g} °C.",
+                f"Extension is {INDEX_EXTENSION_SECONDS // 60} minutes, what the authors ran for "
+                "a gene below 1 kb. The published rule is at least one minute a kilobase, so a "
+                "longer design wants it raised.",
+                f"The mix is made {1 + INDEX_OVERAGE:g} times what the wells take, which is what "
+                "LevSeq's own per-plate table spells out. Nothing says what the surplus is for.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "A plate reads back far fewer wells than the others",
+                    "LevSeq traces that to the amplification, not the sequencing: on a run of "
+                    "ten plates three returned under 60% of their variants. Check each pool on "
+                    "a gel before the library prep.",
+                ),
+            ),
+            holes=(INDEX_MARKS, INDEX_TAQ_UNITS),
+        ),
+        _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
+    )
+
+
+def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
+    """Pool the marked wells and sequence them, which both routes end their own stretch on."""
+    return Step(
+        "Pool and sequence",
+        instructions=(pooling_instruction, "Sequence the pool."),
+        expected=(
+            f"Reads for {one.wells} wells, every well told from the rest by the marks it carries.",
+        ),
+        notes=(
+            "Two plates on one flow cell are told apart by construction, because one axis of "
+            "the address is the plate.",
+        ),
+    )
+
+
+def _call_step(one: Validation) -> Step:
+    """Demultiplex, judge each well on depth and then identity, and compact out what failed."""
+    mark = "at least" if one.route.inclusive else "more than"
+    return Step(
+        "Call every well",
+        instructions=(
+            "Demultiplex the reads by address, checking each address rather than trusting a file.",
+            "Call a consensus a well, then compare it with that well's design base for base.",
+            "Reformat, compacting out the wells that failed.",
+        ),
+        expected=(
+            f"A well read {mark} {one.route.wanted_reads} times is called; route "
+            f"{one.route.name} tolerates {one.route.tolerable_reads} and warns between the two.",
+            "A pass matches across the whole designed region: both entry overhangs, the "
+            "fragment, the stuffer and the barcode.",
+        ),
+        notes=(
+            "A well read too thinly carries no verdict and is not a failure, so reformatting "
+            "does not compact it out.",
+            "More than one consensus is mixed, and mixed fails.",
+            "A design with no passing well is picked again from the same archive spot before "
+            "anyone re-synthesises it.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "A well's call is the right protein and the wrong barcode",
+                "It fails. A barcode that no longer names its member cannot be put right by the "
+                "linkage read later.",
+            ),
+        ),
     )
 
 
@@ -775,7 +1557,8 @@ REFERENCES: tuple[Reference, ...] = (
     Reference(
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "
         "directed evolution and machine learning, for index PCR marking a well on one "
-        "barcoded primer pair, twenty reads wanted and ten tolerable",
+        "barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and "
+        "ten tolerable",
         url="https://doi.org/10.1021/acssynbio.4c00625",
     ),
     Reference(

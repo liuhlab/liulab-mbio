@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.protocol.model import Well
+from liulab_mbio.protocol.model import Citation, Well
 from liulab_synbio import dmx
 
 KIT = """name\tgroup\tindex\toverhang5\tumi\toverhang3\tfinal_seq
@@ -155,3 +155,139 @@ def test_route_b_seats_each_sample_under_the_pair_its_address_names(tmp_path):
     assert plate.seating["H12"] == "forward 96, reverse 4"
     with pytest.raises(ValueError, match="do not fit"):
         dmx.index_plate("index", 97)
+
+
+def test_picking_fills_one_quarter_of_the_plate_at_a_time():
+    """288 wells give three full index plates, not four part-filled ones."""
+    picked = dmx.picked_plate("picked 1", 288)
+    assert len(picked.seating) == 288
+    assert picked.catalog == dmx.PICKED_CATALOG
+    assert set(picked.seating.values()) == {"quarter 1", "quarter 2", "quarter 3"}
+    assert picked.seating["A1"] == "quarter 1"
+    assert picked.seating["B1"] == "quarter 3"
+    assert "B2" not in picked.seating
+    with pytest.raises(ValueError, match="do not fit"):
+        dmx.picked_plate("picked 1", 385)
+
+
+def test_route_b_samples_one_quarter_of_a_picked_plate_into_each_index_plate():
+    """One well in four lines up under the head, so each pass is one full index plate."""
+    picked = dmx.picked_plate("picked 1", 288)
+    index = [dmx.index_plate(f"index {n}", 96, plate=n - 1) for n in (1, 2, 3)]
+    moves = dmx.sampling(picked, index)
+    assert [len(one.moves) for one in moves] == [96, 96, 96]
+    assert moves[0].instrument == dmx.MULTICHANNEL
+    assert moves[0].moves[0].volume_ul == dmx.SAMPLE_UL
+    assert moves[0].moves[1].source.well == "A3"
+    assert moves[0].moves[1].destination.well == "A2"
+    assert index[0].catalog == dmx.INDEX_CATALOG
+    with pytest.raises(ValueError, match="one index plate covers one quarter"):
+        dmx.sampling(picked, index[:2])
+
+
+def sized(route, designs, floor):
+    """Return what these designs take to read back, refusing the None a floor reading none gives."""
+    one = dmx.validation(route, designs, floor)
+    assert one is not None
+    return one
+
+
+def test_a_floor_reads_back_every_design_in_that_many_fragments_or_more():
+    """Omitted reads nothing, zero reads every design, and the rest is a comparison."""
+    some = (dmx.Design("two", 2), dmx.Design("five", 5), dmx.Design("twelve", 12))
+    assert dmx.validated(some, None) == ()
+    assert dmx.validated(some, 0) == some
+    assert [one.name for one in dmx.validated(some, 5)] == ["five", "twelve"]
+    assert dmx.validated(some, 13) == ()
+    with pytest.raises(ValueError, match="below none"):
+        dmx.validated(some, -1)
+    with pytest.raises(ValueError, match="at least one fragment"):
+        dmx.Design("none", 0)
+
+
+def test_the_bench_is_sized_from_the_designs_read_and_not_from_the_design_list():
+    """A design the floor leaves out costs no well, so the plates shrink by exactly those wells."""
+    some = tuple(dmx.Design(f"d{n}", 1 + n % 4) for n in range(72))
+    whole = sized(dmx.ROUTE_B, some, 0)
+    assert (whole.wells, len(whole.picked), len(whole.index)) == (288, 1, 3)
+    assert [len(one.seating) for one in whole.picked] == [288]
+    fewer = sized(dmx.ROUTE_B, some, 4)
+    assert len(fewer.designs) == 18
+    assert fewer.wells == 72
+    assert [len(one.seating) for one in fewer.picked] == [72]
+    assert len(fewer.index) == 1
+    assert dmx.validation(dmx.ROUTE_B, some, 5) is None
+    assert dmx.validation(dmx.ROUTE_B, some, None) is None
+
+
+def test_route_a_compresses_four_picked_plates_into_one_and_route_b_neither():
+    """Each route's plates follow from the shared wells, and neither pours the other's."""
+    many = tuple(dmx.Design(f"d{n}", 2) for n in range(400))
+    route_a = sized(dmx.ROUTE_A, many, 0)
+    assert route_a.wells == 1600
+    assert len(route_a.picked) == 5
+    assert len(route_a.compressed) == 2
+    with pytest.raises(ValueError, match="only route B"):
+        assert route_a.index
+    route_b = sized(dmx.ROUTE_B, many, 0)
+    assert len(route_b.index) == 17
+    assert [one.seating["A1"] for one in route_b.index[:2]] == [
+        "forward 1, reverse 1",
+        "forward 1, reverse 2",
+    ]
+    with pytest.raises(ValueError, match="only route A"):
+        assert route_b.compressed
+
+
+def test_the_steps_print_each_design_chance_beside_the_floor():
+    """The number reads as a choice: the floor is stated and the curve is printed beside it."""
+    some = (dmx.Design("two", 2), dmx.Design("eight", 8))
+    one = sized(dmx.ROUTE_B, some, 2)
+    steps = dmx.validation_steps(one)
+    assert [step.title for step in steps][:2] == [
+        "Array 2 design(s) and grow",
+        "Pick 4 colonies of each design",
+    ]
+    assert "2 fragment(s) or more" in " ".join(steps[0].notes)
+    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in steps[1].notes
+    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in steps[1].notes
+
+
+def test_route_b_carries_a_hole_at_the_marks_and_route_a_carries_none():
+    """The 192 index sequences are lab stock, and no source gives the Taq stock they amplify on."""
+    some = (dmx.Design("one", 2),)
+    route_b = dmx.validation_steps(sized(dmx.ROUTE_B, some, 0))
+    assert [hole.id for step in route_b for hole in step.holes] == ["B1", "B2"]
+    route_a = dmx.validation_steps(sized(dmx.ROUTE_A, some, 0))
+    assert [hole.id for step in route_a for hole in step.holes] == []
+
+
+def test_the_plates_a_pick_fills_name_where_their_numbers_were_read():
+    """Both routes pick into these two, so a reader of either page can follow the numbers back."""
+    some = (dmx.Design("one", 2),)
+    for route in (dmx.ROUTE_A, dmx.ROUTE_B):
+        cited = {
+            one.name: one.citation
+            for one in dmx.validation_materials(sized(route, some, 0))
+            if one.citation
+        }
+        assert cited["25 cm BioAssay plate"] == Citation("Qian SI", "Day 2")
+        assert cited[f"{dmx.PICKED_WELLS}-well culture plate"] == Citation("Qian SI", "Day 3")
+        assert all(one.source in dmx.SOURCES for one in cited.values())
+
+
+def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():
+    """Scaled back to a full plate the table is the SI's own, and the Taq carries no unit count."""
+    table = dmx.index_pcr_reaction()
+    assert round(sum(one.volume_ul for one in table.components), 2) == dmx.INDEX_PCR_UL
+    assert table.mix_volumes(dmx.INDEX_WELLS)[:4] == (144.0, 28.8, 7.2, 57.6)
+    taq = next(one for one in table.components if one.name.startswith("Taq"))
+    assert (taq.volume_ul, taq.stock, taq.final) == (0.05, "", "")
+
+
+def test_the_index_pcr_touches_down_before_it_plateaus():
+    """Ten cycles half a degree apart, then 25 more: 35 in all, as the SI's two loops spell out."""
+    stages = dmx.index_pcr_program().stages
+    assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
+    annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
+    assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]

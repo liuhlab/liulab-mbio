@@ -338,6 +338,29 @@ IGGA = Scheme(
 )
 
 
+#: The enzyme that cuts a cargo fragment out of its oligo, templated on the oligo rather than
+#: carried by a primer: all of a gene's fragments share one primer pair, so a primer-borne site
+#: would give every fragment of that gene the same overhang. It is one the method already
+#: reserves, which is what keeps a designed block free of it.
+SYNTHESIS_ENZYME = "BsmBI"
+
+#: How the orthogonal primer set divides across its three roles, in the order the set is allotted
+#: in. 96 inner primers makes one batch exactly one plate of PCR2, which is what fixes that
+#: number; the other two index the batch together and so multiply.
+ORTHOGONAL_SPLIT: tuple[tuple[str, int], ...] = (
+    ("P2 gene reverse", 96),
+    ("P1 batch forward", 35),
+    ("P3 batch outer", 34),
+)
+
+#: The share of designs assembled from that many fragments with a perfect clone among four
+#: colonies, as Lund et al. 2024 measured it. The only measured curve the fragment count is read
+#: against; a count absent from it was not measured and nothing interpolates one.
+LUND_SUCCESS: Mapping[int, float] = MappingProxyType(
+    {2: 1.0, 3: 0.938, 5: 0.846, 8: 0.667, 12: 0.400, 16: 0.0}
+)
+
+
 def _check_interface() -> None:
     """Check the method reads the cargo pair off its own DNA.
 

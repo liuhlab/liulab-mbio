@@ -11,16 +11,19 @@ carry their own enzyme mix and so exist only for BsaI-HFv2 and BsmBI-v2.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Literal
 
 from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol.model import (
+    Citation,
     Component,
     Incubation,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     ThermocyclerProgram,
 )
@@ -131,8 +134,24 @@ _KIT_BUFFER_UL = 2.0
 END_SOAK_CELSIUS = 60.0
 END_SOAK_SECONDS = 300
 
-#: NEB asks for the fewest cycles that work when a Golden Gate insert is an amplicon.
+#: NEB asks for the fewest cycles that work when a Golden Gate insert is an amplicon, and where
+#: it asks. The count is the kit manual's, not the polymerase's, so it travels with its own
+#: citation rather than through `PcrProfile.cycles`.
 GOLDEN_GATE_PCR_CYCLES = 20
+GOLDEN_GATE_PCR_CYCLES_CITATION = Citation("E1601", "FAQ 11")
+
+#: The documents a citation in a Golden Gate protocol resolves against.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "E1601": Source(
+            "New England Biolabs #E1601S/L NEBridge Golden Gate Assembly Kit (BsaI-HFv2) "
+            "instruction manual",
+            edition="version 5.0_6/26",
+            url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
+            date="2026-09-12",
+        )
+    }
+)
 
 
 def golden_gate_temperature(enzyme: Enzyme) -> float:

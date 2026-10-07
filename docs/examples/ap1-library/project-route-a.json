@@ -25,7 +25,7 @@
   "batch_size": 96,
   "coverage": 300,
   "validate_from": 0,
-  "route": "B",
+  "route": "A",
   "seed": 0,
   "reserved_extra": [],
   "barcode": {

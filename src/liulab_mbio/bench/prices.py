@@ -97,6 +97,11 @@ class PriceRow:
         return f"{self.key} {bands}".strip() if bands else self.key
 
 
+def _plain(value: Decimal) -> str:
+    """Say a quantity without the trailing zeros a `Decimal` built from a float carries."""
+    return f"{value.normalize():f}"
+
+
 @dataclass(frozen=True, slots=True)
 class Headroom:
     """How far a quantity sits from the edges of the band it fell in."""
@@ -111,13 +116,19 @@ class Headroom:
         return None if self.band.high is None else self.band.high - self.value
 
     def __str__(self) -> str:
-        """Say the fact the way a protocol shows it."""
+        """Say the fact the way a protocol shows it.
+
+        Examples
+        --------
+        >>> str(Headroom("length", Decimal("350.0"), Band("length", Decimal(301), Decimal(350))))
+        '350 length, no slack above it at all'
+        """
         gap = self.above
         if gap is None:
-            return f"{self.value:f} {self.quantity}, no band above it"
+            return f"{_plain(self.value)} {self.quantity}, no band above it"
         if gap == 0:
-            return f"{self.value:f} {self.quantity}, no slack above it at all"
-        return f"{self.value:f} {self.quantity}, {gap:f} below the next band"
+            return f"{_plain(self.value)} {self.quantity}, no slack above it at all"
+        return f"{_plain(self.value)} {self.quantity}, {_plain(gap)} below the next band"
 
 
 @dataclass(frozen=True, slots=True)
@@ -274,6 +285,11 @@ class Item:
         quantity where it is not given.
     units
         What a ``per unit`` row is multiplied by. The item's own quantity where it is not given.
+    headroom
+        How far a quantity sits from its band's top edge, where the caller knows the bands
+        without a tariff. A vendor's bands are a fact about the catalogue, so a quantity carries
+        its band whether or not anyone holds a price for it. The record's own headroom is used
+        instead wherever a row prices the item.
     """
 
     item: str
@@ -283,6 +299,7 @@ class Item:
     key: str = ""
     quantities: Mapping[str, float] | None = None
     units: float | None = None
+    headroom: tuple[Headroom, ...] = ()
 
 
 def bill(
@@ -322,6 +339,7 @@ def bill(
                     one.quantity,
                     unit=one.unit,
                     key=one.key,
+                    headroom="; ".join(str(gap) for gap in one.headroom),
                     hole=Hole(
                         f"P{n}",
                         f"no row prices {one.key or one.item!r} at "
