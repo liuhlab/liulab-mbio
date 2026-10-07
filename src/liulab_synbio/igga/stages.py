@@ -83,6 +83,7 @@ POOL_HOLES: tuple[Hole, ...] = (
         where="block assembly, the destination",
         filled_by="a destination the pieces assemble into, as the method's DMX vector is for "
         "cargo carrying no flanks of its own",
+        issue="liuhlab/liulab-mbio#334",
     ),
     Hole(
         "H26",
@@ -91,6 +92,7 @@ POOL_HOLES: tuple[Hole, ...] = (
         where="block assembly, the reaction and its program",
         filled_by="NEB's own Golden Gate table, once the assembly has a destination to be "
         "sized against",
+        issue="liuhlab/liulab-mbio#334",
     ),
 )
 
