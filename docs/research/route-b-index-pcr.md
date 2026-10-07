@@ -316,9 +316,9 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
 - **Plate format other than 96.** A 384-well block is named for cycling only. Every barcode,
   pooling and plate-map number in both documents is 96-well, so Route B at 384 wells per plate is
   not published.
-- **Primers for our vector.** None exist. LevSeq's are pET-22b(+)-specific and the SI hands the
-  redesign to the user. What a new pair must satisfy is a primer-design question, not a number
-  this note can supply.
+- **Primers for our vector.** ~~None exist.~~ **Closed by `docs/research/route-b-index-primers.md`
+  (#312)**, which found the premise wrong: Route B reads the DMX vector, not the working vector,
+  and the DMX vector is pET-derived, so LevSeq's own annealing regions bind it verbatim.
 - **Whether the 24 nt barcodes may be re-ordered as oligos.** They come from the ONT native
   barcoding kit; ONT's terms were not read for this note.
 - **The mean-error criterion.** "Mean error < 10% for each well" has no definition in either
