@@ -1,10 +1,16 @@
 """The oligo pool a library's blocks are synthesised from, and the primers that amplify it.
 
 A block longer than one oligo is ordered as several and assembled in one pot before it is a
-part. This is where that happens for this method: each block is split by `liulab_mbio.split`,
-each fragment is dressed as an oligo by `liulab_mbio.bench.pools`, and the method's own choices
-are what this module supplies -- which enzyme cuts the oligo, which two overhangs are held out
-by name, and which primer of the orthogonal set serves which role.
+part. This is where that happens for this method: each block's cargo is split by
+`liulab_mbio.split`, each fragment is dressed as an oligo by `liulab_mbio.bench.pools`, and the
+method's own choices are what this module supplies -- which enzyme cuts the oligo, which two
+overhangs are held out by name, and which primer of the orthogonal set serves which role.
+
+**The cargo is split, not the whole block.** A block's external stuffers are the flanks its
+destination already carries, and they are each other's reverse complement but for the overhang:
+synthesising them would give every block two ends that anneal to each other and nothing to
+assemble into. `cargo_record` cuts them off, so the outermost overhangs are the ones the part
+enters and leaves its destination on.
 
 The two reserved overhangs are the method's own interface, read off its stuffers rather than
 stated: a part enters the vector on one and leaves its cloning scar as the other, so an internal
@@ -34,7 +40,12 @@ from liulab_mbio.bench.pools import (
 from liulab_mbio.bench.prices import Band, Item
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.split import CargoSplit, Fragment, fewest_pieces, split_cargo
-from liulab_synbio.igga.method import LUND_SUCCESS, ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME
+from liulab_synbio.igga.method import (
+    LUND_SUCCESS,
+    ORTHOGONAL_SPLIT,
+    SYNTHESIS_ENZYME,
+    Scheme,
+)
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import Project
 
@@ -184,7 +195,7 @@ def design_pool(
     key: str = "oligo-pool",
     seed: int = 0,
 ) -> PoolPlan:
-    """Split every block of `parts` and dress each fragment as one oligo of one pool.
+    """Split the cargo of every block of `parts`, each fragment one oligo of one pool.
 
     A batch is one PCR1 and one plate of PCR2, so a gene takes its own inner primer from the
     batch it sits in and the batch takes a forward and an outer primer of its own. The batches
@@ -233,7 +244,7 @@ def design_pool(
         batch, place = batches[index]
         if not part.sequence:
             raise ValueError(f"block {part.name!r} is empty, so there is nothing to synthesise")
-        record = part_record(part)
+        record = cargo_record(part, scheme)
         try:
             split = split_cargo(
                 record,
@@ -273,9 +284,17 @@ def design_pool(
     )
 
 
-def part_record(part: Part) -> SequenceRecord:
-    """Return one block as a record named for its part, which is what the split carries."""
-    return SequenceRecord(part.sequence, name=part.name)
+def cargo_record(part: Part, scheme: Scheme) -> SequenceRecord:
+    """Return the cargo of one block as a record named for its part: what the split carries.
+
+    The cargo is what the external enzyme releases, the overhang the part enters on through the
+    cloning scar. The stuffers either side of it are the destination's own bases and are not
+    synthesised.
+    """
+    overhang = scheme.external.overhang_length
+    start = len(scheme.external_stuffer_5) - overhang
+    end = len(part.sequence) - len(scheme.external_stuffer_3) + overhang
+    return SequenceRecord(part.sequence[start:end], name=part.name)
 
 
 def _check_batch(size: int) -> None:

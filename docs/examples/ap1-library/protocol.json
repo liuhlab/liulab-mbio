@@ -4,7 +4,7 @@
   "overview": {
     "Method": "iGGA",
     "Part lists": "N 24, DBD 24, C 24",
-    "Parts": "72 blocks, assembled from 153 oligos",
+    "Parts": "72 blocks, assembled from 131 oligos",
     "Constructs": "13,824 distinct",
     "Rounds": "3, one a part list",
     "Opened with": "BbsI-HF (R3539)",
@@ -138,7 +138,7 @@
       "supplier": "",
       "catalog": "",
       "storage": "-20 °C",
-      "amount": "153 oligos, every one 350 nt",
+      "amount": "131 oligos, every one 350 nt",
       "note": "ordered from pool.tsv, which says which block each oligo is a piece of",
       "contains": [],
       "rules": [],
@@ -167,12 +167,12 @@
       "citation": null
     },
     {
-      "name": "BsmBI-v2",
-      "supplier": "New England Biolabs",
-      "catalog": "R0739",
+      "name": "NEBridge Golden Gate Assembly Kit, BsmBI-v2",
+      "supplier": "NEB",
+      "catalog": "E1602",
       "storage": "-20 °C",
       "amount": "one assembly per block",
-      "note": "cuts every oligo back to its own fragment, and is reserved for that",
+      "note": "its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them",
       "contains": [],
       "rules": [],
       "citation": null
@@ -1196,13 +1196,13 @@
     {
       "title": "Order the oligo pool and the primers that amplify it",
       "instructions": [
-        "Order every row of pool.tsv as one synthesised oligo pool, 153 members at 350 nt.",
+        "Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.",
         "Order every row of pool-primers.tsv as an ordinary oligo: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer."
       ],
       "cautions": [],
       "notes": [
         "pool.tsv names each oligo's block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.",
-        "152 oligos is what the length budget allows for; this design spends 153, one more on N_ATF7, whose forced cuts spell no legal overhang."
+        "131 oligos is the fewest the length budget allows for."
       ],
       "tables": [],
       "programs": [],
@@ -1210,7 +1210,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "One pool, 153 oligos, every one 350 nt and no length spread, which is what the padding is for.",
+        "One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for.",
         "74 primers, each 20 nt."
       ],
       "troubleshooting": [
@@ -1634,45 +1634,161 @@
       ]
     },
     {
-      "title": "Assemble each block from its 1 to 5 pieces",
+      "title": "Assemble each cargo into DMX-iGGA from its 1 to 5 pieces",
       "instructions": [
-        "Set up one BsmBI assembly a well, holding that block's own PCR2 pieces and nothing from another well."
+        "Open DMX-iGGA with BbsI and SrfI, the digest the first round runs on it, and clean it up.",
+        "Set up one assembly a well, holding that block's own PCR2 pieces, the opened destination, and nothing from another well.",
+        "Transform, plate on 100 µg/mL carbenicillin, and pick one colony a block."
       ],
       "cautions": [],
       "notes": [
-        "BsmBI cuts each oligo back to its fragment, so the primer sites, the recognition sites and the padding all stay outside the block."
+        "BsmBI cuts each oligo back to its fragment, so the primer sites, the recognition sites and the padding all stay outside the cargo.",
+        "The table is sized at the most pieces any block takes, so one master mix covers the plate; a well with fewer pieces fills fewer of its DNA rows."
       ],
-      "tables": [],
-      "programs": [],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "DMX-iGGA, opened",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (167.2 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "PCR2 piece 1",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (10.16 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "PCR2 piece 2",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (10.16 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "PCR2 piece 3",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (10.16 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "PCR2 piece 4",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (10.16 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "PCR2 piece 5",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (10.16 ng)",
+              "master_mix": false,
+              "citation": null
+            },
+            {
+              "name": "T4 DNA Ligase Buffer",
+              "volume_ul": 2.0,
+              "stock": "10X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "NEBridge Golden Gate Enzyme Mix",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": true,
+              "citation": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 11.0,
+              "stock": "",
+              "final": "to 20 µL",
+              "master_mix": true,
+              "citation": null
+            }
+          ],
+          "title": "Golden Gate assembly, NEBridge kit E1602",
+          "reactions": 72,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Digest",
+                  "temperature_c": 42.0,
+                  "seconds": 60,
+                  "citation": null
+                },
+                {
+                  "label": "Ligate",
+                  "temperature_c": 16.0,
+                  "seconds": 60,
+                  "citation": null
+                }
+              ],
+              "cycles": 30,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "End soak",
+                  "temperature_c": 60.0,
+                  "seconds": 300,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "Golden Gate assembly",
+          "lid_temperature_c": null
+        }
+      ],
       "timers": [],
       "transfers": [],
       "gels": [],
       "expected": [
-        "72 blocks, 133 to 1149 bp, as parts.tsv spells them.",
-        "Each block reads: 5' external stuffer, coding bases, internal stuffer, barcode, 3' external stuffer."
+        "72 plasmids, one a block: DMX-iGGA carrying that block's cargo, 83 to 1,099 bp of it.",
+        "Each cargo reads: the overhang its part enters on, its coding bases, the internal stuffer, its barcode, and the TTCC cloning scar. The external stuffers parts.tsv spells either side of it are the destination's own bases."
       ],
       "troubleshooting": [
         {
           "problem": "A block comes out short",
           "solution": "A piece was missing from the well. Check that well's PCR2 lane before assembling it again; the pieces of one block are not interchangeable."
+        },
+        {
+          "problem": "Colonies carrying the destination with no cargo",
+          "solution": "The destination was not opened to completion. Run a little of its digest on a gel before setting the plate up again."
         }
       ],
       "holes": [
         {
           "id": "H25",
-          "missing": "nothing names what the assembled pieces close into, or what selects the closure",
+          "missing": "only the first position's cargo closes into this build's destination; a later position enters on an overhang no backbone here presents",
           "kind": "undecided",
-          "where": "block assembly, the destination",
-          "filled_by": "splitting the cargo rather than the whole block, so the pieces close into the DMX backbone the parent's own BsmBI digest leaves",
-          "issue": "liuhlab/liulab-mbio#373"
-        },
-        {
-          "id": "H26",
-          "missing": "no source sets the DNA in, the enzyme, the ligase or the cycling for a block assembly",
-          "kind": "undecided",
-          "where": "block assembly, the reaction and its program",
-          "filled_by": "NEB's own Golden Gate table, once the assembly has a destination to be sized against",
-          "issue": "liuhlab/liulab-mbio#373"
+          "where": "block assembly, the destination for every position after the first",
+          "filled_by": "one destination a position, each this vector carrying that position's own entry overhang, as a retrofit already writes one",
+          "issue": "liuhlab/liulab-mbio#376"
         }
       ]
     },
@@ -1713,11 +1829,11 @@
       "cautions": [],
       "notes": [
         "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
-        "1 fragment(s): 21 design(s), 100.0% of picks clean",
-        "2 fragment(s): 34 design(s), 100.0% of picks clean",
+        "1 fragment(s): 40 design(s), 100.0% of picks clean",
+        "2 fragment(s): 16 design(s), 100.0% of picks clean",
         "3 fragment(s): 6 design(s), 93.8% of picks clean",
         "4 fragment(s): 9 design(s), 89.2% of picks clean",
-        "5 fragment(s): 2 design(s), 84.6% of picks clean",
+        "5 fragment(s): 1 design(s), 84.6% of picks clean",
         "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
       ],
       "tables": [],
@@ -7278,6 +7394,22 @@
       "url": "https://www.idtdna.com/page/?p=890"
     },
     {
+      "text": "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26",
+      "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf"
+    },
+    {
+      "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+      "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100"
+    },
+    {
+      "text": "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
+      "url": "https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines"
+    },
+    {
+      "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
+      "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
+    },
+    {
       "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
       "url": ""
     },
@@ -7373,15 +7505,15 @@
     "rows": [
       {
         "item": "AP-1 DESynR oligo pool",
-        "quantity": 153,
+        "quantity": 131,
         "unit": "oligos",
         "key": "oligo-pool",
         "charge": "",
-        "headroom": "153 count, 347 below the next band; 350 length, no slack above it at all",
+        "headroom": "131 count, 369 below the next band; 350 length, no slack above it at all",
         "citation": null,
         "hole": {
           "id": "P1",
-          "missing": "no row prices 'oligo-pool' at 153 oligos",
+          "missing": "no row prices 'oligo-pool' at 131 oligos",
           "kind": "price",
           "where": "AP-1 DESynR oligo pool, money",
           "filled_by": "a price record holding a row for this key",
