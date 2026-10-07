@@ -458,19 +458,21 @@ def sweep_three_counts(ligase: LigaseProfile | None, number: str) -> None:
 
 
 def yes(ok: bool) -> str:
-    """A round-trip cell."""
+    """Show whether a design rebuilt its own input."""
     return "yes" if ok else "no"
 
 
 def outcome(answer: Split) -> str:
-    """How a search ended: solved, out of time, or no legal set at all."""
+    """Say how a search ended: solved, out of time, or no legal set at all."""
     if not answer.feasible:
         return "refused"
     return "stopped early" if answer.note else "ok"
 
 
 def sweep_budgets(ligase: LigaseProfile | None, number: str) -> None:
-    """Does a bigger wall-clock budget turn `stopped early` into `proved optimal`? (M2)
+    """Measure what a bigger wall-clock budget buys the branch and bound (M2).
+
+    The question is whether more time turns `stopped early` into `proved optimal`.
 
     One row per budget at the fragment count and cap the earlier run showed stopping early.
     Node count is reported for every cell, abandoned or not: its growth is the finding.
@@ -557,7 +559,7 @@ def sweep_scale(ligase: LigaseProfile | None, number: str) -> None:
                 row += [
                     show(answer),
                     f"{answer.seconds * 1000:.0f}",
-                    "stopped early" if answer.note else "ok",
+                    outcome(answer),
                 ]
             peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6
             row += [f"{peak:.0f}", lund(least) or "off their scale"]
