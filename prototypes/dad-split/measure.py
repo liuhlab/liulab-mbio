@@ -588,6 +588,100 @@ def sweep_scale(ligase: LigaseProfile | None, number: str) -> None:
     )
 
 
+def sweep_four_parts(ligase: LigaseProfile | None, oligo: int, number: str) -> None:
+    """All four searches over the 72 AP-1 parts, the fourth uncapped (M4).
+
+    The uncapped branch and bound is the one that can prove optimality rather than prove it
+    over kept candidates, so the proved and stopped columns are the point of the table.
+    """
+    budget = Budget(oligo=oligo)
+    uncapped = ("branch and bound, uncapped", runner(clever_split, cap=None, seconds_limit=15.0))
+    rows = []
+    for name, run in (*SEARCHES, uncapped):
+        began = time.perf_counter()
+        answers = []
+        for part, sequence in parts():
+            answer = run(sequence, ligase, budget=budget)
+            answers.append((part, sequence, answer))
+            if "uncapped" in name:
+                print(
+                    f"<progress> {oligo} {part} {len(sequence)}bp {answer.fragments}f "
+                    f"{answer.value:.4f} {answer.seconds:.1f}s {outcome(answer)}",
+                    flush=True,
+                )
+        seconds = time.perf_counter() - began
+        values = [answer.value for _, _, answer in answers if answer.feasible]
+        stopped = sum(1 for _, _, answer in answers if answer.feasible and answer.note)
+        searching = "bound" in name
+        slow = max(answers, key=lambda one: one[2].seconds)
+        rows.append(
+            [
+                name,
+                f"{sum(answer.feasible for _, _, answer in answers)}/{len(answers)}",
+                f"{len(answers) - stopped}" if searching else "n/a",
+                f"{stopped}" if searching else "n/a",
+                sum(answer.fragments for _, _, answer in answers),
+                f"{min(values):.4f}",
+                f"{statistics.median(values):.4f}",
+                f"{seconds * 1000 / len(answers):.1f}",
+                f"{seconds:.1f}",
+                f"{slow[0]}, {len(slow[1])} bp, {slow[2].fragments} frags, {slow[2].seconds:.1f} s",
+            ]
+        )
+    table(
+        f"{number}. Four searches over all 72 AP-1 parts, {oligo} nt oligo, the uncapped "
+        "branch and bound held to 15 s per part",
+        [
+            "search",
+            "parts solved",
+            "proved optimal",
+            "stopped early",
+            "oligos in total",
+            "worst fidelity",
+            "median fidelity",
+            "ms per part",
+            "sweep (s)",
+            "slowest part",
+        ],
+        rows,
+    )
+
+
+def sweep_window(ligase: LigaseProfile | None, number: str) -> None:
+    """Whether a wider window removes the set-fidelity greedy's refusals (M5)."""
+    sequence = product()
+    span = len(sequence) - 4
+    rows = []
+    for count in (12, 13, 14):
+        budget = Budget(oligo=54 + 24 + -(-span // count))
+        row: list[object] = [count]
+        for width in (16, 32, 64):
+            answer = greedy_set_split(
+                sequence,
+                budget=budget,
+                profile=ligase,
+                reserved=RESERVED,
+                count=count,
+                window=width,
+            )
+            row += [show(answer), f"{answer.seconds * 1000:.0f}"]
+        rows.append(row)
+    table(
+        f"{number}. The set-fidelity greedy's window widened — 2,276 bp cargo, oligo widened "
+        "per row as in M1c",
+        [
+            "fragments",
+            "window 16",
+            "ms",
+            "window 32",
+            "ms",
+            "window 64",
+            "ms",
+        ],
+        rows,
+    )
+
+
 def heading(ligase: LigaseProfile | None) -> None:
     """Say what scored the tables below."""
     held = "FileS03_T4_18h_25C.xlsx (user-held T4 18 h 25 C)"
@@ -598,7 +692,7 @@ def heading(ligase: LigaseProfile | None) -> None:
 
 def main() -> None:
     """Print the tables the argument names, or every table."""
-    wanted = sys.argv[1:] or ["old", "m1", "m2", "m3"]
+    wanted = sys.argv[1:] or ["old", "m1", "m2", "m3", "m4", "m5"]
     ligase = profile()
     print("# Prototype measurements for issue #261\n")
     heading(ligase)
@@ -621,6 +715,12 @@ def main() -> None:
         sweep_budgets(ligase, "M2")
     if "m3" in wanted:
         sweep_scale(ligase, "M3")
+    if "m4" in wanted or "m4a" in wanted:
+        sweep_four_parts(ligase, 300, "M4a")
+    if "m4" in wanted or "m4b" in wanted:
+        sweep_four_parts(ligase, 350, "M4b")
+    if "m5" in wanted:
+        sweep_window(ligase, "M5")
 
 
 if __name__ == "__main__":

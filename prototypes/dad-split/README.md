@@ -69,6 +69,8 @@ Tables 1 to 8 measure the first two searches. Three more answer what the first r
 | M1c | All three against fragment count on the 2,276 bp cargo. |
 | M2 | Whether a wall-clock budget of 10, 60 or 300 seconds turns the branch and bound's `stopped early` into a proof, and what the nodes do meanwhile. |
 | M3 | How the dynamic program, the greedies and the branch and bound scale to 20 kb of cargo, at a 300 nt and at a 1,000 nt oligo. |
+| M4a, M4b | All four searches over the 72 parts, the fourth an uncapped branch and bound held to 15 s per part, so the proved and stopped columns mean optimality and not optimality over kept candidates. |
+| M5 | Whether widening the set-fidelity greedy's window removes the refusals M1c found at 13 and 14 fragments. |
 
 M3's cargo is AP-1 parts concatenated in frame, each trimmed to a codon boundary and the list
 cycled. Random DNA would change the base composition, and the answer with it.
