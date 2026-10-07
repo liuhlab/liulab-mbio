@@ -73,6 +73,9 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(f"liulab_synbio igga plan {AP1}/project.json --out {OUT}",),
         writes=(
             "barcodes.tsv",
+            "block-vector-1.dna",
+            "block-vector-2.dna",
+            "block-vector-3.dna",
             "changes.tsv",
             "library-read-primers.tsv",
             "parts.tsv",
