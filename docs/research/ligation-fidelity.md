@@ -458,6 +458,68 @@ against one-pot numbers whichever ligase it measures, so swapping in the matchin
 labelling problem for an accuracy problem in the loose direction. The enzyme's own one-pot matrix
 stays the score; a second ligase's matrix is read for what it compares, not for what it scores.
 
+### What it is read for instead: one overhang's on-target rate
+
+`liulab_mbio.overhangs.on_target` is what such a profile is read for. It reports, per overhang,
+the correct Watson-Crick pair per 100,000 events on the profile's own sheet, and names the ones
+below `STRONG_LIGATION`. It returns no score, nothing ranks on it, and the fidelity number above
+does not move.
+
+**The comparison is only honest at matched buffer.** The paragraphs above this sub-section reason
+from T7 against T4 in standard T4 buffer, and that is the wrong pair of cells for a reaction run
+in PEG. PEG raises both ligases, so a T7 PEG number read against T4 in standard buffer flatters
+T7 and a T7 standard-buffer number read against T4 PEG damns it. The sheets to compare are
+`File S6. T4 PEG` against `File S7. T7 PEG`, and `File S1. T4` against `File S2. T7`. Measured on
+a user-held copy of `File S1_NAR.xlsx`, correct Watson-Crick pair per 100,000 events:
+
+| Overhang | T4 | T7 | T4 PEG | T7 PEG | T7 PEG / T4 PEG |
+| --- | --- | --- | --- | --- | --- |
+| `AGGA` | 325.3 | 95.5 | 302.3 | 275.7 | 0.91 |
+| `AGAT` | 336.7 | 66.5 | 284.6 | 175.8 | 0.62 |
+| `GCAT` | 343.3 | 497.2 | 282.4 | 458.9 | 1.62 |
+| `TTCC` | 400.0 | 165.0 | 358.9 | 335.7 | 0.94 |
+
+Those four are the AP-1 example's three entry overhangs and its cloning scar. At matched buffer
+T7 costs `AGAT` 38% of its rate and leaves `GCAT` better than T4 — which is why the check is an
+absolute floor and not a ratio. A ratio rewards `GCAT` for no bench reason and condemns `AGAT`,
+which at 175.8 is in no trouble at all.
+
+**The A/T-rich overhangs usually cited are unreachable, so they do not justify the floor.** The
+seven-fold losses quoted for `TTAA`, `TATA`, `TAAA`, `TTTA` and `AAAA` describe overhangs
+`liulab_mbio.overhangs.refusal` already refuses — the first two as palindromes, the last three as
+uniform. Of the 256 four-base overhangs, 216 are reachable and 40 are not (16 palindrome, 24
+uniform). The whole reachable tail below the floor is nine strand pairs:
+
+| Overhang | T4 PEG | T7 PEG | ratio |
+| --- | --- | --- | --- |
+| `TAGA` / `TCTA` | 173.8 | 60.8 | 0.35 |
+| `TCAA` / `TTGA` | 165.2 | 63.2 | 0.38 |
+| `TGAA` / `TTCA` | 212.6 | 69.3 | 0.33 |
+| `CTAA` / `TTAG` | 204.2 | 71.8 | 0.35 |
+| `CTTA` / `TAAG` | 238.9 | 74.2 | 0.31 |
+| `ACTA` / `TAGT` | 205.9 | 85.7 | 0.42 |
+| `AGAA` / `TTCT` | 276.4 | 86.1 | 0.31 |
+| `AAGA` / `TCTT` | 256.8 | 86.5 | 0.34 |
+| `TACA` / `TGTA` | 275.2 | 99.9 | 0.36 |
+
+About threefold, not sevenfold, and every one of the nine is three A/T bases plus one G or C.
+**The floor is `STRONG_LIGATION`**, NEB's own threshold for a strong Watson-Crick pair, already
+sourced in section 5 and reused rather than added to. Over the 216 reachable overhangs on
+`File S7. T7 PEG` it warns on 18 — those nine pairs, counted on both strands — leaves AP-1's
+worst at 175.8 silent, and a floor of 50 would warn on nothing at all.
+
+**What a low rate costs is colonies, not product.** Bilotti's counts are of the *correct* pair,
+so a threefold loss is threefold fewer good joins. Each iGGA round's tube holds one entry overhang
+and the cloning scar and nothing else — `liulab_synbio.igga.gate.LIGATION_OVERHANGS` — so its
+fidelity saturates and a set comparison has nothing to discriminate at two. Yield is what is at
+risk, and section 11 records
+Strzelecki 2024 attributing it to duplex strength with no count matrix capturing it.
+
+**Nothing is designed on it.** `liulab_synbio.igga.standard` keeps ranking candidates on the
+enzyme's own shipped matrix. The profile is a file the user holds, so ranking on it would make the
+same project yield different overhangs depending on whether that file is present, and a design
+that is not reproducible from the project alone costs more than the overhangs it would save.
+
 ## 9. Regeneration
 
 ```sh

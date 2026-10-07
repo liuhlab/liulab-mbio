@@ -99,6 +99,14 @@ jobs:
         with:
           environments: docs
           locked: true
+      # Before the build, because a page that promises its files are what the command
+      # writes is wrong before it is rendered. `examples-check` regenerates each example
+      # into a temporary directory and compares the bytes; a red step is fixed by running
+      # the command the example's own page prints and committing what it writes. It is a
+      # task on the `docs` feature so that `pixi run check` never pays for it (#372), and
+      # it reports every example it reaches, including the one whose parent lives in
+      # `reference_docs/` and so can only be checked on a laptop that holds that tree.
+      - run: pixi run examples-check
       # `docs-build` is a task on the `docs` FEATURE, so pixi finds it in the one
       # environment that has zensical and no `-e` flag is needed. The task carries
       # `--strict`, so a dead link or a bad reference fails here — but not every kind of

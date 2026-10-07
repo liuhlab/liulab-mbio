@@ -31,6 +31,10 @@ _COLUMN = re.compile(r"[A-Z]+")
 #: What the archive names a matrix file after: the ligase, the incubation, the temperature.
 _CONDITIONS = re.compile(r"(T4|T7)[_-]0*(\d+)h[_-](\d+)C", re.IGNORECASE)
 
+#: Where a command line reads a matrix from when its option names none. The package ships no
+#: matrix; this points at a copy the user holds.
+LIGASE_MATRIX_ENV = "LIULAB_MBIO_LIGASE_MATRIX"
+
 #: What a file has to hold to be one of these, said in the refusal so a caller need not guess.
 EXPECTED = (
     "a header row of overhang labels, the same labels down the first column, and a count in "

@@ -7,6 +7,7 @@ import typer
 
 from liulab_mbio.bench.prices import PRICES_ENV
 from liulab_mbio.cloning.cli import plan_command
+from liulab_mbio.ligase import LIGASE_MATRIX_ENV
 from liulab_synbio.igga.plan import NAME_PATTERN, Kind, LibraryPlan, plan_igga
 from liulab_synbio.igga.vector import Site
 
@@ -55,11 +56,36 @@ def plan(
             "quantities compute without one; the money is then a hole.",
         ),
     ] = None,
+    ligase_matrix: Annotated[
+        Path | None,
+        typer.Option(
+            "--ligase-matrix",
+            envvar=LIGASE_MATRIX_ENV,
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="A ligase fidelity matrix you hold (.xlsx or .csv), to report how often the "
+            "ligase it measured joins each round's overhangs. Nothing is designed on it.",
+        ),
+    ] = None,
+    ligase_sheet: Annotated[
+        str,
+        typer.Option(
+            "--ligase-sheet",
+            help="Which sheet of that matrix to read, for a workbook holding several.",
+        ),
+    ] = "",
 ) -> None:
     """Plan the library PROJECT asks for, and write its sheets, records and protocol into OUT."""
     plan_command(
         lambda: plan_igga(
-            project, kind=_kind(kind), site=_site(site), pattern=pattern, prices=prices
+            project,
+            kind=_kind(kind),
+            site=_site(site),
+            pattern=pattern,
+            prices=prices,
+            profile=ligase_matrix,
+            profile_sheet=ligase_sheet or None,
         ),
         out,
         _summary,
