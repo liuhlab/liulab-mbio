@@ -71,7 +71,8 @@ application gets it. Add a `working_vector` key to name the backbone yours ends 
 steps carry its enzyme and that enzyme's cycling; this project names none, so those steps say
 what a vector would have fixed instead. Name one and the plan reads its cargo enzyme off that
 backbone first, then keeps every block clear of it: an enzyme a block spells cannot be the one
-that admits the library.
+that admits the library. A backbone carrying no ccdB cassette yet needs `--working-site` as
+well, which says where one goes.
 
 ## What a price costs
 

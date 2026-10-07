@@ -46,16 +46,26 @@ def plain(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
-def write_inputs(directory: Path, *, parts: str = "parts.fasta") -> Path:
-    """Write a parts FASTA, a vector carrying no stuffer, and the project naming both."""
+def write_inputs(directory: Path, *, parts: str = "parts.fasta", working: bool = False) -> Path:
+    """Write a parts FASTA, a vector carrying no stuffer, and the project naming both.
+
+    With `working`, a second such vector is written and named as the one the library moves into.
+    It carries no ccdB cassette either, so the run has to be told where to put one.
+    """
     (directory / parts).write_text(
         "".join(f">{name}\n{protein}\n" for one in LISTS for name, protein in one.items())
     )
     write_dna(
         SequenceRecord("TA" * 100, topology="circular", name="bare"), directory / "vector.dna"
     )
+    named = {}
+    if working:
+        write_dna(
+            SequenceRecord("TA" * 100, topology="circular", name="stock"), directory / "stock.dna"
+        )
+        named = {"working_vector": "stock.dna"}
     project = directory / "project.json"
-    project.write_text(json.dumps({**PROJECT, "parts": parts}), encoding="utf-8")
+    project.write_text(json.dumps({**PROJECT, "parts": parts, **named}), encoding="utf-8")
     return project
 
 
@@ -117,6 +127,28 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     assert bill is not None
     assert bill.rows[0].charge == "1200.00"
     assert bill.currency == "USD"
+
+
+def test_a_working_vector_carrying_no_cassette_is_planned_from_the_site_named(tmp_path):
+    """The project names the backbone; only the command line says where its cassette goes.
+
+    A run of its own, because this project's bare vector donates no cargo and so cannot pass the
+    gate the shared one passes.
+    """
+    out = tmp_path / "library"
+
+    result = run(
+        write_inputs(tmp_path, working=True),
+        out,
+        "--site",
+        "100-140",
+        "--working-site",
+        "100-140",
+    )
+
+    assert result.exit_code == 0, result.output
+    titles = [step.title for step in read_protocol(out / "protocol.json").steps]
+    assert any(one.startswith("Pick the working vector and confirm") for one in titles)
 
 
 # A ligase matrix as a supplement serves one: several sheets, one per ligase and buffer, so a

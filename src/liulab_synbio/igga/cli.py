@@ -40,6 +40,14 @@ def plan(
             "carries none.",
         ),
     ] = "",
+    working_site: Annotated[
+        str,
+        typer.Option(
+            "--working-site",
+            help="Feature name, or START-END, to put the ccdB cassette at where the working "
+            "vector carries none.",
+        ),
+    ] = "",
     pattern: Annotated[
         str,
         typer.Option("--pattern", help="Regex matching a record name, {position} for a position."),
@@ -82,6 +90,7 @@ def plan(
             project,
             kind=_kind(kind),
             site=_site(site),
+            working_site=_site(working_site),
             pattern=pattern,
             prices=prices,
             profile=ligase_matrix,
@@ -119,7 +128,7 @@ def _kind(text: str) -> Kind:
 
 
 def _site(text: str) -> Site | None:
-    """Read where a stuffer goes: nothing, a feature name, or a START-END span."""
+    """Read where a cassette goes: nothing, a feature name, or a START-END span."""
     if not text:
         return None
     start, sep, end = text.partition("-")
