@@ -74,6 +74,7 @@ from liulab_synbio.igga.bench import (
     SPRI_AFTER_DIGEST,
     SPRI_AFTER_LIGATION,
     TRANSFORMATION_NG,
+    digest_amount,
     pool_floor_ng_ul,
 )
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
@@ -1895,8 +1896,8 @@ def _final_steps(
     """Return the five steps that move the finished library into the working vector.
 
     One tube, staged: the cargo is freed and the enzymes that freed it are killed before the
-    working vector, the cargo enzyme and the ligase go in. Every mass in the stage is `H24`, and
-    a build naming no working vector carries `H31` in place of the enzyme and its cycling.
+    working vector, the cargo enzyme and the ligase go in. The assembly alone is `H24`, and a
+    build naming no working vector carries `H31` in place of the enzyme and its cycling.
     """
     product = rounds[-1].product
     span = released_cargo(product, scheme)
@@ -1993,7 +1994,7 @@ def _release_step_final(
                 "The sites that free the cargo belong to the vector the rounds ran in, not to "
                 "the cargo, so a backbone without them cannot release it.",
             ),
-            holes=(stages.CARGO_RELEASE, stages.FINAL_MASSES),
+            holes=(stages.CARGO_RELEASE,),
         )
     named = listed([one.name for one in enzymes])
     return Step(
@@ -2001,6 +2002,11 @@ def _release_step_final(
         instructions=(
             f"Digest the finished library with {named} at {DIGEST_CELSIUS:g} °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages.",
+        ),
+        tables=(
+            digest_reaction(
+                digest_amount((product.name or "the finished library", len(product))), enzymes
+            ),
         ),
         programs=(
             ThermocyclerProgram(
@@ -2026,7 +2032,6 @@ def _release_step_final(
                 "carrying the round's own vector rather than the working one.",
             ),
         ),
-        holes=(stages.FINAL_MASSES,),
     )
 
 
@@ -2117,7 +2122,8 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
     return Step(
         f"Clean the assembly up and electroporate into {STRAIN}",
         instructions=(
-            f"Add {SPRI_BEADS} and elute in water. The ratio is not a sourced one; see the hole.",
+            f"Add {SPRI_BEADS} at {SPRI_AFTER_LIGATION:g}x the volume and elute in water, as "
+            "every round did after its ligation.",
             f"Pulse at {pulse.volts:g} V, {pulse.ohms:g} Ω and {pulse.microfarads:g} µF in a "
             f"{pulse.cuvette_mm:g} mm cuvette.",
             f"Recover and grow at {GROWTH_CELSIUS:g} °C, as every round did.",
@@ -2154,7 +2160,6 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
                 "back; repeat the assembly from more of the released cargo.",
             ),
         ),
-        holes=(stages.FINAL_MASSES,),
     )
 
 

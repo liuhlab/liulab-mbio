@@ -81,15 +81,17 @@ ROUND_SELECTION = Hole(
 )
 
 
-#: What no source sets for the final assembly: no published document runs the step, so the DNA
-#: into it and the ratio it is cleaned up at are the method's own. Carried by the steps it bites
-#: in, and listed among the protocol's holes.
+#: What no source sizes in the final assembly. The paper runs its own last transfer by the
+#: methods it gives for a round, which sizes the release and the clean-up around this step. It
+#: does not size the step itself, where the cargo arrives unpurified in the release volume and
+#: no published reaction holds it.
 FINAL_MASSES = Hole(
     "H24",
-    "every mass in the final assembly is unsourced, the SPRI ratio with them",
+    "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working "
+    "vector's mass nor the ratio it meets the cargo at is sourced",
     "undecided",
-    where="final assembly, DNA in",
-    filled_by="a pilot, or carrying the round's own numbers across and saying so",
+    where="final assembly, the one-pot reaction",
+    filled_by="a pilot",
     issue="liuhlab/liulab-mbio#264",
 )
 

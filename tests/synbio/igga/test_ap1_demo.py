@@ -233,8 +233,8 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     linkage = ["H28"]
     # The final assembly: this project names no working vector, so what one would fix is H31. The
     # backbone the rounds ran in frees the cargo itself, so the release is written rather than
-    # held open, and every hole left in the stage is H24, the masses nobody published.
-    final = ["H31", "H24", "H31", "H24", "H24"]
+    # held open, and the one hole left is H24, over the assembly nobody sizes.
+    final = ["H31", "H31", "H24"]
     assert [hole.id for step in route_b.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
@@ -342,6 +342,10 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
     assert "At least 195,386 net colonies: the floor for the 0.99 chance" in " ".join(
         steps[3].expected
     )
+    # The paper runs its own last transfer by the methods it gives for a round, so the release
+    # and the clean-up around the assembly are sized rather than held open.
+    assert steps[1].tables[0].components[0].final.endswith("(1000 ng)")
+    assert "at 1x the volume" in steps[3].instructions[0]
 
 
 def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
@@ -353,11 +357,7 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
 
     assert working.enzyme.name in steps[0].title
     assert steps[2].programs[0].title == "Golden Gate assembly"
-    assert [hole.id for step in steps for hole in step.holes] == [
-        "H24",
-        "H24",
-        "H24",
-    ]
+    assert [hole.id for step in steps for hole in step.holes] == ["H24"]
 
 
 def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):

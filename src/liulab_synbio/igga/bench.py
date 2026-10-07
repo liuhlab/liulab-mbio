@@ -17,7 +17,7 @@ from liulab_mbio.bench.reactions import fits
 from liulab_mbio.protocol.model import Reference
 
 #: DNA into one digest, ng, and the volume it is cut in, with CutSmart buffer, µL.
-#: METHOD DETAILS p. e4.
+#: METHOD DETAILS p. e4, which runs the last transfer's digest on the same numbers.
 DIGEST_NG = 1000.0
 DIGEST_VOLUME_UL = 50.0
 
@@ -29,7 +29,8 @@ DIGEST_SECONDS = 3600
 DIGEST_CELSIUS = 37.0
 
 #: SPRI bead volume ratios, both eluted in water. They differ: twice the volume after the
-#: digest, once after the ligation. METHOD DETAILS pp. e4-e5.
+#: digest, once after the ligation. METHOD DETAILS pp. e4-e5, which cleans the last transfer up
+#: the same way, immediately before the electroporation.
 SPRI_AFTER_DIGEST = 2.0
 SPRI_AFTER_LIGATION = 1.0
 
