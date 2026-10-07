@@ -43,6 +43,7 @@ from liulab_synbio.igga.vector import (
     ccdb_cassette,
     destination_vector,
     domesticate_vector,
+    donor_cassette,
     round_cassette,
     working_vector,
 )
@@ -371,15 +372,13 @@ def test_the_gate_passes_the_tube_the_cargo_enzyme_opens_a_working_vector_in(wor
     assert "in 2 places" in judged[0].check.detail
 
 
-def test_a_working_vector_keeps_the_sites_only_a_round_bars(working: Destination):
+def test_a_working_vector_keeps_the_sites_no_tube_it_meets_bars(working: Destination):
     """BsaI never shares a tube with this vector, so its six sites are counted and left."""
     bsai = get_enzyme("BsaI")
     assert len(find_sites(working.record, bsai)) == 6
     assert bsai not in ccdb_cassette(get_enzyme(CARGO)).free_of
-    assert bsai in round_cassette(IGGA).free_of
-
-    with pytest.raises(ValueError, match="outside the cassette"):
-        destination_vector(working.record, IGGA, site=(0, 10))
+    assert bsai not in round_cassette(IGGA).free_of
+    assert donor_cassette(IGGA).enzyme == bsai
 
 
 def test_a_bsmbi_site_the_working_vector_still_reads_is_refused(plvx: SequenceRecord):
@@ -413,3 +412,80 @@ def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
 
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
         working_vector(plvx, [product], scheme=IGGA, site="EGFP")
+
+
+def donor_carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
+    """A circular donor backbone: the method's stuffer between the two external stuffers.
+
+    What the external enzyme frees from it is the same piece the internal enzyme frees from a
+    round's destination, which is the point: one stuffer, two tubes.
+    """
+    entry, scar = made.entry_overhang, made.scar_overhang
+    between = made.internal_stuffer[len(entry) : len(made.internal_stuffer) - len(scar)]
+    return SequenceRecord(
+        pad(flank) + made.external_stuffer_5 + between + made.external_stuffer_3 + pad(flank),
+        topology="circular",
+        name="donor",
+    )
+
+
+def test_each_cassette_bars_the_enzymes_of_its_own_tube_and_no_others():
+    made = scheme()
+    internal, external = made.internal, made.external
+    core_chopper, flank_chopper = get_enzyme(CORE_CHOPPER), get_enzyme(FLANK_CHOPPER)
+
+    assert round_cassette(made).free_of == (internal, core_chopper)
+    assert made.blunt_for_the_destination == (core_chopper,)
+    # The donor throws its backbone away, so nothing it reads outside the cassette is a defect.
+    assert donor_cassette(made).free_of == ()
+    assert donor_cassette(made).enzyme == external
+    assert flank_chopper not in round_cassette(made).free_of
+
+
+def test_a_destination_carrying_the_sites_that_release_its_cargo_is_accepted():
+    """The outboard external and blunt sites are what frees the cargo once the rounds are done."""
+    made = scheme()
+    vector = donor_carrier(made)
+
+    taken = destination_vector(vector, made)
+
+    assert taken.record is vector
+    assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+    assert find_sites(vector, made.external)
+
+
+def test_the_same_record_is_a_donor_to_the_other_tube():
+    made = scheme()
+    vector = donor_carrier(made)
+
+    taken = destination_vector(vector, made, cassette=donor_cassette(made))
+
+    end = taken.stuffer.end
+    assert vector.extract(taken.stuffer).startswith(made.entry_overhang)
+    assert vector.sequence[end : end + len(SCAR)] == made.scar_overhang
+
+
+def test_a_refusal_names_the_tube_the_site_would_be_cut_in():
+    made = scheme()
+    at = 20
+    vector = donor_carrier(made)
+    strayed, _ = replace(vector, at, at + len(made.internal.site), made.internal.site)
+
+    with pytest.raises(ValueError, match="acts in the digest that opens a round's destination"):
+        destination_vector(strayed, made)
+
+
+def test_a_donor_backbone_keeps_the_releasing_and_blunt_sites_it_is_built_on():
+    """Both lie outboard of the cargo, which is the whole point of holding a part in a backbone."""
+    made = scheme()
+    vector = donor_carrier(made)
+    held = donor_cassette(made)
+    taken = destination_vector(vector, made, cassette=held)
+
+    outboard = [
+        site
+        for site in find_sites(vector, (made.external, *made.blunt))
+        if not vector.covers(taken.stuffer, site.span)
+    ]
+
+    assert {site.enzyme for site in outboard} == {made.external, get_enzyme(FLANK_CHOPPER)}

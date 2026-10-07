@@ -427,9 +427,11 @@ def check_reaction(reaction: Reaction, *, project: Project) -> tuple[Judgement, 
 
     In a digest, each molecule carries the acting enzymes' sites exactly where it is meant to be
     cut and nowhere else, which for this method is two cuts: a destination gives up its stuffer
-    and a block gives up its cargo. In a ligation, the ends meeting in the tube are mutually
-    distinguishable, which for this method is the entry overhang and the cloning scar and nothing
-    else.
+    and a donor gives up its cargo. How many pieces those two cuts leave is the record's own
+    business -- a linear block falls into three and a circular donor backbone into two -- so it is
+    the cuts that are counted and not the pieces. In a ligation, the ends meeting in the tube are
+    mutually distinguishable, which for this method is the entry overhang and the cloning scar and
+    nothing else.
     """
     if reaction.kind == "ligation":
         return _ligation(reaction, project=project)
@@ -632,16 +634,25 @@ def _worst(name: str, group: Sequence[Check]) -> Check:
 def _cargo(block: SequenceRecord, project: Project) -> SequenceRecord:
     """Return what the external enzyme releases from one block, its entry overhang first.
 
+    The piece is taken by the end it leaves on and not by being the only one: a block held in a
+    circular donor backbone gives up two pieces with an overhang at each end, and the backbone is
+    the other. Every part leaves on the method's cloning scar whatever position it fills, and the
+    backbone cut from around it leaves on the overhang the part entered by, so the scar is what
+    tells the two apart.
+
     Raises
     ------
     ValueError
-        If the block does not give up exactly one piece with an overhang at each end.
+        If no piece ends on the scar, or more than one does.
     """
-    released = _released(block, project.scheme.external)
+    scar = project.scheme.cloning_scar
+    released = [
+        piece for piece in _released(block, project.scheme.external) if piece.right_overhang == scar
+    ]
     if len(released) != 1:
         raise ValueError(
-            f"{project.scheme.external.name} releases {len(released)} cargo from this block, "
-            "and a block carries one"
+            f"{project.scheme.external.name} releases {len(released)} piece(s) of this block "
+            f"ending on the cloning scar {scar}, and a donor carries one cargo"
         )
     return SequenceRecord(block.bases(released[0].start, released[0].end))
 

@@ -362,7 +362,7 @@ def _cassette(enzyme: Enzyme, payload: str, *, left: str = "", right: str = "") 
         + reach
         + (right or IGGA.scar_overhang)
     )
-    return Cassette(bases, enzyme, ())
+    return Cassette(bases, enzyme, (), "the digest this stand-in is cut in")
 
 
 @pytest.fixture(scope="module")
