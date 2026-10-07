@@ -76,7 +76,11 @@ from liulab_synbio.igga.bench import (
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
-from liulab_synbio.igga.coverage import RoundCoverage, absent_probability, colonies_for_coverage
+from liulab_synbio.igga.coverage import (
+    RoundCoverage,
+    absent_probability,
+    colonies_for_completeness,
+)
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.rounds import Round
@@ -471,7 +475,10 @@ def _overview(
         ),
         "Codon usage": host,
         "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
-        "Coverage": f"{last.coverage.coverage:g}x, {last.coverage.colonies:,} colonies at the end",
+        "Completeness": card(
+            f"P {last.coverage.completeness:g}, {last.coverage.colonies:,} colonies at the end",
+            f"{last.coverage.coverage:.0f}x",
+        ),
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
         "Designs read back": (
             card(
@@ -530,9 +537,10 @@ def _highlights(
             "junctions."
         )
     said.append(
-        f"The last round needs {last.coverage.colonies:,} colonies for "
-        f"{last.coverage.coverage:g}x coverage of its {last.coverage.products:,} products. A "
-        "round short of that loses members no later round can put back."
+        f"The last round needs {last.coverage.colonies:,} colonies for a "
+        f"{last.coverage.completeness:g} chance that none of its {last.coverage.products:,} "
+        f"products is missing, which is {last.coverage.coverage:.0f}x its products. A round "
+        "short of that floor loses members no later round can put back."
     )
     said.append(
         f"The finished barcode block is "
@@ -790,7 +798,9 @@ def _steps(
     made.append(
         _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
     )
-    made += _final_steps(scheme, rounds, constructs, bench[-1].coverage.coverage, barcodes, working)
+    made += _final_steps(
+        scheme, rounds, constructs, bench[-1].coverage.completeness, barcodes, working
+    )
     return tuple(made)
 
 
@@ -1456,9 +1466,9 @@ def _growth_step(row: RoundBench) -> Step:
         ),
         programs=(growth_program(),),
         expected=(
-            f"At least {coverage.colonies:,} net colonies, scaled up from the dilution: "
-            f"{coverage.products:,} distinct products this round can make, times the "
-            f"{coverage.coverage:g}x the project asked for, rounded up.",
+            f"At least {coverage.colonies:,} net colonies, scaled up from the dilution: the "
+            f"floor for the {coverage.completeness:g} chance the project asked for that none of "
+            f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
             f"{coverage.absent_probability:.3g}.",
             f"{control.name} should be near empty beside it; its colonies come off the count.",
@@ -1468,8 +1478,9 @@ def _growth_step(row: RoundBench) -> Step:
             "precaution rather than an oversight.",
             f"The program carries the shorter outgrowth; {OUTGROWTH_SECONDS[0] // 3600} to "
             f"{OUTGROWTH_SECONDS[1] // 3600} hours is the range the method gives.",
-            f"{coverage.coverage:g}x is the project's own, and follows from the representation "
-            "the screen downstream asks for. No source sets it, and nothing here defaults it.",
+            f"The {coverage.completeness:g} is the project's own, and follows from the "
+            "representation the screen downstream asks for. No source sets it, and nothing here "
+            f"defaults it; it works out at {coverage.coverage:.0f}x this round's products.",
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a "
             "ligase that refuses blunt ends and the 2x clean-up — rather than assuming it.",
         ),
@@ -1590,7 +1601,7 @@ def _final_steps(
     scheme: Scheme,
     rounds: Sequence[Round],
     constructs: int,
-    coverage: float,
+    completeness: float,
     barcodes: str,
     working: Working | None,
 ) -> list[Step]:
@@ -1607,7 +1618,7 @@ def _final_steps(
         _pick_working_step(scheme, working),
         _release_step_final(scheme, product, span, freeing),
         _assemble_step(scheme, product, span, working),
-        _final_growth_step(constructs, coverage, working),
+        _final_growth_step(constructs, completeness, working),
         _final_representation_step(scheme, rounds, barcodes, working),
     ]
 
@@ -1812,10 +1823,10 @@ def _cassette_length(working: Working) -> int:
     return stuffer.end - stuffer.start
 
 
-def _final_growth_step(constructs: int, coverage: float, working: Working | None) -> Step:
+def _final_growth_step(constructs: int, completeness: float, working: Working | None) -> Step:
     """Clean the assembly up and get all of it into cells, which is the library's last bottleneck."""
     pulse = _pulse()
-    colonies = colonies_for_coverage(constructs, coverage)
+    colonies = colonies_for_completeness(constructs, completeness)
     return Step(
         f"Clean the assembly up and electroporate into {STRAIN}",
         instructions=(
@@ -1827,8 +1838,9 @@ def _final_growth_step(constructs: int, coverage: float, working: Working | None
         programs=(growth_program(),),
         cautions=("Keep the cells and the cuvette on ice; a warm cuvette arcs.",),
         expected=(
-            f"At least {colonies:,} net colonies: {constructs:,} distinct members times the "
-            f"{coverage:g}x the project asked for, rounded up.",
+            f"At least {colonies:,} net colonies: the floor for the {completeness:g} chance the "
+            f"project asked for that none of its {constructs:,} distinct members is missing, "
+            "equally represented.",
             f"At that count the chance a named member is missing is "
             f"{absent_probability(constructs, colonies):.3g}.",
             "Near-empty plates from a no-cargo control beside it; what grows there is working "

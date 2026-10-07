@@ -5,7 +5,7 @@ description: >-
   Golden Gate with `liulab_synbio`: design every part's synthesis block, choose the overhang
   standard that costs the proteins fewest amino acids, draw a barcode for each part, accept or
   retrofit the destination vector, simulate every round, size each round's colonies for the
-  coverage asked for, and write an interactive HTML bench protocol covering all the rounds. Use
+  completeness asked for, and write an interactive HTML bench protocol covering all the rounds. Use
   when someone wants every combination of two or more lists of protein domains as a real plasmid
   library, a combinatorial or multiplexed assembly in rounds, a synthesis order sheet for a
   domain library, or asks how many colonies a library round needs.
@@ -25,7 +25,7 @@ pixi run liulab_synbio igga plan project.json --out library/
 ```
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
-`host`, `oligo_length`, `batch_size`, `coverage`, and optionally `seed`, `reserved_extra`,
+`host`, `oligo_length`, `batch_size`, `completeness`, and optionally `seed`, `reserved_extra`,
 `barcode`, `primers` and `bands` for the pool, and `validate_from` with `route` for the read
 back. It is checked where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
@@ -72,9 +72,9 @@ the plate layout are already in `protocol.html`, drawn beside the step that uses
 
 - **One round a position.** Each round appends one part list to every member at once, so three
   lists of 24 are three rounds and 13,824 constructs, not 13,824 syntheses.
-- **Constructs multiply, and so does the colony count.** `--coverage` has no default: how much of
-  a library a round may lose is the user's call. Every round is sized separately, because a round
-  short of its coverage loses members no later round can put back.
+- **Constructs multiply, and so does the colony count.** `completeness` has no default: the
+  chance a round may miss a member is the user's call. Every round is sized separately, because a
+  round short of its floor loses members no later round can put back.
 - **The overhang standard is charged to the proteins.** One standard serves the whole library, so
   a junction forces terminal residues on every member either side. `changes.tsv` is what the user
   is paying for — show it to them before they order.
@@ -128,5 +128,5 @@ It raises rather than guessing, and the message names the cause.
 checking one coding sequence for a host. `primer-design` owns every primer question, including
 the primers that read the barcode block — this plan designs none. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol.json` and render again.
-A change to what the plan computes — the project's vector, host or coverage — goes back through
+A change to what the plan computes — the project's vector, host or completeness — goes back through
 `igga plan`, which writes `protocol.json` afresh.

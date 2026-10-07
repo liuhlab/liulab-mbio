@@ -269,7 +269,9 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
     for step in steps:
         assert step.instructions, step.title
         assert step.expected, step.title
-    assert "4,147,200 net colonies" in " ".join(steps[3].expected)
+    assert "At least 195,386 net colonies: the floor for the 0.99 chance" in " ".join(
+        steps[3].expected
+    )
 
 
 def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):

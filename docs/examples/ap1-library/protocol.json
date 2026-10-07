@@ -15,7 +15,7 @@
     "Barcode": "11 bp, block 41 bp",
     "Codon usage": "human",
     "Product": "AP-1 DESynR round 3, 2276 bp",
-    "Coverage": "300x, 4,147,200 colonies at the end",
+    "Completeness": "P 0.99, 195,386 colonies at the end",
     "Amino acids changed": "27 over 26 part end(s)",
     "Designs read back": "72, every one"
   },
@@ -24,7 +24,7 @@
     "The product keeps BbsI's sites, which is what lets the next round open it, and loses BsaI's with the external stuffers.",
     "Your vector already carried an internal stuffer, so every part enters position N on AGGA, which is the overhang that stuffer spells: DNA that exists cannot be re-chosen.",
     "The overhang standard changes 27 amino acid(s) across 26 part end(s); changes.tsv has wild type beside synthesised, and that is what you are about to pay for.",
-    "The last round needs 4,147,200 colonies for 300x coverage of its 13,824 products. A round short of that loses members no later round can put back.",
+    "The last round needs 195,386 colonies for a 0.99 chance that none of its 13,824 products is missing, which is 14x its products. A round short of that floor loses members no later round can put back.",
     "The finished barcode block is 41 bp and reads in the reverse of the order the rounds ran; barcodes.tsv says which barcode names which part."
   ],
   "checks": [
@@ -5239,7 +5239,7 @@
       "notes": [
         "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
         "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
-        "300x is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it.",
+        "The 0.99 is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 8x this round's products.",
         "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
       ],
       "tables": [],
@@ -5279,8 +5279,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "At least 7,200 net colonies, scaled up from the dilution: 24 distinct products this round can make, times the 300x the project asked for, rounded up.",
-        "At that count the chance a named product is missing is 8.31e-134.",
+        "At least 183 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 24 distinct products is missing, equally represented.",
+        "At that count the chance a named product is missing is 0.000415.",
         "round 1 no-donor control should be near empty beside it; its colonies come off the count."
       ],
       "troubleshooting": [
@@ -5676,7 +5676,7 @@
       "notes": [
         "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
         "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
-        "300x is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it.",
+        "The 0.99 is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 11x this round's products.",
         "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
       ],
       "tables": [],
@@ -5716,8 +5716,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "At least 172,800 net colonies, scaled up from the dilution: 576 distinct products this round can make, times the 300x the project asked for, rounded up.",
-        "At that count the chance a named product is missing is 3.97e-131.",
+        "At least 6,306 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 576 distinct products is missing, equally represented.",
+        "At that count the chance a named product is missing is 1.74e-05.",
         "round 2 no-donor control should be near empty beside it; its colonies come off the count."
       ],
       "troubleshooting": [
@@ -6113,7 +6113,7 @@
       "notes": [
         "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
         "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
-        "300x is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it.",
+        "The 0.99 is the project's own, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 14x this round's products.",
         "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
       ],
       "tables": [],
@@ -6153,8 +6153,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "At least 4,147,200 net colonies, scaled up from the dilution: 13,824 distinct products this round can make, times the 300x the project asked for, rounded up.",
-        "At that count the chance a named product is missing is 5.09e-131.",
+        "At least 195,386 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 13,824 distinct products is missing, equally represented.",
+        "At that count the chance a named product is missing is 7.27e-07.",
         "round 3 no-donor control should be near empty beside it; its colonies come off the count."
       ],
       "troubleshooting": [
@@ -6438,8 +6438,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "At least 4,147,200 net colonies: 13,824 distinct members times the 300x the project asked for, rounded up.",
-        "At that count the chance a named member is missing is 5.09e-131.",
+        "At least 195,386 net colonies: the floor for the 0.99 chance the project asked for that none of its 13,824 distinct members is missing, equally represented.",
+        "At that count the chance a named member is missing is 7.27e-07.",
         "Near-empty plates from a no-cargo control beside it; what grows there is working vector that kept its ccdB cassette."
       ],
       "troubleshooting": [

@@ -23,7 +23,7 @@ is the same and only the protocol differs.
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its coverage, its barcode rules, and that every design is read back by index PCR |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, and that every design is read back by index PCR |
 | [project-route-a.json](project-route-a.json) | the same library read back by DMX barcoding instead |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |

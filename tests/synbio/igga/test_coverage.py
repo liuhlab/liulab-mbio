@@ -58,21 +58,29 @@ def test_completeness_refuses_a_certainty() -> None:
 
 
 def test_every_round_is_counted_on_its_own() -> None:
-    rows = plan_coverage((4, 6), coverage=10)
+    rows = plan_coverage((4, 6), completeness=0.99)
 
     assert [row.number for row in rows] == [1, 2]
     assert [row.part_list_size for row in rows] == [4, 6]
     assert [row.products for row in rows] == [4, 24]
-    assert [row.colonies for row in rows] == [40, 240]
+    assert [row.colonies for row in rows] == [21, 183]
+
+
+def test_the_multiple_a_round_works_out_at_is_derived() -> None:
+    """The project states the completeness; the ratio is what it costs, and it moves."""
+    rows = plan_coverage((4, 6), completeness=0.99)
+
+    assert [round(row.coverage, 2) for row in rows] == [5.25, 7.62]
 
 
 def test_a_round_reports_what_its_colonies_would_miss() -> None:
-    (row,) = plan_coverage((100,), coverage=1)
+    (row,) = plan_coverage((100,), completeness=0.99)
 
     assert isinstance(row, RoundCoverage)
-    assert row.absent_probability == pytest.approx(0.366, abs=0.001)
+    assert row.completeness == 0.99
+    assert row.absent_probability == pytest.approx(0.0001, abs=0.00001)
 
 
-def test_coverage_has_to_be_asked_for() -> None:
-    with pytest.raises(ValueError, match="coverage must be positive"):
-        plan_coverage((4,), coverage=0)
+def test_completeness_has_to_be_asked_for() -> None:
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        plan_coverage((4,), completeness=0)

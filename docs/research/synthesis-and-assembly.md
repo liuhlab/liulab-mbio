@@ -568,12 +568,16 @@ control plate is what measures that argument rather than trusting it. Residual p
 noise: it is the previous round's library, one position short, and it rides into the linkage
 read as truncated members. A round that collapsed cannot be repaired by a later one.
 
-**The 300x multiple is dropped.** It is Qian's, measured at a single transformation whose
-purpose was pickable clones for an arrayed collection. iGGA yields a pool that goes to a pooled
-screen; no member is ever picked or re-identified, so the gate does not transfer. What a round
-needs follows from the representation the downstream experiment asks for, which is a project
-input. `liulab_synbio.igga.coverage` already refuses a default, and reports the colonies a
-stated multiple takes beside the chance a named product is missing.
+**The 300x multiple is dropped, and a completeness replaces it — decided in #297.** 300x is
+Qian's, measured at a single transformation whose purpose was pickable clones for an arrayed
+collection. iGGA yields a pool that goes to a pooled screen; no member is ever picked or
+re-identified, so the gate does not transfer. A multiple does not transfer between rounds
+either: one ratio against each round's own products is a different risk every round. What holds
+across rounds is the completeness — the chance no member of that round is missing — so that is
+what a project states, and `liulab_synbio.igga.coverage` computes each round's floor from it by
+Clarke & Carbon's rule. It refuses a default, and reports the multiple the floor works out at
+beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
+assumes every member equally represented, and synthesis skew breaks that.
 
 **What judges the library is the read, not the plate.** The paper's own quality claim is barcode
 sequencing of the plasmid library for representation, and a long-read amplicon spanning the gene
@@ -851,7 +855,7 @@ sheets. They agree on all 48. No overhang, stuffer, barcode or codon was given t
 | Coding bases over the 72 parts | 23,103 |
 | Blocks | 133 to 1,149 bp, 30,519 bp in all |
 | Product | 2,276 bp, 13,824 distinct constructs, every check passing |
-| Colonies asked for at 300x | 7,200, then 172,800, then 4,147,200 — the multiple 6.9 has since dropped |
+| Colonies for 0.99 completeness | 183, then 6,306, then 195,386 — the floor 6.9 settled on, in place of 300x |
 
 23,103 bp is the source's own published total, to the base. The retained tail reads 75 bases,
 25 codons, no stop, opening `RKVFSPGRRQF` — the specification's section 3.2 derived both.

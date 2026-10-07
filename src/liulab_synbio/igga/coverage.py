@@ -1,8 +1,9 @@
 """How many constructs a library design yields, and how many colonies each round needs.
 
-Library coverage is one round's colonies counted against the distinct products that round could
-make. It is counted per round rather than once at the end: a round short of the coverage asked
-for loses members no later round can put back, and every later round multiplies what survives.
+Completeness is the chance that no product of a round is missing from its colonies. Each round
+is sized for it rather than the library sized once at the end: a round short of its floor loses
+members no later round can put back, and every later round multiplies what survives. Coverage,
+colonies over products, is what the floor works out at.
 
 `plan_coverage` is the way in. The completeness rule is Clarke & Carbon's, in `REFERENCES`, and
 it holds only where every member of a part list is equally represented.
@@ -130,10 +131,12 @@ class RoundCoverage:
         How many parts that round's part list holds.
     products
         The distinct products the round can make: every part list up to and including its own.
-    coverage
-        The library coverage asked for, colonies over products.
+    completeness
+        The chance the round is sized for that none of its products is missing.
     colonies
-        What that coverage takes.
+        The floor that completeness takes.
+    coverage
+        What that floor works out at, colonies over products. It is derived, not asked for.
     absent_probability
         The chance one named product is missing from that many colonies.
     """
@@ -142,40 +145,45 @@ class RoundCoverage:
     part_list_size: int
     _: KW_ONLY
     products: int
-    coverage: float
+    completeness: float
     colonies: int
+    coverage: float
     absent_probability: float
 
 
-def plan_coverage(part_list_sizes: Sequence[int], *, coverage: float) -> tuple[RoundCoverage, ...]:
+def plan_coverage(
+    part_list_sizes: Sequence[int], *, completeness: float
+) -> tuple[RoundCoverage, ...]:
     """Return what each round has to cover, one row per round, in the order they run.
 
     Round *n* joins the *n*-th part list to the library the rounds before it built, so its
-    products are the sizes up to and including its own, multiplied. `coverage` has no default:
-    how much of a library a round may lose is the user's call, and no source sets it.
+    products are the sizes up to and including its own, multiplied. `completeness` has no
+    default: how much of a library a round may lose is the user's call, and no source sets it.
 
     Raises
     ------
     ValueError
-        If no part list is given, one of them is empty, or `coverage` is not positive.
+        If no part list is given, one of them is empty, or `completeness` does not lie between
+        0 and 1.
 
     Examples
     --------
-    >>> [row.colonies for row in plan_coverage((4, 6), coverage=10)]
-    [40, 240]
+    >>> [row.colonies for row in plan_coverage((4, 6), completeness=0.99)]
+    [21, 183]
     """
     constructs(part_list_sizes)  # refuses the whole list before a single row is built
     rows: list[RoundCoverage] = []
     for number, size in enumerate(part_list_sizes, start=1):
         products = constructs(part_list_sizes[:number])
-        colonies = colonies_for_coverage(products, coverage)
+        colonies = colonies_for_completeness(products, completeness)
         rows.append(
             RoundCoverage(
                 number,
                 size,
                 products=products,
-                coverage=coverage,
+                completeness=completeness,
                 colonies=colonies,
+                coverage=colonies / products,
                 absent_probability=absent_probability(products, colonies),
             )
         )

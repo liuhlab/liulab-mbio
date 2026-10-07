@@ -31,7 +31,7 @@ from liulab_synbio.igga.project import Project
 from liulab_synbio.igga.rounds import ROUND_FILE
 
 HOST = "e-coli-k12"
-COVERAGE = 10.0
+COMPLETENESS = 0.99
 
 #: The positions one build fills, named so a record's own name says which it belongs to.
 POSITIONS = ("N", "bZIP", "C")
@@ -89,7 +89,7 @@ def project(inputs, *, vector: str = "carrier.dna") -> Project:
         host=HOST,
         oligo_length=350,
         batch_size=96,
-        coverage=COVERAGE,
+        completeness=COMPLETENESS,
     )
 
 
@@ -338,11 +338,25 @@ def test_a_kind_that_is_neither_is_refused(inputs):
         plan_igga(project(inputs), parts=LISTS, kind=cast(Kind, "rna"))
 
 
-def test_each_round_is_sized_for_the_coverage_asked_for(plan):
+def test_each_round_is_sized_for_the_completeness_asked_for(plan):
     assert [row.products for row in plan.coverage] == [2, 4, 8]
-    assert [row.colonies for row in plan.coverage] == [20, 40, 80]
-    assert [one.coverage.colonies for one in plan.bench] == [20, 40, 80]
+    assert [row.colonies for row in plan.coverage] == [8, 21, 51]
+    assert [one.coverage.colonies for one in plan.bench] == [8, 21, 51]
     assert [one.number for one in plan.bench] == [1, 2, 3]
+
+
+def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(protocol):
+    """Every page the count reaches states the chance asked for; the multiple is what it costs."""
+    assert protocol.overview["Completeness"] == "P 0.99, 51 colonies at the end"
+    assert "51 colonies for a 0.99 chance that none of its 8 products is missing" in " ".join(
+        protocol.highlights
+    )
+    growth = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
+    assert "At least 51 net colonies" in growth.expected[0]
+    assert "floor for the 0.99 chance the project asked for" in growth.expected[0]
+    assert "it works out at 6x this round's products" in " ".join(growth.notes)
+    final = next(one for one in protocol.steps if one.title.startswith("Clean the assembly up"))
+    assert "At least 51 net colonies: the floor for the 0.99 chance" in final.expected[0]
 
 
 #: A price record as a user writes one: the synthesis order banded by count and by length, and

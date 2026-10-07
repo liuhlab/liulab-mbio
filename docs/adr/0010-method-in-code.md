@@ -7,7 +7,7 @@ search:
 
 `liulab_synbio.igga.method` holds `IGGA`: one `Scheme` instance built in code, whose
 invariants are checked when the module is imported. What one build chooses — its positions, its
-parts, its vector, its host, its oligo length, its batch size, its coverage, its seed, its
+parts, its vector, its host, its oligo length, its batch size, its completeness, its seed, its
 barcode length and distance, and any further enzyme it needs kept clear — is read from one
 `project.json` and checked where it is read. `read_scheme()`, the scheme JSON format and the
 CLI's `--scheme` are gone.

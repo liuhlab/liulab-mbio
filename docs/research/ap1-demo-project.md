@@ -748,24 +748,26 @@ Both, because they bound different things.
 - **In:** the source's numbers — 20 ng of digested backbone per 200 µL ligation, up to 100 ng of
   purified ligation product electroporated.
 - **Out:** a plated dilution from each round's recovery, counted, and the round carried forward
-  only when the colony count reaches the coverage target for that round's own complexity: 576
-  distinct products after round 1, 13,824 after round 2 and at the final assembly.
+  only when the colony count reaches the floor for that round's own complexity: 183 colonies for
+  the 24 products of round 1, 6,306 for 576 after round 2, and 195,386 for 13,824 after round 3
+  and again at the final assembly.
 
 Each round also plates a no-donor control, carried through the ligation from the same digest,
 and the gate is net colonies. **Both plates are a departure**, settled in #259: the source plates
 nothing at any round. The reason is there, not here.
 
-**The coverage multiple is open, and 300x is not the answer.** It is Qian's, measured at one
-transformation whose purpose was pickable clones for an arrayed collection. This library is
-never picked: it goes to a pooled screen as a pool, and no member is re-identified. At 300x the
-three rounds would ask for 7,200, then 172,800, then 4,147,200 colonies, and nothing read here
-justifies any of the three.
+**The coverage multiple is closed: this project states a completeness of 0.99, not a multiple
+— decided in #297.** 300x was Qian's, measured at one transformation whose purpose was pickable
+clones for an arrayed collection. This library is never picked: it goes to a pooled screen as a
+pool, and no member is re-identified. At 300x the three rounds would have asked for 7,200, then
+172,800, then 4,147,200 colonies, and nothing read here justified any of the three.
 
-What the number should follow from is the representation the screen downstream needs, and this
-project has not stated a screen. Until it does, the target is the completeness floor
-`liulab_synbio.igga.coverage` computes — the colonies for a stated chance that no member is
-missing — recorded as a **floor, not a sufficiency claim**, because it assumes every member is
-equally represented and synthesis skew breaks that. It belongs in section 10.
+A multiple was the wrong parameter and not only the wrong value: one ratio against each round's
+own products buys a different risk every round. The completeness is what holds across them, so
+`liulab_synbio.igga.coverage` computes each round's floor from it — 183, 6,306 and 195,386
+colonies, which no whole multiple reproduces. It is a **floor, not a sufficiency claim**: it
+assumes every member equally represented, and synthesis skew breaks that. What the screen
+downstream needs is still open, and stays in section 10.
 
 ### 9.10 Also open, answered here
 
@@ -806,16 +808,15 @@ Nothing here becomes a package default, and nothing here is guessed at.
   list rather than only an enzyme list.
 - **The substitution table in section 3.1.** Chosen by chemical class, justified by no matrix.
   Closed by naming the matrix and re-deriving the eight picks from it.
-- **The coverage multiple in section 9.9.** Qian's 300x is dropped (#259): it gated a
-  transformation run to yield pickable clones, and this library is never picked. The number that
-  replaces it follows from the representation the screen downstream needs, and no screen is
-  stated here. Closed by naming the screen, or by a source measuring diversity loss across an
-  iGGA round.
+- **What the screen downstream needs.** The colony floor is settled (#297): this project states
+  a 0.99 completeness and the package sizes every round for it. What representation a screen of
+  this library would ask for is not settled, and a floor is not an answer to it. Closed by naming
+  the screen, or by a source measuring diversity loss across an iGGA round.
 - **The synthesis cost.** 152 oligos sit far below 18,000, the smallest pool any recorded price
   covers, so no price here is this project's. The list prices and the per-usable-base comparison
   are section 4.5; neither stands in for the pilot's own cost.
 - **The orthogonal set's size**, 165 or 166. The 165 held are what the split uses.
-- **The MOI and the cell number at transduction.** The coverage rule gives the number of
+- **The MOI and the cell number at transduction.** The completeness floor gives the number of
   integrants wanted; the MOI that delivers them at mostly one integrant per cell is not fixed
   here.
 - **Whether the T2A should do work.** As specified it is followed immediately by a stop, so it is
