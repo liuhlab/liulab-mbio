@@ -35,9 +35,11 @@ from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.sites import EnzymeLike, primer_tail
 
-#: How many bases two overhangs in one set must differ by. The two-mismatch rule is the one
-#: modular cloning standards state; Potapov 2018 measured it as stricter than it needs to be,
-#: which is why it is an argument and not a constant.
+#: How many bases two overhangs in one set must differ by, counting each one's reverse complement
+#: too. Two is read off the shipped matrices rather than taken from a standard: it is the smallest
+#: separation at which every one of them holds its measured cross-ligations below
+#: `MODEST_MISMATCH`, where a one-base separation leaves a third to a half of its pairs at or
+#: above it. It is an argument because a caller may hold a set to more.
 MIN_DISTANCE = 2
 
 #: Ligations per 100,000 events at or above which NEB's Ligase Fidelity Viewer calls a

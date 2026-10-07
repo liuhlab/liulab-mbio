@@ -7,6 +7,8 @@ import pytest
 
 from liulab_mbio.enzymes import EndType
 from liulab_mbio.overhangs import (
+    MIN_DISTANCE,
+    MODEST_MISMATCH,
     STRONG_LIGATION,
     End,
     compatible,
@@ -154,6 +156,41 @@ def test_every_watson_crick_pair_the_shipped_data_covers_ligates_strongly(name: 
 
     assert lowest >= STRONG_LIGATION
     assert fidelity(matrix.overhangs[:4], name).weak == ()
+
+
+@pytest.mark.parametrize("name", ["BsaI", "BsmBI", "Esp3I", "BbsI", "SapI"])
+def test_the_distance_rule_is_read_off_the_shipped_data_and_not_off_a_standard(name: str) -> None:
+    """`MIN_DISTANCE` is where the measured mis-ligations stop, so the two may not drift apart.
+
+    Two is the smallest separation at which every shipped matrix holds its cross-ligations
+    under `MODEST_MISMATCH`. One base apart leaves hundreds of pairs at or above it. BsaI's one
+    pair is the only one the rule lets through, and it sits far under what one base apart
+    reaches; the matrix records it in both directions.
+    """
+    matrix = ligation_matrix(name)
+    assert matrix is not None
+
+    near: list[float] = []
+    far: list[float] = []
+    for row, columns in matrix.counts.items():
+        for column in columns:
+            seen = matrix.normalised(row, column)
+            if column == _reverse(row) or seen < MODEST_MISMATCH:
+                continue
+            crowded = _apart(row, _reverse(column)) < MIN_DISTANCE
+            (near if crowded else far).append(seen)
+
+    assert len(far) == (2 if name == "BsaI" else 0)
+    assert len(near) > 100
+    assert max(far, default=0.0) < max(near) / 5
+
+
+def _apart(one: str, other: str) -> int:
+    """How far two overhangs of a set stand, which counts each one's reverse complement too."""
+    return min(
+        sum(a != b for a, b in zip(one, partner, strict=True))
+        for partner in (other, _reverse(other))
+    )
 
 
 def _reverse(overhang: str) -> str:
