@@ -169,8 +169,15 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     route_a = rerouted(plan, route="A").protocol()
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
-    assert [hole.id for step in route_b.steps for hole in step.holes] == ["H25", "H26", "B1", "B2"]
-    assert [hole.id for step in route_a.steps for hole in step.holes] == ["H25", "H26"]
+    reads = ["H27", "H28"]
+    assert [hole.id for step in route_b.steps for hole in step.holes] == [
+        "H25",
+        "H26",
+        "B1",
+        "B2",
+        *reads,
+    ]
+    assert [hole.id for step in route_a.steps for hole in step.holes] == ["H25", "H26", *reads]
     for one in (route_a, route_b):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
 

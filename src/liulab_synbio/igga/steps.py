@@ -110,6 +110,7 @@ EQUIPMENT: tuple[str, ...] = (
     "Electroporator and cuvettes",
     f"Shaking incubator at {GROWTH_CELSIUS:g} °C",
     "Spectrophotometer or fluorometer",
+    "Long-read sequencer, for the two reads of the finished library",
 )
 
 
@@ -268,7 +269,8 @@ def protocol(
     Each argument is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
     `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
     in the order someone does them: order the blocks, read back the designs the project asks for,
-    pool each part list, then every round in turn, and finally read the barcode block back.
+    pool each part list, then every round in turn, and finally read the finished library twice,
+    for linkage and for representation.
 
     `validation` is `None` for a project that states no fragment-count floor, and the protocol
     then carries no validation at all: the library stays polyclonal, which is the default.
@@ -342,6 +344,7 @@ def protocol(
             bench,
             inside,
             outside,
+            constructs,
             sheet,
             barcodes,
             validation,
@@ -685,6 +688,7 @@ def _steps(
     bench: Sequence[RoundBench],
     inside: Sequence[Enzyme],
     outside: Sequence[Enzyme],
+    constructs: int,
     sheet: str,
     barcodes: str,
     validation: dmx.Validation | None,
@@ -707,7 +711,10 @@ def _steps(
     made.append(_pool_step(positions, part_lists))
     for one, row in zip(rounds, bench, strict=True):
         made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds)))
-    made.append(_confirm_step(scheme, positions, barcode_length, rounds, parts, barcodes))
+    made.append(_linkage_step(scheme, positions, barcode_length, rounds, parts, barcodes))
+    made.append(
+        _representation_step(scheme, positions, barcode_length, rounds, constructs, barcodes)
+    )
     return tuple(made)
 
 
@@ -1369,7 +1376,7 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
     )
 
 
-def _confirm_step(
+def _linkage_step(
     scheme: Scheme,
     positions: Sequence[str],
     barcode_length: int,
@@ -1377,7 +1384,11 @@ def _confirm_step(
     parts: Sequence[Part],
     barcodes: str,
 ) -> Step:
-    """Read the barcode block back, which is what links a construct to its parts."""
+    """Read the whole cargo back, which is what says the barcode block still names its parts.
+
+    Read once. A barcode that names the wrong member is the one fault no later round repairs,
+    so this is where the library is carried forward or a round is sent back.
+    """
     final = rounds[-1]
     ambiguous = max(
         deletion_ambiguity([one.barcode for one in parts if one.index == index])
@@ -1385,19 +1396,23 @@ def _confirm_step(
     )
     order = listed([one.position for one in reversed(rounds)])
     return Step(
-        "Confirm the library",
+        "Read linkage",
         instructions=(
-            f"Sequence across the "
-            f"{scheme.barcode_block_length(barcode_length, len(positions))} bp barcode block of "
-            "the finished library, at "
-            f"{final.block.start}-{final.block.end} of the representative construct.",
-            f"Decode each read against {barcodes}.",
+            f"Amplify the whole cargo out of the finished library, from the vector before the "
+            f"first {rounds[0].entry_overhang} to the vector past the final "
+            f"{rounds[0].scar_overhang}, so one read carries a member's parts and its barcode "
+            "block together.",
+            "Sequence the amplicon as a long read.",
+            f"Decode each read's block against {barcodes}, then read the coding bases beside it "
+            "against the member that block names.",
         ),
         expected=(
-            f"The block reads {order}, each barcode separated from the last by the cloning scar "
-            f"{scheme.cloning_scar}.",
-            f"Every construct carries one member of each part list, and the {len(rounds)} "
-            "barcodes say which.",
+            "A table from barcode combination to cargo: each read decodes to one member of each "
+            "part list, and the coding bases it carries are that member's.",
+            f"The {scheme.barcode_block_length(barcode_length, len(positions))} bp block reads "
+            f"{order}, each barcode separated from the last by the cloning scar "
+            f"{scheme.cloning_scar}, at {final.block.start}-{final.block.end} of the "
+            "representative construct.",
         ),
         notes=(
             "The block reads in the reverse of the order the rounds ran: each round inserted its "
@@ -1406,9 +1421,9 @@ def _confirm_step(
             f"{ambiguous:.1%} of the single-base deletions a barcode can carry leave a read "
             "another barcode of the same part list could leave, which no read can be assigned "
             "through.",
-            "Where you amplify the block to read it, carry any sample index on a primer "
-            "rather than ligating it on, and keep the barcodes away from where a primer "
-            "anneals: both cost more read counts than what a barcode spells does.",
+            "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid "
+            "barcode at every position, and nearly 90% of the library correctly linked. That is "
+            "what one source reached, not a mark this library is held to.",
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1416,5 +1431,66 @@ def _confirm_step(
                 "A round did not go in. Check that round's prep against its own record before "
                 "blaming the sequencing.",
             ),
+            Troubleshooting(
+                "A combination decodes to a member the coding bases are not",
+                f"That round joined a block to the wrong barcode, so {barcodes} no longer names "
+                "what the library holds. Rebuild that round rather than carrying the table "
+                "forward; no later round repairs it.",
+            ),
         ),
+        holes=(stages.READ_PRIMERS,),
+    )
+
+
+def _representation_step(
+    scheme: Scheme,
+    positions: Sequence[str],
+    barcode_length: int,
+    rounds: Sequence[Round],
+    constructs: int,
+    barcodes: str,
+) -> Step:
+    """Count which combinations the library holds and how evenly, over the barcode block alone.
+
+    This is the read a bottleneck repeats, so it spans the block and nothing else: the forward
+    anchor is the internal stuffer every member keeps, which is a method constant.
+    """
+    block = scheme.barcode_block_length(barcode_length, len(positions))
+    return Step(
+        "Read representation",
+        instructions=(
+            f"Amplify across the {block} bp barcode block alone, forward from the "
+            f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "
+            f"from the vector past the final {rounds[0].scar_overhang}.",
+            f"Sequence the amplicon, decode each read against {barcodes}, and count the reads "
+            "each barcode combination gets.",
+        ),
+        expected=(
+            f"A count for each of up to {constructs:,} distinct combinations: how many of them "
+            "are seen at all, and how evenly they are read.",
+            "A combination with no reads is a member the library has lost.",
+        ),
+        notes=(
+            "Read representation again after every later bottleneck — the final assembly, and "
+            "anything downstream that resamples the library. Linkage is read once; this one is "
+            "read at each.",
+            "The short amplicon is what makes repeating it cheap: linkage spans the whole cargo, "
+            "this spans the block.",
+            "Where you amplify the block to read it, carry any sample index on a primer "
+            "rather than ligating it on, and keep the barcodes away from where a primer "
+            "anneals: both cost more read counts than what a barcode spells does.",
+        ),
+        troubleshooting=(
+            Troubleshooting(
+                "A combination is missing",
+                "It was lost at a round or at a bottleneck since, and no later step puts it "
+                "back. Read the rounds' own titre plates before re-reading this one.",
+            ),
+            Troubleshooting(
+                "The counts are heavily skewed",
+                "Members differ in length and a bottleneck can favour the short ones. This read "
+                "measures the skew; nothing here says how much of it is tolerable.",
+            ),
+        ),
+        holes=(stages.READ_PASS_MARK,),
     )

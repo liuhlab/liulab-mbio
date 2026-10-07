@@ -97,6 +97,33 @@ POOL_HOLES: tuple[Hole, ...] = (
 )
 
 
+#: What neither read of the finished library can write. The method says what each one spans and
+#: that it is a long read, and names no primer against it: #343 is open on that, and the two
+#: reads hit the same wall. Carried by the linkage read, where the amplicon is longest.
+READ_PRIMERS = Hole(
+    "H27",
+    "no primer pair, amplicon length or read depth for either library read",
+    "undecided",
+    where="the linkage and representation reads",
+    filled_by="whichever way #343 is decided: the plan designs both pairs against the finished "
+    "record, or the step says what each must span and leaves the pair to the reader",
+    issue="liuhlab/liulab-mbio#343",
+)
+
+#: What neither read can be judged by. The source's own figures are what it reached, not a mark
+#: it set, and what this library must reach follows from the screen downstream, which the method
+#: cannot see. Carried by the representation read, which is the one repeated.
+READ_PASS_MARK = Hole(
+    "H28",
+    "no pass mark for either library read: what share of the library must be seen, how even the "
+    "counts must be, or what linkage fidelity passes",
+    "undecided",
+    where="the linkage and representation reads, what carries the library forward",
+    filled_by="the screen downstream, which is what sets the representation the library has to "
+    "reach",
+)
+
+
 def titre_plates(number: int) -> tuple[Vessel, Vessel]:
     """Return the two plates one round is bounded by: a dilution, and the no-donor control.
 

@@ -469,6 +469,7 @@
     "Electroporator and cuvettes",
     "Shaking incubator at 30 °C",
     "Spectrophotometer or fluorometer",
+    "Long-read sequencer, for the two reads of the finished library",
     "Thermocycler taking a 96-well plate",
     "Gel tank and a transilluminator",
     "QPix XE Microbial Colony Picker",
@@ -925,7 +926,7 @@
           "kind": "undecided",
           "where": "block assembly, the destination",
           "filled_by": "a destination the pieces assemble into, as the method's DMX vector is for cargo carrying no flanks of its own",
-          "issue": ""
+          "issue": "liuhlab/liulab-mbio#334"
         },
         {
           "id": "H26",
@@ -933,7 +934,7 @@
           "kind": "undecided",
           "where": "block assembly, the reaction and its program",
           "filled_by": "NEB's own Golden Gate table, once the assembly has a destination to be sized against",
-          "issue": ""
+          "issue": "liuhlab/liulab-mbio#334"
         }
       ]
     },
@@ -6121,16 +6122,59 @@
       "holes": []
     },
     {
-      "title": "Confirm the library",
+      "title": "Read linkage",
       "instructions": [
-        "Sequence across the 41 bp barcode block of the finished library, at 1631-1672 of the representative construct.",
-        "Decode each read against barcodes.tsv."
+        "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together.",
+        "Sequence the amplicon as a long read.",
+        "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
       ],
       "cautions": [],
       "notes": [
         "The block reads in the reverse of the order the rounds ran: each round inserted its barcode ahead of the ones already there.",
         "This plan designs no sequencing primers.",
         "0.0% of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
+        "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid barcode at every position, and nearly 90% of the library correctly linked. That is what one source reached, not a mark this library is held to."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "transfers": [],
+      "gels": [],
+      "expected": [
+        "A table from barcode combination to cargo: each read decodes to one member of each part list, and the coding bases it carries are that member's.",
+        "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1631-1672 of the representative construct."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A read carries fewer barcodes than there are rounds",
+          "solution": "A round did not go in. Check that round's prep against its own record before blaming the sequencing."
+        },
+        {
+          "problem": "A combination decodes to a member the coding bases are not",
+          "solution": "That round joined a block to the wrong barcode, so barcodes.tsv no longer names what the library holds. Rebuild that round rather than carrying the table forward; no later round repairs it."
+        }
+      ],
+      "holes": [
+        {
+          "id": "H27",
+          "missing": "no primer pair, amplicon length or read depth for either library read",
+          "kind": "undecided",
+          "where": "the linkage and representation reads",
+          "filled_by": "whichever way #343 is decided: the plan designs both pairs against the finished record, or the step says what each must span and leaves the pair to the reader",
+          "issue": "liuhlab/liulab-mbio#343"
+        }
+      ]
+    },
+    {
+      "title": "Read representation",
+      "instructions": [
+        "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC.",
+        "Sequence the amplicon, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
+      ],
+      "cautions": [],
+      "notes": [
+        "Read representation again after every later bottleneck — the final assembly, and anything downstream that resamples the library. Linkage is read once; this one is read at each.",
+        "The short amplicon is what makes repeating it cheap: linkage spans the whole cargo, this spans the block.",
         "Where you amplify the block to read it, carry any sample index on a primer rather than ligating it on, and keep the barcodes away from where a primer anneals: both cost more read counts than what a barcode spells does."
       ],
       "tables": [],
@@ -6139,16 +6183,29 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "The block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC.",
-        "Every construct carries one member of each part list, and the 3 barcodes say which."
+        "A count for each of up to 13,824 distinct combinations: how many of them are seen at all, and how evenly they are read.",
+        "A combination with no reads is a member the library has lost."
       ],
       "troubleshooting": [
         {
-          "problem": "A read carries fewer barcodes than there are rounds",
-          "solution": "A round did not go in. Check that round's prep against its own record before blaming the sequencing."
+          "problem": "A combination is missing",
+          "solution": "It was lost at a round or at a bottleneck since, and no later step puts it back. Read the rounds' own titre plates before re-reading this one."
+        },
+        {
+          "problem": "The counts are heavily skewed",
+          "solution": "Members differ in length and a bottleneck can favour the short ones. This read measures the skew; nothing here says how much of it is tolerable."
         }
       ],
-      "holes": []
+      "holes": [
+        {
+          "id": "H28",
+          "missing": "no pass mark for either library read: what share of the library must be seen, how even the counts must be, or what linkage fidelity passes",
+          "kind": "undecided",
+          "where": "the linkage and representation reads, what carries the library forward",
+          "filled_by": "the screen downstream, which is what sets the representation the library has to reach",
+          "issue": ""
+        }
+      ]
     }
   ],
   "references": [
