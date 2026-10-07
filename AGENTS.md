@@ -53,6 +53,9 @@ Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in 
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
 forbids it — a ligase matrix is read from a copy the user holds.
 
+**A DNA sequence carries no licence.** An MTA or UBMTA governs a plasmid, never its bases. Never
+weigh one when choosing a sequence, and never hold a sequence outside the package for it.
+
 ## Restraint
 
 Generalizable, lightweight, uncustomized — in that order, and ahead of thorough.
