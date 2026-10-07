@@ -99,9 +99,14 @@ mkdocstrings-python = ">=2.0.7,<3"
 
 # On the feature, so these resolve in the `docs` environment with no `-e` flag.
 # `serve` ignores `--strict` and says so, hence its absence.
+#
+# `examples-check` is here and not in `[tool.pixi.tasks]` deliberately. It regenerates every
+# published example and compares the bytes, which costs seconds the gate should not pay; the
+# `docs` job is already a job of its own, and both CLIs resolve in this environment.
 [tool.pixi.feature.docs.tasks]
 docs = "zensical serve"
 docs-build = "zensical build --clean --strict"
+examples-check = "python scripts/check_examples.py"
 
 # Only `scripts/build_fonts.py` reads a font file. The package reads the tables it writes and
 # imports neither, so a rebuild is the one thing that installs these.
