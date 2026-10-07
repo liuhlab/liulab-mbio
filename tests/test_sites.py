@@ -121,6 +121,14 @@ def test_several_enzymes_are_searched_at_once_and_the_hits_come_back_in_order() 
     ]
 
 
+def test_an_enzyme_listed_twice_is_searched_and_counted_once() -> None:
+    """#289: a doubled listing doubled every count a caller read off the search."""
+    record = SequenceRecord(FORWARD)
+    assert len(find_sites(record, ["BsaI", "BsaI"])) == 1
+    assert site_counts([record], ["BsaI", "BsaI"]) == {"BsaI": 1}
+    assert [one.name for one in free_enzymes([record], ["PaqCI", "PaqCI"])] == ["PaqCI"]
+
+
 def test_the_fixture_tables_hold_the_sites_issue_1_lists(
     puc19: SequenceRecord, gfp: SequenceRecord
 ) -> None:
@@ -373,6 +381,18 @@ def test_the_favourite_codon_is_passed_over_when_it_spells_a_site_to_avoid() -> 
     assert not has_site(edited, ["BsaI", "EcoRI"])
 
 
+def test_an_enzyme_both_targeted_and_avoided_is_domesticated_just_the_same(
+    gfp: SequenceRecord,
+) -> None:
+    """#289: naming one enzyme twice counted each of its sites twice and refused every change."""
+    edited, report = domesticate(gfp, "BsaI", avoid=["BsaI"])
+
+    plain, _ = domesticate(gfp, "BsaI")
+    assert edited == plain
+    assert len(report.changes) == 1
+    assert (report.unchanged, report.outside_cds) == ((), ())
+
+
 def test_a_site_no_synonymous_change_can_remove_is_reported_unchanged() -> None:
     # Methionine and tryptophan have one codon each, so this site cannot be changed silently.
     enzyme = Enzyme("MetTrpI", "ATGTGG", top_cut=6, bottom_cut=10)
@@ -432,6 +452,20 @@ def test_plvx_reads_puror_as_coding_though_the_file_types_it_misc_feature(
     before = next(one for one in plvx.features if one.name == "PuroR")
     after = next(one for one in edited.features if one.name == "PuroR")
     assert _protein(edited.extract(after)) == _protein(plvx.extract(before))
+
+
+def test_plvx_gives_up_both_coding_bsai_sites_with_bsai_named_to_avoid_as_well(
+    plvx: SequenceRecord,
+) -> None:
+    """#289: the working vector names its held enzyme as a target and as one to avoid."""
+    edited, report = domesticate(plvx, "BsaI", avoid=["BsaI"])
+
+    assert [
+        (one.site.start, one.feature.name, one.old_codon, one.new_codon) for one in report.changes
+    ] == [(5730, "PuroR", "GAG", "GAA"), (8720, "AmpR", "GGG", "GGC")]
+    assert report.unchanged == ()
+    # The four left are in the LTRs, the hPGK promoter and no feature at all: none codes.
+    assert [site.start for site in find_sites(edited, "BsaI")] == [454, 3724, 6472, 7112]
 
 
 def _cds(sequence: str) -> SequenceRecord:

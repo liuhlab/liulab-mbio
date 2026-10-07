@@ -763,10 +763,15 @@ def _is(one: CutSite, other: CutSite) -> bool:
 
 
 def _resolve(enzymes: EnzymeLike | Iterable[EnzymeLike]) -> tuple[Enzyme, ...]:
-    """Read one enzyme or several, by name or by record, into a tuple of records."""
+    """Read one enzyme or several, by name or by record, into a tuple of records.
+
+    An enzyme named twice is kept once, where it first appears: a site is one site however
+    many times its enzyme was listed.
+    """
     if isinstance(enzymes, Enzyme | str):
         enzymes = (enzymes,)
-    return tuple(get_enzyme(one) if isinstance(one, str) else one for one in enzymes)
+    read = (get_enzyme(one) if isinstance(one, str) else one for one in enzymes)
+    return tuple(dict.fromkeys(read))
 
 
 @cache
