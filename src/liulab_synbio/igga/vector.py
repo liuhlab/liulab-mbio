@@ -454,6 +454,7 @@ def working_vector(
     *,
     scheme: Scheme = IGGA,
     site: Site | None = None,
+    enzyme: Enzyme | None = None,
 ) -> Working:
     """Return `backbone` as the working vector `cargo` is assembled into.
 
@@ -471,6 +472,9 @@ def working_vector(
         The method, which says what the cassette's two ends are.
     site
         Where the cassette goes, read only where the backbone carries none.
+    enzyme
+        The cargo enzyme, where a caller chose it from `backbone` alone before designing what is
+        in `cargo`. It is the only candidate searched, so the pot still has to be free of it.
 
     Raises
     ------
@@ -478,7 +482,9 @@ def working_vector(
         If no candidate enzyme is free of every molecule, or for any reason
         `destination_vector` refuses the backbone.
     """
-    chosen = cargo_enzyme((backbone, *cargo), scheme=scheme)
+    chosen = cargo_enzyme(
+        (backbone, *cargo), scheme=scheme, candidates=None if enzyme is None else (enzyme.name,)
+    )
     if chosen.enzyme is None:
         raise ValueError(chosen.check.detail)
     held = ccdb_cassette(chosen.enzyme, scheme=scheme)

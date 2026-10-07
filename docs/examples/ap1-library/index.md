@@ -61,8 +61,9 @@ own pieces. The bill buys the oligos and the primers; it never buys the blocks a
 The protocol ends by moving the finished library into a working vector, which is where an
 application gets it. Add a `working_vector` key to name the backbone yours ends in and the
 steps carry its enzyme and that enzyme's cycling; this project names none, so those steps say
-what a vector would have fixed instead. Choose it before the blocks are designed and list it
-under `reserved_extra`: an enzyme a block spells cannot be the one that admits the library.
+what a vector would have fixed instead. Name one and the plan reads its cargo enzyme off that
+backbone first, then keeps every block clear of it: an enzyme a block spells cannot be the one
+that admits the library.
 
 ## What a price costs
 
