@@ -119,28 +119,19 @@ def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
     return HOLES if selection_for(record) else (ROUND_SELECTION, *HOLES)
 
 
-#: What the pool route cannot write, and would have to invent a number to fill. A block is
-#: split for synthesis and nothing says what puts it back together: the method assembles cargo
-#: into the DMX vector, and a block already carries the flanks that vector would supply, so the
-#: pieces have no destination to close into and no reaction sized against one.
+#: What the pool route still cannot write. Only the cargo is synthesised now, so the pieces
+#: close into the vector the first round opens and NEB's kit table sizes the reaction. What is
+#: left is that a part enters on its own position's overhang and one backbone presents one pair.
 POOL_HOLES: tuple[Hole, ...] = (
     Hole(
         "H25",
-        "nothing names what the assembled pieces close into, or what selects the closure",
+        "only the first position's cargo closes into this build's destination; a later position "
+        "enters on an overhang no backbone here presents",
         "undecided",
-        where="block assembly, the destination",
-        filled_by="splitting the cargo rather than the whole block, so the pieces close into "
-        "the DMX backbone the parent's own BsmBI digest leaves",
-        issue="liuhlab/liulab-mbio#373",
-    ),
-    Hole(
-        "H26",
-        "no source sets the DNA in, the enzyme, the ligase or the cycling for a block assembly",
-        "undecided",
-        where="block assembly, the reaction and its program",
-        filled_by="NEB's own Golden Gate table, once the assembly has a destination to be "
-        "sized against",
-        issue="liuhlab/liulab-mbio#373",
+        where="block assembly, the destination for every position after the first",
+        filled_by="one destination a position, each this vector carrying that position's own "
+        "entry overhang, as a retrofit already writes one",
+        issue="liuhlab/liulab-mbio#376",
     ),
 )
 

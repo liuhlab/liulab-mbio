@@ -768,12 +768,15 @@ def _consumed(
 
 def _references(scheme: Scheme) -> tuple[Reference, ...]:
     """Where the numbers come from, and where the scheme itself came from."""
+    from liulab_mbio.cloning.goldengate.bench import REFERENCES as GOLDEN_GATE_REFERENCES
+
     items = [
         *BENCH_REFERENCES,
         *COVERAGE_REFERENCES,
         *AMOUNT_REFERENCES,
         *READOUT_REFERENCES,
         *POOL_RESUSPENSION_REFERENCES,
+        *GOLDEN_GATE_REFERENCES,
     ]
     if scheme.source:
         items.append(Reference(f"The method this build was planned by: {scheme.source}"))
@@ -842,10 +845,23 @@ def _steps(
     """Return every step in the order it happens, the rounds one after another.
 
     A pool replaces the order step with the four it takes to get the same blocks: order the
-    pool, pull each batch out of it, pull each block out of its batch, and assemble the block.
+    pool, pull each batch out of it, pull each block out of its batch, and clone that block's
+    cargo into the destination the first round opens.
     """
     made = (
-        list(_pool_steps(pool, parts, sheet, pool_sheet, primer_sheet))
+        list(
+            _pool_steps(
+                pool,
+                parts,
+                sheet,
+                pool_sheet,
+                primer_sheet,
+                scheme,
+                rounds[0].destination.name or "the destination",
+                bench[0].ligation[0],
+                selection,
+            )
+        )
         if pool
         else [_order_step(parts, sheet)]
     )
@@ -995,10 +1011,13 @@ def _pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple
             amount="one reaction per batch, then one per block",
             note="the buffer the annealing temperatures below were computed in",
         ),
-        enzyme_material(
-            get_enzyme(SYNTHESIS_ENZYME),
+        catalogued(
+            "NEBridge Golden Gate Assembly Kit, BsmBI-v2 (E1602)",
+            supplier="NEB",
+            storage="-20 °C",
             amount="one assembly per block",
-            note="cuts every oligo back to its own fragment, and is reserved for that",
+            note=f"its mix carries the {SYNTHESIS_ENZYME} that cuts every oligo back to its own "
+            "fragment, which this method reserves, and the T4 DNA Ligase that joins them",
         ),
     )
 
@@ -1063,6 +1082,10 @@ def _pool_steps(
     sheet: str,
     pool_sheet: str,
     primer_sheet: str,
+    scheme: Scheme,
+    destination: str,
+    opened: Amount,
+    selection: str,
 ) -> tuple[Step, ...]:
     """Return the steps that turn an oligo pool into the blocks a round's part list holds."""
     sequences = {one.name: one.sequence for one in pool.pool.primers}
@@ -1075,7 +1098,7 @@ def _pool_steps(
         _pool_order_step(pool, pool_sheet, primer_sheet),
         _pcr1_step(pool, batches, first, layout.length),
         _pcr2_step(pool, batches, parts, second, inner_length),
-        _assembly_step(pool, parts, sheet),
+        _assembly_step(pool, parts, sheet, scheme, destination, opened, selection),
     )
 
 
@@ -1272,24 +1295,62 @@ def _pcr2_step(
     )
 
 
-def _assembly_step(pool: PoolPlan, parts: Sequence[Part], sheet: str) -> Step:
-    """Assemble each block out of its own pieces, which is the step the model cannot finish."""
+def _assembly_step(
+    pool: PoolPlan,
+    parts: Sequence[Part],
+    sheet: str,
+    scheme: Scheme,
+    destination: str,
+    opened: Amount,
+    selection: str,
+) -> Step:
+    """Clone each block's cargo into the opened destination, one well a block.
+
+    The destination supplies the stuffers the cargo is no longer synthesised with, and its own
+    marker is what selects a well that closed. The reaction and its cycling are NEB's kit table
+    for the most pieces any block takes, so one master mix covers the plate.
+    """
+    from liulab_mbio.cloning.goldengate.bench import (
+        KIT,
+        assembly_amounts,
+        assembly_program,
+        assembly_reaction,
+    )
+
+    enzyme = get_enzyme(SYNTHESIS_ENZYME)
     pieces = {split.pieces for split in pool.splits}
-    lengths = [part.length for part in parts]
+    most = max(pieces)
+    piece_bp = pool.pool.layout.length - pool.pool.layout.primer_length
+    cargo = [len(split.cargo.sequence) for split in pool.splits]
+    amounts = assembly_amounts(
+        (opened.name, opened.length_bp),
+        tuple((f"PCR2 piece {number}", piece_bp) for number in range(1, most + 1)),
+    )
+    plated = selection or f"{destination}'s own marker, which this plan does not name"
     return Step(
-        f"Assemble each block from its {min(pieces)} to {max(pieces)} pieces",
+        f"Assemble each cargo into {destination} from its {min(pieces)} to {most} pieces",
         instructions=(
-            f"Set up one {SYNTHESIS_ENZYME} assembly a well, holding that block's own PCR2 "
-            "pieces and nothing from another well.",
+            f"Open {destination} with {scheme.internal.name} and "
+            f"{listed([one.name for one in choppers(scheme)[0]])}, the digest the first round "
+            "runs on it, and clean it up.",
+            "Set up one assembly a well, holding that block's own PCR2 pieces, the opened "
+            "destination, and nothing from another well.",
+            f"Transform, plate on {plated}, and pick one colony a block.",
         ),
+        tables=(assembly_reaction(enzyme, amounts, system=KIT, reactions=len(parts)),),
+        programs=(assembly_program(enzyme, fragments=most + 1, system=KIT),),
         expected=(
-            f"{len(parts)} blocks, {min(lengths)} to {max(lengths)} bp, as {sheet} spells them.",
-            "Each block reads: 5' external stuffer, coding bases, internal stuffer, barcode, "
-            "3' external stuffer.",
+            f"{len(parts)} plasmids, one a block: {destination} carrying that block's cargo, "
+            f"{min(cargo):,} to {max(cargo):,} bp of it.",
+            f"Each cargo reads: the overhang its part enters on, its coding bases, the internal "
+            f"stuffer, its barcode, and the {scheme.cloning_scar} cloning scar. The external "
+            f"stuffers {sheet} spells either side of it are the destination's own bases.",
         ),
         notes=(
             f"{SYNTHESIS_ENZYME} cuts each oligo back to its fragment, so the primer sites, the "
-            "recognition sites and the padding all stay outside the block.",
+            "recognition sites and the padding all stay outside the cargo.",
+            "The table is sized at the most pieces any block takes, so one master mix covers "
+            "the plate; a well with fewer pieces fills fewer of its DNA rows.",
         ),
         holes=stages.POOL_HOLES,
         troubleshooting=(
@@ -1297,6 +1358,11 @@ def _assembly_step(pool: PoolPlan, parts: Sequence[Part], sheet: str) -> Step:
                 "A block comes out short",
                 "A piece was missing from the well. Check that well's PCR2 lane before "
                 "assembling it again; the pieces of one block are not interchangeable.",
+            ),
+            Troubleshooting(
+                "Colonies carrying the destination with no cargo",
+                "The destination was not opened to completion. Run a little of its digest on a "
+                "gel before setting the plate up again.",
             ),
         ),
     )

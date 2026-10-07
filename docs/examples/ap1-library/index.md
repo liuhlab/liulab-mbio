@@ -42,7 +42,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | File | What it is |
 | --- | --- |
 | [parts.tsv](parts.tsv) | the synthesis order sheet: 72 blocks, 133 to 1,149 bases |
-| [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 153 oligos, every one 350 nt |
+| [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 131 oligos, every one 350 nt |
 | [pool-primers.tsv](pool-primers.tsv) | the 74 primers that amplify the pool, and how many oligos each one pulls out |
 | [barcodes.tsv](barcodes.tsv) | which barcode names which part, and where it sits |
 | [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
@@ -56,8 +56,10 @@ The three part lists make 24 x 24 x 24 = 13,824 members. The product file holds 
 with the rest differing only in which protein and which barcode sits at each position.
 
 The blocks of `parts.tsv` are not bought. The protocol orders the pool and its primers, pulls
-each batch out of the pool, pulls each block out of its batch, and assembles the block from its
-own pieces. The bill buys the oligos and the primers; it never buys the blocks as well.
+each batch out of the pool, pulls each block out of its batch, and clones that block's cargo
+into the vector the first round opens. Only the cargo is synthesised: the stuffers either side
+of it are the vector's own bases. The bill buys the oligos and the primers; it never buys the
+blocks as well.
 
 The protocol ends by moving the finished library into a working vector, which is where an
 application gets it. Add a `working_vector` key to name the backbone yours ends in and the

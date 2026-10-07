@@ -13,12 +13,14 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.barcodes import MAX_HOMOPOLYMER
+from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
+from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo, working_vector
 
@@ -91,15 +93,15 @@ def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
     assert pool.count == len(pool.oligos)
 
 
-def test_the_arithmetic_floor_is_152_and_the_design_spends_one_more_on_one_block(plan):
-    """152 is what the length budget allows for; 153 is what a legal overhang set costs.
+def test_the_design_lands_on_the_arithmetic_floor_of_131(plan):
+    """Splitting the cargo rather than the block leaves no block over its own floor.
 
-    N_ATF7 is 1,092 bp, exactly four spans of 276 less the three shared overhangs, so its four
-    cut positions are forced and the first spells GCCG, which is refused as one base kind.
+    N_ATF7 overran while the stuffers were synthesised with it: they forced its cut positions,
+    and the first forced one spelled GCCG, which is refused as one base kind.
     """
-    assert plan.pool.floor == 152
-    assert plan.pool.pool.count == 153
-    assert plan.pool.over_floor == ("N_ATF7",)
+    assert plan.pool.floor == 131
+    assert plan.pool.pool.count == 131
+    assert plan.pool.over_floor == ()
 
 
 def test_every_oligo_traces_to_its_protein_and_its_fragment(plan):
@@ -109,15 +111,17 @@ def test_every_oligo_traces_to_its_protein_and_its_fragment(plan):
         assert 1 <= oligo.fragment <= oligo.fragments
 
 
-def test_every_block_reassembles_from_its_own_fragments(plan):
+def test_every_cargo_reassembles_from_its_own_fragments(plan):
+    """What is synthesised is the cargo; the stuffers either side are the destination's."""
     for split, part in zip(plan.pool.splits, plan.parts, strict=True):
-        assert split.reassembled() == part.sequence
+        assert split.reassembled() == str(cargo_record(part, plan.scheme).sequence)
+        assert split.reassembled() in part.sequence
 
 
 def test_the_fragment_counts_sit_at_or_above_lund_s_measured_84_6_per_cent_point(plan):
     counted = dict(plan.pool.pool.fragment_counts())
     assert max(counted) == 5
-    assert sum(blocks for pieces, blocks in counted.items() if pieces <= 2) == 55
+    assert sum(blocks for pieces, blocks in counted.items() if pieces <= 2) == 56
     assert [row[2] for row in plan.pool.against_lund() if row[0] == 5] == [0.846]
 
 
@@ -128,8 +132,8 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
 def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
     """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
     row = next(one for one in plan.protocol().bill.rows if one.item.endswith("oligo pool"))
-    assert (row.quantity, row.unit) == (153, "oligos")
-    assert "153 count, 347 below the next band" in row.headroom
+    assert (row.quantity, row.unit) == (131, "oligos")
+    assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
     assert row.charge == ""
     assert row.hole is not None
@@ -168,11 +172,11 @@ def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out
     whole = plan.validation
     fewer = rerouted(plan, validate_from=2).validation
     left_out = len(whole.designs) - len(fewer.designs)
-    assert left_out == 21
-    assert fewer.wells == whole.wells - left_out * whole.colonies == 204
-    assert sum(len(one.labels) for one in fewer.picked) == 204
+    assert left_out == 40
+    assert fewer.wells == whole.wells - left_out * whole.colonies == 128
+    assert sum(len(one.labels) for one in fewer.picked) == 128
     fewest = rerouted(plan, validate_from=3).validation
-    assert (len(fewest.designs), fewest.wells) == (17, 68)
+    assert (len(fewest.designs), fewest.wells) == (16, 64)
     assert len(fewest.index) == 1 < len(whole.index)
     assert rerouted(plan, validate_from=6).validation is None
 
@@ -201,8 +205,9 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
     assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
     pcrs = ["H29", "H30"]
-    # A block's pieces still have no destination to close into, and no reaction sized against one.
-    blocks = ["H25", "H26"]
+    # The cargo has a destination and NEB's table sizes the reaction; what is left open is the
+    # destination for every position after the first, which no backbone here presents.
+    blocks = ["H25"]
     # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
     # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
     linkage = ["H28"]
@@ -235,7 +240,7 @@ def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_t
         "Order the oligo pool and the primers that amplify it",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
-        "Assemble each block from its 1 to 5 pieces",
+        "Assemble each cargo into DMX-iGGA from its 1 to 5 pieces",
     ]
     note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
@@ -278,13 +283,22 @@ def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
     assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
-def test_the_assembly_step_names_what_nobody_decided_rather_than_a_number(plan):
-    """A block is split for synthesis and nothing says what puts it back together."""
+def test_the_assembly_step_names_its_destination_and_sizes_itself_from_nebs_table(plan):
+    """The cargo closes into the vector the first round opens, in NEB's own kit reaction."""
     step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
-    assert [hole.id for hole in step.holes] == ["H25", "H26"]
-    assert not step.tables
-    assert not step.programs
-    assert all(hole.kind == "undecided" for hole in step.holes)
+    opened = len(plan.rounds[0].destination) - plan.rounds[0].excised.length
+
+    table = step.tables[0]
+    assert "E1602" in table.title
+    rows = {one.name: one for one in table.components}
+    weighed = dna_amount("backbone", opened, pmol=0.05).nanograms
+    assert rows["DMX-iGGA, opened"].final == f"0.05 pmol ({weighed:g} ng)"
+    assert rows["T4 DNA Ligase Buffer"].stock == "10X"
+    assert [one.name for one in table.components if one.name.startswith("PCR2 piece")] == [
+        f"PCR2 piece {number}" for number in range(1, 6)
+    ]
+    assert step.programs[0].stages[-1].incubations[0].temperature_c == 60.0
+    assert [hole.id for hole in step.holes] == ["H25"]
 
 
 def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
