@@ -9,6 +9,13 @@ sets one.
 
 ### Added
 
+- DMX has a way in of its own. `pixi run liulab_synbio dmx plan BUILD --out DIR` reads
+  designs back one well at a time, from a plate a lab already holds and with no library run
+  behind it. The build file names the designs sheet, the archive plate, the marking route
+  and the fragment-count floor. The sheet is two columns: a name, and how many fragments the
+  design was built from. No sequence is read, so any frozen stock can be read back. The run
+  designs no DNA, so a protocol folder is the whole of what it writes.
+  `docs/examples/ap1-readback` is one such run, over the AP-1 library's own cargo.
 - A ligase joins some overhangs far more rarely than another does, and that costs colonies rather
   than product. `liulab_mbio.overhangs.on_target` reports how often the ligase a matrix measured
   joined each overhang of a set to its own partner, and names the ones below the rate NEB calls a
