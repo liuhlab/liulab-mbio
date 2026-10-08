@@ -28,7 +28,7 @@ from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.bench import CUTSMART, SPRI_BEADS, STRAIN
 from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL
+from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
 from liulab_synbio.igga.protocols.run import CUVETTES, FINAL_SELECTIVE, PREP_KIT, SELECTIVE
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo
@@ -776,3 +776,71 @@ def test_every_reagent_the_rounds_share_lands_on_a_page(plan):
         SPRI_BEADS,
         STRAIN,
     } <= bought
+
+
+def test_no_page_cites_a_golden_gate_kit_this_run_never_buys(plan):
+    """A round runs the method's own chemistry, so E1601 answers for nobody's reaction here."""
+    chain = plan.chain()
+    for one in chain.protocols:
+        said = " ".join(ref.text for ref in one.references)
+        assert "E1601" not in said, one.title
+
+    # The one thing the final protocol borrows from that module is its cycling, and it cites
+    # the documents that cycling is read from.
+    final = next(one for one in chain.protocols if one.title == FINAL)
+    assert "NEBridge Ligase Master Mix" in " ".join(ref.text for ref in final.references)
+
+
+def test_the_ordering_page_cites_only_the_document_its_own_numbers_come_from(plan):
+    """Ordering a pool and resuspending it runs no PCR and pours no gel."""
+    ordering = next(one for one in plan.chain().protocols if one.title == ORDERING)
+    said = " ".join(ref.text for ref in ordering.references)
+
+    assert "DOC-4060" in said
+    for unused in ("Colony PCR", "DNA Ladder", "Agarose Gel Resolution", "FRM-001034"):
+        assert unused not in said, unused
+
+
+def test_the_method_reference_links_the_page_it_names(plan):
+    """A reference list prints a bare path as text, so the method gives its address too."""
+    final = next(one for one in plan.chain().protocols if one.title == FINAL)
+    named = next(one for one in final.references if "The method this build" in one.text)
+
+    assert "docs/synthesis-and-assembly.md" in named.text
+    assert named.url.startswith("https://")
+
+
+def test_an_unjudged_badge_never_says_how_many_it_judged(plan):
+    """`ligation fidelity not judged: 4 judged` reads as a contradiction before the detail."""
+    summary = plan.verdict.summary
+    grouped = [one for one in summary if one.status is None and "including:" in one.detail]
+
+    assert grouped, "the demo should group at least one unjudged check"
+    for one in grouped:
+        assert "judged" not in one.detail, one.detail
+
+
+def test_only_the_library_in_its_working_vector_is_called_finished(plan, protocol):
+    """Two molecules called the finished library is one name too many for a bench to follow."""
+    run = plan.chain()
+    assert run.protocols  # the demo names a working vector, so the two are different molecules
+
+    prep = next(one for one in protocol.steps if one.key == "round-3-prep")
+    assert "the library the rounds built" in " ".join(prep.expected)
+    assert "finished library" not in " ".join(prep.expected)
+
+    said = " ".join(
+        text
+        for step in protocol.steps
+        for text in (*step.instructions, *step.expected, *step.notes)
+    )
+    assert "finished library" not in said
+
+
+def test_a_share_of_nothing_reads_as_none(plan, protocol):
+    """0.0% is what a rounded share prints; none of them is what this one means."""
+    linkage = next(one for one in protocol.steps if one.key == "read-linkage")
+    said = " ".join(linkage.notes)
+
+    assert "None of the single-base deletions" in said
+    assert "0.0% of the single-base deletions" not in said

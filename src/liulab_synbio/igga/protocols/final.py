@@ -12,7 +12,7 @@ from liulab_mbio.bench.coverage import (
     absent_probability,
     colonies_for_completeness,
 )
-from liulab_mbio.bench.goldengate import assembly_program
+from liulab_mbio.bench.goldengate import assembly_program, program_references
 from liulab_mbio.bench.inactivation import heat_inactivations
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.cloning.plan import PRODUCT_FILE
@@ -98,7 +98,10 @@ class FinalLigation(Protocol):
                 _pick_working_step(scheme, working, run.working_file),
                 "Choose the working vector",
             ),
-            labelled(_free_step(scheme, product, span, freeing), "Move the library across"),
+            labelled(
+                _free_step(scheme, product, span, freeing, run.assembled),
+                "Move the library across",
+            ),
             labelled(
                 figured(
                     _assemble_step(scheme, product, span, working, run.final_assembly),
@@ -142,8 +145,14 @@ class FinalLigation(Protocol):
         return round_equipment(run)
 
     def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where the numbers come from, and where the scheme itself came from."""
-        return run.round_references
+        """Where the numbers come from, and where the scheme itself came from.
+
+        This protocol borrows one thing from the Golden Gate kit module and nothing else: the
+        cycling the one-pot assembly runs. It cites that cycling's own documents, so no kit the
+        run never buys is named here.
+        """
+        borrowed = () if run.working is None else program_references(run.working.enzyme)
+        return (*run.round_references, *borrowed)
 
     def sources(self, run: Run) -> dict[str, Source]:
         """Return what the method's own materials and the junction figure are cited to."""
@@ -248,14 +257,19 @@ def _free_step(
     product: SequenceRecord,
     span: Segment | None,
     enzymes: Sequence[Enzyme],
+    library: str,
 ) -> Step:
-    """Free the cargo from the backbone the rounds ran in, then kill what freed it."""
+    """Free the cargo from the backbone the rounds ran in, then kill what freed it.
+
+    `library` is what the molecule going into this digest is called: the rounds' own library,
+    which this protocol is in the middle of finishing rather than the finished thing.
+    """
     if span is None:
         return Step(
             "Release the cargo from the library backbone",
             key="release-cargo",
             instructions=(
-                f"Digest the finished library with {scheme.external.name} and the blunt enzyme "
+                f"Digest {library} with {scheme.external.name} and the blunt enzyme "
                 "that shreds the backbone it leaves.",
                 "Heat-kill both. Nothing is purified: the working vector goes into this tube.",
             ),
@@ -273,12 +287,12 @@ def _free_step(
         f"Release the cargo with {named}",
         key="release-cargo",
         instructions=(
-            f"Digest the finished library with {named} at {DIGEST_CELSIUS:g} °C.",
+            f"Digest {library} with {named} at {DIGEST_CELSIUS:g} °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages.",
         ),
         tables=(
             digest_reaction(
-                digest_amount((product.name or "the finished library", len(product))), enzymes
+                digest_amount((product.name or library, len(product))), enzymes
             ),
         ),
         programs=(

@@ -14,7 +14,7 @@ from dataclasses import replace
 
 from liulab_mbio.bench.readback import clean_colony_chance
 from liulab_mbio.checks import counted
-from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting
+from liulab_mbio.protocol.model import Figure, Plate, Step, Transfer, Troubleshooting
 from liulab_synbio.dmx.kit import GROUPS
 from liulab_synbio.dmx.method import (
     BARCODE_UL,
@@ -70,6 +70,19 @@ def chances(designs: Sequence[Design]) -> tuple[str, ...]:
         f"{clean_colony_chance(pieces):.1%} of picks clean"
         for pieces, number in sorted(found.items())
     )
+
+
+def pooled_plates(one: Validation) -> tuple[Plate, ...]:
+    """Return the plates this read pools for sequencing: the marked ones, not the picked ones.
+
+    Examples
+    --------
+    >>> from liulab_synbio.dmx.method import validation
+    >>> one = validation(ROUTE_LIGATION, (Design("a", 4),), 0)
+    >>> len(pooled_plates(one))
+    1
+    """
+    return one.compressed if one.route is ROUTE_LIGATION else one.index
 
 
 #: What each step belongs under, in the order a reader works through them.

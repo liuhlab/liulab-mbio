@@ -43,6 +43,14 @@ POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 POOL_STOCK_BUFFER = "10 mM Tris buffer, pH 8.0"
 POOL_STOCK_NG_PER_UL = 20.0
 
+#: Where the dried pool's own buffer and floor are read. The same document carries the cycle
+#: bands, so the protocol that amplifies the pool cites it too.
+POOL_STOCK_REFERENCE = Reference(
+    "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the "
+    "buffer a dried pool is dissolved in and the least it may be left at, for the three cycle "
+    "bands, and for the FAQ answering that more cycles give worse uniformity"
+)
+
 #: Where PCR1's cycle count is read. Two independently revised Twist documents give the same
 #: three length bands, and the second's appendix answers what more cycles cost.
 POOL_CYCLE_REFERENCES: tuple[Reference, ...] = (
@@ -50,10 +58,7 @@ POOL_CYCLE_REFERENCES: tuple[Reference, ...] = (
         "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle "
         "count banded by the pool's length"
     ),
-    Reference(
-        "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the "
-        "same three bands, and for the FAQ answering that more cycles give worse uniformity"
-    ),
+    POOL_STOCK_REFERENCE,
 )
 
 #: What the two PCRs and their gel cite, beside the round's own references.
@@ -105,8 +110,12 @@ class Ordering(Protocol):
         return bought
 
     def references(self, run: Run) -> tuple[Reference, ...]:
-        """Return the pool's own references, which the protocol after it prints too."""
-        return POOL_REFERENCES if run.pool else ()
+        """Return the one document this page's own numbers are read from.
+
+        Ordering a pool and resuspending it runs no PCR and pours no gel, so the cycle count,
+        the ladders and the gel resolution belong to the protocol after it and not here.
+        """
+        return (POOL_STOCK_REFERENCE,) if run.pool else ()
 
 
 def pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[Material, ...]:

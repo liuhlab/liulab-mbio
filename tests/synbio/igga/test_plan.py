@@ -296,8 +296,9 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
 
     assert "2 volumes here and 1 after the ligation" in said
     # The designed set is indel-aware, so the share is nil — and it is printed rather than implied,
-    # because a set designed on mismatches alone leaves a share that is not.
-    assert "0.0% of the single-base deletions" in linkage
+    # because a set designed on mismatches alone leaves a share that is not. Exactly none reads
+    # as none; a share merely rounding to 0.0% still prints the figure.
+    assert "None of the single-base deletions" in linkage
     assert "keep the barcodes away from where a primer anneals" in representation
 
 

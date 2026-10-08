@@ -652,9 +652,19 @@ def _read_by_a_well_primer(record: SequenceRecord, annealing: Sequence[str]) -> 
 
 
 def _worst(name: str, group: Sequence[Check]) -> Check:
-    """Return the worst check of one name, saying how many carried it where more than one did."""
+    """Return the worst check of one name, saying how many carried it where more than one did.
+
+    A group no threshold judges is counted and not ranked: the badge opens with `not judged`,
+    so a detail saying how many were judged, and which was worst, reads as a contradiction
+    before the explanation arrives.
+    """
     kept = max(group, key=lambda one: STATUSES.index(one.status) if one.status else -1)
-    detail = kept.detail if len(group) == 1 else f"{len(group)} judged, worst: {kept.detail}"
+    if len(group) == 1:
+        detail = kept.detail
+    elif kept.status is None:
+        detail = f"{len(group)} measured, including: {kept.detail}"
+    else:
+        detail = f"{len(group)} judged, worst: {kept.detail}"
     return Check(name, kept.status, kept.value, detail)
 
 

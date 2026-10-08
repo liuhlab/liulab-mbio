@@ -76,7 +76,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
-| [product.dna](product.dna) | one member of the finished library, 6,435 bases |
+| [product.dna](product.dna) | one member of the library the rounds built, 6,435 bases, before the move into the working vector |
 | [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
 | [working-vector-ccdb.dna](working-vector-ccdb.dna) | the backbone above with the ccdB cassette put in at `--working-site`, 10,284 bases: the vector the last sitting opens |
 | [protocol/](protocol/index.html) | the bench protocols, as a folder of pages to work from |
@@ -120,7 +120,7 @@ A part enters on the overhang the round before it leaves behind, so each positio
 offering that overhang. The three `block-vector` files are one vector written three times, four
 bases apart. The first is `vector.gb` itself, which is also what round one opens.
 
-The protocol ends by moving the finished library into a working vector, which is where an
+The protocol ends by moving the library the rounds built into a working vector, which is where an
 application gets it. The `working_vector` key names the backbone this library ends in, and the
 steps then carry its enzyme and that enzyme's cycling. The plan reads the cargo enzyme off that
 backbone first, then keeps every block clear of it: an enzyme a block spells cannot be the one

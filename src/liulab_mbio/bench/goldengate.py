@@ -348,25 +348,45 @@ def _ligation_reference() -> Reference:
     )
 
 
+#: Each document the numbers above are read from, named one at a time so that a protocol
+#: borrowing one part of this module cites that part's own source and not the whole kit.
+KIT_MANUAL = Reference(
+    "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, "
+    "version 5.0_6/26",
+    url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
+)
+MASTER_MIX_PROTOCOL = Reference(
+    "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+    url="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
+)
+MASTER_MIX_GUIDELINES = Reference(
+    "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
+    url="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines",
+)
+PAQCI_GUIDELINES = Reference(
+    "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
+    url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
+)
+
 #: Where the numbers above come from, ready for a protocol's reference list.
 REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, "
-        "version 5.0_6/26",
-        url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
-    ),
-    Reference(
-        "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
-        url="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
-    ),
-    Reference(
-        "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
-        url="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines",
-    ),
-    Reference(
-        "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
-        url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
-    ),
+    KIT_MANUAL,
+    MASTER_MIX_PROTOCOL,
+    MASTER_MIX_GUIDELINES,
+    PAQCI_GUIDELINES,
     # A ligation fidelity check names this in passing; here is the reference it names.
     _ligation_reference(),
 )
+
+
+def program_references(
+    enzyme: Enzyme, *, system: System = LIGASE_MASTER_MIX
+) -> tuple[Reference, ...]:
+    """Return the documents `assembly_program`'s cycling for this enzyme is read from.
+
+    A protocol that borrows the cycling and runs none of the kit's own chemistry cites these
+    and not `REFERENCES`: the kit manual answers for a reaction that protocol never sets up,
+    and naming a kit a run does not buy sends its reader to the wrong document.
+    """
+    read = (KIT_MANUAL,) if system == KIT else (MASTER_MIX_PROTOCOL, MASTER_MIX_GUIDELINES)
+    return (*read, *((PAQCI_GUIDELINES,) if enzyme.name in _NEEDS_ACTIVATOR else ()))

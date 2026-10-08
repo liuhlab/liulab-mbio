@@ -115,6 +115,9 @@ class Scheme:
         The bases every part's 3' end leaves at its junction.
     source
         Where these values came from, so provenance travels with the method.
+    source_url
+        Where `source` can be read, where it is a page with an address. A reference list prints
+        a bare path as text, so a method naming one of this site's pages gives the link too.
     reserved
         The names of further enzymes a block must be free of, beyond the ones above. A step
         outside the rounds — putting a part in its carrier, or the last transfer into a working
@@ -141,6 +144,7 @@ class Scheme:
     external_stuffer_3: str
     cloning_scar: str
     source: str = ""
+    source_url: str = ""
     reserved: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -353,6 +357,7 @@ IGGA = Scheme(
         "external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so "
         "every overhang is read off the DNA rather than stated."
     ),
+    source_url="https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/",
 )
 
 

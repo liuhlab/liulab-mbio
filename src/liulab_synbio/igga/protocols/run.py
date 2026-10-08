@@ -18,7 +18,6 @@ from liulab_mbio.bench.coverage import (
     RepresentationMarks,
     reads_for_representation,
 )
-from liulab_mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
 from liulab_mbio.bench.materials import material
 from liulab_mbio.bench.phenotype import selection_marker
 from liulab_mbio.bench.prices import PriceRecord
@@ -313,6 +312,15 @@ class Run:
         )
 
     @property
+    def assembled(self) -> str:
+        """What the library the rounds built is called, before any move into a working vector.
+
+        A build naming a working vector has two libraries to tell apart: this one, and the one
+        the final protocol hands on. Without one there is only the one, and it is finished.
+        """
+        return "the library the rounds built" if self.working is not None else "the finished library"
+
+    @property
     def library(self) -> Handed:
         """The finished library in its working vector, which is what the run is for."""
         return Handed(
@@ -345,17 +353,26 @@ class Run:
 
     @property
     def round_references(self) -> tuple[Reference, ...]:
-        """Where a round's numbers come from, and where the scheme itself came from."""
+        """Where a round's numbers come from, and where the scheme itself came from.
+
+        No NEBridge kit is among them: a round runs the method's own chemistry, and a page
+        citing a kit the run never buys sends its reader to the wrong document. A protocol
+        borrowing the kit module's cycling cites that cycling's own source instead.
+        """
         items = [
             *BENCH_REFERENCES,
             *COVERAGE_REFERENCES,
             *AMOUNT_REFERENCES,
             *READOUT_REFERENCES,
             *POOL_RESUSPENSION_REFERENCES,
-            *GOLDEN_GATE_REFERENCES,
         ]
         if self.scheme.source:
-            items.append(Reference(f"The method this build was planned by: {self.scheme.source}"))
+            items.append(
+                Reference(
+                    f"The method this build was planned by: {self.scheme.source}",
+                    url=self.scheme.source_url,
+                )
+            )
         return tuple(items)
 
     @property

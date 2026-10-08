@@ -332,7 +332,9 @@ def _round_steps(run: Run, one: Round, row: RoundBench, rows: Figure | None) -> 
         _ligation_cleanup_step(row),
         _electroporation_step(row),
         _growth_step(row, run.selection),
-        _prep_step(scheme, one, row, row.number == len(run.rounds)),
+        _prep_step(
+            scheme, one, row, run.assembled if row.number == len(run.rounds) else ""
+        ),
     ]
 
 
@@ -579,15 +581,19 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
     )
 
 
-def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
-    """Prep the round's plasmid, which is either the next destination or the finished library.
+def _prep_step(scheme: Scheme, one: Round, row: RoundBench, library: str) -> Step:
+    """Prep the round's plasmid, which is either the next destination or the whole library.
+
+    `library` is what the last round's prep is called and empty for every round before it. A
+    build moving its library into a working vector does not call this one finished: the
+    protocol after this one still has it to move.
 
     Both site counts are read off the product rather than assumed: the external enzyme still
     flanks the cargo, which is the molecule the final ligation releases.
     """
     where = (
-        "This is the finished library."
-        if last
+        f"This is {library}."
+        if library
         else f"This is the destination round {row.number + 1} opens."
     )
     internal = len(find_sites(one.product, scheme.internal))
@@ -635,6 +641,8 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
         deletion_ambiguity([one.barcode for one in run.parts if one.index == index])
         for index in range(len(positions))
     )
+    # Exactly none reads as none; a share rounded down to 0.0% does not, and still says so.
+    share = "None" if ambiguous == 0 else f"{ambiguous:.1%}"
     order = listed([one.position for one in reversed(rounds)])
     fidelity = run.linkage_fidelity
     barcodes = run.barcodes
@@ -642,7 +650,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
         "Read linkage",
         key="read-linkage",
         instructions=(
-            f"Amplify the whole cargo out of the finished library, from the vector before the "
+            f"Amplify the whole cargo out of {run.assembled}, from the vector before the "
             f"first {rounds[0].entry_overhang} to the vector past the final "
             f"{rounds[0].scar_overhang}, so one read carries a member's parts and its barcode "
             f"block together{with_pair(pair, run.read_sheet)}.",
@@ -662,7 +670,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
         notes=(
             "The block reads in the reverse of the order the rounds ran: each round inserted its "
             "barcode ahead of the ones already there.",
-            f"{ambiguous:.1%} of the single-base deletions a barcode can carry leave a read "
+            f"{share} of the single-base deletions a barcode can carry leave a read "
             "another barcode of the same part list could leave, which no read can be assigned "
             "through.",
             (
