@@ -87,7 +87,9 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     """Write `protocol` into `directory` as `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`.
 
     The directory is made when it is not there, and the page is rendered from the data as
-    written, so the two cannot disagree. The same protocol writes the same bytes.
+    written, so the two cannot disagree. The same protocol writes the same bytes. A plan of
+    several protocols writes a folder of linked pages instead, through
+    `protocol.render.write_project_files`.
     """
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
