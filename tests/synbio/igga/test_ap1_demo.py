@@ -5,6 +5,7 @@ The inputs are `docs/examples/ap1-library`, specified by `docs/research/ap1-demo
 the blocks that make it, not on how the design reached them.
 """
 
+import re
 from collections import Counter
 from dataclasses import replace
 from itertools import groupby
@@ -38,6 +39,11 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 @pytest.fixture(scope="module")
 def plan():
     return plan_igga(DEMO / "project.json")
+
+
+@pytest.fixture(scope="module")
+def protocol(plan):
+    return plan.protocol()
 
 
 def test_the_demo_plans_every_part_and_the_whole_library(plan):
@@ -253,16 +259,23 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
 
 
-def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(plan):
+def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):
+    """A step builder formats it as the page does, so no line reads ``7.27e-07``."""
+    grow = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
+    assert "At that count the chance a named product is missing is 7.27 × 10⁻⁷." in grow.expected
+    assert not [line for one in protocol.steps for line in one.expected if re.search(r"\de-", line)]
+
+
+def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
     """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
-    titles = [step.title for step in plan.protocol().steps]
+    titles = [step.title for step in protocol.steps]
     assert titles[:4] == [
         "Order the oligo pool and the primers that amplify it",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
         "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
-    note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
+    note = next(one.note for one in protocol.materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
 
 

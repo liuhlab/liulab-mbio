@@ -55,6 +55,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Troubleshooting,
     citing,
+    number,
 )
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import find_sites
@@ -1432,7 +1433,7 @@ def _pool_step(bench: Sequence[RoundBench], parts: Sequence[Part], pool: PoolPla
         expected=tuple(
             f"{row.position}: one tube, {len(members[row.position])} member(s), at least "
             f"{row.donor_digest.nanograms:,.0f} ng at {floor:g} ng/µL or above, "
-            f"{row.donor_digest.pmol / len(members[row.position]):.3g} pmol of each member."
+            f"{number(row.donor_digest.pmol / len(members[row.position]))} pmol of each member."
             for row in bench
             if members[row.position]
         ),
@@ -1480,9 +1481,9 @@ def _pool_masses(
         pmol = row.donor_digest.pmol / len(each)
         shortest, longest = min(each, key=_len_of), max(each, key=_len_of)
         said.append(
-            f"{row.position}: {pmol:.3g} pmol a member is "
-            f"{to_nanograms(pmol, shortest.length):.3g} ng of its shortest at "
-            f"{shortest.length:,} bp and {to_nanograms(pmol, longest.length):.3g} ng of its "
+            f"{row.position}: {number(pmol)} pmol a member is "
+            f"{number(to_nanograms(pmol, shortest.length))} ng of its shortest at "
+            f"{shortest.length:,} bp and {number(to_nanograms(pmol, longest.length))} ng of its "
             f"longest at {longest.length:,} bp."
         )
     return tuple(said)
@@ -1725,7 +1726,7 @@ def _growth_step(row: RoundBench, selection: str = "") -> Step:
             f"floor for the {coverage.completeness:g} chance the project asked for that none of "
             f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
-            f"{coverage.absent_probability:.3g}.",
+            f"{number(coverage.absent_probability)}.",
             f"{control.name} should be near empty beside it; its colonies come off the count.",
         ),
         notes=(
@@ -2135,7 +2136,7 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
             f"project asked for that none of its {constructs:,} distinct members is missing, "
             "equally represented.",
             f"At that count the chance a named member is missing is "
-            f"{absent_probability(constructs, colonies):.3g}.",
+            f"{number(absent_probability(constructs, colonies))}.",
             "Near-empty plates from a no-cargo control beside it; what grows there is working "
             "vector that kept its ccdB cassette.",
         ),
