@@ -1,10 +1,11 @@
 # liulab-mbio
 
 Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Six pipelines
-plan an experiment end to end: a cloning job, by any of the four methods under `cloning/`; a
-barcoded combinatorial library built from lists of proteins in rounds; and a read-back of designs
-a lab holds. Each writes a bench protocol someone can follow, and the five that design DNA pick
-the enzymes and simulate the product. Repo-local skills call them. Distribution name
+plan an experiment end to end: a vector and its inserts joined by any of the four methods under
+`cloning/`; a barcoded combinatorial library built from lists of proteins in rounds; and a
+read-back of designs a lab holds. Each writes a bench protocol someone can follow, and the five
+that design DNA pick the enzymes and simulate the product. Repo-local skills call them.
+Distribution name
 **`liulab-mbio`**, import names **`liulab_mbio`** and **`liulab_synbio`**.
 
 **The package boundary.** One distribution ships both, at one version. `liulab_synbio` holds
@@ -47,8 +48,8 @@ it; `plan_gateway` writes those four plus the entry clone where it planned a BP 
 `liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
 amino-acid change tables, a record per round, a block vector per position, the product, and a
 `protocol` folder: the run as a chain of protocols, one page each.
-`liulab_synbio.dmx.plan_dmx` writes a protocol folder alone: a DMX run reads designs back, so
-there is no record and no sheet. The
+`liulab_synbio.dmx.plan_dmx` turns its output directory into the protocol folder, and writes no
+record and no sheet. The
 method is code and one build's choices are a file: `docs/adr/0010-method-in-code.md` draws that
 line. A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
