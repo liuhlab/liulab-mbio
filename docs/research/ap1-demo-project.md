@@ -483,9 +483,9 @@ open decision 6.7).
 a position, so it plans three for this build. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
-the carrier step, which runs BsmBI one well a part and makes no library. The pipeline has no
-carrier to seat a part in, so this table is not reachable through it; the gap is the fifth item
-of #223.
+the carrier step, which runs BsmBI one well a part and makes no library. No pipeline seats a part
+in a carrier, so this table is not reachable through one: `liulab_synbio.dmx.carrier` models
+the reaction, and no plan assembles it into a run.
 
 After round 2: the linkage read, then the representation read. Representation is read again
 after the final assembly, after packaging and after transduction — each is a bottleneck that

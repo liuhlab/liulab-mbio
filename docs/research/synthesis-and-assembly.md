@@ -994,7 +994,8 @@ than it read.
   24-member library at the end of it. The method's carrier step is a different reaction: BsmBI,
   one well a part, 72 parts into a carrier, and no library made. **One round a position is what
   the pipeline models**, and the method's accounting needs a carrier the pipeline has none of.
-  That is a design question, filed as the fifth item of #223.
+  That is a design question: `liulab_synbio.dmx.carrier` models the reaction, and no plan
+  assembles it into a run.
 
 ### What the planner could not do
 
