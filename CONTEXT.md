@@ -884,9 +884,10 @@ _Avoid_: dispense, stamp, reformat
 
 ### Source
 
-A document a number was read from: what it is, its edition, where it was read, how, and when. A
-protocol names each one once; a **citation** of a source and a locator hangs on the row that
-carries the number.
+A document a number was read from: what it is, its edition, where it was read, how, when, and
+the research note under `docs/research/` it was read into, where it has one. A protocol names
+each one once; a **citation** of a source and a locator hangs on the row that carries the
+number.
 _Avoid_: reference (the protocol's own bibliography entry), provenance
 
 ### Rule

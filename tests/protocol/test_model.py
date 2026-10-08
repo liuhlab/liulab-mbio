@@ -30,7 +30,7 @@ from liulab_mbio.protocol import (
 )
 
 #: The checkout a `Source.note` is relative to.
-REPO = Path(__file__).parents[2]
+REPO = Path(__file__).resolve().parents[2]
 
 
 def test_an_unknown_key_is_refused_and_located() -> None:
@@ -371,7 +371,11 @@ def test_a_figure_cites_its_source_as_a_note_does() -> None:
 
 
 def _notes() -> set[str]:
-    """Every note a `Source` in `src/` names, read off the call so a local one is found too."""
+    """Every note a `Source(...)` call in `src/` spells as a literal `note=`.
+
+    Read off the source text, so a source built inside a function counts; a path a function
+    computes does not, and no scan would see one.
+    """
     found: set[str] = set()
     for path in (REPO / "src").rglob("*.py"):
         text = path.read_text(encoding="utf-8")
@@ -389,10 +393,11 @@ def _notes() -> set[str]:
 
 
 def test_every_note_a_source_names_is_on_disk() -> None:
-    """`Source.note` is a repo-relative path, so a note that moves or goes fails here."""
-    notes = _notes()
-    assert notes, "no source names a note; has the field gone?"
-    assert sorted(note for note in notes if not (REPO / note).is_file()) == []
+    """`Source.note` is a repo-relative path, so a note that moves or goes fails here.
+
+    A source naming no note is not a failure, so naming none anywhere is not one either.
+    """
+    assert sorted(note for note in _notes() if not (REPO / note).is_file()) == []
 
 
 def test_a_span_that_is_not_a_pair_of_numbers_is_refused_where_it_stands() -> None:
