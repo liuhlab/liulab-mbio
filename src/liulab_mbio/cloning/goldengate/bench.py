@@ -352,8 +352,8 @@ REFERENCES: tuple[Reference, ...] = (
     Reference(
         "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. "
         "(2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using "
-        "data-optimized assembly design. PLoS One 15(9): e0238592, whose S1-S5 Tables every "
-        "ligation fidelity score is read from",
+        "data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what "
+        "every ligation fidelity score is read from",
         url="https://doi.org/10.1371/journal.pone.0238592",
     ),
 )

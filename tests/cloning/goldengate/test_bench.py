@@ -9,6 +9,7 @@ from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.cloning.goldengate.bench import (
     FRAGMENT_PMOL,
     KIT,
+    REFERENCES,
     assembly_amounts,
     assembly_program,
     assembly_reaction,
@@ -17,6 +18,7 @@ from liulab_mbio.cloning.goldengate.bench import (
     ligase_master_mix_component,
 )
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.overhangs import ligation_matrix
 
 from ...reactions import total, volumes
 
@@ -156,3 +158,11 @@ def test_the_kit_program_counts_inserts_and_not_fragments() -> None:
     eleven = assembly_program(get_enzyme("BsaI"), fragments=12, system=KIT).stages[0]
     assert (single.cycles, single.incubations[0].seconds) == (1, 300)
     assert (eleven.cycles, eleven.incubations[0].seconds) == (30, 300)
+
+
+def test_the_ligation_fidelity_reference_quotes_the_citation_the_data_ships() -> None:
+    """A check names the paper in passing, so the reference it names has to be the same paper."""
+    matrix = ligation_matrix("BsaI")
+    assert matrix is not None
+    assert matrix.cited == "Pryor 2020"
+    assert [one for one in REFERENCES if matrix.citation in one.text]
