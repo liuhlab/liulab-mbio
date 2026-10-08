@@ -243,8 +243,9 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
             instructions=(
                 f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
                 f"holds its {SAMPLE_UL:g} µL of culture.",
-                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from the prepared "
-                f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
+                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from "
+                f"{one.index_plate or 'the prepared primer plate'}, for {INDEX_PCR_UL:g} µL "
+                "a well.",
                 "Seal the plate, spin it down, and run the program below.",
             ),
             tables=(index_pcr_reaction(one.wells),),
@@ -280,7 +281,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
                     "a gel before the library prep.",
                 ),
             ),
-            holes=(INDEX_MARKS,),
+            holes=() if one.index_plate else (INDEX_MARKS,),
         ),
         _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
     )

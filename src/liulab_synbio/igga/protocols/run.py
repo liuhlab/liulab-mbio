@@ -309,20 +309,7 @@ class Run:
     @property
     def marking_stock(self) -> Handed | None:
         """The lab stock the chosen marking route takes, which no protocol of this run makes."""
-        if self.validation is None:
-            return None
-        if self.validation.route is dmx.ROUTE_LIGATION:
-            return Handed(
-                "DMX barcode kit",
-                "the lab's own barcoding plasmids, one group a picked plate",
-                storage="-20 °C",
-            )
-        return Handed(
-            "Barcoded index primer plate",
-            "the lab's own index primers, prepared once and called for by a run",
-            spec=("1 µM each",),
-            storage="-20 °C",
-        )
+        return dmx.marking_stock(self.validation)
 
     @property
     def round_references(self) -> tuple[Reference, ...]:

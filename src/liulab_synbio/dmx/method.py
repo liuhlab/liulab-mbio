@@ -23,6 +23,7 @@ from liulab_mbio.protocol.model import (
     Component,
     Hole,
     Incubation,
+    Item,
     Material,
     Plate,
     ReactionTable,
@@ -651,6 +652,10 @@ class Validation:
     selection
         What to plate on, read off the vector's own marker by the caller. Empty where the record
         annotates none, and every plate then says so rather than naming a drug.
+    index_plate
+        What the lab calls the prepared plate of barcoded primer pairs the index PCR route takes
+        one pair of per well. Empty, the step says no more than that a prepared plate is wanted,
+        and `INDEX_MARKS` stands.
     """
 
     route: Route
@@ -659,6 +664,7 @@ class Validation:
     floor: int
     colonies: int = COLONIES_PER_DESIGN
     selection: str = ""
+    index_plate: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a read of no design, or of no colony per design."""
@@ -725,6 +731,7 @@ def validation(
     *,
     colonies: int = COLONIES_PER_DESIGN,
     selection: str = "",
+    index_plate: str = "",
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
@@ -733,6 +740,9 @@ def validation(
 
     `selection` is what the caller read off the vector's marker. Left empty, every plate says
     the vector's own antibiotic rather than naming one this read cannot know.
+
+    `index_plate` is what the lab calls its prepared plate of barcoded primer pairs, which only
+    the index PCR route takes.
 
     Raises
     ------
@@ -751,7 +761,36 @@ def validation(
     read = validated(designs, floor)
     if not read:
         return None
-    return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
+    return Validation(
+        route,
+        read,
+        floor=floor,
+        colonies=colonies,
+        selection=selection,
+        index_plate=index_plate,
+    )
+
+
+def marking_stock(one: Validation | None) -> Item | None:
+    """Return the lab stock the chosen route marks with, which no protocol of a run makes.
+
+    `None` where nothing is read back and no well is marked at all. Both routes take stock the
+    lab prepares once and a run calls for, so it is a run's input wherever a read-back stands.
+    """
+    if one is None:
+        return None
+    if one.route is ROUTE_LIGATION:
+        return Item(
+            "DMX barcode kit",
+            "the lab's own barcoding plasmids, one group a picked plate",
+            storage="-20 °C",
+        )
+    return Item(
+        one.index_plate or "Barcoded index primer plate",
+        "the lab's own index primers, prepared once and called for by a run",
+        spec=("1 µM each",),
+        storage="-20 °C",
+    )
 
 
 #: The index PCR marks, which the package holds none of. The published annealing regions bind the

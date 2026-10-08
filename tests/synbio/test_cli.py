@@ -35,6 +35,7 @@ def test_the_help_lists_the_verbs_it_mounts() -> None:
     listed = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
     assert "version" in listed
     assert "igga" in listed
+    assert "dmx" in listed
 
 
 def test_the_igga_pipeline_is_mounted() -> None:

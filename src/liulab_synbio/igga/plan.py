@@ -295,6 +295,7 @@ class LibraryPlan:
             designs(self.parts, self.pool),
             self.project.validate_from,
             selection=selection_for(self.destination.record),
+            index_plate=self.project.index_plate,
         )
 
     @property

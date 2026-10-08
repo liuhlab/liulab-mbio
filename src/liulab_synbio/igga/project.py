@@ -24,7 +24,7 @@ from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_synbio.dmx import ROUTES, refuse_unclonal
+from liulab_synbio.dmx import ROUTE_INDEX_PCR, ROUTES, refuse_unclonal
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a build takes unless it states another.
@@ -179,6 +179,9 @@ class Build:
         `validate_from` is, because an unread build needs no route. A build that reads anything
         back names `primers` too: without a pool each block arrives as the vendor ships it, and
         DMX has no colony to pick.
+    index_plate
+        What this lab calls its prepared plate of barcoded primer pairs. Only the index PCR
+        route takes one, so only that route may name it.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
@@ -213,9 +216,10 @@ class Build:
     ValueError
         If a position is repeated or missing, a number is not positive, the completeness does not
         lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
-        the route are not both there or both absent, a route is named over cargo DMX cannot pick,
-        a representation mark loosens the sourced one, or the barcode and the method's cloning
-        scar are not whole codons together — which names ``barcode-frame``.
+        the route are not both there or both absent, an index plate is named on the route that
+        takes none, a route is named over cargo DMX cannot pick, a representation mark loosens
+        the sourced one, or the barcode and the method's cloning scar are not whole codons
+        together — which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -235,6 +239,7 @@ class Build:
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     validate_from: int | None = None
     route: str | None = None
+    index_plate: str = ""
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
     representation_seen: float | None = None
@@ -327,7 +332,7 @@ class Build:
                 raise ValueError(f"{named} is {cycles}, and a build states a positive one")
 
     def _check_validation(self) -> None:
-        """Refuse a negative floor, an unknown route, one of the two alone, or unclonal cargo.
+        """Refuse a bad floor or route, one of the two alone, a stray plate, or unclonal cargo.
 
         The floor and the route travel together: a floor with no route says which designs are
         read and not how, and a route with no floor names a read nobody asked for. Whether
@@ -347,6 +352,11 @@ class Build:
             raise ValueError(
                 "validate_from and route are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+        if self.index_plate and self.route != ROUTE_INDEX_PCR.name:
+            raise ValueError(
+                "index_plate names a plate of barcoded primer pairs, which only the "
+                f"{ROUTE_INDEX_PCR.name!r} route takes"
             )
         if self.route is not None:
             refuse_unclonal(
@@ -482,6 +492,7 @@ def read_build(path: str | os.PathLike[str]) -> Build:
             _whole(given, "validate_from", "a build") if "validate_from" in given else None
         ),
         route=_text(given, "route", "a build") if "route" in given else None,
+        index_plate=_text(given, "index_plate", "a build") if "index_plate" in given else "",
         representation_seen=(
             _number(given, "representation_seen", "a build")
             if "representation_seen" in given
@@ -536,6 +547,7 @@ _BUILD_OPTIONAL = frozenset(
         "bands",
         "validate_from",
         "route",
+        "index_plate",
         "representation_seen",
         "representation_skew",
         "reads_per_member",
