@@ -184,7 +184,7 @@ def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:
 
 def design_pool(
     parts: Sequence[Part],
-    project: Build,
+    build: Build,
     *,
     primers: Sequence[PrimerSite],
     bands: Mapping[str, Sequence[Band]] | None = None,
@@ -201,7 +201,7 @@ def design_pool(
     ----------
     parts
         Every block to synthesise, as `liulab_synbio.igga.parts.design_parts` wrote them.
-    project
+    build
         What this build chose: the oligo length, the batch size and the reserved enzymes.
     primers
         The orthogonal set, already in role order; `read_primers` reads one.
@@ -220,17 +220,17 @@ def design_pool(
         what the method allots. Also if a block is empty, the split refuses it, or its oligo
         spells a reserved site -- each of those naming the block.
     """
-    _check_batch(project.batch_size)
-    scheme = project.scheme
+    _check_batch(build.batch_size)
+    scheme = build.scheme
     layout = OligoLayout(
-        project.oligo_length,
+        build.oligo_length,
         enzyme=SYNTHESIS_ENZYME,
         primers=len(ORTHOGONAL_SPLIT),
         primer_length=PRIMER_LENGTH,
     )
     held = (scheme.entry_overhang, scheme.scar_overhang)
-    avoid = tuple(one.name for one in project.reserved_enzymes)
-    batches = _batches(len(parts), project.batch_size)
+    avoid = tuple(one.name for one in build.reserved_enzymes)
+    batches = _batches(len(parts), build.batch_size)
     inner, forward, outer = _allot(primers)
     oligos: list[Oligo] = []
     splits: list[CargoSplit] = []
@@ -270,7 +270,7 @@ def design_pool(
                 )
             )
     pool = Pool(
-        project.name,
+        build.name,
         layout=layout,
         oligos=tuple(oligos),
         primers=tuple(dict.fromkeys(used)),
