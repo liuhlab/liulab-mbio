@@ -52,9 +52,10 @@ record = read_record("vector.dna")
 A primer pair can also be checked against a whole genome, so you learn where else it would
 amplify before you order it — see [check primers on a genome](genome-check.md).
 
-A second package, `liulab_synbio`, ships beside it in the same install. It holds the lab's own
-methods: it builds a barcoded library of every combination of several lists of proteins, one
-round at a time, and reads a plate of wells back one well at a time.
+A second package, `liulab_synbio`, comes with the same install. It holds the methods this lab
+works by. One of them joins several lists of proteins into a library of every combination, a
+list at a time, and tags each protein so that sequencing says which ones a plasmid carries.
+Write down what you want in a file, then plan the whole run:
 
 ```bash
 pixi run liulab_synbio igga plan project.json --out library/

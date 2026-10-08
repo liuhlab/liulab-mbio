@@ -14,9 +14,9 @@ one method's choices it is synbio's.
 
 Worked, both ways. A BsaI site reads the same whoever cuts it, so `sites` is mbio's. Which
 overhang set iGGA fixes is that method's choice, so `igga/standard` is synbio's. Judge the
-module's content, not its caller: `bench/goldengate` and `bench/coverage` each had one caller,
-in `igga/`, and are mbio's anyway, because a second method runs them unchanged. Rule 14 of
-`conformance` checks the direction; this half is yours.
+content, not the caller: only `igga/` imports `bench/coverage`, and it is mbio's anyway, because
+any method building a library in rounds sizes a round the same way. Rule 14 checks the
+direction; this half is yours.
 
 **Easiest thing to get wrong: coordinates.** Every module is 0-based and half-open, and a span
 across the origin of a circular record ends past the record's length. Read
@@ -35,7 +35,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF; `plate` draws a plate's wells on the same substrate |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, `figures`, a named figure a step shows, and `render`, its self-contained HTML page |
-| bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters, rules and cautions keyed by catalogue number; `prices`, a price record the user holds and the bill it makes. Four are imported by module, not re-exported, each keeping its own `REFERENCES`: `goldengate`, NEB's enzymes, reaction and cycling; `coverage`, the colonies a library round takes; `readback`, reading a construct back a well at a time; `pools`, an oligo pool as a vendor takes it |
+| bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `readback`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters, rules and cautions keyed by catalogue number; `prices`, a price record the user holds and the bill it makes. Three are imported by module, not re-exported: `goldengate`, NEB's enzymes, reaction and cycling; `coverage`, the colonies a library round takes; `pools`, an oligo pool as a vendor takes it |
 | pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `oligos`, `steps`, joined by its own `plan`, its reaction and cycling being `bench/goldengate`'s; `gibson/`: those modules plus `bench`, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: the same again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
 | method | `liulab_synbio.dmx/` | DMX, its own protocol for multiplexed validation, standing beside `igga/` and taking any cargo: `kit`, the barcode kit a user holds; `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `steps`; and `seating`, one part a well in its carrier, which ends in no library |
 | pipeline | `liulab_synbio.igga/` | `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `cargo`, `vector`, `stages`, `rounds`, `reads`, `bench`, `figures`, and `protocols/`, one module a protocol of the run, ordered by `chain` and joined by `plan` |
@@ -105,7 +105,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 
 ```text
 src/liulab_mbio/   the general package
-src/liulab_synbio/ one method's pipelines
+src/liulab_synbio/ the lab's own named methods
 tests/             pytest, mirroring src/
 docs/              the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
 skills/            repo-local agent skills

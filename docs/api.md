@@ -195,11 +195,12 @@ wells, a price record and the bill it makes, the phenotype a clone should show, 
 order sheet, an oligo pool as a vendor takes it, and the protocol steps any pipeline reuses.
 
 Every public name in the modules below imports from `liulab_mbio.bench` too, `goldengate`,
-`coverage` and `pools` excepted: each is imported by module, because its `REFERENCES` are one
-chemistry's, one sizing rule's or one vendor order's and not this package's. A module that
-cites a source keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES` gathers the ones
-re-exported. `steps` is re-exported, and a protocol cites its `DPNI_REFERENCE` and
-`PLATE_REFERENCE` only when it runs the step they belong to.
+`coverage` and `pools` excepted. Each of those three is imported by module: `goldengate`'s
+`REFERENCES` and `SOURCES` are one chemistry's, `coverage`'s are one sizing rule's, and
+`pools`'s `Pool` is a vendor's order rather than `liulab_mbio.reaction`'s molecules in one tube.
+A module that cites a source keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES`
+gathers the ones re-exported. `steps` is re-exported, and a protocol cites its `DPNI_REFERENCE`
+and `PLATE_REFERENCE` only when it runs the step they belong to.
 
 ::: liulab_mbio.bench
     options:
@@ -387,7 +388,7 @@ holds `IGGA`, the one method, checked when it is imported; `project` holds what 
 chooses, checked as it is read; `gate` judges a finished design reaction by reaction. `standard`
 picks the overhang set, `parts` writes each synthesis block and `cargo` orders a block too long
 to synthesise as an oligo pool. `vector` takes the destination or retrofits it, `rounds`
-simulates each round, and `reads` designs the reads that judge the pool. `bench` turns the
+simulates each round, and `reads` designs the reads that judge the finished library. `bench` turns the
 method into amounts, `stages` says what each stage asks of the bench model, and `figures` picks
 the two figures only this method needs. `protocols` is one module a protocol of the run, each
 owning what its own page prints, and `chain` holds the order they run in.

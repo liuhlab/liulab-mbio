@@ -512,7 +512,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
         programs=(growth_program(),),
         expected=(
             f"At least {coverage.colonies:,} net colonies, scaled up from the dilution: the "
-            f"floor for the {coverage.completeness:g} chance the build asked for that none of "
+            f"floor for the {coverage.completeness:g} chance this design asked for that none of "
             f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
             f"{number(coverage.absent_probability)}.",
@@ -523,7 +523,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
             "precaution rather than an oversight.",
             f"The program carries the shorter outgrowth; {OUTGROWTH_SECONDS[0] // 3600} to "
             f"{OUTGROWTH_SECONDS[1] // 3600} hours is the range the method gives.",
-            f"The {coverage.completeness:g} is the build's own, and follows from the "
+            f"The {coverage.completeness:g} was chosen for this run, and follows from the "
             "representation the screen downstream asks for. No source sets it, and nothing here "
             f"defaults it; it works out at {coverage.coverage:.0f}x this round's products.",
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a "

@@ -120,7 +120,7 @@ READ_PASS_MARK = Hole(
     "names its part",
     "undecided",
     where="the linkage read",
-    filled_by="the build, or a source that sets a mark rather than reporting what it reached",
+    filled_by="this run, or a source that sets a mark rather than reporting what it reached",
     issue="liuhlab/liulab-mbio#346",
 )
 
@@ -133,7 +133,7 @@ WORKING_VECTOR = Hole(
     "vector's length",
     "lab",
     where="final assembly, the vector the library moves into",
-    filled_by="the build naming a working vector, which is a stock the lab holds and an "
+    filled_by="this run naming a working vector, which is a stock the lab holds and an "
     "application chooses",
 )
 

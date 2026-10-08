@@ -9,8 +9,8 @@ One glossary for both import packages. An entry is `liulab_mbio`'s unless it end
 
 `liulab_mbio`, the general import package: everything a different method could use unchanged —
 the sequence model, the file formats, enzymes and sites, codons, barcodes, overhangs, maps,
-primers, the protocol model and the bench. A module is here when the question "could a different
-method use this unchanged?" answers yes. It imports **synbio** nowhere.
+primers, the protocol model and the bench. A module is here when a different method could use it
+unchanged. It imports **synbio** nowhere.
 _Avoid_: core, common, the base package
 
 ### synbio
@@ -23,10 +23,10 @@ _Avoid_: the library package, extension, plugin
 ### Pipeline
 
 One way in that plans a whole experiment from the records it is given: it picks the enzymes,
-designs the DNA, simulates the product and writes a **project** of bench protocols. Five ship —
-`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga` — each the
-single entry point of its own subpackage. A module below one decides a detail of the design and
-is reached by its own path.
+designs the DNA, simulates the product and writes what the bench follows — one **protocol** for
+each of the four cloning methods, and a whole **project** of them for a library. Five ship:
+`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga`, each the
+single entry point of its own subpackage. A module below one decides a detail of the design.
 _Avoid_: workflow, driver, orchestrator
 
 ### Sequence record
@@ -193,8 +193,7 @@ _Avoid_: stage, phase, part
 
 What a step, a protocol or a **project** is addressed by, assigned by its builder and never
 derived from its wording, so rewording a title moves no tick the bench has made. A page's
-anchors and its marks are built from it. A key is a slug and holds no dot, and everything inside
-a step is marked by the step's anchor, a dot and what it is, which is what keeps one step's
+anchors and its marks are built from it, and a key holds no dot, which is what keeps one step's
 marks out of another's.
 _Avoid_: id, name, slug (what a key is spelled as)
 
@@ -787,9 +786,9 @@ _Avoid_: index, tag, UMI, identifier
 
 ### Barcode kit
 
-The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member —
-`liulab_synbio.dmx.kit.KitBarcode` — is a plasmid carrying a group, an index and a UMI, and a
-well's marks are arithmetic from its address rather than a recorded draw. The sequences are not
+The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member is
+a plasmid carrying a group, an index and a UMI, and a well's marks are arithmetic from its
+address rather than a recorded draw. The sequences are not
 shipped: they are read from a copy the user holds. A member of this kit is not a **barcode**,
 which names one part of a library.
 _Avoid_: index set, tag kit, barcode plate
@@ -978,13 +977,11 @@ _Avoid_: reference (the protocol's own bibliography entry), provenance
 
 ### Store
 
-Where a fact is kept. A new fact is asked four questions in order and the first yes is its
-store: a file the user holds, where a licence forbids shipping it or the lab's own copy goes
-stale; `src/liulab_mbio/data/`, where a script rebuilds it from a tracked input; a
-catalogue-keyed table on a **material**, where it belongs to a thing the bench can name; the
-protocol JSON, where it is true of one run. Four noes and it is a sourced constant in the
-method's own bench module. `docs/adr/0020-a-fact-goes-in-the-first-store-that-fits.md` holds the
-order and the reason for it.
+Where a fact is kept. There are five: a file the user holds, `src/liulab_mbio/data/`, a
+catalogue-keyed table on a **material**, the protocol JSON, and a sourced constant in the
+method's own bench module. A new fact goes in the first that fits, asked in that order, so two
+facts of one kind cannot end up apart.
+`docs/adr/0020-a-fact-goes-in-the-first-store-that-fits.md` holds the questions.
 _Avoid_: location, home, storage
 
 ### Material

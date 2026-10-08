@@ -365,7 +365,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
         programs=(growth_program(),),
         expected=(
             f"At least {colonies:,} net colonies: the floor for the {completeness:g} chance the "
-            f"build asked for that none of its {constructs:,} distinct members is missing, "
+            f"this design asked for that none of its {constructs:,} distinct members is missing, "
             "equally represented.",
             f"At that count the chance a named member is missing is "
             f"{number(absent_probability(constructs, colonies))}.",
