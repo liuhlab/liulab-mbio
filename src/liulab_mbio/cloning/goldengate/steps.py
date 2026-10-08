@@ -15,14 +15,14 @@ from liulab_mbio.bench.gels import choose_ladder
 from liulab_mbio.bench.goldengate import (
     GOLDEN_GATE_PCR_CYCLES,
     GOLDEN_GATE_PCR_CYCLES_CITATION,
-    REFERENCES,
-    SOURCES,
     assembly_program,
     assembly_reaction,
     enzyme_component,
     golden_gate_temperature,
     ligase_master_mix_component,
 )
+from liulab_mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
+from liulab_mbio.bench.goldengate import SOURCES as GOLDEN_GATE_SOURCES
 from liulab_mbio.bench.inactivation import heat_inactivation
 from liulab_mbio.bench.oligos import oligo_row
 from liulab_mbio.bench.pcr import (
@@ -174,7 +174,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, overhangs, phenotype),
-        sources={**PCR_SOURCES, **SOURCES},
+        sources={**PCR_SOURCES, **GOLDEN_GATE_SOURCES},
     )
     return citing(one)
 
@@ -480,7 +480,7 @@ def _references(
     parts: Sequence[Part], overhangs: OverhangSet, phenotype: Phenotype
 ) -> tuple[Reference, ...]:
     """Where the numbers come from."""
-    items = [*REFERENCES, *BENCH_REFERENCES, Reference(overhangs.fidelity.source)]
+    items = [*GOLDEN_GATE_REFERENCES, *BENCH_REFERENCES, Reference(overhangs.fidelity.source)]
     if any(part.dpni for part in parts):
         items.append(DPNI_REFERENCE)
     if phenotype.blue_white:
