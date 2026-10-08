@@ -104,10 +104,9 @@ DNTP_CATALOG = "NEB #N0447"
 TAQ_CATALOG = "NEB #M0267"
 DMSO_CATALOG = "MP Biomedicals #194819"
 
-#: What the Taq stock is worth, which LevSeq never states: NEB's own specification for M0267
-#: does, so `INDEX_TAQ_UL` carries a unit count rather than a hole.
-#: ``docs/research/route-b-index-pcr.md`` section 8.
-TAQ_UNITS_UL = 5.0
+#: What the Taq stock is worth, which LevSeq never states and NEB's own specification for M0267
+#: does. ``docs/research/route-b-index-pcr.md`` section 9.
+TAQ_STOCK_UNITS_UL = 5.0
 TAQ_SOURCE_KEY = "PS-M0267"
 
 #: Colonies a 25 cm BioAssay plate carries before picking gets hard. Qian SI Day 2.
@@ -749,8 +748,8 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
 
     The first five lines are the master mix, each one well's share of the mix LevSeq states per
     plate; at `INDEX_OVERAGE` they scale back to that table. The pair and the culture go in a
-    well at a time, because each well takes its own pair. LevSeq gives the Taq volume and never
-    the stock, so the unit count is `INDEX_TAQ_UL` at `TAQ_UNITS_UL`.
+    well at a time, because each well takes its own pair. LevSeq never gives the Taq stock, so
+    the unit count comes from the supplier's own specification.
 
     Examples
     --------
@@ -767,8 +766,8 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
             Component(
                 "Taq DNA Polymerase",
                 INDEX_TAQ_UL,
-                stock=f"{TAQ_UNITS_UL:g} U/µL",
-                final=f"{INDEX_TAQ_UL * TAQ_UNITS_UL:g} units",
+                stock=f"{TAQ_STOCK_UNITS_UL:g} U/µL",
+                final=f"{INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
                 citation=mix,
             ),
             Component("DMSO", 0.4, stock="100%", final="4% (v/v)", citation=mix),
@@ -920,8 +919,8 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 supplier="NEB",
                 catalog=TAQ_CATALOG.split("#")[-1],
                 storage="-20 °C",
-                amount=f"{INDEX_TAQ_UL:g} µL a reaction, {TAQ_UNITS_UL * 1000:,.0f} units/mL",
-                note=f"one reaction takes {INDEX_TAQ_UL * TAQ_UNITS_UL:g} units",
+                amount=f"{INDEX_TAQ_UL:g} µL a reaction, {TAQ_STOCK_UNITS_UL:g} U/µL",
+                note=f"one reaction takes {INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
                 citation=Citation(TAQ_SOURCE_KEY, "Concentration"),
             ),
             Material(

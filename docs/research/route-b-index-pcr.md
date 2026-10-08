@@ -392,7 +392,7 @@ combined between plates by equal mass; and read to 20 reads a well. Every value 
 citation, and the three that are disagreements carry both readings.
 
 It supplies no primer sequences. The one number it supplies to `src/` is the Taq stock of
-section 9, which `liulab_synbio.dmx.method.TAQ_UNITS_UL` carries.
+section 9, which `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL` carries.
 
 ## Sources
 
