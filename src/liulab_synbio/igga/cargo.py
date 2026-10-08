@@ -38,14 +38,10 @@ from liulab_mbio.bench.pools import (
     pool_item,
 )
 from liulab_mbio.bench.prices import Band, Item
+from liulab_mbio.bench.readback import CLEAN_COLONY_CURVE
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.split import CargoSplit, Fragment, fewest_pieces, split_cargo
-from liulab_synbio.igga.method import (
-    LUND_SUCCESS,
-    ORTHOGONAL_SPLIT,
-    SYNTHESIS_ENZYME,
-    Scheme,
-)
+from liulab_synbio.igga.method import ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import Build
 
@@ -141,12 +137,13 @@ class PoolPlan:
     def against_lund(self) -> tuple[tuple[int, int, float | None], ...]:
         """How many blocks take each fragment count, beside the share Lund saw clone perfectly.
 
-        A count Lund did not measure carries ``None``: nothing here interpolates one.
+        The anchors are `liulab_mbio.bench.readback.CLEAN_COLONY_CURVE`, read as measured: a count
+        Lund did not measure carries ``None``, because this method reports what the paper saw
+        rather than an estimate between two of its points.
         """
+        measured = dict(CLEAN_COLONY_CURVE)
         counted = self.pool.fragment_counts()
-        return tuple(
-            (pieces, blocks, LUND_SUCCESS.get(pieces)) for pieces, blocks in counted.items()
-        )
+        return tuple((pieces, blocks, measured.get(pieces)) for pieces, blocks in counted.items())
 
 
 def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:

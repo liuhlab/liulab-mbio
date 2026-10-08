@@ -17,6 +17,9 @@ from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.protocol.model import Well
 
 #: The fragment counts Lund et al. 2024 measured a clean colony at, and the share clean at each.
+#: Six anchors and nothing between them. What an unmeasured count is worth is each caller's
+#: choice, stated where the caller makes it: `clean_colony_chance` interpolates to size a pick,
+#: and a caller reporting what the paper saw looks the count up and finds nothing.
 CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
     (2, 1.0),
     (3, 0.938),

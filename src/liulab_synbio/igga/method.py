@@ -362,13 +362,6 @@ ORTHOGONAL_SPLIT: tuple[tuple[str, int], ...] = (
     ("P3 batch outer", 34),
 )
 
-#: The share of designs assembled from that many fragments with a perfect clone among four
-#: colonies, as Lund et al. 2024 measured it. The only measured curve the fragment count is read
-#: against; a count absent from it was not measured and nothing interpolates one.
-LUND_SUCCESS: Mapping[int, float] = MappingProxyType(
-    {2: 1.0, 3: 0.938, 5: 0.846, 8: 0.667, 12: 0.400, 16: 0.0}
-)
-
 
 def _check_interface() -> None:
     """Check the method reads the cargo pair off its own DNA.
