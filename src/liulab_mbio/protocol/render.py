@@ -967,10 +967,11 @@ def _materials(
 def _oligos(protocol: Protocol) -> str:
     """Render the order sheet: one row each, or what the rows share where there are many.
 
-    Nobody reads 74 rows to learn they are 74 primers, so from `OLIGO_SUMMARY` up the section
-    states the count, the lengths, the melting temperatures and what each purpose covers, and
-    the sheet itself goes under a closed toggle. Rows are in the order a plate seats them, so
-    a reader walking the plate walks the sheet.
+    A sheet long enough that nobody reads it row by row says what its rows have in common
+    instead: from `OLIGO_SUMMARY` up the section states the count, the lengths, the melting
+    temperatures and what each purpose covers, and the sheet goes under a closed toggle. Rows
+    are in the order a plate seats them, so a reader walking the plate walks the sheet; the
+    file the sheet is ordered from keeps the order its plan wrote it in.
     """
     if not protocol.oligos:
         return ""
@@ -1008,19 +1009,20 @@ def _oligos(protocol: Protocol) -> str:
     if len(oligos) > 1:
         sheet = "\n".join(f"{oligo.name}\t{oligo.sequence}" for oligo in oligos)
         copy_all = f"<p>{_copy(sheet, 'Copy all sequences')}</p>"
-    full = (
+    sheet = (
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
         f"<tbody>{''.join(rows)}</tbody></table></div>"
         f"{_oligo_checks(oligos)}{copy_all}"
     )
+    shown = sheet
     if len(oligos) >= OLIGO_SUMMARY:
-        full = (
+        shown = (
             f"{_oligo_summary(oligos, seats)}"
-            f'<details class="listing"><summary>All {len(oligos)} rows</summary>{full}</details>'
+            f'<details class="listing"><summary>All {len(oligos)} rows</summary>{sheet}</details>'
         )
     return (
         '<section class="block oligos" id="oligos">\n<h2>Oligos</h2>\n'
-        f"{_order_sheet(protocol.order_sheet)}{full}\n</section>\n"
+        f"{_order_sheet(protocol.order_sheet)}{shown}\n</section>\n"
     )
 
 
@@ -1081,7 +1083,7 @@ def _oligo_summary(oligos: tuple[Oligo, ...], seats: Mapping[str, _Seat]) -> str
     return (
         f'<p class="muted">{escape(facts)}</p>'
         '<div class="scroll"><table><thead><tr><th>For</th><th>Names</th>'
-        f'<th class="num">Oligos</th><th>Wells</th></tr></thead><tbody>{rows}</tbody>'
+        f'<th class="num">Oligos</th><th>Well range</th></tr></thead><tbody>{rows}</tbody>'
         "</table></div>"
     )
 
