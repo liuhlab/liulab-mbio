@@ -22,7 +22,14 @@ from liulab_mbio.cloning.gateway.att import REGION_BP, find_att_sites
 from liulab_mbio.cloning.gateway.bench import HOSTS, PROPAGATION_HOST
 from liulab_mbio.cloning.gateway.design import Fusion
 from liulab_mbio.cloning.gateway.recombination import Junction, Piece, PlannedReaction
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, counted_round
+from liulab_mbio.sequence import (
+    Feature,
+    Segment,
+    SequenceRecord,
+    Strand,
+    counted_round,
+    position_text,
+)
 from liulab_mbio.translate import translate
 
 #: How much of a C-terminal fusion junction the destination vector supplies, base pairs: attB2's
@@ -59,7 +66,9 @@ def _internal_att_sites(moved: Piece) -> Check:
     """Count the att sites inside the DNA that moves, read on either strand."""
     found = find_att_sites(SequenceRecord(moved.bases, name=moved.name))
     where = ", ".join(
-        f"{one.name} at {one.start} on the {_strand(one.strand)} strand" for one in found
+        f"{one.name} at {position_text(one.start, moved.length)} on the {_strand(one.strand)} "
+        f"strand"
+        for one in found
     )
     return Check(
         "insert att sites",

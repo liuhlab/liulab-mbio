@@ -44,7 +44,7 @@ from liulab_mbio.cloning.restriction.verdicts import (
 )
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.enzymes import enzymes as shipped
-from liulab_mbio.sequence import Segment, SequenceRecord
+from liulab_mbio.sequence import Segment, SequenceRecord, position_text
 from liulab_mbio.sites import CutSite, Domestication, DomesticationReport, EnzymeLike, domesticate
 from liulab_mbio.sites import find_sites as sites_in
 
@@ -265,6 +265,7 @@ class _Weighing:
                 "two cut ends",
             ),
             self._report(enzymes),
+            len(self.source),
         )
 
     def _report(self, enzymes: tuple[Enzyme, ...]) -> DomesticationReport:
@@ -292,11 +293,13 @@ def _religates(backbone: Piece) -> str:
     )
 
 
-def _with_domestication(refused: Refusal, report: DomesticationReport) -> Refusal:
+def _with_domestication(refused: Refusal, report: DomesticationReport, length: int) -> Refusal:
     """Add to a refusal what keeping its enzymes would cost the insert's coding sequences."""
     stuck = (*report.outside_cds, *report.unchanged)
     if stuck:
-        where = listed([f"{site.enzyme.name} at {site.start}" for site in stuck])
+        where = listed(
+            [f"{site.enzyme.name} at {position_text(site.start, length)}" for site in stuck]
+        )
         return dataclasses.replace(
             refused,
             detail=f"{refused.detail}; no synonymous codon change reaches {where}, and taking "
@@ -304,7 +307,8 @@ def _with_domestication(refused: Refusal, report: DomesticationReport) -> Refusa
         )
     changed = listed(
         [
-            f"{one.site.enzyme.name} at {one.site.start} by {one.old_codon} to {one.new_codon} "
+            f"{one.site.enzyme.name} at {position_text(one.site.start, length)} "
+            f"by {one.old_codon} to {one.new_codon} "
             f"in {one.feature.name}"
             for one in report.changes
         ]

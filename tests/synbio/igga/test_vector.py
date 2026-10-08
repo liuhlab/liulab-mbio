@@ -330,7 +330,7 @@ def test_the_two_ltr_bsai_sites_are_refused_as_past_every_oligos_reach(
     held = domesticate_vector(plvx, (get_enzyme("BsaI"),))
     assert [site.start for site in held.unreachable] == [454, 7112]
     assert held.check.status == "fail"
-    assert "No oligo reaches 454, 7112" in held.check.detail
+    assert "No oligo reaches 455, 7113" in held.check.detail
     # #289: the two coding sites go, so what is left is the four in no coding sequence.
     assert [site.start for site in held.remaining] == [454, 3724, 6472, 7112]
 

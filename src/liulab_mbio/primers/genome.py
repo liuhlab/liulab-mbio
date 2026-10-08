@@ -613,13 +613,29 @@ def _checks(
                 "intended_amplicon",
                 thresholds.intended_amplicon.grade(present),
                 present,
-                "" if present else f"none at {locus.sequence_name}:{locus.start}-{locus.end}",
+                ""
+                if present
+                else f"none at {locus_text(locus.sequence_name, locus.start, locus.end)}",
             )
         )
     return tuple(checks)
 
 
+def locus_text(name: str, start: int, end: int) -> str:
+    """Spell a span of one sequence as a person reads one, and as `--region` takes one.
+
+    `NAME:START..END`, 1-based with both ends included. The conversion out of the half-open
+    rule for a genome locus; see `docs/adr/0001-coordinates.md`.
+
+    Examples
+    --------
+    >>> locus_text("chr1", 1400, 1442)
+    'chr1:1401..1442'
+    """
+    return f"{name}:{start + 1}..{end}"
+
+
 def _described(amplicon: Amplicon) -> str:
     who = "the pair" if amplicon.made_by == "pair" else f"{amplicon.made_by} primer alone"
-    where = f"{amplicon.sequence_name}:{amplicon.start}-{amplicon.end}"
+    where = locus_text(amplicon.sequence_name, amplicon.start, amplicon.end)
     return f"{where}, {amplicon.length} bp, by {who}"

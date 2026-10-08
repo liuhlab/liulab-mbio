@@ -451,6 +451,22 @@ def span_text(start: int, end: int, length: int) -> str:
     return f"{start % length + 1} .. {(end - 1) % length + 1}"
 
 
+def position_text(position: int, length: int) -> str:
+    """Return one position as a person reads it: 1-based, counted round a circular record.
+
+    `span_text`'s sibling, for text naming a single base rather than a stretch. A position
+    past the length, as a span across the origin leaves, comes round to the base it names.
+
+    Examples
+    --------
+    >>> position_text(2683, 2686)
+    '2684'
+    >>> position_text(2688, 2686)
+    '3'
+    """
+    return str(position % length + 1)
+
+
 def counted_round(positions: Iterable[int], length: int, *, first: int = 0) -> tuple[int, ...]:
     """Return positions read in order round a circle of `length` bases, at most one turn.
 

@@ -128,7 +128,7 @@ def test_a_second_binding_site_gives_an_off_target_amplicon(reports) -> None:
     assert [one.start for one in report.off_target] == [220]
     off_target = report["off_target_amplicons"]
     assert (off_target.status, off_target.value) == ("warn", 1)
-    assert "chrI__ce11:220-460" in off_target.detail
+    assert "chrI__ce11:221..460" in off_target.detail
     assert "240 bp" in off_target.detail
 
 
@@ -138,7 +138,7 @@ def test_an_intended_amplicon_is_marked_and_one_that_is_absent_warns(reports) ->
     assert present["intended_amplicon"].status == "pass"
     assert not any(one.intended for one in absent.amplicons)
     assert absent["intended_amplicon"].status == "warn"
-    assert "chrI__ce11:0-460" in absent["intended_amplicon"].detail
+    assert "chrI__ce11:1..460" in absent["intended_amplicon"].detail
 
 
 def test_a_primer_facing_itself_makes_an_amplicon_alone(reports) -> None:

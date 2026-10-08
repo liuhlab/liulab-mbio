@@ -77,7 +77,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     citing,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, position_text
 
 #: Correct colonies NEB counts from a single-insert assembly with 2.5 µL of the outgrowth
 #: plated (E1601 technical note, `docs/research/golden-gate-assembly.md` §5). An
@@ -366,7 +366,7 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(enzyme, amounts))
-    steps.append(_cycling_step(enzyme, len(parts), assembly.junctions))
+    steps.append(_cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)))
     steps.append(
         transform_step(
             host,
@@ -441,7 +441,9 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
     )
 
 
-def _cycling_step(enzyme: Enzyme, fragments: int, junctions: Sequence[Junction]) -> Step:
+def _cycling_step(
+    enzyme: Enzyme, fragments: int, junctions: Sequence[Junction], length: int
+) -> Step:
     """Run it, and the heat inactivation the supplier gives."""
     programs = [assembly_program(enzyme, fragments=fragments)]
     kill = heat_inactivation(enzyme)
@@ -451,7 +453,8 @@ def _cycling_step(enzyme: Enzyme, fragments: int, junctions: Sequence[Junction])
         "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it "
         "cuts vector that never opened or has closed again, so fewer empty colonies grow.",
         *(
-            f"The product carries {one.overhang} at {one.start}, joining {one.before} to "
+            f"The product carries {one.overhang} at "
+            f"{position_text(one.start, length)}, joining {one.before} to "
             f"{one.after}."
             for one in junctions
         ),
@@ -462,7 +465,7 @@ def _cycling_step(enzyme: Enzyme, fragments: int, junctions: Sequence[Junction])
         instructions=("Put the tube in the thermocycler and run the program below.",),
         programs=tuple(programs),
         expected=tuple(expected),
-        notes=("Junction positions are 0-based, on the product.",),
+        notes=("Junction positions are 1-based, on the product.",),
         troubleshooting=(
             Troubleshooting(
                 "Mostly empty vector later",

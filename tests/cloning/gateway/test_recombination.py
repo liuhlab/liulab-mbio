@@ -166,6 +166,19 @@ def test_junctions_across_the_product_s_origin_leave_spans_ending_past_its_lengt
     assert made.product.extract(Segment(start, end)) == lr.product.extract(Segment(*lr.recombined))
 
 
+def test_a_junction_check_names_each_site_one_based_on_a_product_crossing_the_origin(
+    entry: SequenceRecord, destination: SequenceRecord
+) -> None:
+    # Turned to 89, the vector's first base falls inside the first junction's att region.
+    made = recombine(entry, rotate(destination, 89), reaction="LR")
+    first, second = made.junctions
+
+    assert made.recombined[0] < len(made.product) < made.recombined[1]
+    assert made.checks[0].detail == (
+        f"{first.name} at {first.start + 1}, {second.name} at {second.start + 1}"
+    )
+
+
 def test_bp_writes_an_entry_clone_carrying_the_insert_between_its_attl_sites(
     bp: Recombination, gfp: SequenceRecord
 ) -> None:

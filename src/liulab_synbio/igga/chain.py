@@ -31,6 +31,7 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.protocol.model import Protocol as Page
+from liulab_mbio.sequence import position_text
 from liulab_synbio import dmx
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import ENZYME_UL, STRAIN, STRAIN_CATALOG, choppers
@@ -226,7 +227,8 @@ def _highlights(run: Run) -> tuple[str, ...]:
     else:
         said.append(
             f"Your vector carried no internal stuffer, so one was put in at "
-            f"{destination.stuffer.start} carrying {standard.entry_overhangs[0]}, the overhang "
+            f"{position_text(destination.stuffer.start, len(destination.record))} carrying "
+            f"{standard.entry_overhangs[0]}, the overhang "
             "this design chose. Read the edit before you order the vector."
         )
     if standard.cost:

@@ -74,7 +74,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     citing,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, position_text
 
 #: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
 #: that supplies the rest of the lacZ fragment the vector carries, which this one does.
@@ -274,7 +274,7 @@ def _highlights(
     joined = listed([f"{part.name} ({part.fragment_length} bp)" for part in parts])
     return (
         f"One reaction joins {len(parts)} fragments: {joined}.",
-        *(_junction_sentence(one) for one in assembly.junctions),
+        *(_junction_sentence(one, len(assembly.product)) for one in assembly.junctions),
         *(
             f"{part.name} is not amplified: {len(part.oligos)} oligos overlapping by "
             f"{STITCH_OVERLAP_BP} bp tile both its strands and assemble it in the same reaction."
@@ -285,7 +285,7 @@ def _highlights(
     )
 
 
-def _junction_sentence(junction: Junction) -> str:
+def _junction_sentence(junction: Junction, length: int) -> str:
     """Say what holds one junction together: a primer tail, or an oligo bridging both ends."""
     if junction.bridge:
         return (
@@ -293,7 +293,8 @@ def _junction_sentence(junction: Junction) -> str:
             f"{junction.length} bp of each, so neither needs a tailed primer."
         )
     return (
-        f"{junction.before} and {junction.after} share {junction.length} bp at {junction.start}, "
+        f"{junction.before} and {junction.after} share {junction.length} bp at "
+        f"{position_text(junction.start, length)}, "
         f"taken from {junction.taken_from} and carried by the other as a primer tail."
     )
 
@@ -439,7 +440,7 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(product, amounts, parts, assembly.junctions))
-    steps.append(_incubation_step(product, assembly.junctions, len(parts)))
+    steps.append(_incubation_step(product, assembly.junctions, len(parts), len(assembly.product)))
     steps.append(
         transform_step(
             host,
@@ -592,7 +593,7 @@ def _assembly_step(
 
 
 def _incubation_step(
-    product: AssemblyProduct, junctions: Sequence[Junction], fragments: int
+    product: AssemblyProduct, junctions: Sequence[Junction], fragments: int, length: int
 ) -> Step:
     """Run the one isothermal incubation, which is the whole reaction."""
     tier = product.tier(fragments)
@@ -609,7 +610,8 @@ def _incubation_step(
             "Nothing visible. One exonuclease, one polymerase and one ligase work together at "
             "this one temperature; there is nothing to cycle.",
             *(
-                f"The product spells {one.overlap} at {one.start}, where {one.before} meets "
+                f"The product spells {one.overlap} at {position_text(one.start, length)}, "
+                f"where {one.before} meets "
                 f"{one.after}."
                 for one in junctions
             ),
@@ -617,7 +619,7 @@ def _incubation_step(
         notes=(
             f"{tier.incubation_seconds // 60} minutes is what {product.supplier} asks for at "
             f"this fragment count. {product.incubation_note}",
-            "Junction positions are 0-based, on the product.",
+            "Junction positions are 1-based, on the product.",
         ),
         troubleshooting=(
             Troubleshooting(

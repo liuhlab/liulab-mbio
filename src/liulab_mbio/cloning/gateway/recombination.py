@@ -40,6 +40,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     counted_round,
+    position_text,
 )
 
 #: What an att junction is drawn in. A feature built in code has no colour of its own, and
@@ -194,7 +195,10 @@ class Recombination:
                 f"{self.reaction} junctions",
                 "pass" if spelled == len(self.junctions) else "fail",
                 spelled,
-                ", ".join(f"{one.name} at {one.start}" for one in self.junctions),
+                ", ".join(
+                    f"{one.name} at {position_text(one.start, len(self.product))}"
+                    for one in self.junctions
+                ),
             ),
             Check(
                 f"{self.reaction} att sites",
@@ -202,7 +206,10 @@ class Recombination:
                 len(found),
                 "the two the reaction wrote, and no other"
                 if not extra
-                else "also " + ", ".join(f"{one.name} at {one.start}" for one in extra),
+                else "also "
+                + ", ".join(
+                    f"{one.name} at {position_text(one.start, len(self.product))}" for one in extra
+                ),
             ),
         )
 

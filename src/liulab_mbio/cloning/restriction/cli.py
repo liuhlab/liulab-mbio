@@ -8,6 +8,7 @@ import typer
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.cloning.restriction.plan import DEFAULT_HOST, Plan, plan_restriction
 from liulab_mbio.primers.polymerase import Q5, get_polymerase
+from liulab_mbio.sequence import position_text
 
 app = typer.Typer(help="Plan restriction and ligation cloning.", no_args_is_help=True)
 
@@ -63,7 +64,9 @@ def plan(
 
 def _summary(made: Plan) -> str:
     """Report the cloning in one line: what it cuts, what it makes, and what each junction spells."""
-    junctions = ", ".join(f"{one.label} at {one.start}" for one in made.junctions)
+    junctions = ", ".join(
+        f"{one.label} at {position_text(one.start, len(made.product))}" for one in made.junctions
+    )
     named = ", ".join(one.name for one in made.enzymes)
     weighed = f" chosen over {len(made.refusals)} refused pairs" if made.refusals else ""
     return (

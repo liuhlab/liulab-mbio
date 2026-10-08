@@ -192,8 +192,8 @@ def test_the_page_says_what_each_junction_now_spells_and_which_buffer_both_enzym
     assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
     prose = " ".join(protocol.highlights)
     assert "not scarless" in prose
-    assert "GAATTC at 396 (EcoRI)" in prose
-    assert "GGATCC at 1119 (BamHI)" in prose
+    assert "GAATTC at 397 (EcoRI)" in prose
+    assert "GGATCC at 1120 (BamHI)" in prose
     said = " ".join(note for step in protocol.steps for note in step.notes)
     assert "Both enzymes are supplied in rCutSmart Buffer" in said
 

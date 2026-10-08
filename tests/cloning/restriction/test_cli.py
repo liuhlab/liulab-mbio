@@ -64,7 +64,7 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     assert summary.startswith("pUC19-GFP: 3388 bp, EcoRI, BamHI")
-    assert "GAATTC at 396" in summary
+    assert "GAATTC at 397" in summary
     assert read_dna(out / "product.dna").name == "pUC19-GFP"
     # A polymerase is read whatever the case of its name, and the strain is the one asked for.
     materials = [one.name for one in read_protocol(out / "protocol.json").materials]

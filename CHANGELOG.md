@@ -333,6 +333,10 @@ sets one.
   prep counts the sites its own product carries, the final assembly says the cargo enzyme cuts
   only the cassette it opens, and the AP-1 maps name the four enzymes the method turns on, which
   cut twice and so were drawn on none of them.
+- A position printed for a reader counts from 1, as a span already did. Every junction,
+  site and locus a bench page, a check or a summary line names is converted through
+  `liulab_mbio.sequence.position_text`, and a genome locus reads `NAME:START..END`, the
+  spelling `--region` takes.
 - A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
   padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes

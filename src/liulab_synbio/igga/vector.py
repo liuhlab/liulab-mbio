@@ -26,7 +26,13 @@ from liulab_mbio.checks import Check, counted
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import (
+    Feature,
+    Segment,
+    SequenceRecord,
+    position_text,
+    reverse_complement,
+)
 from liulab_mbio.sites import (
     OLIGO_REACH,
     CutSite,
@@ -610,9 +616,13 @@ def domesticate_vector(
     if not left:
         detail = f"{counted(len(report.changes), 'site')} changed; none of {_named(held)} is left"
     else:
-        named = ", ".join(f"{one.enzyme.name} at {one.start}" for one in left)
+        named = ", ".join(
+            f"{one.enzyme.name} at {position_text(one.start, len(vector))}" for one in left
+        )
         blocked = {one.start for one in refused}
-        inside = ", ".join(str(one.start) for one in left if one.start in blocked)
+        inside = ", ".join(
+            position_text(one.start, len(vector)) for one in left if one.start in blocked
+        )
         detail = f"{counted(len(report.changes), 'site')} changed, {len(left)} left: {named}" + (
             f". No oligo reaches {inside}: each sits inside a repeat" if inside else ""
         )

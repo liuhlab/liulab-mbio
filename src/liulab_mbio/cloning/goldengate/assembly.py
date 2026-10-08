@@ -36,6 +36,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     counted_round,
+    position_text,
     reverse_complement,
 )
 from liulab_mbio.sites import (
@@ -381,7 +382,10 @@ class Assembly:
                 "junctions",
                 "pass" if matched == len(self.junctions) else "fail",
                 matched,
-                ", ".join(f"{one.overhang} at {one.start}" for one in self.junctions),
+                ", ".join(
+                    f"{one.overhang} at {position_text(one.start, len(self.product))}"
+                    for one in self.junctions
+                ),
             )
         )
         return tuple(checks)

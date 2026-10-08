@@ -111,7 +111,7 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     citing,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, position_text
 
 #: Who sells the products this protocol names. Every catalogue number it prints comes out of an
 #: enzyme record or a product name a supplier wrote; none is written here.
@@ -292,7 +292,8 @@ def _highlights(
         f"{insert.name} ({insert.length} bp).",
         *_chosen(enzymes, refusals),
         *_tailed(amplicon),
-        f"This method's junction is not scarless: {_spelled(ligation.junctions)}",
+        f"This method's junction is not scarless: "
+        f"{_spelled(ligation.junctions, len(ligation.product))}",
         *_closes_on_itself(backbone, dephosphorylate=dephosphorylate),
         *phenotype_sentences(phenotype, [insert.name]),
     )
@@ -343,13 +344,13 @@ def _tailed(amplicon: Amplicon | None) -> tuple[str, ...]:
     )
 
 
-def _spelled(junctions: Sequence[Junction]) -> str:
+def _spelled(junctions: Sequence[Junction], length: int) -> str:
     """Say what each junction spells, and that the product gains those bases."""
     said = listed(
         [
-            f"{one.spells} at {one.start} ({one.enzyme})"
+            f"{one.spells} at {position_text(one.start, length)} ({one.enzyme})"
             if one.enzyme
-            else f"{one.label} at {one.start}, which spells no enzyme's site"
+            else f"{one.label} at {position_text(one.start, length)}, which spells no enzyme's site"
             for one in junctions
         ]
     )
@@ -949,7 +950,8 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
         programs=(ligation_program(blunt=ligation.blunt),),
         expected=(
             *(
-                f"The product carries {one.label} at {one.start}, joining {one.before} to "
+                f"The product carries {one.label} at "
+                f"{position_text(one.start, len(ligation.product))}, joining {one.before} to "
                 f"{one.after}."
                 for one in ligation.junctions
             ),
@@ -961,7 +963,7 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
             "fragment closes on itself instead of joining its partner.",
             *_blunt_cost(ligation),
-            "Junction positions are 0-based, on the product.",
+            "Junction positions are 1-based, on the product.",
         ),
         troubleshooting=(
             Troubleshooting(

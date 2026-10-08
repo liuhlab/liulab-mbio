@@ -9,6 +9,7 @@ from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.cloning.gateway.design import FUSIONS, Fusion
 from liulab_mbio.cloning.gateway.plan import DEFAULT_HOST, Plan, plan_gateway
 from liulab_mbio.primers.polymerase import Q5, get_polymerase
+from liulab_mbio.sequence import position_text
 
 app = typer.Typer(help="Plan Gateway cloning.", no_args_is_help=True)
 
@@ -76,7 +77,9 @@ def plan(
 
 def _summary(made: Plan) -> str:
     """Report the plan in one line: the route it took, and what stands at each junction."""
-    junctions = ", ".join(f"{one.name} at {one.start}" for one in made.junctions)
+    junctions = ", ".join(
+        f"{one.name} at {position_text(one.start, len(made.product))}" for one in made.junctions
+    )
     return (
         f"{made.product.name}: {len(made.product)} bp, {made.route}, "
         f"{made.lr.recombination.moved.length} bp insert, junctions {junctions}, "

@@ -10,7 +10,12 @@ from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.io import read_record
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
-from liulab_mbio.primers.genome import GenomeReport, Locus, design_pair_on_genome
+from liulab_mbio.primers.genome import (
+    GenomeReport,
+    Locus,
+    design_pair_on_genome,
+    locus_text,
+)
 from liulab_mbio.primers.polymerase import Q5, Polymerase, get_polymerase
 from liulab_mbio.primers.thresholds import TARGET_TM
 
@@ -183,7 +188,7 @@ def _on_genome(
     )
     near = "" if design.genome.near_matches_checked else ", near matches not checked"
     typer.echo(
-        f"{assembly} {_where(region.sequence_name, region.start, region.end)}: {_said(design.pair)}"
+        f"{assembly} {locus_text(region.sequence_name, region.start, region.end)}: {_said(design.pair)}"
     )
     typer.echo(
         f"on {assembly}: {found} after {design.rounds} search(es){near}, "
@@ -213,7 +218,7 @@ def _genome_table(report: GenomeReport) -> str:
     rows.extend(
         "\t".join(
             (
-                _where(one.sequence_name, one.start, one.end),
+                locus_text(one.sequence_name, one.start, one.end),
                 str(one.length),
                 one.made_by,
                 "/".join(str(count) for count in one.mismatches),
@@ -223,11 +228,6 @@ def _genome_table(report: GenomeReport) -> str:
         for one in sorted(report.amplicons, key=lambda one: not one.intended)
     )
     return "\n".join(rows) + "\n"
-
-
-def _where(name: str, start: int, end: int) -> str:
-    """Spell a span as a person reads one: `NAME:START..END`, 1-based and both ends included."""
-    return f"{name}:{start + 1}..{end}"
 
 
 def _span(region: str, length: int) -> tuple[int, int]:

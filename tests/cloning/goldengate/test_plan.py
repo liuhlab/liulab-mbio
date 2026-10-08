@@ -463,7 +463,7 @@ def test_the_protocol_names_every_part_and_every_junction(four):
         assert part.name in prose
     results = " ".join(line for step in protocol.steps for line in step.expected)
     for junction in four.assembly.junctions:
-        assert f"{junction.start}" in results
+        assert f"{junction.start + 1}" in results
         assert junction.overhang in results
     assert f"{four.overhangs.fidelity.value:.0%}" in protocol.overview["Fidelity"]
 

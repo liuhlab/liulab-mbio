@@ -43,6 +43,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     counted_round,
+    position_text,
     reverse_complement,
 )
 
@@ -517,7 +518,7 @@ class Assembly:
                 "pass" if matched == len(self.junctions) else "fail",
                 matched,
                 ", ".join(
-                    f"{one.length} bp at {one.start}, "
+                    f"{one.length} bp at {position_text(one.start, len(self.product))}, "
                     + (f"bridged by {one.bridge}" if one.bridge else f"from {one.taken_from}")
                     for one in self.junctions
                 ),

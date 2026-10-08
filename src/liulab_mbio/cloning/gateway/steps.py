@@ -100,7 +100,7 @@ from liulab_mbio.protocol.model import (
     citing,
     number,
 )
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, position_text
 
 #: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
 #: PCR, so the thermocycler and the gel rig are here rather than beside the attB PCR.
@@ -482,13 +482,13 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
             timers=(Timer("BP incubation", BP_SECONDS),),
             expected=(
                 "Nothing visible: the reaction is a recombination, not a digest.",
-                *(_junction_sentence(one, "entry clone") for one in bp.junctions),
+                *(_junction_sentence(one, "entry clone", len(bp.product)) for one in bp.junctions),
             ),
             notes=(
                 f"An attB substrate of {BP_LONG_BP:,} bp or more runs up to "
                 f"{BP_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
                 "longer.",
-                "Junction positions are 0-based, on the entry clone.",
+                "Junction positions are 1-based, on the entry clone.",
             ),
             troubleshooting=(
                 Troubleshooting(
@@ -591,13 +591,16 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             timers=(Timer("LR incubation", LR_SECONDS),),
             expected=(
                 "Nothing visible: the reaction is a recombination, not a digest.",
-                *(_junction_sentence(one, "expression clone") for one in lr.junctions),
+                *(
+                    _junction_sentence(one, "expression clone", len(lr.product))
+                    for one in lr.junctions
+                ),
             ),
             notes=(
                 f"A plasmid of {LR_LONG_BP:,} bp or more runs up to "
                 f"{LR_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
                 "longer.",
-                "Junction positions are 0-based, on the expression clone.",
+                "Junction positions are 1-based, on the expression clone.",
             ),
             troubleshooting=(
                 Troubleshooting(
@@ -732,9 +735,10 @@ def _volume_trouble() -> Troubleshooting:
     )
 
 
-def _junction_sentence(junction: Junction, clone: str) -> str:
+def _junction_sentence(junction: Junction, clone: str, length: int) -> str:
     """Say what one junction spells and which record gave which side of it."""
     return (
-        f"The {clone} carries {junction.name} at {junction.start}, spelling {junction.bases}: "
+        f"The {clone} carries {junction.name} at {position_text(junction.start, length)}, "
+        f"spelling {junction.bases}: "
         f"its first bases from {junction.before} and the rest from {junction.after}."
     )

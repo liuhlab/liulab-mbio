@@ -359,7 +359,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="dbb9dc17bcbcd1b5">
+<body data-protocol="75448250f08948bc">
 <main class="page">
 <header class="intro">
 <h1>Golden Gate assembly: GFP into pUC19</h1>
@@ -448,9 +448,9 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-run-assembly.1"><span>Put the tube in the thermocycler and run the program below.</span></label></li></ol>
 <figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 20 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Assembly</td><td class="num">37 °C</td><td class="num">15 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <figure class="program"><figcaption>BbsI heat inactivation <span class="muted">· 20 min</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">65 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
-<div class="expected"><h3>Expected result</h3><ul><li>Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.</li><li>The product carries ATGA at 395, joining pUC19 backbone to GFP.</li><li>The product carries TGGC at 1112, joining GFP to pUC19 backbone.</li></ul></div>
+<div class="expected"><h3>Expected result</h3><ul><li>Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.</li><li>The product carries ATGA at 396, joining pUC19 backbone to GFP.</li><li>The product carries TGGC at 1113, joining GFP to pUC19 backbone.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Mostly empty vector later</dt><dd>Keep the 60 °C soak, and check the template was digested with DpnI.</dd><dt>Few colonies later</dt><dd>Raise the cycle count, or plate more of the outgrowth.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>Junction positions are 0-based, on the product.</li></ul></div>
+<div class="notes"><h3>Notes</h3><ul><li>Junction positions are 1-based, on the product.</li></ul></div>
 </section>
 <section class="step" id="step-transform">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-transform"><span class="step-n">9</span><span>Transform and plate</span></label></h2>

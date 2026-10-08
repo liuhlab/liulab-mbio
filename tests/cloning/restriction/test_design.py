@@ -101,7 +101,7 @@ def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(int
     assert inside is not None
     assert (inside.rule, inside.domesticable) == ("insert site", True)
     assert "1 EcoRI site (at 9) and no BamHI site" in inside.detail
-    assert "EcoRI at 9 by TTC to TTT in cargo" in inside.detail
+    assert "EcoRI at 10 by TTC to TTT in cargo" in inside.detail
     assert [(one.old_codon, one.new_codon) for one in inside.changes] == [("TTC", "TTT")]
 
     # The same bases annotating no coding sequence: a flat refusal, because taking the site out
@@ -109,7 +109,7 @@ def test_an_insert_neither_route_reaches_says_what_a_codon_change_would_cost(int
     outside = refusal(into, dataclasses.replace(gene, features=()), pair)
     assert outside is not None
     assert (outside.rule, outside.domesticable) == ("insert site", False)
-    assert "no synonymous codon change reaches EcoRI at 9" in outside.detail
+    assert "no synonymous codon change reaches EcoRI at 10" in outside.detail
 
 
 def test_a_backbone_that_closes_on_itself_and_ends_that_do_not_anneal_name_their_rules():

@@ -21,7 +21,14 @@ from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
 from liulab_mbio.reaction import Pool, Reaction, Role
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement, span_text
+from liulab_mbio.sequence import (
+    Segment,
+    SequenceRecord,
+    Strand,
+    position_text,
+    reverse_complement,
+    span_text,
+)
 from liulab_mbio.sites import CutSite, find_sites, released
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
@@ -855,7 +862,10 @@ def _flanks(
             if flank is not None:
                 best = (flank, clear)
         if best is None:
-            return (), f"no {external.name} site faces the primer binding at {site.start}"
+            return (), (
+                f"no {external.name} site faces the primer binding at "
+                f"{position_text(site.start, len(record))}"
+            )
         found.append(best)
     return tuple(found), ""
 

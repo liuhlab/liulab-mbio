@@ -9,6 +9,7 @@ from liulab_mbio.sequence import (
     Strand,
     across_the_origin,
     counted_round,
+    position_text,
     reverse_complement,
 )
 
@@ -234,3 +235,9 @@ def test_a_span_fits_a_linear_record_only_inside_it() -> None:
 def test_positions_counted_round_in_reading_order_pass_the_length_after_the_origin() -> None:
     assert counted_round((91, 2, 5), 100) == (91, 102, 105)
     assert counted_round((2, 5, 91), 100) == (2, 5, 91)
+
+
+def test_a_position_a_person_reads_counts_from_one_and_comes_round_the_origin() -> None:
+    assert position_text(0, 2686) == "1"
+    assert position_text(2683, 2686) == "2684"
+    assert position_text(2688, 2686) == "3"
