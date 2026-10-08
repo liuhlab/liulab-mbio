@@ -78,6 +78,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
 | [product.dna](product.dna) | one member of the finished library, 6,435 bases |
 | [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
+| [working-vector-ccdb.dna](working-vector-ccdb.dna) | the backbone above with the ccdB cassette put in at `--working-site`, 10,284 bases: the vector the last sitting opens |
 | [protocol/](protocol/index.html) | the bench protocols, as a folder of pages to work from |
 
 ## What the bench works through

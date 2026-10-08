@@ -129,7 +129,8 @@ class Run:
     bench does one of them.
 
     `working` is the vector the finished library is moved into, and `None` for a build naming
-    none. Without one the final protocol's steps still run, because it is a stage of the method,
+    none. `working_file` is the record the plan wrote it to, cassette and all, which the bench
+    opens rather than the backbone the build named. Without one the final protocol's steps still run, because it is a stage of the method,
     and what the vector would have fixed is a hole instead.
 
     `pool` is the oligo pool the blocks are built from, and `None` for a build that writes
@@ -173,6 +174,7 @@ class Run:
     pool_sheet: str = ""
     primer_sheet: str = ""
     working: Working | None = None
+    working_file: str = ""
     reads: ReadPairs | None = None
     marks: RepresentationMarks = REPRESENTATION_MARKS
     linkage_fidelity: float | None = None
@@ -202,6 +204,7 @@ class Run:
                 *pooled,
                 self.read_sheet,
                 *(file for _, file in self.block_vectors),
+                self.working_file,
             )
             if name
         )
@@ -215,6 +218,11 @@ class Run:
     def outside(self) -> tuple[Enzyme, ...]:
         """The blunt enzymes that cut the external stuffers the donor digest leaves behind."""
         return choppers(self.scheme)[1]
+
+    @property
+    def pulses(self) -> int:
+        """How many electroporations the run does: one a round, and the final transfer."""
+        return len(self.part_lists) + (1 if self.working is not None else 0)
 
     @property
     def selection(self) -> str:
@@ -421,7 +429,7 @@ class Run:
                 supplier=STRAIN_SUPPLIER,
                 catalog=STRAIN_CATALOG,
                 storage="-80 °C",
-                amount=f"one aliquot per round, {shot.cells_ul:g} µL a pulse",
+                amount=f"{self.pulses} aliquots, one a pulse, {shot.cells_ul:g} µL each",
                 note=f"pulsed at {shot.volts:g} V, {shot.ohms:g} Ω and {shot.microfarads:g} µF "
                 f"in a {shot.cuvette_mm:g} mm cuvette",
                 citation=shot.citation,
@@ -439,9 +447,7 @@ class Run:
                 )
             )
         made.append(Material("Plasmid prep kit", amount="one prep per round"))
-        made.append(
-            Material("Electroporation cuvettes", amount=f"{len(self.part_lists)}, one per round")
-        )
+        made.append(Material("Electroporation cuvettes", amount=f"{self.pulses}, one a pulse"))
         return tuple(made)
 
 

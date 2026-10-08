@@ -34,6 +34,7 @@ from liulab_synbio.igga.plan import (
     BLOCK_VECTOR_FILE,
     CHANGE_FILE,
     PARTS_FILE,
+    WORKING_VECTOR_FILE,
     Kind,
     plan_igga,
     read_part_lists,
@@ -450,6 +451,21 @@ def test_a_working_vector_fixes_the_cargo_enzyme_before_a_block_is_designed(inpu
     assert not any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
     changed = next(one for one in made.parts if one.name == "N_a")
     assert [one.site.enzyme for one in changed.changes] == [alone]
+
+
+def test_a_working_vector_is_written_out_with_its_cassette_in(inputs, tmp_path):
+    """The backbone the build names does not open; the record the plan writes does."""
+    made = plan_igga(
+        project(inputs, working="bare.dna"), parts=coded(), kind="dna", working_site=(100, 140)
+    )
+
+    files = made.write(tmp_path)
+
+    assert made.working is not None
+    assert files.working_vector is not None
+    assert files.working_vector.name == WORKING_VECTOR_FILE
+    assert read_record(files.working_vector).sequence == made.working.record.sequence
+    assert files.working_vector in files.paths
 
 
 def test_a_project_naming_no_working_vector_reserves_nothing_of_its_own(inputs):

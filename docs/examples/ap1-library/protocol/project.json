@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "795cd5ae91ec635e",
+  "key": "d1b11b3b1bef5b2b",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -34,7 +34,8 @@
     "../library-read-primers.tsv",
     "../block-vector-1.dna",
     "../block-vector-2.dna",
-    "../block-vector-3.dna"
+    "../block-vector-3.dna",
+    "../working-vector-ccdb.dna"
   ],
   "inputs": [
     {
@@ -79,7 +80,7 @@
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "09540dcb8a4306bc",
+      "key": "15f09db221827524",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -920,7 +921,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Multichannel pipette",
@@ -2053,7 +2055,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "7054a8a1b1b08018",
+      "key": "3083de8a8ee4c169",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2105,7 +2107,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [],
       "vessels": [],
@@ -2201,7 +2204,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "ee9f149a97821c1f",
+      "key": "b738c781e71f70ee",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2358,7 +2361,7 @@
           "catalog": "",
           "storage": "",
           "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
+          "note": "LB with 100 µg/mL carbenicillin, the working vector's own marker (AmpR)",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -2381,7 +2384,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "",
-          "amount": "3, one per round",
+          "amount": "4, one a pulse",
           "note": "",
           "contains": [],
           "rules": [],
@@ -2400,7 +2403,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Thermocycler taking a 96-well plate",
@@ -3203,7 +3207,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "3bd0f5781bc114ec",
+      "key": "03c4063835389115",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3322,7 +3326,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
@@ -7067,7 +7072,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "07355615f170e75c",
+      "key": "f2df40d244d181b8",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -7238,7 +7243,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
@@ -11552,7 +11558,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "de73a1bd51f20a1c",
+      "key": "26aad11b6bcc1243",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11794,7 +11800,7 @@
           "supplier": "Lucigen",
           "catalog": "60242-2",
           "storage": "-80 °C",
-          "amount": "one aliquot per round, 25 µL a pulse",
+          "amount": "4 aliquots, one a pulse, 25 µL each",
           "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
           "contains": [],
           "rules": [],
@@ -11836,7 +11842,7 @@
           "catalog": "",
           "storage": "",
           "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
+          "note": "LB with 100 µg/mL carbenicillin, the working vector's own marker (AmpR)",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -11859,7 +11865,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "",
-          "amount": "3, one per round",
+          "amount": "4, one a pulse",
           "note": "",
           "contains": [],
           "rules": [],
@@ -11878,7 +11884,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
@@ -13712,7 +13719,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "43a6c6e06eabd268",
+      "key": "9e7ff2db2dec7144",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -13883,7 +13890,7 @@
           "supplier": "Lucigen",
           "catalog": "60242-2",
           "storage": "-80 °C",
-          "amount": "one aliquot per round, 25 µL a pulse",
+          "amount": "4 aliquots, one a pulse, 25 µL each",
           "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
           "contains": [],
           "rules": [],
@@ -13913,7 +13920,7 @@
           "catalog": "",
           "storage": "",
           "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
+          "note": "LB with 100 µg/mL carbenicillin, the working vector's own marker (AmpR)",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -13936,7 +13943,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "",
-          "amount": "3, one per round",
+          "amount": "4, one a pulse",
           "note": "",
           "contains": [],
           "rules": [],
@@ -13955,7 +13962,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
@@ -13973,7 +13981,8 @@
           "key": "pick-working-vector",
           "section": "Choose the working vector",
           "instructions": [
-            "Take one tube of pLVX-TetOne-dom stock.",
+            "Take one tube of pLVX-TetOne-dom stock: the backbone the build named with this plan's ccdB cassette put in, 10284 bp in all.",
+            "Have it made to working-vector-ccdb.dna, which is the record every length below is read off. The backbone alone does not open.",
             "Digest a little of it with PaqCI (R0745) and run it on a gel."
           ],
           "cautions": [],
@@ -14153,7 +14162,47 @@
             "The cycling is NEB's longer single-insert program, which it gives for library preparation rather than for cloning one gene.",
             "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published figure."
           ],
-          "tables": [],
+          "tables": [
+            {
+              "components": [
+                {
+                  "name": "AP-1 DESynR round 3 cargo, in the release",
+                  "volume_ul": 50.0,
+                  "stock": "",
+                  "final": "0.0246 pmol (16.31 ng)",
+                  "master_mix": false,
+                  "citation": null
+                },
+                {
+                  "name": "pLVX-TetOne-dom, opened",
+                  "volume_ul": 1.0,
+                  "stock": "",
+                  "final": "0.0123 pmol (75 ng)",
+                  "master_mix": false,
+                  "citation": null
+                },
+                {
+                  "name": "PaqCI (R0745)",
+                  "volume_ul": 2.5,
+                  "stock": "",
+                  "final": "",
+                  "master_mix": true,
+                  "citation": null
+                },
+                {
+                  "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
+                  "volume_ul": 146.5,
+                  "stock": "",
+                  "final": "to 200 µL",
+                  "master_mix": true,
+                  "citation": null
+                }
+              ],
+              "title": "One-pot assembly",
+              "reactions": 1,
+              "overage": 0.1
+            }
+          ],
           "programs": [
             {
               "stages": [

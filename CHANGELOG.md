@@ -329,6 +329,10 @@ sets one.
 
 ### Fixed
 
+- The library run's last page is one the bench can work. It names the record the plan now writes
+  for the working vector with its ccdB cassette in, gives the one-pot assembly a reaction table
+  carrying the cargo's own mass, buys one aliquot and one cuvette per pulse rather than per
+  round, and names the plate the final transfer selects on.
 - A whole-number headroom on a bill row reads `350 length` again, not `350.0 length`. The
   quantity reached it as a float, and the trailing zero showed on every row carrying a band.
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane

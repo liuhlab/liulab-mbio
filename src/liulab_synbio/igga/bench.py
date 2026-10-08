@@ -17,7 +17,7 @@ round uses belong to the scheme.
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
-from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
+from liulab_mbio.bench.amounts import Amount, dna_amount, to_nanograms, to_pmol
 from liulab_mbio.bench.coverage import RoundCoverage
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.reactions import fits, floor_ng_ul, reaction_table
@@ -220,6 +220,56 @@ def ligation_amounts(
     return opened, released
 
 
+def final_assembly_amounts(
+    cargo: tuple[str, int],
+    vector: tuple[str, int],
+    *,
+    vector_ng: float,
+    ratio: float,
+    volume_ul: float = LIGATION_VOLUME_UL,
+    release_ul: float = DIGEST_VOLUME_UL,
+    vector_ng_ul: float | None = None,
+) -> tuple[Amount, Amount]:
+    """Return what the final one-pot assembly holds, the cargo in its release tube first.
+
+    `vector_ng` of the opened working vector becomes picomoles of its own length, and the cargo
+    gets `ratio` times as many, weighed at the cargo's. The cargo is never pipetted: it arrives
+    in the whole `release_ul` the release ran in, which is the volume of its row.
+
+    Raises
+    ------
+    ValueError
+        If a length, a concentration or `ratio` is not positive, or if the DNA and the cargo
+        enzyme do not fit `volume_ul`.
+
+    Examples
+    --------
+    >>> freed, opened = final_assembly_amounts(("cargo", 1076), ("vector", 9899),
+    ...                                        vector_ng=75.0, ratio=2.0)
+    >>> freed.nanograms, opened.nanograms
+    (16.31, 75.0)
+    """
+    if ratio <= 0:
+        raise ValueError(f"molar ratio must be positive, got {ratio}")
+    cargo_name, cargo_bp = cargo
+    vector_name, vector_bp = vector
+    pmol = to_pmol(vector_ng, vector_bp)
+    opened = dna_amount(vector_name, vector_bp, pmol=pmol, concentration_ng_ul=vector_ng_ul)
+    freed = dna_amount(
+        cargo_name,
+        cargo_bp,
+        pmol=pmol * ratio,
+        concentration_ng_ul=to_nanograms(pmol * ratio, cargo_bp) / release_ul,
+    )
+    fits(
+        (freed, opened),
+        volume_ul=volume_ul,
+        taken_ul=ENZYME_UL,
+        what=f"final assembly into {vector_name}",
+    )
+    return freed, opened
+
+
 def transformation_amount(
     product: tuple[str, int],
     *,
@@ -419,6 +469,32 @@ def ligation_reaction(
         title="Ligation",
         filler=f"{LIGASE} in {LIGASE_BUFFER}, and nuclease-free water",
         reactions=reactions,
+    )
+
+
+def final_assembly_reaction(
+    amounts: tuple[Amount, Amount],
+    enzyme: Enzyme,
+    *,
+    volume_ul: float = LIGATION_VOLUME_UL,
+) -> ReactionTable:
+    """Return the final one-pot assembly: the release, the working vector, `enzyme`, then the rest.
+
+    `amounts` is `final_assembly_amounts`' pair, so the first row is the release the cargo
+    arrives in. The last line carries the ligase with its buffer and the water, as a round's
+    ligation does, neither the ligase's units nor its volume being published.
+
+    Raises
+    ------
+    ValueError
+        If the DNA and the enzyme do not fit `volume_ul`.
+    """
+    return reaction_table(
+        amounts,
+        (_digest_component(enzyme),),
+        volume_ul=volume_ul,
+        title="One-pot assembly",
+        filler=f"{LIGASE} in {LIGASE_BUFFER}, and nuclease-free water",
     )
 
 

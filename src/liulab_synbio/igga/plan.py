@@ -105,6 +105,11 @@ READ_PRIMER_FILE = "library-read-primers.tsv"
 #: serves, as the round records are numbered by their round.
 BLOCK_VECTOR_FILE = "block-vector-{number}.dna"
 
+#: What `LibraryPlan.write` calls the working vector the final assembly opens: the backbone the
+#: build named with the ccdB cassette in it. The build's own file is the backbone before that,
+#: so the bench needs this one and the page names it.
+WORKING_VECTOR_FILE = "working-vector-ccdb.dna"
+
 #: The folder the run's protocols are written into, beside the sheets and the records. A
 #: folder and not a flat pair: a chain of protocols names its own `project.json`, and the
 #: build was read from a file of that name already.
@@ -145,6 +150,9 @@ class Files:
         One position's block vector a file, in the build's order. Empty where the build names
         no primer set, because a block ordered whole carries its own external stuffers and needs
         no vector to supply them.
+    working_vector
+        The working vector the final assembly opens, cassette and all, or ``None`` where the
+        build names none.
     """
 
     parts: Path
@@ -158,6 +166,7 @@ class Files:
     oligo: Path | None = None
     read_primers: Path | None = None
     block_vectors: tuple[Path, ...] = ()
+    working_vector: Path | None = None
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -168,6 +177,7 @@ class Files:
             self.changes,
             *self.records,
             *self.block_vectors,
+            self.working_vector,
             self.protocol_data,
             *self.protocol,
             self.pool,
@@ -354,6 +364,7 @@ class LibraryPlan:
                 reads=self.reads,
                 marks=self.project.marks,
                 linkage_fidelity=self.project.linkage_fidelity,
+                working_file="" if self.working is None else WORKING_VECTOR_FILE,
                 final_assembly=self.project.final_assembly,
                 pcr1_cycles=self.project.pcr1_cycles,
                 pcr2_cycles=self.project.pcr2_cycles,
@@ -384,6 +395,10 @@ class LibraryPlan:
         for number, one in enumerate(self.block_vectors, 1):
             blocks.append(out / BLOCK_VECTOR_FILE.format(number=number))
             write_dna(one.record, blocks[-1])
+        working = None
+        if self.working is not None:
+            working = out / WORKING_VECTOR_FILE
+            write_dna(self.working.record, working)
         pool = primers = oligo = None
         if self.pool is not None:
             pool = out / POOL_FILE
@@ -415,6 +430,7 @@ class LibraryPlan:
             oligo,
             reads,
             tuple(blocks),
+            working,
         )
 
 

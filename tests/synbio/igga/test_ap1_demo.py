@@ -485,7 +485,13 @@ def test_the_final_assembly_is_written_out_from_what_the_build_states(protocol):
     # and the clean-up around the assembly are sized rather than held open.
     assert steps[1].tables[0].components[0].final.endswith("(1000 ng)")
     assert "at 1x the volume" in steps[3].instructions[0]
+    assert steps[0].instructions[1].startswith("Have it made to working-vector-ccdb.dna")
     assert steps[2].instructions[0].startswith("Add 75 ng of working vector")
+    # The cargo is never pipetted, so its row is the whole release and its weight follows from
+    # the vector's and the ratio the build states.
+    cargo, vector = steps[2].tables[0].components[:2]
+    assert (cargo.final, cargo.volume_ul) == ("0.0246 pmol (16.31 ng)", 50.0)
+    assert vector.final == "0.0123 pmol (75 ng)"
     assert steps[2].notes[-1] == (
         "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published "
         "figure."
@@ -539,15 +545,22 @@ def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):
 
 
 def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(protocol, tmp_path):
-    """The destination is KanR, so no plate, well or broth carries the drug D11 rules out.
+    """The destination is KanR, so no plate, well or broth of a round carries the drug D11 rules out.
 
-    Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too.
+    Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too. The
+    working vector is AmpR and its own transfer does plate on carbenicillin, which is the one
+    line the ban does not cover.
     """
     written = write_protocol(protocol, tmp_path / "protocol.json").read_text()
+    rounds = [
+        line
+        for line in written.splitlines()
+        if "carbenicillin" in line or "ampicillin" in line
+        if "working vector's own marker" not in line
+    ]
 
     assert "kanamycin" in written
-    assert "carbenicillin" not in written
-    assert "ampicillin" not in written
+    assert rounds == []
 
 
 def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):

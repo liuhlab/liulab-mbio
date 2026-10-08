@@ -148,24 +148,28 @@ def selection_marker(
 ) -> Feature | None:
     """Return the record's selection marker, or ``None`` when it annotates none.
 
-    A coding sequence `SELECTION` knows, or one named for a resistance gene the way SnapGene's
-    common features are. A marker inside `outside` is passed over: a cassette the reaction
-    throws away carries its own, and that is not what a plate selects.
+    A feature `SELECTION` knows by name, or one named for a resistance gene the way SnapGene's
+    common features are. The name and not the type: a vendor's own GenBank render types every
+    feature ``misc_feature``, and the gene is still the gene. A primer binding site is passed
+    over, and so is a marker inside `outside`: a cassette the reaction throws away carries its
+    own, and that is not what a plate selects.
+
+    One `SELECTION` knows comes first. A record carrying both that and a marker matched by its
+    name alone names a drug rather than leaving the plate to the reader.
     """
-    return next(
-        (
-            feature
-            for feature in record.features
-            if feature.type == "CDS"
-            and _is_marker(feature.name)
-            and (outside is None or not _meets(record, feature, outside))
-        ),
-        None,
-    )
+    found = [
+        feature
+        for feature in record.features
+        if feature.type != "primer_bind"
+        and _is_marker(feature.name)
+        and (outside is None or not _meets(record, feature, outside))
+    ]
+    named = [feature for feature in found if feature.name.lower() in SELECTION]
+    return next(iter(named or found), None)
 
 
 def _is_marker(name: str) -> bool:
-    """Whether a coding sequence of this name is a selection marker."""
+    """Whether a feature of this name is a selection marker."""
     lowered = name.lower()
     return lowered in SELECTION or _MARKER_RE.match(lowered) is not None
 

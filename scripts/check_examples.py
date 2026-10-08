@@ -92,6 +92,7 @@ GENERATORS: tuple[Generator, ...] = (
             "protocol/references.html",
             "round-1.dna",
             "round-2.dna",
+            "working-vector-ccdb.dna",
         ),
     ),
     Generator(

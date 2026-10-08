@@ -46,6 +46,8 @@ from liulab_synbio.igga.bench import (
     STRAIN,
     digest_amount,
     digest_reaction,
+    final_assembly_amounts,
+    final_assembly_reaction,
     growth_program,
     pulse,
 )
@@ -90,7 +92,10 @@ class FinalLigation(Protocol):
         freeing = (scheme.external, *_shredders(scheme, product, span))
         reads = run.reads
         return (
-            labelled(_pick_working_step(scheme, working), "Choose the working vector"),
+            labelled(
+                _pick_working_step(scheme, working, run.working_file),
+                "Choose the working vector",
+            ),
             labelled(_free_step(scheme, product, span, freeing), "Move the library across"),
             labelled(
                 figured(
@@ -169,7 +174,7 @@ def _junction_figure(
     )
 
 
-def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
+def _pick_working_step(scheme: Scheme, working: Working | None, file: str = "") -> Step:
     """Pick the vector the library moves into, which is what fixes the cargo enzyme."""
     entry, scar = scheme.entry_overhang, scheme.scar_overhang
     if working is None:
@@ -194,11 +199,22 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
         )
     record, cargo = working.record, working.enzyme
     stuffer = working.destination.stuffer
+    held = f"Take one tube of {record.name or 'the working vector'} stock"
+    made = (
+        (f"{held}, which is the backbone the build named with the ccdB cassette already in it.",)
+        if working.destination.edit is None
+        else (
+            f"{held}: the backbone the build named with this plan's ccdB cassette put in, "
+            f"{len(record)} bp in all.",
+            f"Have it made to {file or 'the record this plan wrote'}, which is the record "
+            "every length below is read off. The backbone alone does not open.",
+        )
+    )
     return Step(
         f"Pick the working vector and confirm {cargo.name} opens it",
         key="pick-working-vector",
         instructions=(
-            f"Take one tube of {record.name or 'the working vector'} stock.",
+            *made,
             f"Digest a little of it with {cargo.supplier_label} and run it on a gel.",
         ),
         expected=(
@@ -326,6 +342,25 @@ def _assemble_step(
             holes=(stages.WORKING_VECTOR, *(() if sized is not None else (stages.FINAL_MASSES,))),
         )
     cargo = working.enzyme
+    tables = ()
+    if sized is not None and span is not None:
+        tables = (
+            final_assembly_reaction(
+                final_assembly_amounts(
+                    (
+                        f"{product.name or 'the library'} cargo, in the release",
+                        span.end - span.start,
+                    ),
+                    (
+                        f"{working.record.name or 'the working vector'}, opened",
+                        len(working.record) - _cassette_length(working),
+                    ),
+                    vector_ng=sized.vector_ng,
+                    ratio=sized.ratio,
+                ),
+                cargo,
+            ),
+        )
     joined = (
         f"about {len(working.record) - _cassette_length(working) + span.end - span.start} bp, "
         if span is not None
@@ -339,6 +374,7 @@ def _assemble_step(
             f"{LIGASE_BUFFER} to the release tube.",
             "Run the cycling below without purifying anything first.",
         ),
+        tables=tables,
         programs=(assembly_program(cargo, fragments=2, library=True),),
         expected=(
             f"One circular final vector a member, {joined}joined on "
