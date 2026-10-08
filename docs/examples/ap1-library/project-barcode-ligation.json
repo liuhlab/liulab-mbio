@@ -25,7 +25,7 @@
   "batch_size": 96,
   "completeness": 0.99,
   "validate_from": 0,
-  "route": "A",
+  "route": "barcode ligation",
   "seed": 0,
   "reserved_extra": [],
   "barcode": {

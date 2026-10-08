@@ -187,7 +187,7 @@ def rerouted(plan, **changes):
 
 def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
     one = plan.validation
-    assert (one.route.name, one.floor, len(one.designs)) == ("B", 0, 72)
+    assert (one.route.name, one.floor, len(one.designs)) == ("index PCR", 0, 72)
     assert one.wells == 288 == 72 * 4
     assert [len(picked.labels) for picked in one.picked] == [288]
     assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
@@ -226,10 +226,10 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
 
 def test_the_demo_emits_a_protocol_on_each_route(plan):
     """One set of parts, two project files: a second project is never a second branch."""
-    route_b = plan.protocol()
-    route_a = rerouted(plan, route="A").protocol()
-    assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
-    assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
+    index_pcr = plan.protocol()
+    ligation = rerouted(plan, route="barcode ligation").protocol()
+    assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
+    assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
     pcrs = ["H29", "H30"]
     # Block assembly holds nothing open: every position has a destination presenting its own
     # entry overhang, and NEB's kit table sizes the reaction.
@@ -241,21 +241,21 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     # backbone the rounds ran in frees the cargo itself, so the release is written rather than
     # held open, and the one hole left is H24, over the assembly nobody sizes.
     final = ["H31", "H31", "H24"]
-    assert [hole.id for step in route_b.steps for hole in step.holes] == [
+    assert [hole.id for step in index_pcr.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
-        "B1",
-        "B2",
+        "IDX1",
+        "IDX2",
         *linkage,
         *final,
     ]
-    assert [hole.id for step in route_a.steps for hole in step.holes] == [
+    assert [hole.id for step in ligation.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
         *linkage,
         *final,
     ]
-    for one in (route_a, route_b):
+    for one in (ligation, index_pcr):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
 
 

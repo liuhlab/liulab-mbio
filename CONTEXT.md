@@ -596,8 +596,8 @@ The **fragment count** at or above which a design is read back one well at a tim
 states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
 reads every design. No floor ships, because the measured curve gives a design's chance of a clean
 colony and not the chance worth paying to check. A project that states one also names which of
-the two marking routes reads its wells.
-_Avoid_: validation threshold, QC cutoff, validation level
+the two marking routes reads its wells: **barcode ligation** or **index PCR**.
+_Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
 _Package_: liulab_synbio
 
 ### iGGA

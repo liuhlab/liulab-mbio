@@ -514,7 +514,7 @@ def _overview(
                 f"{len(validation.designs)}, every one"
                 if validation.floor == 0
                 else f"{len(validation.designs)}, from {validation.floor} fragment(s)",
-                f"route {validation.route.name}",
+                f"by {validation.route.name}",
             )
             if validation
             else "none; the library stays polyclonal"
@@ -990,7 +990,7 @@ POOL_REFERENCES: tuple[Reference, ...] = (
 
 def _validation_plates(one: dmx.Validation) -> tuple[Plate, ...]:
     """Return the plates the read-back fills, so every well a transfer names has one."""
-    return (*one.picked, *(one.index if one.route is dmx.ROUTE_B else ()))
+    return (*one.picked, *(one.index if one.route is dmx.ROUTE_INDEX_PCR else ()))
 
 
 def _pcr2_plate(pool: PoolPlan) -> Plate:

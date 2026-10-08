@@ -15,8 +15,8 @@ pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
 
 To change what these files say, change the code and run that command again. The same inputs
 write the same bytes, so a run that changes nothing leaves them alone. Point the command at
-`project-route-a.json` and an `--out` of your own to see the other read-back route; the design
-is the same and only the protocol differs.
+`project-barcode-ligation.json` and an `--out` of your own to see the other read-back route;
+the design is the same and only the protocol differs.
 
 ## What goes in
 
@@ -24,7 +24,7 @@ is the same and only the protocol differs.
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
 | [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, and that every design is read back by index PCR |
-| [project-route-a.json](project-route-a.json) | the same library read back by DMX barcoding instead |
+| [project-barcode-ligation.json](project-barcode-ligation.json) | the same library read back by barcode ligation instead |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
 
