@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "d1b11b3b1bef5b2b",
+  "key": "a98482017fc0a6b1",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -3207,7 +3207,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "03c4063835389115",
+      "key": "ac2a6340b64b0826",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -6948,7 +6948,7 @@
               "records": [
                 "../block-vector-1.dna"
               ],
-              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.",
+              "caption": "The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.",
               "span": [
                 280,
                 490
@@ -7072,7 +7072,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "f2df40d244d181b8",
+      "key": "f58eaef0b3844031",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -11403,7 +11403,7 @@
               "records": [
                 "../block-vector-1.dna"
               ],
-              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The pair reads across it, and the band is that stretch plus the two marks the well's address names.",
+              "caption": "The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The pair reads across it, and the band is that stretch plus the two marks the well's address names.",
               "span": [
                 280,
                 490

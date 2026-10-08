@@ -114,7 +114,8 @@ def _marking_figure(run: Run, validation: dmx.Validation) -> Figure | None:
     )
     return Figure(
         (path,),
-        f"What a picked well holds: its design in the cassette {name} carries. {marks}",
+        f"The cassette {name} carries, drawn empty: a picked well holds one with its design in "
+        f"place of the stuffer. {marks}",
         span=_cassette(vector.stuffer, len(vector.record)),
         linear=True,
         highlight=_drawn_as(vector.record, STUFFER_FEATURE),
