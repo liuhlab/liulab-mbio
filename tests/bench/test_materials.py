@@ -56,8 +56,8 @@ def test_a_material_nothing_rules_carries_no_rule() -> None:
     ],
 )
 def test_a_caution_is_one_sentence_the_catalogue_number_carries(catalog: str, carried: str) -> None:
-    # The two polymerases are different tubes from different suppliers and the caution is the
-    # same fact, written once here rather than into every step that pipettes one.
+    # Four tubes, two sentences: each is written here once rather than into every step that
+    # reaches for one of them.
     assert materials.material("the tube", catalog=catalog).cautions == (carried,)
 
 

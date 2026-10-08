@@ -156,7 +156,7 @@ CUVETTE_ON_ICE = "Keep the cells and the cuvette on ice; a warm cuvette arcs."
 
 #: What to watch out for where a material is used, keyed by catalogue number. A caution hangs
 #: here rather than in a step's prose for the reason a rule does: prose an agent edits can be
-#: deleted, and the same sentence written into four steps is four facts to keep in step.
+#: deleted, and one sentence written into four steps is four places to fix.
 CAUTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
     {
         "M0491": (POLYMERASE_ON_ICE,),
