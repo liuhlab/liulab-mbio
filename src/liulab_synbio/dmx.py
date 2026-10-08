@@ -166,7 +166,7 @@ KIT_EXPECTED = (
 SOURCES: dict[str, Source] = {
     "Qian SI": Source(
         "Qian et al. 2026, Supplementary Information",
-        edition="Nat. Commun. 10.1038/s41467-026-76740-5",
+        edition="Nat. Commun. 10.1038/s41467-026-76740-9",
         read_as="held under reference_docs/",
         date="2026-10-06",
     ),
@@ -1538,7 +1538,7 @@ REFERENCES: tuple[Reference, ...] = (
         "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental "
         "characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in "
         "lysate, and a consensus called above 150 reads",
-        url="https://doi.org/10.1038/s41467-026-76740-5",
+        url="https://doi.org/10.1038/s41467-026-76740-9",
     ),
     Reference(
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "

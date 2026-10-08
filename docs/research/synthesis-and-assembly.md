@@ -746,7 +746,7 @@ download.
 
 | File | Source | Retrieved |
 | --- | --- | --- |
-| `dmx/paper/` article and supplementary PDFs, with their text dumps | Qian et al. 2026, doi:10.1038/s41467-026-76740-5 | 2026-10-01 to 2026-10-03 |
+| `dmx/paper/` article and supplementary PDFs, with their text dumps | Qian et al. 2026, doi:10.1038/s41467-026-76740-9 | 2026-10-01 to 2026-10-03 |
 | `dmx/dmx-barcodes.tsv` | Extracted from the same paper's Supplementary Table 3 | 2026-10-05 |
 | `dmx/addgene/addgene-plasmid-247434-*.dna`, **tracked** as `tests/data/dmx0001.gb` | Addgene 247434, depositor's map, first vector parent | 2026-10-04 |
 | `dmx/addgene/addgene-plasmid-247435-*.dna` | Addgene 247435, depositor's map, second vector parent | 2026-10-04 |
@@ -865,7 +865,7 @@ Nothing here should become a package default.
 Read dates are in section 2 and provenance in section 7.
 
 - Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization.
-  *Nat. Commun.* [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5),
+  *Nat. Commun.* [doi:10.1038/s41467-026-76740-9](https://doi.org/10.1038/s41467-026-76740-9),
   with its supplementary information, Supplementary Table 3 (the barcode payloads) and
   Supplementary Table 4 (the primers).
 - Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain

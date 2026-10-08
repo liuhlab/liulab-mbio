@@ -786,7 +786,7 @@ before that pass still resolves. What closed:
   Rev A.0.
   [assets.thermofisher.com/TFS-Assets/LSG/manuals/oneshottop10_man.pdf](https://assets.thermofisher.com/TFS-Assets/LSG/manuals/oneshottop10_man.pdf)
 - Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization.
-  *Nat. Commun.* [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5),
+  *Nat. Commun.* [doi:10.1038/s41467-026-76740-9](https://doi.org/10.1038/s41467-026-76740-9),
   Supplementary Information, Days 1-4 and the GGA cloning section.
 - Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain
   recombination enhance CAR T cell antitumor function. *Cell* 189, 1-20.

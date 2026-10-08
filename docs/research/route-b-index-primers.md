@@ -505,7 +505,7 @@ is not closed by this note.
   `addgene-plasmid-247434-sequence-494299.dna`, as held under
   `reference_docs/synthesis_and_assembly/dmx/addgene/`. Measured 2026-10-06.
 - Qian, Z. et al. Accelerating protein design by scaling experimental characterization. *Nat.
-  Commun.* (2026). [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5).
+  Commun.* (2026). [doi:10.1038/s41467-026-76740-9](https://doi.org/10.1038/s41467-026-76740-9).
   The DMX vector and its barcode kit.
 - New England Biolabs, *NEBNext Multiplex Oligos for Illumina (Index Primers Sets 1–4)*, manual
   v8.0_6/24 (E7335, E7500, E7710, E7730); *Dual Index Primers Set 1*, manual v6.0_6/24 (E7600);
