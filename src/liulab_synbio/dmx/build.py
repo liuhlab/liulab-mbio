@@ -9,13 +9,11 @@ A design on disk is a name and a fragment count on a two-column sheet, never a s
 reads back anything a lab holds.
 """
 
-import json
 import os
-from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass
 from pathlib import Path
-from typing import Any
 
+from liulab_mbio import jsonfile
 from liulab_synbio.dmx.method import ROUTE_INDEX_PCR, ROUTES, Design, Route
 
 
@@ -107,21 +105,21 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     'index PCR'
     """
     file = Path(path)
-    data = json.loads(file.read_text(encoding="utf-8"))
-    if not isinstance(data, Mapping):
-        raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
-    if missing := sorted(_REQUIRED - set(data)):
-        raise ValueError(f"a build is missing {', '.join(missing)}")
-    if unknown := sorted(set(data) - _REQUIRED - _OPTIONAL):
-        raise ValueError(f"a build carries unknown key(s) {', '.join(unknown)}")
+    data = jsonfile.read_object(path)
+    jsonfile.refuse_keys(data, _REQUIRED, _OPTIONAL, "a build")
+    # A key diff names the file, a value its owner, so the two subjects differ by a possessive.
     return Build(
-        _text(data, "name"),
-        designs=_file(file, _text(data, "designs")),
-        archive=_text(data, "archive"),
-        route=_text(data, "route"),
-        validate_from=_whole(data, "validate_from"),
-        selection=_text(data, "selection") if "selection" in data else "",
-        index_plate=_text(data, "index_plate") if "index_plate" in data else "",
+        jsonfile.text(data, "name", "a build's"),
+        designs=jsonfile.named_file(
+            file, jsonfile.text(data, "designs", "a build's"), "designs", "a build's"
+        ),
+        archive=jsonfile.text(data, "archive", "a build's"),
+        route=jsonfile.text(data, "route", "a build's"),
+        validate_from=jsonfile.whole(data, "validate_from", "a build's"),
+        selection=jsonfile.text(data, "selection", "a build's") if "selection" in data else "",
+        index_plate=jsonfile.text(data, "index_plate", "a build's")
+        if "index_plate" in data
+        else "",
     )
 
 
@@ -169,46 +167,3 @@ def read_designs(path: str | os.PathLike[str]) -> tuple[Design, ...]:
 #: The keys a build is written with, and the ones it may leave out.
 _REQUIRED = frozenset({"name", "designs", "archive", "route", "validate_from"})
 _OPTIONAL = frozenset({"selection", "index_plate"})
-
-
-def _file(file: Path, named: str) -> Path:
-    """Resolve the designs sheet against the build file's own directory.
-
-    Raises
-    ------
-    ValueError
-        If nothing is there to read.
-    """
-    found = Path(named)
-    resolved = found if found.is_absolute() else file.parent / found
-    if not resolved.is_file():
-        raise ValueError(f"a build's designs is {named!r}, and {os.fspath(resolved)} is no file")
-    return resolved
-
-
-def _text(data: Mapping[str, Any], key: str) -> str:
-    """Return one string value.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type.
-    """
-    value = data[key]
-    if not isinstance(value, str):
-        raise ValueError(f"a build's {key} is {type(value).__name__}, not a string")
-    return value
-
-
-def _whole(data: Mapping[str, Any], key: str) -> int:
-    """Return one whole number.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, true and false among them.
-    """
-    value = data[key]
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"a build's {key} is {type(value).__name__}, not a whole number")
-    return value

@@ -12,13 +12,13 @@ enzymes a block is kept clear of are the method's unioned with `reserved_extra`,
 length is checked against the method's cloning scar rather than against a number stated here.
 """
 
-import json
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from liulab_mbio import jsonfile
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
@@ -469,68 +469,90 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     ('N', 'DBD', 'C')
     """
     file = Path(path)
-    data = json.loads(file.read_text(encoding="utf-8"))
-    if not isinstance(data, Mapping):
-        raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
-    _keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
+    data = jsonfile.read_object(path)
+    jsonfile.refuse_keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
+    # A path a build names is refused as its own, so that one subject carries the possessive.
     return Build(
-        _text(given, "name", "a build"),
+        jsonfile.text(given, "name", "a build"),
         positions=tuple(
-            _one_text(one, f"positions[{index}]")
-            for index, one in enumerate(_sequence(given, "positions", "a build"))
+            jsonfile.one_text(one, f"positions[{index}]")
+            for index, one in enumerate(jsonfile.sequence(given, "positions", "a build"))
         ),
-        parts=_file(file, _text(given, "parts", "a build"), "parts"),
-        vector=_file(file, _text(given, "vector", "a build"), "vector"),
-        host=_text(given, "host", "a build"),
-        oligo_length=_whole(given, "oligo_length", "a build"),
-        batch_size=_whole(given, "batch_size", "a build"),
-        completeness=_number(given, "completeness", "a build"),
+        parts=jsonfile.named_file(
+            file, jsonfile.text(given, "parts", "a build"), "parts", "a build's"
+        ),
+        vector=jsonfile.named_file(
+            file, jsonfile.text(given, "vector", "a build"), "vector", "a build's"
+        ),
+        host=jsonfile.text(given, "host", "a build"),
+        oligo_length=jsonfile.whole(given, "oligo_length", "a build"),
+        batch_size=jsonfile.whole(given, "batch_size", "a build"),
+        completeness=jsonfile.number(given, "completeness", "a build"),
         primers=(
-            _file(file, _text(given, "primers", "a build"), "primers")
+            jsonfile.named_file(
+                file, jsonfile.text(given, "primers", "a build"), "primers", "a build's"
+            )
             if "primers" in given
             else None
         ),
         working_vector=(
-            _file(file, _text(given, "working_vector", "a build"), "working_vector")
+            jsonfile.named_file(
+                file,
+                jsonfile.text(given, "working_vector", "a build"),
+                "working_vector",
+                "a build's",
+            )
             if "working_vector" in given
             else None
         ),
         bands=_bands(given.get("bands")),
         validate_from=(
-            _whole(given, "validate_from", "a build") if "validate_from" in given else None
+            jsonfile.whole(given, "validate_from", "a build") if "validate_from" in given else None
         ),
         routes=tuple(
-            _one_text(one, f"routes[{index}]")
+            jsonfile.one_text(one, f"routes[{index}]")
             for index, one in enumerate(
-                _sequence(given, "routes", "a build") if "routes" in given else ()
+                jsonfile.listing(given, "routes", "a build") if "routes" in given else ()
             )
         ),
-        index_plate=_text(given, "index_plate", "a build") if "index_plate" in given else "",
+        index_plate=jsonfile.text(given, "index_plate", "a build")
+        if "index_plate" in given
+        else "",
         representation_seen=(
-            _number(given, "representation_seen", "a build")
+            jsonfile.number(given, "representation_seen", "a build")
             if "representation_seen" in given
             else None
         ),
         representation_skew=(
-            _number(given, "representation_skew", "a build")
+            jsonfile.number(given, "representation_skew", "a build")
             if "representation_skew" in given
             else None
         ),
         reads_per_member=(
-            _whole(given, "reads_per_member", "a build") if "reads_per_member" in given else None
+            jsonfile.whole(given, "reads_per_member", "a build")
+            if "reads_per_member" in given
+            else None
         ),
         linkage_fidelity=(
-            _number(given, "linkage_fidelity", "a build") if "linkage_fidelity" in given else None
+            jsonfile.number(given, "linkage_fidelity", "a build")
+            if "linkage_fidelity" in given
+            else None
         ),
         final_assembly=_final_assembly(given.get("final_assembly")),
-        pcr1_cycles=_whole(given, "pcr1_cycles", "a build") if "pcr1_cycles" in given else None,
-        pcr2_cycles=_whole(given, "pcr2_cycles", "a build") if "pcr2_cycles" in given else None,
-        seed=_whole(given, "seed", "a build") if "seed" in given else SEED,
+        pcr1_cycles=jsonfile.whole(given, "pcr1_cycles", "a build")
+        if "pcr1_cycles" in given
+        else None,
+        pcr2_cycles=jsonfile.whole(given, "pcr2_cycles", "a build")
+        if "pcr2_cycles" in given
+        else None,
+        seed=jsonfile.whole(given, "seed", "a build") if "seed" in given else SEED,
         reserved_extra=tuple(
-            _one_text(one, f"reserved_extra[{index}]")
+            jsonfile.one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                _sequence(given, "reserved_extra", "a build") if "reserved_extra" in given else ()
+                jsonfile.sequence(given, "reserved_extra", "a build")
+                if "reserved_extra" in given
+                else ()
             )
         ),
         barcode=_barcode(given.get("barcode")),
@@ -592,8 +614,8 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
         raise ValueError(f"a build's bands are {type(entry).__name__}, not an object")
     return {
         quantity: tuple(
-            _one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(_sequence(entry, quantity, "a build's"))
+            jsonfile.one_text(one, f"bands {quantity}[{index}]")
+            for index, one in enumerate(jsonfile.sequence(entry, quantity, "a build's"))
         )
         for quantity in entry
     }
@@ -611,10 +633,10 @@ def _barcode(entry: Any) -> Barcode:
         return Barcode()
     if not isinstance(entry, Mapping):
         raise ValueError(f"a build barcode is {type(entry).__name__}, not an object")
-    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
+    jsonfile.refuse_keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
     return Barcode(
-        _whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
-        _whole(entry, "min_distance", "a build barcode")
+        jsonfile.whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
+        jsonfile.whole(entry, "min_distance", "a build barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
     )
@@ -633,8 +655,10 @@ def _final_assembly(entry: Any) -> FinalAssembly | None:
     if not isinstance(entry, Mapping):
         raise ValueError(f"a build's final_assembly is {type(entry).__name__}, not an object")
     where = "a build's final_assembly"
-    _keys(entry, _ASSEMBLY_REQUIRED, frozenset(), where)
-    return FinalAssembly(_number(entry, "vector_ng", where), _number(entry, "ratio", where))
+    jsonfile.refuse_keys(entry, _ASSEMBLY_REQUIRED, frozenset(), where)
+    return FinalAssembly(
+        jsonfile.number(entry, "vector_ng", where), jsonfile.number(entry, "ratio", where)
+    )
 
 
 def _primer_plates(entry: Any) -> PrimerPlates | None:
@@ -652,110 +676,17 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
         return None
     if not isinstance(entry, Mapping):
         raise ValueError(f"a build's primer_plates is {type(entry).__name__}, not an object")
-    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
+    jsonfile.refuse_keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
     where = "a build's primer_plates"
     return PrimerPlates(
-        _number(entry, "nanomoles", where),
-        _number(entry, "stock_um", where),
-        _number(entry, "working_ul", where),
-        **({"working_um": _number(entry, "working_um", where)} if "working_um" in entry else {}),
-        **({"wells": _whole(entry, "wells", where)} if "wells" in entry else {}),
-        **({"copies": _whole(entry, "copies", where)} if "copies" in entry else {}),
+        jsonfile.number(entry, "nanomoles", where),
+        jsonfile.number(entry, "stock_um", where),
+        jsonfile.number(entry, "working_ul", where),
+        **(
+            {"working_um": jsonfile.number(entry, "working_um", where)}
+            if "working_um" in entry
+            else {}
+        ),
+        **({"wells": jsonfile.whole(entry, "wells", where)} if "wells" in entry else {}),
+        **({"copies": jsonfile.whole(entry, "copies", where)} if "copies" in entry else {}),
     )
-
-
-def _file(file: Path, named: str, key: str) -> Path:
-    """Resolve a path a build names against the `project.json` file's own directory.
-
-    Raises
-    ------
-    ValueError
-        If nothing is there to read.
-    """
-    found = Path(named)
-    resolved = found if found.is_absolute() else file.parent / found
-    if not resolved.is_file():
-        raise ValueError(f"a build's {key} is {named!r}, and {os.fspath(resolved)} is no file")
-    return resolved
-
-
-def _keys(
-    data: Mapping[str, Any], required: frozenset[str], optional: frozenset[str], where: str
-) -> None:
-    """Refuse a mapping that is missing a key or carries one this does not read.
-
-    Raises
-    ------
-    ValueError
-        Naming the keys and `where` they are.
-    """
-    if missing := sorted(required - set(data)):
-        raise ValueError(f"{where} is missing {', '.join(missing)}")
-    if unknown := sorted(set(data) - required - optional):
-        raise ValueError(f"{where} carries unknown key(s) {', '.join(unknown)}")
-
-
-def _text(data: Mapping[str, Any], key: str, where: str) -> str:
-    """Return one string value.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type.
-    """
-    return _one_text(data[key], f"{where} {key}")
-
-
-def _one_text(value: Any, where: str) -> str:
-    """Return one string.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type.
-    """
-    if not isinstance(value, str):
-        raise ValueError(f"{where} is {type(value).__name__}, not a string")
-    return value
-
-
-def _whole(data: Mapping[str, Any], key: str, where: str) -> int:
-    """Return one whole number.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, true and false among them.
-    """
-    value = data[key]
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a whole number")
-    return value
-
-
-def _number(data: Mapping[str, Any], key: str, where: str) -> float:
-    """Return one number, whole or not.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, true and false among them.
-    """
-    value = data[key]
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a number")
-    return float(value)
-
-
-def _sequence(data: Mapping[str, Any], key: str, where: str) -> Sequence[Any]:
-    """Return one list of values.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, a string among them.
-    """
-    value = data[key]
-    if isinstance(value, str) or not isinstance(value, Sequence):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a list")
-    return value
