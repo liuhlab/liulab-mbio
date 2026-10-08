@@ -7,7 +7,6 @@ page is still self-contained, so the folder opens from disk and survives being z
 
 import hashlib
 import os
-from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from html import escape
@@ -94,7 +93,7 @@ class Page:
         What the protocol is called, which is how every other page names it.
     href
         The file it was written to, relative to the folder.
-    steps
+    step_keys
         One key per numbered step, as that page addresses it, so another page of the folder
         counts the marks rather than trusting a number written twice.
     key
@@ -104,7 +103,7 @@ class Page:
 
     title: str
     href: str
-    steps: tuple[str, ...] = ()
+    step_keys: tuple[str, ...] = ()
     key: str = ""
 
     @classmethod
@@ -218,15 +217,21 @@ def page_name(place: int, title: str) -> str:
 
 
 def _step_keys(steps: Sequence[Step]) -> tuple[str, ...]:
-    """Return what each step is addressed by on its page: its own key, made unique.
+    """Return what each step is addressed by on its page, no two steps alike.
 
-    A page must render, so a key two steps somehow share — and a title that slugs to nothing —
-    gains the step's number rather than being refused. That is a defect in the builder, and the
-    package's own tests fail on it the day it lands.
+    A page must render, so a key another step has taken — or a title that slugs to nothing —
+    takes the step's number and keeps taking one until the key is the page's own, rather than
+    being refused.
     """
-    keys = [step.key or str(n) for n, step in enumerate(steps, 1)]
-    once = Counter(keys)
-    return tuple(key if once[key] == 1 else f"{key}-{n}" for n, key in enumerate(keys, 1))
+    taken: set[str] = set()
+    keys = []
+    for n, step in enumerate(steps, 1):
+        key = step.key or str(n)
+        while key in taken:
+            key = f"{key}-{n}"
+        taken.add(key)
+        keys.append(key)
+    return tuple(keys)
 
 
 def render_html(
@@ -423,9 +428,9 @@ def _protocols(folder: Folder) -> str:
     if not folder.pages:
         return ""
     rows = "".join(
-        f'<li data-page-key="{escape(page.key)}" data-steps="{escape(" ".join(page.steps))}">'
+        f'<li data-page-key="{escape(page.key)}" data-steps="{escape(" ".join(page.step_keys))}">'
         f'<a href="{escape(page.href)}">{escape(page.title)}</a> '
-        f'<span class="page-progress muted">{_count(len(page.steps), "step")}</span></li>'
+        f'<span class="page-progress muted">{_count(len(page.step_keys), "step")}</span></li>'
         for page in folder.pages
     )
     return (
@@ -786,7 +791,7 @@ def _page(
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{escape(title)}</title>\n"
         f"<style>\n{_fonts(frame)}{_asset('protocol.css')}</style>\n"
-        f'</head>\n<body data-protocol="{key}">\n{frame}'
+        f'</head>\n<body data-protocol="{escape(key)}">\n{frame}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
 
@@ -824,14 +829,19 @@ def _chain(folder: Folder, here: str) -> str:
     )
 
 
+def _step_links(steps: Sequence[Step], keys: Sequence[str]) -> str:
+    """Every step as a link to where it stands on its own page, in order."""
+    return "".join(
+        f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
+        for key, step in zip(keys, steps, strict=True)
+    )
+
+
 def _within(protocol: Protocol, keys: Sequence[str]) -> str:
     """Return the right column: every step of this page, so a reader jumps within it."""
     if not protocol.steps:
         return ""
-    links = "".join(
-        f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
-        for key, step in zip(keys, protocol.steps, strict=True)
-    )
+    links = _step_links(protocol.steps, keys)
     return (
         '<nav class="column within" aria-label="Steps">'
         f'<h2 class="column-title">This protocol</h2><ol>{links}</ol></nav>\n'
@@ -917,10 +927,7 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
             '<button type="button" class="reset">Reset page</button></div>\n'
         )
         if toc:
-            links = "".join(
-                f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
-                for key, step in zip(keys, protocol.steps, strict=True)
-            )
+            links = _step_links(protocol.steps, keys)
             parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
     parts.append("</header>\n")
     return "".join(parts)
@@ -1534,7 +1541,11 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
 
 
 def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section: str = "") -> str:
-    """One step, addressed by its own key, so a reworded title keeps the bench's tick."""
+    """One step, addressed by its own key, so a reworded title keeps the bench's tick.
+
+    Everything inside it is marked by that anchor, a dot and what it is. A key is a slug and
+    holds no dot, so no mark here can spell another step's anchor or another of its marks.
+    """
     anchor = f"step-{key}"
     parts = [f'<p class="step-section">{escape(section)}</p>\n'] if section else []
     parts += [
@@ -1548,20 +1559,20 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
     ]
     if step.instructions:
         items = "".join(
-            f'<li><label><input type="checkbox" data-key="{anchor}-{i}">'
+            f'<li><label><input type="checkbox" data-key="{anchor}.{i}">'
             f"<span>{escape(text)}</span></label></li>"
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
-    parts += [_table(f"{anchor}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
+    parts += [_table(f"{anchor}.table.{i}", t) for i, t in enumerate(step.tables, 1)]
     parts += [_program(p) for p in step.programs]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
         parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')
     if step.timers:
-        timers = "".join(_timer(f"{anchor}-timer-{i}", t) for i, t in enumerate(step.timers, 1))
+        timers = "".join(_timer(f"{anchor}.timer.{i}", t) for i, t in enumerate(step.timers, 1))
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     if step.expected or step.gels:

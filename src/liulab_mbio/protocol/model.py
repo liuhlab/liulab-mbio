@@ -1195,11 +1195,9 @@ class Step:
     title
         What the step achieves, such as ``"Run the thermocycler"``.
     key
-        What this step is, across every rewording of its title: the handle its anchor and the
-        bench's check mark are kept under. The builder writing the step assigns it, for the
-        step's job and never for its wording, and it is slugged as a title is. Left empty it
-        falls back to the title's slug, so a hand-written step needs none and a reworded title
-        then costs the bench its ticks.
+        What this step is, whatever its title is reworded to: the handle its anchor and the
+        bench's check mark are kept under. The builder assigns it, for the step's job and not
+        its wording, and it is slugged as a title is. Empty, it falls back to the title's slug.
     section
         What stage of the protocol the step belongs to, such as ``"Day 1"``. A label and not a
         container: the steps stay one list and the numbering runs through it.
@@ -1309,10 +1307,9 @@ class Protocol:
     title
         The page heading.
     key
-        What the rendered page remembers the bench's check marks under. A pipeline mints it from
-        the protocol's content when it writes the JSON and it then stays put, so an agent's edit
-        keeps the ticks the bench has already made while a re-planned run starts clean. Empty
-        here means nobody has minted one yet.
+        What the rendered page remembers the bench's check marks under, minted from the content
+        where a pipeline writes the JSON and left alone after, so an agent's edit keeps the ticks
+        already made. Empty where nobody has minted one.
     summary
         One paragraph: what the protocol does.
     overview
@@ -1368,8 +1365,9 @@ class Protocol:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse an empty title, or an overview value too long to be a card."""
+        """Refuse an empty title, or an overview value too long to be a card; slug the key."""
         _require(bool(self.title.strip()), "a protocol needs a title")
+        object.__setattr__(self, "key", slug(self.key))
         for label, value in self.overview.items():
             _require(
                 len(value) <= OVERVIEW_CHARS,
@@ -1563,9 +1561,8 @@ class Project:
     title
         What the run is called.
     key
-        What the run's own pages remember under, as `Protocol.key` is, minted when the folder is
-        written. Each protocol of the run carries its own, and no two of them may share one: a
-        key names one page's store, so a copied protocol needs its own or none.
+        What the run's own pages remember under, as `Protocol.key` is. Each protocol carries its
+        own and no two may share one, since a key names one page's store.
     summary
         One paragraph: what the run achieves.
     background
@@ -1595,8 +1592,9 @@ class Project:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a project with no title, or two protocols keyed alike."""
+        """Refuse a project with no title, or two protocols keyed alike; slug the key."""
         _require(bool(self.title.strip()), "a project needs a title")
+        object.__setattr__(self, "key", slug(self.key))
         keys = [one.key for one in self.protocols if one.key]
         shared = next((key for key in keys if keys.count(key) > 1), "")
         _require(

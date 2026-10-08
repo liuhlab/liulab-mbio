@@ -138,7 +138,7 @@ def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_its_ticks() ->
         sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
         for one in reworded()
     ]
-    assert marks[0] == ["step-cycle", "step-set-up", "step-set-up-1"]
+    assert marks[0] == ["step-cycle", "step-set-up", "step-set-up.1"]
     assert marks[1] == marks[0]
 
 
@@ -154,16 +154,32 @@ def test_a_page_remembers_under_the_key_its_protocol_carries() -> None:
     assert page_key(unkeyed[0]) != page_key(unkeyed[1])
 
 
-def test_two_steps_keyed_alike_still_anchor_one_step_each() -> None:
-    """A duplicate is a defect the package's own tests catch; the page renders regardless."""
+def test_no_two_marks_of_one_page_are_alike_however_its_steps_are_keyed() -> None:
+    """A duplicate is a defect the package's own tests catch; the page renders regardless.
+
+    The keys below are the ones that collide where a repeat is numbered once and left: ``cut``
+    twice beside a step already called ``cut-2``.
+    """
     protocol = Protocol(
-        "Digest", steps=(Step("Digest", key="cut"), Step("Digest again", key="cut"))
+        "Digest",
+        steps=(
+            Step("Digest", key="cut"),
+            Step("Digest again", key="cut"),
+            Step("Digest once more", key="cut-2"),
+            Step("Set up", key="set-up", instructions=("Thaw the mix.",)),
+            Step("Set up again", key="set-up-1"),
+        ),
     )
     page = parse(render_html(protocol))
     assert [one.attrs["id"] for one in page.find_all("section", cls="step")] == [
-        "step-cut-1",
+        "step-cut",
         "step-cut-2",
+        "step-cut-2-3",
+        "step-set-up",
+        "step-set-up-1",
     ]
+    marks = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
+    assert len(set(marks)) == len(marks)
 
 
 def test_the_toolbar_offers_to_reset_everything_the_page_remembers(page: Node) -> None:
@@ -400,7 +416,7 @@ def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
     )
     page = parse(render_html(protocol))
     keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
-    assert keys == ["step-digest-timer-1", "step-digest-timer-2", "step-ligate-timer-1"]
+    assert keys == ["step-digest.timer.1", "step-digest.timer.2", "step-ligate.timer.1"]
 
 
 def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:

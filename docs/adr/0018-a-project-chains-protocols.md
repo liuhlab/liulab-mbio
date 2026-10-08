@@ -26,7 +26,7 @@ shaped as it is becomes `background`, a `Topic` at a time, so a step never stops
 Materials, equipment, references, sources and holes stay on the protocol that owns them.
 
 `Step.section` is a label on the step, not a container: the steps stay one list and the numbering
-runs through it, so `step-14` is one place in one document.
+runs through it, so step 14 is one place in one document.
 
 ## Considered options
 

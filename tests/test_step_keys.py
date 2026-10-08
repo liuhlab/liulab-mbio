@@ -33,14 +33,16 @@ PARTS = (
 PRIMERS = Path(__file__).parents[1] / "docs" / "examples" / "ap1-library" / "primers.tsv"
 
 
-def igga_protocols(directory: Path) -> tuple[Protocol, ...]:
-    """Every protocol of an iGGA run, from a build written into `directory`.
+def igga_protocols(directory: Path) -> tuple[tuple[str, Protocol], ...]:
+    """Every protocol of an iGGA run, once per route a well is read back by.
 
     The build asks for the primer plates and the read-back, so the run is the whole chain and
-    not the shorter one a plainer build writes.
+    not the shorter one a plainer build writes, and each route writes its own validation
+    protocol.
     """
     from liulab_mbio.sequence import SequenceRecord
     from liulab_mbio.snapgene import write_dna
+    from liulab_synbio.dmx import ROUTES
     from liulab_synbio.igga.method import IGGA
     from liulab_synbio.igga.plan import plan_igga
     from liulab_synbio.igga.project import Build, PrimerPlates
@@ -54,21 +56,26 @@ def igga_protocols(directory: Path) -> tuple[Protocol, ...]:
         SequenceRecord(pad + IGGA.internal_stuffer + pad, topology="circular", name="carrier"),
         directory / "carrier.dna",
     )
-    build = Build(
-        "library",
-        positions=("N", "bZIP", "C"),
-        parts=directory / "parts.fasta",
-        vector=directory / "carrier.dna",
-        host="e-coli-k12",
-        oligo_length=350,
-        batch_size=96,
-        completeness=0.99,
-        primers=PRIMERS,
-        primer_plates=PrimerPlates(nanomoles=25, stock_um=100, working_ul=100),
-        validate_from=0,
-        route="index PCR",
-    )
-    return plan_igga(build, parts=PARTS).chain().protocols
+    found = []
+    for route in ROUTES:
+        build = Build(
+            "library",
+            positions=("N", "bZIP", "C"),
+            parts=directory / "parts.fasta",
+            vector=directory / "carrier.dna",
+            host="e-coli-k12",
+            oligo_length=350,
+            batch_size=96,
+            completeness=0.99,
+            primers=PRIMERS,
+            primer_plates=PrimerPlates(nanomoles=25, stock_um=100, working_ul=100),
+            validate_from=0,
+            route=route,
+        )
+        found += [
+            (f"igga, {route}", one) for one in plan_igga(build, parts=PARTS).chain().protocols
+        ]
+    return tuple(found)
 
 
 @pytest.fixture(scope="module")
@@ -82,15 +89,13 @@ def shipped(
 
     from .cloning.gateway.records import destination_vector, entry_clone
 
-    gateway = plan_gateway(entry_clone(gfp.sequence), destination_vector())
     one_each = {
         "goldengate": plan.protocol(),
         "gibson": plan_gibson(puc19, gfp).protocol(),
         "restriction": plan_restriction(puc19, gfp).protocol(),
-        "gateway": gateway.protocol(),
+        "gateway": plan_gateway(entry_clone(gfp.sequence), destination_vector()).protocol(),
     }
-    igga = igga_protocols(tmp_path_factory.mktemp("igga"))
-    return tuple(one_each.items()) + tuple(("igga", one) for one in igga)
+    return tuple(one_each.items()) + igga_protocols(tmp_path_factory.mktemp("igga"))
 
 
 def test_no_shipped_pipeline_writes_two_steps_under_one_key(
