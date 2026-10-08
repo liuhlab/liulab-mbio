@@ -94,8 +94,7 @@ def project(run: Run) -> Project:
         summary=(
             f"Join {len(run.parts)} synthesised parts into {run.constructs} distinct constructs "
             f"in {len(run.rounds)} rounds, over {_places(pages)} protocols. Each round opens "
-            f"the "
-            f"library with {run.scheme.internal.name}, releases one part list with "
+            f"the library with {run.scheme.internal.name}, releases one part list with "
             f"{run.scheme.external.name}, ligates the two, and transforms, grows and preps the "
             "result for the round after it."
         ),
@@ -110,22 +109,19 @@ def project(run: Run) -> Project:
 
 
 def _places(pages: Sequence[Page]) -> int:
-    """Return how many places the run has, which is one per protocol and one per choice.
+    """Return how many protocols the bench works through, which is fewer than the pages.
 
-    Two ways of one job stand in one place, so a run offering a choice has one page more than it
-    has protocols to work through.
+    The ways of one job stand in one place and the bench does one of them.
     """
     return len(by_place(pages, lambda one: one.choice))
 
 
 def _choosing(run: Run) -> tuple[Topic, ...]:
-    """Return what to weigh where the run offers the bench more than one way to read back.
+    """Return what to weigh where the bench picks a route, and nothing where it does not.
 
-    The topic is `dmx`'s, because comparing that method's own routes is the method's knowledge,
-    and it is titled by the job so each way's page is one link from it. A run offering one way
-    chooses nothing and is told nothing.
+    The topic is `dmx`'s: comparing that method's own routes is the method's knowledge.
     """
-    return (dmx.route_choice(),) if len(run.validations) > 1 else ()
+    return (dmx.route_choice(),) if run.read_back_is_a_choice else ()
 
 
 def _spread(

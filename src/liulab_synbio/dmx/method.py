@@ -259,22 +259,23 @@ def route_choice() -> Topic:
             "them the way the bench's rule of thumb does. Barcode ligation addresses more than "
             "330,000 wells from one plate of barcodes; index PCR addresses 9,216. Most runs sit "
             "well below either.",
-            "Barcode ligation pays a fixed price once, whatever the library's size: $695 of "
-            "sequencing, and five days. Shared over 100 designs that is $19.52 a design, and "
-            "over 2,000 designs $3.38. The more designs share it, the less each one carries. "
-            "Nobody has published the same table for index PCR, so no price for it, and no "
-            "price per well for either route, is stated anywhere here.",
+            "Barcode ligation carries a fixed cost and a fixed delay, paid once whatever the "
+            "library's size: $695 of sequencing, and five days. Because they are paid once, "
+            "the whole route costs less for each design the more designs there are, falling "
+            "from $19.52 a design over 100 designs to $3.38 over 2,000. Nobody has published "
+            "the same table for index PCR, so no price for it, and no price per well for "
+            "either route, is stated anywhere here.",
             "Index PCR runs one thermocycled reaction in every well, so thousands of wells need "
-            "many thermocyclers. Barcode ligation holds one temperature, and a whole 1536-well "
-            "plate marks in a single incubator. That is the only direct comparison of the two "
-            "in print, and Qian and colleagues wrote it about the route their own replaced; no "
-            "independent measurement of one against the other was found.",
+            "many thermocyclers. Barcode ligation needs none: a whole 1536-well plate marks in "
+            "a single incubator. That is the only direct comparison of the two in print, and "
+            "the barcode ligation route's own authors wrote it about the route they replaced; "
+            "no independent measurement of one against the other was found.",
             "Doing neither is also a choice. Every well is then enriched for the design it was "
             "built from, and nothing firmer than that can be said: the one published purity "
             "figure, 89.3% of 929 wells at 90% clonal purity or better, was measured on short "
-            "arrayed fragments under 314 bases rather than on cargo from an oligo pool, and that "
-            "paper says polyclonality grows with length. Nothing measured says the material is "
-            "even. To know what a well holds, read it back.",
+            "arrayed fragments under 314 bases rather than on cargo from an oligo pool, and the "
+            "same work found that polyclonality grows with length. Nothing measured says the "
+            "material is even. To know what a well holds, read it back.",
         ),
     )
 

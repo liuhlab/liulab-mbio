@@ -239,34 +239,41 @@ def test_the_demo_carries_both_read_back_routes_as_the_two_ways_of_one_job(plan)
     """The demo offers both so a reader can read each; a run does one of them, never both."""
     chain = plan.chain()
     ways = [one for one in chain.protocols if one.choice]
+    checks = {check.name: check for check in chain.audit()}
 
     assert [one.title for one in ways] == [
         "Cargo validation: barcode ligation",
         "Cargo validation: index PCR",
     ]
     assert {one.choice for one in ways} == {"read every well back"}
-    assert "Barcode each well in lysate" in [one.title for one in ways[0].steps]
-    assert "Amplify each well with its own pair" in [one.title for one in ways[1].steps]
     left = {"clonal picked plate", "well calls"}
     assert [{item.name for item in one.produces} for one in ways] == [left, left]
+    assert checks["choices"].status == "pass"
+    assert (
+        checks["choices"].detail
+        == "2 ways to read every well back, each leaving the same 2 things."
+    )
+    assert checks["handoffs"].status == "pass"
     said = next(one for one in chain.background if one.title == "read every well back")
     assert "Do one of them, never both." in said.body[0]
-
-
-def test_a_run_naming_one_route_offers_no_choice(plan):
-    """Choosing is the demo's; a build naming one route writes one page and no guidance."""
-    one = rerouted(plan, routes=("barcode ligation",)).chain()
-
-    assert [each.title for each in one.protocols][3] == "Cargo validation: barcode ligation"
-    assert not [each for each in one.protocols if each.choice]
-    assert [each.title for each in one.background] == ["How this library is designed"]
-    assert [check.name for check in one.audit()] == ["handoffs", "sources"]
+    assert [one.what for one in chain.inputs if "way only" in one.what] == [
+        "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation "
+        "way only",
+        "the lab's own index primers, prepared once and called for by a run, for the index PCR "
+        "way only",
+    ]
 
 
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     """One set of parts, both routes: the ways of one job, never a branch the package picks."""
     index_pcr = protocol
-    ligation = whole(rerouted(plan, routes=("barcode ligation",)).chain())
+    alone = rerouted(plan, routes=("barcode ligation",)).chain()
+    # A build naming one route writes one page, offers no choice and is told nothing.
+    assert [one.title for one in alone.protocols][3] == "Cargo validation: barcode ligation"
+    assert not [one for one in alone.protocols if one.choice]
+    assert [one.title for one in alone.background] == ["How this library is designed"]
+    assert [check.name for check in alone.audit()] == ["handoffs", "sources"]
+    ligation = whole(alone)
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
     pcrs = ["H29", "H30"]
@@ -542,17 +549,7 @@ def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
     ]
 
 
-def test_the_two_ways_take_one_place_and_the_run_says_how_to_pick(plan):
-    """Both ways leave the bench holding the same things, so what follows them is the same."""
-    chain = plan.chain()
-    checks = {check.name: check for check in chain.audit()}
-
-    assert checks["choices"].status == "pass"
-    assert (
-        checks["choices"].detail
-        == "2 ways to read every well back, each leaving the same 2 things."
-    )
-    assert checks["handoffs"].status == "pass"
+def test_a_route_the_package_does_not_ship_is_refused(plan):
     with pytest.raises(ValueError, match="route is 'both'"):
         rerouted(plan, routes=("both",))
 

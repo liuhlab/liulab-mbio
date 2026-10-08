@@ -219,9 +219,8 @@ class Build:
         lie between 0 and 1, the floor is negative, a route is neither of the two or named twice,
         the floor and the routes are not both there or both absent, an index plate is named
         without the route that takes one, a route is named over cargo DMX cannot pick, a
-        representation mark loosens
-        the sourced one, or the barcode and the method's cloning scar are not whole codons
-        together — which names ``barcode-frame``.
+        representation mark loosens the sourced one, or the barcode and the method's cloning
+        scar are not whole codons together — which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.

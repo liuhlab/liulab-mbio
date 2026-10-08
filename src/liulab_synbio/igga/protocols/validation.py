@@ -41,17 +41,17 @@ class ReadBack(Protocol):
     two pages and the bench does one of them.
     """
 
-    def __init__(self, one: dmx.Validation) -> None:
+    def __init__(self, validation: dmx.Validation) -> None:
         """Hold the read-back this page is written for, which is one route's."""
-        self.one = one
+        self.validation = validation
 
     def title(self, run: Run) -> str:
         """Return the page's heading, which names the route that marks its wells."""
-        return validation_title(self.one)
+        return validation_title(self.validation)
 
     def choice(self, run: Run) -> str:
         """Name the job this page is one way of doing, where the run offers more than one way."""
-        return dmx.READ_BACK if len(run.validations) > 1 else ""
+        return dmx.READ_BACK if run.read_back_is_a_choice else ""
 
     def summary(self, run: Run) -> str:
         """Return what reading the designs back comes to."""
@@ -62,11 +62,11 @@ class ReadBack(Protocol):
 
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the route's own steps, each under the section `dmx` puts it in."""
-        return dmx.validation_steps(self.one, marking=_marking_figure(run, self.one))
+        return dmx.validation_steps(self.validation, marking=_marking_figure(run, self.validation))
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:
         """Return the archive plate, and the lab stock this page's own route marks with."""
-        stock = dmx.marking_stock(self.one)
+        stock = dmx.marking_stock(self.validation)
         return (run.archive, *((stock,) if stock else ()))
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
@@ -75,15 +75,15 @@ class ReadBack(Protocol):
 
     def carried(self, run: Run) -> tuple[Material, ...]:
         """Return what the route buys, which no other protocol of the run does."""
-        return dmx.validation_materials(self.one)
+        return dmx.validation_materials(self.validation)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware the route needs that no reagent table covers."""
-        return dmx.validation_equipment(self.one)
+        return dmx.validation_equipment(self.validation)
 
     def plates(self, run: Run) -> tuple[Plate, ...]:
         """Return the plates the read-back fills, so every well a transfer names has one."""
-        return self.one.plates
+        return self.validation.plates
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where the route's own numbers are read from."""
@@ -94,7 +94,7 @@ class ReadBack(Protocol):
         return dmx.SOURCES
 
 
-def _marking_figure(run: Run, one: dmx.Validation) -> Figure | None:
+def _marking_figure(run: Run, validation: dmx.Validation) -> Figure | None:
     """Return what the route's own marking step works on: what a picked well holds.
 
     The cassette its design sits in, with the stuffer lit. Drawn as a map and not at base
@@ -108,7 +108,7 @@ def _marking_figure(run: Run, one: dmx.Validation) -> Figure | None:
     marks = (
         f"The kit chains its {dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through "
         f"{dmx.CHAIN[-1]}, reading on the strand the cargo reads on."
-        if one.route is dmx.ROUTE_LIGATION
+        if validation.route is dmx.ROUTE_LIGATION
         else "The pair reads across it, and the band is that stretch plus the two marks the "
         "well's address names."
     )

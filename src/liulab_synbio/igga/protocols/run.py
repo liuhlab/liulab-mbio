@@ -7,7 +7,7 @@ hands the next by name, the reagents the rounds buy, and the hardware they need.
 """
 
 from collections.abc import Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
@@ -307,10 +307,26 @@ class Run:
         )
 
     @property
+    def read_back_is_a_choice(self) -> bool:
+        """Whether the bench picks a route, which it does where the build named more than one."""
+        return len(self.validations) > 1
+
+    @property
     def marking_stocks(self) -> tuple[Handed, ...]:
-        """The lab stock each offered marking route takes, which no protocol of this run makes."""
-        found = (dmx.marking_stock(one) for one in self.validations)
-        return tuple(one for one in found if one is not None)
+        """The lab stock each offered marking route takes, which no protocol of this run makes.
+
+        Where the bench picks a route, each stock says which route takes it, so nobody stocks
+        up for a way they will not do.
+        """
+        found: list[Handed] = []
+        for one in self.validations:
+            stock = dmx.marking_stock(one)
+            if stock is None:
+                continue
+            if self.read_back_is_a_choice:
+                stock = replace(stock, what=f"{stock.what}, for the {one.route.name} way only")
+            found.append(stock)
+        return tuple(found)
 
     @property
     def round_references(self) -> tuple[Reference, ...]:
