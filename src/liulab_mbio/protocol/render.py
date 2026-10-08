@@ -1465,7 +1465,7 @@ def _oligos(protocol: Protocol) -> str:
     if not protocol.oligos:
         return ""
     seats = _seats(protocol.plates)
-    unseated = _Seat(len(protocol.plates), 0, 0, "", "")
+    unseated = _Seat(len(protocol.plates), 0, "", "")
     oligos = tuple(sorted(protocol.oligos, key=lambda one: seats.get(one.name, unseated)))
     columns: list[tuple[str, str, Callable[[Oligo], str]]] = [
         # One decimal, so the column reads as one: `number` prints 63 beside 63.1.
@@ -1518,11 +1518,14 @@ def _oligos(protocol: Protocol) -> str:
 
 
 class _Seat(NamedTuple):
-    """Where one name sits. Ordered by the plate's place in the protocol, then reading order."""
+    """Where one name sits. Ordered by the plate's place in the protocol, then reading order.
+
+    `place` counts the wells of its own plate in reading order, so two seats a plate apart
+    subtract to how many wells lie between them.
+    """
 
     order: int
-    row: int
-    column: int
+    place: int
     plate: str
     well: str
 
@@ -1534,7 +1537,8 @@ def _seats(plates: tuple[Plate, ...]) -> dict[str, _Seat]:
         for well, held in plate.seating.items():
             at = well_at(well)
             if at is not None:
-                found.setdefault(held, _Seat(index, at[0], at[1], plate.name, well))
+                place = at[0] * plate.columns + at[1]
+                found.setdefault(held, _Seat(index, place, plate.name, well))
     return found
 
 
@@ -1562,11 +1566,13 @@ def _oligo_summary(oligos: tuple[Oligo, ...], seats: Mapping[str, _Seat]) -> str
         if text
     )
     groups: dict[str, list[Oligo]] = {}
-    for oligo in oligos:
+    places: dict[str, list[int]] = {}
+    for place, oligo in enumerate(oligos):
         groups.setdefault(oligo.purpose, []).append(oligo)
+        places.setdefault(oligo.purpose, []).append(place)
     rows = "".join(
         f"<tr><td>{escape(purpose)}</td>"
-        f"<td>{escape(_names(group))}</td>"
+        f"<td>{escape(_names(group, places[purpose]))}</td>"
         f'<td class="num">{len(group)}</td>'
         f"<td>{escape(_where([seats[one.name] for one in group if one.name in seats]))}</td></tr>"
         for purpose, group in groups.items()
@@ -1574,7 +1580,7 @@ def _oligo_summary(oligos: tuple[Oligo, ...], seats: Mapping[str, _Seat]) -> str
     return (
         f'<p class="muted">{escape(facts)}</p>'
         '<div class="scroll"><table><thead><tr><th>For</th><th>Names</th>'
-        f'<th class="num">Oligos</th><th>Well range</th></tr></thead><tbody>{rows}</tbody>'
+        f'<th class="num">Oligos</th><th>Wells</th></tr></thead><tbody>{rows}</tbody>'
         "</table></div>"
     )
 
@@ -1585,21 +1591,36 @@ def _span(low: float, high: float, places: int = 0) -> str:
     return first if first == last else f"{first} to {last}"
 
 
-def _names(group: Sequence[Oligo]) -> str:
-    """Return the first and last name of a group, in the order the sheet lists them."""
-    return group[0].name if len(group) == 1 else f"{group[0].name} to {group[-1].name}"
+def _names(group: Sequence[Oligo], places: Sequence[int]) -> str:
+    """Return a group's names, as a range only where it holds every name between its ends.
+
+    `places` is where each of the group's rows sits in the sheet. A group the sheet interleaves
+    with another is a pick and not a run, so it says so rather than naming two ends to read
+    between.
+    """
+    if len(group) == 1:
+        return group[0].name
+    ends = f"{group[0].name} to {group[-1].name}"
+    whole = places[-1] - places[0] + 1 == len(group)
+    return ends if whole else f"some of {ends}"
 
 
 def _where(seats: Sequence[_Seat]) -> str:
-    """Return the wells a group occupies, as a range on the plate that seats them."""
+    """Return the wells a group occupies, as a range only where it fills one.
+
+    A group seated among others fills no range, so it gives its count inside the two wells it
+    reaches: someone counting that many wells off the first would otherwise stop short.
+    """
     if not seats:
         return ""
     first, last = seats[0], seats[-1]
     if first == last:
         return f"{first.plate} {first.well}"
-    if first.plate == last.plate:
+    if first.plate != last.plate:
+        return f"{first.plate} {first.well} to {last.plate} {last.well}"
+    if last.place - first.place + 1 == len(seats):
         return f"{first.plate} {first.well} to {last.well}"
-    return f"{first.plate} {first.well} to {last.plate} {last.well}"
+    return f"{first.plate}, {len(seats)} wells from {first.well} to {last.well}"
 
 
 def _verdict(status: Status | None) -> str:

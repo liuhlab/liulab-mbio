@@ -128,12 +128,17 @@ def test_a_primer_plate_protocol_produces_one_item_per_plate() -> None:
 
 
 def test_a_working_plate_carries_the_rule_that_it_is_never_put_back() -> None:
+    """It reaches both steps that name a plate: the one splitting them and the one storing them."""
     one = _plate_protocol()
-    stored = one.steps[-1]
+    split, stored = one.steps[-2], one.steps[-1]
 
     assert [(material.name, rule.subject) for material, rule in one.rules_for(stored)] == [
         ("primer working plate 1", "return to the freezer"),
         ("primer working plate 2", "return to the freezer"),
+    ]
+    assert [material.name for material, _ in one.rules_for(split)] == [
+        "primer working plate 1",
+        "primer working plate 2",
     ]
     assert {rule.kind for _, rule in one.rules_for(stored)} == {"forbids"}
     assert [check.status for check in one.audit()] == ["pass", "pass", "pass", "pass"]
