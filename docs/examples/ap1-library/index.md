@@ -25,7 +25,7 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back on both routes |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, that every design is read back on both routes, and the three numbers this lab set for itself |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
 | [working-vector.gb](working-vector.gb) | the backbone the finished library ends in: pLVX-TetOne-Puro-GFP, Addgene 171123, with its eight BsaI and BsmBI sites taken out. Swap in your own backbone and name a site in it |
@@ -35,6 +35,13 @@ write the same bytes, so a run that changes nothing leaves them alone.
 what it is resuspended to, and what a working well holds. Leave it out and the primers are
 ordered with the pool, and the run has one sitting fewer. The package states none of the three:
 nothing publishes them, so they are the project author's to give.
+
+Two more keys are this lab's own and not the method's. `linkage_fidelity` is the share of
+reads whose barcode must still name its part, which this project puts at 0.9. `final_assembly`
+sizes the last tube: 75 ng of working vector, with the cargo meeting it at 2:1. Leave either
+out and the pages say the number has no source instead of printing one. **Replace both with
+your own before you run this.** The pages label them as this run's own figures, so a reader who
+copies the file and does not change them is carrying someone else's settings to the bench.
 
 `routes` names the ways the picked wells are read back, and `validate_from` says which designs
 are read at all: a fragment count, at or above which a design is read back. This project names
@@ -122,6 +129,13 @@ BsaI and two BsmBI sites, and a round of this method would cut every one of them
 out is a job of its own, with [its own bench page](working-vector-domestication.html) and its
 own record of what changed. The library run opens with that record already in hand and never
 touches the backbone again.
+
+**Two of the eight are the hard ones, and the demo says so rather than hiding it.** They sit in
+TAR, the stem-loop at each end of the viral genome. TAR is not read as protein, so there is no
+second spelling of the same amino acid to swap in, and the change has to alter the loop itself.
+Whether the virus tolerates that is still open: the one published backbone carrying the change
+reports no titre for it. The bench page carries that as a hole rather than printing a number
+nobody measured. This demo keeps a hard backbone on purpose. Domesticating one is worth seeing.
 
 ## What a price costs
 

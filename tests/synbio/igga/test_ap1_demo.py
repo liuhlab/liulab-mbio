@@ -162,7 +162,7 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
 
 
 def test_the_bill_carries_the_pool_row_with_its_band_and_the_demos_own_price(plan, protocol):
-    """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
+    """The largest line item is priced by the record the demo ships, and holed without one."""
     row = next(one for one in protocol.bill.rows if one.item.endswith("oligo pool"))
     assert (row.quantity, row.unit) == (131, "oligos")
     assert "131 count, 369 below the next band" in row.headroom
@@ -196,7 +196,7 @@ def test_the_demos_price_record_prices_every_line_of_the_bill(plan, protocol):
         "plasmid prep",
     ]
     assert not [row.key for row in bill.rows if row.hole is not None]
-    assert (bill.currency, bill.total) == ("USD", "3130.565")
+    assert (bill.currency, bill.total) == ("USD", "3130.5875")
     record = plan.chain().sources["prices"]
     assert (record.document, record.edition) == ("AP-1 demo price record", "2026-10-08")
     assert record.read_as == "read from prices.csv"
@@ -332,6 +332,28 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     ]
     for one in (ligation, index_pcr):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
+
+
+def test_the_demo_is_left_with_the_four_numbers_no_input_of_its_own_can_give(plan):
+    """What the run page counts: the bill's holes and each protocol's, one entry an id.
+
+    This is the demo's floor. Each of the four waits on something no file beside `project.json`
+    could hold: two pilots on this lab's own pool, the index plate a DMX build names, and the
+    split digest's procedure, which no document describes. Anything else reappearing here is a
+    build field that stopped being read.
+    """
+    chain = plan.chain()
+    found = {row.hole.id: row.hole for row in (chain.bill.rows if chain.bill else ()) if row.hole}
+    for protocol in chain.protocols:
+        for hole in protocol.all_holes:
+            found.setdefault(hole.id, hole)
+
+    assert {one: hole.kind for one, hole in found.items()} == {
+        "H29": "unpublished",
+        "H30": "unpublished",
+        "IDX1": "lab",
+        "H23": "unpublished",
+    }
 
 
 def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):

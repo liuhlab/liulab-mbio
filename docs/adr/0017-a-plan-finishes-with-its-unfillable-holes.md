@@ -23,9 +23,8 @@ work, and the step that carries it is where to look.
 
 - **Hold a plan open until no hole remains.** It asks for a number nobody published, which is the
   defect a hole exists to prevent.
-- **Name a working vector in the demo.** Priced then at a hand-edited backbone the package cannot
-  write, a CLI option that did not exist, and most of the gate's corpus moved. All three were
-  since built, and the second amendment records what changed.
+- **Name a working vector in the demo.** Priced then at a hand-edited backbone the package
+  cannot write, a CLI option that did not exist, and most of the gate's corpus moved.
 - **Count only `undecided` holes, leaving `lab` ones unmentioned.** The two differ in who fills
   them, not in whether the step is runnable as shipped, and a reader at the bench meets both.
 
@@ -38,17 +37,18 @@ measurement, never a published figure. The measurement and the five kinds stand.
 
 ## Amendment: the demo names a working vector
 
-`working-vector.gb` is Addgene 171123 with its eight sites taken out by a builder script, so no
-backbone is hand-edited; `--working-site` says where the cassette goes; and the gate's corpus
-moves with the rest of the example. The demo's build states the assembly's mass and ratio and
-the linkage pass mark as well, so its final assembly carries no hole at all. It states neither
-cycle count, because nobody ran that pilot, and a demo printing one would be the defect this
-decision exists to prevent.
+A builder script takes Addgene 171123's eight sites out, `--working-site` places the
+cassette, and the gate's corpus moves with the example: the three costs priced above. The
+build states the assembly and the linkage mark too, so a run leaves no hole there. It states
+neither cycle count. The difference is what the number is: a mass and
+a ratio are set by whoever pipettes the tube, so stating them says what this run will do; a
+cycle count is what one pool on one machine turns out to need, so stating one says what nobody
+read.
 
 ## Consequences
 
-A pipeline's acceptance reads each hole's kind rather than counting them. The AP-1 demo's final
-assembly now ships none; a hole naming a source nobody read would still be a defect.
+A pipeline's acceptance reads each hole's kind rather than counting them. The AP-1 demo's build
+states the assembly, so a run leaves none there; a hole naming a source nobody read is a defect.
 
 A project of the user's own that names a working vector drops H31 and keeps H24 until it states
 the assembly too, and a demo stays what a reader copies rather than a record of one lab's shelf.

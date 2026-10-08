@@ -146,7 +146,7 @@ class Assembly(Protocol):
         found = stages.holes_for(run.vector)
         if run.final_assembly is None:
             return found
-        return tuple(one for one in found if one is not stages.FINAL_MASSES)
+        return tuple(one for one in found if one.id != stages.FINAL_MASSES.id)
 
     def overview(self, run: Run) -> dict[str, str]:
         """Return the facts to check before starting, each short enough to be a card."""
