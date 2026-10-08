@@ -28,7 +28,7 @@ from liulab_mbio.protocol import (
     render_html,
     write_html,
 )
-from liulab_mbio.protocol.render import NO_NUMBER
+from liulab_mbio.protocol.render import NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -110,6 +110,60 @@ def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
     assert [len(s.find_all("input", type="checkbox")) for s in steps] == [1 + 3, 1 + 1, 1 + 2]
     keys = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
     assert len(set(keys)) == len(keys)
+
+
+def reworded() -> tuple[Protocol, Protocol]:
+    """One protocol and the same one with every step's title rewritten, as an agent edits it."""
+    before = Protocol(
+        "Assemble",
+        key="assemble",
+        steps=(
+            Step("Set the reaction up", key="set-up", instructions=("Thaw the mix.",)),
+            Step("Run the thermocycler", key="cycle", timers=(Timer("ligate", 60),)),
+        ),
+    )
+    after = replace(
+        before,
+        steps=(
+            replace(before.steps[0], title="Set up the Golden Gate reaction"),
+            replace(before.steps[1], title="Cycle it"),
+        ),
+    )
+    return before, after
+
+
+def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_the_benchs_ticks() -> None:
+    """ADR 0002's own case: an agent rewords the steps, renders again, nothing is ticked twice."""
+    marks = [
+        sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
+        for one in reworded()
+    ]
+    assert marks[0] == ["step-cycle", "step-set-up", "step-set-up-1"]
+    assert marks[1] == marks[0]
+
+
+def test_a_page_remembers_under_the_key_its_protocol_carries() -> None:
+    before, after = reworded()
+    stores = [
+        parse(render_html(one)).find_all("body")[0].attrs["data-protocol"]
+        for one in (before, after)
+    ]
+    assert stores == ["assemble", "assemble"]
+    # A protocol nobody has keyed falls back to a digest of its content, which an edit changes.
+    unkeyed = [replace(one, key="") for one in (before, after)]
+    assert page_key(unkeyed[0]) != page_key(unkeyed[1])
+
+
+def test_two_steps_keyed_alike_still_anchor_one_step_each() -> None:
+    """A duplicate is a defect the package's own tests catch; the page renders regardless."""
+    protocol = Protocol(
+        "Digest", steps=(Step("Digest", key="cut"), Step("Digest again", key="cut"))
+    )
+    page = parse(render_html(protocol))
+    assert [one.attrs["id"] for one in page.find_all("section", cls="step")] == [
+        "step-cut-1",
+        "step-cut-2",
+    ]
 
 
 def test_the_toolbar_offers_to_reset_everything_the_page_remembers(page: Node) -> None:
@@ -346,7 +400,7 @@ def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
     )
     page = parse(render_html(protocol))
     keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
-    assert keys == ["step-1-timer-1", "step-1-timer-2", "step-2-timer-1"]
+    assert keys == ["step-digest-timer-1", "step-digest-timer-2", "step-ligate-timer-1"]
 
 
 def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:

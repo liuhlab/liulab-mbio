@@ -3,7 +3,7 @@
 JSON keys are the field names of the classes below, lists stand for tuples, and only the
 fields without a default are required; `write_protocol` writes every field::
 
-    {"title": str, "summary": str, "overview": {label: short value},
+    {"title": str, "key": str, "summary": str, "overview": {label: short value},
      "highlights": [sentence], "checks": [{"name", "status", "detail"}],
      "consumes": [{"name", "what", "spec": [str], "storage"}],
      "produces": [{"name", "what", "spec": [str], "storage"}],
@@ -15,7 +15,8 @@ fields without a default are required; `write_protocol` writes every field::
      "equipment": [str],
      "vessels": [{"name", "kind", "catalog", "holds", "note"}],
      "plates": [{"name", "wells", "catalog", "holds", "seating": {well: name}, "note"}],
-     "steps": [{"title", "section", "instructions": [str], "cautions": [str], "notes": [str],
+     "steps": [{"title", "key", "section", "instructions": [str], "cautions": [str],
+         "notes": [str],
          "tables": [{"title", "reactions", "overage",
              "components": [{"name", "volume_ul", "stock", "final", "master_mix"}]}],
          "programs": [{"title", "lid_temperature_c",
@@ -45,11 +46,16 @@ a touchdown is one cycled stage. A check's ``"status"`` is ``"pass"``,
 A protocol declares what it consumes and what it produces, and nothing else about its place in a
 run. A project chains protocols by those names, `write_project` writing one file of them::
 
-    {"title": str, "summary": str,
+    {"title": str, "key": str, "summary": str,
      "background": [{"title", "body": [paragraph]}],
      "inputs": [{"name", "what", "spec": [str], "storage"}],
      "protocols": [a protocol, as above],
      "checks": [{"name", "status", "detail"}], "bill": a bill, as above}
+
+A ``"key"`` is a handle and never prose: a step's anchors its page and keys the bench's check
+mark, a protocol's names the store those marks are kept in. A pipeline writes both, so rewording
+a title costs the bench nothing. Left empty, a step falls back to its title and a page to a
+digest of its content.
 
 A number's provenance is its row's ``"citation"``, whose ``"source"`` keys ``"sources"``. A
 number nobody published is a ``"hole"``: the field it belongs to stays empty and the hole stands

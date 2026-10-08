@@ -62,7 +62,8 @@
   // Every file:// page shares one store, and each page keys by its own content, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
-    var total = Number(item.getAttribute("data-steps")) || 0;
+    // Each step of that page by the key it is addressed under, which a reworded title keeps.
+    var stepKeys = (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -72,10 +73,12 @@
     } catch (error) {
       return;
     }
-    if (!marks || !label || !total) return;
+    if (!marks || !label || !stepKeys.length) return;
     var done = 0;
-    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + steps(total) + " done";
+    stepKeys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    label.textContent = done + " of " + steps(stepKeys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 

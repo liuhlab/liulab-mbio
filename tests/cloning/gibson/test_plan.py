@@ -26,6 +26,7 @@ from liulab_mbio.cloning.gibson.steps import (
 )
 from liulab_mbio.edits import flipped
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from liulab_mbio.protocol.render import minted
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import read_dna
 
@@ -200,7 +201,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == made.plasmid
-    assert read_protocol(outputs.protocol_data) == made.protocol()
+    assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
         read_protocol(outputs.protocol_data)
     )
@@ -432,7 +433,7 @@ def test_an_oligo_with_no_verdict_survives_the_protocol_being_written_and_read_a
     routed, tmp_path
 ):
     written = routed.write(tmp_path / "routed")
-    assert read_protocol(written.protocol_data) == routed.protocol()
+    assert read_protocol(written.protocol_data) == minted(routed.protocol())
     rows = written.primers.read_text(encoding="utf-8").splitlines()
     assert rows[-1].split("\t")[0].endswith("bridge")
 

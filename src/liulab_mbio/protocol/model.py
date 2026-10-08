@@ -7,6 +7,7 @@ non-positive volume, time, cycle count or band size, or a link that is not http(
 import json
 import math
 import os
+import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
@@ -27,10 +28,31 @@ FORMATS: Mapping[int, tuple[int, int]] = MappingProxyType(
     {12: (3, 4), 24: (4, 6), 96: (8, 12), 384: (16, 24), 1536: (32, 48)}
 )
 
+#: The longest a slug runs: a step's key, and a protocol's title in the file its page is written
+#: to. Long enough to stay readable, short enough for a file name on any filesystem.
+NAME_CHARS = 48
+
 
 def _require(ok: bool, message: str) -> None:
     if not ok:
         raise ValueError(message)
+
+
+def slug(text: str) -> str:
+    """Return `text` as a handle: lowercase, one dash where it is not a letter or a digit.
+
+    Capped at `NAME_CHARS`, so it fits a file name and reads as one word. Slugging a slug
+    returns it unchanged, so a key a builder already wrote this way survives a round trip.
+
+    Examples
+    --------
+    >>> slug("Set up the Golden Gate reaction")
+    'set-up-the-golden-gate-reaction'
+    >>> slug("Digest, then ligate")
+    'digest-then-ligate'
+    """
+    dashed = "".join(char if char.isalnum() else "-" for char in text.casefold())
+    return re.sub("-+", "-", dashed).strip("-")[:NAME_CHARS].strip("-")
 
 
 def row_label(row: int) -> str:
@@ -1172,6 +1194,12 @@ class Step:
     ----------
     title
         What the step achieves, such as ``"Run the thermocycler"``.
+    key
+        What this step is, across every rewording of its title: the handle its anchor and the
+        bench's check mark are kept under. The builder writing the step assigns it, for the
+        step's job and never for its wording, and it is slugged as a title is. Left empty it
+        falls back to the title's slug, so a hand-written step needs none and a reworded title
+        then costs the bench its ticks.
     section
         What stage of the protocol the step belongs to, such as ``"Day 1"``. A label and not a
         container: the steps stay one list and the numbering runs through it.
@@ -1204,6 +1232,7 @@ class Step:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     section: str = ""
     instructions: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
@@ -1221,13 +1250,17 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title, or a hands-on time below zero."""
+        """Slug the key, or the title where there is no key; refuse an empty title.
+
+        Also refuses a hands-on time below zero.
+        """
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,
             f"step {self.title!r}: hands_on_seconds is zero or more, or null where nobody "
             "stated it",
         )
+        object.__setattr__(self, "key", slug(self.key or self.title))
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -1255,9 +1288,9 @@ class Step:
 
         Examples
         --------
-        >>> Step("Rest the tube", timers=(Timer("rest", 600),)).held_seconds
+        >>> Step("Rest the tube", key="rest", timers=(Timer("rest", 600),)).held_seconds
         600.0
-        >>> Step("Mix the reaction").held_seconds is None
+        >>> Step("Mix the reaction", key="mix").held_seconds is None
         True
         """
         bounded = [float(timer.seconds) for timer in self.timers]
@@ -1278,6 +1311,11 @@ class Protocol:
     ----------
     title
         The page heading.
+    key
+        What the rendered page remembers the bench's check marks under. A pipeline mints it from
+        the protocol's content when it writes the JSON and it then stays put, so an agent's edit
+        keeps the ticks the bench has already made while a re-planned run starts clean. Empty
+        here means nobody has minted one yet.
     summary
         One paragraph: what the protocol does.
     overview
@@ -1313,6 +1351,7 @@ class Protocol:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     summary: str = ""
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
@@ -1366,7 +1405,7 @@ class Protocol:
 
         Examples
         --------
-        >>> steps = (Step("Mix"), Step("Rest", timers=(Timer("rest", 60),)))
+        >>> steps = (Step("Mix", key="mix"), Step("Rest", key="rest", timers=(Timer("rest", 60),)))
         >>> Protocol("Demo", steps=steps).held_seconds
         (60.0, 1)
         """
@@ -1526,6 +1565,10 @@ class Project:
     ----------
     title
         What the run is called.
+    key
+        What the run's own pages remember under, as `Protocol.key` is, minted when the folder is
+        written. Each protocol of the run carries its own, and no two of them may share one: a
+        key names one page's store, so a copied protocol needs its own or none.
     summary
         One paragraph: what the run achieves.
     background
@@ -1546,6 +1589,7 @@ class Project:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     summary: str = ""
     background: tuple[Topic, ...] = ()
     inputs: tuple[Item, ...] = ()
@@ -1554,8 +1598,15 @@ class Project:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a project with no title."""
+        """Refuse a project with no title, or two protocols keyed alike."""
         _require(bool(self.title.strip()), "a project needs a title")
+        keys = [one.key for one in self.protocols if one.key]
+        shared = next((key for key in keys if keys.count(key) > 1), "")
+        _require(
+            not shared,
+            f"two protocols are keyed {shared!r}: a key names one page's store, so a protocol "
+            "copied from another needs its own key or none",
+        )
 
     def audit(self) -> tuple[Check, ...]:
         """Judge the chain: every consumed name is an input or an earlier protocol's output.

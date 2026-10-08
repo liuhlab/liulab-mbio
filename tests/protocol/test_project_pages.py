@@ -33,7 +33,6 @@ from liulab_mbio.protocol import (
     Vessel,
     Wait,
     page_key,
-    page_name,
     render_html,
     render_index,
     render_reagents,
@@ -149,12 +148,7 @@ def chain() -> Project:
 
 def folder_of(project: Project) -> Folder:
     """The folder `write_project_files` would compute for `project`, without writing it."""
-    return Folder(
-        tuple(
-            Page(one.title, page_name(n, one.title), len(one.steps), page_key(one))
-            for n, one in enumerate(project.protocols, 1)
-        )
-    )
+    return Folder(tuple(Page.of(n, one) for n, one in enumerate(project.protocols, 1)))
 
 
 @pytest.fixture(scope="module")
@@ -311,7 +305,11 @@ def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got
     assert [item.attrs["data-page-key"] for item in items] == [
         page_key(one) for one in project.protocols
     ]
-    assert [item.attrs["data-steps"] for item in items] == ["1", "2", "2"]
+    assert [item.attrs["data-steps"] for item in items] == [
+        "order-the-pool",
+        "set-the-reaction-up plate-the-colonies",
+        "run-the-thermocycler send-the-plate-away",
+    ]
     assert [item.find_all("span", cls="page-progress")[0].text for item in items] == [
         "1 step",
         "2 steps",

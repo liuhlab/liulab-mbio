@@ -1,6 +1,7 @@
 import ast
 import re
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,7 @@ from liulab_mbio.protocol import (
     read_protocol,
     write_protocol,
 )
+from liulab_mbio.protocol.model import NAME_CHARS
 
 #: The checkout a `Source.note` is relative to.
 REPO = Path(__file__).resolve().parents[2]
@@ -272,6 +274,7 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
         [
             "{",
             '  "title": "Spin at 4 °C",',
+            '  "key": "",',
             '  "summary": "",',
             '  "overview": {},',
             '  "highlights": [],',
@@ -293,6 +296,27 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             "",
         ]
     ).encode("utf-8")
+
+
+def test_a_step_with_no_key_is_named_after_its_title() -> None:
+    assert Step("Set up the Golden Gate reaction").key == "set-up-the-golden-gate-reaction"
+    # A title too long to be a handle is cut where a page name is cut.
+    assert len(Step("Spin " * 40).key) <= NAME_CHARS
+
+
+def test_a_key_the_builder_writes_outlives_the_wording_of_the_title() -> None:
+    """ADR 0002's own case: an agent rewords a step and the bench keeps what it ticked."""
+    step = Step("Anneal the barcodes", key="anneal-barcodes")
+    assert replace(step, title="Anneal the barcode oligos").key == step.key
+    # It is slugged as a title is, so an anchor and a stored mark never need escaping.
+    assert Step("Anneal", key="Anneal The Barcodes").key == "anneal-the-barcodes"
+
+
+def test_two_protocols_of_one_run_may_not_remember_under_one_key() -> None:
+    one = Protocol("Digest", key="digest")
+    with pytest.raises(ValueError, match="two protocols are keyed 'digest'"):
+        Project("Run", protocols=(one, replace(one, title="Digest again")))
+    assert Project("Run", protocols=(one, Protocol("Ligate"))).protocols[1].key == ""
 
 
 def test_a_step_waits_on_a_vendor_nobody_attends() -> None:

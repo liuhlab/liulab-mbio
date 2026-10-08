@@ -152,7 +152,7 @@ def test_the_left_column_switches_protocol_and_the_right_column_jumps_within_one
     assert [a.text for a in left.find_all("a")] == ["BP reaction", "Transformation", "Colony check"]
     assert left.find_all("li", cls="is-here")[0].text == "Transformation"
     [right] = page.find_all("nav", cls="within")
-    assert [a.attrs["href"] for a in right.find_all("a")] == ["#step-1"]
+    assert [a.attrs["href"] for a in right.find_all("a")] == ["#step-thaw-the-cells"]
 
 
 def test_a_page_names_its_neighbours_in_words_where_the_page_itself_prints(folder: Path) -> None:

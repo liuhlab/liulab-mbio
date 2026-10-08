@@ -28,6 +28,7 @@ from liulab_mbio.cloning.goldengate.bench import GOLDEN_GATE_PCR_CYCLES
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.edits import rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
+from liulab_mbio.protocol.render import minted
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
@@ -128,7 +129,7 @@ def test_the_four_files_land_where_they_are_named_and_hold_what_the_plan_holds(p
     ]
     assert all(path.stat().st_size > 0 for path in paths)
     assert read_dna(outputs.product) == plan.product
-    assert read_protocol(outputs.protocol_data) == plan.protocol()
+    assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
     assert page == render_html(read_protocol(outputs.protocol_data))
 

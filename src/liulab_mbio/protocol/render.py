@@ -7,7 +7,7 @@ page is still self-contained, so the folder opens from disk and survives being z
 
 import hashlib
 import os
-import re
+from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from html import escape
@@ -45,6 +45,7 @@ from liulab_mbio.protocol.model import (
     Wait,
     number,
     read_project,
+    slug,
     well_at,
     write_project,
 )
@@ -62,9 +63,6 @@ PROJECT_DATA_FILE = "project.json"
 INDEX_FILE = "index.html"
 REAGENTS_FILE = "reagents.html"
 REFERENCES_FILE = "references.html"
-
-#: The longest a protocol's title may run in the file its page is written to.
-NAME_CHARS = 48
 
 #: From how many oligos a sheet is summarised. Fewer than this reads as a sheet; past it the
 #: rows repeat one pattern and the page states the pattern instead.
@@ -97,7 +95,8 @@ class Page:
     href
         The file it was written to, relative to the folder.
     steps
-        How many numbered steps it holds.
+        One key per numbered step, as that page addresses it, so another page of the folder
+        counts the marks rather than trusting a number written twice.
     key
         What the page remembers its check marks under, so another page of the folder can read
         how far the bench got.
@@ -105,8 +104,22 @@ class Page:
 
     title: str
     href: str
-    steps: int = 0
+    steps: tuple[str, ...] = ()
     key: str = ""
+
+    @classmethod
+    def of(cls, place: int, protocol: Protocol) -> "Page":
+        """Return the page `protocol` is written to, standing `place` in its run, from one.
+
+        Everything the other pages see is derived here, so an index addresses exactly what the
+        page it names wrote.
+        """
+        return cls(
+            protocol.title,
+            page_name(place, protocol.title),
+            _step_keys(protocol.steps),
+            page_key(protocol),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,17 +171,38 @@ class ProjectFiles:
 
 
 def page_key(value: Protocol | Project) -> str:
-    """Return what a page remembers its check marks under: a digest of its own content.
+    """Return what a page remembers its check marks under: the key it carries, or its content.
 
     Two pages of one folder never share it, and every `file://` page in a browser shares one
-    store, so the key is what keeps one page's marks off another.
+    store, so the key is what keeps one page's marks off another. A key already minted is kept,
+    which is what carries the bench's ticks across an agent's edit; everything else is digested,
+    so a re-planned run starts clean.
 
     Examples
     --------
     >>> page_key(Protocol("Demo")) == page_key(Protocol("Demo"))
     True
+    >>> page_key(Protocol("Demo", key="whichever"))
+    'whichever'
     """
-    return hashlib.sha256(repr(value).encode()).hexdigest()[:16]
+    return value.key or hashlib.sha256(repr(value).encode()).hexdigest()[:16]
+
+
+def minted[T: (Protocol, Project)](value: T) -> T:
+    """Return `value` carrying the key its page remembers the bench's marks under, and no other.
+
+    A key already on it is left alone, and a project mints one for each of its protocols too. A
+    pipeline mints before it writes the JSON, so the file an agent edits names its own store:
+    `docs/adr/0002-editable-protocols.md` draws the two paths.
+
+    Examples
+    --------
+    >>> minted(Protocol("Demo")).key == page_key(Protocol("Demo"))
+    True
+    """
+    if isinstance(value, Project):
+        value = replace(value, protocols=tuple(minted(one) for one in value.protocols))
+    return value if value.key else replace(value, key=page_key(value))
 
 
 def page_name(place: int, title: str) -> str:
@@ -179,8 +213,20 @@ def page_name(place: int, title: str) -> str:
     >>> page_name(2, "LR reaction")
     '02-lr-reaction.html'
     """
-    slug = re.sub("-+", "-", _slug(title)).strip("-")[:NAME_CHARS].strip("-")
-    return f"{place:02d}-{slug}.html" if slug else f"{place:02d}.html"
+    name = slug(title)
+    return f"{place:02d}-{name}.html" if name else f"{place:02d}.html"
+
+
+def _step_keys(steps: Sequence[Step]) -> tuple[str, ...]:
+    """Return what each step is addressed by on its page: its own key, made unique.
+
+    A page must render, so a key two steps somehow share — and a title that slugs to nothing —
+    gains the step's number rather than being refused. That is a defect in the builder, and the
+    package's own tests fail on it the day it lands.
+    """
+    keys = [step.key or str(n) for n, step in enumerate(steps, 1)]
+    once = Counter(keys)
+    return tuple(key if once[key] == 1 else f"{key}-{n}" for n, key in enumerate(keys, 1))
 
 
 def render_html(
@@ -207,11 +253,12 @@ def render_html(
     """
     place = _place(folder, here) if folder else ""
     beside = Path() if base is None else Path(base)
+    keys = _step_keys(protocol.steps)
     # A section labels the steps under it, so it is written once, where it changes.
     sections = [""] + [step.section for step in protocol.steps]
     body = "".join(
         [
-            _header(protocol, toc=folder is None, place=place),
+            _header(protocol, keys, toc=folder is None, place=place),
             _materials(protocol.materials, protocol.equipment),
             _oligos(protocol),
             _plates(protocol),
@@ -220,6 +267,7 @@ def render_html(
                 _step(
                     n,
                     step,
+                    keys[n - 1],
                     protocol,
                     beside,
                     step.section if step.section != sections[n - 1] else "",
@@ -231,7 +279,7 @@ def render_html(
             _references(protocol.references),
         ]
     )
-    return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol))
+    return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol, keys))
 
 
 def write_html(
@@ -263,7 +311,7 @@ def render_index(project: Project, folder: Folder) -> str:
     """
     holes = _run_holes(project, folder)
     summary = f'<p class="summary">{escape(project.summary)}</p>\n' if project.summary else ""
-    jumps = [(f"topic-{_slug(topic.title)}", topic.title) for topic in project.background]
+    jumps = [(f"topic-{slug(topic.title)}", topic.title) for topic in project.background]
     parts = [
         f'<header class="intro">\n<h1>{escape(project.title)}</h1>\n{summary}'
         f"{_checks(project.checks)}{_hole_count(holes, 'this run')}</header>\n",
@@ -336,7 +384,7 @@ def _shared(
     """One of the two pages the whole run shares, which carry no protocol of their own."""
     return _page(
         f"{heading} — {project.title}",
-        page_key(project) + _slug(here),
+        page_key(project) + slug(here),
         body or f"<h1>{heading}</h1>\n",
         folder,
         here,
@@ -358,7 +406,7 @@ def _jumps(jumps: Iterable[tuple[str, str]]) -> str:
 def _background(project: Project) -> str:
     """Return what the reader is told before the first protocol, one topic to a block."""
     return "".join(
-        f'<section class="block topic" id="topic-{escape(_slug(topic.title))}">\n'
+        f'<section class="block topic" id="topic-{escape(slug(topic.title))}">\n'
         f"<h2>{escape(topic.title)}</h2>\n"
         + "".join(f"<p>{escape(line)}</p>" for line in topic.body)
         + "\n</section>\n"
@@ -367,17 +415,17 @@ def _background(project: Project) -> str:
 
 
 def _protocols(folder: Folder) -> str:
-    """Return the run in order, each page carrying the key its own check marks are kept under.
+    """Return the run in order, each page carrying its own store's key and its steps' keys.
 
-    `protocol.js` reads that key on this page and writes how far the bench got, so the count
-    comes from the pages themselves and is never stored twice.
+    `protocol.js` reads that store on this page and counts the marks those step keys stand for,
+    so how far the bench got comes from the pages themselves and is never stored twice.
     """
     if not folder.pages:
         return ""
     rows = "".join(
-        f'<li data-page-key="{escape(page.key)}" data-steps="{page.steps}">'
+        f'<li data-page-key="{escape(page.key)}" data-steps="{escape(" ".join(page.steps))}">'
         f'<a href="{escape(page.href)}">{escape(page.title)}</a> '
-        f'<span class="page-progress muted">{_count(page.steps, "step")}</span></li>'
+        f'<span class="page-progress muted">{_count(len(page.steps), "step")}</span></li>'
         for page in folder.pages
     )
     return (
@@ -696,19 +744,15 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
 
     The directory is made when it is not there, and every page is rendered from the data as
     written, so the two cannot disagree. Every page is computed before any is written, so each
-    knows every other's title, address, step count and key. The same project writes the same
-    bytes.
+    knows every other's title, address, step keys and key. The key goes into the data, so an
+    agent editing the file and rendering again hands the bench back its own ticks. The same
+    project writes the same bytes.
     """
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
-    data = write_project(project, out / PROJECT_DATA_FILE)
+    data = write_project(minted(project), out / PROJECT_DATA_FILE)
     written = read_project(data)
-    folder = Folder(
-        tuple(
-            Page(one.title, page_name(n, one.title), len(one.steps), page_key(one))
-            for n, one in enumerate(written.protocols, 1)
-        )
-    )
+    folder = Folder(tuple(Page.of(n, one) for n, one in enumerate(written.protocols, 1)))
     protocols = tuple(
         write_html(one, out / page.href, folder=folder)
         for one, page in zip(written.protocols, folder.pages, strict=True)
@@ -780,13 +824,13 @@ def _chain(folder: Folder, here: str) -> str:
     )
 
 
-def _within(protocol: Protocol) -> str:
+def _within(protocol: Protocol, keys: Sequence[str]) -> str:
     """Return the right column: every step of this page, so a reader jumps within it."""
     if not protocol.steps:
         return ""
     links = "".join(
-        f'<li><a href="#step-{n}">{escape(step.title)}</a></li>'
-        for n, step in enumerate(protocol.steps, 1)
+        f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
+        for key, step in zip(keys, protocol.steps, strict=True)
     )
     return (
         '<nav class="column within" aria-label="Steps">'
@@ -849,7 +893,7 @@ def _copy(text: str, label: str = "Copy") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text)}">{escape(label)}</button>'
 
 
-def _header(protocol: Protocol, *, toc: bool = True, place: str = "") -> str:
+def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place: str = "") -> str:
     parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
         parts.append(f'<p class="summary">{escape(protocol.summary)}</p>\n')
@@ -874,8 +918,8 @@ def _header(protocol: Protocol, *, toc: bool = True, place: str = "") -> str:
         )
         if toc:
             links = "".join(
-                f'<li><a href="#step-{n}">{escape(step.title)}</a></li>'
-                for n, step in enumerate(protocol.steps, 1)
+                f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
+                for key, step in zip(keys, protocol.steps, strict=True)
             )
             parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
     parts.append("</header>\n")
@@ -1153,7 +1197,7 @@ def _cite(citation: Citation | None) -> str:
         return ""
     where = f" {citation.locator}" if citation.locator else ""
     return (
-        f'<a class="cite" href="#source-{escape(_slug(citation.source))}">'
+        f'<a class="cite" href="#source-{escape(slug(citation.source))}">'
         f"{escape(citation.source + where)}</a>"
     )
 
@@ -1161,10 +1205,6 @@ def _cite(citation: Citation | None) -> str:
 def _after(citation: Citation | None) -> str:
     """`_cite`, set off from the text before it; nothing when uncited."""
     return f" {_cite(citation)}" if citation else ""
-
-
-def _slug(text: str) -> str:
-    return "".join(char if char.isalnum() else "-" for char in text.casefold())
 
 
 def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
@@ -1471,7 +1511,7 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
     if not sources:
         return ""
     items = "".join(
-        f'<li id="source-{escape(_slug(key))}"><strong>{escape(key)}</strong> '
+        f'<li id="source-{escape(slug(key))}"><strong>{escape(key)}</strong> '
         f"{escape(source.document)}"
         + "".join(
             f" · {escape(text)}"
@@ -1493,12 +1533,13 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
     )
 
 
-def _step(n: int, step: Step, protocol: Protocol, base: Path, section: str = "") -> str:
-    key = f"step-{n}"
+def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section: str = "") -> str:
+    """One step, addressed by its own key, so a reworded title keeps the bench's tick."""
+    anchor = f"step-{key}"
     parts = [f'<p class="step-section">{escape(section)}</p>\n'] if section else []
     parts += [
-        f'<section class="step" id="{key}">\n<h2 class="step-title"><label>'
-        f'<input type="checkbox" class="done" data-key="{key}">'
+        f'<section class="step" id="{anchor}">\n<h2 class="step-title"><label>'
+        f'<input type="checkbox" class="done" data-key="{anchor}">'
         f'<span class="step-n">{n}</span><span>{escape(step.title)}</span></label></h2>\n'
     ]
     parts.append(_rules(protocol.rules_for(step)))
@@ -1507,20 +1548,20 @@ def _step(n: int, step: Step, protocol: Protocol, base: Path, section: str = "")
     ]
     if step.instructions:
         items = "".join(
-            f'<li><label><input type="checkbox" data-key="{key}-{i}">'
+            f'<li><label><input type="checkbox" data-key="{anchor}-{i}">'
             f"<span>{escape(text)}</span></label></li>"
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
-    parts += [_table(f"{key}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
+    parts += [_table(f"{anchor}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
     parts += [_program(p) for p in step.programs]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
         parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')
     if step.timers:
-        timers = "".join(_timer(f"{key}-timer-{i}", t) for i, t in enumerate(step.timers, 1))
+        timers = "".join(_timer(f"{anchor}-timer-{i}", t) for i, t in enumerate(step.timers, 1))
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     if step.expected or step.gels:

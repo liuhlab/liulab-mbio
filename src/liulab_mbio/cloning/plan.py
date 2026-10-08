@@ -23,7 +23,7 @@ from liulab_mbio.io import read_record
 from liulab_mbio.primers.evaluation import PrimerReport
 from liulab_mbio.primers.thresholds import reading
 from liulab_mbio.protocol.model import Project, Protocol, read_protocol, write_protocol
-from liulab_mbio.protocol.render import write_html
+from liulab_mbio.protocol.render import minted, write_html
 from liulab_mbio.sequence import Feature, SequenceRecord, across_the_origin
 
 #: What a plan calls the product it writes: the annotated plasmid the design makes.
@@ -87,13 +87,14 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     """Write `protocol` into `directory` as `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`.
 
     The directory is made when it is not there, and the page is rendered from the data as
-    written, so the two cannot disagree. The same protocol writes the same bytes. A plan of
-    several protocols writes a folder of linked pages instead, through
-    `protocol.render.write_project_files`.
+    written, so the two cannot disagree. The data carries the key its page remembers the bench's
+    check marks under, so an agent editing it and rendering again keeps the ticks already made.
+    The same protocol writes the same bytes. A plan of several protocols writes a folder of
+    linked pages instead, through `protocol.render.write_project_files`.
     """
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
-    data = write_protocol(protocol, out / PROTOCOL_DATA_FILE)
+    data = write_protocol(minted(protocol), out / PROTOCOL_DATA_FILE)
     return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
 
 
