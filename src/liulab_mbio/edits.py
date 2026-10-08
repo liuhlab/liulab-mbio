@@ -42,11 +42,13 @@ class EditReport:
     Attributes
     ----------
     trimmed
-        Features that lost bases, including any that lost a whole segment.
+        Features that lost bases, including any that lost a whole segment. An edit flush with
+        one end of a feature trims it: only the bases outside the edit are still the feature.
     dropped
         Features left with no bases at all.
     changed
-        Features the edit fell inside: kept, and now spanning the new bases.
+        Features the edit fell inside, with bases of their own either side of it: kept, and now
+        spanning the new bases.
     dropped_sites
         Binding sites the edit overlapped, with the primer they belong to. A primer no longer
         anneals where its bases changed, so such a site is dropped rather than trimmed.
@@ -401,11 +403,9 @@ def _edited_span(
         return (first + delta, last + delta), _Fate.KEPT
     if start <= first and last <= end:
         return None, _Fate.REMOVED
-    if first <= start and end <= last:
-        if last + delta <= first:
-            return None, _Fate.REMOVED
-        inside = inserted > 0 or (first < start and end < last)
-        return (first, last + delta), _Fate.CHANGED if inside else _Fate.TRIMMED
+    if first < start and end < last:
+        # Bases of the feature either side of the edit, so it reads over the new ones too.
+        return (first, last + delta), _Fate.CHANGED if inserted > 0 else _Fate.TRIMMED
     if first < start:
         return (first, start), _Fate.TRIMMED
     return (end + delta, last + delta), _Fate.TRIMMED

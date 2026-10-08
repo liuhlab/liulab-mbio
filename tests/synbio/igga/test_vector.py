@@ -591,6 +591,19 @@ def test_the_rebuilt_dmx_vector_is_a_destination_carrying_what_frees_its_cargo(d
     assert sorted(set(outboard)) == ["BsaI", "PmeI"]
 
 
+def test_the_rebuilt_dmx_vector_draws_its_stuffer_over_what_a_round_excises(dmx):
+    """The feature is the piece the internal enzyme takes out, so a round leaves none of it.
+
+    Drawn over the cargo site instead, it kept the four bases of cloning scar a round keeps,
+    and every round after that grew it over the cargo that replaced the rest.
+    """
+    drawn = next(one for one in dmx.features if one.name == "internal stuffer")
+    excised = destination_vector(dmx, IGGA).stuffer
+
+    assert [(one.start, one.end) for one in drawn.segments] == [(excised.start, excised.end)]
+    assert (excised.start, excised.end) == (370, 400)
+
+
 def test_the_rebuilt_dmx_vector_is_still_refused_where_the_round_would_cut_its_backbone(dmx):
     at = 2000
     site = IGGA.internal.site

@@ -31,7 +31,7 @@ from liulab_mbio.io import read_record
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import CutSite, domesticate, find_sites
 from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.vector import released_cargo, round_cassette
+from liulab_synbio.igga.vector import destination_vector, released_cargo, round_cassette
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -150,11 +150,20 @@ def _renamed(feature: Feature) -> Feature:
 
 
 def _cassette(record: SequenceRecord) -> Segment:
-    """Where the piece a round gives up lies now, read off a digest after each edit."""
+    """Where the piece the external enzyme releases lies now, read off a digest after each edit.
+
+    That is the cargo site, which the blunt sites go outboard of. It is four bases longer than
+    the stuffer a round gives up, the cloning scar being released with it and excised without.
+    """
     found = released_cargo(record)
     if found is None:  # pragma: no cover - the step before this one put it there
         raise ValueError("the rebuilt record gives up no cassette, so nothing locates the edits")
     return found
+
+
+def _excised(record: SequenceRecord) -> Segment:
+    """Where the piece a round gives up lies: what the internal enzyme takes out, and no more."""
+    return destination_vector(record, IGGA).stuffer
 
 
 def _domesticated(record: SequenceRecord) -> tuple[SequenceRecord, list[Change]]:
@@ -215,11 +224,14 @@ def _one_base(record: SequenceRecord, site: CutSite) -> tuple[SequenceRecord, Ch
 
 
 def _annotated(record: SequenceRecord) -> SequenceRecord:
-    """Name the record and annotate what the rebuild put in: the cassette and the blunt sites."""
-    cassette = _cassette(record)
+    """Name the record and annotate what the rebuild put in: the cassette and the blunt sites.
+
+    The stuffer is drawn over what the internal enzyme excises, which is the convention
+    `liulab_synbio.igga.rounds` draws every later one by: a round then leaves none of it behind.
+    """
     features = [
         *record.features,
-        Feature("internal stuffer", "misc_feature", (cassette,)),
+        Feature("internal stuffer", "misc_feature", (_excised(record),)),
         *(
             Feature("PmeI", "protein_bind", (site.span,))
             for site in find_sites(record, get_enzyme("PmeI"))

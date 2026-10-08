@@ -62,6 +62,22 @@ def test_an_edit_inside_a_feature_keeps_it_spanning_the_new_bases() -> None:
     assert report == EditReport(changed=(C,))
 
 
+def test_an_edit_flush_with_a_feature_trims_it_to_the_bases_it_still_has() -> None:
+    """A feature grows over new bases only where it has bases of its own either side.
+
+    A cassette replaced from a feature's first base left the feature spanning what replaced it,
+    so an internal stuffer read over the whole insert.
+    """
+    edited, report = replace(RECORD, 4, 7, "TTTTTT")
+    assert edited.sequence == "AAAATTTTTTCGGGG"
+    assert edited.features == (A, _feature("c", (10, 11)), _feature("g", (11, 15)))
+    assert report == EditReport(trimmed=(C,))
+
+    edited, report = replace(RECORD, 6, 8, "TTTTTT")
+    assert edited.features == (A, _feature("c", (4, 6)), _feature("g", (12, 16)))
+    assert report == EditReport(trimmed=(C,))
+
+
 def test_an_edit_across_the_origin_keeps_the_remaining_bases_and_moves_the_origin() -> None:
     record = SequenceRecord(BASES, topology="circular", features=(G,))
     edited, report = delete(record, 10, 14)
