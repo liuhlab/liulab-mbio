@@ -24,7 +24,7 @@ from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_synbio.dmx import ROUTES
+from liulab_synbio.dmx import ROUTES, refuse_unclonal
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a build takes unless it states another.
@@ -148,7 +148,9 @@ class Build:
         chance of a clean colony, not the chance worth paying to check.
     route
         Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
-        `validate_from` is, because an unread build needs no route.
+        `validate_from` is, because an unread build needs no route. A build that reads anything
+        back names `primers` too: without a pool each block arrives as the vendor ships it, and
+        DMX has no colony to pick.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
@@ -175,9 +177,9 @@ class Build:
     ValueError
         If a position is repeated or missing, a number is not positive, the completeness does not
         lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
-        the route are not both there or both absent, a representation mark loosens the sourced
-        one, or the barcode and the method's cloning scar are not whole codons together — which
-        names ``barcode-frame``.
+        the route are not both there or both absent, a route is named over cargo DMX cannot pick,
+        a representation mark loosens the sourced one, or the barcode and the method's cloning
+        scar are not whole codons together — which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -283,10 +285,11 @@ class Build:
             )
 
     def _check_validation(self) -> None:
-        """Refuse a negative floor, an unknown route, or one of the two without the other.
+        """Refuse a negative floor, an unknown route, one of the two alone, or unpickable cargo.
 
-        The two travel together: a floor with no route says which designs are read and not how,
-        and a route with no floor names a read nobody asked for.
+        The floor and the route travel together: a floor with no route says which designs are
+        read and not how, and a route with no floor names a read nobody asked for. Whether
+        there is anything to read is DMX's own question, so `refuse_unclonal` answers it.
         """
         if self.validate_from is not None and self.validate_from < 0:
             raise ValueError(
@@ -302,6 +305,11 @@ class Build:
             raise ValueError(
                 "validate_from and route are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+        if self.route is not None:
+            refuse_unclonal(
+                "a block as the vendor ships it, which is what a build naming no primers orders",
+                clonal=self.primers is not None,
             )
 
     def _check_plates(self) -> None:

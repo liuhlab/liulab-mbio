@@ -25,9 +25,10 @@ WRITTEN = {
 
 
 def write(directory: Path, **changes) -> Path:
-    """Write a `project.json` and the two files it names, with any key replaced."""
+    """Write a `project.json` and the files it names, with any key replaced."""
     (directory / "parts.fasta").write_text(">N_a\nMKTAEK\n")
     (directory / "vector.dna").write_text("not read here")
+    (directory / "primers.tsv").write_text("not read here")
     path = directory / "project.json"
     path.write_text(json.dumps({**WRITTEN, **changes}), encoding="utf-8")
     return path
@@ -150,13 +151,21 @@ def test_a_build_states_no_floor_and_no_route_by_default(tmp_path):
 
 def test_a_floor_and_a_route_are_stated_together(tmp_path):
     """A floor with no route says which designs are read and not how; a route alone reads none."""
-    made = read_build(write(tmp_path, validate_from=0, route="barcode ligation"))
+    made = read_build(
+        write(tmp_path, validate_from=0, route="barcode ligation", primers="primers.tsv")
+    )
     assert (made.validate_from, made.route) == (0, "barcode ligation")
 
     with pytest.raises(ValueError, match="'barcode ligation', 'index PCR'"):
         read_build(write(tmp_path, validate_from=3))
     with pytest.raises(ValueError, match="stated together"):
         read_build(write(tmp_path, route="index PCR"))
+
+
+def test_a_build_reading_designs_back_without_a_pool_is_refused(tmp_path):
+    """A build naming no primer set orders each block whole, and DMX has no colony to pick."""
+    with pytest.raises(ValueError, match="no colony to pick"):
+        read_build(write(tmp_path, validate_from=0, route="barcode ligation"))
 
 
 def test_a_build_reads_no_route_but_the_two(tmp_path):

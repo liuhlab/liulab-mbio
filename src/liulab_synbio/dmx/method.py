@@ -439,6 +439,29 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     return tuple(one for one in designs if one.fragments >= floor)
 
 
+def refuse_unclonal(cargo: str, *, clonal: bool) -> None:
+    """Refuse to read back cargo nobody can pick a colony from.
+
+    DMX reads clonal material: `liulab_synbio.dmx.steps` spots each design from its archive
+    plate, picks colonies off it and grows every pick under the destination's own selection.
+    Cargo that reaches the bench as DNA in a tube has none of that, and a plan over it asks for
+    an archive plate nobody pours. DMX takes any cargo and a design's name does not say which
+    kind it is, so the caller names its cargo and says.
+
+    Raises
+    ------
+    ValueError
+        If the cargo is not clonal.
+    """
+    if clonal:
+        return
+    raise ValueError(
+        f"{cargo} has no colony to pick and no marker to select on, and DMX reads clonal "
+        "material: it spots each design from its archive plate, picks colonies off it and grows "
+        "every pick under the destination's own selection"
+    )
+
+
 def selected_on(selection: str) -> str:
     """Return what a plate of this read's transformants carries, named or left to the record.
 
