@@ -5,8 +5,8 @@ from typing import Annotated
 
 import typer
 
-from liulab_mbio.cloning.cli import plan_command, read_orientations
-from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, Site, plan_assembly
+from liulab_mbio.cloning.cli import plan_command, read_orientations, read_site
+from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, plan_assembly
 from liulab_mbio.codons import DEFAULT_TABLE
 from liulab_mbio.ligase import LIGASE_MATRIX_ENV
 from liulab_mbio.primers.polymerase import Q5, get_polymerase
@@ -85,7 +85,7 @@ def plan(
         lambda: plan_assembly(
             vector,
             *inserts,
-            site=_site(site),
+            site=read_site(site),
             orientation=read_orientations(orientation, len(inserts)),
             in_frame=in_frame,
             enzyme=enzyme or None,
@@ -109,13 +109,3 @@ def _summary(made: Plan) -> str:
         f"{len(made.parts)} fragments, overhangs {', '.join(made.overhangs.overhangs)}, "
         f"fidelity {scored.value:.0%} ({scored.label}), checks {made.status}"
     )
-
-
-def _site(text: str) -> Site:
-    """Read the insertion site: nothing, a feature name, or a START-END span."""
-    if not text:
-        return None
-    start, sep, end = text.partition("-")
-    if sep and start.strip().isdigit() and end.strip().isdigit():
-        return int(start), int(end)
-    return text

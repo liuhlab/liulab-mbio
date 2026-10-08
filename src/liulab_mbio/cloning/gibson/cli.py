@@ -7,10 +7,9 @@ from typing import Annotated
 
 import typer
 
-from liulab_mbio.cloning.cli import plan_command, read_orientations
+from liulab_mbio.cloning.cli import plan_command, read_orientations, read_site
 from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI, assembly_product
 from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Plan, Route, plan_gibson
-from liulab_mbio.cloning.plan import Site
 from liulab_mbio.primers.polymerase import Q5, get_polymerase
 
 app = typer.Typer(help="Plan Gibson assemblies.", no_args_is_help=True)
@@ -64,7 +63,7 @@ def plan(
         lambda: plan_gibson(
             vector,
             *inserts,
-            site=_site(site),
+            site=read_site(site),
             orientation=read_orientations(orientation, len(inserts)),
             route=_routes(route, len(inserts)),
             bridge=_bridges(bridge),
@@ -85,16 +84,6 @@ def _summary(made: Plan) -> str:
         f"{made.plasmid.name}: {len(made.plasmid)} bp, {len(made.parts)} fragments, "
         f"overlaps {overlaps}, {made.product.name}, checks {made.status}"
     )
-
-
-def _site(text: str) -> Site:
-    """Read the insertion site: nothing, a feature name, or a START-END span."""
-    if not text:
-        return None
-    start, sep, end = text.partition("-")
-    if sep and start.strip().isdigit() and end.strip().isdigit():
-        return int(start), int(end)
-    return text
 
 
 def _routes(given: Sequence[str] | None, count: int) -> tuple[Route, ...]:

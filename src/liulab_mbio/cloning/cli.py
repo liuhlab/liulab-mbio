@@ -4,7 +4,7 @@ One cloning method is one sub-app under this group, mounted by `liulab_mbio.cli`
 `cloning --help` lists the methods this package supports and nothing else. `plan_command` is
 what each of those verbs repeats: call the planner, write what it planned, turn a refusal into
 an error line and exit 1, then print one summary line and one line per file written, and
-`read_orientations` is the option every method that takes several inserts spells the same way.
+`read_orientations` and `read_site` are the options several methods spell the same way.
 A method supplies its own options and its own summary.
 
 The library pipeline is not a cloning method -- `docs/adr/0004-library-rounds.md` says why --
@@ -16,7 +16,7 @@ from pathlib import Path
 
 import typer
 
-from liulab_mbio.cloning.plan import Orientation, Planned
+from liulab_mbio.cloning.plan import Orientation, Planned, Site
 
 app = typer.Typer(help="Plan a cloning experiment, one command per method.", no_args_is_help=True)
 
@@ -56,6 +56,16 @@ def read_orientations(given: Sequence[str] | None, count: int) -> tuple[Orientat
     if len(values) != count:
         raise ValueError(f"--orientation given {len(values)} times for {count} insert(s)")
     return tuple(_orientation(text) for text in values)
+
+
+def read_site(text: str) -> Site:
+    """Read the insertion site a verb was given: nothing, a feature name, or a START-END span."""
+    if not text:
+        return None
+    start, sep, end = text.partition("-")
+    if sep and start.strip().isdigit() and end.strip().isdigit():
+        return int(start), int(end)
+    return text
 
 
 def _orientation(text: str) -> Orientation:
