@@ -335,6 +335,9 @@ sets one.
   round, and names the plate the final transfer selects on.
 - A feature now grows over new bases only where it has bases of its own either side of the
   edit, so a round's internal stuffer no longer reads over the whole cargo that replaced it.
+- Bench text reads as the bench reads it: a count and its noun agree, so no page prints
+  `tube(s)`; a span printed for a reader counts from 1 and includes its last base; and a
+  protocol's materials table lists what its own steps reach and nothing else.
 - A whole-number headroom on a bill row reads `350 length` again, not `350.0 length`. The
   quantity reached it as a float, and the trailing zero showed on every row carrying a band.
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane

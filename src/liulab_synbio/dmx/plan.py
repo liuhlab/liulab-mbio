@@ -13,7 +13,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from liulab_mbio.cloning.plan import as_project
-from liulab_mbio.protocol.model import Item, Project, Protocol, Topic, citing
+from liulab_mbio.protocol.model import Item, Project, Protocol, Topic, citing, counted
 from liulab_mbio.protocol.render import write_project_files
 from liulab_synbio.dmx.build import Build, read_build, read_designs
 from liulab_synbio.dmx.method import (
@@ -89,7 +89,8 @@ class ReadBackPlan:
             Protocol(
                 f"Design read-back: {one.route.name}",
                 summary=(
-                    f"Take {len(one.designs)} archived design(s) to {one.wells} clonal wells, "
+                    f"Take {counted(len(one.designs), 'archived design')} to {one.wells} clonal "
+                    "wells, "
                     "mark each well so sequencing says which well it came from, and call a pass "
                     "or a fail per well."
                 ),
@@ -133,7 +134,7 @@ class ReadBackPlan:
         return {
             "Designs": f"{len(one.designs)} of {len(self.designs)} on the sheet",
             "Route": one.route.name,
-            "Wells": f"{one.wells} over {len(one.picked)} picked plate(s)",
+            "Wells": f"{one.wells} over {counted(len(one.picked), 'picked plate')}",
             "Selection": selected_on(one.selection),
         }
 
@@ -142,7 +143,8 @@ class ReadBackPlan:
         return (
             "A design is read back as a name and a count of the pieces it was built from, never "
             "as bases, so any clonal stock this lab holds can be read back here.",
-            f"The bench is sized from the {len(self.validation.designs)} design(s) read and not "
+            f"The bench is sized from the {counted(len(self.validation.designs), 'design')} read "
+            "and not "
             "from the sheet, so a design the floor leaves out costs no well, no plate and no "
             "reagent.",
         )
@@ -153,7 +155,7 @@ class ReadBackPlan:
         floor = (
             "every design on the sheet, which a floor of zero does"
             if one.floor == 0
-            else f"every design built from {one.floor} fragment(s) or more"
+            else f"every design built from {counted(one.floor, 'fragment')} or more"
         )
         return (
             Topic(
@@ -219,6 +221,7 @@ def plan_dmx(build: Build | str | os.PathLike[str]) -> ReadBackPlan:
     if sized is None:
         raise ValueError(
             f"validate_from is {one.validate_from}, and no design on {os.fspath(one.designs)} is "
-            f"built from that many fragments: {len(designs)} design(s) read, none of them back"
+            f"built from that many fragments: {counted(len(designs), 'design')} read, "
+            "none of them back"
         )
     return ReadBackPlan(one, designs, sized)

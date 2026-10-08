@@ -15,7 +15,7 @@ from typing import Literal
 
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.protocol.figures import SOURCE, SOURCE_KEY
-from liulab_mbio.protocol.model import Citation, Figure
+from liulab_mbio.protocol.model import Citation, Figure, counted
 from liulab_mbio.sequence import Segment, across_the_origin
 from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.rounds import ROUND_FILE, Round
@@ -205,4 +205,6 @@ def _pool_caption(plan: PoolPlan, stage: PoolStage, pair: tuple[str, str]) -> st
     """Return what the pool figure shows: which pair reads the oligo, in how many wells."""
     wells = len(plan.batches) if stage == "PCR1" else len(plan.inner_pairs)
     pulls = "one batch out of the pool" if stage == "PCR1" else "one block out of its batch"
-    return f"{stage} pairs {pair[0]} with {pair[1]} and pulls {pulls}, in {wells} reaction(s)"
+    return (
+        f"{stage} pairs {pair[0]} with {pair[1]} and pulls {pulls}, in {counted(wells, 'reaction')}"
+    )

@@ -237,12 +237,12 @@ def test_the_steps_print_each_design_chance_beside_the_floor():
     one = sized(method.ROUTE_INDEX_PCR, some, 2)
     made = steps.validation_steps(one)
     assert [step.title for step in made][:2] == [
-        "Array 2 design(s) and grow",
+        "Array 2 designs and grow",
         "Pick 4 colonies of each design",
     ]
-    assert "2 fragment(s) or more" in " ".join(made[0].notes)
-    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in made[1].notes
-    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in made[1].notes
+    assert "2 fragments or more" in " ".join(made[0].notes)
+    assert "2 fragments: 1 design, 100.0% of picks clean" in made[1].notes
+    assert "8 fragments: 1 design, 66.7% of picks clean" in made[1].notes
 
 
 def test_no_step_spells_emphasis_the_page_renders_as_asterisks():

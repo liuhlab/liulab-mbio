@@ -437,6 +437,20 @@ def across_the_origin(span: Feature | Segment | BindingSite, length: int) -> boo
     )
 
 
+def span_text(start: int, end: int, length: int) -> str:
+    """Return a span as a person reads it: 1-based, inclusive, across the origin as it reads.
+
+    The conversion out of the half-open rule, for any text a reader follows. See
+    `docs/adr/0001-coordinates.md`.
+
+    Examples
+    --------
+    >>> span_text(2683, 2689, 2686)
+    '2684 .. 3'
+    """
+    return f"{start % length + 1} .. {(end - 1) % length + 1}"
+
+
 def counted_round(positions: Iterable[int], length: int, *, first: int = 0) -> tuple[int, ...]:
     """Return positions read in order round a circle of `length` bases, at most one turn.
 

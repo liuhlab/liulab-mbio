@@ -20,8 +20,9 @@ from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
+from liulab_mbio.protocol.model import counted
 from liulab_mbio.reaction import Pool, Reaction, Role
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
+from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement, span_text
 from liulab_mbio.sites import CutSite, find_sites, released
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
@@ -195,7 +196,7 @@ def check_cargo(
             len(found),
             f"{where} carries no site of {', '.join(one.name for one in held)}"
             if not found
-            else f"{where} carries {len(found)} site(s) it must not, of {named}",
+            else f"{where} carries {counted(len(found), 'site')} it must not, of {named}",
         ),
         where,
         tuple(found),
@@ -225,8 +226,8 @@ def check_cargo(
             len(bound),
             f"no primer that reads a well binds {where}"
             if not bound
-            else f"a primer that reads a well binds {where} in {len(bound)} place(s), which "
-            "leaves that well a second priming site and no read anyone can call",
+            else f"a primer that reads a well binds {where} in {counted(len(bound), 'place')}, "
+            "which leaves that well a second priming site and no read anyone can call",
         ),
         where,
         bound,
@@ -269,7 +270,7 @@ def check_barcode_set(
             len(broken),
             f"every barcode of {where} reads as the method needs it to"
             if not broken
-            else f"{len(broken)} barcode rule(s) broken in {where}: {'; '.join(broken[:3])}",
+            else f"{counted(len(broken), 'barcode rule')} broken in {where}: {'; '.join(broken[:3])}",
         ),
         where,
     )
@@ -348,7 +349,7 @@ def check_product(
             len(stops),
             f"{where} reads through what it keeps without a stop"
             if not stops
-            else f"{len(stops)} stop codon(s) in what {where} keeps past its last part",
+            else f"{counted(len(stops), 'stop codon')} in what {where} keeps past its last part",
         ),
         where,
         tuple(stops),
@@ -420,11 +421,11 @@ def check_dmx_vector(
                 "blunt sites",
                 "pass" if not stray else "fail",
                 len(judged),
-                f"the {len(judged)} blunt site(s) beside {where}'s cassette sit between a "
-                f"{external.name} site and the primer that reads a well, in {spans}"
+                f"{counted(len(judged), 'blunt site')} beside {where}'s cassette, each "
+                f"between a {external.name} site and the primer that reads a well, in {spans}"
                 if not stray
-                else f"{len(stray)} blunt site(s) of {where} miss the bases a {external.name} "
-                f"site and the primer that reads a well leave clear: {named}",
+                else f"{where} has {counted(len(stray), 'blunt site')} outside the bases a "
+                f"{external.name} site and the primer that reads a well leave clear: {named}",
             ),
             where,
             tuple(one for one, _ in stray),
@@ -626,8 +627,8 @@ def _opening(product: SequenceRecord, project: Build, where: str) -> Judgement:
             len(found),
             f"{enzyme.name} cuts {where} in the {CUTS} places a further round opens it on"
             if opens
-            else f"{enzyme.name} reads {len(found)} site(s) in {where}, where a further round "
-            f"opens it on {CUTS}",
+            else f"{enzyme.name} reads {counted(len(found), 'site')} in {where}, where a "
+            f"further round opens it on {CUTS}",
         ),
         where,
         () if opens else tuple(found),
@@ -694,11 +695,11 @@ def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
             f"{pool.role} {verb}",
             "pass" if not offenders else "fail",
             len(offenders),
-            f"{named} cuts each of the {len(pool)} {pool.role}(s) of {reaction.name} in "
+            f"{named} cuts {counted(len(pool), pool.role)} of {reaction.name}, each in "
             f"{CUTS} places"
             if not offenders
-            else f"{len(offenders)} of the {len(pool)} {pool.role}(s) of {reaction.name} are not "
-            f"cut by {named} in the {CUTS} places this method cuts them",
+            else f"{named} leaves {len(offenders)} of {counted(len(pool), pool.role)} of "
+            f"{reaction.name} uncut in the {CUTS} places this method cuts them",
         ),
         reaction.name,
         tuple(findings),
@@ -837,8 +838,8 @@ def _flanks(
         sites = find_binding_sites(region, record)
         if len(sites) != 1:
             return (), (
-                f"a primer that reads a well binds it in {len(sites)} place(s), where one "
-                "amplification binds it in 1"
+                f"a primer that reads a well binds it in {counted(len(sites), 'place')}, where "
+                "one amplification binds it in 1"
             )
         site = sites[0]
         forward = site.strand is Strand.FORWARD
@@ -883,5 +884,5 @@ def _meets(record: SequenceRecord, span: Segment, other: Segment) -> bool:
 
 
 def _printed(record: SequenceRecord, span: Segment) -> str:
-    """One span as a person reads it: 1-based, inclusive, and counted round the origin."""
-    return f"{span.start + 1}..{(span.end - 1) % len(record) + 1}"
+    """One span as a person reads it, in the one form `sequence.span_text` gives."""
+    return span_text(span.start, span.end, len(record))

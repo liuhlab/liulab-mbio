@@ -1,12 +1,12 @@
 {
   "title": "AP-1 cargo read-back",
-  "key": "ae256e3fd6bef721",
-  "summary": "Take 32 archived design(s) to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
+  "key": "45387e00006e34a1",
+  "summary": "Take 32 archived designs to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
   "background": [
     {
       "title": "Which designs are read back",
       "body": [
-        "This run reads every design built from 2 fragment(s) or more: 32 of 72. The rest stay polyclonal and are never read one design at a time.",
+        "This run reads every design built from 2 fragments or more: 32 of 72. The rest stay polyclonal and are never read one design at a time.",
         "Every design is spotted from AP-1 cargo archive plate, which this run reads a copy of and never changes. A design whose spot grows nothing has no clone to read, and is re-transformed before anyone re-synthesises it."
       ]
     },
@@ -39,17 +39,17 @@
   "protocols": [
     {
       "title": "Design read-back: index PCR",
-      "key": "128e808ae6825494",
-      "summary": "Take 32 archived design(s) to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
+      "key": "36f83a71449b4268",
+      "summary": "Take 32 archived designs to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {
         "Designs": "32 of 72 on the sheet",
         "Route": "index PCR",
-        "Wells": "128 over 1 picked plate(s)",
+        "Wells": "128 over 1 picked plate",
         "Selection": "kanamycin"
       },
       "highlights": [
         "A design is read back as a name and a count of the pieces it was built from, never as bases, so any clonal stock this lab holds can be read back here.",
-        "The bench is sized from the 32 design(s) read and not from the sheet, so a design the floor leaves out costs no well, no plate and no reagent."
+        "The bench is sized from the 32 designs read and not from the sheet, so a design the floor leaves out costs no well, no plate and no reagent."
       ],
       "checks": [],
       "choice": "",
@@ -508,7 +508,7 @@
       ],
       "steps": [
         {
-          "title": "Array 32 design(s) and grow",
+          "title": "Array 32 designs and grow",
           "key": "array-designs",
           "section": "Array and pick",
           "instructions": [
@@ -517,7 +517,7 @@
           ],
           "cautions": [],
           "notes": [
-            "This run reads back every design in 2 fragment(s) or more: 32 design(s). The rest stay polyclonal and are never read one design at a time.",
+            "This run reads back every design in 2 fragments or more: 32 designs. The rest stay polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it."
           ],
           "tables": [],
@@ -552,10 +552,10 @@
           "cautions": [],
           "notes": [
             "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
-            "2 fragment(s): 16 design(s), 100.0% of picks clean",
-            "3 fragment(s): 6 design(s), 93.8% of picks clean",
-            "4 fragment(s): 9 design(s), 89.2% of picks clean",
-            "5 fragment(s): 1 design(s), 84.6% of picks clean",
+            "2 fragments: 16 designs, 100.0% of picks clean",
+            "3 fragments: 6 designs, 93.8% of picks clean",
+            "4 fragments: 9 designs, 89.2% of picks clean",
+            "5 fragments: 1 design, 84.6% of picks clean",
             "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
           ],
           "tables": [],
@@ -567,7 +567,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "128 wells over 1 plate(s): 128 picked.",
+            "128 wells over 1 plate: 128 picked.",
             "Every colony of one design sits on one plate."
           ],
           "troubleshooting": [
@@ -2030,7 +2030,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "2 index plate(s), 128 reactions in all."
+            "2 index plates, 128 reactions in all."
           ],
           "troubleshooting": [],
           "holes": []

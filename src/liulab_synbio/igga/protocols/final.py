@@ -55,6 +55,9 @@ from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.project import FinalAssembly
 from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
+    CUVETTES,
+    FINAL_SELECTIVE,
+    PREP_KIT,
     ROUND_EQUIPMENT,
     WORKING_ITEM,
     Run,
@@ -70,8 +73,6 @@ FINAL = "Final cargo ligation"
 
 class FinalLigation(Protocol):
     """Free the cargo from the library backbone and close it into the working vector."""
-
-    round_reagents = True
 
     def title(self, run: Run) -> str:
         """Return the page's own heading."""
@@ -130,6 +131,10 @@ class FinalLigation(Protocol):
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """Return the finished library, pooled and ready for the screen."""
         return (run.library,)
+
+    def shares(self, run: Run) -> tuple[str, ...]:
+        """Return the rounds' reagents this move takes: the working vector, not the destination."""
+        return (run.working_reagent, FINAL_SELECTIVE, PREP_KIT, CUVETTES)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware this protocol needs, which is a round's."""

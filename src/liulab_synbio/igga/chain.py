@@ -11,7 +11,7 @@ cargo, read back the designs the build asks for, join the part lists round by ro
 the finished library into a working vector.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 from liulab_mbio.bench.prices import Item
 from liulab_mbio.bench.prices import bill as priced
@@ -26,6 +26,7 @@ from liulab_mbio.protocol.model import (
     Step,
     Topic,
     by_place,
+    counted,
     names,
 )
 from liulab_mbio.protocol.model import Item as Handed
@@ -127,30 +128,42 @@ def _choosing(run: Run) -> tuple[Topic, ...]:
 def _spread(
     run: Run, made: Sequence[Protocol], staged: Sequence[Sequence[Step]]
 ) -> list[tuple[Material, ...]]:
-    """Return each protocol's reagent list: what its own steps name, else what it is bought for.
+    """Return each protocol's reagent list: what its own steps use, and nothing else.
 
-    One list a protocol, in the chain's own order. A reagent one of those protocols names in a
-    step goes to the protocols that name it; the rest -- a plate, a prep kit, a consumable no
-    sentence mentions -- fall back to the protocols it was bought for. The lists are keyed by
+    One list a protocol, in the chain's own order. A reagent the run shares goes to the
+    protocols whose steps name it and to the ones that claim it in `Protocol.shares`; a
+    reagent one protocol buys alone goes to it, or to the protocols naming it where another
+    does. A page can therefore list nothing no step of it reaches. The lists are keyed by
     where a protocol stands in the chain and not by its heading, so two protocols could share
     a heading without sharing a reagent.
     """
-    rounds = tuple(place for place, one in enumerate(made) if one.round_reagents)
-    carried: list[tuple[Material, tuple[int, ...]]] = [
-        (material, (place,)) for place, one in enumerate(made) for material in one.carried(run)
-    ]
-    carried += [(material, rounds) for material in run.round_materials]
     found: list[list[Material]] = [[] for _ in made]
-    for material, bought_for in carried:
-        named = [
+
+    def naming(material: Material) -> list[int]:
+        return [
             place
             for place, steps in enumerate(staged)
             if any(names(material.name, step.named) for step in steps)
         ]
-        for place in named or bought_for:
-            if material not in found[place]:
-                found[place].append(material)
+
+    for place, one in enumerate(made):
+        for material in one.carried(run):
+            _bought(found, material, naming(material) or [place])
+    for material in run.round_materials:
+        claiming = [
+            place
+            for place, one in enumerate(made)
+            if any(names(claim, (material.name,)) for claim in one.shares(run) if claim)
+        ]
+        _bought(found, material, sorted({*naming(material), *claiming}))
     return [tuple(group) for group in found]
+
+
+def _bought(found: list[list[Material]], material: Material, places: Iterable[int]) -> None:
+    """Put `material` on each of those protocols' lists, once each."""
+    for place in places:
+        if material not in found[place]:
+            found[place].append(material)
 
 
 def _sources(run: Run, made: Sequence[Protocol]) -> dict[str, Source]:
@@ -218,8 +231,8 @@ def _highlights(run: Run) -> tuple[str, ...]:
         )
     if standard.cost:
         said.append(
-            f"The overhang standard changes {standard.cost} amino acid(s) across "
-            f"{len(standard.changes)} part end(s); {run.changes} has wild type beside "
+            f"The overhang standard changes {counted(standard.cost, 'amino acid')} across "
+            f"{counted(len(standard.changes), 'part end')}; {run.changes} has wild type beside "
             "synthesised, and that is what you are about to pay for."
         )
     else:

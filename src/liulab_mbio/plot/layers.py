@@ -40,6 +40,7 @@ from liulab_mbio.sequence import (
     Strand,
     counted_round,
     reverse_complement,
+    span_text,
 )
 from liulab_mbio.sites import find_sites
 
@@ -550,17 +551,6 @@ def pieces(item: Item, start: int, end: int, length: int, *, circular: bool) -> 
                     Piece(*clipped, span, clipped[0] == first + shift, clipped[1] == last + shift)
                 )
     return tuple(sorted(found, key=lambda piece: (piece.start, piece.end)))
-
-
-def span_text(start: int, end: int, length: int) -> str:
-    """Return a span as a person reads it, 1-based and inclusive, across the origin as needed.
-
-    Examples
-    --------
-    >>> span_text(2683, 2689, 2686)
-    '2684 .. 3'
-    """
-    return f"{start % length + 1} .. {(end - 1) % length + 1}"
 
 
 def text_color(fill: str) -> str:

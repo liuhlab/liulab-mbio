@@ -249,7 +249,7 @@ def test_a_bsmbi_site_in_a_designed_coding_region_is_caught(judge, blocks):
     assert verdict.status == "fail"
     failed = verdict["cargo sites"]
     assert failed.status == "fail"
-    assert "carries 1 site(s) it must not, of BsmBI" in failed.check.detail
+    assert "carries 1 site it must not, of BsmBI" in failed.check.detail
     assert {one.enzyme.name for one in failed.findings} == {"BsmBI"}
 
 
@@ -318,7 +318,10 @@ def test_a_destination_the_round_cannot_open_cleanly_is_caught(judge, destinatio
     assert verdict.status == "fail"
     failed = verdict["destination opens"]
     assert failed.status == "fail"
-    assert "are not cut by BbsI in the 2 places this method cuts them" in failed.check.detail
+    assert (
+        "BbsI leaves 1 of 1 destination of round 1 opening uncut in the 2 places"
+        in failed.check.detail
+    )
 
 
 # The DMX vector, which the validating experiment amplifies a well of.
@@ -329,7 +332,7 @@ def test_a_blunt_site_between_a_releasing_site_and_the_primer_is_where_it_belong
     vector = _dmx_vector()
     bases = str(vector.sequence)
     forward = WELL_PRIMERS[0]
-    clear = f"{bases.index(forward) + len(forward) + 1}..{bases.index('GGTCTC')}"
+    clear = f"{bases.index(forward) + len(forward) + 1} .. {bases.index('GGTCTC')}"
     (judged,) = check_dmx_vector(vector, project=project)
     assert judged.status == "pass"
     assert "GCCCGGGC" in bases
@@ -344,8 +347,8 @@ def test_a_blunt_site_inside_a_primers_footprint_is_caught(project):
     clear = bases.index(reads) + len(reads) + 1
     (judged,) = check_dmx_vector(vector, project=project)
     assert judged.status == "fail"
-    assert f"PmeI at {bases.index('GTTTAAAC') + 1}.." in judged.check.detail
-    assert f"outside {clear}.." in judged.check.detail
+    assert f"PmeI at {bases.index('GTTTAAAC') + 1} .." in judged.check.detail
+    assert f"outside {clear} .." in judged.check.detail
     (finding,) = judged.findings
     assert isinstance(finding, CutSite)
     assert finding.enzyme.name == "PmeI"
@@ -357,7 +360,7 @@ def test_a_vector_a_primer_no_longer_reads_says_so_rather_than_passing(project):
         SequenceRecord(bases, topology="circular", name="unread"), project=project
     )
     assert judged.status == "fail"
-    assert "binds it in 0 place(s)" in judged.check.detail
+    assert "binds it in 0 places" in judged.check.detail
 
 
 def test_a_cargo_carrying_an_annealing_region_is_caught(judge, blocks):

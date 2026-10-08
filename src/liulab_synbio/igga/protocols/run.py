@@ -59,6 +59,13 @@ from liulab_synbio.igga.vector import Destination, Working
 #: `liulab_synbio.igga.plan.PROTOCOL_DIR` puts the pages one directory below the records.
 RECORDS_AT = "../"
 
+#: The consumables the rounds share, named here so a protocol claims its own by the same name.
+RECOVERY = "Recovery medium"
+SELECTIVE = "Selective broth and plates"
+FINAL_SELECTIVE = "Selective plates for the final transfer"
+PREP_KIT = "Plasmid prep kit"
+CUVETTES = "Electroporation cuvettes"
+
 #: The hardware a round needs, which no reagent table covers.
 ROUND_EQUIPMENT: tuple[str, ...] = (
     f"Incubator or heat block at {DIGEST_CELSIUS:g} °C",
@@ -352,6 +359,16 @@ class Run:
         return tuple(items)
 
     @property
+    def destination_reagent(self) -> str:
+        """What the vector a round opens is called in the reagent list."""
+        return f"{self.vector.name or 'destination'} vector"
+
+    @property
+    def working_reagent(self) -> str:
+        """What the working vector is called in the reagent list, or nothing where none."""
+        return "" if self.working is None else f"{self.working.record.name or 'Working'} vector"
+
+    @property
     def round_materials(self) -> tuple[Material, ...]:
         """Every reagent and consumable the rounds ask for.
 
@@ -374,7 +391,7 @@ class Run:
         ]
         made.append(
             Material(
-                f"{self.vector.name or 'destination'} vector",
+                self.destination_reagent,
                 storage="-20 °C",
                 amount=(
                     ""
@@ -387,7 +404,7 @@ class Run:
         if self.working is not None:
             made.append(
                 Material(
-                    f"{self.working.record.name or 'Working'} vector",
+                    self.working_reagent,
                     storage="-20 °C",
                     note=f"the library's final home; {self.working.enzyme.name} releases its ccdB "
                     "cassette to admit the cargo",
@@ -435,19 +452,17 @@ class Run:
                 citation=shot.citation,
             )
         )
-        made.append(Material("Recovery medium", amount="one outgrowth per round"))
-        made.append(
-            Material("Selective broth and plates", note=_selection_note(self.vector, "destination"))
-        )
+        made.append(Material(RECOVERY, amount="one outgrowth per round"))
+        made.append(Material(SELECTIVE, note=_selection_note(self.vector, "destination")))
         if self.working is not None:
             made.append(
                 Material(
-                    "Selective plates for the final transfer",
+                    FINAL_SELECTIVE,
                     note=_selection_note(self.working.record, "working"),
                 )
             )
-        made.append(Material("Plasmid prep kit", amount="one prep per round"))
-        made.append(Material("Electroporation cuvettes", amount=f"{self.pulses}, one a pulse"))
+        made.append(Material(PREP_KIT, amount="one prep per round"))
+        made.append(Material(CUVETTES, amount=f"{self.pulses}, one a pulse"))
         return tuple(made)
 
 

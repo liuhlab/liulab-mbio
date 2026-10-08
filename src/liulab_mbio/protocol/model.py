@@ -123,6 +123,20 @@ def number(value: float) -> str:
     return f"{mantissa.rstrip('0').rstrip('.')} × 10{str(int(power)).translate(_SUPERSCRIPT)}"
 
 
+def counted(count: int, noun: str, plural: str = "") -> str:
+    """Return a count and its noun, the noun plural unless the count is one.
+
+    Every rendered field says ``1 tube`` and ``3 tubes``; nothing a reader follows prints
+    ``tube(s)``. `plural` carries an ending the noun does not take an ``s`` for.
+
+    Examples
+    --------
+    >>> counted(1, "tube"), counted(3, "tube"), counted(2, "colony", "colonies")
+    ('1 tube', '3 tubes', '2 colonies')
+    """
+    return f"{count:,} {noun if count == 1 else plural or noun + 's'}"
+
+
 @dataclass(frozen=True, slots=True)
 class Source:
     """A document a number was read from, named once and cited by key.

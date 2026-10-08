@@ -39,6 +39,7 @@ from liulab_mbio.protocol.model import (
 from liulab_mbio.protocol.model import (
     Item as Handed,
 )
+from liulab_synbio.igga.bench import CUTSMART, SPRI_BEADS, STRAIN
 from liulab_synbio.igga.cargo import Batch, PoolPlan
 from liulab_synbio.igga.figures import PoolStage, pool_pcr_figure
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
@@ -49,7 +50,7 @@ from liulab_synbio.igga.protocols.ordering import (
 )
 from liulab_synbio.igga.protocols.primer_plates import working_plate
 from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
-from liulab_synbio.igga.protocols.run import Run, vector_names
+from liulab_synbio.igga.protocols.run import RECOVERY, SELECTIVE, Run, vector_names
 
 #: What the page is headed and what the chain names it by.
 CREATION = "Cargo creation"
@@ -90,8 +91,6 @@ POOL_EQUIPMENT: tuple[str, ...] = (
 
 class Creation(Protocol):
     """Amplify the pool twice and close each block's cargo into its position's vector."""
-
-    round_reagents = True
 
     def title(self, run: Run) -> str:
         """Return the page's own heading."""
@@ -148,6 +147,22 @@ class Creation(Protocol):
     def carried(self, run: Run) -> tuple[Material, ...]:
         """Return what the pool route buys, which the ordering protocol bought most of."""
         return pool_materials(_pool_of(run), run.pool_sheet, run.primer_sheet)
+
+    def shares(self, run: Run) -> tuple[str, ...]:
+        """Return the rounds' reagents this one digest, clean-up and transformation takes.
+
+        It opens a destination, cleans up and transforms, so it buys those; it preps nothing
+        and never reaches the working vector, so it buys neither.
+        """
+        return (
+            run.destination_reagent,
+            run.scheme.internal.name,
+            CUTSMART,
+            SPRI_BEADS,
+            STRAIN,
+            RECOVERY,
+            SELECTIVE,
+        )
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return what the pool route needs on top of a round's."""

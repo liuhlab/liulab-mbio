@@ -20,7 +20,14 @@ from dataclasses import dataclass
 
 from liulab_mbio.bench import plates
 from liulab_mbio.edits import EditReport, insert, ordered
-from liulab_mbio.protocol.model import FORMATS, Material, Plate, Step, Troubleshooting
+from liulab_mbio.protocol.model import (
+    FORMATS,
+    Material,
+    Plate,
+    Step,
+    Troubleshooting,
+    counted,
+)
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites
 
@@ -266,7 +273,7 @@ def materials() -> tuple[Material, ...]:
 def carrier_step(seated: SeatedParts) -> Step:
     """Return the step that seats every part, which ends in plasmids and not in a library."""
     return Step(
-        f"Seat {seated.products} part(s) in {CARRIER}",
+        f"Seat {counted(seated.products, 'part')} in {CARRIER}",
         key="seat-parts",
         instructions=(
             f"Set up one {CARRIER_KIT} reaction per well of {seated.plate.name}, each holding "

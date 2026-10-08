@@ -35,10 +35,6 @@ class Protocol:
     references of its own says nothing rather than being dispatched past.
     """
 
-    #: Whether this protocol buys from the reagents the rounds share. A reagent two protocols
-    #: name is bought once, so the run holds that list and the chain spreads it over these.
-    round_reagents: bool = False
-
     def title(self, run: Run) -> str:
         """Return what the page is headed and what the chain names it by, written for the bench."""
         raise NotImplementedError
@@ -68,6 +64,16 @@ class Protocol:
 
     def carried(self, run: Run) -> tuple[Material, ...]:
         """Every reagent bought for this protocol alone; the rounds' own are the run's."""
+        return ()
+
+    def shares(self, run: Run) -> tuple[str, ...]:
+        """Name the run's shared reagents this protocol's steps use but never spell.
+
+        A reagent two protocols need is bought once, so the run holds it and each page claims
+        its own. A reagent a step spells reaches the page without being claimed; this is for
+        the rest -- a buffer, a plate, a consumable no sentence mentions. Each name is matched
+        inside the reagent's own, so ``"part list"`` claims every one of them.
+        """
         return ()
 
     def equipment(self, run: Run) -> tuple[str, ...]:

@@ -18,12 +18,16 @@ from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.io import read_record
-from liulab_mbio.protocol.model import Citation, write_protocol
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.protocol.model import Citation, write_project, write_protocol
+from liulab_mbio.sequence import SequenceRecord, span_text
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
+from liulab_synbio.igga.bench import CUTSMART, SPRI_BEADS, STRAIN
 from liulab_synbio.igga.cargo import cargo_record
+from liulab_synbio.igga.method import IGGA
+from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL
+from liulab_synbio.igga.protocols.run import CUVETTES, FINAL_SELECTIVE, PREP_KIT, SELECTIVE
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo
 
@@ -663,3 +667,61 @@ def test_the_primers_are_ordered_once_however_the_run_is_split(plan):
     assert "Order the primers" in plated
     assert "Order the oligo pool and the primers that amplify it" in bare
     assert "Order the primers" not in bare
+
+
+def test_no_rendered_field_prints_a_parenthesised_plural(plan, tmp_path):
+    """A reader follows a count and its noun, never ``tube(s)``: `counted` says both."""
+    written = tmp_path / "project.json"
+    write_project(plan.chain(), written)
+
+    assert "(s)" not in written.read_text(encoding="utf-8")
+
+
+def test_the_linkage_read_prints_the_block_1_based_and_inclusive(plan, protocol):
+    """A span the bench reads counts from 1 and includes its last base, as the map prints one."""
+    last = plan.rounds[-1]
+    step = next(one for one in protocol.steps if one.title == "Read linkage")
+
+    said = " ".join(step.expected)
+
+    assert span_text(last.block.start, last.block.end, len(last.product)) in said
+    assert f"{last.block.start}-{last.block.end}" not in said
+
+
+def test_a_page_lists_only_the_reagents_its_own_steps_reach(plan):
+    """A materials table sends nobody to a freezer for a reagent no step of that page uses."""
+    listed = {page.title: {one.name for one in page.materials} for page in plan.chain().protocols}
+    working = plan.working
+    assert working is not None
+    destination = f"{plan.vector.name or 'destination'} vector"
+    carried = f"{working.record.name or 'Working'} vector"
+    creation, rounds, final = listed[CREATION], listed[ASSEMBLY], listed[FINAL]
+
+    # Protocol 03 opens a destination, cleans up and transforms; it preps nothing and never
+    # reaches the vector the library ends in.
+    assert {destination, CUTSMART, SPRI_BEADS, STRAIN} <= creation
+    assert any(one.startswith(IGGA.internal.name) for one in creation)
+    assert not {carried, PREP_KIT, CUVETTES, FINAL_SELECTIVE} & creation
+    assert destination in rounds
+    assert carried not in rounds
+    assert carried in final
+    assert destination not in final
+
+
+def test_every_reagent_the_rounds_share_lands_on_a_page(plan):
+    """Deriving a page's list from its steps may narrow a table; it may never lose an order."""
+    working = plan.working
+    assert working is not None
+    bought = {one.name for page in plan.chain().protocols for one in page.materials}
+
+    assert {
+        f"{plan.vector.name or 'destination'} vector",
+        f"{working.record.name or 'Working'} vector",
+        CUTSMART,
+        CUVETTES,
+        FINAL_SELECTIVE,
+        PREP_KIT,
+        SELECTIVE,
+        SPRI_BEADS,
+        STRAIN,
+    } <= bought

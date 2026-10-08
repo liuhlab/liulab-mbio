@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 
 from liulab_mbio.bench.readback import clean_colony_chance
-from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting
+from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting, counted
 from liulab_synbio.dmx.kit import GROUPS
 from liulab_synbio.dmx.method import (
     BARCODE_UL,
@@ -61,13 +61,13 @@ def chances(designs: Sequence[Design]) -> tuple[str, ...]:
     Examples
     --------
     >>> chances((Design("a", 2), Design("b", 2), Design("c", 8)))
-    ('2 fragment(s): 2 design(s), 100.0% of picks clean', '8 fragment(s): 1 design(s), 66.7% of picks clean')
+    ('2 fragments: 2 designs, 100.0% of picks clean', '8 fragments: 1 design, 66.7% of picks clean')
     """
-    counted = Counter(one.fragments for one in designs)
+    found = Counter(one.fragments for one in designs)
     return tuple(
-        f"{pieces} fragment(s): {number} design(s), "
+        f"{counted(pieces, 'fragment')}: {counted(number, 'design')}, "
         f"{clean_colony_chance(pieces):.1%} of picks clean"
-        for pieces, number in sorted(counted.items())
+        for pieces, number in sorted(found.items())
     )
 
 
@@ -93,7 +93,7 @@ def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple
     >>> one = validation(ROUTE_INDEX_PCR, (Design("a", 4),), 0)
     >>> for step in validation_steps(one):
     ...     print(step.title)
-    Array 1 design(s) and grow
+    Array 1 design and grow
     Pick 4 colonies of each design
     Sample the picked plates into index plates
     Amplify each well with its own pair
@@ -118,10 +118,10 @@ def _array_step(one: Validation) -> Step:
     floor = (
         "every design, which a floor of zero does"
         if one.floor == 0
-        else f"every design in {one.floor} fragment(s) or more"
+        else f"every design in {counted(one.floor, 'fragment')} or more"
     )
     return Step(
-        f"Array {len(one.designs)} design(s) and grow",
+        f"Array {counted(len(one.designs), 'design')} and grow",
         key="array-designs",
         instructions=(
             "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
@@ -132,8 +132,8 @@ def _array_step(one: Validation) -> Step:
             "density picking wants.",
         ),
         notes=(
-            f"This run reads back {floor}: {len(one.designs)} design(s). The rest stay "
-            "polyclonal and are never read one design at a time.",
+            f"This run reads back {floor}: {counted(len(one.designs), 'design')}. The rest "
+            "stay polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it.",
         ),
         troubleshooting=(
@@ -159,7 +159,7 @@ def _pick_step(one: Validation) -> Step:
             "Grow overnight at 37 °C.",
         ),
         expected=(
-            f"{one.wells} wells over {len(one.picked)} plate(s): {sizes} picked.",
+            f"{one.wells} wells over {counted(len(one.picked), 'plate')}: {sizes} picked.",
             "Every colony of one design sits on one plate.",
         ),
         notes=(
@@ -189,7 +189,7 @@ def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Ste
     )
     return (
         Step(
-            f"Compress the picked plates into {len(one.compressed)} barcoding plate(s)",
+            f"Compress the picked plates into {counted(len(one.compressed), 'barcoding plate')}",
             key="compress-plates",
             instructions=(
                 "Invert the picked plates for 30 minutes so the cells gather at the meniscus.",
@@ -243,7 +243,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
                 "quarter of the picked plate a pass.",
             ),
             transfers=tuple(moves),
-            expected=(f"{len(one.index)} index plate(s), {one.wells} reactions in all.",),
+            expected=(f"{counted(len(one.index), 'index plate')}, {one.wells} reactions in all.",),
             notes=(
                 "One well in four lines up under a head built for the smaller format, so a "
                 "quarter moves in one pass.",

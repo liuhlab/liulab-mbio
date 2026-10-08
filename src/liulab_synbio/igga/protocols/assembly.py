@@ -27,9 +27,11 @@ from liulab_mbio.protocol.model import (
     Step,
     Timer,
     Troubleshooting,
+    counted,
     number,
 )
 from liulab_mbio.protocol.model import Item as Handed
+from liulab_mbio.sequence import span_text
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import (
     DIGEST_VOLUME_UL,
@@ -59,7 +61,10 @@ from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
+    CUVETTES,
+    PREP_KIT,
     ROUND_EQUIPMENT,
+    SELECTIVE,
     Run,
     as_platform,
     marks_sentence,
@@ -74,8 +79,6 @@ ASSEMBLY = "Library assembly in rounds"
 
 class Assembly(Protocol):
     """Pool each part list, run every round, and read linkage and representation back."""
-
-    round_reagents = True
 
     def title(self, run: Run) -> str:
         """Return the page's own heading."""
@@ -124,6 +127,10 @@ class Assembly(Protocol):
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """Return the pooled library after the last round, as a plasmid prep."""
         return (run.prep,)
+
+    def shares(self, run: Run) -> tuple[str, ...]:
+        """Return the rounds' reagents the rounds take: the destination, not the working vector."""
+        return (run.destination_reagent, SELECTIVE, PREP_KIT, CUVETTES)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware a round needs, which no reagent table covers."""
@@ -177,7 +184,9 @@ class Assembly(Protocol):
                 f"{last.coverage.colonies:,} colonies at the end",
                 f"{last.coverage.coverage:.0f}x",
             ),
-            "Amino acids changed": (f"{standard.cost} over {len(standard.changes)} part end(s)"),
+            "Amino acids changed": (
+                f"{standard.cost} over {counted(len(standard.changes), 'part end')}"
+            ),
             "Designs read back": _read_back(run),
         }
 
@@ -195,7 +204,7 @@ def _read_back(run: Run) -> str:
     read = (
         f"{len(one.designs)}, every one"
         if one.floor == 0
-        else f"{len(one.designs)}, from {one.floor} fragment(s)"
+        else f"{len(one.designs)}, from {counted(one.floor, 'fragment')}"
     )
     return card(read, f"by {one.route.name}" if len(offered) == 1 else "by either route")
 
@@ -230,7 +239,8 @@ def _pool_step(run: Run) -> Step:
             "the whole total has to arrive in it.",
         ),
         expected=tuple(
-            f"{row.position}: one tube, {len(members[row.position])} member(s), at least "
+            f"{row.position}: one tube, {counted(len(members[row.position]), 'member')}, "
+            f"at least "
             f"{row.donor_digest.nanograms:,.0f} ng at {floor:g} ng/µL or above, "
             f"{number(row.donor_digest.pmol / len(members[row.position]))} pmol of each member."
             for row in bench
@@ -637,7 +647,8 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
             "part list, and the coding bases it carries are that member's.",
             f"The {scheme.barcode_block_length(run.barcode_length, len(positions))} bp block reads "
             f"{order}, each barcode separated from the last by the cloning scar "
-            f"{scheme.cloning_scar}, at {final.block.start}-{final.block.end} of the "
+            f"{scheme.cloning_scar}, at "
+            f"{span_text(final.block.start, final.block.end, len(final.product))} of the "
             "representative construct.",
         ),
         notes=(
