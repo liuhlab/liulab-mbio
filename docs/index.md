@@ -52,6 +52,14 @@ record = read_record("vector.dna")
 A primer pair can also be checked against a whole genome, so you learn where else it would
 amplify before you order it — see [check primers on a genome](genome-check.md).
 
+A second package, `liulab_synbio`, ships beside it in the same install. It holds the lab's own
+methods: it builds a barcoded library of every combination of several lists of proteins, one
+round at a time, and reads a plate of wells back one well at a time.
+
+```bash
+pixi run liulab_synbio igga plan project.json --out library/
+```
+
 [Put GFP into pUC19](golden-gate.md) walks through one job from end to end.
 [The same job by Gibson](gibson.md) does it with no enzyme at all, and
 [with two enzymes](restriction-ligation.md) does it the oldest way. To move a gene between
@@ -79,7 +87,8 @@ pixi run docs-build
 
 | Path | What it holds |
 | --- | --- |
-| `src/liulab_mbio/` | the package |
+| `src/liulab_mbio/` | the general package: sequences, enzymes, primers, maps, protocols and the four cloning methods |
+| `src/liulab_synbio/` | one lab method's own pipelines, built on the first |
 | `tests/` | the tests |
 | `docs/` | this site |
 | `scripts/check.sh` | the gate every commit has to pass |

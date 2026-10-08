@@ -1,4 +1,4 @@
-"""Molecular biology design tools: sequences, enzymes, primers and Golden Gate cloning.
+"""Molecular biology design tools: sequences, enzymes, primers, cloning and the bench.
 
 Only the version is re-exported. Import a name from the module that owns it --
 ``from liulab_mbio.io import read_record`` -- because names are spelled twice across modules

@@ -19,7 +19,7 @@ This needs recording because `cloning/goldengate/` sits next door and a reader w
 generalises. It does not. `Part` gives none of its fields a default, so `forward`, `reverse` and `report` are
 all required, and a synthesised part — which has no primers and no pair report — cannot be one.
 Nor will `_chain` build a product unless exactly one part begins with the overhang the part before
-ends with, where a part list is many parts sharing one entry overhang by design. So `library/` is
+ends with, where a part list is many parts sharing one entry overhang by design. So `igga/` is
 a second pipeline beside it, and the round boundary shapes everything above it rather than being a
 flag to flip later.
 
@@ -41,5 +41,5 @@ Rounds are what the method costs: a transformation, a growth and a prep each, an
 loss carries into the next, so library coverage is counted per round and not once at the end. A
 plan records every round's intermediate product, and the protocol covers every round. The product
 reports cut sites for the scheme's own enzymes, which is the design working rather than a defect.
-`library/` imports no cloning method: the overhang rules both need sit below every pipeline, per
+`igga/` imports no cloning method: the overhang rules both need sit below every pipeline, per
 `docs/adr/0007-cloning-methods.md`.
