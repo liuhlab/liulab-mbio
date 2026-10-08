@@ -239,6 +239,12 @@ SI states it as a limit, "the throughput is limited to 9,216 samples".
 a MinION the binding limit is therefore the barcode set, not sequencing output. On a Flongle the
 flow cell binds first, at 1,600 wells — about 17 plates.
 
+**But 9,216 is not what picks this route over barcode ligation (#473).** The ligation route
+addresses more wells, so capacity ranks the two the other way round. What separates them is one
+thermocycled reaction a well against an isothermal one, and a fixed per-run cost that only
+amortises over a large library. `docs/research/route-choice.md` section 2 has the sources, and
+section 2.4 lists the cost figures that may not be written for this route — LevSeq states none.
+
 ## 6. Where the depth floor is measured
 
 **Per well, after demultiplexing, and not per pool.** The unit is reads assigned to a well, and

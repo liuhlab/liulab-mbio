@@ -380,6 +380,15 @@ The method page's Route B, index PCR, is Long et al. 2025's. Its plate maps and 
 are already inventoried in `docs/research/synthesis-and-assembly-materials.md`; its per-well
 PCR numbers are in `docs/research/route-b-index-pcr.md`.
 
+**The two depth floors in the table above are not a strict-versus-lenient pair (#473).** Both
+were read on the same ONT kit and flow cell — SQK-LSK114 on FLO-MIN114 — so the platform is not
+what separates them. What does: 150 is a consensus-calling parameter in Qian's pipeline and 20 is
+a criterion on a human QC checklist; Qian counts reads surviving a Q15 and 400-1000 bp filter
+after a 10-cycle high-fidelity amplification of a pooled plate, while LevSeq counts alignments
+from a 35-cycle Taq reaction run in each well; and LevSeq's lower mark is simulated.
+`docs/research/route-choice.md` section 4 lays the two side by side. Nothing published says how
+150 was arrived at, and neither paper reports the depth its own run achieved.
+
 ---
 
 ## Stage 4 — The iGGA round
