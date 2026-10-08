@@ -178,6 +178,30 @@ def test_a_floor_counts_fragments(tmp_path):
         read_build(write(tmp_path, validate_from=-1, route="barcode ligation"))
 
 
+def test_only_the_index_pcr_route_names_an_index_plate(tmp_path):
+    """Naming the prepared plate is what closes the index marks, and only one route takes one."""
+    made = read_build(
+        write(
+            tmp_path,
+            validate_from=0,
+            route="index PCR",
+            primers="primers.tsv",
+            index_plate="index plate IDX-1",
+        )
+    )
+    assert made.index_plate == "index plate IDX-1"
+    with pytest.raises(ValueError, match="only the 'index PCR' route"):
+        read_build(
+            write(
+                tmp_path,
+                validate_from=0,
+                route="barcode ligation",
+                primers="primers.tsv",
+                index_plate="plate 1",
+            )
+        )
+
+
 def test_the_ap1_build_reads_every_design_back_by_index_pcr():
     made = read_build(DEMO)
 

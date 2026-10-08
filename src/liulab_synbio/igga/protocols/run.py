@@ -74,8 +74,6 @@ ROUND_EQUIPMENT: tuple[str, ...] = (
 POOL_ITEM = "oligo pool"
 BLOCKS_ITEM = "synthesised blocks"
 ARCHIVE_ITEM = "cargo archive plate"
-PICKED_ITEM = "clonal picked plate"
-CALLS_ITEM = "well calls"
 PREP_ITEM = "library prep, round {number}"
 LIBRARY_ITEM = "the library in its working vector"
 BLOCK_VECTOR_ITEM = "block vector {number}"
@@ -281,12 +279,12 @@ class Run:
     @property
     def picked(self) -> Handed:
         """One well a picked colony, which the read-back takes the archive to."""
-        return Handed(PICKED_ITEM, "one well a picked colony, each well one clone")
+        return dmx.PICKED_PLATE
 
     @property
     def calls(self) -> Handed:
         """A pass or a fail a well, which is the read-back's other product."""
-        return Handed(CALLS_ITEM, "a pass or a fail a well, and which design each well holds")
+        return dmx.WELL_CALLS
 
     @property
     def prep(self) -> Handed:

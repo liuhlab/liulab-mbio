@@ -15,7 +15,7 @@ from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_synbio import dmx
 from liulab_synbio.igga.figures import STUFFER_MARGIN
-from liulab_synbio.igga.protocols.protocol import Protocol, labelled
+from liulab_synbio.igga.protocols.protocol import Protocol
 from liulab_synbio.igga.protocols.run import Run
 
 #: What the page is headed, before the route that marks its wells is named after it.
@@ -48,13 +48,8 @@ class ReadBack(Protocol):
         )
 
     def steps(self, run: Run) -> tuple[Step, ...]:
-        """Return the route's own steps, under the four stages a reader works through them in."""
-        made = dmx.validation_steps(_validation_of(run), marking=_marking_figure(run))
-        return (
-            *(labelled(one, "Array and pick") for one in made[:2]),
-            *(labelled(one, "Mark every well") for one in made[2:-1]),
-            labelled(made[-1], "Call the wells"),
-        )
+        """Return the route's own steps, each under the section `dmx` puts it in."""
+        return dmx.validation_steps(_validation_of(run), marking=_marking_figure(run))
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:
         """Return the archive plate, and the lab stock the chosen route marks with."""
@@ -75,8 +70,7 @@ class ReadBack(Protocol):
 
     def plates(self, run: Run) -> tuple[Plate, ...]:
         """Return the plates the read-back fills, so every well a transfer names has one."""
-        one = _validation_of(run)
-        return (*one.picked, *(one.index if one.route is dmx.ROUTE_INDEX_PCR else ()))
+        return _validation_of(run).plates
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where the route's own numbers are read from."""

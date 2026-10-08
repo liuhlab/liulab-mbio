@@ -10,6 +10,7 @@ run and this module holds none.
 
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import replace
 
 from liulab_mbio.bench.readback import clean_colony_chance
 from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting
@@ -70,10 +71,17 @@ def chances(designs: Sequence[Design]) -> tuple[str, ...]:
     )
 
 
+#: What each step belongs under, in the order a reader works through them.
+ARRAY_SECTION = "Array and pick"
+MARK_SECTION = "Mark every well"
+CALL_SECTION = "Call the wells"
+
+
 def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
     """Return the steps that read these designs back, the route's own in the middle.
 
     The picking is shared and the calling is shared; between them sits the route's own marking.
+    Each step carries the section it belongs under, so every caller labels them alike.
 
     `marking` is drawn on the one step of the route that changes a molecule: the lysate ligation
     on one route, the index PCR on the other. The records it names belong to the run, which this
@@ -97,7 +105,12 @@ def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple
         if one.route is ROUTE_LIGATION
         else _index_pcr_steps(one, marking)
     )
-    return (_array_step(one), _pick_step(one), *route, _call_step(one))
+    return (
+        replace(_array_step(one), section=ARRAY_SECTION),
+        replace(_pick_step(one), section=ARRAY_SECTION),
+        *(replace(step, section=MARK_SECTION) for step in route),
+        replace(_call_step(one), section=CALL_SECTION),
+    )
 
 
 def _array_step(one: Validation) -> Step:

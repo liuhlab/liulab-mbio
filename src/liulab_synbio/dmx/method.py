@@ -709,6 +709,12 @@ class Validation:
                 left -= INDEX_WELLS
         return tuple(made)
 
+    @property
+    def plates(self) -> tuple[Plate, ...]:
+        """Every plate this read pours, so each well a transfer names has one drawn for it."""
+        rest = self.index if self.route is ROUTE_INDEX_PCR else self.compressed
+        return (*self.picked, *rest)
+
     def _only(self, route: Route) -> None:
         """Refuse a plate the other route never pours.
 
@@ -771,11 +777,19 @@ def validation(
     )
 
 
+#: What a read-back hands on, under the names a chain matches by. They are this method's and not
+#: one caller's: every run that reads a plate back leaves one clone a well and a verdict a well.
+PICKED_PLATE = Item("clonal picked plate", "one well a picked colony, each well one clone")
+WELL_CALLS = Item("well calls", "a pass or a fail a well, and which design each well holds")
+
+
 def marking_stock(one: Validation | None) -> Item | None:
     """Return the lab stock the chosen route marks with, which no protocol of a run makes.
 
     `None` where nothing is read back and no well is marked at all. Both routes take stock the
     lab prepares once and a run calls for, so it is a run's input wherever a read-back stands.
+    The index plate a build named is said beside it; the item keeps its own name, which is what
+    a chain hands it over by.
     """
     if one is None:
         return None
@@ -785,9 +799,10 @@ def marking_stock(one: Validation | None) -> Item | None:
             "the lab's own barcoding plasmids, one group a picked plate",
             storage="-20 °C",
         )
+    named = f"{one.index_plate}, " if one.index_plate else "the lab's own index primers, "
     return Item(
-        one.index_plate or "Barcoded index primer plate",
-        "the lab's own index primers, prepared once and called for by a run",
+        "Barcoded index primer plate",
+        f"{named}prepared once and called for by a run",
         spec=("1 µM each",),
         storage="-20 °C",
     )

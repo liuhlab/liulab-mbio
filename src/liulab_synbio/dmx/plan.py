@@ -4,11 +4,8 @@ A run reads designs the lab already holds, so there is no DNA to design and no r
 what a plan is here is the protocol someone works through, as a run of one through
 `liulab_mbio.cloning.plan.as_project`.
 
-One protocol and not three. Array and pick, mark, and call are the three stages the reader works
-through, and each is a `Step.section` of one page: the waits between them are a plate growing
-overnight and a sequencer running, which are hand-offs inside one job rather than three
-documents. A chain splits where the bench carries something from one sitting to another that
-another protocol could have made instead, and nothing here does.
+The run is one protocol in three sections, as `liulab_synbio.igga` has rendered these same steps
+since it first chained them.
 """
 
 import os
@@ -16,13 +13,14 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from liulab_mbio.cloning.plan import as_project
-from liulab_mbio.protocol.model import Item, Project, Protocol, Step, Topic, citing
+from liulab_mbio.protocol.model import Item, Project, Protocol, Topic, citing
 from liulab_mbio.protocol.render import write_project_files
 from liulab_synbio.dmx.build import Build, read_build, read_designs
 from liulab_synbio.dmx.method import (
+    PICKED_PLATE,
     REFERENCES,
-    ROUTE_INDEX_PCR,
     SOURCES,
+    WELL_CALLS,
     Design,
     Validation,
     marking_stock,
@@ -32,16 +30,6 @@ from liulab_synbio.dmx.method import (
     validation_materials,
 )
 from liulab_synbio.dmx.steps import validation_steps
-
-#: What the run hands over, under the names a reader of the page sees. One clone a well and a
-#: verdict a well are what a read-back leaves, whoever asked for it.
-PICKED_ITEM = "clonal picked plate"
-CALLS_ITEM = "well calls"
-
-#: The stage each step belongs to, in the order the reader works through them.
-ARRAY_SECTION = "Array and pick"
-MARK_SECTION = "Mark every well"
-CALL_SECTION = "Call the wells"
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,7 +82,7 @@ class ReadBackPlan:
         )
 
     def protocol(self) -> Protocol:
-        """Return the page someone works through, its three stages labelled."""
+        """Return the page someone works through, its three sections labelled."""
         one = self.validation
         stock = marking_stock(one)
         return citing(
@@ -108,14 +96,11 @@ class ReadBackPlan:
                 overview=self._overview(),
                 highlights=self._highlights(),
                 consumes=(self.archive, *((stock,) if stock else ())),
-                produces=(
-                    Item(PICKED_ITEM, "one well a picked colony, each well one clone"),
-                    Item(CALLS_ITEM, "a pass or a fail a well, and which design each well holds"),
-                ),
+                produces=(PICKED_PLATE, WELL_CALLS),
                 materials=validation_materials(one),
                 equipment=validation_equipment(one),
-                plates=(*one.picked, *(one.index if one.route is ROUTE_INDEX_PCR else ())),
-                steps=self._steps(),
+                plates=one.plates,
+                steps=validation_steps(one),
                 references=REFERENCES,
                 sources=dict(SOURCES),
             )
@@ -140,15 +125,6 @@ class ReadBackPlan:
         return Files(
             written.data,
             (written.index, *written.protocols, written.reagents, written.references),
-        )
-
-    def _steps(self) -> tuple[Step, ...]:
-        """Return the route's own steps, under the three stages a reader works through them in."""
-        made = validation_steps(self.validation)
-        return (
-            *(replace(one, section=ARRAY_SECTION) for one in made[:2]),
-            *(replace(one, section=MARK_SECTION) for one in made[2:-1]),
-            replace(made[-1], section=CALL_SECTION),
         )
 
     def _overview(self) -> dict[str, str]:
@@ -233,7 +209,7 @@ def plan_dmx(build: Build | str | os.PathLike[str]) -> ReadBackPlan:
     one = build if isinstance(build, Build) else read_build(build)
     designs = read_designs(one.designs)
     sized = validation(
-        one.chosen,
+        one.marking_route,
         designs,
         one.validate_from,
         selection=one.selection,

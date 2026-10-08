@@ -30,11 +30,13 @@ any method reading a construct back per well judges it the same way.
 from liulab_synbio.dmx.build import Build, read_build, read_designs
 from liulab_synbio.dmx.kit import CHAIN, GROUPS, KIT_ENV, Kit, KitBarcode, read_kit
 from liulab_synbio.dmx.method import (
+    PICKED_PLATE,
     REFERENCES,
     ROUTE_INDEX_PCR,
     ROUTE_LIGATION,
     ROUTES,
     SOURCES,
+    WELL_CALLS,
     Design,
     Route,
     Validation,
@@ -53,11 +55,13 @@ __all__ = [
     "CHAIN",
     "GROUPS",
     "KIT_ENV",
+    "PICKED_PLATE",
     "REFERENCES",
     "ROUTES",
     "ROUTE_INDEX_PCR",
     "ROUTE_LIGATION",
     "SOURCES",
+    "WELL_CALLS",
     "Build",
     "Design",
     "Files",

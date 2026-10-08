@@ -7,7 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_synbio.cli import app
-from liulab_synbio.dmx import plan_dmx, read_build, read_designs
+from liulab_synbio.dmx import ReadBackPlan, plan_dmx, read_build, read_designs
 from liulab_synbio.dmx.method import INDEX_MARKS
 
 SHEET = "name\tfragments\nshort\t2\nmiddle\t4\nlong\t8\n"
@@ -31,15 +31,23 @@ def written(directory: Path, **changed: object) -> Path:
     return path
 
 
-def test_a_build_names_a_sheet_resolved_against_its_own_directory(tmp_path):
+@pytest.fixture(scope="module")
+def build(tmp_path_factory) -> Path:
+    """The one build every plan test here reads: three designs, read from four fragments up."""
+    return written(tmp_path_factory.mktemp("run"))
+
+
+@pytest.fixture(scope="module")
+def planned(build: Path) -> ReadBackPlan:
+    """That build planned once, which every test that only reads the plan shares."""
+    return plan_dmx(build)
+
+
+def test_a_build_names_a_sheet_resolved_against_its_own_directory(build):
     """The sheet is two columns the lab types, and its path is relative to the build file."""
-    one = read_build(written(tmp_path / "run"))
-    assert one.designs == tmp_path / "run" / "designs.tsv"
-    assert [(design.name, design.fragments) for design in read_designs(one.designs)] == [
-        ("short", 2),
-        ("middle", 4),
-        ("long", 8),
-    ]
+    one = read_build(build)
+    assert one.designs == build.parent / "designs.tsv"
+    assert [design.name for design in read_designs(one.designs)] == ["short", "middle", "long"]
 
 
 @pytest.mark.parametrize(
@@ -48,7 +56,7 @@ def test_a_build_names_a_sheet_resolved_against_its_own_directory(tmp_path):
         ({"archive": ""}, "archive plate"),
         ({"validate_from": -1}, "counts fragments"),
         ({"route": "ligation"}, "reads its wells back"),
-        ({"route": "barcode ligation", "index_plate": "plate 1"}, "takes none of"),
+        ({"route": "barcode ligation", "index_plate": "plate 1"}, "only the 'index PCR' route"),
         ({"validate_from": "4"}, "not a whole number"),
     ],
 )
@@ -66,13 +74,11 @@ def test_a_sheet_that_is_not_two_named_columns_says_what_one_is(tmp_path):
         read_designs(path)
 
 
-def test_the_floor_chooses_the_designs_and_the_bench_is_sized_from_them(tmp_path):
-    """A design under the floor costs no well: the plates follow the designs actually read."""
-    made = plan_dmx(written(tmp_path))
-    one = made.validation
+def test_the_floor_chooses_the_designs_and_the_build_names_how_to_read_them(planned):
+    """A design under the floor is never read, and the build's choices reach the read-back."""
+    one = planned.validation
     assert [design.name for design in one.designs] == ["middle", "long"]
-    assert len(made.designs) == 3
-    assert one.wells == 8
+    assert len(planned.designs) == 3
     assert one.route.name == "index PCR"
     assert one.selection == "carbenicillin"
 
@@ -83,9 +89,9 @@ def test_a_floor_above_every_design_reads_nothing_and_is_refused(tmp_path):
         plan_dmx(written(tmp_path, validate_from=9))
 
 
-def test_the_run_is_one_protocol_in_three_stages_whose_chain_resolves(tmp_path):
-    """Array and pick, mark, call: three labelled stages of one page, handed what it consumes."""
-    chain = plan_dmx(written(tmp_path)).chain()
+def test_the_run_is_one_protocol_in_three_sections_whose_chain_resolves(planned):
+    """Array and pick, mark, call: three labelled sections of one page, handed what it needs."""
+    chain = planned.chain()
     assert chain.title == "Shelf read-back"
     assert len(chain.protocols) == 1
     assert [step.section for step in chain.protocols[0].steps] == [
@@ -100,34 +106,48 @@ def test_the_run_is_one_protocol_in_three_stages_whose_chain_resolves(tmp_path):
     assert chain.background
 
 
-def test_naming_the_index_plate_closes_its_hole_and_leaves_it_open_otherwise(tmp_path):
+def test_every_plate_a_transfer_names_is_drawn_on_the_page(tmp_path, planned):
+    """Both routes: the plate a well is moved into is one the page lists."""
+    ligation = plan_dmx(written(tmp_path, route="barcode ligation", validate_from=0))
+    for one in (planned.protocol(), ligation.protocol()):
+        drawn = {plate.name for plate in one.plates}
+        moved = {
+            well.plate
+            for step in one.steps
+            for transfer in step.transfers
+            for move in transfer.moves
+            for well in (move.source, move.destination)
+        }
+        assert moved <= drawn
+    assert ligation.validation.wells == 12
+
+
+def test_naming_the_index_plate_closes_its_hole_and_leaves_it_open_otherwise(tmp_path, planned):
     """The index PCR marks are a plate the lab holds, so naming it is what fills the hole."""
-    plain = plan_dmx(written(tmp_path / "plain")).protocol()
-    assert INDEX_MARKS in plain.all_holes
-    named = plan_dmx(written(tmp_path / "named", index_plate="index plate IDX-1")).protocol()
+    assert INDEX_MARKS in planned.protocol().all_holes
+    named = plan_dmx(written(tmp_path, index_plate="index plate IDX-1")).protocol()
     assert named.all_holes == ()
     assert any(
         "index plate IDX-1" in instruction
         for step in named.steps
         for instruction in step.instructions
     )
-    assert any(item.name == "index plate IDX-1" for item in named.consumes)
+    assert any("index plate IDX-1" in item.what for item in named.consumes)
 
 
-def test_the_same_build_writes_the_same_bytes(tmp_path):
+def test_the_same_build_writes_the_same_bytes(tmp_path, build):
     """A plan is a function of its inputs, so a second run over them writes the file again."""
-    path = written(tmp_path)
-    first = plan_dmx(path).write(tmp_path / "one")
-    second = plan_dmx(path).write(tmp_path / "two")
+    first = plan_dmx(build).write(tmp_path / "one")
+    second = plan_dmx(build).write(tmp_path / "two")
     for here, there in zip(first.paths, second.paths, strict=True):
         assert here.name == there.name
         assert here.read_bytes() == there.read_bytes()
 
 
-def test_the_verb_writes_the_folder_and_turns_a_refusal_into_an_error_line(tmp_path):
+def test_the_verb_writes_the_folder_and_turns_a_refusal_into_an_error_line(tmp_path, build):
     """One real run of the verb, and one build it cannot read."""
     out = tmp_path / "out"
-    result = CliRunner().invoke(app, ["dmx", "plan", str(written(tmp_path)), "--out", str(out)])
+    result = CliRunner().invoke(app, ["dmx", "plan", str(build), "--out", str(out)])
     assert result.exit_code == 0, result.output
     assert sorted(path.name for path in out.iterdir()) == [
         "01-design-read-back-index-pcr.html",

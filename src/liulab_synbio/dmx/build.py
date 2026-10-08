@@ -5,9 +5,8 @@ clonal stock, on which route, and how deep into the fragment counts to go — an
 method's own numbers already carry. `docs/adr/0010-method-in-code.md` draws the line, so every
 field here is named and documented rather than keyed by whatever a page is missing.
 
-A design on disk is a name and a fragment count on a two-column sheet, never a sequence: nothing
-in a plan reads a design's bases, and the fragment count a design's chance of a clean colony
-falls with is in no FASTA. That is what lets DMX read back anything a lab holds.
+A design on disk is a name and a fragment count on a two-column sheet, never a sequence, so DMX
+reads back anything a lab holds.
 """
 
 import json
@@ -81,15 +80,15 @@ class Build:
                 f"route is {self.route!r}, and a build reads its wells back on one of "
                 f"{', '.join(repr(one) for one in ROUTES)}"
             )
-        if self.index_plate and self.chosen is not ROUTE_INDEX_PCR:
+        if self.index_plate and self.route != ROUTE_INDEX_PCR.name:
             raise ValueError(
-                f"index_plate names a plate of barcoded primer pairs, which the {self.route} "
-                "route takes none of"
+                "index_plate names a plate of barcoded primer pairs, which only the "
+                f"{ROUTE_INDEX_PCR.name!r} route takes"
             )
 
     @property
-    def chosen(self) -> Route:
-        """The route this build named."""
+    def marking_route(self) -> Route:
+        """The route this build named, which marks every well it reads back."""
         return ROUTES[self.route]
 
 
@@ -149,13 +148,17 @@ def read_designs(path: str | os.PathLike[str]) -> tuple[Design, ...]:
         if not row.strip():
             continue
         cells = row.split("\t")
-        if len(cells) < 2 or not cells[0].strip():
-            raise ValueError(f"line {line} of {os.fspath(path)} names a design with no count")
+        if not cells[0].strip():
+            raise ValueError(f"line {line} of {os.fspath(path)} leaves the design unnamed")
+        if len(cells) < 2:
+            raise ValueError(
+                f"line {line} of {os.fspath(path)} names a design and no fragment count"
+            )
         count = cells[1].strip()
-        if not count.isdigit():
+        if not count.isdigit() or int(count) < 1:
             raise ValueError(
                 f"line {line} of {os.fspath(path)} gives {count!r} fragments, and a design is "
-                "built from a whole number of them"
+                "built from at least one whole piece"
             )
         found.append(Design(cells[0].strip(), int(count)))
     if not found:
