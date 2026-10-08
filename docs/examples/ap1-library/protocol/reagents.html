@@ -226,6 +226,12 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .hole-id { font-weight: 700; }
 .hole-kind { color: var(--muted); }
 .is-holed .num { color: var(--fail); }
+/* Gathered holes share one box, so each inside it is a line rather than a box of its own. */
+.hole-group > summary { cursor: pointer; }
+.hole-group .holes-here { margin-top: 0.4rem; gap: 0.2rem; }
+.hole-group .hole { border: none; border-radius: 0; background: none; padding: 0 0 0 0.7rem; border-left: 2px dashed var(--fail); }
+/* How much of the run a total covers is said beside it, and is not itself a figure. */
+tfoot .muted { font-weight: 400; }
 
 /* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
    laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
@@ -329,9 +335,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .caution, .expected { border: 1px solid var(--line); }
   /* The verdict word carries the badge on paper, where the fill does not print. */
   .check { border: 1px solid var(--line); }
-  /* Paper has no toggle, so the reasons print with the sheet. */
-  .oligo-checks:not([open]) > ul { display: block; }
-  .oligo-checks::details-content { content-visibility: visible; }
+  /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
+  .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
+  .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
@@ -342,7 +348,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="cbfa3a8577c5cb26reagents-html">
+<body data-protocol="74e65b79188d7df2reagents-html">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="01-primer-plates.html">Protocols</a><a href="reagents.html" aria-current="page">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
