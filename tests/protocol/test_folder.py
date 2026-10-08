@@ -194,16 +194,17 @@ def test_each_page_remembers_its_own_checks_under_the_key_the_index_can_read(
         assert keys[name] == page_key(protocol)
 
 
-def test_the_two_shared_pages_carry_their_heading_and_wait_for_their_contents(
+def test_the_two_shared_pages_say_so_where_no_protocol_of_the_run_lists_anything(
     folder: Path,
 ) -> None:
-    for name, heading in (
-        (REAGENTS_FILE, "Reagents and equipment"),
-        (REFERENCES_FILE, "References"),
+    for name, heading, empty in (
+        (REAGENTS_FILE, "Reagents and equipment", "reagent"),
+        (REFERENCES_FILE, "References", "cites a document"),
     ):
         [main] = pages(folder)[name].find_all("main", cls="page")
-        assert [n.tag for n in main.children if isinstance(n, Node)] == ["h1"]
+        assert [n.tag for n in main.children if isinstance(n, Node)] == ["h1", "p"]
         assert main.find_all("h1")[0].text == heading
+        assert empty in main.find_all("p")[0].text
 
 
 def test_a_protocol_written_on_its_own_carries_no_frame(tmp_path: Path) -> None:

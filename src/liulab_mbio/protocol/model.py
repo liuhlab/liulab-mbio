@@ -1110,6 +1110,25 @@ class Step:
         )
 
     @property
+    def held_seconds(self) -> float | None:
+        """How long this step holds the bench, where anything in it bounds the time.
+
+        Summed over its timers and its thermocycler programs. ``None`` where nothing bounds
+        one — a step with neither, or one whose only program runs to an open end — because a
+        step holding nothing is a question and never a zero.
+
+        Examples
+        --------
+        >>> Step("Rest the tube", timers=(Timer("rest", 600),)).held_seconds
+        600.0
+        >>> Step("Mix the reaction").held_seconds is None
+        True
+        """
+        bounded = [float(timer.seconds) for timer in self.timers]
+        bounded += [p.duration_seconds for p in self.programs if p.duration_seconds is not None]
+        return sum(bounded) if bounded else None
+
+    @property
     def pipetted(self) -> tuple[str, ...]:
         """What the step puts in a tube: every reaction table's component names."""
         return tuple(c.name for table in self.tables for c in table.components)
@@ -1197,6 +1216,22 @@ class Protocol:
         ):
             found.setdefault(hole.id, hole)
         return tuple(found.values())
+
+    @property
+    def held_seconds(self) -> tuple[float, int]:
+        """How long this protocol holds the bench, and how many of its steps hold nothing.
+
+        One place computes it, so a protocol's own page and the schedule a project draws can
+        never disagree. A step nothing times is counted, never summed as a zero.
+
+        Examples
+        --------
+        >>> steps = (Step("Mix"), Step("Rest", timers=(Timer("rest", 60),)))
+        >>> Protocol("Demo", steps=steps).held_seconds
+        (60.0, 1)
+        """
+        held = [step.held_seconds for step in self.steps]
+        return sum((one for one in held if one is not None), 0.0), held.count(None)
 
     def rules_for(self, step: Step) -> tuple[tuple[Material, Rule], ...]:
         """Return each rule that bears on `step`, with the material carrying it.
