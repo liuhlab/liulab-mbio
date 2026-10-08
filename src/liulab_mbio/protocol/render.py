@@ -626,6 +626,9 @@ def _item_named(item: Item) -> str:
 #: because how long a vendor takes is whatever they say and no column is wide enough for it.
 SCHEDULE_COLUMNS = ("Steps", "Held", "Hands-on", "Unattended", "Holding nothing")
 
+#: Which of those columns is a duration rather than a count, so a figure knows how to read.
+SCHEDULE_DURATIONS = (1, 2, 3)
+
 
 def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
     """Return the run's time plan as a table, with a hole wherever nothing states a number.
@@ -635,6 +638,10 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
     timers and thermocycler programs the steps already hold; hands-on is stated or it is a hole,
     and the unattended share is the difference wherever a step states both. A column nothing
     states a number in is left out, and named once under the table.
+
+    A row is a place of the run, not a page, so the table counts what the rest of the page
+    counts. The ways of one job stand under their place, and the place carries what they take as
+    a span: the bench does one of them, and no single figure across two was ever measured.
     """
     if not folder.pages:
         return ""
@@ -643,12 +650,8 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
     for time in times:
         totals = totals.and_(time)
     shown = tuple(i for i, column in enumerate(totals.columns()) if column is not None)
-    rows = "".join(
-        f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
-        f'{time.cells(shown)}</tr><tr class="wait-row"><td colspan="{len(shown) + 1}">'
-        f"{_waiting(time.waits, sources)}</td></tr>"
-        for page, time in zip(folder.pages, times, strict=True)
-    )
+    places = by_place(tuple(zip(folder.pages, times, strict=True)), lambda pair: pair[0].choice)
+    rows = "".join(_schedule_place(group, shown, sources) for group in places)
     head = "<th>Protocol</th>" + "".join(
         f'<th class="num">{escape(SCHEDULE_COLUMNS[i])}</th>' for i in shown
     )
@@ -660,7 +663,13 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
         if missing
         else ""
     )
-    total, part = _total(times, totals, shown)
+    spans = (
+        " A job offering several ways spans them, low to high, with the ways under it: the "
+        "bench does one."
+        if any(len(group) > 1 for group in places)
+        else ""
+    )
+    total, part = _total(places, shown)
     return (
         '<section class="block schedule" id="schedule">\n<h2>Schedule</h2>\n'
         '<div class="scroll"><table class="schedule"><thead><tr>'
@@ -668,24 +677,80 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
         f"<tfoot><tr><th>Total</th>{total}</tr></tfoot></table></div>\n"
         "<p>A blank here is a number nobody has stated, never a zero. Most of this run is time "
         "nobody attends and nobody can date, so it is written down rather than drawn as a "
-        f"length.{left_out}{part}</p>\n</section>\n"
+        f"length.{left_out}{spans}{part}</p>\n</section>\n"
     )
 
 
-def _total(times: Sequence["_Time"], totals: "_Time", shown: tuple[int, ...]) -> tuple[str, str]:
+#: One place of the schedule: its pages, each with what that page's protocol is known to take.
+type _Place = Sequence[tuple[Page, "_Time"]]
+
+
+def _schedule_place(group: _Place, shown: tuple[int, ...], sources: str) -> str:
+    """Return one place of the run: a protocol's row, or the ways of one job under their span."""
+    rows = "".join(
+        f"<tr{' class="schedule-way"' if len(group) > 1 else ''}>"
+        f'<td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
+        f'{time.cells(shown)}</tr><tr class="wait-row"><td colspan="{len(shown) + 1}">'
+        f"{_waiting(time.waits, sources)}</td></tr>"
+        for page, time in group
+    )
+    if len(group) == 1:
+        return rows
+    job = escape(_opening(group[0][0].choice))
+    return (
+        f'<tr class="schedule-choice"><td><span class="choice-job">{job}</span></td>'
+        f"{_across(group, shown)}</tr>{rows}"
+    )
+
+
+def _across(group: _Place, shown: tuple[int, ...]) -> str:
+    """Return a place's own cells, each column spanned across its ways, low to high.
+
+    A span states what each way takes and invents nothing between them; one figure for two ways
+    would be a number nobody measured, and the longest of them discards the other.
+    """
+    hole = f'<span class="hole-none">{NO_NUMBER}</span>'
+    cells = []
+    for i in shown:
+        said = [value for _, time in group if (value := time.values()[i]) is not None]
+        figure = (
+            f"{_number(i, min(said), max(said))}{_over(len(said), len(group), 'way')}"
+            if said
+            else hole
+        )
+        cells.append(f'<td class="num">{figure}</td>')
+    return "".join(cells)
+
+
+def _number(column: int, low: float, high: float) -> str:
+    """One column's number, or the span two ways put it between, printed once where they agree."""
+    first, last = (
+        (_duration(low), _duration(high))
+        if column in SCHEDULE_DURATIONS
+        else (f"{round(low)}", f"{round(high)}")
+    )
+    return first if first == last else f"{first} to {last}"
+
+
+def _total(places: Sequence[_Place], shown: tuple[int, ...]) -> tuple[str, str]:
     """Return the footer's cells, and the sentence to add under the table where one is partial.
 
     A total of a column some protocol states nothing in is not what the run takes, and a reader
-    plans a week around it. So it carries how many protocols it covers, beside the number.
+    plans a week around it. So it carries how many places it covers, beside the number, in the
+    same count the rest of the page prints. A place whose ways differ puts the total between two
+    numbers, and a place one of whose ways states nothing is not covered.
     """
-    columns = totals.columns()
     cells = []
     partial = False
     for i in shown:
-        covered = sum(1 for time in times if time.columns()[i] is not None)
-        partial = partial or covered < len(times)
+        low, high, covered = 0.0, 0.0, 0
+        for group in places:
+            said = [value for _, time in group if (value := time.values()[i]) is not None]
+            covered += len(said) == len(group)
+            low, high = low + min(said, default=0.0), high + max(said, default=0.0)
+        partial = partial or covered < len(places)
         cells.append(
-            f'<td class="num">{columns[i] or ""}{_over(covered, len(times), "protocol")}</td>'
+            f'<td class="num">{_number(i, low, high)}{_over(covered, len(places), "protocol")}</td>'
         )
     part = " A total that covers only part of the run says so beside it." if partial else ""
     return "".join(cells), part
@@ -744,6 +809,20 @@ class _Time:
             _taken(self.hands_on, self.hands_said, self.steps),
             _taken(self.unattended, self.unattended_said, self.steps),
             str(self.blank),
+        )
+
+    def values(self) -> tuple[float | None, ...]:
+        """Return each column's bare number, or ``None`` where nothing stated one.
+
+        What `columns` prints, before it is worded: a span and a total are arithmetic, so they
+        read the numbers rather than the sentences built from them.
+        """
+        return (
+            float(self.steps),
+            self.held if self.steps > self.blank else None,
+            self.hands_on if self.hands_said else None,
+            self.unattended if self.unattended_said else None,
+            float(self.blank),
         )
 
 

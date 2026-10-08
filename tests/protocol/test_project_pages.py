@@ -556,6 +556,66 @@ def test_the_flow_chart_draws_one_box_for_a_choice_and_hands_on_what_every_way_l
     assert said["well calls"] == "from whichever way to read every well back you did"
 
 
+def timed(title: str, held: int, hands: int | None = None, choice: str = "") -> Protocol:
+    """One protocol of one step, holding `held` seconds and standing over `hands` of them."""
+    return Protocol(
+        title,
+        choice=choice,
+        steps=(Step("Do it", timers=(Timer("hold", held),), hands_on_seconds=hands),),
+    )
+
+
+def timing() -> Project:
+    """A run of three places whose middle one offers two ways, each taking its own time."""
+    return Project(
+        "DMX",
+        protocols=(
+            timed("Pick the colonies", 600, 60),
+            timed("Barcode ligation", 3600, 300, JOB),
+            timed("Index PCR", 7200, 120, JOB),
+            timed("Report", 300),
+        ),
+    )
+
+
+def test_the_schedule_gives_a_choice_one_row_spanning_the_ways_standing_under_it() -> None:
+    """The bench does one way, so one figure across two would be a number nobody measured."""
+    run = timing()
+    index = parse(render_index(run, folder_of(run)))
+    rows, _ = schedule(index)
+    assert [row[0] for row in rows[1:-1]] == [
+        "Pick the colonies",
+        "Read every well back",
+        "Barcode ligation",
+        "Index PCR",
+        "Report",
+    ]
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][1:3] == ["1", "1 h to 2 h"]
+    assert [row[2] for row in rows[3:5]] == ["1 h", "2 h"]
+    [block] = index.find_all("section", cls="schedule")
+    assert "A job offering several ways spans them, low to high" in block.text
+
+
+def test_the_schedule_total_spans_the_ways_and_counts_the_places_of_the_run() -> None:
+    """The page says protocol 2 of 3 everywhere else, so a total over part of it says 3 too."""
+    run = timing()
+    index = parse(render_index(run, folder_of(run)))
+    rows, _ = schedule(index)
+    assert rows[-1][1:3] == ["3", "1 h 15 min to 2 h 15 min"]
+    # Nothing states what the last protocol takes by hand, and that is one place of three.
+    assert rows[-1][3] == "3 min to 6 min over 2 of 3 protocols"
+
+
+def test_a_choice_whose_ways_take_the_same_time_prints_that_time_once() -> None:
+    run = Project("DMX", protocols=(timed("A", 3600, choice=JOB), timed("B", 3600, choice=JOB)))
+    index = parse(render_index(run, folder_of(run)))
+    rows, _ = schedule(index)
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][2] == "1 h"
+    assert rows[-1][2] == "1 h"
+
+
 def test_the_index_says_which_name_the_chain_hands_nobody(index: Node) -> None:
     """A verdict the audit computes reaches no reader unless the index draws its detail too."""
     [said] = [one for one in index.find_all("p", cls="check-detail") if "handoffs" in one.text]
