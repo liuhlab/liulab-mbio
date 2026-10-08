@@ -8,6 +8,7 @@ from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
     Component,
+    Figure,
     Oligo,
     Plate,
     Protocol,
@@ -321,3 +322,32 @@ def test_a_plate_says_its_kind_count_and_drops_the_legend_past_ten() -> None:
 
     assert not figure.find_all("ul", cls="plate-legend")
     assert "11 kinds" in figure.find_all("figcaption")[0].text
+
+
+def _drawn(caption: str) -> Protocol:
+    figure = Figure(("pUC19.dna",), caption, span=(400, 700), highlight=("MCS",))
+    return Protocol("Clone", steps=(Step("Cut the vector", figures=(figure,)),))
+
+
+def test_a_steps_figure_draws_the_record_it_names(data_dir: Path) -> None:
+    """A figure is a spec the page draws, so the map follows the record it names."""
+    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
+
+    [figure] = page.find_all("figure", cls="map")
+
+    assert figure.find_all("svg")
+    assert "drawing" in figure.attrs["class"]
+    assert figure.find_all("figcaption")[0].text == "pUC19, cut at the MCS"
+
+
+def test_a_figure_reads_its_record_from_beside_the_page(data_dir: Path, tmp_path: Path) -> None:
+    """A pipeline writes the records, the data and the page into one directory."""
+    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    path = write_html(_drawn("pUC19"), tmp_path / "protocol.html")
+    assert "<svg" in path.read_text(encoding="utf-8")
+
+
+def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path: Path) -> None:
+    one = Protocol("Clone", steps=(Step("Cut", figures=(Figure(("gone.dna",), "The vector"),)),))
+    with pytest.raises(FileNotFoundError, match=r"step 1 'Cut'.*gone\.dna"):
+        render_html(one, base=tmp_path)

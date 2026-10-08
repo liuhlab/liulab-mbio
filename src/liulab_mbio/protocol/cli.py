@@ -32,7 +32,9 @@ def render(
     except ValueError as error:
         typer.echo(f"error: {source}: {error}", err=True)
         raise typer.Exit(1) from error
-    typer.echo(str(write_html(protocol, output or source.with_suffix(".html"))))
+    out = output or source.with_suffix(".html")
+    # A figure's record sits beside the protocol it was read from, wherever the page is written.
+    typer.echo(str(write_html(protocol, out, base=source.parent)))
 
 
 def _folder(source: Path) -> Path | None:

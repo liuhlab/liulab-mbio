@@ -15,13 +15,14 @@ from importlib.resources import files
 from pathlib import Path
 
 from liulab_mbio.checks import Status
-from liulab_mbio.plot.drawing import draw_plate
+from liulab_mbio.plot.drawing import draw_map, draw_plate
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS
 from liulab_mbio.plot.page import font_face
 from liulab_mbio.protocol.model import (
     Bill,
     Check,
     Citation,
+    Figure,
     Gel,
     Hole,
     Material,
@@ -165,15 +166,30 @@ def page_name(place: int, title: str) -> str:
     return f"{place:02d}-{slug}.html" if slug else f"{place:02d}.html"
 
 
-def render_html(protocol: Protocol, *, folder: Folder | None = None, here: str = "") -> str:
+def render_html(
+    protocol: Protocol,
+    *,
+    folder: Folder | None = None,
+    here: str = "",
+    base: str | os.PathLike[str] | None = None,
+) -> str:
     """Return `protocol` as one HTML page with its styles and script inline.
 
     The page loads nothing over the network, remembers check marks and reaction counts in the
     browser's local storage when it can, and prints without its controls. Given the `folder` it
     stands in and its own address in it, the page gains the run's nav bar, a column either side
     and a line naming its neighbours, and the line prints with it.
+
+    A `Figure` names its record by a path relative to `base`, the directory the protocol was read
+    from; the current directory where nobody says.
+
+    Raises
+    ------
+    FileNotFoundError
+        If a figure's record is not there, naming the step and the path.
     """
     place = _place(folder, here) if folder else ""
+    beside = Path() if base is None else Path(base)
     body = "".join(
         [
             _header(protocol, toc=folder is None, place=place),
@@ -181,7 +197,7 @@ def render_html(protocol: Protocol, *, folder: Folder | None = None, here: str =
             _oligos(protocol.oligos),
             _plates(protocol),
             _bill(protocol.bill),
-            *(_step(n, step, protocol) for n, step in enumerate(protocol.steps, 1)),
+            *(_step(n, step, protocol, beside) for n, step in enumerate(protocol.steps, 1)),
             _holes(protocol),
             _sources(protocol),
             _references(protocol.references),
@@ -191,14 +207,23 @@ def render_html(protocol: Protocol, *, folder: Folder | None = None, here: str =
 
 
 def write_html(
-    protocol: Protocol, path: str | os.PathLike[str], *, folder: Folder | None = None
+    protocol: Protocol,
+    path: str | os.PathLike[str],
+    *,
+    folder: Folder | None = None,
+    base: str | os.PathLike[str] | None = None,
 ) -> Path:
     """Write `render_html(protocol)` to `path` as UTF-8 and return the path.
 
-    Inside a `folder`, the file's own name is the address the other pages link it by.
+    Inside a `folder`, the file's own name is the address the other pages link it by. A figure's
+    record is read from `base`, and from beside the page where nobody says: a pipeline writes the
+    records, the data and the page into one directory.
     """
     out = Path(path)
-    out.write_text(render_html(protocol, folder=folder, here=out.name), encoding="utf-8")
+    page = render_html(
+        protocol, folder=folder, here=out.name, base=out.parent if base is None else base
+    )
+    out.write_text(page, encoding="utf-8")
     return out
 
 
@@ -710,6 +735,34 @@ def _plate(one: Plate) -> str:
     )
 
 
+def _figure(figure: Figure, base: Path, where: str) -> str:
+    """One record drawn as a map and inlined, as `_plate` inlines a plate.
+
+    Laid out here and never stored, so the figure follows the design it is drawn from.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the record is not there, naming the step and the path.
+    """
+    (named,) = figure.records
+    path = base / named
+    if not path.is_file():
+        raise FileNotFoundError(f"{where}: no record at {path} to draw")
+    drawn = draw_map(
+        path,
+        region=figure.span,
+        highlight=figure.highlight,
+        linear=figure.linear,
+        sequence_view=figure.sequence_view,
+        enzymes=figure.enzymes,
+    )
+    return (
+        f'<figure class="drawing map">{drawn.element()}'
+        f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption></figure>\n"
+    )
+
+
 def _transfer(transfer: Transfer) -> str:
     """Return a transfer as a table: where each thing goes, so no step describes it."""
     rows = "".join(
@@ -799,7 +852,7 @@ def _sources(protocol: Protocol) -> str:
     return f'<section class="block sources">\n<h2>Sources</h2>\n<ul>{items}</ul>\n</section>\n'
 
 
-def _step(n: int, step: Step, protocol: Protocol) -> str:
+def _step(n: int, step: Step, protocol: Protocol, base: Path) -> str:
     key = f"step-{n}"
     parts = [
         f'<section class="step" id="{key}">\n<h2 class="step-title"><label>'
@@ -817,6 +870,7 @@ def _step(n: int, step: Step, protocol: Protocol) -> str:
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
+    parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
     parts += [_table(f"{key}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
     parts += [_program(p) for p in step.programs]
     parts += [_transfer(t) for t in step.transfers]
