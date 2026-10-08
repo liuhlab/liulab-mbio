@@ -34,8 +34,8 @@ rows carry the directory's retrieval window instead.
 **Measurements.** Section 5 carries every number the review computed, with what it was computed
 over. A number with no source is not in this note and does not belong in the method page.
 
-**The demo project.** `docs/research/ap1-demo-project.md` specifies one real project against the
-method page and answers section 6's open decisions for that project alone. Nothing it decides is
+**The demo build.** `docs/research/ap1-demo-project.md` specifies one real build against the
+method page and answers section 6's open decisions for that build alone. Nothing it decides is
 a default here.
 
 **Paths.** Downloaded files are named in section 7 so the provenance survives the file. They
@@ -380,7 +380,7 @@ oligo, between P1 and the fragment and between the fragment and P2, which is the
 
 ### 6.2 The padding rule — DAD-GGA-DMX
 
-**Decided in #257: pad every oligo to the project's one oligo length.** Filler sits between the
+**Decided in #257: pad every oligo to the build's one oligo length.** Filler sits between the
 3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is
 screened for the eight enzyme motifs, for the orthogonal primer sites, and at both of its
 junctions for a motif the join creates.
@@ -397,7 +397,7 @@ reach an ssDNA oligo pool, which is ordered against no spread rule at all (secti
 option reaches the same uniform oligo by a different route and differs only in where the filler
 sits. Binning buys nothing at 153 oligos and costs a second pool and a second PCR1.
 
-**The oligo length itself stays a project input**, so this is a method rule with one project
+**The oligo length itself stays a build input**, so this is a method rule with one build
 number in it, not a method constant.
 
 **Rejected here, and recorded because the argument looked good:** moving the filler outboard of
@@ -421,7 +421,7 @@ stub length to matter to.
 the reason the number is 96 rather than any other. Capacity is 35 × 34 = 1,190 batches, far
 past any library this method reaches. An even three-way split was supported by nothing.
 
-A method constant, not a project choice: the plates are laid out once and a slot always means
+A method constant, not a build choice: the plates are laid out once and a slot always means
 the same pair. The set is **not yet ordered**, so the split is an order specification — and P3
 is the cheapest role to under-order, since 12 and 12 still give 144 batches.
 
@@ -435,9 +435,9 @@ physical — one inner-primer plate, one PCR2 plate. Above 96 genes a library di
 batches rather than full batches plus a remainder, which is what Freschlin's evenness
 measurement argues for.
 
-The pieces-per-PCR1 budget is a **project input**. No source gives a number, and gene length is
-what a project rationally chooses it from. The method ships the band Baker's own two anchors
-derive — 96 genes at one to eight oligos a gene is 96 to 768 pieces a PCR1 — and a project
+The pieces-per-PCR1 budget is a **build input**. No source gives a number, and gene length is
+what a build rationally chooses it from. The method ships the band Baker's own two anchors
+derive — 96 genes at one to eight oligos a gene is 96 to 768 pieces a PCR1 — and a build
 chooses inside it.
 
 The cap and the piece rule do not compete: 96 binds for short genes, the budget for long ones.
@@ -512,11 +512,11 @@ than by a file, and it lets a demultiplexer check an address instead of trusting
 generates the combinations randomly in a script and records them; section 4 carries the
 departure.
 
-**Colonies per design: four by default, and a project input.** Lund's four gave 343 of 458 genes
+**Colonies per design: four by default, and a build input.** Lund's four gave 343 of 458 genes
 error-free and it is the only measured anchor, but it is not fixed anywhere. The same table runs
 100% clean at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40% at 12 and 0% at 16, so four is
 right for a short gene and thin for a long one. The protocol states each design's predicted chance
-from that curve and that design's own fragment count, so a project raising the number reads the
+from that curve and that design's own fragment count, so a build raising the number reads the
 reason rather than guessing it. A design with no passing well is re-picked from the same archive
 spot before it is re-synthesised.
 
@@ -588,7 +588,7 @@ collection. iGGA yields a pool that goes to a pooled screen; no member is ever p
 re-identified, so the gate does not transfer. A multiple does not transfer between rounds
 either: one ratio against each round's own products is a different risk every round. What holds
 across rounds is the completeness — the chance no member of that round is missing — so that is
-what a project states, and `liulab_mbio.bench.coverage` computes each round's floor from it by
+what a build states, and `liulab_mbio.bench.coverage` computes each round's floor from it by
 Clarke & Carbon's rule. It refuses a default, and reports the multiple the floor works out at
 beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
 assumes every member equally represented, and synthesis skew breaks that.
@@ -619,11 +619,11 @@ change, not a rounding error.
 
 | Read | Forward | Reverse |
 | --- | --- | --- |
-| Representation, across the barcode block | the retained 34 bp stuffer — a method constant | the vector past the final `TTCC` — per project |
-| Linkage, design to barcodes | the vector, before the first `AGGA` — per project | the vector, past the final `TTCC` — per project |
+| Representation, across the barcode block | the retained 34 bp stuffer — a method constant | the vector past the final `TTCC` — per build |
+| Linkage, design to barcodes | the vector, before the first `AGGA` — per build | the vector, past the final `TTCC` — per build |
 
 The stuffer is constant across every member because the last round keeps it: the C position
-needs its barcode and a capping block carries none. The vector anchors are per project because
+needs its barcode and a capping block carries none. The vector anchors are per build because
 the working vector is the user's own — mbio designs a pair against a record, synbio asks for it
 with the method's constraints.
 
@@ -657,10 +657,10 @@ sequence. What is still unmeasured is the reaction, not the record.
 
 ### 6.12 When a design needs validation — DAD-GGA-DMX
 
-**Decided in #295: polyclonal stands, and a project that wants a read names a fragment-count
+**Decided in #295: polyclonal stands, and a build that wants a read names a fragment-count
 floor.** The three options this section carried were never three choices. Whether a design is
-read back is already a project choice — `CONTEXT.md` says so — so what was open was the default
-and how the project states it.
+read back is already a build choice — `CONTEXT.md` says so — so what was open was the default
+and how the build states it.
 
 **Polyclonal by default, because the common case never reads a member.** A library headed for a
 pooled screen takes its identity from that screen's own sequencing, so a per-design read buys a
@@ -669,19 +669,19 @@ exactly that reason, by correspondence with the group relayed to this repo. That
 not a rule**, which is why it sets a default and constrains nothing: Lund read all 458 of their
 genes, and the AP-1 demo reads all 72 of its designs.
 
-**One fragment-count floor replaces the fork.** A project states the fragment count at or above
+**One fragment-count floor replaces the fork.** A build states the fragment count at or above
 which a design is read. Omitted, nothing is read; `0` reads every design. The three options
 become its three settings, so none of them has to win.
 
-**The floor is the project's number, and none ships.** Lund's curve gives a design's chance of a
+**The floor is the build's number, and none ships.** Lund's curve gives a design's chance of a
 clean colony, not the chance worth paying to check. That second number needs what an error costs
 downstream, which is the screen, which the method cannot see — the same missing input that
 made #267 refuse a coverage multiple, and #299 a route threshold. A shipped floor would be an
-invented constant. The curve is what a project reads to pick the number, and the protocol prints
+invented constant. The curve is what a build reads to pick the number, and the protocol prints
 it per design.
 
 **It is a per-design quantity, which is why the switch is not a boolean.** The chance runs from
-certain to hopeless across one project's own designs, so a project-wide on-off would read every
+certain to hopeless across one build's own designs, so a build-wide on-off would read every
 two-fragment design that never needs it, or skip every long one that does.
 
 The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
@@ -693,7 +693,7 @@ The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
 open.** Joung et al. 2017 set it for a plasmid library counted by a barcode amplicon before a
 screen — under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at
 over 100 reads a member — and section 3.5 of `docs/research/vector-qc-panel.md` quotes it with
-its citation. Each is a default a project may tighten and may not loosen, as a read depth is in
+its citation. Each is a default a build may tighten and may not loosen, as a read depth is in
 `liulab_synbio.dmx`.
 
 **It transfers because the counted amplicon is length-matched.** The usual objection is that this
@@ -718,7 +718,7 @@ that one quantity and loses the other two.
   splits first.
   Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.
 - **The read-out route** — DAD-GGA-DMX. **Decided in #260: the toolkit models both**, as two
-  marking steps behind one judgement, and in #299: nothing picks between them, so a project
+  marking steps behind one judgement, and in #299: nothing picks between them, so a build
   names its route. The capacity ceiling once attributed to the
   primer set is wrong: forward and reverse barcodes combine freely and no dual index is needed,
   so Route B reaches 9,216 wells on 192 owned primers and Route A 24⁴ on the kit, and what binds

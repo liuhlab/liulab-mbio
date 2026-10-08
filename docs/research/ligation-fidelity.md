@@ -517,8 +517,8 @@ Strzelecki 2024 attributing it to duplex strength with no count matrix capturing
 
 **Nothing is designed on it.** `liulab_synbio.igga.standard` keeps ranking candidates on the
 enzyme's own shipped matrix. The profile is a file the user holds, so ranking on it would make the
-same project yield different overhangs depending on whether that file is present, and a design
-that is not reproducible from the project alone costs more than the overhangs it would save.
+same build yield different overhangs depending on whether that file is present, and a design
+that is not reproducible from the build alone costs more than the overhangs it would save.
 
 ## 9. Regeneration
 

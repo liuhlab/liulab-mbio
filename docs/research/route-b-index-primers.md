@@ -387,7 +387,7 @@ product from the kit, built from the kit's published sequences — which §1 say
 
 **What a stock costs: not answered.** No vendor price was retrieved from a primary source
 (§3.3). What can be said without one: the order is **192 oligos of 37 to 41 nt**, one synthesis,
-and it is reusable across every project because the annealing regions are vector constants rather
+and it is reusable across every build because the annealing regions are vector constants rather
 than cargo-specific. LevSeq's own practice is the comparison — they built 8 plates, not 96, and
 covered 768 wells; a lab that will never run more than a few plates at once need not buy 192
 primers to start.

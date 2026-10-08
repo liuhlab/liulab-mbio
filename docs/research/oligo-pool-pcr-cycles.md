@@ -42,7 +42,7 @@ quoted values, and the arithmetic is shown. Nothing here is from memory.
 
 The demo has 72 blocks and a `batch_size` of 96, so it makes **one** batch, and PCR1 is therefore
 a whole-pool amplification with a single universal primer pair. That is precisely the reaction
-every oligo-pool vendor protocol is written for. A project with more blocks than `batch_size`
+every oligo-pool vendor protocol is written for. A build with more blocks than `batch_size`
 splits PCR1 into several reactions, each pulling its own share out of the same tube.
 
 PCR2 is a different animal. Its template is an amplified, abundant product, and it selects one
@@ -63,7 +63,7 @@ Twist publishes two amplification guides for two different products. This method
 Source: Twist FRM-001034 REV 8 p. 2, and DOC-4060 REV 1.0 "General Notes and Precautions" and
 step 1. Two independently revised documents, identical numbers.
 
-Oligo length is a project decision. The AP-1 demo is 350 nt and the method's earlier default was
+Oligo length is a build decision. The AP-1 demo is 350 nt and the method's earlier default was
 300 nt, so both land in the top band: **12–14 cycles** is the sourced count for this design's
 PCR1.
 
@@ -211,7 +211,7 @@ pool's molar evenness. The rendered protocol should give the reason that is true
 
 **PCR1 — a sourced number, and a sourced rule beside it.**
 
-- Print the count from Twist's length band, chosen from the project's own `oligo_length`:
+- Print the count from Twist's length band, chosen from the build's own `oligo_length`:
   **12–14 cycles** at 151–350 nt, 10–12 at 100–150 nt, 6–10 at 20–100 nt. Cited to Twist
   FRM-001034 REV 8 and DOC-4060 REV 1.0. The count then follows the design rather than sitting
   fixed in the source.
