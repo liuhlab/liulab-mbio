@@ -129,6 +129,10 @@ RECORDS_AT = "../"
 #: What a vector's own records call the piece its cassette's enzyme cuts out.
 STUFFER_FEATURE = "internal stuffer"
 
+#: How many times its own length a map of the cassette draws either side of the stuffer, so the
+#: flanks it sits between are in the picture. A margin for the drawing, measured from nothing.
+STUFFER_MARGIN = 3
+
 #: The two nested PCRs that pull one block out of the pool, in the order the steps run them.
 POOL_STAGES: tuple[PoolStage, ...] = ("PCR1", "PCR2")
 
@@ -1398,33 +1402,39 @@ def _marking_figure(
 ) -> Figure | None:
     """Return what the route's own marking step works on: what a picked well holds.
 
-    The ligation route chains barcodes onto it four bases at a time, so it is drawn at base
-    level; the index route reads across the whole cassette, so that is drawn as a map.
+    The cassette its design sits in, with the stuffer lit. Drawn as a map and not at base
+    level on either route: the kit's barcodes chain on through its own chemistry and the index
+    pair's sites are the lab's, so neither route's cut is a cut this record spells.
     """
     found = _block_vector(block_records, block_vectors, at)
     if found is None:
         return None
     vector, name, path = found
-    if one.route is dmx.ROUTE_LIGATION:
-        return ligation_figure(
-            vector.record,
-            path=path,
-            junction=(vector.stuffer.start, vector.stuffer.end),
-            enzymes=(scheme.internal.name,),
-            caption=(
-                f"What a picked well holds: its design in {name}. The kit chains its "
-                f"{dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through {dmx.CHAIN[-1]}, reading on "
-                "the strand the cargo reads on."
-            ),
-            citation=VALIDATION_CITATION,
-        )
+    marks = (
+        f"The kit chains its {dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through "
+        f"{dmx.CHAIN[-1]}, reading on the strand the cargo reads on."
+        if one.route is dmx.ROUTE_LIGATION
+        else "The pair reads across it, and the band is that stretch plus the two marks the "
+        "well's address names."
+    )
     return Figure(
         (path,),
-        f"What a picked well holds: its design in {name}. The pair reads across the cassette, "
-        "and the band is that stretch plus the two marks the well's address names.",
+        f"What a picked well holds: its design in the cassette {name} carries. {marks}",
+        span=_cassette(vector.stuffer, len(vector.record)),
+        linear=True,
         highlight=_drawn_as(vector.record, STUFFER_FEATURE),
         citation=VALIDATION_CITATION,
     )
+
+
+def _cassette(stuffer: Segment, length: int) -> tuple[int, int]:
+    """Return the stretch a map of the cassette draws: the stuffer and its neighbourhood.
+
+    The margin is the stuffer's own length, so the cassette fills a known share of the picture
+    whatever a vector spells there. A linear record stops at its ends.
+    """
+    margin = (stuffer.end - stuffer.start) * STUFFER_MARGIN
+    return max(0, stuffer.start - margin), min(length, stuffer.end + margin)
 
 
 def _drawn_as(record: SequenceRecord, name: str) -> tuple[str, ...]:
