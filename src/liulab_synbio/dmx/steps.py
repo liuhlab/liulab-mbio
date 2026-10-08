@@ -26,7 +26,6 @@ from liulab_synbio.dmx.method import (
     INDEX_PCR_UL,
     INDEX_PLATEAU_CYCLES,
     INDEX_PRIMER_UL,
-    INDEX_TAQ_UNITS,
     INDEX_TOUCHDOWN_C,
     INDEX_TOUCHDOWN_CYCLES,
     INDEX_TOUCHDOWN_STEP_C,
@@ -275,7 +274,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
                     "a gel before the library prep.",
                 ),
             ),
-            holes=(INDEX_MARKS, INDEX_TAQ_UNITS),
+            holes=(INDEX_MARKS,),
         ),
         _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
     )

@@ -248,7 +248,6 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
         *pcrs,
         *blocks,
         "IDX1",
-        "IDX2",
         *linkage,
         *final,
     ]

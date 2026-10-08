@@ -246,10 +246,10 @@ def test_the_steps_print_each_design_chance_beside_the_floor():
 
 
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():
-    """The 192 index sequences are lab stock, and no source gives the Taq stock they amplify on."""
+    """The 192 index sequences are lab stock, which only the lab's own plate fills."""
     some = (method.Design("one", 2),)
     index_pcr = steps.validation_steps(sized(method.ROUTE_INDEX_PCR, some, 0))
-    assert [hole.id for step in index_pcr for hole in step.holes] == ["IDX1", "IDX2"]
+    assert [hole.id for step in index_pcr for hole in step.holes] == ["IDX1"]
     ligation = steps.validation_steps(sized(method.ROUTE_LIGATION, some, 0))
     assert [hole.id for step in ligation for hole in step.holes] == []
 
@@ -269,12 +269,12 @@ def test_the_plates_a_pick_fills_name_where_their_numbers_were_read():
 
 
 def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():
-    """Scaled back to a full plate the table is the SI's own, and the Taq carries no unit count."""
+    """Scaled back to a full plate the table is the SI's own, and the Taq carries its units."""
     table = method.index_pcr_reaction()
     assert round(sum(one.volume_ul for one in table.components), 2) == method.INDEX_PCR_UL
     assert table.mix_volumes(method.INDEX_WELLS)[:4] == (144.0, 28.8, 7.2, 57.6)
     taq = next(one for one in table.components if one.name.startswith("Taq"))
-    assert (taq.volume_ul, taq.stock, taq.final) == (0.05, "", "")
+    assert (taq.volume_ul, taq.stock, taq.final) == (0.05, "5 U/µL", "0.25 units")
 
 
 def test_the_index_pcr_touches_down_before_it_plateaus():

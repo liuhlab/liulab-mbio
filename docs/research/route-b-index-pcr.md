@@ -28,7 +28,8 @@ readings are given and neither is picked — section 7 collects them.
 | `api.figshare.com/v2/articles/28090968` | yes (`curl`) | the SI file's own licence |
 | `api.biorxiv.org/details/biorxiv/<doi>` | yes (`curl`) | the preprint's licence |
 | `pubs.acs.org/doi/<doi>` | **no**, HTTP 403 | nothing — the licence came from the three APIs instead |
-| `neb.com/en/-/media/catalog/specifications/<letter>/<digit>/<catalog>_v1.pdf` | partly | B9004S came through; no spelling of M0267 did |
+| `neb.com/en/-/media/catalog/specifications/<letter>/<digit>/<catalog>_v<n>.pdf` | yes (`curl`) | B9004S, and M0267 once the filename names all four pack sizes — section 9 |
+| `neb.com/en/products/<catalog>-…`, the HTML product page | **no**, HTTP 403 | nothing; the `/-/media/` path above is what answers instead |
 
 A value in a table is quoted from the cited document. A row marked **derived** is arithmetic on
 quoted values, and the arithmetic is shown. Nothing here is from memory, and no number was
@@ -44,6 +45,7 @@ rounded into a cleaner one.
 | The 24 nt barcode sequences (SI Tables S1–S4) | taken by the authors from the ONT native barcoding kit; ONT's own terms were not read here | **No** — and nothing in this note needs them. They stay user-held data, as #260 already decided for Route A's kit |
 | `fhalab/LevSeq` software | GPL-3.0 (GitHub licence API, 2026-10-06) | **No** — a copyleft licence this repository cannot take code from |
 | NEB product specification PS-B9004S v1.0, effective 10 Aug 2016 | © NEB, all rights reserved | **No** — cite, and re-enter single facts by hand, as `docs/research/restriction-ligation.md` §1 already set |
+| NEB product specification PS-M0267S/L/X/E v2.0, effective 12 Feb 2020 | © NEB, all rights reserved | **No** — same verdict; section 9 re-enters the one number by hand |
 
 The practical verdict: **every number below may be cited and re-entered by hand; no document,
 table or sequence set from these sources may be shipped as package data.** That is the same line
@@ -96,7 +98,7 @@ Every row is **derived**, by taking each component's share of the 1007.6 µL mix
 | --- | --- | --- |
 | ThermoPol Buffer | 1.0 µL | 1x. NEB PS-B9004S v1.0 gives B9004 as a 10X concentrate: 20 mM Tris-HCl, 10 mM (NH4)2SO4, 10 mM KCl, 2 mM MgSO4, 0.1% Triton X-100, pH 8.8 at 25 °C |
 | dNTPs | 0.2 µL of 10 mM each | 0.2 mM each |
-| Taq | 0.05 µL | units per reaction unknown — see [Open gaps](#8-open-gaps) |
+| Taq | 0.05 µL | 0.25 units. **Derived**: NEB PS-M0267S/L/X/E v2.0 gives M0267 as 5,000 units/mL, so 0.05 µL is 0.05 × 5 = 0.25 units, which is 25 units/mL in the well. The same specification's own PCR release assay runs 1.25 units in 50 µL, the same 25 units/mL |
 | DMSO | 0.4 µL | 4% (v/v) |
 | ddH2O | 5.35 µL | — |
 | Each primer | 2 µL at 1 µM | 0.2 µM, if the 1 µM plate is the one used — see §7 |
@@ -308,15 +310,8 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
 
 ## 8. Open gaps
 
-- **Units of Taq per reaction.** The SI gives 7.2 µL per plate, which is 0.05 µL per reaction,
-  and never gives the enzyme's concentration. NEB's specification for M0267 could not be read:
-  `pubs`-style blocks aside, every spelling tried under
-  `neb.com/en/-/media/catalog/specifications/m/0/` (`m0267s_l_v1.pdf`, `m0267s_v1.pdf`,
-  `m0267l_v1.pdf`, `m0267x_v1.pdf`, `m0267s_l_x_v1.pdf`, `m0267_v1.pdf`, `m0267s_l_v2.pdf`)
-  returned the same 108,707-byte generic page, and `r.jina.ai` returned an empty body for the
-  product page. The route itself works — `b/9/b9004s_v1.pdf` came through it on the same day — so
-  this is a filename that was not found, not a blocked route. A protocol can print the volume
-  without the unit count; a unit count must not be guessed.
+- ~~**Units of Taq per reaction.**~~ **Closed on 2026-10-08** by section 9, which reads NEB's own
+  specification: 5,000 units/mL, so 0.05 µL is 0.25 units.
 - **Gel-extraction recovery.** Not measured, so how much of a plate's pool reaches the flow cell
   is unknown.
 - **Scaling a part-plate run.** The master mix is 1.5 times what 96 wells need and the SI does not
@@ -348,6 +343,46 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
   read. If a number ever has to be redistributed rather than cited, the CC BY-NC preprint is where
   to check first.
 
+## 9. The Taq stock, read on 2026-10-08
+
+LevSeq never states what its 0.05 µL of Taq is worth, so the number has to come from the
+supplier. **NEB's Product Specification PS-M0267S/L/X/E v2.0, effective 12 Feb 2020, states
+`Concentration: 5,000 units/ml`.** Quoted from the PDF, which was downloaded and read as a
+`pdftotext -layout` dump, not from a search result or a product page.
+
+| Fact | Value | Where in the document |
+| --- | --- | --- |
+| Concentration | 5,000 units/ml | the specification's header block |
+| Unit definition | the enzyme incorporating 15 nmol of dNTP into acid-insoluble material in 30 min at 75 °C | the same block |
+| PCR release assay | 1.25 units in a 50 µL reaction | "PCR Amplification (5.0 kb Lambda DNA)" |
+| Storage | -20 °C, 24-month shelf life | the same block |
+
+**Derived:** 0.05 µL × 5,000 units/mL = 0.25 units a reaction, which is 25 units/mL in the 10 µL
+well — the same enzyme loading the specification's own PCR assay runs.
+
+Two further NEB documents corroborate it and neither was needed for the number. v1.0 of the same
+specification (effective 02 Dec 2015) gives the same 5,000 units/ml, and the certificate of
+analysis for lot 10089003 of M0267L gives `5,000 U/ml` against `Specification Version:
+PS-M0267S/L/X/E v2.0`.
+
+### Why earlier attempts failed, and what worked
+
+The earlier pass tried seven spellings under `neb.com/en/-/media/catalog/specifications/m/0/`
+and every one 404'd, because all of them named a subset of the pack sizes. The specification
+covers four pack sizes at once and its filename spells out all four:
+
+| Route | Result |
+| --- | --- |
+| `.../specifications/m/0/m0267s_l_x_e_v2.pdf`, plain `curl` with a browser user-agent | **200, 1,517,781 bytes of PDF** — the document quoted above |
+| `.../specifications/m/0/m0267s_l_x_e_v1.pdf` | 200; v1.0, same concentration |
+| `.../certificates-of-analysis/m/0/m0267l_v2_10089003.pdf` | 200; one lot's certificate |
+| `m0267_v1`, `m0267s_v1`, `m0267l_v1`, `m0267s_l_v1`, `m0267sl_v1`, `m0267s-l_v1`, `m0267e_v1`, and each with `_v2`, `_v3`, `_v1_0` | 302 to `/Error/404` |
+| `neb.com/en/products/m0267-…`, any locale, with or without full browser headers | **HTTP 403** — the HTML pages are bot-blocked; the `/-/media/` path is not |
+| `.../files/manuals/manualm0267.pdf` | 302 to `/Error/404` |
+
+So the lesson for the next NEB number: the HTML product page stays closed, the `/-/media/` path
+stays open, and a specification filename names **every** pack size the document covers.
+
 ## What this note supplies
 
 The reaction Route B has been missing: a 10 µL colony PCR of 7 µL master mix, 2 µL barcoded
@@ -356,7 +391,8 @@ primer mix and 1 µL overnight culture, cycled 35 times with a ten-cycle touchdo
 combined between plates by equal mass; and read to 20 reads a well. Every value above carries its
 citation, and the three that are disagreements carry both readings.
 
-It supplies no primer sequences, and it changes nothing in `src/`.
+It supplies no primer sequences. The one number it supplies to `src/` is the Taq stock of
+section 9, which `liulab_synbio.dmx.method.TAQ_UNITS_UL` carries.
 
 ## Sources
 
@@ -375,6 +411,11 @@ It supplies no primer sequences, and it changes nothing in `src/`.
 - New England Biolabs, *Product Specification: ThermoPol Reaction Buffer Pack*, B9004S,
   PS-B9004S v1.0, effective 10 Aug 2016. Read 2026-10-06 from
   `neb.com/en/-/media/catalog/specifications/b/9/b9004s_v1.pdf`.
+- New England Biolabs, *Product Specification: Taq DNA Polymerase with ThermoPol Buffer*,
+  M0267S/L/X/E, PS-M0267S/L/X/E v2.0, effective 12 Feb 2020. Read 2026-10-08 from
+  `neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf`. v1.0 of the same
+  specification, effective 02 Dec 2015, and the certificate of analysis for M0267L lot 10089003
+  were read the same day and agree.
 - `docs/research/bench-numbers.md` (issue #233) for every other stage, for the ONT library
   numbers this stage hands over to, and for the omission this note fills.
 - `docs/research/synthesis-and-assembly-materials.md` (issue #225) for the plate maps and primer

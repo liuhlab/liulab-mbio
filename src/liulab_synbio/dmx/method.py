@@ -78,6 +78,7 @@ MULTICHANNEL = "multichannel pipette"
 INDEX_PCR_UL = 10.0
 INDEX_MIX_UL = 7.0
 INDEX_PRIMER_UL = 2.0
+INDEX_TAQ_UL = 0.05
 INDEX_DENATURE_C = 95.0
 INDEX_TOUCHDOWN_C = (68.0, 63.5)
 INDEX_TOUCHDOWN_STEP_C = 0.5
@@ -103,6 +104,12 @@ DNTP_CATALOG = "NEB #N0447"
 TAQ_CATALOG = "NEB #M0267"
 DMSO_CATALOG = "MP Biomedicals #194819"
 
+#: What the Taq stock is worth, which LevSeq never states: NEB's own specification for M0267
+#: does, so `INDEX_TAQ_UL` carries a unit count rather than a hole.
+#: ``docs/research/route-b-index-pcr.md`` section 8.
+TAQ_UNITS_UL = 5.0
+TAQ_SOURCE_KEY = "PS-M0267"
+
 #: Colonies a 25 cm BioAssay plate carries before picking gets hard. Qian SI Day 2.
 BIOASSAY_COLONIES = 2500
 BIOASSAY_CATALOG = "Corning #431111"
@@ -122,6 +129,14 @@ SOURCES: dict[str, Source] = {
         "Long, Y. et al. 2025, LevSeq, Supporting Information",
         read_as="held under reference_docs/",
         date="2026-10-06",
+    ),
+    TAQ_SOURCE_KEY: Source(
+        "New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer",
+        edition="PS-M0267S/L/X/E v2.0, effective 12 Feb 2020",
+        url="https://www.neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf",
+        read_as="plain curl",
+        date="2026-10-08",
+        note="docs/research/route-b-index-pcr.md",
     ),
 }
 
@@ -716,28 +731,16 @@ def validation(
     return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
-#: The index PCR marks, which the package holds none of. The two annealing regions are published
-#: bind the DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab
-#: and holds, as the barcode ligation kit is. ``docs/research/route-b-index-primers.md`` §7.
+#: The index PCR marks, which the package holds none of. The published annealing regions bind the
+#: DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab holds,
+#: as the barcode ligation kit is. It names no ticket, because no ticket closes it: the plate is
+#: the user's own stock. ``docs/research/route-b-index-primers.md`` §7.
 INDEX_MARKS = Hole(
     "IDX1",
     "no index mark set is named for the barcoded primer pairs",
     "lab",
     where="index PCR, the pair marking one well",
     filled_by="the prepared primer plate the lab holds",
-    issue="liuhlab/liulab-mbio#225",
-)
-
-#: What 0.05 µL of Taq is worth. LevSeq states the volume and never the enzyme's concentration,
-#: and NEB's specification for M0267 could not be read, so the table prints the volume and the
-#: unit count stands empty. ``docs/research/route-b-index-pcr.md`` section 8.
-INDEX_TAQ_UNITS = Hole(
-    "IDX2",
-    "the units of Taq one index PCR takes",
-    "unread",
-    where="index PCR, its polymerase",
-    filled_by="NEB's own specification for M0267, which gives the stock concentration",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 
@@ -746,8 +749,8 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
 
     The first five lines are the master mix, each one well's share of the mix LevSeq states per
     plate; at `INDEX_OVERAGE` they scale back to that table. The pair and the culture go in a
-    well at a time, because each well takes its own pair. How many units 0.05 µL of Taq is
-    nobody published, so `INDEX_TAQ_UNITS` stands where the unit count would.
+    well at a time, because each well takes its own pair. LevSeq gives the Taq volume and never
+    the stock, so the unit count is `INDEX_TAQ_UL` at `TAQ_UNITS_UL`.
 
     Examples
     --------
@@ -755,13 +758,21 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
     10.0
     >>> index_pcr_reaction().mix_volumes(96)[:4]
     (144.0, 28.8, 7.2, 57.6)
+    >>> index_pcr_reaction().components[2].final
+    '0.25 units'
     """
     mix = Citation("LevSeq", "step 1")
     return ReactionTable(
         (
             Component("ThermoPol Reaction Buffer", 1.0, stock="10X", final="1X", citation=mix),
             Component("dNTP mix", 0.2, stock="10 mM each", final="0.2 mM each", citation=mix),
-            Component("Taq DNA Polymerase", 0.05, citation=mix),
+            Component(
+                "Taq DNA Polymerase",
+                INDEX_TAQ_UL,
+                stock=f"{TAQ_UNITS_UL:g} U/µL",
+                final=f"{INDEX_TAQ_UL * TAQ_UNITS_UL:g} units",
+                citation=mix,
+            ),
             Component("DMSO", 0.4, stock="100%", final="4% (v/v)", citation=mix),
             Component("Nuclease-free water", 5.35, citation=mix),
             Component(
@@ -911,10 +922,9 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 supplier="NEB",
                 catalog=TAQ_CATALOG.split("#")[-1],
                 storage="-20 °C",
-                amount="0.05 µL a reaction",
-                note="LevSeq gives the volume and no source gives the stock, so the reaction "
-                "carries no unit count",
-                citation=Citation("LevSeq", "step 1"),
+                amount=f"{INDEX_TAQ_UL:g} µL a reaction, {TAQ_UNITS_UL * 1000:,.0f} units/mL",
+                note=f"one reaction takes {INDEX_TAQ_UL * TAQ_UNITS_UL:g} units",
+                citation=Citation(TAQ_SOURCE_KEY, "Concentration"),
             ),
             Material(
                 "DMSO, molecular biology grade",
