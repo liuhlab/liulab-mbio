@@ -245,6 +245,18 @@ def test_the_steps_print_each_design_chance_beside_the_floor():
     assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in made[1].notes
 
 
+def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
+    """A page renders what a step says and nothing more, so Markdown reads as punctuation."""
+    some = (method.Design("one", 2),)
+    said = [
+        text
+        for route in (method.ROUTE_INDEX_PCR, method.ROUTE_LIGATION)
+        for step in steps.validation_steps(sized(route, some, 2))
+        for text in (*step.instructions, *step.notes, *step.expected)
+    ]
+    assert [text for text in said if "*" in text] == []
+
+
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():
     """The 192 index sequences are lab stock, which only the lab's own plate fills."""
     some = (method.Design("one", 2),)

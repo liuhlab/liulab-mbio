@@ -250,8 +250,9 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
             tables=(index_pcr_reaction(one.wells),),
             programs=(index_pcr_program(),),
             expected=(
-                "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and "
-                "every well of one plate takes that plate's own reverse mark.",
+                "One barcoded amplicon a well. Each well of a plate takes the forward mark its "
+                "own place in the plate names, and every well of one plate takes that plate's "
+                "own reverse mark.",
                 "One band a well, the design plus about 100 bp: the two marks, and the stretch "
                 "between the primer sites and the reading frame.",
             ),
