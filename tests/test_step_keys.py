@@ -87,13 +87,23 @@ def shipped(
     from liulab_mbio.cloning.gibson import plan_gibson
     from liulab_mbio.cloning.restriction import plan_restriction
 
-    from .cloning.gateway.records import destination_vector, entry_clone
+    from .cloning.gateway.records import (
+        attb_insert,
+        destination_vector,
+        donor_vector,
+        entry_clone,
+    )
 
     one_each = {
         "goldengate": plan.protocol(),
         "gibson": plan_gibson(puc19, gfp).protocol(),
         "restriction": plan_restriction(puc19, gfp).protocol(),
         "gateway": plan_gateway(entry_clone(gfp.sequence), destination_vector()).protocol(),
+        # Gateway's own second route, which runs two reactions and so builds its stop and its
+        # transformation twice. The LR plan above has warmed the primer caches, so it is cheap.
+        "gateway, BP then LR": plan_gateway(
+            attb_insert(gfp.sequence), destination_vector(), donor=donor_vector()
+        ).protocol(),
     }
     return tuple(one_each.items()) + igga_protocols(tmp_path_factory.mktemp("igga"))
 
