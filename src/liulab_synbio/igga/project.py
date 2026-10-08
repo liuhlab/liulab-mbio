@@ -285,11 +285,11 @@ class Build:
             )
 
     def _check_validation(self) -> None:
-        """Refuse a negative floor, an unknown route, one of the two alone, or unpickable cargo.
+        """Refuse a negative floor, an unknown route, one of the two alone, or unclonal cargo.
 
         The floor and the route travel together: a floor with no route says which designs are
         read and not how, and a route with no floor names a read nobody asked for. Whether
-        there is anything to read is DMX's own question, so `refuse_unclonal` answers it.
+        there is anything to read back at all is DMX's own question, not a build's.
         """
         if self.validate_from is not None and self.validate_from < 0:
             raise ValueError(
@@ -308,7 +308,7 @@ class Build:
             )
         if self.route is not None:
             refuse_unclonal(
-                "a block as the vendor ships it, which is what a build naming no primers orders",
+                "a block as the vendor ships it, which is what a build naming no primer set orders",
                 clonal=self.primers is not None,
             )
 

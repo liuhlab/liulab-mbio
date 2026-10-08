@@ -445,11 +445,8 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
 def refuse_unclonal(cargo: str, *, clonal: bool) -> None:
     """Refuse to read back cargo nobody can pick a colony from.
 
-    DMX reads clonal material: `liulab_synbio.dmx.steps` spots each design from its archive
-    plate, picks colonies off it and grows every pick under the destination's own selection.
-    Cargo that reaches the bench as DNA in a tube has none of that, and a plan over it asks for
-    an archive plate nobody pours. DMX takes any cargo and a design's name does not say which
-    kind it is, so the caller names its cargo and says.
+    DMX takes any cargo and a design's name does not say which kind it is, so the caller names
+    its cargo and says whether it arrives as colonies.
 
     Raises
     ------
@@ -459,9 +456,9 @@ def refuse_unclonal(cargo: str, *, clonal: bool) -> None:
     if clonal:
         return
     raise ValueError(
-        f"{cargo} has no colony to pick and no marker to select on, and DMX reads clonal "
-        "material: it spots each design from its archive plate, picks colonies off it and grows "
-        "every pick under the destination's own selection"
+        "DMX reads clonal material: it spots each design from its archive plate, picks colonies "
+        "off it and grows every pick under the destination's own selection. There is no colony "
+        f"to pick and no marker to select on in {cargo}"
     )
 
 

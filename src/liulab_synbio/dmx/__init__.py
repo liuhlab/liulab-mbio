@@ -11,6 +11,7 @@ barcoded primer pair. The picking, the pass rule and the reformat are shared; th
 the plate and the depth floor are the route's own. The two floors are not a strict and a lenient
 setting of one scale: one is where consensus calling starts, the other where a reader stops
 trusting a well, over different amplification and different read filters.
+`docs/research/route-choice.md` section 4 compares them.
 
 **A well's marks are arithmetic, not a recorded draw.** The address factorises across the
 barcode axes and one axis is the plate, so two plates on one flow cell are told apart by
