@@ -90,3 +90,13 @@ def test_a_suffix_nothing_writes_is_refused(tmp_path: Path) -> None:
 def test_a_row_label_short_of_its_rows_is_refused() -> None:
     with pytest.raises(ValueError, match="1 labels for 2 rows"):
         _ = draw_plate("plate", 2, 3, "A").layout
+
+
+def test_a_well_seated_past_the_last_column_is_refused() -> None:
+    with pytest.raises(ValueError, match="no well 'A4' on a 2 by 3 plate"):
+        _ = draw_plate("plate", 2, 3, "AB", seating={"A4": "water"}).layout
+
+
+def test_a_well_seated_past_the_last_row_is_refused() -> None:
+    with pytest.raises(ValueError, match="no well 'C1' on a 2 by 3 plate"):
+        _ = draw_plate("plate", 2, 3, "AB", seating={"C1": "water"}).layout

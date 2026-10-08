@@ -90,15 +90,17 @@ def layout(
     title
         Drawn above the grid.
     seating
-        Well name to what sits there. A well named nothing is drawn empty, and every distinct
-        content gets a fill of its own while there are no more kinds than `PALETTE` has
-        colours. Past that no fill tells two kinds apart and no legend is readable, so every
-        well is drawn empty and the legend is dropped.
+        Well name to what sits there, named as this array names its wells: a row label and a
+        1-based column. A well named nothing is drawn empty, and every distinct content gets a
+        fill of its own while there are no more kinds than `PALETTE` has colours. Past that no
+        fill tells two kinds apart and no legend is readable, so every well is drawn empty and
+        the legend is dropped.
 
     Raises
     ------
     ValueError
-        If the array has no wells, or there is not one label per row.
+        If the array has no wells, there is not one label per row, or a well is seated where
+        the array has none.
 
     Examples
     --------
@@ -111,6 +113,12 @@ def layout(
     if len(row_labels) != rows:
         raise ValueError(f"{len(row_labels)} labels for {rows} rows")
     held = seating or {}
+    # Every well is read by the name this array generates, so one it does not generate would be
+    # dropped from the drawing while still colouring the legend.
+    names = {f"{label}{column + 1}" for label in row_labels for column in range(columns)}
+    for well in held:
+        if well not in names:
+            raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
     kinds = tuple(dict.fromkeys(held.values()))
     fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
 
