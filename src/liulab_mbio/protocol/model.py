@@ -1749,7 +1749,9 @@ class Project:
         wrong: list[str] = []
         unhelped: list[str] = []
         said: list[str] = []
-        titled = {topic.title for topic in self.background}
+        # A topic is linked by the slug of its title, so that is what names it here: a
+        # title opening in capitals still carries the guidance a lowercase job asks for.
+        titled = {slug(topic.title) for topic in self.background}
         for group in by_place(self.protocols, lambda one: one.choice):
             job = group[0].choice
             if not job:
@@ -1767,7 +1769,7 @@ class Project:
                 )
             else:
                 said.append(f"{len(group)} ways to {job}, each leaving {_leaving(every)}.")
-            if job not in titled:
+            if slug(job) not in titled:
                 unhelped.append(f"Nothing on the overview says how to pick a way to {job}.")
         if wrong:
             return Check("choices", "fail", " ".join(wrong))

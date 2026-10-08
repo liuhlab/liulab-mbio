@@ -286,7 +286,7 @@ def test_the_demo_carries_both_read_back_routes_as_the_two_ways_of_one_job(plan)
         == "2 ways to read every well back, each leaving the same 2 things."
     )
     assert checks["handoffs"].status == "pass"
-    said = next(one for one in chain.background if one.title == "read every well back")
+    said = next(one for one in chain.background if one.title == "Read every well back")
     assert "Do one of them, never both." in said.body[0]
     assert [one.what for one in chain.inputs if "way only" in one.what] == [
         "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation "

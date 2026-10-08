@@ -238,8 +238,11 @@ ROUTES: dict[str, Route] = {
 
 #: The job both routes are a way of doing, in the words a bench reader uses for it. A run
 #: offering both titles its guidance with this, which is what puts each way's page one link
-#: from what to weigh.
+#: from what to weigh. Written to sit inside a sentence, so `READ_BACK_TITLE` opens a heading.
 READ_BACK = "read every well back"
+
+#: The same job where it opens a line: the guidance topic's own heading.
+READ_BACK_TITLE = READ_BACK[:1].upper() + READ_BACK[1:]
 
 
 def route_choice() -> Topic:
@@ -251,7 +254,7 @@ def route_choice() -> Topic:
     overtakes the other.
     """
     return Topic(
-        READ_BACK,
+        READ_BACK_TITLE,
         (
             "Both routes mark every well so that sequencing says which well a read came from, "
             "and both end with a pass or a fail for each well. Do one of them, never both.",

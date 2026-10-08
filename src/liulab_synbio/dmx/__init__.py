@@ -32,6 +32,7 @@ from liulab_synbio.dmx.kit import CHAIN, GROUPS, KIT_ENV, Kit, KitBarcode, read_
 from liulab_synbio.dmx.method import (
     PICKED_PLATE,
     READ_BACK,
+    READ_BACK_TITLE,
     REFERENCES,
     ROUTE_INDEX_PCR,
     ROUTE_LIGATION,
@@ -59,6 +60,7 @@ __all__ = [
     "KIT_ENV",
     "PICKED_PLATE",
     "READ_BACK",
+    "READ_BACK_TITLE",
     "REFERENCES",
     "ROUTES",
     "ROUTE_INDEX_PCR",
