@@ -57,6 +57,10 @@ price once, so it costs less per design the more designs share it. Index PCR run
 thermocycled reaction in every well, so a lot of wells need a lot of thermocyclers. How many
 wells each route reaches does not decide it: both reach far more than this library needs.
 
+Reading wells back is a job on its own too. [Reading the AP-1 cargo back](../ap1-readback/index.md)
+takes the archive plate this run leaves, and a list of design names, and reads those wells back
+with one command. It is a separate run, not a step of this chain.
+
 The names say the position: `N_JUN` fills N, `DBD_JUN` fills DBD, `C_JUN` fills C. No overhang,
 stuffer, barcode or codon is given. The planner chooses all four.
 

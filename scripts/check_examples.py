@@ -13,7 +13,7 @@ check never writes into `docs/examples/`.
 
 The generators are named below rather than discovered. One of them is a script rather than a
 documented command, and another writes files that `tests/synbio/igga/test_gate.py` reads as its
-known-good corpus; neither is reachable by reading a page. A fifth generator is a line added
+known-good corpus; neither is reachable by reading a page. Another generator is a line added
 here, and an example that grows a file fails here until `writes` names it. That is the check
 working: knowing what a command writes without running it is what no discovery rule can do.
 

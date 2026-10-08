@@ -20,7 +20,7 @@ write the same bytes.
 | File | What it is |
 | --- | --- |
 | [build.json](build.json) | what this run chose: the sheet, the plate it spots from, the way it marks a well, and how far down the list it goes |
-| [designs.tsv](designs.tsv) | 72 designs, one a row: a name, and how many pieces it was built from |
+| [designs.tsv](designs.tsv) | 72 designs, one a row: a name, and how many fragments it was built from |
 
 A design here is a name and a count, never a sequence. So any frozen stock a lab holds can be
 read back, whoever built it and however. Two columns anyone can type are the whole of it.
@@ -30,10 +30,10 @@ vector carries, kanamycin here. `index_plate` is what this lab calls its own pla
 primer pairs, and naming it is what stops the pages saying that set has no source. **Replace all
 three with your own before you run this.**
 
-`route` is one of the two ways a well is marked. `validate_from` is a floor on the piece count,
-and a design built from fewer pieces is left out. This run marks by index PCR and sets the floor
-at 2, so the 32 designs stitched from two pieces or more are read back and the 40 made in one
-piece are not. Set the floor to `0` to read every design on the sheet.
+`route` is one of the two ways a well is marked, barcode ligation or index PCR.
+`validate_from` is a floor on the fragment count, and a design built from fewer fragments is
+left out. This run marks by index PCR and sets the floor at 2, so the 32 designs stitched from
+two fragments or more are read back and the 40 made in one are not. Set the floor to `0` to read every design on the sheet.
 
 ## What comes out
 

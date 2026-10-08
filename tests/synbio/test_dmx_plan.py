@@ -189,5 +189,5 @@ def test_the_published_demo_plans_what_its_page_says():
     assert len(made.designs) == 72
     assert len(made.validation.designs) == 32
     assert made.validation.wells == 128
-    assert [plate.name for plate in made.validation.plates] == ["picked 1", "index 1", "index 2"]
-    assert not [hole for step in made.protocol().steps for hole in step.holes]
+    assert [plate.wells for plate in made.validation.plates] == [384, 96, 96]
+    assert made.protocol().all_holes == ()
