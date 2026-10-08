@@ -404,11 +404,11 @@ estimated, which is what #220 was asked for and has now done.
 All four counts in sections 4.3 and 4.4 moved when #257 corrected the span arithmetic. They are
 computed by the cargo designer, not typed here; #265 is where that lands.
 
-### 4.5 Cost — the two bands are close, and the pilot's own cost is still **open**
+### 4.5 Cost — the two bands are close, and the pool sits in the 101-500 tier
 
 Every figure here is a **list price with its date**. A list price is a reference, not a fact
-about what this build would pay. The two recorded, from the vendor's oligo-pool price table
-captured **2026-09-17**:
+about what this build would pay. The two recorded for the band comparison, from the vendor's
+oligo-pool price table captured **2026-09-17**:
 
 | Pool | Length band | List price | Per oligo |
 | --- | --- | --- | --- |
@@ -428,11 +428,12 @@ choice. The 301-350 band lists at exactly 1.25× the 251-300 band for the same 1
 272 / 222 = 1.225× buys almost all of that back. "350 costs 25% more" is true of the pool and
 false of the sequence.
 
-**The pilot's own cost is not known, and no tier figure stands in for it.** 152 oligos sit far
-below 18,000, the smallest pool size any price recorded here covers, so **this project's
-synthesis cost is open** — the figures above price a pool it is not ordering. The project
-exercises the design path, not the pool economics, and should share a pool with other designs if
-one is going out.
+**The pilot's own pool is priced.** The same capture bands pools from 2 oligos up, and 152 sit
+in its 101-500 tier, which lists at **$2,575** at 301-350 nt.
+`docs/examples/ap1-library/prices.csv` carries that figure as this build's oligo-pool row
+(#478). The 18,000-oligo rows above are the band comparison and not what this build pays. The
+build exercises the design path, not the pool economics, and should share a pool with other
+designs if one is going out.
 
 **Two things to flag rather than bury:**
 
@@ -822,9 +823,6 @@ Nothing here becomes a package default, and nothing here is guessed at.
   a 0.99 completeness and the package sizes every round for it. What representation a screen of
   this library would ask for is not settled, and a floor is not an answer to it. Closed by naming
   the screen, or by a source measuring diversity loss across an iGGA round.
-- **The synthesis cost.** 152 oligos sit far below 18,000, the smallest pool any recorded price
-  covers, so no price here is this project's. The list prices and the per-usable-base comparison
-  are section 4.5; neither stands in for the pilot's own cost.
 - **The orthogonal set's size**, 165 or 166. The 165 held are what the split uses.
 - **The MOI and the cell number at transduction.** The completeness floor gives the number of
   integrants wanted; the MOI that delivers them at mostly one integrant per cell is not fixed
