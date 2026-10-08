@@ -740,6 +740,10 @@ def _total(places: Sequence[_Place], totals: "_Time", shown: tuple[int, ...]) ->
     count the rest of the page prints; a place is covered where every way of it states the
     column. Where a job offers ways, how many steps the run has is a span too, so the figures
     stand alone and each protocol's own row keeps the steps behind them.
+
+    Where no place is covered in full the count reads zero beside a measured figure, and that
+    stands: the hole mark would deny a number a way did state, and a bare figure would claim
+    the whole run.
     """
     spanning = any(len(group) > 1 for group in places)
     cells = []

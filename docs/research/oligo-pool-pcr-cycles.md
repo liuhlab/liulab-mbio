@@ -231,7 +231,9 @@ Qian's 10-cycle Day 4.1 is a sequencing-amplicon PCR, not this. Freschlin's 35 i
 PCR. The honest instruction is the rule alone, with no printed count.
 
 PCR2's hole is **H30**. H27 and H28 were taken before this note reached code, and H29 records the
-polymerase caveat above; H31 is the first free id:
+polymerase caveat above. H31 to H34 have been taken since, in `igga/stages.py` and
+`scripts/build_working_vector.py`, so **H35** is the first free id; `bench-numbers.md` collects
+the holes and says which numbers are retired rather than free:
 
 | Field | Value |
 | --- | --- |
