@@ -23,7 +23,7 @@ _Avoid_: the library package, extension, plugin
 ### Pipeline
 
 One way in that plans a whole experiment from the records it is given: it picks the enzymes,
-designs the DNA, simulates the product and writes a **project** of bench protocols. Five ship --
+designs the DNA, simulates the product and writes a **project** of bench protocols. Five ship —
 `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga` — each the
 single entry point of its own subpackage. A module below one decides a detail of the design and
 is reached by its own path.
@@ -787,7 +787,7 @@ _Avoid_: index, tag, UMI, identifier
 
 ### Barcode kit
 
-The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member --
+The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member —
 `liulab_synbio.dmx.kit.KitBarcode` — is a plasmid carrying a group, an index and a UMI, and a
 well's marks are arithmetic from its address rather than a recorded draw. The sequences are not
 shipped: they are read from a copy the user holds. A member of this kit is not a **barcode**,
