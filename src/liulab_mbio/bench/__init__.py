@@ -5,7 +5,8 @@ A module that cites a source keeps it as its own `REFERENCES`; `REFERENCES` here
 re-exported.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
-- `reactions`: one reaction table, filled to volume, and what it refuses.
+- `reactions`: one reaction table, filled to volume, what it refuses, and the least DNA may
+  be concentrated at to fit.
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `goldengate`: NEB's Golden Gate enzymes, assembly reaction and cycling, which the Golden Gate
@@ -84,7 +85,13 @@ from liulab_mbio.bench.plates import (
     wells_of,
 )
 from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
-from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
+from liulab_mbio.bench.reactions import (
+    WATER,
+    dna_components,
+    fits,
+    floor_ng_ul,
+    reaction_table,
+)
 from liulab_mbio.bench.readback import (
     CLEAN_COLONY_CURVE,
     WellVerdict,
@@ -246,6 +253,7 @@ __all__ = [
     "electroporation",
     "enzyme_material",
     "fits",
+    "floor_ng_ul",
     "gel_step",
     "heat_inactivation",
     "heat_inactivations",

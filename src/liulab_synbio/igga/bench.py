@@ -20,7 +20,7 @@ from dataclasses import KW_ONLY, dataclass
 from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
 from liulab_mbio.bench.coverage import RoundCoverage
 from liulab_mbio.bench.materials import Electroporation, electroporation
-from liulab_mbio.bench.reactions import fits, reaction_table
+from liulab_mbio.bench.reactions import fits, floor_ng_ul, reaction_table
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol.model import (
@@ -121,9 +121,9 @@ def pool_floor_ng_ul(
     """Return the least a pooled part list may be concentrated at, ng/µL.
 
     The round's digest takes `nanograms` of the pool in `volume_ul`, and its two enzymes take
-    `taken_ul` of that, so the DNA has to arrive in what is left. No source states this: it is
-    the digest's own numbers read backwards, which is why the vendors' 10 ng/µL resuspension
-    floor does not settle it.
+    `taken_ul` of that: `liulab_mbio.bench.reactions.floor_ng_ul` on the round's own numbers.
+    No source states this floor, which is why the vendors' 10 ng/µL resuspension floor does not
+    settle it.
 
     Raises
     ------
@@ -135,10 +135,7 @@ def pool_floor_ng_ul(
     >>> round(pool_floor_ng_ul(), 2)
     22.22
     """
-    left = volume_ul - taken_ul
-    if left <= 0:
-        raise ValueError(f"{taken_ul:g} µL of enzyme leaves a {volume_ul:g} µL digest no room")
-    return nanograms / left
+    return floor_ng_ul(nanograms, volume_ul=volume_ul, taken_ul=taken_ul)
 
 
 def ligation_amounts(

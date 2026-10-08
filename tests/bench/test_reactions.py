@@ -5,7 +5,7 @@ import re
 import pytest
 
 from liulab_mbio.bench.amounts import dna_amount, to_pmol
-from liulab_mbio.bench.reactions import reaction_table
+from liulab_mbio.bench.reactions import floor_ng_ul, reaction_table
 
 #: The one refusal, which names both ways out: concentrate the DNA, or scale the reaction.
 REFUSAL = (
@@ -27,3 +27,8 @@ def test_a_rows_picomoles_print_three_figures_and_not_six() -> None:
     table = reaction_table((weighed,), volume_ul=15.0)
 
     assert table.components[0].final == "0.604 pmol (1000 ng)"
+
+
+def test_a_reaction_everything_else_fills_leaves_the_dna_no_concentration_to_arrive_at() -> None:
+    with pytest.raises(ValueError, match="leaves a 15 µL reaction no room"):
+        floor_ng_ul(100.0, volume_ul=15.0, taken_ul=15.0)
