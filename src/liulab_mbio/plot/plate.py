@@ -47,6 +47,10 @@ PALETTE = (
     "#92dadd",
 )
 
+#: The one fill every seated well takes where the plate holds more kinds than `PALETTE` can
+#: colour. No fill tells two of those kinds apart, but which wells are used still has to read.
+SEATED = PALETTE[0]
+
 
 @dataclass(frozen=True, slots=True)
 class PlateMap:
@@ -93,8 +97,8 @@ def layout(
         Well name to what sits there, named as this array names its wells: a row label and a
         1-based column. A well named nothing is drawn empty, and every distinct content gets a
         fill of its own while there are no more kinds than `PALETTE` has colours. Past that no
-        fill tells two kinds apart and no legend is readable, so every well is drawn empty and
-        the legend is dropped.
+        fill tells two kinds apart and no legend is readable, so the legend is dropped and every
+        seated well takes `SEATED`: which wells are used is what is left to read.
 
     Raises
     ------
@@ -125,7 +129,8 @@ def layout(
         if well not in named:
             raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
     kinds = tuple(dict.fromkeys(held.values()))
-    fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
+    coloured = len(kinds) <= len(PALETTE)
+    fills = dict(zip(kinds, PALETTE, strict=False)) if coloured else dict.fromkeys(kinds, SEATED)
 
     pitch = min(MAX_PITCH, (WIDTH - 2 * MARGIN) / (columns + 1))
     size = pitch * (1 - GAP)
@@ -166,10 +171,11 @@ def layout(
             )
             shapes.append(
                 svg.Group(
-                    (svg.Rect(box, fills.get(holds, EMPTY), RULE, 0.4, size / 2),),
+                    (svg.Rect(box, fills[holds] if holds else EMPTY, RULE, 0.4, size / 2),),
                     classes=("well",),
                     data={"well": name, "holds": holds} if holds else {"well": name},
                 )
             )
     extent = Box(0.0, 0.0, left + columns * pitch + MARGIN, top + rows * pitch + MARGIN)
-    return PlateMap(tuple(shapes), extent, tuple(fills.items()), len(kinds))
+    legend = tuple(fills.items()) if coloured else ()
+    return PlateMap(tuple(shapes), extent, legend, len(kinds))

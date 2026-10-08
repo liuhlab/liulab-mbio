@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.plot import draw_plate
-from liulab_mbio.plot.plate import EMPTY, PALETTE, PlateMap
+from liulab_mbio.plot.plate import EMPTY, PALETTE, SEATED, PlateMap
 from liulab_mbio.plot.svg import Group, Rect
 from liulab_mbio.protocol.model import FORMATS, Plate
 
@@ -19,13 +19,13 @@ def seat(kinds: int) -> dict[str, str]:
     return {f"A{n + 1}": f"kind {n}" for n in range(kinds)}
 
 
-def well_fills(laid: PlateMap) -> set[str]:
-    fills = set()
+def well_fills(laid: PlateMap) -> list[str]:
+    fills = []
     for shape in laid.shapes:
         if isinstance(shape, Group):
             (rect,) = shape.shapes
             assert isinstance(rect, Rect)
-            fills.add(rect.fill)
+            fills.append(rect.fill)
     return fills
 
 
@@ -61,14 +61,15 @@ def test_a_plate_of_ten_kinds_keeps_a_fill_for_each() -> None:
     laid = drawing(96, seating=seat(10)).layout
     assert laid.kinds == 10
     assert laid.legend == tuple(zip(seat(10).values(), PALETTE, strict=True))
-    assert well_fills(laid) == {EMPTY, *PALETTE}
+    assert set(well_fills(laid)) == {EMPTY, *PALETTE}
 
 
-def test_a_plate_past_ten_kinds_draws_uncoloured_and_lists_none_of_them() -> None:
+def test_a_plate_past_ten_kinds_fills_every_seated_well_alike_and_lists_none_of_them() -> None:
     laid = drawing(96, seating=seat(11)).layout
     assert laid.kinds == 11
     assert laid.legend == ()
-    assert well_fills(laid) == {EMPTY}
+    assert set(well_fills(laid)) == {EMPTY, SEATED}
+    assert well_fills(laid).count(SEATED) == 11
 
 
 def test_a_drawing_is_laid_out_once_and_kept() -> None:
