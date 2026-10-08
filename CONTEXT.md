@@ -7,7 +7,7 @@ One glossary for both import packages. An entry is `liulab_mbio`'s unless it end
 
 ### mbio
 
-`liulab_mbio`, the general import package: everything a different method could use unchanged --
+`liulab_mbio`, the general import package: everything a different method could use unchanged —
 the sequence model, the file formats, enzymes and sites, codons, barcodes, overhangs, maps,
 primers, the protocol model and the bench. A module is here when the question "could a different
 method use this unchanged?" answers yes. It imports **synbio** nowhere.
@@ -24,7 +24,7 @@ _Avoid_: the library package, extension, plugin
 
 One way in that plans a whole experiment from the records it is given: it picks the enzymes,
 designs the DNA, simulates the product and writes a **project** of bench protocols. Five ship --
-`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga` -- each the
+`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga` — each the
 single entry point of its own subpackage. A module below one decides a detail of the design and
 is reached by its own path.
 _Avoid_: workflow, driver, orchestrator
@@ -691,7 +691,7 @@ _Package_: liulab_synbio
 A protocol of its own for multiplexed validation: a design sits one per well, the well is
 marked, sequenced and called on its own, and identity stays with well position throughout. It
 takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
-beside iGGA rather than downstream of it -- a caller chains it. Two routes mark a well, barcode
+beside iGGA rather than downstream of it — a caller chains it. Two routes mark a well, barcode
 ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
 are shared, while the marking step, the plate and the depth floor are the route's own, because
 each floor was measured on its own library prep.
@@ -733,7 +733,7 @@ _Avoid_: pool, insert list, position list
 What a method fixes rather than works out: the positions, the enzymes that cut internally,
 externally and bluntly, the stuffers, the cloning scar and the barcode length. It is one object
 built in code, whose invariants are checked when its module is imported, and not a file anyone
-supplies -- `docs/adr/0010-method-in-code.md` reversed that, so a second scheme is a second
+supplies — `docs/adr/0010-method-in-code.md` reversed that, so a second scheme is a second
 method rather than a second file. A **part list** fills one of its positions, and what one
 **build** chooses sits beside it without overriding any of it.
 _Avoid_: config, standard, design, layout
@@ -788,7 +788,7 @@ _Avoid_: index, tag, UMI, identifier
 ### Barcode kit
 
 The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member --
-`liulab_synbio.dmx.kit.KitBarcode` -- is a plasmid carrying a group, an index and a UMI, and a
+`liulab_synbio.dmx.kit.KitBarcode` — is a plasmid carrying a group, an index and a UMI, and a
 well's marks are arithmetic from its address rather than a recorded draw. The sequences are not
 shipped: they are read from a copy the user holds. A member of this kit is not a **barcode**,
 which names one part of a library.
@@ -991,7 +991,7 @@ _Avoid_: location, home, storage
 
 Something a protocol consumes, named as the bench names it, with its supplier and catalogue
 number where it has one. It carries what it brings into the tube, its own parameters, the
-**rules** that follow it into every step that uses it, and its cautions -- what would hurt the
+**rules** that follow it into every step that uses it, and its cautions — what would hurt the
 person or the material, written as the action to take. A fact keyed by a catalogue number hangs
 on the material and never on a step that mentions it, so it cannot be edited out of one step and
 left in another. How much of it a step takes is the step's, since the same material is pipetted
