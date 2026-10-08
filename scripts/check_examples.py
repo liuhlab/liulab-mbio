@@ -114,6 +114,16 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(f"python scripts/build_dmx_vector.py --out {OUT}/vector.gb",),
         writes=("vector.gb",),
     ),
+    Generator(
+        what="the domesticated working vector and its protocol",
+        directory=REPO / AP1,
+        commands=(f"python scripts/build_working_vector.py --out {OUT}",),
+        writes=(
+            "working-vector-domestication.html",
+            "working-vector-domestication.json",
+            "working-vector.gb",
+        ),
+    ),
 )
 
 
