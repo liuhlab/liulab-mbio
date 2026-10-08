@@ -33,6 +33,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_mbio.bench.pools import oligo_record, pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
@@ -55,7 +56,6 @@ from liulab_synbio.igga.bench import (
 )
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.chain import project as chain_of
-from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme

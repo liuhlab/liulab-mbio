@@ -774,7 +774,7 @@ pool, and no member is re-identified. At 300x the three rounds would have asked 
 
 A multiple was the wrong parameter and not only the wrong value: one ratio against each round's
 own products buys a different risk every round. The completeness is what holds across them, so
-`liulab_synbio.igga.coverage` computes each round's floor from it — 183, 6,306 and 195,386
+`liulab_mbio.bench.coverage` computes each round's floor from it — 183, 6,306 and 195,386
 colonies, which no whole multiple reproduces. It is a **floor, not a sufficiency claim**: it
 assumes every member equally represented, and synthesis skew breaks that. What the screen
 downstream needs is still open, and stays in section 10.

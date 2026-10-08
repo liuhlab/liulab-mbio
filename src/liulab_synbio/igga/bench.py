@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
+from liulab_mbio.bench.coverage import RoundCoverage
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.reactions import fits, reaction_table
 from liulab_mbio.bench.steps import listed
@@ -32,7 +33,6 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
-from liulab_synbio.igga.coverage import RoundCoverage
 from liulab_synbio.igga.method import Scheme
 
 #: DNA into one digest, ng, and the volume it is cut in, with CutSmart buffer, µL.

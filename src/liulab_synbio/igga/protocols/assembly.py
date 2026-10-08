@@ -4,7 +4,7 @@ A round is two digests, a clean-up, a ligation, a second clean-up, an electropor
 and a prep, and the rounds run in the order the scheme fills its positions. The two reads at
 the end are the library's own: linkage once, representation at every bottleneck after it.
 
-Every number comes from `liulab_synbio.igga.bench` and `liulab_synbio.igga.coverage`, each
+Every number comes from `liulab_synbio.igga.bench` and `liulab_mbio.bench.coverage`, each
 sourced in ``docs/research/protein-library-assembly.md``, or from the design the plan computed.
 What the method leaves unpublished -- the ligase's units, the buffer's strength -- is one line
 saying so rather than a number invented here.

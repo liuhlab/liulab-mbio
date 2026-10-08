@@ -20,11 +20,11 @@ from pathlib import Path
 from typing import Any
 
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
+from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_synbio.dmx import ROUTES
-from liulab_synbio.igga.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a build takes unless it states another.
@@ -156,7 +156,7 @@ class Build:
     representation_seen, representation_skew, reads_per_member
         What this build holds the representation read to: the share of combinations that must be
         read at all, the skew ratio the counts must stay under, and the depth both are judged at.
-        Each takes `liulab_synbio.igga.coverage.REPRESENTATION_MARKS` where the build states
+        Each takes `liulab_mbio.bench.coverage.REPRESENTATION_MARKS` where the build states
         none, and each may only be tightened.
     linkage_fidelity
         The share of reads whose barcode must still name its part. No default: nothing published

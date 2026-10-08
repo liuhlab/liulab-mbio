@@ -122,7 +122,7 @@ def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
 
 
 #: What the linkage read alone cannot be judged by. The representation read is held to Joung's
-#: pooled-library bar, in `liulab_synbio.igga.coverage`; nothing published says what share of
+#: pooled-library bar, in `liulab_mbio.bench.coverage`; nothing published says what share of
 #: reads must carry a barcode that still names its part, and the source's own figure is what one
 #: library reached rather than a mark it set.
 READ_PASS_MARK = Hole(

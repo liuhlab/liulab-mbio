@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_synbio.igga.coverage import REPRESENTATION_MARKS
+from liulab_mbio.bench.coverage import REPRESENTATION_MARKS
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.project import Barcode, Build, read_build
 

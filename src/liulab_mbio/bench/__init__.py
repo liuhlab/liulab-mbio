@@ -1,7 +1,8 @@
 """The bench any pipeline shares: reactions, programs, validation and protocol steps.
 
-Every public name in its modules imports from here as well, `goldengate` excepted. A module that
-cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the ones re-exported.
+Every public name in its modules imports from here as well, `goldengate` and `coverage` excepted.
+A module that cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the ones
+re-exported.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
 - `reactions`: one reaction table, filled to volume, and what it refuses.
@@ -12,6 +13,9 @@ cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the o
   pipeline, because only this chemistry has two callers. Imported by module: its `REFERENCES`
   and `SOURCES` are one chemistry's, not this package's.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
+- `coverage`: how many constructs a set of part lists yields, the colonies a round takes before
+  it loses one, and the marks a pooled library's representation read is held to. Imported by
+  module: its `REFERENCES` are one sizing rule's, not this package's.
 - `readback`: what one well's read came to, where a construct is read back one well at a time,
   and how often one picked colony is clean.
 - `inactivation`: an enzyme's heat inactivation.

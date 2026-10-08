@@ -12,6 +12,12 @@ from dataclasses import KW_ONLY, dataclass
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.coverage import REFERENCES as COVERAGE_REFERENCES
+from liulab_mbio.bench.coverage import (
+    REPRESENTATION_MARKS,
+    RepresentationMarks,
+    reads_for_representation,
+)
 from liulab_mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
 from liulab_mbio.bench.materials import material
 from liulab_mbio.bench.phenotype import selection_marker
@@ -40,12 +46,6 @@ from liulab_synbio.igga.bench import (
 )
 from liulab_synbio.igga.bench import REFERENCES as BENCH_REFERENCES
 from liulab_synbio.igga.cargo import PoolPlan
-from liulab_synbio.igga.coverage import REFERENCES as COVERAGE_REFERENCES
-from liulab_synbio.igga.coverage import (
-    REPRESENTATION_MARKS,
-    RepresentationMarks,
-    reads_for_representation,
-)
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part

@@ -7,6 +7,11 @@ steps, because they are a stage of the method, and what the vector would have fi
 
 from collections.abc import Sequence
 
+from liulab_mbio.bench.coverage import (
+    RepresentationMarks,
+    absent_probability,
+    colonies_for_completeness,
+)
 from liulab_mbio.bench.goldengate import assembly_program
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.cloning.plan import PRODUCT_FILE
@@ -42,11 +47,6 @@ from liulab_synbio.igga.bench import (
     digest_reaction,
     growth_program,
     pulse,
-)
-from liulab_synbio.igga.coverage import (
-    RepresentationMarks,
-    absent_probability,
-    colonies_for_completeness,
 )
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled

@@ -583,7 +583,7 @@ collection. iGGA yields a pool that goes to a pooled screen; no member is ever p
 re-identified, so the gate does not transfer. A multiple does not transfer between rounds
 either: one ratio against each round's own products is a different risk every round. What holds
 across rounds is the completeness — the chance no member of that round is missing — so that is
-what a project states, and `liulab_synbio.igga.coverage` computes each round's floor from it by
+what a project states, and `liulab_mbio.bench.coverage` computes each round's floor from it by
 Clarke & Carbon's rule. It refuses a default, and reports the multiple the floor works out at
 beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
 assumes every member equally represented, and synthesis skew breaks that.
