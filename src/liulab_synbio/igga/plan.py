@@ -331,6 +331,7 @@ class LibraryPlan:
             pool_sheet=POOL_FILE,
             primer_sheet=POOL_PRIMER_FILE,
             block_vectors=self.named_block_vectors,
+            block_records=self.block_vectors,
             working=self.working,
             reads=self.reads,
             marks=self.project.marks,
@@ -361,7 +362,6 @@ class LibraryPlan:
         for number, one in enumerate(self.block_vectors, 1):
             blocks.append(out / BLOCK_VECTOR_FILE.format(number=number))
             write_dna(one.record, blocks[-1])
-        written = write_project_files(self.chain(), out / PROTOCOL_DIR)
         pool = primers = oligo = None
         if self.pool is not None:
             pool = out / POOL_FILE
@@ -377,6 +377,8 @@ class LibraryPlan:
                 ),
                 oligo,
             )
+        # The pages draw the records beside them, so every record is written before they render.
+        written = write_project_files(self.chain(), out / PROTOCOL_DIR)
         reads = out / READ_PRIMER_FILE
         reads.write_text(read_sheet(self.reads), encoding="utf-8")
         return Files(

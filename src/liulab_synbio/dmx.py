@@ -32,6 +32,7 @@ from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
+    Figure,
     Hole,
     Incubation,
     Material,
@@ -1222,10 +1223,14 @@ def validation_equipment(one: Validation) -> tuple[str, ...]:
     )
 
 
-def validation_steps(one: Validation) -> tuple[Step, ...]:
+def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
     """Return the steps that read these designs back, the route's own in the middle.
 
     The picking is shared and the calling is shared; between them sits the route's own marking.
+
+    `marking` is drawn on the one step of the route that changes a molecule: the lysate ligation
+    on one route, the index PCR on the other. The records it names belong to the run, which this
+    module does not hold, so the caller chooses it.
 
     Examples
     --------
@@ -1239,8 +1244,12 @@ def validation_steps(one: Validation) -> tuple[Step, ...]:
     Pool and sequence
     Call every well
     """
-    marking = _ligation_steps(one) if one.route is ROUTE_LIGATION else _index_pcr_steps(one)
-    return (_array_step(one), _pick_step(one), *marking, _call_step(one))
+    route = (
+        _ligation_steps(one, marking)
+        if one.route is ROUTE_LIGATION
+        else _index_pcr_steps(one, marking)
+    )
+    return (_array_step(one), _pick_step(one), *route, _call_step(one))
 
 
 def _array_step(one: Validation) -> Step:
@@ -1307,7 +1316,7 @@ def _pick_step(one: Validation) -> Step:
     )
 
 
-def _ligation_steps(one: Validation) -> tuple[Step, ...]:
+def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
     """Compress into 1536, barcode in lysate, then pool and sequence."""
     moves = tuple(
         compression(one.picked[at : at + PLATES_COMPRESSED], plate)
@@ -1327,6 +1336,7 @@ def _ligation_steps(one: Validation) -> tuple[Step, ...]:
         ),
         Step(
             "Barcode each well in lysate",
+            figures=() if marking is None else (marking,),
             instructions=(
                 f"Add one barcode from each of the {GROUPS} kit groups to every well, by the "
                 "address that well's position gives.",
@@ -1351,7 +1361,7 @@ def _ligation_steps(one: Validation) -> tuple[Step, ...]:
     )
 
 
-def _index_pcr_steps(one: Validation) -> tuple[Step, ...]:
+def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
     """Sample a quarter at a time into index plates, amplify on the pair each well's address names."""
     at = 0
     moves: list[Transfer] = []
@@ -1375,6 +1385,7 @@ def _index_pcr_steps(one: Validation) -> tuple[Step, ...]:
         ),
         Step(
             "Amplify each well with its own pair",
+            figures=() if marking is None else (marking,),
             instructions=(
                 f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
                 f"holds its {SAMPLE_UL:g} µL of culture.",

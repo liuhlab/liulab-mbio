@@ -48,6 +48,7 @@ def assembly_rows(
     rounds: Sequence[Round],
     *,
     lit: int = 0,
+    at: str = "",
     caption: str = "",
     citation: Citation | None = ASSEMBLY_CITATION,
 ) -> Figure:
@@ -67,6 +68,9 @@ def assembly_rows(
     lit
         Which round the step is at, counting from one. Nothing is lit at zero, and every row
         keeps its colours.
+    at
+        Where the records sit, relative to the directory the protocol is read from: empty where
+        they sit beside it, ``"../"`` where the protocol is one directory down.
     caption
         What the figure shows. One is written from the rounds where this is empty.
     citation
@@ -84,16 +88,16 @@ def assembly_rows(
     scheme = rounds[0].scheme
     last = len(rounds) - 1
     records = tuple(
-        PRODUCT_FILE if index == last else ROUND_FILE.format(number=one.number)
+        at + (PRODUCT_FILE if index == last else ROUND_FILE.format(number=one.number))
         for index, one in enumerate(rounds)
     )
-    at = rounds[lit - 1] if lit else None
+    here = rounds[lit - 1] if lit else None
     return Figure(
         records,
-        caption or _caption(rounds, at),
+        caption or _caption(rounds, here),
         linear=True,
         enzymes=(scheme.internal_enzyme, scheme.external_enzyme),
-        highlight=(at.part.name,) if at else (),
+        highlight=(here.part.name,) if here else (),
         citation=citation,
     )
 

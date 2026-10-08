@@ -41,12 +41,17 @@ from liulab_mbio.bench.steps import (
     listed,
     primer_plate_protocol,
 )
+from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
+from liulab_mbio.protocol.figures import SOURCE as FIGURE_SOURCE
+from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
+from liulab_mbio.protocol.figures import ligation_figure
 from liulab_mbio.protocol.model import (
     Bill,
     Citation,
     Component,
+    Figure,
     Gel,
     Incubation,
     Lane,
@@ -103,6 +108,12 @@ from liulab_synbio.igga.coverage import (
     colonies_for_completeness,
     reads_for_representation,
 )
+from liulab_synbio.igga.figures import (
+    OLIGO_FILE,
+    PoolStage,
+    assembly_rows,
+    pool_pcr_figure,
+)
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import PrimerPlates
@@ -110,6 +121,19 @@ from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
 from liulab_synbio.igga.vector import Destination, Working, released_cargo
+
+#: Where the records a figure draws sit, relative to the pages that draw them:
+#: `liulab_synbio.igga.plan.PROTOCOL_DIR` puts the pages one directory below the records.
+RECORDS_AT = "../"
+
+#: What a vector's own records call the piece its cassette's enzyme cuts out.
+STUFFER_FEATURE = "internal stuffer"
+
+#: The two nested PCRs that pull one block out of the pool, in the order the steps run them.
+POOL_STAGES: tuple[PoolStage, ...] = ("PCR1", "PCR2")
+
+#: Where in ``docs/research/figure-sources.md`` the read-back figure's equivalent stands.
+VALIDATION_CITATION = Citation(FIGURE_SOURCE_KEY, "section 3, DMX")
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
 #: names all three and publishes neither the ligase's units nor either buffer's strength.
@@ -360,7 +384,9 @@ def project(
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
+    block_records: Sequence[Destination] = (),
     primer_plates: PrimerPlates | None = None,
+    records_at: str = RECORDS_AT,
 ) -> Project:
     """Return the run as the chain of protocols the bench works through, in order.
 
@@ -387,7 +413,9 @@ def project(
     assembled, so ordering and making the cargo are two protocols instead of one step.
 
     `block_vectors` is what a block closes into, one a position: what each is called and the
-    file the plan wrote it to.
+    file the plan wrote it to. `block_records` is the same vectors themselves, in that order,
+    which a step's figure is drawn over. `records_at` says where those records sit relative to
+    the pages, which is what every figure's path is written against.
 
     `primer_plates` is how this lab lays the pool's primers out, and `None` for a project
     stating none. With it the chain opens with a protocol that orders those primers and splits
@@ -421,6 +449,8 @@ def project(
         linkage_fidelity,
         block_vectors,
         plated is not None,
+        block_records,
+        records_at,
     )
     sources = _sources(prices, validation, pool)
     spread = _spread(
@@ -783,7 +813,7 @@ def _sources(
     prices: PriceRecord | None, validation: dmx.Validation | None, pool: PoolPlan | None
 ) -> dict[str, Source]:
     """Return every document this run could cite; `citing` drops the ones it did not."""
-    found = dict(stages.SOURCES)
+    found = dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
     if validation:
         found |= dmx.SOURCES
     if pool:
@@ -1195,14 +1225,20 @@ def _staged(
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
     plated: bool = False,
+    block_records: Sequence[Destination] = (),
+    records_at: str = RECORDS_AT,
 ) -> dict[str, tuple[Step, ...]]:
     """Return each protocol's steps, in the order the bench works through them.
 
     A pool splits ordering from making the cargo: the pool is ordered and stored in one sitting,
     and pulled apart into blocks in another. Without one the blocks are bought whole and
     ordering is the only protocol before the rounds.
+
+    Every step that changes a molecule carries one figure of what it makes, as rule 4 of
+    ``docs/agents/writing.md`` has it, and every other step carries none.
     """
     staged: dict[str, tuple[Step, ...]] = {}
+    oligo = records_at + OLIGO_FILE
     if pool:
         made = _pool_steps(
             pool,
@@ -1218,13 +1254,28 @@ def _staged(
         )
         staged[ORDERING] = (_labelled(made[0], "Order and store"),)
         staged[CREATION] = (
-            *(_labelled(one, "Amplify the pool") for one in made[1:3]),
-            _labelled(made[3], "Close each cargo into its vector"),
+            *(
+                _labelled(
+                    _figured(one, pool_pcr_figure(pool, stage=stage, path=oligo)),
+                    "Amplify the pool",
+                )
+                for one, stage in zip(made[1:3], POOL_STAGES, strict=True)
+            ),
+            _labelled(
+                _figured(
+                    made[3],
+                    _cargo_ligation_figure(scheme, block_records, block_vectors, records_at),
+                ),
+                "Close each cargo into its vector",
+            ),
         )
     else:
         staged[ORDERING] = (_labelled(_order_step(parts, sheet), "Order and store"),)
     if validation:
-        read_back = dmx.validation_steps(validation)
+        read_back = dmx.validation_steps(
+            validation,
+            marking=_marking_figure(validation, scheme, block_records, block_vectors, records_at),
+        )
         staged[_validation_title(validation)] = (
             *(_labelled(one, "Array and pick") for one in read_back[:2]),
             *(_labelled(one, "Mark every well") for one in read_back[2:-1]),
@@ -1234,7 +1285,16 @@ def _staged(
     for place, (one, row) in enumerate(zip(rounds, bench, strict=True), 1):
         assembly += [
             _labelled(step, f"Round {place}")
-            for step in _round_steps(scheme, one, row, inside, outside, len(rounds), selection)
+            for step in _round_steps(
+                scheme,
+                one,
+                row,
+                inside,
+                outside,
+                len(rounds),
+                selection,
+                assembly_rows(rounds, lit=place, at=records_at),
+            )
         ]
     assembly += [
         _labelled(
@@ -1274,6 +1334,7 @@ def _staged(
         working,
         None if reads is None else reads.final_representation,
         marks,
+        records_at,
     )
     staged[FINAL] = (
         _labelled(final[0], "Choose the working vector"),
@@ -1286,6 +1347,112 @@ def _staged(
 def _labelled(step: Step, section: str) -> Step:
     """Return `step` under the stage of its protocol it belongs to."""
     return replace(step, section=section)
+
+
+def _figured(step: Step, figure: Figure | None) -> Step:
+    """Return `step` showing `figure`, or unchanged where there is no record to draw."""
+    return step if figure is None else replace(step, figures=(figure,))
+
+
+def _block_vector(
+    block_records: Sequence[Destination], block_vectors: Sequence[tuple[str, str]], at: str
+) -> tuple[Destination, str, str] | None:
+    """Return the first block vector, what it is called and where its record sits, or nothing.
+
+    A build whose blocks are ordered whole writes no block vector, and nothing is drawn.
+    """
+    if not block_records or not block_vectors or not block_vectors[0][1]:
+        return None
+    return block_records[0], block_vectors[0][0], at + block_vectors[0][1]
+
+
+def _cargo_ligation_figure(
+    scheme: Scheme,
+    block_records: Sequence[Destination],
+    block_vectors: Sequence[tuple[str, str]],
+    at: str,
+) -> Figure | None:
+    """Return the stuffer a cargo replaces, at base level: where the assembly joins it."""
+    found = _block_vector(block_records, block_vectors, at)
+    if found is None:
+        return None
+    vector, name, path = found
+    return ligation_figure(
+        vector.record,
+        path=path,
+        junction=(vector.stuffer.start, vector.stuffer.end),
+        enzymes=(scheme.internal.name, SYNTHESIS_ENZYME),
+        caption=(
+            f"The stuffer {scheme.internal.name} cuts out of {name}, which a cargo replaces. "
+            "The cargo enters on the four bases its position spells here."
+        ),
+    )
+
+
+def _marking_figure(
+    one: dmx.Validation,
+    scheme: Scheme,
+    block_records: Sequence[Destination],
+    block_vectors: Sequence[tuple[str, str]],
+    at: str,
+) -> Figure | None:
+    """Return what the route's own marking step works on: what a picked well holds.
+
+    The ligation route chains barcodes onto it four bases at a time, so it is drawn at base
+    level; the index route reads across the whole cassette, so that is drawn as a map.
+    """
+    found = _block_vector(block_records, block_vectors, at)
+    if found is None:
+        return None
+    vector, name, path = found
+    if one.route is dmx.ROUTE_LIGATION:
+        return ligation_figure(
+            vector.record,
+            path=path,
+            junction=(vector.stuffer.start, vector.stuffer.end),
+            enzymes=(scheme.internal.name,),
+            caption=(
+                f"What a picked well holds: its design in {name}. The kit chains its "
+                f"{dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through {dmx.CHAIN[-1]}, reading on "
+                "the strand the cargo reads on."
+            ),
+            citation=VALIDATION_CITATION,
+        )
+    return Figure(
+        (path,),
+        f"What a picked well holds: its design in {name}. The pair reads across the cassette, "
+        "and the band is that stretch plus the two marks the well's address names.",
+        highlight=_drawn_as(vector.record, STUFFER_FEATURE),
+        citation=VALIDATION_CITATION,
+    )
+
+
+def _drawn_as(record: SequenceRecord, name: str) -> tuple[str, ...]:
+    """Return `name` where the record draws a feature under it, and nothing where it does not.
+
+    A vector that came in already carrying its cassette names its own features, and a highlight
+    lights what a record holds rather than what this module would like it to.
+    """
+    return (name,) if any(one.name == name for one in record.features) else ()
+
+
+def _final_junction_figure(
+    scheme: Scheme, product: SequenceRecord, span: Segment | None, at: str
+) -> Figure | None:
+    """Return the end the freed library ligates to the working vector on, at base level."""
+    if span is None:
+        return None
+    entry = len(scheme.entry_overhang)
+    return ligation_figure(
+        product,
+        path=at + PRODUCT_FILE,
+        junction=(span.start, span.start + entry),
+        enzymes=(scheme.external.name,),
+        caption=(
+            f"The end the library is freed on, which the working vector takes: "
+            f"{scheme.external.name} leaves {scheme.entry_overhang} here."
+        ),
+    )
 
 
 def _order_step(parts: Sequence[Part], sheet: str) -> Step:
@@ -1878,8 +2045,12 @@ def _round_steps(
     outside: Sequence[Enzyme],
     total: int,
     selection: str = "",
+    rows: Figure | None = None,
 ) -> list[Step]:
-    """Return the eight steps of one round, in the order they happen."""
+    """Return the eight steps of one round, in the order they happen.
+
+    `rows` is drawn on the ligation, the one step of the eight that changes a molecule.
+    """
     number = row.number
     opened, released = row.ligation
     internal = (scheme.internal, *inside)
@@ -1888,7 +2059,7 @@ def _round_steps(
         _open_step(scheme, one, row, internal, opened),
         _release_step(scheme, row, external, released),
         _digest_cleanup_step(row, opened, released),
-        _ligation_step(row, opened, released),
+        _figured(_ligation_step(row, opened, released), rows),
         _ligation_cleanup_step(row),
         _electroporation_step(row),
         _growth_step(row, selection),
@@ -2270,6 +2441,7 @@ def _final_steps(
     working: Working | None,
     pair: ReadPair | None = None,
     marks: RepresentationMarks = REPRESENTATION_MARKS,
+    records_at: str = RECORDS_AT,
 ) -> list[Step]:
     """Return the five steps that move the finished library into the working vector.
 
@@ -2283,7 +2455,10 @@ def _final_steps(
     return [
         _pick_working_step(scheme, working),
         _release_step_final(scheme, product, span, freeing),
-        _assemble_step(scheme, product, span, working),
+        _figured(
+            _assemble_step(scheme, product, span, working),
+            _final_junction_figure(scheme, product, span, records_at),
+        ),
         _final_growth_step(constructs, completeness, working),
         _final_representation_step(barcodes, working, pair, constructs, marks),
     ]
