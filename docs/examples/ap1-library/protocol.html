@@ -213,6 +213,33 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
 
+/* A project folder: the run's nav bar across the top, a column either side of the page. */
+.site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
+.site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
+.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame .page { padding-block: 1.5rem 4rem; }
+.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
+.column ol { margin: 0; padding-left: 1.3rem; }
+.column li { margin-bottom: 0.3rem; }
+.column a { color: var(--muted); text-decoration: none; }
+.column a:hover { color: var(--ink); text-decoration: underline; }
+.column .is-here > a { color: var(--ink); font-weight: 600; }
+.neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
+.chain-pages { margin: 0; padding-left: 1.4rem; }
+.chain-pages li { margin-bottom: 0.3rem; }
+
+/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+@media (max-width: 70rem) {
+  .frame { display: flex; flex-direction: column; max-width: 54rem; }
+  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column li { margin-bottom: 0; }
+  .column .is-here > a { text-decoration: underline; }
+}
+
 @media print {
   :root {
     color-scheme: light;
@@ -230,7 +257,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
-  .toolbar, .toc, button.copy, .timer-action { display: none !important; }
+  /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
+  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .frame { display: block; max-width: none; }
+  .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
   .step.is-done { opacity: 1; }
   .caution, .expected { border: 1px solid var(--line); }
