@@ -329,6 +329,8 @@ sets one.
 
 ### Fixed
 
+- A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
+  padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes
   for the working vector with its ccdB cassette in, gives the one-pot assembly a reaction table
   carrying the cargo's own mass, buys one aliquot and one cuvette per pulse rather than per

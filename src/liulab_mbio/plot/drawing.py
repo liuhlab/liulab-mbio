@@ -20,8 +20,8 @@ from liulab_mbio.sequence import SequenceRecord
 #: length across the origin.
 type Region = str | tuple[int, int]
 
-#: How many times its width a PDF's page of sequence view rows is tall: the proportions of A4, so
-#: each page prints filling a sheet.
+#: How many times its width a PDF's page of sequence view rows may run: the proportions of A4, so
+#: a page filled to it prints filling a sheet.
 _PAGE = math.sqrt(2)
 
 #: How many times `linear.WIDTH` long a page lays out the line, a step of its zoom each, each twice
@@ -606,8 +606,8 @@ def _stacked(drawing: Drawing) -> tuple[Box, tuple[svg.Shape, ...]]:
 def _pages(drawing: Drawing) -> Iterator[str]:
     """Yield each page of a PDF: the map, then the sequence view's row blocks, none split.
 
-    A page of rows is as wide as the view and `_PAGE` times as tall, and holds as many blocks as
-    fit; a block too tall for a page has a page of its own, as tall as it needs.
+    A page of rows is as wide as the view and as tall as the blocks on it: as many as fit in
+    `_PAGE` times its width, or one block alone where even that is taller.
     """
     yield _outlined(drawing.layout.shapes, drawing.layout.extent)
     rows = drawing.sequence_view
@@ -618,16 +618,16 @@ def _pages(drawing: Drawing) -> Iterator[str]:
     page: list[view.Row] = []
     for row in rows.rows:
         if page and _bottom(row) + margin - (page[0].extent.y - margin) > tall:
-            yield _page(rows.extent, page, margin, tall)
+            yield _page(rows.extent, page, margin)
             page = []
         page.append(row)
-    yield _page(rows.extent, page, margin, tall)
+    yield _page(rows.extent, page, margin)
 
 
-def _page(extent: Box, page: Sequence[view.Row], margin: float, tall: float) -> str:
-    """Return a page of rows as wide as `extent`, `margin` clear round them and `tall` at least."""
+def _page(extent: Box, page: Sequence[view.Row], margin: float) -> str:
+    """Return a page as wide as `extent` and as tall as its rows, `margin` clear round them."""
     top = page[0].extent.y - margin
-    bottom = max(top + tall, _bottom(page[-1]) + margin)
+    bottom = _bottom(page[-1]) + margin
     box = Box(extent.x, top, extent.width, bottom - top)
     return _outlined([shape for row in page for shape in row.shapes], box)
 
