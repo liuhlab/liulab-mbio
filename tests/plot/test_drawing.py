@@ -242,6 +242,29 @@ def test_a_png_is_one_image_the_sequence_view_under_the_map(rows: Drawing, tmp_p
     assert height == pytest.approx((top.height + under.height) / 2, abs=1)
 
 
+def test_the_element_draws_what_a_png_draws_and_carries_nothing_switched_off(
+    puc19: SequenceRecord,
+) -> None:
+    element = parse(draw_map(puc19, cut_sites=False).element())
+    assert element.find_all("svg")
+    assert not element.find_all("g", cls="off")
+    assert not element.find_all("g", data_kind="cut_site")
+    assert element.find_all("g", data_kind="feature")
+
+
+def test_the_element_stacks_the_sequence_view_under_the_map(rows: Drawing) -> None:
+    assert rows.sequence_view is not None
+    top, under = rows.layout.extent, rows.sequence_view.extent
+    [element] = parse(rows.element()).find_all("svg")
+    assert float(element.attrs["width"]) == pytest.approx(max(top.width, under.width), abs=0.01)
+    assert float(element.attrs["height"]) == pytest.approx(top.height + under.height, abs=0.01)
+
+
+def test_the_element_drawn_with_outlines_keeps_no_text(rows: Drawing) -> None:
+    assert "<text" in rows.element()
+    assert "<text" not in rows.element(outlines=True)
+
+
 def test_a_pdf_has_the_map_then_as_many_whole_rows_to_a_page_as_fit(
     rows: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -122,6 +122,17 @@ class Drawing:
         """
         return self.layout.hidden
 
+    def element(self, *, outlines: bool = False) -> str:
+        """Return the map as one SVG element, for a page or a protocol to embed.
+
+        It draws what a PNG draws: the items that show, with the sequence view under the map where
+        it is switched on, and no switch to turn any of them off. With `outlines` it is drawn on
+        white, every letter as its outline; as text it needs the faces it was measured in, which
+        the page embedding it writes into its own styles.
+        """
+        extent, shapes = _stacked(self)
+        return _outlined(shapes, extent) if outlines else svg.document(shapes, extent)
+
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the drawing to `path`, in the format its suffix names, and return the path.
 
@@ -486,7 +497,7 @@ def _html(drawing: Drawing, path: Path, dpi: float) -> None:
 
 
 def _png(drawing: Drawing, path: Path, dpi: float) -> None:
-    extent, shapes = _stacked(drawing)
+    extent = _stacked(drawing)[0]
     width, height = extent.width, extent.height
     least = convert.POINTS_PER_INCH / min(width, height)
     most = convert.POINTS_PER_INCH * min(
@@ -502,7 +513,7 @@ def _png(drawing: Drawing, path: Path, dpi: float) -> None:
                 "bases, or write a PDF, which draws at any size"
             )
         raise ValueError(f"cannot draw {path.name!r} at {dpi:g} dpi: {reason}")
-    path.write_bytes(convert.png(_outlined(shapes, extent), dpi=dpi))
+    path.write_bytes(convert.png(drawing.element(outlines=True), dpi=dpi))
 
 
 def _pdf(drawing: Drawing, path: Path, dpi: float) -> None:
