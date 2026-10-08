@@ -24,6 +24,7 @@ from liulab_mbio.protocol import (
     Project,
     Protocol,
     Reference,
+    Rule,
     Source,
     Stage,
     Step,
@@ -68,7 +69,14 @@ def chain() -> Project:
         ),
         bill=Bill(
             (
-                BillRow("oligo pool", 1, unit="pool", key="S-1", charge="1200.00"),
+                BillRow(
+                    "oligo pool",
+                    1,
+                    unit="pool",
+                    key="S-1",
+                    charge="1200.00",
+                    citation=Citation("NEB", "price list"),
+                ),
                 BillRow(
                     "sequencing",
                     2,
@@ -102,7 +110,20 @@ def chain() -> Project:
                 produces=(BLOCKS,),
                 materials=(
                     Material("Nuclease-free water", supplier="Thermo", catalog="AM9937"),
-                    Material("BsaI-HFv2", supplier="NEB", catalog="R3733"),
+                    Material(
+                        "BsaI-HFv2",
+                        supplier="NEB",
+                        catalog="R3733",
+                        citation=Citation("M0491", "step 2"),
+                        rules=(
+                            Rule(
+                                "forbids",
+                                "PEG",
+                                "PEG inhibits the ligase.",
+                                citation=Citation("M0491"),
+                            ),
+                        ),
+                    ),
                 ),
                 equipment=("Thermocycler", "Plate reader"),
                 vessels=(Vessel("pool tube", kind="1.5 mL tube"),),
@@ -518,3 +539,32 @@ def test_every_link_a_filled_page_writes_resolves_inside_the_folder(tmp_path: Pa
             if href.startswith(("#", "http:", "https:", "mailto:")):
                 continue
             assert href.split("#")[0] in written, f"{path.name} links to {href}"
+
+
+def test_every_mark_a_filled_page_links_to_stands_on_the_page_it_names(tmp_path: Path) -> None:
+    write_project_files(chain(), tmp_path)
+    pages = {p.name: parse(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.html")}
+    marks = {
+        name: {node.attrs["id"] for node in page.iter() if "id" in node.attrs}
+        for name, page in pages.items()
+    }
+    for name, page in pages.items():
+        for anchor in page.find_all("a"):
+            where, _, mark = anchor.attrs["href"].partition("#")
+            if not mark or where.startswith(("http:", "https:", "mailto:")):
+                continue
+            assert mark in marks[where or name], f"{name} links to {anchor.attrs['href']}"
+
+
+def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_page_with_none(
+    project: Project,
+) -> None:
+    folder = folder_of(project)
+    shared = parse(render_reagents(project, folder))
+    assert {a.attrs["href"] for a in shared.find_all("a", cls="cite")} == {
+        "references.html#source-m0491",
+        "references.html#source-neb",
+    }
+    one = project.protocols[1]
+    for page in (render_html(one), render_html(one, folder=folder, here=folder.pages[1].href)):
+        assert {a.attrs["href"] for a in parse(page).find_all("a", cls="cite")} == {"#source-m0491"}
