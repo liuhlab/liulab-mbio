@@ -45,7 +45,7 @@ SCAR = "AGCG"
 
 HOST = "e-coli-k12"
 
-#: How many bases name one part, as a project states.
+#: How many bases name one part, as a build states.
 BARCODE = 11
 
 #: Three part lists, two members each, so a whole build stays small.
@@ -115,7 +115,7 @@ def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
 
 
 def project(made: Scheme) -> Build:
-    """A project built under `made`, for the gate to read this build's own choices off."""
+    """A build made under `made`, for the gate to read its own choices off."""
     return Build(
         "test",
         positions=POSITIONS,

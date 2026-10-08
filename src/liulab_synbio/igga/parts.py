@@ -118,7 +118,7 @@ def barcode_rules(
 
     The dials are `liulab_mbio.barcodes`' own; the scar, the phase and the forbidden enzymes are
     the method's and are not for a caller to restate. `reserved` names the further enzymes a
-    project keeps a block clear of.
+    build keeps a block clear of.
     """
     return BarcodeRules(
         length,
@@ -282,7 +282,7 @@ def _enzymes(scheme: Scheme, reserved: Sequence[str] = ()) -> tuple[Enzyme, ...]
 
     The first three are allowed in a block's stuffers and nowhere else; a reserved enzyme is
     allowed nowhere at all, which the method checks of its own stuffers when it is built. A
-    project adds to the reserved list and never replaces it.
+    build adds to the reserved list and never replaces it.
     """
     held = dict.fromkeys((*scheme.reserved, *reserved))
     return (

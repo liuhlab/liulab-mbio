@@ -98,7 +98,7 @@ class PrimerPlates:
         ):
             if value <= 0:
                 raise ValueError(
-                    f"primer_plates.{key} is {value}, and a project states a positive one"
+                    f"primer_plates.{key} is {value}, and a build states a positive one"
                 )
         if self.working_um >= self.stock_um:
             raise ValueError(
@@ -109,7 +109,7 @@ class PrimerPlates:
 
 @dataclass(frozen=True, slots=True)
 class Build:
-    """One library build's own choices, checked on construction.
+    """What one build chooses, checked on construction.
 
     Parameters
     ----------
@@ -261,9 +261,9 @@ class Build:
     def _check_positions(self) -> None:
         """Refuse a build with no position, an unnamed one, or one named twice."""
         if not self.positions:
-            raise ValueError("a project needs at least one position")
+            raise ValueError("a build needs at least one position")
         if any(not one for one in self.positions):
-            raise ValueError("every position of a project is named")
+            raise ValueError("every position of a build is named")
         if len(set(self.positions)) != len(self.positions):
             raise ValueError(f"the positions {', '.join(self.positions)} name one of them twice")
 
@@ -276,11 +276,10 @@ class Build:
             ("barcode.min_distance", self.barcode.min_distance),
         ):
             if value <= 0:
-                raise ValueError(f"{named} is {value}, and a project states a positive one")
+                raise ValueError(f"{named} is {value}, and a build states a positive one")
         if not 0.0 < self.completeness < 1.0:
             raise ValueError(
-                f"completeness is {self.completeness}, and a project states a chance between "
-                "0 and 1"
+                f"completeness is {self.completeness}, and a build states a chance between 0 and 1"
             )
 
     def _check_validation(self) -> None:
@@ -296,12 +295,12 @@ class Build:
             )
         if self.route is not None and self.route not in ROUTES:
             raise ValueError(
-                f"route is {self.route!r}, and a project reads its wells back on one of "
+                f"route is {self.route!r}, and a build reads its wells back on one of "
                 f"{', '.join(repr(one) for one in ROUTES)}"
             )
         if (self.validate_from is None) != (self.route is None):
             raise ValueError(
-                "validate_from and route are stated together: a project that reads designs back "
+                "validate_from and route are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
             )
 
@@ -313,7 +312,7 @@ class Build:
         """
         if self.primer_plates is not None and self.primers is None:
             raise ValueError(
-                "primer_plates lays out the primers that amplify the pool, so a project naming "
+                "primer_plates lays out the primers that amplify the pool, so a build naming "
                 "it names primers too"
             )
 
@@ -328,16 +327,16 @@ class Build:
             ("linkage_fidelity", self.linkage_fidelity),
         ):
             if value is not None and not 0.0 < value <= 1.0:
-                raise ValueError(f"{named} is {value}, and a project states a share of 1 or less")
+                raise ValueError(f"{named} is {value}, and a build states a share of 1 or less")
         sourced = REPRESENTATION_MARKS
         if self.representation_seen is not None and self.representation_seen < sourced.seen:
             raise ValueError(
-                f"representation_seen is {self.representation_seen}, and a project may only "
+                f"representation_seen is {self.representation_seen}, and a build may only "
                 f"raise the {sourced.seen} share Joung sets, not lower it"
             )
         if self.representation_skew is not None and self.representation_skew > sourced.skew:
             raise ValueError(
-                f"representation_skew is {self.representation_skew}, and a project may only "
+                f"representation_skew is {self.representation_skew}, and a build may only "
                 f"lower the skew ratio of {sourced.skew} Joung allows, not raise it"
             )
         if self.representation_skew is not None and self.representation_skew < 1.0:
@@ -347,7 +346,7 @@ class Build:
             )
         if self.reads_per_member is not None and self.reads_per_member < sourced.reads_per_member:
             raise ValueError(
-                f"reads_per_member is {self.reads_per_member}, and a project may only raise the "
+                f"reads_per_member is {self.reads_per_member}, and a build may only raise the "
                 f"{sourced.reads_per_member} reads a member Joung judges at, not lower it"
             )
 
@@ -404,56 +403,56 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     data = json.loads(file.read_text(encoding="utf-8"))
     if not isinstance(data, Mapping):
         raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
-    _keys(data, _PROJECT_KEYS, _PROJECT_OPTIONAL, "a project")
+    _keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
     return Build(
-        _text(given, "name", "a project"),
+        _text(given, "name", "a build"),
         positions=tuple(
             _one_text(one, f"positions[{index}]")
-            for index, one in enumerate(_sequence(given, "positions", "a project"))
+            for index, one in enumerate(_sequence(given, "positions", "a build"))
         ),
-        parts=_file(file, _text(given, "parts", "a project"), "parts"),
-        vector=_file(file, _text(given, "vector", "a project"), "vector"),
-        host=_text(given, "host", "a project"),
-        oligo_length=_whole(given, "oligo_length", "a project"),
-        batch_size=_whole(given, "batch_size", "a project"),
-        completeness=_number(given, "completeness", "a project"),
+        parts=_file(file, _text(given, "parts", "a build"), "parts"),
+        vector=_file(file, _text(given, "vector", "a build"), "vector"),
+        host=_text(given, "host", "a build"),
+        oligo_length=_whole(given, "oligo_length", "a build"),
+        batch_size=_whole(given, "batch_size", "a build"),
+        completeness=_number(given, "completeness", "a build"),
         primers=(
-            _file(file, _text(given, "primers", "a project"), "primers")
+            _file(file, _text(given, "primers", "a build"), "primers")
             if "primers" in given
             else None
         ),
         working_vector=(
-            _file(file, _text(given, "working_vector", "a project"), "working_vector")
+            _file(file, _text(given, "working_vector", "a build"), "working_vector")
             if "working_vector" in given
             else None
         ),
         bands=_bands(given.get("bands")),
         validate_from=(
-            _whole(given, "validate_from", "a project") if "validate_from" in given else None
+            _whole(given, "validate_from", "a build") if "validate_from" in given else None
         ),
-        route=_text(given, "route", "a project") if "route" in given else None,
+        route=_text(given, "route", "a build") if "route" in given else None,
         representation_seen=(
-            _number(given, "representation_seen", "a project")
+            _number(given, "representation_seen", "a build")
             if "representation_seen" in given
             else None
         ),
         representation_skew=(
-            _number(given, "representation_skew", "a project")
+            _number(given, "representation_skew", "a build")
             if "representation_skew" in given
             else None
         ),
         reads_per_member=(
-            _whole(given, "reads_per_member", "a project") if "reads_per_member" in given else None
+            _whole(given, "reads_per_member", "a build") if "reads_per_member" in given else None
         ),
         linkage_fidelity=(
-            _number(given, "linkage_fidelity", "a project") if "linkage_fidelity" in given else None
+            _number(given, "linkage_fidelity", "a build") if "linkage_fidelity" in given else None
         ),
-        seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
+        seed=_whole(given, "seed", "a build") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                _sequence(given, "reserved_extra", "a project") if "reserved_extra" in given else ()
+                _sequence(given, "reserved_extra", "a build") if "reserved_extra" in given else ()
             )
         ),
         barcode=_barcode(given.get("barcode")),
@@ -461,8 +460,8 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     )
 
 
-#: The keys a project is written with, and the ones it may leave out.
-_PROJECT_KEYS = frozenset(
+#: The keys a build is written with, and the ones it may leave out.
+_BUILD_KEYS = frozenset(
     {
         "name",
         "positions",
@@ -474,7 +473,7 @@ _PROJECT_KEYS = frozenset(
         "completeness",
     }
 )
-_PROJECT_OPTIONAL = frozenset(
+_BUILD_OPTIONAL = frozenset(
     {
         "seed",
         "reserved_extra",
@@ -497,7 +496,7 @@ _PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
-    """Read the vendor's bands a project states, as a quantity naming its tiers.
+    """Read the vendor's bands a build states, as a quantity naming its tiers.
 
     Raises
     ------
@@ -507,11 +506,11 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
     if entry is None:
         return {}
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project's bands are {type(entry).__name__}, not an object")
+        raise ValueError(f"a build's bands are {type(entry).__name__}, not an object")
     return {
         quantity: tuple(
             _one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(_sequence(entry, quantity, "a project's"))
+            for index, one in enumerate(_sequence(entry, quantity, "a build's"))
         )
         for quantity in entry
     }
@@ -528,11 +527,11 @@ def _barcode(entry: Any) -> Barcode:
     if entry is None:
         return Barcode()
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project barcode is {type(entry).__name__}, not an object")
-    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a project barcode")
+        raise ValueError(f"a build barcode is {type(entry).__name__}, not an object")
+    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
     return Barcode(
-        _whole(entry, "length", "a project barcode") if "length" in entry else BARCODE_LENGTH,
-        _whole(entry, "min_distance", "a project barcode")
+        _whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
+        _whole(entry, "min_distance", "a build barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
     )
@@ -552,9 +551,9 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
     if entry is None:
         return None
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project's primer_plates is {type(entry).__name__}, not an object")
-    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a project's primer_plates")
-    where = "a project's primer_plates"
+        raise ValueError(f"a build's primer_plates is {type(entry).__name__}, not an object")
+    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
+    where = "a build's primer_plates"
     return PrimerPlates(
         _number(entry, "nanomoles", where),
         _number(entry, "stock_um", where),
@@ -565,8 +564,8 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
     )
 
 
-def _file(project: Path, named: str, key: str) -> Path:
-    """Resolve a path a project names against the project file's own directory.
+def _file(file: Path, named: str, key: str) -> Path:
+    """Resolve a path a build names against the `project.json` file's own directory.
 
     Raises
     ------
@@ -574,9 +573,9 @@ def _file(project: Path, named: str, key: str) -> Path:
         If nothing is there to read.
     """
     found = Path(named)
-    resolved = found if found.is_absolute() else project.parent / found
+    resolved = found if found.is_absolute() else file.parent / found
     if not resolved.is_file():
-        raise ValueError(f"a project's {key} is {named!r}, and {os.fspath(resolved)} is no file")
+        raise ValueError(f"a build's {key} is {named!r}, and {os.fspath(resolved)} is no file")
     return resolved
 
 

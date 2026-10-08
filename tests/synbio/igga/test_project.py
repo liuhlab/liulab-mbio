@@ -1,4 +1,4 @@
-"""What a project file holds, what it composes with the method, and what it refuses when read."""
+"""What a build chooses, what it composes with the method, and what it refuses when read."""
 
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ from liulab_synbio.igga.project import Barcode, Build, read_build
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
 
-#: A whole project, as a user writes one.
+#: A whole build, as a user writes one.
 WRITTEN = {
     "name": "demo",
     "positions": ["N", "DBD", "C"],
@@ -25,7 +25,7 @@ WRITTEN = {
 
 
 def write(directory: Path, **changes) -> Path:
-    """Write a project and the two files it names, with any key replaced."""
+    """Write a `project.json` and the two files it names, with any key replaced."""
     (directory / "parts.fasta").write_text(">N_a\nMKTAEK\n")
     (directory / "vector.dna").write_text("not read here")
     path = directory / "project.json"
@@ -33,7 +33,7 @@ def write(directory: Path, **changes) -> Path:
     return path
 
 
-def test_the_ap1_project_reads_as_what_the_demo_plans():
+def test_the_ap1_build_reads_as_what_the_demo_plans():
     made = read_build(DEMO)
 
     assert made.name == "AP-1 DESynR"
@@ -54,7 +54,7 @@ def test_a_path_is_resolved_against_the_project_file(tmp_path):
     assert made.vector == tmp_path / "vector.dna"
 
 
-def test_the_method_s_defaults_stand_where_a_project_states_nothing(tmp_path):
+def test_the_method_s_defaults_stand_where_a_build_states_nothing(tmp_path):
     made = read_build(write(tmp_path))
 
     assert (made.barcode.length, made.barcode.min_distance) == (11, 3)
@@ -66,7 +66,7 @@ def test_reserved_enzymes_compose_rather_than_replace(tmp_path):
 
     assert made.reserved == ("BsmBI", "EcoRI")
     assert [one.name for one in made.reserved_enzymes] == ["BsmBI", "EcoRI"]
-    # Whatever a project says, what the method reserves stays reserved.
+    # Whatever a build says, what the method reserves stays reserved.
     assert IGGA.reserved[0] in made.reserved
 
 
@@ -82,7 +82,7 @@ def test_a_position_named_twice_is_refused(tmp_path):
         read_build(write(tmp_path, positions=["N", "C", "N"]))
 
 
-def test_a_project_with_no_position_is_refused(tmp_path):
+def test_a_build_with_no_position_is_refused(tmp_path):
     with pytest.raises(ValueError, match="at least one position"):
         read_build(write(tmp_path, positions=[]))
 
@@ -126,7 +126,7 @@ def test_a_value_of_another_json_type_is_refused(tmp_path):
         read_build(write(tmp_path, oligo_length="350"))
 
 
-def test_a_project_built_in_code_is_checked_the_same_way(tmp_path):
+def test_a_build_made_in_code_is_checked_the_same_way(tmp_path):
     with pytest.raises(ValueError, match="barcode-frame"):
         Build(
             "demo",
@@ -141,7 +141,7 @@ def test_a_project_built_in_code_is_checked_the_same_way(tmp_path):
         )
 
 
-def test_a_project_states_no_floor_and_no_route_by_default(tmp_path):
+def test_a_build_states_no_floor_and_no_route_by_default(tmp_path):
     """Validation is optional and polyclonal by default, so the package ships no floor."""
     made = read_build(write(tmp_path))
 
@@ -159,7 +159,7 @@ def test_a_floor_and_a_route_are_stated_together(tmp_path):
         read_build(write(tmp_path, route="index PCR"))
 
 
-def test_a_project_reads_no_route_but_the_two(tmp_path):
+def test_a_build_reads_no_route_but_the_two(tmp_path):
     with pytest.raises(ValueError, match="route is 'DMX'"):
         read_build(write(tmp_path, validate_from=0, route="DMX"))
 
@@ -169,14 +169,14 @@ def test_a_floor_counts_fragments(tmp_path):
         read_build(write(tmp_path, validate_from=-1, route="barcode ligation"))
 
 
-def test_the_ap1_project_reads_every_design_back_by_index_pcr():
+def test_the_ap1_build_reads_every_design_back_by_index_pcr():
     made = read_build(DEMO)
 
     assert (made.validate_from, made.route) == (0, "index PCR")
 
 
-def test_a_project_names_the_working_vector_it_moves_into_or_none(tmp_path):
-    """The vector the library ends in is an application's choice, so a project may name one."""
+def test_a_build_names_the_working_vector_it_moves_into_or_none(tmp_path):
+    """The vector the library ends in is an application's choice, so a build may name one."""
     (tmp_path / "pWORK.fasta").write_text(">pWORK\nACGT\n", encoding="utf-8")
 
     assert read_build(write(tmp_path)).working_vector is None
@@ -184,7 +184,7 @@ def test_a_project_names_the_working_vector_it_moves_into_or_none(tmp_path):
     assert named.working_vector == tmp_path / "pWORK.fasta"
 
 
-def test_a_project_may_tighten_each_representation_mark(tmp_path):
+def test_a_build_may_tighten_each_representation_mark(tmp_path):
     """The sourced mark is a floor the method stands on, as a read depth is in `dmx`."""
     made = read_build(
         write(
@@ -200,7 +200,7 @@ def test_a_project_may_tighten_each_representation_mark(tmp_path):
     assert made.marks.reads_per_member == 200
 
 
-def test_a_project_stating_no_mark_takes_joungs(tmp_path):
+def test_a_build_stating_no_mark_takes_joungs(tmp_path):
     assert read_build(write(tmp_path)).marks == REPRESENTATION_MARKS
 
 
@@ -212,13 +212,13 @@ def test_a_project_stating_no_mark_takes_joungs(tmp_path):
         ("reads_per_member", 50, "raise"),
     ],
 )
-def test_a_project_may_not_loosen_a_representation_mark(tmp_path, field, value, says):
-    """Each one is Joung's, and a project that loosened it would be judged by nothing."""
+def test_a_build_may_not_loosen_a_representation_mark(tmp_path, field, value, says):
+    """Each one is Joung's, and a build that loosened it would be judged by nothing."""
     with pytest.raises(ValueError, match=says):
         read_build(write(tmp_path, **{field: value}))
 
 
 def test_linkage_fidelity_has_no_default(tmp_path):
-    """Nothing published sets a mark for it, so a project stating none is held to none."""
+    """Nothing published sets a mark for it, so a build stating none is held to none."""
     assert read_build(write(tmp_path)).linkage_fidelity is None
     assert read_build(write(tmp_path, linkage_fidelity=0.9)).linkage_fidelity == 0.9

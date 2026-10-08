@@ -20,7 +20,7 @@ design's real lengths, and `steps` the protocol's own steps.
 A library is assembled in rounds and not in one pot, because the product keeps the internal
 enzyme's sites and that is what lets the next round open it -- `docs/adr/0004-library-rounds.md`
 says why `liulab_mbio.cloning.goldengate` does not generalise to one. The method is code and a
-project is a file, per `docs/adr/0010-method-in-code.md`.
+build is a file, per `docs/adr/0010-method-in-code.md`.
 
 Only the way in, the method, the build and the gate are re-exported. Everything else is
 imported by module, as `liulab_mbio.cloning.goldengate.design` is.

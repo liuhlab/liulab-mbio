@@ -163,7 +163,7 @@ def check_cargo(
     """Judge one cargo: the sites it must not carry, the frame it keeps, and what it must not read.
 
     A cargo is what the external enzyme releases from a synthesised block, counted from the
-    first base of the overhang a part enters on. Every enzyme the project reserves is one no
+    first base of the overhang a part enters on. Every enzyme the build reserves is one no
     block spells anywhere, its stuffers included, because the step that reserved it cuts the
     cargo in a tube of its own. A cargo another part follows is whole codons; the one that ends
     the chain is one base past them, which is the method's capping block.
@@ -239,7 +239,7 @@ def check_barcode_set(
 ) -> tuple[Judgement, ...]:
     """Judge one part list's barcodes: how far apart they stand, and what each one reads as.
 
-    The rules are the project's length and distance with the method's cloning scar, the frame the
+    The rules are the build's length and distance with the method's cloning scar, the frame the
     finished block reads the barcode in, and the enzymes a block is kept clear of.
     `liulab_mbio.barcodes` holds all of them; this names them for this method.
     """
