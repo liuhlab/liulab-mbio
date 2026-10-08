@@ -373,6 +373,18 @@ class Check:
         )
 
 
+def _sources_check(cited: frozenset[str], named: frozenset[str]) -> Check:
+    """Return the `sources` verdict: every key `cited` is one of those `named`.
+
+    A protocol is judged against the sources it names itself; a project's bill against the
+    sources its protocols name, which are the ones the run's pages list.
+    """
+    dangling = sorted(cited - named)
+    if dangling:
+        return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
+    return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
+
+
 @dataclass(frozen=True, slots=True)
 class Oligo:
     """One synthetic DNA to order: a row of the order sheet, kept apart from the reagents.
@@ -1134,6 +1146,17 @@ class Bill:
         """Refuse an empty bill."""
         _require(bool(self.rows), f"bill {self.title!r} has no row")
 
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this bill's rows name.
+
+        Examples
+        --------
+        >>> Bill((BillRow("cells", 1, citation=Citation("NEB")),)).cited
+        frozenset({'NEB'})
+        """
+        return frozenset(row.citation.source for row in self.rows if row.citation)
+
 
 @dataclass(frozen=True, slots=True)
 class Item:
@@ -1498,17 +1521,12 @@ class Protocol:
                 *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(w.citation for s in self.steps for w in s.waits),
-                *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
-        )
+        ) | (self.bill.cited if self.bill else frozenset())
 
     def _sources(self) -> Check:
-        cited = self.cited
-        dangling = sorted(cited - set(self.sources))
-        if dangling:
-            return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
-        return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
+        return _sources_check(self.cited, frozenset(self.sources))
 
     def _wells(self) -> Check:
         known = {
@@ -1630,9 +1648,8 @@ class Project:
     def audit(self) -> tuple[Check, ...]:
         """Judge the chain, and the sources its own bill cites.
 
-        A consumed name resolves to an input or an earlier protocol's output. A citation on a
-        bill row resolves to a source some protocol of the run names, since the run's pages list
-        those and no others; each protocol answers for its own citations.
+        A consumed name resolves to an input or an earlier protocol's output, and a bill row's
+        citation to a source one of the protocols names. Each protocol judges its own citations.
 
         Examples
         --------
@@ -1661,16 +1678,8 @@ class Project:
         return Check("handoffs", "pass", counted)
 
     def _sources(self) -> Check:
-        cited = {
-            row.citation.source
-            for row in (self.bill.rows if self.bill else ())
-            if row.citation is not None
-        }
-        named = {key for protocol in self.protocols for key in protocol.sources}
-        dangling = sorted(cited - named)
-        if dangling:
-            return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
-        return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
+        named = frozenset(key for protocol in self.protocols for key in protocol.sources)
+        return _sources_check(self.bill.cited if self.bill else frozenset(), named)
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Project":
