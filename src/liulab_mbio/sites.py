@@ -21,6 +21,7 @@ from dataclasses import KW_ONLY, dataclass
 from functools import cache
 from itertools import islice, product
 
+from liulab_mbio.checks import counted
 from liulab_mbio.codons import CodonUsage, amino_acid, codon_usage
 from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
@@ -356,7 +357,7 @@ def free_enzyme_search(
         }
         if sites := tuple(site for hits in found.values() for site in hits):
             where = ", ".join(f"{len(hits)} in {name}" for name, hits in found.items() if hits)
-            blocked.append(Blocked(enzyme, f"reads {len(sites)} site(s): {where}", sites))
+            blocked.append(Blocked(enzyme, f"reads {counted(len(sites), 'site')}: {where}", sites))
         else:
             free.append(enzyme)
     return EnzymeSearch(tuple(sorted(free, key=lambda one: -len(one.site))), tuple(blocked))

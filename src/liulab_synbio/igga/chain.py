@@ -16,6 +16,7 @@ from collections.abc import Iterable, Sequence
 from liulab_mbio.bench.prices import Item
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.steps import badges
+from liulab_mbio.checks import counted
 from liulab_mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from liulab_mbio.protocol.model import (
@@ -26,7 +27,6 @@ from liulab_mbio.protocol.model import (
     Step,
     Topic,
     by_place,
-    counted,
     names,
 )
 from liulab_mbio.protocol.model import Item as Handed

@@ -13,9 +13,10 @@ roles each PCR pairs.
 from collections.abc import Sequence
 from typing import Literal
 
+from liulab_mbio.checks import counted
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.protocol.figures import SOURCE, SOURCE_KEY
-from liulab_mbio.protocol.model import Citation, Figure, counted
+from liulab_mbio.protocol.model import Citation, Figure
 from liulab_mbio.sequence import Segment, across_the_origin
 from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.rounds import ROUND_FILE, Round

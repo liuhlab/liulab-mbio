@@ -12,8 +12,9 @@ import os
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from liulab_mbio.checks import counted
 from liulab_mbio.cloning.plan import as_project
-from liulab_mbio.protocol.model import Item, Project, Protocol, Topic, citing, counted
+from liulab_mbio.protocol.model import Item, Project, Protocol, Topic, citing
 from liulab_mbio.protocol.render import write_project_files
 from liulab_synbio.dmx.build import Build, read_build, read_designs
 from liulab_synbio.dmx.method import (

@@ -22,7 +22,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from liulab_mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
-from liulab_mbio.checks import Check
+from liulab_mbio.checks import Check, counted
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.edits import EditReport, insert, replace
 from liulab_mbio.enzymes import Enzyme, get_enzyme
@@ -606,12 +606,12 @@ def domesticate_vector(
     record, report = domesticate(vector, held, usage=usage, avoid=held)
     left = tuple(sorted((*report.outside_cds, *report.unchanged), key=lambda one: one.start))
     if not left:
-        detail = f"{len(report.changes)} site(s) changed; none of {_named(held)} is left"
+        detail = f"{counted(len(report.changes), 'site')} changed; none of {_named(held)} is left"
     else:
         named = ", ".join(f"{one.enzyme.name} at {one.start}" for one in left)
         blocked = {one.start for one in refused}
         inside = ", ".join(str(one.start) for one in left if one.start in blocked)
-        detail = f"{len(report.changes)} site(s) changed, {len(left)} left: {named}" + (
+        detail = f"{counted(len(report.changes), 'site')} changed, {len(left)} left: {named}" + (
             f". No oligo reaches {inside}: each sits inside a repeat" if inside else ""
         )
     return Domesticated(

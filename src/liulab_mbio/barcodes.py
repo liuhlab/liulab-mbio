@@ -19,6 +19,7 @@ from dataclasses import KW_ONLY, dataclass
 from itertools import combinations, groupby
 from typing import Literal
 
+from liulab_mbio.checks import counted
 from liulab_mbio.codons import amino_acid
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import SequenceRecord
@@ -423,8 +424,9 @@ def _nearest(barcode: str, chosen: Iterable[str], rules: BarcodeRules) -> tuple[
 
 def _apart(apart: int, rules: BarcodeRules) -> str:
     """How two barcodes standing too close are described."""
+    counting = _COUNTING[rules.metric]
     return (
-        f"stand {apart} {_COUNTING[rules.metric].unit} apart, "
+        f"stand {counted(apart, counting.unit, counting.plural)} apart, "
         f"under the {rules.distance} one part list needs"
     )
 
@@ -505,10 +507,8 @@ class _Counting:
 
 #: How each metric counts, named as the caller names it.
 _COUNTING: Mapping[Metric, _Counting] = {
-    "hamming": _Counting(_hamming, "mismatch(es)", "mismatches", across_lengths=False),
-    "sequence-levenshtein": _Counting(
-        _sequence_levenshtein, "edit(s)", "edits", across_lengths=True
-    ),
+    "hamming": _Counting(_hamming, "mismatch", "mismatches", across_lengths=False),
+    "sequence-levenshtein": _Counting(_sequence_levenshtein, "edit", "edits", across_lengths=True),
 }
 
 #: How each rule is named in a refusal, so that whoever reads one knows which dial to turn.
@@ -523,7 +523,10 @@ _WORDING: Mapping[str, Callable[[BarcodeRules], str]] = {
         if rules.gc_band is not None
         else "the GC band"
     ),
-    "site": lambda rules: f"the forbidden site(s) ({', '.join(one.name for one in rules.enzymes)})",
+    "site": lambda rules: (
+        f"the forbidden {'site' if len(rules.enzymes) == 1 else 'sites'} "
+        f"({', '.join(one.name for one in rules.enzymes)})"
+    ),
     "stop": lambda _: "the stop-codon rule",
     "length": lambda rules: f"the length rule ({rules.length} bases)",
     "bases": lambda _: "the definite-bases rule",
@@ -542,12 +545,12 @@ def _exhausted(
     ranked = sorted(rejected.items(), key=lambda entry: (-entry[1], entry[0]))
     named = ", ".join(f"{_WORDING[key](rules)} rejected {number}" for key, number in ranked)
     where = (
-        f"every one of the {space} barcode(s) the space holds was drawn"
+        f"every one of the {counted(space, 'barcode')} the space holds was drawn"
         if len(drawn) == space
         else f"no further barcode passed in {_TRIES} candidates"
     )
     return (
         f"{count} barcodes of {rules.length} bases were asked for and {len(chosen)} found: "
-        f"{where}, and of {sum(rejected.values())} candidate(s) rejected, "
+        f"{where}, and of {counted(sum(rejected.values()), 'candidate')} rejected, "
         f"{named or 'none was rejected by any rule'}"
     )

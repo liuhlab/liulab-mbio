@@ -19,15 +19,9 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.bench import plates
+from liulab_mbio.checks import counted
 from liulab_mbio.edits import EditReport, insert, ordered
-from liulab_mbio.protocol.model import (
-    FORMATS,
-    Material,
-    Plate,
-    Step,
-    Troubleshooting,
-    counted,
-)
+from liulab_mbio.protocol.model import FORMATS, Material, Plate, Step, Troubleshooting
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from liulab_mbio.sites import find_sites
 

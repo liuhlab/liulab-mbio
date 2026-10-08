@@ -15,12 +15,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from liulab_mbio.barcodes import check_barcodes, separation
-from liulab_mbio.checks import STATUSES, Check, Status, worst_of
+from liulab_mbio.checks import STATUSES, Check, Status, counted, worst_of
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
-from liulab_mbio.protocol.model import counted
 from liulab_mbio.reaction import Pool, Reaction, Role
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement, span_text
 from liulab_mbio.sites import CutSite, find_sites, released

@@ -17,9 +17,10 @@ a design has to be held to once its bases are fixed.
 from collections.abc import Iterable, Mapping
 from dataclasses import KW_ONLY, dataclass
 
+from liulab_mbio.checks import counted
 from liulab_mbio.codons import CodonUsage, amino_acid, codon_usage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, span_text
 from liulab_mbio.sites import CutSite, Domestication, EnzymeLike, domesticate, find_sites
 
 #: What a sequence is called when the caller names none.
@@ -315,8 +316,9 @@ def _why(site: CutSite, dna: str, usage: CodonUsage, name: str) -> str:
     )
     strand = "forward" if site.strand == Strand.FORWARD else "reverse"
     return (
-        f"{name}: the {site.enzyme.name} site at {site.start}-{site.end} on the {strand} "
-        f"strand cannot be removed: it covers codon(s) {covered}, and {cause}"
+        f"{name}: the {site.enzyme.name} site at "
+        f"{span_text(site.start, site.end, len(dna))} on the {strand} strand cannot be "
+        f"removed: it covers {counted(len(indices), 'codon')}, {covered}, and {cause}"
     )
 
 

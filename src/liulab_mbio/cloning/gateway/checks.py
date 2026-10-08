@@ -17,7 +17,7 @@ judged. Coordinates are the model's, 0-based and half-open.
 import re
 
 from liulab_mbio.bench.phenotype import SELECTION, selection_marker
-from liulab_mbio.checks import Check
+from liulab_mbio.checks import Check, counted
 from liulab_mbio.cloning.gateway.att import REGION_BP, find_att_sites
 from liulab_mbio.cloning.gateway.bench import HOSTS, PROPAGATION_HOST
 from liulab_mbio.cloning.gateway.design import Fusion
@@ -169,7 +169,7 @@ def _n_frame(lr: PlannedReaction) -> Check:
     added = (coding.segments[0].start - junction.end) % len(product)
     window = product.extract(Segment(junction.start, junction.start + REGION_BP + added))
     spelled = _spelled(window)
-    said = f"{added} base(s) added after attB1"
+    said = f"{counted(added, 'base')} added after attB1"
     if spelled is None:
         return Check(
             "N-terminal frame",
@@ -214,7 +214,7 @@ def _c_frame(lr: PlannedReaction) -> Check:
         )
     window = product.extract(Segment(end, end + added + REGION_BP + C_VECTOR_BP))
     spelled = _spelled(window)
-    said = f"{added} base(s) added before attB2, and one from the vector after it"
+    said = f"{counted(added, 'base')} added before attB2, and one from the vector after it"
     if spelled is None:
         return Check(
             "C-terminal frame",

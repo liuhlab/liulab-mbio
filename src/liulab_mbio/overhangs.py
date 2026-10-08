@@ -32,6 +32,7 @@ from functools import cache
 from importlib.resources import files
 from typing import Any, Literal
 
+from liulab_mbio.checks import counted
 from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
@@ -610,7 +611,7 @@ def _refuse(
                 return Rejection(
                     candidate,
                     "near-duplicate",
-                    f"it differs from {partner} in {distance} base(s), fewer than {min_distance}",
+                    f"it differs from {partner} in {counted(distance, 'base')}, fewer than {min_distance}",
                 )
     try:
         primer_tail(enzyme, candidate, avoid=avoid)

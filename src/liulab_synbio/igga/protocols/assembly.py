@@ -16,6 +16,7 @@ from collections.abc import Mapping, Sequence
 from liulab_mbio.barcodes import deletion_ambiguity
 from liulab_mbio.bench.amounts import Amount, to_nanograms
 from liulab_mbio.bench.steps import card, listed
+from liulab_mbio.checks import counted
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
@@ -27,7 +28,6 @@ from liulab_mbio.protocol.model import (
     Step,
     Timer,
     Troubleshooting,
-    counted,
     number,
 )
 from liulab_mbio.protocol.model import Item as Handed

@@ -13,7 +13,8 @@ from collections.abc import Sequence
 from dataclasses import replace
 
 from liulab_mbio.bench.readback import clean_colony_chance
-from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting, counted
+from liulab_mbio.checks import counted
+from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting
 from liulab_synbio.dmx.kit import GROUPS
 from liulab_synbio.dmx.method import (
     BARCODE_UL,
