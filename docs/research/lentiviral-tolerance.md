@@ -546,7 +546,7 @@ their own entries in place; what section 6 used to list is now in
 | How many 5'/3' R mismatches first strand transfer tolerates | The Berkhout 2001 *in vitro* donor/acceptor assay with a changed donor and wild-type acceptor |
 | Whether a BsaI-based lentiviral toolkit avoided BsaI for the reason section 1 gives | A methods section or correspondence from the MTK or lentiCRISPR groups |
 | ~~Whether VAMSyB already removed BsaI from a lentiviral LTR~~ — **closed 2026-10-06, issue #262.** They did: C→T at R+4 in both copies. They reported no titre, so this closes the precedent question and leaves the titre gap above exactly as it was | — |
-| Whether any Tet-on lentiviral backbone is already BsaI-clean | Scan the Addgene sequences of TRE lentiviral vectors — no login needed, see section 2 |
+| ~~Whether any Tet-on lentiviral backbone is already BsaI-clean~~ — **closed 2026-10-08, issue #485.** None is. Twenty-two deposits were scanned, and the TAR 20-mer that opens R occurs exactly twice in every one: nobody has recoded an LTR. `working-vector-plvx-tetone.md` section 7 has the table | — |
 | Whether pLVX-TetOne is intended to be self-inactivating | The manufacturer's map, or an LTR-transcription assay on the provirus |
 | The effect of base changes in the hPGK promoter, where two of pLVX's sites sit | A reporter assay for promoter strength before and after |
 
