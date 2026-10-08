@@ -24,10 +24,12 @@ from liulab_mbio.bench.reactions import fits, floor_ng_ul, reaction_table
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.protocol.model import (
+    Citation,
     Component,
     Incubation,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     ThermocyclerProgram,
 )
@@ -44,6 +46,30 @@ DIGEST_VOLUME_UL = 50.0
 #: the second for a second hour. The destination digest is "the same protocol".
 #: METHOD DETAILS p. e4.
 ENZYME_UL = 2.5
+
+#: What `ENZYME_UL` of each enzyme the digest runs on is worth: the product the paper's Key
+#: Resources Table names, and that product's concentration in U/µL. Keyed by catalogue number
+#: and never by enzyme name, because the size letter sets the concentration: BbsI-HF also ships
+#: as R3539M at 50 U/µL, where the same volume would be 125 units. The paper gives volumes and
+#: no units, so a unit count is this multiplication on two quoted values, as
+#: `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL` is.
+#: ``docs/research/bench-numbers.md``, "H23 re-checked".
+DIGEST_STOCKS: dict[str, tuple[str, float]] = {
+    "R3733": ("R3733L", 20.0),
+    "R0629": ("R0629L", 20.0),
+    "R3539": ("R3539L", 20.0),
+    "R0560": ("R0560L", 10.0),
+}
+
+#: The documents those concentrations were read from, and the key a digest line cites them by.
+DIGEST_SOURCE_KEY = "NEB specifications"
+DIGEST_SOURCE = Source(
+    "New England Biolabs product specification sheets",
+    edition="#R3733, #R3539, #R0629, #R0560",
+    read_as="plain curl",
+    date="2026-10-06",
+    note="docs/research/bench-numbers.md",
+)
 DIGEST_SECONDS = 3600
 DIGEST_CELSIUS = 37.0
 
@@ -316,6 +342,9 @@ def digest_reaction(
     The buffer is one line with the water because the method names `CUTSMART` and not the
     strength it is supplied at, so its own volume is the supplier's to set.
 
+    An enzyme `DIGEST_STOCKS` names the paper's product for carries that product's concentration
+    and what the volume is worth in units; one it does not carries the volume alone.
+
     Raises
     ------
     ValueError
@@ -323,11 +352,26 @@ def digest_reaction(
     """
     return reaction_table(
         (dna,),
-        tuple(Component(one.supplier_label, ENZYME_UL) for one in enzymes),
+        tuple(_digest_component(one) for one in enzymes),
         volume_ul=volume_ul,
         title=f"Digest with {listed([one.name for one in enzymes])}",
         filler=f"{CUTSMART} and nuclease-free water",
         reactions=reactions,
+    )
+
+
+def _digest_component(enzyme: Enzyme) -> Component:
+    """Return one enzyme's line of a digest, with its unit count where its product is known."""
+    stock = DIGEST_STOCKS.get(enzyme.catalog_number or "")
+    if stock is None:
+        return Component(enzyme.supplier_label, ENZYME_UL)
+    catalog, units_ul = stock
+    return Component(
+        f"{enzyme.commercial_name or enzyme.name} ({catalog})",
+        ENZYME_UL,
+        stock=f"{units_ul:g} U/µL",
+        final=f"{units_ul * ENZYME_UL:g} units",
+        citation=Citation(DIGEST_SOURCE_KEY, f"#{catalog}, concentration"),
     )
 
 
