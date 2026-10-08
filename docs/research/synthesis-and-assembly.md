@@ -334,6 +334,7 @@ session are dated separately.
 | --- | --- | --- |
 | 18,000 oligos at 251-300 nt cost **$10,004**; $12,505 is the 301-350 nt band; 18,000 at 20-120 nt cost $4,056 | The oligo pool price table, captured 2026-09-17 | 2026-10-06 |
 | Per-kb cost runs $1.85 (251-300 nt) to $2.82 (301-350 nt), synthesis only | The same table, with Freschlin's 246 usable bp per 300-mer as the denominator | 2026-10-06 |
+| 101-500 oligos at 301-350 nt cost **$2,575**, the tier this demo's 152-oligo pool sits in | The same capture, which bands pools from 2 oligos up; this lab's account pricing, as Twist publishes no pool price | 2026-10-08 |
 
 Three of these settle a claim in the method page rather than inform one, and are the
 corrections ticket #214 carries: PmeI is added and not removed, SrfI needs no edit, and the
