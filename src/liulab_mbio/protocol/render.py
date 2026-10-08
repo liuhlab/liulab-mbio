@@ -1440,7 +1440,7 @@ def _materials(
             f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
             f"<tbody>{rows}</tbody></table></div>"
         )
-    carried = [(m, rule) for m in materials for rule in m.rules]
+    carried = [(m.name, rule) for m in materials for rule in m.rules]
     cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions), paths)
     line = ""
     if equipment:
@@ -1671,17 +1671,17 @@ def _after(citation: Citation | None, sources: str = "") -> str:
     return f" {_cite(citation, sources)}" if citation else ""
 
 
-def _rules(rules: Iterable[tuple[Material, Rule]], sources: str = "") -> str:
-    """Every rule the materials in this step carry, computed from the material, never stored.
+def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
+    """Every rule the things in this step carry, computed from the carrier, never stored.
 
-    A rule hangs on the material, so it shows wherever the material is and no edit to a step's
-    prose can drop it.
+    A rule hangs on the material or the plate it governs, so it shows wherever that is and no
+    edit to a step's prose can drop it.
     """
     items = "".join(
-        f'<li class="rule is-{rule.kind}"><strong>{escape(material.name)}: '
+        f'<li class="rule is-{rule.kind}"><strong>{escape(carrier)}: '
         f"{escape('never' if rule.kind == 'forbids' else 'always')} "
         f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation, sources)}</li>"
-        for material, rule in rules
+        for carrier, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
 
@@ -1811,6 +1811,9 @@ def _plate(one: Plate) -> str:
         f'<figure class="drawing plate" data-plate="{escape(one.name)}">{drawn.element()}'
         f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
         + (f'<ul class="plate-legend">{legend}</ul>' if legend else "")
+        # A plate the protocol makes carries its handling rules here, where a reagent carries
+        # them in the materials table.
+        + _rules((one.name, rule) for rule in one.rules)
         + "</figure>\n"
     )
 

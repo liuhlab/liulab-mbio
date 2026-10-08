@@ -852,6 +852,11 @@ class Plate:
         A label resolves against nothing and is drawn on the layout as it stands: it is what
         `holds` is for a plate, said a well at a time. A well a step has to name occupies
         `seating`, never this.
+    rules
+        What handling this plate forbids or requires, for the same reason a `Material` carries
+        its own: the rule reaches every step naming the plate, and no edit to a step can drop
+        it. A plate the protocol makes is not a reagent anyone brings in, so this is where its
+        rules hang rather than on a material row that would list an output as an input.
     """
 
     name: str
@@ -861,6 +866,7 @@ class Plate:
     holds: str = ""
     seating: Mapping[str, str] = field(default_factory=dict, hash=False)
     labels: Mapping[str, str] = field(default_factory=dict, hash=False)
+    rules: tuple[Rule, ...] = ()
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -1451,17 +1457,22 @@ class Protocol:
         """
         return tuple(one for one in self.materials if names(one.name, step.named))
 
-    def rules_for(self, step: Step) -> tuple[tuple[Material, Rule], ...]:
-        """Return each rule that bears on `step`, with the material carrying it.
+    def rules_for(self, step: Step) -> tuple[tuple[str, Rule], ...]:
+        """Return each rule that bears on `step`, with the name of whatever carries it.
 
-        A material bears on a step that names it, and its rules come with it: a rule cannot be
-        edited out of a step because it was never written into one.
+        A material or a plate bears on a step that names it, and its rules come with it: a rule
+        cannot be edited out of a step because it was never written into one. Only the carrier's
+        name is handed back, which is all a reader and the audit need.
         """
         contents = self.contents_of(step)
+        carriers: tuple[Material | Plate, ...] = (
+            *self.materials_for(step),
+            *(one for one in self.plates if names(one.name, step.named)),
+        )
         return tuple(
-            (material, rule)
-            for material in self.materials_for(step)
-            for rule in material.rules
+            (carrier.name, rule)
+            for carrier in carriers
+            for rule in carrier.rules
             if not rule.when or names(rule.when, contents)
         )
 
@@ -1552,15 +1563,15 @@ class Protocol:
 
     def _rules(self) -> Check:
         broken = [
-            f"{step.title}: {material.name} {rule.kind} {rule.subject}"
+            f"{step.title}: {carrier} {rule.kind} {rule.subject}"
             for step in self.steps
-            for material, rule in self.rules_for(step)
+            for carrier, rule in self.rules_for(step)
             if not rule.holds(step.named, self.contents_of(step))
         ]
         kept = sum(len(self.rules_for(step)) for step in self.steps)
         if broken:
             return Check("rules", "fail", "; ".join(broken))
-        return Check("rules", "pass", f"{kept} rules hold where their material is used")
+        return Check("rules", "pass", f"{kept} rules hold where their carrier is used")
 
     def _holes(self) -> Check:
         holes = self.all_holes

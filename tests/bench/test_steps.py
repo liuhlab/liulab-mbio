@@ -6,6 +6,7 @@ from liulab_mbio.bench.pcr import cycle_citation
 from liulab_mbio.bench.phenotype import Phenotype
 from liulab_mbio.bench.plates import primer_plates
 from liulab_mbio.bench.steps import (
+    WORKING_PLATE_SINGLE_USE,
     dpni_step,
     pcr_step,
     phenotype_sentences,
@@ -132,16 +133,22 @@ def test_a_working_plate_carries_the_rule_that_it_is_never_put_back() -> None:
     one = _plate_protocol()
     split, stored = one.steps[-2], one.steps[-1]
 
-    assert [(material.name, rule.subject) for material, rule in one.rules_for(stored)] == [
+    assert [(carrier, rule.subject) for carrier, rule in one.rules_for(stored)] == [
         ("primer working plate 1", "return to the freezer"),
         ("primer working plate 2", "return to the freezer"),
     ]
-    assert [material.name for material, _ in one.rules_for(split)] == [
+    assert [carrier for carrier, _ in one.rules_for(split)] == [
         "primer working plate 1",
         "primer working plate 2",
     ]
     assert {rule.kind for _, rule in one.rules_for(stored)} == {"forbids"}
     assert [check.status for check in one.audit()] == ["pass", "pass", "pass", "pass"]
+
+    # The plate carries it, because the plate is what this protocol makes: a materials table
+    # listing an output would have a reader order it.
+    assert "primer working plate 1" not in [material.name for material in one.materials]
+    made = next(plate for plate in one.plates if plate.name == "primer working plate 1")
+    assert made.rules == (WORKING_PLATE_SINGLE_USE,)
 
 
 def test_the_primers_ordered_once_are_the_protocols_own_order_sheet() -> None:

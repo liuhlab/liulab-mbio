@@ -9,7 +9,7 @@ are here too.
 
 import re
 from collections.abc import Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
@@ -100,8 +100,9 @@ PLATE_REFERENCE = Reference(
 #: Where a plate of primers waits between runs.
 PRIMER_PLATE_STORAGE = "-20 °C"
 
-#: What a working plate may never do. It hangs on the plate as a material, so it reaches every
-#: step naming that plate and no edit to a step can drop it.
+#: What a working plate may never do. It hangs on the plate itself, so it reaches every step
+#: naming that plate and no edit to a step can drop it. Not on a material: the plate is what
+#: this protocol makes, and a materials table lists what a protocol needs brought in.
 WORKING_PLATE_SINGLE_USE = Rule(
     "forbids",
     "return to the freezer",
@@ -944,21 +945,22 @@ def primer_plate_protocol(
             Material(diluent, amount=f"{number(diluent_ul)} µL in all"),
             Material(f"Empty {wells}-well plate", amount=f"{copies} for the working plates"),
             Material("Adhesive plate seals", amount=f"{1 + copies} seals"),
-            *(
-                Material(
-                    one.name,
-                    storage=PRIMER_PLATE_STORAGE,
-                    amount=f"{number(working_ul)} µL per well",
-                    note=f"{number(working_um)} µM",
-                    rules=(WORKING_PLATE_SINGLE_USE,),
-                )
-                for one in made.working
-            ),
         ),
         oligos=tuple(oligos),
         order_sheet=order_sheet,
         equipment=PRIMER_PLATE_EQUIPMENT,
-        plates=made.plates,
+        plates=(
+            made.stock,
+            *(
+                replace(
+                    one,
+                    rules=(WORKING_PLATE_SINGLE_USE,),
+                    note=f"{number(working_um)} µM, {number(working_ul)} µL per well, "
+                    f"{PRIMER_PLATE_STORAGE}",
+                )
+                for one in made.working
+            ),
+        ),
         steps=steps,
     )
 
