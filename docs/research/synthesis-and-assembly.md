@@ -482,9 +482,10 @@ not what separates them. Qian's consensus depth above 150 is where consensus cal
 pooled amplicon carrying four UMIs, ten cycles of a high-fidelity polymerase, counted over reads
 already filtered to Q15 and a length window. LevSeq's twenty wanted and ten tolerable are where
 a reader stops trusting a well: one 35-cycle Taq amplicon per well with the index on the primer,
-counted as alignments. Picking one of the two for both routes would read a consensus-calling
-parameter as a quality check, or the reverse. `docs/research/route-choice.md` section 4 works
-the comparison through. Each route's wanted depth is a default a build may raise; the tolerable
+counted as alignments, and the ten from simulated data rather than from a run. Picking one of
+the two for both routes would read a consensus-calling parameter as a quality check, or the
+reverse. `docs/research/route-choice.md` section 4 works the comparison through.
+Each route's wanted depth is a default a build may raise; the tolerable
 one is the route's own and nothing overrides it. The wanted depth is exceeded; the tolerable one
 is reached, so a well at exactly ten reads warns rather than going unjudged.
 
