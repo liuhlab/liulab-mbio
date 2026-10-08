@@ -149,6 +149,19 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
         "Check a miniprep by digesting it with EcoRI and BamHI",
         "Confirm the clone by sequencing",
     ]
+    # Keyed by what each step does and not by its wording. The two digests are told apart by
+    # their role, since a run cutting a record out of itself would name both the same.
+    assert [step.key for step in protocol.steps] == [
+        "digest-vector",
+        "digest-insert",
+        "gel-purify",
+        "quantify",
+        "ligate",
+        "transform",
+        "colony-pcr",
+        "diagnostic-digest",
+        "sequencing",
+    ]
     for step in protocol.steps:
         assert step.expected, step.title
     tables = {table.title for step in protocol.steps for table in step.tables}
