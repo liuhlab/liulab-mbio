@@ -8,8 +8,9 @@ cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the o
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `goldengate`: NEB's Golden Gate enzymes, assembly reaction and cycling, which the Golden Gate
-  cloning pipeline and a library build both run. Imported by module, not re-exported here, so
-  that reaching this package does not read the shipped ligation data its references quote.
+  cloning pipeline and a library build both run. The other methods' numbers stay with their own
+  pipeline, because only this chemistry has two callers. Imported by module: its `REFERENCES`
+  and `SOURCES` are one chemistry's, not this package's.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
 - `readback`: what one well's read came to, where a construct is read back one well at a time,
   and how often one picked colony is clean.
