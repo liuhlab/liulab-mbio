@@ -56,8 +56,8 @@ class SeatedParts:
     Notes
     -----
     There is no library field, and that is the point: this ends in one plasmid a well, each
-    still identified by where it sits. Neither the class nor the module is named for seating,
-    which `liulab_mbio` already uses for where things sit in a plate.
+    still identified by where it sits. Neither this class nor this module is called `Seating`:
+    `liulab_mbio` already uses that word for where things sit in a plate.
     """
 
     plate: Plate
@@ -216,7 +216,7 @@ def seat_parts(
     """
     named = tuple(part.name for part in parts)
     if not named:
-        raise ValueError("a carrier plate holds at least one part")
+        raise ValueError("no part was given, and a carrier plate holds at least one")
     if not all(named):
         raise ValueError("a part has no name, and a well is named by the part sitting in it")
     if len(set(named)) != len(named):

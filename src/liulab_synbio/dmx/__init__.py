@@ -17,8 +17,8 @@ construction and a demultiplexer can check an address instead of trusting a file
 
 `method` holds the routes, the addresses, the plates and the protocol's own pieces; `steps`
 writes them up as the steps a reader works through; `kit` holds the 96 barcodes, which are not
-shipped and are read from a copy the user holds; `carrier` puts one part a well in the part
-carrier, which is where this method's cargo starts. What a call is worth once it is back is
+shipped and are read from a copy the user holds; `carrier` puts one part a well in its own
+plasmid, which is where this method's cargo starts. What a call is worth once it is back is
 `liulab_mbio.bench.readback`'s, because any method reading a construct back per well judges it
 the same way.
 """

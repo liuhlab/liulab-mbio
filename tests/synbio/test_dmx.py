@@ -85,7 +85,7 @@ def test_the_wanted_mark_is_exceeded_and_the_tolerable_one_is_reached():
     assert method.depth_check(method.ROUTE_INDEX_PCR, 10).status == "warn"
 
 
-def test_the_floor_travels_with_the_route_and_a_project_may_only_raise_it():
+def test_the_floor_travels_with_the_route_and_a_build_may_only_raise_it():
     """Each floor was measured on its own library prep, so neither is the other's."""
     assert method.ROUTE_LIGATION.wanted_reads != method.ROUTE_INDEX_PCR.wanted_reads
     assert method.depth_check(method.ROUTE_INDEX_PCR, 25, wanted=30).status == "warn"
