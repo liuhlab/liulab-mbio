@@ -581,6 +581,62 @@ class Gel:
 
 
 @dataclass(frozen=True, slots=True)
+class Figure:
+    """A record drawn as a map beside a step, so what the step makes is shown and not described.
+
+    A spec and never a shape, as a `Gel` and a `Plate` are: the figure says what to draw and the
+    page draws it, so the figure cannot disagree with the design and the JSON stays readable.
+
+    Parameters
+    ----------
+    records
+        What is drawn: a path to a sequence file, relative to the directory the protocol was read
+        from. Exactly one for now; a tuple because a figure of several rows comes next.
+    caption
+        What the figure shows, in the words a step uses.
+    span
+        The stretch drawn, ``(start, end)``, 0-based and half-open, ending past the record's
+        length across the origin. Null draws the whole record.
+    linear
+        Whether a circular record drawn whole is opened as a line.
+    sequence_view
+        Whether the bases are drawn under the map.
+    enzymes
+        The enzymes whose every cut site is drawn; null draws the shipped unique cutters.
+    highlight
+        What the map points at: a feature, a primer or an enzyme. Every other item dims.
+    citation
+        Where a figure taken from a published map was read. One computed from the design cites
+        nothing.
+    """
+
+    records: tuple[str, ...]
+    caption: str
+    _: KW_ONLY
+    span: tuple[int, int] | None = None
+    linear: bool = False
+    sequence_view: bool = False
+    enzymes: tuple[str, ...] | None = None
+    highlight: tuple[str, ...] = ()
+    citation: Citation | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a figure with no caption, without one record, or with a span that is empty."""
+        _require(bool(self.caption.strip()), "a figure needs a caption")
+        _require(
+            len(self.records) == 1,
+            f"figure {self.caption!r}: one record is drawn, not {len(self.records)}",
+        )
+        if self.span is not None:
+            start, end = self.span
+            _require(
+                0 <= start < end,
+                f"figure {self.caption!r}: span {self.span} is 0-based and half-open, so it "
+                "starts at zero or more and ends past its start",
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class Timer:
     """A countdown the reader can start from the step."""
 
@@ -991,6 +1047,8 @@ class Step:
     transfers
         What the step moves between wells. A step references a well by holding the transfer,
         never by describing where a thing is.
+    figures
+        The records the step draws, shown under its instructions.
     gels, expected
         What a successful step looks like.
     troubleshooting
@@ -1011,6 +1069,7 @@ class Step:
     waits: tuple[Wait, ...] = ()
     hands_on_seconds: int | None = None
     transfers: tuple[Transfer, ...] = ()
+    figures: tuple[Figure, ...] = ()
     gels: tuple[Gel, ...] = ()
     expected: tuple[str, ...] = ()
     troubleshooting: tuple[Troubleshooting, ...] = ()
@@ -1197,6 +1256,7 @@ class Protocol:
                     for i in g.incubations
                 ),
                 *(t.citation for s in self.steps for t in s.transfers),
+                *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(w.citation for s in self.steps for w in s.waits),
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
@@ -1429,6 +1489,8 @@ def _converter(hint: Any) -> _Convert:
         return _or_null(_converter(inner))
     if origin is tuple and args[1:] == (...,):
         return _list(_converter(args[0]))
+    if origin is tuple:
+        return _fixed(tuple(_converter(arg) for arg in args))
     if origin is Mapping and args[0] is str:
         return _mapping(_converter(args[1]))
     if isinstance(hint, type) and is_dataclass(hint):
@@ -1462,6 +1524,23 @@ def _list(item: _Convert) -> _Convert:
         if not isinstance(data, list):
             raise _refused(where, "a list", data)
         return tuple(item(value, f"{where}[{i}]") for i, value in enumerate(data))
+
+    return convert
+
+
+def _fixed(items: tuple[_Convert, ...]) -> _Convert:
+    """Return a converter to a tuple of a fixed length, such as a span's two numbers."""
+    expected = f"a list of {len(items)}"
+
+    def convert(data: Any, where: str) -> tuple[Any, ...]:
+        if not isinstance(data, list):
+            raise _refused(where, expected, data)
+        if len(data) != len(items):
+            raise ValueError(f"{where}: expected {expected}, got {len(data)}")
+        return tuple(
+            item(value, f"{where}[{i}]")
+            for i, (item, value) in enumerate(zip(items, data, strict=True))
+        )
 
     return convert
 

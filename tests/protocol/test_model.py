@@ -9,6 +9,7 @@ from liulab_mbio.protocol import (
     Check,
     Citation,
     Component,
+    Figure,
     Gel,
     Incubation,
     Ladder,
@@ -144,6 +145,10 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
             "M13 fwd", "GTAAAACG", status="pass", checks=(Check("length", "warn", "17"),)
         ),
         lambda: Reference("x", url="javascript:alert(1)"),
+        lambda: Figure((), "The product"),
+        lambda: Figure(("a.dna", "b.dna"), "The product"),
+        lambda: Figure(("a.dna",), " "),
+        lambda: Figure(("a.dna",), "The product", span=(400, 100)),
         lambda: Step(""),
         lambda: Protocol(""),
         lambda: Project(""),
@@ -325,3 +330,45 @@ def test_a_steps_time_round_trips_through_json(tmp_path: Path) -> None:
         ),
     )
     assert read_protocol(write_protocol(one, tmp_path / "protocol.json")) == one
+
+
+def test_a_figure_names_its_record_by_path_and_round_trips_through_json(tmp_path: Path) -> None:
+    one = Protocol(
+        "t",
+        steps=(
+            Step(
+                "Assemble the vector and the insert",
+                figures=(
+                    Figure(
+                        ("product.dna",),
+                        "The assembled plasmid, opened at the first junction",
+                        span=(2683, 2689),
+                        linear=True,
+                        sequence_view=True,
+                        enzymes=("BsaI",),
+                        highlight=("GFP",),
+                    ),
+                ),
+            ),
+        ),
+    )
+    assert read_protocol(write_protocol(one, tmp_path / "protocol.json")) == one
+
+
+def test_a_figure_cites_its_source_as_a_note_does() -> None:
+    one = Protocol(
+        "t",
+        steps=(
+            Step("Draw it", figures=(Figure(("v.dna",), "The vector", citation=Citation("k")),)),
+        ),
+    )
+    assert one.cited == frozenset({"k"})
+    (check,) = [c for c in one.audit() if c.name == "sources"]
+    assert check.status == "fail"
+
+
+def test_a_span_that_is_not_a_pair_of_numbers_is_refused_where_it_stands() -> None:
+    figure = {"records": ["v.dna"], "caption": "c", "span": [1, 2, 3]}
+    data = {"title": "t", "steps": [{"title": "s", "figures": [figure]}]}
+    with pytest.raises(ValueError, match=r"figures\[0\]\.span: expected a list of 2, got 3"):
+        Protocol.from_dict(data)
