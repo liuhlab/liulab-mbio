@@ -709,9 +709,9 @@ A protocol of its own for multiplexed validation: a design sits one per well, th
 marked, sequenced and called on its own, and identity stays with well position throughout. It
 takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
 beside iGGA rather than downstream of it — a caller chains it, and `plan_dmx` on the command
-line is one such caller. Two routes mark a well, barcode
-ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
-are shared, while the marking step, the plate and the depth floor are the route's own. The two
+line is one such caller. Two routes mark a well, barcode ligation or index PCR, and one
+judgement reads them; the picking, the pass rule and the reformat are shared, while the marking
+step, the plate and the depth floor are the route's own. The two
 floors are not a strict and a lenient pair: one is where consensus calling starts, the other
 where a reader stops trusting a well, over different amplification and different read filters.
 _Avoid_: the validation pipeline, read-back pipeline, QC
