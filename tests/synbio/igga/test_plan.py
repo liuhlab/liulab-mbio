@@ -520,7 +520,10 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
     assert "floor for the 0.99 chance this design asked for" in growth.expected[0]
     assert "it works out at 6x this round's products" in " ".join(growth.notes)
     final = next(one for one in protocol.steps if one.title.startswith("Clean the assembly up"))
-    assert "At least 51 net colonies: the floor for the 0.99 chance" in final.expected[0]
+    assert (
+        "At least 51 net colonies: the floor for the 0.99 chance this design asked for"
+        in final.expected[0]
+    )
 
 
 #: A price record as a user writes one: the synthesis order banded by count and by length, and
