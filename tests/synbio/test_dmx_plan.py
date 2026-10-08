@@ -13,6 +13,9 @@ from liulab_synbio.dmx.method import INDEX_MARKS
 
 SHEET = "name\tfragments\nshort\t2\nmiddle\t4\nlong\t8\n"
 
+#: The published standalone run, whose page states every number asserted below.
+DEMO = Path(__file__).parents[2] / "docs" / "examples" / "ap1-readback"
+
 BUILD = {
     "name": "Shelf read-back",
     "designs": "designs.tsv",
@@ -178,3 +181,13 @@ def test_the_verb_writes_the_folder_and_turns_a_refusal_into_an_error_line(tmp_p
     )
     assert refused.exit_code == 1
     assert "error:" in refused.output
+
+
+def test_the_published_demo_plans_what_its_page_says():
+    """The committed build and sheet still plan: 32 of 72 read back, and no hole left open."""
+    made = plan_dmx(DEMO / "build.json")
+    assert len(made.designs) == 72
+    assert len(made.validation.designs) == 32
+    assert made.validation.wells == 128
+    assert [plate.name for plate in made.validation.plates] == ["picked 1", "index 1", "index 2"]
+    assert not [hole for step in made.protocol().steps for hole in step.holes]

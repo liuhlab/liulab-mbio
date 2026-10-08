@@ -33,6 +33,7 @@ from tempfile import TemporaryDirectory
 REPO = Path(__file__).resolve().parents[1]
 PUC19 = "docs/examples/pUC19-GFP"
 AP1 = "docs/examples/ap1-library"
+READBACK = "docs/examples/ap1-readback"
 
 #: Stands in a command for the directory that run writes into. Each command below is otherwise
 #: the one its example's page prints, so the two can be read against each other.
@@ -126,6 +127,18 @@ GENERATORS: tuple[Generator, ...] = (
             "working-vector-domestication.html",
             "working-vector-domestication.json",
             "working-vector.gb",
+        ),
+    ),
+    Generator(
+        what="the AP-1 cargo read-back",
+        directory=REPO / READBACK / "protocol",
+        commands=(f"liulab_synbio dmx plan {READBACK}/build.json --out {OUT}",),
+        writes=(
+            "01-design-read-back-index-pcr.html",
+            "index.html",
+            "project.json",
+            "reagents.html",
+            "references.html",
         ),
     ),
 )
