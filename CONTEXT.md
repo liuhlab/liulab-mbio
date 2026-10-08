@@ -22,11 +22,13 @@ _Avoid_: the library package, extension, plugin
 
 ### Pipeline
 
-One way in that plans a whole experiment from the records it is given: it picks the enzymes,
-designs the DNA, simulates the product and writes what the bench follows — one **protocol** for
-each of the four cloning methods, and a whole **project** of them for a library. Five ship:
-`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga`, each the
-single entry point of its own subpackage. A module below one decides a detail of the design.
+One way in that plans a whole experiment and writes what the bench follows: one **protocol** for
+each of the four cloning methods, and a whole **project** of them for a library or a read-back.
+Five plan from the records they are given — picking the enzymes, designing the DNA and
+simulating the product — while **DMX** designs nothing and plans from designs a lab already
+holds. Six ship: `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway`, `plan_igga`
+and `plan_dmx`, each the single entry point of its own subpackage. A module below one decides a
+detail of the design.
 _Avoid_: workflow, driver, orchestrator
 
 ### Sequence record
@@ -182,8 +184,9 @@ _Avoid_: branch, option, variant, fork, conditional, Route A, Route B
 
 What one run of a **pipeline** chooses, as against what its method fixes: for a library, the
 positions and their part lists, the vector, the host, the oligo length, the batch size, the
-completeness, the seed, the barcode length and distance, and any further enzyme to keep clear.
-It is read from one `project.json` and checked where it is read. It overrides nothing the method
+completeness, the seed, the barcode length and distance, and any further enzyme to keep clear;
+for a read-back, the designs sheet, the archive plate, the route and the **validation floor**.
+It is read from one JSON file and checked where it is read. It overrides nothing the method
 states: where both have a say, the two compose. It may also state what the method leaves open —
 what only this lab's bench or its shelf settles — which closes that **hole**; stating none
 leaves the hole standing. What a build writes is a **project**, which is the chain of protocols
@@ -705,7 +708,8 @@ _Package_: liulab_synbio
 A protocol of its own for multiplexed validation: a design sits one per well, the well is
 marked, sequenced and called on its own, and identity stays with well position throughout. It
 takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
-beside iGGA rather than downstream of it — a caller chains it. Two routes mark a well, barcode
+beside iGGA rather than downstream of it — a caller chains it, and `plan_dmx` on the command
+line is one such caller. Two routes mark a well, barcode
 ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
 are shared, while the marking step, the plate and the depth floor are the route's own. The two
 floors are not a strict and a lenient pair: one is where consensus calling starts, the other

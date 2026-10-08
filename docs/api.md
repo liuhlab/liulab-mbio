@@ -456,21 +456,31 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 
 ## DMX
 
+`plan_dmx` is the way in. It plans the read-back one build file asks for: which designs are
+read, on which route, and what that takes at the bench. `ReadBackPlan.write` turns the directory
+it is given into the protocol folder — the run's data and its pages, and nothing else. A DMX run
+reads back designs the lab already holds, so there is no DNA to design, no record and no sheet.
+
 DMX is its own protocol for multiplexed validation. A design sits one per well, the well is
 marked, sequenced and called on its own, and identity stays with well position throughout. It
 takes any cargo, and what `liulab_synbio.igga` builds is one kind of cargo among others, so
 `dmx` stands beside `igga` rather than downstream of it: iGGA chains this protocol as any
-caller would.
+caller would, and so does the `dmx plan` command.
 
-`kit` is the barcode kit a user holds, read from their own copy because the sequences are not
-shipped. `method` holds the two marking routes, each route's depth floor, a well's derived
-address and the pass rule, with the document each number came from. `steps` writes them up as
-protocol steps. `carrier` holds the method's carrier step — one part a well, nothing pooled at
-the end — which is why it is no **round**.
+`build` holds what one run chooses, checked as it is read. `kit` is the barcode kit a user
+holds, read from their own copy because the sequences are not shipped. `method` holds the two
+marking routes, each route's depth floor, a well's derived address and the pass rule, with the
+document each number came from. `steps` writes them up as protocol steps. `carrier` holds the
+method's carrier step — one part a well, nothing pooled at the end — which is why it is no
+**round**.
 
 ::: liulab_synbio.dmx
     options:
       members: false
+
+::: liulab_synbio.dmx.plan
+
+::: liulab_synbio.dmx.build
 
 ::: liulab_synbio.dmx.kit
 
@@ -500,6 +510,8 @@ and every plan verb is the same spine: plan, write, and report what was written.
 ::: liulab_mbio.cloning.gateway.cli
 
 ::: liulab_synbio.cli
+
+::: liulab_synbio.dmx.cli
 
 ::: liulab_synbio.igga.cli
 
