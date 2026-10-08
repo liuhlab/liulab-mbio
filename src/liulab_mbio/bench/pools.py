@@ -30,6 +30,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     reverse_complement,
+    span_text,
 )
 from liulab_mbio.sites import EnzymeLike, find_sites
 from liulab_mbio.split import Budget, CargoSplit, Fragment
@@ -160,6 +161,8 @@ class Oligo:
         Which piece, counting from one, and of how many.
     span
         Where that piece lies in the cargo, its overhangs included.
+    cargo_length
+        How long that cargo is, which is what the span is read against.
     overhangs
         What its two cuts leave, 5' then 3'.
     primers
@@ -175,6 +178,7 @@ class Oligo:
     fragment: int
     fragments: int
     span: Segment
+    cargo_length: int
     overhangs: tuple[str, str]
     primers: tuple[str, ...]
     pad: int
@@ -337,6 +341,7 @@ def build_oligo(
         fragment=fragment.index + 1,
         fragments=split.pieces,
         span=fragment.span,
+        cargo_length=len(split.cargo),
         overhangs=fragment.overhangs,
         primers=tuple(one.name for one in (*forward, *reverse)),
         pad=pad,
@@ -461,7 +466,7 @@ def pool_sheet(pool: Pool) -> str:
                     one.source,
                     str(one.fragment),
                     str(one.fragments),
-                    f"{one.span.start}-{one.span.end}",
+                    span_text(one.span.start, one.span.end, one.cargo_length),
                     ",".join(one.overhangs),
                     ",".join(one.primers),
                     str(one.pad),
