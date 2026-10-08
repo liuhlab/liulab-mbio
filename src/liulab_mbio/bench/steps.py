@@ -759,7 +759,8 @@ def primer_plate_steps(
         Step(
             "Order the primers",
             instructions=(
-                f"Order every primer on the sheet below as one dried {stock.wells}-well plate.",
+                f"Order every primer on the oligo sheet at the top of this page as one dried "
+                f"{stock.wells}-well plate.",
             ),
             expected=(f"A sealed {stock.wells}-well plate holding {count} dried primers.",),
         ),
@@ -823,6 +824,7 @@ def primer_plate_protocol(
     working_ul: float,
     diluent: str = "nuclease-free water",
     title: str = "Primer plates",
+    order_sheet: str = "",
     stock_name: str = "primer stock plate",
     working_name: str = "primer working plate",
 ) -> Protocol:
@@ -844,6 +846,9 @@ def primer_plate_protocol(
         As `primer_plate_steps` takes them.
     title
         The page heading, for a run laying out more than one set of primers.
+    order_sheet
+        The file these primers are ordered from, as a path from the page, where the caller
+        writes one.
     stock_name, working_name
         What the plates are called, which is what a later protocol names.
 
@@ -932,6 +937,7 @@ def primer_plate_protocol(
             ),
         ),
         oligos=tuple(oligos),
+        order_sheet=order_sheet,
         equipment=PRIMER_PLATE_EQUIPMENT,
         plates=made.plates,
         steps=steps,

@@ -14,7 +14,7 @@ import os
 import typing  # Spelled out: `Protocol` here is the bench protocol imported below.
 from collections import Counter
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -95,6 +95,15 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     out.mkdir(parents=True, exist_ok=True)
     data = write_protocol(protocol, out / PROTOCOL_DATA_FILE)
     return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+
+
+def ordered_from_sheet(protocol: Protocol) -> Protocol:
+    """Return `protocol` naming the primer sheet its plan writes beside its page.
+
+    Every cloning plan writes `PRIMER_FILE` into the directory it writes the page into, so the
+    page links the file rather than being the thing a supplier is sent.
+    """
+    return replace(protocol, order_sheet=PRIMER_FILE)
 
 
 def as_project(protocol: Protocol) -> Project:

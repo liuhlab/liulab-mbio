@@ -423,8 +423,8 @@ def with_pair(pair: ReadPair | None) -> str:
     if pair is None:
         return ""
     return (
-        f", on {pair.forward.name} {pair.forward.sequence} and {pair.reverse.name} "
-        f"{pair.reverse.sequence}, which give a {pair.amplicon_length} bp amplicon"
+        f", on {pair.forward.name} and {pair.reverse.name}, which give a "
+        f"{pair.amplicon_length} bp amplicon"
     )
 
 

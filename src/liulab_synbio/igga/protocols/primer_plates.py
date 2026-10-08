@@ -69,6 +69,8 @@ def _plates(run: Run) -> model.Protocol:
         working_um=asked.working_um,
         working_ul=asked.working_ul,
         title=PRIMER_PLATES,
+        # The pages sit in their own folder, so the sheet beside them is a step up.
+        order_sheet=f"../{run.primer_sheet}" if run.primer_sheet else "",
     )
 
 

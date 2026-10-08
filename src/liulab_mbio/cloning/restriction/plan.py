@@ -38,6 +38,7 @@ from liulab_mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
     as_record,
+    ordered_from_sheet,
     primer_check,
     status,
     write_protocol_files,
@@ -249,7 +250,7 @@ class Plan:
 
     def protocol(self) -> Protocol:
         """Return the bench protocol for this plan."""
-        return protocol_for(
+        made = protocol_for(
             vector=self.vector,
             source=self.source,
             enzymes=self.enzymes,
@@ -270,6 +271,7 @@ class Plan:
             polymerase=self.polymerase,
             thresholds=self.thresholds,
         )
+        return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the oligo sheet, the protocol data and its page into `directory`.

@@ -489,3 +489,44 @@ def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table()
     assert not figure.find_all("svg")
     assert not figure.find_all("details")
     assert "picked C2" in figure.find_all("table")[0].text
+
+
+def _ordered(count: int) -> Protocol:
+    oligos = tuple(
+        Oligo(f"OP{n}", "ACGT" * (5 + n % 2), purpose="index" if n % 2 else "gene", tm_c=60.0 + n)
+        for n in range(1, count + 1)
+    )
+    stock = Plate("stock", 96)
+    seating = dict(zip(stock.well_names, (oligo.name for oligo in oligos), strict=False))
+    return Protocol(
+        "Order",
+        oligos=oligos,
+        order_sheet="../primers.tsv",
+        plates=(Plate("stock", 96, seating=seating),),
+    )
+
+
+def test_a_long_order_sheet_is_summarised_and_the_rows_go_behind_a_toggle() -> None:
+    """A page says what 20 rows have in common; the rows themselves are what the file is for."""
+    section = parse(render_html(_ordered(20))).find_all("section", cls="oligos")[0]
+
+    assert section.find_all("a", href="../primers.tsv")
+    assert "20 oligos · 20 to 24 bases · Tm 61.0 to 80.0 °C" in section.text
+    summary = section.find_all("table")[0]
+    index = next(r for r in summary.find_all("tr") if "index" in r.text)
+    assert [cell.text for cell in index.find_all("td")] == [
+        "index",
+        "OP1 to OP19",
+        "10",
+        "stock A1 to B7",
+    ]
+    toggle = section.find_all("details", cls="listing")[0]
+    assert toggle.find_all("summary")[0].text == "All 20 rows"
+    assert "OP20" in toggle.text
+
+
+def test_a_short_order_sheet_stays_the_sheet_it_is() -> None:
+    section = parse(render_html(_ordered(19))).find_all("section", cls="oligos")[0]
+
+    assert not section.find_all("details", cls="listing")
+    assert "19 oligos" not in section.text

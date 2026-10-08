@@ -279,6 +279,7 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "produces": [],',
             '  "materials": [],',
             '  "oligos": [],',
+            '  "order_sheet": "",',
             '  "equipment": [],',
             '  "vessels": [],',
             '  "plates": [],',

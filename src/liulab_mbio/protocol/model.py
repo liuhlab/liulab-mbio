@@ -1275,6 +1275,9 @@ class Protocol:
     materials, oligos, equipment
         The reagents, the oligos to order, and the hardware. Three lists and not one, because an
         order sheet and a reagent list want different columns.
+    order_sheet
+        The file holding `oligos` as a sheet to send a supplier, as a path from the page. The
+        page links it rather than being the thing that is ordered from.
     vessels, plates
         What the run holds material in, and where each thing sits.
     steps, references
@@ -1297,6 +1300,7 @@ class Protocol:
     produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
     oligos: tuple[Oligo, ...] = ()
+    order_sheet: str = ""
     equipment: tuple[str, ...] = ()
     vessels: tuple[Vessel, ...] = ()
     plates: tuple[Plate, ...] = ()

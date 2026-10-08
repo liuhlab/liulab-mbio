@@ -285,8 +285,10 @@ def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
 
     for step, pair in ((linkage, pairs.linkage), (representation, pairs.representation)):
         said = " ".join(step.instructions)
-        assert pair.forward.sequence in said
-        assert pair.reverse.sequence in said
+        # The oligos are named, never spelled out: the sheet is where a sequence belongs.
+        assert pair.forward.name in said
+        assert pair.reverse.name in said
+        assert pair.forward.sequence not in said
         assert f"{pair.amplicon_length} bp amplicon" in said
     assert "long read" in " ".join(linkage.instructions)
 

@@ -13,6 +13,7 @@ from dataclasses import dataclass, replace
 from html import escape
 from importlib.resources import files
 from pathlib import Path
+from typing import NamedTuple
 
 from liulab_mbio.checks import Status
 from liulab_mbio.plot.drawing import draw_map, draw_plate
@@ -43,6 +44,7 @@ from liulab_mbio.protocol.model import (
     Wait,
     number,
     read_project,
+    well_at,
     write_project,
 )
 
@@ -62,6 +64,10 @@ REFERENCES_FILE = "references.html"
 
 #: The longest a protocol's title may run in the file its page is written to.
 NAME_CHARS = 48
+
+#: From how many oligos a sheet is summarised. Fewer than this reads as a sheet; past it the
+#: rows repeat one pattern and the page states the pattern instead.
+OLIGO_SUMMARY = 20
 
 #: What each kind of hole says it is waiting on.
 HOLE_KINDS = {
@@ -200,7 +206,7 @@ def render_html(
         [
             _header(protocol, toc=folder is None, place=place),
             _materials(protocol.materials, protocol.equipment),
-            _oligos(protocol.oligos),
+            _oligos(protocol),
             _plates(protocol),
             _bill(protocol.bill),
             *(
@@ -958,10 +964,19 @@ def _materials(
     )
 
 
-def _oligos(oligos: tuple[Oligo, ...]) -> str:
-    """Render the order sheet: one row each, every sequence with a copy button."""
-    if not oligos:
+def _oligos(protocol: Protocol) -> str:
+    """Render the order sheet: one row each, or what the rows share where there are many.
+
+    Nobody reads 74 rows to learn they are 74 primers, so from `OLIGO_SUMMARY` up the section
+    states the count, the lengths, the melting temperatures and what each purpose covers, and
+    the sheet itself goes under a closed toggle. Rows are in the order a plate seats them, so
+    a reader walking the plate walks the sheet.
+    """
+    if not protocol.oligos:
         return ""
+    seats = _seats(protocol.plates)
+    unseated = _Seat(len(protocol.plates), 0, 0, "", "")
+    oligos = tuple(sorted(protocol.oligos, key=lambda one: seats.get(one.name, unseated)))
     columns: list[tuple[str, str, Callable[[Oligo], str]]] = [
         # One decimal, so the column reads as one: `number` prints 63 beside 63.1.
         ("Tm (°C)", "num", lambda o: "" if o.tm_c is None else f"{o.tm_c:.1f}"),
@@ -993,12 +1008,105 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
     if len(oligos) > 1:
         sheet = "\n".join(f"{oligo.name}\t{oligo.sequence}" for oligo in oligos)
         copy_all = f"<p>{_copy(sheet, 'Copy all sequences')}</p>"
-    return (
-        '<section class="block oligos">\n<h2>Oligos</h2>\n'
+    full = (
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
         f"<tbody>{''.join(rows)}</tbody></table></div>"
-        f"{_oligo_checks(oligos)}{copy_all}\n</section>\n"
+        f"{_oligo_checks(oligos)}{copy_all}"
     )
+    if len(oligos) >= OLIGO_SUMMARY:
+        full = (
+            f"{_oligo_summary(oligos, seats)}"
+            f'<details class="listing"><summary>All {len(oligos)} rows</summary>{full}</details>'
+        )
+    return (
+        '<section class="block oligos" id="oligos">\n<h2>Oligos</h2>\n'
+        f"{_order_sheet(protocol.order_sheet)}{full}\n</section>\n"
+    )
+
+
+class _Seat(NamedTuple):
+    """Where one name sits: the plate's place in the protocol, and the well's in reading order."""
+
+    plate: int
+    row: int
+    column: int
+    name: str
+    well: str
+
+
+def _seats(plates: tuple[Plate, ...]) -> dict[str, _Seat]:
+    """Return where each seated name sits, by the first plate that seats it."""
+    found: dict[str, _Seat] = {}
+    for index, plate in enumerate(plates):
+        for well, held in plate.seating.items():
+            at = well_at(well)
+            if at is not None:
+                found.setdefault(held, _Seat(index, at[0], at[1], plate.name, well))
+    return found
+
+
+def _order_sheet(path: str) -> str:
+    """Return the file the sheet is ordered from: a page is not what a supplier is sent."""
+    if not path:
+        return ""
+    return (
+        f'<p class="order-sheet">Order sheet: '
+        f'<a href="{escape(path, quote=True)}">{escape(path)}</a></p>'
+    )
+
+
+def _oligo_summary(oligos: tuple[Oligo, ...], seats: Mapping[str, _Seat]) -> str:
+    """Return what the rows share, and one row a purpose: where it sits and how much of it."""
+    lengths = [len(oligo.sequence) for oligo in oligos]
+    melting = [oligo.tm_c for oligo in oligos if oligo.tm_c is not None]
+    facts = " · ".join(
+        text
+        for text in (
+            _count(len(oligos), "oligo"),
+            f"{_span(min(lengths), max(lengths))} bases",
+            f"Tm {_span(min(melting), max(melting), 1)} °C" if melting else "",
+        )
+        if text
+    )
+    groups: dict[str, list[Oligo]] = {}
+    for oligo in oligos:
+        groups.setdefault(oligo.purpose, []).append(oligo)
+    rows = "".join(
+        f"<tr><td>{escape(purpose)}</td>"
+        f"<td>{escape(_names(group))}</td>"
+        f'<td class="num">{len(group)}</td>'
+        f"<td>{escape(_where([seats[one.name] for one in group if one.name in seats]))}</td></tr>"
+        for purpose, group in groups.items()
+    )
+    return (
+        f'<p class="muted">{escape(facts)}</p>'
+        '<div class="scroll"><table><thead><tr><th>For</th><th>Names</th>'
+        f'<th class="num">Oligos</th><th>Wells</th></tr></thead><tbody>{rows}</tbody>'
+        "</table></div>"
+    )
+
+
+def _span(low: float, high: float, places: int = 0) -> str:
+    """Return a range, or the one value where both ends are it."""
+    first, last = f"{low:.{places}f}", f"{high:.{places}f}"
+    return first if first == last else f"{first} to {last}"
+
+
+def _names(group: Sequence[Oligo]) -> str:
+    """Return the first and last name of a group, in the order the sheet lists them."""
+    return group[0].name if len(group) == 1 else f"{group[0].name} to {group[-1].name}"
+
+
+def _where(seats: Sequence[_Seat]) -> str:
+    """Return the wells a group occupies, as a range on the plate that seats them."""
+    if not seats:
+        return ""
+    first, last = seats[0], seats[-1]
+    if first == last:
+        return f"{first.name} {first.well}"
+    if first.name == last.name:
+        return f"{first.name} {first.well} to {last.well}"
+    return f"{first.name} {first.well} to {last.name} {last.well}"
 
 
 def _verdict(status: Status | None) -> str:
@@ -1253,7 +1361,7 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...] = ()) -> str:
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
         f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
-        f'{drawn}<details class="moves"><summary>{_count(len(transfer.moves), "move")}'
+        f'{drawn}<details class="listing"><summary>{_count(len(transfer.moves), "move")}'
         f"</summary>{_moves(transfer)}</details></figure>\n"
     )
 
