@@ -693,8 +693,9 @@ marked, sequenced and called on its own, and identity stays with well position t
 takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
 beside iGGA rather than downstream of it — a caller chains it. Two routes mark a well, barcode
 ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
-are shared, while the marking step, the plate and the depth floor are the route's own, because
-each floor was measured on its own library prep.
+are shared, while the marking step, the plate and the depth floor are the route's own. The two
+floors are not a strict and a lenient pair: one is where consensus calling starts, the other
+where a reader stops trusting a well, over different amplification and different read filters.
 _Avoid_: the validation pipeline, read-back pipeline, QC
 _Package_: liulab_synbio
 

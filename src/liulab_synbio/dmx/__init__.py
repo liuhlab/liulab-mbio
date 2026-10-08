@@ -8,8 +8,9 @@ would, and nothing here is a gate on a pool nothing re-identifies per member.
 Two routes mark a well and one judgement reads them. The barcode ligation route ligates four
 DMX barcodes into the construct in lysate; the index PCR route amplifies each well with one
 barcoded primer pair. The picking, the pass rule and the reformat are shared; the marking step,
-the plate and the depth floor are the route's own, because each floor was measured on its own
-library prep.
+the plate and the depth floor are the route's own. The two floors are not a strict and a lenient
+setting of one scale: one is where consensus calling starts, the other where a reader stops
+trusting a well, over different amplification and different read filters.
 
 **A well's marks are arithmetic, not a recorded draw.** The address factorises across the
 barcode axes and one axis is the plate, so two plates on one flow cell are told apart by

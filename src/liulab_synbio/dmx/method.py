@@ -2,7 +2,10 @@
 
 Two routes mark a well and one judgement reads them, and `liulab_synbio.dmx` says what each
 one is. The picking, the pass rule and the reformat are shared; the marking step, the plate and
-the depth floor are the route's own, because each floor was measured on its own library prep.
+the depth floor are the route's own. The two floors are not a strict and a lenient setting of
+one scale: one is where consensus calling starts, the other where a reader stops trusting a
+well, over different amplification and different read filters.
+`docs/research/route-choice.md` section 4 compares them.
 
 Every number a read-back prints is here, with the document it was read from beside it.
 `liulab_synbio.dmx.steps` writes them up as steps.
