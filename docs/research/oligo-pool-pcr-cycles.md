@@ -271,6 +271,82 @@ Twist DOC-001498 REV 1.0 and DOC-4057 REV 1.0; Lund et al. 2024; Freschlin et al
 Romanowicz et al. 2026. Qian et al. 2026's numbers are quoted from
 `docs/research/bench-numbers.md`, which read the supplement directly.
 
+## 10. Re-checked for #476: both holes stand
+
+Searched on **2026-10-08**, the day after everything above. Nothing a vendor publishes could
+have moved in a day, so this pass is not a re-run: it reads the two vendors section 8 left open
+and writes a plain verdict on each hole, so that a pilot is priced against a search rather than
+against a hunch.
+
+### H29 — a cycle count for Q5 on a Twist oligo pool
+
+**Searched.** Both Twist oligo-pool guides held here, for the string `Q5`: no hit in either.
+FRM-001034 REV 8 names KAPA HiFi HotStart and DOC-4060 REV 1.0 names Twist TrueAmp, each as the
+one polymerase it recommends, and neither names a second. Then a web search for any Twist or NEB
+document stating a count for Q5 on an oligo pool, and the two other pool vendors' guides.
+
+**Found.** No Twist document mentions Q5 at all. NEB publishes no oligo-pool amplification
+protocol; its Q5 routine-PCR page returns HTTP 403 to `curl` and to WebFetch, as `neb.com` HTML
+does throughout this repo's research, and a routine-PCR count would not be a pool count anyway.
+
+The nearest thing found is **GenScript's Oligo Pool User Manual**, and it is worth recording
+because it names Q5 and still does not close this:
+
+> High-fidelity polymerases such as Phusion, Q5, KAPA, are recommended for PCR amplification.
+> Taq polymerase is not recommended for use in amplification of oligo pools. Please follow the
+> recommendations of the polymerase supplier for optimal PCR amplification conditions.
+
+Its typical procedure prints **20-30 cycles** from 5-100 ng of template. Three reasons it does
+not transfer. It is GenScript's pool, not Twist's, and the two arrive at different amounts.
+20-30 is roughly twice Twist's 12-14 for the same job, so taking it would mean contradicting the
+vendor whose pool the method buys, on that vendor's own product. And the same page defers twice
+over — to the polymerase supplier in the quotation above, and then to the user: "It is
+recommended to carry out pilot experiments to determine the optimal reaction conditions." It is
+evidence that Q5 amplifies a pool, which nobody doubted, not a count for this one.
+
+Agilent's SurePrint guideline surfaced in the same search and was not read as a document; what
+is quoted of it is stated against Herculase II, so it could not close a Q5 hole either.
+
+**Verdict: no source. H29 stands as `unpublished`**, filled by Twist stating a count against Q5,
+or by a pilot on this pool. A document search is finished with this one; only the bench is left.
+
+### H30 — a cycle count for PCR2
+
+**Searched.** Both Oligo Pools guides for anything about a second round off a first PCR's
+product: `subpool`, `sub-pool`, `re-amplif`, `reamplif`, `nested`, `second round`. In the Oligo
+Pools documents there is nothing. The only hits anywhere in the Twist material are in the
+**Multiplexed Gene Fragments** guide, which mentions "amplifying out subpools" as a reason you
+might amplify at all and gives no count for it, and in the MGF design guidelines, where
+"split into sub-pools" is an ordering remedy for the length-spread rule and not a PCR at all.
+Section 3's warning applies to both: that is the other product.
+
+**Found.** GenScript's manual is the one document read in this whole note that speaks to a
+sub-pool PCR, and what it says is the opposite of a count: raise the template and the cycles to
+pull more sub-pools out of one reaction, and pilot it. Nothing anywhere states a count for
+pulling one block out of a batch that has already been amplified.
+
+**The gap is structural, not accidental.** Every vendor protocol here is written for the pool as
+delivered, because that is the reaction the vendor sells a product for. PCR2's template is
+PCR1's product, which no vendor has in hand. That is why section 4's published counts are all
+first amplifications, and why no amount of further searching is likely to produce one.
+
+**Verdict: no source. H30 stands as `unpublished`**, filled by a pilot titrated against the
+heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve
+plateaus. The printed stopping rule remains the honest instruction.
+
+### One lead, not followed
+
+A Research Square preprint, *Oligo replication advantage driven by GC content and Gibbs free
+energy*, studies amplification bias on a commercial oligo pool and so touches both holes. Its
+body did not come back readable through the fetch, and it is a study of how bias behaves rather
+than a protocol that sets a count. Recorded here as a lead; nothing in this note rests on it.
+
+### What this pass did not change
+
+Section 2's 12-14 for PCR1 is still the sourced count, and still stated against a polymerase the
+method does not run. Section 8's open gaps stand, with one narrowed: GenScript has now been read
+as a protocol and found not to carry our number, and Agilent still has not.
+
 ## Sources
 
 - Twist Bioscience, *Amplifying Twist Oligo Pools*, FRM-001034 REV 8.
@@ -285,6 +361,10 @@ Romanowicz et al. 2026. Qian et al. 2026's numbers are quoted from
 - Romanowicz et al., "DropSynth-Gold: Golden Gate assembly in emulsions extends multiplexed gene
   libraries to greater lengths" (2026).
 - Qian et al. 2026, supplementary protocol, as read in `docs/research/bench-numbers.md`.
+- GenScript, *Oligo Pool User Manual*, read 2026-10-08 from
+  `genscript.com/gsfiles/techfiles/oligo-pool-user-guide.pdf`, as a `pdftotext -layout` dump. It
+  carries no revision number. Not kept under `reference_docs/`: it closes nothing, and section 10
+  quotes everything of it that bears on either hole.
 
 All four Twist documents are vendor material: cite and re-enter single facts by hand, never
 mirror. The same line `docs/research/restriction-ligation.md` section 1 drew for NEB.

@@ -444,9 +444,11 @@ count, and they are shared with stages 2 and 5.
 | SrfI | #R0629S/L | 20,000 U/mL | 1 µg pNEB193-SrfI, 1 h, 37 °C, 50 µL | rCutSmart | 37 °C |
 | PmeI | #R0560S/L | 10,000 U/mL | 1 µg lambda, 1 h, 37 °C, 50 µL | rCutSmart | 37 °C |
 
-At those concentrations, Takacsi-Nagy's 2.5 µL is 50 units of BsaI-HFv2 or BbsI-HF and 25
-units of SrfI or PmeI, in 50 µL on 1 µg of DNA. **That multiplication is this note's, not a
-source's**, and it holds only if the lot matches the specification.
+At those concentrations, Takacsi-Nagy's 2.5 µL is 50 units of BsaI-HFv2, SrfI or BbsI-HF and
+25 units of PmeI, in 50 µL on 1 µg of DNA. **That multiplication is this note's, not a
+source's**, and it holds only if the lot matches the specification. It is worked through enzyme
+by enzyme under **H23 re-checked** below, which also corrects what this paragraph used to say
+about SrfI.
 
 Two blunt-cutter figures bear on the design directly:
 
@@ -476,6 +478,75 @@ does not say this; the vendor's note and the source's practice agree.
 | Number | Value | Source |
 | --- | --- | --- |
 | Time-Saver qualification | `enzymes.json` flags BsaI-HFv2, and a 15-minute functional digest test appears on the BsmBI-v2, BbsI-HF and SrfI sheets | `enzymes.json`; the three specifications |
+
+### H23 re-checked: the unit count is computable, the procedure is not
+
+Searched on **2026-10-08** for #476, to settle whether a document answers H23 before anyone
+prices a pilot.
+
+**What was searched.** The paper's own text, for any unit statement: the word *unit* appears
+nowhere in its STAR Methods reaction paragraphs, which give 2.5 µL, 50 µL, 1 µg, 1 hour and
+nothing else. Both NEBridge kit manuals, which describe a one-pot reaction and never a split
+digest. The four NEB product specification sheets and product pages held under
+`reference_docs/synthesis_and_assembly/bench/neb/`.
+
+**On the question as H23 asks it, the answer is unchanged: no document describes a split
+digest.** Two sequential enzymes in one tube, the second added to the first's reaction, with no
+heat inactivation before the beads, is Takacsi-Nagy's alone. No vendor validates it and no other
+published method here runs it.
+
+**But the units per reaction are not part of that gap.** The paper's Key Resources Table names
+each enzyme's exact catalogue number, and each specification gives that product's concentration,
+so the loading is arithmetic on two quoted values:
+
+| Enzyme | Catalogue, as the paper names it | Concentration | Volume | Units in the 50 µL reaction |
+| --- | --- | --- | --- | --- |
+| BsaI-HFv2 | R3733L | 20,000 U/mL = 20 U/µL | 2.5 µL | **50 U** |
+| SrfI | R0629L | 20,000 U/mL = 20 U/µL | 2.5 µL | **50 U** |
+| BbsI-HF | R3539L | 20,000 U/mL = 20 U/µL | 2.5 µL, by "the same protocol" | **50 U** |
+| PmeI | R0560L | 10,000 U/mL = 10 U/µL | 2.5 µL, by "the same protocol" | **25 U** |
+
+Every row is 1 µg of DNA in 50 µL, which is also the reaction each enzyme's unit is *defined*
+on, so the loading reads straight against its own specification: a 50-fold excess for three of
+them and a 25-fold for PmeI. The destination tube's two volumes are the paper's "using the same
+protocol", which is an inference from one sentence, not a second statement.
+
+**A correction this pass makes.** The paragraph above the enzyme table used to group SrfI with
+PmeI at 25 units. SrfI is 20,000 units/mL — on its specification sheet and on its product page,
+for R0629S and R0629L alike — so its 2.5 µL is 50 units. PmeI is the only 10,000 units/mL
+enzyme of the four.
+
+**One catalogue trap worth recording.** BbsI-HF also ships as **R3539M at 50,000 units/mL**,
+where the same 2.5 µL would be 125 units. The paper names R3539L, so the row above is
+determined; a lab holding the M size and copying the paper's volume would load two and a half
+times the enzyme. A volume is not a unit count until the catalogue number is named, and a lot's
+own certificate of analysis is what confirms it.
+
+**Does a computed value count as sourced?** The repo has already answered this, in the direction
+of yes. ADR 0017 asks what *kind* of hole is left, not whether a number was quoted or derived;
+this note's own convention is that a derived row is arithmetic on quoted values with the
+arithmetic shown. #428 closed IDX2 on exactly this route — LevSeq gives 0.05 µL of Taq and never
+a unit count, NEB's M0267 specification gives 5,000 units/mL, and the derived 0.25 units went
+into the code as `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL`, cited to the specification. The
+split digest is the same shape with better inputs, because the paper names the catalogue number
+and LevSeq did not.
+
+**So, plainly: yes, the unit count is computable, and it is 50/50/50/25 units.** It is not a
+plausible figure; it is a multiplication whose two factors are each quoted from a document.
+
+**What that leaves.** The derivation says what the paper's volume *delivers*. It does not say
+what the reaction *requires* — no source states a unit floor for this digest, because no source
+describes the digest. Those are two questions, and only the first has a document behind it.
+H23's `where` names the first ("the split digest, units per reaction") while its `missing` names
+the second ("no published document describes the split digest"). The two have drifted apart, and
+whichever way the hole is settled, the wording should stop implying the unit count cannot be had.
+
+Closing H23 is a build decision, not this note's: it would mean the step printing these four unit
+counts, cited to four NEB specifications and the paper's own catalogue numbers, the way the index
+PCR prints Taq units today. **The inputs are not shipped package data.** `enzymes.json` carries
+no concentration field — its enzyme records hold sites, cuts, buffers and temperatures — and
+`bench/materials.py` keys electroporation programs by catalogue number and no enzyme stocks. A
+build that prints these numbers has to put them somewhere first, as #428 put the Taq stock.
 
 ### Clean-up, ligation and clean-up again
 
@@ -747,7 +818,11 @@ before that pass still resolves. What closed:
   record annotating no marker still carries it.
 - **H23.** **No NEB document describes a split digest.** Both kit manuals cover the one-pot reaction,
   destination and inserts together. The split digest is Takacsi-Nagy's alone. *Filled by:*
-  nothing — it is the method's own and the paper is its only source.
+  nothing — it is the method's own and the paper is its only source. **Re-checked 2026-10-08 for
+  #476, and it splits in two.** The *procedure* has no document, as above. The *units per
+  reaction* do: the paper names R3733L, R0629L, R3539L and R0560L, each specification gives that
+  product's concentration, and 2.5 µL is 50, 50, 50 and 25 units. See **H23 re-checked** under
+  stage 4.
 
 ### Stage 5 — final assembly
 
