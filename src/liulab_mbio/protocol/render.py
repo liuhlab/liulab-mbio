@@ -1,8 +1,15 @@
-"""Render a protocol to one self-contained HTML page."""
+"""Render a protocol to one self-contained HTML page, and a project to a folder of them.
+
+A protocol on its own is one page that loads nothing. A run of several is a folder: one page
+each, an index, and two pages the run shares. Every link between them is relative and every
+page is still self-contained, so the folder opens from disk and survives being zipped.
+"""
 
 import hashlib
 import os
+import re
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from html import escape
 from importlib.resources import files
 from pathlib import Path
@@ -18,6 +25,7 @@ from liulab_mbio.protocol.model import (
     Material,
     Oligo,
     Plate,
+    Project,
     Protocol,
     ReactionTable,
     Reference,
@@ -27,6 +35,8 @@ from liulab_mbio.protocol.model import (
     Timer,
     Transfer,
     number,
+    read_project,
+    write_project,
 )
 
 #: What the page reads where a check carries no verdict, so it is never taken for a pass.
@@ -34,6 +44,17 @@ NO_VERDICT = "not judged"
 
 #: What stands where a number would, so a hole can never be read as a figure.
 NO_NUMBER = "no sourced number"
+
+#: What a project folder calls the data every one of its pages is rendered from.
+PROJECT_DATA_FILE = "project.json"
+
+#: What a project folder calls the three pages that are not one protocol's.
+INDEX_FILE = "index.html"
+REAGENTS_FILE = "reagents.html"
+REFERENCES_FILE = "references.html"
+
+#: The longest a protocol's title may run in the file its page is written to.
+NAME_CHARS = 48
 
 #: What each kind of hole says it is waiting on.
 HOLE_KINDS = {
@@ -45,16 +66,115 @@ HOLE_KINDS = {
 }
 
 
-def render_html(protocol: Protocol) -> str:
+@dataclass(frozen=True, slots=True)
+class Page:
+    """One protocol's page, as every other page of its folder sees it.
+
+    Parameters
+    ----------
+    title
+        What the protocol is called, which is how every other page names it.
+    href
+        The file it was written to, relative to the folder.
+    steps
+        How many numbered steps it holds.
+    key
+        What the page remembers its check marks under, so another page of the folder can read
+        how far the bench got.
+    """
+
+    title: str
+    href: str
+    steps: int = 0
+    key: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class Folder:
+    """A project folder as one of its pages sees the rest: what the nav bar links to, in order.
+
+    Parameters
+    ----------
+    pages
+        One per protocol, in the order they are run.
+    index
+        The way in to the folder.
+    reagents, references
+        The two pages the whole run shares.
+    """
+
+    pages: tuple[Page, ...]
+    index: str = INDEX_FILE
+    reagents: str = REAGENTS_FILE
+    references: str = REFERENCES_FILE
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectFiles:
+    """The folder one project wrote: the data it was rendered from, and the pages.
+
+    Parameters
+    ----------
+    data
+        The whole run as JSON, which ``protocol render`` turns back into these pages.
+    index
+        The way in.
+    protocols
+        One page per protocol, in the order they are run.
+    reagents, references
+        The two pages the whole run shares.
+    """
+
+    data: Path
+    index: Path
+    protocols: tuple[Path, ...]
+    reagents: Path
+    references: Path
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Every file written, the first written first."""
+        return (self.data, *self.protocols, self.index, self.reagents, self.references)
+
+
+def page_key(value: Protocol | Project) -> str:
+    """Return what a page remembers its check marks under: a digest of its own content.
+
+    Two pages of one folder never share it, and every `file://` page in a browser shares one
+    store, so the key is what keeps one page's marks off another.
+
+    Examples
+    --------
+    >>> page_key(Protocol("Demo")) == page_key(Protocol("Demo"))
+    True
+    """
+    return hashlib.sha256(repr(value).encode()).hexdigest()[:16]
+
+
+def page_name(place: int, title: str) -> str:
+    """Return the file one protocol's page is written to: its place in the chain, then its title.
+
+    Examples
+    --------
+    >>> page_name(2, "LR reaction")
+    '02-lr-reaction.html'
+    """
+    slug = re.sub("-+", "-", _slug(title)).strip("-")[:NAME_CHARS].strip("-")
+    return f"{place:02d}-{slug}.html" if slug else f"{place:02d}.html"
+
+
+def render_html(protocol: Protocol, *, folder: Folder | None = None, here: str = "") -> str:
     """Return `protocol` as one HTML page with its styles and script inline.
 
     The page loads nothing over the network, remembers check marks and reaction counts in the
-    browser's local storage when it can, and prints without its controls.
+    browser's local storage when it can, and prints without its controls. Given the `folder` it
+    stands in and its own address in it, the page gains the run's nav bar, a column either side
+    and a line naming its neighbours, and the line prints with it.
     """
-    key = hashlib.sha256(repr(protocol).encode()).hexdigest()[:16]
+    place = _place(folder, here) if folder else ""
     body = "".join(
         [
-            _header(protocol),
+            _header(protocol, toc=folder is None, place=place),
             _materials(protocol.materials, protocol.equipment),
             _oligos(protocol.oligos),
             _plates(protocol),
@@ -65,20 +185,173 @@ def render_html(protocol: Protocol) -> str:
             _references(protocol.references),
         ]
     )
+    return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol))
+
+
+def write_html(
+    protocol: Protocol, path: str | os.PathLike[str], *, folder: Folder | None = None
+) -> Path:
+    """Write `render_html(protocol)` to `path` as UTF-8 and return the path.
+
+    Inside a `folder`, the file's own name is the address the other pages link it by.
+    """
+    out = Path(path)
+    out.write_text(render_html(protocol, folder=folder, here=out.name), encoding="utf-8")
+    return out
+
+
+def render_index(project: Project, folder: Folder) -> str:
+    """Return the way in to a run: what it achieves, and every protocol in the order they run."""
+    rows = "".join(
+        f'<li><a href="{escape(page.href)}">{escape(page.title)}</a> '
+        f'<span class="muted">{_count(page.steps, "step")}</span></li>'
+        for page in folder.pages
+    )
+    summary = f'<p class="summary">{escape(project.summary)}</p>\n' if project.summary else ""
+    listed = (
+        f'<section class="block chain-list">\n<h2>Protocols</h2>\n'
+        f'<ol class="chain-pages">{rows}</ol>\n</section>\n'
+        if rows
+        else ""
+    )
+    body = f'<header class="intro">\n<h1>{escape(project.title)}</h1>\n{summary}</header>\n{listed}'
+    return _page(project.title, page_key(project), body, folder, folder.index)
+
+
+def render_reagents(project: Project, folder: Folder) -> str:
+    """Return the page everything the run buys and every instrument it uses stands on."""
+    return _shared(project, folder, folder.reagents, "Reagents and equipment")
+
+
+def render_references(project: Project, folder: Folder) -> str:
+    """Return the page every document the run was built from stands on."""
+    return _shared(project, folder, folder.references, "References")
+
+
+def _shared(project: Project, folder: Folder, here: str, heading: str) -> str:
+    """One of the two pages the whole run shares, which carry no protocol of their own."""
+    return _page(
+        f"{heading} — {project.title}",
+        page_key(project) + _slug(here),
+        f"<h1>{heading}</h1>\n",
+        folder,
+        here,
+    )
+
+
+def write_project_files(project: Project, directory: str | os.PathLike[str]) -> ProjectFiles:
+    """Write `project` into `directory` as one data file and the pages rendered from it.
+
+    The directory is made when it is not there, and every page is rendered from the data as
+    written, so the two cannot disagree. Every page is computed before any is written, so each
+    knows every other's title, address, step count and key. The same project writes the same
+    bytes.
+    """
+    out = Path(directory)
+    out.mkdir(parents=True, exist_ok=True)
+    data = write_project(project, out / PROJECT_DATA_FILE)
+    written = read_project(data)
+    folder = Folder(
+        tuple(
+            Page(one.title, page_name(n, one.title), len(one.steps), page_key(one))
+            for n, one in enumerate(written.protocols, 1)
+        )
+    )
+    protocols = tuple(
+        write_html(one, out / page.href, folder=folder)
+        for one, page in zip(written.protocols, folder.pages, strict=True)
+    )
+    return ProjectFiles(
+        data,
+        _write(render_index(written, folder), out / folder.index),
+        protocols,
+        _write(render_reagents(written, folder), out / folder.reagents),
+        _write(render_references(written, folder), out / folder.references),
+    )
+
+
+def _write(html: str, path: Path) -> Path:
+    path.write_text(html, encoding="utf-8")
+    return path
+
+
+def _page(
+    title: str, key: str, body: str, folder: Folder | None, here: str, within: str = ""
+) -> str:
+    """Wrap one page's body in the document, and in the run's frame where it is part of one."""
+    frame = main = f'<main class="page">\n{body}</main>\n'
+    if folder is not None:
+        right = within or '<div class="column within"></div>'
+        frame = (
+            f'{_bar(folder, here)}<div class="frame">{_chain(folder, here)}{main}{right}</div>\n'
+        )
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"<title>{escape(protocol.title)}</title>\n<style>\n{_asset('protocol.css')}</style>\n"
-        f'</head>\n<body data-protocol="{key}">\n<main class="page">\n{body}</main>\n'
+        f"<title>{escape(title)}</title>\n<style>\n{_asset('protocol.css')}</style>\n"
+        f'</head>\n<body data-protocol="{key}">\n{frame}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
 
 
-def write_html(protocol: Protocol, path: str | os.PathLike[str]) -> Path:
-    """Write `render_html(protocol)` to `path` as UTF-8 and return the path."""
-    out = Path(path)
-    out.write_text(render_html(protocol), encoding="utf-8")
-    return out
+def _bar(folder: Folder, here: str) -> str:
+    """Return the run's nav bar: the four places a page can go, the one it is on marked."""
+    addresses = [page.href for page in folder.pages]
+    protocols = here if here in addresses else (addresses[0] if addresses else folder.index)
+    items = (
+        (folder.index, "Overview"),
+        (protocols, "Protocols"),
+        (folder.reagents, "Reagents and equipment"),
+        (folder.references, "References"),
+    )
+    links = "".join(
+        f'<a href="{escape(href)}"{' aria-current="page"' if href == here else ""}>'
+        f"{escape(label)}</a>"
+        for href, label in items
+    )
+    return f'<nav class="site" aria-label="This run">{links}</nav>\n'
+
+
+def _chain(folder: Folder, here: str) -> str:
+    """Return the left column: every protocol of the run, so one page switches to another."""
+    if not folder.pages:
+        return '<div class="column chain"></div>'
+    items = "".join(
+        f"<li{' class="is-here"' if page.href == here else ''}>"
+        f'<a href="{escape(page.href)}">{escape(page.title)}</a></li>'
+        for page in folder.pages
+    )
+    return (
+        '<nav class="column chain" aria-label="Protocols">'
+        f'<h2 class="column-title">Protocols</h2><ol>{items}</ol></nav>\n'
+    )
+
+
+def _within(protocol: Protocol) -> str:
+    """Return the right column: every step of this page, so a reader jumps within it."""
+    if not protocol.steps:
+        return ""
+    links = "".join(
+        f'<li><a href="#step-{n}">{escape(step.title)}</a></li>'
+        for n, step in enumerate(protocol.steps, 1)
+    )
+    return (
+        '<nav class="column within" aria-label="Steps">'
+        f'<h2 class="column-title">This protocol</h2><ol>{links}</ol></nav>\n'
+    )
+
+
+def _place(folder: Folder, here: str) -> str:
+    """Where this page stands in the run, named in words, because it prints with the page."""
+    addresses = [page.href for page in folder.pages]
+    if here not in addresses:
+        return ""
+    at, total = addresses.index(here), len(folder.pages)
+    before = f"Comes after {escape(folder.pages[at - 1].title)}." if at else "The run starts here."
+    after = (
+        f"Next is {escape(folder.pages[at + 1].title)}." if at + 1 < total else "The run ends here."
+    )
+    return f'<p class="neighbours">Protocol {at + 1} of {total}. {before} {after}</p>\n'
 
 
 def _asset(name: str) -> str:
@@ -111,8 +384,8 @@ def _copy(text: str, label: str = "Copy") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text)}">{escape(label)}</button>'
 
 
-def _header(protocol: Protocol) -> str:
-    parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n']
+def _header(protocol: Protocol, *, toc: bool = True, place: str = "") -> str:
+    parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
         parts.append(f'<p class="summary">{escape(protocol.summary)}</p>\n')
     if protocol.overview:
@@ -133,11 +406,12 @@ def _header(protocol: Protocol) -> str:
             ' done</span><button type="button" class="print">Print</button>'
             '<button type="button" class="clear">Clear checks</button></div>\n'
         )
-        links = "".join(
-            f'<li><a href="#step-{n}">{escape(step.title)}</a></li>'
-            for n, step in enumerate(protocol.steps, 1)
-        )
-        parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
+        if toc:
+            links = "".join(
+                f'<li><a href="#step-{n}">{escape(step.title)}</a></li>'
+                for n, step in enumerate(protocol.steps, 1)
+            )
+            parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
     parts.append("</header>\n")
     return "".join(parts)
 
