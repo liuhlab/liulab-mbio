@@ -1009,9 +1009,9 @@ _Avoid_: constraint, warning
 
 A number nobody sourced, standing where the number would be. The field it belongs to stays
 empty and the hole stands beside it, so a hole is never read as a value and never judged. It
-says what is missing, why and what would fill it, and names the ticket it is routed to where one
-owns it. A hole naming a gap no source closes is what a finished plan keeps; a hole waiting on a
-source nobody has read fails the plan. A guess is a defect.
+says what is missing, why and what would fill it. A hole naming a gap no source closes is what a
+finished plan keeps; a hole waiting on a source nobody has read fails the plan. A guess is a
+defect.
 _Avoid_: missing value, TODO, placeholder
 
 ### Price record

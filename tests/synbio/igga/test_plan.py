@@ -580,8 +580,6 @@ def test_the_bill_computes_its_quantities_and_holes_the_money_with_no_record(pla
     assert blocks.charge == ""
     assert blocks.hole is not None
     assert blocks.hole.kind == "price"
-    # A price nobody loaded is a missing input of the user's, not a defect in what we know.
-    assert blocks.hole.issue == ""
     assert bill.total == ""
 
 

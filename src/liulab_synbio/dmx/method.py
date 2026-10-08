@@ -733,8 +733,7 @@ def validation(
 
 #: The index PCR marks, which the package holds none of. The published annealing regions bind the
 #: DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab holds,
-#: as the barcode ligation kit is. It names no ticket, because no ticket closes it: the plate is
-#: the user's own stock. ``docs/research/route-b-index-primers.md`` §7.
+#: as the barcode ligation kit is. ``docs/research/route-b-index-primers.md`` §7.
 INDEX_MARKS = Hole(
     "IDX1",
     "no index mark set is named for the barcoded primer pairs",

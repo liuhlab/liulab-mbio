@@ -2,7 +2,7 @@
 
 Every number here is quoted from ``docs/research/bench-numbers.md``, which names the document
 each came from. Nothing is invented: where the method needs a number nobody published, a `Hole`
-stands in its place and says which ticket it is routed to.
+stands in its place.
 
 This is the pooled experiment's side of the bench. The validating experiment's plates, its
 barcode kit, its depth floors and its per-well pass rule are `liulab_synbio.dmx`'s. A round
@@ -66,7 +66,6 @@ ROUND_SELECTION = Hole(
     "undecided",
     where="each round, plating",
     filled_by="the vector's own marker",
-    issue="liuhlab/liulab-mbio#264",
 )
 
 
@@ -81,13 +80,11 @@ FINAL_MASSES = Hole(
     "undecided",
     where="final assembly, the one-pot reaction",
     filled_by="a pilot",
-    issue="liuhlab/liulab-mbio#264",
 )
 
 
-#: What this method cannot write completely. Each is a number nobody published, routed to the
-#: ticket that would decide it; the ids are the research note's own, so a reference still
-#: resolves.
+#: What this method cannot write completely. Each is a number nobody published; the ids are the
+#: research note's own, so a reference still resolves.
 HOLES: tuple[Hole, ...] = (
     Hole(
         "H23",
@@ -95,7 +92,6 @@ HOLES: tuple[Hole, ...] = (
         "unpublished",
         where="the split digest, units per reaction",
         filled_by="nothing; it is the method's own",
-        issue="liuhlab/liulab-mbio#264",
     ),
     FINAL_MASSES,
 )
@@ -121,7 +117,6 @@ READ_PASS_MARK = Hole(
     "undecided",
     where="the linkage read",
     filled_by="this run, or a source that sets a mark rather than reporting what it reached",
-    issue="liuhlab/liulab-mbio#346",
 )
 
 #: What a build that names no working vector cannot say. The working vector is the user's own
@@ -148,7 +143,6 @@ CARGO_RELEASE = Hole(
     where="final assembly, releasing the cargo",
     filled_by="a destination vector carrying the releasing sites outboard of the cargo, as the "
     "method's own DMX vector does",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 #: What Twist's banded cycle count does not reach. It is stated against KAPA HiFi HotStart or
@@ -162,7 +156,6 @@ PCR1_POLYMERASE = Hole(
     "unpublished",
     where="PCR1, the polymerase the cycle count is stated against",
     filled_by="a count Twist states against Q5, or a pilot on this pool",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 #: What no source covers at all. Twist's table amplifies the pool as it arrives; PCR2's template
@@ -176,7 +169,6 @@ PCR2_CYCLES = Hole(
     where="PCR2, the cycle count",
     filled_by="a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a "
     "real-time run stopped before the curve plateaus",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 

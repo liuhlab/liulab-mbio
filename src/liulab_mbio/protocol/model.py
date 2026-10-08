@@ -250,10 +250,10 @@ def names(subject: str, among: Iterable[str]) -> bool:
     return any(wanted in one.casefold() for one in among)
 
 
-#: Why a number is missing. A ``"price"`` hole names no issue: a price nobody loaded is a missing
-#: input of the user's, not a defect in what the package knows. Only ``"unread"`` fails
-#: `Protocol.audit`: the other four name a gap no source closes, which is what a finished plan
-#: keeps, while a source nobody read is work left undone.
+#: Why a number is missing. A ``"price"`` hole is a missing input of the user's, not a defect in
+#: what the package knows. Only ``"unread"`` fails `Protocol.audit`: the other four name a gap no
+#: source closes, which is what a finished plan keeps, while a source nobody read is work left
+#: undone.
 type HoleKind = Literal["undecided", "unpublished", "lab", "unread", "price"]
 
 
@@ -278,8 +278,6 @@ class Hole:
         What the number belongs to, such as ``"ligase units per reaction"``.
     filled_by
         What would close it.
-    issue
-        The ticket it is routed to. A ``"price"`` hole names none.
     """
 
     id: str
@@ -288,19 +286,14 @@ class Hole:
     _: KW_ONLY
     where: str = ""
     filled_by: str = ""
-    issue: str = ""
 
     def __post_init__(self) -> None:
-        """Refuse an unnamed hole, an unknown kind, or a price hole routed to an issue."""
+        """Refuse an unnamed hole or an unknown kind."""
         _require(bool(self.id.strip()), "a hole needs an id")
         _require(bool(self.missing.strip()), f"hole {self.id!r}: say what is missing")
         _require(
             self.kind in get_args(HoleKind.__value__),
             f"hole {self.id!r}: unknown kind {self.kind!r}",
-        )
-        _require(
-            self.kind != "price" or not self.issue,
-            f"hole {self.id!r}: a missing price is a missing input, so it names no issue",
         )
 
 

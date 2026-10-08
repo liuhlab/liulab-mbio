@@ -1466,7 +1466,6 @@ def _hole(hole: Hole, found: str = "") -> str:
     Four statements, each ended: what is missing, what it waits on, what would fill it and where
     it stands. Run together they are re-parsed halfway through.
 
-    `Hole.issue` is not printed: the bench page is read by someone who cannot open a tracker.
     `found` is markup naming where the hole stands, for a page that is not the one holding it.
     """
     return (

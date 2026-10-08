@@ -311,9 +311,8 @@ def bill(
 ) -> Bill:
     """Return the bill for `items`, priced by `record` where it prices them.
 
-    With no record, every quantity still computes and every money cell is a hole. A hole here
-    names no issue: a price nobody loaded is a missing input of the user's, not a defect in what
-    the package knows.
+    With no record, every quantity still computes and every money cell is a hole: a price nobody
+    loaded is a missing input of the user's, not a defect in what the package knows.
 
     Raises
     ------
