@@ -14,10 +14,9 @@ import pytest
 from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE
+from liulab_mbio.io import read_record
 from liulab_mbio.protocol.model import read_project
 from liulab_mbio.protocol.render import INDEX_FILE, PROJECT_DATA_FILE
-from liulab_mbio.io import read_record
-from liulab_mbio.protocol import read_protocol
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.snapgene import write_dna

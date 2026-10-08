@@ -42,7 +42,6 @@ from liulab_mbio.protocol.model import (
     Component,
     Gel,
     Incubation,
-    Item as Handed,
     Lane,
     Material,
     Plate,
@@ -60,6 +59,9 @@ from liulab_mbio.protocol.model import (
     citing,
     names,
     number,
+)
+from liulab_mbio.protocol.model import (
+    Item as Handed,
 )
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import find_sites
@@ -415,9 +417,7 @@ def project(
         ),
         staged,
     )
-    handed = _handed(
-        vector, rounds, validation, pool, working, block_vectors, staged, part_lists
-    )
+    handed = _handed(vector, rounds, validation, pool, working, block_vectors, staged, part_lists)
     made = tuple(
         citing(
             Protocol(
@@ -656,10 +656,10 @@ def _carried(
         (one, (ORDERING, CREATION))
         for one in (_pool_materials(pool, pool_sheet, primer_sheet) if pool else ())
     ]
-    made += [
-        (one, (_validation_title(validation),))
-        for one in (dmx.validation_materials(validation) if validation else ())
-    ]
+    if validation is not None:
+        made += [
+            (one, (_validation_title(validation),)) for one in dmx.validation_materials(validation)
+        ]
     made += [
         (one, rest)
         for one in _materials(
@@ -696,7 +696,9 @@ def _spread(
     return {title: tuple(group) for title, group in found.items()}
 
 
-def _equipment(title: str, pool: PoolPlan | None, validation: dmx.Validation | None) -> tuple[str, ...]:
+def _equipment(
+    title: str, pool: PoolPlan | None, validation: dmx.Validation | None
+) -> tuple[str, ...]:
     """Return the hardware this protocol needs that no reagent table covers."""
     if title == ORDERING:
         return ()
@@ -1179,9 +1181,9 @@ def _staged(
             _labelled(read_back[-1], "Call the wells"),
         )
     assembly = [_labelled(_pool_step(bench, parts, pool), "Pool the part lists")]
-    for number, (one, row) in enumerate(zip(rounds, bench, strict=True), 1):
+    for place, (one, row) in enumerate(zip(rounds, bench, strict=True), 1):
         assembly += [
-            _labelled(step, f"Round {number}")
+            _labelled(step, f"Round {place}")
             for step in _round_steps(scheme, one, row, inside, outside, len(rounds), selection)
         ]
     assembly += [

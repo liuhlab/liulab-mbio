@@ -39,6 +39,7 @@ from liulab_mbio.cloning.plan import as_record, status
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
+
 # A project is the input file here and a chain of protocols there; both keep their names.
 from liulab_mbio.protocol.model import Project as Chain
 from liulab_mbio.protocol.render import write_project_files

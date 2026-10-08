@@ -7,6 +7,7 @@ page it landed on. `whole` puts the chain back together in the order it runs.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -25,9 +26,7 @@ def whole(project: Project) -> Protocol:
         project.title,
         summary=project.summary,
         overview={
-            label: value
-            for one in project.protocols
-            for label, value in one.overview.items()
+            label: value for one in project.protocols for label, value in one.overview.items()
         },
         highlights=tuple(line for topic in project.background for line in topic.body),
         checks=project.checks,
@@ -45,6 +44,6 @@ def whole(project: Project) -> Protocol:
     )
 
 
-def _once[T](found: object) -> tuple[T, ...]:
+def _once[T](found: Iterable[T]) -> tuple[T, ...]:
     """Return what `found` yields, the first of any repeat kept and the rest dropped."""
-    return tuple(dict.fromkeys(found))  # type: ignore[arg-type]
+    return tuple(dict.fromkeys(found))
