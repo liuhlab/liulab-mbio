@@ -1,3 +1,4 @@
+import ast
 import re
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -27,6 +28,9 @@ from liulab_mbio.protocol import (
     read_protocol,
     write_protocol,
 )
+
+#: The checkout a `Source.note` is relative to.
+REPO = Path(__file__).parents[2]
 
 
 def test_an_unknown_key_is_refused_and_located() -> None:
@@ -364,6 +368,31 @@ def test_a_figure_cites_its_source_as_a_note_does() -> None:
     assert one.cited == frozenset({"k"})
     (check,) = [c for c in one.audit() if c.name == "sources"]
     assert check.status == "fail"
+
+
+def _notes() -> set[str]:
+    """Every note a `Source` in `src/` names, read off the call so a local one is found too."""
+    found: set[str] = set()
+    for path in (REPO / "src").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if "Source(" not in text:
+            continue
+        for node in ast.walk(ast.parse(text)):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            if node.func.id != "Source":
+                continue
+            for keyword in node.keywords:
+                if keyword.arg == "note" and isinstance(keyword.value, ast.Constant):
+                    found.add(str(keyword.value.value))
+    return found
+
+
+def test_every_note_a_source_names_is_on_disk() -> None:
+    """`Source.note` is a repo-relative path, so a note that moves or goes fails here."""
+    notes = _notes()
+    assert notes, "no source names a note; has the field gone?"
+    assert sorted(note for note in notes if not (REPO / note).is_file()) == []
 
 
 def test_a_span_that_is_not_a_pair_of_numbers_is_refused_where_it_stands() -> None:

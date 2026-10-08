@@ -30,7 +30,7 @@ fields without a default are required; `write_protocol` writes every field::
          "gels": [{"title", "ladder": {"name", "bands_bp"}, "lanes": [{"label", "bands_bp"}]}],
          "expected": [str], "troubleshooting": [{"problem", "solution"}]}],
      "references": [{"text", "url"}],
-     "sources": {key: {"document", "edition", "url", "read_as", "date"}},
+     "sources": {key: {"document", "edition", "url", "read_as", "date", "note"}},
      "holes": [{"id", "missing", "kind", "where", "filled_by", "issue"}],
      "bill": {"title", "currency", "total", "record",
          "rows": [{"item", "quantity", "unit", "key", "charge", "headroom", "citation",

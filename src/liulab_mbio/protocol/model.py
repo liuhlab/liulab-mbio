@@ -92,6 +92,9 @@ class Source:
         How it was read, such as ``"plain curl"``.
     date
         When it was read.
+    note
+        The research note it was read into, as a repo-relative path. Empty where the document
+        has no note of its own.
     """
 
     document: str
@@ -100,6 +103,7 @@ class Source:
     url: str = ""
     read_as: str = ""
     date: str = ""
+    note: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a source with no document, or a link that is not http or https."""

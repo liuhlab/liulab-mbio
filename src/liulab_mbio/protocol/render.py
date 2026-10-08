@@ -1279,7 +1279,9 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
         f'<li id="source-{escape(_slug(key))}"><strong>{escape(key)}</strong> '
         f"{escape(source.document)}"
         + "".join(
-            f" · {escape(text)}" for text in (source.edition, source.read_as, source.date) if text
+            f" · {escape(text)}"
+            for text in (source.edition, source.read_as, source.date, source.note)
+            if text
         )
         + (
             f' <a href="{escape(source.url)}" rel="noreferrer">{escape(source.url)}</a>'
