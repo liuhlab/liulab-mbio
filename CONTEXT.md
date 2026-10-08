@@ -165,7 +165,8 @@ _Avoid_: mix table, recipe
 
 ### Thermocycler program
 
-Stages run in order, each a list of incubations repeated for a number of cycles.
+Stages run in order, each a list of incubations repeated for a number of cycles. An incubation
+whose temperature steps a set amount each cycle makes its stage a **touchdown**.
 _Avoid_: cycling conditions, PCR conditions
 
 ### Figure

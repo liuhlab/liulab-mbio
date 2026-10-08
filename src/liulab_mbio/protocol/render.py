@@ -1612,16 +1612,16 @@ def _table(key: str, table: ReactionTable) -> str:
 
 
 def _temperature(step: Incubation, cycles: int | None) -> str:
-    """One incubation's temperature cell: where it starts, and where the stage leaves it.
+    """One incubation's temperature cell: where it starts, and where `cycles` of it end.
 
-    A stepping incubation prints its last cycle's temperature derived from the step and the
-    stage's count, so the two cannot disagree; where the count is a hole, the rule stands in for
-    an end nothing bounds.
+    A stepping incubation's end is read off `last_c`, never stored; where the count is a hole,
+    the step a cycle stands in for an end nothing bounds.
     """
     start = number(step.temperature_c)
     if step.delta_c is None:
         return f"{start} °C"
-    end = "" if cycles is None else f" → {number(step.last_c(cycles))}"
+    last = step.temperature_c if cycles is None else step.last_c(cycles)
+    end = "" if last == step.temperature_c else f" → {number(last)}"
     return f'{start}{end} °C<br><span class="muted">{number(step.delta_c)} °C a cycle</span>'
 
 
@@ -1630,8 +1630,9 @@ def _program(program: ThermocyclerProgram) -> str:
     if program.lid_temperature_c is not None:
         meta.append(f"lid {number(program.lid_temperature_c)} °C")
     if program.duration_seconds is not None:
-        # One stage of one incubation is a hold, not a cycled run, so it has no ramps to add.
-        held = len(program.stages) == 1 and len(program.stages[0].incubations) == 1
+        # One incubation run once is a hold, not a cycled run, so it has no ramps to add.
+        only = program.stages[0]
+        held = len(program.stages) == 1 and len(only.incubations) == 1 and only.cycles == 1
         meta.append(_duration(program.duration_seconds) + ("" if held else " plus ramps"))
     title = escape(program.title or "Thermocycler program")
     caption = f' <span class="muted">· {escape(" · ".join(meta))}</span>' if meta else ""
@@ -1640,12 +1641,12 @@ def _program(program: ThermocyclerProgram) -> str:
     shared = cited.pop() if len(cited) == 1 else None
     bodies = []
     for stage in program.stages:
-        repeats = stage.cycles is not None and stage.cycles > 1
+        # `×` marks the stage that repeats, so a count of 10 is never read as a tenth cycle.
         count = (
             f'<span class="hole-none">{NO_NUMBER}</span>'
             if stage.cycles is None
             else f"×{stage.cycles}"
-            if repeats
+            if stage.cycles > 1
             else str(stage.cycles)
         ) + _after(stage.citation)
         rows = []
@@ -1659,7 +1660,7 @@ def _program(program: ThermocyclerProgram) -> str:
                 f'<td class="num">{_temperature(step, stage.cycles)}</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
-        bodies.append(f'<tbody class="stage{" cycled" if repeats else ""}">{"".join(rows)}</tbody>')
+        bodies.append(f'<tbody class="stage">{"".join(rows)}</tbody>')
     return (
         f'<figure class="program"><figcaption>{title}{caption}{_after(shared)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th>'

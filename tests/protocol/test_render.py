@@ -273,7 +273,7 @@ def _program_rows(program: ThermocyclerProgram) -> tuple[Node, list[list[str]]]:
 def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_end() -> None:
     """The end follows from the step and the count, so the page cannot contradict the model."""
     cite = Citation("LevSeq", "thermal cycler table")
-    anneal = Incubation("Anneal", 68.0, 20, -0.5, cite)
+    anneal = Incubation("Anneal", 68.0, 20, delta_c=-0.5, citation=cite)
     figure, rows = _program_rows(
         ThermocyclerProgram(
             (
@@ -292,7 +292,6 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
     assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
         "LevSeq thermal cycler table"
     ]
-    assert [body.attrs["class"] for body in figure.find_all("tbody")] == ["stage cycled", "stage"]
 
 
 def test_a_program_that_is_one_hold_is_not_given_ramps_it_does_not_run() -> None:

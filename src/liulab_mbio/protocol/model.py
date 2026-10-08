@@ -477,7 +477,7 @@ class ReactionTable:
 
 @dataclass(frozen=True, slots=True)
 class Incubation:
-    """One temperature held for a time.
+    """One temperature held for a time, stepped each cycle where it is a touchdown.
 
     Parameters
     ----------
@@ -489,8 +489,7 @@ class Incubation:
         ``None`` holds until the reader stops it.
     delta_c
         Degrees Celsius added each later cycle, negative for a touchdown; ``None`` holds the
-        temperature. The last cycle's temperature follows from this and the stage's count, so a
-        touchdown is one cycled stage rather than one stage a cycle.
+        temperature. `last_c` reads the end off it, so a touchdown is one cycled stage.
     citation
         Where the temperature and the time were read.
     """
@@ -498,6 +497,7 @@ class Incubation:
     label: str
     temperature_c: float
     seconds: float | None
+    _: KW_ONLY
     delta_c: float | None = None
     citation: Citation | None = None
 

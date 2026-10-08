@@ -808,7 +808,7 @@ def index_pcr_program() -> ThermocyclerProgram:
             Stage(
                 (
                     denature,
-                    Incubation("Anneal", top, 20, -INDEX_TOUCHDOWN_STEP_C, cite),
+                    Incubation("Anneal", top, 20, delta_c=-INDEX_TOUCHDOWN_STEP_C, citation=cite),
                     Incubation("Extend", top, INDEX_EXTENSION_SECONDS, citation=cite),
                 ),
                 cycles=INDEX_TOUCHDOWN_CYCLES,
