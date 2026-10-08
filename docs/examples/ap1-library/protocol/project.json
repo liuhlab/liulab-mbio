@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 5 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
+  "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
       "title": "How this library is designed",
@@ -44,6 +44,1957 @@
   ],
   "protocols": [
     {
+      "title": "Primer plates",
+      "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
+      "overview": {
+        "Primers": "74 in a 96-well plate",
+        "Stock plate": "100 µM",
+        "Working plates": "1 at 10 µM",
+        "Storage": "-20 °C"
+      },
+      "highlights": [],
+      "checks": [],
+      "consumes": [],
+      "produces": [
+        {
+          "name": "primer stock plate",
+          "what": "74 primers seated in a 96-well plate",
+          "spec": [
+            "100 µM"
+          ],
+          "storage": "-20 °C"
+        },
+        {
+          "name": "primer working plate 1",
+          "what": "a copy of primer stock plate, used for one run",
+          "spec": [
+            "10 µM",
+            "100 µL per well"
+          ],
+          "storage": "-20 °C"
+        }
+      ],
+      "materials": [
+        {
+          "name": "nuclease-free water",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "25,160 µL in all",
+          "note": "",
+          "contains": [],
+          "rules": [],
+          "citation": null
+        },
+        {
+          "name": "Empty 96-well plate",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "1 for the working plates",
+          "note": "",
+          "contains": [],
+          "rules": [],
+          "citation": null
+        },
+        {
+          "name": "Adhesive plate seals",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "2 seals",
+          "note": "",
+          "contains": [],
+          "rules": [],
+          "citation": null
+        },
+        {
+          "name": "primer working plate 1",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "100 µL per well",
+          "note": "10 µM",
+          "contains": [],
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ],
+          "citation": null
+        }
+      ],
+      "oligos": [
+        {
+          "name": "OP107",
+          "sequence": "CCGTGCGACAAGATTTCAAG",
+          "purpose": "P1 batch forward",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP1",
+          "sequence": "AAACACGTGGCAAACATTCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP146",
+          "sequence": "TACTTGAATACCACGTGGCC",
+          "purpose": "P3 batch outer",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP2",
+          "sequence": "AAACCGGAGCCATACAGTAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP3",
+          "sequence": "AAAGCACTCTTAGGCCTCTG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP4",
+          "sequence": "AAAGGGGCCGTCAATATCAG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP5",
+          "sequence": "AAATAAGACGACGACCCTCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP6",
+          "sequence": "AACGATGATGCTCACTCTCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP11",
+          "sequence": "AAGAATTACTGACCCCTCGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP12",
+          "sequence": "AAGACGATCCGAGCCATTAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP13",
+          "sequence": "AAGGAACTATGGCATCGAGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP14",
+          "sequence": "AAGGACTGCATACCAGGTTG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP15",
+          "sequence": "AAGGATATGTAGACACCGCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP16",
+          "sequence": "AAGGCCCAGAAGGATACAAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP17",
+          "sequence": "AAGGCGCTCGGATAATACTC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP18",
+          "sequence": "AAGGTATGTATAGCGACCGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP20",
+          "sequence": "AATAGGAACCTCTTACGCGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP21",
+          "sequence": "AATATCACGCAAAAGCACCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP22",
+          "sequence": "AATCAGTTTCTTTGGCAGCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP23",
+          "sequence": "AATGCAAAGCTATTAGCGCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP24",
+          "sequence": "AATGCGTCATTTTACACGGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP25",
+          "sequence": "AATGTCCTTAGGCAGTCGTC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP26",
+          "sequence": "ACAACGAGCAGACCGAATAG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP27",
+          "sequence": "ACAAGGAGTCGGCATATCAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP28",
+          "sequence": "ACAGAACGAACAGGCACTAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP29",
+          "sequence": "ACAGGAAGCAAGGTATACGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP30",
+          "sequence": "ACAGGGTATATTGAGTGCCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP31",
+          "sequence": "ACATAAGCGATCCCAAGGTC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP32",
+          "sequence": "ACATCGCATACCAGAACAGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP33",
+          "sequence": "ACATTAAATTTCGCCGTGGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP34",
+          "sequence": "ACCACAGGTCAAGATTCACG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP35",
+          "sequence": "ACCCGTATCGCATAAGGATG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP36",
+          "sequence": "ACGAGATGATGCACCGATAG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP37",
+          "sequence": "ACGATGGGGACATAGAACAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP38",
+          "sequence": "ACGGAGCCCTTATTGTAACC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP39",
+          "sequence": "ACGTATGGGGAACACTACAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP40",
+          "sequence": "ACGTGAAACTGTATCGAGCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP41",
+          "sequence": "ACGTTCAGTTTTCCAATGGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP42",
+          "sequence": "ACTAGATTAGCAAGGCACCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP43",
+          "sequence": "ACTGGACCCAATAAAAGGCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP44",
+          "sequence": "ACTTCGATTGGCAAGGACTG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP45",
+          "sequence": "AGAACATAGCATTCACGGGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP46",
+          "sequence": "AGACAACAATCTGAGGCTGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP47",
+          "sequence": "AGACAAGCCTTAACCGTAGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP48",
+          "sequence": "AGACACAAGGCTGATTCCAG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP49",
+          "sequence": "AGACATGGGATTGACCACAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP50",
+          "sequence": "AGAGAGGCATGATTGACCTC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP51",
+          "sequence": "AGAGTTGCACCTAGAATCCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP52",
+          "sequence": "AGATAGATGCTCCGTCAAGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP53",
+          "sequence": "AGATAGTCACGCACAAGACC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP54",
+          "sequence": "AGATTAGCCGACTTTCCTGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP55",
+          "sequence": "AGATTAGCTGCCGATACTGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP56",
+          "sequence": "AGATTGTTACTCCGACGGAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP57",
+          "sequence": "AGATTTCCGACGAGATTCCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP58",
+          "sequence": "AGCATCCGTCTAAATCTCGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP59",
+          "sequence": "AGCTATAAGAATTGCCGGGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP60",
+          "sequence": "AGCTATGATCCCGGTGTAAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP61",
+          "sequence": "AGCTCAATCTAACAGTGGGG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP62",
+          "sequence": "AGGACACCAGACCAATGAAG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP63",
+          "sequence": "AGGGCTAATTACCATCAGCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP64",
+          "sequence": "AGGTGATCTGACGAATGTCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP65",
+          "sequence": "AGTAAAGCATAGTGCCCAGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP67",
+          "sequence": "AGTAGTATCCGAATCGCTGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP68",
+          "sequence": "AGTATCTCAGCAAGGGCAAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP69",
+          "sequence": "AGTATTAGGCGTCAAGGTCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP70",
+          "sequence": "AGTATTCTTACAGCCAGCCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP71",
+          "sequence": "AGTATTGCCGGACTAAACCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP73",
+          "sequence": "AGTCCCAAGTTCAGACGTAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP74",
+          "sequence": "AGTCCGACACAATGTGACAC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP75",
+          "sequence": "AGTGAACTGACCGAATCCTC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP77",
+          "sequence": "AGTGGTCTGTAAACCGTACC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP78",
+          "sequence": "AGTGTTTTCCATTTTCCGCG",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP79",
+          "sequence": "AGTTATAAGGGTCCGATGCC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        },
+        {
+          "name": "OP80",
+          "sequence": "AGTTGCAGTATCTAACCCGC",
+          "purpose": "P2 gene reverse",
+          "tm_c": null,
+          "stock": "",
+          "note": "",
+          "status": null,
+          "checks": []
+        }
+      ],
+      "equipment": [
+        "Multichannel pipette",
+        "Plate shaker",
+        "Plate centrifuge"
+      ],
+      "vessels": [],
+      "plates": [
+        {
+          "name": "primer stock plate",
+          "wells": 96,
+          "catalog": "",
+          "holds": "",
+          "seating": {
+            "A1": "OP107",
+            "A2": "OP1",
+            "A3": "OP146",
+            "A4": "OP2",
+            "A5": "OP3",
+            "A6": "OP4",
+            "A7": "OP5",
+            "A8": "OP6",
+            "A9": "OP11",
+            "A10": "OP12",
+            "A11": "OP13",
+            "A12": "OP14",
+            "B1": "OP15",
+            "B2": "OP16",
+            "B3": "OP17",
+            "B4": "OP18",
+            "B5": "OP20",
+            "B6": "OP21",
+            "B7": "OP22",
+            "B8": "OP23",
+            "B9": "OP24",
+            "B10": "OP25",
+            "B11": "OP26",
+            "B12": "OP27",
+            "C1": "OP28",
+            "C2": "OP29",
+            "C3": "OP30",
+            "C4": "OP31",
+            "C5": "OP32",
+            "C6": "OP33",
+            "C7": "OP34",
+            "C8": "OP35",
+            "C9": "OP36",
+            "C10": "OP37",
+            "C11": "OP38",
+            "C12": "OP39",
+            "D1": "OP40",
+            "D2": "OP41",
+            "D3": "OP42",
+            "D4": "OP43",
+            "D5": "OP44",
+            "D6": "OP45",
+            "D7": "OP46",
+            "D8": "OP47",
+            "D9": "OP48",
+            "D10": "OP49",
+            "D11": "OP50",
+            "D12": "OP51",
+            "E1": "OP52",
+            "E2": "OP53",
+            "E3": "OP54",
+            "E4": "OP55",
+            "E5": "OP56",
+            "E6": "OP57",
+            "E7": "OP58",
+            "E8": "OP59",
+            "E9": "OP60",
+            "E10": "OP61",
+            "E11": "OP62",
+            "E12": "OP63",
+            "F1": "OP64",
+            "F2": "OP65",
+            "F3": "OP67",
+            "F4": "OP68",
+            "F5": "OP69",
+            "F6": "OP70",
+            "F7": "OP71",
+            "F8": "OP73",
+            "F9": "OP74",
+            "F10": "OP75",
+            "F11": "OP77",
+            "F12": "OP78",
+            "G1": "OP79",
+            "G2": "OP80"
+          },
+          "labels": {},
+          "note": ""
+        },
+        {
+          "name": "primer working plate 1",
+          "wells": 96,
+          "catalog": "",
+          "holds": "",
+          "seating": {
+            "A1": "OP107",
+            "A2": "OP1",
+            "A3": "OP146",
+            "A4": "OP2",
+            "A5": "OP3",
+            "A6": "OP4",
+            "A7": "OP5",
+            "A8": "OP6",
+            "A9": "OP11",
+            "A10": "OP12",
+            "A11": "OP13",
+            "A12": "OP14",
+            "B1": "OP15",
+            "B2": "OP16",
+            "B3": "OP17",
+            "B4": "OP18",
+            "B5": "OP20",
+            "B6": "OP21",
+            "B7": "OP22",
+            "B8": "OP23",
+            "B9": "OP24",
+            "B10": "OP25",
+            "B11": "OP26",
+            "B12": "OP27",
+            "C1": "OP28",
+            "C2": "OP29",
+            "C3": "OP30",
+            "C4": "OP31",
+            "C5": "OP32",
+            "C6": "OP33",
+            "C7": "OP34",
+            "C8": "OP35",
+            "C9": "OP36",
+            "C10": "OP37",
+            "C11": "OP38",
+            "C12": "OP39",
+            "D1": "OP40",
+            "D2": "OP41",
+            "D3": "OP42",
+            "D4": "OP43",
+            "D5": "OP44",
+            "D6": "OP45",
+            "D7": "OP46",
+            "D8": "OP47",
+            "D9": "OP48",
+            "D10": "OP49",
+            "D11": "OP50",
+            "D12": "OP51",
+            "E1": "OP52",
+            "E2": "OP53",
+            "E3": "OP54",
+            "E4": "OP55",
+            "E5": "OP56",
+            "E6": "OP57",
+            "E7": "OP58",
+            "E8": "OP59",
+            "E9": "OP60",
+            "E10": "OP61",
+            "E11": "OP62",
+            "E12": "OP63",
+            "F1": "OP64",
+            "F2": "OP65",
+            "F3": "OP67",
+            "F4": "OP68",
+            "F5": "OP69",
+            "F6": "OP70",
+            "F7": "OP71",
+            "F8": "OP73",
+            "F9": "OP74",
+            "F10": "OP75",
+            "F11": "OP77",
+            "F12": "OP78",
+            "G1": "OP79",
+            "G2": "OP80"
+          },
+          "labels": {},
+          "note": ""
+        }
+      ],
+      "steps": [
+        {
+          "title": "Order the primers",
+          "section": "",
+          "instructions": [
+            "Order every primer on the sheet below as one dried 96-well plate."
+          ],
+          "cautions": [],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "A sealed 96-well plate holding 74 dried primers."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Resuspend the primers to 100 µM",
+          "section": "",
+          "instructions": [
+            "Add 250 µL of nuclease-free water to each of the 74 wells.",
+            "Seal the plate, shake it until every pellet is in solution, and spin it down."
+          ],
+          "cautions": [
+            "Spin the plate down before taking the seal off."
+          ],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "Every well holds 250 µL at 100 µM."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Seat the stock plate",
+          "section": "",
+          "instructions": [
+            "Check the supplier's plate map against the primer stock plate map below, well by well.",
+            "Write primer stock plate and the date on the plate skirt."
+          ],
+          "cautions": [],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "Every well of primer stock plate holds the primer the map below names."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Split 1 working plate at 10 µM",
+          "section": "",
+          "instructions": [
+            "Add 90 µL of nuclease-free water to the first 74 wells of each working plate.",
+            "Move 10 µL from each well of primer stock plate into the same well of every working plate.",
+            "Seal each plate, shake it, and spin it down."
+          ],
+          "cautions": [],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [
+            {
+              "title": "Stock into primer working plate 1",
+              "moves": [
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "A12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "A12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "B12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "B12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "C12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "C12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "D12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "D12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "E12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "E12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F2"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F3"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F3"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F4"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F4"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F5"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F5"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F6"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F6"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F7"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F7"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F8"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F8"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F9"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F9"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F10"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F10"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F11"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F11"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "F12"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "F12"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "G1"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "G1"
+                  },
+                  "volume_ul": 10.0
+                },
+                {
+                  "source": {
+                    "plate": "primer stock plate",
+                    "well": "G2"
+                  },
+                  "destination": {
+                    "plate": "primer working plate 1",
+                    "well": "G2"
+                  },
+                  "volume_ul": 10.0
+                }
+              ],
+              "instrument": "",
+              "note": "",
+              "citation": null
+            }
+          ],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "Each working plate holds 100 µL at 10 µM in 74 wells."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Label the plates and store them",
+          "section": "",
+          "instructions": [
+            "Label primer stock plate and primer working plate 1 with the date.",
+            "Store every plate at -20 °C.",
+            "Thaw one working plate for a run, and throw it away once the run is set up."
+          ],
+          "cautions": [],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "2 labelled plates at -20 °C, 1 of them ready to run from."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        }
+      ],
+      "references": [],
+      "sources": {},
+      "holes": [],
+      "bill": null
+    },
+    {
       "title": "Cargo ordering and pool preparation",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
@@ -66,17 +2017,6 @@
           "storage": "-20 °C",
           "amount": "131 oligos, every one 350 nt",
           "note": "ordered from pool.tsv, which says which block each oligo is a piece of",
-          "contains": [],
-          "rules": [],
-          "citation": null
-        },
-        {
-          "name": "Pool amplification primers",
-          "supplier": "",
-          "catalog": "",
-          "storage": "-20 °C",
-          "amount": "74 primers: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer",
-          "note": "ordered from pool-primers.tsv; a pair a batch, an inner primer a block",
           "contains": [],
           "rules": [],
           "citation": null
@@ -110,11 +2050,10 @@
       "plates": [],
       "steps": [
         {
-          "title": "Order the oligo pool and the primers that amplify it",
+          "title": "Order the oligo pool",
           "section": "Order and store",
           "instructions": [
-            "Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.",
-            "Order every row of pool-primers.tsv as an ordinary oligo: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer."
+            "Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt."
           ],
           "cautions": [],
           "notes": [
@@ -130,8 +2069,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for.",
-            "74 primers, each 20 nt."
+            "One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for."
           ],
           "troubleshooting": [
             {
@@ -180,6 +2118,15 @@
           "name": "oligo pool",
           "what": "the pool resuspended and aliquoted",
           "spec": [],
+          "storage": "-20 °C"
+        },
+        {
+          "name": "primer working plate 1",
+          "what": "a copy of primer stock plate, used for one run",
+          "spec": [
+            "10 µM",
+            "100 µL per well"
+          ],
           "storage": "-20 °C"
         },
         {
