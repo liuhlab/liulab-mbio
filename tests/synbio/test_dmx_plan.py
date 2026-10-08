@@ -155,6 +155,13 @@ def test_naming_the_index_plate_closes_its_hole_and_leaves_it_open_otherwise(tmp
     assert any("index plate IDX-1" in item.what for item in named.consumes)
 
 
+def test_the_background_counts_the_plates_this_run_pools(planned):
+    """The addressing topic follows the run, so no page claims two plates where one is pooled."""
+    said = " ".join(line for topic in planned.chain().background for line in topic.body)
+    assert "two plates" not in said
+    assert "this run pools 1 plate, and the marks tell 96 plates apart" in said
+
+
 def test_the_same_build_writes_the_same_bytes(tmp_path, build):
     """A plan is a function of its inputs, so a second run over them writes the file again."""
     first = plan_dmx(build).write(tmp_path / "one")

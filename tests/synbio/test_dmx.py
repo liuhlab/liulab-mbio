@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.protocol.model import Citation, Well
+from liulab_mbio.protocol.model import Citation, Step, Well
 from liulab_synbio.dmx import kit, method, steps
 
 KIT = """name\tgroup\tindex\toverhang5\tumi\toverhang3\tfinal_seq
@@ -255,6 +255,38 @@ def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
         for text in (*step.instructions, *step.notes, *step.expected)
     ]
     assert [text for text in said if "*" in text] == []
+
+
+def pooling(one) -> Step:
+    """Return the step that pools the marked plates and sequences them."""
+    return next(step for step in steps.validation_steps(one) if step.key == "pool-and-sequence")
+
+
+def test_the_pool_is_cleaned_up_before_it_is_amplified_on_the_kits_own_pairs():
+    """Nothing counts the flanking pairs, so the page names them and prints no number."""
+    said = pooling(sized(method.ROUTE_LIGATION, (method.Design("one", 2),), 0))
+    assert [line.split(" ", 1)[0] for line in said.instructions] == [
+        "Pool",
+        "Clean",
+        "Amplify",
+        "Sequence",
+    ]
+    written = " ".join(said.instructions)
+    assert f"{method.POOL_COLUMNS} miniprep columns" in written
+    assert "the barcode kit's own flanking primer pairs" in written
+    assert "three" not in written.lower()
+
+
+def test_the_flow_cell_note_counts_the_plates_this_read_pools():
+    """Both numbers follow from the run: what it pools, and what its address could tell apart."""
+    one = sized(method.ROUTE_LIGATION, (method.Design("one", 2),), 0)
+    assert len(steps.pooled_plates(one)) == 1
+    note = " ".join(pooling(one).notes)
+    assert "This read pools 1 plate." in note
+    assert f"tell {method.ROUTE_LIGATION.plate_axis} plates apart" in note
+    many = sized(method.ROUTE_INDEX_PCR, tuple(method.Design(f"d{n}", 2) for n in range(50)), 0)
+    assert len(steps.pooled_plates(many)) == 3
+    assert "This read pools 3 plates." in " ".join(pooling(many).notes)
 
 
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():

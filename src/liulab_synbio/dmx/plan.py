@@ -30,7 +30,7 @@ from liulab_synbio.dmx.method import (
     validation_equipment,
     validation_materials,
 )
-from liulab_synbio.dmx.steps import validation_steps
+from liulab_synbio.dmx.steps import pooled_plates, validation_steps
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,6 +158,8 @@ class ReadBackPlan:
             if one.floor == 0
             else f"every design built from {counted(one.floor, 'fragment')} or more"
         )
+        pooled = counted(len(pooled_plates(one)), "plate")
+        apart = counted(one.route.plate_axis, "plate")
         return (
             Topic(
                 "Which designs are read back",
@@ -176,8 +178,9 @@ class ReadBackPlan:
                     "route marks the same wells a different way, and the picking, the pass rule "
                     "and the reformat are the same either way.",
                     "A well's marks are worked out from where the well is rather than looked up, "
-                    "so two plates on one flow cell are told apart by construction and a "
-                    "demultiplexer can check an address instead of trusting a file.",
+                    "so a demultiplexer can check an address instead of trusting a file. One "
+                    f"axis of the address is the plate: this run pools {pooled}, and the marks "
+                    f"tell {apart} apart on one flow cell.",
                     f"A well is called above {one.route.wanted_reads} reads. The other route's "
                     "floor is not a stricter or a looser setting of the same scale, so neither "
                     "number carries over to the other route.",

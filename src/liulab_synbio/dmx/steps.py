@@ -234,8 +234,19 @@ def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Ste
         ),
         _sequencing_step(
             one,
-            f"Pool every well and amplify the three primer pairs separately. {POOL_COLUMNS} "
-            "miniprep columns, because one saturates.",
+            instructions=(
+                "Pool each barcoding plate into its own reservoir.",
+                f"Clean up each pool across {counted(POOL_COLUMNS, 'miniprep column')}.",
+                "Amplify each cleaned pool with the barcode kit's own flanking primer pairs, "
+                "one reaction a pair.",
+            ),
+            notes=(
+                f"A pool saturates one miniprep column, which is why Qian's clean-up runs "
+                f"{counted(POOL_COLUMNS, 'column')}.",
+                "Each pair starts at a different barcode, so every amplicon still carries the "
+                "design and all four barcodes. Qian runs the pairs separately and pools what "
+                "they make.",
+            ),
         ),
     )
 
@@ -310,22 +321,33 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
             ),
             holes=() if one.index_plate else (INDEX_MARKS,),
         ),
-        _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
+        _sequencing_step(
+            one, instructions=("Pool each index plate on its own and clean the pool up.",)
+        ),
     )
 
 
-def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
-    """Pool the marked wells and sequence them, which both routes end their own stretch on."""
+def _sequencing_step(
+    one: Validation, *, instructions: tuple[str, ...], notes: tuple[str, ...] = ()
+) -> Step:
+    """Pool the marked wells and sequence them, which both routes end their own stretch on.
+
+    The route's own pooling and its reasons come in; what the pooled plates carry is counted
+    here, so the page says what this read pools rather than what a read might.
+    """
+    pooled = pooled_plates(one)
     return Step(
         "Pool and sequence",
         key="pool-and-sequence",
-        instructions=(pooling_instruction, "Sequence the pool."),
+        instructions=(*instructions, "Sequence the pool."),
         expected=(
             f"Reads for {one.wells} wells, every well told from the rest by the marks it carries.",
         ),
         notes=(
-            "Two plates on one flow cell are told apart by construction, because one axis of "
-            "the address is the plate.",
+            *notes,
+            f"This read pools {counted(len(pooled), 'plate')}. One axis of the address is the "
+            f"plate, so the marks tell {counted(one.route.plate_axis, 'plate')} apart on one "
+            "flow cell.",
         ),
     )
 
