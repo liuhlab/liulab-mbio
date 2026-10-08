@@ -473,24 +473,24 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     jsonfile.refuse_keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
     return Build(
-        jsonfile.text(given, "name", "a build"),
+        jsonfile.text(given, "name", "a build's"),
         positions=tuple(
             jsonfile.one_text(one, f"positions[{index}]")
-            for index, one in enumerate(jsonfile.listing(given, "positions", "a build"))
+            for index, one in enumerate(jsonfile.listing(given, "positions", "a build's"))
         ),
         parts=jsonfile.named_file(
-            file, jsonfile.text(given, "parts", "a build"), "parts", "a build's"
+            file, jsonfile.text(given, "parts", "a build's"), "parts", "a build's"
         ),
         vector=jsonfile.named_file(
-            file, jsonfile.text(given, "vector", "a build"), "vector", "a build's"
+            file, jsonfile.text(given, "vector", "a build's"), "vector", "a build's"
         ),
-        host=jsonfile.text(given, "host", "a build"),
-        oligo_length=jsonfile.whole(given, "oligo_length", "a build"),
-        batch_size=jsonfile.whole(given, "batch_size", "a build"),
-        completeness=jsonfile.number(given, "completeness", "a build"),
+        host=jsonfile.text(given, "host", "a build's"),
+        oligo_length=jsonfile.whole(given, "oligo_length", "a build's"),
+        batch_size=jsonfile.whole(given, "batch_size", "a build's"),
+        completeness=jsonfile.number(given, "completeness", "a build's"),
         primers=(
             jsonfile.named_file(
-                file, jsonfile.text(given, "primers", "a build"), "primers", "a build's"
+                file, jsonfile.text(given, "primers", "a build's"), "primers", "a build's"
             )
             if "primers" in given
             else None
@@ -498,7 +498,7 @@ def read_build(path: str | os.PathLike[str]) -> Build:
         working_vector=(
             jsonfile.named_file(
                 file,
-                jsonfile.text(given, "working_vector", "a build"),
+                jsonfile.text(given, "working_vector", "a build's"),
                 "working_vector",
                 "a build's",
             )
@@ -507,49 +507,51 @@ def read_build(path: str | os.PathLike[str]) -> Build:
         ),
         bands=_bands(given.get("bands")),
         validate_from=(
-            jsonfile.whole(given, "validate_from", "a build") if "validate_from" in given else None
+            jsonfile.whole(given, "validate_from", "a build's")
+            if "validate_from" in given
+            else None
         ),
         routes=tuple(
             jsonfile.one_text(one, f"routes[{index}]")
             for index, one in enumerate(
-                jsonfile.listing(given, "routes", "a build") if "routes" in given else ()
+                jsonfile.listing(given, "routes", "a build's") if "routes" in given else ()
             )
         ),
-        index_plate=jsonfile.text(given, "index_plate", "a build")
+        index_plate=jsonfile.text(given, "index_plate", "a build's")
         if "index_plate" in given
         else "",
         representation_seen=(
-            jsonfile.number(given, "representation_seen", "a build")
+            jsonfile.number(given, "representation_seen", "a build's")
             if "representation_seen" in given
             else None
         ),
         representation_skew=(
-            jsonfile.number(given, "representation_skew", "a build")
+            jsonfile.number(given, "representation_skew", "a build's")
             if "representation_skew" in given
             else None
         ),
         reads_per_member=(
-            jsonfile.whole(given, "reads_per_member", "a build")
+            jsonfile.whole(given, "reads_per_member", "a build's")
             if "reads_per_member" in given
             else None
         ),
         linkage_fidelity=(
-            jsonfile.number(given, "linkage_fidelity", "a build")
+            jsonfile.number(given, "linkage_fidelity", "a build's")
             if "linkage_fidelity" in given
             else None
         ),
         final_assembly=_final_assembly(given.get("final_assembly")),
-        pcr1_cycles=jsonfile.whole(given, "pcr1_cycles", "a build")
+        pcr1_cycles=jsonfile.whole(given, "pcr1_cycles", "a build's")
         if "pcr1_cycles" in given
         else None,
-        pcr2_cycles=jsonfile.whole(given, "pcr2_cycles", "a build")
+        pcr2_cycles=jsonfile.whole(given, "pcr2_cycles", "a build's")
         if "pcr2_cycles" in given
         else None,
-        seed=jsonfile.whole(given, "seed", "a build") if "seed" in given else SEED,
+        seed=jsonfile.whole(given, "seed", "a build's") if "seed" in given else SEED,
         reserved_extra=tuple(
             jsonfile.one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                jsonfile.listing(given, "reserved_extra", "a build")
+                jsonfile.listing(given, "reserved_extra", "a build's")
                 if "reserved_extra" in given
                 else ()
             )
@@ -614,7 +616,7 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
     return {
         quantity: tuple(
             jsonfile.one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(jsonfile.listing(entry, quantity, "a build's"))
+            for index, one in enumerate(jsonfile.listing(entry, quantity, "a build's bands"))
         )
         for quantity in entry
     }
@@ -631,11 +633,13 @@ def _barcode(entry: Any) -> Barcode:
     if entry is None:
         return Barcode()
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a build barcode is {type(entry).__name__}, not an object")
-    jsonfile.refuse_keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
+        raise ValueError(f"a build's barcode is {type(entry).__name__}, not an object")
+    jsonfile.refuse_keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build's barcode")
     return Barcode(
-        jsonfile.whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
-        jsonfile.whole(entry, "min_distance", "a build barcode")
+        jsonfile.whole(entry, "length", "a build's barcode")
+        if "length" in entry
+        else BARCODE_LENGTH,
+        jsonfile.whole(entry, "min_distance", "a build's barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
     )

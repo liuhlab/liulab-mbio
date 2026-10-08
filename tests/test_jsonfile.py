@@ -2,11 +2,20 @@
 
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 from liulab_mbio import jsonfile
+
+
+@dataclass(frozen=True)
+class Toy:
+    """Two fields a reader is built from: one a file must name, one it may leave out."""
+
+    name: str
+    seed: int = 0
 
 
 def write(directory: Path, data: object) -> Path:
@@ -69,3 +78,16 @@ def test_a_named_file_resolves_against_the_file_that_names_it(tmp_path):
     said = f"a build's parts is 'nowhere.fasta', and {tmp_path / 'nowhere.fasta'} is no file"
     with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
         jsonfile.named_file(file, "nowhere.fasta", "parts", "a build's")
+
+
+def test_a_dataclass_reader_says_its_key_faults_in_the_words_every_caller_shares():
+    """`reader` refuses a key the way `refuse_keys` does, so one fault reads one way."""
+    read = jsonfile.reader(Toy)
+
+    assert read({"name": "demo", "seed": 3}, "a toy") == Toy("demo", 3)
+    with pytest.raises(ValueError, match=r"^a toy is missing name$"):
+        read({"seed": 3}, "a toy")
+    with pytest.raises(ValueError, match=r"^a toy carries unknown key\(s\) host$"):
+        read({"name": "demo", "host": "human"}, "a toy")
+    with pytest.raises(ValueError, match=r"^a toy\.seed: expected a whole number, got a string$"):
+        read({"name": "demo", "seed": "x"}, "a toy")

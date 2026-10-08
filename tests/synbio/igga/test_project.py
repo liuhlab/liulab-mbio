@@ -128,9 +128,44 @@ def test_an_unknown_key_is_refused_naming_it(tmp_path):
         read_build(write(tmp_path, scheme="iGGA"))
 
 
-def test_a_value_of_another_json_type_is_refused(tmp_path):
-    with pytest.raises(ValueError, match=r"^a build oligo_length is str, not a whole number$"):
-        read_build(write(tmp_path, oligo_length="350"))
+#: One fault a build file can carry, and the whole refusal a user reads for it. Every subject
+#: is here because `jsonfile` takes each from its caller, so only this file pins iGGA's words.
+REFUSED = [
+    ({"name": 1}, "a build's name is int, not a string"),
+    ({"positions": "N"}, "a build's positions is str, not a list"),
+    ({"positions": ["N", 2]}, "positions[1] is int, not a string"),
+    ({"oligo_length": "350"}, "a build's oligo_length is str, not a whole number"),
+    ({"completeness": "0.99"}, "a build's completeness is str, not a number"),
+    ({"validate_from": 0, "routes": [1]}, "routes[0] is int, not a string"),
+    ({"reserved_extra": [1]}, "reserved_extra[0] is int, not a string"),
+    ({"barcode": 11}, "a build's barcode is int, not an object"),
+    ({"barcode": {"size": 11}}, "a build's barcode carries unknown key(s) size"),
+    ({"barcode": {"length": "11"}}, "a build's barcode length is str, not a whole number"),
+    ({"bands": 1}, "a build's bands are int, not an object"),
+    ({"bands": {"oligos": "1-100"}}, "a build's bands oligos is str, not a list"),
+    ({"bands": {"oligos": [1]}}, "bands oligos[0] is int, not a string"),
+    ({"final_assembly": 1}, "a build's final_assembly is int, not an object"),
+    ({"final_assembly": {"vector_ng": 20}}, "a build's final_assembly is missing ratio"),
+    ({"primer_plates": 1}, "a build's primer_plates is int, not an object"),
+    (
+        {"primers": "primers.tsv", "primer_plates": {"nanomoles": 10, "stock_um": 100}},
+        "a build's primer_plates is missing working_ul",
+    ),
+    (
+        {
+            "primers": "primers.tsv",
+            "primer_plates": {"nanomoles": 10, "stock_um": 100, "working_ul": "5"},
+        },
+        "a build's primer_plates working_ul is str, not a number",
+    ),
+]
+
+
+@pytest.mark.parametrize(("changes", "said"), REFUSED)
+def test_a_build_file_is_refused_naming_the_subject_that_owns_the_fault(tmp_path, changes, said):
+    """A key of a build is a build's, as DMX already spells it; a list item is where it sits."""
+    with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
+        read_build(write(tmp_path, **changes))
 
 
 def test_a_build_made_in_code_is_checked_the_same_way(tmp_path):

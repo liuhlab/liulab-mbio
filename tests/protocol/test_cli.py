@@ -28,7 +28,7 @@ def test_the_cli_writes_beside_the_protocol_by_default(data_dir: Path, tmp_path:
 
 def test_the_cli_says_which_key_it_could_not_read(tmp_path: Path) -> None:
     bad = tmp_path / "bad.json"
-    bad.write_text('{"title": "t", "steps": [{"name": "no title here"}]}', encoding="utf-8")
+    bad.write_text('{"title": "t", "steps": [{"title": "s", "name": "x"}]}', encoding="utf-8")
     result = CliRunner().invoke(app, ["protocol", "render", str(bad)])
     assert result.exit_code == 1
     assert "name" in result.output

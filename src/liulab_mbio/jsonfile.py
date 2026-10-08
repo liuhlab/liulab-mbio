@@ -2,7 +2,8 @@
 
 A missing key, a key nothing reads, and a value of another JSON type are each refused in words
 naming the key and what belongs there. A caller reads one key at a time, or hands `reader` a
-dataclass whose fields and annotations say what its object holds.
+dataclass whose fields and annotations say what its object holds. The two word a key
+fault alike, and a type fault differently: one names the type given, the other the value.
 
 Nothing here knows what it reads for. Every refusal takes as `where` the subject it names, so a
 caller supplies its own word for the file, or for the object inside it a key sits in.
@@ -35,6 +36,8 @@ def refuse_keys(
     data: Mapping[str, Any], required: frozenset[str], optional: frozenset[str], where: str
 ) -> None:
     """Refuse a mapping that is missing a key or carries one its reader does not read.
+
+    A missing key is named first, and a key nothing reads only once none is missing.
 
     Raises
     ------
@@ -143,8 +146,9 @@ type _Convert = Callable[[Any, str], Any]
 def reader[T](cls: type[T]) -> Callable[[Any, str], T]:
     """Return a reader from a JSON object to the dataclass `cls`, checking its keys.
 
-    Each field takes its annotation's JSON type, and a field with a default may be left out.
-    The reader takes the parsed JSON and the `where` its refusals name, each key named under it.
+    Each field takes its annotation's JSON type, and a field with a default may be left out,
+    its keys refused in `refuse_keys`'s words. The reader takes the parsed JSON and the `where`
+    its refusals name, each key named under it.
 
     Raises
     ------
@@ -154,15 +158,14 @@ def reader[T](cls: type[T]) -> Callable[[Any, str], T]:
     spec = fields(cls)  # pyright: ignore[reportArgumentType]
     hints = get_type_hints(cls)
     nested = {f.name: _converter(hints[f.name]) for f in spec}
-    required = {f.name for f in spec if f.default is MISSING and f.default_factory is MISSING}
+    required = frozenset(
+        f.name for f in spec if f.default is MISSING and f.default_factory is MISSING
+    )
 
     def convert(data: Any, where: str) -> T:
         if not isinstance(data, Mapping):
             raise _refused(where, "an object", data)
-        if unknown := sorted(set(data) - set(nested)):
-            raise ValueError(f"{where}: unknown key(s) {', '.join(unknown)}")
-        if missing := sorted(required - set(data)):
-            raise ValueError(f"{where}: missing key(s) {', '.join(missing)}")
+        refuse_keys(data, required, frozenset(nested) - required, where)
         return cls(**{key: nested[key](value, f"{where}.{key}") for key, value in data.items()})
 
     return convert
@@ -205,7 +208,7 @@ def _converter(hint: Any) -> _Convert:
         return reader(hint)
     if hint in _SCALARS:
         return _scalar(*_SCALARS[hint])
-    raise TypeError(f"a protocol field has no JSON form: {hint!r}")
+    raise TypeError(f"a field has no JSON form: {hint!r}")
 
 
 def _list(item: _Convert) -> _Convert:
