@@ -7640,9 +7640,12 @@
               "records": [
                 "../block-vector-1.dna"
               ],
-              "caption": "What a picked well holds: its design in DMX-iGGA N. The pair reads across the cassette, and the band is that stretch plus the two marks the well's address names.",
-              "span": null,
-              "linear": false,
+              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The pair reads across it, and the band is that stretch plus the two marks the well's address names.",
+              "span": [
+                280,
+                490
+              ],
+              "linear": true,
               "sequence_view": false,
               "enzymes": null,
               "highlight": [
