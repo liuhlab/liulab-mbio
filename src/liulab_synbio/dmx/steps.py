@@ -36,6 +36,7 @@ from liulab_synbio.dmx.method import (
     PICKED_WELLS,
     PICKER,
     PLATES_COMPRESSED,
+    POOL_COLUMNS,
     ROUTE_INDEX_PCR,
     ROUTE_LIGATION,
     SAMPLE_UL,
@@ -49,9 +50,6 @@ from liulab_synbio.dmx.method import (
     sampling,
     selected_on,
 )
-
-#: Columns a pooled 1536-well plate takes, because one saturates. Qian SI Day 4.1.
-POOL_COLUMNS = 2
 
 
 def chances(designs: Sequence[Design]) -> tuple[str, ...]:
@@ -84,7 +82,8 @@ def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple
 
     Examples
     --------
-    >>> one = Validation(ROUTE_INDEX_PCR, (Design("a", 4),), floor=0)
+    >>> from liulab_synbio.dmx.method import validation
+    >>> one = validation(ROUTE_INDEX_PCR, (Design("a", 4),), 0)
     >>> for step in validation_steps(one):
     ...     print(step.title)
     Array 1 design(s) and grow

@@ -107,6 +107,9 @@ DMSO_CATALOG = "MP Biomedicals #194819"
 BIOASSAY_COLONIES = 2500
 BIOASSAY_CATALOG = "Corning #431111"
 
+#: Columns a pooled 1536-well plate takes, because one saturates. Qian SI Day 4.1.
+POOL_COLUMNS = 2
+
 #: The documents these numbers were read from.
 SOURCES: dict[str, Source] = {
     "Qian SI": Source(
