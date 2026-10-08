@@ -41,8 +41,8 @@ product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
 `cloning.gateway.plan_gateway` writes those four, and the entry clone as a fifth where it
 planned a BP reaction.
 `liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
-amino-acid change tables, a record per round, a block vector per position, the product, and
-those same two protocol files. The
+amino-acid change tables, a record per round, a block vector per position, the product, and a
+`protocol` folder: the run as a chain of protocols, one page each. The
 method is code and a project is a file: `docs/adr/0010-method-in-code.md` draws that line.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
