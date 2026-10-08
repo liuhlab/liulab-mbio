@@ -248,6 +248,14 @@ sets one.
 
 ### Changed
 
+- A protocol now fails its own check when a number is missing only because nobody read the
+  document that gives it. Every other missing number leaves the check with no verdict, as
+  before: a number a bench settles, one the lab's own shelf settles, one a price list settles,
+  and one nobody has published are all things a finished plan keeps rather than guesses. The one
+  number that was waiting on a document is now filled. The index PCR that reads a well back
+  prints 0.25 units of Taq, from the 5,000 units per millilitre the supplier states in its own
+  specification sheet for the enzyme. The page names that sheet beside the number.
+
 - The combinatorial library pipeline is named after its method rather than its product:
   `liulab_synbio.igga`, with `plan_igga` as its way in and `liulab_synbio igga plan` on the
   command line. Every cloning pipeline already names its way in after the method —

@@ -7,6 +7,7 @@ import pytest
 from liulab_mbio.bench import materials, plates
 from liulab_mbio.protocol import model
 from liulab_mbio.protocol.model import (
+    Check,
     Citation,
     Component,
     Hole,
@@ -205,6 +206,35 @@ def test_the_banner_counts_bench_numbers_apart_from_prices() -> None:
     assert "<strong>3</strong> numbers in this protocol have no source" in page
     assert "2 bench numbers and 1 price." in page
     assert "ready to run" not in page
+
+
+def holes_verdict(*holes: Hole) -> Check:
+    (check,) = [c for c in protocol(Step("Assemble", holes=holes)).audit() if c.name == "holes"]
+    return check
+
+
+def test_a_protocol_missing_no_number_passes_its_own_hole_check() -> None:
+    assert holes_verdict().status == "pass"
+
+
+def test_a_hole_no_source_closes_leaves_the_verdict_open_rather_than_failing() -> None:
+    """ADR 0017: a plan is finished with these still standing, so they are no failure."""
+    standing = tuple(
+        Hole(f"H{n}", "nothing sources it", kind)
+        for n, kind in enumerate(("undecided", "unpublished", "lab", "price"), 1)
+    )
+    assert holes_verdict(*standing).status is None
+
+
+def test_a_hole_waiting_on_a_source_nobody_read_fails_and_is_named() -> None:
+    """ADR 0017: a hole naming a source nobody read is work left undone, not a finished plan."""
+    check = holes_verdict(
+        Hole("H24", "nothing sources it", "undecided"),
+        Hole("IDX2", "the units one reaction takes", "unread"),
+    )
+    assert check.status == "fail"
+    assert "IDX2" in check.detail
+    assert "H24" not in check.detail
 
 
 def test_a_price_hole_names_no_issue() -> None:

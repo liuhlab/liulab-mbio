@@ -229,7 +229,9 @@ def names(subject: str, among: Iterable[str]) -> bool:
 
 
 #: Why a number is missing. A ``"price"`` hole names no issue: a price nobody loaded is a missing
-#: input of the user's, not a defect in what the package knows.
+#: input of the user's, not a defect in what the package knows. Only ``"unread"`` fails
+#: `Protocol.audit`: the other four name a gap no source closes, which is what a finished plan
+#: keeps, while a source nobody read is work left undone.
 type HoleKind = Literal["undecided", "unpublished", "lab", "unread", "price"]
 
 
@@ -1487,6 +1489,9 @@ class Protocol:
         holes = self.all_holes
         if not holes:
             return Check("holes", "pass", "no number is missing")
+        unread = [hole.id for hole in holes if hole.kind == "unread"]
+        if unread:
+            return Check("holes", "fail", f"a source nobody read would fill: {', '.join(unread)}")
         ids = ", ".join(hole.id for hole in holes)
         count = f"{len(holes)} numbers have" if len(holes) > 1 else "1 number has"
         return Check("holes", None, f"{count} no source: {ids}")
