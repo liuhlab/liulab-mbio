@@ -348,7 +348,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="072fefdb08953e35">
+<body data-protocol="70607e12828790f1">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="02-cargo-ordering-and-pool-preparation.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li class="is-here"><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
@@ -361,15 +361,15 @@ tfoot .muted { font-weight: 400; }
 </header>
 <section class="block materials" id="materials">
 <h2>Materials</h2>
-<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td>ordered from pool.tsv, which says which block each oligo is a piece of</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td>ordered from <a href="../pool.tsv">pool.tsv</a>, which says which block each oligo is a piece of</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td></tr></tbody></table></div>
 </section>
 <p class="step-section">Order and store</p>
 <section class="step" id="step-order-pool">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-order-pool"><span class="step-n">1</span><span>Order the oligo pool</span></label></h2>
-<ol class="instructions"><li><label><input type="checkbox" data-key="step-order-pool.1"><span>Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.</span></label></li></ol>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-order-pool.1"><span>Order every row of <a href="../pool.tsv">pool.tsv</a> as one synthesised oligo pool, 131 members at 350 nt.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The vendor bins the pool by length</dt><dd>Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants this run&#x27;s oligo length changed and the design run again.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>pool.tsv names each oligo&#x27;s block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.</li><li>131 oligos is the fewest the length budget allows for.</li></ul></div>
+<div class="notes"><h3>Notes</h3><ul><li><a href="../pool.tsv">pool.tsv</a> names each oligo&#x27;s block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.</li><li>131 oligos is the fewest the length budget allows for.</li></ul></div>
 </section>
 <section class="block references" id="references">
 <h2>References</h2>

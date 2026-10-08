@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "fd2290f28e0196cc",
+  "key": "1f1e00ebd23f9613",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -14,6 +14,14 @@
         "The finished barcode block is 41 bp and reads in the reverse of the order the rounds ran; barcodes.tsv says which barcode names which part."
       ]
     }
+  ],
+  "files": [
+    "../parts.tsv",
+    "../barcodes.tsv",
+    "../changes.tsv",
+    "../pool.tsv",
+    "../pool-primers.tsv",
+    "../library-read-primers.tsv"
   ],
   "inputs": [
     {
@@ -46,7 +54,7 @@
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "1ed96f6f08028aaa",
+      "key": "6f5a8d2d11a1139f",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -877,6 +885,14 @@
         }
       ],
       "order_sheet": "../pool-primers.tsv",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [
         "Multichannel pipette",
         "Plate shaker",
@@ -2008,7 +2024,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "072fefdb08953e35",
+      "key": "70607e12828790f1",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2050,6 +2066,14 @@
       ],
       "oligos": [],
       "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [],
       "vessels": [],
       "plates": [],
@@ -2115,7 +2139,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "672f2999902796d5",
+      "key": "f245a533ed9d0a1a",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2280,6 +2304,14 @@
       ],
       "oligos": [],
       "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [
         "Thermocycler taking a 96-well plate",
         "Gel tank and a transilluminator"
@@ -3083,7 +3115,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "e312bf08c7280073",
+      "key": "c361171c9c7f7f15",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3244,6 +3276,14 @@
       ],
       "oligos": [],
       "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
         "multichannel pipette on 96-well spacing",
@@ -7420,7 +7460,7 @@
           ],
           "gels": [],
           "expected": [
-            "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark.",
+            "One barcoded amplicon a well. Each well of a plate takes the forward mark its own place in the plate names, and every well of one plate takes that plate's own reverse mark.",
             "One band a well, the design plus about 100 bp: the two marks, and the stretch between the primer sites and the reading frame."
           ],
           "troubleshooting": [
@@ -7557,7 +7597,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "ede30fed754a9887",
+      "key": "cbea5d8e905c10b0",
       "summary": "Join 3 part lists into 13824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -7849,6 +7889,14 @@
       ],
       "oligos": [],
       "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [
         "Incubator or heat block at 37 °C",
         "Magnetic rack for the bead clean-ups",
@@ -9448,7 +9496,7 @@
           "key": "read-linkage",
           "section": "Read the library back",
           "instructions": [
-            "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse, which give a 1197 bp amplicon.",
+            "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse from library-read-primers.tsv, which give a 1197 bp amplicon.",
             "Sequence the amplicon as a long read.",
             "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
           ],
@@ -9498,7 +9546,7 @@
           "key": "read-representation",
           "section": "Read the library back",
           "instructions": [
-            "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse, which give a 134 bp amplicon.",
+            "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse from library-read-primers.tsv, which give a 134 bp amplicon.",
             "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
           ],
           "cautions": [],
@@ -9649,7 +9697,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "2f80a128c4fdb63d",
+      "key": "4e87df47fdc7d654",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -9787,6 +9835,14 @@
       ],
       "oligos": [],
       "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv"
+      ],
       "equipment": [
         "Incubator or heat block at 37 °C",
         "Magnetic rack for the bead clean-ups",
@@ -10303,10 +10359,10 @@
         "citation": null,
         "hole": {
           "id": "P1",
-          "missing": "nothing prices 131 oligos",
+          "missing": "no row prices 'oligo-pool' at 131 oligos",
           "kind": "price",
           "where": "AP-1 DESynR oligo pool, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10320,10 +10376,10 @@
         "citation": null,
         "hole": {
           "id": "P2",
-          "missing": "nothing prices 74 primers",
+          "missing": "no row prices 'pool-primers' at 74 primers",
           "kind": "price",
           "where": "Pool amplification primers, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10337,10 +10393,10 @@
         "citation": null,
         "hole": {
           "id": "P3",
-          "missing": "nothing prices 7.5 µL",
+          "missing": "no row prices 'R3539' at 7.5 µL",
           "kind": "price",
           "where": "BbsI-HF, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10354,10 +10410,10 @@
         "citation": null,
         "hole": {
           "id": "P4",
-          "missing": "nothing prices 7.5 µL",
+          "missing": "no row prices 'R3733' at 7.5 µL",
           "kind": "price",
           "where": "BsaI-HFv2, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10371,10 +10427,10 @@
         "citation": null,
         "hole": {
           "id": "P5",
-          "missing": "nothing prices 7.5 µL",
+          "missing": "no row prices 'R0629' at 7.5 µL",
           "kind": "price",
           "where": "SrfI, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10388,10 +10444,10 @@
         "citation": null,
         "hole": {
           "id": "P6",
-          "missing": "nothing prices 7.5 µL",
+          "missing": "no row prices 'R0560' at 7.5 µL",
           "kind": "price",
           "where": "PmeI, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10405,10 +10461,10 @@
         "citation": null,
         "hole": {
           "id": "P7",
-          "missing": "nothing prices 3 aliquots",
+          "missing": "no row prices '60242-2' at 3 aliquots",
           "kind": "price",
           "where": "Endura ElectroCompetent Cells, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10422,10 +10478,10 @@
         "citation": null,
         "hole": {
           "id": "P8",
-          "missing": "nothing prices 3 cuvettes",
+          "missing": "no row prices 'cuvettes' at 3 cuvettes",
           "kind": "price",
           "where": "Electroporation cuvettes, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       },
@@ -10439,10 +10495,10 @@
         "citation": null,
         "hole": {
           "id": "P9",
-          "missing": "nothing prices 3 preps",
+          "missing": "no row prices 'plasmid prep' at 3 preps",
           "kind": "price",
           "where": "Plasmid preps, money",
-          "filled_by": "a price record holding a row for this item",
+          "filled_by": "a price record holding a row for this key",
           "issue": ""
         }
       }
