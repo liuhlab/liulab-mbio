@@ -147,6 +147,16 @@ One numbered unit of a protocol: what to do, what it needs, what a successful re
 like, and what to do when the result is wrong.
 _Avoid_: task, procedure
 
+### Wait
+
+Time a step spends waiting on someone else, which nobody attends: a vendor's turnaround on an
+oligo pool, a plate sent away to be sequenced. It is neither a thermocycler stage nor a
+countdown someone starts, and most of a real project's calendar is this. How long is written as
+whoever states it does, so `10-15 working days` stands as it is, and an empty one is an admitted
+unknown. What a step holds beside it is its hands-on time: how much of it someone stands over,
+unknown until a source states it and never written as a zero.
+_Avoid_: delay, downtime, lead time, incubation
+
 ### Reaction table
 
 The volumes of one reaction, scaled to a master mix for several reactions plus an overage. A

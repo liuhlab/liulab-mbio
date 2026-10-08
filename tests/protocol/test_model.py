@@ -7,6 +7,7 @@ import pytest
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
+    Citation,
     Component,
     Gel,
     Incubation,
@@ -21,6 +22,7 @@ from liulab_mbio.protocol import (
     Step,
     ThermocyclerProgram,
     Timer,
+    Wait,
     read_protocol,
     write_protocol,
 )
@@ -281,3 +283,45 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             "",
         ]
     ).encode("utf-8")
+
+
+def test_a_step_waits_on_a_vendor_nobody_attends() -> None:
+    wait = Wait("the oligo pool to arrive", duration="10-15 working days")
+    step = Step("Order the oligo pool", waits=(wait,))
+    assert step.waits == (wait,)
+    # A turnaround nobody will state is admitted, never written as a zero.
+    assert Wait("sequencing to come back").duration == ""
+
+
+def test_a_wait_that_says_nothing_is_waited_on_is_refused() -> None:
+    with pytest.raises(ValueError, match="waits on"):
+        Wait(" ")
+
+
+def test_the_hands_on_share_of_a_step_is_unknown_until_it_is_stated() -> None:
+    assert Step("Thaw the cells").hands_on_seconds is None
+    assert Step("Thaw the cells", hands_on_seconds=0).hands_on_seconds == 0
+    with pytest.raises(ValueError, match="hands_on_seconds"):
+        Step("Thaw the cells", hands_on_seconds=-1)
+
+
+def test_a_wait_cites_its_turnaround_like_any_other_row() -> None:
+    cited = Citation("vendor")
+    one = Protocol("t", steps=(Step("Order it", waits=(Wait("the pool", citation=cited),)),))
+    assert one.cited == frozenset({"vendor"})
+    (check,) = [c for c in one.audit() if c.name == "sources"]
+    assert check.status == "fail"
+
+
+def test_a_steps_time_round_trips_through_json(tmp_path: Path) -> None:
+    one = Protocol(
+        "t",
+        steps=(
+            Step(
+                "Order the oligo pool",
+                waits=(Wait("the pool to arrive", duration="10-15 working days"),),
+                hands_on_seconds=900,
+            ),
+        ),
+    )
+    assert read_protocol(write_protocol(one, tmp_path / "protocol.json")) == one

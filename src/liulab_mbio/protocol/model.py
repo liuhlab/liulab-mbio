@@ -593,6 +593,34 @@ class Timer:
 
 
 @dataclass(frozen=True, slots=True)
+class Wait:
+    """Time the run spends waiting on someone else, which nobody attends.
+
+    A vendor's turnaround: an oligo pool ordered, a plate sent away to be sequenced. An
+    `Incubation` is a thermocycler stage and a `Timer` is a countdown someone starts, so neither
+    of them is this, and most of a real project's calendar is this.
+
+    Parameters
+    ----------
+    what
+        What is waited on, such as ``"the oligo pool to arrive"``.
+    duration
+        How long, as whoever states it does: ``"10-15 working days"``. Free text, because that
+        is the honest shape, and empty is an admitted unknown rather than a zero.
+    citation
+        Where the turnaround was read.
+    """
+
+    what: str
+    duration: str = ""
+    citation: Citation | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a wait that does not say what it waits on."""
+        _require(bool(self.what.strip()), "a wait needs what it waits on")
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -952,6 +980,14 @@ class Step:
         Shown before and after the instructions.
     tables, programs, timers
         Reaction tables, thermocycler programs and countdowns the step uses.
+    waits
+        Time the step spends waiting on someone else, which nobody attends.
+    hands_on_seconds
+        How much of the step someone stands over, which `waits`, `timers` and `programs` say
+        nothing about. ``None`` is an admitted unknown and never a zero, and the unattended
+        share is the time held less this wherever both are known. Nature Protocols publishes
+        both numbers, so a protocol is expected to know them:
+        ``docs/research/gantt-conventions.md`` section 5.
     transfers
         What the step moves between wells. A step references a well by holding the transfer,
         never by describing where a thing is.
@@ -972,6 +1008,8 @@ class Step:
     tables: tuple[ReactionTable, ...] = ()
     programs: tuple[ThermocyclerProgram, ...] = ()
     timers: tuple[Timer, ...] = ()
+    waits: tuple[Wait, ...] = ()
+    hands_on_seconds: int | None = None
     transfers: tuple[Transfer, ...] = ()
     gels: tuple[Gel, ...] = ()
     expected: tuple[str, ...] = ()
@@ -979,8 +1017,13 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title."""
+        """Refuse an empty title, or a hands-on time below zero."""
         _require(bool(self.title.strip()), "a step needs a title")
+        _require(
+            self.hands_on_seconds is None or self.hands_on_seconds >= 0,
+            f"step {self.title!r}: hands_on_seconds is zero or more, or null where nobody "
+            "stated it",
+        )
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -1155,6 +1198,7 @@ class Protocol:
                 ),
                 *(t.citation for s in self.steps for t in s.transfers),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
+                *(w.citation for s in self.steps for w in s.waits),
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
