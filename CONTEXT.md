@@ -772,6 +772,13 @@ features as bars, primers as arrows and enzyme names above their cut. It is draw
 map, which shows where each row lies.
 _Avoid_: sequence panel, text view
 
+### Highlight
+
+What a map is pointed at: the names it lights. A lit item keeps its colours, and every other
+item, its label with it, paints one pale grey. Nothing moves, so each label keeps where it sits,
+and a lit label is the last to hide where labels crowd.
+_Avoid_: callout, emphasis, focus, selection
+
 ### Unique cutter
 
 An enzyme with one cut site in a sequence record, counted over the whole record even when a map
