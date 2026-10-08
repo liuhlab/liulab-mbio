@@ -171,6 +171,7 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
     if working is None:
         return Step(
             "Pick the working vector",
+            key="pick-working-vector",
             instructions=(
                 "Take one tube of the working vector stock for the application this library is "
                 "built for.",
@@ -191,6 +192,7 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
     stuffer = working.destination.stuffer
     return Step(
         f"Pick the working vector and confirm {cargo.name} opens it",
+        key="pick-working-vector",
         instructions=(
             f"Take one tube of {record.name or 'the working vector'} stock.",
             f"Digest a little of it with {cargo.supplier_label} and run it on a gel.",
@@ -225,6 +227,7 @@ def _free_step(
     if span is None:
         return Step(
             "Release the cargo from the library backbone",
+            key="release-cargo",
             instructions=(
                 f"Digest the finished library with {scheme.external.name} and the blunt enzyme "
                 "that shreds the backbone it leaves.",
@@ -242,6 +245,7 @@ def _free_step(
     named = listed([one.name for one in enzymes])
     return Step(
         f"Release the cargo with {named}",
+        key="release-cargo",
         instructions=(
             f"Digest the finished library with {named} at {DIGEST_CELSIUS:g} °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages.",
@@ -303,6 +307,7 @@ def _assemble_step(
     if working is None:
         return Step(
             "Assemble the cargo into the working vector",
+            key="assemble-into-working-vector",
             instructions=(
                 "Add the working vector, its cargo enzyme and the ligase to the release tube, "
                 "and run the enzyme's own Golden Gate cycling.",
@@ -324,6 +329,7 @@ def _assemble_step(
     )
     return Step(
         f"Assemble the cargo into {working.record.name or 'the working vector'} with {cargo.name}",
+        key="assemble-into-working-vector",
         instructions=(
             f"Add the working vector, {cargo.supplier_label} and {LIGASE} in "
             f"{LIGASE_BUFFER} to the release tube.",
@@ -364,6 +370,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
     colonies = colonies_for_completeness(constructs, completeness)
     return Step(
         f"Clean the assembly up and electroporate into {STRAIN}",
+        key="electroporate-library",
         instructions=(
             f"Add {SPRI_BEADS} at {SPRI_AFTER_LIGATION:g}x the volume and elute in water, as "
             "every round did after its ligation.",
@@ -417,6 +424,7 @@ def _representation_step(
     where = working.record.name if working is not None else "the working vector"
     return Step(
         "Read representation in the final vector",
+        key="read-final-representation",
         instructions=(
             f"Amplify across the barcode block again{with_pair(pair)}.",
             f"Sequence, decode each read against {barcodes}, and compare the counts with the "

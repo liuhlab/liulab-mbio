@@ -207,6 +207,7 @@ def _pool_step(run: Run) -> Step:
     )
     return Step(
         "Pool each part list",
+        key="pool-part-lists",
         instructions=(
             first,
             "Pool the members of each part list in equal picomoles, one tube a position: each "
@@ -319,6 +320,7 @@ def _open_step(
     chopped = listed([enzyme.name for enzyme in enzymes[1:]]) or "nothing else"
     return Step(
         f"Round {row.number}: open {row.destination_digest.name} with {scheme.internal.name}",
+        key=f"round-{row.number}-open",
         instructions=_digest_instructions(enzymes),
         tables=(digest_reaction(row.destination_digest, enzymes),),
         programs=(digest_program(enzymes),),
@@ -349,6 +351,7 @@ def _release_step(
     chopped = listed([enzyme.name for enzyme in enzymes[1:]]) or "nothing else"
     return Step(
         f"Round {row.number}: release the {row.position} part list with {scheme.external.name}",
+        key=f"round-{row.number}-release",
         instructions=_digest_instructions(enzymes),
         tables=(digest_reaction(row.donor_digest, enzymes),),
         programs=(digest_program(enzymes),),
@@ -377,6 +380,7 @@ def _digest_cleanup_step(row: RoundBench, opened: Amount, released: Amount) -> S
     """Take the enzymes and the shredded pieces away, and measure what is left."""
     return Step(
         f"Round {row.number}: clean both digests up",
+        key=f"round-{row.number}-digest-cleanup",
         instructions=(
             f"Add {SPRI_AFTER_DIGEST:g} volumes of {SPRI_BEADS} to each digest and elute in water.",
             "Measure both concentrations; the ligation table asks for picomoles, not nanograms.",
@@ -404,6 +408,7 @@ def _ligation_step(row: RoundBench, opened: Amount, released: Amount) -> Step:
     """Join the opened library and the released part list, at a molar ratio and not a mass one."""
     return Step(
         f"Round {row.number}: ligate the {row.position} part list into the library",
+        key=f"round-{row.number}-ligate",
         instructions=(
             "Pipette the two DNAs into the tube first, then the ligase, its buffer and water.",
             f"Hold at room temperature for {LIGATION_SECONDS // 60} minutes.",
@@ -433,6 +438,7 @@ def _ligation_cleanup_step(row: RoundBench) -> Step:
     """Desalt the ligation, which is what stops the cuvette arcing."""
     return Step(
         f"Round {row.number}: clean the ligation up",
+        key=f"round-{row.number}-ligation-cleanup",
         instructions=(
             f"Add {SPRI_AFTER_LIGATION:g} volume of {SPRI_BEADS} and elute in water.",
             "Measure the concentration.",
@@ -460,6 +466,7 @@ def _electroporation_step(row: RoundBench) -> Step:
     low, high = shot.time_constant_ms
     return Step(
         f"Round {row.number}: electroporate into {STRAIN}",
+        key=f"round-{row.number}-electroporate",
         instructions=(
             f"Thaw one aliquot of {STRAIN} on ice, {shot.cells_ul:g} µL a pulse.",
             f"Add at most {TRANSFORMATION_NG:g} ng of the purified ligation and mix without "
@@ -495,6 +502,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
     dilution, control = stages.titre_plates(row.number)
     return Step(
         f"Round {row.number}: recover and grow at {GROWTH_CELSIUS:g} °C",
+        key=f"round-{row.number}-grow",
         instructions=(
             "Add recovery medium straight away and shake for the first hour.",
             f"Plate a measured dilution of the recovery on {selection or 'selection'} as "
@@ -547,6 +555,7 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
     )
     return Step(
         f"Round {row.number}: prep the library",
+        key=f"round-{row.number}-prep",
         instructions=(
             "Harvest the whole culture rather than a single colony.",
             "Prep the plasmid and measure the concentration.",
@@ -586,6 +595,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
     barcodes = run.barcodes
     return Step(
         "Read linkage",
+        key="read-linkage",
         instructions=(
             f"Amplify the whole cargo out of the finished library, from the vector before the "
             f"first {rounds[0].entry_overhang} to the vector past the final "
@@ -646,6 +656,7 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
     block = scheme.barcode_block_length(run.barcode_length, len(run.positions))
     return Step(
         "Read representation",
+        key="read-representation",
         instructions=(
             f"Amplify across the {block} bp barcode block alone, forward from the "
             f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "

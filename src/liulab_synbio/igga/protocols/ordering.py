@@ -144,6 +144,7 @@ def _order_step(run: Run) -> Step:
     sheet = run.sheet
     return Step(
         "Order the synthesised parts",
+        key="order-blocks",
         instructions=(
             f"Order every row of {sheet} as a double-stranded synthesised block.",
             "Ask for sequence-verified material: a block carries the scheme's sites at fixed "
@@ -184,6 +185,7 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str, plated:
         "Order the oligo pool"
         if plated
         else "Order the oligo pool and the primers that amplify it",
+        key="order-pool",
         instructions=(
             f"Order every row of {pool_sheet} as one synthesised oligo pool, {pool.pool.count} "
             f"members at {layout.length} nt.",

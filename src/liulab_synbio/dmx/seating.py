@@ -267,6 +267,7 @@ def seating_step(seated: SeatedParts) -> Step:
     """Return the step that seats every part, which ends in plasmids and not in a library."""
     return Step(
         f"Seat {seated.products} part(s) in {CARRIER}",
+        key="seat-parts",
         instructions=(
             f"Set up one {CARRIER_KIT} reaction per well of {seated.plate.name}, each holding "
             "one blunt part, the linearised carrier and the kit's salt solution.",

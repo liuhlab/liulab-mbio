@@ -87,6 +87,12 @@ def test_the_seating_reaction_is_topoisomerase_and_names_no_enzyme_the_user_adds
     assert "no pool and no library" in " ".join(step.expected).lower()
 
 
+def test_the_seating_step_carries_the_handle_its_builder_assigned():
+    """No pipeline writes this step, so `tests/test_step_keys.py` never sees its key."""
+    seated = seating.seat_parts([part("FLAG")], carrier=CARRIER)
+    assert seating.seating_step(seated).key == "seat-parts"
+
+
 def test_the_plate_is_the_smallest_format_that_holds_the_parts():
     """Format is one parameter, so seating picks rather than hard-coding a plate."""
     eleven = [part(f"p{n}") for n in range(11)]

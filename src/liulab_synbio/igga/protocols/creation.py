@@ -251,6 +251,7 @@ def _pcr1_step(batches: Sequence[Batch], annealing: tuple[float, float], length_
     pairs = "; ".join(f"batch {one.number}: {one.forward} with {one.outer}" for one in batches)
     return Step(
         f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",
+        key="pcr1",
         instructions=(
             f"Set up {_counted(len(batches), 'reaction')}, one a batch, with the pool as template.",
             f"Give each its own pair: {pairs}.",
@@ -320,6 +321,7 @@ def _pcr2_step(
     low, high = annealing
     return Step(
         f"PCR2: pull each of the {blocks} blocks out of its batch",
+        key="pcr2",
         instructions=(
             f"Set up one reaction a block, {blocks} in all, in {PCR2_PLATE}.",
             "Give each its batch's PCR1 product as template, that batch's forward primer, and "
@@ -400,6 +402,7 @@ def _assembly_step(run: Run, pool: PoolPlan) -> Step:
     return Step(
         f"Assemble each cargo into its position's destination, from its {min(pieces)} to "
         f"{most} pieces",
+        key="assemble-cargo",
         instructions=(
             f"Open {named} with {scheme.internal.name} and "
             f"{listed([one.name for one in run.inside])}, the digest a round opens the "

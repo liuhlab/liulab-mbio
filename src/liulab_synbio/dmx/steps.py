@@ -109,6 +109,7 @@ def _array_step(one: Validation) -> Step:
     )
     return Step(
         f"Array {len(one.designs)} design(s) and grow",
+        key="array-designs",
         instructions=(
             "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
             f"Grow overnight at 37 °C on {selected_on(one.selection)}.",
@@ -137,6 +138,7 @@ def _pick_step(one: Validation) -> Step:
     sizes = ", ".join(f"{len(plate.labels)}" for plate in one.picked)
     return Step(
         f"Pick {one.colonies} colonies of each design",
+        key="pick-colonies",
         instructions=(
             f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
             f"{selected_on(one.selection)}, with the {PICKER}.",
@@ -175,6 +177,7 @@ def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Ste
     return (
         Step(
             f"Compress the picked plates into {len(one.compressed)} barcoding plate(s)",
+            key="compress-plates",
             instructions=(
                 "Invert the picked plates for 30 minutes so the cells gather at the meniscus.",
                 f"Move {LYSATE_UL:g} µL of each well into the {COMPRESSED_WELLS}-well plate.",
@@ -184,6 +187,7 @@ def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Ste
         ),
         Step(
             "Barcode each well in lysate",
+            key="barcode-wells",
             figures=() if marking is None else (marking,),
             instructions=(
                 f"Add one barcode from each of the {GROUPS} kit groups to every well, by the "
@@ -220,6 +224,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
     return (
         Step(
             "Sample the picked plates into index plates",
+            key="sample-into-index-plates",
             instructions=(
                 f"Move {SAMPLE_UL:g} µL of each well into its {INDEX_WELLS}-well plate, one "
                 "quarter of the picked plate a pass.",
@@ -233,6 +238,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
         ),
         Step(
             "Amplify each well with its own pair",
+            key="index-pcr",
             figures=() if marking is None else (marking,),
             instructions=(
                 f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
@@ -284,6 +290,7 @@ def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
     """Pool the marked wells and sequence them, which both routes end their own stretch on."""
     return Step(
         "Pool and sequence",
+        key="pool-and-sequence",
         instructions=(pooling_instruction, "Sequence the pool."),
         expected=(
             f"Reads for {one.wells} wells, every well told from the rest by the marks it carries.",
@@ -305,6 +312,7 @@ def _call_step(one: Validation) -> Step:
     )
     return Step(
         "Call every well",
+        key="call-wells",
         instructions=(
             "Demultiplex the reads by address, checking each address rather than trusting a file.",
             "Call a consensus a well, then compare it with that well's design base for base.",
