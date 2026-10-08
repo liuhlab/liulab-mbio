@@ -107,9 +107,11 @@ two are a measurement nobody here has.
 
 A narrower requirement would be met today. The sites that matter are the ones an assembly
 reaction sees — BsmBI for the transfer into this vector, BsaI only if cargo is ever built in
-place. **Both BsmBI sites are domesticable** (PuroR coding, hPGK promoter). Whether the
-requirement should be narrowed to "no BsmBI outside the cassette, BsaI counted and recorded" is
-a method decision, not this note's.
+place. Of the two BsmBI sites, one is **free** — PuroR, coding — and the other, in the hPGK
+promoter, is the one site on this plasmid with **no source at all** (section 7, written for #485,
+which corrects the loose claim this paragraph used to make). Whether the requirement should be
+narrowed to "no BsmBI outside the cassette, BsaI counted and recorded" is a method decision, not
+this note's.
 
 ## 2. Bacterial marker — **passes**
 
