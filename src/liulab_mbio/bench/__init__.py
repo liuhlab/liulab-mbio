@@ -26,7 +26,8 @@ here gathers the ones re-exported.
   the rules it carries. A number attaches to the thing that changes it.
 - `plates`: a plate at any format, where each thing sits in it, and the moves between wells.
 - `prices`: a banded price record the user holds, the charge it gives a quantity, and the bill.
-- `phenotype`: what a clone is expected to show, read off the product's own features.
+- `phenotype`: what a clone is expected to show, read off the product's own features,
+  and what the plate that selects it is poured with.
 - `oligos`: the primer order sheet.
 - `pools`: an oligo pool as a vendor takes it -- one oligo a fragment, padded to one length --
   and the sheet it is ordered from. Imported by module: its `Pool` is a vendor's order, not

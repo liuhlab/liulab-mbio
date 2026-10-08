@@ -37,7 +37,6 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     across_the_origin,
-    span_at,
 )
 from liulab_mbio.sites import Fragment, digest, released
 from liulab_mbio.snapgene import write_dna
@@ -133,7 +132,7 @@ class Round:
         `liulab_synbio.igga.method.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
-        return span_at(self.product, self.coding.end, carried + _length(self.block))
+        return self.product.span(self.coding.end, carried + _length(self.block))
 
 
 def assemble_round(
@@ -200,16 +199,14 @@ def assemble_round(
         """Where a base of the part's block lands in the product."""
         return at + index - released.start
 
-    coding = span_at(product, moved(part.coding.start), part.coding.end - part.coding.start)
-    stuffer = span_at(product, moved(inner.start), inner.end - inner.start)
-    barcode = span_at(product, moved(barcode_at), len(part.barcode))
-    block = span_at(
-        product,
-        barcode.start,
-        number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar),
+    coding = product.span(moved(part.coding.start), part.coding.end - part.coding.start)
+    stuffer = product.span(moved(inner.start), inner.end - inner.start)
+    barcode = product.span(moved(barcode_at), len(part.barcode))
+    block = product.span(
+        barcode.start, number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar)
     )
-    entry = span_at(product, at, len(released.left_overhang))
-    scar = span_at(product, at + len(bases), len(released.right_overhang))
+    entry = product.span(at, len(released.left_overhang))
+    scar = product.span(at + len(bases), len(released.right_overhang))
     drawn = _drawn(part, scheme, number, coding=coding, stuffer=stuffer, barcode=barcode)
     joins = _joins(part, number, entry=entry, scar=scar)
     titled = f"{name} round {number}".strip() if name else f"round {number}"

@@ -123,8 +123,8 @@ def floor_ng_ul(nanograms: float, *, volume_ul: float, taken_ul: float = 0.0) ->
 
     Examples
     --------
-    >>> round(floor_ng_ul(1000.0, volume_ul=50.0, taken_ul=5.0), 2)
-    22.22
+    >>> round(floor_ng_ul(120.0, volume_ul=20.0, taken_ul=4.0), 2)
+    7.5
     """
     room = volume_ul - taken_ul
     if room <= 0:

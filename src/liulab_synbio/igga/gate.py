@@ -864,8 +864,8 @@ def _reach(record: SequenceRecord, start: int, end: int) -> Segment | None:
     """Return the bases from `start` forward to `end` as the top strand reads them, or ``None``.
 
     There are none where the two meet. The reach is counted forward, so a span across the origin
-    ends past the record's length. This is not `liulab_mbio.sequence.span_at`, which is handed a
-    width rather than the far end.
+    ends past the record's length. This is not `SequenceRecord.span`, which is handed a width
+    rather than the far end.
     """
     length = len(record)
     if record.topology == "circular":

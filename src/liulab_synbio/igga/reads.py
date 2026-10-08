@@ -21,7 +21,7 @@ from liulab_mbio.edits import replace
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import evaluate_pair
 from liulab_mbio.primers.placement import Placement, amplicon_sizes
-from liulab_mbio.sequence import Primer, Segment, SequenceRecord, span_at
+from liulab_mbio.sequence import Primer, Segment, SequenceRecord
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.vector import Working
@@ -261,7 +261,7 @@ def _pair(
 
 def _near(position: int, record: SequenceRecord) -> Segment:
     """Return the positions `ALLOWANCE` either way of one, wrapped round a circular origin."""
-    return span_at(record, position - ALLOWANCE, 2 * ALLOWANCE + 1)
+    return record.span(position - ALLOWANCE, 2 * ALLOWANCE + 1)
 
 
 def _inside(span: Segment) -> Placement:
