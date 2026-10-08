@@ -1,8 +1,12 @@
 """Protocol 04: take the archived designs to clonal wells and read each one back.
 
-The route the project chose is what marks a well, and `liulab_synbio.dmx` owns both routes:
-this protocol is where a library run calls for one. A project stating no fragment-count floor
-reads nothing back and this protocol is not in its chain.
+`liulab_synbio.dmx` is a method of its own and takes any cargo; what a library run builds is one
+cargo among others. So nothing of the read-back is written here: this page is only its title,
+the figure of what a well holds, and its place in a library run's chain. The steps, the
+materials and the plates are `dmx`'s, for the route the project named.
+
+A project stating no fragment-count floor reads nothing back and this protocol is not in its
+chain.
 """
 
 from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY

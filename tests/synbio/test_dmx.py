@@ -3,7 +3,7 @@
 import pytest
 
 from liulab_mbio.protocol.model import Citation, Well
-from liulab_synbio.dmx import kit, method
+from liulab_synbio.dmx import kit, method, steps
 
 KIT = """name\tgroup\tindex\toverhang5\tumi\toverhang3\tfinal_seq
 """
@@ -235,22 +235,22 @@ def test_the_steps_print_each_design_chance_beside_the_floor():
     """The number reads as a choice: the floor is stated and the curve is printed beside it."""
     some = (method.Design("two", 2), method.Design("eight", 8))
     one = sized(method.ROUTE_INDEX_PCR, some, 2)
-    steps = method.validation_steps(one)
-    assert [step.title for step in steps][:2] == [
+    made = steps.validation_steps(one)
+    assert [step.title for step in made][:2] == [
         "Array 2 design(s) and grow",
         "Pick 4 colonies of each design",
     ]
-    assert "2 fragment(s) or more" in " ".join(steps[0].notes)
-    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in steps[1].notes
-    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in steps[1].notes
+    assert "2 fragment(s) or more" in " ".join(made[0].notes)
+    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in made[1].notes
+    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in made[1].notes
 
 
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():
     """The 192 index sequences are lab stock, and no source gives the Taq stock they amplify on."""
     some = (method.Design("one", 2),)
-    index_pcr = method.validation_steps(sized(method.ROUTE_INDEX_PCR, some, 0))
+    index_pcr = steps.validation_steps(sized(method.ROUTE_INDEX_PCR, some, 0))
     assert [hole.id for step in index_pcr for hole in step.holes] == ["IDX1", "IDX2"]
-    ligation = method.validation_steps(sized(method.ROUTE_LIGATION, some, 0))
+    ligation = steps.validation_steps(sized(method.ROUTE_LIGATION, some, 0))
     assert [hole.id for step in ligation for hole in step.holes] == []
 
 
@@ -291,7 +291,7 @@ def said_by(one) -> str:
         (
             *(plate.holds for plate in one.picked),
             *(material.note or "" for material in method.validation_materials(one)),
-            *(line for step in method.validation_steps(one) for line in step.instructions),
+            *(line for step in steps.validation_steps(one) for line in step.instructions),
         )
     )
 

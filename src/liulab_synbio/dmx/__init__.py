@@ -15,10 +15,11 @@ library prep.
 barcode axes and one axis is the plate, so two plates on one flow cell are told apart by
 construction and a demultiplexer can check an address instead of trusting a file.
 
-`method` holds the routes, the addresses, the plates and the protocol's own pieces; `kit` holds
-the 96 barcodes, which are not shipped and are read from a copy the user holds. What a call is
-worth once it is back is `liulab_mbio.bench.readback`'s, because any method reading a construct
-back per well judges it the same way.
+`method` holds the routes, the addresses, the plates and the protocol's own pieces; `steps`
+writes them up as the steps a reader works through; `kit` holds the 96 barcodes, which are not
+shipped and are read from a copy the user holds. What a call is worth once it is back is
+`liulab_mbio.bench.readback`'s, because any method reading a construct back per well judges it
+the same way.
 """
 
 from liulab_synbio.dmx.kit import CHAIN, GROUPS, KIT_ENV, Kit, KitBarcode, read_kit
@@ -36,8 +37,8 @@ from liulab_synbio.dmx.method import (
     validation,
     validation_equipment,
     validation_materials,
-    validation_steps,
 )
+from liulab_synbio.dmx.steps import validation_steps
 
 __all__ = [
     "CHAIN",
