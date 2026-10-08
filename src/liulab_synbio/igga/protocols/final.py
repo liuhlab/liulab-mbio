@@ -370,7 +370,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
     colonies = colonies_for_completeness(constructs, completeness)
     return Step(
         f"Clean the assembly up and electroporate into {STRAIN}",
-        key="electroporate-library",
+        key="electroporate-and-grow",
         instructions=(
             f"Add {SPRI_BEADS} at {SPRI_AFTER_LIGATION:g}x the volume and elute in water, as "
             "every round did after its ligation.",
