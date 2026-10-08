@@ -881,6 +881,38 @@ class Bill:
 
 
 @dataclass(frozen=True, slots=True)
+class Item:
+    """One thing a protocol consumes or produces: the name is the contract, the rest is prose.
+
+    A `Project` chains protocols by these names, matched as a `Plate.seating` name is. Nothing
+    parses `spec`: the protocol producing an item states what it makes, the one consuming it
+    restates what it needs, and the reader compares the two.
+
+    Parameters
+    ----------
+    name
+        What a project matches it by, so two protocols handing it over spell it alike.
+    what
+        What it is, for the bench.
+    spec
+        What it has to meet, a phrase each, such as ``"≥100 ng/µL"``.
+    storage
+        Where it waits until the protocol consuming it takes it, such as ``"-20 °C"``.
+    """
+
+    name: str
+    what: str
+    _: KW_ONLY
+    spec: tuple[str, ...] = ()
+    storage: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse an item with no name, or one nothing is said about."""
+        _require(bool(self.name.strip()), "an item needs a name")
+        _require(bool(self.what.strip()), f"item {self.name!r}: say what it is")
+
+
+@dataclass(frozen=True, slots=True)
 class Step:
     """One numbered step of a protocol.
 
@@ -888,6 +920,9 @@ class Step:
     ----------
     title
         What the step achieves, such as ``"Run the thermocycler"``.
+    section
+        What stage of the protocol the step belongs to, such as ``"Day 1"``. A label and not a
+        container: the steps stay one list and the numbering runs through it.
     instructions
         Ordered actions, one sentence each.
     cautions, notes
@@ -907,6 +942,7 @@ class Step:
 
     title: str
     _: KW_ONLY
+    section: str = ""
     instructions: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
@@ -963,6 +999,11 @@ class Protocol:
         has to read rather than scan goes here and not in `overview`.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
+    consumes, produces
+        What the bench is handed before this protocol, and what it leaves for the next one. A
+        `Project` chains protocols by these names; a protocol rendered alone states them for its
+        reader. Everything else a protocol needs it declares for itself, in `materials`,
+        `equipment` and `oligos`.
     materials, oligos, equipment
         The reagents, the oligos to order, and the hardware. Three lists and not one, because an
         order sheet and a reagent list want different columns.
@@ -984,6 +1025,8 @@ class Protocol:
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
     checks: tuple[Check, ...] = ()
+    consumes: tuple[Item, ...] = ()
+    produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
     oligos: tuple[Oligo, ...] = ()
     equipment: tuple[str, ...] = ()
@@ -1155,6 +1198,82 @@ class Protocol:
         return _PROTOCOL(data, "protocol")
 
 
+@dataclass(frozen=True, slots=True)
+class Project:
+    """Protocols run in order, each handed what the ones before it produced.
+
+    A protocol is a document someone follows in one sitting; a project is the run they are part
+    of. The chain is by name alone: a protocol consuming ``"entry clone"`` is handed whatever
+    the project was given or an earlier protocol produced under that name, and `audit` reports a
+    name nothing hands over as a badge rather than refusing to build the project. A chain with a
+    dangling input is still a document someone can read.
+
+    Parameters
+    ----------
+    title
+        What the run is called.
+    summary
+        One paragraph: what the run achieves.
+    inputs
+        What the bench already holds before the first protocol.
+    protocols
+        In the order they are run.
+    checks
+        Verdicts on the design, which one protocol of the run cannot judge alone. A verdict on
+        one protocol's own work stays on that protocol.
+    bill
+        What the run consumes, and what it costs where a price record prices it. It is the
+        run's, not each protocol's, because two protocols buying the same cells would otherwise
+        be counted twice.
+    """
+
+    title: str
+    _: KW_ONLY
+    summary: str = ""
+    inputs: tuple[Item, ...] = ()
+    protocols: tuple[Protocol, ...] = ()
+    checks: tuple[Check, ...] = ()
+    bill: Bill | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a project with no title."""
+        _require(bool(self.title.strip()), "a project needs a title")
+
+    def audit(self) -> tuple[Check, ...]:
+        """Judge the chain: every consumed name is an input or an earlier protocol's output.
+
+        Examples
+        --------
+        >>> [check.name for check in Project("Demo").audit()]
+        ['handoffs']
+        """
+        return (self._handoffs(),)
+
+    def _handoffs(self) -> Check:
+        handed = {item.name for item in self.inputs}
+        dangling: list[str] = []
+        consumed = 0
+        for protocol in self.protocols:
+            consumed += len(protocol.consumes)
+            dangling += [
+                f"{protocol.title} consumes {item.name!r}, which nothing hands it"
+                for item in protocol.consumes
+                if item.name not in handed
+            ]
+            handed |= {item.name for item in protocol.produces}
+        if dangling:
+            return Check("handoffs", "fail", "; ".join(dangling))
+        counted = (
+            f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
+        )
+        return Check("handoffs", "pass", counted)
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Project":
+        """Build a project from parsed JSON, by the rules `Protocol.from_dict` follows."""
+        return _PROJECT(data, "project")
+
+
 def citing(protocol: Protocol) -> Protocol:
     """Return `protocol` with the sources its own citations name, and no others.
 
@@ -1184,9 +1303,26 @@ def write_protocol(protocol: Protocol, path: str | os.PathLike[str]) -> Path:
     indented two spaces and as UTF-8 ending in a newline, so one protocol always writes the same
     bytes.
     """
+    return _write(protocol, path)
+
+
+def read_project(path: str | os.PathLike[str]) -> Project:
+    """Read a project from a JSON file; see `Project.from_dict`."""
+    return Project.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
+    """Write `project` to `path` as JSON that `read_project` reads back equal; return the path.
+
+    Its protocols are written where they stand, by the rule `write_protocol` follows, so the
+    chain is one file an agent edits and renders again.
+    """
+    return _write(project, path)
+
+
+def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    text = json.dumps(asdict(protocol), ensure_ascii=False, indent=2)
-    out.write_text(text + "\n", encoding="utf-8")
+    out.write_text(json.dumps(asdict(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return out
 
 
@@ -1292,3 +1428,4 @@ _SCALARS: dict[type, tuple[str, Callable[[Any], bool]]] = {
     float: ("a number", lambda value: type(value) in (int, float)),
 }
 _PROTOCOL = _object(Protocol)
+_PROJECT = _object(Project)

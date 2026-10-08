@@ -13,6 +13,7 @@ from liulab_mbio.protocol import (
     Ladder,
     Lane,
     Oligo,
+    Project,
     Protocol,
     ReactionTable,
     Reference,
@@ -143,6 +144,7 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: Reference("x", url="javascript:alert(1)"),
         lambda: Step(""),
         lambda: Protocol(""),
+        lambda: Project(""),
     ],
 )
 def test_the_model_refuses_values_no_bench_could_follow(build: Callable[[], object]) -> None:
@@ -263,6 +265,8 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "overview": {},',
             '  "highlights": [],',
             '  "checks": [],',
+            '  "consumes": [],',
+            '  "produces": [],',
             '  "materials": [],',
             '  "oligos": [],',
             '  "equipment": [],',
