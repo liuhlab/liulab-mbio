@@ -71,7 +71,7 @@ OLIGO_SUMMARY = 20
 #: What each kind of hole says it is waiting on, as a sentence of its own. Each reads the same
 #: for one hole and for a group of them, so a group says it once instead of once a hole.
 HOLE_KINDS = {
-    "undecided": "Waiting on a bench, because the method has not decided.",
+    "undecided": "Waiting on a bench to settle it.",
     "unpublished": "Waiting on a number nobody has published.",
     "lab": "Waiting on the lab's own stock.",
     "unread": "Waiting on a source nobody has read.",
@@ -549,7 +549,7 @@ def _schedule(project: Project, folder: Folder) -> str:
 
 
 def _total(times: Sequence["_Time"], totals: "_Time", shown: tuple[int, ...]) -> tuple[str, str]:
-    """Return the footer's cells and, where one is summed over part of the run, what to say.
+    """Return the footer's cells, and the sentence to add under the table where one is partial.
 
     A total of a column some protocol states nothing in is not what the run takes, and a reader
     plans a week around it. So it carries how many protocols it covers, beside the number.
@@ -558,21 +558,18 @@ def _total(times: Sequence["_Time"], totals: "_Time", shown: tuple[int, ...]) ->
     cells = []
     partial = False
     for i in shown:
-        over = sum(1 for time in times if time.columns()[i] is not None)
-        said = over < len(times)
-        partial = partial or said
-        covers = (
-            f' <span class="muted">over {over} of {_count(len(times), "protocol")}</span>'
-            if said
-            else ""
+        covered = sum(1 for time in times if time.columns()[i] is not None)
+        partial = partial or covered < len(times)
+        cells.append(
+            f'<td class="num">{columns[i] or ""}{_over(covered, len(times), "protocol")}</td>'
         )
-        cells.append(f'<td class="num">{columns[i] or ""}{covers}</td>')
-    part = (
-        " A total that covers only part of the run says so beside it, and is never the whole."
-        if partial
-        else ""
-    )
+    part = " A total that covers only part of the run says so beside it." if partial else ""
     return "".join(cells), part
+
+
+def _over(said: int, of: int, noun: str) -> str:
+    """How much of a whole a figure was computed over, or nothing where it covers all of it."""
+    return f' <span class="muted">over {said} of {_count(of, noun)}</span>' if said < of else ""
 
 
 def _or(words: Sequence[str]) -> str:
@@ -633,12 +630,7 @@ def _taken(seconds: float, said: int, steps: int = 0) -> str | None:
     """
     if not said:
         return None
-    over = (
-        f' <span class="muted">over {said} of {_count(steps, "step")}</span>'
-        if 0 < said < steps
-        else ""
-    )
-    return f"{_duration(seconds)}{over}"
+    return f"{_duration(seconds)}{_over(said, steps, 'step')}"
 
 
 def _waiting(waits: tuple[Wait, ...]) -> str:
@@ -700,8 +692,9 @@ def _run_hole_list(project: Project, folder: Folder, holes: tuple[Hole, ...]) ->
     """
     if not holes:
         return ""
-    found = _holes_found(project, folder)
-    items = "".join(_hole_item(group, found[group[0].id][1]) for group in _gathered(holes, found))
+    items = "".join(
+        _hole_item(group, where) for group, where in _gathered(holes, _holes_found(project, folder))
+    )
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
         f"<p>{_count(len(holes), 'number')} this run would otherwise have to invent. "
@@ -711,16 +704,18 @@ def _run_hole_list(project: Project, folder: Folder, holes: tuple[Hole, ...]) ->
 
 def _gathered(
     holes: tuple[Hole, ...], found: Mapping[str, tuple[Hole, tuple[str, str]]]
-) -> list[tuple[Hole, ...]]:
-    """Return the holes in order, those waiting on the very same thing in one place as one.
+) -> list[tuple[tuple[Hole, ...], tuple[str, str]]]:
+    """Return a group per thing the holes wait on, with the page it is waited on, first said first.
 
     The same kind filled by the same thing on the same page is one statement; anything else
-    differs where it matters and stands on its own.
+    differs where it matters and stands on its own. A group holds its holes in the order given.
     """
-    gathered: dict[tuple[str, str, str], list[Hole]] = {}
+    gathered: dict[tuple[str, str, str], tuple[list[Hole], tuple[str, str]]] = {}
     for hole in holes:
-        gathered.setdefault((hole.kind, hole.filled_by, found[hole.id][1][0]), []).append(hole)
-    return [tuple(group) for group in gathered.values()]
+        where = found[hole.id][1]
+        key = (hole.kind, hole.filled_by, where[0])
+        gathered.setdefault(key, ([], where))[0].append(hole)
+    return [(tuple(group), where) for group, where in gathered.values()]
 
 
 def _hole_item(group: tuple[Hole, ...], where: tuple[str, str]) -> str:

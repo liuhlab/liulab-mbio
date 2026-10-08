@@ -335,9 +335,9 @@ tfoot .muted { font-weight: 400; }
   .caution, .expected { border: 1px solid var(--line); }
   /* The verdict word carries the badge on paper, where the fill does not print. */
   .check { border: 1px solid var(--line); }
-  /* Paper has no toggle, so the reasons print with the sheet. */
-  .oligo-checks:not([open]) > ul { display: block; }
-  .oligo-checks::details-content { content-visibility: visible; }
+  /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
+  .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
+  .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }

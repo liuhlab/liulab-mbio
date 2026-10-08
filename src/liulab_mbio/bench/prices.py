@@ -342,8 +342,7 @@ def bill(
                     headroom="; ".join(str(gap) for gap in one.headroom),
                     hole=Hole(
                         f"P{n}",
-                        # The key is the record's own name for the row and nothing a reader at
-                        # the bench can look up. The bill prints it beside the item it prices.
+                        # Not the key: it names a row of a record the bench reader does not hold.
                         f"nothing prices {one.quantity:g} {one.unit}".strip(),
                         "price",
                         where=f"{one.item}, money",
