@@ -258,7 +258,6 @@ def _pcr1_step(batches: Sequence[Batch], annealing: tuple[float, float], length_
             "Run the program below. On a real-time instrument, add an intercalating dye and stop "
             "before the curve plateaus; the printed count is what to run without one.",
         ),
-        cautions=("Keep the polymerase on ice.",),
         tables=(
             pcr_reaction(POOL_POLYMERASE, reactions=len(batches), title="PCR1, one tube a batch"),
         ),
@@ -330,7 +329,6 @@ def _pcr2_step(
             "on a real-time instrument with an intercalating dye and stop before the curve "
             "plateaus.",
         ),
-        cautions=("Keep the polymerase on ice.",),
         tables=(pcr_reaction(POOL_POLYMERASE, reactions=blocks, title="PCR2, one well a block"),),
         programs=(
             pcr_program(

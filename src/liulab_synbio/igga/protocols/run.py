@@ -12,6 +12,7 @@ from dataclasses import KW_ONLY, dataclass
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.materials import material
 from liulab_mbio.bench.phenotype import selection_marker
 from liulab_mbio.bench.prices import PriceRecord
 from liulab_mbio.bench.steps import enzyme_material, listed
@@ -379,7 +380,7 @@ class Run:
         )
         shot = pulse()
         made.append(
-            Material(
+            material(
                 STRAIN,
                 supplier=STRAIN_SUPPLIER,
                 catalog=STRAIN_CATALOG,

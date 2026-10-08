@@ -379,7 +379,6 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
             f"Recover and grow at {GROWTH_CELSIUS:g} °C, as every round did.",
         ),
         programs=(growth_program(),),
-        cautions=("Keep the cells and the cuvette on ice; a warm cuvette arcs.",),
         expected=(
             f"At least {colonies:,} net colonies: the floor for the {completeness:g} chance the "
             f"project asked for that none of its {constructs:,} distinct members is missing, "

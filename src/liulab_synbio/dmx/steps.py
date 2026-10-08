@@ -247,7 +247,6 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
                 f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
                 "Seal the plate, spin it down, and run the program below.",
             ),
-            cautions=("Keep the polymerase on ice.",),
             tables=(index_pcr_reaction(one.wells),),
             programs=(index_pcr_program(),),
             expected=(

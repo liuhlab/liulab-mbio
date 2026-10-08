@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
 from liulab_mbio.bench import plates
+from liulab_mbio.bench.materials import material
 from liulab_mbio.bench.readback import WellVerdict, clean_colony_chance, identity_check
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.protocol.model import (
@@ -914,7 +915,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 amount="0.2 µL a reaction, 10 mM each",
                 citation=Citation("LevSeq", "step 1"),
             ),
-            Material(
+            material(
                 "Taq DNA Polymerase",
                 supplier="NEB",
                 catalog=TAQ_CATALOG.split("#")[-1],

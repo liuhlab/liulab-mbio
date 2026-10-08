@@ -474,7 +474,6 @@ def _electroporation_step(row: RoundBench) -> Step:
             f"Pulse at {shot.volts:g} V, {shot.ohms:g} Ω and {shot.microfarads:g} µF in a "
             f"{shot.cuvette_mm:g} mm cuvette.",
         ),
-        cautions=("Keep the cells and the cuvette on ice; a warm cuvette arcs.",),
         expected=(f"A pulse with no arc, and a time constant of {low:g} to {high:g} ms.",),
         notes=(
             "The method names the instrument and none of the settings, so the program is the "
