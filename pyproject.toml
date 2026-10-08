@@ -178,6 +178,8 @@ select = [
 ]
 # E501: the formatter owns line length. D203/D213: incompatible with D211/D212.
 ignore = ["E501", "D203", "D213"]
+# The sign a page prints in `2.5 × 10⁻⁹`, never a mistyped `x`.
+allowed-confusables = ["×"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

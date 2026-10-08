@@ -6,8 +6,10 @@ import pytest
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
+    Component,
     Oligo,
     Protocol,
+    ReactionTable,
     Step,
     read_protocol,
     render_html,
@@ -168,18 +170,60 @@ def test_each_oligo_sequence_has_a_copy_button(page: Node) -> None:
 def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None:
     table = page.find_all(cls="reaction")[0]
     assert table.find_all("input", type="number")[0].attrs["value"] == "4"
-    # Per-reaction volume x 4 reactions x 1.1 for overage; the last cell is the mix total.
+    # Per-reaction volume x 4 reactions x 1.1 for overage, to three figures; the last cell is
+    # the mix total.
     assert [c.text for c in table.find_all("td", cls="mix")] == [
-        "87.45",
+        "87.5",
         "11",
         "2.2",
         "2.2",
         "2.2",
         "0.55",
-        "105.6",
+        "106",
     ]
     template = next(r for r in table.find_all("tr") if "Template DNA" in r.text)
     assert "each tube" in template.text
+
+
+def volume_cells(volume_ul: float) -> list[str]:
+    """Every number a one-component reaction table of `volume_ul` prints, and its dispense line."""
+    table = ReactionTable((Component("Water", volume_ul),), reactions=1, overage=0.1)
+    figure = parse(render_html(Protocol("t", steps=(Step("Mix", tables=(table,)),))))
+    figure = figure.find_all(cls="reaction")[0]
+    return [cell.text for cell in figure.find_all("td", cls="num")] + [
+        figure.find_all(cls="dispense")[0].text
+    ]
+
+
+@pytest.mark.parametrize(
+    ("volume_ul", "printed"),
+    [
+        (2.5e-9, "2.5 × 10⁻⁹"),
+        (1e7, "1 × 10⁷"),
+        (0.0009, "9 × 10⁻⁴"),
+        (0.001, "0.001"),
+        (999999, "999,999"),
+        (1e6, "1 × 10⁶"),
+        (1161.6, "1,162"),
+        (198.0, "198"),
+        (0.05, "0.05"),
+    ],
+)
+def test_a_volume_prints_to_three_figures_and_far_from_the_bench_as_a_power(
+    volume_ul: float, printed: str
+) -> None:
+    assert volume_cells(volume_ul)[0] == printed
+
+
+def test_a_volume_under_half_a_thousandth_of_a_microlitre_never_prints_as_zero() -> None:
+    # The mix is the volume times 1.1, the total row repeats both, and the line says it again.
+    assert volume_cells(4e-4) == [
+        "4 × 10⁻⁴",
+        "4.4 × 10⁻⁴",
+        "4 × 10⁻⁴",
+        "4.4 × 10⁻⁴",
+        "Put 4 × 10⁻⁴ µL of mix in each tube.",
+    ]
 
 
 def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) -> None:

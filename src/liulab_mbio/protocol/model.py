@@ -49,6 +49,29 @@ def row_label(row: int) -> str:
         row -= 1
 
 
+_SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def number(value: float) -> str:
+    """Return a number as a page prints it: plain text, to three significant figures.
+
+    Fixed, with thousands separators, from 0.001 to 999,999, and never rounding away a digit
+    before the point; outside that, a power of ten. Only zero prints as ``0``.
+
+    Examples
+    --------
+    >>> number(1161.6), number(0.05), number(0.0009), number(2.5e-9), number(1e7), number(0)
+    ('1,162', '0.05', '9 × 10⁻⁴', '2.5 × 10⁻⁹', '1 × 10⁷', '0')
+    """
+    if value == 0:
+        return "0"
+    mantissa, power = f"{value:.2e}".split("e")
+    if 0.001 <= abs(value) < 1e6:
+        fixed = f"{value:,.{max(0, 2 - int(power))}f}"
+        return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
+    return f"{mantissa.rstrip('0').rstrip('.')} × 10{str(int(power)).translate(_SUPERSCRIPT)}"
+
+
 @dataclass(frozen=True, slots=True)
 class Source:
     """A document a number was read from, named once and cited by key.

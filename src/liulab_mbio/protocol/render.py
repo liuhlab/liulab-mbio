@@ -26,6 +26,7 @@ from liulab_mbio.protocol.model import (
     ThermocyclerProgram,
     Timer,
     Transfer,
+    number,
 )
 
 #: What the page reads where a check carries no verdict, so it is never taken for a pass.
@@ -82,10 +83,6 @@ def write_html(protocol: Protocol, path: str | os.PathLike[str]) -> Path:
 
 def _asset(name: str) -> str:
     return files("liulab_mbio.protocol").joinpath(name).read_text(encoding="utf-8")
-
-
-def _num(value: float) -> str:
-    return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
 def _duration(seconds: float) -> str:
@@ -225,7 +222,7 @@ def _oligos(oligos: tuple[Oligo, ...]) -> str:
     if not oligos:
         return ""
     columns: list[tuple[str, str, Callable[[Oligo], str]]] = [
-        # One decimal, so the column reads as one: `_num` prints 63 beside 63.1.
+        # One decimal, so the column reads as one: `number` prints 63 beside 63.1.
         ("Tm (°C)", "num", lambda o: "" if o.tm_c is None else f"{o.tm_c:.1f}"),
         ("For", "", lambda o: o.purpose),
         ("Working stock", "", lambda o: o.stock),
@@ -426,7 +423,7 @@ def _transfer(transfer: Transfer) -> str:
     rows = "".join(
         f"<tr><td>{escape(move.source.plate)} {escape(move.source.well)}</td>"
         f"<td>{escape(move.destination.plate)} {escape(move.destination.well)}</td>"
-        f'<td class="num">{_num(move.volume_ul)}</td></tr>'
+        f'<td class="num">{number(move.volume_ul)}</td></tr>'
         for move in transfer.moves
     )
     meta = " · ".join(
@@ -463,7 +460,7 @@ def _bill(bill: Bill | None) -> str:
         cells = [
             f"<td>{escape(row.item)}</td>",
             f"<td>{escape(row.key)}</td>",
-            f'<td class="num">{_num(row.quantity)} {escape(row.unit)}</td>',
+            f'<td class="num">{number(row.quantity)} {escape(row.unit)}</td>',
             f'<td class="num">{charge}</td>',
         ]
         if headroom:
@@ -558,15 +555,17 @@ def _table(key: str, table: ReactionTable) -> str:
     final = any(c.final for c in table.components)
     scale = table.reactions * (1 + table.overage)
     rows = []
-    for component, mix in zip(table.components, table.mix_volumes(table.reactions), strict=True):
+    for component in table.components:
         cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
         cells += [f"<td>{escape(component.stock)}</td>"] if stock else []
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
-        cells.append(f'<td class="num">{_num(component.volume_ul)}</td>')
-        if mix is None:
-            cells.append('<td class="num per-tube">each tube</td>')
+        cells.append(f'<td class="num">{number(component.volume_ul)}</td>')
+        if component.master_mix:
+            # `protocol.js` writes this cell again from `data-ul`, by the same arithmetic.
+            mix = number(component.volume_ul * scale)
+            cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{mix}</td>')
         else:
-            cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{_num(mix)}</td>')
+            cells.append('<td class="num per-tube">each tube</td>')
         rows.append(f"<tr>{''.join(cells)}</tr>")
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
@@ -579,14 +578,14 @@ def _table(key: str, table: ReactionTable) -> str:
         + f'<th class="num">Mix for <span class="rxn-n">{table.reactions}</span> (µL)</th>'
     )
     foot = (
-        f'<tr><th>Total</th>{blanks}<td class="num">{_num(total)}</td>'
-        f'<td class="num mix" data-ul="{in_mix!r}">{_num(round(in_mix * scale, 2))}</td></tr>'
+        f'<tr><th>Total</th>{blanks}<td class="num">{number(total)}</td>'
+        f'<td class="num mix" data-ul="{in_mix!r}">{number(in_mix * scale)}</td></tr>'
     )
     per_tube = [c for c in table.components if not c.master_mix]
     dispense = ""
     if in_mix:
-        then = ", ".join(f"{_num(c.volume_ul)} µL {c.name}" for c in per_tube)
-        dispense = f"Put {_num(in_mix)} µL of mix in each tube" + (
+        then = ", ".join(f"{number(c.volume_ul)} µL {c.name}" for c in per_tube)
+        dispense = f"Put {number(in_mix)} µL of mix in each tube" + (
             f", then add {then}" if then else ""
         )
         dispense = f'<p class="dispense">{escape(dispense)}.</p>'
@@ -595,7 +594,7 @@ def _table(key: str, table: ReactionTable) -> str:
         f'<figure class="reaction" data-overage="{table.overage!r}">{caption}'
         f'<label class="count">Reactions <input type="number" class="rxn-count" name="reactions"'
         f' min="1" step="1" inputmode="numeric" value="{table.reactions}" data-key="{key}"></label>'
-        f'<span class="muted">mix includes {_num(table.overage * 100)}% extra</span>'
+        f'<span class="muted">mix includes {number(table.overage * 100)}% extra</span>'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{"".join(rows)}</tbody>'
         f"<tfoot>{foot}</tfoot></table></div>{dispense}</figure>\n"
     )
@@ -604,7 +603,7 @@ def _table(key: str, table: ReactionTable) -> str:
 def _program(program: ThermocyclerProgram) -> str:
     meta = []
     if program.lid_temperature_c is not None:
-        meta.append(f"lid {_num(program.lid_temperature_c)} °C")
+        meta.append(f"lid {number(program.lid_temperature_c)} °C")
     if program.duration_seconds is not None:
         meta.append(f"{_duration(program.duration_seconds)} plus ramps")
     title = escape(program.title or "Thermocycler program")
@@ -624,7 +623,7 @@ def _program(program: ThermocyclerProgram) -> str:
             )
             rows.append(
                 f"<tr><td>{escape(step.label)}{_after(step.citation)}</td>"
-                f'<td class="num">{_num(step.temperature_c)} °C</td>'
+                f'<td class="num">{number(step.temperature_c)} °C</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
         bodies.append(f'<tbody class="stage">{"".join(rows)}</tbody>')
@@ -638,7 +637,7 @@ def _program(program: ThermocyclerProgram) -> str:
 
 def _timer(timer: Timer) -> str:
     return (
-        f'<button type="button" class="timer" data-seconds="{_num(timer.seconds)}">'
+        f'<button type="button" class="timer" data-seconds="{timer.seconds!r}">'
         f'<span class="timer-label">{escape(timer.label)}</span>'
         f'<span class="timer-time">{_clock(timer.seconds)}</span>'
         '<span class="timer-action">Start</span></button>'
