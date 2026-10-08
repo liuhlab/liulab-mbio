@@ -201,7 +201,7 @@ def test_a_hole_renders_and_never_reads_as_a_value() -> None:
     page = render_html(protocol(Step("Ligate", holes=(hole,))))
     assert NO_NUMBER in page
     assert "H23" in page
-    assert "nobody published it" in page
+    assert "Waiting on a number nobody has published." in page
     assert "liuhlab/liulab-mbio#264" not in page
     assert (
         "1 number has no source"

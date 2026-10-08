@@ -5,7 +5,7 @@ stale, and a figure quoted here would be ours. `read_prices` reads a copy from t
 disk, exactly as `liulab_mbio.ligase.read_profile` reads a matrix, and nothing is redistributed.
 
 A quantity always computes, because it comes from the design. Money comes only from a record,
-and where no row prices a key the money cell is a hole carrying the key and the quantity that
+and where no row prices a key the money cell is a hole naming the item and the quantity that
 went unpriced. No estimate is ever written.
 
 **Price steers no design.** The lookup reports headroom — how far a quantity sits from the
@@ -342,11 +342,12 @@ def bill(
                     headroom="; ".join(str(gap) for gap in one.headroom),
                     hole=Hole(
                         f"P{n}",
-                        f"no row prices {one.key or one.item!r} at "
-                        f"{one.quantity:g} {one.unit}".strip(),
+                        # The key is the record's own name for the row and nothing a reader at
+                        # the bench can look up. The bill prints it beside the item it prices.
+                        f"nothing prices {one.quantity:g} {one.unit}".strip(),
                         "price",
                         where=f"{one.item}, money",
-                        filled_by="a price record holding a row for this key",
+                        filled_by="a price record holding a row for this item",
                     ),
                 )
             )

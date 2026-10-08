@@ -68,13 +68,14 @@ REFERENCES_FILE = "references.html"
 #: rows repeat one pattern and the page states the pattern instead.
 OLIGO_SUMMARY = 20
 
-#: What each kind of hole says it is waiting on.
+#: What each kind of hole says it is waiting on, as a sentence of its own. Each reads the same
+#: for one hole and for a group of them, so a group says it once instead of once a hole.
 HOLE_KINDS = {
-    "undecided": "the method has not decided",
-    "unpublished": "nobody published it",
-    "lab": "the lab's own stock",
-    "unread": "a source was not read",
-    "price": "no price record prices it",
+    "undecided": "Waiting on a bench, because the method has not decided.",
+    "unpublished": "Waiting on a number nobody has published.",
+    "lab": "Waiting on the lab's own stock.",
+    "unread": "Waiting on a source nobody has read.",
+    "price": "Waiting on a price record.",
 }
 
 #: What the holes block says above its list, on a protocol's page and on a run's index alike.
@@ -535,15 +536,43 @@ def _schedule(project: Project, folder: Folder) -> str:
         if missing
         else ""
     )
+    total, part = _total(times, totals, shown)
     return (
         '<section class="block schedule" id="schedule">\n<h2>Schedule</h2>\n'
         '<div class="scroll"><table class="schedule"><thead><tr>'
         f"{head}</tr></thead><tbody>{rows}</tbody>"
-        f"<tfoot><tr><th>Total</th>{totals.cells(shown)}</tr></tfoot></table></div>\n"
+        f"<tfoot><tr><th>Total</th>{total}</tr></tfoot></table></div>\n"
         "<p>A blank here is a number nobody has stated, never a zero. Most of this run is time "
         "nobody attends and nobody can date, so it is written down rather than drawn as a "
-        f"length.{left_out}</p>\n</section>\n"
+        f"length.{left_out}{part}</p>\n</section>\n"
     )
+
+
+def _total(times: Sequence["_Time"], totals: "_Time", shown: tuple[int, ...]) -> tuple[str, str]:
+    """Return the footer's cells and, where one is summed over part of the run, what to say.
+
+    A total of a column some protocol states nothing in is not what the run takes, and a reader
+    plans a week around it. So it carries how many protocols it covers, beside the number.
+    """
+    columns = totals.columns()
+    cells = []
+    partial = False
+    for i in shown:
+        over = sum(1 for time in times if time.columns()[i] is not None)
+        said = over < len(times)
+        partial = partial or said
+        covers = (
+            f' <span class="muted">over {over} of {_count(len(times), "protocol")}</span>'
+            if said
+            else ""
+        )
+        cells.append(f'<td class="num">{columns[i] or ""}{covers}</td>')
+    part = (
+        " A total that covers only part of the run says so beside it, and is never the whole."
+        if partial
+        else ""
+    )
+    return "".join(cells), part
 
 
 def _or(words: Sequence[str]) -> str:
@@ -646,34 +675,68 @@ def _run_holes(project: Project, folder: Folder) -> tuple[Hole, ...]:
 
 
 def _holes_found(project: Project, folder: Folder) -> dict[str, tuple[Hole, tuple[str, str]]]:
-    """Each hole by id, with the page holding it and what that page is called."""
+    """Each hole by id, with where on which page it stands and what that page is called.
+
+    A protocol page prints the hole under its own id; the bill prints it as the row whose money
+    it stands in, so that is what the run's index points a reader at.
+    """
     found: dict[str, tuple[Hole, tuple[str, str]]] = {}
     for row in project.bill.rows if project.bill else ():
         if row.hole:
-            found.setdefault(row.hole.id, (row.hole, (folder.reagents, "Reagents and equipment")))
+            where = (f"{folder.reagents}#bill", "Reagents and equipment")
+            found.setdefault(row.hole.id, (row.hole, where))
     for page, protocol in zip(folder.pages, project.protocols, strict=True):
         for hole in protocol.all_holes:
-            found.setdefault(hole.id, (hole, (page.href, page.title)))
+            found.setdefault(hole.id, (hole, (f"{page.href}#hole-{hole.id}", page.title)))
     return found
 
 
 def _run_hole_list(project: Project, folder: Folder, holes: tuple[Hole, ...]) -> str:
-    """Every hole the run carries, each linking to the page it stands on."""
+    """Every hole the run carries, each linking to the page it stands on.
+
+    Holes waiting on one thing on one page are gathered, because nine of them saying it nine
+    times is one fact told at nine times the length. None is dropped: the gathered ones keep
+    their ids on the summary and their own lines behind the disclosure.
+    """
     if not holes:
         return ""
     found = _holes_found(project, folder)
-    items = "".join(
-        _hole(
-            hole,
-            f' <span class="hole-page">on <a href="{escape(found[hole.id][1][0])}'
-            f'#hole-{escape(hole.id)}">{escape(found[hole.id][1][1])}</a></span>',
-        )
-        for hole in holes
-    )
+    items = "".join(_hole_item(group, found[group[0].id][1]) for group in _gathered(holes, found))
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
         f"<p>{_count(len(holes), 'number')} this run would otherwise have to invent. "
         f"{HOLES_INTRO}</p>\n<ul>{items}</ul>\n</section>\n"
+    )
+
+
+def _gathered(
+    holes: tuple[Hole, ...], found: Mapping[str, tuple[Hole, tuple[str, str]]]
+) -> list[tuple[Hole, ...]]:
+    """Return the holes in order, those waiting on the very same thing in one place as one.
+
+    The same kind filled by the same thing on the same page is one statement; anything else
+    differs where it matters and stands on its own.
+    """
+    gathered: dict[tuple[str, str, str], list[Hole]] = {}
+    for hole in holes:
+        gathered.setdefault((hole.kind, hole.filled_by, found[hole.id][1][0]), []).append(hole)
+    return [tuple(group) for group in gathered.values()]
+
+
+def _hole_item(group: tuple[Hole, ...], where: tuple[str, str]) -> str:
+    """One hole on its own line, or several behind a disclosure saying what they all wait on."""
+    page = f'<a href="{escape(where[0])}">{escape(where[1])}</a>'
+    if len(group) == 1:
+        return _hole(group[0], f' <span class="hole-page">Stands on {page}.</span>')
+    ids = ", ".join(escape(hole.id) for hole in group)
+    items = "".join(f'<li class="hole" id="hole-{escape(h.id)}">{_missing(h)}</li>' for h in group)
+    return (
+        '<li class="hole"><details class="hole-group">\n<summary>'
+        f'<span class="hole-id">{ids}</span> <span class="hole-none">{NO_NUMBER}</span> — '
+        f"{_count(len(group), 'number')}, each waiting on the same thing. "
+        f'<span class="hole-kind">{escape(HOLE_KINDS[group[0].kind])}</span>'
+        f'{_filled_by(group[0])} <span class="hole-page">Each stands on {page}.</span>'
+        f'</summary>\n<ul class="holes-here">{items}</ul>\n</details></li>'
     )
 
 
@@ -1340,16 +1403,36 @@ def _hole_count(holes: tuple[Hole, ...], subject: str = "this protocol") -> str:
 def _hole(hole: Hole, found: str = "") -> str:
     """One hole, which reads as a hole and never as a value.
 
+    Four statements, each ended: what is missing, what it waits on, what would fill it and where
+    it stands. Run together they are re-parsed halfway through.
+
     `Hole.issue` is not printed: the bench page is read by someone who cannot open a tracker.
     `found` is markup naming where the hole stands, for a page that is not the one holding it.
     """
-    where = f"{escape(hole.where)}: " if hole.where else ""
-    filled = f" <em>Filled by {escape(hole.filled_by)}.</em>" if hole.filled_by else ""
     return (
-        f'<li class="hole" id="hole-{escape(hole.id)}"><span class="hole-id">{escape(hole.id)}'
-        f'</span> <span class="hole-none">{NO_NUMBER}</span> — {where}{escape(hole.missing)} '
-        f'<span class="hole-kind">{escape(HOLE_KINDS[hole.kind])}</span>{filled}{found}</li>'
+        f'<li class="hole" id="hole-{escape(hole.id)}">{_missing(hole)} '
+        f'<span class="hole-kind">{escape(HOLE_KINDS[hole.kind])}</span>'
+        f"{_filled_by(hole)}{found}</li>"
     )
+
+
+def _missing(hole: Hole) -> str:
+    """Return the id, the mark a number can never be read from, and what is not known."""
+    where = f"{escape(hole.where)}: " if hole.where else ""
+    return (
+        f'<span class="hole-id">{escape(hole.id)}</span> '
+        f'<span class="hole-none">{NO_NUMBER}</span> — {where}{_ended(escape(hole.missing))}'
+    )
+
+
+def _filled_by(hole: Hole) -> str:
+    """Return what would close the hole, or nothing where it names none."""
+    return f" <em>Filled by {escape(hole.filled_by)}.</em>" if hole.filled_by else ""
+
+
+def _ended(text: str) -> str:
+    """`text` with a full stop, so one statement cannot run into the next."""
+    return text if text.endswith((".", "!", "?")) else f"{text}."
 
 
 def _holes(protocol: Protocol) -> str:

@@ -229,7 +229,7 @@ def test_the_schedule_holds_each_protocol_and_totals_the_seconds_they_hold(
     assert [row[1] for row in body] == ["1", "2", "2"]
     assert [row[2] for row in body] == ["no sourced number", "1 h", "3 min"]
     assert sum(one.held_seconds[0] for one in project.protocols) == 3780.0
-    assert rows[-1][2] == "1 h 3 min"
+    assert rows[-1][2].startswith("1 h 3 min")
 
 
 def test_the_schedule_counts_the_steps_holding_nothing_rather_than_timing_them(
@@ -291,10 +291,102 @@ def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocol
         for hole in index.find_all("li", cls="hole")
     }
     assert found == {
-        "H9": f"{REAGENTS_FILE}#hole-H9",
+        # The reagents page prints a price hole as the bill row whose money it stands in.
+        "H9": f"{REAGENTS_FILE}#bill",
         "H3": "02-build-the-blocks.html#hole-H3",
         "H7": "03-pool-and-sequence.html#hole-H7",
     }
+
+
+def test_a_hole_states_itself_in_sentences_rather_than_clauses_run_together(index: Node) -> None:
+    """Four statements with nothing between them are re-parsed halfway through."""
+    [listed] = index.find_all("section", cls="holes")
+    [depth] = [one for one in listed.find_all("li", cls="hole") if one.attrs.get("id") == "hole-H7"]
+    assert depth.text == (
+        "H7 no sourced number — the depth one library needs. "
+        "Waiting on a number nobody has published. Stands on Pool and sequence."
+    )
+
+
+def unpriced() -> Project:
+    """A run whose bill leaves three rows unpriced for one reason, beside a hole of its own."""
+    fills = "a price record holding a row for this item"
+    return Project(
+        "Unpriced",
+        bill=Bill(
+            tuple(
+                BillRow(
+                    f"reagent {n}",
+                    1,
+                    unit="tube",
+                    key=f"R-{n}",
+                    hole=Hole(
+                        f"P{n}",
+                        "nothing prices 1 tube",
+                        "price",
+                        where=f"reagent {n}, money",
+                        filled_by=fills,
+                    ),
+                )
+                for n in (1, 2, 3)
+            )
+        ),
+        protocols=(
+            Protocol(
+                "Mix",
+                holes=(Hole("H1", "how long the colonies grow", "lab", filled_by="the lab"),),
+                steps=(Step("Pipette"),),
+            ),
+        ),
+    )
+
+
+def test_holes_waiting_on_one_thing_say_it_once_and_every_one_of_them_stays_listed() -> None:
+    """Three holes repeating one sentence is one fact told at three times the length."""
+    index = parse(render_index(unpriced(), folder_of(unpriced())))
+    [group] = index.find_all("details", cls="hole-group")
+    [summary] = group.find_all("summary")
+    assert "3 numbers, each waiting on the same thing" in summary.text
+    assert summary.text.count("Waiting on a price record.") == 1
+    assert summary.text.count("Filled by") == 1
+    assert summary.find_all("span", cls="hole-id")[0].text == "P1, P2, P3"
+    # None is dropped: each keeps its id, its own line and what it is missing, one click away.
+    inside = group.find_all("li", cls="hole")
+    assert [one.attrs["id"] for one in inside] == ["hole-P1", "hole-P2", "hole-P3"]
+    assert "reagent 2, money: nothing prices 1 tube." in inside[1].text
+    [banner] = index.find_all("p", cls="hole-count")
+    assert banner.text.startswith("4 numbers in this run have no source")
+
+
+def test_a_hole_standing_alone_is_not_put_behind_a_disclosure() -> None:
+    index = parse(render_index(unpriced(), folder_of(unpriced())))
+    [alone] = [one for one in index.find_all("li", cls="hole") if one.attrs.get("id") == "hole-H1"]
+    assert not alone.find_all("details")
+    assert "Waiting on the lab's own stock." in alone.text
+
+
+def test_a_total_summed_over_part_of_the_run_says_so_beside_itself(index: Node) -> None:
+    """A reader plans a week around this number, so it may not read as the whole run."""
+    rows, _ = schedule(index)
+    assert rows[-1][2] == "1 h 3 min over 2 of 3 protocols"
+    # The steps are counted on every protocol, so that total carries no such qualification.
+    assert rows[-1][1] == "5"
+    [block] = index.find_all("section", cls="schedule")
+    assert "covers only part of the run says so beside it" in block.text
+
+
+def test_a_total_over_the_whole_run_is_qualified_by_nothing() -> None:
+    step = Step("Pipette", timers=(Timer("mix", 60),))
+    run = Project("Timed", protocols=(Protocol("Mix", steps=(step,)),))
+    index = parse(render_index(run, folder_of(run)))
+    [table] = index.find_all("table", cls="schedule")
+    assert [cell.text for cell in table.find_all("tr")[-1].find_all(("th", "td"))] == [
+        "Total",
+        "1",
+        "1 min",
+        "0",
+    ]
+    assert "covers only part of the run" not in index.find_all("section", cls="schedule")[0].text
 
 
 def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got(
