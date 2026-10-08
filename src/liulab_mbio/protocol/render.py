@@ -318,7 +318,8 @@ def render_index(project: Project, folder: Folder) -> str:
     step never stops to explain a decision.
     """
     holes = _run_holes(project, folder)
-    summary = f'<p class="summary">{escape(project.summary)}</p>\n' if project.summary else ""
+    said = _linked(project.summary, project.files)
+    summary = f'<p class="summary">{said}</p>\n' if project.summary else ""
     jumps = [(f"topic-{slug(topic.title)}", topic.title) for topic in project.background]
     parts = [
         f'<header class="intro">\n<h1>{escape(project.title)}</h1>\n{summary}'
@@ -416,7 +417,7 @@ def _background(project: Project) -> str:
     return "".join(
         f'<section class="block topic" id="topic-{escape(slug(topic.title))}">\n'
         f"<h2>{escape(topic.title)}</h2>\n"
-        + "".join(f"<p>{_said(line, project.files)}</p>" for line in topic.body)
+        + "".join(f"<p>{_linked(line, project.files)}</p>" for line in topic.body)
         + "\n</section>\n"
         for topic in project.background
     )
@@ -751,7 +752,7 @@ def _merged_materials(project: Project) -> str:
             found[key] = material if kept is None else replace(kept, amount=_join(kept, material))
             takers.setdefault(key, []).append(protocol.title)
     used = tuple(", ".join(dict.fromkeys(names)) for names in takers.values())
-    return _materials(tuple(found.values()), (), used, note=False)
+    return _materials(tuple(found.values()), (), used, project.files, note=False)
 
 
 def _join(kept: Material, found: Material) -> str:
@@ -1000,11 +1001,11 @@ def _clock(seconds: float) -> str:
 
 
 def _bullets(items: Iterable[str], paths: Sequence[str] = ()) -> str:
-    lines = "".join(f"<li>{_said(item, paths)}</li>" for item in items)
+    lines = "".join(f"<li>{_linked(item, paths)}</li>" for item in items)
     return f"<ul>{lines}</ul>" if lines else ""
 
 
-def _said(text: str, paths: Sequence[str] = ()) -> str:
+def _linked(text: str, paths: Sequence[str] = ()) -> str:
     """Escape `text`, linking every file of `paths` it names by that file's own name.
 
     Protocol prose says a file the way the bench says it — `pool.tsv`, never a path — so the
@@ -1018,7 +1019,7 @@ def _said(text: str, paths: Sequence[str] = ()) -> str:
     pattern = "|".join(re.escape(name) for name in sorted(named, key=len, reverse=True))
     out: list[str] = []
     at = 0
-    for match in re.finditer(rf"(?<![\w.-])({pattern})(?![\w-])", text):
+    for match in re.finditer(rf"(?<![\w.-])({pattern})(?![\w-]|\.\w)", text):
         out.append(escape(text[at : match.start()]))
         href = escape(named[match[0]], quote=True)
         out.append(f'<a href="{href}">{escape(match[0])}</a>')
@@ -1034,16 +1035,16 @@ def _copy(text: str, label: str = "Copy") -> str:
 def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place: str = "") -> str:
     parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
-        parts.append(f'<p class="summary">{_said(protocol.summary, protocol.files)}</p>\n')
+        parts.append(f'<p class="summary">{_linked(protocol.summary, protocol.files)}</p>\n')
     if protocol.overview:
         facts = "".join(
-            f"<div><dt>{escape(k)}</dt><dd>{escape(v)}</dd></div>"
+            f"<div><dt>{escape(k)}</dt><dd>{_linked(v, protocol.files)}</dd></div>"
             for k, v in protocol.overview.items()
         )
         parts.append(f'<dl class="overview">{facts}</dl>\n')
     parts.append(_handover(protocol))
     if protocol.highlights:
-        lines = "".join(f"<p>{_said(one, protocol.files)}</p>" for one in protocol.highlights)
+        lines = "".join(f"<p>{_linked(one, protocol.files)}</p>" for one in protocol.highlights)
         parts.append(f'<div class="highlights">{lines}</div>\n')
     parts.append(_checks(protocol.checks))
     parts.append(_hole_count(protocol.all_holes))
@@ -1153,7 +1154,7 @@ def _materials(
         )
         rows = "".join(
             f"<tr><td>{escape(material.name)}</td>"
-            + "".join(f"<td>{_said(get(material), paths)}</td>" for _, get in shown)
+            + "".join(f"<td>{_linked(get(material), paths)}</td>" for _, get in shown)
             + (f"<td>{_cite(material.citation)}</td>" if cited else "")
             + (f"<td>{escape(used[i])}</td>" if used else "")
             + "</tr>"
@@ -1164,7 +1165,7 @@ def _materials(
             f"<tbody>{rows}</tbody></table></div>"
         )
     carried = [(m, rule) for m in materials for rule in m.rules]
-    cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions))
+    cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions), paths)
     line = ""
     if equipment:
         line = (
@@ -1384,13 +1385,14 @@ def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
 
 
-def _cautions(texts: Iterable[str]) -> str:
+def _cautions(texts: Iterable[str], paths: Sequence[str] = ()) -> str:
     """Every caution, as the one paragraph both the steps and the reagents page show it in.
 
     One site renders it, so a sentence cannot read two ways on two pages.
     """
     return "".join(
-        f'<p class="caution"><strong>Caution:</strong> {escape(text)}</p>\n' for text in texts
+        f'<p class="caution"><strong>Caution:</strong> {_linked(text, paths)}</p>\n'
+        for text in texts
     )
 
 
@@ -1739,11 +1741,11 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         f'<span class="step-n">{n}</span><span>{escape(step.title)}</span></label></h2>\n'
     ]
     parts.append(_rules(protocol.rules_for(step)))
-    parts.append(_cautions(protocol.cautions_for(step)))
+    parts.append(_cautions(protocol.cautions_for(step), protocol.files))
     if step.instructions:
         items = "".join(
             f'<li><label><input type="checkbox" data-key="{anchor}.{i}">'
-            f"<span>{_said(text, protocol.files)}</span></label></li>"
+            f"<span>{_linked(text, protocol.files)}</span></label></li>"
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
@@ -1767,7 +1769,7 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
     if step.troubleshooting:
         entries = "".join(
             f"<dt>{escape(t.problem)}</dt>"
-            f"<dd>{_said(t.solution, protocol.files)}{_after(t.citation)}</dd>"
+            f"<dd>{_linked(t.solution, protocol.files)}{_after(t.citation)}</dd>"
             for t in step.troubleshooting
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')

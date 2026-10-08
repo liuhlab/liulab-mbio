@@ -27,6 +27,7 @@ from liulab_mbio.protocol import (
     ThermocyclerProgram,
     Timer,
     Transfer,
+    Troubleshooting,
     Well,
     read_protocol,
     render_html,
@@ -736,15 +737,23 @@ def _naming_files() -> Protocol:
     return Protocol(
         "Order",
         summary="Order pool.tsv, then amplify it.",
+        overview={"Ordered from": "pool.tsv"},
         highlights=("pool-primers.tsv pairs a primer to a block.",),
         files=("../pool.tsv", "../pool-primers.tsv", "../changes.tsv"),
-        materials=(Material("Oligo pool", note="ordered from pool.tsv"),),
+        materials=(
+            Material(
+                "Oligo pool",
+                note="ordered from pool.tsv",
+                cautions=("Thaw the tubes pool.tsv names on ice.",),
+            ),
+        ),
         steps=(
             Step(
                 "Order the pool",
                 instructions=("Order every row of pool.tsv.",),
                 notes=("pool.tsv names each oligo's block.",),
                 expected=("One pool, as pool.tsv has it.",),
+                troubleshooting=(Troubleshooting("A short row", "Order pool.tsv again."),),
             ),
         ),
     )
@@ -752,17 +761,15 @@ def _naming_files() -> Protocol:
 
 def test_a_file_the_run_writes_is_linked_wherever_the_page_says_its_name() -> None:
     """A filename a gloved reader cannot open is not a filename, so every mention is a link."""
-    page = parse(render_html(_naming_files()))
+    html = render_html(_naming_files())
+    page = parse(html)
 
-    linked = [(a.attrs["href"], a.text) for a in page.find_all("a") if a.text.endswith(".tsv")]
-    assert linked == [
-        ("../pool.tsv", "pool.tsv"),
-        ("../pool-primers.tsv", "pool-primers.tsv"),
-        ("../pool.tsv", "pool.tsv"),
-        ("../pool.tsv", "pool.tsv"),
-        ("../pool.tsv", "pool.tsv"),
-        ("../pool.tsv", "pool.tsv"),
-    ]
+    assert {a.attrs["href"] for a in page.find_all("a") if a.text.endswith(".tsv")} == {
+        "../pool.tsv",
+        "../pool-primers.tsv",
+    }
+    # No field says a file name as bare text, whichever field the pipeline put it in.
+    assert ".tsv" not in re.sub(r"<[^>]+>", " ", re.sub(r"<a [^>]*>[^<]*</a>", "", html))
     # `changes.tsv` is written by the run and said by no page of it, so it links nowhere.
     assert "changes.tsv" not in page.find_all("main", cls="page")[0].text
 

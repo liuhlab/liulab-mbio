@@ -305,9 +305,15 @@ def test_every_sheet_the_run_writes_is_one_its_pages_can_link(plan, pooled):
         "../library-read-primers.tsv",
     )
     assert [one.files for one in run.protocols] == [run.files] * len(run.protocols)
-    # A build with a pool writes two more sheets, and a build without writes neither.
+    # A build with a pool writes the two pool sheets and a block vector a position besides.
     made, _files = pooled
-    assert set(made.chain().files) - set(run.files) == {"../pool.tsv", "../pool-primers.tsv"}
+    assert set(made.chain().files) - set(run.files) == {
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna",
+    }
 
 
 def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):

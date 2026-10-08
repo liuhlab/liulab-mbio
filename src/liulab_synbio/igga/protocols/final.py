@@ -403,7 +403,7 @@ def _representation_step(
     pair: ReadPair | None,
     constructs: int,
     marks: RepresentationMarks,
-    read_sheet: str = "",
+    read_sheet: str,
 ) -> Step:
     """Read the library again on the other side of the move, which is the only way to size the loss."""
     where = working.record.name if working is not None else "the working vector"

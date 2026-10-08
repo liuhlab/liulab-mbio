@@ -122,7 +122,8 @@ class Run:
 
     Each field is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
     `sheet`, `barcodes`, `changes`, `pool_sheet`, `primer_sheet` and `read_sheet` are what the
-    plan calls the sheets its pages point at, and `files` gathers them as the pages link them.
+    plan calls the sheets its pages point at, and `files` gathers them, with the block vectors'
+    own records, as the pages link them.
 
     `validation` is `None` for a build that states no fragment-count floor, and no read-back
     protocol is written: the library stays polyclonal, which is the default.
@@ -187,7 +188,14 @@ class Run:
         pooled = (self.pool_sheet, self.primer_sheet) if self.pool is not None else ()
         return tuple(
             self.records_at + name
-            for name in (self.sheet, self.barcodes, self.changes, *pooled, self.read_sheet)
+            for name in (
+                self.sheet,
+                self.barcodes,
+                self.changes,
+                *pooled,
+                self.read_sheet,
+                *(file for _, file in self.block_vectors),
+            )
             if name
         )
 
@@ -436,7 +444,7 @@ def vector_names(destinations: Sequence[tuple[str, str]]) -> list[str]:
     return [f"{name} ({file})" if file else name for name, file in destinations]
 
 
-def with_pair(pair: ReadPair | None, sheet: str = "") -> str:
+def with_pair(pair: ReadPair | None, sheet: str) -> str:
     """Name the designed pair, the sheet holding it and its amplicon, or say nothing.
 
     A pair the bench has to order is a pair the step says where to find, so the sentence names
