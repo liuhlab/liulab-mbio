@@ -9,12 +9,13 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
+from dataclasses import KW_ONLY, asdict, dataclass, field, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
-from types import MappingProxyType, NoneType, UnionType
-from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
+from types import MappingProxyType
+from typing import Any, Literal, get_args
 
+from liulab_mbio import jsonfile
 from liulab_mbio.checks import STATUSES, Status
 
 #: The most characters `Protocol.overview` gives one card. Anything longer is a sentence, which
@@ -1838,125 +1839,5 @@ def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     return out
 
 
-type _Convert = Callable[[Any, str], Any]
-
-
-def _refused(where: str, expected: str, value: Any) -> ValueError:
-    match value:
-        case str():
-            got = "a string"
-        case list():
-            got = "a list"
-        case Mapping():
-            got = "an object"
-        case None | bool():
-            got = json.dumps(value)
-        case int() | float():
-            got = repr(value)
-        case _:
-            got = type(value).__name__
-    return ValueError(f"{where}: expected {expected}, got {got}")
-
-
-def _converter(hint: Any) -> _Convert:
-    """Return a converter from parsed JSON to the annotation `hint`, refusing another JSON type."""
-    if isinstance(hint, TypeAliasType):
-        return _converter(hint.__value__)
-    origin, args = get_origin(hint), get_args(hint)
-    if origin is Literal:
-        return _converter(type(args[0]))
-    if origin in (Union, UnionType) and len(args) == 2 and NoneType in args:
-        (inner,) = (arg for arg in args if arg is not NoneType)
-        return _or_null(_converter(inner))
-    if origin is tuple and args[1:] == (...,):
-        return _list(_converter(args[0]))
-    if origin is tuple:
-        return _fixed(tuple(_converter(arg) for arg in args))
-    if origin is Mapping and args[0] is str:
-        return _mapping(_converter(args[1]))
-    if isinstance(hint, type) and is_dataclass(hint):
-        return _object(hint)
-    if hint in _SCALARS:
-        return _scalar(*_SCALARS[hint])
-    raise TypeError(f"a protocol field has no JSON form: {hint!r}")
-
-
-def _object[T](cls: type[T]) -> Callable[[Any, str], T]:
-    """Return a converter from a JSON object to the dataclass `cls`, checking its keys."""
-    spec = fields(cls)  # pyright: ignore[reportArgumentType]
-    hints = get_type_hints(cls)
-    nested = {f.name: _converter(hints[f.name]) for f in spec}
-    required = {f.name for f in spec if f.default is MISSING and f.default_factory is MISSING}
-
-    def convert(data: Any, where: str) -> T:
-        if not isinstance(data, Mapping):
-            raise _refused(where, "an object", data)
-        if unknown := sorted(set(data) - set(nested)):
-            raise ValueError(f"{where}: unknown key(s) {', '.join(unknown)}")
-        if missing := sorted(required - set(data)):
-            raise ValueError(f"{where}: missing key(s) {', '.join(missing)}")
-        return cls(**{key: nested[key](value, f"{where}.{key}") for key, value in data.items()})
-
-    return convert
-
-
-def _list(item: _Convert) -> _Convert:
-    def convert(data: Any, where: str) -> tuple[Any, ...]:
-        if not isinstance(data, list):
-            raise _refused(where, "a list", data)
-        return tuple(item(value, f"{where}[{i}]") for i, value in enumerate(data))
-
-    return convert
-
-
-def _fixed(items: tuple[_Convert, ...]) -> _Convert:
-    """Return a converter to a tuple of a fixed length, such as a span's two numbers."""
-    expected = f"a list of {len(items)}"
-
-    def convert(data: Any, where: str) -> tuple[Any, ...]:
-        if not isinstance(data, list):
-            raise _refused(where, expected, data)
-        if len(data) != len(items):
-            raise ValueError(f"{where}: expected {expected}, got {len(data)}")
-        return tuple(
-            item(value, f"{where}[{i}]")
-            for i, (item, value) in enumerate(zip(items, data, strict=True))
-        )
-
-    return convert
-
-
-def _mapping(value: _Convert) -> _Convert:
-    def convert(data: Any, where: str) -> dict[str, Any]:
-        if not isinstance(data, Mapping):
-            raise _refused(where, "an object", data)
-        return {
-            key: value(item, f"{where}[{json.dumps(key, ensure_ascii=False)}]")
-            for key, item in data.items()
-        }
-
-    return convert
-
-
-def _or_null(convert: _Convert) -> _Convert:
-    return lambda data, where: None if data is None else convert(data, where)
-
-
-def _scalar(expected: str, accepts: Callable[[Any], bool]) -> _Convert:
-    def convert(data: Any, where: str) -> Any:
-        if not accepts(data):
-            raise _refused(where, expected, data)
-        return data
-
-    return convert
-
-
-# `bool` is a subclass of `int` in Python, and true is not a number in JSON.
-_SCALARS: dict[type, tuple[str, Callable[[Any], bool]]] = {
-    str: ("a string", lambda value: isinstance(value, str)),
-    bool: ("true or false", lambda value: isinstance(value, bool)),
-    int: ("a whole number", lambda value: type(value) is int),
-    float: ("a number", lambda value: type(value) in (int, float)),
-}
-_PROTOCOL = _object(Protocol)
-_PROJECT = _object(Project)
+_PROTOCOL = jsonfile.reader(Protocol)
+_PROJECT = jsonfile.reader(Project)
