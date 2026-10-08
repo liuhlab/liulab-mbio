@@ -67,6 +67,7 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [parts.tsv](parts.tsv) | the synthesis order sheet: 72 blocks, 133 to 1,149 bases |
 | [pool.tsv](pool.tsv) | the oligo pool those blocks are synthesised as: 131 oligos, every one 350 nt |
 | [pool-primers.tsv](pool-primers.tsv) | the 74 primers that amplify the pool, and how many oligos each one pulls out |
+| [oligo.dna](oligo.dna) | one oligo of that pool, carrying the three primers that amplify it |
 | [barcodes.tsv](barcodes.tsv) | which barcode names which part, and where it sits |
 | [library-read-primers.tsv](library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
 | [changes.tsv](changes.tsv) | every amino acid the overhang standard moved, wild type beside synthesised |
