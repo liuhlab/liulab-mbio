@@ -421,3 +421,48 @@ def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(protoco
     assert "kanamycin" in written
     assert "carbenicillin" not in written
     assert "ampicillin" not in written
+
+
+def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
+    """What one page hands the next is the point of the split, so the chain is checked."""
+    chain = plan.chain()
+
+    assert [one.title for one in chain.protocols] == [
+        "Cargo ordering and pool preparation",
+        "Cargo creation",
+        "Cargo validation: index PCR",
+        "Library assembly in rounds",
+        "Final cargo ligation",
+    ]
+    assert [len(one.steps) for one in chain.protocols] == [1, 3, 6, 27, 5]
+    assert [one.audit()[0].status for one in (chain,)] == ["pass"]
+    handed = {item.name for item in chain.inputs}
+    for one in chain.protocols:
+        assert {item.name for item in one.consumes} <= handed, one.title
+        handed |= {item.name for item in one.produces}
+    assert "the library in its working vector" in handed
+
+
+def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
+    """A page of 27 steps reads as rounds, so each step says which stage it belongs to."""
+    chain = plan.chain()
+    rounds = next(one for one in chain.protocols if one.title == "Library assembly in rounds")
+
+    assert all(step.section for one in chain.protocols for step in one.steps)
+    assert list(dict.fromkeys(step.section for step in rounds.steps)) == [
+        "Pool the part lists",
+        "Round 1",
+        "Round 2",
+        "Round 3",
+        "Read the library back",
+    ]
+
+
+def test_the_other_route_writes_its_own_protocol_and_both_at_once_is_refused(plan):
+    """A run marks its wells one way, so the chain carries that route's page and no other."""
+    ligation = rerouted(plan, route="barcode ligation").chain()
+
+    assert [one.title for one in ligation.protocols][2] == "Cargo validation: barcode ligation"
+    assert ligation.audit()[0].status == "pass"
+    with pytest.raises(ValueError, match="route is 'both'"):
+        rerouted(plan, route="both")

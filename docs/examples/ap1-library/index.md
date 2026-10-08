@@ -50,8 +50,28 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
 | [product.dna](product.dna) | one member of the finished library, 6,435 bases |
 | [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
-| [protocol.json](protocol.json) | the bench protocol as data |
-| [protocol.html](protocol.html) | the same protocol as a page to work from |
+| [protocol/](protocol/index.html) | the bench protocols, as a folder of pages to work from |
+
+## What the bench works through
+
+The run is not one sitting. The `protocol/` folder holds one page for each, in the order
+someone does them, and each page says what it is handed and what it leaves behind:
+
+| Page | What it is handed | What it leaves |
+| --- | --- | --- |
+| [Cargo ordering and pool preparation](protocol/01-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
+| [Cargo creation](protocol/02-cargo-creation.html) | the pool, and a block vector a position | one archived well a design |
+| [Cargo validation](protocol/03-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
+| [Library assembly in rounds](protocol/04-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
+| [Final cargo ligation](protocol/05-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
+
+[The way in](protocol/index.html) lists them with the run's own checks and its bill;
+[the reagents](protocol/reagents.html) and [the references](protocol/references.html) are
+shared by every page. The whole chain is [protocol/project.json](protocol/project.json), which
+`liulab_mbio protocol render` turns back into these pages after an edit.
+
+A page names the one before it and the one after it, so each is complete on its own: mail one
+page to whoever runs that sitting, or zip the folder and send the run.
 
 The three part lists make 24 x 24 x 24 = 13,824 members. The product file holds one of them,
 with the rest differing only in which protein and which barcode sits at each position.
@@ -106,7 +126,7 @@ pixi run liulab_mbio plot map $D/product.dna \
 | [product-map.pdf](product-map.pdf) | one finished member |
 | [barcode-block.pdf](barcode-block.pdf) | the 75 bases the barcode block reads, with the bases shown |
 
-The gel and the plate layout are in `protocol.html`, drawn where the step that uses them is.
+The gel and the plate layouts are in the protocol pages, drawn where the step that uses them is.
 
 ## Where the proteins come from
 

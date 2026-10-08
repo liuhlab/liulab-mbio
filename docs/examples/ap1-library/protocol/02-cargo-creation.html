@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cargo creation</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #1c1e21;
+  --muted: #5c626b;
+  --line: #dedbd3;
+  --accent: #1d6b58;
+  --accent-soft: #e2f0eb;
+  --caution: #8f4a00;
+  --caution-soft: #fff1dc;
+  --fail: #a11d1d;
+  --fail-soft: #fdeaea;
+  --expected: #1a4f8b;
+  --expected-soft: #e8f1fc;
+  --code-bg: #efede7;
+  --gel: #15171c;
+  --well: #030407;
+  --band: #f3f0ff;
+  --ladder: #a9bbff;
+  --gel-ink: #c9ced6;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111316;
+    --surface: #191c20;
+    --ink: #e7e5e0;
+    --muted: #9ea4ac;
+    --line: #2d3137;
+    --accent: #6cc4a9;
+    --accent-soft: #1a2d27;
+    --caution: #f2b464;
+    --caution-soft: #2b2316;
+    --fail: #f28b8b;
+    --fail-soft: #2e1a1a;
+    --expected: #93bdf2;
+    --expected-soft: #16212f;
+    --code-bg: #23272c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.page { max-width: 54rem; margin: 0 auto; padding-block: 2rem 4rem; }
+
+h1 { font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.2; margin: 0 0 0.5rem; }
+h2 { font-size: 1.3rem; line-height: 1.3; margin: 0 0 0.75rem; }
+h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.4rem; }
+p { margin: 0 0 0.75rem; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+
+.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+
+/* Short facts only: a card is a few words, so the row stays one height. A sentence is
+   .highlights, and the model refuses one here. */
+.overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0.45rem; margin: 1.25rem 0 1rem; }
+.overview div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.45rem 0.7rem; }
+.overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+
+.highlights { max-width: 44rem; margin: 0 0 1rem; }
+.highlights p:last-child { margin-bottom: 0; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
+.check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.check-name { overflow-wrap: anywhere; }
+.verdict { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.is-pass .verdict { color: var(--accent); }
+.is-warn { background: var(--caution-soft); border-color: var(--caution); }
+.is-warn .verdict { color: var(--caution); }
+.is-fail { background: var(--fail-soft); border-color: var(--fail); }
+.is-fail .verdict { color: var(--fail); }
+.is-none { border-style: dashed; }
+.is-none .verdict { color: var(--muted); }
+.check-detail { font-size: 0.9rem; color: var(--muted); margin: 0 0 0.3rem; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 1rem 0; }
+.progress { margin-right: auto; font-weight: 600; }
+
+button {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  min-height: 2rem;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
+.toc li { counter-increment: toc; }
+.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+.block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
+.step { scroll-margin-top: 1rem; }
+.step.is-done { opacity: 0.6; }
+.step > * + * { margin-top: 0.9rem; }
+
+input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); flex: none; margin: 0.2rem 0 0; }
+.step-title label { display: flex; gap: 0.6rem; align-items: baseline; cursor: pointer; }
+.step-title input { align-self: center; margin: 0; }
+.step-n { display: inline-grid; place-items: center; min-width: 1.8rem; height: 1.8rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.95rem; }
+
+.instructions { padding-left: 0; list-style: none; margin-bottom: 0; }
+.instructions li + li { margin-top: 0.35rem; }
+.instructions label { display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer; }
+.instructions input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.caution { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; }
+.expected { background: var(--expected-soft); border-radius: 8px; padding: 0.7rem 0.9rem; }
+.expected h3 { color: var(--expected); }
+.expected ul, .notes ul { margin: 0; padding-left: 1.2rem; }
+.trouble dl { margin: 0; }
+.trouble dt { font-weight: 600; }
+.trouble dd { margin: 0 0 0.5rem; color: var(--muted); }
+
+figure { margin: 0; }
+figcaption { font-weight: 600; margin-bottom: 0.4rem; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 0.78rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tfoot th, tfoot td { font-weight: 700; border-bottom: none; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.per-tube { color: var(--muted); }
+.mix { font-weight: 600; }
+.stage + .stage td { border-top: 2px solid var(--line); }
+
+.count { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0 0.5rem 0.5rem 0; font-size: 0.9rem; }
+.count input { width: 4.5rem; font: inherit; padding: 0.2rem 0.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.dispense { font-size: 0.9rem; color: var(--muted); margin: 0.4rem 0 0; }
+
+code, .seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+.seq { background: var(--code-bg); border-radius: 4px; padding: 0.1rem 0.3rem; overflow-wrap: anywhere; }
+.seq-cell { min-width: 12rem; }
+.oligos .seq-cell { min-width: 14rem; }
+.equipment { font-size: 0.92rem; color: var(--muted); margin: 0.7rem 0 0; }
+
+.verdict-cell { white-space: nowrap; }
+.oligos td .check { padding: 0.05rem 0.55rem; font-size: 0.78rem; }
+.oligo-checks { font-size: 0.9rem; margin-top: 0.6rem; }
+.oligo-checks summary { cursor: pointer; color: var(--muted); }
+.oligo-checks ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; margin-left: 0.25rem; }
+button.is-copied { border-color: var(--accent); color: var(--accent); }
+
+.timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
+.timer-action { color: var(--accent); }
+button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.55; } }
+
+.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+.gel-bg { fill: var(--gel); }
+.well { fill: var(--well); }
+.band { fill: var(--band); }
+.ladder .band { fill: var(--ladder); }
+.gel-image text { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--muted); }
+.gel-image .lane-mark { text-anchor: middle; font-weight: 700; fill: var(--ink); }
+.gel-image .size { text-anchor: end; }
+.gel-legend { list-style: none; padding: 0; margin: 0.5rem 0 0; font-size: 0.88rem; }
+.gel-legend strong { display: inline-block; min-width: 1.4rem; }
+
+@media (max-width: 30rem) {
+  .block, .step { padding: 0.9rem; }
+  h2 { font-size: 1.15rem; }
+}
+
+
+/* A rule travels with its material, so it is shown and not written into a step. */
+.rules { list-style: none; margin: 0 0 0.8rem; padding: 0; display: grid; gap: 0.4rem; }
+.rule { border-left: 3px solid var(--caution); background: var(--caution-soft); padding: 0.45rem 0.7rem; border-radius: var(--radius); }
+.rule.is-requires { border-left-color: var(--accent); background: var(--accent-soft); }
+
+/* A hole is never a value: it is struck through where a number would stand and says so. */
+.hole-count { background: var(--fail-soft); border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.hole-none { font-variant: all-small-caps; letter-spacing: 0.04em; color: var(--fail); border-bottom: 2px dotted var(--fail); }
+.holes ul, .holes-here { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.hole { border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.45rem 0.7rem; background: var(--fail-soft); }
+.hole-id { font-weight: 700; }
+.hole-kind { color: var(--muted); }
+.is-holed .num { color: var(--fail); }
+
+/* The plate, drawn by `plot` and embedded here, beside the map, the sequence view and the gel. */
+.plate svg { max-width: 100%; height: auto; }
+.plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
+.cite { color: var(--muted); font-size: 0.85em; }
+
+/* A project folder: the run's nav bar across the top, a column either side of the page. */
+.site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
+.site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
+.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame .page { padding-block: 1.5rem 4rem; }
+.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
+.column ol { margin: 0; padding-left: 1.3rem; }
+.column li { margin-bottom: 0.3rem; }
+.column a { color: var(--muted); text-decoration: none; }
+.column a:hover { color: var(--ink); text-decoration: underline; }
+.column .is-here > a { color: var(--ink); font-weight: 600; }
+.neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
+.chain-pages { margin: 0; padding-left: 1.4rem; }
+.chain-pages li { margin-bottom: 0.3rem; }
+
+/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+@media (max-width: 70rem) {
+  .frame { display: flex; flex-direction: column; max-width: 54rem; }
+  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column li { margin-bottom: 0; }
+  .column .is-here > a { text-decoration: underline; }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #000000;
+    --muted: #3a3a3a;
+    --line: #bdbdbd;
+    --accent: #000000;
+    --accent-soft: #ffffff;
+    --caution-soft: #ffffff;
+    --fail-soft: #ffffff;
+    --expected-soft: #ffffff;
+    --code-bg: #ffffff;
+  }
+  body { padding: 0; font-size: 10.5pt; }
+  .page { max-width: none; padding: 0; }
+  /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
+  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .frame { display: block; max-width: none; }
+  .frame .page { padding: 0; }
+  .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
+  .step.is-done { opacity: 1; }
+  .caution, .expected { border: 1px solid var(--line); }
+  /* The verdict word carries the badge on paper, where the fill does not print. */
+  .check { border: 1px solid var(--line); }
+  /* Paper has no toggle, so the reasons print with the sheet. */
+  .oligo-checks:not([open]) > ul { display: block; }
+  .oligo-checks::details-content { content-visibility: visible; }
+  button.timer { border: 1px solid var(--line); animation: none; }
+  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  .count input { border: none; width: 2.5rem; }
+  .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
+  .references a::after { content: none; }
+}
+</style>
+</head>
+<body data-protocol="6f2807f3bc4dbe5f">
+<nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="02-cargo-creation.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
+<div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li class="is-here"><a href="02-cargo-creation.html">Cargo creation</a></li><li><a href="03-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="04-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="05-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
+<main class="page">
+<header class="intro">
+<h1>Cargo creation</h1>
+<p class="neighbours">Protocol 2 of 5. Comes after Cargo ordering and pool preparation. Next is Cargo validation: index PCR.</p>
+<p class="summary">Pull every block out of the ordered pool and close each one&#x27;s cargo into the vector for the position it fills, one archived well a design.</p>
+<p class="hole-count"><a href="#holes"><strong>2</strong> numbers in this protocol have no source</a>.</p>
+<div class="toolbar"><span class="progress" aria-live="polite">0 of 3 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
+</header>
+<section class="block materials">
+<h2>Materials</h2>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>Pool amplification primers</td><td></td><td></td><td>-20 °C</td><td>74 primers: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer</td><td>ordered from pool-primers.tsv; a pair a batch, an inner primer a block</td><td></td></tr><tr><td>Q5 High-Fidelity DNA Polymerase</td><td>NEB</td><td>M0491</td><td>-20 °C</td><td>one reaction per batch, then one per block</td><td>the buffer the annealing temperatures below were computed in</td><td></td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td><td></td></tr><tr><td>dNTP mix</td><td>NEB</td><td>N0447</td><td>-20 °C</td><td>0.2 µL a reaction, 10 mM each</td><td></td><td><a class="cite" href="#source-levseq">LevSeq step 1</a></td></tr><tr><td>DMX-iGGA vector</td><td></td><td></td><td>-20 °C</td><td>3, one a position</td><td>opened by the internal digest in round 1, and to take each block&#x27;s cargo. A part enters on its own position&#x27;s entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)</td><td></td></tr><tr><td>SrfI</td><td>New England Biolabs</td><td>R0629</td><td>-20 °C</td><td>2.5 µL per digest</td><td>cuts the excised stuffer, so it cannot ligate back</td><td></td></tr><tr><td>Selective broth and plates</td><td></td><td></td><td></td><td></td><td>LB with 50 µg/mL kanamycin, the destination vector&#x27;s own marker (KanR)</td><td></td></tr><tr><td>Plasmid prep kit</td><td></td><td></td><td></td><td>one prep per round</td><td></td><td></td></tr><tr><td>Electroporation cuvettes</td><td></td><td></td><td></td><td>3, one per round</td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Thermocycler taking a 96-well plate, Gel tank and a transilluminator</p>
+</section>
+<section class="block plates">
+<h2>Plates</h2>
+<figure class="plate" data-plate="PCR2 plate"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 358 280" width="358" height="280"><text x="10" y="28.2" font-size="13" textLength="80.22" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">PCR2 plate</text><text x="46.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">1</text><text x="72.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">2</text><text x="98.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">3</text><text x="124.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">4</text><text x="150.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">5</text><text x="176.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">6</text><text x="202.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">7</text><text x="228.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">8</text><text x="254.14" y="52.9" font-size="9" textLength="5.73" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">9</text><text x="277.27" y="52.9" font-size="9" textLength="11.45" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">10</text><text x="303.27" y="52.9" font-size="9" textLength="11.45" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">11</text><text x="329.27" y="52.9" font-size="9" textLength="11.45" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">12</text><text x="20.74" y="78.12" font-size="9" textLength="6.16" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">A</text><g class="well" data-well="A1" data-holds="N_JUN"><rect x="38.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A2" data-holds="N_JUNB"><rect x="64.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A3" data-holds="N_JUND"><rect x="90.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A4" data-holds="N_ATF2"><rect x="116.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A5" data-holds="N_ATF3"><rect x="142.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A6" data-holds="N_ATF4"><rect x="168.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A7" data-holds="N_ATF5"><rect x="194.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A8" data-holds="N_ATF6"><rect x="220.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A9" data-holds="N_ATF6B"><rect x="246.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A10" data-holds="N_ATF7"><rect x="272.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A11" data-holds="N_BATF"><rect x="298.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="A12" data-holds="N_BATF2"><rect x="324.34" y="64.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="20.73" y="104.12" font-size="9" textLength="6.17" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">B</text><g class="well" data-well="B1" data-holds="N_BATF3"><rect x="38.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B2" data-holds="N_JDP2"><rect x="64.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B3" data-holds="N_MAF"><rect x="90.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B4" data-holds="N_MAFA"><rect x="116.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B5" data-holds="N_MAFB"><rect x="142.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B6" data-holds="N_MAFF"><rect x="168.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B7" data-holds="N_MAFG"><rect x="194.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B8" data-holds="N_MAFK"><rect x="220.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B9" data-holds="N_FOS"><rect x="246.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B10" data-holds="N_FOSB"><rect x="272.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B11" data-holds="N_FOSL1"><rect x="298.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="B12" data-holds="N_FOSL2"><rect x="324.34" y="90.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="20.62" y="130.12" font-size="9" textLength="6.28" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">C</text><g class="well" data-well="C1" data-holds="DBD_JUN"><rect x="38.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C2" data-holds="DBD_JUNB"><rect x="64.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C3" data-holds="DBD_JUND"><rect x="90.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C4" data-holds="DBD_ATF2"><rect x="116.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C5" data-holds="DBD_ATF3"><rect x="142.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C6" data-holds="DBD_ATF4"><rect x="168.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C7" data-holds="DBD_ATF5"><rect x="194.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C8" data-holds="DBD_ATF6"><rect x="220.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C9" data-holds="DBD_ATF6B"><rect x="246.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C10" data-holds="DBD_ATF7"><rect x="272.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C11" data-holds="DBD_BATF"><rect x="298.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="C12" data-holds="DBD_BATF2"><rect x="324.34" y="116.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="19.97" y="156.12" font-size="9" textLength="6.93" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">D</text><g class="well" data-well="D1" data-holds="DBD_BATF3"><rect x="38.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D2" data-holds="DBD_JDP2"><rect x="64.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D3" data-holds="DBD_MAF"><rect x="90.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D4" data-holds="DBD_MAFA"><rect x="116.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D5" data-holds="DBD_MAFB"><rect x="142.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D6" data-holds="DBD_MAFF"><rect x="168.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D7" data-holds="DBD_MAFG"><rect x="194.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D8" data-holds="DBD_MAFK"><rect x="220.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D9" data-holds="DBD_FOS"><rect x="246.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D10" data-holds="DBD_FOSB"><rect x="272.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D11" data-holds="DBD_FOSL1"><rect x="298.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="D12" data-holds="DBD_FOSL2"><rect x="324.34" y="142.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="21.21" y="182.12" font-size="9" textLength="5.69" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">E</text><g class="well" data-well="E1" data-holds="C_JUN"><rect x="38.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E2" data-holds="C_JUNB"><rect x="64.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E3" data-holds="C_JUND"><rect x="90.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E4" data-holds="C_ATF2"><rect x="116.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E5" data-holds="C_ATF3"><rect x="142.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E6" data-holds="C_ATF4"><rect x="168.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E7" data-holds="C_ATF5"><rect x="194.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E8" data-holds="C_ATF6"><rect x="220.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E9" data-holds="C_ATF6B"><rect x="246.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E10" data-holds="C_ATF7"><rect x="272.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E11" data-holds="C_BATF"><rect x="298.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="E12" data-holds="C_BATF2"><rect x="324.34" y="168.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="21.72" y="208.12" font-size="9" textLength="5.18" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">F</text><g class="well" data-well="F1" data-holds="C_BATF3"><rect x="38.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F2" data-holds="C_JDP2"><rect x="64.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F3" data-holds="C_MAF"><rect x="90.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F4" data-holds="C_MAFA"><rect x="116.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F5" data-holds="C_MAFB"><rect x="142.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F6" data-holds="C_MAFF"><rect x="168.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F7" data-holds="C_MAFG"><rect x="194.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F8" data-holds="C_MAFK"><rect x="220.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F9" data-holds="C_FOS"><rect x="246.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F10" data-holds="C_FOSB"><rect x="272.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F11" data-holds="C_FOSL1"><rect x="298.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="F12" data-holds="C_FOSL2"><rect x="324.34" y="194.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="19.93" y="234.12" font-size="9" textLength="6.97" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">G</text><g class="well" data-well="G1"><rect x="38.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G2"><rect x="64.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G3"><rect x="90.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G4"><rect x="116.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G5"><rect x="142.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G6"><rect x="168.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G7"><rect x="194.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G8"><rect x="220.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G9"><rect x="246.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G10"><rect x="272.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G11"><rect x="298.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="G12"><rect x="324.34" y="220.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><text x="20.13" y="260.12" font-size="9" textLength="6.77" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">H</text><g class="well" data-well="H1"><rect x="38.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H2"><rect x="64.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H3"><rect x="90.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H4"><rect x="116.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H5"><rect x="142.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H6"><rect x="168.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H7"><rect x="194.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H8"><rect x="220.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H9"><rect x="246.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H10"><rect x="272.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H11"><rect x="298.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g><g class="well" data-well="H12"><rect x="324.34" y="246.34" width="21.32" height="21.32" rx="10.66" fill="#f4f4f4" stroke="#bbbbbb" stroke-width="0.4"/></g></svg><figcaption>PCR2 plate <span class="muted">96 wells · 72 kinds · one block a well, in the order its batch allotted the inner primers · 1 plate, one a batch; batch 1 holds 72</span></figcaption></figure>
+
+</section>
+<section class="step" id="step-1">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>PCR1: pull 1 batch out of the pool</span></label></h2>
+<p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Set up 1 reaction, one a batch, with the pool as template.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Give each its own pair: batch 1: OP107 with OP146.</span></label></li><li><label><input type="checkbox" data-key="step-1-3"><span>Run the program below. On a real-time instrument, add an intercalating dye and stop before the curve plateaus; the printed count is what to run without one.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>PCR1, one tube a batch</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="program"><figcaption>PCR1 <span class="muted">· 12 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">12 <a class="cite" href="#source-frm-001034">FRM-001034 p. 2, cycle chart</a></td></tr><tr><td>Anneal</td><td class="num">65.1 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<ul class="holes-here" aria-label="Holes"><li class="hole" id="hole-H29"><span class="hole-id">H29</span> <span class="hole-none">no sourced number</span> — PCR1, the polymerase the cycle count is stated against: no cycle count published for Q5 on a Twist oligo pool <span class="hole-kind">nobody published it</span> <em>Filled by a count Twist states against Q5, or a pilot on this pool.</em></li></ul>
+<div class="expected"><h3>Expected result</h3><ul><li>One band at 350 bp in every batch, which is the whole oligo.</li><li>Batch sizes: 1 holds 72.</li></ul><figure class="gel"><figcaption>PCR1, any batch</figcaption><svg class="gel-image" viewBox="0 0 154 276" role="img" aria-label="PCR1, any batch"><rect class="gel-bg" x="46" y="22" width="106" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="PCR1 product"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="350" x="107" y="159.3" width="32" height="4" rx="1.5"><title>350 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> PCR1 product: 350 bp</li></ol></figure></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the pool went in.</dd><dt>A hump after the peak on a Bioanalyzer or TapeStation trace</dt><dd>Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles. What too many cycles cost is dropout, chimeras and polymerase error; pooling the blocks equimolar later restores the evenness but none of those.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>Every pair anneals at 65.1 °C, so one block of tubes takes them all.</li><li>Twist&#x27;s band for a 350 nt pool is 12 to 14 cycles; Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ answers that more cycles give worse uniformity, so 12 is what prints.</li><li>The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block cannot be pulled out of a batch it does not sit in.</li></ul></div>
+</section>
+<section class="step" id="step-2">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-2"><span class="step-n">2</span><span>PCR2: pull each of the 72 blocks out of its batch</span></label></h2>
+<p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-2-1"><span>Set up one reaction a block, 72 in all, in PCR2 plate.</span></label></li><li><label><input type="checkbox" data-key="step-2-2"><span>Give each its batch&#x27;s PCR1 product as template, that batch&#x27;s forward primer, and the block&#x27;s own inner primer.</span></label></li><li><label><input type="checkbox" data-key="step-2-3"><span>Run the program below. Nobody published a cycle count for this reaction, so run it on a real-time instrument with an intercalating dye and stop before the curve plateaus.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>PCR2, one well a block</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="72" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">72</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">792</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">79.2</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">198</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">198</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">39.6</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">2,574</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">3,881</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="program"><figcaption>PCR2</figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3"><span class="hole-none">no sourced number</span></td></tr><tr><td>Anneal</td><td class="num">64.3 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<ul class="holes-here" aria-label="Holes"><li class="hole" id="hole-H30"><span class="hole-id">H30</span> <span class="hole-none">no sourced number</span> — PCR2, the cycle count: no cycle count for PCR2, which pulls one block out of an already-amplified batch <span class="hole-kind">nobody published it</span> <em>Filled by a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus.</em></li></ul>
+<div class="expected"><h3>Expected result</h3><ul><li>One band at 330 bp in every well, the outer primer&#x27;s 20 nt shorter than PCR1&#x27;s.</li><li>72 wells filled across 1 plate.</li></ul><figure class="gel"><figcaption>PCR2, any well</figcaption><svg class="gel-image" viewBox="0 0 154 276" role="img" aria-label="PCR2, any well"><rect class="gel-bg" x="46" y="22" width="106" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="PCR2 product"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="330" x="107" y="163.8" width="32" height="4" rx="1.5"><title>330 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> PCR2 product: 330 bp</li></ol></figure></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>A band at PCR1&#x27;s length</dt><dd>The outer primer region was not dropped. Check the inner primer went in, and that the template is PCR1&#x27;s product and not the pool.</dd><dt>A hump after the peak on a Bioanalyzer or TapeStation trace</dt><dd>Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles; the forward primer is the whole batch&#x27;s, so over-cycling here also pulls a neighbour&#x27;s product into the well.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>The pairs anneal between 64.3 and 65.1 °C. The program runs at 64.3, the lowest of them, so one block of tubes takes them all.</li><li>A block is named by its well from here on, not by anything in the tube.</li></ul></div>
+</section>
+<section class="step" id="step-3">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-3"><span class="step-n">3</span><span>Assemble each cargo into its position&#x27;s destination, from its 1 to 5 pieces</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-3-1"><span>Open DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna) with BbsI and SrfI, the digest a round opens the library with, and clean each up.</span></label></li><li><label><input type="checkbox" data-key="step-3-2"><span>Set up one assembly a well, holding that block&#x27;s own PCR2 pieces, the opened destination of the position that block fills, and nothing from another well.</span></label></li><li><label><input type="checkbox" data-key="step-3-3"><span>Transform, plate on 50 µg/mL kanamycin, and pick one colony a block.</span></label></li></ol>
+<figure class="reaction" data-overage="0.1"><figcaption>Golden Gate assembly, NEBridge kit E1602</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="72" data-key="step-3-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">72</span> (µL)</th></tr></thead><tbody><tr><td>DMX-iGGA, opened</td><td></td><td>0.05 pmol (165.17 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 1</td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 2</td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 3</td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 4</td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 5</td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>T4 DNA Ligase Buffer</td><td>10X</td><td>1X</td><td class="num">2</td><td class="num mix" data-ul="2.0">158</td></tr><tr><td>NEBridge Golden Gate Enzyme Mix</td><td></td><td></td><td class="num">1</td><td class="num mix" data-ul="1.0">79.2</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 20 µL</td><td class="num">11</td><td class="num mix" data-ul="11.0">871</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">20</td><td class="num mix" data-ul="14.0">1,109</td></tr></tfoot></table></div><p class="dispense">Put 14 µL of mix in each tube, then add 1 µL DMX-iGGA, opened, 1 µL PCR2 piece 1, 1 µL PCR2 piece 2, 1 µL PCR2 piece 3, 1 µL PCR2 piece 4, 1 µL PCR2 piece 5.</p></figure>
+<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 1 h 5 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Digest</td><td class="num">42 °C</td><td class="num">1 min</td><td class="num" rowspan="2">30</td></tr><tr><td>Ligate</td><td class="num">16 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>72 plasmids, one a block: its position&#x27;s destination carrying that block&#x27;s cargo, 83 to 1,099 bp of it.</li><li>Each cargo reads: the overhang its part enters on, its coding bases, the internal stuffer, its barcode, and the TTCC cloning scar. The external stuffers parts.tsv spells either side of it are the destination&#x27;s own bases.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>A block comes out short</dt><dd>A piece was missing from the well. Check that well&#x27;s PCR2 lane before assembling it again; the pieces of one block are not interchangeable.</dd><dt>Colonies carrying the destination with no cargo</dt><dd>The destination was not opened to completion. Run a little of its digest on a gel before setting the plate up again.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li>BsmBI cuts each oligo back to its fragment, so the primer sites, the recognition sites and the padding all stay outside the cargo.</li><li>The table is sized at the most pieces any block takes, so one master mix covers the plate; a well with fewer pieces fills fewer of its DNA rows.</li><li>A part enters on its own position&#x27;s entry overhang, so there is one destination a position. They are one vector differing in the 4 bases of that overhang; a block put in the wrong one cannot close.</li></ul></div>
+</section>
+<section class="block holes" id="holes">
+<h2>Holes</h2>
+<p>2 numbers this protocol would otherwise have to invent. A hole is a defect in what the package knows, not a failure of the run, and it is never filled with a guess.</p>
+<ul><li class="hole" id="hole-H29"><span class="hole-id">H29</span> <span class="hole-none">no sourced number</span> — PCR1, the polymerase the cycle count is stated against: no cycle count published for Q5 on a Twist oligo pool <span class="hole-kind">nobody published it</span> <em>Filled by a count Twist states against Q5, or a pilot on this pool.</em></li><li class="hole" id="hole-H30"><span class="hole-id">H30</span> <span class="hole-none">no sourced number</span> — PCR2, the cycle count: no cycle count for PCR2, which pulls one block out of an already-amplified batch <span class="hole-kind">nobody published it</span> <em>Filled by a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus.</em></li></ul>
+</section>
+<section class="block sources">
+<h2>Sources</h2>
+<ul><li id="source-levseq"><strong>LevSeq</strong> Long, Y. et al. 2025, LevSeq, Supporting Information · held under reference_docs/ · 2026-10-06</li><li id="source-frm-001034"><strong>FRM-001034</strong> Twist Bioscience, Amplifying Twist Oligo Pools · REV 8 · plain curl · 2026-10-07 <a href="https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf" rel="noreferrer">https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf</a></li></ul>
+</section>
+<section class="block references">
+<h2>References</h2>
+<ol><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool&#x27;s length</li><li>Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity</li></ol>
+</section>
+</main>
+<nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ol><li><a href="#step-1">PCR1: pull 1 batch out of the pool</a></li><li><a href="#step-2">PCR2: pull each of the 72 blocks out of its batch</a></li><li><a href="#step-3">Assemble each cargo into its position&#x27;s destination, from its 1 to 5 pieces</a></li></ol></nav>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  var storageKey = "liulab-protocol:" + (document.body.getAttribute("data-protocol") || "");
+
+  // Storage can be missing or throw (private windows, blocked site data); the page works without it.
+  function load() {
+    try {
+      return JSON.parse(window.localStorage.getItem(storageKey) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function save() {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (error) {
+      /* checks last for this visit only */
+    }
+  }
+
+  var state = load();
+
+  function all(selector, root) {
+    return Array.prototype.slice.call((root || document).querySelectorAll(selector));
+  }
+
+  // Check marks.
+  var boxes = all('input[type="checkbox"][data-key]');
+  var stepBoxes = all("input.done");
+  var progress = document.querySelector(".progress");
+
+  function refresh() {
+    var done = 0;
+    stepBoxes.forEach(function (box) {
+      var step = box.closest(".step");
+      if (step) step.classList.toggle("is-done", box.checked);
+      if (box.checked) done += 1;
+    });
+    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+  }
+
+  boxes.forEach(function (box) {
+    box.checked = state[box.getAttribute("data-key")] === true;
+    box.addEventListener("change", function () {
+      var key = box.getAttribute("data-key");
+      if (box.checked) state[key] = true;
+      else delete state[key];
+      save();
+      refresh();
+    });
+  });
+  refresh();
+
+  var clear = document.querySelector("button.clear");
+  if (clear) {
+    clear.addEventListener("click", function () {
+      boxes.forEach(function (box) {
+        box.checked = false;
+        delete state[box.getAttribute("data-key")];
+      });
+      save();
+      refresh();
+    });
+  }
+
+  var print = document.querySelector("button.print");
+  if (print) print.addEventListener("click", function () { window.print(); });
+
+  // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
+  // protocol.model.number, so the column reads the same after the count changes.
+  var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+  function number(value) {
+    if (value === 0) return "0";
+    var parts = value.toExponential(2).split("e");
+    var power = Number(parts[1]);
+    if (Math.abs(value) >= 0.001 && Math.abs(value) < 1e6) {
+      var fixed = value.toFixed(Math.max(0, 2 - power));
+      if (fixed.indexOf(".") >= 0) fixed = fixed.replace(/0+$/, "").replace(/\.$/, "");
+      var halves = fixed.split(".");
+      halves[0] = halves[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return halves.join(".");
+    }
+    var mantissa = parts[0].replace(/\.?0+$/, "");
+    var raised = String(power).replace(/\d/g, function (d) { return SUPERSCRIPT.charAt(d); });
+    return mantissa + " × 10" + raised.replace("-", "⁻");
+  }
+
+  all(".reaction").forEach(function (figure) {
+    var input = figure.querySelector("input.rxn-count");
+    if (!input) return;
+    var overage = parseFloat(figure.getAttribute("data-overage")) || 0;
+    var key = input.getAttribute("data-key");
+
+    function update() {
+      var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
+      var scale = reactions * (1 + overage);
+      all("[data-ul]", figure).forEach(function (cell) {
+        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
+      });
+      all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
+      return reactions;
+    }
+
+    if (typeof state[key] === "number") input.value = String(state[key]);
+    update();
+    input.addEventListener("input", function () {
+      state[key] = update();
+      save();
+    });
+  });
+
+  // Copy buttons.
+  function fallbackCopy(text) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    try {
+      return document.execCommand("copy");
+    } catch (error) {
+      return false;
+    } finally {
+      document.body.removeChild(area);
+    }
+  }
+
+  function flash(button, label) {
+    var original = button.getAttribute("data-label") || button.textContent;
+    button.setAttribute("data-label", original);
+    button.textContent = label;
+    button.classList.add("is-copied");
+    window.setTimeout(function () {
+      button.textContent = original;
+      button.classList.remove("is-copied");
+    }, 1400);
+  }
+
+  all("button.copy").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var text = button.getAttribute("data-copy") || "";
+      var done = function () { flash(button, "Copied"); };
+      var failed = function () { flash(button, fallbackCopy(text) ? "Copied" : "Copy failed"); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, failed);
+      } else {
+        failed();
+      }
+    });
+  });
+
+  // Timers.
+  function clock(seconds) {
+    var s = Math.max(0, Math.round(seconds));
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var rest = String(s % 60).padStart(2, "0");
+    return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
+  }
+
+  function alarm() {
+    try {
+      var Context = window.AudioContext || window.webkitAudioContext;
+      var context = new Context();
+      [0, 0.35, 0.7].forEach(function (offset) {
+        var tone = context.createOscillator();
+        var gain = context.createGain();
+        tone.frequency.value = 880;
+        gain.gain.value = 0.15;
+        tone.connect(gain);
+        gain.connect(context.destination);
+        tone.start(context.currentTime + offset);
+        tone.stop(context.currentTime + offset + 0.2);
+      });
+    } catch (error) {
+      /* no sound available */
+    }
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+
+  all("button.timer").forEach(function (button) {
+    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+    var left = total;
+    var end = 0;
+    var handle = null;
+    var time = button.querySelector(".timer-time");
+    var action = button.querySelector(".timer-action");
+
+    function show(label) {
+      time.textContent = clock(left);
+      action.textContent = label;
+    }
+
+    function stop() {
+      window.clearInterval(handle);
+      handle = null;
+      button.classList.remove("is-running");
+    }
+
+    function tick() {
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left <= 0) {
+        stop();
+        left = 0;
+        button.classList.add("is-finished");
+        show("Reset");
+        alarm();
+      } else {
+        show("Pause");
+      }
+    }
+
+    button.addEventListener("click", function () {
+      if (handle !== null) {
+        stop();
+        show("Resume");
+      } else if (left <= 0) {
+        left = total;
+        button.classList.remove("is-finished");
+        show("Start");
+      } else {
+        end = Date.now() + left * 1000;
+        handle = window.setInterval(tick, 250);
+        button.classList.add("is-running");
+        show("Pause");
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
