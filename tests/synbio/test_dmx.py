@@ -278,11 +278,11 @@ def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():
 
 
 def test_the_index_pcr_touches_down_before_it_plateaus():
-    """Ten cycles half a degree apart, then 25 more: 35 in all, as the SI's two loops spell out."""
+    """One stepping stage of ten cycles, then 25 more: 35 in all, the SI's two loops as two."""
     stages = method.index_pcr_program().stages
-    assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
-    annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
-    assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]
+    assert [stage.cycles for stage in stages] == [1, 10, 25, 1, 1]
+    anneal = stages[1].incubations[1]
+    assert (anneal.temperature_c, anneal.delta_c, anneal.last_c(10)) == (68.0, -0.5, 63.5)
 
 
 def said_by(one) -> str:

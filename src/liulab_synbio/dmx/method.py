@@ -786,41 +786,42 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
 
 
 def index_pcr_program() -> ThermocyclerProgram:
-    """Return LevSeq's touchdown program, the SI's two loop lines spelled out.
+    """Return LevSeq's touchdown program, the SI's two loop lines as two stages.
 
-    Ten cycles drop the annealing temperature `INDEX_TOUCHDOWN_STEP_C` each, over
-    `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more anneal and extend together at the top of it.
-    The touchdown is one stage a cycle, because a stage holds one temperature.
+    The touchdown is one stage of `INDEX_TOUCHDOWN_CYCLES` cycles whose annealing step drops
+    `INDEX_TOUCHDOWN_STEP_C` a cycle, across `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more
+    anneal and extend together at the top of it.
 
     Examples
     --------
-    >>> stages = index_pcr_program().stages
-    >>> stages[1].incubations[1].temperature_c, stages[10].incubations[1].temperature_c
-    (68.0, 63.5)
+    >>> touchdown = index_pcr_program().stages[1]
+    >>> anneal = touchdown.incubations[1]
+    >>> anneal.temperature_c, anneal.delta_c, anneal.last_c(touchdown.cycles)
+    (68.0, -0.5, 63.5)
     """
     cite = Citation("LevSeq", "thermal cycler table")
     top = INDEX_TOUCHDOWN_C[0]
-    denature = Incubation("Denature", INDEX_DENATURE_C, 20, cite)
-    extend = Incubation("Extend", top, INDEX_EXTENSION_SECONDS, cite)
+    denature = Incubation("Denature", INDEX_DENATURE_C, 20, citation=cite)
     return ThermocyclerProgram(
         (
-            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, cite),)),
-            *(
-                Stage(
-                    (
-                        denature,
-                        Incubation("Anneal", top - at * INDEX_TOUCHDOWN_STEP_C, 20, cite),
-                        extend,
-                    )
-                )
-                for at in range(INDEX_TOUCHDOWN_CYCLES)
+            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, citation=cite),)),
+            Stage(
+                (
+                    denature,
+                    Incubation("Anneal", top, 20, -INDEX_TOUCHDOWN_STEP_C, cite),
+                    Incubation("Extend", top, INDEX_EXTENSION_SECONDS, citation=cite),
+                ),
+                cycles=INDEX_TOUCHDOWN_CYCLES,
             ),
             Stage(
-                (denature, Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, cite)),
+                (
+                    denature,
+                    Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, citation=cite),
+                ),
                 cycles=INDEX_PLATEAU_CYCLES,
             ),
-            Stage((Incubation("Final extension", top, 300, cite),)),
-            Stage((Incubation("Hold", 4.0, None, cite),)),
+            Stage((Incubation("Final extension", top, 300, citation=cite),)),
+            Stage((Incubation("Hold", 4.0, None, citation=cite),)),
         ),
         title="Index PCR",
     )
