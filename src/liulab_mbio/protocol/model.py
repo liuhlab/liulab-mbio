@@ -180,13 +180,22 @@ class Rule:
 
     def holds(self, named: Iterable[str], contents: Iterable[str]) -> bool:
         """Return whether the rule is kept by a step naming `named` with `contents` in the tube."""
-        if self.when and not _names(self.when, contents):
+        if self.when and not names(self.when, contents):
             return True
-        return _names(self.subject, named) == (self.kind == "requires")
+        return names(self.subject, named) == (self.kind == "requires")
 
 
-def _names(subject: str, among: Iterable[str]) -> bool:
-    """Return whether `subject` is named among `among`, whatever the case."""
+def names(subject: str, among: Iterable[str]) -> bool:
+    """Return whether `subject` is named among `among`, whatever the case.
+
+    It is how a `Rule` finds its material and how a protocol split across several pages finds
+    which of them a reagent belongs on.
+
+    Examples
+    --------
+    >>> names("BsaI", ("Digest with BsaI-HFv2",))
+    True
+    """
     wanted = subject.casefold()
     return any(wanted in one.casefold() for one in among)
 
@@ -1198,12 +1207,12 @@ class Protocol:
         contents = self.contents_of(step)
         found: list[tuple[Material, Rule]] = []
         for material in self.materials:
-            if not _names(material.name, step.named):
+            if not names(material.name, step.named):
                 continue
             found += [
                 (material, rule)
                 for rule in material.rules
-                if not rule.when or _names(rule.when, contents)
+                if not rule.when or names(rule.when, contents)
             ]
         return tuple(found)
 

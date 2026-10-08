@@ -11,10 +11,12 @@ import pytest
 from typer.testing import CliRunner
 
 from liulab_mbio.ligase import RELATIONSHIP_NS, SPREADSHEET_NS
-from liulab_mbio.protocol import read_protocol
+from liulab_mbio.protocol import read_project
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.snapgene import write_dna
 from liulab_synbio.cli import app
+
+from ...chains import whole
 
 LISTS = (
     {"N_a": "MKTAEK", "N_b": "MKTCEK"},
@@ -80,6 +82,11 @@ def run(project: Path, out: Path, *extra: str):
     return CliRunner().invoke(app, ["igga", "plan", str(project), "--out", str(out), *extra])
 
 
+def one_run(out: Path):
+    """Return every protocol the command wrote into `out`, read back as one."""
+    return whole(read_project(out / "protocol" / "project.json"))
+
+
 def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
     out = tmp_path / "library"
 
@@ -116,14 +123,19 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
         "round-1.dna",
         "round-2.dna",
         "product.dna",
-        "protocol.json",
-        "protocol.html",
+        "project.json",
+        "index.html",
+        "01-cargo-ordering-and-pool-preparation.html",
+        "02-library-assembly-in-rounds.html",
+        "03-final-cargo-ligation.html",
+        "reagents.html",
+        "references.html",
         "library-read-primers.tsv",
     ]
     for path in written:
         assert path.is_file()
         assert path.read_bytes()
-    bill = read_protocol(out / "protocol.json").bill
+    bill = one_run(out).bill
     assert bill is not None
     assert bill.rows[0].charge == "1200.00"
     assert bill.currency == "USD"
@@ -147,7 +159,7 @@ def test_a_working_vector_carrying_no_cassette_is_planned_from_the_site_named(tm
     )
 
     assert result.exit_code == 0, result.output
-    titles = [step.title for step in read_protocol(out / "protocol.json").steps]
+    titles = [step.title for step in one_run(out).steps]
     assert any(one.startswith("Pick the working vector and confirm") for one in titles)
 
 
@@ -180,7 +192,7 @@ def test_a_ligase_matrix_reports_each_round_on_the_sheet_it_names(project, tmp_p
     )
 
     assert result.exit_code == 0, result.output
-    checks = [one for one in read_protocol(out / "protocol.json").checks if "on-target" in one.name]
+    checks = [one for one in one_run(out).checks if "on-target" in one.name]
     assert checks
     assert all(SHEETS[1] in one.detail for one in checks)
     assert SHEETS[0] not in checks[0].detail

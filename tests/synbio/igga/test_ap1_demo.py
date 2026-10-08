@@ -25,6 +25,8 @@ from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo, working_vector
 
+from ...chains import whole
+
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
 #: The enzymes the method reserves: the three a round uses, and BsmBI, which seats a part in its
@@ -43,7 +45,8 @@ def plan():
 
 @pytest.fixture(scope="module")
 def protocol(plan):
-    return plan.protocol()
+    """Every protocol of the run as one, which is what most of these tests ask about."""
+    return whole(plan.chain())
 
 
 def test_the_demo_plans_every_part_and_the_whole_library(plan):
@@ -218,7 +221,7 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     """Cargo validation is optional, and a project that asks for none gets none."""
     polyclonal = rerouted(plan, validate_from=None, route=None)
     assert polyclonal.validation is None
-    titles = [step.title for step in polyclonal.protocol().steps]
+    titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
     assert titles[0] == "Order the oligo pool and the primers that amplify it"
     assert titles[4] == "Pool each part list"
@@ -227,7 +230,7 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     """One set of parts, two project files: a second project is never a second branch."""
     index_pcr = protocol
-    ligation = rerouted(plan, route="barcode ligation").protocol()
+    ligation = whole(rerouted(plan, route="barcode ligation").chain())
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
     pcrs = ["H29", "H30"]
@@ -302,7 +305,7 @@ def test_the_same_dna_is_billed_once(plan, protocol):
     assert pooled[:2] == ["AP-1 DESynR oligo pool", "Pool amplification primers"]
     primers = next(row for row in protocol.bill.rows if row.item.endswith("primers"))
     assert (primers.quantity, primers.unit) == (74, "primers")
-    unpooled = [row.item for row in replace(plan, pool=None).protocol().bill.rows]
+    unpooled = [row.item for row in replace(plan, pool=None).chain().bill.rows]
     assert unpooled[0] == "Synthesised blocks"
     assert "Pool amplification primers" not in unpooled
 
@@ -382,7 +385,7 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
     stock = SequenceRecord("ACGATCGTTA" * 20, topology="circular", name="pWORK")
     working = working_vector(stock, [], site=(0, 1))
 
-    steps = replace(plan, working=working).protocol().steps[-5:]
+    steps = whole(replace(plan, working=working).chain()).steps[-5:]
 
     assert working.enzyme.name in steps[0].title
     assert steps[2].programs[0].title == "Golden Gate assembly"
