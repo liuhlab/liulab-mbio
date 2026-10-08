@@ -88,6 +88,13 @@ the user asks for what the pipeline did not anticipate — skip, add or reword a
 file in place and render it again. The folder ends with one final `protocol.json` and one page:
 a run is one session's job, so keep no copies and no record of the edits.
 
+A run of several protocols writes `project.json` instead, holding every protocol in order, and a
+page each beside an index. Edit that one file and render the whole folder again:
+
+```sh
+pixi run liulab_mbio protocol render PLAN_DIR
+```
+
 Make simple edits straight in the JSON. Add a step with computed numbers in Python, so a builder
 computes them rather than you typing them:
 

@@ -48,5 +48,9 @@ runs through it, so `step-14` is one place in one document.
 ## Consequences
 
 Every one-protocol plan writes a project of one, through `cloning.plan.as_project`, so whatever
-reads a run reads one shape. How a project is written and rendered as a folder of pages is its
-own decision, and this one fixes only what a protocol declares.
+reads a run reads one shape.
+
+A project is written as a folder: `project.json`, one page per protocol named by its place in
+the chain, an index, and the two pages the run shares. Routing inside a page cannot work on
+disk, so each page stays self-contained, links to the rest by relative address, and names its
+neighbours in a line that prints. One protocol still writes one page.

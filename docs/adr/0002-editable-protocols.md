@@ -34,7 +34,8 @@ fails when the page is rendered rather than printing on the page.
 
 ## Consequences
 
-The user's folder holds one final `protocol.json` and one `protocol.html`. Dropping a step
+A one-protocol run leaves one final `protocol.json` and one `protocol.html`; a run of
+several leaves one `project.json` and a page per protocol, rendered from it. Dropping a step
 leaves stale mentions — the materials, another step's troubleshooting, an oligo row — which no
 code checks, so `build-protocol` tells the agent to fix them. An assembly plan's `primers.tsv`
 stays the whole order sheet, which is the record of what was designed. A pipeline gains an
