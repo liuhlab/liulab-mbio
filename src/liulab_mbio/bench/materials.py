@@ -8,9 +8,10 @@ cells and the number changes while the step does not.
 
 A rule the material carries travels with it the same way. T7 DNA ligase refuses blunt ends
 only because the PEG stays low, so the two rules below hang on the ligase and on its buffer
-and reach every step that uses either.
+and reach every step that uses either. A caution rides the same key, so the sentence about
+keeping a polymerase cold is written once and reaches every step that pipettes one.
 
-Everything here is sourced in ``docs/research/bench-numbers.md``.
+Every number here is sourced in ``docs/research/bench-numbers.md``.
 """
 
 from collections.abc import Mapping
@@ -149,9 +150,25 @@ RULES: Mapping[str, tuple[Rule, ...]] = MappingProxyType(
     }
 )
 
+#: What to watch out for wherever a polymerase is pipetted, and wherever cells are pulsed.
+POLYMERASE_ON_ICE = "Keep the polymerase on ice."
+CUVETTE_ON_ICE = "Keep the cells and the cuvette on ice; a warm cuvette arcs."
+
+#: What to watch out for where a material is used, keyed by catalogue number. A caution hangs
+#: here rather than in a step's prose for the reason a rule does: prose an agent edits can be
+#: deleted, and the same sentence written into four steps is four facts to keep in step.
+CAUTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "M0491": (POLYMERASE_ON_ICE,),
+        "M0267": (POLYMERASE_ON_ICE,),
+        "60242": (CUVETTE_ON_ICE,),
+        "C3020": (CUVETTE_ON_ICE,),
+    }
+)
+
 #: Every catalogue number these parameters are keyed by. A number is keyed without its pack
 #: size, because a pack size changes nothing about the thing in the tube.
-_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys()
+_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys() | CAUTIONS.keys()
 
 
 def _key(catalog: str) -> str:
@@ -190,6 +207,17 @@ def contains(catalog: str) -> tuple[str, ...]:
     return CONTAINS.get(_key(catalog), ())
 
 
+def cautions(catalog: str) -> tuple[str, ...]:
+    """Return what to watch out for wherever the material with this number is used.
+
+    Examples
+    --------
+    >>> cautions("M0491S")
+    ('Keep the polymerase on ice.',)
+    """
+    return CAUTIONS.get(_key(catalog), ())
+
+
 def material(
     name: str,
     *,
@@ -200,16 +228,19 @@ def material(
     note: str = "",
     citation: Citation | None = None,
 ) -> Material:
-    """Return a material carrying its own parameters: what it brings, and what it rules.
+    """Return a material carrying its own parameters: what it brings, rules and cautions.
 
-    The caller names the thing; what travels with it is looked up, so a rule cannot be left off
-    a protocol that uses the material.
+    The caller names the thing; what travels with it is looked up, so neither a rule nor a
+    caution can be left off a protocol that uses the material. A material with a catalogue
+    number is built here, because one built around this carries nothing.
 
     Examples
     --------
     >>> ligase = material("T7 DNA Ligase", supplier="NEB", catalog="#M0318L")
     >>> len(ligase.rules), material("StickTogether", catalog="#B0535S").contains
     (2, ('PEG 6000',))
+    >>> material("Q5 DNA Polymerase", catalog="M0491").cautions
+    ('Keep the polymerase on ice.',)
     """
     return Material(
         name,
@@ -220,5 +251,6 @@ def material(
         note=note,
         contains=contains(catalog),
         rules=rules(catalog),
+        cautions=cautions(catalog),
         citation=citation,
     )

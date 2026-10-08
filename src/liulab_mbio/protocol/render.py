@@ -1621,7 +1621,8 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
     ]
     parts.append(_rules(protocol.rules_for(step)))
     parts += [
-        f'<p class="caution"><strong>Caution:</strong> {escape(c)}</p>\n' for c in step.cautions
+        f'<p class="caution"><strong>Caution:</strong> {escape(c)}</p>\n'
+        for c in protocol.cautions_for(step)
     ]
     if step.instructions:
         items = "".join(

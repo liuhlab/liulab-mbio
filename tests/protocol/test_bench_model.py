@@ -86,6 +86,26 @@ def test_the_rule_travels_with_the_material_and_no_step_stores_it() -> None:
     ]
 
 
+def test_the_caution_travels_with_the_polymerase_and_no_step_stores_it() -> None:
+    tube = materials.material("Q5 DNA Polymerase", catalog="M0491")
+    amplifying = Step("Amplify", tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),))
+    one = Protocol("PCR", materials=(tube,), steps=(amplifying,))
+    assert amplifying.cautions == ()
+    assert one.cautions_for(amplifying) == (materials.POLYMERASE_ON_ICE,)
+    assert materials.POLYMERASE_ON_ICE in render_html(one)
+
+
+def test_a_step_writing_out_a_caution_its_material_carries_shows_it_once() -> None:
+    tube = materials.material("Q5 DNA Polymerase", catalog="M0491")
+    written = Step(
+        "Amplify",
+        cautions=(materials.POLYMERASE_ON_ICE, "Spin the plate down."),
+        tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),),
+    )
+    one = Protocol("PCR", materials=(tube,), steps=(written,))
+    assert one.cautions_for(written) == (materials.POLYMERASE_ON_ICE, "Spin the plate down.")
+
+
 def test_adding_peg_to_the_t7_reaction_fails_the_protocols_own_check() -> None:
     broken = protocol(ligation(extra=(Component("PEG 6000", 5.0),)))
     (check,) = [one for one in broken.audit() if one.name == "rules"]

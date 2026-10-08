@@ -44,3 +44,22 @@ def test_the_ligase_carries_both_peg_rules_wherever_it_is_used() -> None:
 
 def test_a_material_nothing_rules_carries_no_rule() -> None:
     assert materials.material("Water").rules == ()
+
+
+@pytest.mark.parametrize(
+    ("catalog", "carried"),
+    [
+        ("M0491", materials.POLYMERASE_ON_ICE),
+        ("#M0267S", materials.POLYMERASE_ON_ICE),
+        ("60242-2", materials.CUVETTE_ON_ICE),
+        ("#C3020", materials.CUVETTE_ON_ICE),
+    ],
+)
+def test_a_caution_is_one_sentence_the_catalogue_number_carries(catalog: str, carried: str) -> None:
+    # The two polymerases are different tubes from different suppliers and the caution is the
+    # same fact, written once here rather than into every step that pipettes one.
+    assert materials.material("the tube", catalog=catalog).cautions == (carried,)
+
+
+def test_a_material_nothing_cautions_carries_no_caution() -> None:
+    assert materials.material("Water").cautions == ()

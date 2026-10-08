@@ -14,6 +14,7 @@ from dataclasses import KW_ONLY, dataclass
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from liulab_mbio.bench.gels import agarose_percent, choose_ladder
+from liulab_mbio.bench.materials import POLYMERASE_ON_ICE, material
 from liulab_mbio.bench.pcr import (
     colony_pcr_program,
     colony_pcr_reaction,
@@ -227,7 +228,7 @@ def enzyme_material(enzyme: Enzyme, *, amount: str = "", note: str = "") -> Mate
 
     `amount` is what one reaction takes of it, and `note` what it is there to cut.
     """
-    return Material(
+    return material(
         enzyme.commercial_name or enzyme.name,
         supplier=enzyme.supplier or "",
         catalog=enzyme.catalog_number or "",
@@ -258,8 +259,8 @@ def catalogued(
     """
     found = _CATALOG_RE.match(name)
     if found is None:
-        return Material(name, supplier=supplier, storage=storage, amount=amount, note=note)
-    return Material(
+        return material(name, supplier=supplier, storage=storage, amount=amount, note=note)
+    return material(
         found["name"],
         supplier=supplier,
         catalog=found["catalog"],
@@ -317,7 +318,9 @@ def pcr_step(
             f"Run the program below: {annealing_temperature:g} °C annealing and "
             f"{extension_seconds} s extension for a {length_bp} bp product.",
         ),
-        cautions=("Keep the polymerase on ice.",),
+        # The cloning methods' polymerase material carries no catalogue number, so nothing
+        # hands this step the caution; #394 takes it off once they name one.
+        cautions=(POLYMERASE_ON_ICE,),
         tables=(pcr_reaction(polymerase, title=f"{name} PCR"),),
         programs=(
             pcr_program(
