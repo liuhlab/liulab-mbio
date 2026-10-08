@@ -337,6 +337,12 @@ sets one.
   site and locus a bench page, a check or a summary line names is converted through
   `liulab_mbio.sequence.position_text`, and a genome locus reads `NAME:START..END`, the
   spelling `--region` takes.
+- A run's bill tells the whole truth about money. Every reagent a protocol names is a row, with
+  a charge where the record prices it and a declared hole where nothing does, so no item is
+  passed over in silence. Money prints to the cent, and the column adds up to the total under
+  it. A library build now states the working vector's mass alone: the release is never purified,
+  so the digest fixes the cargo against it and a build can no longer ask for a ratio its own
+  release contradicts.
 - A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
   padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes

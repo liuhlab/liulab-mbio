@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "b27244ec0e3d2e35",
+  "key": "ffdc16f2d0a10979",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -13720,7 +13720,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "320826234b0a9850",
+      "key": "c679e00273b066e8",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -14137,7 +14137,8 @@
           "notes": [
             "6435 bp of library goes in and the cargo alone comes out: the backbone the rounds ran in is shredded and stays behind.",
             "The cycling is NEB's longer single-insert program, which it gives for library preparation rather than for cloning one gene.",
-            "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published figure."
+            "75 ng of vector is what this run measured, not a published figure. The cargo is not measured out: the release tube goes in whole.",
+            "The release delivers the cargo at 20.5:1 over the vector, which is what the digest frees and not a ratio anyone sets."
           ],
           "tables": [
             {
@@ -14146,7 +14147,7 @@
                   "name": "AP-1 DESynR round 3 cargo, in the release",
                   "volume_ul": 50.0,
                   "stock": "",
-                  "final": "0.0246 pmol (16.31 ng)",
+                  "final": "0.252 pmol (167.21 ng)",
                   "master_mix": false,
                   "citation": null
                 },
@@ -14578,7 +14579,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3539",
-        "charge": "41.4975",
+        "charge": "41.50",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14591,7 +14592,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3733",
-        "charge": "12.450",
+        "charge": "12.45",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14604,7 +14605,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0629",
-        "charge": "27.900",
+        "charge": "27.90",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14617,7 +14618,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0560",
-        "charge": "13.200",
+        "charge": "13.20",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14652,7 +14653,7 @@
         "hole": null
       },
       {
-        "item": "Plasmid preps",
+        "item": "Plasmid prep kit",
         "quantity": 3,
         "unit": "preps",
         "key": "plasmid prep",
@@ -14663,11 +14664,491 @@
           "locator": "plasmid prep count 1-50"
         },
         "hole": null
+      },
+      {
+        "item": "nuclease-free water",
+        "quantity": null,
+        "unit": "25,160 µL in all",
+        "key": "nuclease-free water",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P10",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "nuclease-free water, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Empty 96-well plate",
+        "quantity": null,
+        "unit": "1 for the working plates",
+        "key": "Empty 96-well plate",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P11",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Empty 96-well plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Adhesive plate seals",
+        "quantity": null,
+        "unit": "2 seals",
+        "key": "Adhesive plate seals",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P12",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Adhesive plate seals, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "primer working plate 1",
+        "quantity": null,
+        "unit": "100 µL per well",
+        "key": "primer working plate 1",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P13",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "primer working plate 1, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "NEBridge Golden Gate Assembly Kit, BsmBI-v2",
+        "quantity": null,
+        "unit": "one assembly per block",
+        "key": "E1602",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P14",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "NEBridge Golden Gate Assembly Kit, BsmBI-v2, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Q5 DNA Polymerase",
+        "quantity": null,
+        "unit": "one reaction per batch, then one per block",
+        "key": "M0491",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P15",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Q5 DNA Polymerase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "dNTP mix",
+        "quantity": null,
+        "unit": "0.2 µL a reaction, 10 mM each",
+        "key": "N0447",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P16",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "dNTP mix, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMX-iGGA vector",
+        "quantity": null,
+        "unit": "3, one a position",
+        "key": "DMX-iGGA vector",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P17",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMX-iGGA vector, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "CutSmart Buffer",
+        "quantity": null,
+        "unit": "",
+        "key": "CutSmart Buffer",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P18",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "CutSmart Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "SPRI paramagnetic beads",
+        "quantity": null,
+        "unit": "2 volumes after a digest, 1 after a ligation",
+        "key": "SPRI paramagnetic beads",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P19",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "SPRI paramagnetic beads, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Recovery medium",
+        "quantity": null,
+        "unit": "one outgrowth per round",
+        "key": "Recovery medium",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P20",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Recovery medium, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Selective broth and plates",
+        "quantity": null,
+        "unit": "",
+        "key": "Selective broth and plates",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P21",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Selective broth and plates, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "25 cm BioAssay plate",
+        "quantity": null,
+        "unit": "one spot a design",
+        "key": "431111",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P22",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "25 cm BioAssay plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "384-well culture plate",
+        "quantity": null,
+        "unit": "1, one a 384 wells",
+        "key": "c74290",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P23",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "384-well culture plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "1536-well barcoding plate",
+        "quantity": null,
+        "unit": "1, one a 4 picked plates",
+        "key": "782270",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P24",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "1536-well barcoding plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMX barcode kit",
+        "quantity": null,
+        "unit": "96 plasmids, 4 groups of 24",
+        "key": "DMX barcode kit",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P25",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMX barcode kit, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Barcoding master mix",
+        "quantity": null,
+        "unit": "0.5 µL a well",
+        "key": "Barcoding master mix",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P26",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Barcoding master mix, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "96-well half-skirted PCR plate",
+        "quantity": null,
+        "unit": "3, one a quarter of a picked plate",
+        "key": "1402-9700",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P27",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "96-well half-skirted PCR plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Barcoded index primer plate",
+        "quantity": null,
+        "unit": "2 µL a well at 1 µM each, 96 forward and 96 reverse",
+        "key": "Barcoded index primer plate",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P28",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Barcoded index primer plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "ThermoPol Reaction Buffer",
+        "quantity": null,
+        "unit": "1 µL a reaction, 10X",
+        "key": "B9004",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P29",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "ThermoPol Reaction Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Taq DNA Polymerase",
+        "quantity": null,
+        "unit": "0.05 µL a reaction",
+        "key": "M0267",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P30",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Taq DNA Polymerase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMSO, molecular biology grade",
+        "quantity": null,
+        "unit": "0.4 µL a reaction, 4% (v/v) in the well",
+        "key": "194819",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P31",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMSO, molecular biology grade, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "N part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "N part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P32",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "N part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DBD part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "DBD part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P33",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DBD part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "C part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "C part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P34",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "C part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "T7 DNA Ligase",
+        "quantity": null,
+        "unit": "",
+        "key": "#M0318L",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P35",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "T7 DNA Ligase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "StickTogether DNA Ligase Buffer",
+        "quantity": null,
+        "unit": "",
+        "key": "#B0535S",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P36",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "StickTogether DNA Ligase Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "pLVX-TetOne-dom vector",
+        "quantity": null,
+        "unit": "",
+        "key": "pLVX-TetOne-dom vector",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P37",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "pLVX-TetOne-dom vector, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "PaqCI",
+        "quantity": null,
+        "unit": "2.5 µL per digest",
+        "key": "R0745",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P38",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "PaqCI, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Selective plates for the final transfer",
+        "quantity": null,
+        "unit": "",
+        "key": "Selective plates for the final transfer",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P39",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Selective plates for the final transfer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
       }
     ],
     "title": "What this run consumes",
     "currency": "USD",
-    "total": "3130.5875",
+    "total": "3130.59",
     "record": "prices"
   }
 }
