@@ -32,6 +32,15 @@ SELECTION: Mapping[str, str] = {
 #: `docs/research/gateway-cloning.md` §13).
 MEDIUM: Mapping[str, str] = {"Zeocin": "Low Salt LB"}
 
+#: What a plate carries for each drug `SELECTION` names, where a document states the
+#: concentration: Zero Blunt TOPO UG p. 13 for kanamycin and Qian SI Day 2 for carbenicillin,
+#: both quoted in `docs/research/bench-numbers.md`. A drug absent from here is named without a
+#: concentration rather than given one nobody published.
+SELECTION_PLATE: Mapping[str, str] = {
+    "kanamycin": "50 µg/mL kanamycin",
+    "ampicillin or carbenicillin": "100 µg/mL carbenicillin",
+}
+
 #: What a resistance gene is called where `SELECTION` does not know it: a drug and an ``R``, the
 #: way SnapGene's common features name every one of them. A marker matching this is named on the
 #: page rather than translated into a drug nobody cited.

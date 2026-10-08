@@ -69,6 +69,7 @@ from liulab_mbio.bench.pcr import (
 from liulab_mbio.bench.phenotype import (
     MEDIUM,
     SELECTION,
+    SELECTION_PLATE,
     Phenotype,
     read_phenotype,
     selection_marker,
@@ -204,6 +205,7 @@ __all__ = [
     "SANGER_ALLOWANCE",
     "SANGER_FLANK",
     "SELECTION",
+    "SELECTION_PLATE",
     "SEQUENCING_TITLE",
     "SHEET_COLUMNS",
     "THAW_SECONDS",

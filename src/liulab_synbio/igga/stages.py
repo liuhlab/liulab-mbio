@@ -13,10 +13,8 @@ and which materials carry which rule — a different method would call the same 
 its own numbers.
 """
 
-from collections.abc import Mapping
-
 from liulab_mbio.bench import materials
-from liulab_mbio.bench.phenotype import SELECTION, selection_marker
+from liulab_mbio.bench.phenotype import SELECTION, SELECTION_PLATE, selection_marker
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
 from liulab_mbio.sequence import SequenceRecord
 
@@ -45,16 +43,6 @@ LIGASE_BUFFER = materials.material(
     note="Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.",
     citation=Citation("M0318", "reaction conditions"),
 )
-
-#: What a plate carries for each drug `liulab_mbio.bench.phenotype.SELECTION` names, where this
-#: method has a concentration sourced for it. Kanamycin is Zero Blunt TOPO UG p. 13, the guide
-#: for this method's own part carrier; carbenicillin is Qian SI Day 2. A drug absent from here is
-#: named without a concentration rather than given one nobody published.
-SELECTION_PLATE: Mapping[str, str] = {
-    "kanamycin": "50 µg/mL kanamycin",
-    "ampicillin or carbenicillin": "100 µg/mL carbenicillin",
-}
-
 
 def selection_for(record: SequenceRecord) -> str:
     """Return what to select this vector's transformants on, or ``""`` where nothing names it.
