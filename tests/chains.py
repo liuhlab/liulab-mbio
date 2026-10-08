@@ -18,7 +18,8 @@ def whole(project: Project) -> Protocol:
     """Return every protocol of `project` as one, each list in the order the chain runs.
 
     A reagent two protocols both buy is kept once, where it is first bought, as a reader
-    working through the pages meets it.
+    working through the pages meets it. The run's own bill comes with the run's own sources, so
+    a row citing the price record still resolves here.
     """
     from liulab_mbio.protocol.model import Protocol
 
@@ -38,7 +39,8 @@ def whole(project: Project) -> Protocol:
         plates=_once(one for p in project.protocols for one in p.plates),
         steps=tuple(one for p in project.protocols for one in p.steps),
         references=_once(one for p in project.protocols for one in p.references),
-        sources={key: value for p in project.protocols for key, value in p.sources.items()},
+        sources=dict(project.sources)
+        | {key: value for p in project.protocols for key, value in p.sources.items()},
         holes=_once(one for p in project.protocols for one in p.holes),
         bill=project.bill,
     )

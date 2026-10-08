@@ -17,6 +17,7 @@ from liulab_mbio.barcodes import MAX_HOMOPOLYMER
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.io import read_record
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest, find_sites
@@ -24,7 +25,7 @@ from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
-from liulab_synbio.igga.vector import released_cargo, working_vector
+from liulab_synbio.igga.vector import released_cargo
 
 from ...chains import whole
 
@@ -41,7 +42,8 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 
 @pytest.fixture(scope="module")
 def plan():
-    return plan_igga(DEMO / "project.json")
+    """The demo as its own page runs it: the domesticated backbone, and the prices it ships."""
+    return plan_igga(DEMO / "project.json", working_site="EGFP", prices=DEMO / "prices.csv")
 
 
 @pytest.fixture(scope="module")
@@ -159,15 +161,45 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
 
 
-def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(protocol):
+def test_the_bill_carries_the_pool_row_with_its_band_and_the_demos_own_price(plan, protocol):
     """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
     row = next(one for one in protocol.bill.rows if one.item.endswith("oligo pool"))
     assert (row.quantity, row.unit) == (131, "oligos")
     assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
-    assert row.charge == ""
-    assert row.hole is not None
-    assert row.hole.kind == "price"
+    assert row.charge == "2575.00"
+    assert row.citation == Citation("prices", "oligo-pool count 101-500; length 301-350")
+    assert row.hole is None
+
+    bare = next(
+        one
+        for one in replace(plan, prices=None).chain().bill.rows
+        if one.item.endswith("oligo pool")
+    )
+    assert bare.charge == ""
+    assert bare.hole is not None
+    assert bare.hole.kind == "price"
+
+
+def test_the_demos_price_record_prices_every_line_of_the_bill(plan, protocol):
+    """Nine keys, nine rows: the demo ships the tariff a user would, so no money cell is a hole."""
+    bill = protocol.bill
+    assert [row.key for row in bill.rows] == [
+        "oligo-pool",
+        "pool-primers",
+        "R3539",
+        "R3733",
+        "R0629",
+        "R0560",
+        "60242-2",
+        "cuvettes",
+        "plasmid prep",
+    ]
+    assert not [row.key for row in bill.rows if row.hole is not None]
+    assert (bill.currency, bill.total) == ("USD", "3130.565")
+    record = plan.chain().sources["prices"]
+    assert (record.document, record.edition) == ("AP-1 demo price record", "2026-10-08")
+    assert record.read_as == "read from prices.csv"
 
 
 def test_the_cargo_the_reads_run_across_is_the_cargo_the_release_digest_frees(plan):
@@ -276,17 +308,15 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     ligation = whole(alone)
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
+    # Both cycle counts stay open: this build states neither, because nobody ran the pilot.
     pcrs = ["H29", "H30"]
     # Block assembly holds nothing open: every position has a destination presenting its own
     # entry overhang, and NEB's kit table sizes the reaction.
     blocks: list[str] = []
-    # Only the linkage read is unjudged: both representation reads are held to sourced marks, and
-    # this build states no mark of its own, so H28 is raised once, where it is asked.
-    linkage = ["H28"]
-    # The final assembly: this project names no working vector, so what one would fix is H31. The
-    # backbone the rounds ran in frees the cargo itself, so the release is written rather than
-    # held open, and the one hole left is H24, over the assembly nobody sizes.
-    final = ["H31", "H31", "H24"]
+    # The linkage read and the final assembly are both answered by what this build states: its
+    # own pass mark, its own working vector, and its own mass and ratio for the one-pot tube.
+    linkage: list[str] = []
+    final: list[str] = []
     assert [hole.id for step in index_pcr.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
@@ -416,14 +446,14 @@ def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_
     )
 
 
-def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
-    """Five steps, every one of them there, and a hole wherever no number is sourced."""
+def test_the_final_assembly_is_written_out_from_what_the_build_states(protocol):
+    """Five steps, every one of them there, and no hole left where the build names its own."""
     steps = protocol.steps[-5:]
 
     assert [one.title for one in steps] == [
-        "Pick the working vector",
+        "Pick the working vector and confirm PaqCI opens it",
         "Release the cargo with BsaI and PmeI",
-        "Assemble the cargo into the working vector",
+        "Assemble the cargo into pLVX-TetOne-dom with PaqCI",
         "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
         "Read representation in the final vector",
     ]
@@ -437,18 +467,38 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
     # and the clean-up around the assembly are sized rather than held open.
     assert steps[1].tables[0].components[0].final.endswith("(1000 ng)")
     assert "at 1x the volume" in steps[3].instructions[0]
+    assert steps[2].instructions[0].startswith("Add 75 ng of working vector")
+    assert steps[2].notes[-1] == (
+        "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published "
+        "figure."
+    )
+    assert not [hole.id for step in steps for hole in step.holes]
 
 
-def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
-    """With a vector to move into, H31 goes and the cargo enzyme's own cycling takes its place."""
-    stock = SequenceRecord("ACGATCGTTA" * 20, topology="circular", name="pWORK")
-    working = working_vector(stock, [], site=(0, 1))
+def test_the_demo_puts_its_cassette_at_the_first_of_two_egfp_annotations(plan):
+    """Addgene annotates EGFP twice on this deposit, so which one answers `--working-site` is set.
 
-    steps = whole(replace(plan, working=working).chain()).steps[-5:]
+    The two spans share an end and differ by three bases at the start, and the cassette goes at
+    the start of the first the record lists. Both annotations survive, shifted by what went in.
+    """
+    backbone = read_record(DEMO / "working-vector.gb")
+    before = [one.segments[0].start for one in backbone.features if one.name == "EGFP"]
+    assert before == [2513, 2516]
 
-    assert working.enzyme.name in steps[0].title
-    assert steps[2].programs[0].title == "Golden Gate assembly"
-    assert [hole.id for step in steps for hole in step.holes] == ["H24"]
+    after = [one.segments[0].start for one in plan.working.record.features if one.name == "EGFP"]
+    cassette = len(plan.working.record) - len(backbone)
+    assert after == [start + cassette for start in before]
+    assert plan.working.enzyme.name == "PaqCI"
+
+
+def test_a_build_naming_no_working_vector_carries_the_hole_one_fills(plan):
+    """H31 is the demo's own input doing the work: take the vector away and the hole comes back."""
+    steps = whole(replace(plan, working=None).chain()).steps[-5:]
+
+    assert steps[0].title == "Pick the working vector"
+    assert steps[2].title == "Assemble the cargo into the working vector"
+    assert not steps[2].programs
+    assert [hole.id for step in steps for hole in step.holes] == ["H31", "H31"]
 
 
 def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):

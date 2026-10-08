@@ -62,7 +62,10 @@ GENERATORS: tuple[Generator, ...] = (
     Generator(
         what="the AP-1 library plan",
         directory=REPO / AP1,
-        commands=(f"liulab_synbio igga plan {AP1}/project.json --out {OUT}",),
+        commands=(
+            f"liulab_synbio igga plan {AP1}/project.json --out {OUT} "
+            f"--working-site EGFP --prices {AP1}/prices.csv",
+        ),
         writes=(
             "barcodes.tsv",
             "block-vector-1.dna",

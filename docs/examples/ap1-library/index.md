@@ -10,8 +10,12 @@ package's own and is not in the file.
 
 ```bash
 pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
-  --out docs/examples/ap1-library
+  --out docs/examples/ap1-library \
+  --working-site EGFP --prices docs/examples/ap1-library/prices.csv
 ```
+
+`--working-site EGFP` says where the backbone's ccdB cassette goes, since this one carries
+none. `--prices` points at the price list this lab holds.
 
 To change what these files say, change the code and run that command again. The same inputs
 write the same bytes, so a run that changes nothing leaves them alone.
@@ -24,6 +28,8 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back on both routes |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
+| [working-vector.gb](working-vector.gb) | the backbone the finished library ends in: pLVX-TetOne-Puro-GFP, Addgene 171123, with its eight BsaI and BsmBI sites taken out. Swap in your own backbone and name a site in it |
+| [prices.csv](prices.csv) | what this lab pays for each thing the run buys. Replace every row with your own quote |
 
 `primer_plates` says how this lab lays the primers out: what the vendor delivers in a well,
 what it is resuspended to, and what a working well holds. Leave it out and the primers are
@@ -102,26 +108,34 @@ offering that overhang. The three `block-vector` files are one vector written th
 bases apart. The first is `vector.gb` itself, which is also what round one opens.
 
 The protocol ends by moving the finished library into a working vector, which is where an
-application gets it. Add a `working_vector` key to name the backbone yours ends in and the
-steps carry its enzyme and that enzyme's cycling; this project names none, so those steps say
-what a vector would have fixed instead. Name one and the plan reads its cargo enzyme off that
+application gets it. The `working_vector` key names the backbone this library ends in, and the
+steps then carry its enzyme and that enzyme's cycling. The plan reads the cargo enzyme off that
 backbone first, then keeps every block clear of it: an enzyme a block spells cannot be the one
-that admits the library. A backbone carrying no ccdB cassette yet needs `--working-site` as
-well, which says where one goes.
+that admits the library. Leave the key out and those steps say what a vector would have fixed
+instead. A backbone carrying no ccdB cassette needs `--working-site` as well, which says where
+one goes; here that is EGFP, the feature the cassette goes in at.
+
+## Where the working vector comes from
+
+[working-vector.gb](working-vector.gb) is not the file Addgene sends. Addgene 171123 reads six
+BsaI and two BsmBI sites, and a round of this method would cut every one of them. Taking them
+out is a job of its own, with [its own bench page](working-vector-domestication.html) and its
+own record of what changed. The library run opens with that record already in hand and never
+touches the backbone again.
 
 ## What a price costs
 
-Add a price record of your own and the bill carries money beside every quantity:
+[prices.csv](prices.csv) is what this lab pays. It is a CSV of `key`, `item`, `bands`, `charge`,
+`basis` and `currency`, found the way the ligase matrix is, and a row nobody priced leaves a
+hole rather than a guess. The nine keys are the bill's own: `oligo-pool`, `pool-primers`, each
+enzyme's catalogue number, `60242-2`, `cuvettes` and `plasmid prep`.
 
-```bash
-pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
-  --out library/ --prices prices.csv
-```
-
-The package ships no prices, so none are here. A record is a CSV of `key`, `item`, `bands`,
-`charge`, `basis` and `currency`, found the way the ligase matrix is, and a row nobody priced
-leaves a hole rather than a guess. The keys this plan asks for are the bill's own: `oligo-pool`,
-`pool-primers`, each enzyme's catalogue number, `60242-2`, `cuvettes` and `plasmid prep`.
+Every row says what kind of price it is and the day it was read. Seven are the maker's own list
+price. One, the oligo pool, is this lab's account pricing, because Twist publishes no pool
+prices in public. One, the cells, is a distributor price that may carry a surcharge. Each
+enzyme row divides a pack price by what the pack holds, so the money beside 7.5 µL is what
+those 7.5 µL cost rather than what a vial costs. **Prices move.** Check every row against the
+seller before you order, and swap in your own account's numbers.
 
 ## The figures
 
