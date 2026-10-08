@@ -919,8 +919,9 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 supplier="NEB",
                 catalog=TAQ_CATALOG.split("#")[-1],
                 storage="-20 °C",
-                amount=f"{INDEX_TAQ_UL:g} µL a reaction, {TAQ_STOCK_UNITS_UL:g} U/µL",
-                note=f"one reaction takes {INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
+                amount=f"{INDEX_TAQ_UL:g} µL a reaction",
+                note=f"{TAQ_STOCK_UNITS_UL:g} U/µL, so one reaction takes "
+                f"{INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
                 citation=Citation(TAQ_SOURCE_KEY, "Concentration"),
             ),
             Material(
