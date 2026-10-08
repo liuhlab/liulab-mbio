@@ -1250,10 +1250,7 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Slug the key, or the title where there is no key; refuse an empty title.
-
-        Also refuses a hands-on time below zero.
-        """
+        """Refuse an empty title or a hands-on time below zero, and slug the key or the title."""
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,

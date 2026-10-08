@@ -132,7 +132,7 @@ def reworded() -> tuple[Protocol, Protocol]:
     return before, after
 
 
-def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_the_benchs_ticks() -> None:
+def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_its_ticks() -> None:
     """ADR 0002's own case: an agent rewords the steps, renders again, nothing is ticked twice."""
     marks = [
         sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
