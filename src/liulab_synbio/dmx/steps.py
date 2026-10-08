@@ -119,7 +119,7 @@ def _array_step(one: Validation) -> Step:
             "density picking wants.",
         ),
         notes=(
-            f"This project reads back {floor}: {len(one.designs)} design(s). The rest stay "
+            f"This run reads back {floor}: {len(one.designs)} design(s). The rest stay "
             "polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it.",
         ),

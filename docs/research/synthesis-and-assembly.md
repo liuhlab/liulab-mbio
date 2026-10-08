@@ -480,7 +480,7 @@ so the judgement is shared and only the floor travels with the route.
 consensus depth above 150 was measured on a pooled amplicon carrying four UMIs, where 1,536 wells
 demultiplex in-read. LevSeq's twenty wanted and ten tolerable were measured on one amplicon per
 well, with the index on the primer. Picking one of the two for both routes would apply a figure
-to a library prep that never produced it. Each is a default a project may raise. The wanted depth
+to a library prep that never produced it. Each is a default a build may raise. The wanted depth
 is exceeded; the tolerable one is reached, so a well at exactly ten reads warns rather than going
 unjudged.
 
@@ -637,7 +637,7 @@ The seated plasmid itself is no longer unsimulated. The carrier is supplied open
 point: `dmx/addgene/pCR-Blunt II-TOPO.dna` carries a single head-to-head `GCCCTT`/`AAGGGC` run,
 and the Zero Blunt TOPO user guide (`bench/thermo/zeroblunttopo_man.pdf`) says topoisomerase I
 cleaves after 5'-CCCTT on each strand, which puts the blunt point at **offset 336** of the
-3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.dmx.seating.seat` inserts a
+3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.dmx.carrier.seat` inserts a
 part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
 keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
 overhang pair, backbone whole. The carrier's one BsaI site is at **797**, inside `ccdB`
@@ -985,7 +985,7 @@ than it read.
   the difference as wording; #224 measured it and it is not. The planner's first round opens the
   destination with the internal enzyme, ligates the N part list released by the external enzyme,
   transforms it and sizes it for 24 products — the same reaction as rounds 2 and 3, and a
-  24-member library at the end of it. The method's seating step is a different reaction: BsmBI,
+  24-member library at the end of it. The method's carrier step is a different reaction: BsmBI,
   one well a part, 72 parts into a carrier, and no library made. **One round a position is what
   the pipeline models**, and the method's accounting needs a carrier the pipeline has none of.
   That is a design question, filed as the fifth item of #223.

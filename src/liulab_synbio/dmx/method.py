@@ -32,7 +32,7 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_synbio.dmx.kit import GROUP_SIZE, GROUPS, Kit, KitBarcode
 
-#: Colonies picked per design. Four is Lund's only measured anchor, and it is a project input
+#: Colonies picked per design. Four is Lund's only measured anchor, and it is a build's input
 #: rather than a constant of the method.
 COLONIES_PER_DESIGN = 4
 
@@ -146,13 +146,13 @@ class Route:
     """One way of marking a well, and how deep its read has to be before anyone calls it.
 
     The two routes differ in their marking step, their plate and their floor; the picking, the
-    pass rule and the reformat are shared. Which one a project runs is the project's choice.
+    pass rule and the reformat are shared. Which one a build runs is the build's choice.
 
     Parameters
     ----------
     name
         What the marking step does: ``"barcode ligation"`` or ``"index PCR"``. It is both the
-        name the page prints and the key a project names a route by.
+        name the page prints and the key a build names a route by.
     marking
         What the step does, in a few words.
     well_axes
@@ -163,7 +163,7 @@ class Route:
     wanted_reads
         A well is called **above** this mark. Qian publishes a consensus depth above 150 and
         LevSeq's SI checklist an alignment count above 20, so neither route calls a well landing
-        exactly on it. A project may raise it.
+        exactly on it. A build may raise it.
     tolerable_reads
         The mark at or above which a well still carries a verdict; `None` where the route
         publishes one number and has no warn band. LevSeq's SI routes a well at ``<=20`` into a
@@ -225,7 +225,7 @@ ROUTE_INDEX_PCR = Route(
     source="LevSeq",
 )
 
-#: Both routes, by the name a project names one with.
+#: Both routes, by the name a build names one with.
 ROUTES: dict[str, Route] = {
     ROUTE_LIGATION.name: ROUTE_LIGATION,
     ROUTE_INDEX_PCR.name: ROUTE_INDEX_PCR,
@@ -322,7 +322,7 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     A well below the route's tolerable depth carries **no verdict**, not a failure: it is read
     again or picked again, and reformatting does not compact it out. From the tolerable mark up
     to the wanted one it warns; above the wanted one it passes. A route with no tolerable mark
-    has no warn band. `wanted` raises the route's own mark, which a project may do and may not
+    has no warn band. `wanted` raises the route's own mark, which a build may do and may not
     lower.
 
     Raises
@@ -342,8 +342,8 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     mark = route.wanted_reads if wanted is None else wanted
     if mark < route.wanted_reads:
         raise ValueError(
-            f"the {route.name} route wants {route.wanted_reads} reads a well and a project may "
-            f"raise that, not lower it to {mark}"
+            f"the {route.name} route wants {route.wanted_reads} reads a well, and that mark "
+            f"may be raised, not lowered to {mark}"
         )
     status: Status | None = None
     if reads > mark:
@@ -419,7 +419,7 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     No floor reads nothing, because validation is optional and a library headed for a pooled
     screen takes its identity from that screen. A floor of zero reads every design. Nothing here
     supplies a default: `clean_colony_chance` gives a design's chance of a clean colony, not the
-    chance worth paying to check, and that is the project's own call.
+    chance worth paying to check, and that is the build's own call.
 
     Raises
     ------
@@ -618,9 +618,9 @@ class Validation:
     Parameters
     ----------
     route
-        The route the project named.
+        The route the build named.
     designs
-        The designs read back, which `validated` chose from the project's floor.
+        The designs read back, which `validated` chose from the build's floor.
     floor
         That floor, carried so the protocol can print it beside each design's chance.
     colonies
@@ -705,7 +705,7 @@ def validation(
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
-    `None` is the answer for a project that states no floor and for one whose floor is above
+    `None` is the answer for a build that states no floor and for one whose floor is above
     every design: either way nothing is read, and a protocol then carries no validation at all.
 
     `selection` is what the caller read off the vector's marker. Left empty, every plate says

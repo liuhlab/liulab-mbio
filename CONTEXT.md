@@ -698,6 +698,17 @@ each floor was measured on its own library prep.
 _Avoid_: the validation pipeline, read-back pipeline, QC
 _Package_: liulab_synbio
 
+### Carrier
+
+The plasmid one **part** is kept in until it is wanted: one part a well, each well named by the
+part sitting in it. Parts go in before any **round** runs, and the releasing enzyme reads no site
+in the backbone, so a part is cut back out on its own and the plasmid stays whole. A carrier step
+is not a round: a round joins a part list to the library in one tube and hands back a pool, while
+this hands back one plasmid a well and makes no library. It is also not a **seating**, which is
+where things sit in a plate — a carrier holds a part, a seating says which well holds what.
+_Avoid_: holding vector, shuttle vector, seating (where things sit in a plate, and its own entry)
+_Package_: liulab_synbio
+
 ### Validation floor
 
 The **fragment count** at or above which a design is read back one well at a time. A **build**

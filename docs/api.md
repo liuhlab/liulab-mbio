@@ -465,8 +465,8 @@ caller would.
 `kit` is the barcode kit a user holds, read from their own copy because the sequences are not
 shipped. `method` holds the two marking routes, each route's depth floor, a well's derived
 address and the pass rule, with the document each number came from. `steps` writes them up as
-protocol steps. `seating` is the method's carrier step — one part a well, nothing pooled at the
-end — which is why it is no **round**.
+protocol steps. `carrier` holds the method's carrier step — one part a well, nothing pooled at
+the end — which is why it is no **round**.
 
 ::: liulab_synbio.dmx
     options:
@@ -478,7 +478,7 @@ end — which is why it is no **round**.
 
 ::: liulab_synbio.dmx.steps
 
-::: liulab_synbio.dmx.seating
+::: liulab_synbio.dmx.carrier
 
 ## The command line
 
