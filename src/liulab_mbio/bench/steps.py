@@ -463,7 +463,7 @@ def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
 def quantify_step(amounts: Sequence[Amount]) -> Step:
     """Return the step that measures what the next reaction is about to take."""
     wanted = tuple(
-        f"{amount.name}: {amount.pmol:g} pmol is {amount.nanograms:g} ng, so "
+        f"{amount.name}: {number(amount.pmol)} pmol is {amount.nanograms:g} ng, so "
         f"{amount.nanograms / DNA_VOLUME_UL:.0f} ng/µL or more fits in {DNA_VOLUME_UL:g} µL."
         for amount in amounts
     )

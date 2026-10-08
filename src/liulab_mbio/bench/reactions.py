@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.steps import listed
-from liulab_mbio.protocol.model import Component, ReactionTable
+from liulab_mbio.protocol.model import Component, ReactionTable, number
 
 #: What fills a reaction to volume, where the method names nothing of its own to go in with it.
 WATER = "Nuclease-free water"
@@ -74,7 +74,7 @@ def dna_components(amounts: Sequence[Amount]) -> tuple[Component, ...]:
         Component(
             amount.name,
             amount.volume_ul,
-            final=f"{amount.pmol:g} pmol ({amount.nanograms:g} ng)",
+            final=f"{number(amount.pmol)} pmol ({amount.nanograms:g} ng)",
             master_mix=False,
         )
         for amount in amounts

@@ -28,6 +28,7 @@ from liulab_mbio.cloning.restriction.bench import (
 from liulab_mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from liulab_mbio.cloning.restriction.ligation import Junction
 from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.protocol.model import number
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import DAM_SITE, DCM_SITE, CutSite, find_sites
 
@@ -218,9 +219,9 @@ def ratio_check(backbone: Amount, insert: Amount) -> Check:
     ratio = insert.pmol / backbone.pmol
     low, high = RATIO_RANGE
     said = (
-        f"{ratio:g}:1 insert to vector -- {insert.pmol:g} pmol ({insert.nanograms:g} ng) of "
-        f"{insert.name} against {backbone.pmol:g} pmol ({backbone.nanograms:g} ng) of "
-        f"{backbone.name}"
+        f"{ratio:g}:1 insert to vector -- {number(insert.pmol)} pmol "
+        f"({insert.nanograms:g} ng) of {insert.name} against {number(backbone.pmol)} pmol "
+        f"({backbone.nanograms:g} ng) of {backbone.name}"
     )
     return Check(
         "ligation ratio",
