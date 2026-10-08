@@ -217,42 +217,53 @@ def test_the_flow_chart_says_where_each_handed_name_comes_from(index: Node) -> N
     assert said["library"] == "the run ends holding it"
 
 
+def schedule(index: Node) -> tuple[list[list[str]], list[str]]:
+    """The schedule's protocol rows and its total, and the wait row under each protocol."""
+    [table] = index.find_all("table", cls="schedule")
+    rows = [[cell.text for cell in row.find_all(("th", "td"))] for row in table.find_all("tr")]
+    waiting = [row.text for row in table.find_all("tr", cls="wait-row")]
+    return [row for row in rows if len(row) > 1], waiting
+
+
 def test_the_schedule_holds_each_protocol_and_totals_the_seconds_they_hold(
     index: Node, project: Project
 ) -> None:
-    [table] = index.find_all("table", cls="schedule")
-    rows = [[cell.text for cell in row.find_all(("th", "td"))] for row in table.find_all("tr")]
+    rows, _ = schedule(index)
     body = rows[1:-1]
     assert [row[0] for row in body] == [one.title for one in project.protocols]
     assert [row[1] for row in body] == ["1", "2", "2"]
     assert [row[2] for row in body] == ["no sourced number", "1 h", "3 min"]
-    total = sum(one.held_seconds[0] for one in project.protocols)
-    assert total == 3780.0
+    assert sum(one.held_seconds[0] for one in project.protocols) == 3780.0
     assert rows[-1][2] == "1 h 3 min"
 
 
 def test_the_schedule_counts_the_steps_holding_nothing_rather_than_timing_them(
     index: Node, project: Project
 ) -> None:
-    [table] = index.find_all("table", cls="schedule")
-    rows = [[cell.text for cell in row.find_all(("th", "td"))] for row in table.find_all("tr")]
+    rows, _ = schedule(index)
     assert [row[-1] for row in rows[1:-1]] == ["1", "1", "1"]
     assert rows[-1][-1] == "3"
     assert sum(one.held_seconds[1] for one in project.protocols) == 3
 
 
 def test_the_schedule_draws_a_hole_where_nobody_stated_a_number(index: Node) -> None:
-    [table] = index.find_all("table", cls="schedule")
-    rows = [[cell.text for cell in row.find_all(("th", "td"))] for row in table.find_all("tr")]
-    assert rows[0][3:6] == ["Hands-on", "Unattended", "Waiting"]
+    rows, _ = schedule(index)
+    assert rows[0][3:5] == ["Hands-on", "Unattended"]
     # Nothing states the hands-on share of the first two protocols, so neither it nor the
     # unattended share it would be subtracted from reads as a figure.
-    assert rows[1][3] == rows[1][4] == "no sourced number"
+    assert rows[1][3] == "no sourced number"
+    assert rows[1][4] == "no sourced number"
     assert "1 min" in rows[3][3]
-    assert rows[1][5].startswith("Waiting on the pool to arrive")
-    assert "10-15 working days" in rows[1][5]
-    assert rows[2][5] == "none recorded"
-    assert "no sourced number" in rows[3][5]
+
+
+def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(
+    index: Node,
+) -> None:
+    _, waiting = schedule(index)
+    assert waiting[0].startswith("Waiting on the pool to arrive")
+    assert "10-15 working days" in waiting[0]
+    assert waiting[1] == "No waiting recorded."
+    assert "no sourced number" in waiting[2]
 
 
 def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocols(
@@ -315,10 +326,10 @@ def test_the_reagents_page_lists_the_equipment_the_plasticware_and_the_run_bill(
         item.find_all("strong")[0].text: item.find_all("span", cls="used-in")[0].text
         for item in main.find_all("li", cls="kit")
     }
-    assert equipment["Thermocycler"] == "Order the pool, Build the blocks"
-    assert equipment["Plate reader"] == "Build the blocks"
-    assert equipment["pool tube"] == "Build the blocks"
-    assert equipment["blocks"] == "Build the blocks"
+    assert equipment["Thermocycler"] == "used in Order the pool, Build the blocks"
+    assert equipment["Plate reader"] == "used in Build the blocks"
+    assert equipment["pool tube"] == "used in Build the blocks"
+    assert equipment["blocks"] == "used in Build the blocks"
     [bill] = main.find_all("section", cls="bill")
     assert "oligo pool" in bill.text
     assert "1200.00" in bill.text
@@ -332,14 +343,17 @@ def test_the_references_page_names_every_protocol_citing_each_document(project: 
         for item in listed.find_all("li")
     }
     assert cited == {
-        "Smith 2020": "Order the pool, Build the blocks",
-        "Jones 2019": "Build the blocks",
+        "Smith 2020": "cited by Order the pool, Build the blocks",
+        "Jones 2019": "cited by Build the blocks",
     }
     sources = {
         item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
         for item in main.find_all("section", cls="sources")[0].find_all("li")
     }
-    assert sources == {"NEB": "Order the pool, Build the blocks", "M0491": "Build the blocks"}
+    assert sources == {
+        "NEB": "cited by Order the pool, Build the blocks",
+        "M0491": "cited by Build the blocks",
+    }
 
 
 def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) -> None:

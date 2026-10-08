@@ -413,7 +413,7 @@ def _flow_item(item: Item, came_from: str) -> str:
     said = came_from or "nothing in the run hands this over"
     dangling = "" if came_from else " is-dangling"
     wanted = escape(", ".join(item.spec))
-    spec = f' <span class="muted">{wanted}</span>' if item.spec else ""
+    spec = f' <span class="muted">· {wanted}</span>' if item.spec else ""
     return (
         f'<li class="flow-hand-item{dangling}">'
         f'<span class="flow-item">{escape(item.name)}</span> '
@@ -422,15 +422,9 @@ def _flow_item(item: Item, came_from: str) -> str:
     )
 
 
-#: The schedule's columns after the protocol's own name, each with how its cells are set.
-SCHEDULE_COLUMNS = (
-    ("Steps", "num"),
-    ("Held", "num"),
-    ("Hands-on", "num"),
-    ("Unattended", "num"),
-    ("Waiting", ""),
-    ("Holding nothing", "num"),
-)
+#: The schedule's columns after the protocol's own name. The waiting goes in a row of its own,
+#: because how long a vendor takes is whatever they say and no column is wide enough for it.
+SCHEDULE_COLUMNS = ("Steps", "Held", "Hands-on", "Unattended", "Holding nothing")
 
 
 def _schedule(project: Project, folder: Folder) -> str:
@@ -448,10 +442,12 @@ def _schedule(project: Project, folder: Folder) -> str:
         time = _time_of(protocol)
         totals = totals.and_(time)
         rows.append(
-            f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>{time.cells()}</tr>'
+            f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
+            f'{time.cells()}</tr><tr class="wait-row"><td colspan="6">{_waiting(time.waits)}'
+            "</td></tr>"
         )
     head = "<th>Protocol</th>" + "".join(
-        _cell("th", css, escape(label)) for label, css in SCHEDULE_COLUMNS
+        f'<th class="num">{escape(label)}</th>' for label in SCHEDULE_COLUMNS
     )
     foot = f"<tr><th>Total</th>{totals.cells()}</tr>"
     return (
@@ -499,13 +495,9 @@ class _Time:
             _taken(self.held, self.steps - self.blank),
             _taken(self.hands_on, self.hands_said, self.steps),
             _taken(self.unattended, self.unattended_said, self.steps),
-            _waiting(self.waits),
             str(self.blank),
         )
-        return "".join(
-            _cell("td", css, inner)
-            for (_, css), inner in zip(SCHEDULE_COLUMNS, filled, strict=True)
-        )
+        return "".join(f'<td class="num">{inner}</td>' for inner in filled)
 
 
 def _taken(seconds: float, said: int, steps: int = 0) -> str:
@@ -524,9 +516,9 @@ def _taken(seconds: float, said: int, steps: int = 0) -> str:
 
 
 def _waiting(waits: tuple[Wait, ...]) -> str:
-    """Return the waiting cell: what is waited on and for how long, or that nothing recorded any."""
+    """Return the wait row: what is waited on and for how long, or that nothing recorded any."""
     if not waits:
-        return '<span class="muted">none recorded</span>'
+        return '<span class="muted">No waiting recorded.</span>'
     return _waits(waits)
 
 
@@ -576,8 +568,8 @@ def _run_hole_list(project: Project, folder: Folder, holes: tuple[Hole, ...]) ->
     items = "".join(
         _hole(
             hole,
-            f' <a href="{escape(found[hole.id][1][0])}#hole-{escape(hole.id)}">'
-            f"{escape(found[hole.id][1][1])}</a>",
+            f' <span class="hole-page">on <a href="{escape(found[hole.id][1][0])}'
+            f'#hole-{escape(hole.id)}">{escape(found[hole.id][1][1])}</a></span>',
         )
         for hole in holes
     )
@@ -634,7 +626,7 @@ def _kit(project: Project) -> str:
     items = "".join(
         f'<li class="kit"><strong>{escape(name)}</strong>'
         + (f' <span class="muted">{escape(what)}</span>' if what else "")
-        + f' <span class="used-in">{escape(", ".join(dict.fromkeys(names)))}</span></li>'
+        + f' <span class="used-in">used in {escape(", ".join(dict.fromkeys(names)))}</span></li>'
         for (name, what), names in takers.items()
     )
     return (
@@ -838,8 +830,9 @@ def _header(protocol: Protocol, *, toc: bool = True, place: str = "") -> str:
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
-            f'<div class="toolbar"><span class="progress" aria-live="polite">0 of {count} steps'
-            ' done</span><button type="button" class="print">Print</button>'
+            f'<div class="toolbar"><span class="progress" aria-live="polite">0 of '
+            f"{_count(count, 'step')} done</span>"
+            '<button type="button" class="print">Print</button>'
             '<button type="button" class="clear">Clear checks</button></div>\n'
         )
         if toc:
@@ -1255,7 +1248,7 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
             if source.url
             else ""
         )
-        + (f' <span class="cited-by">{escape(cited[key])}</span>' if cited else "")
+        + (f' <span class="cited-by">cited by {escape(cited[key])}</span>' if cited else "")
         + "</li>"
         for key, source in sources.items()
     )
@@ -1485,7 +1478,7 @@ def _references(references: tuple[Reference, ...], cited: tuple[str, ...] = ()) 
     items = "".join(
         f"<li>{escape(r.text)}"
         + (f' <a href="{escape(r.url)}" rel="noreferrer">{escape(r.url)}</a>' if r.url else "")
-        + (f' <span class="cited-by">{escape(cited[i])}</span>' if cited else "")
+        + (f' <span class="cited-by">cited by {escape(cited[i])}</span>' if cited else "")
         + "</li>"
         for i, r in enumerate(references)
     )

@@ -22,6 +22,11 @@
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -38,7 +43,7 @@
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -70,7 +75,7 @@
     if (!marks || !label || !total) return;
     var done = 0;
     for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + total + " steps done";
+    label.textContent = done + " of " + steps(total) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 

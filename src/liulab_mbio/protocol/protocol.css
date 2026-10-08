@@ -244,8 +244,15 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .is-dangling .flow-from { color: var(--fail); }
 .flow-end { margin: 0.5rem 0 0; }
 
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
 .schedule td, .schedule th { vertical-align: top; }
-.schedule .waits { font-size: 0.95em; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
 .waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
 .wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
 .step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
