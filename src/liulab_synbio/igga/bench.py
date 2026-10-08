@@ -8,13 +8,32 @@ mass becomes picomoles at the length of the DNA actually being cut or ligated, t
 Two sourced numbers are easy to get wrong, so both are named rather than written into a step:
 both growth steps run at `GROWTH_CELSIUS` and not at 37 °C, and the two SPRI ratios differ.
 
-No reaction table is built here. The method publishes neither the ligase's units nor its volume,
-and the enzymes a round uses belong to the scheme.
+The reactions and the cycling a round runs are here too, because every protocol of the chain
+that cuts, joins or grows reads them from one place. The method publishes neither the ligase's
+units nor its volume, so the last line of a ligation is the supplier's own, and the enzymes a
+round uses belong to the scheme.
 """
 
+from collections.abc import Sequence
+from dataclasses import KW_ONLY, dataclass
+
 from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
-from liulab_mbio.bench.reactions import fits
-from liulab_mbio.protocol.model import Reference
+from liulab_mbio.bench.materials import Electroporation, electroporation
+from liulab_mbio.bench.reactions import fits, reaction_table
+from liulab_mbio.bench.steps import listed
+from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.protocol.model import (
+    Component,
+    Incubation,
+    ReactionTable,
+    Reference,
+    Stage,
+    ThermocyclerProgram,
+)
+from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sites import find_sites
+from liulab_synbio.igga.coverage import RoundCoverage
+from liulab_synbio.igga.method import Scheme
 
 #: DNA into one digest, ng, and the volume it is cut in, with CutSmart buffer, µL.
 #: METHOD DETAILS p. e4, which runs the last transfer's digest on the same numbers.
@@ -210,3 +229,159 @@ REFERENCES: tuple[Reference, ...] = (
         url="https://doi.org/10.1016/j.cell.2026.07.054",
     ),
 )
+
+
+#: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
+#: names all three and publishes neither the ligase's units nor either buffer's strength.
+CUTSMART = "CutSmart Buffer"
+LIGASE = "T7 DNA Ligase"
+LIGASE_BUFFER = "StickTogether DNA Ligase Buffer"
+
+#: What each clean-up is done with. The method gives the two volume ratios and not the product.
+SPRI_BEADS = "SPRI paramagnetic beads"
+
+#: The electrocompetent strain the method names, and who sells it.
+STRAIN = "Endura ElectroCompetent Cells"
+STRAIN_SUPPLIER = "Lucigen"
+STRAIN_CATALOG = "60242-2"
+
+
+def pulse() -> Electroporation:
+    """Return the strain's own program, which belongs to the cells and not to the step.
+
+    Raises
+    ------
+    LookupError
+        If the package stops shipping a program for these cells, rather than printing none.
+    """
+    found = electroporation(STRAIN_CATALOG)
+    if found is None:
+        raise LookupError(f"no electroporation program ships for {STRAIN_CATALOG}")
+    return found
+
+
+@dataclass(frozen=True, slots=True)
+class RoundBench:
+    """What one round takes at the bench, computed from that round's own lengths.
+
+    Parameters
+    ----------
+    number
+        Which round it is, counting from one.
+    position
+        The position it fills, which names its part list.
+    destination_digest, donor_digest
+        What goes into each of the two digests: the library built so far, and the part list.
+    ligation
+        What the ligation takes, the opened destination first and the released part list second.
+    transformation
+        The most of the purified ligation one electroporation takes.
+    coverage
+        What this round has to cover, and what the colonies asked for leave out.
+    """
+
+    number: int
+    position: str
+    _: KW_ONLY
+    destination_digest: Amount
+    donor_digest: Amount
+    ligation: tuple[Amount, Amount]
+    transformation: Amount
+    coverage: RoundCoverage
+
+
+def choppers(scheme: Scheme) -> tuple[tuple[Enzyme, ...], tuple[Enzyme, ...]]:
+    """Return the blunt enzymes each digest carries, the internal digest's first.
+
+    A chopper belongs to the digest whose discarded piece it cuts: the internal stuffer core the
+    internal digest excises, or the external stuffers the external digest leaves behind. One that
+    reads a site in both is named by both, and the method has already refused one that reads a
+    site in neither.
+    """
+    core = SequenceRecord(scheme.internal_stuffer_core)
+    flanks = [
+        SequenceRecord(bases) for bases in (scheme.external_stuffer_5, scheme.external_stuffer_3)
+    ]
+    inside = tuple(one for one in scheme.blunt if find_sites(core, one))
+    outside = tuple(one for one in scheme.blunt if any(find_sites(flank, one) for flank in flanks))
+    return inside, outside
+
+
+def digest_reaction(
+    dna: Amount,
+    enzymes: Sequence[Enzyme],
+    *,
+    volume_ul: float = DIGEST_VOLUME_UL,
+    reactions: int = 1,
+) -> ReactionTable:
+    """Return one digest: the DNA, each enzyme in turn, and the buffer and water that fill it.
+
+    The buffer is one line with the water because the method names `CUTSMART` and not the
+    strength it is supplied at, so its own volume is the supplier's to set.
+
+    Raises
+    ------
+    ValueError
+        If the DNA and the enzymes do not fit `volume_ul`.
+    """
+    return reaction_table(
+        (dna,),
+        tuple(Component(one.supplier_label, ENZYME_UL) for one in enzymes),
+        volume_ul=volume_ul,
+        title=f"Digest with {listed([one.name for one in enzymes])}",
+        filler=f"{CUTSMART} and nuclease-free water",
+        reactions=reactions,
+    )
+
+
+def digest_program(enzymes: Sequence[Enzyme]) -> ThermocyclerProgram:
+    """Return the two hours a digest runs: the first enzyme alone, then the rest added to it."""
+    first, rest = enzymes[0], tuple(enzymes[1:])
+    stages = [Stage((Incubation(first.name, DIGEST_CELSIUS, DIGEST_SECONDS),))]
+    if rest:
+        added = listed([one.name for one in rest])
+        stages.append(
+            Stage((Incubation(f"{first.name} and {added}", DIGEST_CELSIUS, DIGEST_SECONDS),))
+        )
+    return ThermocyclerProgram(
+        tuple(stages), title=f"Digest with {listed([one.name for one in enzymes])}"
+    )
+
+
+def ligation_reaction(
+    amounts: tuple[Amount, Amount],
+    *,
+    volume_ul: float = LIGATION_VOLUME_UL,
+    reactions: int = 1,
+) -> ReactionTable:
+    """Return one round's ligation: the two digest fragments, then the ligase, buffer and water.
+
+    The last line carries all three together: the method publishes neither the ligase's units nor
+    its volume, so the split between them is the supplier's to set and is not invented here.
+
+    Raises
+    ------
+    ValueError
+        If the two fragments do not fit `volume_ul`.
+    """
+    return reaction_table(
+        amounts,
+        volume_ul=volume_ul,
+        title="Ligation",
+        filler=f"{LIGASE} in {LIGASE_BUFFER}, and nuclease-free water",
+        reactions=reactions,
+    )
+
+
+def growth_program() -> ThermocyclerProgram:
+    """Return the recovery and the outgrowth, both at `GROWTH_CELSIUS` and not at 37 °C.
+
+    The outgrowth carries the shorter of the two times the method gives; the step says the range.
+    """
+    return ThermocyclerProgram(
+        (
+            Stage((Incubation("Recovery, shaking", GROWTH_CELSIUS, RECOVERY_SECONDS),)),
+            Stage((Incubation("Outgrowth", GROWTH_CELSIUS, OUTGROWTH_SECONDS[0]),)),
+        ),
+        title=f"Recovery and outgrowth at {GROWTH_CELSIUS:g} °C",
+    )

@@ -48,8 +48,14 @@ from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
 from liulab_synbio import dmx
-from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.igga.bench import (
+    RoundBench,
+    digest_amount,
+    ligation_amounts,
+    transformation_amount,
+)
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
+from liulab_synbio.igga.chain import project as chain_of
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
@@ -63,12 +69,11 @@ from liulab_synbio.igga.parts import (
     synthesis_sheet,
 )
 from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.protocols import Run
 from liulab_synbio.igga.reads import ReadPairs, read_pairs, read_sheet
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
 from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
-from liulab_synbio.igga.steps import RoundBench
-from liulab_synbio.igga.steps import project as project_for
 from liulab_synbio.igga.vector import (
     Destination,
     Site,
@@ -309,34 +314,36 @@ class LibraryPlan:
 
     def chain(self) -> Chain:
         """Return this plan as the chain of protocols the bench works through, in order."""
-        return project_for(
-            scheme=self.scheme,
-            positions=self.project.positions,
-            barcode_length=self.project.barcode.length,
-            vector=self.vector,
-            destination=self.destination,
-            part_lists=self.part_lists,
-            standard=self.standard,
-            parts=self.parts,
-            rounds=self.rounds,
-            bench=self.bench,
-            constructs=self.constructs,
-            checks=self.verdict.summary,
-            host=self.host,
-            sheet=PARTS_FILE,
-            barcodes=BARCODE_FILE,
-            validation=self.validation,
-            prices=self.prices,
-            pool=self.pool,
-            pool_sheet=POOL_FILE,
-            primer_sheet=POOL_PRIMER_FILE,
-            block_vectors=self.named_block_vectors,
-            block_records=self.block_vectors,
-            working=self.working,
-            reads=self.reads,
-            marks=self.project.marks,
-            linkage_fidelity=self.project.linkage_fidelity,
-            primer_plates=self.project.primer_plates,
+        return chain_of(
+            Run(
+                scheme=self.scheme,
+                positions=self.project.positions,
+                barcode_length=self.project.barcode.length,
+                vector=self.vector,
+                destination=self.destination,
+                part_lists=self.part_lists,
+                standard=self.standard,
+                parts=self.parts,
+                rounds=self.rounds,
+                bench=self.bench,
+                constructs=self.constructs,
+                checks=self.verdict.summary,
+                host=self.host,
+                sheet=PARTS_FILE,
+                barcodes=BARCODE_FILE,
+                validation=self.validation,
+                prices=self.prices,
+                pool=self.pool,
+                pool_sheet=POOL_FILE,
+                primer_sheet=POOL_PRIMER_FILE,
+                block_vectors=self.named_block_vectors,
+                block_records=self.block_vectors,
+                working=self.working,
+                reads=self.reads,
+                marks=self.project.marks,
+                linkage_fidelity=self.project.linkage_fidelity,
+                primer_plates=self.project.primer_plates,
+            )
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
