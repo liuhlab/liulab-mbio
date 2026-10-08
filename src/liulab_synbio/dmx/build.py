@@ -107,7 +107,6 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     file = Path(path)
     data = jsonfile.read_object(path)
     jsonfile.refuse_keys(data, _REQUIRED, _OPTIONAL, "a build")
-    # A key diff names the file, a value its owner, so the two subjects differ by a possessive.
     return Build(
         jsonfile.text(data, "name", "a build's"),
         designs=jsonfile.named_file(

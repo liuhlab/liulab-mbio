@@ -1,12 +1,10 @@
 """Read a JSON file of what one run chooses, and say what is wrong with it.
 
-A method is code; what one run of it chooses is a file someone writes by hand. These read that
-file's values and refuse a missing key, a key nothing reads, and a value of another JSON type,
-in words naming the key and what belongs there.
+A file someone writes by hand is refused for a missing key, a key nothing reads, and a value of
+another JSON type, in words naming the key and what belongs there.
 
-Nothing here knows which method it reads for. Every refusal takes the subject it names as
-`where`, so the reader supplies its own word for the file it is reading — `"a build"`, or the
-object inside it a key sits in.
+Nothing here knows what it reads for. Every refusal takes as `where` the subject it names, so a
+caller supplies its own word for the file, or for the object inside it a key sits in.
 """
 
 import json
@@ -98,7 +96,7 @@ def number(data: Mapping[str, Any], key: str, where: str) -> float:
     return float(value)
 
 
-def sequence(data: Mapping[str, Any], key: str, where: str) -> Sequence[Any]:
+def listing(data: Mapping[str, Any], key: str, where: str) -> Sequence[Any]:
     """Return one list of values.
 
     Raises

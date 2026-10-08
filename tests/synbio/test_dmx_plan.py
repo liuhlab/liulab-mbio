@@ -57,7 +57,7 @@ def test_a_build_names_a_sheet_resolved_against_its_own_directory(build):
         ({"validate_from": -1}, "counts fragments"),
         ({"route": "ligation"}, "reads its wells back"),
         ({"route": "barcode ligation", "index_plate": "plate 1"}, "only the 'index PCR' route"),
-        ({"validate_from": "4"}, "not a whole number"),
+        ({"validate_from": "4"}, r"^a build's validate_from is str, not a whole number$"),
     ],
 )
 def test_a_build_is_refused_where_it_is_read(tmp_path, changed, said):

@@ -472,12 +472,11 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     data = jsonfile.read_object(path)
     jsonfile.refuse_keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
-    # A path a build names is refused as its own, so that one subject carries the possessive.
     return Build(
         jsonfile.text(given, "name", "a build"),
         positions=tuple(
             jsonfile.one_text(one, f"positions[{index}]")
-            for index, one in enumerate(jsonfile.sequence(given, "positions", "a build"))
+            for index, one in enumerate(jsonfile.listing(given, "positions", "a build"))
         ),
         parts=jsonfile.named_file(
             file, jsonfile.text(given, "parts", "a build"), "parts", "a build's"
@@ -550,7 +549,7 @@ def read_build(path: str | os.PathLike[str]) -> Build:
         reserved_extra=tuple(
             jsonfile.one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                jsonfile.sequence(given, "reserved_extra", "a build")
+                jsonfile.listing(given, "reserved_extra", "a build")
                 if "reserved_extra" in given
                 else ()
             )
@@ -615,7 +614,7 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
     return {
         quantity: tuple(
             jsonfile.one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(jsonfile.sequence(entry, quantity, "a build's"))
+            for index, one in enumerate(jsonfile.listing(entry, quantity, "a build's"))
         )
         for quantity in entry
     }

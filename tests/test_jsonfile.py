@@ -45,7 +45,7 @@ def test_a_missing_key_and_a_key_nothing_reads_are_both_named(tmp_path):
         (jsonfile.whole, "350", "a build's name is str, not a whole number"),
         (jsonfile.whole, True, "a build's name is bool, not a whole number"),
         (jsonfile.number, True, "a build's name is bool, not a number"),
-        (jsonfile.sequence, "N", "a build's name is str, not a list"),
+        (jsonfile.listing, "N", "a build's name is str, not a list"),
     ],
 )
 def test_a_value_of_another_json_type_is_refused_naming_the_key(read, given, said):

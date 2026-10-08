@@ -1,6 +1,7 @@
 """What a build chooses, what it composes with the method, and what it refuses when read."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -95,7 +96,8 @@ def test_a_completeness_that_is_not_a_chance_is_refused(tmp_path, given):
 
 
 def test_a_path_naming_no_file_is_refused(tmp_path):
-    with pytest.raises(ValueError, match="is no file"):
+    said = f"a build's vector is 'nowhere.dna', and {tmp_path / 'nowhere.dna'} is no file"
+    with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
         read_build(write(tmp_path, vector="nowhere.dna"))
 
 
@@ -123,7 +125,7 @@ def test_an_unknown_key_is_refused_naming_it(tmp_path):
 
 
 def test_a_value_of_another_json_type_is_refused(tmp_path):
-    with pytest.raises(ValueError, match="not a whole number"):
+    with pytest.raises(ValueError, match=r"^a build oligo_length is str, not a whole number$"):
         read_build(write(tmp_path, oligo_length="350"))
 
 
