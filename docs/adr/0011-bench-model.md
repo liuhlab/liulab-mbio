@@ -27,9 +27,8 @@ step using it, and a `when` matches the tube's contents, so *never add PEG to th
 reaction* cannot be edited out of a step that never held it. A rule computing a number stays a
 function.
 
-**A hole is not judged and names its ticket.** The field stays empty and the hole stands beside
-it, so no loader reads a union and no reader sees a guess. A price hole names no issue: a
-missing input is not a defect.
+**A hole is not judged.** The field stays empty and the hole stands beside it, so no loader
+reads a union and no reader sees a guess. A price hole is a missing input, not a defect.
 
 **The bill.** The price record is the user's, read by `bench.prices`, never shipped. Quantities
 compute with no record, and the money is then a hole. Headroom is reported beside each banded
