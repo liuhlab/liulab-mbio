@@ -50,6 +50,30 @@ def row_label(row: int) -> str:
         row -= 1
 
 
+def well_at(well: str) -> tuple[int, int] | None:
+    """Return a well name's 0-based row and column, or `None` where it names neither.
+
+    The inverse of `row_label` with the column read off the digits, so a position a plate
+    could hold reads back as the place it names and anything else says it is not one.
+
+    Examples
+    --------
+    >>> well_at("A1"), well_at("AF48"), well_at("reservoir")
+    ((0, 0), (31, 47), None)
+    """
+    name = well.strip().upper()
+    if not name.isascii():
+        return None
+    cut = len(name) - len(name.lstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+    letters, digits = name[:cut], name[cut:]
+    if not letters or not digits.isdigit():
+        return None
+    row = 0
+    for letter in letters:
+        row = row * 26 + ord(letter) - ord("A") + 1
+    return row - 1, int(digits) - 1
+
+
 _SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
 
 
@@ -856,6 +880,60 @@ class Move:
         _require(self.volume_ul > 0, "a move's volume_ul must be positive")
 
 
+#: A stride in words, one entry per stride a stamp can have. The widest a format allows is 4:
+#: a 1536-well plate sampled into a 96-well one takes every fourth row and column.
+_STRIDES = ("", "", "every other", "every third", "every fourth")
+
+
+@dataclass(frozen=True, slots=True)
+class Stamp:
+    """The one pattern a transfer repeats, in place of the moves that spell it out.
+
+    Destination (row, column) comes from source (``stride`` · row + `row`, ``stride`` ·
+    column + `column`), so three numbers stand for the whole move list and a page can draw
+    the pattern rather than print a row each.
+
+    Parameters
+    ----------
+    stride
+        How far apart the source wells stand: 1 well for well, 2 every other row and column.
+    row, column
+        Where on the source the pattern starts, 0-based.
+    """
+
+    stride: int
+    row: int
+    column: int
+
+    def __post_init__(self) -> None:
+        """Refuse a stride no plate format allows, or a start off the plate."""
+        _require(
+            1 <= self.stride < len(_STRIDES),
+            f"a stamp's stride is 1 to {len(_STRIDES) - 1}, not {self.stride}",
+        )
+        _require(min(self.row, self.column) >= 0, "a stamp starts on the plate")
+
+    @property
+    def start(self) -> str:
+        """The source well the pattern starts at, such as ``A2``."""
+        return f"{row_label(self.row)}{self.column + 1}"
+
+    @property
+    def words(self) -> str:
+        """The pattern as the bench follows it: which source wells, and where it starts.
+
+        Examples
+        --------
+        >>> Stamp(1, 0, 0).words, Stamp(2, 0, 1).words
+        ('each well into the same well', 'every other row and column, starting A2')
+        """
+        if self.stride == 1:
+            if not self.row and not self.column:
+                return "each well into the same well"
+            return f"the same layout, starting {self.start}"
+        return f"{_STRIDES[self.stride]} row and column, starting {self.start}"
+
+
 @dataclass(frozen=True, slots=True)
 class Transfer:
     """Material moved between wells, shown as a table beside a step's prose.
@@ -896,6 +974,41 @@ class Transfer:
             name for move in self.moves for name in (move.source.plate, move.destination.plate)
         )
         return tuple(seen)
+
+    @property
+    def stamp(self) -> Stamp | None:
+        """The one pattern every move repeats, or `None` where the moves are not one pattern.
+
+        A stamp runs one volume from one plate into another and takes every destination well
+        from the source at one stride. That is what the bench does by hand, so a page draws it
+        once instead of printing a row per move; anything else is a list and stays one.
+
+        Examples
+        --------
+        >>> picked = (Well("picked", "A1"), Well("picked", "A3"))
+        >>> moves = tuple(Move(one, Well("index", f"A{n}"), 1.0) for n, one in enumerate(picked, 1))
+        >>> Transfer("Sample a quarter", moves).stamp
+        Stamp(stride=2, row=0, column=0)
+        """
+        if len(self.plates) != 2 or len({move.volume_ul for move in self.moves}) != 1:
+            return None
+        source, destination = self.plates
+        places: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        for move in self.moves:
+            if (move.source.plate, move.destination.plate) != (source, destination):
+                return None
+            at, to = well_at(move.source.well), well_at(move.destination.well)
+            if at is None or to is None:
+                return None
+            places.append((at, to))
+        for stride in range(1, len(_STRIDES)):
+            offsets = {(at[0] - stride * to[0], at[1] - stride * to[1]) for at, to in places}
+            if len(offsets) != 1:
+                continue
+            row, column = offsets.pop()
+            if min(row, column) >= 0:
+                return Stamp(stride, row, column)
+        return None
 
 
 @dataclass(frozen=True, slots=True)

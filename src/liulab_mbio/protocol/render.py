@@ -35,6 +35,7 @@ from liulab_mbio.protocol.model import (
     Reference,
     Rule,
     Source,
+    Stamp,
     Step,
     ThermocyclerProgram,
     Timer,
@@ -1224,29 +1225,74 @@ def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
     return f'<div class="row">{label}{element}</div>', answering
 
 
-def _transfer(transfer: Transfer) -> str:
-    """Return a transfer as a table: where each thing goes, so no step describes it."""
+def _transfer(transfer: Transfer, plates: tuple[Plate, ...] = ()) -> str:
+    """Return a transfer drawn as the pattern it repeats, or as a table where it repeats none.
+
+    A stamp is the two plates with every well it touches filled, since the pattern is what the
+    bench follows and the moves spell out one thing 96 times; those go under a closed toggle.
+    A transfer that is no stamp, or that names a plate `plates` does not declare, is the table
+    it was, because nothing says what its wells look like.
+    """
+    stamp = transfer.stamp
+    declared = {plate.name: plate for plate in plates}
+    source = declared.get(transfer.plates[0])
+    destination = declared.get(transfer.plates[-1])
+    if stamp is None or source is None or destination is None:
+        return (
+            f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
+            f'<span class="muted">{escape(_transfer_meta(transfer))}</span>'
+            f"{_after(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
+        )
+    taken = {move.source.well for move in transfer.moves}
+    filled = {move.destination.well for move in transfer.moves}
+    drawn = "".join(
+        _stamped(f"{word} {one.name}", one, wells, transfer.title)
+        for word, one, wells in (("From", source, taken), ("Into", destination, filled))
+    )
+    meta = _transfer_meta(transfer, stamp)
+    return (
+        f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
+        f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
+        f'{drawn}<details class="moves"><summary>{_count(len(transfer.moves), "move")}'
+        f"</summary>{_moves(transfer)}</details></figure>\n"
+    )
+
+
+def _transfer_meta(transfer: Transfer, stamp: Stamp | None = None) -> str:
+    """Return the caption beside the title: who moves how much, and the pattern if any."""
+    volume = f"{number(transfer.moves[0].volume_ul)} µL each" if stamp else ""
+    return " · ".join(
+        text
+        for text in (
+            transfer.instrument,
+            _count(len(transfer.moves), "move") if stamp else f"{len(transfer.moves)} wells",
+            volume or " → ".join(transfer.plates),
+            stamp.words if stamp else "",
+            transfer.note,
+        )
+        if text
+    )
+
+
+def _stamped(name: str, plate: Plate, wells: set[str], holds: str) -> str:
+    """One plate of a stamp, every well the transfer touches filled and the rest left empty."""
+    drawn = draw_plate(
+        name, plate.rows, plate.columns, plate.row_labels, seating=dict.fromkeys(wells, holds)
+    )
+    return f'<div class="row">{drawn.element()}</div>'
+
+
+def _moves(transfer: Transfer) -> str:
+    """Every move as a row: from, to, and how much."""
     rows = "".join(
         f"<tr><td>{escape(move.source.plate)} {escape(move.source.well)}</td>"
         f"<td>{escape(move.destination.plate)} {escape(move.destination.well)}</td>"
         f'<td class="num">{number(move.volume_ul)}</td></tr>'
         for move in transfer.moves
     )
-    meta = " · ".join(
-        text
-        for text in (
-            transfer.instrument,
-            f"{len(transfer.moves)} wells",
-            " → ".join(transfer.plates),
-            transfer.note,
-        )
-        if text
-    )
     return (
-        f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
-        f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>From</th><th>To</th>'
-        f'<th class="num">µL</th></tr></thead><tbody>{rows}</tbody></table></div></figure>\n'
+        f'<th class="num">µL</th></tr></thead><tbody>{rows}</tbody></table></div>'
     )
 
 
@@ -1344,7 +1390,7 @@ def _step(n: int, step: Step, protocol: Protocol, base: Path, section: str = "")
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
     parts += [_table(f"{key}-table-{i}", t) for i, t in enumerate(step.tables, 1)]
     parts += [_program(p) for p in step.programs]
-    parts += [_transfer(t) for t in step.transfers]
+    parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
         parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')

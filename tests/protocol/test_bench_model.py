@@ -12,13 +12,16 @@ from liulab_mbio.protocol.model import (
     Hole,
     Incubation,
     Material,
+    Move,
     Oligo,
     Protocol,
     ReactionTable,
     Source,
     Stage,
+    Stamp,
     Step,
     ThermocyclerProgram,
+    Transfer,
     Troubleshooting,
     Vessel,
     Well,
@@ -281,3 +284,30 @@ def test_a_label_does_not_excuse_a_seated_well_naming_nothing_declared() -> None
 def test_a_label_off_the_array_is_refused_as_a_seating_is() -> None:
     with pytest.raises(ValueError, match="has no well"):
         plates.plate("picked", 96, labels={"Z1": "quarter 1"})
+
+
+def test_a_transfer_that_repeats_one_pattern_answers_with_the_pattern() -> None:
+    """96 moves of a quarter-sampling are one stride and one start, so a page can draw them."""
+    moved = Transfer(
+        "Sample a quarter",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A2", "A1"), ("A4", "A2"), ("C2", "B1"))
+        ),
+    )
+
+    stamp = moved.stamp
+
+    assert stamp is not None
+    assert stamp == Stamp(2, 0, 1)
+    assert stamp.words == "every other row and column, starting A2"
+
+
+def test_moves_that_repeat_no_one_pattern_stay_a_list() -> None:
+    """A compaction leaves out the wells that failed, so no stride describes it."""
+    pooled = plates.plate("pooled", 96)
+    moved = plates.compact(
+        [Well("picked", "A1"), Well("picked", "B4")], pooled, 2.0, title="Compact"
+    )
+
+    assert moved.stamp is None

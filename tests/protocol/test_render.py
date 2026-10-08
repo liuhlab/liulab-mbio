@@ -11,6 +11,7 @@ from liulab_mbio.protocol import (
     Component,
     Figure,
     Incubation,
+    Move,
     Oligo,
     Plate,
     Protocol,
@@ -19,6 +20,8 @@ from liulab_mbio.protocol import (
     Step,
     ThermocyclerProgram,
     Timer,
+    Transfer,
+    Well,
     read_protocol,
     render_html,
     write_html,
@@ -444,3 +447,45 @@ def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None
     one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
     with pytest.raises(ValueError, match=r"step 1 'Join them'.*'mCherry'"):
         render_html(one, base=data_dir)
+
+
+def _sampled() -> Transfer:
+    return Transfer(
+        "Sample a quarter",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A2", "A1"), ("A4", "A2"), ("C2", "B1"))
+        ),
+        instrument="multichannel pipette",
+    )
+
+
+def test_a_stamp_is_drawn_as_its_two_plates_and_keeps_its_moves_behind_a_toggle() -> None:
+    """One pattern draws once: the move list spells the same thing out a row at a time."""
+    one = Protocol(
+        "Index",
+        plates=(Plate("picked", 384), Plate("index", 96)),
+        steps=(Step("Sample", transfers=(_sampled(),)),),
+    )
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert len(figure.find_all("svg")) == 2
+    caption = figure.find_all("figcaption")[0].text
+    assert "every other row and column, starting A2" in caption
+    assert "3 moves" in caption
+    assert "1 µL each" in caption
+    toggle = figure.find_all("details")[0]
+    assert "open" not in toggle.attrs
+    assert "picked C2" in toggle.text
+
+
+def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table() -> None:
+    """Nothing says what those wells look like, so the moves are all the page has."""
+    one = Protocol("Index", steps=(Step("Sample", transfers=(_sampled(),)),))
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert not figure.find_all("svg")
+    assert not figure.find_all("details")
+    assert "picked C2" in figure.find_all("table")[0].text
