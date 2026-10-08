@@ -454,6 +454,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
     return (
         Step(
             "Set up the BP reaction",
+            key="set-up-bp",
             instructions=(
                 "Thaw the enzyme mix on ice and vortex it briefly twice.",
                 "Pipette the attB DNA, the donor vector and the TE buffer into a tube at room "
@@ -476,6 +477,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
         ),
         Step(
             "Run the BP reaction",
+            key="run-bp",
             instructions=(f"Incubate at {BP_CELSIUS:g} °C for {BP_SECONDS // 3600} hour.",),
             timers=(Timer("BP incubation", BP_SECONDS),),
             expected=(
@@ -502,6 +504,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
             host,
             bp.phenotype,
             title="Transform and plate the BP reaction",
+            key="transform-bp",
             inserts=[bp.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {BP_COLONIES:,} colonies where the whole reaction is transformed "
@@ -525,6 +528,7 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
     """Grow one colony up and purify it, because that is what the LR reaction takes."""
     return Step(
         "Pick and miniprep the entry clone",
+        key="miniprep-entry-clone",
         instructions=(
             "Pick single colonies into overnight cultures on the plate's own antibiotic.",
             "Miniprep each culture and measure what it yielded.",
@@ -563,6 +567,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
     return (
         Step(
             "Set up the LR reaction",
+            key="set-up-lr",
             instructions=(
                 "Thaw the enzyme mix on ice and vortex it briefly twice.",
                 "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
@@ -581,6 +586,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
         ),
         Step(
             "Run the LR reaction",
+            key="run-lr",
             instructions=(f"Incubate at {LR_CELSIUS:g} °C for {LR_SECONDS // 3600} hour.",),
             timers=(Timer("LR incubation", LR_SECONDS),),
             expected=(
@@ -607,6 +613,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             host,
             lr.phenotype,
             title="Transform and plate the LR reaction",
+            key="transform-lr",
             inserts=[lr.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {LR_COLONIES:,} colonies where the whole reaction is transformed "
@@ -693,6 +700,7 @@ def _stop_step(reaction: str) -> Step:
     """End one reaction, which the manual requires before transforming."""
     return Step(
         f"Stop the {reaction} reaction with proteinase K",
+        key=f"stop-{reaction}",
         instructions=(
             f"Add {PROTEINASE_K_UL:g} µL of proteinase K at {PROTEINASE_K_UG_UL:g} µg/µL.",
             f"Incubate at {STOP_CELSIUS:g} °C for {STOP_SECONDS // 60} minutes.",

@@ -527,13 +527,16 @@ def _steps(
     backbone, insert = ligation.pieces
     return (
         *_amplify_steps(amplicon, polymerase),
-        _digest_step(vector, enzymes, vector_pieces, digests[0], keeping=backbone),
+        _digest_step(
+            vector, enzymes, vector_pieces, digests[0], key="digest-vector", keeping=backbone
+        ),
         *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
         _digest_step(
             digested,
             enzymes,
             source_pieces,
             digests[1],
+            key="digest-insert",
             keeping=insert,
             notes=_stubs(amplicon, insert),
         ),
@@ -565,6 +568,7 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
     amount = digest_amount((clone, len(product)))
     return Step(
         f"Check a miniprep by digesting it with {named}",
+        key="diagnostic-digest",
         instructions=(
             "Miniprep two or three of the colonies the PCR called correct.",
             f"Mix the reaction below, {amount.nanograms:g} ng of miniprep first.",
@@ -625,6 +629,7 @@ def _phosphatase_steps(
     return (
         Step(
             f"Dephosphorylate the cut {vector.name}",
+            key="dephosphorylate",
             instructions=(
                 f"Add {units:g} units of rSAP straight into the {vector.name} digest and mix.",
                 f"Incubate at {PHOSPHATASE_CELSIUS:g} °C for {PHOSPHATASE_SECONDS // 60} minutes.",
@@ -751,14 +756,20 @@ def _digest_step(
     pieces: Sequence[Piece],
     amount: Amount,
     *,
+    key: str,
     keeping: Piece,
     notes: Sequence[str] = (),
 ) -> Step:
-    """Cut one record with both enzymes in one tube, carrying the caller's own notes."""
+    """Cut one record with both enzymes in one tube, carrying the caller's own notes.
+
+    `key` says which digest this is, since a run that cuts a record out of itself would name
+    both the same.
+    """
     named = listed([enzyme.name for enzyme in enzymes])
     room = f"{MAX_DNA_FRACTION:.0%}"
     return Step(
         f"Digest {record.name} with {named}",
+        key=key,
         instructions=(
             f"Mix the reaction below, {amount.nanograms:g} ng of {record.name} first.",
             f"Incubate at {_celsius(enzymes)} for {DIGEST_SECONDS // 60} minutes.",
@@ -838,6 +849,7 @@ def _purify_step(
     low, high = gel_recovery(min(backbone.length, insert.length))
     return Step(
         "Separate the digests on a gel and recover the two fragments",
+        key="gel-purify",
         instructions=(
             f"Pour a {percent:g}% agarose gel and load each whole digest beside the ladder.",
             "Run until the bands below are apart.",
@@ -926,6 +938,7 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
     seconds = BLUNT_SECONDS if ligation.blunt else COHESIVE_SECONDS
     return Step(
         "Ligate the insert into the backbone",
+        key="ligate",
         instructions=(
             "Mix the reaction below, the DNA first and the ligase last.",
             f"Hold at {ROOM_CELSIUS:g} °C for {seconds // 60} minutes, or overnight at "

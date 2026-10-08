@@ -310,6 +310,7 @@ def pcr_step(
     """
     return Step(
         pcr_title(name),
+        key=f"pcr-{name}",
         instructions=(
             "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
             f"Mix the master mix and put it in each tube, then add the {template} template.",
@@ -353,6 +354,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
     percent = agarose_percent(sizes)
     return Step(
         "Check the PCRs on a gel",
+        key="pcr-gel",
         instructions=(
             f"Pour a {percent:g}% agarose gel.",
             "Load 5 µL of each reaction beside the ladder.",
@@ -411,6 +413,7 @@ def dpni_step(
     )
     return Step(
         "Digest the plasmid template with DpnI",
+        key="dpni-digest",
         instructions=(
             *(f"Add {DPNI_UNITS} units of DpnI to the {name} PCR and mix." for name in pcrs),
             f"Incubate at {DPNI_CELSIUS:g} °C for {seconds // 60} minutes.",
@@ -446,6 +449,7 @@ def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
     """Return the spin-column cleanup of every amplicon, carrying the caller's own notes."""
     return Step(
         "Purify every amplicon",
+        key="purify-amplicons",
         instructions=(
             "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
         ),
@@ -469,6 +473,7 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
     )
     return Step(
         "Measure every concentration",
+        key="quantify",
         instructions=(
             "Measure each purified amplicon by A260 or with a fluorometer.",
             "Work out the volume that carries the picomoles the next table asks for.",
@@ -496,6 +501,7 @@ def transform_step(
     colonies: str,
     protocol: Transformation = NEB_TRANSFORMATION,
     title: str = "Transform and plate",
+    key: str = "transform",
     expected: Sequence[str] = (),
     notes: Sequence[str] = (),
 ) -> Step:
@@ -515,6 +521,8 @@ def transform_step(
         The volumes and times to run it by, which are the kit manufacturer's.
     title
         The step's, for a method that transforms more than once and has to tell them apart.
+    key
+        The step's handle, which such a method also gives each of its transformations.
     expected, notes
         The caller's own, after the step's.
     """
@@ -536,6 +544,7 @@ def transform_step(
     said.extend(notes)
     return Step(
         title,
+        key=key,
         instructions=(
             f"Thaw {protocol.cells_ul:g} µL of {host} on ice"
             + (
@@ -617,6 +626,7 @@ def colony_pcr_step(
         )
     return Step(
         COLONY_PCR_TITLE,
+        key="colony-pcr",
         instructions=(
             "Touch a well-separated colony with a sterile toothpick and stir it into the "
             "tube until the liquid clouds.",
@@ -675,6 +685,7 @@ def sequencing_step(
     )
     return Step(
         SEQUENCING_TITLE,
+        key="sequencing",
         instructions=(
             "Miniprep two or three colonies that read as correct.",
             "Send each with both sequencing primers.",
@@ -758,6 +769,7 @@ def primer_plate_steps(
     return (
         Step(
             "Order the primers",
+            key="order-primers",
             instructions=(
                 f"Order every primer on the oligo sheet at the top of this page as one dried "
                 f"{stock.wells}-well plate.",
@@ -766,6 +778,7 @@ def primer_plate_steps(
         ),
         Step(
             f"Resuspend the primers to {number(stock_um)} µM",
+            key="resuspend-primers",
             instructions=(
                 f"Add {number(resuspend_ul)} µL of {diluent} to each of the {count} wells.",
                 "Seal the plate, shake it until every pellet is in solution, and spin it down.",
@@ -775,6 +788,7 @@ def primer_plate_steps(
         ),
         Step(
             "Seat the stock plate",
+            key="seat-stock-plate",
             instructions=(
                 f"Check the supplier's plate map against the {stock.name} map below, well by well.",
                 f"Write {stock.name} and the date on the plate skirt.",
@@ -783,6 +797,7 @@ def primer_plate_steps(
         ),
         Step(
             f"Split {len(working)} working plate{plural} at {number(working_um)} µM",
+            key="split-working-plates",
             instructions=(
                 f"Add {number(top_up_ul)} µL of {diluent} to the first {count} wells of each "
                 f"working plate.",
@@ -800,6 +815,7 @@ def primer_plate_steps(
         ),
         Step(
             "Label the plates and store them",
+            key="store-plates",
             instructions=(
                 f"Label {listed((stock.name, *(one.name for one in working)))} with the date.",
                 f"Store every plate at {PRIMER_PLATE_STORAGE}.",

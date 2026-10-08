@@ -547,6 +547,7 @@ def _assembly_step(
     )
     return Step(
         f"Set up the {product.name} reaction",
+        key="set-up-assembly",
         instructions=(
             "Thaw the master mix on ice and mix it well.",
             "Pipette the DNA into the tube first, then the master mix.",
@@ -597,6 +598,7 @@ def _incubation_step(
     tier = product.tier(fragments)
     return Step(
         "Incubate the assembly",
+        key="run-assembly",
         instructions=(
             "Put the tube in the thermocycler and run the program below.",
             "Put the reaction on ice afterwards, or keep it at -20 °C.",

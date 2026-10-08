@@ -419,6 +419,7 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
     total = sum(component.volume_ul for component in table.components)
     return Step(
         "Set up the Golden Gate reaction",
+        key="set-up-assembly",
         instructions=(
             "Thaw the master mix on ice and mix it well; it is viscous.",
             "Pipette the DNA into the tube first, then the rest.",
@@ -457,6 +458,7 @@ def _cycling_step(enzyme: Enzyme, fragments: int, junctions: Sequence[Junction])
     ]
     return Step(
         "Run the Golden Gate program",
+        key="run-assembly",
         instructions=("Put the tube in the thermocycler and run the program below.",),
         programs=tuple(programs),
         expected=tuple(expected),
