@@ -1,10 +1,12 @@
-"""What one well's read came to, where a construct is read back one well at a time.
+"""Reading a construct back one well at a time: how many colonies that takes, and what came back.
 
 A design sits one per well and the well is sequenced and called on its own, so identity stays
-with well position. How a well is marked, and how deep its read has to be before anyone calls
-it, belong to the method doing the marking. What the call is worth once it is back, which wells
-a reformat carries forward, and how often one picked colony is clean at all do not: any method
-reading a construct back per well judges them the same way.
+with well position. The curve sizes the pick that fills those wells; the rest judges what they
+read as. How a well is marked, and how deep its read has to be before anyone calls it, belong
+to the method doing the marking and are not here.
+
+The clean-colony curve is Lund et al. 2024's measurement, recorded in
+``docs/research/synthesis-and-assembly.md``; the protocol that picks the colonies cites it.
 """
 
 import itertools
