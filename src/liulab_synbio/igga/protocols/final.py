@@ -13,6 +13,7 @@ from liulab_mbio.bench.coverage import (
     colonies_for_completeness,
 )
 from liulab_mbio.bench.goldengate import assembly_program
+from liulab_mbio.bench.inactivation import heat_inactivations
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.enzymes import Enzyme
@@ -261,7 +262,7 @@ def _free_step(
                 (Stage((Incubation(named, DIGEST_CELSIUS, DIGEST_SECONDS),)),),
                 title=f"Digest with {named}",
             ),
-            *_kill(enzymes),
+            *heat_inactivations(enzymes),
         ),
         expected=(
             f"The whole {span.end - span.start} bp cargo free, on {scheme.entry_overhang} and "
@@ -280,22 +281,6 @@ def _free_step(
                 "carrying the round's own vector rather than the working one.",
             ),
         ),
-    )
-
-
-def _kill(enzymes: Sequence[Enzyme]) -> tuple[ThermocyclerProgram, ...]:
-    """Return the suppliers' heat inactivations, enzymes agreeing on one sharing a program."""
-    shared: dict[tuple[int, int], list[Enzyme]] = {}
-    for one in enzymes:
-        celsius, minutes = one.heat_inactivation_celsius, one.heat_inactivation_minutes
-        if celsius is not None and minutes is not None:
-            shared.setdefault((celsius, minutes), []).append(one)
-    return tuple(
-        ThermocyclerProgram(
-            (Stage((Incubation("Heat inactivation", float(celsius), minutes * 60),)),),
-            title=f"{listed([one.name for one in named])} heat inactivation",
-        )
-        for (celsius, minutes), named in shared.items()
     )
 
 

@@ -20,7 +20,7 @@ re-exported.
   its `REFERENCES` are one sizing rule's, not this package's.
 - `readback`: what one well's read came to, where a construct is read back one well at a time,
   and how often one picked colony is clean.
-- `inactivation`: an enzyme's heat inactivation.
+- `inactivation`: an enzyme's heat inactivation, and one tube's grouped by it.
 - `materials`: what a material brings with it -- its own program, what it puts in the tube, and
   the rules it carries. A number attaches to the thing that changes it.
 - `plates`: a plate at any format, where each thing sits in it, and the moves between wells.
@@ -44,7 +44,7 @@ from liulab_mbio.bench.amounts import (
     to_pmol,
 )
 from liulab_mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
-from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.inactivation import heat_inactivation, heat_inactivations
 from liulab_mbio.bench.materials import Electroporation, electroporation, material
 from liulab_mbio.bench.oligos import (
     SHEET_COLUMNS,
@@ -246,6 +246,7 @@ __all__ = [
     "fits",
     "gel_step",
     "heat_inactivation",
+    "heat_inactivations",
     "identity_check",
     "listed",
     "material",
