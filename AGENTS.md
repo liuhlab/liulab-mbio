@@ -31,7 +31,7 @@ One direction, bottom to top — nothing lower imports anything higher.
 | Layer | Modules | What it owns |
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
-| files | `io`, `snapgene`, `edits` | reading and writing records; editing spans, and carrying what a record annotates into another one |
+| files | `io`, `snapgene`, `edits`, `jsonfile` | reading and writing records; editing spans, and carrying what a record annotates into another one; reading a hand-written JSON file, and refusing what is wrong with it |
 | biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase`, `reaction`, `split` | shipped enzyme data, cut sites, domestication; reverse translation, whole-sequence codon choice, and whether a span reads in frame without a stop; distance-separated barcode sets and how far apart one stands; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds; one tube, each molecule's role in it and the enzymes acting; where to cut a cargo too long to synthesise |
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF; `plate` draws a plate's wells on the same substrate |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
