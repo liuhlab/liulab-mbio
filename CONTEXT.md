@@ -827,6 +827,20 @@ Format is one parameter, not a kind. A plate carries a **seating** and says noth
 differs between the reactions it holds.
 _Avoid_: microplate, microtitre plate, array
 
+### Stock plate
+
+A plate a set of oligos is resuspended in once and kept at that concentration: the copy nothing
+runs from. Every **working plate** is split from it, so it is thawed only to make one.
+_Avoid_: master plate, mother plate, source plate
+
+### Working plate
+
+A copy of a **stock plate** at the concentration a reaction takes, seated the same way, so a
+well's address names the same oligo on both. One is thawed for one run and thrown away, never
+returned to the freezer; that is a **rule** on the plate as a material, not a field a protocol
+declares. A run splits as many as it has runs ahead of it.
+_Avoid_: daughter plate, aliquot plate, dilution plate
+
 ### Seating
 
 Where each thing sits in a plate: a map from a well to the name of what it holds. A name has to
