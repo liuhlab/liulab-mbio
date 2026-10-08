@@ -1,34 +1,17 @@
-"""The DMX stage of DAD-GGA-DMX: how a well is marked, how deeply it is read, and what passes.
+"""How a well is marked, how deeply it is read, and what reading a plate back takes.
 
-This is the **validating** experiment, not the pooled one. A design sits one per well, the well
-is marked, sequenced and called on its own, and identity stays with well position throughout.
-`liulab_synbio.igga` is iGGA, whose product is a pool nothing re-identifies per member, so
-nothing here is a gate on a library.
-
-Two routes mark a well and one judgement reads them. The barcode ligation route ligates four
-DMX barcodes into the construct in lysate; the index PCR route amplifies each well with one
-barcoded primer pair. The picking,
-the pass rule and the reformat are shared; the marking step, the plate and the depth floor are
-the route's own, because each floor was measured on its own library prep.
-
-**A well's marks are arithmetic, not a recorded draw.** The address factorises across the
-barcode axes and one axis is the plate, so two plates on one flow cell are told apart by
-construction and a demultiplexer can check an address instead of trusting a file.
-
-The 96 barcode sequences are not shipped. They are read from a copy the user holds, the way
-`liulab_mbio.bench.prices` and `liulab_mbio.ligase` read theirs; `read_kit` finds one.
+Two routes mark a well and one judgement reads them, and `liulab_synbio.dmx` says what each
+one is. The picking, the pass rule and the reformat are shared; the marking step, the plate and
+the depth floor are the route's own, because each floor was measured on its own library prep.
 """
 
-import csv
-import itertools
-import os
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
-from pathlib import Path
 
 from liulab_mbio.bench import plates
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.bench.readback import WellVerdict, clean_colony_chance, identity_check
+from liulab_mbio.checks import Check, Status
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
@@ -47,32 +30,11 @@ from liulab_mbio.protocol.model import (
     Troubleshooting,
     Well,
 )
+from liulab_synbio.dmx.kit import GROUP_SIZE, GROUPS, Kit, KitBarcode
 
-#: The kit: 96 plasmids in four groups of 24, used as supplied.
-#: ``docs/research/synthesis-and-assembly-barcode-kit.md``.
-GROUPS = 4
-GROUP_SIZE = 24
-
-#: The overhangs the four groups chain on, read on the strand the cargo reads on, so the four
-#: barcodes assemble in one order and none can be left out.
-CHAIN: tuple[str, ...] = ("AGGA", "GTTC", "CCTT", "TCAG", "TTCC")
-
-#: The two universal primers flanking the design, which exist only after barcoding because they
-#: come from the barcodes. Group 4's 3' constant and the reverse complement of group 1's 5'.
-DMX0 = "TTTGATACGCAGGAAGATGGCCCAC"
-DMX7 = "ATCGGTGACGGCGATTCTCACATTT"
-
-#: Colonies picked per design, and the fragment counts Lund measured a clean colony at. Four is
-#: the only measured anchor and is a project input, not a constant of the method.
+#: Colonies picked per design. Four is Lund's only measured anchor, and it is a project input
+#: rather than a constant of the method.
 COLONIES_PER_DESIGN = 4
-CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
-    (2, 1.0),
-    (3, 0.938),
-    (5, 0.846),
-    (8, 0.667),
-    (12, 0.40),
-    (16, 0.0),
-)
 
 #: The plate each stage uses. Colonies are picked into 384-well plates and four of those are
 #: compressed into one 1536-well plate, which is why the format parameter has to reach 1536.
@@ -149,20 +111,6 @@ BIOASSAY_CATALOG = "Corning #431111"
 #: Columns a pooled 1536-well plate takes, because one saturates. Qian SI Day 4.1.
 POOL_COLUMNS = 2
 
-#: Where the 96 barcode sequences are read from when a caller names no file. The package ships
-#: none; this points at a copy the user holds.
-KIT_ENV = "LIULAB_SYNBIO_DMX_BARCODES"
-
-#: The columns one of those files holds, in any order.
-KIT_COLUMNS = ("name", "group", "index", "overhang5", "umi", "overhang3", "final_seq")
-
-#: What a file has to hold to be one of these, said in the refusal so a caller need not guess.
-KIT_EXPECTED = (
-    f"a tab-separated file with the columns {', '.join(KIT_COLUMNS)}, holding "
-    f"{GROUPS * GROUP_SIZE} rows: {GROUPS} groups of {GROUP_SIZE}, indexed 1 to {GROUP_SIZE} "
-    "within each group, every UMI distinct"
-)
-
 #: The documents these numbers were read from.
 SOURCES: dict[str, Source] = {
     "Qian SI": Source(
@@ -177,75 +125,6 @@ SOURCES: dict[str, Source] = {
         date="2026-10-06",
     ),
 }
-
-
-@dataclass(frozen=True, slots=True)
-class Barcode:
-    """One member of the kit: which group it belongs to, what it spells, and how it chains.
-
-    Parameters
-    ----------
-    name
-        What the kit calls it, such as ``"DMX_1_1"``.
-    group, index
-        Which of the `GROUPS` groups it is in, counting from one, and which of `GROUP_SIZE`.
-    overhang5, overhang3
-        The two overhangs it chains on, which are its group's and not its own.
-    umi
-        The bases that tell it from the rest of its group.
-    sequence
-        The whole barcode as it is ordered.
-    """
-
-    name: str
-    _: KW_ONLY
-    group: int
-    index: int
-    overhang5: str
-    overhang3: str
-    umi: str
-    sequence: str
-
-
-@dataclass(frozen=True, slots=True)
-class Kit:
-    """The 96 barcodes a user holds, grouped as the kit groups them.
-
-    Parameters
-    ----------
-    path
-        The file they were read from, so a report can say which copy was used.
-    barcodes
-        Every barcode, in group and then index order.
-    """
-
-    path: Path
-    barcodes: tuple[Barcode, ...]
-
-    def group(self, group: int) -> tuple[Barcode, ...]:
-        """Return one group's barcodes, in index order.
-
-        Raises
-        ------
-        ValueError
-            If the kit has no such group.
-        """
-        if not 1 <= group <= GROUPS:
-            raise ValueError(f"the kit has groups 1 to {GROUPS}, and {group} is not one of them")
-        return tuple(one for one in self.barcodes if one.group == group)
-
-    def at(self, group: int, index: int) -> Barcode:
-        """Return the barcode at one group and index, both counting from one.
-
-        Raises
-        ------
-        ValueError
-            If the kit holds no barcode there.
-        """
-        found = [one for one in self.group(group) if one.index == index]
-        if not found:
-            raise ValueError(f"the kit holds no barcode {index} of group {group}")
-        return found[0]
 
 
 @dataclass(frozen=True, slots=True)
@@ -407,7 +286,7 @@ def address(route: Route, *, plate: int, well: int) -> Address:
     return Address(route, plate=plate, well=well, well_marks=tuple(marks), plate_mark=plate + 1)
 
 
-def barcodes_for(kit: Kit, one: Address) -> tuple[Barcode, ...]:
+def barcodes_for(kit: Kit, one: Address) -> tuple[KitBarcode, ...]:
     """Return the four kit barcodes an address names, in chain order.
 
     Raises
@@ -421,37 +300,6 @@ def barcodes_for(kit: Kit, one: Address) -> tuple[Barcode, ...]:
             f"address was worked out on the {one.route.name} route"
         )
     return tuple(kit.at(group, mark) for group, mark in enumerate(one.marks, start=1))
-
-
-def read_kit(path: str | os.PathLike[str] | None = None) -> Kit:
-    """Read the 96 barcode sequences from a copy the user holds.
-
-    The package ships none. `path` names the file, or `KIT_ENV` does.
-
-    Raises
-    ------
-    ValueError
-        If no file is named, or the file is not one of these, saying what one is.
-
-    Examples
-    --------
-    >>> read_kit("dmx-barcodes.tsv").barcodes[0].group  # doctest: +SKIP
-    1
-    """
-    named = path if path is not None else os.environ.get(KIT_ENV)
-    if not named:
-        raise ValueError(
-            f"the DMX barcode sequences are not shipped: name the file, or set {KIT_ENV}. "
-            f"It is {KIT_EXPECTED}"
-        )
-    one = Path(named)
-    try:
-        barcodes = _kit_rows(one.read_text(encoding="utf-8-sig").splitlines())
-    except (KeyError, TypeError, ValueError) as error:
-        raise ValueError(
-            f"{one.name} is not the DMX barcode kit ({error}); expected {KIT_EXPECTED}"
-        ) from error
-    return Kit(one, barcodes)
 
 
 def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check:
@@ -498,70 +346,6 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     )
 
 
-def identity_check(called: Sequence[str], designed: str) -> Check:
-    """Return the verdict on whether a well's call is the design, base for base.
-
-    A pass is an exact match across the whole designed region — both entry overhangs, the
-    fragment, the stuffer and the barcode. A silent mismatch is not a pass: it leaves the
-    protein right and the barcode wrong, and a barcode that no longer names its member cannot be
-    put right by the linkage read. More than one consensus is mixed, and mixed fails. No
-    consensus at all is nothing to judge, so it carries no verdict.
-
-    Raises
-    ------
-    ValueError
-        If `designed` is empty.
-
-    Examples
-    --------
-    >>> identity_check(("ACGT",), "ACGT").status
-    'pass'
-    >>> identity_check(("ACGT", "ACGA"), "ACGT").status
-    'fail'
-    """
-    if not designed:
-        raise ValueError("a well is judged against a designed region, and this one is empty")
-    consensus = [one.upper() for one in called]
-    if not consensus:
-        return Check("well_identity", None, 0.0, "no consensus was called from this well")
-    if len(consensus) > 1:
-        return Check(
-            "well_identity",
-            "fail",
-            float(len(consensus)),
-            f"{len(consensus)} consensus sequences: the well is mixed",
-        )
-    if consensus[0] != designed.upper():
-        return Check("well_identity", "fail", 1.0, "the call is not the design, base for base")
-    return Check("well_identity", "pass", 1.0, "the call is the design across its whole length")
-
-
-@dataclass(frozen=True, slots=True)
-class WellVerdict:
-    """What one well's read came to, and whether reformatting carries it forward.
-
-    Parameters
-    ----------
-    well
-        Where the well is, as a plate name and a well name.
-    checks
-        The depth and the identity, in that order.
-    """
-
-    well: Well
-    checks: tuple[Check, ...]
-
-    @property
-    def status(self) -> Status:
-        """The worst verdict the well carries, by `liulab_mbio.checks.worst`."""
-        return worst(one.status for one in self.checks)
-
-    @property
-    def called(self) -> bool:
-        """Whether anything judged this well at all."""
-        return any(one.status is not None for one in self.checks)
-
-
 def judge_well(
     well: Well,
     *,
@@ -584,49 +368,6 @@ def judge_well(
     if depth.status is None:
         return WellVerdict(well, (depth,))
     return WellVerdict(well, (depth, identity_check(called, designed)))
-
-
-def reformat(verdicts: Sequence[WellVerdict]) -> tuple[WellVerdict, ...]:
-    """Return the wells reformatting carries forward: everything that did not fail.
-
-    A well nobody could call is kept. Compacting it out would throw away a design that may be
-    clean and has only been read too thinly.
-
-    Examples
-    --------
-    >>> reformat(())
-    ()
-    """
-    return tuple(one for one in verdicts if one.status != "fail")
-
-
-def clean_colony_chance(fragments: int) -> float:
-    """Return the chance one picked colony carries a clean copy of a design of this many pieces.
-
-    Linear interpolation between Lund's six measured anchors, `CLEAN_COLONY_CURVE`: a design in
-    two pieces came out clean every time, one in sixteen never. Fewer pieces than the first
-    anchor takes the first anchor's value and more than the last takes the last's, because
-    nothing was measured outside them.
-
-    Raises
-    ------
-    ValueError
-        If `fragments` is not positive.
-
-    Examples
-    --------
-    >>> clean_colony_chance(8), clean_colony_chance(16)
-    (0.667, 0.0)
-    """
-    if fragments < 1:
-        raise ValueError(f"a design is built from at least one fragment, got {fragments}")
-    anchors = CLEAN_COLONY_CURVE
-    if fragments <= anchors[0][0]:
-        return anchors[0][1]
-    for (low, left), (high, right) in itertools.pairwise(anchors):
-        if fragments <= high:
-            return left + (right - left) * (fragments - low) / (high - low)
-    return anchors[-1][1]
 
 
 @dataclass(frozen=True, slots=True)
@@ -1482,65 +1223,6 @@ def _call_step(one: Validation) -> Step:
             ),
         ),
     )
-
-
-def _kit_rows(lines: Sequence[str]) -> tuple[Barcode, ...]:
-    """Parse the barcode rows, refusing a file that is not the kit.
-
-    Raises
-    ------
-    ValueError
-        Naming what is wrong with it.
-    """
-    reader = csv.DictReader(lines, delimiter="\t")
-    if missing := sorted(set(KIT_COLUMNS) - set(reader.fieldnames or ())):
-        raise ValueError(f"missing column(s) {', '.join(missing)}")
-    found = [
-        Barcode(
-            row["name"],
-            group=int(row["group"]),
-            index=int(row["index"]),
-            overhang5=row["overhang5"].upper(),
-            overhang3=row["overhang3"].upper(),
-            umi=row["umi"].upper(),
-            sequence=row["final_seq"].upper(),
-        )
-        for row in reader
-    ]
-    _check_kit(found)
-    return tuple(sorted(found, key=lambda one: (one.group, one.index)))
-
-
-def _check_kit(found: Sequence[Barcode]) -> None:
-    """Refuse a kit that is not four groups of 24 with distinct UMIs chaining in one order.
-
-    Raises
-    ------
-    ValueError
-        Naming what is wrong with it.
-    """
-    if len(found) != GROUPS * GROUP_SIZE:
-        raise ValueError(f"{len(found)} rows, not {GROUPS * GROUP_SIZE}")
-    if len({one.umi for one in found}) != len(found):
-        raise ValueError("two rows share a UMI")
-    for group in range(1, GROUPS + 1):
-        members = [one for one in found if one.group == group]
-        if sorted(one.index for one in members) != list(range(1, GROUP_SIZE + 1)):
-            raise ValueError(f"group {group} is not indexed 1 to {GROUP_SIZE}")
-        ends = {(one.overhang5, one.overhang3) for one in members}
-        if len(ends) != 1:
-            raise ValueError(f"group {group} chains on {len(ends)} different overhang pairs")
-    # Head to tail, so a barcode cannot land in the wrong position and none can be left out.
-    # Checked strand-agnostically: a copy held on the map strand spells the chain reversed and
-    # complemented, and the adjacency is the same either way.
-    for group in range(1, GROUPS):
-        left = next(one for one in found if one.group == group)
-        right = next(one for one in found if one.group == group + 1)
-        if left.overhang3 != right.overhang5:
-            raise ValueError(
-                f"group {group} ends on {left.overhang3} and group {group + 1} begins on "
-                f"{right.overhang5}, so the four do not chain head to tail"
-            )
 
 
 #: Where the numbers above come from, ready for a protocol's reference list.

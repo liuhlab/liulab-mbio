@@ -141,8 +141,8 @@ class Project:
     validate_from
         The fragment-count floor at or above which a design is read back one well at a time.
         Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
-        There is no default: `liulab_synbio.dmx.clean_colony_chance` gives a design's chance of
-        a clean colony, not the chance worth paying to check.
+        There is no default: `liulab_mbio.bench.readback.clean_colony_chance` gives a design's
+        chance of a clean colony, not the chance worth paying to check.
     route
         Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
         `validate_from` is, because an unread project needs no route.

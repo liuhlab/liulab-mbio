@@ -8,6 +8,8 @@ it as its own `REFERENCES`; `REFERENCES` here gathers them.
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
+- `readback`: what one well's read came to, where a construct is read back one well at a time,
+  and how often one picked colony is clean.
 - `inactivation`: an enzyme's heat inactivation.
 - `materials`: what a material brings with it -- its own program, what it puts in the tube, and
   the rules it carries. A number attaches to the thing that changes it.
@@ -72,6 +74,13 @@ from liulab_mbio.bench.plates import (
 )
 from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
 from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
+from liulab_mbio.bench.readback import (
+    CLEAN_COLONY_CURVE,
+    WellVerdict,
+    clean_colony_chance,
+    identity_check,
+    reformat,
+)
 from liulab_mbio.bench.steps import (
     ASSEMBLY_UL,
     CELLS_UL,
@@ -143,6 +152,7 @@ REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels
 __all__ = [
     "ASSEMBLY_UL",
     "CELLS_UL",
+    "CLEAN_COLONY_CURVE",
     "COLONY_ALLOWANCE",
     "COLONY_FLANK",
     "COLONY_HOLD_CELSIUS",
@@ -202,12 +212,14 @@ __all__ = [
     "PrimerPlates",
     "SangerRead",
     "Transformation",
+    "WellVerdict",
     "agarose_percent",
     "badges",
     "bill",
     "card",
     "catalogued",
     "choose_ladder",
+    "clean_colony_chance",
     "cleanup_step",
     "colony_pcr_check",
     "colony_pcr_master_mix_component",
@@ -224,6 +236,7 @@ __all__ = [
     "fits",
     "gel_step",
     "heat_inactivation",
+    "identity_check",
     "listed",
     "material",
     "molecular_weight",
@@ -244,6 +257,7 @@ __all__ = [
     "reaction_table",
     "read_phenotype",
     "read_prices",
+    "reformat",
     "sanger_primers",
     "seat",
     "selection_marker",

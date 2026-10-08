@@ -680,7 +680,7 @@ certain to hopeless across one project's own designs, so a project-wide on-off w
 two-fragment design that never needs it, or skip every long one that does.
 
 The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
-`liulab_synbio.dmx.CLEAN_COLONY_CURVE` carries it. #306 restores the two anchors it dropped,
+`liulab_mbio.bench.readback.CLEAN_COLONY_CURVE` carries it. #306 restores the two anchors it dropped,
 and #305 builds the floor.
 
 ### 6.13 The pass mark for the library reads — iGGA
