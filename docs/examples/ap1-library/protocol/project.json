@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "e3975dac0e84f1b2",
+  "key": "ec8fda1005b094ca",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -11583,7 +11583,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "c183aa353f049161",
+      "key": "d6e711222ef7223a",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -12459,7 +12459,7 @@
           "gels": [],
           "expected": [
             "One pool of plasmid, 6161 bp per molecule. This is the destination round 2 opens.",
-            "BbsI still cuts it and BsaI no longer does."
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {
@@ -12986,7 +12986,7 @@
           "gels": [],
           "expected": [
             "One pool of plasmid, 6368 bp per molecule. This is the destination round 3 opens.",
-            "BbsI still cuts it and BsaI no longer does."
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {
@@ -13513,7 +13513,7 @@
           "gels": [],
           "expected": [
             "One pool of plasmid, 6435 bp per molecule. This is the finished library.",
-            "BbsI still cuts it and BsaI no longer does."
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {

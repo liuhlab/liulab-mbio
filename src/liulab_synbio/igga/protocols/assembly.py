@@ -32,6 +32,7 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.sequence import span_text
+from liulab_mbio.sites import find_sites
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import (
     DIGEST_VOLUME_UL,
@@ -581,12 +582,18 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
 
 
 def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
-    """Prep the round's plasmid, which is either the next destination or the finished library."""
+    """Prep the round's plasmid, which is either the next destination or the finished library.
+
+    Both site counts are read off the product rather than assumed: the external enzyme still
+    flanks the cargo, which is the molecule the final ligation releases.
+    """
     where = (
         "This is the finished library."
         if last
         else f"This is the destination round {row.number + 1} opens."
     )
+    internal = len(find_sites(one.product, scheme.internal))
+    external = len(find_sites(one.product, scheme.external))
     return Step(
         f"Round {row.number}: prep the library",
         key=f"round-{row.number}-prep",
@@ -596,7 +603,10 @@ def _prep_step(scheme: Scheme, one: Round, row: RoundBench, last: bool) -> Step:
         ),
         expected=(
             f"One pool of plasmid, {len(one.product)} bp per molecule. {where}",
-            f"{scheme.internal.name} still cuts it and {scheme.external.name} no longer does.",
+            f"{scheme.internal.name} cuts it in {counted(internal, 'place')}, around the "
+            f"stuffer the part carried in. {scheme.external.name} cuts it in "
+            f"{counted(external, 'place')}, as it cut the destination: the part brought "
+            "none in.",
         ),
         notes=(
             "Harvesting the whole culture is what keeps the library a library; picking colonies "

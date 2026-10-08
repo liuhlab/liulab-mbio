@@ -688,6 +688,18 @@ def test_the_linkage_read_prints_the_block_1_based_and_inclusive(plan, protocol)
     assert f"{last.block.start}-{last.block.end}" not in said
 
 
+def test_a_prep_step_counts_the_sites_its_own_round_s_product_carries(plan, protocol):
+    """The library keeps the pair the final ligation releases it on, so no page says otherwise."""
+    one = plan.rounds[0]
+    step = next(step for step in protocol.steps if step.key == "round-1-prep")
+
+    assert len(find_sites(one.product, one.scheme.external)) == 2
+    assert step.expected[1] == (
+        "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in "
+        "2 places, as it cut the destination: the part brought none in."
+    )
+
+
 def test_a_page_lists_only_the_reagents_its_own_steps_reach(plan):
     """A materials table sends nobody to a freezer for a reagent no step of that page uses."""
     listed = {page.title: {one.name for one in page.materials} for page in plan.chain().protocols}
