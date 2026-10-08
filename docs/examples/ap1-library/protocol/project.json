@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "ffdc16f2d0a10979",
+  "key": "54732ea55d05b1db",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -80,7 +80,7 @@
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "15f09db221827524",
+      "key": "f6bbe943a73898f0",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -145,26 +145,6 @@
           "note": "",
           "contains": [],
           "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "primer working plate 1",
-          "supplier": "",
-          "catalog": "",
-          "storage": "-20 °C",
-          "amount": "100 µL per well",
-          "note": "10 µM",
-          "contains": [],
-          "rules": [
-            {
-              "kind": "forbids",
-              "subject": "return to the freezer",
-              "detail": "a thawed working plate is used once and discarded",
-              "when": "",
-              "citation": null
-            }
-          ],
           "cautions": [],
           "citation": null
         }
@@ -1013,6 +993,7 @@
             "G2": "OP80"
           },
           "labels": {},
+          "rules": [],
           "note": ""
         },
         {
@@ -1097,7 +1078,16 @@
             "G2": "OP80"
           },
           "labels": {},
-          "note": ""
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ],
+          "note": "10 µM, 100 µL per well, -20 °C"
         }
       ],
       "steps": [
@@ -2055,7 +2045,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "3083de8a8ee4c169",
+      "key": "9e8ec2380f2ef24f",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2178,23 +2168,7 @@
       ],
       "references": [
         {
-          "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
-          "url": ""
-        },
-        {
-          "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
-          "url": ""
-        },
-        {
-          "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool's length",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity",
+          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
           "url": ""
         }
       ],
@@ -2204,7 +2178,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "b6a13900f7994409",
+      "key": "11bbeb29c3c0fc00",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2509,6 +2483,7 @@
             "F11": "C_FOSL1",
             "F12": "C_FOSL2"
           },
+          "rules": [],
           "note": "1 plate, one a batch; batch 1 holds 72"
         }
       ],
@@ -3189,7 +3164,7 @@
           "url": ""
         },
         {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity",
+          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
           "url": ""
         }
       ],
@@ -3232,7 +3207,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "08ce1ec5c5f20003",
+      "key": "8a9971ffdbbff99a",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3658,6 +3633,7 @@
             "P21": "quarter 3",
             "P23": "quarter 3"
           },
+          "rules": [],
           "note": "288 of 384 wells picked, a quarter at a time"
         },
         {
@@ -3667,6 +3643,7 @@
           "holds": "3.5 µL: 2 µL lysate, barcodes, water and mastermix",
           "seating": {},
           "labels": {},
+          "rules": [],
           "note": "4 picked plates to one"
         }
       ],
@@ -7002,12 +6979,16 @@
           "key": "pool-and-sequence",
           "section": "Mark every well",
           "instructions": [
-            "Pool every well and amplify the three primer pairs separately. 2 miniprep columns, because one saturates.",
+            "Pool each barcoding plate into its own reservoir.",
+            "Clean up each pool across 2 miniprep columns.",
+            "Amplify each cleaned pool with the barcode kit's own flanking primer pairs, one reaction a pair.",
             "Sequence the pool."
           ],
           "cautions": [],
           "notes": [
-            "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+            "A pool saturates one miniprep column, which is why Qian's clean-up runs 2 columns.",
+            "Each pair starts at a different barcode, so every amplicon still carries the design and all four barcodes. Qian runs the pairs separately and pools what they make.",
+            "This read pools 1 plate. One axis of the address is the plate, so the marks tell 24 plates apart on one flow cell."
           ],
           "tables": [],
           "programs": [],
@@ -7097,7 +7078,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "7fc7b6239e3a2844",
+      "key": "d778016e0c1d5c66",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -7576,6 +7557,7 @@
             "P21": "quarter 3",
             "P23": "quarter 3"
           },
+          "rules": [],
           "note": "288 of 384 wells picked, a quarter at a time"
         },
         {
@@ -7682,6 +7664,7 @@
             "H11": "forward 95, reverse 1",
             "H12": "forward 96, reverse 1"
           },
+          "rules": [],
           "note": "plate mark 1; 96 of 96 wells used"
         },
         {
@@ -7788,6 +7771,7 @@
             "H11": "forward 95, reverse 2",
             "H12": "forward 96, reverse 2"
           },
+          "rules": [],
           "note": "plate mark 2; 96 of 96 wells used"
         },
         {
@@ -7894,6 +7878,7 @@
             "H11": "forward 95, reverse 3",
             "H12": "forward 96, reverse 3"
           },
+          "rules": [],
           "note": "plate mark 3; 96 of 96 wells used"
         }
       ],
@@ -11477,7 +11462,7 @@
           ],
           "cautions": [],
           "notes": [
-            "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+            "This read pools 3 plates. One axis of the address is the plate, so the marks tell 96 plates apart on one flow cell."
           ],
           "tables": [],
           "programs": [],
@@ -11583,7 +11568,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "d6e711222ef7223a",
+      "key": "66f42f32d88fa6db",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11894,7 +11879,8 @@
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
         "Spectrophotometer or fluorometer",
-        "Long-read sequencer, for the two reads of the finished library"
+        "Long-read sequencer, for the linkage read of the finished library",
+        "Short-read sequencer, for the representation read of the finished library"
       ],
       "vessels": [],
       "plates": [],
@@ -11912,6 +11898,7 @@
           "notes": [
             "Library coverage is counted on equally represented members, so an uneven pool loses members that no later round can put back.",
             "Equal picomoles are unequal masses: a short member weighs less than a long one for the same number of molecules, and weighing them equally would not pool them equally.",
+            "Every round's digest table is laid out at 22.3 ng/µL, which is the floor and not a target: at it the pool takes almost the whole tube and the buffer and water line all but disappears. Concentrate well above it and pipette less pool; the buffer and water line makes the volume up either way.",
             "N: 0.11 pmol a member is 9.99 ng of its shortest at 147 bp and 78.1 ng of its longest at 1,149 bp.",
             "DBD: 0.219 pmol a member is 39.2 ng of its shortest at 291 bp and 48.9 ng of its longest at 363 bp.",
             "C: 0.193 pmol a member is 15.8 ng of its shortest at 133 bp and 125 ng of its longest at 1,048 bp."
@@ -12073,7 +12060,7 @@
               "components": [
                 {
                   "name": "N part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "2.65 pmol (1000 ng)",
                   "master_mix": false,
@@ -12103,7 +12090,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -12600,7 +12587,7 @@
               "components": [
                 {
                   "name": "DBD part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "5.25 pmol (1000 ng)",
                   "master_mix": false,
@@ -12630,7 +12617,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -13127,7 +13114,7 @@
               "components": [
                 {
                   "name": "C part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "4.64 pmol (1000 ng)",
                   "master_mix": false,
@@ -13157,7 +13144,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -13512,7 +13499,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "One pool of plasmid, 6435 bp per molecule. This is the finished library.",
+            "One pool of plasmid, 6435 bp per molecule. This is the library the rounds built.",
             "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
@@ -13529,14 +13516,14 @@
           "key": "read-linkage",
           "section": "Read the library back",
           "instructions": [
-            "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse from library-read-primers.tsv, which give a 1197 bp amplicon.",
+            "Amplify the whole cargo out of the library the rounds built, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse from library-read-primers.tsv, which give a 1197 bp amplicon.",
             "Sequence the amplicon as a long read.",
             "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
           ],
           "cautions": [],
           "notes": [
             "The block reads in the reverse of the order the rounds ran: each round inserted its barcode ahead of the ones already there.",
-            "0.0% of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
+            "None of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
             "This build passes the linkage read at 90.0% of reads carrying a barcode that still names its part. That is this run's own mark, not a published one."
           ],
           "tables": [],
@@ -13570,7 +13557,7 @@
           "key": "read-representation",
           "section": "Read the library back",
           "instructions": [
-            "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse from library-read-primers.tsv, which give a 134 bp amplicon.",
+            "Amplify across the 41 bp barcode block alone, forward from the 30 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse from library-read-primers.tsv, which give a 134 bp amplicon.",
             "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
           ],
           "cautions": [],
@@ -13649,28 +13636,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26",
-          "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf"
-        },
-        {
-          "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
-          "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100"
-        },
-        {
-          "text": "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
-          "url": "https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines"
-        },
-        {
-          "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
-          "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
-        },
-        {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": ""
+          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/"
         }
       ],
       "sources": {
@@ -13720,7 +13687,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "c679e00273b066e8",
+      "key": "51116681dfba6f47",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -13948,7 +13915,7 @@
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
         "Spectrophotometer or fluorometer",
-        "Long-read sequencer, for the two reads of the finished library"
+        "Short-read sequencer, for the final representation read of the finished library"
       ],
       "vessels": [],
       "plates": [],
@@ -13993,7 +13960,7 @@
           "key": "release-cargo",
           "section": "Move the library across",
           "instructions": [
-            "Digest the finished library with BsaI and PmeI at 37 °C.",
+            "Digest the library the rounds built with BsaI and PmeI at 37 °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages."
           ],
           "cautions": [],
@@ -14402,8 +14369,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26",
-          "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf"
+          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/"
         },
         {
           "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
@@ -14416,14 +14383,6 @@
         {
           "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
           "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
-        },
-        {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": ""
         }
       ],
       "sources": {
@@ -14488,7 +14447,7 @@
     {
       "name": "ligation fidelity",
       "status": null,
-      "detail": "4 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
+      "detail": "4 measured, including: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
     },
     {
       "name": "barcode spacing",
@@ -14714,22 +14673,6 @@
         }
       },
       {
-        "item": "primer working plate 1",
-        "quantity": null,
-        "unit": "100 µL per well",
-        "key": "primer working plate 1",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P13",
-          "missing": "nothing prices this item",
-          "kind": "price",
-          "where": "primer working plate 1, money",
-          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
-        }
-      },
-      {
         "item": "NEBridge Golden Gate Assembly Kit, BsmBI-v2",
         "quantity": null,
         "unit": "one assembly per block",
@@ -14738,7 +14681,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P14",
+          "id": "P13",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "NEBridge Golden Gate Assembly Kit, BsmBI-v2, money",
@@ -14754,7 +14697,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P15",
+          "id": "P14",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Q5 DNA Polymerase, money",
@@ -14770,7 +14713,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P16",
+          "id": "P15",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "dNTP mix, money",
@@ -14786,7 +14729,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P17",
+          "id": "P16",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMX-iGGA vector, money",
@@ -14802,7 +14745,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P18",
+          "id": "P17",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "CutSmart Buffer, money",
@@ -14818,7 +14761,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P19",
+          "id": "P18",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "SPRI paramagnetic beads, money",
@@ -14834,7 +14777,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P20",
+          "id": "P19",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Recovery medium, money",
@@ -14850,7 +14793,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P21",
+          "id": "P20",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Selective broth and plates, money",
@@ -14866,7 +14809,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P22",
+          "id": "P21",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "25 cm BioAssay plate, money",
@@ -14882,7 +14825,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P23",
+          "id": "P22",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "384-well culture plate, money",
@@ -14898,7 +14841,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P24",
+          "id": "P23",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "1536-well barcoding plate, money",
@@ -14914,7 +14857,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P25",
+          "id": "P24",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMX barcode kit, money",
@@ -14930,7 +14873,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P26",
+          "id": "P25",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Barcoding master mix, money",
@@ -14946,7 +14889,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P27",
+          "id": "P26",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "96-well half-skirted PCR plate, money",
@@ -14962,7 +14905,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P28",
+          "id": "P27",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Barcoded index primer plate, money",
@@ -14978,7 +14921,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P29",
+          "id": "P28",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "ThermoPol Reaction Buffer, money",
@@ -14994,7 +14937,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P30",
+          "id": "P29",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Taq DNA Polymerase, money",
@@ -15010,7 +14953,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P31",
+          "id": "P30",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMSO, molecular biology grade, money",
@@ -15026,7 +14969,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P32",
+          "id": "P31",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "N part list, money",
@@ -15042,7 +14985,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P33",
+          "id": "P32",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DBD part list, money",
@@ -15058,7 +15001,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P34",
+          "id": "P33",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "C part list, money",
@@ -15074,7 +15017,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P35",
+          "id": "P34",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "T7 DNA Ligase, money",
@@ -15090,7 +15033,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P36",
+          "id": "P35",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "StickTogether DNA Ligase Buffer, money",
@@ -15106,7 +15049,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P37",
+          "id": "P36",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "pLVX-TetOne-dom vector, money",
@@ -15122,7 +15065,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P38",
+          "id": "P37",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "PaqCI, money",
@@ -15138,7 +15081,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P39",
+          "id": "P38",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Selective plates for the final transfer, money",

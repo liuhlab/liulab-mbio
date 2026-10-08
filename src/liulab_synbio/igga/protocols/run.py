@@ -318,7 +318,9 @@ class Run:
         A build naming a working vector has two libraries to tell apart: this one, and the one
         the final protocol hands on. Without one there is only the one, and it is finished.
         """
-        return "the library the rounds built" if self.working is not None else "the finished library"
+        return (
+            "the library the rounds built" if self.working is not None else "the finished library"
+        )
 
     @property
     def library(self) -> Handed:

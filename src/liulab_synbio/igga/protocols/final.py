@@ -291,11 +291,7 @@ def _free_step(
             f"Digest {library} with {named} at {DIGEST_CELSIUS:g} °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages.",
         ),
-        tables=(
-            digest_reaction(
-                digest_amount((product.name or library, len(product))), enzymes
-            ),
-        ),
+        tables=(digest_reaction(digest_amount((product.name or library, len(product))), enzymes),),
         programs=(
             ThermocyclerProgram(
                 (Stage((Incubation(named, DIGEST_CELSIUS, DIGEST_SECONDS),)),),

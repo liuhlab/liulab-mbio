@@ -359,7 +359,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="45387e00006e34a1">
+<body data-protocol="6923623847bd4e2a">
 <nav class="site" aria-label="This run"><a href="index.html" aria-current="page">Overview</a><a href="01-design-read-back-index-pcr.html">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-design-read-back-index-pcr.html">Design read-back: index PCR</a></li></ol></nav>
 <main class="page">
@@ -375,7 +375,7 @@ tfoot .muted { font-weight: 400; }
 </section>
 <section class="block topic" id="topic-how-a-well-is-told-from-the-rest">
 <h2>How a well is told from the rest</h2>
-<p>The index PCR route marks each well: amplify each well with one barcoded primer pair. The other route marks the same wells a different way, and the picking, the pass rule and the reformat are the same either way.</p><p>A well&#x27;s marks are worked out from where the well is rather than looked up, so two plates on one flow cell are told apart by construction and a demultiplexer can check an address instead of trusting a file.</p><p>A well is called above 20 reads. The other route&#x27;s floor is not a stricter or a looser setting of the same scale, so neither number carries over to the other route.</p>
+<p>The index PCR route marks each well: amplify each well with one barcoded primer pair. The other route marks the same wells a different way, and the picking, the pass rule and the reformat are the same either way.</p><p>A well&#x27;s marks are worked out from where the well is rather than looked up, so a demultiplexer can check an address instead of trusting a file. One axis of the address is the plate: this run pools 2 plates, and the marks tell 96 plates apart on one flow cell.</p><p>A well is called above 20 reads. The other route&#x27;s floor is not a stricter or a looser setting of the same scale, so neither number carries over to the other route.</p>
 </section>
 <section class="block flow" id="flow">
 <h2>How the run fits together</h2>
@@ -383,7 +383,7 @@ tfoot .muted { font-weight: 400; }
 </section>
 <section class="block chain-list" id="protocols">
 <h2>Protocols</h2>
-<ol class="chain-pages"><li data-page-key="36f83a71449b4268" data-steps="array-designs pick-colonies sample-into-index-plates index-pcr pool-and-sequence call-wells"><a href="01-design-read-back-index-pcr.html">Design read-back: index PCR</a> <span class="page-progress muted">6 steps</span></li></ol>
+<ol class="chain-pages"><li data-page-key="4e6f4f956e695698" data-steps="array-designs pick-colonies sample-into-index-plates index-pcr pool-and-sequence call-wells"><a href="01-design-read-back-index-pcr.html">Design read-back: index PCR</a> <span class="page-progress muted">6 steps</span></li></ol>
 </section>
 <section class="block schedule" id="schedule">
 <h2>Schedule</h2>

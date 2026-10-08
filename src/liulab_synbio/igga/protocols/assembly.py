@@ -335,9 +335,7 @@ def _round_steps(run: Run, one: Round, row: RoundBench, rows: Figure | None) -> 
         _ligation_cleanup_step(row),
         _electroporation_step(row),
         _growth_step(row, run.selection),
-        _prep_step(
-            scheme, one, row, run.assembled if row.number == len(run.rounds) else ""
-        ),
+        _prep_step(scheme, one, row, run.assembled if row.number == len(run.rounds) else ""),
     ]
 
 
