@@ -46,6 +46,7 @@ from liulab_mbio.primers.polymerase import (
     TAQ,
     PcrProfile,
     Polymerase,
+    get_polymerase,
     melting_temperature,
 )
 from liulab_mbio.primers.thresholds import (
@@ -95,6 +96,7 @@ __all__ = [
     "find_binding_sites",
     "find_off_target_sites",
     "find_priming_sites",
+    "get_polymerase",
     "melting_temperature",
     "pair_checks",
     "ranked_pairs",

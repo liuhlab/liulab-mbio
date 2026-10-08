@@ -8,7 +8,7 @@ import typer
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.cloning.gateway.design import FUSIONS, Fusion
 from liulab_mbio.cloning.gateway.plan import DEFAULT_HOST, Plan, plan_gateway
-from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import Q5, get_polymerase
 
 app = typer.Typer(help="Plan Gateway cloning.", no_args_is_help=True)
 
@@ -65,7 +65,7 @@ def plan(
             donor=donor,
             amplify=amplify,
             fusion=_fusion(fusion),
-            polymerase=_polymerase(polymerase),
+            polymerase=get_polymerase(polymerase),
             host=host,
             name=name,
         ),
@@ -96,18 +96,3 @@ def _fusion(text: str) -> Fusion:
         if one.lower() == text.lower():
             return one
     raise ValueError(f"no fusion called {text!r}; name one of {', '.join(FUSIONS)}")
-
-
-def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships, whatever the case of its name.
-
-    Raises
-    ------
-    ValueError
-        If it ships no polymerase of that name.
-    """
-    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
-    if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES)
-        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
-    return found

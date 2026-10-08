@@ -7,7 +7,7 @@ import typer
 
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.cloning.restriction.plan import DEFAULT_HOST, Plan, plan_restriction
-from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import Q5, get_polymerase
 
 app = typer.Typer(help="Plan restriction and ligation cloning.", no_args_is_help=True)
 
@@ -52,7 +52,7 @@ def plan(
             vector,
             insert,
             enzymes=tuple(enzyme or ()),
-            polymerase=_polymerase(polymerase),
+            polymerase=get_polymerase(polymerase),
             host=host,
             name=name,
         ),
@@ -72,18 +72,3 @@ def _summary(made: Plan) -> str:
         f"{made.insert.length} bp insert into a {made.backbone.length} bp backbone, "
         f"junctions {junctions}, checks {made.status}"
     )
-
-
-def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships, whatever the case of its name.
-
-    Raises
-    ------
-    ValueError
-        If it ships no polymerase of that name.
-    """
-    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
-    if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES)
-        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
-    return found

@@ -9,7 +9,7 @@ from liulab_mbio.cloning.cli import plan_command, read_orientations
 from liulab_mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, Site, plan_assembly
 from liulab_mbio.codons import DEFAULT_TABLE
 from liulab_mbio.ligase import LIGASE_MATRIX_ENV
-from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import Q5, get_polymerase
 
 app = typer.Typer(help="Plan Golden Gate assemblies.", no_args_is_help=True)
 
@@ -92,7 +92,7 @@ def plan(
             codon_table=codon_table,
             profile=ligase_matrix,
             prefer_profile=prefer_ligase_matrix,
-            polymerase=_polymerase(polymerase),
+            polymerase=get_polymerase(polymerase),
             host=host,
             name=name,
         ),
@@ -119,18 +119,3 @@ def _site(text: str) -> Site:
     if sep and start.strip().isdigit() and end.strip().isdigit():
         return int(start), int(end)
     return text
-
-
-def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships, whatever the case of its name.
-
-    Raises
-    ------
-    ValueError
-        If it ships no polymerase of that name.
-    """
-    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
-    if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES)
-        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
-    return found

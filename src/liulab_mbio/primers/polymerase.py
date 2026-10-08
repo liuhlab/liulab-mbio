@@ -246,6 +246,26 @@ ONETAQ = Polymerase(
 POLYMERASES: tuple[Polymerase, ...] = (Q5, PHUSION, TAQ, ONETAQ)
 
 
+def get_polymerase(name: str) -> Polymerase:
+    """Read one of the polymerases this package ships, whatever the case of its name.
+
+    Raises
+    ------
+    ValueError
+        If it ships no polymerase of that name.
+
+    Examples
+    --------
+    >>> get_polymerase("q5").name
+    'Q5'
+    """
+    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
+    if found is None:
+        shipped = ", ".join(one.name for one in POLYMERASES)
+        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
+    return found
+
+
 class _Conditions(TypedDict):
     mv_conc: float
     dv_conc: float

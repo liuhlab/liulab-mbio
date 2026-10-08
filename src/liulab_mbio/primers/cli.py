@@ -11,7 +11,7 @@ from liulab_mbio.io import read_record
 from liulab_mbio.primers.design import design_pair
 from liulab_mbio.primers.evaluation import PairReport, evaluate_pair
 from liulab_mbio.primers.genome import GenomeReport, Locus, design_pair_on_genome
-from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import Q5, Polymerase, get_polymerase
 from liulab_mbio.primers.thresholds import TARGET_TM
 
 #: What the verb calls the sheet it orders its oligos from, and the genome report beside it.
@@ -89,7 +89,7 @@ def design(
     amplicon, so the amplicons it does make are written beside the sheet.
     """
     try:
-        chosen = _polymerase(polymerase)
+        chosen = get_polymerase(polymerase)
         tails, names = (forward_tail, reverse_tail), (forward_name, reverse_name)
         written = (
             _on_genome(
@@ -265,18 +265,3 @@ def _locus(region: str) -> Locus:
     if not 1 <= first <= last:
         raise ValueError(f"--region {region}: a span runs from 1 up, forwards")
     return Locus(match["name"], first - 1, last)
-
-
-def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships, whatever the case of its name.
-
-    Raises
-    ------
-    ValueError
-        If it ships no polymerase of that name.
-    """
-    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
-    if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES)
-        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
-    return found

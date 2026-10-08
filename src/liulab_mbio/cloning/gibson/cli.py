@@ -11,7 +11,7 @@ from liulab_mbio.cloning.cli import plan_command, read_orientations
 from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI, assembly_product
 from liulab_mbio.cloning.gibson.plan import DEFAULT_HOST, Plan, Route, plan_gibson
 from liulab_mbio.cloning.plan import Site
-from liulab_mbio.primers.polymerase import POLYMERASES, Q5, Polymerase
+from liulab_mbio.primers.polymerase import Q5, get_polymerase
 
 app = typer.Typer(help="Plan Gibson assemblies.", no_args_is_help=True)
 
@@ -69,7 +69,7 @@ def plan(
             route=_routes(route, len(inserts)),
             bridge=_bridges(bridge),
             product=assembly_product(product),
-            polymerase=_polymerase(polymerase),
+            polymerase=get_polymerase(polymerase),
             host=host,
             name=name,
         ),
@@ -140,18 +140,3 @@ def _bridges(given: Sequence[str] | None) -> tuple[tuple[str, str], ...]:
             )
         pairs.append((before.strip(), after.strip()))
     return tuple(pairs)
-
-
-def _polymerase(name: str) -> Polymerase:
-    """Read one of the polymerases this package ships, whatever the case of its name.
-
-    Raises
-    ------
-    ValueError
-        If it ships no polymerase of that name.
-    """
-    found = next((one for one in POLYMERASES if one.name.lower() == name.lower()), None)
-    if found is None:
-        shipped = ", ".join(one.name for one in POLYMERASES)
-        raise ValueError(f"no polymerase called {name!r}; this package ships {shipped}")
-    return found

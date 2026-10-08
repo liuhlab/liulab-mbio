@@ -2,9 +2,11 @@
 ``docs/research/primer-design-and-pcr.md``.
 """
 
+import re
+
 import pytest
 
-from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, melting_temperature
+from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, get_polymerase, melting_temperature
 
 from .sequences import M13_FWD, M13_REV, PUC_FWD, PUC_REV
 
@@ -59,3 +61,14 @@ def test_extension_time_rounds_the_amplicon_up_to_whole_kilobases() -> None:
     assert PHUSION.extension_seconds(1000) == 15
     assert TAQ.extension_seconds(103) == 60
     assert ONETAQ.extension_seconds(1001) == 120
+
+
+@pytest.mark.parametrize("name", ["Q5", "q5", "ONETAQ", "OneTaq"])
+def test_a_shipped_polymerase_is_read_whatever_the_case_of_its_name(name: str) -> None:
+    assert get_polymerase(name).name.lower() == name.lower()
+
+
+def test_an_unshipped_polymerase_is_refused_by_name_and_the_shipped_ones_listed() -> None:
+    said = "no polymerase called 'Pfu'; this package ships Q5, Phusion, Taq, OneTaq"
+    with pytest.raises(ValueError, match=re.escape(said)):
+        get_polymerase("Pfu")
