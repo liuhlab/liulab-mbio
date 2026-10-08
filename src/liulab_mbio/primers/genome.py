@@ -9,7 +9,7 @@ import json
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from itertools import islice
 from pathlib import Path
@@ -22,7 +22,14 @@ from liulab_mbio.primers.evaluation import PairReport
 from liulab_mbio.primers.placement import Placement
 from liulab_mbio.primers.polymerase import Q5, Polymerase
 from liulab_mbio.primers.thresholds import TARGET_TM, THRESHOLDS, Thresholds
-from liulab_mbio.sequence import BindingSite, Primer, Segment, Strand, reverse_complement
+from liulab_mbio.sequence import (
+    BindingSite,
+    Primer,
+    Segment,
+    Strand,
+    position_text,
+    reverse_complement,
+)
 
 #: Which primers make an amplicon: the two together, or one alone.
 type MadeBy = Literal["pair", "forward", "reverse"]
@@ -221,7 +228,7 @@ def evaluate_on_genome(
         for locus in loci
     ]
     annealing = [(_annealing(forward), _annealing(reverse)) for forward, reverse in pairs]
-    hits = _search(
+    hits, lengths = _search(
         annealing,
         fasta,
         mismatches=mismatches,
@@ -270,7 +277,7 @@ def evaluate_on_genome(
             tuple(amplicons),
             mismatches,
             thresholds.genome_terminal_window,
-            _checks(amplicons, locus, mismatches, thresholds),
+            _checks(amplicons, locus, lengths, mismatches, thresholds),
         )
         for (forward, reverse), amplicons, locus in zip(pairs, found, loci, strict=True)
     )
@@ -486,12 +493,14 @@ def _search(
     max_length: int,
     circular: bool,
     timeout: float,
-) -> list[_Hit]:
+) -> tuple[list[_Hit], dict[str, int]]:
     """Run `ipcr` once over every pair and return each amplicon once, by name and position.
 
     The one place the tool runs. `ipcr` misses a binding site across the origin of a circular
     record, so each circular record is searched written twice over, and only an amplicon
     starting in its first copy is kept, its end passing the record's length as ADR 0001 has it.
+    Those lengths come back with the hits, since a position past one needs its own to be read;
+    a linear search measures none, and leaves no position past a length.
     """
     tool = shutil.which("ipcr")
     if tool is None:
@@ -500,7 +509,7 @@ def _search(
             "so run `pixi install`"
         )
     if not pairs:
-        return []
+        return [], {}
     with tempfile.TemporaryDirectory() as scratch:
         table = Path(scratch) / "pairs.tsv"
         table.write_text("".join(f"{i}\t{f}\t{r}\n" for i, (f, r) in enumerate(pairs)))
@@ -530,7 +539,7 @@ def _search(
             size = lengths.get(hit.sequence_name)
             if size is None or (hit.start < size and hit.end - hit.start <= size):
                 hits.setdefault((hit.pair, hit.made_by, hit.sequence_name, hit.start, hit.end), hit)
-    return sorted(hits.values(), key=lambda hit: (hit.sequence_name, hit.start, hit.end))
+    return sorted(hits.values(), key=lambda hit: (hit.sequence_name, hit.start, hit.end)), lengths
 
 
 def _hit(row: dict[str, Any]) -> _Hit:
@@ -590,10 +599,14 @@ def _tail(primer: Primer) -> int:
 
 
 def _checks(
-    amplicons: list[Amplicon], locus: Locus | None, mismatches: int, thresholds: Thresholds
+    amplicons: list[Amplicon],
+    locus: Locus | None,
+    lengths: Mapping[str, int],
+    mismatches: int,
+    thresholds: Thresholds,
 ) -> tuple[Check, ...]:
     off_target = [amplicon for amplicon in amplicons if not amplicon.intended]
-    notes = [_described(amplicon) for amplicon in off_target[:_LISTED]]
+    notes = [_described(amplicon, lengths) for amplicon in off_target[:_LISTED]]
     if len(off_target) > _LISTED:
         notes.append(f"and {len(off_target) - _LISTED} more")
     if not mismatches:
@@ -608,34 +621,42 @@ def _checks(
     ]
     if locus is not None:
         present = sum(amplicon.intended for amplicon in amplicons)
+        where = locus_text(
+            locus.sequence_name, locus.start, locus.end, lengths.get(locus.sequence_name)
+        )
         checks.append(
             Check(
                 "intended_amplicon",
                 thresholds.intended_amplicon.grade(present),
                 present,
-                ""
-                if present
-                else f"none at {locus_text(locus.sequence_name, locus.start, locus.end)}",
+                "" if present else f"none at {where}",
             )
         )
     return tuple(checks)
 
 
-def locus_text(name: str, start: int, end: int) -> str:
+def locus_text(name: str, start: int, end: int, length: int | None = None) -> str:
     """Spell a span of one sequence as a person reads one, and as `--region` takes one.
 
     `NAME:START..END`, 1-based with both ends included. The conversion out of the half-open
-    rule for a genome locus; see `docs/adr/0001-coordinates.md`.
+    rule for a genome locus; see `docs/adr/0001-coordinates.md`. `length` is the sequence's
+    own, which a span across a circular origin needs to come round; a span given without one
+    lies inside the sequence.
 
     Examples
     --------
     >>> locus_text("chr1", 1400, 1442)
     'chr1:1401..1442'
+    >>> locus_text("chrM", 16540, 16600, 16569)
+    'chrM:16541..31'
     """
-    return f"{name}:{start + 1}..{end}"
+    if length is None:
+        return f"{name}:{start + 1}..{end}"
+    return f"{name}:{position_text(start, length)}..{position_text(end - 1, length)}"
 
 
-def _described(amplicon: Amplicon) -> str:
+def _described(amplicon: Amplicon, lengths: Mapping[str, int]) -> str:
     who = "the pair" if amplicon.made_by == "pair" else f"{amplicon.made_by} primer alone"
-    where = locus_text(amplicon.sequence_name, amplicon.start, amplicon.end)
+    name = amplicon.sequence_name
+    where = locus_text(name, amplicon.start, amplicon.end, lengths.get(name))
     return f"{where}, {amplicon.length} bp, by {who}"

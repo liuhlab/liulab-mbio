@@ -118,6 +118,24 @@ def test_on_a_plasmid_the_amplicons_are_the_template_checks(puc19, tmp_path) -> 
     ]
 
 
+def test_a_locus_across_the_origin_is_read_round_the_plasmid(puc19, tmp_path) -> None:
+    """An amplicon across the origin ends past the length; its text comes round, as ADR 0001 has it."""
+    fasta = tmp_path / "pUC19.fa"
+    fasta.write_text(f">pUC19\n{puc19.sequence}\n")
+    across = puc19.sequence[-10:] + puc19.sequence[:10]
+    elsewhere = Locus("pUC19", 2680, 100 + len(puc19))
+    found, missing = evaluate_on_genome(
+        [_pair((across, M13_REV)), _pair((across, M13_REV))],
+        fasta,
+        "pUC19",
+        intended=[None, elsewhere],
+        circular=True,
+    )
+    assert [(one.start, one.end) for one in found.amplicons] == [(2676, 481 + len(puc19))]
+    assert "pUC19:2677..481" in found["off_target_amplicons"].detail
+    assert "none at pUC19:2681..100" in missing["intended_amplicon"].detail
+
+
 def test_a_second_binding_site_gives_an_off_target_amplicon(reports) -> None:
     report = reports[0]
     assert report.assembly == "planted"

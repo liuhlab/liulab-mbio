@@ -343,6 +343,8 @@ sets one.
   it. A library build now states the working vector's mass alone: the release is never purified,
   so the digest fixes the cargo against it and a build can no longer ask for a ratio its own
   release contradicts.
+- An amplicon found across a circular genome's origin reads round it: `pUC19:2677..481`,
+  rather than an end counted past the sequence's length.
 - A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
   padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes
