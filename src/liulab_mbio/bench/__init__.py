@@ -1,8 +1,8 @@
 """The bench any pipeline shares: reactions, programs, validation and protocol steps.
 
-Every public name in its modules imports from here as well, `goldengate` and `coverage` excepted.
-A module that cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the ones
-re-exported.
+Every public name in its modules imports from here as well, `goldengate`, `coverage` and
+`pools` excepted. A module that cites a source keeps it as its own `REFERENCES`; `REFERENCES`
+here gathers the ones re-exported.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
 - `reactions`: one reaction table, filled to volume, what it refuses, and the least DNA may
@@ -28,6 +28,9 @@ re-exported.
 - `prices`: a banded price record the user holds, the charge it gives a quantity, and the bill.
 - `phenotype`: what a clone is expected to show, read off the product's own features.
 - `oligos`: the primer order sheet.
+- `pools`: an oligo pool as a vendor takes it -- one oligo a fragment, padded to one length --
+  and the sheet it is ordered from. Imported by module: its `Pool` is a vendor's order, not
+  `liulab_mbio.reaction`'s molecules in one tube.
 - `steps`: the protocol steps any pipeline reuses, built from plain facts, and the smaller
   pieces both pipelines shape the same way. Its two references are cited only by a protocol
   that runs the step they belong to.
@@ -85,13 +88,7 @@ from liulab_mbio.bench.plates import (
     wells_of,
 )
 from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
-from liulab_mbio.bench.reactions import (
-    WATER,
-    dna_components,
-    fits,
-    floor_ng_ul,
-    reaction_table,
-)
+from liulab_mbio.bench.reactions import WATER, dna_components, fits, floor_ng_ul, reaction_table
 from liulab_mbio.bench.readback import (
     CLEAN_COLONY_CURVE,
     WellVerdict,
