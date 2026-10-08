@@ -231,6 +231,41 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
+.chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+
+/* The run's index: what it explains, how it fits together and how long it takes. */
+.topic p:last-child { margin-bottom: 0; }
+
+/* The flow chart is boxes and names in HTML, never a drawing: it is found by browser find,
+   it is selectable and it prints with no font embedded. */
+.flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.flow-box:hover { text-decoration: underline; }
+.flow-title { font-weight: 600; }
+.flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.flow-hand-item { position: relative; }
+/* The arrow is decoration: what it means is written beside it as words. */
+.flow-hand-item::before { content: "\2193"; position: absolute; left: -1.2rem; color: var(--muted); }
+.flow-item { font-weight: 600; }
+.flow-from { color: var(--accent); }
+.is-dangling .flow-from { color: var(--fail); }
+.flow-end { margin: 0.5rem 0 0; }
+
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
+.schedule td, .schedule th { vertical-align: top; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
+.waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
+.cited-by, .used-in { color: var(--muted); font-size: 0.9em; }
+.kit-list .vessels { display: grid; gap: 0.3rem; }
+.hole a { white-space: nowrap; }
 
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
@@ -272,7 +307,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .oligo-checks:not([open]) > ul { display: block; }
   .oligo-checks::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
-  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
+  .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
@@ -285,8 +321,24 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="02-cargo-creation.html">Cargo creation</a></li><li><a href="03-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="04-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="05-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
 <h1>Reagents and equipment</h1>
+<p>Everything the whole run takes, each row naming the protocols that take it. Each protocol page carries its own list, which is what to lay out before that sitting.</p>
+<section class="block materials" id="materials">
+<h2>Materials</h2>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Source</th><th>Used in</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td></td><td>Cargo ordering and pool preparation</td></tr><tr><td>Pool amplification primers</td><td></td><td></td><td>-20 °C</td><td>74 primers: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer</td><td></td><td>Cargo ordering and pool preparation, Cargo creation</td></tr><tr><td>Q5 High-Fidelity DNA Polymerase</td><td>NEB</td><td>M0491</td><td>-20 °C</td><td>one reaction per batch, then one per block</td><td></td><td>Cargo ordering and pool preparation, Cargo creation</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td></td><td>Cargo ordering and pool preparation, Cargo creation</td></tr><tr><td>dNTP mix</td><td>NEB</td><td>N0447</td><td>-20 °C</td><td>0.2 µL a reaction, 10 mM each</td><td><a class="cite" href="#source-levseq">LevSeq step 1</a></td><td>Cargo creation, Cargo validation: index PCR</td></tr><tr><td>DMX-iGGA vector</td><td></td><td></td><td>-20 °C</td><td>3, one a position</td><td></td><td>Cargo creation, Library assembly in rounds, Final cargo ligation</td></tr><tr><td>SrfI</td><td>New England Biolabs</td><td>R0629</td><td>-20 °C</td><td>2.5 µL per digest</td><td></td><td>Cargo creation, Library assembly in rounds</td></tr><tr><td>Selective broth and plates</td><td></td><td></td><td></td><td></td><td></td><td>Cargo creation, Library assembly in rounds, Final cargo ligation</td></tr><tr><td>Plasmid prep kit</td><td></td><td></td><td></td><td>one prep per round</td><td></td><td>Cargo creation, Library assembly in rounds, Final cargo ligation</td></tr><tr><td>Electroporation cuvettes</td><td></td><td></td><td></td><td>3, one per round</td><td></td><td>Cargo creation, Library assembly in rounds, Final cargo ligation</td></tr><tr><td>25 cm BioAssay plate</td><td>Corning</td><td>431111</td><td></td><td>one spot a design</td><td><a class="cite" href="#source-qian-si">Qian SI Day 2</a></td><td>Cargo validation: index PCR</td></tr><tr><td>384-well culture plate</td><td>Beckman Coulter</td><td>c74290</td><td></td><td>1, one a 384 wells</td><td><a class="cite" href="#source-qian-si">Qian SI Day 3</a></td><td>Cargo validation: index PCR</td></tr><tr><td>96-well half-skirted PCR plate</td><td>USA Scientific</td><td>1402-9700</td><td></td><td>3, one a quarter of a picked plate</td><td><a class="cite" href="#source-levseq">LevSeq step 2</a></td><td>Cargo validation: index PCR</td></tr><tr><td>Barcoded index primer plate</td><td></td><td></td><td>-20 °C</td><td>2 µL a well at 1 µM each, 96 forward and 96 reverse</td><td><a class="cite" href="#source-levseq">LevSeq step 3</a></td><td>Cargo validation: index PCR</td></tr><tr><td>ThermoPol Reaction Buffer</td><td>NEB</td><td>B9004</td><td>-20 °C</td><td>1 µL a reaction, 10X</td><td><a class="cite" href="#source-levseq">LevSeq step 1</a></td><td>Cargo validation: index PCR</td></tr><tr><td>Taq DNA Polymerase</td><td>NEB</td><td>M0267</td><td>-20 °C</td><td>0.05 µL a reaction</td><td><a class="cite" href="#source-levseq">LevSeq step 1</a></td><td>Cargo validation: index PCR</td></tr><tr><td>DMSO, molecular biology grade</td><td>MP Biomedicals</td><td>194819</td><td></td><td>0.4 µL a reaction, 4% (v/v) in the well</td><td><a class="cite" href="#source-levseq">LevSeq step 1</a></td><td>Cargo validation: index PCR</td></tr><tr><td>N part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td></td><td>Library assembly in rounds</td></tr><tr><td>DBD part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td></td><td>Library assembly in rounds</td></tr><tr><td>C part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td></td><td>Library assembly in rounds</td></tr><tr><td>BbsI-HF</td><td>New England Biolabs</td><td>R3539</td><td>-20 °C</td><td>2.5 µL per digest</td><td></td><td>Library assembly in rounds</td></tr><tr><td>BsaI-HFv2</td><td>New England Biolabs</td><td>R3733</td><td>-20 °C</td><td>2.5 µL per digest</td><td></td><td>Library assembly in rounds, Final cargo ligation</td></tr><tr><td>PmeI</td><td>New England Biolabs</td><td>R0560</td><td>-20 °C</td><td>2.5 µL per digest</td><td></td><td>Library assembly in rounds, Final cargo ligation</td></tr><tr><td>CutSmart Buffer</td><td></td><td></td><td>-20 °C</td><td></td><td></td><td>Library assembly in rounds, Final cargo ligation</td></tr><tr><td>T7 DNA Ligase</td><td>NEB</td><td>#M0318L</td><td>-20 °C</td><td></td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td><td>Library assembly in rounds</td></tr><tr><td>StickTogether DNA Ligase Buffer</td><td>NEB</td><td>#B0535S</td><td>-20 °C</td><td></td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td><td>Library assembly in rounds</td></tr><tr><td>SPRI paramagnetic beads</td><td></td><td></td><td></td><td>2 volumes after a digest, 1 after a ligation</td><td></td><td>Library assembly in rounds, Final cargo ligation</td></tr><tr><td>Endura ElectroCompetent Cells</td><td>Lucigen</td><td>60242-2</td><td>-80 °C</td><td>one aliquot per round, 25 µL a pulse</td><td><a class="cite" href="#source-ma133">MA133 p. 4-5</a></td><td>Library assembly in rounds, Final cargo ligation</td></tr><tr><td>Recovery medium</td><td></td><td></td><td></td><td>one outgrowth per round</td><td></td><td>Library assembly in rounds</td></tr></tbody></table></div><ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more. <a class="cite" href="#source-m0318">M0318 reaction conditions</a></li><li class="rule is-forbids"><strong>T7 DNA Ligase: never heat inactivation</strong> Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up. <a class="cite" href="#source-m0318">M0318 note 4</a></li></ul>
+
+</section>
+<section class="block kit-list" id="kit">
+<h2>Equipment and plasticware</h2>
+<ul class="vessels"><li class="kit"><strong>Thermocycler taking a 96-well plate</strong> <span class="used-in">used in Cargo creation, Cargo validation: index PCR</span></li><li class="kit"><strong>Gel tank and a transilluminator</strong> <span class="used-in">used in Cargo creation</span></li><li class="kit"><strong>PCR2 plate</strong> <span class="muted">96 wells</span> <span class="used-in">used in Cargo creation</span></li><li class="kit"><strong>QPix XE Microbial Colony Picker</strong> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>multichannel pipette on 96-well spacing</strong> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>Incubator at 37 °C</strong> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>A sequencer, and a demultiplexer that can check an address</strong> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>picked 1</strong> <span class="muted">384 wells · Beckman Coulter #c74290</span> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>index 1</strong> <span class="muted">96 wells · USA Scientific #1402-9700</span> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>index 2</strong> <span class="muted">96 wells · USA Scientific #1402-9700</span> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>index 3</strong> <span class="muted">96 wells · USA Scientific #1402-9700</span> <span class="used-in">used in Cargo validation: index PCR</span></li><li class="kit"><strong>Incubator or heat block at 37 °C</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li><li class="kit"><strong>Magnetic rack for the bead clean-ups</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li><li class="kit"><strong>Electroporator and cuvettes</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li><li class="kit"><strong>Shaking incubator at 30 °C</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li><li class="kit"><strong>Spectrophotometer or fluorometer</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li><li class="kit"><strong>Long-read sequencer, for the two reads of the finished library</strong> <span class="used-in">used in Library assembly in rounds, Final cargo ligation</span></li></ul>
+</section>
+<section class="block bill" id="bill">
+<h2>What this run consumes</h2>
+<p>Quantities come from the design and are here whatever is loaded. A charge comes only from a price record; where none prices a row, the money is a hole and no figure is estimated. Price steers no part of the design.</p>
+<div class="scroll"><table><thead><tr><th>Item</th><th>Key</th><th class="num">Quantity</th><th class="num">Charge</th><th>Headroom</th></tr></thead><tbody><tr class="is-holed"><td>AP-1 DESynR oligo pool</td><td>oligo-pool</td><td class="num">131 oligos</td><td class="num"><span class="hole-none">no sourced number</span></td><td>131 count, 369 below the next band; 350 length, no slack above it at all</td></tr><tr class="is-holed"><td>Pool amplification primers</td><td>pool-primers</td><td class="num">74 primers</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>BbsI-HF</td><td>R3539</td><td class="num">7.5 µL</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>BsaI-HFv2</td><td>R3733</td><td class="num">7.5 µL</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>SrfI</td><td>R0629</td><td class="num">7.5 µL</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>PmeI</td><td>R0560</td><td class="num">7.5 µL</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>Endura ElectroCompetent Cells</td><td>60242-2</td><td class="num">3 aliquots</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>Electroporation cuvettes</td><td>cuvettes</td><td class="num">3 cuvettes</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr><tr class="is-holed"><td>Plasmid preps</td><td>plasmid prep</td><td class="num">3 preps</td><td class="num"><span class="hole-none">no sourced number</span></td><td></td></tr></tbody></table></div>
+</section>
 </main>
-<div class="column within"></div></div>
+<nav class="column within" aria-label="This page"><h2 class="column-title">This page</h2><ol><li><a href="#materials">Materials</a></li><li><a href="#kit">Equipment and plasticware</a></li><li><a href="#bill">Bill</a></li></ol></nav>
+</div>
 <script>
 (function () {
   "use strict";
@@ -312,6 +364,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -328,7 +385,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -342,6 +399,27 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     });
   });
   refresh();
+
+  // A run's index: how far the bench got in each protocol, read from that page's own store.
+  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // reads the marks without the protocol pages writing anything twice.
+  all("[data-page-key]").forEach(function (item) {
+    var total = Number(item.getAttribute("data-steps")) || 0;
+    var label = item.querySelector(".page-progress");
+    var marks;
+    try {
+      marks = JSON.parse(
+        window.localStorage.getItem("liulab-protocol:" + item.getAttribute("data-page-key")) || "{}"
+      );
+    } catch (error) {
+      return;
+    }
+    if (!marks || !label || !total) return;
+    var done = 0;
+    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
+    label.textContent = done + " of " + steps(total) + " done";
+    item.classList.toggle("is-started", done > 0);
+  });
 
   var clear = document.querySelector("button.clear");
   if (clear) {

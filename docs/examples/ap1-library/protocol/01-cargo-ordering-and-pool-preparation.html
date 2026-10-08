@@ -231,6 +231,41 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
+.chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+
+/* The run's index: what it explains, how it fits together and how long it takes. */
+.topic p:last-child { margin-bottom: 0; }
+
+/* The flow chart is boxes and names in HTML, never a drawing: it is found by browser find,
+   it is selectable and it prints with no font embedded. */
+.flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.flow-box:hover { text-decoration: underline; }
+.flow-title { font-weight: 600; }
+.flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.flow-hand-item { position: relative; }
+/* The arrow is decoration: what it means is written beside it as words. */
+.flow-hand-item::before { content: "\2193"; position: absolute; left: -1.2rem; color: var(--muted); }
+.flow-item { font-weight: 600; }
+.flow-from { color: var(--accent); }
+.is-dangling .flow-from { color: var(--fail); }
+.flow-end { margin: 0.5rem 0 0; }
+
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
+.schedule td, .schedule th { vertical-align: top; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
+.waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
+.cited-by, .used-in { color: var(--muted); font-size: 0.9em; }
+.kit-list .vessels { display: grid; gap: 0.3rem; }
+.hole a { white-space: nowrap; }
 
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
@@ -272,7 +307,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .oligo-checks:not([open]) > ul { display: block; }
   .oligo-checks::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
-  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
+  .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
@@ -288,12 +324,13 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <h1>Cargo ordering and pool preparation</h1>
 <p class="neighbours">Protocol 1 of 5. The run starts here. Next is Cargo creation.</p>
 <p class="summary">Order the synthesised material this library is built from, and put it away ready for the bench.</p>
-<div class="toolbar"><span class="progress" aria-live="polite">0 of 1 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
+<div class="toolbar"><span class="progress" aria-live="polite">0 of 1 step done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
 </header>
-<section class="block materials">
+<section class="block materials" id="materials">
 <h2>Materials</h2>
 <div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td>ordered from pool.tsv, which says which block each oligo is a piece of</td></tr><tr><td>Pool amplification primers</td><td></td><td></td><td>-20 °C</td><td>74 primers: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer</td><td>ordered from pool-primers.tsv; a pair a batch, an inner primer a block</td></tr><tr><td>Q5 High-Fidelity DNA Polymerase</td><td>NEB</td><td>M0491</td><td>-20 °C</td><td>one reaction per batch, then one per block</td><td>the buffer the annealing temperatures below were computed in</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td></tr></tbody></table></div>
 </section>
+<p class="step-section">Order and store</p>
 <section class="step" id="step-1">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Order the oligo pool and the primers that amplify it</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Order every row of pool-primers.tsv as an ordinary oligo: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer.</span></label></li></ol>
@@ -301,7 +338,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The vendor bins the pool by length</dt><dd>Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants the project&#x27;s oligo length changed and the design run again.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>pool.tsv names each oligo&#x27;s block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.</li><li>131 oligos is the fewest the length budget allows for.</li></ul></div>
 </section>
-<section class="block references">
+<section class="block references" id="references">
 <h2>References</h2>
 <ol><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool&#x27;s length</li><li>Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity</li></ol>
 </section>
@@ -333,6 +370,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -349,7 +391,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -363,6 +405,27 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     });
   });
   refresh();
+
+  // A run's index: how far the bench got in each protocol, read from that page's own store.
+  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // reads the marks without the protocol pages writing anything twice.
+  all("[data-page-key]").forEach(function (item) {
+    var total = Number(item.getAttribute("data-steps")) || 0;
+    var label = item.querySelector(".page-progress");
+    var marks;
+    try {
+      marks = JSON.parse(
+        window.localStorage.getItem("liulab-protocol:" + item.getAttribute("data-page-key")) || "{}"
+      );
+    } catch (error) {
+      return;
+    }
+    if (!marks || !label || !total) return;
+    var done = 0;
+    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
+    label.textContent = done + " of " + steps(total) + " done";
+    item.classList.toggle("is-started", done > 0);
+  });
 
   var clear = document.querySelector("button.clear");
   if (clear) {

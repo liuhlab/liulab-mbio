@@ -231,6 +231,41 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
+.chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+
+/* The run's index: what it explains, how it fits together and how long it takes. */
+.topic p:last-child { margin-bottom: 0; }
+
+/* The flow chart is boxes and names in HTML, never a drawing: it is found by browser find,
+   it is selectable and it prints with no font embedded. */
+.flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.flow-box:hover { text-decoration: underline; }
+.flow-title { font-weight: 600; }
+.flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.flow-hand-item { position: relative; }
+/* The arrow is decoration: what it means is written beside it as words. */
+.flow-hand-item::before { content: "\2193"; position: absolute; left: -1.2rem; color: var(--muted); }
+.flow-item { font-weight: 600; }
+.flow-from { color: var(--accent); }
+.is-dangling .flow-from { color: var(--fail); }
+.flow-end { margin: 0.5rem 0 0; }
+
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
+.schedule td, .schedule th { vertical-align: top; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
+.waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
+.cited-by, .used-in { color: var(--muted); font-size: 0.9em; }
+.kit-list .vessels { display: grid; gap: 0.3rem; }
+.hole a { white-space: nowrap; }
 
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
@@ -272,7 +307,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .oligo-checks:not([open]) > ul { display: block; }
   .oligo-checks::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
-  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
+  .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
@@ -292,11 +328,12 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <p class="hole-count"><a href="#holes"><strong>3</strong> numbers in this protocol have no source</a>.</p>
 <div class="toolbar"><span class="progress" aria-live="polite">0 of 27 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
 </header>
-<section class="block materials">
+<section class="block materials" id="materials">
 <h2>Materials</h2>
 <div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>N part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td>assembled from the oligo pool; pool.tsv says which oligos</td><td></td></tr><tr><td>DBD part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td>assembled from the oligo pool; pool.tsv says which oligos</td><td></td></tr><tr><td>C part list</td><td></td><td></td><td>-20 °C</td><td>24 members, pooled</td><td>assembled from the oligo pool; pool.tsv says which oligos</td><td></td></tr><tr><td>DMX-iGGA vector</td><td></td><td></td><td>-20 °C</td><td>3, one a position</td><td>opened by the internal digest in round 1, and to take each block&#x27;s cargo. A part enters on its own position&#x27;s entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)</td><td></td></tr><tr><td>BbsI-HF</td><td>New England Biolabs</td><td>R3539</td><td>-20 °C</td><td>2.5 µL per digest</td><td>opens the library, excising its stuffer</td><td></td></tr><tr><td>BsaI-HFv2</td><td>New England Biolabs</td><td>R3733</td><td>-20 °C</td><td>2.5 µL per digest</td><td>releases a part from its own block</td><td></td></tr><tr><td>SrfI</td><td>New England Biolabs</td><td>R0629</td><td>-20 °C</td><td>2.5 µL per digest</td><td>cuts the excised stuffer, so it cannot ligate back</td><td></td></tr><tr><td>PmeI</td><td>New England Biolabs</td><td>R0560</td><td>-20 °C</td><td>2.5 µL per digest</td><td>cuts the donor backbone, so it cannot ligate back</td><td></td></tr><tr><td>CutSmart Buffer</td><td></td><td></td><td>-20 °C</td><td></td><td>both digests run in it</td><td></td></tr><tr><td>T7 DNA Ligase</td><td>NEB</td><td>#M0318L</td><td>-20 °C</td><td></td><td>3,000,000 U/mL. Refuses blunt ends, which is what removes escapees.</td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td></tr><tr><td>StickTogether DNA Ligase Buffer</td><td>NEB</td><td>#B0535S</td><td>-20 °C</td><td></td><td>Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.</td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td></tr><tr><td>SPRI paramagnetic beads</td><td></td><td></td><td></td><td>2 volumes after a digest, 1 after a ligation</td><td>the two ratios differ; both elute in water</td><td></td></tr><tr><td>Endura ElectroCompetent Cells</td><td>Lucigen</td><td>60242-2</td><td>-80 °C</td><td>one aliquot per round, 25 µL a pulse</td><td>pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette</td><td><a class="cite" href="#source-ma133">MA133 p. 4-5</a></td></tr><tr><td>Recovery medium</td><td></td><td></td><td></td><td>one outgrowth per round</td><td></td><td></td></tr><tr><td>Selective broth and plates</td><td></td><td></td><td></td><td></td><td>LB with 50 µg/mL kanamycin, the destination vector&#x27;s own marker (KanR)</td><td></td></tr><tr><td>Plasmid prep kit</td><td></td><td></td><td></td><td>one prep per round</td><td></td><td></td></tr><tr><td>Electroporation cuvettes</td><td></td><td></td><td></td><td>3, one per round</td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Incubator or heat block at 37 °C, Magnetic rack for the bead clean-ups, Electroporator and cuvettes, Shaking incubator at 30 °C, Spectrophotometer or fluorometer, Long-read sequencer, for the two reads of the finished library</p><ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more. <a class="cite" href="#source-m0318">M0318 reaction conditions</a></li><li class="rule is-forbids"><strong>T7 DNA Ligase: never heat inactivation</strong> Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up. <a class="cite" href="#source-m0318">M0318 note 4</a></li></ul>
 
 </section>
+<p class="step-section">Pool the part lists</p>
 <section class="step" id="step-1">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Pool each part list</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Clean up each assembly and measure each concentration.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Pool the members of each part list in equal picomoles, one tube a position: each member gives the position&#x27;s total divided by its member count, which is unequal masses because the members differ in length.</span></label></li><li><label><input type="checkbox" data-key="step-1-3"><span>Bring each pool to at least 22.3 ng/µL. The round&#x27;s 50 µL digest leaves 45 µL for the DNA after its two 2.5 µL enzymes, and the whole total has to arrive in it.</span></label></li></ol>
@@ -304,6 +341,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>One member is much more dilute than the rest</dt><dd>Pool to the lowest member rather than to the mean; a member short here is short in every round after it.</dd><dt>The pool is below 22.3 ng/µL</dt><dd>Concentrate it, by SPRI at the round&#x27;s own 2x ratio, or scale the digest up so the same mass arrives in a larger volume.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Library coverage is counted on equally represented members, so an uneven pool loses members that no later round can put back.</li><li>Equal picomoles are unequal masses: a short member weighs less than a long one for the same number of molecules, and weighing them equally would not pool them equally.</li><li>N: 0.11 pmol a member is 9.99 ng of its shortest at 147 bp and 78.1 ng of its longest at 1,149 bp.</li><li>DBD: 0.219 pmol a member is 39.2 ng of its shortest at 291 bp and 48.9 ng of its longest at 363 bp.</li><li>C: 0.193 pmol a member is 15.8 ng of its shortest at 133 bp and 125 ng of its longest at 1,048 bp.</li></ul></div>
 </section>
+<p class="step-section">Round 1</p>
 <section class="step" id="step-2">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-2"><span class="step-n">2</span><span>Round 1: open DMX-iGGA with BbsI</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-2-1"><span>Set the digest below up with BbsI alone, and start the program.</span></label></li><li><label><input type="checkbox" data-key="step-2-2"><span>After the first hour add SrfI and run the second.</span></label></li></ol>
@@ -369,6 +407,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A low yield</dt><dd>The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector&#x27;s own marker.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Harvesting the whole culture is what keeps the library a library; picking colonies here throws away everything not picked.</li></ul></div>
 </section>
+<p class="step-section">Round 2</p>
 <section class="step" id="step-10">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-10"><span class="step-n">10</span><span>Round 2: open AP-1 DESynR round 1 with BbsI</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-10-1"><span>Set the digest below up with BbsI alone, and start the program.</span></label></li><li><label><input type="checkbox" data-key="step-10-2"><span>After the first hour add SrfI and run the second.</span></label></li></ol>
@@ -434,6 +473,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A low yield</dt><dd>The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector&#x27;s own marker.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Harvesting the whole culture is what keeps the library a library; picking colonies here throws away everything not picked.</li></ul></div>
 </section>
+<p class="step-section">Round 3</p>
 <section class="step" id="step-18">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-18"><span class="step-n">18</span><span>Round 3: open AP-1 DESynR round 2 with BbsI</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-18-1"><span>Set the digest below up with BbsI alone, and start the program.</span></label></li><li><label><input type="checkbox" data-key="step-18-2"><span>After the first hour add SrfI and run the second.</span></label></li></ol>
@@ -499,6 +539,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A low yield</dt><dd>The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector&#x27;s own marker.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Harvesting the whole culture is what keeps the library a library; picking colonies here throws away everything not picked.</li></ul></div>
 </section>
+<p class="step-section">Read the library back</p>
 <section class="step" id="step-26">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-26"><span class="step-n">26</span><span>Read linkage</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-26-1"><span>Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member&#x27;s parts and its barcode block together, on Linkage read forward TCCCCTCTAGAAATAATTTTGTTTAACTTT and Linkage read reverse CAGCCGGATCTCATGTTT, which give a 1197 bp amplicon.</span></label></li><li><label><input type="checkbox" data-key="step-26-2"><span>Sequence the amplicon as a long read.</span></label></li><li><label><input type="checkbox" data-key="step-26-3"><span>Decode each read&#x27;s block against barcodes.tsv, then read the coding bases beside it against the member that block names.</span></label></li></ol>
@@ -519,11 +560,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <p>3 numbers this protocol would otherwise have to invent. A hole is a defect in what the package knows, not a failure of the run, and it is never filled with a guess.</p>
 <ul><li class="hole" id="hole-H23"><span class="hole-id">H23</span> <span class="hole-none">no sourced number</span> — the split digest, units per reaction: no published document describes the split digest; the one source is the paper itself <span class="hole-kind">nobody published it</span> <em>Filled by nothing; it is the method&#x27;s own.</em></li><li class="hole" id="hole-H24"><span class="hole-id">H24</span> <span class="hole-none">no sourced number</span> — final assembly, the one-pot reaction: no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector&#x27;s mass nor the ratio it meets the cargo at is sourced <span class="hole-kind">the method has not decided</span> <em>Filled by a pilot.</em></li><li class="hole" id="hole-H28"><span class="hole-id">H28</span> <span class="hole-none">no sourced number</span> — the linkage read: no pass mark for the linkage read: what share of reads must carry a barcode that still names its part <span class="hole-kind">the method has not decided</span> <em>Filled by the project, or a source that sets a mark rather than reporting what it reached.</em></li></ul>
 </section>
-<section class="block sources">
+<section class="block sources" id="sources">
 <h2>Sources</h2>
 <ul><li id="source-m0318"><strong>M0318</strong> New England Biolabs #M0318 T7 DNA Ligase product page · r.jina.ai · 2026-10-06 <a href="https://www.neb.com/en/products/m0318-t7-dna-ligase" rel="noreferrer">https://www.neb.com/en/products/m0318-t7-dna-ligase</a></li><li id="source-ma133"><strong>MA133</strong> Endura Competent Cells manual, Lucigen / Biosearch Technologies · MA133 26Feb2018 · plain curl · 2026-10-06</li></ul>
 </section>
-<section class="block references">
+<section class="block references" id="references">
 <h2>References</h2>
 <ol><li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0 <a href="https://doi.org/10.1016/j.cell.2026.07.054" rel="noreferrer">https://doi.org/10.1016/j.cell.2026.07.054</a></li><li>Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member <a href="https://doi.org/10.1016/0092-8674(76)90055-6" rel="noreferrer">https://doi.org/10.1016/0092-8674(76)90055-6</a></li><li>Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library&#x27;s acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member <a href="https://doi.org/10.1038/nprot.2017.016" rel="noreferrer">https://doi.org/10.1038/nprot.2017.016</a></li><li>Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library&#x27;s own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x <a href="https://doi.org/10.1186/s13059-020-1939-1" rel="noreferrer">https://doi.org/10.1186/s13059-020-1939-1</a></li><li>Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage <a href="https://doi.org/10.1186/s13059-023-03132-3" rel="noreferrer">https://doi.org/10.1186/s13059-023-03132-3</a></li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977 <a href="https://doi.org/10.1371/journal.pone.0026969" rel="noreferrer">https://doi.org/10.1371/journal.pone.0026969</a></li><li>Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not <a href="https://doi.org/10.1101/gr.121715.111" rel="noreferrer">https://doi.org/10.1101/gr.121715.111</a></li><li>Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution <a href="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended" rel="noreferrer">https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended</a></li><li>Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify <a href="https://www.idtdna.com/page/?p=890" rel="noreferrer">https://www.idtdna.com/page/?p=890</a></li><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li><li>The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page&#x27;s own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.</li></ol>
 </section>
@@ -555,6 +596,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -571,7 +617,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -585,6 +631,27 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     });
   });
   refresh();
+
+  // A run's index: how far the bench got in each protocol, read from that page's own store.
+  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // reads the marks without the protocol pages writing anything twice.
+  all("[data-page-key]").forEach(function (item) {
+    var total = Number(item.getAttribute("data-steps")) || 0;
+    var label = item.querySelector(".page-progress");
+    var marks;
+    try {
+      marks = JSON.parse(
+        window.localStorage.getItem("liulab-protocol:" + item.getAttribute("data-page-key")) || "{}"
+      );
+    } catch (error) {
+      return;
+    }
+    if (!marks || !label || !total) return;
+    var done = 0;
+    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
+    label.textContent = done + " of " + steps(total) + " done";
+    item.classList.toggle("is-started", done > 0);
+  });
 
   var clear = document.querySelector("button.clear");
   if (clear) {

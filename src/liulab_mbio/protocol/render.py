@@ -596,7 +596,7 @@ def _merged_materials(project: Project) -> str:
             found[key] = material if kept is None else replace(kept, amount=_join(kept, material))
             takers.setdefault(key, []).append(protocol.title)
     used = tuple(", ".join(dict.fromkeys(names)) for names in takers.values())
-    return _materials(tuple(found.values()), (), used)
+    return _materials(tuple(found.values()), (), used, note=False)
 
 
 def _join(kept: Material, found: Material) -> str:
@@ -878,12 +878,17 @@ def _cell(tag: str, css: str, inner: str) -> str:
 
 
 def _materials(
-    materials: tuple[Material, ...], equipment: tuple[str, ...], used: tuple[str, ...] = ()
+    materials: tuple[Material, ...],
+    equipment: tuple[str, ...],
+    used: tuple[str, ...] = (),
+    *,
+    note: bool = True,
 ) -> str:
     """Everything that is not an oligo, and the hardware as one light line under it.
 
     `used` names, row by row, which protocols of a run take each material, for the page a whole
-    run shares. A protocol's own list leaves it empty.
+    run shares. A protocol's own list leaves it empty. That page is what is ordered rather than
+    what is laid out, so it drops the bench note and `note` is how.
     """
     if not materials and not equipment:
         return ""
@@ -892,7 +897,7 @@ def _materials(
         ("Catalogue", lambda m: m.catalog),
         ("Storage", lambda m: m.storage),
         ("Per run", lambda m: m.amount),
-        ("Note", lambda m: m.note),
+        *([("Note", lambda m: m.note)] if note else []),
     ]
     cited = any(m.citation for m in materials)
     shown = [(label, get) for label, get in columns if any(get(m) for m in materials)]
