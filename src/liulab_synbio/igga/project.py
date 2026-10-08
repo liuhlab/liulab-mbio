@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
+from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_synbio.dmx import ROUTES
@@ -25,6 +26,12 @@ from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a project takes unless it states another.
 BARCODE_LENGTH = 11
+
+#: The plate format a primer order comes in unless a project names another, and how many working
+#: copies it splits. Neither is a measurement: one is the format every supplier quotes a plated
+#: oligo order in, the other is one plate a run.
+PRIMER_PLATE_WELLS = 96
+PRIMER_PLATE_COPIES = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +49,59 @@ class Barcode:
 
     length: int = BARCODE_LENGTH
     min_distance: int = MIN_DISTANCE
+
+
+@dataclass(frozen=True, slots=True)
+class PrimerPlates:
+    """How a run lays its routine primers out, which is the lab's own and not the method's.
+
+    The amounts are the project author's: what the vendor delivers in a well and what this lab
+    resuspends and dilutes to. None of them is published anywhere this package can cite, so a
+    project that wants the plates states them and one that does not gets no such protocol.
+
+    Parameters
+    ----------
+    nanomoles
+        What the vendor delivers in one well, which sets the volume it is resuspended in.
+    stock_um
+        What the stock plate is resuspended to, µM.
+    working_ul
+        What one well of a working plate holds.
+    working_um
+        What a working plate is diluted to, µM. It defaults to what a PCR is pipetted from,
+        `liulab_mbio.bench.pcr.PRIMER_STOCK_UM`.
+    wells
+        The format every plate comes in.
+    copies
+        How many working plates to split, one run each.
+    """
+
+    nanomoles: float
+    stock_um: float
+    working_ul: float
+    working_um: float = PRIMER_STOCK_UM
+    wells: int = PRIMER_PLATE_WELLS
+    copies: int = PRIMER_PLATE_COPIES
+
+    def __post_init__(self) -> None:
+        """Refuse an amount that is not positive, or a working plate that dilutes nothing."""
+        for key, value in (
+            ("nanomoles", self.nanomoles),
+            ("stock_um", self.stock_um),
+            ("working_ul", self.working_ul),
+            ("working_um", self.working_um),
+            ("wells", self.wells),
+            ("copies", self.copies),
+        ):
+            if value <= 0:
+                raise ValueError(
+                    f"primer_plates.{key} is {value}, and a project states a positive one"
+                )
+        if self.working_um >= self.stock_um:
+            raise ValueError(
+                f"primer_plates.working_um is {self.working_um} and stock_um is "
+                f"{self.stock_um}, so a working plate dilutes nothing"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +160,10 @@ class Project:
         sets a mark for it, so a project that states none is read against no mark at all.
     barcode
         What one part's barcode holds to.
+    primer_plates
+        How this lab lays the pool's primers out as a stock plate and its working copies.
+        Omitted, no such protocol is written: an empty page is worse than a step, and the
+        amounts are nobody's to guess. It needs `primers`, which is what there is to plate.
     scheme
         The method the project is built by. There is one, and it is `IGGA`.
 
@@ -137,6 +201,7 @@ class Project:
     reads_per_member: int | None = None
     linkage_fidelity: float | None = None
     barcode: Barcode = field(default_factory=Barcode)
+    primer_plates: PrimerPlates | None = None
     scheme: Scheme = IGGA
 
     def __post_init__(self) -> None:
@@ -151,6 +216,7 @@ class Project:
         self._check_positions()
         self._check_numbers()
         self._check_validation()
+        self._check_plates()
         self._check_marks()
         self._check_barcode_frame()
         if self.host not in codon_tables():
@@ -234,6 +300,18 @@ class Project:
             raise ValueError(
                 "validate_from and route are stated together: a project that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+
+    def _check_plates(self) -> None:
+        """Refuse primer plates where there is no primer set to plate.
+
+        The plates seat the primers that amplify the pool, and a project naming no primer set
+        writes no pool and no primer.
+        """
+        if self.primer_plates is not None and self.primers is None:
+            raise ValueError(
+                "primer_plates lays out the primers that amplify the pool, so a project naming "
+                "it names primers too"
             )
 
     def _check_marks(self) -> None:
@@ -376,6 +454,7 @@ def read_project(path: str | os.PathLike[str]) -> Project:
             )
         ),
         barcode=_barcode(given.get("barcode")),
+        primer_plates=_primer_plates(given.get("primer_plates")),
     )
 
 
@@ -406,9 +485,12 @@ _PROJECT_OPTIONAL = frozenset(
         "representation_skew",
         "reads_per_member",
         "linkage_fidelity",
+        "primer_plates",
     }
 )
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
+_PLATES_REQUIRED = frozenset({"nanomoles", "stock_um", "working_ul"})
+_PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
@@ -450,6 +532,33 @@ def _barcode(entry: Any) -> Barcode:
         _whole(entry, "min_distance", "a project barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
+    )
+
+
+def _primer_plates(entry: Any) -> PrimerPlates | None:
+    """Build the primer-plate amounts from parsed JSON, or `None` where a project states none.
+
+    Three amounts are required because nothing publishes them: what the vendor delivers, what
+    this lab resuspends to, and what a working well holds. The other three have a default.
+
+    Raises
+    ------
+    ValueError
+        If it is not an object, or a key is missing, unknown or of another JSON type.
+    """
+    if entry is None:
+        return None
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"a project's primer_plates is {type(entry).__name__}, not an object")
+    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a project's primer_plates")
+    where = "a project's primer_plates"
+    return PrimerPlates(
+        _number(entry, "nanomoles", where),
+        _number(entry, "stock_um", where),
+        _number(entry, "working_ul", where),
+        **({"working_um": _number(entry, "working_um", where)} if "working_um" in entry else {}),
+        **({"wells": _whole(entry, "wells", where)} if "wells" in entry else {}),
+        **({"copies": _whole(entry, "copies", where)} if "copies" in entry else {}),
     )
 
 

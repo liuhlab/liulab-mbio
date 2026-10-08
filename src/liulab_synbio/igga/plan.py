@@ -328,6 +328,7 @@ class LibraryPlan:
             reads=self.reads,
             marks=self.project.marks,
             linkage_fidelity=self.project.linkage_fidelity,
+            primer_plates=self.project.primer_plates,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:

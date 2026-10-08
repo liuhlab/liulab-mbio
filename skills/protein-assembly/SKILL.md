@@ -26,8 +26,9 @@ pixi run liulab_synbio igga plan project.json --out library/
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
 `host`, `oligo_length`, `batch_size`, `completeness`, and optionally `seed`, `reserved_extra`,
-`barcode`, `primers` and `bands` for the pool, and `validate_from` with `route` for the read
-back. It is checked where it is read, so a bad value fails before anything is designed.
+`barcode`, `primers` and `bands` for the pool, `primer_plates` to lay those primers out as a
+stock plate and its copies, and `validate_from` with `route` for the read back. It is checked
+where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.
 
@@ -72,6 +73,9 @@ the plate layout are already in the pages, drawn beside the step that uses them.
 
 - **One round a position.** Each round appends one part list to every member at once, so three
   lists of 24 are three rounds and 13,824 constructs, not 13,824 syntheses.
+- **The primer-plate amounts are the user's.** `primer_plates` takes `nanomoles`, `stock_um`
+  and `working_ul`; nothing publishes them, so ask the user rather than guessing. Leave the key
+  out and the primers are ordered with the pool and no plate protocol is written.
 - **Constructs multiply, and so does the colony count.** `completeness` has no default: the
   chance a round may miss a member is the user's call. Every round is sized separately, because a
   round short of its floor loses members no later round can put back.

@@ -33,7 +33,14 @@ from liulab_mbio.bench.plates import plate, seat
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
-from liulab_mbio.bench.steps import badges, card, catalogued, enzyme_material, listed
+from liulab_mbio.bench.steps import (
+    badges,
+    card,
+    catalogued,
+    enzyme_material,
+    listed,
+    primer_plate_protocol,
+)
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
 from liulab_mbio.protocol.model import (
@@ -44,6 +51,7 @@ from liulab_mbio.protocol.model import (
     Incubation,
     Lane,
     Material,
+    Oligo,
     Plate,
     Project,
     Protocol,
@@ -97,6 +105,7 @@ from liulab_synbio.igga.coverage import (
 )
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.project import PrimerPlates
 from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
@@ -300,6 +309,7 @@ def growth_program() -> ThermocyclerProgram:
 
 #: What each protocol of a library run is called, in the order the bench runs them. A title is
 #: what the page is headed and what the chain names it by, so it is written for the bench.
+PRIMER_PLATES = "Primer plates"
 ORDERING = "Cargo ordering and pool preparation"
 CREATION = "Cargo creation"
 VALIDATION = "Cargo validation"
@@ -308,6 +318,10 @@ FINAL = "Final cargo ligation"
 
 #: What one protocol hands the next, by name. The name is the contract, so the protocol that
 #: produces it and the one that consumes it spell it alike.
+#: What `_pool_materials` calls the primers that amplify the pool. Where a run plates them,
+#: they are ordered in that protocol instead and this material is only used in the next one.
+PRIMER_MATERIAL = "Pool amplification primers"
+
 POOL_ITEM = "oligo pool"
 BLOCKS_ITEM = "synthesised blocks"
 ARCHIVE_ITEM = "cargo archive plate"
@@ -346,6 +360,7 @@ def project(
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
+    primer_plates: PrimerPlates | None = None,
 ) -> Project:
     """Return the run as the chain of protocols the bench works through, in order.
 
@@ -373,8 +388,14 @@ def project(
 
     `block_vectors` is what a block closes into, one a position: what each is called and the
     file the plan wrote it to.
+
+    `primer_plates` is how this lab lays the pool's primers out, and `None` for a project
+    stating none. With it the chain opens with a protocol that orders those primers and splits
+    them into working plates; without it they are ordered with the pool and no such protocol is
+    written.
     """
     inside, outside = choppers(scheme)
+    plated = _primer_plates(pool, primer_plates)
     selection = stages.selection_for(vector)
     staged = _staged(
         scheme,
@@ -399,6 +420,7 @@ def project(
         marks,
         linkage_fidelity,
         block_vectors,
+        plated is not None,
     )
     sources = _sources(prices, validation, pool)
     spread = _spread(
@@ -414,11 +436,14 @@ def project(
             working,
             block_vectors,
             validation,
+            plated is not None,
         ),
         staged,
     )
-    handed = _handed(vector, rounds, validation, pool, working, block_vectors, staged, part_lists)
-    made = tuple(
+    handed = _handed(
+        vector, rounds, validation, pool, working, block_vectors, staged, part_lists, plated
+    )
+    made = ((plated,) if plated else ()) + tuple(
         citing(
             Protocol(
                 title,
@@ -481,6 +506,26 @@ def project(
         protocols=made,
         checks=badges(checks),
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
+    )
+
+
+def _primer_plates(pool: PoolPlan | None, asked: PrimerPlates | None) -> Protocol | None:
+    """Return the protocol that lays the pool's primers out, or `None` where none was asked for.
+
+    The primers are the pool's own, so there is nothing to plate without one. The amounts are
+    the project's: this invents none of them.
+    """
+    if pool is None or asked is None:
+        return None
+    return primer_plate_protocol(
+        [Oligo(one.name, one.sequence, purpose=one.role) for one in pool.pool.primers],
+        wells=asked.wells,
+        copies=asked.copies,
+        nanomoles=asked.nanomoles,
+        stock_um=asked.stock_um,
+        working_um=asked.working_um,
+        working_ul=asked.working_ul,
+        title=PRIMER_PLATES,
     )
 
 
@@ -587,6 +632,7 @@ def _handed(
     block_vectors: Sequence[tuple[str, str]],
     staged: Mapping[str, tuple[Step, ...]],
     part_lists: Sequence[PartList],
+    plated: Protocol | None = None,
 ) -> dict[str, tuple[tuple[Handed, ...], tuple[Handed, ...]]]:
     """Return what each protocol is handed and what it leaves, keyed by the protocol's title."""
     blocks = tuple(
@@ -612,8 +658,9 @@ def _handed(
         else Handed(BLOCKS_ITEM, "every block as the vendor shipped it", storage="-20 °C")
     )
     held[ORDERING] = ((), (ordered,))
+    working_plate = plated.produces[1:2] if plated else ()
     if CREATION in staged:
-        held[CREATION] = ((ordered, *blocks), (archive,))
+        held[CREATION] = ((ordered, *working_plate, *blocks), (archive,))
     takes_cargo: tuple[Handed, ...] = (archive,)
     if validation is not None:
         title = _validation_title(validation)
@@ -645,6 +692,7 @@ def _carried(
     working: Working | None,
     block_vectors: Sequence[tuple[str, str]],
     validation: dmx.Validation | None,
+    plated: bool = False,
 ) -> tuple[tuple[Material, tuple[str, ...]], ...]:
     """Return every reagent the run buys, each beside the protocols it is bought for.
 
@@ -653,7 +701,7 @@ def _carried(
     """
     rest = (CREATION, ASSEMBLY, FINAL)
     made: list[tuple[Material, tuple[str, ...]]] = [
-        (one, (ORDERING, CREATION))
+        (one, (CREATION,) if plated and one.name == PRIMER_MATERIAL else (ORDERING, CREATION))
         for one in (_pool_materials(pool, pool_sheet, primer_sheet) if pool else ())
     ]
     if validation is not None:
@@ -1146,6 +1194,7 @@ def _staged(
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
+    plated: bool = False,
 ) -> dict[str, tuple[Step, ...]]:
     """Return each protocol's steps, in the order the bench works through them.
 
@@ -1165,6 +1214,7 @@ def _staged(
             block_vectors or ((rounds[0].destination.name or "the destination", ""),),
             bench[0].ligation[0],
             selection,
+            plated,
         )
         staged[ORDERING] = (_labelled(made[0], "Order and store"),)
         staged[CREATION] = (
@@ -1330,7 +1380,7 @@ def _pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple
             note=f"ordered from {pool_sheet}, which says which block each oligo is a piece of",
         ),
         Material(
-            "Pool amplification primers",
+            PRIMER_MATERIAL,
             storage="-20 °C",
             amount=f"{len(pool.pool.primers)} primers: {roles}",
             note=f"ordered from {primer_sheet}; a pair a batch, an inner primer a block",
@@ -1417,8 +1467,13 @@ def _pool_steps(
     destinations: Sequence[tuple[str, str]],
     opened: Amount,
     selection: str,
+    plated: bool = False,
 ) -> tuple[Step, ...]:
-    """Return the steps that turn an oligo pool into the blocks a round's part list holds."""
+    """Return the steps that turn an oligo pool into the blocks a round's part list holds.
+
+    `plated` says the primers are ordered by the protocol that lays them out as plates, so the
+    pool order step does not order them a second time.
+    """
     sequences = {one.name: one.sequence for one in pool.pool.primers}
     layout = pool.pool.layout
     batches = pool.batches
@@ -1426,15 +1481,17 @@ def _pool_steps(
     second = _annealing(pool.inner_pairs, sequences)
     inner_length = layout.length - layout.primer_length
     return (
-        _pool_order_step(pool, pool_sheet, primer_sheet),
+        _pool_order_step(pool, pool_sheet, primer_sheet, plated),
         _pcr1_step(pool, batches, first, layout.length),
         _pcr2_step(pool, batches, parts, second, inner_length),
         _assembly_step(pool, parts, sheet, scheme, destinations, opened, selection),
     )
 
 
-def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step:
-    """Order the pool and its primers, which is what the whole design comes down to."""
+def _pool_order_step(
+    pool: PoolPlan, pool_sheet: str, primer_sheet: str, plated: bool = False
+) -> Step:
+    """Order the pool, and its primers where no other protocol has ordered them already."""
     layout = pool.pool.layout
     roles = ", ".join(f"{count} {role}" for role, count in _primer_roles(pool).items())
     over = pool.over_floor
@@ -1446,17 +1503,29 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step
         else f"{pool.pool.count} oligos is the fewest the length budget allows for."
     )
     return Step(
-        "Order the oligo pool and the primers that amplify it",
+        "Order the oligo pool"
+        if plated
+        else "Order the oligo pool and the primers that amplify it",
         instructions=(
             f"Order every row of {pool_sheet} as one synthesised oligo pool, {pool.pool.count} "
             f"members at {layout.length} nt.",
-            f"Order every row of {primer_sheet} as an ordinary oligo: {roles}.",
+            *(
+                ()
+                if plated
+                else (f"Order every row of {primer_sheet} as an ordinary oligo: {roles}.",)
+            ),
         ),
         expected=(
             f"One pool, {pool.pool.count} oligos, every one {layout.length} nt and no length "
             "spread, which is what the padding is for.",
-            f"{len(pool.pool.primers)} primers, each "
-            f"{min(len(one) for one in pool.pool.primers)} nt.",
+            *(
+                ()
+                if plated
+                else (
+                    f"{len(pool.pool.primers)} primers, each "
+                    f"{min(len(one) for one in pool.pool.primers)} nt.",
+                )
+            ),
         ),
         notes=(
             f"{pool_sheet} names each oligo's block, which piece of it that is, and the primers "

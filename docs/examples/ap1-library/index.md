@@ -23,10 +23,15 @@ the design is the same and only the protocol differs.
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, and that every design is read back by index PCR |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back by index PCR |
 | [project-barcode-ligation.json](project-barcode-ligation.json) | the same library read back by barcode ligation instead |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
+
+`primer_plates` says how this lab lays the primers out: what the vendor delivers in a well,
+what it is resuspended to, and what a working well holds. Leave it out and the primers are
+ordered with the pool, and the run has one sitting fewer. The package states none of the three:
+nothing publishes them, so they are the project author's to give.
 
 The two project files differ in one key. `route` says which of the two read-back routes reads
 the picked wells, and `validate_from` says which designs are read at all: a fragment count, at
@@ -59,11 +64,12 @@ someone does them, and each page says what it is handed and what it leaves behin
 
 | Page | What it is handed | What it leaves |
 | --- | --- | --- |
-| [Cargo ordering and pool preparation](protocol/01-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
-| [Cargo creation](protocol/02-cargo-creation.html) | the pool, and a block vector a position | one archived well a design |
-| [Cargo validation](protocol/03-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
-| [Library assembly in rounds](protocol/04-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
-| [Final cargo ligation](protocol/05-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
+| [Primer plates](protocol/01-primer-plates.html) | nothing yet | a primer stock plate, and a working copy |
+| [Cargo ordering and pool preparation](protocol/02-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
+| [Cargo creation](protocol/03-cargo-creation.html) | the pool, the working plate, and a block vector a position | one archived well a design |
+| [Cargo validation](protocol/04-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
+| [Library assembly in rounds](protocol/05-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
+| [Final cargo ligation](protocol/06-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
 
 [The way in](protocol/index.html) explains the design, draws the chain, and lists the run's own
 checks, how long it holds the bench and every number it has no source for.

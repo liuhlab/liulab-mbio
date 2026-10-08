@@ -223,8 +223,8 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     assert polyclonal.validation is None
     titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
-    assert titles[0] == "Order the oligo pool and the primers that amplify it"
-    assert titles[4] == "Pool each part list"
+    assert "Order the oligo pool" in titles
+    assert titles[titles.index("Order the oligo pool") + 4] == "Pool each part list"
 
 
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
@@ -288,8 +288,9 @@ def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
 def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
     """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
     titles = [step.title for step in protocol.steps]
-    assert titles[:4] == [
-        "Order the oligo pool and the primers that amplify it",
+    start = titles.index("Order the oligo pool")
+    assert titles[start : start + 4] == [
+        "Order the oligo pool",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
         "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
@@ -428,13 +429,14 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
     chain = plan.chain()
 
     assert [one.title for one in chain.protocols] == [
+        "Primer plates",
         "Cargo ordering and pool preparation",
         "Cargo creation",
         "Cargo validation: index PCR",
         "Library assembly in rounds",
         "Final cargo ligation",
     ]
-    assert [len(one.steps) for one in chain.protocols] == [1, 3, 6, 27, 5]
+    assert [len(one.steps) for one in chain.protocols] == [5, 1, 3, 6, 27, 5]
     assert [one.audit()[0].status for one in (chain,)] == ["pass"]
     handed = {item.name for item in chain.inputs}
     for one in chain.protocols:
@@ -448,7 +450,8 @@ def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
     chain = plan.chain()
     rounds = next(one for one in chain.protocols if one.title == "Library assembly in rounds")
 
-    assert all(step.section for one in chain.protocols for step in one.steps)
+    written = [one for one in chain.protocols if one.title != "Primer plates"]
+    assert all(step.section for one in written for step in one.steps)
     assert list(dict.fromkeys(step.section for step in rounds.steps)) == [
         "Pool the part lists",
         "Round 1",
@@ -462,7 +465,37 @@ def test_the_other_route_writes_its_own_protocol_and_both_at_once_is_refused(pla
     """A run marks its wells one way, so the chain carries that route's page and no other."""
     ligation = rerouted(plan, route="barcode ligation").chain()
 
-    assert [one.title for one in ligation.protocols][2] == "Cargo validation: barcode ligation"
+    assert [one.title for one in ligation.protocols][3] == "Cargo validation: barcode ligation"
     assert ligation.audit()[0].status == "pass"
     with pytest.raises(ValueError, match="route is 'both'"):
         rerouted(plan, route="both")
+
+
+def test_the_primer_plates_are_written_only_where_the_project_says_how(plan):
+    """The amounts are nobody's to guess, so a project stating none gets no such sitting."""
+    plates = plan.chain().protocols[0]
+    bare = rerouted(plan, primer_plates=None).chain()
+
+    assert plates.title == "Primer plates"
+    assert len(plates.oligos) == len(plan.pool.pool.primers) == 74
+    assert [one.name for one in plates.produces] == [
+        "primer stock plate",
+        "primer working plate 1",
+    ]
+    assert [one.name for one in plates.plates] == [
+        "primer stock plate",
+        "primer working plate 1",
+    ]
+    assert bare.protocols[0].title == "Cargo ordering and pool preparation"
+    assert bare.audit()[0].status == "pass"
+
+
+def test_the_primers_are_ordered_once_however_the_run_is_split(plan):
+    """A plated run orders its primers in that sitting, so the pool step stops ordering them."""
+    plated = [step.title for step in whole(plan.chain()).steps]
+    bare = [step.title for step in whole(rerouted(plan, primer_plates=None).chain()).steps]
+
+    assert "Order the oligo pool" in plated
+    assert "Order the primers" in plated
+    assert "Order the oligo pool and the primers that amplify it" in bare
+    assert "Order the primers" not in bare
