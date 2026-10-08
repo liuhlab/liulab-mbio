@@ -335,12 +335,8 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
 
 
 def test_the_demo_is_left_with_the_four_numbers_no_input_of_its_own_can_give(plan):
-    """What the run page counts: the bill's holes and each protocol's, one entry an id.
-
-    This is the demo's floor. Each of the four waits on something no file beside `project.json`
-    could hold: two pilots on this lab's own pool, the index plate a DMX build names, and the
-    split digest's procedure, which no document describes. Anything else reappearing here is a
-    build field that stopped being read.
+    """The demo's floor, counted as the run page counts it: the bill's holes and each
+    protocol's, one entry an id. Anything else here is a build field that stopped being read.
     """
     chain = plan.chain()
     found = {row.hole.id: row.hole for row in (chain.bill.rows if chain.bill else ()) if row.hole}

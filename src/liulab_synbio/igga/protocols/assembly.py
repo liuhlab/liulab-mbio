@@ -138,15 +138,8 @@ class Assembly(Protocol):
         return dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
 
     def holes(self, run: Run) -> tuple[Hole, ...]:
-        """Return what the destination's own record and this build leave unanswered.
-
-        A build stating `final_assembly` sizes the one-pot reaction, which is what H24 says
-        closes it, so the hole goes here as it goes from the step that prints the mass.
-        """
-        found = stages.holes_for(run.vector)
-        if run.final_assembly is None:
-            return found
-        return tuple(one for one in found if one.id != stages.FINAL_MASSES.id)
+        """Return what the destination's own record leaves unanswered."""
+        return stages.holes_for(run.vector)
 
     def overview(self, run: Run) -> dict[str, str]:
         """Return the facts to check before starting, each short enough to be a card."""

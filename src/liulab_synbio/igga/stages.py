@@ -86,7 +86,8 @@ FINAL_MASSES = Hole(
 
 
 #: What this method cannot write completely. The ids are the research note's own, so a reference
-#: still resolves.
+#: still resolves. `FINAL_MASSES` is not here: a build may size that reaction, so the step that
+#: would print the mass is the one place that knows whether the hole stands.
 HOLES: tuple[Hole, ...] = (
     Hole(
         "H23",
@@ -96,7 +97,6 @@ HOLES: tuple[Hole, ...] = (
         where="the split digest, the procedure",
         filled_by="nothing; it is the method's own",
     ),
-    FINAL_MASSES,
 )
 
 

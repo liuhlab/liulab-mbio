@@ -23,8 +23,9 @@ work, and the step that carries it is where to look.
 
 - **Hold a plan open until no hole remains.** It asks for a number nobody published, which is the
   defect a hole exists to prevent.
-- **Name a working vector in the demo.** Priced then at a hand-edited backbone the package
-  cannot write, a CLI option that did not exist, and most of the gate's corpus moved.
+- **Name a working vector in the demo**, rejected then and adopted later. Priced at a
+  hand-edited backbone the package cannot write, a CLI option that did not exist, and most of
+  the gate's corpus moved.
 - **Count only `undecided` holes, leaving `lab` ones unmentioned.** The two differ in who fills
   them, not in whether the step is runnable as shipped, and a reader at the bench meets both.
 
@@ -37,13 +38,12 @@ measurement, never a published figure. The measurement and the five kinds stand.
 
 ## Amendment: the demo names a working vector
 
-A builder script takes Addgene 171123's eight sites out, `--working-site` places the
-cassette, and the gate's corpus moves with the example: the three costs priced above. The
-build states the assembly and the linkage mark too, so a run leaves no hole there. It states
-neither cycle count. The difference is what the number is: a mass and
-a ratio are set by whoever pipettes the tube, so stating them says what this run will do; a
-cycle count is what one pool on one machine turns out to need, so stating one says what nobody
-read.
+A builder script takes the eight sites out and `--working-site` places the cassette, so two
+of those costs are gone; the corpus move was paid. The build states the assembly and the
+linkage mark too, so a run leaves no hole there. Neither had a pilot; what differs is the
+number: a mass and a ratio are what this run will pipette, true once written. A cycle
+count is what one pool on one machine turns out to need, so writing one claims a reading
+nobody took. That is why the demo states neither.
 
 ## Consequences
 

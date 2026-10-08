@@ -4,9 +4,9 @@ A combinatorial library over three positions, built from 72 protein sequences an
 Every output file below was written by the command, from the input files beside it.
 Nothing here is edited by hand.
 
-Read this page to see what a whole run writes. Its [project.json](project.json) holds every
-choice this library made; copy it to start one of your own. The method it is built by is the
-package's own and is not in the file.
+Read this page to see what a whole run writes. Its [project.json](project.json) holds the
+choices this library made, bar the two the command below adds; copy it to start one of your
+own. The method it is built by is the package's own and is not in the file.
 
 ```bash
 pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
@@ -25,7 +25,7 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, that every design is read back on both routes, and the three numbers this lab set for itself |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, that every design is read back on both routes, and the numbers this lab set for itself |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
 | [working-vector.gb](working-vector.gb) | the backbone the finished library ends in: pLVX-TetOne-Puro-GFP, Addgene 171123, with its eight BsaI and BsmBI sites taken out. Swap in your own backbone and name a site in it |
@@ -126,16 +126,18 @@ one goes; here that is EGFP, the feature the cassette goes in at.
 
 [working-vector.gb](working-vector.gb) is not the file Addgene sends. Addgene 171123 reads six
 BsaI and two BsmBI sites, and a round of this method would cut every one of them. Taking them
-out is a job of its own, with [its own bench page](working-vector-domestication.html) and its
-own record of what changed. The library run opens with that record already in hand and never
-touches the backbone again.
+out is a job of its own, with [its own bench page](working-vector-domestication.html) and
+[the protocol behind it](working-vector-domestication.json), which lists every base that
+moved. The library run opens with that record already in hand and never touches the backbone
+again.
 
 **Two of the eight are the hard ones, and the demo says so rather than hiding it.** They sit in
-TAR, the stem-loop at each end of the viral genome. TAR is not read as protein, so there is no
-second spelling of the same amino acid to swap in, and the change has to alter the loop itself.
-Whether the virus tolerates that is still open: the one published backbone carrying the change
-reports no titre for it. The bench page carries that as a hole rather than printing a number
-nobody measured. This demo keeps a hard backbone on purpose. Domesticating one is worth seeing.
+TAR, the stem-loop at each end of the viral genome. Five of the eight sit outside a gene too,
+but TAR has to fold to work, so the change alters the shape the virus needs rather than a
+spelling nothing reads. Whether the virus tolerates that is still open: the one published
+backbone carrying the change reports no titre for it. The bench page carries that as a hole
+rather than printing a number nobody measured. This demo keeps a hard backbone on purpose.
+Domesticating one is worth seeing.
 
 ## What a price costs
 
