@@ -1,10 +1,10 @@
-"""Seating: one part a well, simulated in its carrier, and no library at the end of it."""
+"""DMX seating: one part a well, simulated in its carrier, and no library at the end."""
 
 import pytest
 
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
-from liulab_synbio import seating
+from liulab_synbio.dmx import seating
 
 #: A carrier the size of a test: one blunt point, no site the releasing enzyme reads, and a
 #: feature the insertion falls inside so the report has something to say.

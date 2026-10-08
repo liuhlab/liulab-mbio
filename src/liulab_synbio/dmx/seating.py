@@ -1,17 +1,19 @@
-"""Seating: one part into its own carrier, one well a part, with nothing pooled at the end.
+"""One part into its own carrier, one well a part, with nothing pooled at the end.
 
 A part is a reusable in-frame element — a tag, a linker, a signal peptide, a localization
-signal, a degron — flanked by inward-facing BsmBI sites. Seating puts each one in the part
+signal, a degron — flanked by inward-facing BsmBI sites. This puts each one in the part
 carrier so the collection can be kept and re-cut later. It is not a round: a round joins one
 part list to a library in one tube and hands back a pool, and this hands back one plasmid a
 well. The method reserves BsmBI for releasing a part from its carrier and for the last transfer
 into a working vector, which is why neither has a role inside the rounds to be named by.
 
 The carrier is supplied already linearised, with topoisomerase I bound to each 3' end, so the
-seating reaction adds no enzyme and the backbone must stay free of BsmBI. Seating simulates the
-plasmid that comes out: it says where each part sits, what cuts it back out and what comes out,
-so a step that seats parts can be written without the round model pretending a library came of
-it.
+reaction adds no enzyme and the backbone must stay free of BsmBI. The plasmid that comes out is
+simulated: this says where each part sits, what cuts it back out and what comes out, so a step
+that seats parts can be written without the round model pretending a library came of it.
+
+**Seating** is `liulab_mbio`'s word for where things sit in a plate, so what comes out of here
+is `SeatedParts` and never a `Seating`.
 """
 
 import dataclasses
@@ -41,7 +43,7 @@ TOPO_SITE = "GCCCTTAAGGGC"
 
 
 @dataclass(frozen=True, slots=True)
-class Seating:
+class SeatedParts:
     """Every part seated in its own carrier, and where each one sits.
 
     Parameters
@@ -153,8 +155,8 @@ def seat(
     part
         The part, flanked by an inward-facing `ENZYME` pair.
     overhangs
-        The pairs a released part may carry, such as
-        `liulab_synbio.igga.method.INTERFACE_OVERHANGS` values. ``None`` accepts any pair.
+        The pairs a released part may carry, declared by the method whose cargo this is —
+        iGGA's are `liulab_synbio.igga.method.INTERFACE_OVERHANGS`. ``None`` accepts any pair.
 
     Raises
     ------
@@ -194,7 +196,7 @@ def seat_parts(
     carrier: SequenceRecord,
     name: str = "parts",
     overhangs: Collection[tuple[str, str]] | None = None,
-) -> Seating:
+) -> SeatedParts:
     """Seat each part in its own well of the smallest plate format that holds them all.
 
     A well is named by the part sitting in it, so a part is named by its record.
@@ -226,7 +228,7 @@ def seat_parts(
             f"{len(named)} parts do not fit the largest plate format, {max(FORMATS)} wells"
         )
     records = tuple(seat(carrier, part, overhangs=overhangs)[0] for part in parts)
-    return Seating(
+    return SeatedParts(
         plates.plate(
             name,
             fits[0],
@@ -262,7 +264,7 @@ def materials() -> tuple[Material, ...]:
     )
 
 
-def seating_step(seated: Seating) -> Step:
+def seating_step(seated: SeatedParts) -> Step:
     """Return the step that seats every part, which ends in plasmids and not in a library."""
     return Step(
         f"Seat {seated.products} part(s) in {CARRIER}",
@@ -287,8 +289,8 @@ def seating_step(seated: Seating) -> Step:
         troubleshooting=(
             Troubleshooting(
                 "Two parts end up in one well",
-                "The wells were pooled. Seating keeps one part a well on purpose: a part that "
-                "has met another cannot be re-cut back out on its own.",
+                "The wells were pooled. One part a well is the point: a part that has met "
+                "another cannot be re-cut back out on its own.",
             ),
         ),
     )

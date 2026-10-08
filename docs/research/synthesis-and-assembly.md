@@ -637,7 +637,7 @@ The seated plasmid itself is no longer unsimulated. The carrier is supplied open
 point: `dmx/addgene/pCR-Blunt II-TOPO.dna` carries a single head-to-head `GCCCTT`/`AAGGGC` run,
 and the Zero Blunt TOPO user guide (`bench/thermo/zeroblunttopo_man.pdf`) says topoisomerase I
 cleaves after 5'-CCCTT on each strand, which puts the blunt point at **offset 336** of the
-3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.seating.seat` inserts a
+3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.dmx.seating.seat` inserts a
 part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
 keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
 overhang pair, backbone whole. The carrier's one BsaI site is at **797**, inside `ccdB`
