@@ -27,6 +27,8 @@
   --ladder: #a9bbff;
   --gel-ink: #c9ced6;
   --radius: 10px;
+  /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
+  --bar: 0rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,6 +79,11 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
+/* What the bench holds before this protocol and what it is left with, beside the overview cards. */
+.handover { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.45rem; margin: 0 0 1rem; }
+.handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
+.handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+
 .highlights { max-width: 44rem; margin: 0 0 1rem; }
 .highlights p:last-child { margin-bottom: 0; }
 
@@ -110,13 +117,25 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
-.toc li { counter-increment: toc; }
+.toc { margin: 0 0 1.5rem; }
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+/* Both lists of steps — the standalone table of contents and a page's right column — are this
+   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
+   number is in the markup, so no counter here. */
+.step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
+.step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
+.step-group + .step-group { margin-top: 0.45rem; }
+.step-group summary { cursor: pointer; font-weight: 600; }
+.step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
+/* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
+.section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
+/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
+.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
-.step { scroll-margin-top: 1rem; }
+.block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
 .step.is-done { opacity: 0.6; }
 .step > * + * { margin-top: 0.9rem; }
 
@@ -176,7 +195,8 @@ button.timer.is-running { border-color: var(--accent); background: var(--accent-
 button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
-.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+/* A gel is taller than it is wide, so its height is what has to fit on the screen. */
+.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
 .gel-bg { fill: var(--gel); }
 .well { fill: var(--well); }
 .band { fill: var(--band); }
@@ -214,6 +234,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .drawing.rows { display: grid; gap: 0.7rem; }
 .row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.listing { font-size: 0.9rem; margin-top: 0.6rem; }
+.listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
 
@@ -221,9 +243,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
-.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
-.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
 .column li { margin-bottom: 0.3rem; }
@@ -272,9 +294,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
-  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  /* A flex item sizes to its content, so without this the widest table widens the page. */
+  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }
@@ -318,18 +342,18 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="dc65adb51f9cc8d8references-html">
+<body data-protocol="8bf706805cd33e71references-html">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="01-primer-plates.html">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html" aria-current="page">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
 <h1>References</h1>
 <section class="block references" id="references">
 <h2>References</h2>
-<ol><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13) <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231) <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool&#x27;s length <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads <a href="https://doi.org/10.1038/s41467-026-76740-9" rel="noreferrer">https://doi.org/10.1038/s41467-026-76740-9</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach <a href="https://doi.org/10.1021/acssynbio.4c00625" rel="noreferrer">https://doi.org/10.1021/acssynbio.4c00625</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from <a href="https://doi.org/10.1021/acssynbio.3c00694" rel="noreferrer">https://doi.org/10.1021/acssynbio.3c00694</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0 <a href="https://doi.org/10.1016/j.cell.2026.07.054" rel="noreferrer">https://doi.org/10.1016/j.cell.2026.07.054</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member <a href="https://doi.org/10.1016/0092-8674(76)90055-6" rel="noreferrer">https://doi.org/10.1016/0092-8674(76)90055-6</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library&#x27;s acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member <a href="https://doi.org/10.1038/nprot.2017.016" rel="noreferrer">https://doi.org/10.1038/nprot.2017.016</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library&#x27;s own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x <a href="https://doi.org/10.1186/s13059-020-1939-1" rel="noreferrer">https://doi.org/10.1186/s13059-020-1939-1</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage <a href="https://doi.org/10.1186/s13059-023-03132-3" rel="noreferrer">https://doi.org/10.1186/s13059-023-03132-3</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977 <a href="https://doi.org/10.1371/journal.pone.0026969" rel="noreferrer">https://doi.org/10.1371/journal.pone.0026969</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not <a href="https://doi.org/10.1101/gr.121715.111" rel="noreferrer">https://doi.org/10.1101/gr.121715.111</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution <a href="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended" rel="noreferrer">https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify <a href="https://www.idtdna.com/page/?p=890" rel="noreferrer">https://www.idtdna.com/page/?p=890</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page&#x27;s own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated. <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li></ol>
+<ol><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13) <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231) <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool&#x27;s length <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity <span class="cited-by">cited by Cargo ordering and pool preparation, Cargo creation</span></li><li>Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads <a href="https://doi.org/10.1038/s41467-026-76740-9" rel="noreferrer">https://doi.org/10.1038/s41467-026-76740-9</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach <a href="https://doi.org/10.1021/acssynbio.4c00625" rel="noreferrer">https://doi.org/10.1021/acssynbio.4c00625</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from <a href="https://doi.org/10.1021/acssynbio.3c00694" rel="noreferrer">https://doi.org/10.1021/acssynbio.3c00694</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0 <a href="https://doi.org/10.1016/j.cell.2026.07.054" rel="noreferrer">https://doi.org/10.1016/j.cell.2026.07.054</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member <a href="https://doi.org/10.1016/0092-8674(76)90055-6" rel="noreferrer">https://doi.org/10.1016/0092-8674(76)90055-6</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library&#x27;s acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member <a href="https://doi.org/10.1038/nprot.2017.016" rel="noreferrer">https://doi.org/10.1038/nprot.2017.016</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library&#x27;s own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x <a href="https://doi.org/10.1186/s13059-020-1939-1" rel="noreferrer">https://doi.org/10.1186/s13059-020-1939-1</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage <a href="https://doi.org/10.1186/s13059-023-03132-3" rel="noreferrer">https://doi.org/10.1186/s13059-023-03132-3</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977 <a href="https://doi.org/10.1371/journal.pone.0026969" rel="noreferrer">https://doi.org/10.1371/journal.pone.0026969</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not <a href="https://doi.org/10.1101/gr.121715.111" rel="noreferrer">https://doi.org/10.1101/gr.121715.111</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution <a href="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended" rel="noreferrer">https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify <a href="https://www.idtdna.com/page/?p=890" rel="noreferrer">https://www.idtdna.com/page/?p=890</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from <a href="https://doi.org/10.1371/journal.pone.0238592" rel="noreferrer">https://doi.org/10.1371/journal.pone.0238592</a> <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li><li>The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page&#x27;s own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated. <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li></ol>
 </section>
 <section class="block sources" id="sources">
 <h2>Sources</h2>
-<ul><li id="source-figure-sources"><strong>figure-sources</strong> liulab-mbio, Figure sources for four designs · docs/research/figure-sources.md <span class="cited-by">cited by Cargo creation, Cargo validation: index PCR, Library assembly in rounds, Final cargo ligation</span></li><li id="source-frm-001034"><strong>FRM-001034</strong> Twist Bioscience, Amplifying Twist Oligo Pools · REV 8 · plain curl · 2026-10-07 <a href="https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf" rel="noreferrer">https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf</a> <span class="cited-by">cited by Cargo creation</span></li><li id="source-levseq"><strong>LevSeq</strong> Long, Y. et al. 2025, LevSeq, Supporting Information · held under reference_docs/ · 2026-10-06 <span class="cited-by">cited by Cargo creation, Cargo validation: index PCR</span></li><li id="source-qian-si"><strong>Qian SI</strong> Qian et al. 2026, Supplementary Information · Nat. Commun. 10.1038/s41467-026-76740-9 · held under reference_docs/ · 2026-10-06 <span class="cited-by">cited by Cargo validation: index PCR</span></li><li id="source-m0318"><strong>M0318</strong> New England Biolabs #M0318 T7 DNA Ligase product page · r.jina.ai · 2026-10-06 <a href="https://www.neb.com/en/products/m0318-t7-dna-ligase" rel="noreferrer">https://www.neb.com/en/products/m0318-t7-dna-ligase</a> <span class="cited-by">cited by Library assembly in rounds</span></li><li id="source-ma133"><strong>MA133</strong> Endura Competent Cells manual, Lucigen / Biosearch Technologies · MA133 26Feb2018 · plain curl · 2026-10-06 <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li></ul>
+<ul><li id="source-figure-sources"><strong>figure-sources</strong> liulab-mbio, Figure sources for four designs · docs/research/figure-sources.md <span class="cited-by">cited by Cargo creation, Cargo validation: index PCR, Library assembly in rounds, Final cargo ligation</span></li><li id="source-frm-001034"><strong>FRM-001034</strong> Twist Bioscience, Amplifying Twist Oligo Pools · REV 8 · plain curl · 2026-10-07 <a href="https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf" rel="noreferrer">https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf</a> <span class="cited-by">cited by Cargo creation</span></li><li id="source-levseq"><strong>LevSeq</strong> Long, Y. et al. 2025, LevSeq, Supporting Information · held under reference_docs/ · 2026-10-06 <span class="cited-by">cited by Cargo creation, Cargo validation: index PCR</span></li><li id="source-qian-si"><strong>Qian SI</strong> Qian et al. 2026, Supplementary Information · Nat. Commun. 10.1038/s41467-026-76740-9 · held under reference_docs/ · 2026-10-06 <span class="cited-by">cited by Cargo validation: index PCR</span></li><li id="source-ps-m0267"><strong>PS-M0267</strong> New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer · PS-M0267S/L/X/E v2.0, effective 12 Feb 2020 · plain curl · 2026-10-08 · docs/research/route-b-index-pcr.md <a href="https://www.neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf" rel="noreferrer">https://www.neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf</a> <span class="cited-by">cited by Cargo validation: index PCR</span></li><li id="source-m0318"><strong>M0318</strong> New England Biolabs #M0318 T7 DNA Ligase product page · r.jina.ai · 2026-10-06 <a href="https://www.neb.com/en/products/m0318-t7-dna-ligase" rel="noreferrer">https://www.neb.com/en/products/m0318-t7-dna-ligase</a> <span class="cited-by">cited by Library assembly in rounds</span></li><li id="source-ma133"><strong>MA133</strong> Endura Competent Cells manual, Lucigen / Biosearch Technologies · MA133 26Feb2018 · plain curl · 2026-10-06 <span class="cited-by">cited by Library assembly in rounds, Final cargo ligation</span></li></ul>
 </section>
 </main>
 <nav class="column within" aria-label="This page"><h2 class="column-title">This page</h2><ol><li><a href="#references">References</a></li><li><a href="#sources">Sources</a></li></ol></nav>
@@ -373,6 +397,37 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
+  // A thing carrying step keys — a section of this page, a page of the run — says which steps it
+  // stands for and how far the bench got in them. The marks are a store's, never a second count.
+  function stepKeys(item) {
+    return (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+  }
+
+  function ticked(marks, keys) {
+    var done = 0;
+    keys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    return done;
+  }
+
+  var groups = all("nav details[data-steps]");
+
+  function showSections() {
+    groups.forEach(function (group) {
+      var keys = stepKeys(group);
+      var label = group.querySelector(".section-progress");
+      if (label) label.textContent = ticked(state, keys) + " of " + keys.length + " done";
+    });
+  }
+
+  function currentSection() {
+    return groups.filter(function (group) {
+      var keys = stepKeys(group);
+      return ticked(state, keys) < keys.length;
+    })[0];
+  }
+
   function refresh() {
     var done = 0;
     stepBoxes.forEach(function (box) {
@@ -381,6 +436,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
+    showSections();
   }
 
   boxes.forEach(function (box) {
@@ -395,11 +451,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   });
   refresh();
 
+  // The section the bench is in — the first still holding an unticked step — opens on arrival,
+  // and the rest close. A section opened by hand after that stays open. Where this never runs,
+  // the page keeps the first section open, which is where a bench with no marks is.
+  var current = currentSection();
+  if (current) {
+    groups.forEach(function (group) { group.open = group === current; });
+  }
+
   // A run's index: how far the bench got in each protocol, read from that page's own store.
-  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // Every file:// page shares one store, and each page has a key of its own, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
-    var total = Number(item.getAttribute("data-steps")) || 0;
+    // Each step of that page by the key it is addressed under, which a reworded title keeps.
+    var keys = stepKeys(item);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -409,22 +474,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     } catch (error) {
       return;
     }
-    if (!marks || !label || !total) return;
-    var done = 0;
-    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + steps(total) + " done";
+    if (!marks || !label || !keys.length) return;
+    var done = ticked(marks, keys);
+    label.textContent = done + " of " + steps(keys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -467,7 +530,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       return reactions;
     }
 
+    // A browser restores a typed-in value across a reload, so the count is set either way: what
+    // the page remembers, or the count render.py wrote.
     if (typeof state[key] === "number") input.value = String(state[key]);
+    else input.value = input.getAttribute("value") || "1";
     update();
     input.addEventListener("input", function () {
       state[key] = update();
@@ -546,7 +612,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
   all("button.timer").forEach(function (button) {
+    var key = button.getAttribute("data-key");
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -565,33 +635,53 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();

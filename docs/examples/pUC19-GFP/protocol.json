@@ -1,5 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
+  "key": "1c1e58bfca986802",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -56,6 +57,7 @@
       "note": "PCR template",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -67,6 +69,7 @@
       "note": "PCR template",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -78,6 +81,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -89,6 +93,7 @@
       "note": "10 mM of each base",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -100,6 +105,7 @@
       "note": "cuts the methylated plasmid template only",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -111,6 +117,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -122,6 +129,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -133,6 +141,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -144,6 +153,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -155,6 +165,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -166,6 +177,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -177,6 +189,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -188,6 +201,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -199,6 +213,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     },
     {
@@ -210,6 +225,7 @@
       "note": "",
       "contains": [],
       "rules": [],
+      "cautions": [],
       "citation": null
     }
   ],
@@ -317,6 +333,7 @@
       "checks": []
     }
   ],
+  "order_sheet": "primers.tsv",
   "equipment": [
     "Thermocycler with a heated lid",
     "Agarose gel rig and power supply",
@@ -330,6 +347,7 @@
   "steps": [
     {
       "title": "Amplify pUC19 backbone",
+      "key": "pcr-puc19-backbone",
       "section": "",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
@@ -417,6 +435,7 @@
                   "label": "Initial denaturation",
                   "temperature_c": 98.0,
                   "seconds": 30,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -429,18 +448,21 @@
                   "label": "Denature",
                   "temperature_c": 98.0,
                   "seconds": 10,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Anneal",
                   "temperature_c": 64.0,
                   "seconds": 20,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Extend",
                   "temperature_c": 72.0,
                   "seconds": 60,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -456,6 +478,7 @@
                   "label": "Final extension",
                   "temperature_c": 72.0,
                   "seconds": 120,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -468,6 +491,7 @@
                   "label": "Hold",
                   "temperature_c": 4.0,
                   "seconds": null,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -504,6 +528,7 @@
     },
     {
       "title": "Amplify GFP",
+      "key": "pcr-gfp",
       "section": "",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
@@ -591,6 +616,7 @@
                   "label": "Initial denaturation",
                   "temperature_c": 98.0,
                   "seconds": 30,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -603,18 +629,21 @@
                   "label": "Denature",
                   "temperature_c": 98.0,
                   "seconds": 10,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Anneal",
                   "temperature_c": 63.0,
                   "seconds": 20,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Extend",
                   "temperature_c": 72.0,
                   "seconds": 20,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -630,6 +659,7 @@
                   "label": "Final extension",
                   "temperature_c": 72.0,
                   "seconds": 120,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -642,6 +672,7 @@
                   "label": "Hold",
                   "temperature_c": 4.0,
                   "seconds": null,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -678,6 +709,7 @@
     },
     {
       "title": "Check the PCRs on a gel",
+      "key": "pcr-gel",
       "section": "",
       "instructions": [
         "Pour a 1% agarose gel.",
@@ -751,6 +783,7 @@
     },
     {
       "title": "Digest the plasmid template with DpnI",
+      "key": "dpni-digest",
       "section": "",
       "instructions": [
         "Add 20 units of DpnI to the pUC19 backbone PCR and mix.",
@@ -788,6 +821,7 @@
     },
     {
       "title": "Purify every amplicon",
+      "key": "purify-amplicons",
       "section": "",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
@@ -818,6 +852,7 @@
     },
     {
       "title": "Measure every concentration",
+      "key": "quantify",
       "section": "",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
@@ -850,6 +885,7 @@
     },
     {
       "title": "Set up the Golden Gate reaction",
+      "key": "set-up-assembly",
       "section": "",
       "instructions": [
         "Thaw the master mix on ice and mix it well; it is viscous.",
@@ -930,6 +966,7 @@
     },
     {
       "title": "Run the Golden Gate program",
+      "key": "run-assembly",
       "section": "",
       "instructions": [
         "Put the tube in the thermocycler and run the program below."
@@ -948,6 +985,7 @@
                   "label": "Assembly",
                   "temperature_c": 37.0,
                   "seconds": 900,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -960,6 +998,7 @@
                   "label": "End soak",
                   "temperature_c": 60.0,
                   "seconds": 300,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -978,6 +1017,7 @@
                   "label": "Heat inactivation",
                   "temperature_c": 65.0,
                   "seconds": 1200,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -1016,6 +1056,7 @@
     },
     {
       "title": "Transform and plate",
+      "key": "transform",
       "section": "",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
@@ -1074,6 +1115,7 @@
     },
     {
       "title": "Screen colonies by PCR",
+      "key": "colony-pcr",
       "section": "",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
@@ -1134,6 +1176,7 @@
                   "label": "Lysis",
                   "temperature_c": 94.0,
                   "seconds": 300,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -1146,18 +1189,21 @@
                   "label": "Denature",
                   "temperature_c": 94.0,
                   "seconds": 30,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Anneal",
                   "temperature_c": 56.9,
                   "seconds": 30,
+                  "delta_c": null,
                   "citation": null
                 },
                 {
                   "label": "Extend",
                   "temperature_c": 68.0,
                   "seconds": 60,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -1173,6 +1219,7 @@
                   "label": "Final extension",
                   "temperature_c": 68.0,
                   "seconds": 300,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -1185,6 +1232,7 @@
                   "label": "Hold",
                   "temperature_c": 10.0,
                   "seconds": null,
+                  "delta_c": null,
                   "citation": null
                 }
               ],
@@ -1259,6 +1307,7 @@
     },
     {
       "title": "Confirm the clone by sequencing",
+      "key": "sequencing",
       "section": "",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",

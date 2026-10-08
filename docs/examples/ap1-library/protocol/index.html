@@ -27,6 +27,8 @@
   --ladder: #a9bbff;
   --gel-ink: #c9ced6;
   --radius: 10px;
+  /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
+  --bar: 0rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,6 +79,11 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
+/* What the bench holds before this protocol and what it is left with, beside the overview cards. */
+.handover { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.45rem; margin: 0 0 1rem; }
+.handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
+.handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+
 .highlights { max-width: 44rem; margin: 0 0 1rem; }
 .highlights p:last-child { margin-bottom: 0; }
 
@@ -110,13 +117,25 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
-.toc li { counter-increment: toc; }
+.toc { margin: 0 0 1.5rem; }
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+/* Both lists of steps — the standalone table of contents and a page's right column — are this
+   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
+   number is in the markup, so no counter here. */
+.step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
+.step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
+.step-group + .step-group { margin-top: 0.45rem; }
+.step-group summary { cursor: pointer; font-weight: 600; }
+.step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
+/* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
+.section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
+/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
+.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
-.step { scroll-margin-top: 1rem; }
+.block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
 .step.is-done { opacity: 0.6; }
 .step > * + * { margin-top: 0.9rem; }
 
@@ -176,7 +195,8 @@ button.timer.is-running { border-color: var(--accent); background: var(--accent-
 button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
-.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+/* A gel is taller than it is wide, so its height is what has to fit on the screen. */
+.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
 .gel-bg { fill: var(--gel); }
 .well { fill: var(--well); }
 .band { fill: var(--band); }
@@ -214,6 +234,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .drawing.rows { display: grid; gap: 0.7rem; }
 .row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.listing { font-size: 0.9rem; margin-top: 0.6rem; }
+.listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
 
@@ -221,9 +243,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
-.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
-.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
 .column li { margin-bottom: 0.3rem; }
@@ -272,9 +294,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
-  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  /* A flex item sizes to its content, so without this the widest table widens the page. */
+  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }
@@ -318,7 +342,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="dc65adb51f9cc8d8">
+<body data-protocol="8bf706805cd33e71">
 <nav class="site" aria-label="This run"><a href="index.html" aria-current="page">Overview</a><a href="01-primer-plates.html">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
@@ -326,8 +350,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <h1>DMX-iGGA: 3 part lists in 3 rounds</h1>
 <p class="summary">Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.</p>
 <ul class="checks" aria-label="Checks"><li class="check is-pass"><span class="check-name">blunt sites</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">destination opens</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">donor releases</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">ends distinguishable</span><span class="verdict">pass</span></li><li class="check is-none"><span class="check-name">ligation fidelity</span><span class="verdict">not judged</span></li><li class="check is-pass"><span class="check-name">barcode spacing</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">barcode reading</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">cargo sites</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">cargo frame</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">well primers</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">product opens</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">barcode block</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">terminal block</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">terminal stop</span><span class="verdict">pass</span></li></ul>
-<p class="check-detail"><strong>ligation fidelity not judged:</strong> 3 judged, worst: round 1 ligation scores 1.000 on Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer</p>
-<p class="hole-count"><a href="#holes"><strong>17</strong> numbers in this run have no source</a>: 8 bench numbers and 9 prices.</p>
+<p class="check-detail"><strong>ligation fidelity not judged:</strong> 3 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer</p>
+<p class="hole-count"><a href="#holes"><strong>16</strong> numbers in this run have no source</a>: 7 bench numbers and 9 prices.</p>
 </header>
 <section class="block topic" id="topic-how-this-library-is-designed">
 <h2>How this library is designed</h2>
@@ -335,21 +359,21 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 </section>
 <section class="block flow" id="flow">
 <h2>How the run fits together</h2>
-<ol class="flow-chain"><li><a class="flow-box" href="01-primer-plates.html"><span class="flow-title">Primer plates</span> <span class="muted">5 steps</span></a></li><li><a class="flow-box" href="02-cargo-ordering-and-pool-preparation.html"><span class="flow-title">Cargo ordering and pool preparation</span> <span class="muted">1 step</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">oligo pool</span> <span class="muted">the pool resuspended and aliquoted</span> <span class="flow-from">from Cargo ordering and pool preparation</span></li><li class="flow-hand-item"><span class="flow-item">primer working plate 1</span> <span class="muted">a copy of primer stock plate, used for one run</span> <span class="muted">· 10 µM, 100 µL per well</span> <span class="flow-from">from Primer plates</span></li><li class="flow-hand-item"><span class="flow-item">block vector 1</span> <span class="muted">DMX-iGGA N, ready to open</span> <span class="flow-from">the bench already holds it</span></li><li class="flow-hand-item"><span class="flow-item">block vector 2</span> <span class="muted">DMX-iGGA DBD, ready to open</span> <span class="flow-from">the bench already holds it</span></li><li class="flow-hand-item"><span class="flow-item">block vector 3</span> <span class="muted">DMX-iGGA C, ready to open</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="03-cargo-creation.html"><span class="flow-title">Cargo creation</span> <span class="muted">3 steps</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">cargo archive plate</span> <span class="muted">one well a design, polyclonal, sealed and frozen</span> <span class="flow-from">from Cargo creation</span></li><li class="flow-hand-item"><span class="flow-item">Barcoded index primer plate</span> <span class="muted">the lab&#x27;s own index primers, prepared once and called for by a run</span> <span class="muted">· 1 µM each</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="04-cargo-validation-index-pcr.html"><span class="flow-title">Cargo validation: index PCR</span> <span class="muted">6 steps</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">clonal picked plate</span> <span class="muted">one well a picked colony, each well one clone</span> <span class="flow-from">from Cargo validation: index PCR</span></li><li class="flow-hand-item"><span class="flow-item">well calls</span> <span class="muted">a pass or a fail a well, and which design each well holds</span> <span class="flow-from">from Cargo validation: index PCR</span></li><li class="flow-hand-item"><span class="flow-item">block vector 1</span> <span class="muted">DMX-iGGA N, ready to open</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="05-library-assembly-in-rounds.html"><span class="flow-title">Library assembly in rounds</span> <span class="muted">27 steps</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">library prep, round 3</span> <span class="muted">the pooled library after round 3, as a plasmid prep</span> <span class="flow-from">from Library assembly in rounds</span></li></ul><a class="flow-box" href="06-final-cargo-ligation.html"><span class="flow-title">Final cargo ligation</span> <span class="muted">5 steps</span></a></li></ol><ul class="flow-hand flow-end"><li class="flow-hand-item"><span class="flow-item">primer stock plate</span> <span class="muted">74 primers seated in a 96-well plate</span> <span class="muted">· 100 µM</span> <span class="flow-from">the run ends holding it</span></li><li class="flow-hand-item"><span class="flow-item">the library in its working vector</span> <span class="muted">3 part lists joined, pooled and ready for the screen</span> <span class="flow-from">the run ends holding it</span></li></ul>
+<ol class="flow-chain"><li><a class="flow-box" href="01-primer-plates.html"><span class="flow-title">Primer plates</span></a></li><li><a class="flow-box" href="02-cargo-ordering-and-pool-preparation.html"><span class="flow-title">Cargo ordering and pool preparation</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">oligo pool</span> <span class="muted">the pool resuspended and aliquoted</span> <span class="flow-from">from Cargo ordering and pool preparation</span></li><li class="flow-hand-item"><span class="flow-item">primer working plate 1</span> <span class="muted">a copy of primer stock plate, used for one run</span> <span class="muted">· 10 µM, 100 µL per well</span> <span class="flow-from">from Primer plates</span></li><li class="flow-hand-item"><span class="flow-item">block vector 1</span> <span class="muted">DMX-iGGA N, ready to open</span> <span class="flow-from">the bench already holds it</span></li><li class="flow-hand-item"><span class="flow-item">block vector 2</span> <span class="muted">DMX-iGGA DBD, ready to open</span> <span class="flow-from">the bench already holds it</span></li><li class="flow-hand-item"><span class="flow-item">block vector 3</span> <span class="muted">DMX-iGGA C, ready to open</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="03-cargo-creation.html"><span class="flow-title">Cargo creation</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">cargo archive plate</span> <span class="muted">one well a design, polyclonal, sealed and frozen</span> <span class="flow-from">from Cargo creation</span></li><li class="flow-hand-item"><span class="flow-item">Barcoded index primer plate</span> <span class="muted">the lab&#x27;s own index primers, prepared once and called for by a run</span> <span class="muted">· 1 µM each</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="04-cargo-validation-index-pcr.html"><span class="flow-title">Cargo validation: index PCR</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">clonal picked plate</span> <span class="muted">one well a picked colony, each well one clone</span> <span class="flow-from">from Cargo validation: index PCR</span></li><li class="flow-hand-item"><span class="flow-item">well calls</span> <span class="muted">a pass or a fail a well, and which design each well holds</span> <span class="flow-from">from Cargo validation: index PCR</span></li><li class="flow-hand-item"><span class="flow-item">block vector 1</span> <span class="muted">DMX-iGGA N, ready to open</span> <span class="flow-from">the bench already holds it</span></li></ul><a class="flow-box" href="05-library-assembly-in-rounds.html"><span class="flow-title">Library assembly in rounds</span></a></li><li><ul class="flow-hand"><li class="flow-hand-item"><span class="flow-item">library prep, round 3</span> <span class="muted">the pooled library after round 3, as a plasmid prep</span> <span class="flow-from">from Library assembly in rounds</span></li></ul><a class="flow-box" href="06-final-cargo-ligation.html"><span class="flow-title">Final cargo ligation</span></a></li></ol><ul class="flow-hand flow-end"><li class="flow-hand-item"><span class="flow-item">primer stock plate</span> <span class="muted">74 primers seated in a 96-well plate</span> <span class="muted">· 100 µM</span> <span class="flow-from">the run ends holding it</span></li><li class="flow-hand-item"><span class="flow-item">the library in its working vector</span> <span class="muted">3 part lists joined, pooled and ready for the screen</span> <span class="flow-from">the run ends holding it</span></li></ul>
 </section>
 <section class="block chain-list" id="protocols">
 <h2>Protocols</h2>
-<ol class="chain-pages"><li data-page-key="c4d25f2b0bf67fd5" data-steps="5"><a href="01-primer-plates.html">Primer plates</a> <span class="page-progress muted">5 steps</span></li><li data-page-key="335d4ad7ca924362" data-steps="1"><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a> <span class="page-progress muted">1 step</span></li><li data-page-key="41359c7011d8e434" data-steps="3"><a href="03-cargo-creation.html">Cargo creation</a> <span class="page-progress muted">3 steps</span></li><li data-page-key="5e250d36bd9485b4" data-steps="6"><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a> <span class="page-progress muted">6 steps</span></li><li data-page-key="0cfad205dc73f914" data-steps="27"><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a> <span class="page-progress muted">27 steps</span></li><li data-page-key="4012864cd125e15f" data-steps="5"><a href="06-final-cargo-ligation.html">Final cargo ligation</a> <span class="page-progress muted">5 steps</span></li></ol>
+<ol class="chain-pages"><li data-page-key="1ed96f6f08028aaa" data-steps="order-primers resuspend-primers seat-stock-plate split-working-plates store-plates"><a href="01-primer-plates.html">Primer plates</a> <span class="page-progress muted">5 steps</span></li><li data-page-key="072fefdb08953e35" data-steps="order-pool"><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a> <span class="page-progress muted">1 step</span></li><li data-page-key="672f2999902796d5" data-steps="pcr1 pcr2 assemble-cargo"><a href="03-cargo-creation.html">Cargo creation</a> <span class="page-progress muted">3 steps</span></li><li data-page-key="e312bf08c7280073" data-steps="array-designs pick-colonies sample-into-index-plates index-pcr pool-and-sequence call-wells"><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a> <span class="page-progress muted">6 steps</span></li><li data-page-key="ede30fed754a9887" data-steps="pool-part-lists round-1-open round-1-release round-1-digest-cleanup round-1-ligate round-1-ligation-cleanup round-1-electroporate round-1-grow round-1-prep round-2-open round-2-release round-2-digest-cleanup round-2-ligate round-2-ligation-cleanup round-2-electroporate round-2-grow round-2-prep round-3-open round-3-release round-3-digest-cleanup round-3-ligate round-3-ligation-cleanup round-3-electroporate round-3-grow round-3-prep read-linkage read-representation"><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a> <span class="page-progress muted">27 steps</span></li><li data-page-key="2f80a128c4fdb63d" data-steps="pick-working-vector release-cargo assemble-into-working-vector electroporate-and-grow read-final-representation"><a href="06-final-cargo-ligation.html">Final cargo ligation</a> <span class="page-progress muted">5 steps</span></li></ol>
 </section>
 <section class="block schedule" id="schedule">
 <h2>Schedule</h2>
-<div class="scroll"><table class="schedule"><thead><tr><th>Protocol</th><th class="num">Steps</th><th class="num">Held</th><th class="num">Hands-on</th><th class="num">Unattended</th><th class="num">Holding nothing</th></tr></thead><tbody><tr><td><a href="01-primer-plates.html">Primer plates</a></td><td class="num">5</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td><td class="num">1</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">1</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="03-cargo-creation.html">Cargo creation</a></td><td class="num">3</td><td class="num">1 h 17 min 30 s</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">1</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td><td class="num">6</td><td class="num">1 h 35 min</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></td><td class="num">27</td><td class="num">52 h 30 min</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">15</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="06-final-cargo-ligation.html">Final cargo ligation</a></td><td class="num">5</td><td class="num">14 h 40 min</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">3</td></tr><tr class="wait-row"><td colspan="6"><span class="muted">No waiting recorded.</span></td></tr></tbody><tfoot><tr><th>Total</th><td class="num">47</td><td class="num">70 h 2 min 30 s</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">30</td></tr></tfoot></table></div>
-<p>A blank here is a number nobody has stated, never a zero. Most of this run is time nobody attends and nobody can date, so it is written down rather than drawn as a length.</p>
+<div class="scroll"><table class="schedule"><thead><tr><th>Protocol</th><th class="num">Steps</th><th class="num">Held</th><th class="num">Holding nothing</th></tr></thead><tbody><tr><td><a href="01-primer-plates.html">Primer plates</a></td><td class="num">5</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td><td class="num">1</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="03-cargo-creation.html">Cargo creation</a></td><td class="num">3</td><td class="num">1 h 18 min</td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td><td class="num">6</td><td class="num">1 h 35 min</td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></td><td class="num">27</td><td class="num">52 h 30 min</td><td class="num">15</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="06-final-cargo-ligation.html">Final cargo ligation</a></td><td class="num">5</td><td class="num">14 h 40 min</td><td class="num">3</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr></tbody><tfoot><tr><th>Total</th><td class="num">47</td><td class="num">70 h 2 min</td><td class="num">30</td></tr></tfoot></table></div>
+<p>A blank here is a number nobody has stated, never a zero. Most of this run is time nobody attends and nobody can date, so it is written down rather than drawn as a length. No protocol here states hands-on or unattended time, so those columns are left out.</p>
 </section>
 <section class="block holes" id="holes">
 <h2>Holes</h2>
-<p>17 numbers this run would otherwise have to invent. A hole is a defect in what the package knows, not a failure of the run, and it is never filled with a guess.</p>
-<ul><li class="hole" id="hole-P1"><span class="hole-id">P1</span> <span class="hole-none">no sourced number</span> — AP-1 DESynR oligo pool, money: no row prices &#x27;oligo-pool&#x27; at 131 oligos <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P1">Reagents and equipment</a></span></li><li class="hole" id="hole-P2"><span class="hole-id">P2</span> <span class="hole-none">no sourced number</span> — Pool amplification primers, money: no row prices &#x27;pool-primers&#x27; at 74 primers <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P2">Reagents and equipment</a></span></li><li class="hole" id="hole-P3"><span class="hole-id">P3</span> <span class="hole-none">no sourced number</span> — BbsI-HF, money: no row prices &#x27;R3539&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P3">Reagents and equipment</a></span></li><li class="hole" id="hole-P4"><span class="hole-id">P4</span> <span class="hole-none">no sourced number</span> — BsaI-HFv2, money: no row prices &#x27;R3733&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P4">Reagents and equipment</a></span></li><li class="hole" id="hole-P5"><span class="hole-id">P5</span> <span class="hole-none">no sourced number</span> — SrfI, money: no row prices &#x27;R0629&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P5">Reagents and equipment</a></span></li><li class="hole" id="hole-P6"><span class="hole-id">P6</span> <span class="hole-none">no sourced number</span> — PmeI, money: no row prices &#x27;R0560&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P6">Reagents and equipment</a></span></li><li class="hole" id="hole-P7"><span class="hole-id">P7</span> <span class="hole-none">no sourced number</span> — Endura ElectroCompetent Cells, money: no row prices &#x27;60242-2&#x27; at 3 aliquots <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P7">Reagents and equipment</a></span></li><li class="hole" id="hole-P8"><span class="hole-id">P8</span> <span class="hole-none">no sourced number</span> — Electroporation cuvettes, money: no row prices &#x27;cuvettes&#x27; at 3 cuvettes <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P8">Reagents and equipment</a></span></li><li class="hole" id="hole-P9"><span class="hole-id">P9</span> <span class="hole-none">no sourced number</span> — Plasmid preps, money: no row prices &#x27;plasmid prep&#x27; at 3 preps <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P9">Reagents and equipment</a></span></li><li class="hole" id="hole-H29"><span class="hole-id">H29</span> <span class="hole-none">no sourced number</span> — PCR1, the polymerase the cycle count is stated against: no cycle count published for Q5 on a Twist oligo pool <span class="hole-kind">nobody published it</span> <em>Filled by a count Twist states against Q5, or a pilot on this pool.</em> <span class="hole-page">on <a href="03-cargo-creation.html#hole-H29">Cargo creation</a></span></li><li class="hole" id="hole-H30"><span class="hole-id">H30</span> <span class="hole-none">no sourced number</span> — PCR2, the cycle count: no cycle count for PCR2, which pulls one block out of an already-amplified batch <span class="hole-kind">nobody published it</span> <em>Filled by a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus.</em> <span class="hole-page">on <a href="03-cargo-creation.html#hole-H30">Cargo creation</a></span></li><li class="hole" id="hole-IDX1"><span class="hole-id">IDX1</span> <span class="hole-none">no sourced number</span> — index PCR, the pair marking one well: no index mark set is named for the barcoded primer pairs <span class="hole-kind">the lab&#x27;s own stock</span> <em>Filled by the prepared primer plate the lab holds.</em> <span class="hole-page">on <a href="04-cargo-validation-index-pcr.html#hole-IDX1">Cargo validation: index PCR</a></span></li><li class="hole" id="hole-IDX2"><span class="hole-id">IDX2</span> <span class="hole-none">no sourced number</span> — index PCR, its polymerase: the units of Taq one index PCR takes <span class="hole-kind">a source was not read</span> <em>Filled by NEB&#x27;s own specification for M0267, which gives the stock concentration.</em> <span class="hole-page">on <a href="04-cargo-validation-index-pcr.html#hole-IDX2">Cargo validation: index PCR</a></span></li><li class="hole" id="hole-H23"><span class="hole-id">H23</span> <span class="hole-none">no sourced number</span> — the split digest, units per reaction: no published document describes the split digest; the one source is the paper itself <span class="hole-kind">nobody published it</span> <em>Filled by nothing; it is the method&#x27;s own.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H23">Library assembly in rounds</a></span></li><li class="hole" id="hole-H24"><span class="hole-id">H24</span> <span class="hole-none">no sourced number</span> — final assembly, the one-pot reaction: no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector&#x27;s mass nor the ratio it meets the cargo at is sourced <span class="hole-kind">the method has not decided</span> <em>Filled by a pilot.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H24">Library assembly in rounds</a></span></li><li class="hole" id="hole-H28"><span class="hole-id">H28</span> <span class="hole-none">no sourced number</span> — the linkage read: no pass mark for the linkage read: what share of reads must carry a barcode that still names its part <span class="hole-kind">the method has not decided</span> <em>Filled by the project, or a source that sets a mark rather than reporting what it reached.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H28">Library assembly in rounds</a></span></li><li class="hole" id="hole-H31"><span class="hole-id">H31</span> <span class="hole-none">no sourced number</span> — final assembly, the vector the library moves into: no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector&#x27;s length <span class="hole-kind">the lab&#x27;s own stock</span> <em>Filled by the project naming a working vector, which is a stock the lab holds and an application chooses.</em> <span class="hole-page">on <a href="06-final-cargo-ligation.html#hole-H31">Final cargo ligation</a></span></li></ul>
+<p>16 numbers this run would otherwise have to invent. None is filled with a guess, and each says below what it waits on: a bench, a shelf, a price, or a number nobody has published.</p>
+<ul><li class="hole" id="hole-P1"><span class="hole-id">P1</span> <span class="hole-none">no sourced number</span> — AP-1 DESynR oligo pool, money: no row prices &#x27;oligo-pool&#x27; at 131 oligos <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P1">Reagents and equipment</a></span></li><li class="hole" id="hole-P2"><span class="hole-id">P2</span> <span class="hole-none">no sourced number</span> — Pool amplification primers, money: no row prices &#x27;pool-primers&#x27; at 74 primers <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P2">Reagents and equipment</a></span></li><li class="hole" id="hole-P3"><span class="hole-id">P3</span> <span class="hole-none">no sourced number</span> — BbsI-HF, money: no row prices &#x27;R3539&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P3">Reagents and equipment</a></span></li><li class="hole" id="hole-P4"><span class="hole-id">P4</span> <span class="hole-none">no sourced number</span> — BsaI-HFv2, money: no row prices &#x27;R3733&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P4">Reagents and equipment</a></span></li><li class="hole" id="hole-P5"><span class="hole-id">P5</span> <span class="hole-none">no sourced number</span> — SrfI, money: no row prices &#x27;R0629&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P5">Reagents and equipment</a></span></li><li class="hole" id="hole-P6"><span class="hole-id">P6</span> <span class="hole-none">no sourced number</span> — PmeI, money: no row prices &#x27;R0560&#x27; at 7.5 µL <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P6">Reagents and equipment</a></span></li><li class="hole" id="hole-P7"><span class="hole-id">P7</span> <span class="hole-none">no sourced number</span> — Endura ElectroCompetent Cells, money: no row prices &#x27;60242-2&#x27; at 3 aliquots <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P7">Reagents and equipment</a></span></li><li class="hole" id="hole-P8"><span class="hole-id">P8</span> <span class="hole-none">no sourced number</span> — Electroporation cuvettes, money: no row prices &#x27;cuvettes&#x27; at 3 cuvettes <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P8">Reagents and equipment</a></span></li><li class="hole" id="hole-P9"><span class="hole-id">P9</span> <span class="hole-none">no sourced number</span> — Plasmid preps, money: no row prices &#x27;plasmid prep&#x27; at 3 preps <span class="hole-kind">no price record prices it</span> <em>Filled by a price record holding a row for this key.</em> <span class="hole-page">on <a href="reagents.html#hole-P9">Reagents and equipment</a></span></li><li class="hole" id="hole-H29"><span class="hole-id">H29</span> <span class="hole-none">no sourced number</span> — PCR1, the polymerase the cycle count is stated against: no cycle count published for Q5 on a Twist oligo pool <span class="hole-kind">nobody published it</span> <em>Filled by a count Twist states against Q5, or a pilot on this pool.</em> <span class="hole-page">on <a href="03-cargo-creation.html#hole-H29">Cargo creation</a></span></li><li class="hole" id="hole-H30"><span class="hole-id">H30</span> <span class="hole-none">no sourced number</span> — PCR2, the cycle count: no cycle count for PCR2, which pulls one block out of an already-amplified batch <span class="hole-kind">nobody published it</span> <em>Filled by a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus.</em> <span class="hole-page">on <a href="03-cargo-creation.html#hole-H30">Cargo creation</a></span></li><li class="hole" id="hole-IDX1"><span class="hole-id">IDX1</span> <span class="hole-none">no sourced number</span> — index PCR, the pair marking one well: no index mark set is named for the barcoded primer pairs <span class="hole-kind">the lab&#x27;s own stock</span> <em>Filled by the prepared primer plate the lab holds.</em> <span class="hole-page">on <a href="04-cargo-validation-index-pcr.html#hole-IDX1">Cargo validation: index PCR</a></span></li><li class="hole" id="hole-H23"><span class="hole-id">H23</span> <span class="hole-none">no sourced number</span> — the split digest, units per reaction: no published document describes the split digest; the one source is the paper itself <span class="hole-kind">nobody published it</span> <em>Filled by nothing; it is the method&#x27;s own.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H23">Library assembly in rounds</a></span></li><li class="hole" id="hole-H24"><span class="hole-id">H24</span> <span class="hole-none">no sourced number</span> — final assembly, the one-pot reaction: no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector&#x27;s mass nor the ratio it meets the cargo at is sourced <span class="hole-kind">the method has not decided</span> <em>Filled by a pilot.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H24">Library assembly in rounds</a></span></li><li class="hole" id="hole-H28"><span class="hole-id">H28</span> <span class="hole-none">no sourced number</span> — the linkage read: no pass mark for the linkage read: what share of reads must carry a barcode that still names its part <span class="hole-kind">the method has not decided</span> <em>Filled by this run, or a source that sets a mark rather than reporting what it reached.</em> <span class="hole-page">on <a href="05-library-assembly-in-rounds.html#hole-H28">Library assembly in rounds</a></span></li><li class="hole" id="hole-H31"><span class="hole-id">H31</span> <span class="hole-none">no sourced number</span> — final assembly, the vector the library moves into: no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector&#x27;s length <span class="hole-kind">the lab&#x27;s own stock</span> <em>Filled by this run naming a working vector, which is a stock the lab holds and an application chooses.</em> <span class="hole-page">on <a href="06-final-cargo-ligation.html#hole-H31">Final cargo ligation</a></span></li></ul>
 </section>
 </main>
 <nav class="column within" aria-label="This page"><h2 class="column-title">This page</h2><ol><li><a href="#topic-how-this-library-is-designed">How this library is designed</a></li><li><a href="#flow">How the run fits together</a></li><li><a href="#protocols">Protocols</a></li><li><a href="#schedule">Schedule</a></li><li><a href="#holes">Holes</a></li></ol></nav>
@@ -393,6 +417,37 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
+  // A thing carrying step keys — a section of this page, a page of the run — says which steps it
+  // stands for and how far the bench got in them. The marks are a store's, never a second count.
+  function stepKeys(item) {
+    return (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+  }
+
+  function ticked(marks, keys) {
+    var done = 0;
+    keys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    return done;
+  }
+
+  var groups = all("nav details[data-steps]");
+
+  function showSections() {
+    groups.forEach(function (group) {
+      var keys = stepKeys(group);
+      var label = group.querySelector(".section-progress");
+      if (label) label.textContent = ticked(state, keys) + " of " + keys.length + " done";
+    });
+  }
+
+  function currentSection() {
+    return groups.filter(function (group) {
+      var keys = stepKeys(group);
+      return ticked(state, keys) < keys.length;
+    })[0];
+  }
+
   function refresh() {
     var done = 0;
     stepBoxes.forEach(function (box) {
@@ -401,6 +456,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
+    showSections();
   }
 
   boxes.forEach(function (box) {
@@ -415,11 +471,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   });
   refresh();
 
+  // The section the bench is in — the first still holding an unticked step — opens on arrival,
+  // and the rest close. A section opened by hand after that stays open. Where this never runs,
+  // the page keeps the first section open, which is where a bench with no marks is.
+  var current = currentSection();
+  if (current) {
+    groups.forEach(function (group) { group.open = group === current; });
+  }
+
   // A run's index: how far the bench got in each protocol, read from that page's own store.
-  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // Every file:// page shares one store, and each page has a key of its own, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
-    var total = Number(item.getAttribute("data-steps")) || 0;
+    // Each step of that page by the key it is addressed under, which a reworded title keeps.
+    var keys = stepKeys(item);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -429,22 +494,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     } catch (error) {
       return;
     }
-    if (!marks || !label || !total) return;
-    var done = 0;
-    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + steps(total) + " done";
+    if (!marks || !label || !keys.length) return;
+    var done = ticked(marks, keys);
+    label.textContent = done + " of " + steps(keys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -487,7 +550,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       return reactions;
     }
 
+    // A browser restores a typed-in value across a reload, so the count is set either way: what
+    // the page remembers, or the count render.py wrote.
     if (typeof state[key] === "number") input.value = String(state[key]);
+    else input.value = input.getAttribute("value") || "1";
     update();
     input.addEventListener("input", function () {
       state[key] = update();
@@ -566,7 +632,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
   all("button.timer").forEach(function (button) {
+    var key = button.getAttribute("data-key");
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -585,33 +655,53 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();
