@@ -542,3 +542,25 @@ def test_a_warned_row_is_seen_without_opening_the_summarised_sheet() -> None:
     toggles = section.find_all("section", cls="oligos")[0].find_all("details")
 
     assert [t.attrs.get("class") for t in toggles] == ["listing", "oligo-checks"]
+
+
+def test_a_move_through_a_well_the_declared_plate_has_not_got_stays_a_table() -> None:
+    """A drawing that silently left out the wells it cannot place would claim the wrong move."""
+    moved = Transfer(
+        "Sample",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A1", "A1"), ("E5", "B2"))
+        ),
+    )
+    one = Protocol(
+        "Index",
+        plates=(Plate("picked", 12), Plate("index", 12)),
+        steps=(Step("Sample", transfers=(moved,)),),
+    )
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert moved.stamp is not None
+    assert not figure.find_all("svg")
+    assert "picked E5" in figure.find_all("table")[0].text

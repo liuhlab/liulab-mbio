@@ -1011,7 +1011,7 @@ def _oligos(protocol: Protocol) -> str:
         copy_all = f"<p>{_copy(sheet, 'Copy all sequences')}</p>"
     sheet = (
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
-        f"<tbody>{''.join(rows)}</tbody></table></div>{copy_all}"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
     )
     shown = sheet
     if len(oligos) >= OLIGO_SUMMARY:
@@ -1019,11 +1019,12 @@ def _oligos(protocol: Protocol) -> str:
             f"{_oligo_summary(oligos, seats)}"
             f'<details class="listing"><summary>All {len(oligos)} rows</summary>{sheet}</details>'
         )
-    # Which rows warn stays beside the summary and never inside it: a verdict a reader has to
-    # open the sheet to find is a verdict they do not see.
+    # Which rows warn, and the copy of every sequence, stay outside the toggle: the longer the
+    # sheet the more they are wanted, and summarising is not a reason to hide either.
     return (
         '<section class="block oligos" id="oligos">\n<h2>Oligos</h2>\n'
-        f"{_order_sheet(protocol.order_sheet)}{shown}{_oligo_checks(oligos)}\n</section>\n"
+        f"{_order_sheet(protocol.order_sheet)}{shown}{_oligo_checks(oligos)}{copy_all}"
+        "\n</section>\n"
     )
 
 
@@ -1341,21 +1342,20 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
 
     A stamp is the two plates with every well it touches filled, since the pattern is what the
     bench follows and the moves spell out one thing 96 times; those go under a closed toggle.
-    A transfer that is no stamp, or that names a plate `plates` does not declare, is the table
-    it was, because nothing says what its wells look like.
+    A transfer that is no stamp, that names a plate `plates` does not declare, or that moves
+    through a well the declared format has not got, is the table it was: nothing says what its
+    wells look like, and a drawing missing the wells it cannot place would say it wrongly.
     """
     stamp = transfer.stamp
     declared = {plate.name: plate for plate in plates}
     source = declared.get(transfer.plates[0])
     destination = declared.get(transfer.plates[-1])
-    if stamp is None or source is None or destination is None:
-        return (
-            f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
-            f'<span class="muted">{escape(_transfer_meta(transfer))}</span>'
-            f"{_after(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
-        )
     taken = {move.source.well for move in transfer.moves}
     filled = {move.destination.well for move in transfer.moves}
+    if stamp is None or source is None or destination is None:
+        return _transfer_table(transfer)
+    if not (taken <= set(source.well_names) and filled <= set(destination.well_names)):
+        return _transfer_table(transfer)
     drawn = "".join(
         _stamped(f"{word} {one.name}", one, wells, transfer.title)
         for word, one, wells in (("From", source, taken), ("Into", destination, filled))
@@ -1366,6 +1366,15 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
         f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
         f'{drawn}<details class="listing"><summary>{_count(len(transfer.moves), "move")}'
         f"</summary>{_moves(transfer)}</details></figure>\n"
+    )
+
+
+def _transfer_table(transfer: Transfer) -> str:
+    """Return a transfer as the table it has always been: where each thing goes, a row each."""
+    return (
+        f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
+        f'<span class="muted">{escape(_transfer_meta(transfer))}</span>'
+        f"{_after(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
     )
 
 
