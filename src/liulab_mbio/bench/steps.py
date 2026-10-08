@@ -100,9 +100,10 @@ PLATE_REFERENCE = Reference(
 #: Where a plate of primers waits between runs.
 PRIMER_PLATE_STORAGE = "-20 °C"
 
-#: What a working plate may never do. It hangs on the plate itself, so it reaches every step
-#: naming that plate and no edit to a step can drop it. Not on a material: the plate is what
-#: this protocol makes, and a materials table lists what a protocol needs brought in.
+#: What a working plate may never do. It hangs on the item the plate is handed over as, so it
+#: travels: the protocol pouring the plate and every protocol thawing one state the same rule,
+#: and no edit to a step can drop it. Not on a material, since a materials table lists what a
+#: protocol needs brought in; not on the plate, which stands on the page that lays it out.
 WORKING_PLATE_SINGLE_USE = Rule(
     "forbids",
     "return to the freezer",
@@ -937,6 +938,7 @@ def primer_plate_protocol(
                     f"a copy of {made.stock.name}, used for one run",
                     spec=(f"{number(working_um)} µM", f"{number(working_ul)} µL per well"),
                     storage=PRIMER_PLATE_STORAGE,
+                    rules=(WORKING_PLATE_SINGLE_USE,),
                 )
                 for one in made.working
             ),
@@ -954,7 +956,6 @@ def primer_plate_protocol(
             *(
                 replace(
                     one,
-                    rules=(WORKING_PLATE_SINGLE_USE,),
                     note=f"{number(working_um)} µM, {number(working_ul)} µL per well, "
                     f"{PRIMER_PLATE_STORAGE}",
                 )

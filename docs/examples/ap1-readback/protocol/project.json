@@ -1,6 +1,6 @@
 {
   "title": "AP-1 cargo read-back",
-  "key": "6923623847bd4e2a",
+  "key": "2eef699dd4a7d715",
   "summary": "Take 32 archived designs to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
   "background": [
     {
@@ -25,7 +25,8 @@
       "name": "AP-1 cargo archive plate",
       "what": "one clonal stock a design, 72 of them, sealed and frozen",
       "spec": [],
-      "storage": "-80 °C glycerol stock"
+      "storage": "-80 °C glycerol stock",
+      "rules": []
     },
     {
       "name": "Barcoded index primer plate",
@@ -33,13 +34,14 @@
       "spec": [
         "1 µM each"
       ],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     }
   ],
   "protocols": [
     {
       "title": "Design read-back: index PCR",
-      "key": "4e6f4f956e695698",
+      "key": "d44af9d12019685f",
       "summary": "Take 32 archived designs to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {
         "Designs": "32 of 72 on the sheet",
@@ -58,7 +60,8 @@
           "name": "AP-1 cargo archive plate",
           "what": "one clonal stock a design, 72 of them, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         },
         {
           "name": "Barcoded index primer plate",
@@ -66,7 +69,8 @@
           "spec": [
             "1 µM each"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "produces": [
@@ -74,13 +78,15 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "materials": [

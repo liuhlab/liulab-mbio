@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "54732ea55d05b1db",
+  "key": "d5c205a8c083ff32",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -42,25 +42,29 @@
       "name": "block vector 1",
       "what": "DMX-iGGA N, which a block of position 1 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "block vector 2",
       "what": "DMX-iGGA DBD, which a block of position 2 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "block vector 3",
       "what": "DMX-iGGA C, which a block of position 3 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "DMX barcode kit",
       "what": "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation way only",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "Barcoded index primer plate",
@@ -68,19 +72,21 @@
       "spec": [
         "1 µM each"
       ],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "working vector",
       "what": "pLVX-TetOne-dom the finished library ends in",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     }
   ],
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "f6bbe943a73898f0",
+      "key": "4b4477d6f23d728f",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -99,7 +105,8 @@
           "spec": [
             "100 µM"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "primer working plate 1",
@@ -108,7 +115,16 @@
             "10 µM",
             "100 µL per well"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ]
         }
       ],
       "materials": [
@@ -1078,15 +1094,7 @@
             "G2": "OP80"
           },
           "labels": {},
-          "rules": [
-            {
-              "kind": "forbids",
-              "subject": "return to the freezer",
-              "detail": "a thawed working plate is used once and discarded",
-              "when": "",
-              "citation": null
-            }
-          ],
+          "rules": [],
           "note": "10 µM, 100 µL per well, -20 °C"
         }
       ],
@@ -2045,7 +2053,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "9e8ec2380f2ef24f",
+      "key": "0b80c36fd8ed311d",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2057,7 +2065,8 @@
           "name": "oligo pool",
           "what": "the pool resuspended",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [
@@ -2178,7 +2187,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "11bbeb29c3c0fc00",
+      "key": "4c9e683cf89da3b3",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2189,7 +2198,8 @@
           "name": "oligo pool",
           "what": "the pool resuspended",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "primer working plate 1",
@@ -2198,25 +2208,37 @@
             "10 µM",
             "100 µL per well"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ]
         },
         {
           "name": "block vector 1",
           "what": "DMX-iGGA N, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 2",
           "what": "DMX-iGGA DBD, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 3",
           "what": "DMX-iGGA C, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -2224,7 +2246,8 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         }
       ],
       "materials": [
@@ -3207,7 +3230,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "8a9971ffdbbff99a",
+      "key": "27879237f03b9b08",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3218,13 +3241,15 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         },
         {
           "name": "DMX barcode kit",
           "what": "the lab's own barcoding plasmids, one group a picked plate",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "produces": [
@@ -3232,13 +3257,15 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "materials": [
@@ -7078,7 +7105,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "d778016e0c1d5c66",
+      "key": "139b5f98e4c6e753",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -7089,7 +7116,8 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         },
         {
           "name": "Barcoded index primer plate",
@@ -7097,7 +7125,8 @@
           "spec": [
             "1 µM each"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "produces": [
@@ -7105,13 +7134,15 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "materials": [
@@ -11568,7 +11599,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "66f42f32d88fa6db",
+      "key": "1912041ca018f87b",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11596,19 +11627,22 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 1",
           "what": "DMX-iGGA N, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -11616,7 +11650,8 @@
           "name": "library prep, round 3",
           "what": "the pooled library after round 3, as a plasmid prep",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [
@@ -13687,7 +13722,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "51116681dfba6f47",
+      "key": "d078549babdb36f9",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -13698,13 +13733,15 @@
           "name": "library prep, round 3",
           "what": "the pooled library after round 3, as a plasmid prep",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "working vector",
           "what": "the backbone the library ends in",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -13712,7 +13749,8 @@
           "name": "the library in its working vector",
           "what": "3 part lists joined, pooled and ready for the screen",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [

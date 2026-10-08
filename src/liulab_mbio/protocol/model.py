@@ -853,10 +853,10 @@ class Plate:
         `holds` is for a plate, said a well at a time. A well a step has to name occupies
         `seating`, never this.
     rules
-        What handling this plate forbids or requires, for the same reason a `Material` carries
-        its own: the rule reaches every step naming the plate, and no edit to a step can drop
-        it. A plate the protocol makes is not a reagent anyone brings in, so this is where its
-        rules hang rather than on a material row that would list an output as an input.
+        What handling this plate forbids or requires on this page, for the same reason a
+        `Material` carries its own: the rule reaches every step naming the plate, and no edit
+        to a step can drop it. A plate stands on the protocol that lays it out, so a rule a
+        later protocol has to keep hangs on the `Item` handed over instead, which travels.
     """
 
     name: str
@@ -1179,6 +1179,10 @@ class Item:
         What it has to meet, a phrase each, such as ``"≥100 ng/µL"``.
     storage
         Where it waits until the protocol consuming it takes it, such as ``"-20 °C"``.
+    rules
+        What handling it forbids or requires. The rule hangs on the item, so it travels with the
+        item: the protocol producing it and every protocol handed it show the same rule, and the
+        page that keeps the rule is never the only page that states it.
     """
 
     name: str
@@ -1186,6 +1190,7 @@ class Item:
     _: KW_ONLY
     spec: tuple[str, ...] = ()
     storage: str = ""
+    rules: tuple[Rule, ...] = ()
 
     def __post_init__(self) -> None:
         """Refuse an item with no name, or one nothing is said about."""
@@ -1460,14 +1465,20 @@ class Protocol:
     def rules_for(self, step: Step) -> tuple[tuple[str, Rule], ...]:
         """Return each rule that bears on `step`, with the name of whatever carries it.
 
-        A material or a plate bears on a step that names it, and its rules come with it: a rule
-        cannot be edited out of a step because it was never written into one. Only the carrier's
-        name is handed back, which is all a reader and the audit need.
+        A material, a plate, or anything the protocol is handed or leaves bears on a step that
+        names it, and its rules come with it: a rule cannot be edited out of a step because it
+        was never written into one. Only the carrier's name is handed back, which is all a
+        reader and the audit need.
         """
         contents = self.contents_of(step)
-        carriers: tuple[Material | Plate, ...] = (
+        handled: tuple[Material | Plate | Item, ...] = (
+            *self.plates,
+            *self.consumes,
+            *self.produces,
+        )
+        carriers: tuple[Material | Plate | Item, ...] = (
             *self.materials_for(step),
-            *(one for one in self.plates if names(one.name, step.named)),
+            *(one for one in handled if names(one.name, step.named)),
         )
         return tuple(
             (carrier.name, rule)

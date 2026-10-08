@@ -144,11 +144,13 @@ def test_a_working_plate_carries_the_rule_that_it_is_never_put_back() -> None:
     assert {rule.kind for _, rule in one.rules_for(stored)} == {"forbids"}
     assert [check.status for check in one.audit()] == ["pass", "pass", "pass", "pass"]
 
-    # The plate carries it, because the plate is what this protocol makes: a materials table
-    # listing an output would have a reader order it.
+    # The item carries it, so it travels to whichever protocol is handed the plate. Not a
+    # material row, which would have a reader order what this protocol makes, and not the
+    # plate, which stands on this page alone.
     assert "primer working plate 1" not in [material.name for material in one.materials]
-    made = next(plate for plate in one.plates if plate.name == "primer working plate 1")
-    assert made.rules == (WORKING_PLATE_SINGLE_USE,)
+    handed = next(item for item in one.produces if item.name == "primer working plate 1")
+    assert handed.rules == (WORKING_PLATE_SINGLE_USE,)
+    assert [plate.rules for plate in one.plates] == [(), (), ()]
 
 
 def test_the_primers_ordered_once_are_the_protocols_own_order_sheet() -> None:

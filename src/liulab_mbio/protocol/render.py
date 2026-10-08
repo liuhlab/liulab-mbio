@@ -1342,18 +1342,20 @@ def _handover(protocol: Protocol) -> str:
     """Return what the bench holds before this protocol and what it is left with, or nothing.
 
     A protocol read on its own states them for its reader; inside a run the index draws the same
-    names as a chain, and nothing is written where the protocol declares neither.
+    names as a chain, and nothing is written where the protocol declares neither. A rule either
+    of them carries stands under both lists.
     """
+    handed = (("Have in hand", protocol.consumes), ("Leaves you with", protocol.produces))
     blocks = [
         f"<div><h3>{heading}</h3>"
         f"<ul>{''.join(f'<li>{_item_named(item)}</li>' for item in items)}</ul></div>"
-        for heading, items in (
-            ("Have in hand", protocol.consumes),
-            ("Leaves you with", protocol.produces),
-        )
+        for heading, items in handed
         if items
     ]
-    return f'<div class="handover">{"".join(blocks)}</div>\n' if blocks else ""
+    # A rule travels with the item, so a page handed a thing it may break states the rule even
+    # where no step of it spells that thing's name.
+    carried = [(item.name, rule) for _, items in handed for item in items for rule in item.rules]
+    return f'<div class="handover">{"".join(blocks)}</div>\n{_rules(carried)}' if blocks else ""
 
 
 def _checks(checks: tuple[Check, ...]) -> str:
@@ -1674,8 +1676,8 @@ def _after(citation: Citation | None, sources: str = "") -> str:
 def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
     """Every rule the things in this step carry, computed from the carrier, never stored.
 
-    A rule hangs on the material or the plate it governs, so it shows wherever that is and no
-    edit to a step's prose can drop it.
+    A rule hangs on the material, the plate or the handed item it governs, so it shows
+    wherever that is and no edit to a step's prose can drop it.
     """
     items = "".join(
         f'<li class="rule is-{rule.kind}"><strong>{escape(carrier)}: '

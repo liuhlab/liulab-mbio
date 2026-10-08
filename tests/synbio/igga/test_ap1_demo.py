@@ -17,10 +17,12 @@ import pytest
 from liulab_mbio.barcodes import MAX_HOMOPOLYMER
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
+from liulab_mbio.bench.steps import WORKING_PLATE_SINGLE_USE
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.io import read_record
 from liulab_mbio.plot.layers import items
 from liulab_mbio.protocol.model import Citation, write_project, write_protocol
+from liulab_mbio.protocol.render import render_html
 from liulab_mbio.sequence import SequenceRecord, span_text
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
@@ -28,7 +30,7 @@ from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.bench import CUTSMART, SPRI_BEADS, STRAIN
 from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
+from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING, PRIMER_PLATES
 from liulab_synbio.igga.protocols.run import CUVETTES, FINAL_SELECTIVE, PREP_KIT, SELECTIVE
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo
@@ -692,6 +694,19 @@ def test_the_primers_are_ordered_once_however_the_run_is_split(plan):
     assert "Order the primers" in plated
     assert "Order the oligo pool and the primers that amplify it" in bare
     assert "Order the primers" not in bare
+
+
+def test_the_single_use_rule_reaches_both_pages_that_handle_the_working_plate(plan):
+    """Protocol 01 pours the plate and protocol 03 thaws it, so the rule travels to both."""
+    pages = {one.title: one for one in plan.chain().protocols}
+    handling = (pages[PRIMER_PLATES], pages[CREATION])
+
+    for page in handling:
+        carried = [
+            (item.name, rule) for item in (*page.consumes, *page.produces) for rule in item.rules
+        ]
+        assert carried == [("primer working plate 1", WORKING_PLATE_SINGLE_USE)]
+        assert WORKING_PLATE_SINGLE_USE.detail in render_html(page, base=DEMO / "protocol")
 
 
 def test_no_rendered_field_prints_a_parenthesised_plural(plan, tmp_path):

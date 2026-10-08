@@ -329,6 +329,9 @@ sets one.
 
 ### Fixed
 
+- A handling rule now reaches every page that handles the thing, not only the page that makes
+  it. A rule hangs on the item a protocol hands over, so the protocol thawing a single-use
+  primer plate states what it may never do just as the protocol pouring it does.
 - No library page now says an enzyme has stopped cutting a record it still cuts. Each round's
   prep counts the sites its own product carries, the final assembly says the cargo enzyme cuts
   only the cassette it opens, and the AP-1 maps name the four enzymes the method turns on, which
