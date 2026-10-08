@@ -98,7 +98,10 @@ def test_the_published_plant_overhang_set_scores_as_the_paper_reports_it() -> No
     report = fidelity(PLANT, "BsmBI")
 
     assert report.measured
-    assert "Pryor" in report.source
+    # Named in passing, by author, year and table: a check detail is read at the bench, and the
+    # reference in full belongs on the page that carries the number.
+    assert report.source.startswith("Pryor 2020 S")
+    assert "PLoS One" not in report.source
     # Pryor 2020, Fig 4A: 81% for this set with BsmBI-v2 and 42 C / 16 C cycling.
     assert round(report.value, 2) == 0.81
 

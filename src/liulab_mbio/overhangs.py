@@ -25,6 +25,7 @@ tables of Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and 
 """
 
 import json
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass, field
 from functools import cache
@@ -177,9 +178,20 @@ class LigationMatrix:
         return tuple(self.counts)
 
     @property
+    def cited(self) -> str:
+        """The paper by first author and year, or the whole citation where it gives neither."""
+        surname, _, rest = self.citation.partition(",")
+        year = re.search(r"\((\d{4})\)", rest)
+        return f"{surname} {year.group(1)}" if surname and year else self.citation
+
+    @property
     def source(self) -> str:
-        """Where a report should say this number came from."""
-        return f"{self.citation} {self.table}, measured with {self.product}"
+        """Where a report should say this number came from, named the way a check names it.
+
+        The paper in passing and which of its tables. A check detail is read at the bench, so
+        the reference in full belongs on the page's References list and not in the sentence.
+        """
+        return f"{self.cited} {self.table}, measured with {self.product}"
 
     def count(self, top: str, bottom: str) -> int:
         """How often a top-strand overhang was seen ligating to a bottom-strand one."""

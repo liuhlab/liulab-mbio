@@ -348,4 +348,12 @@ REFERENCES: tuple[Reference, ...] = (
         "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
         url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
     ),
+    # A ligation fidelity check names this in passing; here is the reference it names.
+    Reference(
+        "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. "
+        "(2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using "
+        "data-optimized assembly design. PLoS One 15(9): e0238592, whose S1-S5 Tables every "
+        "ligation fidelity score is read from",
+        url="https://doi.org/10.1371/journal.pone.0238592",
+    ),
 )
