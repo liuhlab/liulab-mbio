@@ -202,6 +202,8 @@ def test_the_flow_chart_boxes_every_protocol_in_order_and_links_each_to_its_page
         one.title for one in project.protocols
     ]
     assert [box.attrs["href"] for box in boxes] == [page.href for page in folder_of(project).pages]
+    # The Protocols list prints the step count and `protocol.js` keeps it up to date there.
+    assert not any("step" in box.text for box in boxes)
 
 
 def test_the_flow_chart_says_where_each_handed_name_comes_from(index: Node) -> None:
@@ -254,6 +256,20 @@ def test_the_schedule_draws_a_hole_where_nobody_stated_a_number(index: Node) -> 
     assert rows[1][3] == "no sourced number"
     assert rows[1][4] == "no sourced number"
     assert "1 min" in rows[3][3]
+
+
+def test_a_schedule_column_nothing_states_is_left_out_and_named_once_under_the_table() -> None:
+    """A column that is a hole in every row says the same thing once per row, so it goes."""
+    run = Project(
+        "Untimed",
+        protocols=(Protocol("Mix", steps=(Step("Pipette"),)),),
+    )
+    index = parse(render_index(run, folder_of(run)))
+    [table] = index.find_all("table", cls="schedule")
+    head = [cell.text for cell in table.find_all("tr")[0].find_all("th")]
+    assert head == ["Protocol", "Steps", "Holding nothing"]
+    [block] = index.find_all("section", cls="schedule")
+    assert "Nothing in this run states held, hands-on and unattended" in block.text
 
 
 def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(

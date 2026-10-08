@@ -79,15 +79,14 @@
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -209,7 +208,11 @@
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
-  all("button.timer").forEach(function (button) {
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
+  all("button.timer").forEach(function (button, index) {
+    var key = button.getAttribute("data-key") || "timer-" + index;
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -228,33 +231,53 @@
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();

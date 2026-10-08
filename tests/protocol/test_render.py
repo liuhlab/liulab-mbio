@@ -10,11 +10,15 @@ from liulab_mbio.protocol import (
     Check,
     Component,
     Figure,
+    Incubation,
     Oligo,
     Plate,
     Protocol,
     ReactionTable,
+    Stage,
     Step,
+    ThermocyclerProgram,
+    Timer,
     read_protocol,
     render_html,
     write_html,
@@ -102,6 +106,12 @@ def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
     assert len(set(keys)) == len(keys)
 
 
+def test_the_toolbar_offers_to_reset_everything_the_page_remembers(page: Node) -> None:
+    """One button for one store: `protocol.js` empties it, marks, counts and timers alike."""
+    [button] = page.find_all("button", cls="reset")
+    assert button.text == "Reset page"
+
+
 def test_an_oligo_is_an_order_sheet_row_and_never_a_material(page: Node) -> None:
     materials = page.find_all("section", cls="materials")[0]
     assert "M13 fwd" not in materials.text
@@ -175,7 +185,7 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
     table = page.find_all(cls="reaction")[0]
     assert table.find_all("input", type="number")[0].attrs["value"] == "4"
     # Per-reaction volume x 4 reactions x 1.1 for overage, to three figures; the last cell is
-    # the mix total.
+    # the mix total, which says so because a component is added per tube and not to the mix.
     assert [c.text for c in table.find_all("td", cls="mix")] == [
         "87.5",
         "11",
@@ -183,7 +193,7 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
         "2.2",
         "2.2",
         "0.55",
-        "106",
+        "106mix only",
     ]
     template = next(r for r in table.find_all("tr") if "Template DNA" in r.text)
     assert "each tube" in template.text
@@ -271,6 +281,35 @@ def test_a_timer_starts_from_its_duration(page: Node) -> None:
     timer = page.find_all("button", cls="timer")[0]
     assert timer.attrs["data-seconds"] == "1800"
     assert "30:00" in timer.text
+
+
+def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
+    """`protocol.js` keeps a deadline under this key, so a key is a timer's own and no other's."""
+    protocol = Protocol(
+        "Incubate",
+        steps=(
+            Step("Digest", timers=(Timer("digest", 60), Timer("heat", 120))),
+            Step("Ligate", timers=(Timer("ligate", 60),)),
+        ),
+    )
+    page = parse(render_html(protocol))
+    keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
+    assert keys == ["step-1-timer-1", "step-1-timer-2", "step-2-timer-1"]
+
+
+def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
+    """Nothing a bench reads in hours is planned to the second, so the seconds are not printed."""
+    program = ThermocyclerProgram(
+        (
+            Stage(
+                (Incubation("hold", 72.0, 3661), Incubation("rest", 4.0, 59)),
+            ),
+        )
+    )
+    page = parse(render_html(Protocol("Run", steps=(Step("Cycle", programs=(program,)),))))
+    times = [cell.text for cell in page.find_all("td", cls="num")]
+    assert "1 h 1 min" in times
+    assert "59 s" in times
 
 
 def test_expected_results_troubleshooting_and_references_are_shown(page: Node) -> None:

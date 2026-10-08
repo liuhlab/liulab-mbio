@@ -8,7 +8,7 @@ page is still self-contained, so the folder opens from disk and survives being z
 import hashlib
 import os
 import re
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from html import escape
 from importlib.resources import files
@@ -392,9 +392,10 @@ def _flow(project: Project, folder: Folder) -> str:
             left.pop(item.name, None)
         hand = f'<ul class="flow-hand">{needs}</ul>' if needs else ""
         boxes.append(
+            # The step count stands in the Protocols list, where `protocol.js` keeps it up to
+            # date; printed here too it would be the same number twice, one of them stale.
             f'<li>{hand}<a class="flow-box" href="{escape(page.href)}">'
-            f'<span class="flow-title">{escape(page.title)}</span> '
-            f'<span class="muted">{_count(page.steps, "step")}</span></a></li>'
+            f'<span class="flow-title">{escape(page.title)}</span></a></li>'
         )
         for item in protocol.produces:
             came_from[item.name] = f"from {page.title}"
@@ -434,31 +435,56 @@ def _schedule(project: Project, folder: Folder) -> str:
     date, and a bar draws an unknown wait as a length, which is a claim. Held is summed from the
     timers and thermocycler programs the steps already hold; hands-on is stated or it is a hole,
     and the unattended share is the difference wherever a step states both.
+
+    A column no protocol states a number in is a hole in every row, which says the same thing
+    once per row that one sentence under the table says once.
     """
     if not folder.pages:
         return ""
-    rows, totals = [], _Time()
-    for page, protocol in zip(folder.pages, project.protocols, strict=True):
-        time = _time_of(protocol)
+    times = [_time_of(protocol) for protocol in project.protocols]
+    totals = _Time()
+    for time in times:
         totals = totals.and_(time)
-        rows.append(
-            f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
-            f'{time.cells()}</tr><tr class="wait-row"><td colspan="6">{_waiting(time.waits)}'
-            "</td></tr>"
-        )
-    head = "<th>Protocol</th>" + "".join(
-        f'<th class="num">{escape(label)}</th>' for label in SCHEDULE_COLUMNS
+    kept = tuple(i for i, column in enumerate(totals.columns()) if column is not None)
+    rows = "".join(
+        f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
+        f'{_cells(time, kept)}</tr><tr class="wait-row"><td colspan="{len(kept) + 1}">'
+        f"{_waiting(time.waits)}</td></tr>"
+        for page, time in zip(folder.pages, times, strict=True)
     )
-    foot = f"<tr><th>Total</th>{totals.cells()}</tr>"
+    head = "<th>Protocol</th>" + "".join(
+        f'<th class="num">{escape(SCHEDULE_COLUMNS[i])}</th>' for i in kept
+    )
+    missing = [SCHEDULE_COLUMNS[i].lower() for i in range(len(SCHEDULE_COLUMNS)) if i not in kept]
+    left_out = (
+        f" Nothing in this run states {_and(missing)}, so "
+        f"{'that column is' if len(missing) == 1 else 'those columns are'} left out."
+        if missing
+        else ""
+    )
     return (
         '<section class="block schedule" id="schedule">\n<h2>Schedule</h2>\n'
         '<div class="scroll"><table class="schedule"><thead><tr>'
-        f"{head}</tr></thead><tbody>{''.join(rows)}</tbody>"
-        f"<tfoot>{foot}</tfoot></table></div>\n"
+        f"{head}</tr></thead><tbody>{rows}</tbody>"
+        f"<tfoot><tr><th>Total</th>{_cells(totals, kept)}</tr></tfoot></table></div>\n"
         "<p>A blank here is a number nobody has stated, never a zero. Most of this run is time "
         "nobody attends and nobody can date, so it is written down rather than drawn as a "
-        "length.</p>\n</section>\n"
+        f"length.{left_out}</p>\n</section>\n"
     )
+
+
+def _cells(time: "_Time", kept: tuple[int, ...]) -> str:
+    """One row's kept columns, each a duration or the mark that stands for a missing one."""
+    hole = f'<span class="hole-none">{NO_NUMBER}</span>'
+    columns = time.columns()
+    return "".join(f'<td class="num">{columns[i] or hole}</td>' for i in kept)
+
+
+def _and(words: Sequence[str]) -> str:
+    """Return a list of words as a sentence reads one: ``a``, ``a and b``, ``a, b and c``."""
+    if len(words) < 2:
+        return "".join(words)
+    return f"{', '.join(words[:-1])} and {words[-1]}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -487,9 +513,9 @@ class _Time:
             self.waits + other.waits,
         )
 
-    def cells(self) -> str:
-        """Return the row's cells, each a duration or the mark that stands for a missing one."""
-        filled = (
+    def columns(self) -> tuple[str | None, ...]:
+        """Return this row under `SCHEDULE_COLUMNS`, each column a value or ``None`` for none."""
+        return (
             str(self.steps),
             # The steps holding nothing have a column of their own, so held is not qualified.
             _taken(self.held, self.steps - self.blank),
@@ -497,16 +523,15 @@ class _Time:
             _taken(self.unattended, self.unattended_said, self.steps),
             str(self.blank),
         )
-        return "".join(f'<td class="num">{inner}</td>' for inner in filled)
 
 
-def _taken(seconds: float, said: int, steps: int = 0) -> str:
-    """One duration cell: the time, over how many steps it was stated, or the mark for none.
+def _taken(seconds: float, said: int, steps: int = 0) -> str | None:
+    """One duration: the time, over how many steps it was stated, or ``None`` where none did.
 
     `steps` is left out where the row already says elsewhere how many steps stated nothing.
     """
     if not said:
-        return f'<span class="hole-none">{NO_NUMBER}</span>'
+        return None
     over = (
         f' <span class="muted">over {said} of {_count(steps, "step")}</span>'
         if 0 < said < steps
@@ -787,11 +812,16 @@ def _fonts(body: str) -> str:
 
 
 def _duration(seconds: float) -> str:
-    hours, rest = divmod(round(seconds), 3600)
-    minutes, secs = divmod(rest, 60)
-    parts = [f"{hours} h"] if hours else []
-    if minutes:
-        parts.append(f"{minutes} min")
+    """One duration in words, to the second under an hour and to the minute from an hour up.
+
+    Nothing a bench reads in hours is planned to the second, and the seconds of a run's total
+    are a precision the numbers behind it do not have.
+    """
+    if round(seconds) >= 3600:
+        hours, minutes = divmod(round(seconds / 60), 60)
+        return f"{hours} h {minutes} min" if minutes else f"{hours} h"
+    minutes, secs = divmod(round(seconds), 60)
+    parts = [f"{minutes} min"] if minutes else []
     if secs or not parts:
         parts.append(f"{secs} s")
     return " ".join(parts)
@@ -833,7 +863,7 @@ def _header(protocol: Protocol, *, toc: bool = True, place: str = "") -> str:
             f'<div class="toolbar"><span class="progress" aria-live="polite">0 of '
             f"{_count(count, 'step')} done</span>"
             '<button type="button" class="print">Print</button>'
-            '<button type="button" class="clear">Clear checks</button></div>\n'
+            '<button type="button" class="reset">Reset page</button></div>\n'
         )
         if toc:
             links = "".join(
@@ -1325,7 +1355,8 @@ def _step(n: int, step: Step, protocol: Protocol, base: Path, section: str = "")
         items = "".join(_hole(hole) for hole in step.holes)
         parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')
     if step.timers:
-        parts.append(f'<div class="timers">{"".join(_timer(t) for t in step.timers)}</div>\n')
+        timers = "".join(_timer(f"{key}-timer-{i}", t) for i, t in enumerate(step.timers, 1))
+        parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     if step.expected or step.gels:
         gels = "".join(_gel(g) for g in step.gels)
@@ -1385,6 +1416,10 @@ def _table(key: str, table: ReactionTable) -> str:
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
     total = sum(c.volume_ul for c in table.components)
+    per_tube = [c for c in table.components if not c.master_mix]
+    # One tube takes every component; the mix holds only those the column adds up, so where the
+    # two totals count different things the mix total says which it is.
+    only = '<br><span class="muted">mix only</span>' if per_tube and in_mix else ""
     head = (
         "<th>Component</th>"
         + ("<th>Stock</th>" if stock else "")
@@ -1394,9 +1429,9 @@ def _table(key: str, table: ReactionTable) -> str:
     )
     foot = (
         f'<tr><th>Total</th>{blanks}<td class="num">{number(total)}</td>'
-        f'<td class="num mix" data-ul="{in_mix!r}">{number(in_mix * scale)}</td></tr>'
+        f'<td class="num mix"><span data-ul="{in_mix!r}">{number(in_mix * scale)}</span>'
+        f"{only}</td></tr>"
     )
-    per_tube = [c for c in table.components if not c.master_mix]
     dispense = ""
     if in_mix:
         then = ", ".join(f"{number(c.volume_ul)} µL {c.name}" for c in per_tube)
@@ -1450,9 +1485,10 @@ def _program(program: ThermocyclerProgram) -> str:
     )
 
 
-def _timer(timer: Timer) -> str:
+def _timer(key: str, timer: Timer) -> str:
+    """One timer, keyed so `protocol.js` can give it back its deadline after a page turn."""
     return (
-        f'<button type="button" class="timer" data-seconds="{timer.seconds!r}">'
+        f'<button type="button" class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
         f'<span class="timer-label">{escape(timer.label)}</span>'
         f'<span class="timer-time">{_clock(timer.seconds)}</span>'
         '<span class="timer-action">Start</span></button>'
