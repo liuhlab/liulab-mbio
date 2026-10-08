@@ -127,6 +127,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for.",
@@ -559,6 +560,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [
             {
               "ladder": {
@@ -768,6 +770,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [
             {
               "ladder": {
@@ -962,6 +965,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "72 plasmids, one a block: its position's destination carrying that block's cargo, 83 to 1,099 bp of it.",
@@ -1819,6 +1823,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
@@ -1856,6 +1861,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "288 wells over 1 plate(s): 288 picked.",
@@ -5088,6 +5094,7 @@
               }
             }
           ],
+          "figures": [],
           "gels": [],
           "expected": [
             "3 index plate(s), 288 reactions in all."
@@ -5610,6 +5617,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark.",
@@ -5658,6 +5666,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Reads for 288 wells, every well told from the rest by the marks it carries."
@@ -5685,6 +5694,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A well read more than 20 times is called; the index PCR route tolerates 10 reads and warns between the two.",
@@ -6039,6 +6049,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "N: one tube, 24 member(s), at least 1,000 ng at 22.3 ng/µL or above, 0.11 pmol of each member.",
@@ -6147,6 +6158,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "DMX-iGGA opens on AGGA and TTCC, leaving 5363 bp of backbone.",
@@ -6250,6 +6262,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Every member of the N part list is released, about 559 bp, on the same two overhangs the destination now offers.",
@@ -6281,6 +6294,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "DMX-iGGA, opened: 0.00605 pmol is 20 ng at 5363 bp.",
@@ -6350,6 +6364,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the opened library is the 1:1 molar ratio."
@@ -6380,6 +6395,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0264 pmol at 6161 bp."
@@ -6413,6 +6429,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
@@ -6478,6 +6495,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "At least 183 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 24 distinct products is missing, equally represented.",
@@ -6515,6 +6533,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One pool of plasmid, 6161 bp per molecule. This is the destination round 2 opens.",
@@ -6617,6 +6636,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 6131 bp of backbone.",
@@ -6720,6 +6740,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Every member of the DBD part list is released, about 255 bp, on the same two overhangs the destination now offers.",
@@ -6751,6 +6772,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "AP-1 DESynR round 1, opened: 0.0053 pmol is 20 ng at 6131 bp.",
@@ -6820,6 +6842,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Nothing visible. 0.0053 pmol of the released part list against 0.0053 pmol of the opened library is the 1:1 molar ratio."
@@ -6850,6 +6873,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0255 pmol at 6368 bp."
@@ -6883,6 +6907,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
@@ -6948,6 +6973,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "At least 6,306 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 576 distinct products is missing, equally represented.",
@@ -6985,6 +7011,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One pool of plasmid, 6368 bp per molecule. This is the destination round 3 opens.",
@@ -7087,6 +7114,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 6338 bp of backbone.",
@@ -7190,6 +7218,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Every member of the C part list is released, about 296 bp, on the same two overhangs the destination now offers.",
@@ -7221,6 +7250,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "AP-1 DESynR round 2, opened: 0.00512 pmol is 20 ng at 6338 bp.",
@@ -7290,6 +7320,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Nothing visible. 0.00512 pmol of the released part list against 0.00512 pmol of the opened library is the 1:1 molar ratio."
@@ -7320,6 +7351,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0252 pmol at 6435 bp."
@@ -7353,6 +7385,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
@@ -7418,6 +7451,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "At least 195,386 net colonies, scaled up from the dilution: the floor for the 0.99 chance the project asked for that none of its 13,824 distinct products is missing, equally represented.",
@@ -7455,6 +7489,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One pool of plasmid, 6435 bp per molecule. This is the finished library.",
@@ -7489,6 +7524,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A table from barcode combination to cargo: each read decodes to one member of each part list, and the coding bases it carries are that member's.",
@@ -7536,6 +7572,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "A count for each of up to 13,824 distinct combinations: how many of them are seen at all, and how evenly they are read.",
@@ -7810,6 +7847,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One opened backbone and the ccdB cassette beside it, and nothing else cut."
@@ -7938,6 +7976,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "The whole 1076 bp cargo free, on AGGA and TTCC, out of 6435 bp of library.",
@@ -7968,6 +8007,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "One circular final vector a member, the ccdB cassette displaced by the cargo."
@@ -8044,6 +8084,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "At least 195,386 net colonies: the floor for the 0.99 chance the project asked for that none of its 13,824 distinct members is missing, equally represented.",
@@ -8077,6 +8118,7 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
+          "figures": [],
           "gels": [],
           "expected": [
             "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into the working vector.",
