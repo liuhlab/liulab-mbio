@@ -1602,9 +1602,9 @@ def _digest_cleanup_step(row: RoundBench, opened: Amount, released: Amount) -> S
             "Measure both concentrations; the ligation table asks for picomoles, not nanograms.",
         ),
         expected=(
-            f"{opened.name}: {opened.pmol:g} pmol is {opened.nanograms:g} ng at "
+            f"{opened.name}: {number(opened.pmol)} pmol is {opened.nanograms:g} ng at "
             f"{opened.length_bp} bp.",
-            f"{released.name}: {released.pmol:g} pmol is {released.nanograms:g} ng at "
+            f"{released.name}: {number(released.pmol)} pmol is {released.nanograms:g} ng at "
             f"{released.length_bp} bp.",
         ),
         notes=(
@@ -1631,8 +1631,9 @@ def _ligation_step(row: RoundBench, opened: Amount, released: Amount) -> Step:
         tables=(ligation_reaction(row.ligation),),
         timers=(Timer("Ligation", LIGATION_SECONDS),),
         expected=(
-            f"Nothing visible. {released.pmol:g} pmol of the released part list against "
-            f"{opened.pmol:g} pmol of the opened library is the {MOLAR_RATIO:g}:1 molar ratio.",
+            f"Nothing visible. {number(released.pmol)} pmol of the released part list against "
+            f"{number(opened.pmol)} pmol of the opened library is the "
+            f"{MOLAR_RATIO:g}:1 molar ratio.",
         ),
         notes=(
             "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
@@ -1658,7 +1659,7 @@ def _ligation_cleanup_step(row: RoundBench) -> Step:
         ),
         expected=(
             f"Enough for one electroporation: {row.transformation.nanograms:g} ng is "
-            f"{row.transformation.pmol:g} pmol at {row.transformation.length_bp} bp.",
+            f"{number(row.transformation.pmol)} pmol at {row.transformation.length_bp} bp.",
         ),
         notes=(
             f"One volume here, not the {SPRI_AFTER_DIGEST:g} the digests took. Eluting in water "

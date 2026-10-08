@@ -266,6 +266,22 @@ def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):
     assert not [line for one in protocol.steps for line in one.expected if re.search(r"\de-", line)]
 
 
+def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
+    """Every pmol a round states goes through the page's own formatter, not ``{:g}``."""
+    said = {one.title: one.expected for one in protocol.steps}
+    assert said["Round 1: clean both digests up"] == (
+        "DMX-iGGA, opened: 0.00605 pmol is 20 ng at 5363 bp.",
+        "N part list, released: 0.00605 pmol is 2.08 ng at 559 bp.",
+    )
+    assert said["Round 1: ligate the N part list into the library"] == (
+        "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the "
+        "opened library is the 1:1 molar ratio.",
+    )
+    assert said["Round 1: clean the ligation up"] == (
+        "Enough for one electroporation: 100 ng is 0.0264 pmol at 6161 bp.",
+    )
+
+
 def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
     """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
     titles = [step.title for step in protocol.steps]
