@@ -23,7 +23,7 @@ this build pays.
 
 ## 1. The cargo input, and what is held back
 
-The project builds a combinatorial AP-1 transcription-factor library over three positions:
+The build is a combinatorial AP-1 transcription-factor library over three positions:
 **N**, **DBD** and **C**. The source calls the middle position bZIP; this build says DBD, and
 they are the same position.
 
@@ -429,11 +429,11 @@ choice. The 301-350 band lists at exactly 1.25× the 251-300 band for the same 1
 false of the sequence.
 
 **The pilot's own pool is priced.** The same capture bands pools from 2 oligos up, and 152 sit
-in its 101-500 tier, which lists at **$2,575** at 301-350 nt.
-`docs/examples/ap1-library/prices.csv` carries that figure as this build's oligo-pool row
-(#478). The 18,000-oligo rows above are the band comparison and not what this build pays. The
-build exercises the design path, not the pool economics, and should share a pool with other
-designs if one is going out.
+in its 101-500 tier at **$2,575** for 301-350 nt. `docs/examples/ap1-library/prices.csv` carries
+that figure as the demo's oligo-pool row (#478), where it is recorded as this lab's account
+pricing rather than a published list — Twist publishes no pool pricing. The pilot exercises the
+design path, not the pool economics, and should share a pool with other designs if one is going
+out.
 
 **Two things to flag rather than bury:**
 
