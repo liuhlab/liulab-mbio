@@ -290,7 +290,24 @@ def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
         assert pair.reverse.name in said
         assert pair.forward.sequence not in said
         assert f"{pair.amplicon_length} bp amplicon" in said
+        # And where to find the pair, which is the sheet the plan wrote it to.
+        assert "library-read-primers.tsv" in said
     assert "long read" in " ".join(linkage.instructions)
+
+
+def test_every_sheet_the_run_writes_is_one_its_pages_can_link(plan, pooled):
+    """A page links a filename only where the run states the file, so the run states them all."""
+    run = plan.chain()
+    assert run.files == (
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../library-read-primers.tsv",
+    )
+    assert [one.files for one in run.protocols] == [run.files] * len(run.protocols)
+    # A build with a pool writes two more sheets, and a build without writes neither.
+    made, _files = pooled
+    assert set(made.chain().files) - set(run.files) == {"../pool.tsv", "../pool-primers.tsv"}
 
 
 def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):

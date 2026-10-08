@@ -87,6 +87,7 @@ def project(run: Run) -> Project:
             "result for the round after it."
         ),
         background=(Topic("How this library is designed", _highlights(run)),),
+        files=run.files,
         inputs=_inputs(run),
         protocols=pages,
         checks=badges(run.checks),
@@ -193,8 +194,8 @@ def _highlights(run: Run) -> tuple[str, ...]:
     if standard.cost:
         said.append(
             f"The overhang standard changes {standard.cost} amino acid(s) across "
-            f"{len(standard.changes)} part end(s); changes.tsv has wild type beside synthesised, "
-            "and that is what you are about to pay for."
+            f"{len(standard.changes)} part end(s); {run.changes} has wild type beside "
+            "synthesised, and that is what you are about to pay for."
         )
     else:
         said.append(

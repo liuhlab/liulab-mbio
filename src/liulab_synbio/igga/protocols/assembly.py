@@ -599,7 +599,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
             f"Amplify the whole cargo out of the finished library, from the vector before the "
             f"first {rounds[0].entry_overhang} to the vector past the final "
             f"{rounds[0].scar_overhang}, so one read carries a member's parts and its barcode "
-            f"block together{with_pair(pair)}.",
+            f"block together{with_pair(pair, run.read_sheet)}.",
             f"Sequence the amplicon{as_platform(pair)}.",
             f"Decode each read's block against {barcodes}, then read the coding bases beside it "
             "against the member that block names.",
@@ -659,7 +659,8 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
         instructions=(
             f"Amplify across the {block} bp barcode block alone, forward from the "
             f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "
-            f"from the vector past the final {rounds[0].scar_overhang}{with_pair(pair)}.",
+            f"from the vector past the final {rounds[0].scar_overhang}"
+            f"{with_pair(pair, run.read_sheet)}.",
             f"Sequence the amplicon{as_platform(pair)}, decode each read against {barcodes}, "
             "and count the reads each barcode combination gets.",
         ),

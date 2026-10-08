@@ -334,6 +334,8 @@ class LibraryPlan:
                 host=self.host,
                 sheet=PARTS_FILE,
                 barcodes=BARCODE_FILE,
+                changes=CHANGE_FILE,
+                read_sheet=READ_PRIMER_FILE,
                 validation=self.validation,
                 prices=self.prices,
                 pool=self.pool,

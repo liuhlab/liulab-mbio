@@ -102,9 +102,10 @@ def ordered_from_sheet(protocol: Protocol) -> Protocol:
     """Return `protocol` naming the primer sheet its plan writes beside its page.
 
     Every cloning plan writes `PRIMER_FILE` into the directory it writes the page into, so the
-    page links the file rather than being the thing a supplier is sent.
+    page links the file rather than being the thing a supplier is sent, and any text naming the
+    sheet links it too.
     """
-    return replace(protocol, order_sheet=PRIMER_FILE)
+    return replace(protocol, order_sheet=PRIMER_FILE, files=(PRIMER_FILE,))
 
 
 def as_project(protocol: Protocol) -> Project:

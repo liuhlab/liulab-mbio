@@ -1335,6 +1335,11 @@ class Protocol:
     order_sheet
         The file holding `oligos` as a sheet to send a supplier, as a path from the page. The
         page links it rather than being the thing that is ordered from.
+    files
+        The files the run writes, each as a path from the page. Rendered text naming one by its
+        file name links it, so a bare filename is never one the reader cannot open. A file the
+        page never names costs nothing, so a run declares what it writes once rather than each
+        page declaring what it mentions.
     vessels, plates
         What the run holds material in, and where each thing sits.
     steps, references
@@ -1359,6 +1364,7 @@ class Protocol:
     materials: tuple[Material, ...] = ()
     oligos: tuple[Oligo, ...] = ()
     order_sheet: str = ""
+    files: tuple[str, ...] = ()
     equipment: tuple[str, ...] = ()
     vessels: tuple[Vessel, ...] = ()
     plates: tuple[Plate, ...] = ()
@@ -1583,6 +1589,8 @@ class Project:
     background
         What the reader is told before the first protocol: why the run is shaped as it is, a
         topic at a time. Explanation a step would otherwise carry belongs here.
+    files
+        The files the run writes, as `Protocol.files` holds them, for the run's own pages.
     inputs
         What the bench already holds before the first protocol.
     protocols
@@ -1601,6 +1609,7 @@ class Project:
     key: str = ""
     summary: str = ""
     background: tuple[Topic, ...] = ()
+    files: tuple[str, ...] = ()
     inputs: tuple[Item, ...] = ()
     protocols: tuple[Protocol, ...] = ()
     checks: tuple[Check, ...] = ()

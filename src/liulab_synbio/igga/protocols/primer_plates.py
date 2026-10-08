@@ -6,6 +6,7 @@ steps, materials and plates are that builder's and the chain spreads nothing int
 """
 
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 
 from liulab_mbio.bench.steps import primer_plate_protocol
 from liulab_mbio.protocol import model
@@ -46,7 +47,7 @@ class PrimerPlating(Protocol):
         The chain spreads nothing into this one, so the arguments every other protocol is
         handed are not read here.
         """
-        return _plates(run)
+        return replace(_plates(run), files=run.files)
 
 
 def _plates(run: Run) -> model.Protocol:

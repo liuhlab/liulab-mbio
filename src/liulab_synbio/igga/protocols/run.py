@@ -121,7 +121,8 @@ class Run:
     """What one library build settled, which every protocol of its chain is written against.
 
     Each field is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
-    `sheet` and `barcodes` are what the plan calls the two files a step points at.
+    `sheet`, `barcodes`, `changes`, `pool_sheet`, `primer_sheet` and `read_sheet` are what the
+    plan calls the sheets its pages point at, and `files` gathers them as the pages link them.
 
     `validation` is `None` for a build that states no fragment-count floor, and no read-back
     protocol is written: the library stays polyclonal, which is the default.
@@ -159,6 +160,8 @@ class Run:
     host: str
     sheet: str
     barcodes: str
+    changes: str = ""
+    read_sheet: str = ""
     validation: dmx.Validation | None = None
     prices: PriceRecord | None = None
     pool: PoolPlan | None = None
@@ -172,6 +175,21 @@ class Run:
     block_records: Sequence[Destination] = ()
     primer_plates: PrimerPlates | None = None
     records_at: str = RECORDS_AT
+
+    @property
+    def files(self) -> tuple[str, ...]:
+        """Every sheet this run writes, as a path from a page, for the pages that name one.
+
+        The run states them once and each page links whichever of them its own text says, so
+        no page carries a filename its reader cannot open. A run without a pool writes neither
+        pool sheet, so neither is here to be linked.
+        """
+        pooled = (self.pool_sheet, self.primer_sheet) if self.pool is not None else ()
+        return tuple(
+            self.records_at + name
+            for name in (self.sheet, self.barcodes, self.changes, *pooled, self.read_sheet)
+            if name
+        )
 
     @property
     def inside(self) -> tuple[Enzyme, ...]:
@@ -418,12 +436,17 @@ def vector_names(destinations: Sequence[tuple[str, str]]) -> list[str]:
     return [f"{name} ({file})" if file else name for name, file in destinations]
 
 
-def with_pair(pair: ReadPair | None) -> str:
-    """Name the designed pair and its amplicon, or say nothing where none was designed."""
+def with_pair(pair: ReadPair | None, sheet: str = "") -> str:
+    """Name the designed pair, the sheet holding it and its amplicon, or say nothing.
+
+    A pair the bench has to order is a pair the step says where to find, so the sentence names
+    the sheet beside the two primers rather than leaving the reader to look for them.
+    """
     if pair is None:
         return ""
+    from_sheet = f" from {sheet}" if sheet else ""
     return (
-        f", on {pair.forward.name} and {pair.reverse.name}, which give a "
+        f", on {pair.forward.name} and {pair.reverse.name}{from_sheet}, which give a "
         f"{pair.amplicon_length} bp amplicon"
     )
 

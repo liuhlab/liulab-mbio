@@ -109,6 +109,7 @@ class Protocol:
                 consumes=self.consumes(run),
                 produces=self.produces(run),
                 materials=tuple(materials),
+                files=run.files,
                 equipment=self.equipment(run),
                 plates=self.plates(run),
                 steps=tuple(steps),

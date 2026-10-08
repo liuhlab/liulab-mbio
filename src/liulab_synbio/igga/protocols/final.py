@@ -109,6 +109,7 @@ class FinalLigation(Protocol):
                     None if reads is None else reads.final_representation,
                     run.constructs,
                     run.marks,
+                    run.read_sheet,
                 ),
                 "Read the library back",
             ),
@@ -402,6 +403,7 @@ def _representation_step(
     pair: ReadPair | None,
     constructs: int,
     marks: RepresentationMarks,
+    read_sheet: str = "",
 ) -> Step:
     """Read the library again on the other side of the move, which is the only way to size the loss."""
     where = working.record.name if working is not None else "the working vector"
@@ -409,7 +411,7 @@ def _representation_step(
         "Read representation in the final vector",
         key="read-final-representation",
         instructions=(
-            f"Amplify across the barcode block again{with_pair(pair)}.",
+            f"Amplify across the barcode block again{with_pair(pair, read_sheet)}.",
             f"Sequence, decode each read against {barcodes}, and compare the counts with the "
             "read taken in the library backbone.",
         ),

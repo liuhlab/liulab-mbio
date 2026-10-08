@@ -172,6 +172,20 @@ def test_the_index_explains_the_run_before_any_protocol_does(index: Node, projec
     assert [p.text for p in topic.find_all("p")] == list(project.background[0].body)
 
 
+def test_the_index_links_a_file_the_run_writes_where_its_background_names_it() -> None:
+    """The index's own text names sheets no protocol page does, and links them the same way."""
+    run = Project(
+        "AP-1 library",
+        files=("../changes.tsv",),
+        background=(Topic("What it costs", ("changes.tsv has wild type beside synthesised.",)),),
+    )
+
+    index = parse(render_index(run, folder_of(run)))
+
+    [link] = [a for a in index.find_all("a") if a.text.endswith(".tsv")]
+    assert link.attrs["href"] == "../changes.tsv"
+
+
 def test_the_background_renders_on_the_index_and_on_no_protocol_page(project: Project) -> None:
     page = parse(render_html(project.protocols[0], folder=folder_of(project), here="01.html"))
     assert not page.find_all("section", cls="topic")

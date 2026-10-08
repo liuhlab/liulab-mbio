@@ -15,6 +15,7 @@ from liulab_mbio.protocol import (
     Folder,
     Incubation,
     Item,
+    Material,
     Move,
     Oligo,
     Page,
@@ -728,6 +729,68 @@ def test_a_long_order_sheet_is_summarised_and_the_rows_go_behind_a_toggle() -> N
     toggle = section.find_all("details", cls="listing")[0]
     assert toggle.find_all("summary")[0].text == "All 20 rows"
     assert "OP20" in toggle.text
+
+
+def _naming_files() -> Protocol:
+    """A protocol whose text says the sheets its run writes, as the bench says them."""
+    return Protocol(
+        "Order",
+        summary="Order pool.tsv, then amplify it.",
+        highlights=("pool-primers.tsv pairs a primer to a block.",),
+        files=("../pool.tsv", "../pool-primers.tsv", "../changes.tsv"),
+        materials=(Material("Oligo pool", note="ordered from pool.tsv"),),
+        steps=(
+            Step(
+                "Order the pool",
+                instructions=("Order every row of pool.tsv.",),
+                notes=("pool.tsv names each oligo's block.",),
+                expected=("One pool, as pool.tsv has it.",),
+            ),
+        ),
+    )
+
+
+def test_a_file_the_run_writes_is_linked_wherever_the_page_says_its_name() -> None:
+    """A filename a gloved reader cannot open is not a filename, so every mention is a link."""
+    page = parse(render_html(_naming_files()))
+
+    linked = [(a.attrs["href"], a.text) for a in page.find_all("a") if a.text.endswith(".tsv")]
+    assert linked == [
+        ("../pool.tsv", "pool.tsv"),
+        ("../pool-primers.tsv", "pool-primers.tsv"),
+        ("../pool.tsv", "pool.tsv"),
+        ("../pool.tsv", "pool.tsv"),
+        ("../pool.tsv", "pool.tsv"),
+        ("../pool.tsv", "pool.tsv"),
+    ]
+    # `changes.tsv` is written by the run and said by no page of it, so it links nowhere.
+    assert "changes.tsv" not in page.find_all("main", cls="page")[0].text
+
+
+def test_a_file_name_spelled_inside_a_longer_one_is_not_linked_on_its_own() -> None:
+    """`pool.tsv` and `pool-primers.tsv` are two files, and a reader must reach the right one."""
+    one = Protocol(
+        "Order",
+        files=("../pool.tsv", "../pool-primers.tsv"),
+        steps=(Step("Amplify", instructions=("Use pool-primers.tsv on the pool.",)),),
+    )
+
+    page = parse(render_html(one))
+
+    linked = [(a.attrs["href"], a.text) for a in page.find_all("a") if a.text.endswith(".tsv")]
+    assert linked == [("../pool-primers.tsv", "pool-primers.tsv")]
+
+
+def test_text_beside_a_linked_file_name_is_still_escaped() -> None:
+    one = Protocol(
+        "Order",
+        files=("../pool.tsv",),
+        steps=(Step("Order", instructions=("Order <b>pool.tsv</b> & nothing else.",)),),
+    )
+
+    html = render_html(one)
+
+    assert 'Order &lt;b&gt;<a href="../pool.tsv">pool.tsv</a>&lt;/b&gt; &amp; nothing' in html
 
 
 def test_a_short_order_sheet_stays_the_sheet_it_is() -> None:
