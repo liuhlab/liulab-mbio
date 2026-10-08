@@ -155,9 +155,9 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
 
 
-def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
+def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(protocol):
     """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
-    row = next(one for one in plan.protocol().bill.rows if one.item.endswith("oligo pool"))
+    row = next(one for one in protocol.bill.rows if one.item.endswith("oligo pool"))
     assert (row.quantity, row.unit) == (131, "oligos")
     assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
@@ -224,9 +224,9 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     assert titles[4] == "Pool each part list"
 
 
-def test_the_demo_emits_a_protocol_on_each_route(plan):
+def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     """One set of parts, two project files: a second project is never a second branch."""
-    index_pcr = plan.protocol()
+    index_pcr = protocol
     ligation = rerouted(plan, route="barcode ligation").protocol()
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
@@ -279,21 +279,20 @@ def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_t
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
 
 
-def test_the_same_dna_is_billed_once(plan):
+def test_the_same_dna_is_billed_once(plan, protocol):
     """A pool buys oligos and primers; a project without one buys blocks. Never both."""
-    pooled = [row.item for row in plan.protocol().bill.rows]
+    pooled = [row.item for row in protocol.bill.rows]
     assert "Synthesised blocks" not in pooled
     assert pooled[:2] == ["AP-1 DESynR oligo pool", "Pool amplification primers"]
-    primers = next(row for row in plan.protocol().bill.rows if row.item.endswith("primers"))
+    primers = next(row for row in protocol.bill.rows if row.item.endswith("primers"))
     assert (primers.quantity, primers.unit) == (74, "primers")
     unpooled = [row.item for row in replace(plan, pool=None).protocol().bill.rows]
     assert unpooled[0] == "Synthesised blocks"
     assert "Pool amplification primers" not in unpooled
 
 
-def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(plan):
+def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(protocol):
     """A 350 nt pool sits in Twist's top band; nothing sources the count for PCR2's template."""
-    protocol = plan.protocol()
     steps = {one.title.split(":")[0]: one for one in protocol.steps}
     first, second = steps["PCR1"], steps["PCR2"]
 
@@ -305,9 +304,8 @@ def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(p
     assert [hole.id for hole in second.holes] == ["H30"]
 
 
-def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
+def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(protocol):
     """The program belongs to the cells, so the settings and their source sit on one row."""
-    protocol = plan.protocol()
     cells = next(one for one in protocol.materials if one.catalog == "60242-2")
     assert cells.citation == Citation("MA133", "p. 4-5")
     assert "1800 V, 600 Ω and 10 µF" in cells.note
@@ -316,9 +314,11 @@ def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
     assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
-def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(plan):
+def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(
+    plan, protocol
+):
     """Each cargo closes into its own position's vector, in NEB's own kit reaction."""
-    step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
+    step = next(one for one in protocol.steps if one.title.startswith("Assemble"))
     opened = len(plan.rounds[0].destination) - plan.rounds[0].excised.length
 
     table = step.tables[0]
@@ -338,9 +338,9 @@ def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_
     )
 
 
-def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
+def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
     """Five steps, every one of them there, and a hole wherever no number is sourced."""
-    steps = plan.protocol().steps[-5:]
+    steps = protocol.steps[-5:]
 
     assert [one.title for one in steps] == [
         "Pick the working vector",
@@ -373,9 +373,9 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
     assert [hole.id for step in steps for hole in step.holes] == ["H24"]
 
 
-def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
+def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):
     """Route B pours picked and index plates, and each now belongs to a plate the page draws."""
-    one = plan.protocol()
+    one = protocol
     named = {
         well.plate
         for step in one.steps
@@ -392,12 +392,12 @@ def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
     assert [c.status for c in one.audit() if c.name == "wells"] == ["pass"]
 
 
-def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(plan, tmp_path):
+def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(protocol, tmp_path):
     """The destination is KanR, so no plate, well or broth carries the drug D11 rules out.
 
     Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too.
     """
-    written = write_protocol(plan.protocol(), tmp_path / "protocol.json").read_text()
+    written = write_protocol(protocol, tmp_path / "protocol.json").read_text()
 
     assert "kanamycin" in written
     assert "carbenicillin" not in written
