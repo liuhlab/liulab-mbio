@@ -9,6 +9,7 @@ import math
 import os
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -65,10 +66,13 @@ def number(value: float) -> str:
     """
     if value == 0:
         return "0"
-    mantissa, power = f"{value:.2e}".split("e")
-    if 0.001 <= abs(value) < 1e6:
-        fixed = f"{value:,.{max(0, 2 - int(power))}f}"
-        return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
+    # The float's exact value, rounded half up as `protocol.js` rounds it when the count changes.
+    exact = Decimal(value)
+    with localcontext(rounding=ROUND_HALF_UP):
+        mantissa, power = f"{exact:.2e}".split("e")
+        if 0.001 <= abs(value) < 1e6:
+            fixed = f"{exact:,.{max(0, 2 - int(power))}f}"
+            return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
     return f"{mantissa.rstrip('0').rstrip('.')} × 10{str(int(power)).translate(_SUPERSCRIPT)}"
 
 

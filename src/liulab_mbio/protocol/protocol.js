@@ -68,9 +68,24 @@
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
-  // Reaction tables: the same arithmetic as ReactionTable.mix_volumes.
-  function round2(value) {
-    return String(Math.round(value * 100) / 100);
+  // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
+  // protocol.model.number, so the column reads the same after the count changes.
+  var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+  function number(value) {
+    if (value === 0) return "0";
+    var parts = value.toExponential(2).split("e");
+    var power = Number(parts[1]);
+    if (Math.abs(value) >= 0.001 && Math.abs(value) < 1e6) {
+      var fixed = value.toFixed(Math.max(0, 2 - power));
+      if (fixed.indexOf(".") >= 0) fixed = fixed.replace(/0+$/, "").replace(/\.$/, "");
+      var halves = fixed.split(".");
+      halves[0] = halves[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return halves.join(".");
+    }
+    var mantissa = parts[0].replace(/\.?0+$/, "");
+    var raised = String(power).replace(/\d/g, function (d) { return SUPERSCRIPT.charAt(d); });
+    return mantissa + " × 10" + raised.replace("-", "⁻");
   }
 
   all(".reaction").forEach(function (figure) {
@@ -83,7 +98,7 @@
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
       all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = round2(parseFloat(cell.getAttribute("data-ul")) * scale);
+        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
       });
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;
