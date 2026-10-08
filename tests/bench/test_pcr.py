@@ -47,7 +47,7 @@ SHIPPED_PCR = {
             ("Forward primer", 2.5, "10 µM", "500 nM"),
             ("Reverse primer", 2.5, "10 µM", "500 nM"),
             ("Template DNA", 1.0, "", ""),
-            ("Q5 DNA Polymerase", 0.5, "2 U/µL", "1 units"),
+            ("Q5 DNA Polymerase", 0.5, "2 U/µL", "1 unit"),
             ("Nuclease-free water", 32.5, "", "to 50 µL"),
         ],
         [
@@ -67,7 +67,7 @@ SHIPPED_PCR = {
             ("Forward primer", 2.5, "10 µM", "500 nM"),
             ("Reverse primer", 2.5, "10 µM", "500 nM"),
             ("Template DNA", 1.0, "", ""),
-            ("Phusion DNA Polymerase", 0.5, "2 U/µL", "1 units"),
+            ("Phusion DNA Polymerase", 0.5, "2 U/µL", "1 unit"),
             ("Nuclease-free water", 32.5, "", "to 50 µL"),
         ],
         [
