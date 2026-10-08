@@ -34,7 +34,7 @@ inputs and outputs beside it.
 
 The method itself is code, not a file, and `docs/adr/0010-method-in-code.md` says why: its
 overhangs, enzymes and stuffers are the DNA of molecules already on the shelf. Never ask the user
-for them and never write them into a project.
+for them and never write them into a build.
 
 `parts.fasta` holds every part list in one file. A record's name says which position it fills —
 `N_ATF2`, `bZIP_JUN`, `C_VP64` — and a name that says no position, or two of them, is refused
