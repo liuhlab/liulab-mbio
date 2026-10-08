@@ -65,9 +65,10 @@ someone does them, and each page says what it is handed and what it leaves behin
 | [Library assembly in rounds](protocol/04-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
 | [Final cargo ligation](protocol/05-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
 
-[The way in](protocol/index.html) lists them with the run's own checks and its bill;
-[the reagents](protocol/reagents.html) and [the references](protocol/references.html) are
-shared by every page. The whole chain is [protocol/project.json](protocol/project.json), which
+[The way in](protocol/index.html) explains the design, draws the chain, and lists the run's own
+checks, how long it holds the bench and every number it has no source for.
+[The reagents](protocol/reagents.html), which is what to order, and
+[the references](protocol/references.html) are shared by every page. The whole chain is [protocol/project.json](protocol/project.json), which
 `liulab_mbio protocol render` turns back into these pages after an edit.
 
 A page names the one before it and the one after it, so each is complete on its own: mail one
