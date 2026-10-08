@@ -374,7 +374,7 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
 
 
 def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):
-    """Route B pours picked and index plates, and each now belongs to a plate the page draws."""
+    """Index PCR pours picked and index plates, and each now belongs to a plate the page draws."""
     one = protocol
     named = {
         well.plate

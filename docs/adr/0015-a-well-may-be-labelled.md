@@ -7,8 +7,8 @@ search:
 
 `Protocol.audit` resolves every seated well against a declared material, oligo, vessel or plate,
 and reports one that does not. Three plates could not meet that and say what they know. A picked
-plate's wells carry `quarter 3`, which groups wells rather than naming an occupant. A Route B
-index plate's carry `forward 2, reverse 2`, the well's printed address, whose occupant is
+plate's wells carry `quarter 3`, which groups wells rather than naming an occupant. An index
+plate's carry `forward 2, reverse 2`, the well's printed address, whose occupant is
 already declared as one material. A PCR2 plate's carry a block's name, and a block is none of
 the four kinds. Declaring the first two made `audit` report 384 dangling entries.
 
@@ -22,7 +22,7 @@ The model already had this distinction at plate level, in `Plate.holds`: what a 
 hold where they hold nothing named. A label is `holds` said a well at a time.
 
 With the validation plates now declarable, `igga.steps.protocol` passes the picked plates and
-Route B's index plates to the protocol, which it never did, so every well those transfers name
+the index plates to the protocol, which it never did, so every well those transfers name
 belongs to a plate the page draws.
 
 ## Considered options
