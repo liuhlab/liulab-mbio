@@ -175,8 +175,9 @@ class ReadBackPlan:
                     "A well's marks are worked out from where the well is rather than looked up, "
                     "so two plates on one flow cell are told apart by construction and a "
                     "demultiplexer can check an address instead of trusting a file.",
-                    f"A well is called above {one.route.wanted_reads} reads, which is the depth "
-                    f"this route was measured at and no other.",
+                    f"A well is called above {one.route.wanted_reads} reads. The other route's "
+                    "floor is not a stricter or a looser setting of the same scale, so neither "
+                    "number carries over to the other route.",
                 ),
             ),
         )
