@@ -2,7 +2,7 @@ LOCUS       DMX-iGGA                5393 bp    DNA     circular UNK 01-JAN-1980
 DEFINITION  iGGA destination rebuilt from DMX0001 (Addgene 247434): the method's
             internal stuffer where the parent's cassette was, PmeI outboard of
             each BsaI site, KanR where the parent's AmpR was, and no BbsI left
-            in the backbone. Built by scripts/build_dmx_vector.py..
+            in the backbone. Built by scripts/build_dmx_vector.py.
 ACCESSION   DMX-iGGA
 VERSION     DMX-iGGA
 KEYWORDS    .
