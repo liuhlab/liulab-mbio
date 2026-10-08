@@ -1,10 +1,13 @@
-"""The project: everything one library build chooses, read from JSON and checked as it is read.
+"""The `Build`: what one build chooses, read from `project.json` and checked as it is read.
 
-A project holds what the method leaves open — which positions, which proteins, which vector, how
-deep to sample — and nothing the method's own molecules already carry. A second project is a
+A build holds what the method leaves open — which positions, which proteins, which vector, how
+deep to sample — and nothing the method's own molecules already carry. A second build is a
 second file and no change to this package. `docs/adr/0010-method-in-code.md` draws the line.
 
-Nothing a project states replaces a method constant. Where the two meet they compose: the
+The file keeps the name `project.json`, which is what a user writes. A `Project` is something
+else here: `liulab_mbio.protocol.model.Project`, the chain of protocols a build writes.
+
+Nothing a build states replaces a method constant. Where the two meet they compose: the
 enzymes a block is kept clear of are the method's unioned with `reserved_extra`, and the barcode
 length is checked against the method's cloning scar rather than against a number stated here.
 """
@@ -24,10 +27,10 @@ from liulab_synbio.dmx import ROUTES
 from liulab_synbio.igga.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
-#: The method's own barcode length, which a project takes unless it states another.
+#: The method's own barcode length, which a build takes unless it states another.
 BARCODE_LENGTH = 11
 
-#: The plate format a primer order comes in unless a project names another, and how many working
+#: The plate format a primer order comes in unless a build names another, and how many working
 #: copies it splits. Neither is a measurement: one is the format every supplier quotes a plated
 #: oligo order in, the other is one plate a run.
 PRIMER_PLATE_WELLS = 96
@@ -55,9 +58,9 @@ class Barcode:
 class PrimerPlates:
     """How a run lays its routine primers out, which is the lab's own and not the method's.
 
-    The amounts are the project author's: what the vendor delivers in a well and what this lab
+    The amounts are the build author's: what the vendor delivers in a well and what this lab
     resuspends and dilutes to. None of them is published anywhere this package can cite, so a
-    project that wants the plates states them and one that does not gets no such protocol.
+    build that wants the plates states them and one that does not gets no such protocol.
 
     Parameters
     ----------
@@ -105,7 +108,7 @@ class PrimerPlates:
 
 
 @dataclass(frozen=True, slots=True)
-class Project:
+class Build:
     """One library build's own choices, checked on construction.
 
     Parameters
@@ -145,19 +148,19 @@ class Project:
         chance of a clean colony, not the chance worth paying to check.
     route
         Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
-        `validate_from` is, because an unread project needs no route.
+        `validate_from` is, because an unread build needs no route.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
-        Further enzymes this project needs a block kept clear of, added to the method's own.
+        Further enzymes this build needs a block kept clear of, added to the method's own.
     representation_seen, representation_skew, reads_per_member
         What this build holds the representation read to: the share of combinations that must be
         read at all, the skew ratio the counts must stay under, and the depth both are judged at.
-        Each takes `liulab_synbio.igga.coverage.REPRESENTATION_MARKS` where the project states
+        Each takes `liulab_synbio.igga.coverage.REPRESENTATION_MARKS` where the build states
         none, and each may only be tightened.
     linkage_fidelity
         The share of reads whose barcode must still name its part. No default: nothing published
-        sets a mark for it, so a project that states none is read against no mark at all.
+        sets a mark for it, so a build that states none is read against no mark at all.
     barcode
         What one part's barcode holds to.
     primer_plates
@@ -165,7 +168,7 @@ class Project:
         Omitted, no such protocol is written: an empty page is worse than a step, and the
         amounts are nobody's to guess. It needs `primers`, which is what there is to plate.
     scheme
-        The method the project is built by. There is one, and it is `IGGA`.
+        The method the build is made by. There is one, and it is `IGGA`.
 
     Raises
     ------
@@ -233,10 +236,10 @@ class Project:
 
     @property
     def reserved(self) -> tuple[str, ...]:
-        """Every enzyme a block is kept clear of: the method's, then this project's own.
+        """Every enzyme a block is kept clear of: the method's, then this build's own.
 
-        A project adds and never replaces, so an enzyme the method reserves stays reserved
-        whatever a project says.
+        A build adds and never replaces, so an enzyme the method reserves stays reserved
+        whatever a build says.
         """
         return tuple(dict.fromkeys((*self.scheme.reserved, *self.reserved_extra)))
 
@@ -256,7 +259,7 @@ class Project:
         return self.scheme.retained_length(self.barcode.length, self.position_count)
 
     def _check_positions(self) -> None:
-        """Refuse a project with no position, an unnamed one, or one named twice."""
+        """Refuse a build with no position, an unnamed one, or one named twice."""
         if not self.positions:
             raise ValueError("a project needs at least one position")
         if any(not one for one in self.positions):
@@ -265,7 +268,7 @@ class Project:
             raise ValueError(f"the positions {', '.join(self.positions)} name one of them twice")
 
     def _check_numbers(self) -> None:
-        """Refuse a project whose lengths or counts are not positive, or whose chance is not one."""
+        """Refuse a build whose lengths or counts are not positive, or whose chance is not one."""
         for named, value in (
             ("oligo_length", self.oligo_length),
             ("batch_size", self.batch_size),
@@ -305,7 +308,7 @@ class Project:
     def _check_plates(self) -> None:
         """Refuse primer plates where there is no primer set to plate.
 
-        The plates seat the primers that amplify the pool, and a project naming no primer set
+        The plates seat the primers that amplify the pool, and a build naming no primer set
         writes no pool and no primer.
         """
         if self.primer_plates is not None and self.primers is None:
@@ -317,7 +320,7 @@ class Project:
     def _check_marks(self) -> None:
         """Refuse a representation mark that loosens the sourced one, or a share outside 0 to 1.
 
-        A project tightens and never loosens, the same rule `liulab_synbio.dmx.depth_check`
+        A build tightens and never loosens, the same rule `liulab_synbio.dmx.depth_check`
         holds a read depth to: the sourced mark is the floor the method stands on.
         """
         for named, value in (
@@ -381,20 +384,20 @@ class Project:
             )
 
 
-def read_project(path: str | os.PathLike[str]) -> Project:
-    """Read a project from JSON, resolving every file path against the file's own directory.
+def read_build(path: str | os.PathLike[str]) -> Build:
+    """Read a build from JSON, resolving every file path against the file's own directory.
 
     Raises
     ------
     ValueError
         On a missing or unknown key, a value of another JSON type, a path naming no file, or any
-        check `Project` makes.
+        check `Build` makes.
     KeyError
         If it names an enzyme or a codon usage table this package does not ship.
 
     Examples
     --------
-    >>> read_project("project.json").positions  # doctest: +SKIP
+    >>> read_build("project.json").positions  # doctest: +SKIP
     ('N', 'DBD', 'C')
     """
     file = Path(path)
@@ -403,7 +406,7 @@ def read_project(path: str | os.PathLike[str]) -> Project:
         raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
     _keys(data, _PROJECT_KEYS, _PROJECT_OPTIONAL, "a project")
     given = dict(data)
-    return Project(
+    return Build(
         _text(given, "name", "a project"),
         positions=tuple(
             _one_text(one, f"positions[{index}]")
@@ -536,7 +539,7 @@ def _barcode(entry: Any) -> Barcode:
 
 
 def _primer_plates(entry: Any) -> PrimerPlates | None:
-    """Build the primer-plate amounts from parsed JSON, or `None` where a project states none.
+    """Build the primer-plate amounts from parsed JSON, or `None` where a build states none.
 
     Three amounts are required because nothing publishes them: what the vendor delivers, what
     this lab resuspends to, and what a working well holds. The other three have a default.

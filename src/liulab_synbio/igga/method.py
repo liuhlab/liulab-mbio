@@ -3,8 +3,8 @@
 `IGGA` is the method. Its overhangs, enzymes and stuffers are the DNA of molecules already on the
 shelf — the four ccdB cassettes, the DMX vector, the part carrier — so turning one of them would
 not change the tube, which is what makes it a constant rather than an input.
-`docs/adr/0010-method-in-code.md` says why, and `liulab_synbio.igga.project` holds what a
-project chooses instead.
+`docs/adr/0010-method-in-code.md` says why, and `liulab_synbio.igga.project.Build` holds
+what one build chooses instead.
 
 Nothing here states the overhang a design works from. A part's entry overhang is read off the 5'
 external stuffer by cutting it with the external enzyme, and the cloning scar off the 3' one, so
@@ -21,7 +21,7 @@ from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import find_sites
 
-#: What the method checks when it is imported, and what a project checks when it is read. A
+#: What the method checks when it is imported, and what a build checks when it is read. A
 #: refusal leads with the name of the invariant it broke.
 type Invariant = Literal[
     "internal-stuffer-prefix",
@@ -82,7 +82,7 @@ def _one_overhang(bases: str, enzyme: Enzyme, invariant: Invariant, where: str) 
 class Scheme:
     """The architecture of one method, checked on construction.
 
-    Every position carries the same stuffers, so what a position is is a name, which a project
+    Every position carries the same stuffers, so what a position is is a name, which a build
     supplies.
 
     Parameters
@@ -119,7 +119,7 @@ class Scheme:
         The names of further enzymes a block must be free of, beyond the ones above. A step
         outside the rounds — seating a part in its carrier, or the last transfer into a working
         vector — cuts the cargo too, and its enzyme has no role here to be named by. A block
-        spells none of these anywhere, its stuffers included. A project adds to this list and
+        spells none of these anywhere, its stuffers included. A build adds to this list and
         never replaces it.
 
     Raises
@@ -265,7 +265,7 @@ class Scheme:
         """Check what the product keeps past its last part is a whole number of codons.
 
         A barcode and the scar joining it to the last are whole codons together, which the
-        project checks, so the barcode block is whole codons however many positions there are and
+        build checks, so the barcode block is whole codons however many positions there are and
         whatever a barcode is long. What is left to check is the stuffer, less the scar the block
         does not repeat at its 5' end.
         """

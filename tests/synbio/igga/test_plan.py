@@ -38,7 +38,7 @@ from liulab_synbio.igga.plan import (
     plan_igga,
     read_part_lists,
 )
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
 from liulab_synbio.igga.protocols.run import ROUND_EQUIPMENT
 from liulab_synbio.igga.rounds import ROUND_FILE
@@ -97,9 +97,9 @@ def inputs(tmp_path_factory, scheme):
 
 def project(
     inputs, *, vector: str = "carrier.dna", working: str | None = None, primers: Path | None = None
-) -> Project:
+) -> Build:
     """The project a test plans, naming the inputs written into `inputs`."""
-    return Project(
+    return Build(
         "library",
         positions=POSITIONS,
         parts=inputs / "parts.fasta",

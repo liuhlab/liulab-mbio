@@ -25,7 +25,7 @@ from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_comple
 from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 from liulab_synbio.igga.stages import LIGASE, LIGASE_BUFFER
 
 #: What stands behind a check: a domain object `liulab_mbio` already returns, so `plot` can draw
@@ -155,7 +155,7 @@ class Verdict:
 def check_cargo(
     cargo: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     where: str = "cargo",
     ends_chain: bool = False,
     annealing: Sequence[str] = WELL_PRIMERS,
@@ -235,7 +235,7 @@ def check_cargo(
 
 
 def check_barcode_set(
-    codes: Sequence[str], *, project: Project, where: str = "this part list"
+    codes: Sequence[str], *, project: Build, where: str = "this part list"
 ) -> tuple[Judgement, ...]:
     """Judge one part list's barcodes: how far apart they stand, and what each one reads as.
 
@@ -279,7 +279,7 @@ def check_barcode_set(
 def check_product(
     product: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     barcodes: Mapping[str, Sequence[str]],
     where: str = "the library product",
 ) -> tuple[Judgement, ...]:
@@ -359,7 +359,7 @@ def check_product(
 def check_dmx_vector(
     vector: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     annealing: Sequence[str] = WELL_PRIMERS,
     where: str = "the DMX vector",
 ) -> tuple[Judgement, ...]:
@@ -433,7 +433,7 @@ def check_dmx_vector(
 
 
 def check_reaction(
-    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Judge one tube: whether every molecule in it is cut where this method cuts it.
 
@@ -454,7 +454,7 @@ def check_reaction(
 
 
 def library_reactions(
-    project: Project,
+    project: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -506,7 +506,7 @@ def library_reactions(
 
 
 def final_assembly_reactions(
-    project: Project, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
+    project: Build, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
 ) -> tuple[Reaction, ...]:
     """Compose the final assembly: two digests and the ligation that joins what they leave.
 
@@ -527,7 +527,7 @@ def final_assembly_reactions(
 
 
 def check_library(
-    project: Project,
+    project: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -610,7 +610,7 @@ def check_library(
     return Verdict(made)
 
 
-def _opening(product: SequenceRecord, project: Project, where: str) -> Judgement:
+def _opening(product: SequenceRecord, project: Build, where: str) -> Judgement:
     """Whether the internal enzyme still cuts the finished product where a further round opens it.
 
     The method leaves the library openable after its last round, which is what a further round or
@@ -651,7 +651,7 @@ def _worst(name: str, group: Sequence[Check]) -> Check:
     return Check(name, kept.status, kept.value, detail)
 
 
-def _cargo(block: SequenceRecord, project: Project) -> SequenceRecord:
+def _cargo(block: SequenceRecord, project: Build) -> SequenceRecord:
     """Return what the external enzyme releases from one block, its entry overhang first.
 
     The piece is taken by the end it leaves on and not by being the only one: a block held in a
@@ -713,7 +713,7 @@ def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
 
 
 def _ligation(
-    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Whether the ends meeting in one tube can be told apart, and how well they ligate."""
     ends = sorted(_ends(reaction, project))
@@ -780,7 +780,7 @@ def _on_target(reaction: Reaction, ends: Sequence[str], profile: LigaseProfile) 
     )
 
 
-def _ends(reaction: Reaction, project: Project) -> set[str]:
+def _ends(reaction: Reaction, project: Build) -> set[str]:
     """Every overhang the molecules of a ligation present, read off the digest that made it.
 
     A pool naming its own cutter is read off that one. The method's round is what the rest fall
@@ -804,7 +804,7 @@ def _ends(reaction: Reaction, project: Project) -> set[str]:
 
 
 def _block(
-    bases: str, at: int, project: Project, barcodes: Mapping[str, Sequence[str]]
+    bases: str, at: int, project: Build, barcodes: Mapping[str, Sequence[str]]
 ) -> tuple[tuple[str, ...], str, int]:
     """Walk the barcode block from `at`, one barcode a round joined by the cloning scar.
 

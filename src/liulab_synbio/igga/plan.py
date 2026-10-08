@@ -39,9 +39,7 @@ from liulab_mbio.cloning.plan import as_record, status
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
-
-# A project is the input file here and a chain of protocols there; both keep their names.
-from liulab_mbio.protocol.model import Project as Chain
+from liulab_mbio.protocol.model import Project
 from liulab_mbio.protocol.render import write_project_files
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
@@ -68,7 +66,7 @@ from liulab_synbio.igga.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.project import Build, read_build
 from liulab_synbio.igga.protocols import Run
 from liulab_synbio.igga.reads import ReadPairs, read_pairs, read_sheet
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
@@ -233,7 +231,7 @@ class LibraryPlan:
         enzyme chosen to admit it. `None` leaves the library in the destination vector.
     """
 
-    project: Project
+    project: Build
     scheme: Scheme
     vector: SequenceRecord
     destination: Destination
@@ -312,7 +310,7 @@ class LibraryPlan:
         """The worst status of any check."""
         return status(self.checks)
 
-    def chain(self) -> Chain:
+    def chain(self) -> Project:
         """Return this plan as the chain of protocols the bench works through, in order."""
         return chain_of(
             Run(
@@ -429,7 +427,7 @@ def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, .
 
 
 def plan_igga(
-    project: Project | str | os.PathLike[str],
+    project: Build | str | os.PathLike[str],
     *,
     parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
@@ -457,7 +455,7 @@ def plan_igga(
     ----------
     project
         What this build chooses, or a path to the JSON holding it;
-        `liulab_synbio.igga.project.read_project` reads one. It names the parts FASTA and the
+        `liulab_synbio.igga.project.read_build` reads one. It names the parts FASTA and the
         vector by path.
     parts
         One already-sorted mapping per position, in the project's order. The project's own parts
@@ -514,7 +512,7 @@ def plan_igga(
     >>> plan = plan_igga("project.json")  # doctest: +SKIP
     >>> plan.write("library/")  # doctest: +SKIP
     """
-    chosen = project if isinstance(project, Project) else read_project(project)
+    chosen = project if isinstance(project, Build) else read_build(project)
     # Read before anything is designed, so a file that is not a matrix is refused at once.
     ligase = _profile(profile, profile_sheet)
     design = chosen.scheme
@@ -646,7 +644,7 @@ def _named(record: SequenceRecord, position: str) -> SequenceRecord:
     return dataclasses.replace(record, name=f"{record.name} {position}".strip())
 
 
-def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
+def _pool(project: Build, parts: Sequence[Part]) -> PoolPlan | None:
     """Design the oligo pool, or none where the project names no primer set.
 
     The sites that cut a fragment out are templated on the oligo rather than carried by a

@@ -22,7 +22,7 @@ from liulab_synbio.igga.cargo import (
 )
 from liulab_synbio.igga.method import IGGA, ORTHOGONAL_SPLIT
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 
 INNER, FORWARD, OUTER = (count for _, count in ORTHOGONAL_SPLIT)
 TOTAL = INNER + FORWARD + OUTER
@@ -59,7 +59,7 @@ def rows(count):
 
 @pytest.fixture(scope="module")
 def project():
-    return Project(
+    return Build(
         "tiny",
         positions=("N",),
         parts=Path("parts.fasta"),

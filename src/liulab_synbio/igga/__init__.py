@@ -22,24 +22,24 @@ enzyme's sites and that is what lets the next round open it -- `docs/adr/0004-li
 says why `liulab_mbio.cloning.goldengate` does not generalise to one. The method is code and a
 project is a file, per `docs/adr/0010-method-in-code.md`.
 
-Only the way in, the method, the project and the gate are re-exported. Everything else is
+Only the way in, the method, the build and the gate are re-exported. Everything else is
 imported by module, as `liulab_mbio.cloning.goldengate.design` is.
 """
 
 from liulab_synbio.igga.gate import Judgement, Verdict, check_library
 from liulab_synbio.igga.method import IGGA, Scheme
 from liulab_synbio.igga.plan import Files, LibraryPlan, plan_igga
-from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.project import Build, read_build
 
 __all__ = [
     "IGGA",
+    "Build",
     "Files",
     "Judgement",
     "LibraryPlan",
-    "Project",
     "Scheme",
     "Verdict",
     "check_library",
     "plan_igga",
-    "read_project",
+    "read_build",
 ]

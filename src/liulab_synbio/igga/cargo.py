@@ -47,7 +47,7 @@ from liulab_synbio.igga.method import (
     Scheme,
 )
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 
 #: How long one primer of the orthogonal set is.
 PRIMER_LENGTH = 20
@@ -188,7 +188,7 @@ def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:
 
 def design_pool(
     parts: Sequence[Part],
-    project: Project,
+    project: Build,
     *,
     primers: Sequence[PrimerSite],
     bands: Mapping[str, Sequence[Band]] | None = None,
@@ -199,7 +199,7 @@ def design_pool(
 
     A batch is one PCR1 and one plate of PCR2, so a gene takes its own inner primer from the
     batch it sits in and the batch takes a forward and an outer primer of its own. The batches
-    are equal, which is what the evenness measurement behind `Project.batch_size` argues for.
+    are equal, which is what the evenness measurement behind `Build.batch_size` argues for.
 
     Parameters
     ----------

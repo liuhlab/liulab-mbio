@@ -35,7 +35,7 @@ from liulab_synbio.igga.gate import (
     library_reactions,
 )
 from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.project import read_project
+from liulab_synbio.igga.project import read_build
 from liulab_synbio.igga.vector import Cassette
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
@@ -53,7 +53,7 @@ FILLER = "ACGATCGTTA" * 20
 
 @pytest.fixture(scope="module")
 def project():
-    return read_project(DEMO / "project.json")
+    return read_build(DEMO / "project.json")
 
 
 @pytest.fixture(scope="module")

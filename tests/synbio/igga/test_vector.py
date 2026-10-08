@@ -32,7 +32,7 @@ from liulab_mbio.translate import translate
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.gate import check_reaction
 from liulab_synbio.igga.method import IGGA, INTERFACE_OVERHANGS, Scheme
-from liulab_synbio.igga.project import read_project
+from liulab_synbio.igga.project import read_build
 from liulab_synbio.igga.vector import (
     B0034,
     BIOBRICK_SCAR,
@@ -423,7 +423,7 @@ def test_the_gate_passes_the_tube_the_cargo_enzyme_opens_a_working_vector_in(wor
         enzymes=[CARGO],
     )
 
-    judged = check_reaction(reaction, project=read_project(DEMO))
+    judged = check_reaction(reaction, project=read_build(DEMO))
 
     assert [one.status for one in judged] == ["pass"]
     assert "in 2 places" in judged[0].check.detail
