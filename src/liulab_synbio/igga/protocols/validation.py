@@ -3,9 +3,9 @@
 `liulab_synbio.dmx` is a method of its own and takes any cargo; what a library run builds is one
 cargo among others. So nothing of the read-back is written here: this page is only its title,
 the figure of what a well holds, and its place in a library run's chain. The steps, the
-materials and the plates are `dmx`'s, for the route the project named.
+materials and the plates are `dmx`'s, for the route the build named.
 
-A project stating no fragment-count floor reads nothing back and this protocol is not in its
+A build stating no fragment-count floor reads nothing back and this protocol is not in its
 chain.
 """
 
@@ -37,7 +37,7 @@ def validation_title(one: dmx.Validation) -> str:
 
 
 class ReadBack(Protocol):
-    """Array, pick, mark and call every design the project's floor asks to read back."""
+    """Array, pick, mark and call every design the build's floor asks to read back."""
 
     def title(self, run: Run) -> str:
         """Return the page's heading, which names the route that marks its wells."""
@@ -96,7 +96,7 @@ def _validation_of(run: Run) -> dmx.Validation:
     Raises
     ------
     ValueError
-        If the project states no fragment-count floor, where this protocol is not in the chain.
+        If the build states no fragment-count floor, where this protocol is not in the chain.
     """
     if run.validation is None:
         raise ValueError("this run states no validation floor and reads no design back")

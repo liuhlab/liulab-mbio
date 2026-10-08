@@ -123,14 +123,14 @@ class Run:
     Each field is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
     `sheet` and `barcodes` are what the plan calls the two files a step points at.
 
-    `validation` is `None` for a project that states no fragment-count floor, and no read-back
+    `validation` is `None` for a build that states no fragment-count floor, and no read-back
     protocol is written: the library stays polyclonal, which is the default.
 
-    `working` is the vector the finished library is moved into, and `None` for a project naming
+    `working` is the vector the finished library is moved into, and `None` for a build naming
     none. Without one the final protocol's steps still run, because it is a stage of the method,
     and what the vector would have fixed is a hole instead.
 
-    `pool` is the oligo pool the blocks are built from, and `None` for a project that writes
+    `pool` is the oligo pool the blocks are built from, and `None` for a build that writes
     none. With one, the blocks are not ordered: they are amplified out of the pool and
     assembled, so ordering and making the cargo are two protocols instead of one step.
 
@@ -139,7 +139,7 @@ class Run:
     which a step's figure is drawn over. `records_at` says where those records sit relative to
     the pages, which is what every figure's path is written against.
 
-    `primer_plates` is how this lab lays the pool's primers out, and `None` for a project
+    `primer_plates` is how this lab lays the pool's primers out, and `None` for a build
     stating none.
     """
 

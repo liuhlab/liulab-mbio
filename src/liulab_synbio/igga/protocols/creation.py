@@ -4,7 +4,7 @@ Two nested PCRs and one assembly: the first pulls a batch out of the whole pool,
 pulls one block out of its batch, and the third closes that block's cargo into the vector for
 the position it fills. One archived well a design comes out.
 
-This protocol only exists where a pool does; a project ordering its blocks whole makes its
+This protocol only exists where a pool does; a build ordering its blocks whole makes its
 cargo in the vendor's tube.
 """
 
@@ -162,7 +162,7 @@ class Creation(Protocol):
 def pool_cycles(length_nt: int) -> tuple[int, int]:
     """Return the fewest and the most cycles Twist allows a pool of this length.
 
-    The count is banded by length, so it follows the project's own oligo length rather than
+    The count is banded by length, so it follows the build's own oligo length rather than
     sitting fixed in the source. A pool longer than the last band takes that band's count: the
     table stops where the product does.
 

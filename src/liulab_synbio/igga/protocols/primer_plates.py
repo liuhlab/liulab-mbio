@@ -1,7 +1,7 @@
 """Protocol 01: lay the pool's amplification primers out as the plates a run pipettes from.
 
 The primers are the pool's own, so there is nothing to plate without one. Every amount is the
-project's; this invents none of them. The page is the shared primer-plate protocol, so its
+build's; this invents none of them. The page is the shared primer-plate protocol, so its
 steps, materials and plates are that builder's and the chain spreads nothing into it.
 """
 

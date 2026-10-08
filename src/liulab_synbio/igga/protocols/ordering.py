@@ -98,7 +98,7 @@ class Ordering(Protocol):
 
 
 def pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[Material, ...]:
-    """Return what the pool route buys that a project ordering its blocks does not."""
+    """Return what the pool route buys that a build ordering its blocks does not."""
     layout = pool.pool.layout
     roles = ", ".join(f"{count} {role}" for role, count in primer_roles(pool).items())
     return (
@@ -218,7 +218,7 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str, plated:
             Troubleshooting(
                 "The vendor bins the pool by length",
                 "Every oligo is padded to one length, so the spread is zero. A vendor asking "
-                "for a different length wants the project's oligo length changed and the "
+                "for a different length wants the build's oligo length changed and the "
                 "design run again.",
             ),
         ),

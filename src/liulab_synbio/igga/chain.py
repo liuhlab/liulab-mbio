@@ -7,7 +7,7 @@ design. Each protocol is a module of `liulab_synbio.igga.protocols`, and adding 
 is an edit there.
 
 The chain is the order someone does the work in: plate the primers, order the blocks, make the
-cargo, read back the designs the project asks for, join the part lists round by round, and move
+cargo, read back the designs the build asks for, join the part lists round by round, and move
 the finished library into a working vector.
 """
 
@@ -34,7 +34,7 @@ from liulab_synbio.igga.protocols.validation import ReadBack
 
 #: What a price record prices the synthesis order and the bill's own source by. Neither has a
 #: catalogue number, so each is keyed by the name the protocol's own row already carries. The
-#: pool's own key is the project's, through `liulab_synbio.igga.cargo.design_pool`.
+#: pool's own key is the build's, through `liulab_synbio.igga.cargo.design_pool`.
 BLOCKS_KEY = "synthesised blocks"
 POOL_PRIMER_KEY = "pool-primers"
 PRICES_SOURCE = "prices"

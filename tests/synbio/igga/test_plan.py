@@ -517,7 +517,7 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
     )
     growth = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
     assert "At least 51 net colonies" in growth.expected[0]
-    assert "floor for the 0.99 chance the project asked for" in growth.expected[0]
+    assert "floor for the 0.99 chance the build asked for" in growth.expected[0]
     assert "it works out at 6x this round's products" in " ".join(growth.notes)
     final = next(one for one in protocol.steps if one.title.startswith("Clean the assembly up"))
     assert "At least 51 net colonies: the floor for the 0.99 chance" in final.expected[0]
