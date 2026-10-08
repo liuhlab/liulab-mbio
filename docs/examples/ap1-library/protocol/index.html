@@ -348,7 +348,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <section class="block schedule" id="schedule">
 <h2>Schedule</h2>
 <div class="scroll"><table class="schedule"><thead><tr><th>Protocol</th><th class="num">Steps</th><th class="num">Held</th><th class="num">Holding nothing</th></tr></thead><tbody><tr><td><a href="01-primer-plates.html">Primer plates</a></td><td class="num">5</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td><td class="num">1</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="03-cargo-creation.html">Cargo creation</a></td><td class="num">3</td><td class="num">1 h 18 min</td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td><td class="num">6</td><td class="num">1 h 35 min</td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></td><td class="num">27</td><td class="num">52 h 30 min</td><td class="num">15</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="06-final-cargo-ligation.html">Final cargo ligation</a></td><td class="num">5</td><td class="num">14 h 40 min</td><td class="num">3</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr></tbody><tfoot><tr><th>Total</th><td class="num">47</td><td class="num">70 h 2 min</td><td class="num">30</td></tr></tfoot></table></div>
-<p>A blank here is a number nobody has stated, never a zero. Most of this run is time nobody attends and nobody can date, so it is written down rather than drawn as a length. Nothing in this run states hands-on and unattended, so those columns are left out.</p>
+<p>A blank here is a number nobody has stated, never a zero. Most of this run is time nobody attends and nobody can date, so it is written down rather than drawn as a length. No protocol here states hands-on or unattended time, so those columns are left out.</p>
 </section>
 <section class="block holes" id="holes">
 <h2>Holes</h2>
@@ -490,7 +490,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       return reactions;
     }
 
+    // A browser restores a typed-in value across a reload, so the count is set either way: what
+    // the page remembers, or the count render.py wrote.
     if (typeof state[key] === "number") input.value = String(state[key]);
+    else input.value = input.getAttribute("value") || "1";
     update();
     input.addEventListener("input", function () {
       state[key] = update();
@@ -572,8 +575,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
   // page or closing the tab does not lose an incubation. A deadline already past comes back
   // finished and silent: the sound belongs to the moment it ran out, not to the page load.
-  all("button.timer").forEach(function (button, index) {
-    var key = button.getAttribute("data-key") || "timer-" + index;
+  all("button.timer").forEach(function (button) {
+    var key = button.getAttribute("data-key");
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;

@@ -186,10 +186,9 @@ class LigationMatrix:
 
     @property
     def source(self) -> str:
-        """Where a report should say this number came from, named the way a check names it.
+        """The paper in passing and which of its tables, as a check cites it.
 
-        The paper in passing and which of its tables. A check detail is read at the bench, so
-        the reference in full belongs on the page's References list and not in the sentence.
+        The reference in full belongs under References, not in a sentence read at the bench.
         """
         return f"{self.cited} {self.table}, measured with {self.product}"
 

@@ -434,10 +434,8 @@ def _schedule(project: Project, folder: Folder) -> str:
     A table and not a bar chart: most of a run's calendar is time nobody attends and nobody can
     date, and a bar draws an unknown wait as a length, which is a claim. Held is summed from the
     timers and thermocycler programs the steps already hold; hands-on is stated or it is a hole,
-    and the unattended share is the difference wherever a step states both.
-
-    A column no protocol states a number in is a hole in every row, which says the same thing
-    once per row that one sentence under the table says once.
+    and the unattended share is the difference wherever a step states both. A column nothing
+    states a number in is left out, and named once under the table.
     """
     if not folder.pages:
         return ""
@@ -445,19 +443,20 @@ def _schedule(project: Project, folder: Folder) -> str:
     totals = _Time()
     for time in times:
         totals = totals.and_(time)
-    kept = tuple(i for i, column in enumerate(totals.columns()) if column is not None)
+    shown = tuple(i for i, column in enumerate(totals.columns()) if column is not None)
     rows = "".join(
         f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
-        f'{_cells(time, kept)}</tr><tr class="wait-row"><td colspan="{len(kept) + 1}">'
+        f'{time.cells(shown)}</tr><tr class="wait-row"><td colspan="{len(shown) + 1}">'
         f"{_waiting(time.waits)}</td></tr>"
         for page, time in zip(folder.pages, times, strict=True)
     )
     head = "<th>Protocol</th>" + "".join(
-        f'<th class="num">{escape(SCHEDULE_COLUMNS[i])}</th>' for i in kept
+        f'<th class="num">{escape(SCHEDULE_COLUMNS[i])}</th>' for i in shown
     )
-    missing = [SCHEDULE_COLUMNS[i].lower() for i in range(len(SCHEDULE_COLUMNS)) if i not in kept]
+    # Only a duration column can go: the steps and the steps holding nothing are always counted.
+    missing = [SCHEDULE_COLUMNS[i].lower() for i in range(len(SCHEDULE_COLUMNS)) if i not in shown]
     left_out = (
-        f" Nothing in this run states {_and(missing)}, so "
+        f" No protocol here states {_or(missing)} time, so "
         f"{'that column is' if len(missing) == 1 else 'those columns are'} left out."
         if missing
         else ""
@@ -466,25 +465,18 @@ def _schedule(project: Project, folder: Folder) -> str:
         '<section class="block schedule" id="schedule">\n<h2>Schedule</h2>\n'
         '<div class="scroll"><table class="schedule"><thead><tr>'
         f"{head}</tr></thead><tbody>{rows}</tbody>"
-        f"<tfoot><tr><th>Total</th>{_cells(totals, kept)}</tr></tfoot></table></div>\n"
+        f"<tfoot><tr><th>Total</th>{totals.cells(shown)}</tr></tfoot></table></div>\n"
         "<p>A blank here is a number nobody has stated, never a zero. Most of this run is time "
         "nobody attends and nobody can date, so it is written down rather than drawn as a "
         f"length.{left_out}</p>\n</section>\n"
     )
 
 
-def _cells(time: "_Time", kept: tuple[int, ...]) -> str:
-    """One row's kept columns, each a duration or the mark that stands for a missing one."""
-    hole = f'<span class="hole-none">{NO_NUMBER}</span>'
-    columns = time.columns()
-    return "".join(f'<td class="num">{columns[i] or hole}</td>' for i in kept)
-
-
-def _and(words: Sequence[str]) -> str:
-    """Return a list of words as a sentence reads one: ``a``, ``a and b``, ``a, b and c``."""
+def _or(words: Sequence[str]) -> str:
+    """Return a list of words as a sentence reads one: ``a``, ``a or b``, ``a, b or c``."""
     if len(words) < 2:
         return "".join(words)
-    return f"{', '.join(words[:-1])} and {words[-1]}"
+    return f"{', '.join(words[:-1])} or {words[-1]}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -512,6 +504,12 @@ class _Time:
             self.blank + other.blank,
             self.waits + other.waits,
         )
+
+    def cells(self, shown: tuple[int, ...]) -> str:
+        """Return this row's `shown` columns, each a value or the mark for a missing one."""
+        hole = f'<span class="hole-none">{NO_NUMBER}</span>'
+        columns = self.columns()
+        return "".join(f'<td class="num">{columns[i] or hole}</td>' for i in shown)
 
     def columns(self) -> tuple[str | None, ...]:
         """Return this row under `SCHEDULE_COLUMNS`, each column a value or ``None`` for none."""
@@ -812,11 +810,7 @@ def _fonts(body: str) -> str:
 
 
 def _duration(seconds: float) -> str:
-    """One duration in words, to the second under an hour and to the minute from an hour up.
-
-    Nothing a bench reads in hours is planned to the second, and the seconds of a run's total
-    are a precision the numbers behind it do not have.
-    """
+    """One duration in words, to the second under an hour and to the minute from an hour up."""
     if round(seconds) >= 3600:
         hours, minutes = divmod(round(seconds / 60), 60)
         return f"{hours} h {minutes} min" if minutes else f"{hours} h"

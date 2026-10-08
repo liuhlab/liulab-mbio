@@ -165,4 +165,4 @@ def test_the_ligation_fidelity_reference_quotes_the_citation_the_data_ships() ->
     matrix = ligation_matrix("BsaI")
     assert matrix is not None
     assert matrix.cited == "Pryor 2020"
-    assert [one for one in REFERENCES if matrix.citation in one.text]
+    assert any(matrix.citation in one.text for one in REFERENCES)

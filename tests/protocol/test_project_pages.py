@@ -202,7 +202,6 @@ def test_the_flow_chart_boxes_every_protocol_in_order_and_links_each_to_its_page
         one.title for one in project.protocols
     ]
     assert [box.attrs["href"] for box in boxes] == [page.href for page in folder_of(project).pages]
-    # The Protocols list prints the step count and `protocol.js` keeps it up to date there.
     assert not any("step" in box.text for box in boxes)
 
 
@@ -269,7 +268,7 @@ def test_a_schedule_column_nothing_states_is_left_out_and_named_once_under_the_t
     head = [cell.text for cell in table.find_all("tr")[0].find_all("th")]
     assert head == ["Protocol", "Steps", "Holding nothing"]
     [block] = index.find_all("section", cls="schedule")
-    assert "Nothing in this run states held, hands-on and unattended" in block.text
+    assert "No protocol here states held, hands-on or unattended time" in block.text
 
 
 def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(
