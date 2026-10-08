@@ -27,6 +27,8 @@
   --ladder: #a9bbff;
   --gel-ink: #c9ced6;
   --radius: 10px;
+  /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
+  --bar: 0rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -116,7 +118,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .toc a::before { content: counter(toc) ". "; color: var(--muted); }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
-.step { scroll-margin-top: 1rem; }
+.block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
 .step.is-done { opacity: 0.6; }
 .step > * + * { margin-top: 0.9rem; }
 
@@ -176,7 +178,8 @@ button.timer.is-running { border-color: var(--accent); background: var(--accent-
 button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
-.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+/* A gel is taller than it is wide, so its height is what has to fit on the screen. */
+.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
 .gel-bg { fill: var(--gel); }
 .well { fill: var(--well); }
 .band { fill: var(--band); }
@@ -221,9 +224,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
-.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
-.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
 .column li { margin-bottom: 0.3rem; }
@@ -272,7 +275,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
-  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  /* A flex item sizes to its content, so without this the widest table widens the page. */
+  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
   .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column li { margin-bottom: 0; }
@@ -318,7 +322,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="88a2c4638f78de5c">
+<body data-protocol="2ee9a5dc88548572">
 <main class="page">
 <header class="intro">
 <h1>Golden Gate assembly: GFP into pUC19</h1>
@@ -327,7 +331,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="highlights"><p>One reaction joins 2 fragments: pUC19 backbone (2630 bp) and GFP (717 bp).</p><p>GFP reads on the opposite strand from lac promoter, 61 bp away, so that promoter does not transcribe it.</p><p>There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.</p><p>The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG.</p></div>
 <ul class="checks" aria-label="Checks"><li class="check is-pass"><span class="check-name">sites</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">pUC19 backbone</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">GFP</span><span class="verdict">pass</span></li><li class="check is-pass"><span class="check-name">junctions</span><span class="verdict">pass</span></li><li class="check is-warn"><span class="check-name">primers</span><span class="verdict">warn</span></li></ul>
 <p class="check-detail"><strong>primers warn:</strong> 9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3&#x27; end stability</p>
-<div class="toolbar"><span class="progress" aria-live="polite">0 of 11 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
+<div class="toolbar"><span class="progress" aria-live="polite">0 of 11 steps done</span><button type="button" class="print">Print</button><button type="button" class="reset">Reset page</button></div>
 <nav class="toc" aria-label="Steps"><ol><li><a href="#step-1">Amplify pUC19 backbone</a></li><li><a href="#step-2">Amplify GFP</a></li><li><a href="#step-3">Check the PCRs on a gel</a></li><li><a href="#step-4">Digest the plasmid template with DpnI</a></li><li><a href="#step-5">Purify every amplicon</a></li><li><a href="#step-6">Measure every concentration</a></li><li><a href="#step-7">Set up the Golden Gate reaction</a></li><li><a href="#step-8">Run the Golden Gate program</a></li><li><a href="#step-9">Transform and plate</a></li><li><a href="#step-10">Screen colonies by PCR</a></li><li><a href="#step-11">Confirm the clone by sequencing</a></li></ol></nav>
 </header>
 <section class="block materials" id="materials">
@@ -350,7 +354,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Amplify pUC19 backbone</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Mix the master mix and put it in each tube, then add the pUC19 template.</span></label></li><li><label><input type="checkbox" data-key="step-1-3"><span>Run the program below: 64 °C annealing and 60 s extension for a 2662 bp product.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>pUC19 backbone PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>pUC19 backbone PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
 <figure class="program"><figcaption>pUC19 backbone PCR <span class="muted">· 32 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20 <a class="cite" href="#source-e1601">E1601 FAQ 11</a></td></tr><tr><td>Anneal</td><td class="num">64 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 2662 bp.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the pUC19 template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
@@ -360,7 +364,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-2"><span class="step-n">2</span><span>Amplify GFP</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-2-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-2-2"><span>Mix the master mix and put it in each tube, then add the GFP template.</span></label></li><li><label><input type="checkbox" data-key="step-2-3"><span>Run the program below: 63 °C annealing and 20 s extension for a 749 bp product.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
 <figure class="program"><figcaption>GFP PCR <span class="muted">· 19 min 10 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20 <a class="cite" href="#source-e1601">E1601 FAQ 11</a></td></tr><tr><td>Anneal</td><td class="num">63 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 749 bp.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the GFP template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
@@ -375,7 +379,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <section class="step" id="step-4">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-4"><span class="step-n">4</span><span>Digest the plasmid template with DpnI</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-4-1"><span>Add 20 units of DpnI to the pUC19 backbone PCR and mix.</span></label></li><li><label><input type="checkbox" data-key="step-4-2"><span>Incubate at 37 °C for 60 minutes.</span></label></li></ol>
-<div class="timers"><button type="button" class="timer" data-seconds="3600"><span class="timer-label">DpnI digest</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
+<div class="timers"><button type="button" class="timer" data-key="step-4-timer-1" data-seconds="3600"><span class="timer-label">DpnI digest</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
 <div class="expected"><h3>Expected result</h3><ul><li>Nothing visible. The digest shows up later as fewer colonies carrying the template plasmid.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Many colonies on the no-insert control</dt><dd>The template survived: digest longer, or use more DpnI.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (15 Dam sites) and leaves the PCR product, which carries no methylation.</li><li>This step is not in NEB&#x27;s Golden Gate protocol; the incubation is this package&#x27;s choice.</li></ul></div>
@@ -397,7 +401,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <section class="step" id="step-7">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-7"><span class="step-n">7</span><span>Set up the Golden Gate reaction</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-7-1"><span>Thaw the master mix on ice and mix it well; it is viscous.</span></label></li><li><label><input type="checkbox" data-key="step-7-2"><span>Pipette the DNA into the tube first, then the rest.</span></label></li><li><label><input type="checkbox" data-key="step-7-3"><span>Mix gently and spin down.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>Golden Gate assembly, NEBridge Ligase Master Mix (M1100)</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-7-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>pUC19 backbone</td><td></td><td>0.05 pmol (81.98 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>GFP</td><td></td><td>0.05 pmol (23.07 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>NEBridge Ligase Master Mix</td><td>3X</td><td>1X</td><td class="num">5</td><td class="num mix" data-ul="5.0">5.5</td></tr><tr><td>BbsI-HF (R3539)</td><td>20 U/µL</td><td>20 units</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 15 µL</td><td class="num">7</td><td class="num mix" data-ul="7.0">7.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">15</td><td class="num mix" data-ul="13.0">14.3</td></tr></tfoot></table></div><p class="dispense">Put 13 µL of mix in each tube, then add 1 µL pUC19 backbone, 1 µL GFP.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>Golden Gate assembly, NEBridge Ligase Master Mix (M1100)</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-7-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>pUC19 backbone</td><td></td><td>0.05 pmol (81.98 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>GFP</td><td></td><td>0.05 pmol (23.07 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>NEBridge Ligase Master Mix</td><td>3X</td><td>1X</td><td class="num">5</td><td class="num mix" data-ul="5.0">5.5</td></tr><tr><td>BbsI-HF (R3539)</td><td>20 U/µL</td><td>20 units</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 15 µL</td><td class="num">7</td><td class="num mix" data-ul="7.0">7.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">15</td><td class="num mix"><span data-ul="13.0">14.3</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 13 µL of mix in each tube, then add 1 µL pUC19 backbone, 1 µL GFP.</p></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>A 15 µL reaction holding every fragment.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The DNA does not fit the reaction volume</dt><dd>Concentrate the fragments, or scale the whole reaction up.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>The volumes above assume the concentrations measured in the step before; pipette the volume that gives the picomoles, and make the difference up with water.</li></ul></div>
@@ -415,7 +419,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-9"><span class="step-n">9</span><span>Transform and plate</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Competent cells die if they warm up; keep them on ice until the shock.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-9-1"><span>Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-2"><span>Add 2 µL of the assembly and flick the tube four or five times.</span></label></li><li><label><input type="checkbox" data-key="step-9-3"><span>Hold on ice for 30 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-4"><span>Heat shock at 42 °C for 30 seconds.</span></label></li><li><label><input type="checkbox" data-key="step-9-5"><span>Return to ice for 5 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-9-6"><span>Add 950 µL of outgrowth medium and shake at 37 °C for 60 minutes at 250 rpm.</span></label></li><li><label><input type="checkbox" data-key="step-9-7"><span>Spread 50 µL of a 1:5 dilution on a warmed plate and grow overnight at 37 °C.</span></label></li></ol>
-<div class="timers"><button type="button" class="timer" data-seconds="1800"><span class="timer-label">On ice</span><span class="timer-time">30:00</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-seconds="30"><span class="timer-label">Heat shock</span><span class="timer-time">0:30</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-seconds="3600"><span class="timer-label">Outgrowth</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
+<div class="timers"><button type="button" class="timer" data-key="step-9-timer-1" data-seconds="1800"><span class="timer-label">On ice</span><span class="timer-time">30:00</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-key="step-9-timer-2" data-seconds="30"><span class="timer-label">Heat shock</span><span class="timer-time">0:30</span><span class="timer-action">Start</span></button><button type="button" class="timer" data-key="step-9-timer-3" data-seconds="3600"><span class="timer-label">Outgrowth</span><span class="timer-time">1:00:00</span><span class="timer-action">Start</span></button></div>
 <div class="expected"><h3>Expected result</h3><ul><li>Hundreds of colonies; NEB counts about 687 correct ones from a single-insert assembly with 2.5 µL of the outgrowth plated.</li><li>Correct clones are white and empty vector is blue: the insertion interrupts lacZα, which is then not there to complete the host&#x27;s own.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No colonies</dt><dd>Check the antibiotic and the cells&#x27; efficiency, and plate the rest of the outgrowth.</dd><dt>A lawn</dt><dd>Plate a smaller volume or a greater dilution next time.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>The plate reads colour only with an alpha-complementing host, such as NEB 5-alpha Competent E. coli (C2987). A host that cannot complement gives white colonies whatever the clone carries.</li><li>The clone is not expected to make GFP: it reads on the opposite strand from lac promoter and no ribosome binding site is annotated ahead of it.</li></ul></div>
@@ -423,7 +427,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <section class="step" id="step-10">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-10"><span class="step-n">10</span><span>Screen colonies by PCR</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-10-1"><span>Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.</span></label></li><li><label><input type="checkbox" data-key="step-10-2"><span>Streak the same toothpick onto a numbered plate, so the clone survives the PCR.</span></label></li><li><label><input type="checkbox" data-key="step-10-3"><span>Run the program below and load 5 µL on a 2% gel.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-10-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.8</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix" data-ul="25.0">27.5</td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-10-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.8</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix"><span data-ul="25.0">27.5</span></td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
 <figure class="program"><figcaption>Colony PCR <span class="muted">· 1 h 10 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Lysis</td><td class="num">94 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">94 °C</td><td class="num">30 s</td><td class="num" rowspan="3">30 <a class="cite" href="#source-m0480">M0480 thermocycling conditions</a></td></tr><tr><td>Anneal</td><td class="num">56.9 °C</td><td class="num">30 s</td></tr><tr><td>Extend</td><td class="num">68 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">68 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">10 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.</li><li>Correct clone: 160 bp, 838 bp.</li><li>Empty vector: 177 bp.</li></ul><figure class="gel"><figcaption>Colony PCR</figcaption><svg class="gel-image" viewBox="0 0 202 276" role="img" aria-label="Colony PCR"><rect class="gel-bg" x="46" y="22" width="154" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="Correct clone"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="838" x="107" y="91.8" width="32" height="4" rx="1.5"><title>838 bp</title></rect><rect class="band" data-bp="160" x="107" y="219.7" width="32" height="4" rx="1.5"><title>160 bp</title></rect></g><g class="lane" data-lane="Empty vector"><text class="lane-mark" x="171.0" y="14">2</text><rect class="well" x="152" y="30" width="38" height="6"/><rect class="band" data-bp="177" x="155" y="211.9" width="32" height="4" rx="1.5"><title>177 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> Correct clone: 160, 838 bp</li><li><strong>2</strong> Empty vector: 177 bp</li></ol></figure></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band in any lane</dt><dd>The colony was too much material: touch a smaller one, or dilute it.</dd><dt>Every colony reads as empty vector</dt><dd>The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.</dd></dl></div>
@@ -442,7 +446,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 </section>
 <section class="block references" id="references">
 <h2>References</h2>
-<ol><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF</li><li>REBASE record for DpnI, which cuts G6mATC and so only methylated template <a href="http://rebase.neb.com/rebase/rebase.html" rel="noreferrer">http://rebase.neb.com/rebase/rebase.html</a></li><li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal and IPTG plate <a href="https://doi.org/10.1021/acssynbio.8b00333" rel="noreferrer">https://doi.org/10.1021/acssynbio.8b00333</a></li></ol>
+<ol><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li><li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592, whose S1-S5 Tables every ligation fidelity score is read from <a href="https://doi.org/10.1371/journal.pone.0238592" rel="noreferrer">https://doi.org/10.1371/journal.pone.0238592</a></li><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Pryor 2020 S4 Table, measured with BbsI-HF</li><li>REBASE record for DpnI, which cuts G6mATC and so only methylated template <a href="http://rebase.neb.com/rebase/rebase.html" rel="noreferrer">http://rebase.neb.com/rebase/rebase.html</a></li><li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal and IPTG plate <a href="https://doi.org/10.1021/acssynbio.8b00333" rel="noreferrer">https://doi.org/10.1021/acssynbio.8b00333</a></li></ol>
 </section>
 </main>
 <script>
@@ -527,15 +531,14 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -657,7 +660,11 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
-  all("button.timer").forEach(function (button) {
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
+  all("button.timer").forEach(function (button, index) {
+    var key = button.getAttribute("data-key") || "timer-" + index;
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -676,33 +683,53 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();

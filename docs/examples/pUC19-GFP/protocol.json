@@ -1311,6 +1311,10 @@
       "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
     },
     {
+      "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592, whose S1-S5 Tables every ligation fidelity score is read from",
+      "url": "https://doi.org/10.1371/journal.pone.0238592"
+    },
+    {
       "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
       "url": ""
     },
@@ -1327,7 +1331,7 @@
       "url": ""
     },
     {
-      "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF",
+      "text": "Pryor 2020 S4 Table, measured with BbsI-HF",
       "url": ""
     },
     {
@@ -1345,14 +1349,16 @@
       "edition": "protocols.io version 2, 2022-02-21",
       "url": "https://dx.doi.org/10.17504/protocols.io.bd24i8gw",
       "read_as": "",
-      "date": "2026-09-12"
+      "date": "2026-09-12",
+      "note": ""
     },
     "E1601": {
       "document": "New England Biolabs #E1601S/L NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual",
       "edition": "version 5.0_6/26",
       "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
       "read_as": "",
-      "date": "2026-09-12"
+      "date": "2026-09-12",
+      "note": ""
     }
   },
   "holes": [],
