@@ -37,6 +37,7 @@ from liulab_mbio.sequence import (
     SequenceRecord,
     Strand,
     across_the_origin,
+    span_at,
 )
 from liulab_mbio.sites import Fragment, digest, released
 from liulab_mbio.snapgene import write_dna
@@ -132,7 +133,7 @@ class Round:
         `liulab_synbio.igga.method.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
-        return _span(self.coding.end, carried + _length(self.block), len(self.product))
+        return span_at(self.product, self.coding.end, carried + _length(self.block))
 
 
 def assemble_round(
@@ -199,16 +200,16 @@ def assemble_round(
         """Where a base of the part's block lands in the product."""
         return at + index - released.start
 
-    coding = _span(moved(part.coding.start), part.coding.end - part.coding.start, total)
-    stuffer = _span(moved(inner.start), inner.end - inner.start, total)
-    barcode = _span(moved(barcode_at), len(part.barcode), total)
-    block = _span(
+    coding = span_at(product, moved(part.coding.start), part.coding.end - part.coding.start)
+    stuffer = span_at(product, moved(inner.start), inner.end - inner.start)
+    barcode = span_at(product, moved(barcode_at), len(part.barcode))
+    block = span_at(
+        product,
         barcode.start,
         number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar),
-        total,
     )
-    entry = _span(at, len(released.left_overhang), total)
-    scar = _span(at + len(bases), len(released.right_overhang), total)
+    entry = span_at(product, at, len(released.left_overhang))
+    scar = span_at(product, at + len(bases), len(released.right_overhang))
     drawn = _drawn(part, scheme, number, coding=coding, stuffer=stuffer, barcode=barcode)
     joins = _joins(part, number, entry=entry, scar=scar)
     titled = f"{name} round {number}".strip() if name else f"round {number}"
@@ -335,12 +336,6 @@ def write_records(rounds: Sequence[Round], directory: Path) -> tuple[Path, ...]:
 def _length(span: Segment) -> int:
     """How many bases a span holds."""
     return span.end - span.start
-
-
-def _span(start: int, length: int, total: int) -> Segment:
-    """Return a span of `length` bases from `start`, reduced onto a record of `total` bases."""
-    first = start % total
-    return Segment(first, first + length)
 
 
 def _check_parts(parts: Sequence[Part], positions: Sequence[str]) -> None:

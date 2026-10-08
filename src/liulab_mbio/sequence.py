@@ -392,6 +392,33 @@ class SequenceRecord:
         raise ValueError(f"{span} does not fit a circular record of {n} bases")
 
 
+def span_at(record: SequenceRecord, start: int, width: int) -> Segment:
+    """Return the `width` bases at `start`, counted round a circular origin, clipped on a line.
+
+    A circular record counts `start` round the circle, so a span reaching past the last base
+    ends past the record's length. A linear record has nothing outside its bases, so a span
+    hanging off either end is cut back to them.
+
+    Raises
+    ------
+    ValueError
+        If nothing is left: a width of no bases, or a linear span wholly off the record.
+
+    Examples
+    --------
+    >>> wrapped = span_at(SequenceRecord("AACCGGTTAC", topology="circular"), 18, 4)
+    >>> wrapped.start, wrapped.end
+    (8, 12)
+    >>> clipped = span_at(SequenceRecord("AACCGGTTAC"), -2, 6)
+    >>> clipped.start, clipped.end
+    (0, 4)
+    """
+    if record.topology == "circular":
+        first = start % len(record)
+        return Segment(first, first + width)
+    return Segment(max(start, 0), min(start + width, len(record)))
+
+
 def across_the_origin(span: Feature | Segment | BindingSite, length: int) -> bool:
     """Whether `span` runs on from the last of `length` bases into the first.
 

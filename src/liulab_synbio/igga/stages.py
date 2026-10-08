@@ -44,6 +44,7 @@ LIGASE_BUFFER = materials.material(
     citation=Citation("M0318", "reaction conditions"),
 )
 
+
 def selection_for(record: SequenceRecord) -> str:
     """Return what to select this vector's transformants on, or ``""`` where nothing names it.
 

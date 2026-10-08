@@ -844,13 +844,13 @@ def _flanks(
         forward = site.strand is Strand.FORWARD
         best: tuple[Segment, Segment] | None = None
         for cut in opened:
-            clear = _span(record, *((site.end, cut.start) if forward else (cut.end, site.start)))
+            clear = _reach(record, *((site.end, cut.start) if forward else (cut.end, site.start)))
             if clear is None or (best and clear.end - clear.start >= best[1].end - best[1].start):
                 continue
             flank = (
-                _span(record, site.end - len(region), clear.end)
+                _reach(record, site.end - len(region), clear.end)
                 if forward
-                else _span(record, clear.start, site.start + len(region))
+                else _reach(record, clear.start, site.start + len(region))
             )
             if flank is not None:
                 best = (flank, clear)
@@ -860,10 +860,12 @@ def _flanks(
     return tuple(found), ""
 
 
-def _span(record: SequenceRecord, start: int, end: int) -> Segment | None:
-    """Return the bases from `start` to `end` as the top strand reads them, or ``None``.
+def _reach(record: SequenceRecord, start: int, end: int) -> Segment | None:
+    """Return the bases from `start` forward to `end` as the top strand reads them, or ``None``.
 
-    There are none where the two meet. A span across the origin ends past the record's length.
+    There are none where the two meet. The reach is counted forward, so a span across the origin
+    ends past the record's length. This is not `liulab_mbio.sequence.span_at`, which is handed a
+    width rather than the far end.
     """
     length = len(record)
     if record.topology == "circular":
