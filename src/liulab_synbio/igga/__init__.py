@@ -7,15 +7,14 @@ product, the block vector each position's cargo closes into, the protocol as dat
 rendered from it in one directory.
 
 The submodules are the steps it is made of -- `method`, `project`, `standard`, `parts`, `vector`,
-`rounds`, `bench` and `steps` -- and `gate`, which judges a finished design whoever
-composed it. `method` holds `IGGA`, the one method, checked when it is imported; `project` holds
-what one build chooses, checked as it is read; `gate` judges each reaction's molecules by the
-method's rules; `standard` chooses the
-overhang set by what it costs the proteins; `parts` writes each part's synthesis sequence;
-`vector` accepts or retrofits the destination and holds the working vector's own ccdB cassette;
-`rounds` simulates each round; `bench` turns the method's volumes and masses into amounts at the
-design's real lengths, and `steps` the protocol's own steps. How many colonies a round takes is
-`liulab_mbio.bench.coverage`'s, because no method's choices reach it.
+`rounds`, `bench` and `steps` -- and `gate`, which judges a finished design whoever composed it.
+`method` holds `IGGA`, the one method, checked when it is imported; `project` holds what one build
+chooses, checked as it is read; `gate` judges each reaction's molecules by the method's rules;
+`standard` chooses the overhang set by what it costs the proteins; `parts` writes each part's
+synthesis sequence; `vector` accepts or retrofits the destination and holds the working vector's
+own ccdB cassette; `rounds` simulates each round; `bench` turns the method's volumes and masses
+into amounts at the design's real lengths, and `steps` the protocol's own steps. How many colonies
+a round takes is `liulab_mbio.bench.coverage`'s, because no method's choices reach it.
 
 A library is assembled in rounds and not in one pot, because the product keeps the internal
 enzyme's sites and that is what lets the next round open it -- `docs/adr/0004-library-rounds.md`
