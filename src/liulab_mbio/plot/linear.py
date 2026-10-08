@@ -28,6 +28,7 @@ from liulab_mbio.plot import labels
 from liulab_mbio.plot.fonts import BOLD, SANS, Font
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.plot.layers import (
+    DIM,
     Item,
     Piece,
     Span,
@@ -432,7 +433,7 @@ def _rows(
             names[id(run)] = Name(arrow, letters, inside=True)
         elif id(run) in under:
             below = middle + _BAND / 2 + _OVERHANG + _PADDING[1] + height / 2
-            letters = _set(label, under[id(run)], below, _INK)
+            letters = _set(label, under[id(run)], below, _ink(run.item))
             names[id(run)] = Name(max(placed, key=_room), letters, inside=False)
     return arrows, names, y
 
@@ -470,6 +471,11 @@ def _height(font: Font, size: float) -> float:
 def _baseline(font: Font, size: float, middle: float) -> float:
     """Return the baseline that centres a line of text on the height `middle`."""
     return middle + (font.ascender + font.descender) / 2 / font.units_per_em * size
+
+
+def _ink(item: Item) -> str:
+    """Return the colour of a paint of `item` that is dark whatever the item's own colour is."""
+    return DIM if item.dim else _INK
 
 
 def _set(text: str, left: float, middle: float, fill: str) -> Letters:

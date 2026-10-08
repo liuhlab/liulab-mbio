@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -47,3 +48,23 @@ def test_the_cli_says_in_one_line_where_a_value_has_the_wrong_type(tmp_path: Pat
 def test_the_cli_refuses_a_protocol_file_that_is_not_there(tmp_path: Path) -> None:
     result = CliRunner().invoke(app, ["protocol", "render", str(tmp_path / "absent.json")])
     assert result.exit_code != 0
+
+
+def test_the_cli_draws_a_figure_from_beside_the_protocol_it_read(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    """A page written elsewhere still finds the records the protocol was written with."""
+    source = tmp_path / "run.json"
+    figure = {"records": ["pUC19.dna"], "caption": "The vector", "span": [400, 700]}
+    source.write_text(
+        json.dumps({"title": "Clone", "steps": [{"title": "Cut", "figures": [figure]}]}),
+        encoding="utf-8",
+    )
+    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    out = tmp_path / "pages" / "bench.html"
+    out.parent.mkdir()
+
+    result = CliRunner().invoke(app, ["protocol", "render", str(source), "-o", str(out)])
+
+    assert result.exit_code == 0
+    assert "<svg" in out.read_text(encoding="utf-8")

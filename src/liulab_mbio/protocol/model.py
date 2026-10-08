@@ -9,6 +9,7 @@ import math
 import os
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -47,6 +48,32 @@ def row_label(row: int) -> str:
         if row == 0:
             return letters
         row -= 1
+
+
+_SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def number(value: float) -> str:
+    """Return a number as a page prints it: plain text, to three significant figures.
+
+    Fixed, with thousands separators, from 0.001 to 999,999, and never rounding away a digit
+    before the point; outside that, a power of ten. Only zero prints as ``0``.
+
+    Examples
+    --------
+    >>> number(1161.6), number(0.05), number(0.0009), number(2.5e-9), number(1e7), number(0)
+    ('1,162', '0.05', '9 × 10⁻⁴', '2.5 × 10⁻⁹', '1 × 10⁷', '0')
+    """
+    if value == 0:
+        return "0"
+    # The float's exact value, rounded half up as `protocol.js` rounds it when the count changes.
+    exact = Decimal(value)
+    with localcontext(rounding=ROUND_HALF_UP):
+        mantissa, power = f"{exact:.2e}".split("e")
+        if 0.001 <= abs(value) < 1e6:
+            fixed = f"{exact:,.{max(0, 2 - int(power))}f}"
+            return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
+    return f"{mantissa.rstrip('0').rstrip('.')} × 10{str(int(power)).translate(_SUPERSCRIPT)}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,7 +115,8 @@ class Citation:
     """Where in a source one row's number stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the cycling stage, the material or the bill row that carries the number.
+    the cycling stage, the material or the bill row that carries the number, and on the
+    troubleshooting entry whose solution it gives.
 
     Parameters
     ----------
@@ -152,13 +180,22 @@ class Rule:
 
     def holds(self, named: Iterable[str], contents: Iterable[str]) -> bool:
         """Return whether the rule is kept by a step naming `named` with `contents` in the tube."""
-        if self.when and not _names(self.when, contents):
+        if self.when and not names(self.when, contents):
             return True
-        return _names(self.subject, named) == (self.kind == "requires")
+        return names(self.subject, named) == (self.kind == "requires")
 
 
-def _names(subject: str, among: Iterable[str]) -> bool:
-    """Return whether `subject` is named among `among`, whatever the case."""
+def names(subject: str, among: Iterable[str]) -> bool:
+    """Return whether `subject` is named among `among`, whatever the case.
+
+    It is how a `Rule` finds its material and how a protocol split across several pages finds
+    which of them a reagent belongs on.
+
+    Examples
+    --------
+    >>> names("BsaI", ("Digest with BsaI-HFv2",))
+    True
+    """
     wanted = subject.casefold()
     return any(wanted in one.casefold() for one in among)
 
@@ -553,6 +590,60 @@ class Gel:
 
 
 @dataclass(frozen=True, slots=True)
+class Figure:
+    """A record drawn as a map beside a step, so what the step makes is shown and not described.
+
+    A spec and never a shape, as a `Gel` and a `Plate` are: the figure says what to draw and the
+    page draws it, so the figure cannot disagree with the design and the JSON stays readable.
+
+    Parameters
+    ----------
+    records
+        What is drawn: a path to a sequence file, relative to the directory the protocol was read
+        from. Several are drawn as stacked rows, in the order given, each to the same span and
+        the same switches, which is how a figure shows one molecule becoming the next.
+    caption
+        What the figure shows, in the words a step uses.
+    span
+        The stretch drawn, ``(start, end)``, 0-based and half-open, ending past the record's
+        length across the origin. Null draws the whole record.
+    linear
+        Whether a circular record drawn whole is opened as a line.
+    sequence_view
+        Whether the bases are drawn under the map.
+    enzymes
+        The enzymes whose every cut site is drawn; null draws the shipped unique cutters.
+    highlight
+        What the map points at: a feature, a primer or an enzyme. Every other item dims.
+    citation
+        Where a figure taken from a published map was read. One computed from the design cites
+        nothing.
+    """
+
+    records: tuple[str, ...]
+    caption: str
+    _: KW_ONLY
+    span: tuple[int, int] | None = None
+    linear: bool = False
+    sequence_view: bool = False
+    enzymes: tuple[str, ...] | None = None
+    highlight: tuple[str, ...] = ()
+    citation: Citation | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a figure with no caption, with no record, or with a span that is empty."""
+        _require(bool(self.caption.strip()), "a figure needs a caption")
+        _require(bool(self.records), f"figure {self.caption!r}: name a record to draw")
+        if self.span is not None:
+            start, end = self.span
+            _require(
+                0 <= start < end,
+                f"figure {self.caption!r}: span {self.span} is 0-based and half-open, so it "
+                "starts at zero or more and ends past its start",
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class Timer:
     """A countdown the reader can start from the step."""
 
@@ -565,11 +656,49 @@ class Timer:
 
 
 @dataclass(frozen=True, slots=True)
+class Wait:
+    """Time the run spends waiting on someone else, which nobody attends.
+
+    A vendor's turnaround: an oligo pool ordered, a plate sent away to be sequenced. An
+    `Incubation` is a thermocycler stage and a `Timer` is a countdown someone starts, so neither
+    of them is this, and most of a real project's calendar is this.
+
+    Parameters
+    ----------
+    what
+        What is waited on, such as ``"the oligo pool to arrive"``.
+    duration
+        How long, as whoever states it does: ``"10-15 working days"``. Free text, because that
+        is the honest shape, and empty is an admitted unknown rather than a zero.
+    citation
+        Where the turnaround was read.
+    """
+
+    what: str
+    duration: str = ""
+    citation: Citation | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a wait that does not say what it waits on."""
+        _require(bool(self.what.strip()), "a wait needs what it waits on")
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
-    """A problem the reader may see at a step, and what to do about it."""
+    """A problem the reader may see at a step, and what to do about it.
+
+    Parameters
+    ----------
+    problem, solution
+        What the reader sees, and what to do.
+    citation
+        The source that gives the solution.
+    """
 
     problem: str
     solution: str
+    _: KW_ONLY
+    citation: Citation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -843,6 +972,61 @@ class Bill:
 
 
 @dataclass(frozen=True, slots=True)
+class Item:
+    """One thing a protocol consumes or produces: the name is the contract, the rest is prose.
+
+    A `Project` chains protocols by these names, matched as a `Plate.seating` name is. Nothing
+    parses `spec`: the protocol producing an item states what it makes, the one consuming it
+    restates what it needs, and the reader compares the two.
+
+    Parameters
+    ----------
+    name
+        What a project matches it by, so two protocols handing it over spell it alike.
+    what
+        What it is, for the bench.
+    spec
+        What it has to meet, a phrase each, such as ``"≥100 ng/µL"``.
+    storage
+        Where it waits until the protocol consuming it takes it, such as ``"-20 °C"``.
+    """
+
+    name: str
+    what: str
+    _: KW_ONLY
+    spec: tuple[str, ...] = ()
+    storage: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse an item with no name, or one nothing is said about."""
+        _require(bool(self.name.strip()), "an item needs a name")
+        _require(bool(self.what.strip()), f"item {self.name!r}: say what it is")
+
+
+@dataclass(frozen=True, slots=True)
+class Topic:
+    """One thing a run's reader is told before any of its protocols: a heading and paragraphs.
+
+    It explains what no one protocol can — why the run is shaped as it is — so a step never has
+    to stop and explain a decision.
+
+    Parameters
+    ----------
+    title
+        The heading.
+    body
+        A paragraph each.
+    """
+
+    title: str
+    body: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Refuse a topic with no title."""
+        _require(bool(self.title.strip()), "a topic needs a title")
+
+
+@dataclass(frozen=True, slots=True)
 class Step:
     """One numbered step of a protocol.
 
@@ -850,15 +1034,28 @@ class Step:
     ----------
     title
         What the step achieves, such as ``"Run the thermocycler"``.
+    section
+        What stage of the protocol the step belongs to, such as ``"Day 1"``. A label and not a
+        container: the steps stay one list and the numbering runs through it.
     instructions
         Ordered actions, one sentence each.
     cautions, notes
         Shown before and after the instructions.
     tables, programs, timers
         Reaction tables, thermocycler programs and countdowns the step uses.
+    waits
+        Time the step spends waiting on someone else, which nobody attends.
+    hands_on_seconds
+        How much of the step someone stands over, which `waits`, `timers` and `programs` say
+        nothing about. ``None`` is an admitted unknown and never a zero, and the unattended
+        share is the time held less this wherever both are known. Nature Protocols publishes
+        both numbers, so a protocol is expected to know them:
+        ``docs/research/gantt-conventions.md`` section 5.
     transfers
         What the step moves between wells. A step references a well by holding the transfer,
         never by describing where a thing is.
+    figures
+        The records the step draws, shown under its instructions.
     gels, expected
         What a successful step looks like.
     troubleshooting
@@ -869,21 +1066,30 @@ class Step:
 
     title: str
     _: KW_ONLY
+    section: str = ""
     instructions: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
     tables: tuple[ReactionTable, ...] = ()
     programs: tuple[ThermocyclerProgram, ...] = ()
     timers: tuple[Timer, ...] = ()
+    waits: tuple[Wait, ...] = ()
+    hands_on_seconds: int | None = None
     transfers: tuple[Transfer, ...] = ()
+    figures: tuple[Figure, ...] = ()
     gels: tuple[Gel, ...] = ()
     expected: tuple[str, ...] = ()
     troubleshooting: tuple[Troubleshooting, ...] = ()
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title."""
+        """Refuse an empty title, or a hands-on time below zero."""
         _require(bool(self.title.strip()), "a step needs a title")
+        _require(
+            self.hands_on_seconds is None or self.hands_on_seconds >= 0,
+            f"step {self.title!r}: hands_on_seconds is zero or more, or null where nobody "
+            "stated it",
+        )
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -900,6 +1106,25 @@ class Step:
             *(t.title for t in self.transfers),
             *(t.label for t in self.timers),
         )
+
+    @property
+    def held_seconds(self) -> float | None:
+        """How long this step holds the bench, where anything in it bounds the time.
+
+        Summed over its timers and its thermocycler programs. ``None`` where nothing bounds
+        one — a step with neither, or one whose only program runs to an open end — because a
+        step holding nothing is a question and never a zero.
+
+        Examples
+        --------
+        >>> Step("Rest the tube", timers=(Timer("rest", 600),)).held_seconds
+        600.0
+        >>> Step("Mix the reaction").held_seconds is None
+        True
+        """
+        bounded = [float(timer.seconds) for timer in self.timers]
+        bounded += [p.duration_seconds for p in self.programs if p.duration_seconds is not None]
+        return sum(bounded) if bounded else None
 
     @property
     def pipetted(self) -> tuple[str, ...]:
@@ -925,6 +1150,11 @@ class Protocol:
         has to read rather than scan goes here and not in `overview`.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
+    consumes, produces
+        What the bench is handed before this protocol, and what it leaves for the next one. A
+        `Project` chains protocols by these names; a protocol rendered alone states them for its
+        reader. Everything else a protocol needs it declares for itself, in `materials`,
+        `equipment` and `oligos`.
     materials, oligos, equipment
         The reagents, the oligos to order, and the hardware. Three lists and not one, because an
         order sheet and a reagent list want different columns.
@@ -946,6 +1176,8 @@ class Protocol:
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
     checks: tuple[Check, ...] = ()
+    consumes: tuple[Item, ...] = ()
+    produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
     oligos: tuple[Oligo, ...] = ()
     equipment: tuple[str, ...] = ()
@@ -983,6 +1215,22 @@ class Protocol:
             found.setdefault(hole.id, hole)
         return tuple(found.values())
 
+    @property
+    def held_seconds(self) -> tuple[float, int]:
+        """How long this protocol holds the bench, and how many of its steps hold nothing.
+
+        One place computes it, so a protocol's own page and the schedule a project draws can
+        never disagree. A step nothing times is counted, never summed as a zero.
+
+        Examples
+        --------
+        >>> steps = (Step("Mix"), Step("Rest", timers=(Timer("rest", 60),)))
+        >>> Protocol("Demo", steps=steps).held_seconds
+        (60.0, 1)
+        """
+        held = [step.held_seconds for step in self.steps]
+        return sum((one for one in held if one is not None), 0.0), held.count(None)
+
     def rules_for(self, step: Step) -> tuple[tuple[Material, Rule], ...]:
         """Return each rule that bears on `step`, with the material carrying it.
 
@@ -992,12 +1240,12 @@ class Protocol:
         contents = self.contents_of(step)
         found: list[tuple[Material, Rule]] = []
         for material in self.materials:
-            if not _names(material.name, step.named):
+            if not names(material.name, step.named):
                 continue
             found += [
                 (material, rule)
                 for rule in material.rules
-                if not rule.when or _names(rule.when, contents)
+                if not rule.when or names(rule.when, contents)
             ]
         return tuple(found)
 
@@ -1050,6 +1298,9 @@ class Protocol:
                     for i in g.incubations
                 ),
                 *(t.citation for s in self.steps for t in s.transfers),
+                *(f.citation for s in self.steps for f in s.figures),
+                *(t.citation for s in self.steps for t in s.troubleshooting),
+                *(w.citation for s in self.steps for w in s.waits),
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
@@ -1116,6 +1367,86 @@ class Protocol:
         return _PROTOCOL(data, "protocol")
 
 
+@dataclass(frozen=True, slots=True)
+class Project:
+    """Protocols run in order, each handed what the ones before it produced.
+
+    A protocol is a document someone follows in one sitting; a project is the run they are part
+    of. The chain is by name alone: a protocol consuming ``"entry clone"`` is handed whatever
+    the project was given or an earlier protocol produced under that name, and `audit` reports a
+    name nothing hands over as a badge rather than refusing to build the project. A chain with a
+    dangling input is still a document someone can read.
+
+    Parameters
+    ----------
+    title
+        What the run is called.
+    summary
+        One paragraph: what the run achieves.
+    background
+        What the reader is told before the first protocol: why the run is shaped as it is, a
+        topic at a time. Explanation a step would otherwise carry belongs here.
+    inputs
+        What the bench already holds before the first protocol.
+    protocols
+        In the order they are run.
+    checks
+        Verdicts on the design, which one protocol of the run cannot judge alone. A verdict on
+        one protocol's own work stays on that protocol.
+    bill
+        What the run consumes, and what it costs where a price record prices it. It is the
+        run's, not each protocol's, because two protocols buying the same cells would otherwise
+        be counted twice.
+    """
+
+    title: str
+    _: KW_ONLY
+    summary: str = ""
+    background: tuple[Topic, ...] = ()
+    inputs: tuple[Item, ...] = ()
+    protocols: tuple[Protocol, ...] = ()
+    checks: tuple[Check, ...] = ()
+    bill: Bill | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a project with no title."""
+        _require(bool(self.title.strip()), "a project needs a title")
+
+    def audit(self) -> tuple[Check, ...]:
+        """Judge the chain: every consumed name is an input or an earlier protocol's output.
+
+        Examples
+        --------
+        >>> [check.name for check in Project("Demo").audit()]
+        ['handoffs']
+        """
+        return (self._handoffs(),)
+
+    def _handoffs(self) -> Check:
+        handed = {item.name for item in self.inputs}
+        dangling: list[str] = []
+        consumed = 0
+        for protocol in self.protocols:
+            consumed += len(protocol.consumes)
+            dangling += [
+                f"{protocol.title} consumes {item.name!r}, which nothing hands it"
+                for item in protocol.consumes
+                if item.name not in handed
+            ]
+            handed |= {item.name for item in protocol.produces}
+        if dangling:
+            return Check("handoffs", "fail", "; ".join(dangling))
+        counted = (
+            f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
+        )
+        return Check("handoffs", "pass", counted)
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Project":
+        """Build a project from parsed JSON, by the rules `Protocol.from_dict` follows."""
+        return _PROJECT(data, "project")
+
+
 def citing(protocol: Protocol) -> Protocol:
     """Return `protocol` with the sources its own citations name, and no others.
 
@@ -1145,9 +1476,26 @@ def write_protocol(protocol: Protocol, path: str | os.PathLike[str]) -> Path:
     indented two spaces and as UTF-8 ending in a newline, so one protocol always writes the same
     bytes.
     """
+    return _write(protocol, path)
+
+
+def read_project(path: str | os.PathLike[str]) -> Project:
+    """Read a project from a JSON file; see `Project.from_dict`."""
+    return Project.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
+    """Write `project` to `path` as JSON that `read_project` reads back equal; return the path.
+
+    Its protocols are written where they stand, by the rule `write_protocol` follows, so the
+    chain is one file an agent edits and renders again.
+    """
+    return _write(project, path)
+
+
+def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    text = json.dumps(asdict(protocol), ensure_ascii=False, indent=2)
-    out.write_text(text + "\n", encoding="utf-8")
+    out.write_text(json.dumps(asdict(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return out
 
 
@@ -1183,6 +1531,8 @@ def _converter(hint: Any) -> _Convert:
         return _or_null(_converter(inner))
     if origin is tuple and args[1:] == (...,):
         return _list(_converter(args[0]))
+    if origin is tuple:
+        return _fixed(tuple(_converter(arg) for arg in args))
     if origin is Mapping and args[0] is str:
         return _mapping(_converter(args[1]))
     if isinstance(hint, type) and is_dataclass(hint):
@@ -1220,6 +1570,23 @@ def _list(item: _Convert) -> _Convert:
     return convert
 
 
+def _fixed(items: tuple[_Convert, ...]) -> _Convert:
+    """Return a converter to a tuple of a fixed length, such as a span's two numbers."""
+    expected = f"a list of {len(items)}"
+
+    def convert(data: Any, where: str) -> tuple[Any, ...]:
+        if not isinstance(data, list):
+            raise _refused(where, expected, data)
+        if len(data) != len(items):
+            raise ValueError(f"{where}: expected {expected}, got {len(data)}")
+        return tuple(
+            item(value, f"{where}[{i}]")
+            for i, (item, value) in enumerate(zip(items, data, strict=True))
+        )
+
+    return convert
+
+
 def _mapping(value: _Convert) -> _Convert:
     def convert(data: Any, where: str) -> dict[str, Any]:
         if not isinstance(data, Mapping):
@@ -1253,3 +1620,4 @@ _SCALARS: dict[type, tuple[str, Callable[[Any], bool]]] = {
     float: ("a number", lambda value: type(value) in (int, float)),
 }
 _PROTOCOL = _object(Protocol)
+_PROJECT = _object(Project)

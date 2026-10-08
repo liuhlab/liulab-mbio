@@ -17,7 +17,7 @@ PCR that pulls a block out of the oligo pool, and the smaller pieces of a protoc
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from liulab_mbio import checks as judged
 from liulab_mbio.barcodes import deletion_ambiguity
@@ -33,18 +33,32 @@ from liulab_mbio.bench.plates import plate, seat
 from liulab_mbio.bench.prices import Item, PriceRecord
 from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.reactions import reaction_table
-from liulab_mbio.bench.steps import badges, card, catalogued, enzyme_material, listed
+from liulab_mbio.bench.steps import (
+    badges,
+    card,
+    catalogued,
+    enzyme_material,
+    listed,
+    primer_plate_protocol,
+)
+from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.primers.polymerase import Q5, Polymerase, melting_temperature
+from liulab_mbio.protocol.figures import SOURCE as FIGURE_SOURCE
+from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
+from liulab_mbio.protocol.figures import ligation_figure
 from liulab_mbio.protocol.model import (
     Bill,
     Citation,
     Component,
+    Figure,
     Gel,
     Incubation,
     Lane,
     Material,
+    Oligo,
     Plate,
+    Project,
     Protocol,
     ReactionTable,
     Reference,
@@ -53,8 +67,14 @@ from liulab_mbio.protocol.model import (
     Step,
     ThermocyclerProgram,
     Timer,
+    Topic,
     Troubleshooting,
     citing,
+    names,
+    number,
+)
+from liulab_mbio.protocol.model import (
+    Item as Handed,
 )
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_mbio.sites import find_sites
@@ -88,12 +108,36 @@ from liulab_synbio.igga.coverage import (
     colonies_for_completeness,
     reads_for_representation,
 )
+from liulab_synbio.igga.figures import (
+    OLIGO_FILE,
+    PoolStage,
+    assembly_rows,
+    pool_pcr_figure,
+)
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.project import PrimerPlates
 from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
 from liulab_synbio.igga.vector import Destination, Working, released_cargo
+
+#: Where the records a figure draws sit, relative to the pages that draw them:
+#: `liulab_synbio.igga.plan.PROTOCOL_DIR` puts the pages one directory below the records.
+RECORDS_AT = "../"
+
+#: What a vector's own records call the piece its cassette's enzyme cuts out.
+STUFFER_FEATURE = "internal stuffer"
+
+#: How many times its own length a map of the cassette draws either side of the stuffer, so the
+#: flanks it sits between are in the picture. A margin for the drawing, measured from nothing.
+STUFFER_MARGIN = 3
+
+#: The two nested PCRs that pull one block out of the pool, in the order the steps run them.
+POOL_STAGES: tuple[PoolStage, ...] = ("PCR1", "PCR2")
+
+#: Where in ``docs/research/figure-sources.md`` the read-back figure's equivalent stands.
+VALIDATION_CITATION = Citation(FIGURE_SOURCE_KEY, "section 3, DMX")
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
 #: names all three and publishes neither the ligase's units nor either buffer's strength.
@@ -291,7 +335,33 @@ def growth_program() -> ThermocyclerProgram:
     )
 
 
-def protocol(
+#: What each protocol of a library run is called, in the order the bench runs them. A title is
+#: what the page is headed and what the chain names it by, so it is written for the bench.
+PRIMER_PLATES = "Primer plates"
+ORDERING = "Cargo ordering and pool preparation"
+CREATION = "Cargo creation"
+VALIDATION = "Cargo validation"
+ASSEMBLY = "Library assembly in rounds"
+FINAL = "Final cargo ligation"
+
+#: What one protocol hands the next, by name. The name is the contract, so the protocol that
+#: produces it and the one that consumes it spell it alike.
+#: What `_pool_materials` calls the primers that amplify the pool. Where a run plates them,
+#: they are ordered in that protocol instead and this material is only used in the next one.
+PRIMER_MATERIAL = "Pool amplification primers"
+
+POOL_ITEM = "oligo pool"
+BLOCKS_ITEM = "synthesised blocks"
+ARCHIVE_ITEM = "cargo archive plate"
+PICKED_ITEM = "clonal picked plate"
+CALLS_ITEM = "well calls"
+PREP_ITEM = "library prep, round {number}"
+LIBRARY_ITEM = "the library in its working vector"
+BLOCK_VECTOR_ITEM = "block vector {number}"
+WORKING_ITEM = "working vector"
+
+
+def project(
     *,
     scheme: Scheme,
     positions: Sequence[str],
@@ -318,140 +388,436 @@ def protocol(
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
-) -> Protocol:
-    """Return the bench protocol for one planned library, ready to render.
+    block_records: Sequence[Destination] = (),
+    primer_plates: PrimerPlates | None = None,
+    records_at: str = RECORDS_AT,
+) -> Project:
+    """Return the run as the chain of protocols the bench works through, in order.
 
     Each argument is the `liulab_synbio.igga.plan.LibraryPlan` field or property of that name;
-    `sheet` and `barcodes` are what the plan calls the two files a step points at. The steps run
-    in the order someone does them: order the blocks, read back the designs the project asks for,
-    pool each part list, then every round in turn, and finally read the finished library twice,
-    for linkage and for representation.
+    `sheet` and `barcodes` are what the plan calls the two files a step points at. The chain is
+    the order someone does the work in: order the blocks, make the cargo, read back the designs
+    the project asks for, join the part lists round by round, and move the finished library into
+    a working vector. Each protocol is a sitting of its own and says what it is handed and what
+    it leaves.
 
-    `validation` is `None` for a project that states no fragment-count floor, and the protocol
-    then carries no validation at all: the library stays polyclonal, which is the default.
+    `validation` is `None` for a project that states no fragment-count floor, and no read-back
+    protocol is written: the library stays polyclonal, which is the default.
 
-    The bill is always there, because its quantities come from the design. Money comes only from
-    `prices`, and every row it does not price carries a hole.
+    The bill and the design checks are the run's, not one protocol's: two protocols buying the
+    same cells would otherwise be counted twice, and no one protocol judges the design. Money
+    comes only from `prices`, and every row it does not price carries a hole.
 
     `working` is the vector the finished library is moved into, and `None` for a project naming
-    none. Without one the final assembly's steps still run, because it is a stage of the method,
+    none. Without one the final protocol's steps still run, because it is a stage of the method,
     and what the vector would have fixed is a hole instead.
 
     `pool` is the oligo pool the blocks are built from, and `None` for a project that writes
     none. With one, the blocks are not ordered: they are amplified out of the pool and
-    assembled, so the first steps and the bill say that instead. `pool_sheet` and `primer_sheet`
-    are what the plan calls the two files those steps point at.
+    assembled, so ordering and making the cargo are two protocols instead of one step.
 
-    `block_vectors` is what a block closes into, one a position: what each is called and the file
-    the plan wrote it to. A part enters on its own position's entry overhang, so one destination
-    serves one position. Given none, the steps name the destination the first round opens and
-    say nothing about the rest.
+    `block_vectors` is what a block closes into, one a position: what each is called and the
+    file the plan wrote it to. `block_records` is the same vectors themselves, in that order,
+    which a step's figure is drawn over. `records_at` says where those records sit relative to
+    the pages, which is what every figure's path is written against.
+
+    `primer_plates` is how this lab lays the pool's primers out, and `None` for a project
+    stating none. With it the chain opens with a protocol that orders those primers and splits
+    them into working plates; without it they are ordered with the pool and no such protocol is
+    written.
     """
     inside, outside = choppers(scheme)
+    plated = _primer_plates(pool, primer_plates)
     selection = stages.selection_for(vector)
-    one = Protocol(
-        f"Library assembly: {len(part_lists)} part lists into {vector.name or 'the vector'}",
-        summary=(
-            f"Join {len(parts)} synthesised parts into {constructs} distinct constructs in "
-            f"{len(rounds)} rounds. Each round opens the library with {scheme.internal.name}, "
-            f"releases one part list with {scheme.external.name}, ligates the two, and "
-            "transforms, grows and preps the result for the round after it."
-        ),
-        overview=_overview(
+    staged = _staged(
+        scheme,
+        positions,
+        barcode_length,
+        parts,
+        part_lists,
+        rounds,
+        bench,
+        inside,
+        outside,
+        constructs,
+        sheet,
+        barcodes,
+        validation,
+        pool,
+        pool_sheet,
+        primer_sheet,
+        working,
+        selection,
+        reads,
+        marks,
+        linkage_fidelity,
+        block_vectors,
+        plated is not None,
+        block_records,
+        records_at,
+    )
+    sources = _sources(prices, validation, pool)
+    spread = _spread(
+        _carried(
             scheme,
             positions,
-            barcode_length,
-            standard,
-            rounds,
-            bench,
-            constructs,
             part_lists,
-            host,
-            validation,
-            pool,
-        ),
-        highlights=_highlights(
-            scheme,
-            positions,
-            barcode_length,
-            destination,
-            standard,
-            rounds,
-            bench,
-            constructs,
-            barcodes,
-        ),
-        checks=badges(checks),
-        materials=(
-            *_materials(
-                scheme,
-                positions,
-                part_lists,
-                vector,
-                sheet,
-                pool,
-                pool_sheet,
-                primer_sheet,
-                working,
-                block_vectors,
-            ),
-            *(dmx.validation_materials(validation) if validation else ()),
-        ),
-        # Deduplicated: the pool route and the read-back route each ask for a thermocycler.
-        equipment=tuple(
-            dict.fromkeys(
-                (
-                    *EQUIPMENT,
-                    *(POOL_EQUIPMENT if pool else ()),
-                    *(dmx.validation_equipment(validation) if validation else ()),
-                )
-            )
-        ),
-        plates=(
-            *((_pcr2_plate(pool),) if pool else ()),
-            *(_validation_plates(validation) if validation else ()),
-        ),
-        steps=_steps(
-            scheme,
-            positions,
-            barcode_length,
-            parts,
-            part_lists,
-            rounds,
-            bench,
-            inside,
-            outside,
-            constructs,
+            vector,
             sheet,
-            barcodes,
-            validation,
             pool,
             pool_sheet,
             primer_sheet,
             working,
-            selection,
-            reads,
-            marks,
-            linkage_fidelity,
             block_vectors,
+            validation,
+            plated is not None,
         ),
-        references=(
-            *_references(scheme),
-            *(POOL_REFERENCES if pool else ()),
-            *(dmx.REFERENCES if validation else ()),
+        staged,
+    )
+    handed = _handed(
+        vector, rounds, validation, pool, working, block_vectors, staged, part_lists, plated
+    )
+    made = ((plated,) if plated else ()) + tuple(
+        citing(
+            Protocol(
+                title,
+                summary=_summary(title, scheme, rounds, part_lists, vector, constructs, pool),
+                overview=(
+                    _overview(
+                        scheme,
+                        positions,
+                        barcode_length,
+                        standard,
+                        rounds,
+                        bench,
+                        constructs,
+                        part_lists,
+                        host,
+                        validation,
+                        pool,
+                    )
+                    if title == ASSEMBLY
+                    else {}
+                ),
+                consumes=handed[title][0],
+                produces=handed[title][1],
+                materials=spread[title],
+                equipment=_equipment(title, pool, validation),
+                plates=_staged_plates(title, pool, validation),
+                steps=steps,
+                references=_staged_references(title, scheme, pool, validation),
+                sources=sources,
+                holes=stages.holes_for(vector) if title == ASSEMBLY else (),
+            )
+        )
+        for title, steps in staged.items()
+    )
+    return Project(
+        f"{vector.name or 'Library'}: {len(part_lists)} part lists in {len(rounds)} rounds",
+        summary=(
+            f"Join {len(parts)} synthesised parts into {constructs} distinct constructs in "
+            f"{len(rounds)} rounds, over {len(made)} protocols. Each round opens the library "
+            f"with {scheme.internal.name}, releases one part list with {scheme.external.name}, "
+            "ligates the two, and transforms, grows and preps the result for the round after it."
         ),
-        sources=_sources(prices, validation, pool),
-        holes=stages.holes_for(vector),
+        background=(
+            Topic(
+                "How this library is designed",
+                _highlights(
+                    scheme,
+                    positions,
+                    barcode_length,
+                    destination,
+                    standard,
+                    rounds,
+                    bench,
+                    constructs,
+                    barcodes,
+                ),
+            ),
+        ),
+        inputs=_inputs(vector, validation, working, block_vectors),
+        protocols=made,
+        checks=badges(checks),
         bill=_consumed(scheme, parts, rounds, inside, outside, prices, pool),
     )
-    return citing(one)
+
+
+def _primer_plates(pool: PoolPlan | None, asked: PrimerPlates | None) -> Protocol | None:
+    """Return the protocol that lays the pool's primers out, or `None` where none was asked for.
+
+    The primers are the pool's own, so there is nothing to plate without one. The amounts are
+    the project's: this invents none of them.
+    """
+    if pool is None or asked is None:
+        return None
+    return primer_plate_protocol(
+        [Oligo(one.name, one.sequence, purpose=one.role) for one in pool.pool.primers],
+        wells=asked.wells,
+        copies=asked.copies,
+        nanomoles=asked.nanomoles,
+        stock_um=asked.stock_um,
+        working_um=asked.working_um,
+        working_ul=asked.working_ul,
+        title=PRIMER_PLATES,
+    )
+
+
+def _validation_title(one: dmx.Validation) -> str:
+    """Name the read-back protocol for the route that marks its wells."""
+    return f"{VALIDATION}: {one.route.name}"
+
+
+def _summary(
+    title: str,
+    scheme: Scheme,
+    rounds: Sequence[Round],
+    part_lists: Sequence[PartList],
+    vector: SequenceRecord,
+    constructs: int,
+    pool: PoolPlan | None,
+) -> str:
+    """Return one paragraph saying what this protocol of the run does."""
+    if title == ORDERING:
+        return (
+            "Order the synthesised material this library is built from, and put it away ready "
+            "for the bench."
+            if pool
+            else "Order every block this library is built from."
+        )
+    if title == CREATION:
+        return (
+            "Pull every block out of the ordered pool and close each one's cargo into the "
+            "vector for the position it fills, one archived well a design."
+        )
+    if title.startswith(VALIDATION):
+        return (
+            "Take the archived designs to clonal wells, mark each well so sequencing says "
+            "which well it came from, and call a pass or a fail per well."
+        )
+    if title == ASSEMBLY:
+        return (
+            f"Join {len(part_lists)} part lists into {constructs} distinct constructs in "
+            f"{len(rounds)} rounds, each round opening the library with {scheme.internal.name} "
+            f"and ligating one part list into it, then read the finished library back."
+        )
+    return (
+        f"Release the finished cargo from {vector.name or 'the library'} and move it into the "
+        "vector the application asks for."
+    )
+
+
+def _inputs(
+    vector: SequenceRecord,
+    validation: dmx.Validation | None,
+    working: Working | None,
+    block_vectors: Sequence[tuple[str, str]],
+) -> tuple[Handed, ...]:
+    """Return what the bench holds before the first protocol: stock the run does not make."""
+    made = [
+        Handed(
+            BLOCK_VECTOR_ITEM.format(number=number),
+            f"{name}, which a block of position {number} closes into",
+            storage="-20 °C",
+        )
+        for number, (name, _) in enumerate(block_vectors, 1)
+    ] or [
+        Handed(
+            BLOCK_VECTOR_ITEM.format(number=1),
+            f"{vector.name or 'the destination'}, which round 1 opens",
+            storage="-20 °C",
+        )
+    ]
+    if validation is not None:
+        made.append(_marking_stock(validation))
+    if working is not None:
+        made.append(
+            Handed(
+                WORKING_ITEM,
+                f"{working.record.name or 'the backbone'} the finished library ends in",
+                storage="-20 °C",
+            )
+        )
+    return tuple(made)
+
+
+def _marking_stock(one: dmx.Validation) -> Handed:
+    """Return the lab stock the chosen marking route takes, which no protocol of this run makes."""
+    if one.route is dmx.ROUTE_LIGATION:
+        return Handed(
+            "DMX barcode kit",
+            "the lab's own barcoding plasmids, one group a picked plate",
+            storage="-20 °C",
+        )
+    return Handed(
+        "Barcoded index primer plate",
+        "the lab's own index primers, prepared once and called for by a run",
+        spec=("1 µM each",),
+        storage="-20 °C",
+    )
+
+
+def _handed(
+    vector: SequenceRecord,
+    rounds: Sequence[Round],
+    validation: dmx.Validation | None,
+    pool: PoolPlan | None,
+    working: Working | None,
+    block_vectors: Sequence[tuple[str, str]],
+    staged: Mapping[str, tuple[Step, ...]],
+    part_lists: Sequence[PartList],
+    plated: Protocol | None = None,
+) -> dict[str, tuple[tuple[Handed, ...], tuple[Handed, ...]]]:
+    """Return what each protocol is handed and what it leaves, keyed by the protocol's title."""
+    blocks = tuple(
+        Handed(BLOCK_VECTOR_ITEM.format(number=number), f"{name}, ready to open")
+        for number, (name, _) in enumerate(block_vectors, 1)
+    ) or (Handed(BLOCK_VECTOR_ITEM.format(number=1), f"{vector.name or 'the destination'}"),)
+    archive = Handed(
+        ARCHIVE_ITEM,
+        "one well a design, polyclonal, sealed and frozen",
+        storage="-80 °C glycerol stock",
+    )
+    picked = Handed(PICKED_ITEM, "one well a picked colony, each well one clone")
+    calls = Handed(CALLS_ITEM, "a pass or a fail a well, and which design each well holds")
+    prep = Handed(
+        PREP_ITEM.format(number=len(rounds)),
+        f"the pooled library after round {len(rounds)}, as a plasmid prep",
+        storage="-20 °C",
+    )
+    held: dict[str, tuple[tuple[Handed, ...], tuple[Handed, ...]]] = {}
+    ordered = (
+        Handed(POOL_ITEM, "the pool resuspended and aliquoted", storage="-20 °C")
+        if pool
+        else Handed(BLOCKS_ITEM, "every block as the vendor shipped it", storage="-20 °C")
+    )
+    held[ORDERING] = ((), (ordered,))
+    working_plate = plated.produces[1:2] if plated else ()
+    if CREATION in staged:
+        held[CREATION] = ((ordered, *working_plate, *blocks), (archive,))
+    takes_cargo: tuple[Handed, ...] = (archive,)
+    if validation is not None:
+        title = _validation_title(validation)
+        held[title] = ((archive, _marking_stock(validation)), (picked, calls))
+        takes_cargo = (picked, calls)
+    held[ASSEMBLY] = ((*takes_cargo, *blocks[:1]), (prep,))
+    held[FINAL] = (
+        ((prep, Handed(WORKING_ITEM, "the backbone the library ends in")) if working else (prep,)),
+        (
+            Handed(
+                LIBRARY_ITEM,
+                f"{len(part_lists)} part lists joined, pooled and ready for the screen",
+                storage="-20 °C",
+            ),
+        ),
+    )
+    return {title: held[title] for title in staged}
+
+
+def _carried(
+    scheme: Scheme,
+    positions: Sequence[str],
+    part_lists: Sequence[PartList],
+    vector: SequenceRecord,
+    sheet: str,
+    pool: PoolPlan | None,
+    pool_sheet: str,
+    primer_sheet: str,
+    working: Working | None,
+    block_vectors: Sequence[tuple[str, str]],
+    validation: dmx.Validation | None,
+    plated: bool = False,
+) -> tuple[tuple[Material, tuple[str, ...]], ...]:
+    """Return every reagent the run buys, each beside the protocols it is bought for.
+
+    A reagent one of those protocols names in a step goes to the protocols that name it; the
+    rest -- a plate, a prep kit, a consumable no sentence mentions -- fall back to this list.
+    """
+    rest = (CREATION, ASSEMBLY, FINAL)
+    made: list[tuple[Material, tuple[str, ...]]] = [
+        (one, (CREATION,) if plated and one.name == PRIMER_MATERIAL else (ORDERING, CREATION))
+        for one in (_pool_materials(pool, pool_sheet, primer_sheet) if pool else ())
+    ]
+    if validation is not None:
+        made += [
+            (one, (_validation_title(validation),)) for one in dmx.validation_materials(validation)
+        ]
+    made += [
+        (one, rest)
+        for one in _materials(
+            scheme,
+            positions,
+            part_lists,
+            vector,
+            sheet,
+            pool,
+            pool_sheet,
+            primer_sheet,
+            working,
+            block_vectors,
+        )
+    ]
+    return tuple(made)
+
+
+def _spread(
+    carried: Sequence[tuple[Material, tuple[str, ...]]],
+    staged: Mapping[str, tuple[Step, ...]],
+) -> dict[str, tuple[Material, ...]]:
+    """Return each protocol's reagent list: what its own steps name, else what it is bought for."""
+    found: dict[str, list[Material]] = {title: [] for title in staged}
+    for material, bought_for in carried:
+        named = [
+            title
+            for title, steps in staged.items()
+            if any(names(material.name, step.named) for step in steps)
+        ]
+        for title in named or bought_for:
+            if title in found and material not in found[title]:
+                found[title].append(material)
+    return {title: tuple(group) for title, group in found.items()}
+
+
+def _equipment(
+    title: str, pool: PoolPlan | None, validation: dmx.Validation | None
+) -> tuple[str, ...]:
+    """Return the hardware this protocol needs that no reagent table covers."""
+    if title == ORDERING:
+        return ()
+    if title == CREATION:
+        return POOL_EQUIPMENT if pool else ()
+    if title.startswith(VALIDATION):
+        return dmx.validation_equipment(validation) if validation else ()
+    return EQUIPMENT
+
+
+def _staged_plates(
+    title: str, pool: PoolPlan | None, validation: dmx.Validation | None
+) -> tuple[Plate, ...]:
+    """Return the plates this protocol fills, so every well a transfer names has one."""
+    if title == CREATION and pool:
+        return (_pcr2_plate(pool),)
+    if title.startswith(VALIDATION) and validation:
+        return _validation_plates(validation)
+    return ()
+
+
+def _staged_references(
+    title: str, scheme: Scheme, pool: PoolPlan | None, validation: dmx.Validation | None
+) -> tuple[Reference, ...]:
+    """Return what this protocol's own numbers are read from."""
+    if title in (ORDERING, CREATION):
+        return POOL_REFERENCES if pool else ()
+    if title.startswith(VALIDATION):
+        return dmx.REFERENCES if validation else ()
+    return _references(scheme)
 
 
 def _sources(
     prices: PriceRecord | None, validation: dmx.Validation | None, pool: PoolPlan | None
 ) -> dict[str, Source]:
     """Return every document this run could cite; `citing` drops the ones it did not."""
-    found = dict(stages.SOURCES)
+    found = dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
     if validation:
         found |= dmx.SOURCES
     if pool:
@@ -503,7 +869,8 @@ def _overview(
         "Codon usage": host,
         "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
         "Completeness": card(
-            f"P {last.coverage.completeness:g}, {last.coverage.colonies:,} colonies at the end",
+            f"{last.coverage.completeness:g} chance nothing is missing, "
+            f"{last.coverage.colonies:,} colonies at the end",
             f"{last.coverage.coverage:.0f}x",
         ),
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
@@ -512,7 +879,7 @@ def _overview(
                 f"{len(validation.designs)}, every one"
                 if validation.floor == 0
                 else f"{len(validation.designs)}, from {validation.floor} fragment(s)",
-                f"route {validation.route.name}",
+                f"by {validation.route.name}",
             )
             if validation
             else "none; the library stays polyclonal"
@@ -621,8 +988,7 @@ def _materials(
     """Every reagent and consumable the protocol asks for.
 
     Where there is a pool the blocks are not bought, so the part lists say what they are built
-    from and the pool, its primers, its polymerase and its assembly enzyme are the materials
-    bought instead.
+    from; what the pool itself buys is `_pool_materials`, listed against the protocols buying it.
     """
     inside, outside = choppers(scheme)
     came_from = (
@@ -639,8 +1005,6 @@ def _materials(
         )
         for position, one in zip(positions, part_lists, strict=True)
     ]
-    if pool:
-        made += list(_pool_materials(pool, pool_sheet, primer_sheet))
     made.append(
         Material(
             f"{vector.name or 'destination'} vector",
@@ -841,7 +1205,7 @@ READOUT_REFERENCES: tuple[Reference, ...] = (
 )
 
 
-def _steps(
+def _staged(
     scheme: Scheme,
     positions: Sequence[str],
     barcode_length: int,
@@ -864,60 +1228,108 @@ def _steps(
     marks: RepresentationMarks = REPRESENTATION_MARKS,
     linkage_fidelity: float | None = None,
     block_vectors: Sequence[tuple[str, str]] = (),
-) -> tuple[Step, ...]:
-    """Return every step in the order it happens, the rounds one after another.
+    plated: bool = False,
+    block_records: Sequence[Destination] = (),
+    records_at: str = RECORDS_AT,
+) -> dict[str, tuple[Step, ...]]:
+    """Return each protocol's steps, in the order the bench works through them.
 
-    A pool replaces the order step with the four it takes to get the same blocks: order the
-    pool, pull each batch out of it, pull each block out of its batch, and clone that block's
-    cargo into its own position's destination.
+    A pool splits ordering from making the cargo: the pool is ordered and stored in one sitting,
+    and pulled apart into blocks in another. Without one the blocks are bought whole and
+    ordering is the only protocol before the rounds.
+
+    Every step that changes a molecule carries one figure of what it makes, as rule 4 of
+    ``docs/agents/writing.md`` has it, and every other step carries none.
     """
-    made = (
-        list(
-            _pool_steps(
-                pool,
-                parts,
-                sheet,
-                pool_sheet,
-                primer_sheet,
-                scheme,
-                block_vectors or ((rounds[0].destination.name or "the destination", ""),),
-                bench[0].ligation[0],
-                selection,
-            )
-        )
-        if pool
-        else [_order_step(parts, sheet)]
-    )
-    if validation:
-        made += dmx.validation_steps(validation)
-    made.append(_pool_step(bench, parts, pool))
-    for one, row in zip(rounds, bench, strict=True):
-        made.extend(_round_steps(scheme, one, row, inside, outside, len(rounds), selection))
-    made.append(
-        _linkage_step(
-            scheme,
-            positions,
-            barcode_length,
-            rounds,
+    staged: dict[str, tuple[Step, ...]] = {}
+    oligo = records_at + OLIGO_FILE
+    if pool:
+        made = _pool_steps(
+            pool,
             parts,
-            barcodes,
-            None if reads is None else reads.linkage,
-            linkage_fidelity,
-        )
-    )
-    made.append(
-        _representation_step(
+            sheet,
+            pool_sheet,
+            primer_sheet,
             scheme,
-            positions,
-            barcode_length,
-            rounds,
-            constructs,
-            barcodes,
-            None if reads is None else reads.representation,
-            marks,
+            block_vectors or ((rounds[0].destination.name or "the destination", ""),),
+            bench[0].ligation[0],
+            selection,
+            plated,
         )
-    )
-    made += _final_steps(
+        staged[ORDERING] = (_labelled(made[0], "Order and store"),)
+        staged[CREATION] = (
+            *(
+                _labelled(
+                    _figured(one, pool_pcr_figure(pool, stage=stage, path=oligo)),
+                    "Amplify the pool",
+                )
+                for one, stage in zip(made[1:3], POOL_STAGES, strict=True)
+            ),
+            _labelled(
+                _figured(
+                    made[3],
+                    _cargo_ligation_figure(scheme, block_records, block_vectors, records_at),
+                ),
+                "Close each cargo into its vector",
+            ),
+        )
+    else:
+        staged[ORDERING] = (_labelled(_order_step(parts, sheet), "Order and store"),)
+    if validation:
+        read_back = dmx.validation_steps(
+            validation,
+            marking=_marking_figure(validation, scheme, block_records, block_vectors, records_at),
+        )
+        staged[_validation_title(validation)] = (
+            *(_labelled(one, "Array and pick") for one in read_back[:2]),
+            *(_labelled(one, "Mark every well") for one in read_back[2:-1]),
+            _labelled(read_back[-1], "Call the wells"),
+        )
+    assembly = [_labelled(_pool_step(bench, parts, pool), "Pool the part lists")]
+    for place, (one, row) in enumerate(zip(rounds, bench, strict=True), 1):
+        assembly += [
+            _labelled(step, f"Round {place}")
+            for step in _round_steps(
+                scheme,
+                one,
+                row,
+                inside,
+                outside,
+                len(rounds),
+                selection,
+                assembly_rows(rounds, lit=place, at=records_at),
+            )
+        ]
+    assembly += [
+        _labelled(
+            _linkage_step(
+                scheme,
+                positions,
+                barcode_length,
+                rounds,
+                parts,
+                barcodes,
+                None if reads is None else reads.linkage,
+                linkage_fidelity,
+            ),
+            "Read the library back",
+        ),
+        _labelled(
+            _representation_step(
+                scheme,
+                positions,
+                barcode_length,
+                rounds,
+                constructs,
+                barcodes,
+                None if reads is None else reads.representation,
+                marks,
+            ),
+            "Read the library back",
+        ),
+    ]
+    staged[ASSEMBLY] = tuple(assembly)
+    final = _final_steps(
         scheme,
         rounds,
         constructs,
@@ -926,8 +1338,131 @@ def _steps(
         working,
         None if reads is None else reads.final_representation,
         marks,
+        records_at,
     )
-    return tuple(made)
+    staged[FINAL] = (
+        _labelled(final[0], "Choose the working vector"),
+        *(_labelled(one, "Move the library across") for one in final[1:-1]),
+        _labelled(final[-1], "Read the library back"),
+    )
+    return staged
+
+
+def _labelled(step: Step, section: str) -> Step:
+    """Return `step` under the stage of its protocol it belongs to."""
+    return replace(step, section=section)
+
+
+def _figured(step: Step, figure: Figure | None) -> Step:
+    """Return `step` showing `figure`, or unchanged where there is no record to draw."""
+    return step if figure is None else replace(step, figures=(figure,))
+
+
+def _block_vector(
+    block_records: Sequence[Destination], block_vectors: Sequence[tuple[str, str]], at: str
+) -> tuple[Destination, str, str] | None:
+    """Return the first block vector, what it is called and where its record sits, or nothing.
+
+    A build whose blocks are ordered whole writes no block vector, and nothing is drawn.
+    """
+    if not block_records or not block_vectors or not block_vectors[0][1]:
+        return None
+    return block_records[0], block_vectors[0][0], at + block_vectors[0][1]
+
+
+def _cargo_ligation_figure(
+    scheme: Scheme,
+    block_records: Sequence[Destination],
+    block_vectors: Sequence[tuple[str, str]],
+    at: str,
+) -> Figure | None:
+    """Return the stuffer a cargo replaces, at base level: where the assembly joins it."""
+    found = _block_vector(block_records, block_vectors, at)
+    if found is None:
+        return None
+    vector, name, path = found
+    return ligation_figure(
+        vector.record,
+        path=path,
+        junction=(vector.stuffer.start, vector.stuffer.end),
+        enzymes=(scheme.internal.name, SYNTHESIS_ENZYME),
+        caption=(
+            f"The stuffer {scheme.internal.name} cuts out of {name}, which a cargo replaces. "
+            "The cargo enters on the four bases its position spells here."
+        ),
+    )
+
+
+def _marking_figure(
+    one: dmx.Validation,
+    scheme: Scheme,
+    block_records: Sequence[Destination],
+    block_vectors: Sequence[tuple[str, str]],
+    at: str,
+) -> Figure | None:
+    """Return what the route's own marking step works on: what a picked well holds.
+
+    The cassette its design sits in, with the stuffer lit. Drawn as a map and not at base
+    level on either route: the kit's barcodes chain on through its own chemistry and the index
+    pair's sites are the lab's, so neither route's cut is a cut this record spells.
+    """
+    found = _block_vector(block_records, block_vectors, at)
+    if found is None:
+        return None
+    vector, name, path = found
+    marks = (
+        f"The kit chains its {dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through "
+        f"{dmx.CHAIN[-1]}, reading on the strand the cargo reads on."
+        if one.route is dmx.ROUTE_LIGATION
+        else "The pair reads across it, and the band is that stretch plus the two marks the "
+        "well's address names."
+    )
+    return Figure(
+        (path,),
+        f"What a picked well holds: its design in the cassette {name} carries. {marks}",
+        span=_cassette(vector.stuffer, len(vector.record)),
+        linear=True,
+        highlight=_drawn_as(vector.record, STUFFER_FEATURE),
+        citation=VALIDATION_CITATION,
+    )
+
+
+def _cassette(stuffer: Segment, length: int) -> tuple[int, int]:
+    """Return the stretch a map of the cassette draws: the stuffer and its neighbourhood.
+
+    The margin is the stuffer's own length, so the cassette fills a known share of the picture
+    whatever a vector spells there. A linear record stops at its ends.
+    """
+    margin = (stuffer.end - stuffer.start) * STUFFER_MARGIN
+    return max(0, stuffer.start - margin), min(length, stuffer.end + margin)
+
+
+def _drawn_as(record: SequenceRecord, name: str) -> tuple[str, ...]:
+    """Return `name` where the record draws a feature under it, and nothing where it does not.
+
+    A vector that came in already carrying its cassette names its own features, and a highlight
+    lights what a record holds rather than what this module would like it to.
+    """
+    return (name,) if any(one.name == name for one in record.features) else ()
+
+
+def _final_junction_figure(
+    scheme: Scheme, product: SequenceRecord, span: Segment | None, at: str
+) -> Figure | None:
+    """Return the end the freed library ligates to the working vector on, at base level."""
+    if span is None:
+        return None
+    entry = len(scheme.entry_overhang)
+    return ligation_figure(
+        product,
+        path=at + PRODUCT_FILE,
+        junction=(span.start, span.start + entry),
+        enzymes=(scheme.external.name,),
+        caption=(
+            f"The end the library is freed on, which the working vector takes: "
+            f"{scheme.external.name} leaves {scheme.entry_overhang} here."
+        ),
+    )
 
 
 def _order_step(parts: Sequence[Part], sheet: str) -> Step:
@@ -988,7 +1523,7 @@ POOL_REFERENCES: tuple[Reference, ...] = (
 
 def _validation_plates(one: dmx.Validation) -> tuple[Plate, ...]:
     """Return the plates the read-back fills, so every well a transfer names has one."""
-    return (*one.picked, *(one.index if one.route is dmx.ROUTE_B else ()))
+    return (*one.picked, *(one.index if one.route is dmx.ROUTE_INDEX_PCR else ()))
 
 
 def _pcr2_plate(pool: PoolPlan) -> Plate:
@@ -1022,7 +1557,7 @@ def _pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple
             note=f"ordered from {pool_sheet}, which says which block each oligo is a piece of",
         ),
         Material(
-            "Pool amplification primers",
+            PRIMER_MATERIAL,
             storage="-20 °C",
             amount=f"{len(pool.pool.primers)} primers: {roles}",
             note=f"ordered from {primer_sheet}; a pair a batch, an inner primer a block",
@@ -1109,8 +1644,13 @@ def _pool_steps(
     destinations: Sequence[tuple[str, str]],
     opened: Amount,
     selection: str,
+    plated: bool = False,
 ) -> tuple[Step, ...]:
-    """Return the steps that turn an oligo pool into the blocks a round's part list holds."""
+    """Return the steps that turn an oligo pool into the blocks a round's part list holds.
+
+    `plated` says the primers are ordered by the protocol that lays them out as plates, so the
+    pool order step does not order them a second time.
+    """
     sequences = {one.name: one.sequence for one in pool.pool.primers}
     layout = pool.pool.layout
     batches = pool.batches
@@ -1118,15 +1658,17 @@ def _pool_steps(
     second = _annealing(pool.inner_pairs, sequences)
     inner_length = layout.length - layout.primer_length
     return (
-        _pool_order_step(pool, pool_sheet, primer_sheet),
+        _pool_order_step(pool, pool_sheet, primer_sheet, plated),
         _pcr1_step(pool, batches, first, layout.length),
         _pcr2_step(pool, batches, parts, second, inner_length),
         _assembly_step(pool, parts, sheet, scheme, destinations, opened, selection),
     )
 
 
-def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step:
-    """Order the pool and its primers, which is what the whole design comes down to."""
+def _pool_order_step(
+    pool: PoolPlan, pool_sheet: str, primer_sheet: str, plated: bool = False
+) -> Step:
+    """Order the pool, and its primers where no other protocol has ordered them already."""
     layout = pool.pool.layout
     roles = ", ".join(f"{count} {role}" for role, count in _primer_roles(pool).items())
     over = pool.over_floor
@@ -1138,17 +1680,29 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> Step
         else f"{pool.pool.count} oligos is the fewest the length budget allows for."
     )
     return Step(
-        "Order the oligo pool and the primers that amplify it",
+        "Order the oligo pool"
+        if plated
+        else "Order the oligo pool and the primers that amplify it",
         instructions=(
             f"Order every row of {pool_sheet} as one synthesised oligo pool, {pool.pool.count} "
             f"members at {layout.length} nt.",
-            f"Order every row of {primer_sheet} as an ordinary oligo: {roles}.",
+            *(
+                ()
+                if plated
+                else (f"Order every row of {primer_sheet} as an ordinary oligo: {roles}.",)
+            ),
         ),
         expected=(
             f"One pool, {pool.pool.count} oligos, every one {layout.length} nt and no length "
             "spread, which is what the padding is for.",
-            f"{len(pool.pool.primers)} primers, each "
-            f"{min(len(one) for one in pool.pool.primers)} nt.",
+            *(
+                ()
+                if plated
+                else (
+                    f"{len(pool.pool.primers)} primers, each "
+                    f"{min(len(one) for one in pool.pool.primers)} nt.",
+                )
+            ),
         ),
         notes=(
             f"{pool_sheet} names each oligo's block, which piece of it that is, and the primers "
@@ -1432,7 +1986,7 @@ def _pool_step(bench: Sequence[RoundBench], parts: Sequence[Part], pool: PoolPla
         expected=tuple(
             f"{row.position}: one tube, {len(members[row.position])} member(s), at least "
             f"{row.donor_digest.nanograms:,.0f} ng at {floor:g} ng/µL or above, "
-            f"{row.donor_digest.pmol / len(members[row.position]):.3g} pmol of each member."
+            f"{number(row.donor_digest.pmol / len(members[row.position]))} pmol of each member."
             for row in bench
             if members[row.position]
         ),
@@ -1480,9 +2034,9 @@ def _pool_masses(
         pmol = row.donor_digest.pmol / len(each)
         shortest, longest = min(each, key=_len_of), max(each, key=_len_of)
         said.append(
-            f"{row.position}: {pmol:.3g} pmol a member is "
-            f"{to_nanograms(pmol, shortest.length):.3g} ng of its shortest at "
-            f"{shortest.length:,} bp and {to_nanograms(pmol, longest.length):.3g} ng of its "
+            f"{row.position}: {number(pmol)} pmol a member is "
+            f"{number(to_nanograms(pmol, shortest.length))} ng of its shortest at "
+            f"{shortest.length:,} bp and {number(to_nanograms(pmol, longest.length))} ng of its "
             f"longest at {longest.length:,} bp."
         )
     return tuple(said)
@@ -1501,8 +2055,12 @@ def _round_steps(
     outside: Sequence[Enzyme],
     total: int,
     selection: str = "",
+    rows: Figure | None = None,
 ) -> list[Step]:
-    """Return the eight steps of one round, in the order they happen."""
+    """Return the eight steps of one round, in the order they happen.
+
+    `rows` is drawn on the ligation, the one step of the eight that changes a molecule.
+    """
     number = row.number
     opened, released = row.ligation
     internal = (scheme.internal, *inside)
@@ -1511,7 +2069,7 @@ def _round_steps(
         _open_step(scheme, one, row, internal, opened),
         _release_step(scheme, row, external, released),
         _digest_cleanup_step(row, opened, released),
-        _ligation_step(row, opened, released),
+        _figured(_ligation_step(row, opened, released), rows),
         _ligation_cleanup_step(row),
         _electroporation_step(row),
         _growth_step(row, selection),
@@ -1600,9 +2158,9 @@ def _digest_cleanup_step(row: RoundBench, opened: Amount, released: Amount) -> S
             "Measure both concentrations; the ligation table asks for picomoles, not nanograms.",
         ),
         expected=(
-            f"{opened.name}: {opened.pmol:g} pmol is {opened.nanograms:g} ng at "
+            f"{opened.name}: {number(opened.pmol)} pmol is {opened.nanograms:g} ng at "
             f"{opened.length_bp} bp.",
-            f"{released.name}: {released.pmol:g} pmol is {released.nanograms:g} ng at "
+            f"{released.name}: {number(released.pmol)} pmol is {released.nanograms:g} ng at "
             f"{released.length_bp} bp.",
         ),
         notes=(
@@ -1629,8 +2187,9 @@ def _ligation_step(row: RoundBench, opened: Amount, released: Amount) -> Step:
         tables=(ligation_reaction(row.ligation),),
         timers=(Timer("Ligation", LIGATION_SECONDS),),
         expected=(
-            f"Nothing visible. {released.pmol:g} pmol of the released part list against "
-            f"{opened.pmol:g} pmol of the opened library is the {MOLAR_RATIO:g}:1 molar ratio.",
+            f"Nothing visible. {number(released.pmol)} pmol of the released part list against "
+            f"{number(opened.pmol)} pmol of the opened library is the "
+            f"{MOLAR_RATIO:g}:1 molar ratio.",
         ),
         notes=(
             "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
@@ -1656,7 +2215,7 @@ def _ligation_cleanup_step(row: RoundBench) -> Step:
         ),
         expected=(
             f"Enough for one electroporation: {row.transformation.nanograms:g} ng is "
-            f"{row.transformation.pmol:g} pmol at {row.transformation.length_bp} bp.",
+            f"{number(row.transformation.pmol)} pmol at {row.transformation.length_bp} bp.",
         ),
         notes=(
             f"One volume here, not the {SPRI_AFTER_DIGEST:g} the digests took. Eluting in water "
@@ -1725,7 +2284,7 @@ def _growth_step(row: RoundBench, selection: str = "") -> Step:
             f"floor for the {coverage.completeness:g} chance the project asked for that none of "
             f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
-            f"{coverage.absent_probability:.3g}.",
+            f"{number(coverage.absent_probability)}.",
             f"{control.name} should be near empty beside it; its colonies come off the count.",
         ),
         notes=(
@@ -1892,6 +2451,7 @@ def _final_steps(
     working: Working | None,
     pair: ReadPair | None = None,
     marks: RepresentationMarks = REPRESENTATION_MARKS,
+    records_at: str = RECORDS_AT,
 ) -> list[Step]:
     """Return the five steps that move the finished library into the working vector.
 
@@ -1905,7 +2465,10 @@ def _final_steps(
     return [
         _pick_working_step(scheme, working),
         _release_step_final(scheme, product, span, freeing),
-        _assemble_step(scheme, product, span, working),
+        _figured(
+            _assemble_step(scheme, product, span, working),
+            _final_junction_figure(scheme, product, span, records_at),
+        ),
         _final_growth_step(constructs, completeness, working),
         _final_representation_step(barcodes, working, pair, constructs, marks),
     ]
@@ -2135,7 +2698,7 @@ def _final_growth_step(constructs: int, completeness: float, working: Working | 
             f"project asked for that none of its {constructs:,} distinct members is missing, "
             "equally represented.",
             f"At that count the chance a named member is missing is "
-            f"{absent_probability(constructs, colonies):.3g}.",
+            f"{number(absent_probability(constructs, colonies))}.",
             "Near-empty plates from a no-cargo control beside it; what grows there is working "
             "vector that kept its ccdB cassette.",
         ),

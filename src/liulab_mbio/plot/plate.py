@@ -7,7 +7,6 @@ caller names them by, and what each well holds. A well's own name is its row lab
 Laid out as geometry, like every other drawing here — `docs/adr/0006-drawings-as-geometry.md`.
 """
 
-import colorsys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
@@ -31,6 +30,23 @@ EMPTY = "#f4f4f4"
 INK = "#333333"
 RULE = "#bbbbbb"
 
+#: The fill each kind takes, in order, and so the most kinds a plate colours at all: the
+#: petroff10 sequence, whose colours stay apart under every colour-vision deficiency. Matthew A.
+#: Petroff, *Accessible Color Sequences for Data Visualization*, arXiv:2107.02270, as matplotlib
+#: ships it (`_petroff10_data` in `_cm.py`).
+PALETTE = (
+    "#3f90da",
+    "#ffa90e",
+    "#bd1f01",
+    "#94a4a2",
+    "#832db6",
+    "#a96b59",
+    "#e76300",
+    "#b9ac70",
+    "#717581",
+    "#92dadd",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class PlateMap:
@@ -43,18 +59,16 @@ class PlateMap:
     extent
         The view box, in points.
     legend
-        What each colour stands for, in the order the legend lists them.
+        What each colour stands for, in the order the legend lists them. Empty where the plate
+        holds more kinds than `PALETTE` has colours.
+    kinds
+        How many distinct contents the plate holds, coloured or not.
     """
 
     shapes: tuple[svg.Shape, ...]
     extent: Box
     legend: tuple[tuple[str, str], ...]
-
-
-def colour(n: int, of: int) -> str:
-    """Return the `n`-th of `of` fills, evenly round the wheel so neighbours stay apart."""
-    red, green, blue = colorsys.hls_to_rgb((n / max(of, 1)) % 1.0, 0.72, 0.62)
-    return f"#{round(red * 255):02x}{round(green * 255):02x}{round(blue * 255):02x}"
+    kinds: int
 
 
 def layout(
@@ -77,7 +91,9 @@ def layout(
         Drawn above the grid.
     seating
         Well name to what sits there. A well named nothing is drawn empty, and every distinct
-        content gets a fill of its own.
+        content gets a fill of its own while there are no more kinds than `PALETTE` has
+        colours. Past that no fill tells two kinds apart and no legend is readable, so every
+        well is drawn empty and the legend is dropped.
 
     Raises
     ------
@@ -88,7 +104,7 @@ def layout(
     --------
     >>> one = layout(2, 3, ("A", "B"), seating={"A1": "water"})
     >>> one.legend
-    (('water', '#e48b8b'),)
+    (('water', '#3f90da'),)
     """
     if rows < 1 or columns < 1:
         raise ValueError(f"a plate has at least one row and column, not {rows} by {columns}")
@@ -96,7 +112,7 @@ def layout(
         raise ValueError(f"{len(row_labels)} labels for {rows} rows")
     held = seating or {}
     kinds = tuple(dict.fromkeys(held.values()))
-    fills = {kind: colour(n, len(kinds)) for n, kind in enumerate(kinds)}
+    fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
 
     pitch = min(MAX_PITCH, (WIDTH - 2 * MARGIN) / (columns + 1))
     size = pitch * (1 - GAP)
@@ -143,4 +159,4 @@ def layout(
                 )
             )
     extent = Box(0.0, 0.0, left + columns * pitch + MARGIN, top + rows * pitch + MARGIN)
-    return PlateMap(tuple(shapes), extent, tuple((kind, fills[kind]) for kind in kinds))
+    return PlateMap(tuple(shapes), extent, tuple(fills.items()), len(kinds))

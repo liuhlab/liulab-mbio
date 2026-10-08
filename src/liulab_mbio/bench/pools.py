@@ -22,7 +22,15 @@ from decimal import Decimal
 
 from liulab_mbio.bench.prices import Band, Headroom, Item
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from liulab_mbio.sequence import (
+    BindingSite,
+    Feature,
+    Primer,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 from liulab_mbio.sites import EnzymeLike, find_sites
 from liulab_mbio.split import Budget, CargoSplit, Fragment
 
@@ -333,6 +341,111 @@ def build_oligo(
         primers=tuple(one.name for one in (*forward, *reverse)),
         pad=pad,
     )
+
+
+def oligo_record(
+    oligo: Oligo, *, layout: OligoLayout, primers: Sequence[PrimerSite]
+) -> SequenceRecord:
+    """One oligo as a record: its cargo, its filler, and every primer at the site it reads from.
+
+    What a map of an oligo is drawn over. Each primer is found where the oligo spells it, a
+    forward one along the top strand and a reverse one reverse-complemented at the far end, so
+    the record cannot disagree with the bases ordered. The two recognition sites are left to a
+    map's cut sites, which draw where the enzyme cuts and not only where it binds.
+
+    Parameters
+    ----------
+    oligo
+        The member of the pool to draw.
+    layout
+        What it was built to, which says how long a primer site is.
+    primers
+        Every primer the pool is amplified by: `Pool.primers` serves.
+
+    Raises
+    ------
+    ValueError
+        If a primer the oligo names is not in `primers`, or is not spelt where the layout puts
+        it, which says the oligo and the layout disagree.
+
+    Examples
+    --------
+    >>> from liulab_mbio.split import split_cargo
+    >>> cargo = SequenceRecord("ATG" + "ACGTTGCA" * 6, name="block")
+    >>> layout = OligoLayout(120, enzyme="BsaI", primers=2, primer_length=20)
+    >>> sites = [PrimerSite("forward", "F1", "A" * 20), PrimerSite("inner", "R1", "C" * 20)]
+    >>> split = split_cargo(cargo, layout.cutter, budget=layout.budget)
+    >>> one = build_oligo(
+    ...     split, split.fragments[0], name="block_f1", source="block", layout=layout,
+    ...     forward=sites[:1], reverse=sites[1:],
+    ... )
+    >>> [p.name for p in oligo_record(one, layout=layout, primers=sites).primers]
+    ['F1', 'R1']
+    """
+    known = {one.name: one for one in primers}
+    missing = [name for name in oligo.primers if name not in known]
+    if missing:
+        listed = ", ".join(repr(name) for name in missing)
+        raise ValueError(f"oligo {oligo.name!r} names {listed}, which the pool does not carry")
+    sites = [known[name] for name in oligo.primers]
+    leading = 0
+    while leading < len(sites) and oligo.sequence.startswith(
+        "".join(one.sequence for one in sites[: leading + 1])
+    ):
+        leading += 1
+    drawn, at = [], 0
+    for one in sites[:leading]:
+        drawn.append(_bound(one, at, Strand.FORWARD))
+        at += len(one)
+    tail = sites[leading:]
+    at = len(oligo.sequence) - sum(len(one) for one in tail)
+    for one in tail:
+        spelt = reverse_complement(one.sequence)
+        if oligo.sequence[at : at + len(one)] != spelt:
+            raise ValueError(
+                f"oligo {oligo.name!r} does not spell {one.name!r} at base {at + 1}, where this "
+                "layout puts it"
+            )
+        drawn.append(_bound(one, at, Strand.REVERSE))
+        at += len(one)
+    return SequenceRecord(
+        oligo.sequence,
+        name=oligo.name,
+        features=_oligo_features(oligo, layout, leading),
+        primers=tuple(drawn),
+        notes={"description": f"{oligo.source}, fragment {oligo.fragment} of {oligo.fragments}"},
+    )
+
+
+def _bound(site: PrimerSite, at: int, strand: Strand) -> Primer:
+    """Return the primer bound where the oligo spells it, described by the role it serves."""
+    return Primer(
+        site.name,
+        site.sequence,
+        binding_sites=(BindingSite(at, at + len(site), strand),),
+        description=site.role,
+    )
+
+
+def _oligo_features(oligo: Oligo, layout: OligoLayout, leading: int) -> tuple[Feature, ...]:
+    """Return the cargo this oligo carries and the filler padding it, where the layout puts them."""
+    flank = len(layout.cutter.site) + len(layout.spacer)
+    start = leading * layout.primer_length + flank
+    trailing = (layout.primers - leading) * layout.primer_length
+    end = len(oligo.sequence) - trailing - oligo.pad - flank
+    found = [
+        Feature(
+            f"{oligo.source} fragment {oligo.fragment}",
+            "misc_feature",
+            (Segment(start, end),),
+            strand=Strand.FORWARD,
+        )
+    ]
+    if oligo.pad:
+        found.append(
+            Feature("filler", "misc_feature", (Segment(end + flank, end + flank + oligo.pad),))
+        )
+    return tuple(found)
 
 
 def pool_sheet(pool: Pool) -> str:

@@ -98,6 +98,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Troubleshooting,
     citing,
+    number,
 )
 from liulab_mbio.sequence import SequenceRecord
 
@@ -297,13 +298,14 @@ def _materials(
                 Material(
                     f"{_carrier(bp).name} attB DNA",
                     storage="-20 °C",
-                    amount=f"{substrate.pmol:g} pmol ({substrate.nanograms:g} ng) per reaction",
+                    amount=f"{number(substrate.pmol)} pmol "
+                    f"({substrate.nanograms:g} ng) per reaction",
                     note="purified, which is what takes the attB primers and their dimers away",
                 ),
                 Material(
                     f"{_acceptor(bp).name} donor vector",
                     storage="-20 °C",
-                    amount=f"{donor.pmol:g} pmol ({donor.nanograms:g} ng) per reaction",
+                    amount=f"{number(donor.pmol)} pmol ({donor.nanograms:g} ng) per reaction",
                     note=f"supercoiled, and grown in {PROPAGATION_HOST}",
                 ),
                 _clonase(BP_CLONASE, BP_CLONASE_CATALOG, BP_CLONASE_UL),

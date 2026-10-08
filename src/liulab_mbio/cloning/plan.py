@@ -22,7 +22,7 @@ from liulab_mbio.checks import Check, Status, worst, worst_of
 from liulab_mbio.io import read_record
 from liulab_mbio.primers.evaluation import PrimerReport
 from liulab_mbio.primers.thresholds import reading
-from liulab_mbio.protocol.model import Protocol, read_protocol, write_protocol
+from liulab_mbio.protocol.model import Project, Protocol, read_protocol, write_protocol
 from liulab_mbio.protocol.render import write_html
 from liulab_mbio.sequence import Feature, SequenceRecord, across_the_origin
 
@@ -87,12 +87,29 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     """Write `protocol` into `directory` as `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`.
 
     The directory is made when it is not there, and the page is rendered from the data as
-    written, so the two cannot disagree. The same protocol writes the same bytes.
+    written, so the two cannot disagree. The same protocol writes the same bytes. A plan of
+    several protocols writes a folder of linked pages instead, through
+    `protocol.render.write_project_files`.
     """
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
     data = write_protocol(protocol, out / PROTOCOL_DATA_FILE)
     return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+
+
+def as_project(protocol: Protocol) -> Project:
+    """Return `protocol` as a run of one, which is what every one-protocol method plans.
+
+    What it consumes is what the bench already holds, so those are the project's inputs and the
+    chain resolves. Whatever reads a run then reads one shape, and a run of several protocols is
+    no special case of it.
+    """
+    return Project(
+        protocol.title,
+        summary=protocol.summary,
+        inputs=protocol.consumes,
+        protocols=(protocol,),
+    )
 
 
 def status(checks: Iterable[Check]) -> Status:

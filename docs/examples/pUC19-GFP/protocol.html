@@ -204,14 +204,80 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .holes ul, .holes-here { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
 .hole { border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.45rem 0.7rem; background: var(--fail-soft); }
 .hole-id { font-weight: 700; }
-.hole-kind, .hole-issue { color: var(--muted); }
+.hole-kind { color: var(--muted); }
 .is-holed .num { color: var(--fail); }
 
-/* The plate, drawn by `plot` and embedded here, beside the map, the sequence view and the gel. */
-.plate svg { max-width: 100%; height: auto; }
+/* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
+   laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
+   gel is drawn here instead, and has its own colours. */
+.drawing svg { display: block; max-width: 100%; height: auto; background: #ffffff; }
+.drawing.rows { display: grid; gap: 0.7rem; }
+.row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
+
+/* A project folder: the run's nav bar across the top, a column either side of the page. */
+.site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
+.site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
+.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame .page { padding-block: 1.5rem 4rem; }
+.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
+.column ol { margin: 0; padding-left: 1.3rem; }
+.column li { margin-bottom: 0.3rem; }
+.column a { color: var(--muted); text-decoration: none; }
+.column a:hover { color: var(--ink); text-decoration: underline; }
+.column .is-here > a { color: var(--ink); font-weight: 600; }
+.neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
+.chain-pages { margin: 0; padding-left: 1.4rem; }
+.chain-pages li { margin-bottom: 0.3rem; }
+.chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+
+/* The run's index: what it explains, how it fits together and how long it takes. */
+.topic p:last-child { margin-bottom: 0; }
+
+/* The flow chart is boxes and names in HTML, never a drawing: it is found by browser find,
+   it is selectable and it prints with no font embedded. */
+.flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.flow-box:hover { text-decoration: underline; }
+.flow-title { font-weight: 600; }
+.flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.flow-hand-item { position: relative; }
+/* The arrow is decoration: what it means is written beside it as words. */
+.flow-hand-item::before { content: "\2193"; position: absolute; left: -1.2rem; color: var(--muted); }
+.flow-item { font-weight: 600; }
+.flow-from { color: var(--accent); }
+.is-dangling .flow-from { color: var(--fail); }
+.flow-end { margin: 0.5rem 0 0; }
+
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
+.schedule td, .schedule th { vertical-align: top; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
+.waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
+.cited-by, .used-in { color: var(--muted); font-size: 0.9em; }
+.kit-list .vessels { display: grid; gap: 0.3rem; }
+.hole a { white-space: nowrap; }
+
+/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+@media (max-width: 70rem) {
+  .frame { display: flex; flex-direction: column; max-width: 54rem; }
+  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column li { margin-bottom: 0; }
+  .column .is-here > a { text-decoration: underline; }
+}
 
 @media print {
   :root {
@@ -230,7 +296,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
-  .toolbar, .toc, button.copy, .timer-action { display: none !important; }
+  /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
+  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .frame { display: block; max-width: none; }
+  .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
   .step.is-done { opacity: 1; }
   .caution, .expected { border: 1px solid var(--line); }
@@ -240,7 +309,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .oligo-checks:not([open]) > ul { display: block; }
   .oligo-checks::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
-  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
+  .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
@@ -248,7 +318,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="8f94ee2bc316711c">
+<body data-protocol="88a2c4638f78de5c">
 <main class="page">
 <header class="intro">
 <h1>Golden Gate assembly: GFP into pUC19</h1>
@@ -260,7 +330,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 <div class="toolbar"><span class="progress" aria-live="polite">0 of 11 steps done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
 <nav class="toc" aria-label="Steps"><ol><li><a href="#step-1">Amplify pUC19 backbone</a></li><li><a href="#step-2">Amplify GFP</a></li><li><a href="#step-3">Check the PCRs on a gel</a></li><li><a href="#step-4">Digest the plasmid template with DpnI</a></li><li><a href="#step-5">Purify every amplicon</a></li><li><a href="#step-6">Measure every concentration</a></li><li><a href="#step-7">Set up the Golden Gate reaction</a></li><li><a href="#step-8">Run the Golden Gate program</a></li><li><a href="#step-9">Transform and plate</a></li><li><a href="#step-10">Screen colonies by PCR</a></li><li><a href="#step-11">Confirm the clone by sequencing</a></li></ol></nav>
 </header>
-<section class="block materials">
+<section class="block materials" id="materials">
 <h2>Materials</h2>
 <div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>pUC19 plasmid</td><td></td><td></td><td>-20 °C</td><td></td><td>PCR template</td></tr><tr><td>GFP template</td><td></td><td></td><td>-20 °C</td><td></td><td>PCR template</td></tr><tr><td>Q5 DNA Polymerase and its reaction buffer</td><td>New England Biolabs</td><td></td><td>-20 °C</td><td></td><td></td></tr><tr><td>dNTP mix</td><td></td><td></td><td>-20 °C</td><td></td><td>10 mM of each base</td></tr><tr><td>DpnI</td><td>New England Biolabs</td><td></td><td>-20 °C</td><td>20 units per PCR</td><td>cuts the methylated plasmid template only</td></tr><tr><td>PCR and gel cleanup spin columns</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>NEBridge Ligase Master Mix</td><td>New England Biolabs</td><td>M1100</td><td>-20 °C</td><td>5 µL per reaction</td><td></td></tr><tr><td>BbsI-HF</td><td>New England Biolabs</td><td>R3539</td><td>-20 °C</td><td>1 µL per reaction</td><td></td></tr><tr><td>NEB 5-alpha Competent E. coli</td><td>New England Biolabs</td><td>C2987</td><td>-80 °C</td><td>50 µL per transformation</td><td></td></tr><tr><td>SOC or NEB 10-beta/Stable Outgrowth Medium</td><td></td><td></td><td></td><td>950 µL per transformation</td><td></td></tr><tr><td>LB agar plates with ampicillin or carbenicillin, 80 µg/mL X-gal and 200 µM IPTG</td><td></td><td></td><td></td><td>one plate per transformation</td><td></td></tr><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer</td><td>New England Biolabs</td><td>M0486</td><td>-20 °C</td><td>12.5 µL per reaction</td><td></td></tr><tr><td>Agarose and 1X TAE or TBE</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>NEB 1 kb Plus DNA Ladder</td><td>New England Biolabs</td><td>N3200</td><td></td><td></td><td></td></tr><tr><td>NEB 100 bp DNA Ladder</td><td>New England Biolabs</td><td>N3231</td><td></td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Thermocycler with a heated lid, Agarose gel rig and power supply, Microcentrifuge, Spectrophotometer or fluorometer, Heat block or water bath at 42 °C, Shaking incubator and a plate incubator at 37 °C</p>
 </section>
@@ -280,7 +350,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Amplify pUC19 backbone</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-1-2"><span>Mix the master mix and put it in each tube, then add the pUC19 template.</span></label></li><li><label><input type="checkbox" data-key="step-1-3"><span>Run the program below: 64 °C annealing and 60 s extension for a 2662 bp product.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>pUC19 backbone PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.75</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>pUC19 backbone PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-1-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
 <figure class="program"><figcaption>pUC19 backbone PCR <span class="muted">· 32 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20 <a class="cite" href="#source-e1601">E1601 FAQ 11</a></td></tr><tr><td>Anneal</td><td class="num">64 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 2662 bp.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the pUC19 template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
@@ -290,7 +360,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-2"><span class="step-n">2</span><span>Amplify GFP</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-2-1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-2-2"><span>Mix the master mix and put it in each tube, then add the GFP template.</span></label></li><li><label><input type="checkbox" data-key="step-2-3"><span>Run the program below: 63 °C annealing and 20 s extension for a 749 bp product.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.75</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-2-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 units</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix" data-ul="49.0">53.9</td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
 <figure class="program"><figcaption>GFP PCR <span class="muted">· 19 min 10 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">20 <a class="cite" href="#source-e1601">E1601 FAQ 11</a></td></tr><tr><td>Anneal</td><td class="num">63 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 749 bp.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the GFP template is there.</dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.</dd></dl></div>
@@ -353,7 +423,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <section class="step" id="step-10">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-10"><span class="step-n">10</span><span>Screen colonies by PCR</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-10-1"><span>Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.</span></label></li><li><label><input type="checkbox" data-key="step-10-2"><span>Streak the same toothpick onto a numbered plate, so the clone survives the PCR.</span></label></li><li><label><input type="checkbox" data-key="step-10-3"><span>Run the program below and load 5 µL on a 2% gel.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-10-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.75</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.65</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix" data-ul="25.0">27.5</td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-10-table-1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.8</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix" data-ul="25.0">27.5</td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
 <figure class="program"><figcaption>Colony PCR <span class="muted">· 1 h 10 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Lysis</td><td class="num">94 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">94 °C</td><td class="num">30 s</td><td class="num" rowspan="3">30 <a class="cite" href="#source-m0480">M0480 thermocycling conditions</a></td></tr><tr><td>Anneal</td><td class="num">56.9 °C</td><td class="num">30 s</td></tr><tr><td>Extend</td><td class="num">68 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">68 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">10 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.</li><li>Correct clone: 160 bp, 838 bp.</li><li>Empty vector: 177 bp.</li></ul><figure class="gel"><figcaption>Colony PCR</figcaption><svg class="gel-image" viewBox="0 0 202 276" role="img" aria-label="Colony PCR"><rect class="gel-bg" x="46" y="22" width="154" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="Correct clone"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="838" x="107" y="91.8" width="32" height="4" rx="1.5"><title>838 bp</title></rect><rect class="band" data-bp="160" x="107" y="219.7" width="32" height="4" rx="1.5"><title>160 bp</title></rect></g><g class="lane" data-lane="Empty vector"><text class="lane-mark" x="171.0" y="14">2</text><rect class="well" x="152" y="30" width="38" height="6"/><rect class="band" data-bp="177" x="155" y="211.9" width="32" height="4" rx="1.5"><title>177 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> Correct clone: 160, 838 bp</li><li><strong>2</strong> Empty vector: 177 bp</li></ol></figure></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band in any lane</dt><dd>The colony was too much material: touch a smaller one, or dilute it.</dd><dt>Every colony reads as empty vector</dt><dd>The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.</dd></dl></div>
@@ -366,11 +436,11 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The read starts too close to the junction</dt><dd>Move the primer further out; the first bases after a primer are unreadable.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Only a read across the junctions confirms the assembly, whatever the screen said.</li><li>A provider whose read is shorter than the lengths above needs a further primer inside the inserts.</li></ul></div>
 </section>
-<section class="block sources">
+<section class="block sources" id="sources">
 <h2>Sources</h2>
 <ul><li id="source-m0480"><strong>M0480</strong> New England Biolabs #M0480 OneTaq DNA Polymerase protocol · protocols.io version 2, 2022-02-21 · 2026-09-12 <a href="https://dx.doi.org/10.17504/protocols.io.bd24i8gw" rel="noreferrer">https://dx.doi.org/10.17504/protocols.io.bd24i8gw</a></li><li id="source-e1601"><strong>E1601</strong> New England Biolabs #E1601S/L NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual · version 5.0_6/26 · 2026-09-12 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li></ul>
 </section>
-<section class="block references">
+<section class="block references" id="references">
 <h2>References</h2>
 <ol><li>NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26 <a href="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf" rel="noreferrer">https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF</li><li>REBASE record for DpnI, which cuts G6mATC and so only methylated template <a href="http://rebase.neb.com/rebase/rebase.html" rel="noreferrer">http://rebase.neb.com/rebase/rebase.html</a></li><li>Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal and IPTG plate <a href="https://doi.org/10.1021/acssynbio.8b00333" rel="noreferrer">https://doi.org/10.1021/acssynbio.8b00333</a></li></ol>
 </section>
@@ -400,6 +470,11 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -416,7 +491,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -430,6 +505,27 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
     });
   });
   refresh();
+
+  // A run's index: how far the bench got in each protocol, read from that page's own store.
+  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // reads the marks without the protocol pages writing anything twice.
+  all("[data-page-key]").forEach(function (item) {
+    var total = Number(item.getAttribute("data-steps")) || 0;
+    var label = item.querySelector(".page-progress");
+    var marks;
+    try {
+      marks = JSON.parse(
+        window.localStorage.getItem("liulab-protocol:" + item.getAttribute("data-page-key")) || "{}"
+      );
+    } catch (error) {
+      return;
+    }
+    if (!marks || !label || !total) return;
+    var done = 0;
+    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
+    label.textContent = done + " of " + steps(total) + " done";
+    item.classList.toggle("is-started", done > 0);
+  });
 
   var clear = document.querySelector("button.clear");
   if (clear) {
@@ -446,9 +542,24 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
-  // Reaction tables: the same arithmetic as ReactionTable.mix_volumes.
-  function round2(value) {
-    return String(Math.round(value * 100) / 100);
+  // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
+  // protocol.model.number, so the column reads the same after the count changes.
+  var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+  function number(value) {
+    if (value === 0) return "0";
+    var parts = value.toExponential(2).split("e");
+    var power = Number(parts[1]);
+    if (Math.abs(value) >= 0.001 && Math.abs(value) < 1e6) {
+      var fixed = value.toFixed(Math.max(0, 2 - power));
+      if (fixed.indexOf(".") >= 0) fixed = fixed.replace(/0+$/, "").replace(/\.$/, "");
+      var halves = fixed.split(".");
+      halves[0] = halves[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return halves.join(".");
+    }
+    var mantissa = parts[0].replace(/\.?0+$/, "");
+    var raised = String(power).replace(/\d/g, function (d) { return SUPERSCRIPT.charAt(d); });
+    return mantissa + " × 10" + raised.replace("-", "⁻");
   }
 
   all(".reaction").forEach(function (figure) {
@@ -461,7 +572,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
       all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = round2(parseFloat(cell.getAttribute("data-ul")) * scale);
+        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
       });
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;

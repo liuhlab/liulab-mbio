@@ -120,14 +120,42 @@ _Avoid_: validation, rule, test
 ### Protocol
 
 A bench procedure someone can follow without asking anything: summary, materials, numbered
-steps, expected results and references. Rendered as one self-contained HTML page.
+steps, expected results and references. Rendered as one self-contained HTML page. It declares
+what it consumes and what it produces, and nothing else about the run it belongs to: everything
+else it needs it holds itself.
 _Avoid_: SOP, recipe, method
+
+### Item
+
+One thing passed from a protocol to the one after it: a plasmid, a plate of colonies, a pooled
+library. The name is the contract a **project** chains by; what it is, what it has to meet and
+where it waits are prose for the bench, which nothing parses.
+_Avoid_: input, output, artefact, deliverable
+
+### Project
+
+Protocols run in order, each handed what the ones before it produced. It holds what no single
+protocol owns: the background a reader is told before the first protocol, the bill for the whole
+run, and the checks that judge the design rather than one bench procedure. What a build chooses
+is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line; what a build
+writes is this chain of protocols.
+_Avoid_: workflow, pipeline, campaign
 
 ### Step
 
 One numbered unit of a protocol: what to do, what it needs, what a successful result looks
 like, and what to do when the result is wrong.
 _Avoid_: task, procedure
+
+### Wait
+
+Time a step spends waiting on someone else, which nobody attends: a vendor's turnaround on an
+oligo pool, a plate sent away to be sequenced. It is neither a thermocycler stage nor a
+countdown someone starts, and most of a real project's calendar is this. How long is written as
+whoever states it does, so `10-15 working days` stands as it is, and an empty one is an admitted
+unknown. What a step holds beside it is its hands-on time: how much of it someone stands over,
+unknown until a source states it and never written as a zero.
+_Avoid_: delay, downtime, lead time, incubation
 
 ### Reaction table
 
@@ -139,6 +167,15 @@ _Avoid_: mix table, recipe
 
 Stages run in order, each a list of incubations repeated for a number of cycles.
 _Avoid_: cycling conditions, PCR conditions
+
+### Figure
+
+What a step shows rather than describes: the record to draw, the stretch of it, which view, and
+what the map is pointed at. It is a spec and never a drawing, so it cannot disagree with the
+design it names, and the page lays it out when it renders. A record is named by a path, relative
+to the directory the protocol was read from, since a protocol holds no bases of its own. A map is
+what a figure becomes, not another word for one.
+_Avoid_: image, illustration, panel, picture
 
 ### Simulated gel
 
@@ -596,8 +633,8 @@ The **fragment count** at or above which a design is read back one well at a tim
 states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
 reads every design. No floor ships, because the measured curve gives a design's chance of a clean
 colony and not the chance worth paying to check. A project that states one also names which of
-the two marking routes reads its wells.
-_Avoid_: validation threshold, QC cutoff, validation level
+the two marking routes reads its wells: **barcode ligation** or **index PCR**.
+_Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
 _Package_: liulab_synbio
 
 ### iGGA
@@ -744,6 +781,13 @@ features as bars, primers as arrows and enzyme names above their cut. It is draw
 map, which shows where each row lies.
 _Avoid_: sequence panel, text view
 
+### Highlight
+
+What a map is pointed at: the names it lights. A lit item keeps its colours, and every other
+item, its label with it, paints one pale grey. Nothing moves, so each label keeps where it sits,
+and a lit label is the last to hide where labels crowd.
+_Avoid_: callout, emphasis, focus, selection
+
 ### Unique cutter
 
 An enzyme with one cut site in a sequence record, counted over the whole record even when a map
@@ -798,6 +842,20 @@ A vessel whose positions form an array, named by its well count: 12, 24, 96, 384
 Format is one parameter, not a kind. A plate carries a **seating** and says nothing about what
 differs between the reactions it holds.
 _Avoid_: microplate, microtitre plate, array
+
+### Stock plate
+
+A plate a set of oligos is resuspended in once and kept at that concentration: the copy nothing
+runs from. Every **working plate** is split from it, so it is thawed only to make one.
+_Avoid_: master plate, mother plate, source plate
+
+### Working plate
+
+A copy of a **stock plate** at the concentration a reaction takes, seated the same way, so a
+well's address names the same oligo on both. One is thawed for one run and thrown away, never
+returned to the freezer; that is a **rule** on the plate as a material, not a field a protocol
+declares. A run splits as many as it has runs ahead of it.
+_Avoid_: daughter plate, aliquot plate, dilution plate
 
 ### Seating
 

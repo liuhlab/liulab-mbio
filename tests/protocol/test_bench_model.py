@@ -19,6 +19,7 @@ from liulab_mbio.protocol.model import (
     Stage,
     Step,
     ThermocyclerProgram,
+    Troubleshooting,
     Vessel,
     Well,
     citing,
@@ -27,10 +28,17 @@ from liulab_mbio.protocol.model import (
 )
 from liulab_mbio.protocol.render import NO_NUMBER, render_html
 
+from ..html import parse
+
 LIGASE = materials.material(
     "T7 DNA Ligase", catalog="#M0318L", citation=Citation("M0318", "reaction conditions")
 )
 BUFFER = materials.material("StickTogether DNA Ligase Buffer", catalog="#B0535S")
+FRESH_BUFFER = Troubleshooting(
+    "Few colonies",
+    "Repeat the ligation with fresh buffer.",
+    citation=Citation("NEB cloning", "ligation"),
+)
 
 
 def ligation(*, extra: tuple[Component, ...] = (), title: str = "Ligate") -> Step:
@@ -144,6 +152,7 @@ def test_a_hole_renders_and_never_reads_as_a_value() -> None:
     assert NO_NUMBER in page
     assert "H23" in page
     assert "nobody published it" in page
+    assert "liuhlab/liulab-mbio#264" not in page
     assert (
         "1 number has no source"
         in [check.detail for check in protocol(Step("Ligate", holes=(hole,))).audit()][3]
@@ -207,12 +216,33 @@ def test_a_citation_naming_no_source_is_reported() -> None:
     assert "nowhere" in check.detail
 
 
+def test_a_troubleshooting_answer_cites_its_source_beside_it() -> None:
+    one = citing(
+        Protocol(
+            "x",
+            steps=(Step("Plate", troubleshooting=(FRESH_BUFFER,)),),
+            sources={"NEB cloning": Source("NEB cloning troubleshooting guide")},
+        )
+    )
+    assert list(one.sources) == ["NEB cloning"]
+    (answer,) = parse(render_html(one)).find_all(cls="trouble")[0].find_all("dd")
+    assert [a.attrs["href"] for a in answer.find_all("a", cls="cite")] == ["#source-neb-cloning"]
+
+
+def test_a_troubleshooting_citation_naming_no_source_is_reported() -> None:
+    one = Protocol("x", steps=(Step("Plate", troubleshooting=(FRESH_BUFFER,)),))
+    (check,) = [c for c in one.audit() if c.name == "sources"]
+    assert check.status == "fail"
+    assert "NEB cloning" in check.detail
+
+
 def test_everything_new_round_trips_through_json(tmp_path: Path) -> None:
     one = protocol(
         ligation(),
+        Step("Plate", troubleshooting=(FRESH_BUFFER,)),
         plates=(plates.plate("picked", 96, seating={"A1": "T7 DNA Ligase"}),),
         vessels=(Vessel("reservoir", kind="trough"),),
-        holes=(Hole("H1", "no polymerase is named", "undecided"),),
+        holes=(Hole("H1", "no polymerase is named", "undecided", issue="liuhlab/liulab-mbio#264"),),
     )
     path = write_protocol(one, tmp_path / "protocol.json")
     assert read_protocol(path) == one

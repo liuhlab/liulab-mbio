@@ -75,7 +75,7 @@ def render(
     first, and the page shows the one that fits it. A switch shows the view, first when
     `sequence_shown`, and a toggle in it shows its bottom strand, first when `both_strands`.
     """
-    fonts = "".join(_font_face(font) for font in (SANS, BOLD, MONO))
+    fonts = "".join(font_face(font) for font in (SANS, BOLD, MONO))
     zoom = {
         shape: "steps" if len(images) > 1 else "free"
         for shape, images in maps.items()
@@ -196,7 +196,12 @@ def _input(kind: str, name: str, value: str, text: str, on: bool) -> str:
 
 
 @cache
-def _font_face(font: Font) -> str:
+def font_face(font: Font) -> str:
+    """Return the ``@font-face`` rule embedding `font`, for a page inlining a drawing to write.
+
+    A drawing's text is pinned to the width this face measured it at, so a page that draws it as
+    text carries the face with it.
+    """
     data = base64.b64encode(font.woff2()).decode("ascii")
     weight = 700 if font.style == "Bold" else 400
     return (

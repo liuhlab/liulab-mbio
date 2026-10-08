@@ -51,6 +51,7 @@ Text is escaped, so write plain sentences; markup will show up as characters.
 
 Picture the reader: standing at the bench, gloves on, your page open, unable to ask you
 anything. Everything they need to decide what to do next is on the page, or it does not exist.
+Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before you write one.
 
 - **A header in three parts.** `summary` is one paragraph. `overview` is the facts they check
   before starting — what goes in, what comes out — a few words each, because it renders as a grid
@@ -86,6 +87,13 @@ A pipeline writes its protocol as `protocol.json` beside the page, and that file
 the user asks for what the pipeline did not anticipate — skip, add or reword a step — edit the
 file in place and render it again. The folder ends with one final `protocol.json` and one page:
 a run is one session's job, so keep no copies and no record of the edits.
+
+A run of several protocols writes `project.json` instead, holding every protocol in order, and a
+page each beside an index. Edit that one file and render the whole folder again:
+
+```sh
+pixi run liulab_mbio protocol render PLAN_DIR
+```
 
 Make simple edits straight in the JSON. Add a step with computed numbers in Python, so a builder
 computes them rather than you typing them:

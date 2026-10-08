@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.plot import draw_plate
-from liulab_mbio.plot.plate import EMPTY
+from liulab_mbio.plot.plate import EMPTY, PALETTE, PlateMap
 from liulab_mbio.plot.svg import Group, Rect
 from liulab_mbio.protocol.model import FORMATS, Plate
 
@@ -13,6 +13,20 @@ from liulab_mbio.protocol.model import FORMATS, Plate
 def drawing(wells: int, **rest: object):
     one = Plate("plate", wells, **rest)  # pyright: ignore[reportArgumentType]
     return draw_plate(one.name, one.rows, one.columns, one.row_labels, seating=one.seating)
+
+
+def seat(kinds: int) -> dict[str, str]:
+    return {f"A{n + 1}": f"kind {n}" for n in range(kinds)}
+
+
+def well_fills(laid: PlateMap) -> set[str]:
+    fills = set()
+    for shape in laid.shapes:
+        if isinstance(shape, Group):
+            (rect,) = shape.shapes
+            assert isinstance(rect, Rect)
+            fills.add(rect.fill)
+    return fills
 
 
 @pytest.mark.parametrize("wells", sorted(FORMATS))
@@ -35,12 +49,26 @@ def test_a_well_holding_something_is_filled_and_an_empty_one_is_not() -> None:
     assert isinstance(second, Rect)
     assert first.fill != EMPTY
     assert second.fill == EMPTY
-    assert laid.legend == (("UMI-1", "#e48b8b"),)
+    assert laid.legend == (("UMI-1", PALETTE[0]),)
 
 
 def test_each_distinct_content_gets_a_fill_of_its_own() -> None:
     laid = drawing(96, seating={"A1": "a", "A2": "b", "A3": "a"}).layout
     assert len({fill for _, fill in laid.legend}) == 2
+
+
+def test_a_plate_of_ten_kinds_keeps_a_fill_for_each() -> None:
+    laid = drawing(96, seating=seat(10)).layout
+    assert laid.kinds == 10
+    assert laid.legend == tuple(zip(seat(10).values(), PALETTE, strict=True))
+    assert well_fills(laid) == {EMPTY, *PALETTE}
+
+
+def test_a_plate_past_ten_kinds_draws_uncoloured_and_lists_none_of_them() -> None:
+    laid = drawing(96, seating=seat(11)).layout
+    assert laid.kinds == 11
+    assert laid.legend == ()
+    assert well_fills(laid) == {EMPTY}
 
 
 def test_a_drawing_is_laid_out_once_and_kept() -> None:

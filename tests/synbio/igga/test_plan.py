@@ -13,9 +13,10 @@ import pytest
 
 from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
-from liulab_mbio.cloning.plan import PRODUCT_FILE, PROTOCOL_DATA_FILE, PROTOCOL_FILE
+from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.io import read_record
-from liulab_mbio.protocol import read_protocol
+from liulab_mbio.protocol.model import read_project
+from liulab_mbio.protocol.render import INDEX_FILE, PROJECT_DATA_FILE
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.snapgene import write_dna
@@ -40,6 +41,8 @@ from liulab_synbio.igga.plan import (
 from liulab_synbio.igga.project import Project
 from liulab_synbio.igga.rounds import ROUND_FILE
 from liulab_synbio.igga.vector import cargo_enzyme
+
+from ...chains import whole
 
 HOST = "e-coli-k12"
 COMPLETENESS = 0.99
@@ -140,7 +143,8 @@ def pooled(inputs, tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def protocol(plan):
-    return plan.protocol()
+    """Every protocol of the run as one, which is what most of these tests ask about."""
+    return whole(plan.chain())
 
 
 def test_one_call_plans_every_round_and_every_part(plan):
@@ -161,15 +165,16 @@ def test_write_puts_every_file_in_one_directory_and_the_protocol_reads_back(writ
         ROUND_FILE.format(number=2),
         PRODUCT_FILE,
     ]
-    assert files.protocol_data.name == PROTOCOL_DATA_FILE
-    assert files.protocol.name == PROTOCOL_FILE
+    assert files.protocol_data.name == PROJECT_DATA_FILE
+    assert files.protocol[0].name == INDEX_FILE
     for path in (files.parts, files.barcodes, files.changes, *files.records):
         assert path.read_bytes()
-    assert len({path.parent for path in (files.parts, files.protocol, *files.records)}) == 1
-    back = read_protocol(files.protocol_data)
+    assert len({path.parent for path in (files.parts, *files.records)}) == 1
+    assert {path.parent for path in files.protocol} == {files.protocol_data.parent}
+    back = read_project(files.protocol_data)
     assert back.title
-    assert back.steps
-    assert files.protocol.read_text(encoding="utf-8")
+    assert [one.title for one in back.protocols]
+    assert all(path.read_text(encoding="utf-8") for path in files.protocol)
 
 
 def test_a_pool_writes_the_block_vector_each_position_closes_into(pooled):
@@ -205,7 +210,7 @@ def test_the_same_inputs_write_the_same_bytes(plan, tmp_path):
         (once.barcodes, twice.barcodes),
         (once.changes, twice.changes),
         (once.protocol_data, twice.protocol_data),
-        (once.protocol, twice.protocol),
+        *zip(once.protocol, twice.protocol, strict=True),
         *zip(once.records, twice.records, strict=True),
     ):
         assert one.read_bytes() == other.read_bytes(), one.name
@@ -478,7 +483,10 @@ def test_each_round_is_sized_for_the_completeness_asked_for(plan):
 
 def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(protocol):
     """Every page the count reaches states the chance asked for; the multiple is what it costs."""
-    assert protocol.overview["Completeness"] == "P 0.99, 51 colonies at the end"
+    assert (
+        protocol.overview["Completeness"]
+        == "0.99 chance nothing is missing, 51 colonies at the end"
+    )
     assert "51 colonies for a 0.99 chance that none of its 8 products is missing" in " ".join(
         protocol.highlights
     )
@@ -515,7 +523,7 @@ def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path)
     record = tmp_path / "prices.csv"
     record.write_text(PRICES, encoding="utf-8")
 
-    bill = dataclasses.replace(plan, prices=read_prices(record)).protocol().bill
+    bill = dataclasses.replace(plan, prices=read_prices(record)).chain().bill
 
     assert bill is not None
     blocks = bill.rows[0]
@@ -545,7 +553,7 @@ def test_a_vector_that_names_its_marker_plates_every_round_on_it(plan, carrier):
     """The marker is a fact in the record, so the drug follows from it and the hole is answered."""
     kanr = dataclasses.replace(carrier, features=(Feature("KanR", "CDS", (Segment(10, 100),)),))
 
-    protocol = dataclasses.replace(plan, vector=kanr).protocol()
+    protocol = whole(dataclasses.replace(plan, vector=kanr).chain())
 
     said = said_by(protocol)
     assert "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)" in said

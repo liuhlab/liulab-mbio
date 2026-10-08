@@ -150,29 +150,29 @@ def test_a_project_states_no_floor_and_no_route_by_default(tmp_path):
 
 def test_a_floor_and_a_route_are_stated_together(tmp_path):
     """A floor with no route says which designs are read and not how; a route alone reads none."""
-    made = read_project(write(tmp_path, validate_from=0, route="A"))
-    assert (made.validate_from, made.route) == (0, "A")
+    made = read_project(write(tmp_path, validate_from=0, route="barcode ligation"))
+    assert (made.validate_from, made.route) == (0, "barcode ligation")
 
-    with pytest.raises(ValueError, match="'A', 'B'"):
+    with pytest.raises(ValueError, match="'barcode ligation', 'index PCR'"):
         read_project(write(tmp_path, validate_from=3))
     with pytest.raises(ValueError, match="stated together"):
-        read_project(write(tmp_path, route="B"))
+        read_project(write(tmp_path, route="index PCR"))
 
 
-def test_a_route_a_project_reads_no_other_route(tmp_path):
-    with pytest.raises(ValueError, match="route is 'C'"):
-        read_project(write(tmp_path, validate_from=0, route="C"))
+def test_a_project_reads_no_route_but_the_two(tmp_path):
+    with pytest.raises(ValueError, match="route is 'DMX'"):
+        read_project(write(tmp_path, validate_from=0, route="DMX"))
 
 
 def test_a_floor_counts_fragments(tmp_path):
     with pytest.raises(ValueError, match="omit it to read nothing"):
-        read_project(write(tmp_path, validate_from=-1, route="A"))
+        read_project(write(tmp_path, validate_from=-1, route="barcode ligation"))
 
 
 def test_the_ap1_project_reads_every_design_back_by_index_pcr():
     made = read_project(DEMO)
 
-    assert (made.validate_from, made.route) == (0, "B")
+    assert (made.validate_from, made.route) == (0, "index PCR")
 
 
 def test_a_project_names_the_working_vector_it_moves_into_or_none(tmp_path):

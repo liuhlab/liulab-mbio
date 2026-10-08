@@ -357,8 +357,8 @@ DNA starts and stops is `Recombination.boundaries` rather than the junction's ow
 
 `plan_igga` is the way in. It builds a barcoded library of every combination of the part
 lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
-barcode and amino-acid change tables, a record for each round, the product and the protocol pair
-in one directory. The modules under it are its steps. `method` holds `IGGA`, the one method,
+barcode and amino-acid change tables, a record for each round, the product and a `protocol`
+folder of the run's protocols in one directory. The modules under it are its steps. `method` holds `IGGA`, the one method,
 checked when it is imported; `project` holds what one build chooses, checked as it is read;
 `standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
 takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the

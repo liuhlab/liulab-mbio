@@ -4,9 +4,16 @@ import pytest
 
 from liulab_mbio.bench.pcr import cycle_citation
 from liulab_mbio.bench.phenotype import Phenotype
-from liulab_mbio.bench.steps import dpni_step, pcr_step, phenotype_sentences
+from liulab_mbio.bench.plates import primer_plates
+from liulab_mbio.bench.steps import (
+    dpni_step,
+    pcr_step,
+    phenotype_sentences,
+    primer_plate_protocol,
+    primer_plate_steps,
+)
 from liulab_mbio.primers import Q5
-from liulab_mbio.protocol.model import Citation
+from liulab_mbio.protocol.model import Citation, Oligo, Protocol
 from liulab_mbio.sequence import Feature, Segment, Strand
 
 
@@ -84,3 +91,91 @@ def test_the_ribosome_binding_site_reads_as_english_either_way(
     phenotype = Phenotype((100, 800), coding, promoter, 50, True, annotated, None, None)
 
     assert phenotype_sentences(phenotype, ["GFP"])[1].startswith(sentence)
+
+
+def _index_oligos(count: int = 3) -> tuple[Oligo, ...]:
+    """Routine primers to order once, as an order sheet's rows."""
+    return tuple(Oligo(f"IDX{n}", "ACGTACGTACGTACGTACGT") for n in range(1, count + 1))
+
+
+def _plate_protocol(copies: int = 2) -> Protocol:
+    return primer_plate_protocol(
+        _index_oligos(),
+        wells=96,
+        copies=copies,
+        nanomoles=25.0,
+        stock_um=100.0,
+        working_um=1.0,
+        working_ul=100.0,
+    )
+
+
+def test_a_primer_plate_protocol_produces_one_item_per_plate() -> None:
+    one = _plate_protocol()
+
+    assert one.consumes == ()
+    assert [item.name for item in one.produces] == [
+        "primer stock plate",
+        "primer working plate 1",
+        "primer working plate 2",
+    ]
+    assert one.produces[0].spec == ("100 µM",)
+    assert one.produces[1].spec[0] == "1 µM"
+    assert {item.storage for item in one.produces} == {"-20 °C"}
+    assert [plate.name for plate in one.plates] == [item.name for item in one.produces]
+
+
+def test_a_working_plate_carries_the_rule_that_it_is_never_put_back() -> None:
+    one = _plate_protocol()
+    stored = one.steps[-1]
+
+    assert [(material.name, rule.subject) for material, rule in one.rules_for(stored)] == [
+        ("primer working plate 1", "return to the freezer"),
+        ("primer working plate 2", "return to the freezer"),
+    ]
+    assert {rule.kind for _, rule in one.rules_for(stored)} == {"forbids"}
+    assert [check.status for check in one.audit()] == ["pass", "pass", "pass", "pass"]
+
+
+def test_the_primers_ordered_once_are_the_protocols_own_order_sheet() -> None:
+    one = _plate_protocol()
+
+    assert [oligo.name for oligo in one.oligos] == ["IDX1", "IDX2", "IDX3"]
+    assert one.steps[0].title == "Order the primers"
+
+
+def test_the_split_moves_every_stock_well_into_the_same_well_of_each_copy() -> None:
+    one = _plate_protocol()
+    (split,) = [step for step in one.steps if step.transfers]
+
+    assert [transfer.title for transfer in split.transfers] == [
+        "Stock into primer working plate 1",
+        "Stock into primer working plate 2",
+    ]
+    moves = split.transfers[0].moves
+    assert len(moves) == 3
+    assert all(move.source.well == move.destination.well for move in moves)
+    assert {move.volume_ul for move in moves} == {1.0}
+    assert "99 µL of nuclease-free water" in split.instructions[0]
+
+
+def test_the_resuspension_volume_reaches_the_stock_concentration() -> None:
+    made = primer_plates(["IDX1"], wells=96, copies=1)
+    steps = primer_plate_steps(
+        made, nanomoles=25.0, stock_um=100.0, working_um=1.0, working_ul=100.0, diluent="water"
+    )
+
+    assert "250 µL of water" in steps[1].instructions[0]
+
+
+def test_a_primer_plate_protocol_refuses_a_working_plate_no_weaker_than_the_stock() -> None:
+    with pytest.raises(ValueError, match="dilutes nothing"):
+        primer_plate_protocol(
+            _index_oligos(),
+            wells=96,
+            copies=1,
+            nanomoles=25.0,
+            stock_um=10.0,
+            working_um=10.0,
+            working_ul=100.0,
+        )

@@ -22,6 +22,7 @@ from liulab_mbio.bench.pcr import (
     pcr_reaction,
 )
 from liulab_mbio.bench.phenotype import Phenotype
+from liulab_mbio.bench.plates import PrimerPlates, compact, primer_plates, wells_of
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.enzymes import Enzyme
 from liulab_mbio.primers.polymerase import ONETAQ, Polymerase
@@ -31,12 +32,17 @@ from liulab_mbio.protocol.model import (
     Citation,
     Gel,
     Incubation,
+    Item,
     Lane,
     Material,
+    Oligo,
+    Protocol,
     Reference,
+    Rule,
     Step,
     Timer,
     Troubleshooting,
+    number,
 )
 from liulab_mbio.sequence import SequenceRecord
 
@@ -87,6 +93,25 @@ PLATE_REFERENCE = Reference(
     "T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal "
     "and IPTG plate",
     url="https://doi.org/10.1021/acssynbio.8b00333",
+)
+
+
+#: Where a plate of primers waits between runs.
+PRIMER_PLATE_STORAGE = "-20 °C"
+
+#: What a working plate may never do. It hangs on the plate as a material, so it reaches every
+#: step naming that plate and no edit to a step can drop it.
+WORKING_PLATE_SINGLE_USE = Rule(
+    "forbids",
+    "return to the freezer",
+    "a thawed working plate is used once and discarded",
+)
+
+#: What the plates are made and split with.
+PRIMER_PLATE_EQUIPMENT = (
+    "Multichannel pipette",
+    "Plate shaker",
+    "Plate centrifuge",
 )
 
 
@@ -438,7 +463,7 @@ def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
 def quantify_step(amounts: Sequence[Amount]) -> Step:
     """Return the step that measures what the next reaction is about to take."""
     wanted = tuple(
-        f"{amount.name}: {amount.pmol:g} pmol is {amount.nanograms:g} ng, so "
+        f"{amount.name}: {number(amount.pmol)} pmol is {amount.nanograms:g} ng, so "
         f"{amount.nanograms / DNA_VOLUME_UL:.0f} ng/µL or more fits in {DNA_VOLUME_UL:g} µL."
         for amount in amounts
     )
@@ -672,6 +697,260 @@ def sequencing_step(
             ),
         ),
     )
+
+
+def primer_plate_steps(
+    made: PrimerPlates,
+    *,
+    nanomoles: float,
+    stock_um: float,
+    working_um: float,
+    working_ul: float,
+    diluent: str = "nuclease-free water",
+) -> tuple[Step, ...]:
+    """Return the steps that turn an order of dried primers into a stock plate and its copies.
+
+    Parameters
+    ----------
+    made
+        The plates, and where each primer sits in them.
+    nanomoles
+        What the vendor delivers in one well, which sets the volume it is resuspended in.
+    stock_um, working_um
+        What the stock plate and each working plate hold, µM.
+    working_ul
+        What one working well holds.
+    diluent
+        What the primers are resuspended and diluted in.
+
+    Raises
+    ------
+    ValueError
+        If an amount is not positive, or a working plate dilutes nothing.
+
+    Examples
+    --------
+    >>> made = primer_plates(["IDX1"], wells=96)
+    >>> steps = primer_plate_steps(made, nanomoles=25, stock_um=100, working_um=1, working_ul=100)
+    >>> [step.title for step in steps][:2]
+    ['Order the primers', 'Resuspend the primers to 100 µM']
+    """
+    for label, value in (
+        ("the delivered amount", nanomoles),
+        ("the stock concentration", stock_um),
+        ("the working concentration", working_um),
+        ("the working volume", working_ul),
+    ):
+        if value <= 0:
+            raise ValueError(f"primer plates: {label} is {number(value)}, which is not positive")
+    if working_um >= stock_um:
+        raise ValueError(
+            f"a working plate at {number(working_um)} µM dilutes nothing from a stock plate at "
+            f"{number(stock_um)} µM"
+        )
+    stock, working = made.stock, made.working
+    count = len(stock.seating)
+    resuspend_ul = nanomoles * 1000.0 / stock_um
+    carry_ul = working_ul * working_um / stock_um
+    top_up_ul = working_ul - carry_ul
+    sources = wells_of(stock, count=count)
+    plural = "" if len(working) == 1 else "s"
+    return (
+        Step(
+            "Order the primers",
+            instructions=(
+                f"Order every primer on the sheet below as one dried {stock.wells}-well plate.",
+            ),
+            expected=(f"A sealed {stock.wells}-well plate holding {count} dried primers.",),
+        ),
+        Step(
+            f"Resuspend the primers to {number(stock_um)} µM",
+            instructions=(
+                f"Add {number(resuspend_ul)} µL of {diluent} to each of the {count} wells.",
+                "Seal the plate, shake it until every pellet is in solution, and spin it down.",
+            ),
+            cautions=("Spin the plate down before taking the seal off.",),
+            expected=(f"Every well holds {number(resuspend_ul)} µL at {number(stock_um)} µM.",),
+        ),
+        Step(
+            "Seat the stock plate",
+            instructions=(
+                f"Check the supplier's plate map against the {stock.name} map below, well by well.",
+                f"Write {stock.name} and the date on the plate skirt.",
+            ),
+            expected=(f"Every well of {stock.name} holds the primer the map below names.",),
+        ),
+        Step(
+            f"Split {len(working)} working plate{plural} at {number(working_um)} µM",
+            instructions=(
+                f"Add {number(top_up_ul)} µL of {diluent} to the first {count} wells of each "
+                f"working plate.",
+                f"Move {number(carry_ul)} µL from each well of {stock.name} into the same well "
+                f"of every working plate.",
+                "Seal each plate, shake it, and spin it down.",
+            ),
+            transfers=tuple(
+                compact(sources, one, carry_ul, title=f"Stock into {one.name}") for one in working
+            ),
+            expected=(
+                f"Each working plate holds {number(working_ul)} µL at {number(working_um)} µM in "
+                f"{count} wells.",
+            ),
+        ),
+        Step(
+            "Label the plates and store them",
+            instructions=(
+                f"Label {listed((stock.name, *(one.name for one in working)))} with the date.",
+                f"Store every plate at {PRIMER_PLATE_STORAGE}.",
+                "Thaw one working plate for a run, and throw it away once the run is set up.",
+            ),
+            expected=(
+                f"{1 + len(working)} labelled plates at {PRIMER_PLATE_STORAGE}, "
+                f"{len(working)} of them ready to run from.",
+            ),
+        ),
+    )
+
+
+def primer_plate_protocol(
+    oligos: Sequence[Oligo],
+    *,
+    wells: int,
+    copies: int,
+    nanomoles: float,
+    stock_um: float,
+    working_um: float,
+    working_ul: float,
+    diluent: str = "nuclease-free water",
+    title: str = "Primer plates",
+    stock_name: str = "primer stock plate",
+    working_name: str = "primer working plate",
+) -> Protocol:
+    """Return the whole protocol that lays a run's routine primers out as plates.
+
+    The primers are ordered once and seated once, so a later protocol names a plate and a well
+    rather than a primer. It produces one item per plate: the stock plate, and one working plate
+    per copy, which is thawed for one run and thrown away.
+
+    Parameters
+    ----------
+    oligos
+        The primers to order, in the order they are seated. Their names are what the plates seat.
+    wells
+        The format every plate comes in.
+    copies
+        How many working plates to split, one run each.
+    nanomoles, stock_um, working_um, working_ul, diluent
+        As `primer_plate_steps` takes them.
+    title
+        The page heading, for a run laying out more than one set of primers.
+    stock_name, working_name
+        What the plates are called, which is what a later protocol names.
+
+    Raises
+    ------
+    ValueError
+        As `liulab_mbio.bench.plates.primer_plates` and `primer_plate_steps` raise it.
+
+    Examples
+    --------
+    >>> order = [Oligo("IDX1", "ACGTACGTACGTACGTACGT")]
+    >>> one = primer_plate_protocol(
+    ...     order, wells=96, copies=2, nanomoles=25, stock_um=100, working_um=1, working_ul=100
+    ... )
+    >>> [item.name for item in one.produces]
+    ['primer stock plate', 'primer working plate 1', 'primer working plate 2']
+    """
+    made = primer_plates(
+        [oligo.name for oligo in oligos],
+        wells=wells,
+        copies=copies,
+        stock=stock_name,
+        working=working_name,
+    )
+    steps = primer_plate_steps(
+        made,
+        nanomoles=nanomoles,
+        stock_um=stock_um,
+        working_um=working_um,
+        working_ul=working_ul,
+        diluent=diluent,
+    )
+    count = len(oligos)
+    plural = "" if copies == 1 else "s"
+    diluent_ul = _diluent_ul(
+        count,
+        copies,
+        nanomoles=nanomoles,
+        stock_um=stock_um,
+        working_um=working_um,
+        working_ul=working_ul,
+    )
+    return Protocol(
+        title,
+        summary=(
+            f"Order {count} primers as one {wells}-well plate, resuspend them to "
+            f"{number(stock_um)} µM, and split {copies} working plate{plural} at "
+            f"{number(working_um)} µM, one of them thawed for each run that needs these primers."
+        ),
+        overview={
+            "Primers": f"{count} in a {wells}-well plate",
+            "Stock plate": f"{number(stock_um)} µM",
+            "Working plates": f"{copies} at {number(working_um)} µM",
+            "Storage": PRIMER_PLATE_STORAGE,
+        },
+        produces=(
+            Item(
+                made.stock.name,
+                f"{count} primers seated in a {wells}-well plate",
+                spec=(f"{number(stock_um)} µM",),
+                storage=PRIMER_PLATE_STORAGE,
+            ),
+            *(
+                Item(
+                    one.name,
+                    f"a copy of {made.stock.name}, used for one run",
+                    spec=(f"{number(working_um)} µM", f"{number(working_ul)} µL per well"),
+                    storage=PRIMER_PLATE_STORAGE,
+                )
+                for one in made.working
+            ),
+        ),
+        materials=(
+            Material(diluent, amount=f"{number(diluent_ul)} µL in all"),
+            Material(f"Empty {wells}-well plate", amount=f"{copies} for the working plates"),
+            Material("Adhesive plate seals", amount=f"{1 + copies} seals"),
+            *(
+                Material(
+                    one.name,
+                    storage=PRIMER_PLATE_STORAGE,
+                    amount=f"{number(working_ul)} µL per well",
+                    note=f"{number(working_um)} µM",
+                    rules=(WORKING_PLATE_SINGLE_USE,),
+                )
+                for one in made.working
+            ),
+        ),
+        oligos=tuple(oligos),
+        equipment=PRIMER_PLATE_EQUIPMENT,
+        plates=made.plates,
+        steps=steps,
+    )
+
+
+def _diluent_ul(
+    count: int,
+    copies: int,
+    *,
+    nanomoles: float,
+    stock_um: float,
+    working_um: float,
+    working_ul: float,
+) -> float:
+    """Return what the whole run takes of the diluent: the resuspension and every dilution."""
+    resuspend_ul = nanomoles * 1000.0 / stock_um
+    top_up_ul = working_ul - working_ul * working_um / stock_um
+    return count * (resuspend_ul + copies * top_up_ul)
 
 
 def phenotype_sentences(phenotype: Phenotype, inserts: Sequence[str]) -> tuple[str, ...]:

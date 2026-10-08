@@ -197,14 +197,80 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .holes ul, .holes-here { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
 .hole { border: 1px dashed var(--fail); border-radius: var(--radius); padding: 0.45rem 0.7rem; background: var(--fail-soft); }
 .hole-id { font-weight: 700; }
-.hole-kind, .hole-issue { color: var(--muted); }
+.hole-kind { color: var(--muted); }
 .is-holed .num { color: var(--fail); }
 
-/* The plate, drawn by `plot` and embedded here, beside the map, the sequence view and the gel. */
-.plate svg { max-width: 100%; height: auto; }
+/* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
+   laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
+   gel is drawn here instead, and has its own colours. */
+.drawing svg { display: block; max-width: 100%; height: auto; background: #ffffff; }
+.drawing.rows { display: grid; gap: 0.7rem; }
+.row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
+
+/* A project folder: the run's nav bar across the top, a column either side of the page. */
+.site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
+.site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
+.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame .page { padding-block: 1.5rem 4rem; }
+.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
+.column ol { margin: 0; padding-left: 1.3rem; }
+.column li { margin-bottom: 0.3rem; }
+.column a { color: var(--muted); text-decoration: none; }
+.column a:hover { color: var(--ink); text-decoration: underline; }
+.column .is-here > a { color: var(--ink); font-weight: 600; }
+.neighbours { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.9rem; }
+.chain-pages { margin: 0; padding-left: 1.4rem; }
+.chain-pages li { margin-bottom: 0.3rem; }
+.chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+
+/* The run's index: what it explains, how it fits together and how long it takes. */
+.topic p:last-child { margin-bottom: 0; }
+
+/* The flow chart is boxes and names in HTML, never a drawing: it is found by browser find,
+   it is selectable and it prints with no font embedded. */
+.flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
+.flow-box:hover { text-decoration: underline; }
+.flow-title { font-weight: 600; }
+.flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.flow-hand-item { position: relative; }
+/* The arrow is decoration: what it means is written beside it as words. */
+.flow-hand-item::before { content: "\2193"; position: absolute; left: -1.2rem; color: var(--muted); }
+.flow-item { font-weight: 600; }
+.flow-from { color: var(--accent); }
+.is-dangling .flow-from { color: var(--fail); }
+.flow-end { margin: 0.5rem 0 0; }
+
+/* Seven columns in one page column: the marks standing for a missing number wrap rather than
+   push the count of untimed steps off the edge. */
+.schedule { font-size: 0.85rem; }
+.schedule td, .schedule th { vertical-align: top; }
+.schedule .num { white-space: normal; }
+.schedule td:first-child { white-space: nowrap; }
+/* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
+.wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
+.schedule tbody tr:not(.wait-row) td { border-bottom: none; }
+.waits { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.wait { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.step-section { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.4rem 0 0.4rem; }
+.cited-by, .used-in { color: var(--muted); font-size: 0.9em; }
+.kit-list .vessels { display: grid; gap: 0.3rem; }
+.hole a { white-space: nowrap; }
+
+/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+@media (max-width: 70rem) {
+  .frame { display: flex; flex-direction: column; max-width: 54rem; }
+  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column li { margin-bottom: 0; }
+  .column .is-here > a { text-decoration: underline; }
+}
 
 @media print {
   :root {
@@ -223,7 +289,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
-  .toolbar, .toc, button.copy, .timer-action { display: none !important; }
+  /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
+  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .frame { display: block; max-width: none; }
+  .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
   .step.is-done { opacity: 1; }
   .caution, .expected { border: 1px solid var(--line); }
@@ -233,7 +302,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .oligo-checks:not([open]) > ul { display: block; }
   .oligo-checks::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
-  figure, table, .trouble dt, .gel { break-inside: avoid; }
+  figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
+  .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }

@@ -28,11 +28,11 @@ One direction, bottom to top — nothing lower imports anything higher.
 | biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase`, `reaction` | shipped enzyme data, cut sites, domestication; reverse translation, whole-sequence codon choice, and whether a span reads in frame without a stop; distance-separated barcode sets and how far apart one stands; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds; one tube, each molecule's role in it and the enzymes acting |
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF; `plate` draws a plate's wells on the same substrate |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
-| protocol | `protocol/` | `model`, read from and written to JSON, and `render`, its self-contained HTML page |
+| protocol | `protocol/` | `model`, read from and written to JSON, `figures`, a named figure a step shows, and `render`, its self-contained HTML page |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters and rules keyed by catalogue number; `prices`, a price record the user holds and the bill it makes |
 | pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: those modules again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
 | method | `liulab_synbio.dmx`, `liulab_synbio.seating` | the validating experiment's side: the barcode kit a user holds, its two routes, a well's derived address, each route's depth floor and the pass rule; and one part a well in its carrier, which ends in no library |
-| pipeline | `liulab_synbio.igga/` | synbio's, and its only pipeline so far: `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `vector`, `stages`, `rounds`, `coverage`, `bench`, `steps`, joined by `plan` |
+| pipeline | `liulab_synbio.igga/` | synbio's, and its only pipeline so far: `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `vector`, `stages`, `rounds`, `coverage`, `bench`, `figures`, `steps`, joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: each package's root app mounts one sub-app per feature it holds, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
@@ -41,8 +41,8 @@ product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
 `cloning.gateway.plan_gateway` writes those four, and the entry clone as a fifth where it
 planned a BP reaction.
 `liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
-amino-acid change tables, a record per round, a block vector per position, the product, and
-those same two protocol files. The
+amino-acid change tables, a record per round, a block vector per position, the product, and a
+`protocol` folder: the run as a chain of protocols, one page each. The
 method is code and a project is a file: `docs/adr/0010-method-in-code.md` draws that line.
 A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
@@ -137,9 +137,10 @@ Four traps:
 
 ## Writing rules
 
-Three rules, all enforced by `vale`: be concise; agent-facing documents have word caps;
-human-facing prose avoids jargon and stays readable. Read `docs/agents/writing.md` before
-writing either kind — the caps are lower than you expect, and this file is subject to one.
+Four rules, two enforced by `vale`: be concise; agent-facing documents have word caps;
+human-facing prose avoids jargon and stays readable; and protocol text is written for the
+bench. Read `docs/agents/writing.md` before writing any of them — the caps are lower than you
+expect, and this file is subject to one.
 
 ### Comments and docstrings are short
 

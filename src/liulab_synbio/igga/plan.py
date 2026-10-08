@@ -32,14 +32,17 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.bench.pools import pool_sheet, primer_inventory
+from liulab_mbio.bench.pools import oligo_record, pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
-from liulab_mbio.cloning.plan import as_record, status, write_protocol_files
+from liulab_mbio.cloning.plan import as_record, status
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
-from liulab_mbio.protocol.model import Protocol
+
+# A project is the input file here and a chain of protocols there; both keep their names.
+from liulab_mbio.protocol.model import Project as Chain
+from liulab_mbio.protocol.render import write_project_files
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
@@ -48,6 +51,7 @@ from liulab_synbio import dmx
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import (
@@ -64,7 +68,7 @@ from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, wr
 from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
 from liulab_synbio.igga.steps import RoundBench
-from liulab_synbio.igga.steps import protocol as protocol_for
+from liulab_synbio.igga.steps import project as project_for
 from liulab_synbio.igga.vector import (
     Destination,
     Site,
@@ -97,6 +101,11 @@ READ_PRIMER_FILE = "library-read-primers.tsv"
 #: serves, as the round records are numbered by their round.
 BLOCK_VECTOR_FILE = "block-vector-{number}.dna"
 
+#: The folder the run's protocols are written into, beside the sheets and the records. A
+#: folder and not a flat pair: a project names its own data file, and a run reads the
+#: library's choices out of a file of that name already.
+PROTOCOL_DIR = "protocol"
+
 
 @dataclass(frozen=True, slots=True)
 class Files:
@@ -113,14 +122,18 @@ class Files:
     records
         One annotated record a round, the last of them the representative construct.
     protocol_data
-        The bench protocol as JSON, which ``protocol render`` turns back into a page.
+        The run's protocols as one JSON file, which ``protocol render`` turns back into pages.
     protocol
-        The interactive bench protocol, as one self-contained HTML page rendered from
-        `protocol_data`.
+        Every page rendered from `protocol_data`: the index first, then one page a protocol,
+        then the two pages the run shares.
     pool, pool_primers
         The oligo pool to order and the primers that amplify it. Both are ``None`` where the
         project names no primer set, because the primer sites are templated on the oligo and
         nothing can be written without them.
+    oligo
+        One oligo of the pool as a record, carrying the three primer roles at the sites it spells
+        them: what `liulab_synbio.igga.figures.pool_pcr_figure` is drawn over. ``None`` wherever
+        the pool is.
     read_primers
         The pairs that read the finished library back, designed against the simulated records:
         linkage, representation, and representation again after the move into a working vector.
@@ -135,9 +148,10 @@ class Files:
     changes: Path
     records: tuple[Path, ...]
     protocol_data: Path
-    protocol: Path
+    protocol: tuple[Path, ...]
     pool: Path | None = None
     pool_primers: Path | None = None
+    oligo: Path | None = None
     read_primers: Path | None = None
     block_vectors: tuple[Path, ...] = ()
 
@@ -151,9 +165,10 @@ class Files:
             *self.records,
             *self.block_vectors,
             self.protocol_data,
-            self.protocol,
+            *self.protocol,
             self.pool,
             self.pool_primers,
+            self.oligo,
             self.read_primers,
         )
         return tuple(path for path in written if path is not None)
@@ -292,9 +307,9 @@ class LibraryPlan:
         """The worst status of any check."""
         return status(self.checks)
 
-    def protocol(self) -> Protocol:
-        """Return the bench protocol for this plan, covering every round as one experiment."""
-        return protocol_for(
+    def chain(self) -> Chain:
+        """Return this plan as the chain of protocols the bench works through, in order."""
+        return project_for(
             scheme=self.scheme,
             positions=self.project.positions,
             barcode_length=self.project.barcode.length,
@@ -316,10 +331,12 @@ class LibraryPlan:
             pool_sheet=POOL_FILE,
             primer_sheet=POOL_PRIMER_FILE,
             block_vectors=self.named_block_vectors,
+            block_records=self.block_vectors,
             working=self.working,
             reads=self.reads,
             marks=self.project.marks,
             linkage_fidelity=self.project.linkage_fidelity,
+            primer_plates=self.project.primer_plates,
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -327,8 +344,8 @@ class LibraryPlan:
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
         `BARCODE_FILE`, `CHANGE_FILE` and `BLOCK_VECTOR_FILE`, by `liulab_synbio.igga.rounds`
-        for the records and by `liulab_mbio.cloning.plan` for the protocol pair, and a second run
-        over the same inputs writes the same bytes.
+        for the records and by `liulab_mbio.protocol.render` inside `PROTOCOL_DIR`, and a second
+        run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -345,13 +362,23 @@ class LibraryPlan:
         for number, one in enumerate(self.block_vectors, 1):
             blocks.append(out / BLOCK_VECTOR_FILE.format(number=number))
             write_dna(one.record, blocks[-1])
-        written = write_protocol_files(self.protocol(), out)
-        pool = primers = None
+        pool = primers = oligo = None
         if self.pool is not None:
             pool = out / POOL_FILE
             pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
             primers = out / POOL_PRIMER_FILE
             primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
+            oligo = out / OLIGO_FILE
+            write_dna(
+                oligo_record(
+                    self.pool.pool.oligos[0],
+                    layout=self.pool.pool.layout,
+                    primers=self.pool.pool.primers,
+                ),
+                oligo,
+            )
+        # The pages draw the records beside them, so every record is written before they render.
+        written = write_project_files(self.chain(), out / PROTOCOL_DIR)
         reads = out / READ_PRIMER_FILE
         reads.write_text(read_sheet(self.reads), encoding="utf-8")
         return Files(
@@ -360,9 +387,10 @@ class LibraryPlan:
             changes,
             records,
             written.data,
-            written.page,
+            (written.index, *written.protocols, written.reagents, written.references),
             pool,
             primers,
+            oligo,
             reads,
             tuple(blocks),
         )

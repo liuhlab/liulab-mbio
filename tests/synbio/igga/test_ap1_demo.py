@@ -5,6 +5,7 @@ The inputs are `docs/examples/ap1-library`, specified by `docs/research/ap1-demo
 the blocks that make it, not on how the design reached them.
 """
 
+import re
 from collections import Counter
 from dataclasses import replace
 from itertools import groupby
@@ -24,6 +25,8 @@ from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo, working_vector
 
+from ...chains import whole
+
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library"
 
 #: The enzymes the method reserves: the three a round uses, and BsmBI, which seats a part in its
@@ -38,6 +41,12 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 @pytest.fixture(scope="module")
 def plan():
     return plan_igga(DEMO / "project.json")
+
+
+@pytest.fixture(scope="module")
+def protocol(plan):
+    """Every protocol of the run as one, which is what most of these tests ask about."""
+    return whole(plan.chain())
 
 
 def test_the_demo_plans_every_part_and_the_whole_library(plan):
@@ -149,9 +158,9 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
 
 
-def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(plan):
+def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(protocol):
     """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
-    row = next(one for one in plan.protocol().bill.rows if one.item.endswith("oligo pool"))
+    row = next(one for one in protocol.bill.rows if one.item.endswith("oligo pool"))
     assert (row.quantity, row.unit) == (131, "oligos")
     assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
@@ -181,7 +190,7 @@ def rerouted(plan, **changes):
 
 def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
     one = plan.validation
-    assert (one.route.name, one.floor, len(one.designs)) == ("B", 0, 72)
+    assert (one.route.name, one.floor, len(one.designs)) == ("index PCR", 0, 72)
     assert one.wells == 288 == 72 * 4
     assert [len(picked.labels) for picked in one.picked] == [288]
     assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
@@ -212,18 +221,18 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     """Cargo validation is optional, and a project that asks for none gets none."""
     polyclonal = rerouted(plan, validate_from=None, route=None)
     assert polyclonal.validation is None
-    titles = [step.title for step in polyclonal.protocol().steps]
+    titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
-    assert titles[0] == "Order the oligo pool and the primers that amplify it"
-    assert titles[4] == "Pool each part list"
+    assert "Order the oligo pool" in titles
+    assert titles[titles.index("Order the oligo pool") + 4] == "Pool each part list"
 
 
-def test_the_demo_emits_a_protocol_on_each_route(plan):
+def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     """One set of parts, two project files: a second project is never a second branch."""
-    route_b = plan.protocol()
-    route_a = rerouted(plan, route="A").protocol()
-    assert "Amplify each well with its own pair" in [one.title for one in route_b.steps]
-    assert "Barcode each well in lysate" in [one.title for one in route_a.steps]
+    index_pcr = protocol
+    ligation = whole(rerouted(plan, route="barcode ligation").chain())
+    assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
+    assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
     pcrs = ["H29", "H30"]
     # Block assembly holds nothing open: every position has a destination presenting its own
     # entry overhang, and NEB's kit table sizes the reaction.
@@ -235,52 +244,75 @@ def test_the_demo_emits_a_protocol_on_each_route(plan):
     # backbone the rounds ran in frees the cargo itself, so the release is written rather than
     # held open, and the one hole left is H24, over the assembly nobody sizes.
     final = ["H31", "H31", "H24"]
-    assert [hole.id for step in route_b.steps for hole in step.holes] == [
+    assert [hole.id for step in index_pcr.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
-        "B1",
-        "B2",
+        "IDX1",
+        "IDX2",
         *linkage,
         *final,
     ]
-    assert [hole.id for step in route_a.steps for hole in step.holes] == [
+    assert [hole.id for step in ligation.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
         *linkage,
         *final,
     ]
-    for one in (route_a, route_b):
+    for one in (ligation, index_pcr):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
 
 
-def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(plan):
+def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):
+    """A step builder formats it as the page does, so no line reads ``7.27e-07``."""
+    grow = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
+    assert "At that count the chance a named product is missing is 7.27 × 10⁻⁷." in grow.expected
+    assert not [line for one in protocol.steps for line in one.expected if re.search(r"\de-", line)]
+
+
+def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
+    """Every pmol a round states goes through the page's own formatter, not ``{:g}``."""
+    said = {one.title: one.expected for one in protocol.steps}
+    assert said["Round 1: clean both digests up"] == (
+        "DMX-iGGA, opened: 0.00605 pmol is 20 ng at 5363 bp.",
+        "N part list, released: 0.00605 pmol is 2.08 ng at 559 bp.",
+    )
+    assert said["Round 1: ligate the N part list into the library"] == (
+        "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the "
+        "opened library is the 1:1 molar ratio.",
+    )
+    assert said["Round 1: clean the ligation up"] == (
+        "Enough for one electroporation: 100 ng is 0.0264 pmol at 6161 bp.",
+    )
+
+
+def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
     """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
-    titles = [step.title for step in plan.protocol().steps]
-    assert titles[:4] == [
-        "Order the oligo pool and the primers that amplify it",
+    titles = [step.title for step in protocol.steps]
+    start = titles.index("Order the oligo pool")
+    assert titles[start : start + 4] == [
+        "Order the oligo pool",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
         "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
-    note = next(one.note for one in plan.protocol().materials if one.name == "N part list")
+    note = next(one.note for one in protocol.materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
 
 
-def test_the_same_dna_is_billed_once(plan):
+def test_the_same_dna_is_billed_once(plan, protocol):
     """A pool buys oligos and primers; a project without one buys blocks. Never both."""
-    pooled = [row.item for row in plan.protocol().bill.rows]
+    pooled = [row.item for row in protocol.bill.rows]
     assert "Synthesised blocks" not in pooled
     assert pooled[:2] == ["AP-1 DESynR oligo pool", "Pool amplification primers"]
-    primers = next(row for row in plan.protocol().bill.rows if row.item.endswith("primers"))
+    primers = next(row for row in protocol.bill.rows if row.item.endswith("primers"))
     assert (primers.quantity, primers.unit) == (74, "primers")
-    unpooled = [row.item for row in replace(plan, pool=None).protocol().bill.rows]
+    unpooled = [row.item for row in replace(plan, pool=None).chain().bill.rows]
     assert unpooled[0] == "Synthesised blocks"
     assert "Pool amplification primers" not in unpooled
 
 
-def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(plan):
+def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(protocol):
     """A 350 nt pool sits in Twist's top band; nothing sources the count for PCR2's template."""
-    protocol = plan.protocol()
     steps = {one.title.split(":")[0]: one for one in protocol.steps}
     first, second = steps["PCR1"], steps["PCR2"]
 
@@ -292,9 +324,8 @@ def test_pcr1_cites_its_cycles_from_the_pool_length_and_pcr2_leaves_them_blank(p
     assert [hole.id for hole in second.holes] == ["H30"]
 
 
-def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
+def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(protocol):
     """The program belongs to the cells, so the settings and their source sit on one row."""
-    protocol = plan.protocol()
     cells = next(one for one in protocol.materials if one.catalog == "60242-2")
     assert cells.citation == Citation("MA133", "p. 4-5")
     assert "1800 V, 600 Ω and 10 µF" in cells.note
@@ -303,9 +334,11 @@ def test_the_pulse_prints_on_the_row_that_names_the_cells_manual(plan):
     assert {"MA133", "Qian SI"} <= set(protocol.sources)
 
 
-def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(plan):
+def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_nebs_table(
+    plan, protocol
+):
     """Each cargo closes into its own position's vector, in NEB's own kit reaction."""
-    step = next(one for one in plan.protocol().steps if one.title.startswith("Assemble"))
+    step = next(one for one in protocol.steps if one.title.startswith("Assemble"))
     opened = len(plan.rounds[0].destination) - plan.rounds[0].excised.length
 
     table = step.tables[0]
@@ -325,9 +358,9 @@ def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_
     )
 
 
-def test_the_final_assembly_is_written_as_what_it_cannot_say(plan):
+def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
     """Five steps, every one of them there, and a hole wherever no number is sourced."""
-    steps = plan.protocol().steps[-5:]
+    steps = protocol.steps[-5:]
 
     assert [one.title for one in steps] == [
         "Pick the working vector",
@@ -353,16 +386,16 @@ def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
     stock = SequenceRecord("ACGATCGTTA" * 20, topology="circular", name="pWORK")
     working = working_vector(stock, [], site=(0, 1))
 
-    steps = replace(plan, working=working).protocol().steps[-5:]
+    steps = whole(replace(plan, working=working).chain()).steps[-5:]
 
     assert working.enzyme.name in steps[0].title
     assert steps[2].programs[0].title == "Golden Gate assembly"
     assert [hole.id for step in steps for hole in step.holes] == ["H24"]
 
 
-def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
-    """Route B pours picked and index plates, and each now belongs to a plate the page draws."""
-    one = plan.protocol()
+def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):
+    """Index PCR pours picked and index plates, and each now belongs to a plate the page draws."""
+    one = protocol
     named = {
         well.plate
         for step in one.steps
@@ -379,13 +412,90 @@ def test_the_read_backs_plates_are_declared_and_every_well_resolves(plan):
     assert [c.status for c in one.audit() if c.name == "wells"] == ["pass"]
 
 
-def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(plan, tmp_path):
+def test_the_demo_names_kanamycin_wherever_the_paper_named_carbenicillin(protocol, tmp_path):
     """The destination is KanR, so no plate, well or broth carries the drug D11 rules out.
 
     Asserted on the file the pipeline ships, so a vessel's or a plate's wording counts too.
     """
-    written = write_protocol(plan.protocol(), tmp_path / "protocol.json").read_text()
+    written = write_protocol(protocol, tmp_path / "protocol.json").read_text()
 
     assert "kanamycin" in written
     assert "carbenicillin" not in written
     assert "ampicillin" not in written
+
+
+def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
+    """What one page hands the next is the point of the split, so the chain is checked."""
+    chain = plan.chain()
+
+    assert [one.title for one in chain.protocols] == [
+        "Primer plates",
+        "Cargo ordering and pool preparation",
+        "Cargo creation",
+        "Cargo validation: index PCR",
+        "Library assembly in rounds",
+        "Final cargo ligation",
+    ]
+    assert [len(one.steps) for one in chain.protocols] == [5, 1, 3, 6, 27, 5]
+    assert [one.audit()[0].status for one in (chain,)] == ["pass"]
+    handed = {item.name for item in chain.inputs}
+    for one in chain.protocols:
+        assert {item.name for item in one.consumes} <= handed, one.title
+        handed |= {item.name for item in one.produces}
+    assert "the library in its working vector" in handed
+
+
+def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
+    """A page of 27 steps reads as rounds, so each step says which stage it belongs to."""
+    chain = plan.chain()
+    rounds = next(one for one in chain.protocols if one.title == "Library assembly in rounds")
+
+    written = [one for one in chain.protocols if one.title != "Primer plates"]
+    assert all(step.section for one in written for step in one.steps)
+    assert list(dict.fromkeys(step.section for step in rounds.steps)) == [
+        "Pool the part lists",
+        "Round 1",
+        "Round 2",
+        "Round 3",
+        "Read the library back",
+    ]
+
+
+def test_the_other_route_writes_its_own_protocol_and_both_at_once_is_refused(plan):
+    """A run marks its wells one way, so the chain carries that route's page and no other."""
+    ligation = rerouted(plan, route="barcode ligation").chain()
+
+    assert [one.title for one in ligation.protocols][3] == "Cargo validation: barcode ligation"
+    assert ligation.audit()[0].status == "pass"
+    with pytest.raises(ValueError, match="route is 'both'"):
+        rerouted(plan, route="both")
+
+
+def test_the_primer_plates_are_written_only_where_the_project_says_how(plan):
+    """The amounts are nobody's to guess, so a project stating none gets no such sitting."""
+    plates = plan.chain().protocols[0]
+    bare = rerouted(plan, primer_plates=None).chain()
+
+    assert plates.title == "Primer plates"
+    assert len(plates.oligos) == len(plan.pool.pool.primers) == 74
+    assert [one.name for one in plates.produces] == [
+        "primer stock plate",
+        "primer working plate 1",
+    ]
+    assert [one.name for one in plates.plates] == [
+        "primer stock plate",
+        "primer working plate 1",
+    ]
+    assert bare.protocols[0].title == "Cargo ordering and pool preparation"
+    assert bare.audit()[0].status == "pass"
+
+
+def test_the_primers_are_ordered_once_however_the_run_is_split(plan):
+    """A plated run orders its primers in that sitting, so the pool step stops ordering them."""
+    plated = [step.title for step in whole(plan.chain()).steps]
+    bare = [step.title for step in whole(rerouted(plan, primer_plates=None).chain()).steps]
+
+    assert "Order the oligo pool" in plated
+    assert "Order the primers" in plated
+    assert "Order the oligo pool and the primers that amplify it" in bare
+    assert "Order the primers" not in bare

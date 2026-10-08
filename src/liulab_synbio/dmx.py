@@ -5,8 +5,9 @@ is marked, sequenced and called on its own, and identity stays with well positio
 `liulab_synbio.igga` is iGGA, whose product is a pool nothing re-identifies per member, so
 nothing here is a gate on a library.
 
-Two routes mark a well and one judgement reads them. Route A ligates four DMX barcodes into the
-construct in lysate; Route B amplifies each well with one barcoded primer pair. The picking,
+Two routes mark a well and one judgement reads them. The barcode ligation route ligates four
+DMX barcodes into the construct in lysate; the index PCR route amplifies each well with one
+barcoded primer pair. The picking,
 the pass rule and the reformat are shared; the marking step, the plate and the depth floor are
 the route's own, because each floor was measured on its own library prep.
 
@@ -31,6 +32,7 @@ from liulab_mbio.checks import Check, Status, worst
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
+    Figure,
     Hole,
     Incubation,
     Material,
@@ -74,7 +76,7 @@ CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
 
 #: The plate each stage uses. Colonies are picked into 384-well plates and four of those are
 #: compressed into one 1536-well plate, which is why the format parameter has to reach 1536.
-#: Qian SI Day 3 and Day 4.1. Route B amplifies in the half-skirted 96-well PCR plate its
+#: Qian SI Day 3 and Day 4.1. Index PCR amplifies in the half-skirted 96-well PCR plate its
 #: barcodes address, LevSeq SI step 2.
 PICKED_WELLS = 384
 COMPRESSED_WELLS = 1536
@@ -103,12 +105,12 @@ WELL_UL = LYSATE_UL + BARCODE_UL + WATER_UL + MASTERMIX_UL
 ACOUSTIC = "ECHO 525 acoustic liquid handler"
 PICKER = "QPix XE Microbial Colony Picker"
 
-#: What a quarter of a picked plate is sampled into a Route B index plate with, and how much of
+#: What a quarter of a picked plate is sampled into an index plate with, and how much of
 #: each well goes. LevSeq SI step 4. An acoustic handler does the same move where one is booked.
 SAMPLE_UL = 1.0
 MULTICHANNEL = "multichannel pipette"
 
-#: Route B's index PCR: a colony PCR straight from overnight culture, cycled with a touchdown.
+#: The index PCR itself: a colony PCR straight from overnight culture, cycled with a touchdown.
 #: The master mix is one well's share of the mix LevSeq states per plate, and the cycling is its
 #: thermal-cycler table with the two loop lines spelled out: ten touchdown cycles and 25 more,
 #: 35 in all. ``docs/research/route-b-index-pcr.md`` section 2.
@@ -165,7 +167,7 @@ KIT_EXPECTED = (
 SOURCES: dict[str, Source] = {
     "Qian SI": Source(
         "Qian et al. 2026, Supplementary Information",
-        edition="Nat. Commun. 10.1038/s41467-026-76740-5",
+        edition="Nat. Commun. 10.1038/s41467-026-76740-9",
         read_as="held under reference_docs/",
         date="2026-10-06",
     ),
@@ -256,7 +258,8 @@ class Route:
     Parameters
     ----------
     name
-        ``"A"`` or ``"B"``.
+        What the marking step does: ``"barcode ligation"`` or ``"index PCR"``. It is both the
+        name the page prints and the key a project names a route by.
     marking
         What the step does, in a few words.
     well_axes
@@ -303,8 +306,8 @@ class Route:
 #: Four DMX barcodes a well, three groups addressing the well and the fourth the plate, one
 #: barcode across a whole plate from a reservoir. 24 x 24 x 24 is 13,824 against the 1,536 a
 #: compressed plate needs. Depth from Qian SI, "Generation of consensus sequences".
-ROUTE_A = Route(
-    "A",
+ROUTE_LIGATION = Route(
+    "barcode ligation",
     marking="ligate one barcode from each of the four kit groups into the construct, in lysate",
     well_axes=(GROUP_SIZE, GROUP_SIZE, GROUP_SIZE),
     plate_axis=GROUP_SIZE,
@@ -319,8 +322,8 @@ ROUTE_A = Route(
 #: SI's suboptimal branch puts it. LevSeq pairs the floor with a second criterion, a mean error
 #: below 10%, which nothing here judges — a named hole: it is a mean over per-position base
 #: counts, and a well reaches this package as a read count and a consensus call.
-ROUTE_B = Route(
-    "B",
+ROUTE_INDEX_PCR = Route(
+    "index PCR",
     marking="amplify each well with one barcoded primer pair",
     well_axes=(INDEX_WELLS,),
     plate_axis=INDEX_WELLS,
@@ -330,7 +333,10 @@ ROUTE_B = Route(
 )
 
 #: Both routes, by the name a project names one with.
-ROUTES: dict[str, Route] = {ROUTE_A.name: ROUTE_A, ROUTE_B.name: ROUTE_B}
+ROUTES: dict[str, Route] = {
+    ROUTE_LIGATION.name: ROUTE_LIGATION,
+    ROUTE_INDEX_PCR.name: ROUTE_INDEX_PCR,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -375,21 +381,22 @@ def address(route: Route, *, plate: int, well: int) -> Address:
 
     Examples
     --------
-    >>> address(ROUTE_A, plate=0, well=25).marks
+    >>> address(ROUTE_LIGATION, plate=0, well=25).marks
     (2, 2, 1, 1)
-    >>> address(ROUTE_B, plate=2, well=0).marks
+    >>> address(ROUTE_INDEX_PCR, plate=2, well=0).marks
     (1, 3)
     """
     if plate < 0 or well < 0:
         raise ValueError(f"a well's address counts from zero, got plate {plate} and well {well}")
     if well >= route.wells_per_plate:
         raise ValueError(
-            f"route {route.name} tells {route.wells_per_plate} wells of a plate apart, and well "
+            f"the {route.name} route tells {route.wells_per_plate} wells of a plate apart, and "
+            f"well "
             f"{well} is past the last of them"
         )
     if plate >= route.plate_axis:
         raise ValueError(
-            f"route {route.name} tells {route.plate_axis} plates apart, and plate {plate} is "
+            f"the {route.name} route tells {route.plate_axis} plates apart, and plate {plate} is "
             "past the last of them"
         )
     marks: list[int] = []
@@ -406,12 +413,12 @@ def barcodes_for(kit: Kit, one: Address) -> tuple[Barcode, ...]:
     Raises
     ------
     ValueError
-        If the address was not worked out on Route A, which is the route the kit marks.
+        If the address was not worked out on the barcode ligation route, which the kit marks.
     """
-    if one.route is not ROUTE_A:
+    if one.route is not ROUTE_LIGATION:
         raise ValueError(
-            f"the DMX barcode kit marks a well on route {ROUTE_A.name}, and this address was "
-            f"worked out on route {one.route.name}"
+            f"the DMX barcode kit marks a well on the {ROUTE_LIGATION.name} route, and this "
+            f"address was worked out on the {one.route.name} route"
         )
     return tuple(kit.at(group, mark) for group, mark in enumerate(one.marks, start=1))
 
@@ -463,9 +470,9 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
 
     Examples
     --------
-    >>> depth_check(ROUTE_B, 12).status, depth_check(ROUTE_B, 4).status
+    >>> depth_check(ROUTE_INDEX_PCR, 12).status, depth_check(ROUTE_INDEX_PCR, 4).status
     ('warn', None)
-    >>> depth_check(ROUTE_B, 10).status
+    >>> depth_check(ROUTE_INDEX_PCR, 10).status
     'warn'
     """
     if reads < 0:
@@ -473,7 +480,7 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     mark = route.wanted_reads if wanted is None else wanted
     if mark < route.wanted_reads:
         raise ValueError(
-            f"route {route.name} wants {route.wanted_reads} reads a well and a project may only "
+            f"the {route.name} route wants {route.wanted_reads} reads a well and a project may "
             f"raise that, not lower it to {mark}"
         )
     status: Status | None = None
@@ -486,7 +493,7 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
         "reads_per_well",
         status,
         float(reads),
-        f"route {route.name} wants more than {mark} reads a well{tolerated}; below that no read "
+        f"the {route.name} route wants more than {mark} reads a well{tolerated}; below that no "
         f"is deep enough to call",
     )
 
@@ -736,7 +743,7 @@ def compressed_plate(name: str) -> Plate:
 
 
 def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
-    """Return one Route B plate: each well amplified with the pair its address names.
+    """Return one index plate: each well amplified with the pair its address names.
 
     Raises
     ------
@@ -754,7 +761,7 @@ def index_plate(name: str, samples: int, *, plate: int = 0) -> Plate:
     labels = {}
     names = plates.plate(name, INDEX_WELLS).well_names
     for well in range(samples):
-        one = address(ROUTE_B, plate=plate, well=well)
+        one = address(ROUTE_INDEX_PCR, plate=plate, well=well)
         labels[names[well]] = f"forward {one.well_marks[0]}, reverse {one.plate_mark}"
     return plates.plate(
         name,
@@ -800,7 +807,7 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
 
 
 def sampling(picked: Plate, index: Sequence[Plate]) -> tuple[Transfer, ...]:
-    """Return Route B's move out of one picked plate: one quarter of it into each index plate.
+    """Return the index PCR move out of one picked plate: a quarter of it into each index plate.
 
     A 384-well plate's wells sit at half a 96-well plate's spacing, so one well in four lines up
     under a standard multichannel head and the plate is covered in four passes. A quarter nobody
@@ -899,15 +906,15 @@ class Validation:
 
     @property
     def compressed(self) -> tuple[Plate, ...]:
-        """Route A's 1536-well plates, `PLATES_COMPRESSED` picked plates compressed into one."""
-        self._only(ROUTE_A)
+        """The barcode ligation plates, `PLATES_COMPRESSED` picked plates compressed into one."""
+        self._only(ROUTE_LIGATION)
         many = -(-len(self.picked) // PLATES_COMPRESSED)
         return tuple(compressed_plate(f"lysate {number}") for number in range(1, many + 1))
 
     @property
     def index(self) -> tuple[Plate, ...]:
-        """Route B's 96-well plates, one a filled quarter, marked in one run across the run."""
-        self._only(ROUTE_B)
+        """The index plates, one a filled quarter, marked in one run across the run."""
+        self._only(ROUTE_INDEX_PCR)
         made: list[Plate] = []
         for one in self.picked:
             left = len(one.labels)
@@ -928,8 +935,8 @@ class Validation:
         """
         if self.route is not route:
             raise ValueError(
-                f"only route {route.name} pours this plate, and this read runs route "
-                f"{self.route.name}"
+                f"only the {route.name} route pours this plate, and this read runs the "
+                f"{self.route.name} route"
             )
 
 
@@ -956,9 +963,9 @@ def validation(
 
     Examples
     --------
-    >>> validation(ROUTE_B, (Design("one", 4),), 2).wells
+    >>> validation(ROUTE_INDEX_PCR, (Design("one", 4),), 2).wells
     4
-    >>> validation(ROUTE_B, (Design("one", 4),), None) is None
+    >>> validation(ROUTE_INDEX_PCR, (Design("one", 4),), None) is None
     True
     """
     if floor is None:
@@ -969,14 +976,14 @@ def validation(
     return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
-#: Route B's marks, which the package holds none of. The two annealing regions are published and
+#: The index PCR marks, which the package holds none of. The two annealing regions are published
 #: bind the DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab
-#: buys and holds, as Route A's kit is. ``docs/research/route-b-index-primers.md`` section 7.
+#: and holds, as the barcode ligation kit is. ``docs/research/route-b-index-primers.md`` §7.
 INDEX_MARKS = Hole(
-    "B1",
+    "IDX1",
     "no index mark set is named for the barcoded primer pairs",
     "lab",
-    where="route B, the pair marking one well",
+    where="index PCR, the pair marking one well",
     filled_by="the prepared primer plate the lab holds",
     issue="liuhlab/liulab-mbio#225",
 )
@@ -985,10 +992,10 @@ INDEX_MARKS = Hole(
 #: and NEB's specification for M0267 could not be read, so the table prints the volume and the
 #: unit count stands empty. ``docs/research/route-b-index-pcr.md`` section 8.
 INDEX_TAQ_UNITS = Hole(
-    "B2",
+    "IDX2",
     "the units of Taq one index PCR takes",
     "unread",
-    where="route B, the index PCR's polymerase",
+    where="index PCR, its polymerase",
     filled_by="NEB's own specification for M0267, which gives the stock concentration",
     issue="liuhlab/liulab-mbio#225",
 )
@@ -1118,7 +1125,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             citation=Citation("Qian SI", "Day 3"),
         ),
     ]
-    if one.route is ROUTE_A:
+    if one.route is ROUTE_LIGATION:
         made += [
             Material(
                 f"{COMPRESSED_WELLS}-well barcoding plate",
@@ -1202,7 +1209,7 @@ def validation_equipment(one: Validation) -> tuple[str, ...]:
     """Return the hardware reading these designs back needs and no reagent table covers."""
     route = (
         (ACOUSTIC,)
-        if one.route is ROUTE_A
+        if one.route is ROUTE_LIGATION
         else (
             f"{MULTICHANNEL} on {INDEX_WELLS}-well spacing",
             f"Thermocycler taking a {INDEX_WELLS}-well plate",
@@ -1216,14 +1223,18 @@ def validation_equipment(one: Validation) -> tuple[str, ...]:
     )
 
 
-def validation_steps(one: Validation) -> tuple[Step, ...]:
+def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
     """Return the steps that read these designs back, the route's own in the middle.
 
     The picking is shared and the calling is shared; between them sits the route's own marking.
 
+    `marking` is drawn on the one step of the route that changes a molecule: the lysate ligation
+    on one route, the index PCR on the other. The records it names belong to the run, which this
+    module does not hold, so the caller chooses it.
+
     Examples
     --------
-    >>> one = validation(ROUTE_B, (Design("a", 4),), 0)
+    >>> one = validation(ROUTE_INDEX_PCR, (Design("a", 4),), 0)
     >>> for step in validation_steps(one):
     ...     print(step.title)
     Array 1 design(s) and grow
@@ -1233,8 +1244,12 @@ def validation_steps(one: Validation) -> tuple[Step, ...]:
     Pool and sequence
     Call every well
     """
-    marking = _route_a_steps(one) if one.route is ROUTE_A else _route_b_steps(one)
-    return (_array_step(one), _pick_step(one), *marking, _call_step(one))
+    route = (
+        _ligation_steps(one, marking)
+        if one.route is ROUTE_LIGATION
+        else _index_pcr_steps(one, marking)
+    )
+    return (_array_step(one), _pick_step(one), *route, _call_step(one))
 
 
 def _array_step(one: Validation) -> Step:
@@ -1301,7 +1316,7 @@ def _pick_step(one: Validation) -> Step:
     )
 
 
-def _route_a_steps(one: Validation) -> tuple[Step, ...]:
+def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
     """Compress into 1536, barcode in lysate, then pool and sequence."""
     moves = tuple(
         compression(one.picked[at : at + PLATES_COMPRESSED], plate)
@@ -1321,6 +1336,7 @@ def _route_a_steps(one: Validation) -> tuple[Step, ...]:
         ),
         Step(
             "Barcode each well in lysate",
+            figures=() if marking is None else (marking,),
             instructions=(
                 f"Add one barcode from each of the {GROUPS} kit groups to every well, by the "
                 "address that well's position gives.",
@@ -1345,7 +1361,7 @@ def _route_a_steps(one: Validation) -> tuple[Step, ...]:
     )
 
 
-def _route_b_steps(one: Validation) -> tuple[Step, ...]:
+def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
     """Sample a quarter at a time into index plates, amplify on the pair each well's address names."""
     at = 0
     moves: list[Transfer] = []
@@ -1369,6 +1385,7 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
         ),
         Step(
             "Amplify each well with its own pair",
+            figures=() if marking is None else (marking,),
             instructions=(
                 f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
                 f"holds its {SAMPLE_UL:g} µL of culture.",
@@ -1387,7 +1404,7 @@ def _route_b_steps(one: Validation) -> tuple[Step, ...]:
             ),
             notes=(
                 f"{INDEX_WELLS} forward marks and {INDEX_WELLS} reverse reach "
-                f"{ROUTE_B.capacity:,} wells, so the pairs already held cover far more than this "
+                f"{ROUTE_INDEX_PCR.capacity:,} wells, so the pairs already held cover far more than this "
                 "run needs.",
                 "The primer plate is built once as lab stock and a run calls for it; this "
                 "protocol does not build one.",
@@ -1435,8 +1452,8 @@ def _call_step(one: Validation) -> Step:
     tolerated = (
         "."
         if one.route.tolerable_reads is None
-        else f"; route {one.route.name} tolerates {one.route.tolerable_reads} reads and warns "
-        "between the two."
+        else f"; the {one.route.name} route tolerates {one.route.tolerable_reads} reads and "
+        "warns between the two."
     )
     return Step(
         "Call every well",
@@ -1532,7 +1549,7 @@ REFERENCES: tuple[Reference, ...] = (
         "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental "
         "characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in "
         "lysate, and a consensus called above 150 reads",
-        url="https://doi.org/10.1038/s41467-026-76740-5",
+        url="https://doi.org/10.1038/s41467-026-76740-9",
     ),
     Reference(
         "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "

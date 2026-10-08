@@ -15,18 +15,23 @@ pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
 
 To change what these files say, change the code and run that command again. The same inputs
 write the same bytes, so a run that changes nothing leaves them alone. Point the command at
-`project-route-a.json` and an `--out` of your own to see the other read-back route; the design
-is the same and only the protocol differs.
+`project-barcode-ligation.json` and an `--out` of your own to see the other read-back route;
+the design is the same and only the protocol differs.
 
 ## What goes in
 
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, and that every design is read back by index PCR |
-| [project-route-a.json](project-route-a.json) | the same library read back by DMX barcoding instead |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back by index PCR |
+| [project-barcode-ligation.json](project-barcode-ligation.json) | the same library read back by barcode ligation instead |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
+
+`primer_plates` says how this lab lays the primers out: what the vendor delivers in a well,
+what it is resuspended to, and what a working well holds. Leave it out and the primers are
+ordered with the pool, and the run has one sitting fewer. The package states none of the three:
+nothing publishes them, so they are the project author's to give.
 
 The two project files differ in one key. `route` says which of the two read-back routes reads
 the picked wells, and `validate_from` says which designs are read at all: a fragment count, at
@@ -50,8 +55,30 @@ stuffer, barcode or codon is given. The planner chooses all four.
 | [round-1.dna](round-1.dna), [round-2.dna](round-2.dna) | one annotated record a round |
 | [product.dna](product.dna) | one member of the finished library, 6,435 bases |
 | [block-vector-1.dna](block-vector-1.dna), [block-vector-2.dna](block-vector-2.dna), [block-vector-3.dna](block-vector-3.dna) | the vector each position's blocks are built in, one a position |
-| [protocol.json](protocol.json) | the bench protocol as data |
-| [protocol.html](protocol.html) | the same protocol as a page to work from |
+| [protocol/](protocol/index.html) | the bench protocols, as a folder of pages to work from |
+
+## What the bench works through
+
+The run is not one sitting. The `protocol/` folder holds one page for each, in the order
+someone does them, and each page says what it is handed and what it leaves behind:
+
+| Page | What it is handed | What it leaves |
+| --- | --- | --- |
+| [Primer plates](protocol/01-primer-plates.html) | nothing yet | a primer stock plate, and a working copy |
+| [Cargo ordering and pool preparation](protocol/02-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
+| [Cargo creation](protocol/03-cargo-creation.html) | the pool, the working plate, and a block vector a position | one archived well a design |
+| [Cargo validation](protocol/04-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
+| [Library assembly in rounds](protocol/05-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
+| [Final cargo ligation](protocol/06-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
+
+[The way in](protocol/index.html) explains the design, draws the chain, and lists the run's own
+checks, how long it holds the bench and every number it has no source for.
+[The reagents](protocol/reagents.html), which is what to order, and
+[the references](protocol/references.html) are shared by every page. The whole chain is [protocol/project.json](protocol/project.json), which
+`liulab_mbio protocol render` turns back into these pages after an edit.
+
+A page names the one before it and the one after it, so each is complete on its own: mail one
+page to whoever runs that sitting, or zip the folder and send the run.
 
 The three part lists make 24 x 24 x 24 = 13,824 members. The product file holds one of them,
 with the rest differing only in which protein and which barcode sits at each position.
@@ -106,7 +133,7 @@ pixi run liulab_mbio plot map $D/product.dna \
 | [product-map.pdf](product-map.pdf) | one finished member |
 | [barcode-block.pdf](barcode-block.pdf) | the 75 bases the barcode block reads, with the bases shown |
 
-The gel and the plate layout are in `protocol.html`, drawn where the step that uses them is.
+The gel and the plate layouts are in the protocol pages, drawn where the step that uses them is.
 
 ## Where the proteins come from
 

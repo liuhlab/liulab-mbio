@@ -22,6 +22,11 @@
 
   var state = load();
 
+  // One step is a step: the count reads as a sentence, as render.py writes it.
+  function steps(n) {
+    return n + (n === 1 ? " step" : " steps");
+  }
+
   function all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -38,7 +43,7 @@
       if (step) step.classList.toggle("is-done", box.checked);
       if (box.checked) done += 1;
     });
-    if (progress) progress.textContent = done + " of " + stepBoxes.length + " steps done";
+    if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
   }
 
   boxes.forEach(function (box) {
@@ -52,6 +57,27 @@
     });
   });
   refresh();
+
+  // A run's index: how far the bench got in each protocol, read from that page's own store.
+  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // reads the marks without the protocol pages writing anything twice.
+  all("[data-page-key]").forEach(function (item) {
+    var total = Number(item.getAttribute("data-steps")) || 0;
+    var label = item.querySelector(".page-progress");
+    var marks;
+    try {
+      marks = JSON.parse(
+        window.localStorage.getItem("liulab-protocol:" + item.getAttribute("data-page-key")) || "{}"
+      );
+    } catch (error) {
+      return;
+    }
+    if (!marks || !label || !total) return;
+    var done = 0;
+    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
+    label.textContent = done + " of " + steps(total) + " done";
+    item.classList.toggle("is-started", done > 0);
+  });
 
   var clear = document.querySelector("button.clear");
   if (clear) {
@@ -68,9 +94,24 @@
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
-  // Reaction tables: the same arithmetic as ReactionTable.mix_volumes.
-  function round2(value) {
-    return String(Math.round(value * 100) / 100);
+  // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
+  // protocol.model.number, so the column reads the same after the count changes.
+  var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+  function number(value) {
+    if (value === 0) return "0";
+    var parts = value.toExponential(2).split("e");
+    var power = Number(parts[1]);
+    if (Math.abs(value) >= 0.001 && Math.abs(value) < 1e6) {
+      var fixed = value.toFixed(Math.max(0, 2 - power));
+      if (fixed.indexOf(".") >= 0) fixed = fixed.replace(/0+$/, "").replace(/\.$/, "");
+      var halves = fixed.split(".");
+      halves[0] = halves[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return halves.join(".");
+    }
+    var mantissa = parts[0].replace(/\.?0+$/, "");
+    var raised = String(power).replace(/\d/g, function (d) { return SUPERSCRIPT.charAt(d); });
+    return mantissa + " × 10" + raised.replace("-", "⁻");
   }
 
   all(".reaction").forEach(function (figure) {
@@ -83,7 +124,7 @@
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
       all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = round2(parseFloat(cell.getAttribute("data-ul")) * scale);
+        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
       });
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;

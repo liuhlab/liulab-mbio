@@ -274,8 +274,8 @@ drawing. The protocol prints each design's own chance beside it.
 | 4 | Grow | 384-well plates | cultures ready to sample | — |
 
 The picked plate is where the shared section ends, on both routes. Each route's own first step is
-the move out of it: Route A takes four of these plates into one 1536-well plate, Route B takes one
-into 96-well plates. Neither route amplifies or lyses in the plate the colonies were picked into.
+the move out of it: barcode ligation takes four of these plates into one 1536-well plate, index
+PCR takes one into 96-well plates. Neither route amplifies or lyses in the plate the colonies were picked into.
 
 **Step 3, colonies per design.** Four by default, which is Lund's anchor and the only measured
 one, and a project may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
@@ -284,7 +284,7 @@ five pieces 84.6% of the time, one in twelve 40%, and one in sixteen never. The 
 each design's own chance from that table, so a project that needs more picks knows it before the
 plates are poured.
 
-#### Route A — DMX barcoding
+#### Barcode ligation
 
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
@@ -296,7 +296,7 @@ plates are poured.
 | 10 | Basecall and demultiplex | reads | a sequence per well | the depth floor |
 | 11 | Reformat | per-well calls | compacted plate | — |
 
-#### Route B — index PCR
+#### Index PCR
 
 | # | Step | In | Out | Decision |
 | --- | --- | --- | --- | --- |
@@ -312,17 +312,18 @@ sit at half a 96-well plate's spacing, so one well in four lines up under a stan
 head, and the plate is covered in four passes. Picking fills one quarter at a time for the same
 reason: a part-filled picked plate then gives full 96-well plates, no reverse barcode is spent on a
 plate that is mostly empty, and a design's colonies stay together on one plate. An acoustic handler
-does the same move where one is already booked, which is how Route A moves out of the same plate.
+does the same move where one is already booked, which is how barcode ligation moves out of the
+same plate.
 
 **Step 6, the primer plate.** The barcoded pairs are built once and kept as lab stock, by their
 own preparation protocol. A run calls for a prepared plate and does not build one.
 
 #### Which barcodes mark a well
 
-The well's address is split across the barcode sets, and one set carries the plate. Route B uses
-96 forward barcodes for the well and 96 reverse for the plate, which reaches 9,216 wells on the
-192 primers already held. Route A uses three DMX groups for the well and the fourth for the
-plate, so one barcode goes across a whole plate from a reservoir.
+The well's address is split across the barcode sets, and one set carries the plate. Index PCR
+uses 96 forward barcodes for the well and 96 reverse for the plate, which reaches 9,216 wells on
+the 192 primers already held. Barcode ligation uses three DMX groups for the well and the fourth
+for the plate, so one barcode goes across a whole plate from a reservoir.
 
 Two plates on one flow cell are told apart this way. The combination is worked out from the
 well, not looked up in a file, so a demultiplexer can check an address instead of trusting one.
@@ -333,8 +334,8 @@ Two questions, in order.
 
 Is the read deep enough to call? If not, the well has **no verdict**. It is read again or picked
 again, and it is not a failure. The floor comes with the route, because each one was measured on
-its own. Route A wants more than 150 reads. Route B wants more than twenty, and a well at ten reads or
-more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
+its own. Barcode ligation wants more than 150 reads. Index PCR wants more than twenty, and a well
+at ten reads or more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
 depth to reach. A project may raise either.
 
 Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
@@ -462,7 +463,7 @@ it after assembly. So a stock whose ccdB is expressed has to be grown in DB3.1 o
 
 | Source | What it gives |
 | --- | --- |
-| Qian, Z. et al. Accelerating protein design by scaling experimental characterization. *Nat. Commun.* (2026). [doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5) | The DMX vector, the barcode kit and the barcoded ONT read-out |
+| Qian, Z. et al. Accelerating protein design by scaling experimental characterization. *Nat. Commun.* (2026). [doi:10.1038/s41467-026-76740-9](https://doi.org/10.1038/s41467-026-76740-9) | The DMX vector, the barcode kit and the barcoded ONT read-out |
 | Lund, S., Potapov, V., Johnson, S. R., Buss, J. & Tanner, N. A. Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. *ACS Synth. Biol.* 13, 745–751 (2024). [doi:10.1021/acssynbio.3c00694](https://doi.org/10.1021/acssynbio.3c00694) | Building a gene from a cheap oligo pool: the fragment split, its overhangs chosen on ligation fidelity, and fixed terminal overhangs |
 | Subramanian, S. K., Russ, W. P. & Ranganathan, R. A set of experimentally validated, mutually orthogonal primers for combinatorially specifying genetic components. *Synth. Biol.* 3, ysx008 (2018). [doi:10.1093/synbio/ysx008](https://doi.org/10.1093/synbio/ysx008) | The orthogonal primer set the P1 / P2 / P3 roles draw from |
 | Baker lab three-primer scheme | The nested PCR that demultiplexes the pool; unpublished, a diagram sent to us |

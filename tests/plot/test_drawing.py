@@ -242,6 +242,29 @@ def test_a_png_is_one_image_the_sequence_view_under_the_map(rows: Drawing, tmp_p
     assert height == pytest.approx((top.height + under.height) / 2, abs=1)
 
 
+def test_the_element_draws_what_a_png_draws_and_carries_nothing_switched_off(
+    puc19: SequenceRecord,
+) -> None:
+    element = parse(draw_map(puc19, cut_sites=False).element())
+    assert element.find_all("svg")
+    assert not element.find_all("g", cls="off")
+    assert not element.find_all("g", data_kind="cut_site")
+    assert element.find_all("g", data_kind="feature")
+
+
+def test_the_element_stacks_the_sequence_view_under_the_map(rows: Drawing) -> None:
+    assert rows.sequence_view is not None
+    top, under = rows.layout.extent, rows.sequence_view.extent
+    [element] = parse(rows.element()).find_all("svg")
+    assert float(element.attrs["width"]) == pytest.approx(max(top.width, under.width), abs=0.01)
+    assert float(element.attrs["height"]) == pytest.approx(top.height + under.height, abs=0.01)
+
+
+def test_the_element_drawn_with_outlines_keeps_no_text(rows: Drawing) -> None:
+    assert "<text" in rows.element()
+    assert "<text" not in rows.element(outlines=True)
+
+
 def test_a_pdf_has_the_map_then_as_many_whole_rows_to_a_page_as_fit(
     rows: Drawing, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1342,6 +1365,86 @@ def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pd
     [listed] = whole.find_all("g", cls="notice")
     assert notice.attrs["data-hidden"] == listed.attrs["data-hidden"]
     assert _placed(page) == _placed(whole)
+
+
+def _label_fills(page: Node, kind: str) -> dict[str, str]:
+    """What each label of a kind is written in, by the name of the item it labels."""
+    return {
+        group.attrs["data-name"]: group.find_all("text")[0].attrs["fill"]
+        for group in page.find_all("g", cls="label", data_kind=kind)
+    }
+
+
+def test_a_highlight_keeps_what_it_names_in_colour_and_dims_every_other_item(
+    puc19: SequenceRecord,
+) -> None:
+    before = _items(parse(draw_map(puc19).element()))
+    after = _items(parse(draw_map(puc19, highlight="AmpR").element()))
+
+    assert set(before) == set(after)
+    assert _fills(after["AmpR"][0]) == _fills(before["AmpR"][0])
+    assert _fills(after["AmpR"][0]) != [layers.DIM]
+    assert {
+        fill for name, groups in after.items() if name != "AmpR" for fill in _fills(groups[0])
+    } == {layers.DIM}
+    # An enzyme lights every cut site naming it, and a name matches whatever its case.
+    sites = _label_fills(parse(draw_map(puc19, highlight="ecori").element()), "cut_site")
+    assert sites["EcoRI"] == layers.ENZYME.lower()
+    assert set(sites.values()) == {layers.ENZYME.lower(), layers.DIM}
+
+
+def test_a_highlight_dims_a_name_and_a_translation_an_unlit_item_owns() -> None:
+    """Two paints are dark whatever the item's own colour: a name beside it, and its residues."""
+    record = SequenceRecord(
+        "ATGTAA" + "ACGT" * 10,
+        name="dim",
+        features=(
+            Feature("a long coding name", "CDS", (Segment(0, 6),), strand=Strand.FORWARD),
+            Feature("tag", "promoter", (Segment(10, 40),)),
+        ),
+    )
+
+    drawing = draw_map(record, sequence_view=True, highlight="tag", cut_sites=False)
+
+    assert {
+        line.fill for line in _lines(drawing.layout.shapes) if line.text == "a long coding name"
+    } == {layers.DIM}
+    assert {
+        text.attrs["fill"]
+        for group in parse(drawing.element()).find_all("g", cls="translation")
+        for text in group.find_all("text")
+    } == {layers.DIM}
+
+
+def test_a_highlight_moves_no_label(puc19: SequenceRecord, puc19_file: Path) -> None:
+    """Colour moves no shape, so the no-overlap rule holds with a highlight as without one."""
+    assert draw_map(puc19_file).hidden == ()
+
+    plain, lit = draw_map(puc19), draw_map(puc19, highlight="AmpR")
+
+    assert _placed(parse(lit.element())) == _placed(parse(plain.element()))
+
+
+def test_a_lit_label_is_the_last_to_hide_where_labels_crowd(
+    primed_crowd: tuple[SequenceRecord, Node],
+) -> None:
+    record, _ = primed_crowd
+    enzymes = ["EcoRI", "HindIII"]
+    plain = draw_map(record, enzymes=enzymes)
+    crowded_out = next(item.name for item in plain.hidden if item.kind == "primer")
+
+    lit = draw_map(record, enzymes=enzymes, highlight=crowded_out)
+
+    assert crowded_out not in {item.name for item in lit.hidden}
+    assert len(lit.hidden) >= len(plain.hidden)
+
+
+@pytest.mark.parametrize("highlight", ["nope", ["AmpR", "nope"]])
+def test_a_highlight_naming_nothing_the_record_draws_is_refused(
+    puc19: SequenceRecord, highlight: str | list[str]
+) -> None:
+    with pytest.raises(ValueError, match="no feature, primer or enzyme called 'nope'"):
+        draw_map(puc19, highlight=highlight)
 
 
 def test_a_map_with_room_for_every_label_hides_none_and_says_nothing(

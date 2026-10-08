@@ -26,8 +26,9 @@ pixi run liulab_synbio igga plan project.json --out library/
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
 `host`, `oligo_length`, `batch_size`, `completeness`, and optionally `seed`, `reserved_extra`,
-`barcode`, `primers` and `bands` for the pool, and `validate_from` with `route` for the read
-back. It is checked where it is read, so a bad value fails before anything is designed.
+`barcode`, `primers` and `bands` for the pool, `primer_plates` to lay those primers out as a
+stock plate and its copies, and `validate_from` with `route` for the read back. It is checked
+where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.
 
@@ -54,8 +55,8 @@ Files land in the directory you name:
   amplify it. Both appear where the project names a primer set, and the blocks are then not
   ordered at all
 - `round-1.dna` … `product.dna` — one annotated record a round, the last the whole construct
-- `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
-- `protocol.html` — the page rendered from it, covering every round as one experiment
+- `protocol/` — the run as a chain of protocols: `project.json` is the data, a draft you may
+  edit through `build-protocol`, and `index.html` is the way into the pages rendered from it
 
 The command prints a summary line and the paths. The same inputs write the same bytes.
 
@@ -66,12 +67,15 @@ every row nobody priced carries a hole rather than a guess. Ask the user for the
 for a number. Pass `--prices` only where there is one: the quantities compute without it.
 
 Draw each record the run wrote with `plot-map`, which owns every drawing question. The gel and
-the plate layout are already in `protocol.html`, drawn beside the step that uses them.
+the plate layout are already in the pages, drawn beside the step that uses them.
 
 ## What the list count and the round count change
 
 - **One round a position.** Each round appends one part list to every member at once, so three
   lists of 24 are three rounds and 13,824 constructs, not 13,824 syntheses.
+- **The primer-plate amounts are the user's.** `primer_plates` takes `nanomoles`, `stock_um`
+  and `working_ul`; nothing publishes them, so ask the user rather than guessing. Leave the key
+  out and the primers are ordered with the pool and no plate protocol is written.
 - **Constructs multiply, and so does the colony count.** `completeness` has no default: the
   chance a round may miss a member is the user's call. Every round is sized separately, because a
   round short of its floor loses members no later round can put back.
@@ -104,7 +108,7 @@ round needs, and `plan.bench` what each round takes in the tube.
 
 ## Before you hand it over
 
-Open `protocol.html` and read it back, as `build-protocol` asks. Then tell the user what the
+Open `protocol/index.html` and read the pages back, as `build-protocol` asks. Then tell the user what the
 design chose and what it cost: the entry overhangs, the amino acids changed, the construct count,
 the colonies each round needs, and whether their vector was retrofitted. Say which checks warned
 rather than hiding them.
@@ -128,6 +132,6 @@ It raises rather than guessing, and the message names the cause.
 checking one coding sequence for a host. `primer-design` owns every primer question this plan does not
 already answer; the plan designs the two library read pairs against the simulated record and
 writes them with the other sheets. `build-protocol` owns the page:
-when the user wants a step this plan did not anticipate, edit `protocol.json` and render again.
-A change to what the plan computes — the project's vector, host or completeness — goes back through
-`igga plan`, which writes `protocol.json` afresh.
+when the user wants a step this plan did not anticipate, edit `protocol/project.json` and
+render the folder again. A change to what the plan computes — the project's vector, host or
+completeness — goes back through `igga plan`, which writes the folder afresh.

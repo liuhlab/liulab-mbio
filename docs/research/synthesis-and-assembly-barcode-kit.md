@@ -10,7 +10,7 @@ by a combination of four, and 24⁴ combinations is far more than any plate set 
 supplied — no domestication, no modification.
 
 Source: Qian, Z. et al. *Nat. Commun.* (2026),
-[doi:10.1038/s41467-026-76740-5](https://doi.org/10.1038/s41467-026-76740-5), Supplementary
+[doi:10.1038/s41467-026-76740-9](https://doi.org/10.1038/s41467-026-76740-9), Supplementary
 Table 3 (the UMIs) and Table 4 (the primers). Deposited with Addgene.
 
 ## All 96 sequences
