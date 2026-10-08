@@ -1044,9 +1044,9 @@ def _materials(
     run shares. A protocol's own list leaves it empty. That page is what is ordered rather than
     what is laid out, so it drops the bench note and `note` is how.
 
-    A material's rules and cautions stand under the table, so someone laying the bench out reads
-    them here and not only on the steps that pipette the tube. Two tubes carrying one sentence
-    print it once, as `Protocol.cautions_for` prints it once on a step.
+    A material's rules and its cautions stand under the table, so they reach a reader of this
+    list and not only the steps that pipette the tube. Two tubes carrying one sentence state it
+    once.
     """
     if not materials and not equipment:
         return ""
@@ -1080,10 +1080,7 @@ def _materials(
             f"<tbody>{rows}</tbody></table></div>"
         )
     carried = [(m, rule) for m in materials for rule in m.rules]
-    cautions = "".join(
-        f'<p class="caution"><strong>Caution:</strong> {escape(one)}</p>\n'
-        for one in dict.fromkeys(one for m in materials for one in m.cautions)
-    )
+    cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions))
     line = ""
     if equipment:
         line = (
@@ -1301,6 +1298,16 @@ def _rules(rules: Iterable[tuple[Material, Rule]]) -> str:
         for material, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
+
+
+def _cautions(texts: Iterable[str]) -> str:
+    """Every caution, as the one paragraph both the steps and the reagents page show it in.
+
+    One site renders it, so a sentence cannot read two ways on two pages.
+    """
+    return "".join(
+        f'<p class="caution"><strong>Caution:</strong> {escape(text)}</p>\n' for text in texts
+    )
 
 
 def _count(n: int, noun: str) -> str:
@@ -1628,10 +1635,7 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         f'<span class="step-n">{n}</span><span>{escape(step.title)}</span></label></h2>\n'
     ]
     parts.append(_rules(protocol.rules_for(step)))
-    parts += [
-        f'<p class="caution"><strong>Caution:</strong> {escape(c)}</p>\n'
-        for c in protocol.cautions_for(step)
-    ]
+    parts.append(_cautions(protocol.cautions_for(step)))
     if step.instructions:
         items = "".join(
             f'<li><label><input type="checkbox" data-key="{anchor}.{i}">'

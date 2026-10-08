@@ -348,6 +348,20 @@ def test_the_reagents_page_lists_the_equipment_the_plasticware_and_the_run_bill(
     assert "1200.00" in bill.text
 
 
+def test_the_reagents_page_states_a_caution_two_protocols_both_bring_once() -> None:
+    chilled = ("Keep the polymerase on ice.",)
+    run = Project(
+        "Two sittings",
+        protocols=(
+            Protocol("Amplify", materials=(Material("Q5", catalog="M0491", cautions=chilled),)),
+            Protocol("Index", materials=(Material("Taq", catalog="M0267", cautions=chilled),)),
+        ),
+    )
+    page = parse(render_reagents(run, folder_of(run)))
+    [block] = main_of(page).find_all("section", cls="materials")
+    assert [p.text for p in block.find_all("p", cls="caution")] == [f"Caution: {chilled[0]}"]
+
+
 def test_the_references_page_names_every_protocol_citing_each_document(project: Project) -> None:
     main = main_of(parse(render_references(project, folder_of(project))))
     [listed] = main.find_all("ol")

@@ -122,10 +122,10 @@ def test_every_caution_a_catalogue_number_carries_reaches_the_reagents_page_once
     steps = tuple(
         Step("Pipette", tables=(ReactionTable((Component(tube.name, 0.5),)),)) for tube in tubes
     )
-    page = parse(render_html(Protocol("PCR", materials=tubes, steps=steps)))
+    # Two tubes carry the polymerase sentence, and every step pipettes one: the two ways the
+    # list could print a caution twice.
+    page = parse(render_html(Protocol("Build", materials=tubes, steps=steps)))
     reagents = page.find_all("section", cls="materials")[0]
-    # Two polymerases carry the one sentence, so the page someone lays the bench out from
-    # states it once, not once per tube and not once per step that pipettes one.
     assert [p.text for p in reagents.find_all("p", cls="caution")] == [
         f"Caution: {materials.POLYMERASE_ON_ICE}",
         f"Caution: {materials.CUVETTE_ON_ICE}",
