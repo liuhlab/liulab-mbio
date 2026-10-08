@@ -5969,8 +5969,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "DMX-iGGA, opened: 0.00605451 pmol is 20 ng at 5363 bp.",
-        "N part list, released: 0.00605451 pmol is 2.08 ng at 559 bp."
+        "DMX-iGGA, opened: 0.00605 pmol is 20 ng at 5363 bp.",
+        "N part list, released: 0.00605 pmol is 2.08 ng at 559 bp."
       ],
       "troubleshooting": [
         {
@@ -6038,7 +6038,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.00605451 pmol of the released part list against 0.00605451 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -6068,7 +6068,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0263516 pmol at 6161 bp."
+        "Enough for one electroporation: 100 ng is 0.0264 pmol at 6161 bp."
       ],
       "troubleshooting": [
         {
@@ -6439,8 +6439,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 1, opened: 0.0052961 pmol is 20 ng at 6131 bp.",
-        "DBD part list, released: 0.0052961 pmol is 0.83 ng at 255 bp."
+        "AP-1 DESynR round 1, opened: 0.0053 pmol is 20 ng at 6131 bp.",
+        "DBD part list, released: 0.0053 pmol is 0.83 ng at 255 bp."
       ],
       "troubleshooting": [
         {
@@ -6508,7 +6508,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.0052961 pmol of the released part list against 0.0052961 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.0053 pmol of the released part list against 0.0053 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -6538,7 +6538,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.025495 pmol at 6368 bp."
+        "Enough for one electroporation: 100 ng is 0.0255 pmol at 6368 bp."
       ],
       "troubleshooting": [
         {
@@ -6909,8 +6909,8 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "AP-1 DESynR round 2, opened: 0.00512313 pmol is 20 ng at 6338 bp.",
-        "C part list, released: 0.00512313 pmol is 0.93 ng at 296 bp."
+        "AP-1 DESynR round 2, opened: 0.00512 pmol is 20 ng at 6338 bp.",
+        "C part list, released: 0.00512 pmol is 0.93 ng at 296 bp."
       ],
       "troubleshooting": [
         {
@@ -6978,7 +6978,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Nothing visible. 0.00512313 pmol of the released part list against 0.00512313 pmol of the opened library is the 1:1 molar ratio."
+        "Nothing visible. 0.00512 pmol of the released part list against 0.00512 pmol of the opened library is the 1:1 molar ratio."
       ],
       "troubleshooting": [
         {
@@ -7008,7 +7008,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "Enough for one electroporation: 100 ng is 0.0252295 pmol at 6435 bp."
+        "Enough for one electroporation: 100 ng is 0.0252 pmol at 6435 bp."
       ],
       "troubleshooting": [
         {
