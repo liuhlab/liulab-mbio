@@ -117,7 +117,7 @@ class Scheme:
         Where these values came from, so provenance travels with the method.
     reserved
         The names of further enzymes a block must be free of, beyond the ones above. A step
-        outside the rounds — seating a part in its carrier, or the last transfer into a working
+        outside the rounds — putting a part in its carrier, or the last transfer into a working
         vector — cuts the cargo too, and its enzyme has no role here to be named by. A block
         spells none of these anywhere, its stuffers included. A build adds to this list and
         never replaces it.

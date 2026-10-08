@@ -47,6 +47,13 @@ class Protocol:
         """One paragraph saying what this protocol of the run does."""
         raise NotImplementedError
 
+    def choice(self, run: Run) -> str:
+        """Return the job this protocol is one way of doing, where the run offers several ways.
+
+        Empty is what a protocol that is simply a step of the chain says, which is most of them.
+        """
+        return ""
+
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the steps, in the order the bench works through them."""
         return ()
@@ -106,6 +113,7 @@ class Protocol:
                 self.title(run),
                 summary=self.summary(run),
                 overview=self.overview(run),
+                choice=self.choice(run),
                 consumes=self.consumes(run),
                 produces=self.produces(run),
                 materials=tuple(materials),

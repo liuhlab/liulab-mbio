@@ -13,7 +13,7 @@ check never writes into `docs/examples/`.
 
 The generators are named below rather than discovered. One of them is a script rather than a
 documented command, and another writes files that `tests/synbio/igga/test_gate.py` reads as its
-known-good corpus; neither is reachable by reading a page. A fifth generator is a line added
+known-good corpus; neither is reachable by reading a page. Another generator is a line added
 here, and an example that grows a file fails here until `writes` names it. That is the check
 working: knowing what a command writes without running it is what no discovery rule can do.
 
@@ -33,6 +33,7 @@ from tempfile import TemporaryDirectory
 REPO = Path(__file__).resolve().parents[1]
 PUC19 = "docs/examples/pUC19-GFP"
 AP1 = "docs/examples/ap1-library"
+READBACK = "docs/examples/ap1-readback"
 
 #: Stands in a command for the directory that run writes into. Each command below is otherwise
 #: the one its example's page prints, so the two can be read against each other.
@@ -62,7 +63,10 @@ GENERATORS: tuple[Generator, ...] = (
     Generator(
         what="the AP-1 library plan",
         directory=REPO / AP1,
-        commands=(f"liulab_synbio igga plan {AP1}/project.json --out {OUT}",),
+        commands=(
+            f"liulab_synbio igga plan {AP1}/project.json --out {OUT} "
+            f"--working-site EGFP --prices {AP1}/prices.csv",
+        ),
         writes=(
             "barcodes.tsv",
             "block-vector-1.dna",
@@ -78,6 +82,7 @@ GENERATORS: tuple[Generator, ...] = (
             "protocol/01-primer-plates.html",
             "protocol/02-cargo-ordering-and-pool-preparation.html",
             "protocol/03-cargo-creation.html",
+            "protocol/04-cargo-validation-barcode-ligation.html",
             "protocol/04-cargo-validation-index-pcr.html",
             "protocol/05-library-assembly-in-rounds.html",
             "protocol/06-final-cargo-ligation.html",
@@ -113,6 +118,28 @@ GENERATORS: tuple[Generator, ...] = (
         directory=REPO / AP1,
         commands=(f"python scripts/build_dmx_vector.py --out {OUT}/vector.gb",),
         writes=("vector.gb",),
+    ),
+    Generator(
+        what="the domesticated working vector and its protocol",
+        directory=REPO / AP1,
+        commands=(f"python scripts/build_working_vector.py --out {OUT}",),
+        writes=(
+            "working-vector-domestication.html",
+            "working-vector-domestication.json",
+            "working-vector.gb",
+        ),
+    ),
+    Generator(
+        what="the AP-1 cargo read-back",
+        directory=REPO / READBACK / "protocol",
+        commands=(f"liulab_synbio dmx plan {READBACK}/build.json --out {OUT}",),
+        writes=(
+            "01-design-read-back-index-pcr.html",
+            "index.html",
+            "project.json",
+            "reagents.html",
+            "references.html",
+        ),
     ),
 )
 

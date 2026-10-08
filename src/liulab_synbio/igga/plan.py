@@ -280,22 +280,29 @@ class LibraryPlan:
         return read_pairs(self.scheme, self.rounds, self.working)
 
     @property
-    def validation(self) -> dmx.Validation | None:
-        """What reading these designs back takes, or `None` where the build reads none.
+    def validations(self) -> tuple[dmx.Validation, ...]:
+        """What reading these designs back takes, one a route, and empty where none is named.
 
-        The build's floor chooses the designs and its route reads them. The bench is sized
+        The build's floor chooses the designs and its routes read them. The bench is sized
         from that set and not from the part list, so a design the floor leaves out costs no
         well, no plate and no reagent. Every plate it pours is selected on the destination's own
         marker, which is not the marker the published read-back was written for.
+
+        A build naming two routes reads the same designs on each: they are the ways of one job,
+        and the bench does one of them.
         """
-        if self.project.route is None:
-            return None
-        return dmx.validation(
-            dmx.ROUTES[self.project.route],
-            designs(self.parts, self.pool),
-            self.project.validate_from,
-            selection=selection_for(self.destination.record),
+        chosen = designs(self.parts, self.pool)
+        found = (
+            dmx.validation(
+                dmx.ROUTES[name],
+                chosen,
+                self.project.validate_from,
+                selection=selection_for(self.destination.record),
+                index_plate=self.project.index_plate,
+            )
+            for name in self.project.routes
         )
+        return tuple(one for one in found if one is not None)
 
     @property
     def checks(self) -> tuple[Check, ...]:
@@ -336,7 +343,7 @@ class LibraryPlan:
                 barcodes=BARCODE_FILE,
                 changes=CHANGE_FILE,
                 read_sheet=READ_PRIMER_FILE,
-                validation=self.validation,
+                validations=self.validations,
                 prices=self.prices,
                 pool=self.pool,
                 pool_sheet=POOL_FILE,
@@ -347,6 +354,9 @@ class LibraryPlan:
                 reads=self.reads,
                 marks=self.project.marks,
                 linkage_fidelity=self.project.linkage_fidelity,
+                final_assembly=self.project.final_assembly,
+                pcr1_cycles=self.project.pcr1_cycles,
+                pcr2_cycles=self.project.pcr2_cycles,
                 primer_plates=self.project.primer_plates,
             )
         )

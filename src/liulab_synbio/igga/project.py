@@ -12,19 +12,19 @@ enzymes a block is kept clear of are the method's unioned with `reserved_extra`,
 length is checked against the method's cloning scar rather than against a number stated here.
 """
 
-import json
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from liulab_mbio import jsonfile
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
 from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_synbio.dmx import ROUTES
+from liulab_synbio.dmx import ROUTE_INDEX_PCR, ROUTES, refuse_unclonal
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
 #: The method's own barcode length, which a build takes unless it states another.
@@ -52,6 +52,34 @@ class Barcode:
 
     length: int = BARCODE_LENGTH
     min_distance: int = MIN_DISTANCE
+
+
+@dataclass(frozen=True, slots=True)
+class FinalAssembly:
+    """What a lab that has run the one-pot assembly states about it.
+
+    Both numbers travel together: a mass with no ratio sizes one side of the pot, and a ratio
+    with no mass sizes neither. Nothing published sizes this reaction, so a build that has
+    measured it states both and a build that has not leaves the hole standing.
+
+    Parameters
+    ----------
+    vector_ng
+        How much working vector goes into the one-pot assembly, ng.
+    ratio
+        How much cargo meets it, as a molar ratio of cargo to vector.
+    """
+
+    vector_ng: float
+    ratio: float
+
+    def __post_init__(self) -> None:
+        """Refuse a mass or a ratio that is not positive."""
+        for key, value in (("vector_ng", self.vector_ng), ("ratio", self.ratio)):
+            if value <= 0:
+                raise ValueError(
+                    f"final_assembly.{key} is {value}, and a build states a positive one"
+                )
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,9 +174,15 @@ class Build:
         Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
         There is no default: `liulab_mbio.bench.readback.clean_colony_chance` gives a design's
         chance of a clean colony, not the chance worth paying to check.
-    route
-        Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
-        `validate_from` is, because an unread build needs no route.
+    routes
+        Which of `liulab_synbio.dmx.ROUTES` read those wells back, one or more. Named exactly
+        when `validate_from` is, because an unread build needs no route. Name two and the run
+        writes a page for each, as the two ways of one job the bench does one of. A build that
+        reads anything back names `primers` too: without a pool each block arrives as the vendor
+        ships it, and DMX has no colony to pick.
+    index_plate
+        What this lab calls its prepared plate of barcoded primer pairs. Only the index PCR
+        route takes one, so only that route may name it.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
@@ -161,6 +195,14 @@ class Build:
     linkage_fidelity
         The share of reads whose barcode must still name its part. No default: nothing published
         sets a mark for it, so a build that states none is read against no mark at all.
+    final_assembly
+        What this lab measured the one-pot assembly at: the working vector's mass and the molar
+        ratio the cargo meets it at. No default, as for the two cycle counts below: a build that
+        has run the pilot states it and a build that has not leaves the hole standing.
+    pcr1_cycles, pcr2_cycles
+        The cycle counts this lab measured for PCR1, against the polymerase it runs, and for
+        PCR2. No default: nobody published either, so a build stating neither prints the band
+        Twist gives for another polymerase and no PCR2 count at all.
     barcode
         What one part's barcode holds to.
     primer_plates
@@ -174,10 +216,11 @@ class Build:
     ------
     ValueError
         If a position is repeated or missing, a number is not positive, the completeness does not
-        lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
-        the route are not both there or both absent, a representation mark loosens the sourced
-        one, or the barcode and the method's cloning scar are not whole codons together — which
-        names ``barcode-frame``.
+        lie between 0 and 1, the floor is negative, a route is neither of the two or named twice,
+        the floor and the routes are not both there or both absent, an index plate is named
+        without the route that takes one, a route is named over cargo DMX cannot pick, a
+        representation mark loosens the sourced one, or the barcode and the method's cloning
+        scar are not whole codons together — which names ``barcode-frame``.
     KeyError
         If `reserved_extra` names an enzyme this package does not ship, or `host` no shipped
         codon usage table.
@@ -196,13 +239,17 @@ class Build:
     working_vector: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     validate_from: int | None = None
-    route: str | None = None
+    routes: tuple[str, ...] = ()
+    index_plate: str = ""
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
     representation_seen: float | None = None
     representation_skew: float | None = None
     reads_per_member: int | None = None
     linkage_fidelity: float | None = None
+    final_assembly: FinalAssembly | None = None
+    pcr1_cycles: int | None = None
+    pcr2_cycles: int | None = None
     barcode: Barcode = field(default_factory=Barcode)
     primer_plates: PrimerPlates | None = None
     scheme: Scheme = IGGA
@@ -281,27 +328,49 @@ class Build:
             raise ValueError(
                 f"completeness is {self.completeness}, and a build states a chance between 0 and 1"
             )
+        for named, cycles in (("pcr1_cycles", self.pcr1_cycles), ("pcr2_cycles", self.pcr2_cycles)):
+            if cycles is not None and cycles <= 0:
+                raise ValueError(f"{named} is {cycles}, and a build states a positive one")
 
     def _check_validation(self) -> None:
-        """Refuse a negative floor, an unknown route, or one of the two without the other.
+        """Refuse a bad floor or route, one of the two alone, a stray plate, or unclonal cargo.
 
-        The two travel together: a floor with no route says which designs are read and not how,
-        and a route with no floor names a read nobody asked for.
+        The floor and the routes travel together: a floor with no route says which designs are
+        read and not how, and a route with no floor names a read nobody asked for. Whether
+        there is anything to read back at all is DMX's own question, not a build's.
+
+        Naming a route twice is refused rather than collapsed: it would write one page twice and
+        ask the bench to choose between a page and itself.
         """
         if self.validate_from is not None and self.validate_from < 0:
             raise ValueError(
                 f"validate_from is {self.validate_from}, and a fragment-count floor counts "
                 "fragments; omit it to read nothing, or set 0 to read every design"
             )
-        if self.route is not None and self.route not in ROUTES:
+        for one in self.routes:
+            if one not in ROUTES:
+                raise ValueError(
+                    f"route is {one!r}, and a build reads its wells back on one of "
+                    f"{', '.join(repr(each) for each in ROUTES)}"
+                )
+        if len(set(self.routes)) != len(self.routes):
             raise ValueError(
-                f"route is {self.route!r}, and a build reads its wells back on one of "
-                f"{', '.join(repr(one) for one in ROUTES)}"
+                "routes names the same route twice, and the ways of one job are different ways"
             )
-        if (self.validate_from is None) != (self.route is None):
+        if (self.validate_from is None) != (not self.routes):
             raise ValueError(
-                "validate_from and route are stated together: a build that reads designs back "
+                "validate_from and routes are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
+            )
+        if self.index_plate and ROUTE_INDEX_PCR.name not in self.routes:
+            raise ValueError(
+                "index_plate names a plate of barcoded primer pairs, which only the "
+                f"{ROUTE_INDEX_PCR.name!r} route takes"
+            )
+        if self.routes:
+            refuse_unclonal(
+                "a block as the vendor ships it, which is what a build naming no primer set orders",
+                clonal=self.primers is not None,
             )
 
     def _check_plates(self) -> None:
@@ -400,59 +469,91 @@ def read_build(path: str | os.PathLike[str]) -> Build:
     ('N', 'DBD', 'C')
     """
     file = Path(path)
-    data = json.loads(file.read_text(encoding="utf-8"))
-    if not isinstance(data, Mapping):
-        raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
-    _keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
+    data = jsonfile.read_object(path)
+    jsonfile.refuse_keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
     return Build(
-        _text(given, "name", "a build"),
+        jsonfile.text(given, "name", "a build's"),
         positions=tuple(
-            _one_text(one, f"positions[{index}]")
-            for index, one in enumerate(_sequence(given, "positions", "a build"))
+            jsonfile.one_text(one, f"positions[{index}]")
+            for index, one in enumerate(jsonfile.listing(given, "positions", "a build's"))
         ),
-        parts=_file(file, _text(given, "parts", "a build"), "parts"),
-        vector=_file(file, _text(given, "vector", "a build"), "vector"),
-        host=_text(given, "host", "a build"),
-        oligo_length=_whole(given, "oligo_length", "a build"),
-        batch_size=_whole(given, "batch_size", "a build"),
-        completeness=_number(given, "completeness", "a build"),
+        parts=jsonfile.named_file(
+            file, jsonfile.text(given, "parts", "a build's"), "parts", "a build's"
+        ),
+        vector=jsonfile.named_file(
+            file, jsonfile.text(given, "vector", "a build's"), "vector", "a build's"
+        ),
+        host=jsonfile.text(given, "host", "a build's"),
+        oligo_length=jsonfile.whole(given, "oligo_length", "a build's"),
+        batch_size=jsonfile.whole(given, "batch_size", "a build's"),
+        completeness=jsonfile.number(given, "completeness", "a build's"),
         primers=(
-            _file(file, _text(given, "primers", "a build"), "primers")
+            jsonfile.named_file(
+                file, jsonfile.text(given, "primers", "a build's"), "primers", "a build's"
+            )
             if "primers" in given
             else None
         ),
         working_vector=(
-            _file(file, _text(given, "working_vector", "a build"), "working_vector")
+            jsonfile.named_file(
+                file,
+                jsonfile.text(given, "working_vector", "a build's"),
+                "working_vector",
+                "a build's",
+            )
             if "working_vector" in given
             else None
         ),
         bands=_bands(given.get("bands")),
         validate_from=(
-            _whole(given, "validate_from", "a build") if "validate_from" in given else None
+            jsonfile.whole(given, "validate_from", "a build's")
+            if "validate_from" in given
+            else None
         ),
-        route=_text(given, "route", "a build") if "route" in given else None,
+        routes=tuple(
+            jsonfile.one_text(one, f"routes[{index}]")
+            for index, one in enumerate(
+                jsonfile.listing(given, "routes", "a build's") if "routes" in given else ()
+            )
+        ),
+        index_plate=jsonfile.text(given, "index_plate", "a build's")
+        if "index_plate" in given
+        else "",
         representation_seen=(
-            _number(given, "representation_seen", "a build")
+            jsonfile.number(given, "representation_seen", "a build's")
             if "representation_seen" in given
             else None
         ),
         representation_skew=(
-            _number(given, "representation_skew", "a build")
+            jsonfile.number(given, "representation_skew", "a build's")
             if "representation_skew" in given
             else None
         ),
         reads_per_member=(
-            _whole(given, "reads_per_member", "a build") if "reads_per_member" in given else None
+            jsonfile.whole(given, "reads_per_member", "a build's")
+            if "reads_per_member" in given
+            else None
         ),
         linkage_fidelity=(
-            _number(given, "linkage_fidelity", "a build") if "linkage_fidelity" in given else None
+            jsonfile.number(given, "linkage_fidelity", "a build's")
+            if "linkage_fidelity" in given
+            else None
         ),
-        seed=_whole(given, "seed", "a build") if "seed" in given else SEED,
+        final_assembly=_final_assembly(given.get("final_assembly")),
+        pcr1_cycles=jsonfile.whole(given, "pcr1_cycles", "a build's")
+        if "pcr1_cycles" in given
+        else None,
+        pcr2_cycles=jsonfile.whole(given, "pcr2_cycles", "a build's")
+        if "pcr2_cycles" in given
+        else None,
+        seed=jsonfile.whole(given, "seed", "a build's") if "seed" in given else SEED,
         reserved_extra=tuple(
-            _one_text(one, f"reserved_extra[{index}]")
+            jsonfile.one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                _sequence(given, "reserved_extra", "a build") if "reserved_extra" in given else ()
+                jsonfile.listing(given, "reserved_extra", "a build's")
+                if "reserved_extra" in given
+                else ()
             )
         ),
         barcode=_barcode(given.get("barcode")),
@@ -482,17 +583,22 @@ _BUILD_OPTIONAL = frozenset(
         "working_vector",
         "bands",
         "validate_from",
-        "route",
+        "routes",
+        "index_plate",
         "representation_seen",
         "representation_skew",
         "reads_per_member",
         "linkage_fidelity",
+        "final_assembly",
+        "pcr1_cycles",
+        "pcr2_cycles",
         "primer_plates",
     }
 )
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
 _PLATES_REQUIRED = frozenset({"nanomoles", "stock_um", "working_ul"})
 _PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
+_ASSEMBLY_REQUIRED = frozenset({"vector_ng", "ratio"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
@@ -509,8 +615,8 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
         raise ValueError(f"a build's bands are {type(entry).__name__}, not an object")
     return {
         quantity: tuple(
-            _one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(_sequence(entry, quantity, "a build's"))
+            jsonfile.one_text(one, f"bands {quantity}[{index}]")
+            for index, one in enumerate(jsonfile.listing(entry, quantity, "a build's bands"))
         )
         for quantity in entry
     }
@@ -527,13 +633,34 @@ def _barcode(entry: Any) -> Barcode:
     if entry is None:
         return Barcode()
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a build barcode is {type(entry).__name__}, not an object")
-    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
+        raise ValueError(f"a build's barcode is {type(entry).__name__}, not an object")
+    jsonfile.refuse_keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build's barcode")
     return Barcode(
-        _whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
-        _whole(entry, "min_distance", "a build barcode")
+        jsonfile.whole(entry, "length", "a build's barcode")
+        if "length" in entry
+        else BARCODE_LENGTH,
+        jsonfile.whole(entry, "min_distance", "a build's barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
+    )
+
+
+def _final_assembly(entry: Any) -> FinalAssembly | None:
+    """Build the one-pot assembly's amounts from parsed JSON, or `None` where a build states none.
+
+    Raises
+    ------
+    ValueError
+        If it is not an object, or a key is missing, unknown or of another JSON type.
+    """
+    if entry is None:
+        return None
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"a build's final_assembly is {type(entry).__name__}, not an object")
+    where = "a build's final_assembly"
+    jsonfile.refuse_keys(entry, _ASSEMBLY_REQUIRED, frozenset(), where)
+    return FinalAssembly(
+        jsonfile.number(entry, "vector_ng", where), jsonfile.number(entry, "ratio", where)
     )
 
 
@@ -552,110 +679,17 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
         return None
     if not isinstance(entry, Mapping):
         raise ValueError(f"a build's primer_plates is {type(entry).__name__}, not an object")
-    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
+    jsonfile.refuse_keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
     where = "a build's primer_plates"
     return PrimerPlates(
-        _number(entry, "nanomoles", where),
-        _number(entry, "stock_um", where),
-        _number(entry, "working_ul", where),
-        **({"working_um": _number(entry, "working_um", where)} if "working_um" in entry else {}),
-        **({"wells": _whole(entry, "wells", where)} if "wells" in entry else {}),
-        **({"copies": _whole(entry, "copies", where)} if "copies" in entry else {}),
+        jsonfile.number(entry, "nanomoles", where),
+        jsonfile.number(entry, "stock_um", where),
+        jsonfile.number(entry, "working_ul", where),
+        **(
+            {"working_um": jsonfile.number(entry, "working_um", where)}
+            if "working_um" in entry
+            else {}
+        ),
+        **({"wells": jsonfile.whole(entry, "wells", where)} if "wells" in entry else {}),
+        **({"copies": jsonfile.whole(entry, "copies", where)} if "copies" in entry else {}),
     )
-
-
-def _file(file: Path, named: str, key: str) -> Path:
-    """Resolve a path a build names against the `project.json` file's own directory.
-
-    Raises
-    ------
-    ValueError
-        If nothing is there to read.
-    """
-    found = Path(named)
-    resolved = found if found.is_absolute() else file.parent / found
-    if not resolved.is_file():
-        raise ValueError(f"a build's {key} is {named!r}, and {os.fspath(resolved)} is no file")
-    return resolved
-
-
-def _keys(
-    data: Mapping[str, Any], required: frozenset[str], optional: frozenset[str], where: str
-) -> None:
-    """Refuse a mapping that is missing a key or carries one this does not read.
-
-    Raises
-    ------
-    ValueError
-        Naming the keys and `where` they are.
-    """
-    if missing := sorted(required - set(data)):
-        raise ValueError(f"{where} is missing {', '.join(missing)}")
-    if unknown := sorted(set(data) - required - optional):
-        raise ValueError(f"{where} carries unknown key(s) {', '.join(unknown)}")
-
-
-def _text(data: Mapping[str, Any], key: str, where: str) -> str:
-    """Return one string value.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type.
-    """
-    return _one_text(data[key], f"{where} {key}")
-
-
-def _one_text(value: Any, where: str) -> str:
-    """Return one string.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type.
-    """
-    if not isinstance(value, str):
-        raise ValueError(f"{where} is {type(value).__name__}, not a string")
-    return value
-
-
-def _whole(data: Mapping[str, Any], key: str, where: str) -> int:
-    """Return one whole number.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, true and false among them.
-    """
-    value = data[key]
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a whole number")
-    return value
-
-
-def _number(data: Mapping[str, Any], key: str, where: str) -> float:
-    """Return one number, whole or not.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, true and false among them.
-    """
-    value = data[key]
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a number")
-    return float(value)
-
-
-def _sequence(data: Mapping[str, Any], key: str, where: str) -> Sequence[Any]:
-    """Return one list of values.
-
-    Raises
-    ------
-    ValueError
-        If the value is of another JSON type, a string among them.
-    """
-    value = data[key]
-    if isinstance(value, str) or not isinstance(value, Sequence):
-        raise ValueError(f"{where} {key} is {type(value).__name__}, not a list")
-    return value

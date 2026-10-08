@@ -140,7 +140,7 @@ def pcr_reaction(
             polymerase_name(polymerase),
             round(volume_ul * profile.units_per_ul / profile.stock_units_ul, 2),
             stock=f"{profile.stock_units_ul:g} U/µL",
-            final=f"{volume_ul * profile.units_per_ul:g} units",
+            final=_units(volume_ul * profile.units_per_ul),
         ),
     ]
     return _filled(components, volume_ul, title=title, reactions=reactions)
@@ -180,6 +180,11 @@ def colony_pcr_reaction(
 def colony_pcr_master_mix_component(volume_ul: float = COLONY_PCR_VOLUME_UL) -> Component:
     """Return the 2X master mix component of a colony PCR of `volume_ul`."""
     return Component(COLONY_PCR_MASTER_MIX, round(volume_ul / 2, 2), stock="2X", final="1X")
+
+
+def _units(units: float) -> str:
+    """Spell a polymerase dose for the table's final column: one of them is a unit."""
+    return f"{units:g} unit" + ("" if units == 1 else "s")
 
 
 def _filled(

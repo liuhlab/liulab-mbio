@@ -265,6 +265,10 @@ tfoot .muted { font-weight: 400; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
 .chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+/* A place the bench has a choice at is one entry, with the ways of the job nested under it. */
+.choice-job { font-weight: 600; }
+.chain-ways { list-style: none; margin: 0.2rem 0 0; padding: 0; }
+.chain-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 
 /* The run's index: what it explains, how it fits together and how long it takes. */
 .topic p:last-child { margin-bottom: 0; }
@@ -274,6 +278,10 @@ tfoot .muted { font-weight: 400; }
 .flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
 .flow-box:hover { text-decoration: underline; }
+.flow-choice { display: block; }
+.flow-choice:hover { text-decoration: none; }
+.flow-ways { list-style: none; margin: 0.3rem 0 0; padding: 0; }
+.flow-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 .flow-title { font-weight: 600; }
 .flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
 .flow-hand-item { position: relative; }
@@ -290,6 +298,9 @@ tfoot .muted { font-weight: 400; }
 .schedule td, .schedule th { vertical-align: top; }
 .schedule .num { white-space: normal; }
 .schedule td:first-child { white-space: nowrap; }
+/* A place the bench has a choice at is one row carrying a span, the ways indented under it. */
+.schedule-way td:first-child { padding-left: 1.2rem; }
+.schedule-way td:first-child::before { content: "\00B7\00A0"; color: var(--muted); }
 /* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
 .wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
 .schedule tbody tr:not(.wait-row) td { border-bottom: none; }
@@ -351,9 +362,9 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="ab495951a65e3ccd">
+<body data-protocol="09540dcb8a4306bc">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="01-primer-plates.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
-<div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li class="is-here"><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
+<div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li class="is-here"><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li class="chain-choice"><span class="choice-job">Read every well back</span><ul class="chain-ways"><li><a href="04-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li></ul></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
 <header class="intro">
 <h1>Primer plates</h1>

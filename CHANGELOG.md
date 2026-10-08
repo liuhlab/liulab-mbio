@@ -9,6 +9,13 @@ sets one.
 
 ### Added
 
+- DMX has a way in of its own. `pixi run liulab_synbio dmx plan BUILD --out DIR` reads
+  designs back one well at a time, from a plate a lab already holds and with no library run
+  behind it. The build file names the designs sheet, the archive plate, the marking route
+  and the fragment-count floor. The sheet is two columns: a name, and how many fragments the
+  design was built from. No sequence is read, so any frozen stock can be read back. The run
+  designs no DNA, so a protocol folder is the whole of what it writes.
+  `docs/examples/ap1-readback` is one such run, over the AP-1 library's own cargo.
 - A ligase joins some overhangs far more rarely than another does, and that costs colonies rather
   than product. `liulab_mbio.overhangs.on_target` reports how often the ligase a matrix measured
   joined each overhang of a set to its own partner, and names the ones below the rate NEB calls a
@@ -27,8 +34,8 @@ sets one.
   fragment count: every design built from that many pieces or more is read back one well at a
   time, and the rest stay polyclonal. Leave it out and nothing is read, which is the default.
   Set it to `0` and every design is read. There is no shipped floor — the measured curve gives a
-  design's chance of a clean colony, not the chance worth paying to check. `route` says which of
-  the two read-back routes reads the wells, `"barcode ligation"` or `"index PCR"`, and the two
+  design's chance of a clean colony, not the chance worth paying to check. `routes` says which
+  read-back routes read the wells, `"barcode ligation"` or `"index PCR"` or both, and the two
   keys are stated together. The protocol prints each design's chance beside the floor, so
   the number reads as a choice.
 - The bench is sized from the designs actually read. The picked plates, barcode ligation's compression
@@ -37,9 +44,12 @@ sets one.
   is what makes a part-filled plate give full index plates: the AP-1 demo's 288 wells give three
   index plates at 96, not four at 72. `liulab_mbio.bench.plates.interleave` is the general move
   behind it.
-- The AP-1 example ships a project file for each route, `project.json` and
-  `project-barcode-ligation.json`, over one set of parts. A second project is a second set of input files
-  and never a second branch in the code.
+- The AP-1 example reads its wells back both ways at once, and says how to pick one. Its
+  project file names both routes, so the run writes a page for each and marks them as the two
+  ways of one job: they take one place in the run, each page names the other, and the bench does
+  one of them. What to weigh is on the way in — a fixed cost per run that falls as more designs
+  share it, against one thermocycled reaction in every well. How many wells each route reaches
+  does not decide it, and the page says so. Nothing in the code picks a way.
 - Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
   cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
   is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the

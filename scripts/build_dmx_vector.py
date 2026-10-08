@@ -55,7 +55,7 @@ NAME = "DMX-iGGA"
 DESCRIPTION = (
     "iGGA destination rebuilt from DMX0001 (Addgene 247434): the method's internal stuffer "
     "where the parent's cassette was, PmeI outboard of each BsaI site, KanR where the parent's "
-    "AmpR was, and no BbsI left in the backbone. Built by scripts/build_dmx_vector.py."
+    "AmpR was, and no BbsI left in the backbone. Built by scripts/build_dmx_vector.py"
 )
 
 #: Every enzyme the method names. No step may spell a new site of one of these.
@@ -241,7 +241,8 @@ def write_genbank(record: SequenceRecord, path: Path) -> None:
     A feature's colour goes out as SnapGene's own one-line ``color:`` note, which `liulab_mbio.io`
     reads back. A segment's name is dropped, and each one is named on stderr as it goes: GenBank
     spells a segment name only in the note whose meaning is in its line breaks, and Biopython's
-    writer wraps a qualifier at a fixed width instead of honouring them.
+    writer wraps a qualifier at a fixed width instead of honouring them. A trailing full stop is
+    taken off the description, because Biopython terminates the ``DEFINITION`` line with its own.
 
     Imported here and not at module scope so that importing this script costs nothing.
     """
@@ -277,7 +278,7 @@ def write_genbank(record: SequenceRecord, path: Path) -> None:
         Seq(record.sequence),
         id=record.name,
         name=record.name,
-        description=record.notes.get("Description", ""),
+        description=record.notes.get("Description", "").removesuffix("."),
         features=made,
         annotations={"molecule_type": "DNA", "topology": record.topology},
     )

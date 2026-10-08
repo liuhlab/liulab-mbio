@@ -206,7 +206,7 @@ Kan, then pooled equimolar per family. Measured CDS lengths 27 to 1,046 bp.
 
 Ours: fragments come from a Twist pool, assembled by DAD, split into wells by DMX and read by
 ONT (`## Goal`, `### Cargo synthesis`, `### Cargo validation (optional)`). The oligo length is a
-project input, not a method constant.
+build input, not a method constant.
 
 The budget fits, and the figure to use is the method page's, not this one. An earlier revision
 read "about 235 bp usable per 300-mer" off a two-primer layout; the three-primer scheme spends

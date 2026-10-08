@@ -11,11 +11,14 @@ Everything below was retrieved on **2026-10-07** unless a row carries its own da
 
 ## The contradiction
 
-`igga/steps.py`'s `_pcr1_step` and `_pcr2_step` pass no `cycles`, so `pcr_program` falls through
-to the polymerase's own profile and the rendered protocol prints **30** for both. The AP-1 demo
-shows it: `docs/examples/ap1-library/protocol.json` carries `"cycles": 30` in the inner stage of
-PCR1 and of PCR2. The same step's troubleshooting says *"Take the fewest cycles that give a
-visible band."* A reader at the bench has a printed count and a rule that contradicts it.
+As read on 2026-10-07, the two cargo creation steps passed no `cycles`, so `pcr_program` fell
+through to the polymerase's own profile and the rendered protocol printed **30** for both PCR1
+and PCR2, while the same step's troubleshooting said *"Take the fewest cycles that give a
+visible band."* A reader at the bench had a printed count and a rule that contradicted it.
+
+**Section 7 has since landed.** `docs/examples/ap1-library/protocol/project.json` now prints
+Twist's fewest, 12, for PCR1 and no count at all for PCR2; the one `"cycles": 30` left in that
+file is the Golden Gate assembly's own cycling, which is not a PCR.
 
 ## How to read this note
 
@@ -42,7 +45,7 @@ quoted values, and the arithmetic is shown. Nothing here is from memory.
 
 The demo has 72 blocks and a `batch_size` of 96, so it makes **one** batch, and PCR1 is therefore
 a whole-pool amplification with a single universal primer pair. That is precisely the reaction
-every oligo-pool vendor protocol is written for. A project with more blocks than `batch_size`
+every oligo-pool vendor protocol is written for. A build with more blocks than `batch_size`
 splits PCR1 into several reactions, each pulling its own share out of the same tube.
 
 PCR2 is a different animal. Its template is an amplified, abundant product, and it selects one
@@ -63,9 +66,30 @@ Twist publishes two amplification guides for two different products. This method
 Source: Twist FRM-001034 REV 8 p. 2, and DOC-4060 REV 1.0 "General Notes and Precautions" and
 step 1. Two independently revised documents, identical numbers.
 
-Oligo length is a project decision. The AP-1 demo is 350 nt and the method's earlier default was
+Oligo length is a build decision. The AP-1 demo is 350 nt and the method's earlier default was
 300 nt, so both land in the top band: **12–14 cycles** is the sourced count for this design's
 PCR1.
+
+**How the pool arrives, and where the 20 ng/µL comes from.** DOC-4060's "Before You Begin", the
+same document as the band table:
+
+> Twist Oligo Pools are delivered as a lyophilized product pooled in a single tube. The total
+> yield in ng is printed on the shipping tube label.
+>
+> Prepare a stock solution of your Oligo Pool by resuspending in 10 mM Tris buffer, pH 8.0 to a
+> concentration of at least 20 ng/µl. Stock solution concentration (ng/µl) = Total yield (ng) /
+> resuspension volume (µl).
+
+Its component table stores the pool at "-20°C for 24 months", 4 °C for 12, and -80 °C long term.
+
+Three things follow. The 20 ng/µL the PCR1 row above takes as template is the **stock the reader
+prepares**, not a concentration the vendor ships at — DOC-4060's own amplification table asks for
+"Oligo pool (20 ng/µl), 20 ng, 1 µl", and "at least 20 ng/µl" is the separate rule for making
+that stock. The volume is **derived** from the label and that floor: resuspension volume (µl) =
+total yield (ng) / 20, rounded down, leaves the stock at the floor or above it, so the table's
+1 µl still delivers its 20 ng. And the yield is printed on the tube and written in no file, so
+the protocol states the division and the reader supplies the one number in front of them — a rule
+they can execute, not a hole.
 
 The rest of the reaction, where the two revisions differ:
 
@@ -190,7 +214,7 @@ pool's molar evenness. The rendered protocol should give the reason that is true
 
 **PCR1 — a sourced number, and a sourced rule beside it.**
 
-- Print the count from Twist's length band, chosen from the project's own `oligo_length`:
+- Print the count from Twist's length band, chosen from the build's own `oligo_length`:
   **12–14 cycles** at 151–350 nt, 10–12 at 100–150 nt, 6–10 at 20–100 nt. Cited to Twist
   FRM-001034 REV 8 and DOC-4060 REV 1.0. The count then follows the design rather than sitting
   fixed in the source.
@@ -210,7 +234,9 @@ Qian's 10-cycle Day 4.1 is a sequencing-amplicon PCR, not this. Freschlin's 35 i
 PCR. The honest instruction is the rule alone, with no printed count.
 
 PCR2's hole is **H30**. H27 and H28 were taken before this note reached code, and H29 records the
-polymerase caveat above; H31 is the first free id:
+polymerase caveat above. H31 to H34 have been taken since, in `igga/stages.py` and
+`scripts/build_working_vector.py`, so **H35** is the first free id; `bench-numbers.md` collects
+the holes and says which numbers are retired rather than free:
 
 | Field | Value |
 | --- | --- |
@@ -229,12 +255,12 @@ the count is chosen per pool: by length, by polymerase, and by watching the reac
 
 ## 7. What this implies in code
 
-Not done here; #340 is a research ticket.
+Not done when this note was written; all five have landed since.
 
 1. `_pcr1_step` passes an explicit `cycles`, chosen from `project.oligo_length` against Twist's
    three-band table, with a citation on the program.
 2. `_pcr2_step` passes no count and carries a `Hole` instead, as `_assembly_step` already carries
-   `stages.POOL_HOLES`.
+   `stages.HOLES`.
 3. PCR1's troubleshooting entry changes its observable from "a smear rather than a band" to the
    heteroduplex hump on capillary electrophoresis, and gains the real-time stopping rule.
 4. A hole records that Twist's count is stated against KAPA HiFi HotStart or TrueAmp while the

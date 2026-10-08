@@ -237,13 +237,13 @@ across the range. It is a crossover argument drawn as two families of bars.
 
 - **The plate format and the compression ratio.** 4-to-1 into 384 is this lab's; `liulab_mbio.bench`
   holds the format parameter and the moves between wells.
-- **Which marking route the project chose.** The published panel only knows the DMX barcode route;
-  a project may read its wells by index PCR instead, and then steps 6 and 7 are different steps.
+- **Which marking route the build chose.** The published panel only knows the DMX barcode route;
+  a build may read its wells by index PCR instead, and then steps 6 and 7 are different steps.
 - **The barcode groups.** Four groups of 24 is the kit's; the figure hard-codes `BC1`–`BC4`.
 - **Every incubation and duration.** The ribbon's numbers are this protocol's; ours are computed,
   and a step's figure should agree with the step's own table.
 - **Panel c's percentages.** They are a measurement of one run of 4608 wells. Ours would be this
-  project's own counts, or nothing — a Sankey with no numbers behind it is decoration.
+  build's own counts, or nothing — a Sankey with no numbers behind it is decoration.
 - **Panel d entirely.** Cost is a price record the user holds, so the bars are per-user, and the
   comparison arm is whatever the user is comparing against.
 - **Which step is lit**, when the figure sits inside one step of a protocol rather than above all

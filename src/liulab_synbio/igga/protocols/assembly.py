@@ -84,7 +84,7 @@ class Assembly(Protocol):
     def summary(self, run: Run) -> str:
         """Return what the rounds come to, which is the whole library."""
         return (
-            f"Join {len(run.part_lists)} part lists into {run.constructs} distinct constructs in "
+            f"Join {len(run.part_lists)} part lists into {run.constructs:,} distinct constructs in "
             f"{len(run.rounds)} rounds, each round opening the library with "
             f"{run.scheme.internal.name} and ligating one part list into it, then read the "
             "finished library back."
@@ -93,13 +93,10 @@ class Assembly(Protocol):
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the pool, every round's eight steps, and the two reads that close the protocol."""
         made = [labelled(_pool_step(run), "Pool the part lists")]
+        vector = _vector_record(run)
         for place, (one, row) in enumerate(zip(run.rounds, run.bench, strict=True), 1):
-            made += [
-                labelled(step, f"Round {place}")
-                for step in _round_steps(
-                    run, one, row, assembly_rows(run.rounds, lit=place, at=run.records_at)
-                )
-            ]
+            rows = assembly_rows(run.rounds, lit=place, vector=vector, at=run.records_at)
+            made += [labelled(step, f"Round {place}") for step in _round_steps(run, one, row, rows)]
         reads = run.reads
         made += [
             labelled(
@@ -118,7 +115,7 @@ class Assembly(Protocol):
 
         A run ordering its blocks whole archives nothing, so its cargo is the vendor's tube.
         """
-        if run.validation is not None:
+        if run.validations:
             cargo = (run.picked, run.calls)
         else:
             cargo = (run.archive,) if run.pool else (run.ordered,)
@@ -153,7 +150,7 @@ class Assembly(Protocol):
             f"{position} {len(parts)}"
             for position, parts in zip(run.positions, run.part_lists, strict=True)
         )
-        scheme, standard, validation = run.scheme, run.standard, run.validation
+        scheme, standard = run.scheme, run.standard
         return {
             "Method": card(scheme.name, f"{len(run.positions)} positions"),
             "Part lists": card(sizes, f"{len(run.part_lists)} lists"),
@@ -181,17 +178,26 @@ class Assembly(Protocol):
                 f"{last.coverage.coverage:.0f}x",
             ),
             "Amino acids changed": (f"{standard.cost} over {len(standard.changes)} part end(s)"),
-            "Designs read back": (
-                card(
-                    f"{len(validation.designs)}, every one"
-                    if validation.floor == 0
-                    else f"{len(validation.designs)}, from {validation.floor} fragment(s)",
-                    f"by {validation.route.name}",
-                )
-                if validation
-                else "none; the library stays polyclonal"
-            ),
+            "Designs read back": _read_back(run),
         }
+
+
+def _read_back(run: Run) -> str:
+    """Return how many designs were read back and on which route, for the card that says so.
+
+    A run offering both routes says so rather than naming one: which route the bench did is the
+    bench's to pick, and the card has to read true whichever it was.
+    """
+    offered = run.validations
+    if not offered:
+        return "none; the library stays polyclonal"
+    one = offered[0]
+    read = (
+        f"{len(one.designs)}, every one"
+        if one.floor == 0
+        else f"{len(one.designs)}, from {one.floor} fragment(s)"
+    )
+    return card(read, f"by {one.route.name}" if len(offered) == 1 else "by either route")
 
 
 def _pool_step(run: Run) -> Step:
@@ -285,6 +291,19 @@ def _pool_masses(
 def _len_of(one: Part) -> int:
     """How many bases the part is ordered as."""
     return one.length
+
+
+def _vector_record(run: Run) -> str:
+    """Return what the plan calls the vector round 1 opens, or nothing where it writes none.
+
+    The first block vector is that vector: each is this build's own destination respelt for the
+    position whose blocks it holds, and position one's enters on the overhang it already spells.
+    The file is returned as the run names it, for a figure to say where the records sit.
+    """
+    if not run.block_vectors:
+        return ""
+    _, file = run.block_vectors[0]
+    return file
 
 
 def _round_steps(run: Run, one: Round, row: RoundBench, rows: Figure | None) -> list[Step]:
@@ -588,6 +607,9 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
 
     Read once. A barcode that names the wrong member is the one fault no later round repairs,
     so this is where the library is carried forward or a round is sent back.
+
+    A build stating `linkage_fidelity` sets the mark nobody published, which is what H28 says
+    closes it; a build stating none carries the hole.
     """
     scheme, rounds, positions = run.scheme, run.rounds, run.positions
     final = rounds[-1]
@@ -626,7 +648,8 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
             "through.",
             (
                 f"This build passes the linkage read at {fidelity:.1%} of reads carrying a "
-                "barcode that still names its part."
+                "barcode that still names its part. That is this run's own mark, not a "
+                "published one."
                 if fidelity is not None
                 else "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a "
                 "valid barcode at every position, and nearly 90% of the library correctly "
@@ -646,7 +669,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
                 "forward; no later round repairs it.",
             ),
         ),
-        holes=(stages.READ_PASS_MARK,),
+        holes=() if fidelity is not None else (stages.READ_PASS_MARK,),
     )
 
 

@@ -48,7 +48,7 @@ record = read_record("vector.dna")
 ```
 
 One wheel, two import packages. `liulab_mbio` is the general toolkit above; `liulab_synbio`
-holds one named method's pipelines and has its own command, so a barcoded combinatorial library
+holds the lab's own named methods and has its own command, so a barcoded combinatorial library
 is planned with `pixi run liulab_synbio igga plan`.
 
 A primer pair can also be checked against a whole genome, so you learn where else it would

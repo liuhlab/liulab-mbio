@@ -22,11 +22,14 @@ _Avoid_: the library package, extension, plugin
 
 ### Pipeline
 
-One way in that plans a whole experiment from the records it is given: it picks the enzymes,
-designs the DNA, simulates the product and writes what the bench follows — one **protocol** for
-each of the four cloning methods, and a whole **project** of them for a library. Five ship:
-`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga`, each the
-single entry point of its own subpackage. A module below one decides a detail of the design.
+One way in that plans a whole experiment and writes what the bench follows: one **protocol** for
+each of the four cloning methods, a whole **project** of them for a library, and a project of one
+for a read-back.
+Five plan from the records they are given — picking the enzymes, designing the DNA and
+simulating the product — while **DMX** designs nothing and plans from designs a lab already
+holds. Six ship: `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway`, `plan_igga`
+and `plan_dmx`, each the single entry point of its own subpackage. A module below one decides a
+detail of the design.
 _Avoid_: workflow, driver, orchestrator
 
 ### Sequence record
@@ -166,14 +169,29 @@ is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line
 writes is this chain of protocols.
 _Avoid_: workflow, pipeline, campaign
 
+### Choice
+
+One job a run does one way out of several. Each **protocol** that is a way of doing it names the
+job, and protocols naming the same job are the ways: the bench does one of them, never all. The
+name is the contract, as an **item**'s is, and it is a job someone at the bench recognises —
+"read every well back" — so a page can say "one of two ways to read every well back". The ways
+stand together in one place of the run: numbered alike, listed as one entry, and each page names
+the others and says to do only one. What comes after a choice may depend only on what every way
+leaves behind. Nothing in the package picks a way; what to weigh is a topic the reader is told
+before the first protocol.
+_Avoid_: branch, option, variant, fork, conditional, Route A, Route B
+
 ### Build
 
 What one run of a **pipeline** chooses, as against what its method fixes: for a library, the
 positions and their part lists, the vector, the host, the oligo length, the batch size, the
-completeness, the seed, the barcode length and distance, and any further enzyme to keep clear.
-It is read from one `project.json` and checked where it is read. It overrides nothing the method
-states: where both have a say, the two compose. What a build writes is a **project**, which is
-the chain of protocols and a different thing.
+completeness, the seed, the barcode length and distance, and any further enzyme to keep clear;
+for a read-back, the designs sheet, the archive plate, the route and the **validation floor**.
+It is read from one JSON file and checked where it is read. It overrides nothing the method
+states: where both have a say, the two compose. It may also state what the method leaves open —
+what only this lab's bench or its shelf settles — which closes that **hole**; stating none
+leaves the hole standing. What a build writes is a **project**, which is the chain of protocols
+and a different thing.
 _Avoid_: project (the chain of protocols, and its own entry), configuration, run
 _Package_: liulab_synbio
 
@@ -691,20 +709,35 @@ _Package_: liulab_synbio
 A protocol of its own for multiplexed validation: a design sits one per well, the well is
 marked, sequenced and called on its own, and identity stays with well position throughout. It
 takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
-beside iGGA rather than downstream of it — a caller chains it. Two routes mark a well, barcode
-ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
-are shared, while the marking step, the plate and the depth floor are the route's own, because
-each floor was measured on its own library prep.
+beside iGGA rather than downstream of it — a caller chains it, and the `dmx plan` command runs
+it on its own from a **build**. Two routes mark a well, barcode ligation or index PCR, and one
+judgement reads them; the picking, the pass rule and the reformat are shared, while the marking
+step, the plate and the depth floor are the route's own. The two
+floors are not a strict and a lenient pair: one is where consensus calling starts, the other
+where a reader stops trusting a well, over different amplification and different read filters.
 _Avoid_: the validation pipeline, read-back pipeline, QC
+_Package_: liulab_synbio
+
+### Carrier
+
+The plasmid one **part** is kept in until it is wanted: one part a well, each well named by the
+part sitting in it. Parts go in before any **round** runs, and the releasing enzyme reads no site
+in the backbone, so a part is cut back out on its own and the plasmid stays whole. A carrier step
+is not a round: a round joins a part list to the library in one tube and hands back a pool, while
+this hands back one plasmid a well and makes no library. It is also not a **seating**, which is
+where things sit in a plate — a carrier holds a part, a seating says which well holds what.
+_Avoid_: holding vector, shuttle vector, seating (where things sit in a plate, and its own entry)
 _Package_: liulab_synbio
 
 ### Validation floor
 
-The **fragment count** at or above which a design is read back one well at a time. A **build**
-states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
-reads every design. No floor ships, because the measured curve gives a design's chance of a clean
+The **fragment count** at or above which a design is read back one well at a time. A library
+**build** states it or leaves it out: left out, nothing is read and the cargo stays polyclonal,
+and zero reads every design. A read-back build always states one.
+No floor ships, because the measured curve gives a design's chance of a clean
 colony and not the chance worth paying to check. A build that states one also names which of
-the two marking routes reads its wells: **barcode ligation** or **index PCR**.
+the two marking routes reads its wells: **barcode ligation** or **index PCR**, or both, which
+makes them the two ways of a **choice**.
 _Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
 _Package_: liulab_synbio
 
@@ -1009,9 +1042,11 @@ _Avoid_: constraint, warning
 
 A number nobody sourced, standing where the number would be. The field it belongs to stays
 empty and the hole stands beside it, so a hole is never read as a value and never judged. It
-says what is missing, why and what would fill it, and names the ticket it is routed to where one
-owns it. A hole naming a gap no source closes is what a finished plan keeps; a hole waiting on a
-source nobody has read fails the plan. A guess is a defect.
+says what is missing, why and what would fill it. A hole naming a gap no source closes is what a
+finished plan keeps; a hole waiting on a source nobody has read fails the plan. A guess is a
+defect. A **build** may close one the method leaves open, where only a bench or a shelf
+settles it: the step then prints the number and says it is that run's own, never a published
+figure.
 _Avoid_: missing value, TODO, placeholder
 
 ### Price record

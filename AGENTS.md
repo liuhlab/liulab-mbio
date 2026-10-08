@@ -1,10 +1,11 @@
 # liulab-mbio
 
-Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Five pipelines
-plan an experiment end to end: a cloning job from a vector and its inserts, by any of the four
-methods under `cloning/`, and a barcoded combinatorial library built from lists of proteins in
-rounds. Each picks its enzymes, designs the DNA, simulates the product, and writes a bench
-protocol someone can follow. Repo-local skills call them. Distribution name
+Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Six pipelines
+plan an experiment end to end: a vector and its inserts joined by any of the four methods under
+`cloning/`; a barcoded combinatorial library built from lists of proteins in rounds; and a
+read-back of designs a lab holds. Each writes a bench protocol someone can follow, and the five
+that design DNA pick the enzymes and simulate the product. Repo-local skills call them.
+Distribution name
 **`liulab-mbio`**, import names **`liulab_mbio`** and **`liulab_synbio`**.
 
 **The package boundary.** One distribution ships both, at one version. `liulab_synbio` holds
@@ -30,31 +31,31 @@ One direction, bottom to top — nothing lower imports anything higher.
 | Layer | Modules | What it owns |
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
-| files | `io`, `snapgene`, `edits` | reading and writing records; editing spans, and carrying what a record annotates into another one |
+| files | `io`, `snapgene`, `edits`, `jsonfile` | reading and writing records; editing spans, and carrying what a record annotates into another one; reading a hand-written JSON file, and refusing what is wrong with it |
 | biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase`, `reaction`, `split` | shipped enzyme data, cut sites, domestication; reverse translation, whole-sequence codon choice, and whether a span reads in frame without a stop; distance-separated barcode sets and how far apart one stands; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds; one tube, each molecule's role in it and the enzymes acting; where to cut a cargo too long to synthesise |
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF; `plate` draws a plate's wells on the same substrate |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, `figures`, a named figure a step shows, and `render`, its self-contained HTML page |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `readback`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters, rules and cautions keyed by catalogue number; `prices`, a price record the user holds and the bill it makes. Three are imported by module, not re-exported: `goldengate`, NEB's enzymes, reaction and cycling; `coverage`, the colonies a library round takes; `pools`, an oligo pool as a vendor takes it |
 | pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `oligos`, `steps`, joined by its own `plan`, its reaction and cycling being `bench/goldengate`'s; `gibson/`: those modules plus `bench`, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: the same again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
-| method | `liulab_synbio.dmx/` | DMX, its own protocol for multiplexed validation, standing beside `igga/` and taking any cargo: `kit`, the barcode kit a user holds; `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `steps`; and `seating`, one part a well in its carrier, which ends in no library |
+| pipeline | `liulab_synbio.dmx/` | DMX, standing beside `igga/` and taking any cargo: `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `kit`, the barcode kit a user holds; `carrier`, one part a well in its own plasmid, which ends in no library; `build`, what one run chooses; `steps`; and `plan`, its way in |
 | pipeline | `liulab_synbio.igga/` | `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `cargo`, `vector`, `stages`, `rounds`, `reads`, `bench`, `figures`, and `protocols/`, one module a protocol of the run, ordered by `chain` and joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: each package's root app mounts one sub-app per feature it holds, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `plan_assembly`, `plan_gibson` and `plan_restriction` each write
 four files: the product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
-it. `plan_gateway` writes those four, and the entry clone as a fifth where it planned a BP
-reaction.
+it; `plan_gateway` writes those four plus the entry clone where it planned a BP reaction.
 `liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
 amino-acid change tables, a record per round, a block vector per position, the product, and a
-`protocol` folder: the run as a chain of protocols, one page each. The
+`protocol` folder: the run as a chain of protocols, one page each.
+`liulab_synbio.dmx.plan_dmx` turns its output directory into the protocol folder, and writes no
+record and no sheet. The
 method is code and one build's choices are a file: `docs/adr/0010-method-in-code.md` draws that
 line. A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 A subpackage re-exports its own way in, for callers outside it. Inside the package, import a
 name from the module that owns it; the top-level `__init__.py` re-exports only `__version__`,
-and `Check`, `Junction`, `Part` and `Files` each mean different things in every module that
-defines one.
+and `Check`, `Junction`, `Part` and `Files` each mean different things in different modules.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
@@ -98,6 +99,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | a Gibson plan | `pixi run liulab_mbio cloning gibson plan VECTOR INSERT --out DIR` |
 | a restriction and ligation plan | `pixi run liulab_mbio cloning restriction plan VECTOR INSERT --out DIR` |
 | a Gateway plan | `pixi run liulab_mbio cloning gateway plan CARRIER DESTINATION --out DIR` |
+| a read-back plan | `pixi run liulab_synbio dmx plan BUILD --out DIR` |
 | a library plan | `pixi run liulab_synbio igga plan PROJECT --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
@@ -122,8 +124,8 @@ temporary files. `reference_docs/README.md` says how.
 
 `pixi run check` must be green before you commit: `lint` and `fmt-check` (ruff), `typecheck`
 (pyright, `standard`, plus annotated parameters outside `tests/`), `vale` and `markdownlint`,
-`conformance`, and `test`. It reports **all** failures, not just the first — read to the bottom
-before fixing anything. The docs build is not part of it and runs as its own CI job.
+`conformance`, and `test`. It reports **all** failures — read to the bottom before fixing
+anything. The docs build is not part of it and runs as its own CI job.
 
 Work on a branch and merge through a pull request.
 
@@ -144,8 +146,8 @@ Four traps:
 
 Four rules, two enforced by `vale`: be concise; agent-facing documents have word caps;
 human-facing prose avoids jargon and stays readable; and protocol text is written for the
-bench. Read `docs/agents/writing.md` before writing any of them — the caps are lower than you
-expect, and this file is subject to one.
+bench. Read `docs/agents/writing.md` first — the caps are lower than you expect, and this file
+is subject to one.
 
 ### Comments and docstrings are short
 

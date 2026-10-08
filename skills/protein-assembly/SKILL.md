@@ -27,22 +27,22 @@ pixi run liulab_synbio igga plan project.json --out library/
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
 `host`, `oligo_length`, `batch_size`, `completeness`, and optionally `seed`, `reserved_extra`,
 `barcode`, `primers` and `bands` for the pool, `primer_plates` to lay those primers out as a
-stock plate and its copies, and `validate_from` with `route` for the read back. It is checked
+stock plate and its copies, and `validate_from` with `routes` for the read back. It is checked
 where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.
 
 The method itself is code, not a file, and `docs/adr/0010-method-in-code.md` says why: its
 overhangs, enzymes and stuffers are the DNA of molecules already on the shelf. Never ask the user
-for them and never write them into a project.
+for them and never write them into a build.
 
 `parts.fasta` holds every part list in one file. A record's name says which position it fills —
 `N_ATF2`, `bZIP_JUN`, `C_VP64` — and a name that says no position, or two of them, is refused
 naming it. Pass `--kind dna` where the sequences are already coded: those codons are checked and
 kept, not written again.
 
-`reserved_extra` names any further enzyme a step outside the rounds cuts the cargo with — seating
-a part in a carrier, or a last transfer into a working vector. It **adds** to the method's own
+`reserved_extra` names any further enzyme a step outside the rounds cuts the cargo with — putting
+a part in its carrier, or a last transfer into a working vector. It **adds** to the method's own
 list and never replaces it, and every block is held clear of the union, its stuffers included.
 Ask the user what cuts their cargo outside the rounds, and leave it out where nothing does.
 
@@ -52,7 +52,7 @@ Files land in the directory you name:
 - `barcodes.tsv` — which barcode names which part, and its slot in the finished block
 - `changes.tsv` — every amino acid the overhang standard moved, wild type beside synthesised
 - `pool.tsv`, `pool-primers.tsv` — the oligo pool the blocks are built from, and the primers that
-  amplify it. Both appear where the project names a primer set, and the blocks are then not
+  amplify it. Both appear where the build names a primer set, and the blocks are then not
   ordered at all
 - `round-1.dna` … `product.dna` — one annotated record a round, the last the whole construct
 - `protocol/` — the run as a chain of protocols: `project.json` is the data, a draft you may
@@ -82,7 +82,7 @@ the plate layout are already in the pages, drawn beside the step that uses them.
 - **The overhang standard is charged to the proteins.** One standard serves the whole library, so
   a junction forces terminal residues on every member either side. `changes.tsv` is what the user
   is paying for — show it to them before they order.
-- **More positions means more overhangs from one set**, so a long project is likelier to refuse.
+- **More positions means more overhangs from one set**, so a long build is likelier to refuse.
 
 ## The vector decides one overhang
 
@@ -133,5 +133,5 @@ checking one coding sequence for a host. `primer-design` owns every primer quest
 already answer; the plan designs the two library read pairs against the simulated record and
 writes them with the other sheets. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol/project.json` and
-render the folder again. A change to what the plan computes — the project's vector, host or
+render the folder again. A change to what the plan computes — the build's vector, host or
 completeness — goes back through `igga plan`, which writes the folder afresh.

@@ -7,6 +7,7 @@
   ],
   "parts": "parts.fasta",
   "vector": "vector.gb",
+  "working_vector": "working-vector.gb",
   "host": "human",
   "oligo_length": 350,
   "primers": "primers.tsv",
@@ -30,9 +31,17 @@
   "batch_size": 96,
   "completeness": 0.99,
   "validate_from": 0,
-  "route": "index PCR",
+  "routes": [
+    "barcode ligation",
+    "index PCR"
+  ],
   "seed": 0,
   "reserved_extra": [],
+  "linkage_fidelity": 0.9,
+  "final_assembly": {
+    "vector_ng": 75,
+    "ratio": 2
+  },
   "barcode": {
     "length": 11,
     "min_distance": 3

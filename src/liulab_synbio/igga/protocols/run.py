@@ -7,7 +7,7 @@ hands the next by name, the reagents the rounds buy, and the hardware they need.
 """
 
 from collections.abc import Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from liulab_mbio import checks as judged
 from liulab_mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
@@ -49,7 +49,7 @@ from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import PrimerPlates
+from liulab_synbio.igga.project import FinalAssembly, PrimerPlates
 from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
@@ -74,8 +74,6 @@ ROUND_EQUIPMENT: tuple[str, ...] = (
 POOL_ITEM = "oligo pool"
 BLOCKS_ITEM = "synthesised blocks"
 ARCHIVE_ITEM = "cargo archive plate"
-PICKED_ITEM = "clonal picked plate"
-CALLS_ITEM = "well calls"
 PREP_ITEM = "library prep, round {number}"
 LIBRARY_ITEM = "the library in its working vector"
 BLOCK_VECTOR_ITEM = "block vector {number}"
@@ -125,8 +123,10 @@ class Run:
     plan calls the sheets its pages point at, and `files` gathers them, with the block vectors'
     own records, as the pages link them.
 
-    `validation` is `None` for a build that states no fragment-count floor, and no read-back
-    protocol is written: the library stays polyclonal, which is the default.
+    `validations` is empty for a build that states no fragment-count floor, and no read-back
+    protocol is written: the library stays polyclonal, which is the default. A build naming more
+    than one route gets one read-back protocol per route, and they are the ways of one job: the
+    bench does one of them.
 
     `working` is the vector the finished library is moved into, and `None` for a build naming
     none. Without one the final protocol's steps still run, because it is a stage of the method,
@@ -143,6 +143,10 @@ class Run:
 
     `primer_plates` is how this lab lays the pool's primers out, and `None` for a build
     stating none.
+
+    `final_assembly`, `pcr1_cycles` and `pcr2_cycles` are what this build measured where the
+    method leaves the number open, and `None` where it measured none. Stated, the step prints
+    the number and says it is this run's own; left out, the hole stands as it does today.
     """
 
     _: KW_ONLY
@@ -163,7 +167,7 @@ class Run:
     barcodes: str
     changes: str = ""
     read_sheet: str = ""
-    validation: dmx.Validation | None = None
+    validations: tuple[dmx.Validation, ...] = ()
     prices: PriceRecord | None = None
     pool: PoolPlan | None = None
     pool_sheet: str = ""
@@ -172,6 +176,9 @@ class Run:
     reads: ReadPairs | None = None
     marks: RepresentationMarks = REPRESENTATION_MARKS
     linkage_fidelity: float | None = None
+    final_assembly: FinalAssembly | None = None
+    pcr1_cycles: int | None = None
+    pcr2_cycles: int | None = None
     block_vectors: Sequence[tuple[str, str]] = ()
     block_records: Sequence[Destination] = ()
     primer_plates: PrimerPlates | None = None
@@ -249,7 +256,7 @@ class Run:
     def ordered(self) -> Handed:
         """What the ordering protocol leaves behind: a pool, or the blocks themselves."""
         if self.pool:
-            return Handed(POOL_ITEM, "the pool resuspended and aliquoted", storage="-20 °C")
+            return Handed(POOL_ITEM, "the pool resuspended", storage="-20 °C")
         return Handed(BLOCKS_ITEM, "every block as the vendor shipped it", storage="-20 °C")
 
     @property
@@ -274,12 +281,12 @@ class Run:
     @property
     def picked(self) -> Handed:
         """One well a picked colony, which the read-back takes the archive to."""
-        return Handed(PICKED_ITEM, "one well a picked colony, each well one clone")
+        return dmx.PICKED_PLATE
 
     @property
     def calls(self) -> Handed:
         """A pass or a fail a well, which is the read-back's other product."""
-        return Handed(CALLS_ITEM, "a pass or a fail a well, and which design each well holds")
+        return dmx.WELL_CALLS
 
     @property
     def prep(self) -> Handed:
@@ -300,22 +307,26 @@ class Run:
         )
 
     @property
-    def marking_stock(self) -> Handed | None:
-        """The lab stock the chosen marking route takes, which no protocol of this run makes."""
-        if self.validation is None:
-            return None
-        if self.validation.route is dmx.ROUTE_LIGATION:
-            return Handed(
-                "DMX barcode kit",
-                "the lab's own barcoding plasmids, one group a picked plate",
-                storage="-20 °C",
-            )
-        return Handed(
-            "Barcoded index primer plate",
-            "the lab's own index primers, prepared once and called for by a run",
-            spec=("1 µM each",),
-            storage="-20 °C",
-        )
+    def read_back_is_a_choice(self) -> bool:
+        """Whether the bench picks a route, which it does where the build named more than one."""
+        return len(self.validations) > 1
+
+    @property
+    def marking_stocks(self) -> tuple[Handed, ...]:
+        """The lab stock each offered marking route takes, which no protocol of this run makes.
+
+        Where the bench picks a route, each stock says which route takes it, so nobody stocks
+        up for a way they will not do.
+        """
+        found: list[Handed] = []
+        for one in self.validations:
+            stock = dmx.marking_stock(one)
+            if stock is None:
+                continue
+            if self.read_back_is_a_choice:
+                stock = replace(stock, what=f"{stock.what}, for the {one.route.name} way only")
+            found.append(stock)
+        return tuple(found)
 
     @property
     def round_references(self) -> tuple[Reference, ...]:

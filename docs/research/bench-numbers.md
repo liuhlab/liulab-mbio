@@ -682,7 +682,7 @@ colonies.
 | What the source judges the library by instead | barcode sequencing of the plasmid library for representation, and a long-read amplicon over the gene and its barcodes for linkage | Takacsi-Nagy, Figures 1D and 1E |
 | Linkage the source reached | ~95% of reads carried three valid barcodes; nearly 90% of the library correctly linked; >90% of it above 80% fidelity | same |
 | Whole-plasmid sequencing | a **sample** of individual clones from the finished libraries, Plasmidsaurus | Takacsi-Nagy METHOD DETAILS p. e4 |
-| The colony target for a round | **ours, and a project input.** It follows from the representation the screen downstream needs. Qian's >300 gated a transformation run to yield pickable clones and does not transfer | — |
+| The colony target for a round | **ours, and a build input.** It follows from the representation the screen downstream needs. Qian's >300 gated a transformation run to yield pickable clones and does not transfer | — |
 
 ---
 

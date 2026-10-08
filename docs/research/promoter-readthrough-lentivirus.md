@@ -35,7 +35,7 @@ Measured:
 Not measured anywhere read:
 
 - The uninduced background of a TRE promoter sitting downstream of a constitutive promoter,
-  against a matched control with the upstream promoter removed. That is the number this project
+  against a matched control with the upstream promoter removed. That is the number this build
   wants and nobody has published it.
 - The reverse arrangement §7.2 would need — a constitutive promoter downstream of an induced one
   in a lentivirus. Nothing read puts an inducible promoter upstream.
@@ -69,7 +69,7 @@ them (rGBpA and SPA) decreased RFI compared to control lentivirus". Their explan
 own result: "one possible explanation may be reduction of read-through transcription by the PGK
 promoter."
 
-That is the load-bearing fact for this project. Part of what the downstream unit expressed was
+That is the load-bearing fact for this build. Part of what the downstream unit expressed was
 not its own promoter firing; it was polymerase arriving from the upstream promoter. The
 mechanism is the authors' reading of the measurement, not a separate experiment — they did not
 sequence a transcript across the junction.
@@ -207,7 +207,7 @@ None of 1 to 3 has been measured with an inducible downstream promoter.
 ## 5. What is still open, and the experiment that closes it
 
 Open: how much of the committed vector's uninduced cargo expression comes from the upstream
-constitutive promoter, in the cells this project uses, at one copy per cell.
+constitutive promoter, in the cells this build uses, at one copy per cell.
 
 The experiment, as small as it goes:
 
@@ -226,7 +226,7 @@ The experiment, as small as it goes:
 5. If the contribution is material, test mitigation 1 above — cassettes antisense to the LTRs with
    SPA plus Tactb between them — against the same control, and check titre.
 
-Until step 3 has a number, the project should treat uninduced background as unquantified and
+Until step 3 has a number, the build should treat uninduced background as unquantified and
 design around it: carry a no-doxycycline arm for every screen, and read each library member's
 phenotype against its own uninduced well rather than against a pooled baseline.
 

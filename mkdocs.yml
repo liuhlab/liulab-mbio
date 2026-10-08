@@ -26,6 +26,7 @@ nav:
   - Check primers on a genome: genome-check.md
   - Highly parallel DNA synthesis and assembly: synthesis-and-assembly.md
   - Example library: examples/ap1-library/index.md
+  - Example read-back: examples/ap1-readback/index.md
   - API reference: api.md
 
 # What `--strict` catches. Every row was built against the pinned zensical and watched, not

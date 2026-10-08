@@ -2,7 +2,7 @@
 
 Every number here is quoted from ``docs/research/bench-numbers.md``, which names the document
 each came from. Nothing is invented: where the method needs a number nobody published, a `Hole`
-stands in its place and says which ticket it is routed to.
+stands in its place.
 
 This is the pooled experiment's side of the bench. The validating experiment's plates, its
 barcode kit, its depth floors and its per-well pass rule are `liulab_synbio.dmx`'s. A round
@@ -17,12 +17,14 @@ from liulab_mbio.bench import materials
 from liulab_mbio.bench.phenotype import SELECTION, SELECTION_PLATE, selection_marker
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
 from liulab_mbio.sequence import SequenceRecord
+from liulab_synbio.igga.bench import DIGEST_SOURCE, DIGEST_SOURCE_KEY
 
 #: The documents a citation in this protocol could resolve against: the ones a material brings
-#: with it. The round's own numbers are the paper's and travel as references, not as cited rows.
+#: with it, and the specifications a digest's unit count is read from. The round's own numbers
+#: are the paper's and travel as references, not as cited rows.
 #: Copied whole rather than picked over, because which of them a run cites depends on the steps
 #: it builds; `liulab_mbio.protocol.citing` drops the rest before the protocol is returned.
-SOURCES: dict[str, Source] = dict(materials.SOURCES)
+SOURCES: dict[str, Source] = dict(materials.SOURCES) | {DIGEST_SOURCE_KEY: DIGEST_SOURCE}
 
 #: The ligase this method's round runs on, and the buffer it runs in. Both carry their own
 #: rules, so neither can be used in a protocol that does not show them: never add PEG to a T7
@@ -66,7 +68,6 @@ ROUND_SELECTION = Hole(
     "undecided",
     where="each round, plating",
     filled_by="the vector's own marker",
-    issue="liuhlab/liulab-mbio#264",
 )
 
 
@@ -81,23 +82,21 @@ FINAL_MASSES = Hole(
     "undecided",
     where="final assembly, the one-pot reaction",
     filled_by="a pilot",
-    issue="liuhlab/liulab-mbio#264",
 )
 
 
-#: What this method cannot write completely. Each is a number nobody published, routed to the
-#: ticket that would decide it; the ids are the research note's own, so a reference still
-#: resolves.
+#: What this method cannot write completely. The ids are the research note's own, so a reference
+#: still resolves. `FINAL_MASSES` is not here: a build may size that reaction, so the step that
+#: would print the mass is the one place that knows whether the hole stands.
 HOLES: tuple[Hole, ...] = (
     Hole(
         "H23",
-        "no published document describes the split digest; the one source is the paper itself",
+        "nobody has published two enzymes run in one tube, the second added to the first's "
+        "reaction with no heat kill before the beads; the one source is the paper itself",
         "unpublished",
-        where="the split digest, units per reaction",
+        where="the split digest, the procedure",
         filled_by="nothing; it is the method's own",
-        issue="liuhlab/liulab-mbio#264",
     ),
-    FINAL_MASSES,
 )
 
 
@@ -121,7 +120,6 @@ READ_PASS_MARK = Hole(
     "undecided",
     where="the linkage read",
     filled_by="this run, or a source that sets a mark rather than reporting what it reached",
-    issue="liuhlab/liulab-mbio#346",
 )
 
 #: What a build that names no working vector cannot say. The working vector is the user's own
@@ -148,7 +146,6 @@ CARGO_RELEASE = Hole(
     where="final assembly, releasing the cargo",
     filled_by="a destination vector carrying the releasing sites outboard of the cargo, as the "
     "method's own DMX vector does",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 #: What Twist's banded cycle count does not reach. It is stated against KAPA HiFi HotStart or
@@ -162,7 +159,6 @@ PCR1_POLYMERASE = Hole(
     "unpublished",
     where="PCR1, the polymerase the cycle count is stated against",
     filled_by="a count Twist states against Q5, or a pilot on this pool",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 #: What no source covers at all. Twist's table amplifies the pool as it arrives; PCR2's template
@@ -176,7 +172,6 @@ PCR2_CYCLES = Hole(
     where="PCR2, the cycle count",
     filled_by="a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a "
     "real-time run stopped before the curve plateaus",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 

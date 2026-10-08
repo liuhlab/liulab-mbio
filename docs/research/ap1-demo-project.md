@@ -3,13 +3,13 @@ search:
   exclude: true
 ---
 
-# The AP-1 demo project
+# The AP-1 demo build
 
-Specification for issue #217, under the spec at #210. One real project against
+Specification for issue #217, under the spec at #210. One real build against
 `docs/synthesis-and-assembly.md`, end to end, so development has something concrete to build
 toward.
 
-**Everything decided here is decided for this project only.** The method page keeps carrying
+**Everything decided here is decided for this build only.** The method page keeps carrying
 each question as open, and nothing below is a package default. Where this note answers a
 decision the method defers, the heading says so.
 
@@ -19,12 +19,12 @@ cargo comes from is in `docs/research/protein-library-assembly.md`; the barcode 
 measurement in them is contradicted here. Numbers this note derives are arithmetic over the
 layout in section 3 and the two inputs in section 4.1, and are marked **derived** where they
 appear. A price is a list price with its date, which is a reference and never a fact about what
-this project pays.
+this build pays.
 
 ## 1. The cargo input, and what is held back
 
-The project builds a combinatorial AP-1 transcription-factor library over three positions:
-**N**, **DBD** and **C**. The source calls the middle position bZIP; this project says DBD, and
+The build is a combinatorial AP-1 transcription-factor library over three positions:
+**N**, **DBD** and **C**. The source calls the middle position bZIP; this build says DBD, and
 they are the same position.
 
 **The input is amino acid sequences and a position per sequence. Nothing else.** For each AP-1
@@ -39,13 +39,13 @@ family member: three protein sequences, each labelled N, DBD or C.
 | Domain coding lengths | N 44-1,046 bp, DBD 191-263 bp, C 27-942 bp |
 
 Twenty-four parts per position is what is measured; that they are 24 AP-1 family members each
-split three ways is the source's own framing and the issue's, and nothing in this project turns
+split three ways is the source's own framing and the issue's, and nothing in this build turns
 on it. What the design needs is 24 sequences per position and 72 in all.
 
 Those counts are measured in `docs/research/protein-library-assembly.md` (section 6 and section
 7), not taken from the issue. The same note records that the source's main text gives the
 domains as "50-1,000 bp" while its own sequences measure 44-1,046 bp; the measured range is the
-one this project designs against.
+one this build designs against.
 
 **Held back, and never read by the design:** the source's codon choices, its overhangs, its
 internal and external stuffers, its barcode set, its padding, its primers, and the residue
@@ -62,7 +62,7 @@ attribution. The attribution travels with the design output.
 ### 2.1 The DMX vector
 
 The lab-resources build: a rebuilt DMX parent, BbsI-free, one PmeI site outboard of each BsaI
-site. Which parent is a method decision and not this project's, and this project uses whatever
+site. Which parent is a method decision and not this build's, and this build uses whatever
 the lab-resources build settles on.
 
 `scripts/build_dmx_vector.py` now builds it from DMX0001 and the demo is planned against the
@@ -177,9 +177,9 @@ overhang. The trailing `GG` plus the `C` of `CTAA` spells the final residue, and
 translation — which is how a part obeys the no-stop-codon rule and still ends an open reading
 frame. 78 is a multiple of three, as the part rule requires (**derived**).
 
-**The T2A does no work in this project.** Translation stops immediately after it. It is carried
+**The T2A does no work in this build.** Translation stops immediately after it. It is carried
 because the part is a lab resource whose later uses put something after the tag, and because the
-same part serves the marker-as-a-part placement section 7 rejects. Whether the project would
+same part serves the marker-as-a-part placement section 7 rejects. Whether the build would
 rather have an induction reporter there is in section 10.
 
 #### Which way the cassette points
@@ -245,7 +245,7 @@ boundary and its length is ≡ 2 mod 3, so a fragment holding *m* residues is **
 (**derived**). The source's own N and bZIP sequences measure the same congruence against their
 own 4-bp scars, which is the cross-check; its C position differs only because T2A follows there.
 
-Two consequences, and they are this project's answer to a gap the research note records as
+Two consequences, and they are this build's answer to a gap the research note records as
 "no rule fits a fragment's boundary codons to the entry overhang":
 
 1. **One Gly is inserted at every junction.** `GGA` is a whole codon and is added, not
@@ -254,7 +254,7 @@ Two consequences, and they are this project's answer to a gap the research note 
    **C, D, F, H, M, N, W, Y** (**derived** over the standard table). A fragment ending in one of
    those has that one residue replaced.
 
-The replacement table this project uses, one residue each, chosen by chemical class:
+The replacement table this build uses, one residue each, chosen by chemical class:
 
 | Last residue | Replaced by |
 | --- | --- |
@@ -313,12 +313,12 @@ primer split section 9.3 and the batch size section 9.4.
 
 ### 4.1 The two inputs
 
-Everything in this section is arithmetic over two numbers, and both are the project's rather
+Everything in this section is arithmetic over two numbers, and both are the build's rather
 than the method's. Neither the oligo length nor the number of oligos is fixed by the method.
 
-| Input | This project | Where it is set |
+| Input | This build | Where it is set |
 | --- | --- | --- |
-| Oligo length, counting the whole oligo | **350 nt** | section 9.2 — a project decision, changed from 300 because the lab changed it |
+| Oligo length, counting the whole oligo | **350 nt** | section 9.2 — a build decision, changed from 300 because the lab changed it |
 | Blocks to be synthesised | **72**, 133 to 1,149 bp, 30,519 bp in all | the design the pipeline wrote, measured 2026-10-06 and tabled in `docs/research/synthesis-and-assembly.md` |
 
 Change either and every number below changes with it. Nothing below is edited by hand.
@@ -355,7 +355,7 @@ count for a part whose length lands just past a multiple of the span.
 between a real span and 276, and it sits outboard of the 3' cut.
 
 The research note quotes 246 bp per 300-mer from Freschlin and `synthesis-and-assembly-departures.md`
-D10 quotes about 235. Both describe a two-primer layout and neither is this project's budget.
+D10 quotes about 235. Both describe a two-primer layout and neither is this build's budget.
 
 ### 4.3 Fragments per part — **derived**, and the reason to prefer 350
 
@@ -404,18 +404,18 @@ estimated, which is what #220 was asked for and has now done.
 All four counts in sections 4.3 and 4.4 moved when #257 corrected the span arithmetic. They are
 computed by the cargo designer, not typed here; #265 is where that lands.
 
-### 4.5 Cost — the two bands are close, and the pilot's own cost is still **open**
+### 4.5 Cost — the two bands are close, and the pool sits in the 101-500 tier
 
 Every figure here is a **list price with its date**. A list price is a reference, not a fact
-about what this project would pay. The two recorded, from the vendor's oligo-pool price table
-captured **2026-09-17**:
+about what this build would pay. The two recorded for the band comparison, from the vendor's
+oligo-pool price table captured **2026-09-17**:
 
 | Pool | Length band | List price | Per oligo |
 | --- | --- | --- | --- |
 | 18,000 oligos | 251-300 nt | $10,004 | $0.556 |
 | 18,000 oligos | 301-350 nt | $12,505 | $0.695 |
 
-Per usable base, at this project's own span rather than Freschlin's (**derived**). An oligo
+Per usable base, at this build's own span rather than Freschlin's (**derived**). An oligo
 delivers `span − 4` bases of the part, by section 4.2:
 
 ```text
@@ -428,11 +428,12 @@ choice. The 301-350 band lists at exactly 1.25× the 251-300 band for the same 1
 272 / 222 = 1.225× buys almost all of that back. "350 costs 25% more" is true of the pool and
 false of the sequence.
 
-**The pilot's own cost is not known, and no tier figure stands in for it.** 152 oligos sit far
-below 18,000, the smallest pool size any price recorded here covers, so **this project's
-synthesis cost is open** — the figures above price a pool it is not ordering. The project
-exercises the design path, not the pool economics, and should share a pool with other designs if
-one is going out.
+**The pilot's own pool is priced.** The same capture bands pools from 2 oligos up, and 152 sit
+in its 101-500 tier at **$2,575** for 301-350 nt. `docs/examples/ap1-library/prices.csv` carries
+that figure as the demo's oligo-pool row (#478), where it is recorded as this lab's account
+pricing rather than a published list — Twist publishes no pool pricing. The pilot exercises the
+design path, not the pool economics, and should share a pool with other designs if one is going
+out.
 
 **Two things to flag rather than bury:**
 
@@ -445,15 +446,15 @@ one is going out.
 
 ## 5. Validation of the parts
 
-Route: **index PCR**, the method page's Route B.
+Routes: **both**. This section works through index PCR, the method page's Route B.
 
 - Four colonies picked per part, which is Lund's anchor and the only one measured: 343 of 458
   genes error-free at four colonies.
 - 72 parts × 4 = **288 wells**, which is one 384-well pick plate and three 96-well index plates
   (**derived**). Picking fills a quarter of the pick plate at a time, which is what gives three
   full index plates rather than four part-filled ones.
-- Nothing picks the route (#299): the project names it, and this demo ships a project file for
-  each so both are exercised.
+- Nothing picks the route (#299): the build names it, and this demo's build names both, so
+  both are exercised.
 - Well-to-barcode mapping is the published LevSeq plate map, ordered as given, recorded per
   plate.
 - The pass criterion is section 9.6.
@@ -474,17 +475,17 @@ right number of reactions:
 | Round 2 | N+DBD library | C part list | BbsI + SrfI / BsaI + PmeI | 13,824 |
 | Final assembly | working vector | the finished library | PaqCI, one pot | 13,824 |
 
-All 72 parts are cloned into the DMX vector at the seating step, because our donor carries no
+All 72 parts are cloned into the DMX vector at the carrier step, because our donor carries no
 release sites of its own and cannot be a donor until it is cloned (the constraint recorded under
 open decision 6.7).
 
 **The pipeline counts differently, and it is right to.** `liulab_synbio.igga` models one round
-a position, so it plans three for this project. Measured on 2026-10-06: its first round opens the
+a position, so it plans three for this build. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
-the seating step, which runs BsmBI one well a part and makes no library. The pipeline has no
-carrier to seat a part in, so this table is not reachable through it; the gap is the fifth item
-of #223.
+the carrier step, which runs BsmBI one well a part and makes no library. No pipeline seats a part
+in a carrier, so this table is not reachable through one: `liulab_synbio.dmx.carrier` models
+the reaction, and no plan assembles it into a run.
 
 After round 2: the linkage read, then the representation read. Representation is read again
 after the final assembly, after packaging and after transduction — each is a bottleneck that
@@ -511,13 +512,13 @@ Why:
   decision stands, on better grounds than it was made on.
 - **It needs no new part class.** The marker-as-a-part placement needs the terminal part exempted
   from the no-stop-codon and in-frame rules, which is a change to the method, not a choice
-  inside it. The first project to exercise the method should not also be the first to bend it.
+  inside it. The first build to exercise the method should not also be the first to bend it.
 - **Swappability buys nothing here.** The argument for the part placement is that the marker
-  swaps like any other part. This project has one marker and never swaps it. The cost of the
-  backbone placement — rebuilding the backbone to change the marker — is paid once by a project
+  swaps like any other part. This build has one marker and never swaps it. The cost of the
+  backbone placement — rebuilding the backbone to change the marker — is paid once by a build
   that does not change it.
 
-What the choice costs, stated plainly: the marker is fixed in the vector. A later project that
+What the choice costs, stated plainly: the marker is fixed in the vector. A later build that
 wants puromycin resistance or a blue marker rebuilds the backbone, or revisits this decision
 with a source in hand.
 
@@ -535,7 +536,7 @@ polyadenylation signal on the strand the producer cell does not package. A termi
 therefore possible in a lentiviral vector. It is not free — see section 7.3 — but "impossible"
 was wrong.
 
-### 7.3 Read-through is measured; the number this project wants is not
+### 7.3 Read-through is measured; the number this build wants is not
 
 Most of this is closed by #231; `docs/research/promoter-readthrough-lentivirus.md` has the
 detail.
@@ -552,7 +553,7 @@ constitutive one, against a matched control with the upstream promoter removed.
 **#256 decided not to wait for it.** Eszterhas et al. 2002 is why: the magnitude *and the sign*
 of interference move with integration site, so in a pooled library with random integration leak
 is a distribution, not a number, and no option makes it a constant. The read-out has to survive
-the spread either way. So this project carries **a no-doxycycline arm for every screen**, and
+the spread either way. So this build carries **a no-doxycycline arm for every screen**, and
 reads each member against its own uninduced well rather than a pooled baseline. That is a
 requirement here, not an option.
 
@@ -571,7 +572,7 @@ running.
 ## 8. The comparison against the source
 
 The source's own designed parts are the **check, not the input**. They are opened only after
-this project's design is frozen and written to disk, and the comparison is run against that
+this build's design is frozen and written to disk, and the comparison is run against that
 frozen output. **A design re-run after the source has been read is a new design and says so.**
 
 The comparison runs at four levels, and agreement means something different at each.
@@ -607,12 +608,12 @@ of 24 C parts a changed first residue, every synthesised C domain starting with 
 is section 3.1. Agreement here means our changed-residue set is explained by our one overhang
 pair and theirs by their four, with the junction count matching the positions. A difference where
 we changed nothing and no rule of ours covers the boundary is case 2, and the strongest single
-result this project can produce.
+result this build can produce.
 
-## 9. Every deferred decision, answered for this project
+## 9. Every deferred decision, answered for this build
 
 Each heading names the open decision in `docs/research/synthesis-and-assembly.md` section 6.
-**Each answer is this project's, not the method's**, except where a later ticket promoted one.
+**Each answer is this build's, not the method's**, except where a later ticket promoted one.
 Ticket #258 took 9.3 and 9.4 into the method, so the method page now carries those two.
 
 ### 9.1 Where the Type IIS sites sit on the oligo — on the oligo, inboard of P1 and P2
@@ -626,12 +627,12 @@ internal junctions alike.
 Why not on the primers: all of a gene's fragments share one P1 and P2, so a primer-borne site
 would give every fragment of that gene the same overhang and no internal junction could be
 expressed. Oligo length was never the deciding term — #257 measured the saving at two oligos
-across this project's 72 blocks. This is the Baker diagram's arrangement, which draws the cuts
+across this build's 72 blocks. This is the Baker diagram's arrangement, which draws the cuts
 on the oligo, inboard of P1 and P2.
 
 ### 9.2 The padding rule — pad every oligo to a uniform 350 nt
 
-**#257 promoted the rule to the method; the length stays this project's.** Filler sits between
+**#257 promoted the rule to the method; the length stays this build's.** Filler sits between
 the 3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is screened for the eight enzyme motifs, for the orthogonal primer sites,
 and at its two junctions for a motif the join creates.
 
@@ -644,7 +645,7 @@ measured against a 15% gate that never applied — and the conclusion is unchang
 oligo is padded to one length anyway. Only its justification was borrowed. Binning by length
 buys nothing at 152 oligos.
 
-**Why 350 and not 300: the lab changed it.** This is a project decision and not a method
+**Why 350 and not 300: the lab changed it.** This is a build decision and not a method
 constant, and it is the only input section 4 takes besides the block list. What it buys is
 measured in section 4.3 — no part needs more than five fragments at 350, where one needs six at
 300 — and what it costs is measured in section 4.5, which is 2.0% per usable base. 350 is the
@@ -663,7 +664,7 @@ the reason the number is 96 rather than any other. Capacity is 35 × 34 = 1,190 
 genes (**derived**), which stops being the limit long before the reaction count does.
 
 The split totals the **165** rows the primer supplement keeps. The abstract says 166; that
-discrepancy is unresolved in the research note and this project uses the 165 sequences held.
+discrepancy is unresolved in the research note and this build uses the 165 sequences held.
 
 ### 9.4 Batch size — one batch, all 72 parts
 
@@ -671,7 +672,7 @@ One PCR1, then 72 PCR2 reactions using 72 of the 96 inner primers. **152 pieces 
 tube** — section 4.4 derives the count, and this section does not restate it — which is at the
 low end of the Baker anchor of hundreds of oligos to a well.
 
-The method's rule is to hold pieces per PCR1 roughly constant; **this project sets that constant
+The method's rule is to hold pieces per PCR1 roughly constant; **this build sets that constant
 at whatever section 4.4 derives**, which at 350 nt is 152 pieces. Freschlin's evenness
 measurement — subpools under 16 genes overabundant,
 20 or more underrepresented — compares subpools against each other inside one pool, and a single
@@ -682,7 +683,7 @@ equal batches of 18, since equal sizes are what that measurement actually argues
 
 Eleven bases, and the set is drawn fresh:
 
-| Rule | This project |
+| Rule | This build |
 | --- | --- |
 | Distance metric | **Sequence-Levenshtein** |
 | Minimum distance | **3**, within each part list |
@@ -699,7 +700,7 @@ own round, and Freschlin lost whole replicates to exactly that.
 The metric, the absent GC band, the cap of 5 and the shuffled draw order are the verdicts of
 `docs/research/barcode-design.md`, and the method page now carries them. Enzyme-site freedom was
 the method page's one open barcode decision; #260 closed it **on**, so every row above is now the
-method's and this project restates rather than chooses them.
+method's and this build restates rather than chooses them.
 
 The source's 72 barcodes are not reused. The reason is the distance rule and the site screen
 above, and **not** a stop codon: an earlier revision of this section said six of the 72 carry one
@@ -766,7 +767,7 @@ Each round also plates a no-donor control, carried through the ligation from the
 and the gate is net colonies. **Both plates are a departure**, settled in #259: the source plates
 nothing at any round. The reason is there, not here.
 
-**The coverage multiple is closed: this project states a completeness of 0.99, not a multiple
+**The coverage multiple is closed: this build states a completeness of 0.99, not a multiple
 — decided in #297.** 300x was Qian's, measured at one transformation whose purpose was pickable
 clones for an arrayed collection. This library is never picked: it goes to a pooled screen as a
 pool, and no member is re-identified. At 300x the three rounds would have asked for 7,200, then
@@ -783,9 +784,9 @@ downstream needs is still open, and stays in section 10.
 
 - **Read-out route:** index PCR for the parts (section 5); representation reads, not per-well
   reads, for the library.
-- **DMX parent:** a method decision, not this project's (section 2.1).
+- **DMX parent:** a method decision, not this build's (section 2.1).
 - **Colony picker model:** a purchase decision, untouched.
-- **Library-read primers:** decided in #258, and not by this project. Two pairs against
+- **Library-read primers:** decided in #258, and not by this build. Two pairs against
   sequence already constant: representation reads from the retained stuffer to the vector past
   the final `TTCC`, linkage reads the vector either side of the whole cargo. The package designs
   both against the simulated record. The two universal flanking primers turned out to have
@@ -812,19 +813,16 @@ Nothing here becomes a package default, and nothing here is guessed at.
 - **How much titre the cargo costs.** Kumar et al. give the curve's shape and not its slope, and
   the figures are paywalled. A pooled library pays it as representation (section 2.2).
 - **Read-through and promoter interference.** No source read. Closed by one primary source,
-  before any project uses the marker-as-a-part placement.
+  before any build uses the marker-as-a-part placement.
 - **The polyadenylation screen.** The motif list `AATAAA`/`ATTAAA` is standard practice and
   carries no citation here. Closed by a source, and by domestication learning to take a motif
   list rather than only an enzyme list.
 - **The substitution table in section 3.1.** Chosen by chemical class, justified by no matrix.
   Closed by naming the matrix and re-deriving the eight picks from it.
-- **What the screen downstream needs.** The colony floor is settled (#297): this project states
+- **What the screen downstream needs.** The colony floor is settled (#297): this build states
   a 0.99 completeness and the package sizes every round for it. What representation a screen of
   this library would ask for is not settled, and a floor is not an answer to it. Closed by naming
   the screen, or by a source measuring diversity loss across an iGGA round.
-- **The synthesis cost.** 152 oligos sit far below 18,000, the smallest pool any recorded price
-  covers, so no price here is this project's. The list prices and the per-usable-base comparison
-  are section 4.5; neither stands in for the pilot's own cost.
 - **The orthogonal set's size**, 165 or 166. The 165 held are what the split uses.
 - **The MOI and the cell number at transduction.** The completeness floor gives the number of
   integrants wanted; the MOI that delivers them at mostly one integrant per cell is not fixed

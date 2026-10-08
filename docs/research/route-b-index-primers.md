@@ -66,7 +66,7 @@ document agree:
 - "**Runs in the DMX vector**; the working vector takes only the finished cargo" (iGGA cargo).
 - "Assemble into the DMX vector" is step 9 of cargo construction; the working vector appears only
   at the final transfer.
-- `docs/research/ap1-demo-project.md` §2.1 puts all 72 parts in the DMX vector at the seating
+- `docs/research/ap1-demo-project.md` §6 puts all 72 parts in the DMX vector at the carrier
   step.
 
 So issue #312's framing — "our working vector is not pET-22b(+)" — names the wrong vector.
@@ -349,7 +349,7 @@ Two things do have to be checked, and neither is a platform question:
 
 ## 5. How many are needed, and what the stock costs
 
-`src/liulab_synbio/dmx.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
+`src/liulab_synbio/dmx/method.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
 and 96 reverse marks addressing the plate: 9,216 wells on 192 primers.
 
 | Scheme | Forward | Reverse | Wells | Primers to hold |
@@ -387,7 +387,7 @@ product from the kit, built from the kit's published sequences — which §1 say
 
 **What a stock costs: not answered.** No vendor price was retrieved from a primary source
 (§3.3). What can be said without one: the order is **192 oligos of 37 to 41 nt**, one synthesis,
-and it is reusable across every project because the annealing regions are vector constants rather
+and it is reusable across every build because the annealing regions are vector constants rather
 than cargo-specific. LevSeq's own practice is the comparison — they built 8 plates, not 96, and
 covered 768 wells; a lab that will never run more than a few plates at once need not buy 192
 primers to start.
@@ -437,7 +437,7 @@ third pair would be work whose output is strictly worse — unpublished, unvalid
 shorter. The package's own restraint rule applies: a narrower thing will do.
 
 **The marks are not ours to choose.** Route A's barcodes are already user-held, read from a copy
-the user holds, because the kit is a physical thing someone bought (`dmx.py`, and #260). A plate
+the user holds, because the kit is a physical thing someone bought (`dmx/kit.py`, and #260). A plate
 of 192 index primers is the same kind of object. Whether they come from an NEB kit, from an ONT
 kit or from a custom IDT plate, the lab holds them and the package must not pretend to have
 invented them. Shipping any vendor's index table is also the licence verdict §1 reaches.

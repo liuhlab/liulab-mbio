@@ -20,7 +20,6 @@ from liulab_mbio.protocol import (
     Incubation,
     Item,
     Material,
-    Page,
     Plate,
     Project,
     Protocol,
@@ -168,11 +167,6 @@ def chain() -> Project:
     )
 
 
-def folder_of(project: Project) -> Folder:
-    """The folder `write_project_files` would compute for `project`, without writing it."""
-    return Folder(tuple(Page.of(n, one) for n, one in enumerate(project.protocols, 1)))
-
-
 @pytest.fixture(scope="module")
 def project() -> Project:
     return chain()
@@ -180,7 +174,7 @@ def project() -> Project:
 
 @pytest.fixture(scope="module")
 def index(project: Project) -> Node:
-    return parse(render_index(project, folder_of(project)))
+    return parse(render_index(project, Folder.of(project)))
 
 
 def main_of(page: Node) -> Node:
@@ -202,14 +196,14 @@ def test_the_index_links_a_file_the_run_writes_where_its_background_names_it() -
         background=(Topic("What it costs", ("changes.tsv has wild type beside synthesised.",)),),
     )
 
-    index = parse(render_index(run, folder_of(run)))
+    index = parse(render_index(run, Folder.of(run)))
 
     [link] = [a for a in index.find_all("a") if a.text.endswith(".tsv")]
     assert link.attrs["href"] == "../changes.tsv"
 
 
 def test_the_background_renders_on_the_index_and_on_no_protocol_page(project: Project) -> None:
-    page = parse(render_html(project.protocols[0], folder=folder_of(project), here="01.html"))
+    page = parse(render_html(project.protocols[0], folder=Folder.of(project), here="01.html"))
     assert not page.find_all("section", cls="topic")
 
 
@@ -231,7 +225,7 @@ def test_the_flow_chart_boxes_every_protocol_in_order_and_links_each_to_its_page
     assert [box.find_all("span", cls="flow-title")[0].text for box in boxes] == [
         one.title for one in project.protocols
     ]
-    assert [box.attrs["href"] for box in boxes] == [page.href for page in folder_of(project).pages]
+    assert [box.attrs["href"] for box in boxes] == [page.href for page in Folder.of(project).pages]
     assert not any("step" in box.text for box in boxes)
 
 
@@ -293,7 +287,7 @@ def test_a_schedule_column_nothing_states_is_left_out_and_named_once_under_the_t
         "Untimed",
         protocols=(Protocol("Mix", steps=(Step("Pipette"),)),),
     )
-    index = parse(render_index(run, folder_of(run)))
+    index = parse(render_index(run, Folder.of(run)))
     [table] = index.find_all("table", cls="schedule")
     head = [cell.text for cell in table.find_all("tr")[0].find_all("th")]
     assert head == ["Protocol", "Steps", "Holding nothing"]
@@ -318,8 +312,15 @@ def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocol
     assert [badge.find_all("span", cls="check-name")[0].text for badge in badges] == [
         "coverage",
         "fidelity",
+        "handoffs",
+        "sources",
     ]
-    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges] == ["pass", "warn"]
+    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges] == [
+        "pass",
+        "warn",
+        "fail",
+        "pass",
+    ]
     [banner] = index.find_all("p", cls="hole-count")
     assert banner.text.startswith("3 numbers in this run have no source")
     found = {
@@ -376,7 +377,7 @@ def unpriced() -> Node:
             ),
         ),
     )
-    return parse(render_index(run, folder_of(run)))
+    return parse(render_index(run, Folder.of(run)))
 
 
 def test_holes_waiting_on_one_thing_say_it_once_and_every_one_of_them_stays_listed(
@@ -419,7 +420,7 @@ def test_a_total_summed_over_part_of_the_run_says_so_beside_itself(index: Node) 
 def test_a_total_over_the_whole_run_is_qualified_by_nothing() -> None:
     step = Step("Pipette", timers=(Timer("mix", 60),))
     run = Project("Timed", protocols=(Protocol("Mix", steps=(step,)),))
-    index = parse(render_index(run, folder_of(run)))
+    index = parse(render_index(run, Folder.of(run)))
     [table] = index.find_all("table", cls="schedule")
     assert [cell.text for cell in table.find_all("tr")[-1].find_all(("th", "td"))] == [
         "Total",
@@ -450,10 +451,183 @@ def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got
     ]
 
 
+JOB = "read every well back"
+CALLS = Item("well calls", "one design name per well")
+
+
+def choosing() -> Project:
+    """A run whose middle place offers two ways of one job, and says how to pick between them."""
+    return Project(
+        "DMX",
+        background=(Topic(JOB, ("Ligation scales; index PCR is quicker to set up.",)),),
+        protocols=(
+            Protocol("Pick the colonies", produces=(VECTOR,), steps=(Step("Pick"),)),
+            Protocol(
+                "Cargo validation: barcode ligation",
+                choice=JOB,
+                consumes=(VECTOR,),
+                produces=(CALLS,),
+                steps=(Step("Ligate"),),
+            ),
+            Protocol(
+                "Cargo validation: index PCR",
+                choice=JOB,
+                consumes=(VECTOR,),
+                produces=(CALLS,),
+                steps=(Step("Amplify"), Step("Pool")),
+            ),
+            Protocol("Report", consumes=(CALLS,), steps=(Step("Write it up"),)),
+        ),
+    )
+
+
+def test_two_ways_of_one_job_take_one_place_in_the_run_and_two_file_names(tmp_path: Path) -> None:
+    written = write_project_files(choosing(), tmp_path)
+    assert [path.name for path in written.protocols] == [
+        "01-pick-the-colonies.html",
+        "02-cargo-validation-barcode-ligation.html",
+        "02-cargo-validation-index-pcr.html",
+        "03-report.html",
+    ]
+
+
+def test_a_way_names_its_sibling_and_the_page_after_a_choice_names_neither(
+    tmp_path: Path,
+) -> None:
+    write_project_files(choosing(), tmp_path)
+    read = {path.name: parse(path.read_text(encoding="utf-8")) for path in tmp_path.glob("*.html")}
+    [line] = read["02-cargo-validation-barcode-ligation.html"].find_all("p", cls="neighbours")
+    assert line.text.startswith(
+        "Protocol 2 of 3, and one of two ways to read every well back — do this one or "
+        "Cargo validation: index PCR, not both."
+    )
+    [guide] = [a for a in line.find_all("a") if a.text == "How to choose"]
+    assert guide.attrs["href"] == "index.html#topic-read-every-well-back"
+    [after] = read["03-report.html"].find_all("p", cls="neighbours")
+    assert "Comes after whichever of the two ways to read every well back you did." in after.text
+
+
+def test_the_index_lists_a_choice_as_one_entry_with_the_ways_under_it() -> None:
+    run = choosing()
+    index = parse(render_index(run, Folder.of(run)))
+    [listed] = index.find_all("ol", cls="chain-pages")
+    # Three entries, because the run has three places and not four pages.
+    assert [one.tag for one in listed.children if isinstance(one, Node)] == ["li", "li", "li"]
+    [choice] = listed.find_all("li", cls="chain-choice")
+    assert choice.find_all("span", cls="choice-job")[0].text == "Read every well back"
+    assert "do one of these two" in choice.text
+    [ways] = choice.find_all("ul", cls="chain-ways")
+    assert [a.text for a in ways.find_all("a")] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    assert [one.attrs["data-steps"] for one in ways.find_all("li")] == ["ligate", "amplify pool"]
+
+
+def test_the_flow_chart_draws_one_box_for_a_choice_and_hands_on_what_every_way_leaves() -> None:
+    run = choosing()
+    index = parse(render_index(run, Folder.of(run)))
+    [box] = index.find_all("div", cls="flow-choice")
+    assert box.find_all("span", cls="flow-title")[0].text == "Read every well back"
+    assert [a.text for a in box.find_all("ul", cls="flow-ways")[0].find_all("a")] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    said = {
+        item.find_all("span", cls="flow-item")[0].text: item.find_all("span", cls="flow-from")[
+            0
+        ].text
+        for item in index.find_all("li", cls="flow-hand-item")
+    }
+    assert said["well calls"] == "from whichever way to read every well back you did"
+
+
+def timed(title: str, held: int, hands: int | None = None, choice: str = "") -> Protocol:
+    """One protocol of one step, holding `held` seconds and standing over `hands` of them."""
+    return Protocol(
+        title,
+        choice=choice,
+        steps=(Step("Do it", timers=(Timer("hold", held),), hands_on_seconds=hands),),
+    )
+
+
+def timed_choice() -> Project:
+    """A run of three places whose middle one offers two ways, each taking its own time."""
+    return Project(
+        "DMX",
+        protocols=(
+            timed("Pick the colonies", 600, 60),
+            timed("Barcode ligation", 3600, 300, JOB),
+            timed("Index PCR", 7200, 120, JOB),
+            timed("Report", 300),
+        ),
+    )
+
+
+def test_the_schedule_gives_a_choice_one_row_spanning_the_ways_standing_under_it() -> None:
+    """The bench does one way, so one figure across two would be a number nobody measured."""
+    run = timed_choice()
+    index = parse(render_index(run, Folder.of(run)))
+    rows, _ = schedule(index)
+    assert [row[0] for row in rows[1:-1]] == [
+        "Pick the colonies",
+        "Read every well back",
+        "Barcode ligation",
+        "Index PCR",
+        "Report",
+    ]
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][1:3] == ["1", "1 h to 2 h"]
+    assert [row[2] for row in rows[3:5]] == ["1 h", "2 h"]
+    [block] = index.find_all("section", cls="schedule")
+    assert "the row above them gives each column's range" in block.text
+
+
+def test_a_place_says_how_many_of_its_ways_stated_a_column_it_spans() -> None:
+    """One way timed and the other not is a span over one way, never the place's own figure."""
+    run = Project("DMX", protocols=(timed("A", 3600, 300, JOB), timed("B", 3600, choice=JOB)))
+    index = parse(render_index(run, Folder.of(run)))
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][3] == "5 min over 1 of 2 ways"
+
+
+def test_a_total_no_place_covers_in_full_keeps_the_zero_beside_what_was_measured() -> None:
+    """The figure is a way's own measurement, so neither the hole mark nor a bare number fits."""
+    run = Project("DMX", protocols=(timed("A", 3600, 300, JOB), timed("B", 3600, choice=JOB)))
+    rows, _ = schedule(parse(render_index(run, Folder.of(run))))
+    assert rows[-1][3] == "5 min over 0 of 1 protocol"
+
+
+def test_the_schedule_total_spans_the_ways_and_counts_the_places_of_the_run() -> None:
+    """The page says protocol 2 of 3 everywhere else, so a total over part of it says 3 too."""
+    run = timed_choice()
+    index = parse(render_index(run, Folder.of(run)))
+    rows, _ = schedule(index)
+    assert rows[-1][1:3] == ["3", "1 h 15 min to 2 h 15 min"]
+    # Nothing states what the last protocol takes by hand, and that is one place of three.
+    assert rows[-1][3] == "3 min to 6 min over 2 of 3 protocols"
+
+
+def test_a_choice_whose_ways_take_the_same_time_prints_that_time_once() -> None:
+    """A span printing one number twice reads as two, and the bench reads this to plan a week."""
+    run = Project("DMX", protocols=(timed("A", 3600, choice=JOB), timed("B", 3600, choice=JOB)))
+    index = parse(render_index(run, Folder.of(run)))
+    rows, _ = schedule(index)
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][2] == "1 h"
+    assert rows[-1][2] == "1 h"
+
+
+def test_the_index_says_which_name_the_chain_hands_nobody(index: Node) -> None:
+    """A verdict the audit computes reaches no reader unless the index draws its detail too."""
+    [said] = [one for one in index.find_all("p", cls="check-detail") if "handoffs" in one.text]
+    assert "consumes 'barcode map', which nothing hands it" in said.text
+
+
 def test_the_reagents_page_merges_a_material_two_protocols_buy_into_one_row(
     project: Project,
 ) -> None:
-    page = parse(render_reagents(project, folder_of(project)))
+    page = parse(render_reagents(project, Folder.of(project)))
     [block] = main_of(page).find_all("section", cls="materials")
     [table] = block.find_all("table")
     rows = [[cell.text for cell in row.find_all(("th", "td"))] for row in table.find_all("tr")]
@@ -467,7 +641,7 @@ def test_the_reagents_page_merges_a_material_two_protocols_buy_into_one_row(
 def test_the_reagents_page_lists_the_equipment_the_plasticware_and_the_run_bill(
     project: Project,
 ) -> None:
-    main = main_of(parse(render_reagents(project, folder_of(project))))
+    main = main_of(parse(render_reagents(project, Folder.of(project))))
     equipment = {
         item.find_all("strong")[0].text: item.find_all("span", cls="used-in")[0].text
         for item in main.find_all("li", cls="kit")
@@ -490,13 +664,13 @@ def test_the_reagents_page_states_a_caution_two_protocols_both_bring_once() -> N
             Protocol("Index", materials=(Material("Taq", catalog="M0267", cautions=chilled),)),
         ),
     )
-    page = parse(render_reagents(run, folder_of(run)))
+    page = parse(render_reagents(run, Folder.of(run)))
     [block] = main_of(page).find_all("section", cls="materials")
     assert [p.text for p in block.find_all("p", cls="caution")] == [f"Caution: {chilled[0]}"]
 
 
 def test_the_references_page_names_every_protocol_citing_each_document(project: Project) -> None:
-    main = main_of(parse(render_references(project, folder_of(project))))
+    main = main_of(parse(render_references(project, Folder.of(project))))
     [listed] = main.find_all("ol")
     cited = {
         item.text.split(".")[0]: item.find_all("span", cls="cited-by")[0].text
@@ -524,7 +698,7 @@ def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
         bill=Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("prices")),)),
         protocols=(Protocol("Order the pool", sources={"NEB": Source("NEB catalogue")}),),
     )
-    folder = folder_of(run)
+    folder = Folder.of(run)
     main = main_of(parse(render_references(run, folder)))
     sources = {
         item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
@@ -544,14 +718,14 @@ def test_a_run_source_no_row_of_its_bill_cites_is_listed_with_no_citer() -> None
         sources={"prices": Source("prices.csv")},
         bill=Bill((BillRow("pool", 1, key="S-1", hole=Hole("H1", "what a pool costs", "price")),)),
     )
-    main = main_of(parse(render_references(run, folder_of(run))))
+    main = main_of(parse(render_references(run, Folder.of(run))))
     [listed] = main.find_all("section", cls="sources")[0].find_all("li")
     assert listed.find_all("strong")[0].text == "prices"
     assert not listed.find_all("span", cls="cited-by")
 
 
 def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) -> None:
-    page = parse(render_html(project.protocols[0], folder=folder_of(project), here="01.html"))
+    page = parse(render_html(project.protocols[0], folder=Folder.of(project), here="01.html"))
     [wait] = page.find_all("li", cls="wait")
     assert wait.text.startswith("Waiting on the pool to arrive")
     assert "10-15 working days" in wait.text
@@ -561,7 +735,7 @@ def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) 
 def test_a_step_carries_the_label_of_the_part_of_the_protocol_it_belongs_to(
     project: Project,
 ) -> None:
-    page = parse(render_html(project.protocols[0], folder=folder_of(project), here="01.html"))
+    page = parse(render_html(project.protocols[0], folder=Folder.of(project), here="01.html"))
     assert [one.text for one in page.find_all("p", cls="step-section")] == ["Day 1"]
 
 
@@ -595,7 +769,7 @@ def test_every_mark_a_filled_page_links_to_stands_on_the_page_it_names(tmp_path:
 def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_page_with_none(
     project: Project,
 ) -> None:
-    folder = folder_of(project)
+    folder = Folder.of(project)
     shared = parse(render_reagents(project, folder))
     assert {a.attrs["href"] for a in shared.find_all("a", cls="cite")} == {
         "references.html#source-m0491",

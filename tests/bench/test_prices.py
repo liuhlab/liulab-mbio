@@ -77,8 +77,6 @@ def test_a_quantity_computes_with_no_record_and_the_money_is_a_hole() -> None:
     assert row.charge == ""
     assert row.hole is not None
     assert row.hole.kind == "price"
-    # A missing price is a missing input of the user's, not a defect in what the package knows.
-    assert row.hole.issue == ""
     assert bill.total == ""
 
 

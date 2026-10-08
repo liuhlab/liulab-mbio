@@ -10,6 +10,7 @@ run and this module holds none.
 
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import replace
 
 from liulab_mbio.bench.readback import clean_colony_chance
 from liulab_mbio.protocol.model import Figure, Step, Transfer, Troubleshooting
@@ -70,10 +71,17 @@ def chances(designs: Sequence[Design]) -> tuple[str, ...]:
     )
 
 
+#: What each step belongs under, in the order a reader works through them.
+ARRAY_SECTION = "Array and pick"
+MARK_SECTION = "Mark every well"
+CALL_SECTION = "Call the wells"
+
+
 def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
     """Return the steps that read these designs back, the route's own in the middle.
 
     The picking is shared and the calling is shared; between them sits the route's own marking.
+    Each step carries the section it belongs under, so every caller labels them alike.
 
     `marking` is drawn on the one step of the route that changes a molecule: the lysate ligation
     on one route, the index PCR on the other. The records it names belong to the run, which this
@@ -97,7 +105,12 @@ def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple
         if one.route is ROUTE_LIGATION
         else _index_pcr_steps(one, marking)
     )
-    return (_array_step(one), _pick_step(one), *route, _call_step(one))
+    return (
+        replace(_array_step(one), section=ARRAY_SECTION),
+        replace(_pick_step(one), section=ARRAY_SECTION),
+        *(replace(step, section=MARK_SECTION) for step in route),
+        replace(_call_step(one), section=CALL_SECTION),
+    )
 
 
 def _array_step(one: Validation) -> Step:
@@ -119,7 +132,7 @@ def _array_step(one: Validation) -> Step:
             "density picking wants.",
         ),
         notes=(
-            f"This project reads back {floor}: {len(one.designs)} design(s). The rest stay "
+            f"This run reads back {floor}: {len(one.designs)} design(s). The rest stay "
             "polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it.",
         ),
@@ -243,8 +256,9 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
             instructions=(
                 f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
                 f"holds its {SAMPLE_UL:g} µL of culture.",
-                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from the prepared "
-                f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
+                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from "
+                f"{one.index_plate or 'the prepared primer plate'}, for {INDEX_PCR_UL:g} µL "
+                "a well.",
                 "Seal the plate, spin it down, and run the program below.",
             ),
             tables=(index_pcr_reaction(one.wells),),
@@ -280,7 +294,7 @@ def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[St
                     "a gel before the library prep.",
                 ),
             ),
-            holes=(INDEX_MARKS,),
+            holes=() if one.index_plate else (INDEX_MARKS,),
         ),
         _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
     )

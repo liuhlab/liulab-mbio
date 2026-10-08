@@ -37,13 +37,21 @@ REPO = Path(__file__).resolve().parents[2]
 
 def test_an_unknown_key_is_refused_and_located() -> None:
     data = {"title": "t", "steps": [{"title": "s", "instruction": ["typo"]}]}
-    with pytest.raises(ValueError, match=r"steps\[0\].*instruction"):
+    said = r"^protocol\.steps\[0\] carries unknown key\(s\) instruction$"
+    with pytest.raises(ValueError, match=said):
         Protocol.from_dict(data)
 
 
 def test_a_missing_required_key_is_refused_and_located() -> None:
     data = {"title": "t", "steps": [{"title": "s", "tables": [{"components": [{"name": "x"}]}]}]}
-    with pytest.raises(ValueError, match=r"components\[0\].*volume_ul"):
+    said = r"^protocol\.steps\[0\]\.tables\[0\]\.components\[0\] is missing volume_ul$"
+    with pytest.raises(ValueError, match=said):
+        Protocol.from_dict(data)
+
+
+def test_a_key_that_is_missing_is_named_before_one_nothing_reads() -> None:
+    data = {"title": "t", "steps": [{"tables": [], "instruction": ["typo"]}]}
+    with pytest.raises(ValueError, match=r"^protocol\.steps\[0\] is missing title$"):
         Protocol.from_dict(data)
 
 
@@ -279,6 +287,7 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "overview": {},',
             '  "highlights": [],',
             '  "checks": [],',
+            '  "choice": "",',
             '  "consumes": [],',
             '  "produces": [],',
             '  "materials": [],',

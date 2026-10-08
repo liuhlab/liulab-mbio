@@ -109,3 +109,18 @@ def test_the_genbank_written_loses_a_segment_name_and_says_which(
     assert [one.name for one in again.segments] == ["", "", ""]
     said = capsys.readouterr().err
     assert [name for name in ("-35", "-10") if f"{name!r}" in said] == ["-35", "-10"]
+
+
+def test_the_definition_line_ends_in_one_full_stop_however_the_description_ends(
+    tmp_path: Path,
+) -> None:
+    """Biopython terminates ``DEFINITION`` itself, so a description's own stop would double it."""
+    from liulab_mbio.sequence import SequenceRecord
+
+    for index, described in enumerate(("a stuffer.", "a stuffer")):
+        record = SequenceRecord("ACGT" * 16, name="stuffer", notes={"Description": described})
+        path = tmp_path / f"stuffer-{index}.gb"
+        _script().write_genbank(record, path)
+
+        (line,) = [one for one in path.read_text().splitlines() if one.startswith("DEFINITION")]
+        assert line == "DEFINITION  a stuffer."

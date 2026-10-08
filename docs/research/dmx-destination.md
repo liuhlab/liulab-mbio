@@ -147,5 +147,5 @@ The rebuilt vector is a plasmid the lab builds, not one that is deposited anywhe
 are deposited and are already held. A DNA sequence carries no licence, so none was weighed —
 an MTA or a UBMTA governs a plasmid, never its bases. #287 settled the same include-or-not for
 the ccdB cassette and decided that synbio ships the method's own DNA, with the input vector
-staying a project input. This record is the method's own molecule by that test, and it ships as
+staying a build input. This record is the method's own molecule by that test, and it ships as
 the worked example's destination, written by the script rather than by hand.

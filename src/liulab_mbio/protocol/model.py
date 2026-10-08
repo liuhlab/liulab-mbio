@@ -9,12 +9,13 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
+from dataclasses import KW_ONLY, asdict, dataclass, field, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
-from types import MappingProxyType, NoneType, UnionType
-from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
+from types import MappingProxyType
+from typing import Any, Literal, get_args
 
+from liulab_mbio import jsonfile
 from liulab_mbio.checks import STATUSES, Status
 
 #: The most characters `Protocol.overview` gives one card. Anything longer is a sentence, which
@@ -250,10 +251,10 @@ def names(subject: str, among: Iterable[str]) -> bool:
     return any(wanted in one.casefold() for one in among)
 
 
-#: Why a number is missing. A ``"price"`` hole names no issue: a price nobody loaded is a missing
-#: input of the user's, not a defect in what the package knows. Only ``"unread"`` fails
-#: `Protocol.audit`: the other four name a gap no source closes, which is what a finished plan
-#: keeps, while a source nobody read is work left undone.
+#: Why a number is missing. A ``"price"`` hole is a missing input of the user's, not a defect in
+#: what the package knows. Only ``"unread"`` fails `Protocol.audit`: the other four name a gap no
+#: source closes, which is what a finished plan keeps, while a source nobody read is work left
+#: undone.
 type HoleKind = Literal["undecided", "unpublished", "lab", "unread", "price"]
 
 
@@ -278,8 +279,6 @@ class Hole:
         What the number belongs to, such as ``"ligase units per reaction"``.
     filled_by
         What would close it.
-    issue
-        The ticket it is routed to. A ``"price"`` hole names none.
     """
 
     id: str
@@ -288,19 +287,14 @@ class Hole:
     _: KW_ONLY
     where: str = ""
     filled_by: str = ""
-    issue: str = ""
 
     def __post_init__(self) -> None:
-        """Refuse an unnamed hole, an unknown kind, or a price hole routed to an issue."""
+        """Refuse an unnamed hole or an unknown kind."""
         _require(bool(self.id.strip()), "a hole needs an id")
         _require(bool(self.missing.strip()), f"hole {self.id!r}: say what is missing")
         _require(
             self.kind in get_args(HoleKind.__value__),
             f"hole {self.id!r}: unknown kind {self.kind!r}",
-        )
-        _require(
-            self.kind != "price" or not self.issue,
-            f"hole {self.id!r}: a missing price is a missing input, so it names no issue",
         )
 
 
@@ -1348,6 +1342,12 @@ class Protocol:
         has to read rather than scan goes here and not in `overview`.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
+    choice
+        The job this protocol is one way of doing, where several ways are offered. Protocols
+        naming the same job are the ways: they stand together in `Project.protocols`, take one
+        place in the run, and the bench does one of them. It is read at the bench, so it is a
+        lowercase job that sits inside "one of two ways to read every well back". Empty where
+        the protocol is simply a step of the chain.
     consumes, produces
         What the bench is handed before this protocol, and what it leaves for the next one. A
         `Project` chains protocols by these names; a protocol rendered alone states them for its
@@ -1383,6 +1383,7 @@ class Protocol:
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
     checks: tuple[Check, ...] = ()
+    choice: str = ""
     consumes: tuple[Item, ...] = ()
     produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
@@ -1586,6 +1587,49 @@ class Protocol:
         return _PROTOCOL(data, "protocol")
 
 
+def by_place[T](items: Iterable[T], choice: Callable[[T], str]) -> tuple[tuple[T, ...], ...]:
+    """Return `items` one place of the run at a time, `choice` naming the job each is a way of.
+
+    The ways of one job take a single place, so they are numbered alike and listed as one entry;
+    everything else stands alone. Nothing stores an ordinal.
+
+    Examples
+    --------
+    >>> by_place(("", "read every well back", "read every well back", ""), lambda one: one)
+    (('',), ('read every well back', 'read every well back'), ('',))
+    """
+    groups: list[list[T]] = []
+    last = ""
+    for item in items:
+        here = choice(item)
+        if not here or here != last:
+            groups.append([])
+        groups[-1].append(item)
+        last = here
+    return tuple(tuple(group) for group in groups)
+
+
+def left_by_every(protocols: Iterable[Protocol]) -> set[str]:
+    """Return the names every one of `protocols` produces, which is what one place hands on.
+
+    Where they are the ways of one job the bench did only one of them, so a name one way makes
+    and another does not is not certainly there.
+
+    Examples
+    --------
+    >>> left_by_every((Protocol("A", produces=(Item("calls", "per well"),)),))
+    {'calls'}
+    """
+    return set.intersection(*({item.name for item in one.produces} for one in protocols))
+
+
+def _leaving(every: set[str]) -> str:
+    """Return what every way of one job leaves behind, as the `choices` check words it."""
+    if not every:
+        return "nothing"
+    return "the same thing" if len(every) == 1 else f"the same {len(every)} things"
+
+
 @dataclass(frozen=True, slots=True)
 class Project:
     """Protocols run in order, each handed what the ones before it produced.
@@ -1595,6 +1639,10 @@ class Project:
     the project was given or an earlier protocol produced under that name, and `audit` reports a
     name nothing hands over as a badge rather than refusing to build the project. A chain with a
     dangling input is still a document someone can read.
+
+    A protocol may name the job it is one way of doing. The ways of one job stand together and
+    take one place in the run, the bench does one of them, and what passes out of that place is
+    what every way leaves behind.
 
     Parameters
     ----------
@@ -1639,7 +1687,11 @@ class Project:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a project with no title, or two protocols keyed alike; slug the key."""
+        """Refuse a project with no title, two protocols keyed alike, or ways standing apart.
+
+        Slug the key. The ways of one job take one place in the run, and a place is contiguous,
+        so ways with another protocol between them are a builder defect rather than a badge.
+        """
         _require(bool(self.title.strip()), "a project needs a title")
         object.__setattr__(self, "key", slug(self.key))
         keys = [one.key for one in self.protocols if one.key]
@@ -1649,39 +1701,81 @@ class Project:
             f"two protocols are keyed {shared!r}: a key names one page's store, so a protocol "
             "copied from another needs its own key or none",
         )
+        places = by_place(self.protocols, lambda one: one.choice)
+        jobs = [group[0].choice for group in places if group[0].choice]
+        apart = next((job for job in jobs if jobs.count(job) > 1), "")
+        _require(
+            not apart,
+            f"ways to {apart!r} stand apart in protocols: the ways of one job take one place in "
+            "the run, and a place is contiguous, so they go next to each other",
+        )
 
     def audit(self) -> tuple[Check, ...]:
-        """Judge the chain, and the sources its own bill cites.
+        """Judge the chain, the choices it offers, and the sources its own bill cites.
 
         A consumed name resolves to an input or an earlier protocol's output, and a bill row's
         citation to a source the run or one of its protocols names. Each protocol judges its own
-        citations.
+        citations. A run offering no choice is judged by two checks, as it always was.
 
         Examples
         --------
         >>> [check.name for check in Project("Demo").audit()]
         ['handoffs', 'sources']
         """
-        return (self._handoffs(), self._sources())
+        offered = (self._choices(),) if any(one.choice for one in self.protocols) else ()
+        return (self._handoffs(), *offered, self._sources())
 
     def _handoffs(self) -> Check:
         handed = {item.name for item in self.inputs}
         dangling: list[str] = []
         consumed = 0
-        for protocol in self.protocols:
-            consumed += len(protocol.consumes)
-            dangling += [
-                f"{protocol.title} consumes {item.name!r}, which nothing hands it"
-                for item in protocol.consumes
-                if item.name not in handed
-            ]
-            handed |= {item.name for item in protocol.produces}
+        for group in by_place(self.protocols, lambda one: one.choice):
+            for protocol in group:
+                consumed += len(protocol.consumes)
+                dangling += [
+                    f"{protocol.title} consumes {item.name!r}, which nothing hands it"
+                    for item in protocol.consumes
+                    if item.name not in handed
+                ]
+            handed |= left_by_every(group)
         if dangling:
             return Check("handoffs", "fail", "; ".join(dangling))
         counted = (
             f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
         )
         return Check("handoffs", "pass", counted)
+
+    def _choices(self) -> Check:
+        wrong: list[str] = []
+        unhelped: list[str] = []
+        said: list[str] = []
+        # A topic is linked by the slug of its title, so that is what names it here: a
+        # title opening in capitals still carries the guidance a lowercase job asks for.
+        titled = {slug(topic.title) for topic in self.background}
+        for group in by_place(self.protocols, lambda one: one.choice):
+            job = group[0].choice
+            if not job:
+                continue
+            every = left_by_every(group)
+            odd = sorted({item.name for one in group for item in one.produces} - every)
+            if len(group) < 2:
+                wrong.append(f"Only one way to {job} is written, so there is nothing to choose.")
+            elif odd:
+                listed = ", ".join(f'"{name}"' for name in odd)
+                comes = "comes" if len(odd) == 1 else "come"
+                wrong.append(
+                    f"The ways to {job} do not leave the same things: "
+                    f"{listed} {comes} from only one of them."
+                )
+            else:
+                said.append(f"{len(group)} ways to {job}, each leaving {_leaving(every)}.")
+            if slug(job) not in titled:
+                unhelped.append(f"Nothing on the overview says how to pick a way to {job}.")
+        if wrong:
+            return Check("choices", "fail", " ".join(wrong))
+        if unhelped:
+            return Check("choices", "warn", " ".join(unhelped))
+        return Check("choices", "pass", " ".join(said))
 
     def _sources(self) -> Check:
         named = frozenset(self.sources).union(
@@ -1747,125 +1841,5 @@ def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     return out
 
 
-type _Convert = Callable[[Any, str], Any]
-
-
-def _refused(where: str, expected: str, value: Any) -> ValueError:
-    match value:
-        case str():
-            got = "a string"
-        case list():
-            got = "a list"
-        case Mapping():
-            got = "an object"
-        case None | bool():
-            got = json.dumps(value)
-        case int() | float():
-            got = repr(value)
-        case _:
-            got = type(value).__name__
-    return ValueError(f"{where}: expected {expected}, got {got}")
-
-
-def _converter(hint: Any) -> _Convert:
-    """Return a converter from parsed JSON to the annotation `hint`, refusing another JSON type."""
-    if isinstance(hint, TypeAliasType):
-        return _converter(hint.__value__)
-    origin, args = get_origin(hint), get_args(hint)
-    if origin is Literal:
-        return _converter(type(args[0]))
-    if origin in (Union, UnionType) and len(args) == 2 and NoneType in args:
-        (inner,) = (arg for arg in args if arg is not NoneType)
-        return _or_null(_converter(inner))
-    if origin is tuple and args[1:] == (...,):
-        return _list(_converter(args[0]))
-    if origin is tuple:
-        return _fixed(tuple(_converter(arg) for arg in args))
-    if origin is Mapping and args[0] is str:
-        return _mapping(_converter(args[1]))
-    if isinstance(hint, type) and is_dataclass(hint):
-        return _object(hint)
-    if hint in _SCALARS:
-        return _scalar(*_SCALARS[hint])
-    raise TypeError(f"a protocol field has no JSON form: {hint!r}")
-
-
-def _object[T](cls: type[T]) -> Callable[[Any, str], T]:
-    """Return a converter from a JSON object to the dataclass `cls`, checking its keys."""
-    spec = fields(cls)  # pyright: ignore[reportArgumentType]
-    hints = get_type_hints(cls)
-    nested = {f.name: _converter(hints[f.name]) for f in spec}
-    required = {f.name for f in spec if f.default is MISSING and f.default_factory is MISSING}
-
-    def convert(data: Any, where: str) -> T:
-        if not isinstance(data, Mapping):
-            raise _refused(where, "an object", data)
-        if unknown := sorted(set(data) - set(nested)):
-            raise ValueError(f"{where}: unknown key(s) {', '.join(unknown)}")
-        if missing := sorted(required - set(data)):
-            raise ValueError(f"{where}: missing key(s) {', '.join(missing)}")
-        return cls(**{key: nested[key](value, f"{where}.{key}") for key, value in data.items()})
-
-    return convert
-
-
-def _list(item: _Convert) -> _Convert:
-    def convert(data: Any, where: str) -> tuple[Any, ...]:
-        if not isinstance(data, list):
-            raise _refused(where, "a list", data)
-        return tuple(item(value, f"{where}[{i}]") for i, value in enumerate(data))
-
-    return convert
-
-
-def _fixed(items: tuple[_Convert, ...]) -> _Convert:
-    """Return a converter to a tuple of a fixed length, such as a span's two numbers."""
-    expected = f"a list of {len(items)}"
-
-    def convert(data: Any, where: str) -> tuple[Any, ...]:
-        if not isinstance(data, list):
-            raise _refused(where, expected, data)
-        if len(data) != len(items):
-            raise ValueError(f"{where}: expected {expected}, got {len(data)}")
-        return tuple(
-            item(value, f"{where}[{i}]")
-            for i, (item, value) in enumerate(zip(items, data, strict=True))
-        )
-
-    return convert
-
-
-def _mapping(value: _Convert) -> _Convert:
-    def convert(data: Any, where: str) -> dict[str, Any]:
-        if not isinstance(data, Mapping):
-            raise _refused(where, "an object", data)
-        return {
-            key: value(item, f"{where}[{json.dumps(key, ensure_ascii=False)}]")
-            for key, item in data.items()
-        }
-
-    return convert
-
-
-def _or_null(convert: _Convert) -> _Convert:
-    return lambda data, where: None if data is None else convert(data, where)
-
-
-def _scalar(expected: str, accepts: Callable[[Any], bool]) -> _Convert:
-    def convert(data: Any, where: str) -> Any:
-        if not accepts(data):
-            raise _refused(where, expected, data)
-        return data
-
-    return convert
-
-
-# `bool` is a subclass of `int` in Python, and true is not a number in JSON.
-_SCALARS: dict[type, tuple[str, Callable[[Any], bool]]] = {
-    str: ("a string", lambda value: isinstance(value, str)),
-    bool: ("true or false", lambda value: isinstance(value, bool)),
-    int: ("a whole number", lambda value: type(value) is int),
-    float: ("a number", lambda value: type(value) in (int, float)),
-}
-_PROTOCOL = _object(Protocol)
-_PROJECT = _object(Project)
+_PROTOCOL = jsonfile.reader(Protocol)
+_PROJECT = jsonfile.reader(Project)

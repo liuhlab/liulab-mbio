@@ -2,7 +2,10 @@
 
 Two routes mark a well and one judgement reads them, and `liulab_synbio.dmx` says what each
 one is. The picking, the pass rule and the reformat are shared; the marking step, the plate and
-the depth floor are the route's own, because each floor was measured on its own library prep.
+the depth floor are the route's own. The two floors are not a strict and a lenient setting of
+one scale: one is where consensus calling starts, the other where a reader stops trusting a
+well, over different amplification and different read filters.
+`docs/research/route-choice.md` section 4 compares them.
 
 Every number a read-back prints is here, with the document it was read from beside it.
 `liulab_synbio.dmx.steps` writes them up as steps.
@@ -20,6 +23,7 @@ from liulab_mbio.protocol.model import (
     Component,
     Hole,
     Incubation,
+    Item,
     Material,
     Plate,
     ReactionTable,
@@ -27,12 +31,13 @@ from liulab_mbio.protocol.model import (
     Source,
     Stage,
     ThermocyclerProgram,
+    Topic,
     Transfer,
     Well,
 )
 from liulab_synbio.dmx.kit import GROUP_SIZE, GROUPS, Kit, KitBarcode
 
-#: Colonies picked per design. Four is Lund's only measured anchor, and it is a project input
+#: Colonies picked per design. Four is Lund's only measured anchor, and it is a build's input
 #: rather than a constant of the method.
 COLONIES_PER_DESIGN = 4
 
@@ -146,13 +151,13 @@ class Route:
     """One way of marking a well, and how deep its read has to be before anyone calls it.
 
     The two routes differ in their marking step, their plate and their floor; the picking, the
-    pass rule and the reformat are shared. Which one a project runs is the project's choice.
+    pass rule and the reformat are shared. Which one a build runs is the build's choice.
 
     Parameters
     ----------
     name
         What the marking step does: ``"barcode ligation"`` or ``"index PCR"``. It is both the
-        name the page prints and the key a project names a route by.
+        name the page prints and the key a build names a route by.
     marking
         What the step does, in a few words.
     well_axes
@@ -163,7 +168,7 @@ class Route:
     wanted_reads
         A well is called **above** this mark. Qian publishes a consensus depth above 150 and
         LevSeq's SI checklist an alignment count above 20, so neither route calls a well landing
-        exactly on it. A project may raise it.
+        exactly on it. A build may raise it.
     tolerable_reads
         The mark at or above which a well still carries a verdict; `None` where the route
         publishes one number and has no warn band. LevSeq's SI routes a well at ``<=20`` into a
@@ -225,11 +230,57 @@ ROUTE_INDEX_PCR = Route(
     source="LevSeq",
 )
 
-#: Both routes, by the name a project names one with.
+#: Both routes, by the name a build names one with.
 ROUTES: dict[str, Route] = {
     ROUTE_LIGATION.name: ROUTE_LIGATION,
     ROUTE_INDEX_PCR.name: ROUTE_INDEX_PCR,
 }
+
+#: The job both routes are a way of doing, in the words a bench reader uses for it. A run
+#: offering both titles its guidance with this, which is what puts each way's page one link
+#: from what to weigh. Written to sit inside a sentence, so `READ_BACK_TITLE` opens a heading.
+READ_BACK = "read every well back"
+
+#: The same job where it opens a line: the guidance topic's own heading.
+READ_BACK_TITLE = READ_BACK[:1].upper() + READ_BACK[1:]
+
+
+def route_choice() -> Topic:
+    """Return what to weigh before doing one of the two routes, for a run offering both.
+
+    Every figure is `docs/research/route-choice.md`'s, which is also what says which comparisons
+    no source carries. Those are written as cautions and never as figures: there is no published
+    cost for index PCR, no cost for either route per well, and no library size at which one
+    overtakes the other.
+    """
+    return Topic(
+        READ_BACK_TITLE,
+        (
+            "Both routes mark every well so that sequencing says which well a read came from, "
+            "and both end with a pass or a fail for each well. Do one of them, never both.",
+            "How many wells each reaches is not what picks between them, and it does not rank "
+            "them the way the bench's rule of thumb does. Barcode ligation addresses more than "
+            "330,000 wells from one plate of barcodes; index PCR addresses 9,216. Most runs sit "
+            "well below either.",
+            "Barcode ligation carries a fixed cost and a fixed delay, paid once whatever the "
+            "library's size: $695 of sequencing, and five days. Because they are paid once, "
+            "the whole route costs less for each design the more designs there are, falling "
+            "from $19.52 a design over 100 designs to $3.38 over 2,000. Nobody has published "
+            "the same table for index PCR, so no price for it, and no price per well for "
+            "either route, is stated anywhere here.",
+            "Index PCR runs one thermocycled reaction in every well, so thousands of wells need "
+            "many thermocyclers. Barcode ligation needs none: a whole 1536-well plate marks in "
+            "a single incubator. That is the only direct comparison of the two in print, and "
+            "the barcode ligation route's own authors wrote it about the route they replaced; "
+            "no independent measurement of one against the other was found.",
+            "Doing neither is also a choice. Every well is then enriched for the design it was "
+            "built from, and nothing firmer than that can be said: the one published purity "
+            "figure, 89.3% of 929 wells at 90% clonal purity or better, was measured on short "
+            "arrayed fragments under 314 bases rather than on cargo from an oligo pool, and the "
+            "same work found that polyclonality grows with length. Nothing measured says the "
+            "material is even. To know what a well holds, read it back.",
+        ),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -322,7 +373,7 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     A well below the route's tolerable depth carries **no verdict**, not a failure: it is read
     again or picked again, and reformatting does not compact it out. From the tolerable mark up
     to the wanted one it warns; above the wanted one it passes. A route with no tolerable mark
-    has no warn band. `wanted` raises the route's own mark, which a project may do and may not
+    has no warn band. `wanted` raises the route's own mark, which a build may do and may not
     lower.
 
     Raises
@@ -342,8 +393,8 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     mark = route.wanted_reads if wanted is None else wanted
     if mark < route.wanted_reads:
         raise ValueError(
-            f"the {route.name} route wants {route.wanted_reads} reads a well and a project may "
-            f"raise that, not lower it to {mark}"
+            f"the {route.name} route wants {route.wanted_reads} reads a well, and that mark "
+            f"may be raised, not lowered to {mark}"
         )
     status: Status | None = None
     if reads > mark:
@@ -419,7 +470,7 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     No floor reads nothing, because validation is optional and a library headed for a pooled
     screen takes its identity from that screen. A floor of zero reads every design. Nothing here
     supplies a default: `clean_colony_chance` gives a design's chance of a clean colony, not the
-    chance worth paying to check, and that is the project's own call.
+    chance worth paying to check, and that is the build's own call.
 
     Raises
     ------
@@ -437,6 +488,26 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     if floor < 0:
         raise ValueError(f"a fragment-count floor counts fragments, and {floor} is below none")
     return tuple(one for one in designs if one.fragments >= floor)
+
+
+def refuse_unclonal(cargo: str, *, clonal: bool) -> None:
+    """Refuse to read back cargo nobody can pick a colony from.
+
+    DMX takes any cargo and a design's name does not say which kind it is, so the caller names
+    its cargo and says whether it arrives as colonies.
+
+    Raises
+    ------
+    ValueError
+        If the cargo is not clonal.
+    """
+    if clonal:
+        return
+    raise ValueError(
+        "DMX reads clonal material: it spots each design from its archive plate, picks colonies "
+        "off it and grows every pick under the destination's own selection. There is no colony "
+        f"to pick and no marker to select on in {cargo}"
+    )
 
 
 def selected_on(selection: str) -> str:
@@ -618,9 +689,9 @@ class Validation:
     Parameters
     ----------
     route
-        The route the project named.
+        The route the build named.
     designs
-        The designs read back, which `validated` chose from the project's floor.
+        The designs read back, which `validated` chose from the build's floor.
     floor
         That floor, carried so the protocol can print it beside each design's chance.
     colonies
@@ -628,6 +699,10 @@ class Validation:
     selection
         What to plate on, read off the vector's own marker by the caller. Empty where the record
         annotates none, and every plate then says so rather than naming a drug.
+    index_plate
+        What the lab calls the prepared plate of barcoded primer pairs the index PCR route takes
+        one pair of per well. Empty, the step says no more than that a prepared plate is wanted,
+        and `INDEX_MARKS` stands.
     """
 
     route: Route
@@ -636,6 +711,7 @@ class Validation:
     floor: int
     colonies: int = COLONIES_PER_DESIGN
     selection: str = ""
+    index_plate: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a read of no design, or of no colony per design."""
@@ -680,6 +756,12 @@ class Validation:
                 left -= INDEX_WELLS
         return tuple(made)
 
+    @property
+    def plates(self) -> tuple[Plate, ...]:
+        """Every plate this read pours, so each well a transfer names has one drawn for it."""
+        rest = self.index if self.route is ROUTE_INDEX_PCR else self.compressed
+        return (*self.picked, *rest)
+
     def _only(self, route: Route) -> None:
         """Refuse a plate the other route never pours.
 
@@ -702,14 +784,18 @@ def validation(
     *,
     colonies: int = COLONIES_PER_DESIGN,
     selection: str = "",
+    index_plate: str = "",
 ) -> Validation | None:
     """Return what reading `designs` back on `route` takes, or `None` where the floor reads none.
 
-    `None` is the answer for a project that states no floor and for one whose floor is above
+    `None` is the answer for a build that states no floor and for one whose floor is above
     every design: either way nothing is read, and a protocol then carries no validation at all.
 
     `selection` is what the caller read off the vector's marker. Left empty, every plate says
     the vector's own antibiotic rather than naming one this read cannot know.
+
+    `index_plate` is what the lab calls its prepared plate of barcoded primer pairs, which only
+    the index PCR route takes.
 
     Raises
     ------
@@ -728,13 +814,50 @@ def validation(
     read = validated(designs, floor)
     if not read:
         return None
-    return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
+    return Validation(
+        route,
+        read,
+        floor=floor,
+        colonies=colonies,
+        selection=selection,
+        index_plate=index_plate,
+    )
+
+
+#: What a read-back hands on, under the names a chain matches by. They are this method's and not
+#: one caller's: every run that reads a plate back leaves one clone a well and a verdict a well.
+PICKED_PLATE = Item("clonal picked plate", "one well a picked colony, each well one clone")
+WELL_CALLS = Item("well calls", "a pass or a fail a well, and which design each well holds")
+
+
+def marking_stock(one: Validation | None) -> Item | None:
+    """Return the lab stock the chosen route marks with, which no protocol of a run makes.
+
+    `None` where nothing is read back and no well is marked at all. Both routes take stock the
+    lab prepares once and a run calls for, so it is a run's input wherever a read-back stands.
+    The index plate a build named is said beside it; the item keeps its own name, which is what
+    a chain hands it over by.
+    """
+    if one is None:
+        return None
+    if one.route is ROUTE_LIGATION:
+        return Item(
+            "DMX barcode kit",
+            "the lab's own barcoding plasmids, one group a picked plate",
+            storage="-20 °C",
+        )
+    named = f"{one.index_plate}, " if one.index_plate else "the lab's own index primers, "
+    return Item(
+        "Barcoded index primer plate",
+        f"{named}prepared once and called for by a run",
+        spec=("1 µM each",),
+        storage="-20 °C",
+    )
 
 
 #: The index PCR marks, which the package holds none of. The published annealing regions bind the
 #: DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab holds,
-#: as the barcode ligation kit is. It names no ticket, because no ticket closes it: the plate is
-#: the user's own stock. ``docs/research/route-b-index-primers.md`` §7.
+#: as the barcode ligation kit is. ``docs/research/route-b-index-primers.md`` §7.
 INDEX_MARKS = Hole(
     "IDX1",
     "no index mark set is named for the barcoded primer pairs",

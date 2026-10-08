@@ -1,0 +1,9 @@
+{
+  "name": "AP-1 cargo read-back",
+  "designs": "designs.tsv",
+  "archive": "AP-1 cargo archive plate",
+  "route": "index PCR",
+  "validate_from": 2,
+  "selection": "kanamycin",
+  "index_plate": "the lab's index primer plate IDX-01"
+}

@@ -22,7 +22,7 @@ Test where the code already divides. Add no seam, and change no API, to move a c
 
 | Seam | Tested for |
 | --- | --- |
-| Each pipeline's way in: `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway`, `plan_igga` | the plan whole, and the files it writes |
+| Each pipeline's way in: `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway`, `plan_igga`, `plan_dmx` | the plan whole, and the files it writes |
 | The CLI | its wiring |
 | Below a plan: each method's `design`, `assembly`, `digest`, `ligation`, `recombination`, `checks`, `bench`, `oligos` and `steps`; each `igga.protocols` module; `bench.validation`, `bench.goldengate` and `bench.coverage`; `primers.design` and `primers.placement` | each detail they decide |
 

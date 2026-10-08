@@ -41,7 +41,7 @@ AP-1 needs 1,536. Both routes clear it by a wide margin, and the smaller of the 
 PCR's. So capacity ranks the routes the *wrong way* for the lab's claim, and cannot be its basis.
 
 `docs/research/synthesis-and-assembly.md` reached the same conclusion under #299: "nothing picks
-between them, so a project names its route … what binds either is the flow cell and one reaction
+between them, so a build names its route … what binds either is the flow cell and one reaction
 per well." That last clause turns out to be the live half, and section 2 is what it rests on.
 
 ## 2. The claim: index PCR for few samples, barcode ligation for many

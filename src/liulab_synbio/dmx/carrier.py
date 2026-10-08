@@ -1,14 +1,14 @@
-"""Seating: one part into its own carrier, one well a part, with nothing pooled at the end.
+"""The part carrier: one part into its own plasmid, one well a part, nothing pooled at the end.
 
 A part is a reusable in-frame element — a tag, a linker, a signal peptide, a localization
-signal, a degron — flanked by inward-facing BsmBI sites. Seating puts each one in the part
-carrier so the collection can be kept and re-cut later. It is not a round: a round joins one
-part list to a library in one tube and hands back a pool, and this hands back one plasmid a
-well. The method reserves BsmBI for releasing a part from its carrier and for the last transfer
-into a working vector, which is why neither has a role inside the rounds to be named by.
+signal, a degron — flanked by inward-facing BsmBI sites. Each one goes into the part carrier so
+the collection can be kept and re-cut later. It is not a round: a round joins one part list to a
+library in one tube and hands back a pool, and this hands back one plasmid a well. The method
+reserves BsmBI for releasing a part from its carrier and for the last transfer into a working
+vector, which is why neither has a role inside the rounds to be named by.
 
 The carrier is supplied already linearised, with topoisomerase I bound to each 3' end, so the
-seating reaction adds no enzyme and the backbone must stay free of BsmBI. Seating simulates the
+reaction adds no enzyme and the backbone must stay free of BsmBI. This module simulates the
 plasmid that comes out: it says where each part sits, what cuts it back out and what comes out,
 so a step that seats parts can be written without the round model pretending a library came of
 it.
@@ -55,9 +55,9 @@ class SeatedParts:
 
     Notes
     -----
-    There is no library field, and that is the point: seating ends in one plasmid a well, each
-    still identified by where it sits. The name is not `Seating`, which `liulab_mbio` already
-    uses for where things sit in a plate.
+    There is no library field, and that is the point: this ends in one plasmid a well, each
+    still identified by where it sits. Neither this class nor this module is called `Seating`:
+    `liulab_mbio` already uses that word for where things sit in a plate.
     """
 
     plate: Plate
@@ -66,7 +66,7 @@ class SeatedParts:
 
     @property
     def products(self) -> int:
-        """How many plasmids seating makes: one a part, never a pool."""
+        """How many plasmids the carrier reaction makes: one a part, never a pool."""
         return len(self.parts)
 
 
@@ -216,7 +216,7 @@ def seat_parts(
     """
     named = tuple(part.name for part in parts)
     if not named:
-        raise ValueError("seating takes at least one part")
+        raise ValueError("no part was given, and a carrier plate holds at least one")
     if not all(named):
         raise ValueError("a part has no name, and a well is named by the part sitting in it")
     if len(set(named)) != len(named):
@@ -241,7 +241,7 @@ def seat_parts(
 
 
 def materials() -> tuple[Material, ...]:
-    """Return what seating consumes besides the parts themselves."""
+    """Return what the carrier reaction consumes besides the parts themselves."""
     return (
         Material(
             CARRIER,
@@ -263,7 +263,7 @@ def materials() -> tuple[Material, ...]:
     )
 
 
-def seating_step(seated: SeatedParts) -> Step:
+def carrier_step(seated: SeatedParts) -> Step:
     """Return the step that seats every part, which ends in plasmids and not in a library."""
     return Step(
         f"Seat {seated.products} part(s) in {CARRIER}",
@@ -289,8 +289,8 @@ def seating_step(seated: SeatedParts) -> Step:
         troubleshooting=(
             Troubleshooting(
                 "Two parts end up in one well",
-                "The wells were pooled. Seating keeps one part a well on purpose: a part that "
-                "has met another cannot be re-cut back out on its own.",
+                "The wells were pooled. One part a well is on purpose: a part that has met "
+                "another cannot be re-cut back out on its own.",
             ),
         ),
     )

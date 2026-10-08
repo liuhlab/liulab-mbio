@@ -17,6 +17,7 @@ from liulab_mbio.barcodes import MAX_HOMOPOLYMER
 from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.io import read_record
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest, find_sites
@@ -24,7 +25,7 @@ from liulab_mbio.translate import translate
 from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.cargo import cargo_record
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
-from liulab_synbio.igga.vector import released_cargo, working_vector
+from liulab_synbio.igga.vector import released_cargo
 
 from ...chains import whole
 
@@ -41,7 +42,8 @@ EXPECTED_SITES = {"BsaI": 2, "BbsI": 2, "SrfI": 1, "PmeI": 2}
 
 @pytest.fixture(scope="module")
 def plan():
-    return plan_igga(DEMO / "project.json")
+    """The demo as its own page runs it: the domesticated backbone, and the prices it ships."""
+    return plan_igga(DEMO / "project.json", working_site="EGFP", prices=DEMO / "prices.csv")
 
 
 @pytest.fixture(scope="module")
@@ -159,15 +161,45 @@ def test_the_pool_reports_that_350_nt_has_no_slack_above_it(plan):
     assert "no slack above it at all" in "; ".join(str(one) for one in plan.pool.item.headroom)
 
 
-def test_the_bill_carries_the_pool_row_with_its_band_and_a_money_hole(protocol):
-    """The largest line item is on the bill; with no tariff loaded its money cell is a hole."""
+def test_the_bill_carries_the_pool_row_with_its_band_and_the_demos_own_price(plan, protocol):
+    """The largest line item is priced by the record the demo ships, and holed without one."""
     row = next(one for one in protocol.bill.rows if one.item.endswith("oligo pool"))
     assert (row.quantity, row.unit) == (131, "oligos")
     assert "131 count, 369 below the next band" in row.headroom
     assert "350 length, no slack above it at all" in row.headroom
-    assert row.charge == ""
-    assert row.hole is not None
-    assert row.hole.kind == "price"
+    assert row.charge == "2575.00"
+    assert row.citation == Citation("prices", "oligo-pool count 101-500; length 301-350")
+    assert row.hole is None
+
+    bare = next(
+        one
+        for one in replace(plan, prices=None).chain().bill.rows
+        if one.item.endswith("oligo pool")
+    )
+    assert bare.charge == ""
+    assert bare.hole is not None
+    assert bare.hole.kind == "price"
+
+
+def test_the_demos_price_record_prices_every_line_of_the_bill(plan, protocol):
+    """Nine keys, nine rows: the demo ships the tariff a user would, so no money cell is a hole."""
+    bill = protocol.bill
+    assert [row.key for row in bill.rows] == [
+        "oligo-pool",
+        "pool-primers",
+        "R3539",
+        "R3733",
+        "R0629",
+        "R0560",
+        "60242-2",
+        "cuvettes",
+        "plasmid prep",
+    ]
+    assert not [row.key for row in bill.rows if row.hole is not None]
+    assert (bill.currency, bill.total) == ("USD", "3130.5875")
+    record = plan.chain().sources["prices"]
+    assert (record.document, record.edition) == ("AP-1 demo price record", "2026-10-08")
+    assert record.read_as == "read from prices.csv"
 
 
 def test_the_cargo_the_reads_run_across_is_the_cargo_the_release_digest_frees(plan):
@@ -189,62 +221,102 @@ def rerouted(plan, **changes):
     return replace(plan, project=replace(plan.project, **changes))
 
 
+def read_back(plan, route="index PCR"):
+    """Return the run's read-back on one route, of the two this demo offers."""
+    return next(one for one in plan.validations if one.route.name == route)
+
+
 def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
-    one = plan.validation
-    assert (one.route.name, one.floor, len(one.designs)) == ("index PCR", 0, 72)
-    assert one.wells == 288 == 72 * 4
-    assert [len(picked.labels) for picked in one.picked] == [288]
-    assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
+    """Both routes read the same designs into the same wells: they differ in how a well is marked."""
+    assert [one.route.name for one in plan.validations] == ["barcode ligation", "index PCR"]
+    for one in plan.validations:
+        assert (one.floor, len(one.designs)) == (0, 72)
+        assert one.wells == 288 == 72 * 4
+        assert [len(picked.labels) for picked in one.picked] == [288]
+    assert [index.name for index in read_back(plan).index] == ["index 1", "index 2", "index 3"]
 
 
 def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out(plan):
     """The bench is sized from the designs read, not from the part list."""
-    whole = plan.validation
-    fewer = rerouted(plan, validate_from=2).validation
+    whole = read_back(plan)
+    fewer = read_back(rerouted(plan, validate_from=2))
     left_out = len(whole.designs) - len(fewer.designs)
     assert left_out == 40
     assert fewer.wells == whole.wells - left_out * whole.colonies == 128
     assert sum(len(one.labels) for one in fewer.picked) == 128
-    fewest = rerouted(plan, validate_from=3).validation
+    fewest = read_back(rerouted(plan, validate_from=3))
     assert (len(fewest.designs), fewest.wells) == (16, 64)
     assert len(fewest.index) == 1 < len(whole.index)
-    assert rerouted(plan, validate_from=6).validation is None
+    assert rerouted(plan, validate_from=6).validations == ()
 
 
 def test_a_design_is_read_in_the_pieces_the_pool_was_split_into(plan):
     """The count is the split's own, because arithmetic on the oligo length only bounds it."""
-    counted = Counter(one.fragments for one in plan.validation.designs)
+    counted = Counter(one.fragments for one in read_back(plan).designs)
     assert dict(plan.pool.pool.fragment_counts()) == counted
     assert max(counted) == 5
 
 
 def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     """Cargo validation is optional, and a project that asks for none gets none."""
-    polyclonal = rerouted(plan, validate_from=None, route=None)
-    assert polyclonal.validation is None
+    polyclonal = rerouted(plan, validate_from=None, routes=())
+    assert polyclonal.validations == ()
     titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
     assert "Order the oligo pool" in titles
-    assert titles[titles.index("Order the oligo pool") + 4] == "Pool each part list"
+    assert titles[titles.index("Order the oligo pool") + 5] == "Pool each part list"
+
+
+def test_the_demo_carries_both_read_back_routes_as_the_two_ways_of_one_job(plan):
+    """The demo offers both so a reader can read each; a run does one of them, never both."""
+    chain = plan.chain()
+    ways = [one for one in chain.protocols if one.choice]
+    checks = {check.name: check for check in chain.audit()}
+
+    assert [one.title for one in ways] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    assert {one.choice for one in ways} == {"read every well back"}
+    left = {"clonal picked plate", "well calls"}
+    assert [{item.name for item in one.produces} for one in ways] == [left, left]
+    assert checks["choices"].status == "pass"
+    assert (
+        checks["choices"].detail
+        == "2 ways to read every well back, each leaving the same 2 things."
+    )
+    assert checks["handoffs"].status == "pass"
+    said = next(one for one in chain.background if one.title == "Read every well back")
+    assert "Do one of them, never both." in said.body[0]
+    assert [one.what for one in chain.inputs if "way only" in one.what] == [
+        "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation "
+        "way only",
+        "the lab's own index primers, prepared once and called for by a run, for the index PCR "
+        "way only",
+    ]
 
 
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
-    """One set of parts, two project files: a second project is never a second branch."""
+    """One set of parts, both routes: the ways of one job, never a branch the package picks."""
     index_pcr = protocol
-    ligation = whole(rerouted(plan, route="barcode ligation").chain())
+    alone = rerouted(plan, routes=("barcode ligation",)).chain()
+    # A build naming one route writes one page, offers no choice and is told nothing.
+    assert [one.title for one in alone.protocols][3] == "Cargo validation: barcode ligation"
+    assert not [one for one in alone.protocols if one.choice]
+    assert [one.title for one in alone.background] == ["How this library is designed"]
+    assert [check.name for check in alone.audit()] == ["handoffs", "sources"]
+    ligation = whole(alone)
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
+    # Both cycle counts stay open: this build states neither, because nobody ran the pilot.
     pcrs = ["H29", "H30"]
     # Block assembly holds nothing open: every position has a destination presenting its own
     # entry overhang, and NEB's kit table sizes the reaction.
     blocks: list[str] = []
-    # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
-    # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
-    linkage = ["H28"]
-    # The final assembly: this project names no working vector, so what one would fix is H31. The
-    # backbone the rounds ran in frees the cargo itself, so the release is written rather than
-    # held open, and the one hole left is H24, over the assembly nobody sizes.
-    final = ["H31", "H31", "H24"]
+    # The linkage read and the final assembly are both answered by what this build states: its
+    # own pass mark, its own working vector, and its own mass and ratio for the one-pot tube.
+    linkage: list[str] = []
+    final: list[str] = []
     assert [hole.id for step in index_pcr.steps for hole in step.holes] == [
         *pcrs,
         *blocks,
@@ -260,6 +332,24 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     ]
     for one in (ligation, index_pcr):
         assert [check.status for check in one.audit()] == ["pass", "pass", "pass", None]
+
+
+def test_the_demo_is_left_with_the_four_numbers_no_input_of_its_own_can_give(plan):
+    """The demo's floor, counted as the run page counts it: the bill's holes and each
+    protocol's, one entry an id. Anything else here is a build field that stopped being read.
+    """
+    chain = plan.chain()
+    found = {row.hole.id: row.hole for row in (chain.bill.rows if chain.bill else ()) if row.hole}
+    for protocol in chain.protocols:
+        for hole in protocol.all_holes:
+            found.setdefault(hole.id, hole)
+
+    assert {one: hole.kind for one, hole in found.items()} == {
+        "H29": "unpublished",
+        "H30": "unpublished",
+        "IDX1": "lab",
+        "H23": "unpublished",
+    }
 
 
 def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):
@@ -286,17 +376,33 @@ def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
 
 
 def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
-    """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
+    """With a pool designed, nothing is ordered as a block: the pool is, resuspended, then used."""
     titles = [step.title for step in protocol.steps]
     start = titles.index("Order the oligo pool")
-    assert titles[start : start + 4] == [
+    assert titles[start : start + 5] == [
         "Order the oligo pool",
+        "Resuspend the oligo pool",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
         "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
     note = next(one.note for one in protocol.materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
+
+
+def test_the_pool_is_in_buffer_before_anything_amplifies_it(protocol):
+    """PCR1 takes 20 ng/µL of template, so the step before it says how the pool got there."""
+    made = next(one for one in protocol.steps if one.title == "Resuspend the oligo pool")
+    assert made.instructions[0] == (
+        "Divide the total yield in ng printed on the shipping tube label by 20, rounding down, "
+        "to get the resuspension volume in µL."
+    )
+    assert "10 mM Tris buffer, pH 8.0" in made.instructions[1]
+    assert made.expected == (
+        "One tube of pool in solution at 20 ng/µL or above, with nothing left undissolved on the "
+        "wall of the tube.",
+    )
+    assert not made.holes
 
 
 def test_the_same_dna_is_billed_once(plan, protocol):
@@ -358,14 +464,14 @@ def test_the_assembly_step_names_a_destination_a_position_and_sizes_itself_from_
     )
 
 
-def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
-    """Five steps, every one of them there, and a hole wherever no number is sourced."""
+def test_the_final_assembly_is_written_out_from_what_the_build_states(protocol):
+    """Five steps, every one of them there, and no hole left where the build names its own."""
     steps = protocol.steps[-5:]
 
     assert [one.title for one in steps] == [
-        "Pick the working vector",
+        "Pick the working vector and confirm PaqCI opens it",
         "Release the cargo with BsaI and PmeI",
-        "Assemble the cargo into the working vector",
+        "Assemble the cargo into pLVX-TetOne-dom with PaqCI",
         "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
         "Read representation in the final vector",
     ]
@@ -379,18 +485,38 @@ def test_the_final_assembly_is_written_as_what_it_cannot_say(protocol):
     # and the clean-up around the assembly are sized rather than held open.
     assert steps[1].tables[0].components[0].final.endswith("(1000 ng)")
     assert "at 1x the volume" in steps[3].instructions[0]
+    assert steps[2].instructions[0].startswith("Add 75 ng of working vector")
+    assert steps[2].notes[-1] == (
+        "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published "
+        "figure."
+    )
+    assert not [hole.id for step in steps for hole in step.holes]
 
 
-def test_a_named_working_vector_fills_the_enzyme_and_its_cycling_in(plan):
-    """With a vector to move into, H31 goes and the cargo enzyme's own cycling takes its place."""
-    stock = SequenceRecord("ACGATCGTTA" * 20, topology="circular", name="pWORK")
-    working = working_vector(stock, [], site=(0, 1))
+def test_the_demo_puts_its_cassette_at_the_first_of_two_egfp_annotations(plan):
+    """Addgene annotates EGFP twice on this deposit, so which one answers `--working-site` is set.
 
-    steps = whole(replace(plan, working=working).chain()).steps[-5:]
+    The two spans share an end and differ by three bases at the start, and the cassette goes at
+    the start of the first the record lists. Both annotations survive, shifted by what went in.
+    """
+    backbone = read_record(DEMO / "working-vector.gb")
+    before = [one.segments[0].start for one in backbone.features if one.name == "EGFP"]
+    assert before == [2513, 2516]
 
-    assert working.enzyme.name in steps[0].title
-    assert steps[2].programs[0].title == "Golden Gate assembly"
-    assert [hole.id for step in steps for hole in step.holes] == ["H24"]
+    after = [one.segments[0].start for one in plan.working.record.features if one.name == "EGFP"]
+    cassette = len(plan.working.record) - len(backbone)
+    assert after == [start + cassette for start in before]
+    assert plan.working.enzyme.name == "PaqCI"
+
+
+def test_a_build_naming_no_working_vector_carries_the_hole_one_fills(plan):
+    """H31 is the demo's own input doing the work: take the vector away and the hole comes back."""
+    steps = whole(replace(plan, working=None).chain()).steps[-5:]
+
+    assert steps[0].title == "Pick the working vector"
+    assert steps[2].title == "Assemble the cargo into the working vector"
+    assert not steps[2].programs
+    assert [hole.id for step in steps for hole in step.holes] == ["H31", "H31"]
 
 
 def test_the_read_backs_plates_are_declared_and_every_well_resolves(protocol):
@@ -432,11 +558,12 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
         "Primer plates",
         "Cargo ordering and pool preparation",
         "Cargo creation",
+        "Cargo validation: barcode ligation",
         "Cargo validation: index PCR",
         "Library assembly in rounds",
         "Final cargo ligation",
     ]
-    assert [len(one.steps) for one in chain.protocols] == [5, 1, 3, 6, 27, 5]
+    assert [len(one.steps) for one in chain.protocols] == [5, 2, 3, 6, 6, 27, 5]
     assert [one.audit()[0].status for one in (chain,)] == ["pass"]
     handed = {item.name for item in chain.inputs}
     for one in chain.protocols:
@@ -459,6 +586,9 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
         ("Primer plates", "resuspend-primers"): (
             "Spin the plate down before taking the seal off.",
         ),
+        ("Cargo ordering and pool preparation", "resuspend-pool"): (
+            "Spin the tube down before taking the cap off.",
+        ),
         ("Cargo creation", "pcr1"): (POLYMERASE_ON_ICE,),
         ("Cargo creation", "pcr2"): (POLYMERASE_ON_ICE,),
         ("Cargo validation: index PCR", "index-pcr"): (POLYMERASE_ON_ICE,),
@@ -468,7 +598,7 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
         ("Final cargo ligation", "electroporate-and-grow"): (CUVETTE_ON_ICE,),
     }
     written = {step.key for one in chain.protocols for step in one.steps if step.cautions}
-    assert written == {"resuspend-primers"}
+    assert written == {"resuspend-primers", "resuspend-pool"}
 
 
 def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
@@ -487,14 +617,9 @@ def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
     ]
 
 
-def test_the_other_route_writes_its_own_protocol_and_both_at_once_is_refused(plan):
-    """A run marks its wells one way, so the chain carries that route's page and no other."""
-    ligation = rerouted(plan, route="barcode ligation").chain()
-
-    assert [one.title for one in ligation.protocols][3] == "Cargo validation: barcode ligation"
-    assert ligation.audit()[0].status == "pass"
+def test_a_route_the_package_does_not_ship_is_refused(plan):
     with pytest.raises(ValueError, match="route is 'both'"):
-        rerouted(plan, route="both")
+        rerouted(plan, routes=("both",))
 
 
 def test_the_primer_plates_are_written_only_where_the_project_says_how(plan):

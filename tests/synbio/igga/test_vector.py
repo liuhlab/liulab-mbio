@@ -475,16 +475,18 @@ def test_a_pre_chosen_cargo_enzyme_is_the_only_candidate_the_pot_is_searched_for
     assert not made.cargo.search.blocked
 
 
-def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one(plvx):
-    """The AP-1 library spells PaqCI twice, so nothing is left to admit it to pLVX."""
-    product = read_record(DEMO.parent / "product.dna")
+def test_a_pot_no_candidate_is_free_of_refuses_rather_than_choosing_one():
+    """A cargo spelling every candidate leaves nothing to admit it, which is refused."""
+    bare = SequenceRecord(pad(200), topology="circular", name="bare")
+    spelled = "".join(get_enzyme(one).site + pad(20) for one in cargo_candidates(IGGA))
+    cargo = SequenceRecord(pad(20) + spelled, topology="circular", name="every candidate")
 
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
-        working_vector(plvx, [product], scheme=IGGA, site="EGFP")
+        working_vector(bare, [cargo], scheme=IGGA, site=(100, 140))
 
     # A pre-chosen enzyme is still held to the pot: that is the net under a composed design.
     with pytest.raises(ValueError, match="no candidate is free to admit cargo"):
-        working_vector(plvx, [product], scheme=IGGA, site="EGFP", enzyme=get_enzyme(CARGO))
+        working_vector(bare, [cargo], scheme=IGGA, site=(100, 140), enzyme=get_enzyme(CARGO))
 
 
 def donor_carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:

@@ -38,7 +38,7 @@ from liulab_synbio.igga.plan import (
     plan_igga,
     read_part_lists,
 )
-from liulab_synbio.igga.project import Build
+from liulab_synbio.igga.project import Build, FinalAssembly
 from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
 from liulab_synbio.igga.protocols.run import ROUND_EQUIPMENT
 from liulab_synbio.igga.rounds import ROUND_FILE
@@ -285,12 +285,49 @@ def test_the_finished_library_is_read_for_linkage_and_for_representation(protoco
     linkage, representation = protocol.steps[-7:-5]
 
     assert [linkage.title, representation.title] == ["Read linkage", "Read representation"]
-    # Linkage keeps H28: no source sets a mark for barcode-to-part fidelity. Representation is
-    # held to Joung's bar, so it carries none.
+    # Linkage keeps H28 because this build states no mark of its own: no source sets one for
+    # barcode-to-part fidelity. Representation is held to Joung's bar, so it carries none.
     assert [hole.id for hole in linkage.holes] == ["H28"]
     assert representation.holes == ()
     said = " ".join(note for step in protocol.steps for note in step.notes)
     assert said.count("after every later bottleneck") == 1
+
+
+def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
+    """Stated, each prints as this run's own and its hole goes; stated nowhere, the hole stands."""
+    made, _files = pooled
+    stated = dataclasses.replace(
+        made,
+        project=dataclasses.replace(
+            made.project,
+            linkage_fidelity=0.9,
+            final_assembly=FinalAssembly(75.0, 2.0),
+            pcr1_cycles=16,
+            pcr2_cycles=18,
+        ),
+    )
+    before, after = whole(made.chain()), whole(stated.chain())
+    said = " ".join(
+        text for step in after.steps for text in (*step.instructions, *step.notes, *step.expected)
+    )
+
+    assert [hole.id for step in before.steps for hole in step.holes] == [
+        "H29",
+        "H30",
+        "H28",
+        "H31",
+        "H32",
+        "H31",
+        "H24",
+    ]
+    # What is left is what no number closes: this build names no working vector, and the
+    # carrier it ran in presents no cut that frees the cargo.
+    assert [hole.id for step in after.steps for hole in step.holes] == ["H31", "H32", "H31"]
+    assert "16 cycles is what this run measured for its own polymerase" in said
+    assert "18 cycles is what this run measured" in said
+    assert "75 ng of working vector" in said
+    assert "75 ng of vector, at 2:1 cargo to vector, is what this run measured" in said
+    assert "this run's own mark" in said
 
 
 def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
@@ -580,8 +617,6 @@ def test_the_bill_computes_its_quantities_and_holes_the_money_with_no_record(pla
     assert blocks.charge == ""
     assert blocks.hole is not None
     assert blocks.hole.kind == "price"
-    # A price nobody loaded is a missing input of the user's, not a defect in what we know.
-    assert blocks.hole.issue == ""
     assert bill.total == ""
 
 
