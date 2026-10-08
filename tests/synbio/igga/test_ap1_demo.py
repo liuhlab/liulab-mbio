@@ -238,8 +238,8 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     # Block assembly holds nothing open: every position has a destination presenting its own
     # entry overhang, and NEB's kit table sizes the reaction.
     blocks: list[str] = []
-    # Only the linkage read is unjudged: both representation reads are held to sourced marks, so
-    # H28 is raised once, where it is asked, and the two reads after it hold nothing open.
+    # Only the linkage read is unjudged: both representation reads are held to sourced marks, and
+    # this build states no mark of its own, so H28 is raised once, where it is asked.
     linkage = ["H28"]
     # The final assembly: this project names no working vector, so what one would fix is H31. The
     # backbone the rounds ran in frees the cargo itself, so the release is written rather than

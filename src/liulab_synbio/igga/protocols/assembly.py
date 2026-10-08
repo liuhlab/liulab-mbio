@@ -598,6 +598,9 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
 
     Read once. A barcode that names the wrong member is the one fault no later round repairs,
     so this is where the library is carried forward or a round is sent back.
+
+    A build stating `linkage_fidelity` sets the mark nobody published, which is what H28 says
+    closes it; a build stating none carries the hole.
     """
     scheme, rounds, positions = run.scheme, run.rounds, run.positions
     final = rounds[-1]
@@ -636,7 +639,8 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
             "through.",
             (
                 f"This build passes the linkage read at {fidelity:.1%} of reads carrying a "
-                "barcode that still names its part."
+                "barcode that still names its part. That is this run's own mark, not a "
+                "published one."
                 if fidelity is not None
                 else "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a "
                 "valid barcode at every position, and nearly 90% of the library correctly "
@@ -656,7 +660,7 @@ def _linkage_step(run: Run, pair: ReadPair | None) -> Step:
                 "forward; no later round repairs it.",
             ),
         ),
-        holes=(stages.READ_PASS_MARK,),
+        holes=() if fidelity is not None else (stages.READ_PASS_MARK,),
     )
 
 

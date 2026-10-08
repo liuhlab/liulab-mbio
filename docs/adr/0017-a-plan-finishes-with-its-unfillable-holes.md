@@ -36,11 +36,18 @@ its corpus — changing what the gate is proved against, for a demo customised t
 - **Count only `undecided` holes, leaving `lab` ones unmentioned.** The two differ in who fills
   them, not in whether the step is runnable as shipped, and a reader at the bench meets both.
 
+## Amendment: a build may state what only a bench or a shelf settles
+
+A lab that has run the pilot is not held to a hole. A build may state the assembly's mass and
+ratio, the two pool cycle counts, the linkage pass mark and the working vector, each optional
+and each leaving its hole standing by default. Stated, the step prints it as that run's own
+measurement, never a published figure. The measurement and the five kinds stand.
+
 ## Consequences
 
 A pipeline's acceptance reads each hole's kind rather than counting them. The AP-1 demo ships two
 on its final assembly and is finished; a third of either kind would be a finding, and a hole
 naming a source nobody read would be a defect.
 
-A project of the user's own that names a working vector drops H31 and keeps H24, and a demo stays
-what a reader copies rather than a record of one lab's shelf.
+A project of the user's own that names a working vector drops H31 and keeps H24 until it states
+the assembly too, and a demo stays what a reader copies rather than a record of one lab's shelf.

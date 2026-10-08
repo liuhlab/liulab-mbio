@@ -49,7 +49,7 @@ from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import PrimerPlates
+from liulab_synbio.igga.project import FinalAssembly, PrimerPlates
 from liulab_synbio.igga.reads import ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
@@ -143,6 +143,10 @@ class Run:
 
     `primer_plates` is how this lab lays the pool's primers out, and `None` for a build
     stating none.
+
+    `final_assembly`, `pcr1_cycles` and `pcr2_cycles` are what this build measured where the
+    method leaves the number open, and `None` where it measured none. Stated, the step prints
+    the number and says it is this run's own; left out, the hole stands as it does today.
     """
 
     _: KW_ONLY
@@ -172,6 +176,9 @@ class Run:
     reads: ReadPairs | None = None
     marks: RepresentationMarks = REPRESENTATION_MARKS
     linkage_fidelity: float | None = None
+    final_assembly: FinalAssembly | None = None
+    pcr1_cycles: int | None = None
+    pcr2_cycles: int | None = None
     block_vectors: Sequence[tuple[str, str]] = ()
     block_records: Sequence[Destination] = ()
     primer_plates: PrimerPlates | None = None

@@ -7,7 +7,7 @@ import pytest
 
 from liulab_mbio.bench.coverage import REPRESENTATION_MARKS
 from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.project import Barcode, Build, read_build
+from liulab_synbio.igga.project import Barcode, Build, FinalAssembly, read_build
 
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
 
@@ -231,3 +231,36 @@ def test_linkage_fidelity_has_no_default(tmp_path):
     """Nothing published sets a mark for it, so a build stating none is held to none."""
     assert read_build(write(tmp_path)).linkage_fidelity is None
     assert read_build(write(tmp_path, linkage_fidelity=0.9)).linkage_fidelity == 0.9
+
+
+def test_a_build_states_what_its_own_pilot_measured_or_nothing(tmp_path):
+    """The three a pilot settles: none has a default, and none is invented where it is absent."""
+    plain = read_build(write(tmp_path))
+    assert (plain.final_assembly, plain.pcr1_cycles, plain.pcr2_cycles) == (None, None, None)
+
+    measured = read_build(
+        write(
+            tmp_path,
+            final_assembly={"vector_ng": 75.0, "ratio": 2.0},
+            pcr1_cycles=16,
+            pcr2_cycles=18,
+        )
+    )
+    assert measured.final_assembly == FinalAssembly(75.0, 2.0)
+    assert (measured.pcr1_cycles, measured.pcr2_cycles) == (16, 18)
+
+
+@pytest.mark.parametrize(
+    ("changes", "says"),
+    [
+        ({"pcr1_cycles": 0}, "pcr1_cycles is 0"),
+        ({"pcr2_cycles": -1}, "pcr2_cycles is -1"),
+        ({"final_assembly": {"vector_ng": 0.0, "ratio": 2.0}}, "final_assembly.vector_ng is 0"),
+        ({"final_assembly": {"vector_ng": 75.0, "ratio": -1.0}}, "final_assembly.ratio is -1"),
+        ({"final_assembly": {"vector_ng": 75.0}}, "missing ratio"),
+    ],
+)
+def test_a_build_refuses_a_measurement_that_is_not_physical(tmp_path, changes, says):
+    """A pilot number still has to be a number the bench could have produced."""
+    with pytest.raises(ValueError, match=says):
+        read_build(write(tmp_path, **changes))

@@ -113,8 +113,15 @@ class Creation(Protocol):
         first = _annealing(((one.forward, one.outer) for one in batches), sequences)
         second = _annealing(pool.inner_pairs, sequences)
         made = (
-            _pcr1_step(batches, first, layout.length),
-            _pcr2_step(pool, batches, len(run.parts), second, layout.length - layout.primer_length),
+            _pcr1_step(batches, first, layout.length, run.pcr1_cycles),
+            _pcr2_step(
+                pool,
+                batches,
+                len(run.parts),
+                second,
+                layout.length - layout.primer_length,
+                run.pcr2_cycles,
+            ),
         )
         return (
             *(
@@ -248,13 +255,28 @@ def _band_note(low: float, high: float) -> str:
     )
 
 
-def _pcr1_step(batches: Sequence[Batch], annealing: tuple[float, float], length_bp: int) -> Step:
-    """Pull one batch of blocks out of the whole pool, which is what PCR1 is for."""
+def _pcr1_step(
+    batches: Sequence[Batch],
+    annealing: tuple[float, float],
+    length_bp: int,
+    measured: int | None,
+) -> Step:
+    """Pull one batch of blocks out of the whole pool, which is what PCR1 is for.
+
+    `measured` is the count this build ran its own polymerase at. With one the step prints it
+    and says whose it is; without one it prints Twist's fewest and carries H29.
+    """
     from liulab_synbio.igga import stages
 
     low, high = annealing
     fewest, most = pool_cycles(length_bp)
     pairs = "; ".join(f"batch {one.number}: {one.forward} with {one.outer}" for one in batches)
+    band = (
+        f"Twist's band for a {length_bp} nt pool is {fewest} to {most} cycles; Twist Oligo "
+        "Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ "
+        "answers that more cycles give worse uniformity, so "
+        + (f"{fewest} is what prints." if measured is None else "stay at the fewest that works.")
+    )
     return Step(
         f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",
         key="pcr1",
@@ -272,8 +294,8 @@ def _pcr1_step(batches: Sequence[Batch], annealing: tuple[float, float], length_
                 POOL_POLYMERASE,
                 annealing_temperature=low,
                 amplicon_length=length_bp,
-                cycles=fewest,
-                cycles_citation=POOL_CYCLE_CITATION,
+                cycles=fewest if measured is None else measured,
+                cycles_citation=POOL_CYCLE_CITATION if measured is None else None,
                 title="PCR1",
             ),
         ),
@@ -285,13 +307,19 @@ def _pcr1_step(batches: Sequence[Batch], annealing: tuple[float, float], length_
         ),
         notes=(
             _band_note(low, high),
-            f"Twist's band for a {length_bp} nt pool is {fewest} to {most} cycles; Twist Oligo "
-            "Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ "
-            f"answers that more cycles give worse uniformity, so {fewest} is what prints.",
+            *(
+                ()
+                if measured is None
+                else (
+                    f"{measured} cycles is what this run measured for its own polymerase, not a "
+                    "published count.",
+                )
+            ),
+            band,
             "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block "
             "cannot be pulled out of a batch it does not sit in.",
         ),
-        holes=(stages.PCR1_POLYMERASE,),
+        holes=() if measured is not None else (stages.PCR1_POLYMERASE,),
         troubleshooting=(
             Troubleshooting(
                 "No band",
@@ -314,16 +342,25 @@ def _pcr2_step(
     blocks: int,
     annealing: tuple[float, float],
     length_bp: int,
+    measured: int | None,
 ) -> Step:
     """Pull one block out of its batch, after which a block is named by the well it sits in.
 
-    The program's cycle count is blank. Twist's band is for amplifying the pool as it arrives,
-    and this reaction's template is PCR1's product, so the reader is given the rule that stops
-    the reaction and `liulab_synbio.igga.stages.PCR2_CYCLES` stands where the number would be.
+    Without a `measured` count the program's count is blank: Twist's band is for amplifying the
+    pool as it arrives, and this reaction's template is PCR1's product, so the reader is given
+    the rule that stops the reaction and `liulab_synbio.igga.stages.PCR2_CYCLES` stands where the
+    number would be. A build that has measured its own count prints it instead.
     """
     from liulab_synbio.igga import stages
 
     low, high = annealing
+    stopping = (
+        "Run the program below. Nobody published a cycle count for this reaction, so run it "
+        "on a real-time instrument with an intercalating dye and stop before the curve "
+        "plateaus."
+        if measured is None
+        else f"Run the program below, stopping at {measured} cycles."
+    )
     return Step(
         f"PCR2: pull each of the {blocks} blocks out of its batch",
         key="pcr2",
@@ -331,9 +368,7 @@ def _pcr2_step(
             f"Set up one reaction a block, {blocks} in all, in {PCR2_PLATE}.",
             "Give each its batch's PCR1 product as template, that batch's forward primer, and "
             "the block's own inner primer.",
-            "Run the program below. Nobody published a cycle count for this reaction, so run it "
-            "on a real-time instrument with an intercalating dye and stop before the curve "
-            "plateaus.",
+            stopping,
         ),
         tables=(pcr_reaction(POOL_POLYMERASE, reactions=blocks, title="PCR2, one well a block"),),
         programs=(
@@ -341,8 +376,9 @@ def _pcr2_step(
                 POOL_POLYMERASE,
                 annealing_temperature=low,
                 amplicon_length=length_bp,
-                # A blank count has nothing to cite; `stages.PCR2_CYCLES` stands where it would.
-                cycles=None,
+                # Neither count is published, so neither has anything to cite; without one,
+                # `stages.PCR2_CYCLES` stands where the number would be.
+                cycles=measured,
                 cycles_citation=None,
                 title="PCR2",
             ),
@@ -355,9 +391,14 @@ def _pcr2_step(
         ),
         notes=(
             _band_note(low, high),
+            *(
+                ()
+                if measured is None
+                else (f"{measured} cycles is what this run measured, not a published count.",)
+            ),
             "A block is named by its well from here on, not by anything in the tube.",
         ),
-        holes=(stages.PCR2_CYCLES,),
+        holes=() if measured is not None else (stages.PCR2_CYCLES,),
         troubleshooting=(
             Troubleshooting(
                 "A band at PCR1's length",

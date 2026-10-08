@@ -50,6 +50,7 @@ from liulab_synbio.igga.bench import (
     pulse,
 )
 from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.project import FinalAssembly
 from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
     ROUND_EQUIPMENT,
@@ -93,7 +94,7 @@ class FinalLigation(Protocol):
             labelled(_free_step(scheme, product, span, freeing), "Move the library across"),
             labelled(
                 figured(
-                    _assemble_step(scheme, product, span, working),
+                    _assemble_step(scheme, product, span, working, run.final_assembly),
                     _junction_figure(scheme, product, span, run.records_at),
                 ),
                 "Move the library across",
@@ -286,16 +287,34 @@ def _free_step(
 
 
 def _assemble_step(
-    scheme: Scheme, product: SequenceRecord, span: Segment | None, working: Working | None
+    scheme: Scheme,
+    product: SequenceRecord,
+    span: Segment | None,
+    working: Working | None,
+    sized: FinalAssembly | None,
 ) -> Step:
-    """Join the freed cargo to the opened working vector, in the tube the release left."""
+    """Join the freed cargo to the opened working vector, in the tube the release left.
+
+    `sized` is what this build measured the pot at. Without one no published reaction sizes it,
+    so the amounts are H24 rather than a figure.
+    """
+    vector = "the working vector" if sized is None else f"{sized.vector_ng:g} ng of working vector"
+    met = "" if sized is None else f", so the cargo meets it at {number(sized.ratio)}:1"
+    measured = (
+        ()
+        if sized is None
+        else (
+            f"{sized.vector_ng:g} ng at {number(sized.ratio)}:1 is what this run measured. "
+            "No published reaction sizes this pot.",
+        )
+    )
     if working is None:
         return Step(
             "Assemble the cargo into the working vector",
             key="assemble-into-working-vector",
             instructions=(
-                "Add the working vector, its cargo enzyme and the ligase to the release tube, "
-                "and run the enzyme's own Golden Gate cycling.",
+                f"Add {vector}, its cargo enzyme and the ligase to the release tube{met}, and "
+                "run the enzyme's own Golden Gate cycling.",
             ),
             expected=(
                 "One circular final vector a member, the ccdB cassette displaced by the cargo.",
@@ -303,8 +322,9 @@ def _assemble_step(
             notes=(
                 "This is the one reaction where the working vector meets material the rounds "
                 "made; the rounds all finish first.",
+                *measured,
             ),
-            holes=(stages.WORKING_VECTOR, stages.FINAL_MASSES),
+            holes=(stages.WORKING_VECTOR, *(() if sized else (stages.FINAL_MASSES,))),
         )
     cargo = working.enzyme
     joined = (
@@ -316,8 +336,8 @@ def _assemble_step(
         f"Assemble the cargo into {working.record.name or 'the working vector'} with {cargo.name}",
         key="assemble-into-working-vector",
         instructions=(
-            f"Add the working vector, {cargo.supplier_label} and {LIGASE} in "
-            f"{LIGASE_BUFFER} to the release tube.",
+            f"Add {vector}, {cargo.supplier_label} and {LIGASE} in "
+            f"{LIGASE_BUFFER} to the release tube{met}.",
             "Run the cycling below without purifying anything first.",
         ),
         programs=(assembly_program(cargo, fragments=2, library=True),),
@@ -331,6 +351,7 @@ def _assemble_step(
             "the rounds ran in is shredded and stays behind.",
             "The cycling is NEB's longer single-insert program, which it gives for library "
             "preparation rather than for cloning one gene.",
+            *measured,
         ),
         troubleshooting=(
             Troubleshooting(
@@ -339,7 +360,7 @@ def _assemble_step(
                 "before repeating.",
             ),
         ),
-        holes=(stages.FINAL_MASSES,),
+        holes=() if sized else (stages.FINAL_MASSES,),
     )
 
 

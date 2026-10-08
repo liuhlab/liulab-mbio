@@ -55,6 +55,34 @@ class Barcode:
 
 
 @dataclass(frozen=True, slots=True)
+class FinalAssembly:
+    """What a lab that has run the one-pot assembly states about it.
+
+    Both numbers travel together: a mass with no ratio sizes one side of the pot, and a ratio
+    with no mass sizes neither. Nothing published sizes this reaction, so a build that has
+    measured it states both and a build that has not leaves the hole standing.
+
+    Parameters
+    ----------
+    vector_ng
+        How much working vector goes into the one-pot assembly, ng.
+    ratio
+        How much cargo meets it, as a molar ratio of cargo to vector.
+    """
+
+    vector_ng: float
+    ratio: float
+
+    def __post_init__(self) -> None:
+        """Refuse a mass or a ratio that is not positive."""
+        for key, value in (("vector_ng", self.vector_ng), ("ratio", self.ratio)):
+            if value <= 0:
+                raise ValueError(
+                    f"final_assembly.{key} is {value}, and a build states a positive one"
+                )
+
+
+@dataclass(frozen=True, slots=True)
 class PrimerPlates:
     """How a run lays its routine primers out, which is the lab's own and not the method's.
 
@@ -163,6 +191,14 @@ class Build:
     linkage_fidelity
         The share of reads whose barcode must still name its part. No default: nothing published
         sets a mark for it, so a build that states none is read against no mark at all.
+    final_assembly
+        What this lab measured the one-pot assembly at: the working vector's mass and the molar
+        ratio the cargo meets it at. No default, as for the two cycle counts below: a build that
+        has run the pilot states it and a build that has not leaves the hole standing.
+    pcr1_cycles, pcr2_cycles
+        The cycle counts this lab measured for PCR1, against the polymerase it runs, and for
+        PCR2. No default: nobody published either, so a build stating neither prints the band
+        Twist gives for another polymerase and no PCR2 count at all.
     barcode
         What one part's barcode holds to.
     primer_plates
@@ -205,6 +241,9 @@ class Build:
     representation_skew: float | None = None
     reads_per_member: int | None = None
     linkage_fidelity: float | None = None
+    final_assembly: FinalAssembly | None = None
+    pcr1_cycles: int | None = None
+    pcr2_cycles: int | None = None
     barcode: Barcode = field(default_factory=Barcode)
     primer_plates: PrimerPlates | None = None
     scheme: Scheme = IGGA
@@ -283,6 +322,9 @@ class Build:
             raise ValueError(
                 f"completeness is {self.completeness}, and a build states a chance between 0 and 1"
             )
+        for named, cycles in (("pcr1_cycles", self.pcr1_cycles), ("pcr2_cycles", self.pcr2_cycles)):
+            if cycles is not None and cycles <= 0:
+                raise ValueError(f"{named} is {cycles}, and a build states a positive one")
 
     def _check_validation(self) -> None:
         """Refuse a negative floor, an unknown route, one of the two alone, or unclonal cargo.
@@ -456,6 +498,9 @@ def read_build(path: str | os.PathLike[str]) -> Build:
         linkage_fidelity=(
             _number(given, "linkage_fidelity", "a build") if "linkage_fidelity" in given else None
         ),
+        final_assembly=_final_assembly(given.get("final_assembly")),
+        pcr1_cycles=_whole(given, "pcr1_cycles", "a build") if "pcr1_cycles" in given else None,
+        pcr2_cycles=_whole(given, "pcr2_cycles", "a build") if "pcr2_cycles" in given else None,
         seed=_whole(given, "seed", "a build") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
@@ -495,12 +540,16 @@ _BUILD_OPTIONAL = frozenset(
         "representation_skew",
         "reads_per_member",
         "linkage_fidelity",
+        "final_assembly",
+        "pcr1_cycles",
+        "pcr2_cycles",
         "primer_plates",
     }
 )
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
 _PLATES_REQUIRED = frozenset({"nanomoles", "stock_um", "working_ul"})
 _PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
+_ASSEMBLY_REQUIRED = frozenset({"vector_ng", "ratio"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
@@ -543,6 +592,23 @@ def _barcode(entry: Any) -> Barcode:
         if "min_distance" in entry
         else MIN_DISTANCE,
     )
+
+
+def _final_assembly(entry: Any) -> FinalAssembly | None:
+    """Build the one-pot assembly's amounts from parsed JSON, or `None` where a build states none.
+
+    Raises
+    ------
+    ValueError
+        If it is not an object, or a key is missing, unknown or of another JSON type.
+    """
+    if entry is None:
+        return None
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"a build's final_assembly is {type(entry).__name__}, not an object")
+    where = "a build's final_assembly"
+    _keys(entry, _ASSEMBLY_REQUIRED, frozenset(), where)
+    return FinalAssembly(_number(entry, "vector_ng", where), _number(entry, "ratio", where))
 
 
 def _primer_plates(entry: Any) -> PrimerPlates | None:

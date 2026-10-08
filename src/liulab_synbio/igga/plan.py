@@ -347,6 +347,9 @@ class LibraryPlan:
                 reads=self.reads,
                 marks=self.project.marks,
                 linkage_fidelity=self.project.linkage_fidelity,
+                final_assembly=self.project.final_assembly,
+                pcr1_cycles=self.project.pcr1_cycles,
+                pcr2_cycles=self.project.pcr2_cycles,
                 primer_plates=self.project.primer_plates,
             )
         )
