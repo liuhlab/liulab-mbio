@@ -1378,11 +1378,12 @@ def _label_fills(page: Node, kind: str) -> dict[str, str]:
 def test_a_highlight_keeps_what_it_names_in_colour_and_dims_every_other_item(
     puc19: SequenceRecord,
 ) -> None:
-    plain, lit = (parse(draw_map(puc19, **asked).element()) for asked in ({}, {"highlight": "AmpR"}))
-    before, after = _items(plain), _items(lit)
+    before = _items(parse(draw_map(puc19).element()))
+    after = _items(parse(draw_map(puc19, highlight="AmpR").element()))
 
-    assert set(before) == set(after) and "AmpR" in after
-    assert _fills(after["AmpR"][0]) == _fills(before["AmpR"][0]) != [layers.DIM]
+    assert set(before) == set(after)
+    assert _fills(after["AmpR"][0]) == _fills(before["AmpR"][0])
+    assert _fills(after["AmpR"][0]) != [layers.DIM]
     assert {
         fill for name, groups in after.items() if name != "AmpR" for fill in _fills(groups[0])
     } == {layers.DIM}
@@ -1419,7 +1420,7 @@ def test_a_highlight_moves_no_label(puc19: SequenceRecord, puc19_file: Path) -> 
     """Colour moves no shape, so the no-overlap rule holds with a highlight as without one."""
     assert draw_map(puc19_file).hidden == ()
 
-    plain, lit = (draw_map(puc19, **asked) for asked in ({}, {"highlight": "AmpR"}))
+    plain, lit = draw_map(puc19), draw_map(puc19, highlight="AmpR")
 
     assert _placed(parse(lit.element())) == _placed(parse(plain.element()))
 
