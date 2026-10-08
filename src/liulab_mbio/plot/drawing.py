@@ -741,12 +741,14 @@ def draw_plate(
         One per row, top to bottom. The caller names its own rows, so this module keeps no
         second opinion about how a plate is numbered.
     seating
-        Well name to what sits there, such as ``{"A1": "UMI-1"}``.
+        Well name to what sits there, such as ``{"A1": "UMI-1"}``, each named as this array
+        names its wells: a row label and a 1-based column.
 
     Raises
     ------
     ValueError
-        If the array has no wells, or there is not one label per row.
+        If the array has no wells, there is not one label per row, or a well is seated where
+        the array has none.
 
     Examples
     --------

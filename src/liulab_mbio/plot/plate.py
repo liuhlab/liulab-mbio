@@ -113,11 +113,12 @@ def layout(
     if len(row_labels) != rows:
         raise ValueError(f"{len(row_labels)} labels for {rows} rows")
     held = seating or {}
-    # Every well is read by the name this array generates, so one it does not generate would be
-    # dropped from the drawing while still colouring the legend.
-    names = {f"{label}{column + 1}" for label in row_labels for column in range(columns)}
+    # Each well is drawn under the name this grid gives it, so a seating is checked against the
+    # same names: one not in it would be dropped from the drawing and still colour the legend.
+    grid = [[f"{label}{column + 1}" for column in range(columns)] for label in row_labels]
+    named = {name for row in grid for name in row}
     for well in held:
-        if well not in names:
+        if well not in named:
             raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
     kinds = tuple(dict.fromkeys(held.values()))
     fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
@@ -151,7 +152,7 @@ def layout(
             )
         )
         for column in range(columns):
-            name = f"{row_labels[row]}{column + 1}"
+            name = grid[row][column]
             holds = held.get(name, "")
             box = Box(
                 left + column * pitch + (pitch - size) / 2,

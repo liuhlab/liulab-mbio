@@ -92,11 +92,7 @@ def test_a_row_label_short_of_its_rows_is_refused() -> None:
         _ = draw_plate("plate", 2, 3, "A").layout
 
 
-def test_a_well_seated_past_the_last_column_is_refused() -> None:
-    with pytest.raises(ValueError, match="no well 'A4' on a 2 by 3 plate"):
-        _ = draw_plate("plate", 2, 3, "AB", seating={"A4": "water"}).layout
-
-
-def test_a_well_seated_past_the_last_row_is_refused() -> None:
-    with pytest.raises(ValueError, match="no well 'C1' on a 2 by 3 plate"):
-        _ = draw_plate("plate", 2, 3, "AB", seating={"C1": "water"}).layout
+@pytest.mark.parametrize("well", ["A4", "C1"], ids=["past the last column", "past the last row"])
+def test_a_well_seated_where_the_array_has_none_is_refused(well: str) -> None:
+    with pytest.raises(ValueError, match=f"no well '{well}' on a 2 by 3 plate"):
+        _ = draw_plate("plate", 2, 3, "AB", seating={well: "water"}).layout
