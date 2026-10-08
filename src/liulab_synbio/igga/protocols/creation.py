@@ -41,9 +41,9 @@ from liulab_synbio.igga.protocols.ordering import (
     POOL_REFERENCES,
     pool_materials,
 )
-from liulab_synbio.igga.protocols.primer_plates import PrimerPlating
+from liulab_synbio.igga.protocols.primer_plates import working_plate
+from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import Run, vector_names
-from liulab_synbio.igga.protocols.sitting import Sitting, figured, labelled
 
 #: What the page is headed and what the chain names it by.
 CREATION = "Cargo creation"
@@ -82,7 +82,7 @@ POOL_EQUIPMENT: tuple[str, ...] = (
 )
 
 
-class Creation(Sitting):
+class Creation(Protocol):
     """Amplify the pool twice and close each block's cargo into its position's vector."""
 
     round_reagents = True
@@ -126,8 +126,7 @@ class Creation(Sitting):
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:
         """Return the pool, the working plate of primers where one was poured, and the block vectors."""
-        plated = PrimerPlating().produces(run)[1:2] if run.plated else ()
-        return (run.ordered, *plated, *run.blocks)
+        return (run.ordered, *working_plate(run), *run.blocks)
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """One well a design, sealed and frozen."""

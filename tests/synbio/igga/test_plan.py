@@ -39,6 +39,8 @@ from liulab_synbio.igga.plan import (
     read_part_lists,
 )
 from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
+from liulab_synbio.igga.protocols.run import ROUND_EQUIPMENT
 from liulab_synbio.igga.rounds import ROUND_FILE
 from liulab_synbio.igga.vector import cargo_enzyme
 
@@ -145,6 +147,27 @@ def pooled(inputs, tmp_path_factory):
 def protocol(plan):
     """Every protocol of the run as one, which is what most of these tests ask about."""
     return whole(plan.chain())
+
+
+def test_a_plain_run_orders_its_blocks_assembles_and_moves_the_library(plan):
+    assert [one.title for one in plan.chain().protocols] == [ORDERING, ASSEMBLY, FINAL]
+
+
+def test_a_pool_splits_ordering_from_making_the_cargo(pooled):
+    made, _files = pooled
+
+    # This project states no primer plates, so the pool's primers are ordered with the pool.
+    assert [one.title for one in made.chain().protocols] == [ORDERING, CREATION, ASSEMBLY, FINAL]
+
+
+def test_each_protocol_of_the_chain_answers_for_its_own_page(plan):
+    run = plan.chain()
+    ordering, assembly = run.protocols[0], run.protocols[1]
+
+    assert ordering.summary == "Order every block this library is built from."
+    # Only the protocols running a round's chemistry buy the reagents the rounds share.
+    assert not ordering.equipment
+    assert assembly.equipment == ROUND_EQUIPMENT
 
 
 def test_one_call_plans_every_round_and_every_part(plan):

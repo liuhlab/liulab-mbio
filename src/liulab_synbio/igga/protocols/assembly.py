@@ -57,6 +57,7 @@ from liulab_synbio.igga.bench import (
 from liulab_synbio.igga.figures import assembly_rows
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
+from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
     ROUND_EQUIPMENT,
     Run,
@@ -64,7 +65,6 @@ from liulab_synbio.igga.protocols.run import (
     marks_sentence,
     with_pair,
 )
-from liulab_synbio.igga.protocols.sitting import Sitting, figured, labelled
 from liulab_synbio.igga.reads import ReadPair
 from liulab_synbio.igga.rounds import Round
 
@@ -72,7 +72,7 @@ from liulab_synbio.igga.rounds import Round
 ASSEMBLY = "Library assembly in rounds"
 
 
-class Assembly(Sitting):
+class Assembly(Protocol):
     """Pool each part list, run every round, and read linkage and representation back."""
 
     round_reagents = True

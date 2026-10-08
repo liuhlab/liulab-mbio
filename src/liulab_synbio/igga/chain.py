@@ -1,6 +1,6 @@
 """A library run as the chain of protocols the bench works through, in order.
 
-This module holds the order and nothing else about any one protocol: which sittings a run
+This module holds the order and nothing else about any one protocol: which protocols a run
 includes, how the run's reagents spread across them, and what no single protocol owns — the
 background a reader is told first, the bill for the whole run, and the checks that judge the
 design. Each protocol is a module of `liulab_synbio.igga.protocols`, and adding a fact to one
@@ -11,7 +11,7 @@ cargo, read back the designs the project asks for, join the part lists round by 
 the finished library into a working vector.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 
 from liulab_mbio.bench.prices import Item
 from liulab_mbio.bench.prices import bill as priced
@@ -28,8 +28,8 @@ from liulab_synbio.igga.protocols.creation import Creation
 from liulab_synbio.igga.protocols.final import FinalLigation
 from liulab_synbio.igga.protocols.ordering import Ordering
 from liulab_synbio.igga.protocols.primer_plates import PrimerPlating
+from liulab_synbio.igga.protocols.protocol import Protocol
 from liulab_synbio.igga.protocols.run import BLOCK_VECTOR_ITEM, WORKING_ITEM, Run
-from liulab_synbio.igga.protocols.sitting import Sitting
 from liulab_synbio.igga.protocols.validation import ReadBack
 
 #: What a price record prices the synthesis order and the bill's own source by. Neither has a
@@ -40,14 +40,14 @@ POOL_PRIMER_KEY = "pool-primers"
 PRICES_SOURCE = "prices"
 
 
-def sittings(run: Run) -> tuple[Sitting, ...]:
+def ordered(run: Run) -> tuple[Protocol, ...]:
     """Return the protocols this run writes, in the order the bench works through them.
 
     A run plating no primers opens at the ordering protocol; one ordering its blocks whole
     makes its cargo in the vendor's tube and writes no creation protocol; one stating no
     fragment-count floor reads nothing back.
     """
-    made: list[Sitting] = []
+    made: list[Protocol] = []
     if run.plated:
         made.append(PrimerPlating())
     made.append(Ordering())
@@ -62,24 +62,19 @@ def sittings(run: Run) -> tuple[Sitting, ...]:
 def project(run: Run) -> Project:
     """Return the run as the chain of protocols the bench works through, in order.
 
-    Each protocol is a sitting of its own and says what it is handed and what it leaves.
+    Each protocol says what it is handed and what it leaves, and nothing else about the run.
 
     The bill and the design checks are the run's, not one protocol's: two protocols buying the
     same cells would otherwise be counted twice, and no one protocol judges the design. Money
     comes only from `run.prices`, and every row it does not price carries a hole.
     """
-    made = sittings(run)
-    staged = {one.title(run): one.steps(run) for one in made}
+    made = ordered(run)
+    staged = [one.steps(run) for one in made]
     spread = _spread(run, made, staged)
     sources = _sources(run, made)
     pages = tuple(
-        one.page(
-            run,
-            steps=staged[one.title(run)],
-            materials=spread[one.title(run)],
-            sources=sources,
-        )
-        for one in made
+        one.page(run, steps=steps, materials=bought, sources=sources)
+        for one, steps, bought in zip(made, staged, spread, strict=True)
     )
     return Project(
         f"{run.vector.name or 'Library'}: {len(run.part_lists)} part lists in "
@@ -100,33 +95,35 @@ def project(run: Run) -> Project:
 
 
 def _spread(
-    run: Run, made: Sequence[Sitting], staged: Mapping[str, Sequence[Step]]
-) -> dict[str, tuple[Material, ...]]:
+    run: Run, made: Sequence[Protocol], staged: Sequence[Sequence[Step]]
+) -> list[tuple[Material, ...]]:
     """Return each protocol's reagent list: what its own steps name, else what it is bought for.
 
-    A reagent one of those protocols names in a step goes to the protocols that name it; the
-    rest -- a plate, a prep kit, a consumable no sentence mentions -- fall back to the protocols
-    it was bought for.
+    One list a protocol, in the chain's own order. A reagent one of those protocols names in a
+    step goes to the protocols that name it; the rest -- a plate, a prep kit, a consumable no
+    sentence mentions -- fall back to the protocols it was bought for. The lists are keyed by
+    where a protocol stands in the chain and not by its heading, so two protocols could share
+    a heading without sharing a reagent.
     """
-    rounds = tuple(one.title(run) for one in made if one.round_reagents)
-    carried: list[tuple[Material, tuple[str, ...]]] = [
-        (material, (one.title(run),)) for one in made for material in one.carried(run)
+    rounds = tuple(place for place, one in enumerate(made) if one.round_reagents)
+    carried: list[tuple[Material, tuple[int, ...]]] = [
+        (material, (place,)) for place, one in enumerate(made) for material in one.carried(run)
     ]
     carried += [(material, rounds) for material in run.round_materials]
-    found: dict[str, list[Material]] = {title: [] for title in staged}
+    found: list[list[Material]] = [[] for _ in made]
     for material, bought_for in carried:
         named = [
-            title
-            for title, steps in staged.items()
+            place
+            for place, steps in enumerate(staged)
             if any(names(material.name, step.named) for step in steps)
         ]
-        for title in named or bought_for:
-            if title in found and material not in found[title]:
-                found[title].append(material)
-    return {title: tuple(group) for title, group in found.items()}
+        for place in named or bought_for:
+            if material not in found[place]:
+                found[place].append(material)
+    return [tuple(group) for group in found]
 
 
-def _sources(run: Run, made: Sequence[Sitting]) -> dict[str, Source]:
+def _sources(run: Run, made: Sequence[Protocol]) -> dict[str, Source]:
     """Return every document this run could cite; `citing` drops the ones a protocol did not.
 
     Every protocol is handed the whole set, because one of them draws a figure another's

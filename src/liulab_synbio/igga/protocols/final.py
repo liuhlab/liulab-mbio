@@ -48,6 +48,7 @@ from liulab_synbio.igga.coverage import (
     colonies_for_completeness,
 )
 from liulab_synbio.igga.method import Scheme
+from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
     ROUND_EQUIPMENT,
     WORKING_ITEM,
@@ -55,7 +56,6 @@ from liulab_synbio.igga.protocols.run import (
     marks_sentence,
     with_pair,
 )
-from liulab_synbio.igga.protocols.sitting import Sitting, figured, labelled
 from liulab_synbio.igga.reads import ReadPair
 from liulab_synbio.igga.vector import Working, released_cargo
 
@@ -63,7 +63,7 @@ from liulab_synbio.igga.vector import Working, released_cargo
 FINAL = "Final cargo ligation"
 
 
-class FinalLigation(Sitting):
+class FinalLigation(Protocol):
     """Free the cargo from the library backbone and close it into the working vector."""
 
     round_reagents = True
@@ -88,7 +88,7 @@ class FinalLigation(Sitting):
         reads = run.reads
         return (
             labelled(_pick_working_step(scheme, working), "Choose the working vector"),
-            labelled(_release_step(scheme, product, span, freeing), "Move the library across"),
+            labelled(_free_step(scheme, product, span, freeing), "Move the library across"),
             labelled(
                 figured(
                     _assemble_step(scheme, product, span, working),
@@ -215,7 +215,7 @@ def _pick_working_step(scheme: Scheme, working: Working | None) -> Step:
     )
 
 
-def _release_step(
+def _free_step(
     scheme: Scheme,
     product: SequenceRecord,
     span: Segment | None,

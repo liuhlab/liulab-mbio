@@ -1,20 +1,21 @@
 """One protocol of a library run, and what every one of them answers.
 
-A protocol of the chain is a sitting of its own: it is handed named items, takes a bench
-through its own steps, and leaves named items for the next. `Sitting` is what a protocol
-module implements, one method a thing its page prints, so adding a fact to a protocol is one
-edit in one module and the chain never names it by its title.
+A protocol declares what it consumes and what it produces and nothing else about the run, as
+`CONTEXT.md` has it. `Protocol` is what a protocol module implements, one method a thing its
+page prints, so adding a fact to a protocol is one edit in one module and the chain never
+dispatches on its title. `liulab_mbio.protocol.model.Protocol` is the page it writes, which is
+why that one is reached through `model` here.
 """
 
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
+from liulab_mbio.protocol import model
 from liulab_mbio.protocol.model import (
     Figure,
     Hole,
     Material,
     Plate,
-    Protocol,
     Reference,
     Source,
     Step,
@@ -26,7 +27,7 @@ from liulab_mbio.protocol.model import (
 from liulab_synbio.igga.protocols.run import Run
 
 
-class Sitting:
+class Protocol:
     """One protocol of a library run, which owns everything its own page prints.
 
     Every method takes the run and nothing else, so no protocol reads another's arguments. The
@@ -93,7 +94,7 @@ class Sitting:
         steps: Sequence[Step],
         materials: Sequence[Material],
         sources: Mapping[str, Source],
-    ) -> Protocol:
+    ) -> model.Protocol:
         """Return the protocol as the page prints it.
 
         `steps` is what `steps` returned, built once because the chain reads them to spread the
@@ -101,7 +102,7 @@ class Sitting:
         document the run could cite, so a protocol citing another's document still resolves it.
         """
         return citing(
-            Protocol(
+            model.Protocol(
                 self.title(run),
                 summary=self.summary(run),
                 overview=self.overview(run),

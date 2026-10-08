@@ -17,8 +17,8 @@ from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.protocol.model import Material, Reference, Step, Troubleshooting
 from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.method import SYNTHESIS_ENZYME
+from liulab_synbio.igga.protocols.protocol import Protocol, labelled
 from liulab_synbio.igga.protocols.run import Run
-from liulab_synbio.igga.protocols.sitting import Sitting, labelled
 
 #: What the page is headed and what the chain names it by.
 ORDERING = "Cargo ordering and pool preparation"
@@ -53,7 +53,7 @@ POOL_REFERENCES: tuple[Reference, ...] = (
 )
 
 
-class Ordering(Sitting):
+class Ordering(Protocol):
     """Order the pool, or every block, and store it ready for the bench."""
 
     def title(self, run: Run) -> str:

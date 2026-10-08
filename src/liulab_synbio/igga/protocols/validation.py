@@ -10,8 +10,8 @@ from liulab_mbio.protocol.model import Citation, Figure, Material, Plate, Refere
 from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_synbio import dmx
+from liulab_synbio.igga.protocols.protocol import Protocol, labelled
 from liulab_synbio.igga.protocols.run import Run
-from liulab_synbio.igga.protocols.sitting import Sitting, labelled
 
 #: What the page is headed, before the route that marks its wells is named after it.
 VALIDATION = "Cargo validation"
@@ -32,7 +32,7 @@ def validation_title(one: dmx.Validation) -> str:
     return f"{VALIDATION}: {one.route.name}"
 
 
-class ReadBack(Sitting):
+class ReadBack(Protocol):
     """Array, pick, mark and call every design the project's floor asks to read back."""
 
     def title(self, run: Run) -> str:
