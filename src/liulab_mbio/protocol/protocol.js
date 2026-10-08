@@ -36,6 +36,25 @@
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
+  // One section of the navigation, holding the keys of the steps under it: how far the bench got
+  // in it is counted from this page's own marks, never written down a second time.
+  var groups = all("nav details[data-steps]");
+
+  function sections() {
+    var here = null;
+    groups.forEach(function (group) {
+      var keys = (group.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+      var done = 0;
+      keys.forEach(function (key) {
+        if (state["step-" + key] === true) done += 1;
+      });
+      var label = group.querySelector(".section-progress");
+      if (label) label.textContent = done + " of " + keys.length + " done";
+      if (here === null && done < keys.length) here = group;
+    });
+    return here;
+  }
+
   function refresh() {
     var done = 0;
     stepBoxes.forEach(function (box) {
@@ -44,6 +63,7 @@
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
+    sections();
   }
 
   boxes.forEach(function (box) {
@@ -57,6 +77,13 @@
     });
   });
   refresh();
+
+  // The section the bench is in — the first still holding an unticked step — opens on arrival,
+  // and the rest close. A section opened by hand after that stays open.
+  var current = sections();
+  if (current) {
+    groups.forEach(function (group) { group.open = group === current; });
+  }
 
   // A run's index: how far the bench got in each protocol, read from that page's own store.
   // Every file:// page shares one store, and each page has a key of its own, so the index

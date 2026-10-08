@@ -164,6 +164,11 @@ def test_a_page_names_its_neighbours_in_words_where_the_page_itself_prints(folde
     assert first.text == "Protocol 1 of 3. The run starts here. Next is Transformation."
     [last] = pages(folder)["03-colony-check.html"].find_all("p", cls="neighbours")
     assert last.text == "Protocol 3 of 3. Comes after Transformation. The run ends here."
+    # Each neighbour it names is the way there, so a reader reads the line and follows it.
+    assert [(a.text, a.attrs["href"]) for a in line.find_all("a")] == [
+        ("BP reaction", "01-bp-reaction.html"),
+        ("Colony check", "03-colony-check.html"),
+    ]
 
 
 def test_the_index_carries_the_summary_and_every_protocol_with_its_step_count(

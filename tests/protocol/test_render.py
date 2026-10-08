@@ -12,9 +12,12 @@ from liulab_mbio.protocol import (
     Citation,
     Component,
     Figure,
+    Folder,
     Incubation,
+    Item,
     Move,
     Oligo,
+    Page,
     Plate,
     Protocol,
     ReactionTable,
@@ -180,6 +183,86 @@ def test_no_two_marks_of_one_page_are_alike_however_its_steps_are_keyed() -> Non
     ]
     marks = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
     assert len(set(marks)) == len(marks)
+
+
+def rounds() -> Protocol:
+    """A protocol of two like rounds between a step that opens it and one that closes it."""
+    return Protocol(
+        "Assemble in rounds",
+        steps=(
+            Step("Pool each part list", key="pool"),
+            *(
+                Step(f"Round {n}: {what}", key=f"round-{n}-{what}", section=f"Round {n}")
+                for n in (1, 2)
+                for what in ("open", "ligate")
+            ),
+            Step("Read the library back", key="read", section="Read the library back"),
+        ),
+    )
+
+
+def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> None:
+    [nav] = parse(render_html(rounds())).find_all("nav", cls="toc")
+    groups = nav.find_all("details")
+    assert [g.attrs["data-steps"] for g in groups] == [
+        "round-1-open round-1-ligate",
+        "round-2-open round-2-ligate",
+        "read",
+    ]
+    counts = [g.find_all("summary")[0].text for g in groups]
+    assert counts == [
+        "Round 1 0 of 2 done",
+        "Round 2 0 of 2 done",
+        "Read the library back 0 of 1 done",
+    ]
+    # The bench arrives at the top of the run, so the first section is the one standing open.
+    assert [("open" in g.attrs) for g in groups] == [True, False, False]
+    # A step naming no section is not forced into one, and the numbering runs through every list.
+    assert [a.text for a in nav.find_all("a")][:2] == ["1 Pool each part list", "2 Round 1: open"]
+    assert nav.find_all("a")[-1].text == "6 Read the library back"
+
+
+def test_both_navigation_lists_of_one_page_are_the_same_list() -> None:
+    """The right column of a page in a run and the standalone list it shows alone, alike."""
+    one = rounds()
+    [standalone] = parse(render_html(one)).find_all("nav", cls="toc")
+    [column] = parse(
+        render_html(one, folder=Folder((Page.of(1, one),)), here="01-x.html")
+    ).find_all("nav", cls="within")
+    assert [g.attrs["data-steps"] for g in column.find_all("details")] == [
+        g.attrs["data-steps"] for g in standalone.find_all("details")
+    ]
+    # One or the other: a page shows the list in its header or in its column, never twice.
+    assert not parse(render_html(one)).find_all("nav", cls="within")
+
+
+def test_steps_naming_no_section_stay_the_one_list_they_were(page: Node) -> None:
+    [nav] = page.find_all("nav", cls="toc")
+    assert not nav.find_all("details")
+    assert next(a.attrs["href"] for a in nav.find_all("a")).startswith("#step-")
+
+
+def test_the_header_states_what_the_bench_is_handed_and_what_it_is_left_with() -> None:
+    one = Protocol(
+        "Transform",
+        overview={"Strain": "DH10B"},
+        consumes=(Item("ligation", "the joined plasmid", spec=("≥10 ng/µL",)),),
+        produces=(Item("colonies", "transformed cells on a plate"),),
+    )
+    header = parse(render_html(one)).find_all("header", cls="intro")[0]
+    blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
+    assert blocks[:3] == ["h1", "overview", "handover"]
+    [handover] = header.find_all("div", cls="handover")
+    assert [h.text for h in handover.find_all("h3")] == ["Have in hand", "Leaves you with"]
+    assert handover.find_all("li")[0].text == "ligation the joined plasmid · ≥10 ng/µL"
+    assert handover.find_all("li")[1].text == "colonies transformed cells on a plate"
+
+
+def test_a_protocol_declaring_neither_states_no_handover(page: Node) -> None:
+    assert not page.find_all("div", cls="handover")
+    one = Protocol("Transform", produces=(Item("colonies", "transformed cells on a plate"),))
+    [handover] = parse(render_html(one)).find_all("div", cls="handover")
+    assert [h.text for h in handover.find_all("h3")] == ["Leaves you with"]
 
 
 def test_the_toolbar_offers_to_reset_everything_the_page_remembers(page: Node) -> None:

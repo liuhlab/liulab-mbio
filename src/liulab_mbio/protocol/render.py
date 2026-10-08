@@ -11,6 +11,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from html import escape
 from importlib.resources import files
+from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple
 
@@ -480,13 +481,19 @@ def _flow_item(item: Item, came_from: str) -> str:
     """One name handed between two protocols, and where it came from, or that nothing hands it."""
     said = came_from or "nothing in the run hands this over"
     dangling = "" if came_from else " is-dangling"
+    return (
+        f'<li class="flow-hand-item{dangling}">{_item_named(item)} '
+        f'<span class="flow-from">{escape(said)}</span></li>'
+    )
+
+
+def _item_named(item: Item) -> str:
+    """One item as every page names it: what it is called, what it is, and what it has to meet."""
     wanted = escape(", ".join(item.spec))
     spec = f' <span class="muted">· {wanted}</span>' if item.spec else ""
     return (
-        f'<li class="flow-hand-item{dangling}">'
         f'<span class="flow-item">{escape(item.name)}</span> '
-        f'<span class="muted">{escape(item.what)}</span>{spec} '
-        f'<span class="flow-from">{escape(said)}</span></li>'
+        f'<span class="muted">{escape(item.what)}</span>{spec}'
     )
 
 
@@ -829,22 +836,56 @@ def _chain(folder: Folder, here: str) -> str:
     )
 
 
-def _step_links(steps: Sequence[Step], keys: Sequence[str]) -> str:
-    """Every step as a link to where it stands on its own page, in order."""
+def _step_links(steps: Sequence[Step], keys: Sequence[str], first: int = 1) -> str:
+    """Every step as a link to where it stands on its own page, numbered from `first`.
+
+    The number is written out rather than counted by the list, because a collapsed section's
+    steps are not laid out and a counter would renumber the sections after it.
+    """
     return "".join(
-        f'<li><a href="#step-{key}">{escape(step.title)}</a></li>'
-        for key, step in zip(keys, steps, strict=True)
+        f'<li><a href="#step-{key}"><span class="step-mark">{n}</span> '
+        f"<span>{escape(step.title)}</span></a></li>"
+        for n, (key, step) in enumerate(zip(keys, steps, strict=True), first)
     )
+
+
+def _step_nav(steps: Sequence[Step], keys: Sequence[str]) -> str:
+    """Every step as a link, under the section it belongs to wherever the steps name one.
+
+    One group per run of steps sharing a `Step.section`, each a `<details>` carrying its own
+    steps' keys: `protocol.js` counts the marks under it and opens the one the bench is in, so
+    three like rounds read as three rounds and not as one flat list. Steps naming no section
+    stay the one list they were.
+    """
+    if not any(step.section for step in steps):
+        return f'<ul class="step-nav step-list">{_step_links(steps, keys)}</ul>'
+    groups, at, opened = [], 0, False
+    for section, run in groupby(steps, key=lambda step: step.section):
+        size = len(tuple(run))
+        under = _step_links(steps[at : at + size], keys[at : at + size], at + 1)
+        if section:
+            groups.append(
+                f'<li class="step-group"><details data-steps='
+                f'"{escape(" ".join(keys[at : at + size]))}"{"" if opened else " open"}>'
+                f"<summary>{escape(section)} "
+                f'<span class="section-progress muted">0 of {size} done</span></summary>'
+                f'<ul class="step-list">{under}</ul></details></li>'
+            )
+            opened = True
+        else:
+            groups.append(under)
+        at += size
+    return f'<ul class="step-nav">{"".join(groups)}</ul>'
 
 
 def _within(protocol: Protocol, keys: Sequence[str]) -> str:
     """Return the right column: every step of this page, so a reader jumps within it."""
     if not protocol.steps:
         return ""
-    links = _step_links(protocol.steps, keys)
     return (
         '<nav class="column within" aria-label="Steps">'
-        f'<h2 class="column-title">This protocol</h2><ol>{links}</ol></nav>\n'
+        f'<h2 class="column-title">This protocol</h2>'
+        f"{_step_nav(protocol.steps, keys)}</nav>\n"
     )
 
 
@@ -854,11 +895,16 @@ def _place(folder: Folder, here: str) -> str:
     if here not in addresses:
         return ""
     at, total = addresses.index(here), len(folder.pages)
-    before = f"Comes after {escape(folder.pages[at - 1].title)}." if at else "The run starts here."
+    before = f"Comes after {_page_link(folder.pages[at - 1])}." if at else "The run starts here."
     after = (
-        f"Next is {escape(folder.pages[at + 1].title)}." if at + 1 < total else "The run ends here."
+        f"Next is {_page_link(folder.pages[at + 1])}." if at + 1 < total else "The run ends here."
     )
     return f'<p class="neighbours">Protocol {at + 1} of {total}. {before} {after}</p>\n'
+
+
+def _page_link(page: Page) -> str:
+    """One neighbouring page as a link, so the name a reader is given is the way there."""
+    return f'<a href="{escape(page.href)}">{escape(page.title)}</a>'
 
 
 def _asset(name: str) -> str:
@@ -913,6 +959,7 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
             for k, v in protocol.overview.items()
         )
         parts.append(f'<dl class="overview">{facts}</dl>\n')
+    parts.append(_handover(protocol))
     if protocol.highlights:
         lines = "".join(f"<p>{escape(one)}</p>" for one in protocol.highlights)
         parts.append(f'<div class="highlights">{lines}</div>\n')
@@ -927,10 +974,29 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
             '<button type="button" class="reset">Reset page</button></div>\n'
         )
         if toc:
-            links = _step_links(protocol.steps, keys)
-            parts.append(f'<nav class="toc" aria-label="Steps"><ol>{links}</ol></nav>\n')
+            parts.append(
+                f'<nav class="toc" aria-label="Steps">{_step_nav(protocol.steps, keys)}</nav>\n'
+            )
     parts.append("</header>\n")
     return "".join(parts)
+
+
+def _handover(protocol: Protocol) -> str:
+    """Return what the bench holds before this protocol and what it is left with, or nothing.
+
+    A protocol read on its own states them for its reader; inside a run the index draws the same
+    names as a chain, and nothing is written where the protocol declares neither.
+    """
+    blocks = [
+        f"<div><h3>{heading}</h3>"
+        f"<ul>{''.join(f'<li>{_item_named(item)}</li>' for item in items)}</ul></div>"
+        for heading, items in (
+            ("Have in hand", protocol.consumes),
+            ("Leaves you with", protocol.produces),
+        )
+        if items
+    ]
+    return f'<div class="handover">{"".join(blocks)}</div>\n' if blocks else ""
 
 
 def _checks(checks: tuple[Check, ...]) -> str:

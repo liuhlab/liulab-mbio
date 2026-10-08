@@ -72,6 +72,11 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
+/* What the bench holds before this protocol and what it is left with, beside the overview cards. */
+.handover { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.45rem; margin: 0 0 1rem; }
+.handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
+.handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+
 .highlights { max-width: 44rem; margin: 0 0 1rem; }
 .highlights p:last-child { margin-bottom: 0; }
 
@@ -105,10 +110,20 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
-.toc li { counter-increment: toc; }
+.toc { margin: 0 0 1.5rem; }
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+/* Both lists of steps — the standalone table of contents and a page's right column — are this
+   list: one group per section, collapsed, so three like rounds read as three rounds. The number
+   is in the markup because a collapsed group lays nothing out and a counter would renumber. */
+.step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
+.step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
+.step-group + .step-group { margin-top: 0.45rem; }
+.step-group summary { cursor: pointer; font-weight: 600; }
+.step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
+/* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
+.section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
+.toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -273,7 +288,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   /* A flex item sizes to its content, so without this the widest table widens the page. */
   .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }
