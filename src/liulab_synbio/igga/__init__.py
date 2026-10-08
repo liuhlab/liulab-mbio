@@ -14,7 +14,7 @@ chooses, checked as it is read; `gate` judges each reaction's molecules by the m
 synthesis sequence; `vector` accepts or retrofits the destination and holds the working vector's
 own ccdB cassette; `rounds` simulates each round; `bench` turns the method's volumes and masses
 into amounts at the design's real lengths, and `steps` the protocol's own steps. How many colonies
-a round takes is `liulab_mbio.bench.coverage`'s, because no method's choices reach it.
+a round takes is `liulab_mbio.bench.coverage`'s.
 
 A library is assembled in rounds and not in one pot, because the product keeps the internal
 enzyme's sites and that is what lets the next round open it -- `docs/adr/0004-library-rounds.md`

@@ -13,9 +13,11 @@ re-exported.
   pipeline, because only this chemistry has two callers. Imported by module: its `REFERENCES`
   and `SOURCES` are one chemistry's, not this package's.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
-- `coverage`: how many constructs a set of part lists yields, the colonies a round takes before
-  it loses one, and the marks a pooled library's representation read is held to. Imported by
-  module: its `REFERENCES` are one sizing rule's, not this package's.
+- `coverage`: how many constructs a set of part lists yields, the colonies a round takes for a
+  stated chance that none of its products is missing, and the marks a pooled library's
+  representation read is held to. It cites sources, so it sits in this layer rather than beside
+  `barcodes`; what calls it is any pipeline that builds a library in rounds. Imported by module:
+  its `REFERENCES` are one sizing rule's, not this package's.
 - `readback`: what one well's read came to, where a construct is read back one well at a time,
   and how often one picked colony is clean.
 - `inactivation`: an enzyme's heat inactivation.
