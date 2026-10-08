@@ -483,6 +483,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "One band at 2662 bp."
@@ -656,6 +657,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "One band at 749 bp."
@@ -690,6 +692,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [
         {
           "ladder": {
@@ -769,6 +772,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "Nothing visible. The digest shows up later as fewer colonies carrying the template plasmid."
@@ -798,6 +802,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "Clean DNA, free of polymerase, primers and dNTPs."
@@ -828,6 +833,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "pUC19 backbone: 0.05 pmol is 81.98 ng, so 82 ng/µL or more fits in 1 µL.",
@@ -908,6 +914,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "A 15 µL reaction holding every fragment."
@@ -986,6 +993,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.",
@@ -1044,6 +1052,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "Hundreds of colonies; NEB counts about 687 correct ones from a single-insert assembly with 2.5 µL of the outgrowth plated.",
@@ -1191,6 +1200,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [
         {
           "ladder": {
@@ -1266,6 +1276,7 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
+      "figures": [],
       "gels": [],
       "expected": [
         "Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.",
