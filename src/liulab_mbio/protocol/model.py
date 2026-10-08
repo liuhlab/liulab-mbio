@@ -1070,14 +1070,16 @@ class BillRow:
 
     The quantity is computed from the design and owes nothing to a price, so it is here whether
     or not a price record was loaded. The money is a hole where nothing priced the key, and no
-    figure is ever estimated.
+    figure is ever estimated. **A row carries a charge or a hole**, so an item this run names
+    and nobody prices cannot reach a page as an empty cell.
 
     Parameters
     ----------
     item
         What it is.
     quantity, unit
-        What this run consumes.
+        What this run consumes. A `quantity` of ``None`` is an item the design does not size,
+        and `unit` then carries what the protocol states the run takes, in its own words.
     key
         What a price record prices it by: a catalogue number where it has one.
     charge
@@ -1091,7 +1093,7 @@ class BillRow:
     """
 
     item: str
-    quantity: float
+    quantity: float | None = None
     _: KW_ONLY
     unit: str = ""
     key: str = ""
@@ -1101,11 +1103,11 @@ class BillRow:
     hole: Hole | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a row that is both priced and holed, and a hole of another kind."""
+        """Refuse a row that is neither priced nor holed, both, or holed for another reason."""
         _require(bool(self.item.strip()), "a bill row needs an item")
         _require(
-            not (self.charge and self.hole),
-            f"bill row {self.item!r} is both priced and holed",
+            bool(self.charge) != (self.hole is not None),
+            f"bill row {self.item!r} carries a charge or a price hole, and not both",
         )
         _require(
             self.hole is None or self.hole.kind == "price",
@@ -1147,7 +1149,7 @@ class Bill:
 
         Examples
         --------
-        >>> Bill((BillRow("cells", 1, citation=Citation("NEB")),)).cited
+        >>> Bill((BillRow("cells", 1, charge="9.00", citation=Citation("NEB")),)).cited
         frozenset({'NEB'})
         """
         return frozenset(row.citation.source for row in self.rows if row.citation)

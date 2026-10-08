@@ -1947,10 +1947,15 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
             if row.hole
             else escape(row.charge) + _after(row.citation, sources)
         )
+        quantity = (
+            f"{number(row.quantity)} {escape(row.unit)}"
+            if row.quantity is not None
+            else escape(row.unit) or f'<span class="hole-none">{NO_NUMBER}</span>'
+        )
         cells = [
             f"<td>{escape(row.item)}</td>",
             f"<td>{escape(row.key)}</td>",
-            f'<td class="num">{number(row.quantity)} {escape(row.unit)}</td>',
+            f'<td class="num">{quantity}</td>',
             f'<td class="num">{charge}</td>',
         ]
         if headroom:
@@ -1968,9 +1973,10 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
     )
     return (
         f'<section class="block bill" id="bill">\n<h2>{escape(bill.title or "Bill")}</h2>\n'
-        "<p>Quantities come from the design and are here whatever is loaded. A charge comes "
-        "only from a price record; where none prices a row, the money is a hole and no figure "
-        "is estimated. Price steers no part of the design.</p>\n"
+        "<p>Every item this run consumes has a row. A quantity comes from the design and is "
+        "here whatever is loaded; one the design does not size carries what the protocol "
+        "states. A charge comes only from a price record; where none prices a row, the money "
+        "is a hole and no figure is estimated. Price steers no part of the design.</p>\n"
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
         f"<tbody>{''.join(rows)}</tbody>{total}</table></div>\n</section>\n"
     )

@@ -302,7 +302,7 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
         project=dataclasses.replace(
             made.project,
             linkage_fidelity=0.9,
-            final_assembly=FinalAssembly(75.0, 2.0),
+            final_assembly=FinalAssembly(75.0),
             pcr1_cycles=16,
             pcr2_cycles=18,
         ),
@@ -327,7 +327,7 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
     assert "16 cycles is what this run measured for its own polymerase" in said
     assert "18 cycles is what this run measured" in said
     assert "75 ng of working vector" in said
-    assert "75 ng of vector, at 2:1 cargo to vector, is what this run measured" in said
+    assert "75 ng of vector is what this run measured" in said
     assert "this run's own mark" in said
 
 

@@ -9,6 +9,7 @@ from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.enzymes import get_enzyme
 from liulab_synbio.igga.bench import (
     DIGEST_CELSIUS,
+    DIGEST_NG,
     DIGEST_SECONDS,
     DIGEST_SOURCE_KEY,
     DIGEST_VOLUME_UL,
@@ -23,9 +24,11 @@ from liulab_synbio.igga.bench import (
     digest_amount,
     digest_program,
     digest_reaction,
+    final_assembly_amounts,
     growth_program,
     ligation_amounts,
     ligation_reaction,
+    ratio,
     transformation_amount,
 )
 from liulab_synbio.igga.method import IGGA
@@ -150,3 +153,27 @@ def test_each_blunt_enzyme_belongs_to_the_digest_whose_piece_it_cuts() -> None:
 
     assert [one.name for one in inside] == ["SrfI"]
     assert [one.name for one in outside] == ["PmeI"]
+
+
+def test_the_release_fixes_the_cargo_and_only_the_vector_is_anyone_to_state() -> None:
+    """The whole release is the reaction, so the cargo's mass is its share of what was cut."""
+    freed, opened = final_assembly_amounts(
+        ("cargo", 1076), ("vector", 9899), library_bp=6435, vector_ng=75.0
+    )
+
+    assert round(freed.nanograms) == round(DIGEST_NG * 1076 / 6435)
+    assert freed.volume_ul == DIGEST_VOLUME_UL
+    assert opened.nanograms == 75.0
+    # The ratio is read off the pot rather than stated into it.
+    assert round(ratio(freed, opened), 1) == 20.5
+
+    # Twice the vector against the same release halves it, which no build can override.
+    _, heavier = final_assembly_amounts(
+        ("cargo", 1076), ("vector", 9899), library_bp=6435, vector_ng=150.0
+    )
+    assert round(ratio(freed, heavier), 1) == 10.3
+
+
+def test_a_cargo_longer_than_the_library_it_came_out_of_is_refused() -> None:
+    with pytest.raises(ValueError, match="longer than the 1076 bp it is released from"):
+        final_assembly_amounts(("cargo", 6435), ("vector", 9899), library_bp=1076, vector_ng=75.0)

@@ -39,8 +39,7 @@
   "reserved_extra": [],
   "linkage_fidelity": 0.9,
   "final_assembly": {
-    "vector_ng": 75,
-    "ratio": 2
+    "vector_ng": 75
   },
   "barcode": {
     "length": 11,

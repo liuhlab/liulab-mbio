@@ -17,7 +17,7 @@ round uses belong to the scheme.
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
-from liulab_mbio.bench.amounts import Amount, dna_amount, to_nanograms, to_pmol
+from liulab_mbio.bench.amounts import Amount, dna_amount, to_pmol
 from liulab_mbio.bench.coverage import RoundCoverage
 from liulab_mbio.bench.materials import Electroporation, electroporation
 from liulab_mbio.bench.reactions import fits, floor_ng_ul, reaction_table
@@ -224,42 +224,55 @@ def final_assembly_amounts(
     cargo: tuple[str, int],
     vector: tuple[str, int],
     *,
+    library_bp: int,
     vector_ng: float,
-    ratio: float,
+    digest_ng: float = DIGEST_NG,
     volume_ul: float = LIGATION_VOLUME_UL,
     release_ul: float = DIGEST_VOLUME_UL,
     vector_ng_ul: float | None = None,
 ) -> tuple[Amount, Amount]:
     """Return what the final one-pot assembly holds, the cargo in its release tube first.
 
-    `vector_ng` of the opened working vector becomes picomoles of its own length, and the cargo
-    gets `ratio` times as many, weighed at the cargo's. The cargo is never pipetted: it arrives
-    in the whole `release_ul` the release ran in, which is the volume of its row.
+    **The cargo is never pipetted**, so nobody chooses how much of it goes in: the release cut
+    `digest_ng` of `library_bp` of library, and the cargo's share of that mass by length is the
+    whole of what the pot holds. It arrives in the whole `release_ul` the release ran in, which
+    is the volume of its row. Only `vector_ng` is anyone's to state, and the molar ratio the two
+    meet at is `ratio` of the pair this returns.
 
     Raises
     ------
     ValueError
-        If a length, a concentration or `ratio` is not positive, or if the DNA and the cargo
-        enzyme do not fit `volume_ul`.
+        If a length, a mass or a concentration is not positive, if the cargo is longer than the
+        library it came out of, or if the DNA and the cargo enzyme do not fit `volume_ul`.
 
     Examples
     --------
     >>> freed, opened = final_assembly_amounts(("cargo", 1076), ("vector", 9899),
-    ...                                        vector_ng=75.0, ratio=2.0)
-    >>> freed.nanograms, opened.nanograms
-    (16.31, 75.0)
+    ...                                        library_bp=6435, vector_ng=75.0)
+    >>> round(freed.nanograms, 1), opened.nanograms, round(ratio(freed, opened), 1)
+    (167.2, 75.0, 20.5)
     """
-    if ratio <= 0:
-        raise ValueError(f"molar ratio must be positive, got {ratio}")
     cargo_name, cargo_bp = cargo
     vector_name, vector_bp = vector
-    pmol = to_pmol(vector_ng, vector_bp)
-    opened = dna_amount(vector_name, vector_bp, pmol=pmol, concentration_ng_ul=vector_ng_ul)
+    if cargo_bp > library_bp:
+        raise ValueError(
+            f"{cargo_name} is {cargo_bp} bp, which is longer than the {library_bp} bp it is "
+            "released from"
+        )
+    if digest_ng <= 0:
+        raise ValueError(f"the release digests a positive mass, got {digest_ng}")
+    freed_ng = digest_ng * cargo_bp / library_bp
+    opened = dna_amount(
+        vector_name,
+        vector_bp,
+        pmol=to_pmol(vector_ng, vector_bp),
+        concentration_ng_ul=vector_ng_ul,
+    )
     freed = dna_amount(
         cargo_name,
         cargo_bp,
-        pmol=pmol * ratio,
-        concentration_ng_ul=to_nanograms(pmol * ratio, cargo_bp) / release_ul,
+        pmol=to_pmol(freed_ng, cargo_bp),
+        concentration_ng_ul=freed_ng / release_ul,
     )
     fits(
         (freed, opened),
@@ -268,6 +281,19 @@ def final_assembly_amounts(
         what=f"final assembly into {vector_name}",
     )
     return freed, opened
+
+
+def ratio(donor: Amount, destination: Amount) -> float:
+    """Return how many picomoles of `donor` meet one of `destination`.
+
+    Examples
+    --------
+    >>> freed, opened = final_assembly_amounts(("cargo", 1076), ("vector", 9899),
+    ...                                        library_bp=6435, vector_ng=75.0)
+    >>> round(ratio(freed, opened), 2)
+    20.51
+    """
+    return donor.pmol / destination.pmol
 
 
 def transformation_amount(

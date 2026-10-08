@@ -409,3 +409,14 @@ def test_moves_that_repeat_no_one_pattern_stay_a_list() -> None:
     )
 
     assert moved.stamp is None
+
+
+def test_a_bill_row_carries_a_charge_or_a_price_hole_and_never_neither() -> None:
+    """An item named with an empty money cell is how a bill goes partial without saying so."""
+    with pytest.raises(ValueError, match="carries a charge or a price hole"):
+        BillRow("PaqCI", 2.5, unit="µL", key="R0745")
+    with pytest.raises(ValueError, match="carries a charge or a price hole"):
+        BillRow("PaqCI", 2.5, charge="9.00", hole=Hole("P1", "nothing prices it", "price"))
+
+    assert BillRow("PaqCI", 2.5, charge="9.00").hole is None
+    assert BillRow("PaqCI", hole=Hole("P1", "nothing prices it", "price")).quantity is None

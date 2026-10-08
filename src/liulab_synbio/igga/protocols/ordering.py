@@ -28,6 +28,10 @@ ORDERING = "Cargo ordering and pool preparation"
 #: they are ordered in that protocol instead and this material is only used in the next one.
 PRIMER_MATERIAL = "Pool amplification primers"
 
+#: What `pool_materials` calls the pool. The bill names it by the pool's own name instead, so
+#: the chain matches the two by this rather than by spelling.
+POOL_MATERIAL = "Oligo pool"
+
 #: What amplifies the pool. The package's high-fidelity default, named here so the two PCRs
 #: and the material agree about which buffer the annealing temperatures were computed in.
 POOL_POLYMERASE: Polymerase = Q5
@@ -111,7 +115,7 @@ def pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[
     roles = ", ".join(f"{count} {role}" for role, count in primer_roles(pool).items())
     return (
         Material(
-            "Oligo pool",
+            POOL_MATERIAL,
             storage="-20 °C",
             amount=f"{pool.pool.count} oligos, every one {layout.length} nt, resuspended to "
             f"{POOL_STOCK_NG_PER_UL:g} ng/µL",

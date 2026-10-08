@@ -145,7 +145,10 @@ REFUSED = [
     ({"bands": {"oligos": "1-100"}}, "a build's bands oligos is str, not a list"),
     ({"bands": {"oligos": [1]}}, "bands oligos[0] is int, not a string"),
     ({"final_assembly": 1}, "a build's final_assembly is int, not an object"),
-    ({"final_assembly": {"vector_ng": 20}}, "a build's final_assembly is missing ratio"),
+    (
+        {"final_assembly": {"vector_ng": 20, "ratio": 2}},
+        "a build's final_assembly carries unknown key(s) ratio",
+    ),
     ({"primer_plates": 1}, "a build's primer_plates is int, not an object"),
     (
         {"primers": "primers.tsv", "primer_plates": {"nanomoles": 10, "stock_um": 100}},
@@ -329,12 +332,12 @@ def test_a_build_states_what_its_own_pilot_measured_or_nothing(tmp_path):
     measured = read_build(
         write(
             tmp_path,
-            final_assembly={"vector_ng": 75.0, "ratio": 2.0},
+            final_assembly={"vector_ng": 75.0},
             pcr1_cycles=16,
             pcr2_cycles=18,
         )
     )
-    assert measured.final_assembly == FinalAssembly(75.0, 2.0)
+    assert measured.final_assembly == FinalAssembly(75.0)
     assert (measured.pcr1_cycles, measured.pcr2_cycles) == (16, 18)
 
 
@@ -343,9 +346,8 @@ def test_a_build_states_what_its_own_pilot_measured_or_nothing(tmp_path):
     [
         ({"pcr1_cycles": 0}, "pcr1_cycles is 0"),
         ({"pcr2_cycles": -1}, "pcr2_cycles is -1"),
-        ({"final_assembly": {"vector_ng": 0.0, "ratio": 2.0}}, "final_assembly.vector_ng is 0"),
-        ({"final_assembly": {"vector_ng": 75.0, "ratio": -1.0}}, "final_assembly.ratio is -1"),
-        ({"final_assembly": {"vector_ng": 75.0}}, "missing ratio"),
+        ({"final_assembly": {"vector_ng": 0.0}}, "final_assembly.vector_ng is 0"),
+        ({"final_assembly": {"vector_ng": -1.0}}, "final_assembly.vector_ng is -1"),
     ],
 )
 def test_a_build_refuses_a_measurement_that_is_not_physical(tmp_path, changes, says):

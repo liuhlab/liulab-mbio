@@ -74,11 +74,12 @@ ROUND_SELECTION = Hole(
 #: What no source sizes in the final assembly. The paper runs its own last transfer by the
 #: methods it gives for a round, which sizes the release and the clean-up around this step. It
 #: does not size the step itself, where the cargo arrives unpurified in the release volume and
-#: no published reaction holds it.
+#: no published reaction holds it. The cargo's own mass is not part of the hole: the release
+#: frees it, so it computes.
 FINAL_MASSES = Hole(
     "H24",
-    "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working "
-    "vector's mass nor the ratio it meets the cargo at is sourced",
+    "no mass for the one-pot assembly: the cargo arrives unpurified in the whole release, and "
+    "the working vector's mass against it is not sourced",
     "undecided",
     where="final assembly, the one-pot reaction",
     filled_by="a pilot",

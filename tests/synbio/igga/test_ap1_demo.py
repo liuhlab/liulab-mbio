@@ -8,6 +8,7 @@ the blocks that make it, not on how the design reached them.
 import re
 from collections import Counter
 from dataclasses import replace
+from decimal import Decimal
 from itertools import groupby
 from pathlib import Path
 
@@ -186,10 +187,10 @@ def test_the_bill_carries_the_pool_row_with_its_band_and_the_demos_own_price(pla
     assert bare.hole.kind == "price"
 
 
-def test_the_demos_price_record_prices_every_line_of_the_bill(plan, protocol):
-    """Nine keys, nine rows: the demo ships the tariff a user would, so no money cell is a hole."""
+def test_the_demos_price_record_prices_the_nine_keys_it_carries_and_holes_the_rest(plan, protocol):
+    """Nine keys priced, every other reagent holed, and no row with neither."""
     bill = protocol.bill
-    assert [row.key for row in bill.rows] == [
+    assert [row.key for row in bill.rows if row.charge] == [
         "oligo-pool",
         "pool-primers",
         "R3539",
@@ -200,8 +201,25 @@ def test_the_demos_price_record_prices_every_line_of_the_bill(plan, protocol):
         "cuvettes",
         "plasmid prep",
     ]
-    assert not [row.key for row in bill.rows if row.hole is not None]
-    assert (bill.currency, bill.total) == ("USD", "3130.5875")
+    assert all(bool(row.charge) != (row.hole is not None) for row in bill.rows)
+    # Every item the run names and the record does not price, including the ones a protocol
+    # states an amount for but the design never sizes.
+    assert {row.key for row in bill.rows} >= {
+        "E1602",
+        "R0745",
+        "M0491",
+        "M0267",
+        "194819",
+        "431111",
+        "c74290",
+        "782270",
+        "1402-9700",
+        "SPRI paramagnetic beads",
+        "Barcoded index primer plate",
+    }
+    assert (bill.currency, bill.total) == ("USD", "3130.59")
+    # The column sums to the figure under it, which is not what rounding a longer total gives.
+    assert sum(Decimal(row.charge) for row in bill.rows if row.charge) == Decimal(bill.total)
     record = plan.chain().sources["prices"]
     assert (record.document, record.edition) == ("AP-1 demo price record", "2026-10-08")
     assert record.read_as == "read from prices.csv"
@@ -349,11 +367,15 @@ def test_the_demo_is_left_with_the_four_numbers_no_input_of_its_own_can_give(pla
         for hole in protocol.all_holes:
             found.setdefault(hole.id, hole)
 
-    assert {one: hole.kind for one, hole in found.items()} == {
+    # A price hole waits on a tariff the user holds, so it is not one of the bench's four.
+    assert {one: hole.kind for one, hole in found.items() if hole.kind != "price"} == {
         "H29": "unpublished",
         "H30": "unpublished",
         "IDX1": "lab",
         "H23": "unpublished",
+    }
+    assert {hole.id for hole in found.values() if hole.kind == "price"} == {
+        row.hole.id for row in (chain.bill.rows if chain.bill else ()) if row.hole
     }
 
 
@@ -492,14 +514,16 @@ def test_the_final_assembly_is_written_out_from_what_the_build_states(protocol):
     assert "at 1x the volume" in steps[3].instructions[0]
     assert steps[0].instructions[1].startswith("Have it made to working-vector-ccdb.dna")
     assert steps[2].instructions[0].startswith("Add 75 ng of working vector")
-    # The cargo is never pipetted, so its row is the whole release and its weight follows from
-    # the vector's and the ratio the build states.
+    # The cargo is never pipetted, so its row is the whole release and its weight is the
+    # cargo's share by length of the 1,000 ng the release cut. Only the vector is stated.
     cargo, vector = steps[2].tables[0].components[:2]
-    assert (cargo.final, cargo.volume_ul) == ("0.0246 pmol (16.31 ng)", 50.0)
+    assert (cargo.final, cargo.volume_ul) == ("0.252 pmol (167.21 ng)", 50.0)
     assert vector.final == "0.0123 pmol (75 ng)"
-    assert steps[2].notes[-1] == (
-        "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published "
-        "figure."
+    assert steps[2].notes[-2:] == (
+        "75 ng of vector is what this run measured, not a published figure. The cargo is not "
+        "measured out: the release tube goes in whole.",
+        "The release delivers the cargo at 20.5:1 over the vector, which is what the digest "
+        "frees and not a ratio anyone sets.",
     )
     assert not [hole.id for step in steps for hole in step.holes]
 

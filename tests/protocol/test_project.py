@@ -175,7 +175,7 @@ def test_a_project_reads_back_equal_from_its_json(tmp_path: Path) -> None:
         inputs=(Item("insert", "the amplicon, attB-tailed"),),
         protocols=(bp(), lr(steps=(Step("Set up the LR reaction", section="Day 2"),))),
         checks=(Check("junctions", "pass", "4 of 4 read in frame"),),
-        bill=Bill((BillRow("LR Clonase II", 1, unit="reaction"),)),
+        bill=Bill((BillRow("LR Clonase II", 1, unit="reaction", charge="129.00"),)),
     )
     assert read_project(write_project(one, tmp_path / "project.json")) == one
 

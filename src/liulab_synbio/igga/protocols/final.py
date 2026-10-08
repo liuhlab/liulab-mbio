@@ -50,6 +50,7 @@ from liulab_synbio.igga.bench import (
     final_assembly_reaction,
     growth_program,
     pulse,
+    ratio,
 )
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.project import FinalAssembly
@@ -316,16 +317,17 @@ def _assemble_step(
 ) -> Step:
     """Join the freed cargo to the opened working vector, in the tube the release left.
 
-    `sized` is what this build measured the pot at. Without one no published reaction sizes it,
-    so the amounts are H24 rather than a figure.
+    `sized` is what this build measured the vector at. Without one no published reaction sizes
+    it, so the amounts are H24 rather than a figure. The cargo is never stated: the release
+    fixes it, and the table computes the ratio the two meet at.
     """
     vector = "the working vector" if sized is None else f"{sized.vector_ng:g} ng of working vector"
     measured_note = (
         ()
         if sized is None
         else (
-            f"{sized.vector_ng:g} ng of vector, at {number(sized.ratio)}:1 cargo to vector, is "
-            "what this run measured, not a published figure.",
+            f"{sized.vector_ng:g} ng of vector is what this run measured, not a published "
+            "figure. The cargo is not measured out: the release tube goes in whole.",
         )
     )
     if working is None:
@@ -348,23 +350,21 @@ def _assemble_step(
         )
     cargo = working.enzyme
     tables = ()
+    met = ""
     if sized is not None and span is not None:
-        tables = (
-            final_assembly_reaction(
-                final_assembly_amounts(
-                    (
-                        f"{product.name or 'the library'} cargo, in the release",
-                        span.end - span.start,
-                    ),
-                    (
-                        f"{working.record.name or 'the working vector'}, opened",
-                        len(working.record) - _cassette_length(working),
-                    ),
-                    vector_ng=sized.vector_ng,
-                    ratio=sized.ratio,
-                ),
-                cargo,
+        amounts = final_assembly_amounts(
+            (f"{product.name or 'the library'} cargo, in the release", span.end - span.start),
+            (
+                f"{working.record.name or 'the working vector'}, opened",
+                len(working.record) - _cassette_length(working),
             ),
+            library_bp=len(product),
+            vector_ng=sized.vector_ng,
+        )
+        tables = (final_assembly_reaction(amounts, cargo),)
+        met = (
+            f"The release delivers the cargo at {number(ratio(*amounts))}:1 over the vector, "
+            "which is what the digest frees and not a ratio anyone sets."
         )
     joined = (
         f"about {len(working.record) - _cassette_length(working) + span.end - span.start} bp, "
@@ -392,6 +392,7 @@ def _assemble_step(
             "The cycling is NEB's longer single-insert program, which it gives for library "
             "preparation rather than for cloning one gene.",
             *measured_note,
+            *((met,) if met else ()),
         ),
         troubleshooting=(
             Troubleshooting(

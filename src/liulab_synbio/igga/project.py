@@ -56,30 +56,28 @@ class Barcode:
 
 @dataclass(frozen=True, slots=True)
 class FinalAssembly:
-    """What a lab that has run the one-pot assembly states about it.
+    """What a lab that has run the one-pot assembly states about it: the vector's mass, alone.
 
-    Both numbers travel together: a mass with no ratio sizes one side of the pot, and a ratio
-    with no mass sizes neither. Nothing published sizes this reaction, so a build that has
-    measured it states both and a build that has not leaves the hole standing.
+    **The cargo is not stated.** It is never pipetted: the whole release is the reaction, so
+    the release's own digest fixes the cargo's mass and the ratio it meets the vector at. A
+    build naming a ratio would be naming a number the package computes, and one the release
+    can contradict. Nothing published sizes the vector, so a build that has measured it states
+    it and a build that has not leaves the hole standing.
 
     Parameters
     ----------
     vector_ng
         How much working vector goes into the one-pot assembly, ng.
-    ratio
-        How much cargo meets it, as a molar ratio of cargo to vector.
     """
 
     vector_ng: float
-    ratio: float
 
     def __post_init__(self) -> None:
-        """Refuse a mass or a ratio that is not positive."""
-        for key, value in (("vector_ng", self.vector_ng), ("ratio", self.ratio)):
-            if value <= 0:
-                raise ValueError(
-                    f"final_assembly.{key} is {value}, and a build states a positive one"
-                )
+        """Refuse a mass that is not positive."""
+        if self.vector_ng <= 0:
+            raise ValueError(
+                f"final_assembly.vector_ng is {self.vector_ng}, and a build states a positive one"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,9 +194,10 @@ class Build:
         The share of reads whose barcode must still name its part. No default: nothing published
         sets a mark for it, so a build that states none is read against no mark at all.
     final_assembly
-        What this lab measured the one-pot assembly at: the working vector's mass and the molar
-        ratio the cargo meets it at. No default, as for the two cycle counts below: a build that
-        has run the pilot states it and a build that has not leaves the hole standing.
+        What this lab measured the one-pot assembly at: the working vector's mass, which is the
+        whole of it. The cargo follows from the release. No default, as for the two cycle counts
+        below: a build that has run the pilot states it and one that has not leaves the hole
+        standing.
     pcr1_cycles, pcr2_cycles
         The cycle counts this lab measured for PCR1, against the polymerase it runs, and for
         PCR2. No default: nobody published either, so a build stating neither prints the band
@@ -598,7 +597,7 @@ _BUILD_OPTIONAL = frozenset(
 _BARCODE_OPTIONAL = frozenset({"length", "min_distance"})
 _PLATES_REQUIRED = frozenset({"nanomoles", "stock_um", "working_ul"})
 _PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
-_ASSEMBLY_REQUIRED = frozenset({"vector_ng", "ratio"})
+_ASSEMBLY_REQUIRED = frozenset({"vector_ng"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
@@ -659,9 +658,7 @@ def _final_assembly(entry: Any) -> FinalAssembly | None:
         raise ValueError(f"a build's final_assembly is {type(entry).__name__}, not an object")
     where = "a build's final_assembly"
     jsonfile.refuse_keys(entry, _ASSEMBLY_REQUIRED, frozenset(), where)
-    return FinalAssembly(
-        jsonfile.number(entry, "vector_ng", where), jsonfile.number(entry, "ratio", where)
-    )
+    return FinalAssembly(jsonfile.number(entry, "vector_ng", where))
 
 
 def _primer_plates(entry: Any) -> PrimerPlates | None:

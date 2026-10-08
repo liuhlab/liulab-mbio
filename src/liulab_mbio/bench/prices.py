@@ -4,9 +4,13 @@ Price is the one material parameter this package never ships: a tariff is the us
 stale, and a figure quoted here would be ours. `read_prices` reads a copy from the user's own
 disk, exactly as `liulab_mbio.ligase.read_profile` reads a matrix, and nothing is redistributed.
 
-A quantity always computes, because it comes from the design. Money comes only from a record,
-and where no row prices a key the money cell is a hole naming the item and the quantity that
-went unpriced. No estimate is ever written.
+Money comes only from a record, and where no row prices a key the money cell is a hole naming
+the item and the quantity that went unpriced. No estimate is ever written. A quantity usually
+computes, because it comes from the design; an item the design does not size still gets its
+row, so nothing the run consumes is left off the bill in silence.
+
+**Money prints in `CENTS`.** Each row is rounded once, and the total is the sum of the rounded
+rows, so the column adds up to the figure under it.
 
 **Price steers no design.** The lookup reports headroom — how far a quantity sits from the
 nearest band edge — and that is the whole of what a cliff gets. A design that changed with
@@ -17,11 +21,15 @@ import csv
 import os
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Literal
 
 from liulab_mbio.protocol.model import Bill, BillRow, Citation, Hole, Source
+
+#: What a bill prints money to. A charge is quoted to the cent at a till, so a page that showed
+#: more would be reading a precision into a tariff that the tariff does not carry.
+CENTS = Decimal("0.01")
 
 #: What a basis says the charge is for: flat inside the band, or amortised over a pack.
 type Basis = Literal["per order", "per unit"]
@@ -277,7 +285,9 @@ class Item:
     item
         What it is.
     quantity, unit
-        What the design says the run consumes.
+        What the design says the run consumes. A `quantity` of ``None`` is an item the design
+        does not size, and `unit` then carries what the protocol states the run takes, in its
+        own words. The row still stands, because an item nobody sized is one somebody buys.
     key
         What a price record prices it by, a catalogue number where it has one.
     quantities
@@ -293,7 +303,7 @@ class Item:
     """
 
     item: str
-    quantity: float
+    quantity: float | None = None
     _: KW_ONLY
     unit: str = ""
     key: str = ""
@@ -314,6 +324,9 @@ def bill(
     With no record, every quantity still computes and every money cell is a hole: a price nobody
     loaded is a missing input of the user's, not a defect in what the package knows.
 
+    Every row is rounded to `CENTS` and the total is the sum of the rounded rows, so a reader
+    adding the column up reaches the figure printed under it.
+
     Raises
     ------
     ValueError
@@ -324,12 +337,11 @@ def bill(
     priced = False
     for n, one in enumerate(items, 1):
         quantities = one.quantities if one.quantities is not None else {}
+        units = one.units if one.units is not None else one.quantity
         charge = (
             None
-            if record is None
-            else record.charge(
-                one.key, quantities, units=one.units if one.units is not None else one.quantity
-            )
+            if record is None or units is None
+            else record.charge(one.key, quantities, units=units)
         )
         if charge is None:
             rows.append(
@@ -342,16 +354,24 @@ def bill(
                     hole=Hole(
                         f"P{n}",
                         # Not the key: it names a row of a record the bench reader does not hold.
-                        f"nothing prices {one.quantity:g} {one.unit}".strip(),
+                        "nothing prices this item"
+                        if one.quantity is None
+                        else f"nothing prices {one.quantity:g} {one.unit}".strip(),
                         "price",
                         where=f"{one.item}, money",
-                        filled_by="a price record holding a row for this item",
+                        filled_by=(
+                            "a quantity the design sizes, and a price record holding a row for "
+                            "this item"
+                            if one.quantity is None
+                            else "a price record holding a row for this item"
+                        ),
                     ),
                 )
             )
             continue
         priced = True
-        total += charge
+        rounded = charge.quantize(CENTS, rounding=ROUND_HALF_UP)
+        total += rounded
         found = record.row(one.key, quantities) if record else None
         rows.append(
             BillRow(
@@ -359,7 +379,7 @@ def bill(
                 one.quantity,
                 unit=one.unit,
                 key=one.key,
-                charge=f"{charge:f}",
+                charge=f"{rounded:f}",
                 headroom="; ".join(
                     str(gap) for gap in (record.headroom(one.key, quantities) if record else ())
                 ),
@@ -370,6 +390,6 @@ def bill(
         tuple(rows),
         title=title,
         currency=record.currency if record else "",
-        total=f"{total:f}" if priced else "",
+        total=f"{total.quantize(CENTS):f}" if priced else "",
         record=source_key if record else "",
     )

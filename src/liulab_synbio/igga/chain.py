@@ -39,10 +39,17 @@ from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.protocols.assembly import Assembly
 from liulab_synbio.igga.protocols.creation import Creation
 from liulab_synbio.igga.protocols.final import FinalLigation
-from liulab_synbio.igga.protocols.ordering import Ordering
+from liulab_synbio.igga.protocols.ordering import POOL_MATERIAL, Ordering
 from liulab_synbio.igga.protocols.primer_plates import PrimerPlating
 from liulab_synbio.igga.protocols.protocol import Protocol
-from liulab_synbio.igga.protocols.run import BLOCK_VECTOR_ITEM, WORKING_ITEM, Run
+from liulab_synbio.igga.protocols.run import (
+    BLOCK_VECTOR_ITEM,
+    BLOCKS_ITEM,
+    CUVETTES,
+    PREP_KIT,
+    WORKING_ITEM,
+    Run,
+)
 from liulab_synbio.igga.protocols.validation import ReadBack
 
 #: What a price record prices the synthesis order and the bill's own source by. Neither has a
@@ -78,9 +85,10 @@ def project(run: Run) -> Project:
     Each protocol says what it is handed and what it leaves, and nothing else about the run.
 
     The bill and the design checks are the run's, not one protocol's: two protocols buying the
-    same cells would otherwise be counted twice, and no one protocol judges the design. Money
-    comes only from `run.prices`, and every row it does not price carries a hole. The record
-    those rows cite is the run's own source, since the bill sits on a page no protocol owns.
+    same cells would otherwise be counted twice, and no one protocol judges the design. The
+    bill is drawn from the reagent lists, so an item a protocol names is on it. Money comes
+    only from `run.prices`, and every row it does not price carries a hole. The record those
+    rows cite is the run's own source, since the bill sits on a page no protocol owns.
     """
     made = ordered(run)
     staged = [one.steps(run) for one in made]
@@ -106,7 +114,7 @@ def project(run: Run) -> Project:
         protocols=pages,
         checks=badges(run.checks),
         sources={PRICES_SOURCE: run.prices.source} if run.prices else {},
-        bill=_consumed(run),
+        bill=_consumed(run, [one.materials for one in pages]),
     )
 
 
@@ -257,11 +265,15 @@ def _highlights(run: Run) -> tuple[str, ...]:
     return tuple(said)
 
 
-def _consumed(run: Run) -> Bill:
-    """Return what this build buys, in the quantities the design computes.
+def _consumed(run: Run, listed: Sequence[Sequence[Material]] = ()) -> Bill:
+    """Return what this build buys: the quantities the design computes, then everything else.
 
-    Only what the design fixes is billed. The buffer, the beads and the medium scale with volumes
-    the method leaves to the supplier, so a row for one would be a quantity nobody computed.
+    **Every reagent the run names is a row.** The ones the design sizes come first, in the
+    quantities it computes. Each remaining material of `listed` follows -- one list a page, as
+    the pages print them -- carrying the amount its own row states, because the buffer, the
+    beads and the plates scale with volumes the method leaves to the supplier and nobody here
+    computes a number for them. Leaving one off would be the bill's own promise broken: where
+    nothing prices a row, the money is a hole.
 
     **The blocks are bought once or not at all.** A project with a pool buys oligos and the
     primers that amplify them, and assembles its blocks from those; one without buys the blocks
@@ -300,18 +312,31 @@ def _consumed(run: Run) -> Bill:
             for one, uses in digests
         ),
         Item(STRAIN, rounds, unit="aliquots", key=STRAIN_CATALOG, quantities={"count": rounds}),
-        Item(
-            "Electroporation cuvettes",
-            rounds,
-            unit="cuvettes",
-            key="cuvettes",
-            quantities={"count": rounds},
-        ),
-        Item(
-            "Plasmid preps", rounds, unit="preps", key="plasmid prep", quantities={"count": rounds}
-        ),
+        Item(CUVETTES, rounds, unit="cuvettes", key="cuvettes", quantities={"count": rounds}),
+        Item(PREP_KIT, rounds, unit="preps", key="plasmid prep", quantities={"count": rounds}),
     ]
-    return priced(items, record, source_key=PRICES_SOURCE)
+    covered = {POOL_MATERIAL} if pool else {BLOCKS_ITEM}
+    return priced([*items, *_unsized(listed, items, covered)], record, source_key=PRICES_SOURCE)
+
+
+def _unsized(
+    listed: Sequence[Sequence[Material]], sized: Sequence[Item], covered: set[str]
+) -> list[Item]:
+    """Return a row for every reagent the design does not size, once each, in the chain's order.
+
+    A material is keyed by its catalogue number, and by its name where it has none, which is
+    how a price record already prices the pool and the blocks. One already billed by a computed
+    quantity is skipped, so the same tube is not bought twice: by key, by name, or by the
+    `covered` names a computed row buys under a name of its own.
+    """
+    billed = {one.key for one in sized} | {one.item for one in sized} | covered
+    found: dict[str, Item] = {}
+    for group in listed:
+        for one in group:
+            key = one.catalog or one.name
+            if key not in billed and one.name not in billed and key not in found:
+                found[key] = Item(one.name, unit=one.amount, key=key)
+    return list(found.values())
 
 
 def _primer_item(pool: PoolPlan) -> Item:
