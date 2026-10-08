@@ -88,7 +88,7 @@ pixi run docs-build
 | Path | What it holds |
 | --- | --- |
 | `src/liulab_mbio/` | the general package: sequences, enzymes, primers, maps, protocols and the four cloning methods |
-| `src/liulab_synbio/` | one lab method's own pipelines, built on the first |
+| `src/liulab_synbio/` | the lab's own methods and what they plan, built on the first |
 | `tests/` | the tests |
 | `docs/` | this site |
 | `scripts/check.sh` | the gate every commit has to pass |
