@@ -12,6 +12,17 @@ from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.goldengate import (
+    GOLDEN_GATE_PCR_CYCLES,
+    GOLDEN_GATE_PCR_CYCLES_CITATION,
+    REFERENCES,
+    SOURCES,
+    assembly_program,
+    assembly_reaction,
+    enzyme_component,
+    golden_gate_temperature,
+    ligase_master_mix_component,
+)
 from liulab_mbio.bench.inactivation import heat_inactivation
 from liulab_mbio.bench.oligos import oligo_row
 from liulab_mbio.bench.pcr import (
@@ -52,17 +63,6 @@ from liulab_mbio.bench.steps import (
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part
-from liulab_mbio.cloning.goldengate.bench import (
-    GOLDEN_GATE_PCR_CYCLES,
-    GOLDEN_GATE_PCR_CYCLES_CITATION,
-    REFERENCES,
-    SOURCES,
-    assembly_program,
-    assembly_reaction,
-    enzyme_component,
-    golden_gate_temperature,
-    ligase_master_mix_component,
-)
 from liulab_mbio.cloning.goldengate.design import OverhangSet
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.enzymes import Enzyme

@@ -22,9 +22,9 @@ from liulab_mbio.bench import (
     SANGER_ALLOWANCE,
     SANGER_FLANK,
 )
+from liulab_mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.cloning.goldengate import plan_assembly
-from liulab_mbio.cloning.goldengate.bench import GOLDEN_GATE_PCR_CYCLES
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.edits import rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html

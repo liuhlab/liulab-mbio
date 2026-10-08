@@ -302,7 +302,7 @@ def _assemble_step(
     scheme: Scheme, product: SequenceRecord, span: Segment | None, working: Working | None
 ) -> Step:
     """Join the freed cargo to the opened working vector, in the tube the release left."""
-    from liulab_mbio.cloning.goldengate.bench import assembly_program
+    from liulab_mbio.bench.goldengate import assembly_program
 
     if working is None:
         return Step(

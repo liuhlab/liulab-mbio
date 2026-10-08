@@ -1,8 +1,8 @@
-"""What a Golden Gate assembly takes at the bench: its reaction and its cycling.
+"""What a Golden Gate assembly takes at the bench: its enzymes, its reaction and its cycling.
 
-Every number is NEB's, through ``docs/research/golden-gate-assembly.md``. Functions return
-`liulab_mbio.protocol` values, so a protocol prints them unchanged. What any cloning pipeline
-shares -- DNA amounts, PCR, gels and validation -- is `liulab_mbio.bench`.
+Every number is NEB's, through ``docs/research/golden-gate-assembly.md``, and none of it is one
+method's choice: `liulab_mbio.cloning.goldengate` and `liulab_synbio.igga` run the same tables.
+Functions return `liulab_mbio.protocol` values, so a protocol prints them unchanged.
 
 NEB ships two Golden Gate systems and their tables do not mix. `LIGASE_MASTER_MIX` is NEBridge
 Ligase Master Mix (M1100), which takes any NEB Type IIS enzyme; `KIT` is one of the kits, which

@@ -439,7 +439,7 @@ methylation = { dam = "not sensitive", dcm = "not sensitive", cpg = "not sensiti
 source = "neb-r0712"
 
 # The page supplies PaqCI in rCutSmart and asks for the activator on top of it, which
-# `cloning.goldengate.bench` adds. The buffer is the buffer; the activator is not.
+# `bench.goldengate` adds. The buffer is the buffer; the activator is not.
 [enzymes.PaqCI]
 commercial_name = "PaqCI"
 catalog_number = "R0745"

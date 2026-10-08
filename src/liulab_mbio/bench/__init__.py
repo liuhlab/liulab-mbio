@@ -1,12 +1,15 @@
-"""The bench any cloning pipeline shares: reactions, programs, validation and protocol steps.
+"""The bench any pipeline shares: reactions, programs, validation and protocol steps.
 
-Every public name in its modules imports from here as well. A module that cites a source keeps
-it as its own `REFERENCES`; `REFERENCES` here gathers them.
+Every public name in its modules imports from here as well, `goldengate` excepted. A module that
+cites a source keeps it as its own `REFERENCES`; `REFERENCES` here gathers the ones re-exported.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
 - `reactions`: one reaction table, filled to volume, and what it refuses.
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
+- `goldengate`: NEB's Golden Gate enzymes, assembly reaction and cycling, which the Golden Gate
+  cloning pipeline and a library build both run. Imported by module, not re-exported here, so
+  that reaching this package does not read the shipped ligation data its references quote.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
 - `readback`: what one well's read came to, where a construct is read back one well at a time,
   and how often one picked colony is clean.

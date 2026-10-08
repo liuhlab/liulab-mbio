@@ -293,7 +293,7 @@ class Run:
     @property
     def round_references(self) -> tuple[Reference, ...]:
         """Where a round's numbers come from, and where the scheme itself came from."""
-        from liulab_mbio.cloning.goldengate.bench import REFERENCES as GOLDEN_GATE_REFERENCES
+        from liulab_mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
 
         items = [
             *BENCH_REFERENCES,

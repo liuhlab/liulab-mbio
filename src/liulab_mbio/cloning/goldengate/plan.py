@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.goldengate import assembly_amounts
 from liulab_mbio.bench.oligos import primer_sheet
 from liulab_mbio.bench.phenotype import Phenotype, read_phenotype
 from liulab_mbio.bench.validation import (
@@ -29,7 +30,6 @@ from liulab_mbio.bench.validation import (
 )
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Part, amplify, assemble, open_vector
-from liulab_mbio.cloning.goldengate.bench import assembly_amounts
 from liulab_mbio.cloning.goldengate.design import (
     EnzymeChoice,
     OverhangSet,

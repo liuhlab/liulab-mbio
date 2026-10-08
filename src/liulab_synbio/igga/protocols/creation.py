@@ -377,7 +377,7 @@ def _assembly_step(run: Run, pool: PoolPlan) -> Step:
     and its cycling are NEB's kit table for the most pieces any block takes, so one master mix
     covers the plate.
     """
-    from liulab_mbio.cloning.goldengate.bench import (
+    from liulab_mbio.bench.goldengate import (
         KIT,
         assembly_amounts,
         assembly_program,

@@ -176,7 +176,7 @@ Values worth flagging:
   answer from the "Compatible Buffer" row of their pages — `Buffer G` for BpiI and the unique
   `Buffer AarI` for AarI — so no pair crossing the two suppliers reads as sharing a buffer.
   PaqCI's page gives `rCutSmart Buffer` and asks for the PaqCI Activator on top of it; the
-  activator is not a buffer and `cloning.goldengate.bench` already adds it.
+  activator is not a buffer and `bench.goldengate` already adds it.
 - **The concentration is not part of the name.** The pages write `1X rCutSmart™ Buffer` and
   `10X Buffer G`; the field holds the buffer.
 
