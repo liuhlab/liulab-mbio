@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from liulab_mbio.bench import plates
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -275,6 +276,27 @@ def test_expected_results_troubleshooting_and_references_are_shown(page: Node) -
     assert "One band at 500 bp" in expected
     assert "Band in the no-template lane" in page.find_all(cls="trouble")[0].text
     assert page.find_all("a", href="https://example.org/pcr")
+
+
+def test_a_page_inlining_a_drawing_embeds_its_faces_once_and_keeps_it_on_white(page: Node) -> None:
+    """The plate is laid out on white in the faces the package measured it in, in either scheme."""
+    drawn = parse(render_html(Protocol("Pick", plates=(plates.plate("picked", 96),))))
+    style = drawn.find_all("style")[0].text
+    [figure] = drawn.find_all("figure", cls="drawing")
+
+    families = {text.attrs["font-family"] for text in figure.find_all("text")}
+
+    faces = re.findall(r"@font-face \{([^}]*)\}", style)
+
+    assert families
+    assert all(any(f"font-family: {family};" in face for face in faces) for family in families)
+    assert len(faces) == len(set(faces))
+    # One rule, under no scheme's media query, so the dark ground never shows through.
+    assert style.count(".drawing svg") == 1
+    [declarations] = re.findall(r"\.drawing svg \{([^}]*)\}", style)
+    assert "background: #ffffff" in declarations
+    # A page with no drawing carries no face: they cost more than the rest of the page.
+    assert "@font-face" not in page.find_all("style")[0].text
 
 
 def test_the_page_fits_a_phone_prints_and_follows_dark_mode(page: Node) -> None:

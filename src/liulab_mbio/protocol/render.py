@@ -16,6 +16,8 @@ from pathlib import Path
 
 from liulab_mbio.checks import Status
 from liulab_mbio.plot.drawing import draw_plate
+from liulab_mbio.plot.fonts import BOLD, MONO, SANS
+from liulab_mbio.plot.page import font_face
 from liulab_mbio.protocol.model import (
     Bill,
     Check,
@@ -288,7 +290,8 @@ def _page(
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"<title>{escape(title)}</title>\n<style>\n{_asset('protocol.css')}</style>\n"
+        f"<title>{escape(title)}</title>\n"
+        f"<style>\n{_fonts(frame)}{_asset('protocol.css')}</style>\n"
         f'</head>\n<body data-protocol="{key}">\n{frame}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
@@ -356,6 +359,17 @@ def _place(folder: Folder, here: str) -> str:
 
 def _asset(name: str) -> str:
     return files("liulab_mbio.protocol").joinpath(name).read_text(encoding="utf-8")
+
+
+def _fonts(body: str) -> str:
+    """Each face a drawing in `body` was measured in, written once, or nothing where it draws none.
+
+    A drawing pins every line of text to the width the package measured it at, so a page drawing
+    one as text carries those faces or the browser stretches its own to fit. Every figure holding
+    a drawing is marked `drawing`, whatever it draws, so the faces follow it onto any page.
+    """
+    drawn = 'class="drawing' in body
+    return "".join(font_face(font) for font in (SANS, BOLD, MONO)) if drawn else ""
 
 
 def _duration(seconds: float) -> str:
@@ -689,7 +703,7 @@ def _plate(one: Plate) -> str:
         text for text in (f"{one.wells} wells", kinds, one.catalog, one.holds, one.note) if text
     )
     return (
-        f'<figure class="plate" data-plate="{escape(one.name)}">{drawn.element()}'
+        f'<figure class="drawing plate" data-plate="{escape(one.name)}">{drawn.element()}'
         f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
         + (f'<ul class="plate-legend">{legend}</ul>' if legend else "")
         + "</figure>\n"
