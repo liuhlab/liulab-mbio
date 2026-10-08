@@ -12,8 +12,10 @@ library run opens with this record already in hand and has no domestication step
 Three of the eight sites lie in a coding sequence and `liulab_mbio.sites.domesticate` takes
 those out by itself. The other five lie in none, so this script states the base it changes at
 each one. `docs/research/working-vector-plvx-tetone.md` section 7 prices all eight, and
-`docs/research/domestication-methods.md` section 3 is why the route is to order the plasmid
-whole. Every site is counted again on the result, which is what holds the arithmetic honest.
+`docs/research/domestication-methods.md` section 3.2 is why the route is to order the plasmid
+whole: that note's own worked case leaves the two long terminal repeat sites standing, and once
+#485 gave them a precedent and they came into the edit set, no oligo-based route reaches them.
+Every site is counted again on the result, which is what holds the arithmetic honest.
 
 The parent ships as GenBank in `tests/data/`, converted from Addgene's own render: a file a
 shipped record is built from is an input, not a reference document. The script never reaches
@@ -68,11 +70,6 @@ PROTOCOL_FILE = "working-vector-domestication.html"
 CLEARED = ("BsaI", "BsmBI")
 
 NAME = "pLVX-TetOne-dom"
-DESCRIPTION = (
-    "pLVX-TetOne-Puro-GFP (Addgene 171123) with its six BsaI and two BsmBI sites taken out: "
-    "three by a synonymous codon, five by a stated base. Built by "
-    "scripts/build_working_vector.py."
-)
 
 
 @dataclass(frozen=True)
@@ -81,7 +78,7 @@ class Edit:
 
     `liulab_mbio.sites.domesticate` hands these back untouched, because taking a site out of a
     non-coding element changes what the record spells and the package leaves that to its caller.
-    These five are the demo's choice, each with what is known about it.
+    These five are the demo's choice.
     """
 
     position: int
@@ -89,59 +86,18 @@ class Edit:
     after: str
     enzyme: str
     element: str
-    warrant: str
 
 
-#: The five bases this build changes by hand, in the order they lie on the plasmid. Every
-#: position, base and warrant is section 7 of `docs/research/working-vector-plvx-tetone.md`.
-#: The two long terminal repeat copies carry the same change at the same offset, which is the
-#: one condition the published precedent rides on.
+#: The five bases this build changes by hand, in the order they lie on the plasmid. Section 7 of
+#: `docs/research/working-vector-plvx-tetone.md` prices every one of them. The two long terminal
+#: repeat copies carry the same change at the same offset, which is the one condition the
+#: published precedent rides on.
 EDITS = (
-    Edit(
-        457,
-        "C",
-        "T",
-        "BsaI",
-        "5' long terminal repeat, transcript position +4",
-        "A third-generation lentiviral vector carrying this change in both repeats packages, "
-        "transduces and drives a dose-responsive circuit (Haellman et al. 2021). That paper "
-        "reports no titre, and nobody has published one for any vector with a changed R region.",
-    ),
-    Edit(
-        3725,
-        "G",
-        "A",
-        "BsaI",
-        "hPGK promoter",
-        "Addgene 239691 carries this change at this base of the same promoter fragment "
-        "(Peterman et al. 2025). Nobody published what it costs the promoter.",
-    ),
-    Edit(
-        3881,
-        "C",
-        "G",
-        "BsmBI",
-        "hPGK promoter",
-        "No published vector carries any change at this site. The base chosen neither makes nor "
-        "breaks a CpG, which is what a fragment carrying 62 of them in 511 bases asks for.",
-    ),
-    Edit(
-        6474,
-        "G",
-        "A",
-        "BsaI",
-        "the linker joining the WPRE to the HIV-1 remnant",
-        "No element is annotated here and none is inherited: the WPRE ends at 6452 and HIV-1 "
-        "sequence starts at 6480.",
-    ),
-    Edit(
-        7115,
-        "C",
-        "T",
-        "BsaI",
-        "3' long terminal repeat, transcript position +4",
-        "The same change as at 457, which the two repeats have to carry alike.",
-    ),
+    Edit(457, "C", "T", "BsaI", "5' long terminal repeat, transcript position +4"),
+    Edit(3725, "G", "A", "BsaI", "hPGK promoter"),
+    Edit(3881, "C", "G", "BsmBI", "hPGK promoter"),
+    Edit(6474, "G", "A", "BsaI", "the linker joining the WPRE to the HIV-1 remnant"),
+    Edit(7115, "C", "T", "BsaI", "3' long terminal repeat, transcript position +4"),
 )
 
 #: What the two holes this record leaves are called. Neither is a number a bench page may
@@ -149,14 +105,14 @@ EDITS = (
 LTR_HOLE = Hole(
     "H33",
     "no titre for a lentiviral vector whose transcript start has been changed",
-    "unpublished",
+    "undecided",
     where="the change at transcript position +4 in both long terminal repeats",
     filled_by="one packaging run titring this vector beside the parent it was built from",
 )
 PROMOTER_HOLE = Hole(
     "H34",
     "no expression figure for either changed base of the hPGK promoter",
-    "unpublished",
+    "undecided",
     where="the two changes in the promoter driving the transactivator",
     filled_by="a reporter assay reading this promoter beside the parent's",
 )
@@ -202,6 +158,7 @@ def rebuild(parent: SequenceRecord) -> tuple[SequenceRecord, DomesticationReport
         If a stated position lies outside the record, reads another base, or leaves a site
         standing.
     """
+    counted = {name: len(find_sites(parent, get_enzyme(name))) for name in CLEARED}
     record, report = domesticate(parent, CLEARED)
     for edit in EDITS:
         record = _changed(record, edit)
@@ -209,7 +166,7 @@ def rebuild(parent: SequenceRecord) -> tuple[SequenceRecord, DomesticationReport
     if left:
         where = ", ".join(f"{one.enzyme.name} at {one.start}" for one in left)
         raise ValueError(f"the rebuilt record still reads {where}")
-    return _annotated(record, report), report
+    return _annotated(record, report, counted), report
 
 
 def _changed(record: SequenceRecord, edit: Edit) -> SequenceRecord:
@@ -233,7 +190,9 @@ def _changed(record: SequenceRecord, edit: Edit) -> SequenceRecord:
     return changed
 
 
-def _annotated(record: SequenceRecord, report: DomesticationReport) -> SequenceRecord:
+def _annotated(
+    record: SequenceRecord, report: DomesticationReport, counted: dict[str, int]
+) -> SequenceRecord:
     """Name the record, and mark every base the build changed, whoever changed it."""
     coding = tuple((one.position, one.site.enzyme.name) for one in report.changes for one in (one,))
     stated = tuple((edit.position, edit.enzyme) for edit in EDITS)
@@ -251,7 +210,17 @@ def _annotated(record: SequenceRecord, report: DomesticationReport) -> SequenceR
         name=NAME,
         features=(*record.features, *marks),
         primers=record.primers,
-        notes={"Description": DESCRIPTION},
+        notes={"Description": _described(counted, len(report.changes))},
+    )
+
+
+def _described(counted: dict[str, int], synonymous: int) -> str:
+    """Say what the record is, counting its sites off the parent rather than stating them."""
+    taken = ", ".join(f"{count} {name}" for name, count in counted.items())
+    return (
+        f"pLVX-TetOne-Puro-GFP (Addgene 171123) with its {taken} sites taken out: "
+        f"{synonymous} by a synonymous codon, {len(EDITS)} by a stated base. Built by "
+        "scripts/build_working_vector.py"
     )
 
 
@@ -379,8 +348,11 @@ def _highlights(
     return (
         "Two sites sit at the same offset in the two long terminal repeats, and 610 bases "
         "around each one are identical between the copies. No primer, assembly overlap or "
-        "Type IIS overhang is unique to one copy, so mutagenesis and assembly both fail here "
-        "and the plasmid is ordered whole instead.",
+        "Type IIS overhang is unique to one copy, so mutagenesis and assembly both fail at "
+        "those two.",
+        "Leaving those two standing would make this a cheaper job. They are changed here "
+        "because a published vector carries the change, and changing them is what puts the "
+        "whole plasmid on the order form rather than a fragment of it.",
         f"{len(report.changes)} of the sites sit in a coding sequence, where a synonymous codon "
         f"takes the site away: {' and '.join(proteins)} read exactly as the parent reads them.",
         f"The other {len(EDITS)} cost a stated base each. A published vector already carries the "
@@ -450,13 +422,13 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
             key="transform",
             instructions=(
                 "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
-                "Plate on LB with 100 µg/mL carbenicillin and grow for 24 hours at 30 °C.",
+                "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
                 "Pick one colony into 5 mL of LB with carbenicillin, grow overnight at 30 °C, "
                 "and miniprep it.",
             ),
             cautions=(
-                "Grow this plasmid at 30 °C throughout: a long direct repeat recombines "
-                "out faster the warmer the culture is.",
+                "Use a recombination-deficient strain and a 5 mL culture; a larger one is not "
+                "worth the deletions it returns.",
             ),
             expected=(
                 "Colonies by the next morning at the latest, and a miniprep of a few micrograms.",
@@ -470,8 +442,7 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
                 "1 hour at 37 °C.",
                 "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at "
                 "55 °C.",
-                f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name} "
-                "as the control that the digest worked.",
+                f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
                 "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
             ),
             expected=(
@@ -488,19 +459,40 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
             "Read both repeats",
             key="confirm-sequence",
             instructions=(
-                "Send 500 ng of the miniprep for whole-plasmid sequencing.",
+                "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the "
+                "whole plasmid assembled rather than reads from primers.",
                 f"Compare the assembled consensus with {RECORD_FILE} base by base.",
                 "Confirm that both long terminal repeats carry their change, one at a time.",
-            ),
-            cautions=(
-                "A read from one primer cannot tell the two repeats apart; only an assembly of "
-                "the whole plasmid shows both.",
             ),
             expected=(
                 f"The consensus matches {RECORD_FILE} at every base, both repeats included.",
             ),
         ),
     )
+
+
+def _check_written(record: SequenceRecord, path: Path) -> None:
+    """Refuse to leave behind a file that reads back as a different record.
+
+    Raises
+    ------
+    ValueError
+        Naming the first thing that came back differently.
+    """
+    again = read_record(path)
+    if (again.sequence, again.topology) != (record.sequence, record.topology):
+        raise ValueError(f"{path} does not read back as the record the build made")
+    if _marks(again) != _marks(record):
+        raise ValueError(f"{path} does not read back every base the build changed")
+
+
+def _marks(record: SequenceRecord) -> list[tuple[str, int]]:
+    """Every base the build marked as changed, which a written file has to carry back."""
+    return [
+        (one.name, int(one.segments[0].start))
+        for one in record.features
+        if one.name.endswith("site removed")
+    ]
 
 
 def write(record: SequenceRecord, made: Protocol, into: Path) -> list[Path]:
@@ -515,6 +507,7 @@ def write(record: SequenceRecord, made: Protocol, into: Path) -> list[Path]:
     sys.modules[spec.name] = sibling
     spec.loader.exec_module(sibling)
     sibling.write_genbank(record, into / RECORD_FILE)
+    _check_written(record, into / RECORD_FILE)
     data = write_protocol(minted(made), into / PROTOCOL_DATA_FILE)
     page = write_html(read_protocol(data), into / PROTOCOL_FILE)
     return [into / RECORD_FILE, data, page]

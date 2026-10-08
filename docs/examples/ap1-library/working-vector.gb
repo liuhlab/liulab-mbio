@@ -1,7 +1,7 @@
 LOCUS       pLVX-TetOne-dom         9895 bp    DNA     circular UNK 01-JAN-1980
-DEFINITION  pLVX-TetOne-Puro-GFP (Addgene 171123) with its six BsaI and two
-            BsmBI sites taken out: three by a synonymous codon, five by a stated
-            base. Built by scripts/build_working_vector.py..
+DEFINITION  pLVX-TetOne-Puro-GFP (Addgene 171123) with its 6 BsaI, 2 BsmBI sites
+            taken out: 3 by a synonymous codon, 5 by a stated base. Built by
+            scripts/build_working_vector.py.
 ACCESSION   pLVX-TetOne-dom
 VERSION     pLVX-TetOne-dom
 KEYWORDS    .

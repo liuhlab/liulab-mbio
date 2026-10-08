@@ -1,6 +1,6 @@
 {
   "title": "Domesticating the working vector",
-  "key": "d93150ef904dc846",
+  "key": "07cb7b0ca3ff6397",
   "summary": "The library's working vector is pLVX-TetOne-Puro-GFP, which reads 6 BsaI and 2 BsmBI sites. This orders the same plasmid with all 8 taken out and confirms what arrives. It is a sitting of its own: the library run opens with the record it leaves behind.",
   "overview": {
     "Parent": "pLVX-TetOne-Puro-GFP, Addgene 171123",
@@ -11,7 +11,8 @@
     "Protein changed": "none"
   },
   "highlights": [
-    "Two sites sit at the same offset in the two long terminal repeats, and 610 bases around each one are identical between the copies. No primer, assembly overlap or Type IIS overhang is unique to one copy, so mutagenesis and assembly both fail here and the plasmid is ordered whole instead.",
+    "Two sites sit at the same offset in the two long terminal repeats, and 610 bases around each one are identical between the copies. No primer, assembly overlap or Type IIS overhang is unique to one copy, so mutagenesis and assembly both fail at those two.",
+    "Leaving those two standing would make this a cheaper job. They are changed here because a published vector carries the change, and changing them is what puts the whole plasmid on the order form rather than a fragment of it.",
     "3 of the sites sit in a coding sequence, where a synonymous codon takes the site away: PuroR and AmpR read exactly as the parent reads them.",
     "The other 5 cost a stated base each. A published vector already carries the change made in both repeats, and another carries the change made at the BsaI site of the hPGK promoter. Neither group measured what the change cost, so neither number is stated here.",
     "The BsmBI site in the hPGK promoter has no precedent anywhere. The base chosen neither makes nor breaks a CpG, which is the most this run can say for it.",
@@ -141,11 +142,11 @@
       "section": "",
       "instructions": [
         "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
-        "Plate on LB with 100 µg/mL carbenicillin and grow for 24 hours at 30 °C.",
+        "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
         "Pick one colony into 5 mL of LB with carbenicillin, grow overnight at 30 °C, and miniprep it."
       ],
       "cautions": [
-        "Grow this plasmid at 30 °C throughout: a long direct repeat recombines out faster the warmer the culture is."
+        "Use a recombination-deficient strain and a 5 mL culture; a larger one is not worth the deletions it returns."
       ],
       "notes": [],
       "tables": [],
@@ -169,7 +170,7 @@
       "instructions": [
         "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for 1 hour at 37 °C.",
         "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at 55 °C.",
-        "Digest a third 1 µg with 10 units of BamHI-HF as the control that the digest worked.",
+        "Digest a third 1 µg with 10 units of BamHI-HF.",
         "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel."
       ],
       "cautions": [],
@@ -196,13 +197,11 @@
       "key": "confirm-sequence",
       "section": "",
       "instructions": [
-        "Send 500 ng of the miniprep for whole-plasmid sequencing.",
+        "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the whole plasmid assembled rather than reads from primers.",
         "Compare the assembled consensus with working-vector.gb base by base.",
         "Confirm that both long terminal repeats carry their change, one at a time."
       ],
-      "cautions": [
-        "A read from one primer cannot tell the two repeats apart; only an assembly of the whole plasmid shows both."
-      ],
+      "cautions": [],
       "notes": [],
       "tables": [],
       "programs": [],
@@ -246,14 +245,14 @@
     {
       "id": "H33",
       "missing": "no titre for a lentiviral vector whose transcript start has been changed",
-      "kind": "unpublished",
+      "kind": "undecided",
       "where": "the change at transcript position +4 in both long terminal repeats",
       "filled_by": "one packaging run titring this vector beside the parent it was built from"
     },
     {
       "id": "H34",
       "missing": "no expression figure for either changed base of the hPGK promoter",
-      "kind": "unpublished",
+      "kind": "undecided",
       "where": "the two changes in the promoter driving the transactivator",
       "filled_by": "a reporter assay reading this promoter beside the parent's"
     }
