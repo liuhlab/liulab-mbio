@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.protocol import Figure, Protocol, Step, render_html
 from liulab_mbio.plot.sequence_view import LIMIT
+from liulab_mbio.protocol import Figure, Protocol, Step, render_html
 from liulab_mbio.protocol.figures import SOURCE, SOURCE_KEY, ligation_figure
 from liulab_mbio.sequence import SequenceRecord
 
@@ -51,11 +51,9 @@ def test_a_junction_near_the_end_of_a_linear_record_stops_at_it() -> None:
 
 def test_a_ligation_figure_cites_the_note_its_equivalent_was_read_in() -> None:
     """A figure's provenance is a note's: one `Citation` keying one `Source`."""
-    one = Protocol(
-        "t", steps=(Step("Join", figures=(_figure(),)),), sources={SOURCE_KEY: SOURCE}
-    )
+    one = Protocol("t", steps=(Step("Join", figures=(_figure(),)),), sources={SOURCE_KEY: SOURCE})
     assert one.cited == frozenset({SOURCE_KEY})
-    assert [c for c in one.audit() if c.name == "sources"][0].status == "pass"
+    assert next(c for c in one.audit() if c.name == "sources").status == "pass"
 
 
 def test_context_below_zero_is_refused() -> None:

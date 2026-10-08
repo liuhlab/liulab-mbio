@@ -41,7 +41,7 @@ def ligation_figure(
     highlight: Iterable[str] = (),
     citation: Citation | None = LIGATION_CITATION,
 ) -> Figure:
-    """A Golden Gate junction at base level: both strands, each cut through both, the frame above.
+    """Return a Golden Gate junction at base level: both strands, each cut, the frame above.
 
     What `liulab_mbio.plot.sequence_view` draws over the span around one junction, which is what a
     reader needs to see that the four bases match and that the join stays in frame. Any method's
@@ -109,7 +109,7 @@ def ligation_figure(
 def _around(
     junction: tuple[int, int], context: int, length: int, *, circular: bool
 ) -> tuple[int, int]:
-    """The span `context` bases either side of `junction`, as the record it lies on allows.
+    """Return the span `context` bases either side of `junction`, as its record allows.
 
     A linear record stops at its ends. A circular one runs across the origin, which `start` is
     counted back round to and `end` past, as `docs/adr/0001-coordinates.md` has it.

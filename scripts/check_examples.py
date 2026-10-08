@@ -70,6 +70,7 @@ GENERATORS: tuple[Generator, ...] = (
             "block-vector-3.dna",
             "changes.tsv",
             "library-read-primers.tsv",
+            "oligo.dna",
             "parts.tsv",
             "pool-primers.tsv",
             "pool.tsv",

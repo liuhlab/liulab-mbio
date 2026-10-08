@@ -1140,7 +1140,7 @@ def _plate(one: Plate) -> str:
 
 
 def _figure(figure: Figure, base: Path, where: str) -> str:
-    """The figure's records drawn as maps and inlined, as `_plate` inlines a plate.
+    """Return the figure's records drawn as maps and inlined, as `_plate` inlines a plate.
 
     Laid out here and never stored, so the figure follows the design it is drawn from. Several
     records stack as rows in the order they are named, each labelled by the record's own name,
@@ -1175,7 +1175,7 @@ def _figure(figure: Figure, base: Path, where: str) -> str:
 
 
 def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
-    """One record of a figure as its SVG element, and every name it answers to.
+    """Return one record of a figure as its SVG element, and every name it answers to.
 
     A stacked row carries the record's own name beside it, so a reader knows which molecule it is.
     """

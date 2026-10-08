@@ -10,13 +10,14 @@ from liulab_mbio.bench.pools import (
     PrimerSite,
     build_oligo,
     headroom,
+    oligo_record,
     pad_bases,
     pool_item,
     pool_sheet,
     primer_inventory,
 )
 from liulab_mbio.bench.prices import Band
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
 from liulab_mbio.sites import find_sites
 from liulab_mbio.split import split_cargo
 
@@ -114,3 +115,66 @@ def test_the_bill_line_carries_the_count_and_the_band_without_any_price(pool):
     assert item.quantity == pool.count
     assert item.unit == "oligos"
     assert [str(one) for one in item.headroom] == ["350 length, no slack above it at all"]
+
+
+def test_an_oligo_draws_as_a_record_with_every_primer_where_it_reads() -> None:
+    """The three-primer figure is drawn over this: two nested pairs on one bar."""
+    cargo = SequenceRecord("ATG" + "ACGTTGCA" * 8, name="block")
+    layout = OligoLayout(160, enzyme="BsaI")
+    sites = (
+        PrimerSite("forward", "F1", "ACACGACGCTCTTCCGATCT"[:20]),
+        PrimerSite("inner", "I1", "TGTGCTGCGAGAAGGCTAGA"),
+        PrimerSite("outer", "O1", "GTGACTGGAGTTCAGACGTG"),
+    )
+    split = split_cargo(cargo, layout.cutter, budget=layout.budget)
+    one = build_oligo(
+        split,
+        split.fragments[0],
+        name="block_f1",
+        source="block",
+        layout=layout,
+        forward=sites[:1],
+        reverse=sites[1:],
+    )
+
+    record = oligo_record(one, layout=layout, primers=sites)
+
+    assert record.sequence == one.sequence
+    placed = {
+        p.name: (p.binding_sites[0].start, p.binding_sites[0].end, p.binding_sites[0].strand)
+        for p in record.primers
+    }
+    assert placed["F1"] == (0, 20, Strand.FORWARD)
+    assert placed["I1"][2] is Strand.REVERSE
+    assert placed["O1"][1] == len(one.sequence)
+    # Each primer lies where the oligo spells it, forward or reverse-complemented.
+    for name, (start, end, strand) in placed.items():
+        spelt = next(s.sequence for s in sites if s.name == name)
+        here = one.sequence[start:end]
+        assert here == (spelt if strand is Strand.FORWARD else reverse_complement(spelt))
+    [fragment] = [f for f in record.features if f.name.startswith("block fragment")]
+    assert one.sequence[fragment.segments[0].start : fragment.segments[0].end].endswith(
+        split.sequence(split.fragments[0])[-10:]
+    )
+
+
+def test_an_oligo_naming_a_primer_the_pool_does_not_carry_is_refused() -> None:
+    cargo = SequenceRecord("ATG" + "ACGTTGCA" * 8, name="block")
+    layout = OligoLayout(160, enzyme="BsaI")
+    sites = (
+        PrimerSite("forward", "F1", "ACACGACGCTCTTCCGATCT"),
+        PrimerSite("inner", "I1", "TGTGCTGCGAGAAGGCTAGA"),
+        PrimerSite("outer", "O1", "GTGACTGGAGTTCAGACGTG"),
+    )
+    split = split_cargo(cargo, layout.cutter, budget=layout.budget)
+    one = build_oligo(
+        split,
+        split.fragments[0],
+        name="block_f1",
+        source="block",
+        layout=layout,
+        forward=sites[:1],
+        reverse=sites[1:],
+    )
+    with pytest.raises(ValueError, match="which the pool does not carry"):
+        oligo_record(one, layout=layout, primers=sites[:2])

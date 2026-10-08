@@ -128,7 +128,7 @@ class Drawing:
 
     @property
     def answering(self) -> frozenset[str]:
-        """Every name the record draws something under, casefolded: what a highlight may light.
+        """Return every name the record draws something under, casefolded, for a highlight.
 
         A feature's or a primer's name, and the name of every enzyme that cuts. A caller lighting
         one name across several records asks each which of them it answers to.

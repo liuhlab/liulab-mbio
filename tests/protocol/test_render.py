@@ -386,7 +386,7 @@ def test_a_highlight_lights_the_rows_answering_to_it_and_dims_the_rest(data_dir:
     rows = parse(render_html(one, base=data_dir)).find_all("div", cls="row")
 
     unlit, named = (_paints(row) for row in rows)
-    assert unlit and set(unlit.values()) == {layers.DIM}
+    assert set(unlit.values()) == {layers.DIM}
     assert named["GFP"] != layers.DIM
 
 

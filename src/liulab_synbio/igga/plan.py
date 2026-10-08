@@ -32,7 +32,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
-from liulab_mbio.bench.pools import pool_sheet, primer_inventory
+from liulab_mbio.bench.pools import oligo_record, pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
 from liulab_mbio.cloning.plan import as_record, status
@@ -51,6 +51,7 @@ from liulab_synbio import dmx
 from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
 from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import (
@@ -129,6 +130,10 @@ class Files:
         The oligo pool to order and the primers that amplify it. Both are ``None`` where the
         project names no primer set, because the primer sites are templated on the oligo and
         nothing can be written without them.
+    oligo
+        One oligo of the pool as a record, carrying the three primer roles at the sites it spells
+        them: what `liulab_synbio.igga.figures.pool_pcr_figure` is drawn over. ``None`` wherever
+        the pool is.
     read_primers
         The pairs that read the finished library back, designed against the simulated records:
         linkage, representation, and representation again after the move into a working vector.
@@ -146,6 +151,7 @@ class Files:
     protocol: tuple[Path, ...]
     pool: Path | None = None
     pool_primers: Path | None = None
+    oligo: Path | None = None
     read_primers: Path | None = None
     block_vectors: tuple[Path, ...] = ()
 
@@ -162,6 +168,7 @@ class Files:
             *self.protocol,
             self.pool,
             self.pool_primers,
+            self.oligo,
             self.read_primers,
         )
         return tuple(path for path in written if path is not None)
@@ -355,12 +362,21 @@ class LibraryPlan:
             blocks.append(out / BLOCK_VECTOR_FILE.format(number=number))
             write_dna(one.record, blocks[-1])
         written = write_project_files(self.chain(), out / PROTOCOL_DIR)
-        pool = primers = None
+        pool = primers = oligo = None
         if self.pool is not None:
             pool = out / POOL_FILE
             pool.write_text(pool_sheet(self.pool.pool), encoding="utf-8")
             primers = out / POOL_PRIMER_FILE
             primers.write_text(primer_inventory(self.pool.pool), encoding="utf-8")
+            oligo = out / OLIGO_FILE
+            write_dna(
+                oligo_record(
+                    self.pool.pool.oligos[0],
+                    layout=self.pool.pool.layout,
+                    primers=self.pool.pool.primers,
+                ),
+                oligo,
+            )
         reads = out / READ_PRIMER_FILE
         reads.write_text(read_sheet(self.reads), encoding="utf-8")
         return Files(
@@ -372,6 +388,7 @@ class LibraryPlan:
             (written.index, *written.protocols, written.reagents, written.references),
             pool,
             primers,
+            oligo,
             reads,
             tuple(blocks),
         )
