@@ -11,6 +11,7 @@ import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
+from itertools import groupby
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -1341,6 +1342,12 @@ class Protocol:
         has to read rather than scan goes here and not in `overview`.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
+    choice
+        The job this protocol is one way of doing, where several ways are offered. Protocols
+        naming the same job are the ways: they stand together in `Project.protocols`, take one
+        place in the run, and the bench does one of them. It is read at the bench, so it is a
+        lowercase job that sits inside "one of two ways to read every well back". Empty where
+        the protocol is simply a step of the chain.
     consumes, produces
         What the bench is handed before this protocol, and what it leaves for the next one. A
         `Project` chains protocols by these names; a protocol rendered alone states them for its
@@ -1376,6 +1383,7 @@ class Protocol:
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
     checks: tuple[Check, ...] = ()
+    choice: str = ""
     consumes: tuple[Item, ...] = ()
     produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
@@ -1579,6 +1587,36 @@ class Protocol:
         return _PROTOCOL(data, "protocol")
 
 
+def by_place[T](items: Iterable[T], choice: Callable[[T], str]) -> tuple[tuple[T, ...], ...]:
+    """Return `items` one place of the run at a time, `choice` naming the job each is a way of.
+
+    The ways of one job take a single place, so they are numbered alike and listed as one entry;
+    everything else stands alone. Nothing stores an ordinal: the audit, the pages and the chain
+    they stand in all walk the list the same way.
+
+    Examples
+    --------
+    >>> by_place(("", "read every well back", "read every well back", ""), lambda one: one)
+    (('',), ('read every well back', 'read every well back'), ('',))
+    """
+    groups: list[list[T]] = []
+    last = ""
+    for item in items:
+        here = choice(item)
+        if not here or here != last:
+            groups.append([])
+        groups[-1].append(item)
+        last = here
+    return tuple(tuple(group) for group in groups)
+
+
+def _leaving(every: set[str]) -> str:
+    """Return what every way of one job leaves behind, as the `choices` check words it."""
+    if not every:
+        return "nothing"
+    return "the same thing" if len(every) == 1 else f"the same {len(every)} things"
+
+
 @dataclass(frozen=True, slots=True)
 class Project:
     """Protocols run in order, each handed what the ones before it produced.
@@ -1588,6 +1626,10 @@ class Project:
     the project was given or an earlier protocol produced under that name, and `audit` reports a
     name nothing hands over as a badge rather than refusing to build the project. A chain with a
     dangling input is still a document someone can read.
+
+    A protocol may name the job it is one way of doing. The ways of one job stand together and
+    take one place in the run, the bench does one of them, and what passes out of that place is
+    what every way leaves behind.
 
     Parameters
     ----------
@@ -1632,7 +1674,11 @@ class Project:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a project with no title, or two protocols keyed alike; slug the key."""
+        """Refuse a project with no title, two protocols keyed alike, or ways standing apart.
+
+        Slug the key. The ways of one job take one place in the run, and a place is contiguous,
+        so ways with another protocol between them are a builder defect rather than a badge.
+        """
         _require(bool(self.title.strip()), "a project needs a title")
         object.__setattr__(self, "key", slug(self.key))
         keys = [one.key for one in self.protocols if one.key]
@@ -1642,39 +1688,80 @@ class Project:
             f"two protocols are keyed {shared!r}: a key names one page's store, so a protocol "
             "copied from another needs its own key or none",
         )
+        jobs = [job for job, _ in groupby(one.choice for one in self.protocols) if job]
+        apart = next((job for job in jobs if jobs.count(job) > 1), "")
+        _require(
+            not apart,
+            f"ways to {apart!r} stand apart in protocols: the ways of one job take one place in "
+            "the run, and a place is contiguous, so they go next to each other",
+        )
 
     def audit(self) -> tuple[Check, ...]:
-        """Judge the chain, and the sources its own bill cites.
+        """Judge the chain, the choices it offers, and the sources its own bill cites.
 
         A consumed name resolves to an input or an earlier protocol's output, and a bill row's
         citation to a source the run or one of its protocols names. Each protocol judges its own
-        citations.
+        citations. A run offering no choice is judged by two checks, as it always was.
 
         Examples
         --------
         >>> [check.name for check in Project("Demo").audit()]
         ['handoffs', 'sources']
         """
-        return (self._handoffs(), self._sources())
+        offered = (self._choices(),) if any(one.choice for one in self.protocols) else ()
+        return (self._handoffs(), *offered, self._sources())
 
     def _handoffs(self) -> Check:
         handed = {item.name for item in self.inputs}
         dangling: list[str] = []
         consumed = 0
-        for protocol in self.protocols:
-            consumed += len(protocol.consumes)
-            dangling += [
-                f"{protocol.title} consumes {item.name!r}, which nothing hands it"
-                for item in protocol.consumes
-                if item.name not in handed
-            ]
-            handed |= {item.name for item in protocol.produces}
+        for group in by_place(self.protocols, lambda one: one.choice):
+            for protocol in group:
+                consumed += len(protocol.consumes)
+                dangling += [
+                    f"{protocol.title} consumes {item.name!r}, which nothing hands it"
+                    for item in protocol.consumes
+                    if item.name not in handed
+                ]
+            # The bench did one of the ways, so only a name every one of them makes is there.
+            handed |= set.intersection(*({item.name for item in one.produces} for one in group))
         if dangling:
             return Check("handoffs", "fail", "; ".join(dangling))
         counted = (
             f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
         )
         return Check("handoffs", "pass", counted)
+
+    def _choices(self) -> Check:
+        wrong: list[str] = []
+        unhelped: list[str] = []
+        said: list[str] = []
+        titled = {topic.title for topic in self.background}
+        for group in by_place(self.protocols, lambda one: one.choice):
+            job = group[0].choice
+            if not job:
+                continue
+            made = [{item.name for item in one.produces} for one in group]
+            every = set.intersection(*made)
+            odd = sorted(set.union(*made) - every)
+            if len(group) < 2:
+                wrong.append(f"Only one way to {job} is written, so there is nothing to choose.")
+            elif odd:
+                listed = ", ".join(f'"{name}"' for name in odd)
+                comes = "comes" if len(odd) == 1 else "come"
+                wrong.append(
+                    f"The ways to {job} do not leave the same things: "
+                    f"{listed} {comes} from only one of them."
+                )
+            else:
+                said.append(f"{len(group)} ways to {job}, each leaving {_leaving(every)}.")
+            if job not in titled:
+                unhelped.append(f"Nothing on the overview says how to pick a way to {job}.")
+        if wrong:
+            return Check("choices", "fail", " ".join(wrong))
+        if unhelped:
+            return Check("choices", "warn", " ".join(unhelped))
+        return Check("choices", "pass", " ".join(said))
 
     def _sources(self) -> Check:
         named = frozenset(self.sources).union(

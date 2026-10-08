@@ -44,6 +44,7 @@ from liulab_mbio.protocol.model import (
     Timer,
     Transfer,
     Wait,
+    by_place,
     number,
     read_project,
     slug,
@@ -105,25 +106,31 @@ class Page:
     key
         What the page remembers its check marks under, so another page of the folder can read
         how far the bench got.
+    choice
+        The job the protocol is one way of doing, carried from it, so every page of the folder
+        can see which pages share one place in the run.
     """
 
     title: str
     href: str
     step_keys: tuple[str, ...] = ()
     key: str = ""
+    choice: str = ""
 
     @classmethod
     def of(cls, place: int, protocol: Protocol) -> "Page":
         """Return the page `protocol` is written to, standing `place` in its run, from one.
 
         Everything the other pages see is derived here, so an index addresses exactly what the
-        page it names wrote.
+        page it names wrote. Two ways of one job stand in one place, so one `place` writes two
+        file names and the title is what tells them apart.
         """
         return cls(
             protocol.title,
             page_name(place, protocol.title),
             _step_keys(protocol.steps),
             page_key(protocol),
+            protocol.choice,
         )
 
 
@@ -139,12 +146,21 @@ class Folder:
         The way in to the folder.
     reagents, references
         The two pages the whole run shares.
+    explained
+        The jobs the overview carries guidance on, one `Topic` each. A way's page links that
+        guidance only where there is some, so no page offers a reader a link to nothing.
     """
 
     pages: tuple[Page, ...]
     index: str = INDEX_FILE
     reagents: str = REAGENTS_FILE
     references: str = REFERENCES_FILE
+    explained: tuple[str, ...] = ()
+
+    @property
+    def places(self) -> tuple[tuple[Page, ...], ...]:
+        """The pages one place of the run at a time: the ways of one job together."""
+        return by_place(self.pages, lambda page: page.choice)
 
     def sources_at(self, here: str) -> str:
         """Return the page a citation on `here` finds its source on, empty where that is `here`.
@@ -337,7 +353,9 @@ def render_index(project: Project, folder: Folder) -> str:
     """Return the way in to a run: what it achieves, how it fits together and how long it takes.
 
     The explanation of why the run is shaped as it is stands here and on no protocol page, so a
-    step never stops to explain a decision.
+    step never stops to explain a decision. The badges carry the run's own verdicts beside the
+    chain's, which `Project.audit` computes here and never stores: `docs/adr/0002` lets an agent
+    edit the data and render it again, and a stored verdict goes stale against that edit.
     """
     sources = folder.sources_at(folder.index)
     holes = _run_holes(project, folder)
@@ -346,7 +364,8 @@ def render_index(project: Project, folder: Folder) -> str:
     jumps = [(f"topic-{slug(topic.title)}", topic.title) for topic in project.background]
     parts = [
         f'<header class="intro">\n<h1>{escape(project.title)}</h1>\n{summary}'
-        f"{_checks(project.checks)}{_hole_count(holes, 'this run')}</header>\n",
+        f"{_checks((*project.checks, *project.audit()))}"
+        f"{_hole_count(holes, 'this run')}</header>\n",
         _background(project),
     ]
     for anchor, label, block in (
@@ -448,59 +467,112 @@ def _background(project: Project) -> str:
 
 
 def _protocols(folder: Folder) -> str:
-    """Return the run in order, each page carrying its own store's key and its steps' keys.
+    """Return the run a place at a time, each page carrying its store's key and its steps' keys.
 
     `protocol.js` reads that store on this page and counts the marks those step keys stand for,
-    so how far the bench got comes from the pages themselves and is never stored twice.
+    so how far the bench got comes from the pages themselves and is never stored twice. A place
+    holding several ways of one job is one entry, with the ways nested under it.
     """
     if not folder.pages:
         return ""
-    rows = "".join(
-        f'<li data-page-key="{escape(page.key)}" data-steps="{escape(" ".join(page.step_keys))}">'
-        f'<a href="{escape(page.href)}">{escape(page.title)}</a> '
-        f'<span class="page-progress muted">{_count(len(page.step_keys), "step")}</span></li>'
-        for page in folder.pages
-    )
+    rows = "".join(_protocols_place(group) for group in folder.places)
     return (
         '<section class="block chain-list" id="protocols">\n<h2>Protocols</h2>\n'
         f'<ol class="chain-pages">{rows}</ol>\n</section>\n'
     )
 
 
+def _protocols_place(group: tuple[Page, ...]) -> str:
+    """One place of the run as the index lists it: one page, or the ways of one job under it."""
+    ways = "".join(
+        f'<li data-page-key="{escape(page.key)}" data-steps="{escape(" ".join(page.step_keys))}">'
+        f'<a href="{escape(page.href)}">{escape(page.title)}</a> '
+        f'<span class="page-progress muted">{_count(len(page.step_keys), "step")}</span></li>'
+        for page in group
+    )
+    if not group[0].choice:
+        return ways
+    return (
+        f'<li class="chain-choice"><span class="choice-job">{escape(_opening(group[0].choice))}'
+        f'</span> <span class="muted">do {_one_of(len(group))}</span>'
+        f'<ul class="chain-ways">{ways}</ul></li>'
+    )
+
+
+def _opening(job: str) -> str:
+    """Return a job as it opens a line: it is written to sit inside a sentence, so lowercase."""
+    return job[:1].upper() + job[1:]
+
+
+def _one_of(ways: int) -> str:
+    """How a page tells the bench to do one way of a job and not the others."""
+    return "one of these two" if ways == 2 else f"one of these {ways}"
+
+
 def _flow(project: Project, folder: Folder) -> str:
     """Return the chain as boxes and the names handed between them, in HTML and never a drawing.
 
-    Generated from what each protocol declares it consumes and produces: a box is a protocol,
-    and above it stand the names it is handed, each saying where it came from. Drawn in text, so
-    a browser's find reaches it, it is selectable and it prints with no font embedded.
+    Generated from what each protocol declares it consumes and produces: a box is one place of
+    the run, and above it stand the names it is handed, each saying where it came from. A place
+    offering several ways of one job is one box holding them all, and only a name every way
+    makes stands below it. Drawn in text, so a browser's find reaches it, it is selectable and
+    it prints with no font embedded.
     """
     if not folder.pages:
         return ""
     came_from = {item.name: "the bench already holds it" for item in project.inputs}
     left: dict[str, Item] = {}
     boxes = []
-    for page, protocol in zip(folder.pages, project.protocols, strict=True):
-        needs = "".join(
-            _flow_item(item, came_from.get(item.name, "")) for item in protocol.consumes
-        )
-        for item in protocol.consumes:
-            left.pop(item.name, None)
+    paired = tuple(zip(folder.pages, project.protocols, strict=True))
+    for group in by_place(paired, lambda pair: pair[1].choice):
+        wanted: dict[str, Item] = {}
+        made: dict[str, Item] = {}
+        for _, protocol in group:
+            for item in protocol.consumes:
+                wanted.setdefault(item.name, item)
+            for item in protocol.produces:
+                made.setdefault(item.name, item)
+        needs = "".join(_flow_item(item, came_from.get(name, "")) for name, item in wanted.items())
+        for name in wanted:
+            left.pop(name, None)
         hand = f'<ul class="flow-hand">{needs}</ul>' if needs else ""
-        boxes.append(
-            # The step count stands in the Protocols list, where `protocol.js` keeps it up to
-            # date; printed here too it would be the same number twice, one of them stale.
-            f'<li>{hand}<a class="flow-box" href="{escape(page.href)}">'
-            f'<span class="flow-title">{escape(page.title)}</span></a></li>'
-        )
-        for item in protocol.produces:
-            came_from[item.name] = f"from {page.title}"
-            left[item.name] = item
+        # The step count stands in the Protocols list, where `protocol.js` keeps it up to date;
+        # printed here too it would be the same number twice, one of them stale.
+        boxes.append(f"<li>{hand}{_flow_box(group)}</li>")
+        job = group[0][1].choice
+        source = f"from whichever way to {job} you did" if job else f"from {group[0][0].title}"
+        # Only a name every way makes stands below the box: the bench did one of them.
+        every = set.intersection(*({one.name for one in p.produces} for _, p in group))
+        for name, item in made.items():
+            if name in every:
+                came_from[name] = source
+                left[name] = item
     ends = "".join(_flow_item(item, "the run ends holding it") for item in left.values())
     return (
         '<section class="block flow" id="flow">\n<h2>How the run fits together</h2>\n'
         f'<ol class="flow-chain">{"".join(boxes)}</ol>'
         + (f'<ul class="flow-hand flow-end">{ends}</ul>' if ends else "")
         + "\n</section>\n"
+    )
+
+
+def _flow_box(group: tuple[tuple[Page, Protocol], ...]) -> str:
+    """One place of the run as a box: a protocol, or the ways of one job to pick between."""
+    job = group[0][1].choice
+    if not job:
+        page = group[0][0]
+        return (
+            f'<a class="flow-box" href="{escape(page.href)}">'
+            f'<span class="flow-title">{escape(page.title)}</span></a>'
+        )
+    ways = "".join(
+        f'<li><a href="{escape(page.href)}">{escape(page.title)}</a></li>' for page, _ in group
+    )
+    return (
+        '<div class="flow-box flow-choice">'
+        f'<span class="flow-title">{escape(_opening(job))}</span> '
+        f'<span class="muted">do {_one_of(len(group))}</span>'
+        f'<ul class="flow-ways">{ways}</ul></div>'
     )
 
 
@@ -855,7 +927,14 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
     out.mkdir(parents=True, exist_ok=True)
     data = write_project(minted(project), out / PROJECT_DATA_FILE)
     written = read_project(data)
-    folder = Folder(tuple(Page.of(n, one) for n, one in enumerate(written.protocols, 1)))
+    folder = Folder(
+        tuple(
+            Page.of(at, one)
+            for at, group in enumerate(by_place(written.protocols, lambda one: one.choice), 1)
+            for one in group
+        ),
+        explained=tuple(topic.title for topic in written.background),
+    )
     protocols = tuple(
         write_html(one, out / page.href, folder=folder)
         for one, page in zip(written.protocols, folder.pages, strict=True)
@@ -913,17 +992,32 @@ def _bar(folder: Folder, here: str) -> str:
 
 
 def _chain(folder: Folder, here: str) -> str:
-    """Return the left column: every protocol of the run, so one page switches to another."""
+    """Return the left column: every protocol of the run, so one page switches to another.
+
+    The ways of one job are one entry with the ways under it, as the index lists them, so the
+    column numbers the places of the run and not the pages.
+    """
     if not folder.pages:
         return '<div class="column chain"></div>'
-    items = "".join(
-        f"<li{' class="is-here"' if page.href == here else ''}>"
-        f'<a href="{escape(page.href)}">{escape(page.title)}</a></li>'
-        for page in folder.pages
-    )
+    items = "".join(_chain_place(group, here) for group in folder.places)
     return (
         '<nav class="column chain" aria-label="Protocols">'
         f'<h2 class="column-title">Protocols</h2><ol>{items}</ol></nav>\n'
+    )
+
+
+def _chain_place(group: tuple[Page, ...], here: str) -> str:
+    """One place of the run in the left column, the page being read marked."""
+    ways = "".join(
+        f"<li{' class="is-here"' if page.href == here else ''}>"
+        f'<a href="{escape(page.href)}">{escape(page.title)}</a></li>'
+        for page in group
+    )
+    if not group[0].choice:
+        return ways
+    return (
+        f'<li class="chain-choice"><span class="choice-job">{escape(_opening(group[0].choice))}'
+        f'</span><ul class="chain-ways">{ways}</ul></li>'
     )
 
 
@@ -981,16 +1075,59 @@ def _within(protocol: Protocol, keys: Sequence[str]) -> str:
 
 
 def _place(folder: Folder, here: str) -> str:
-    """Where this page stands in the run, named in words, because it prints with the page."""
-    addresses = [page.href for page in folder.pages]
-    if here not in addresses:
+    """Where this page stands in the run, named in words, because it prints with the page.
+
+    The ways of one job take one place, so both are protocol 4 of 6; the line then names the
+    sibling, says to do one and not both, and links what to weigh where the overview carries it.
+    """
+    groups = folder.places
+    at = next((n for n, group in enumerate(groups) if any(p.href == here for p in group)), -1)
+    if at < 0:
         return ""
-    at, total = addresses.index(here), len(folder.pages)
-    before = f"Comes after {_page_link(folder.pages[at - 1])}." if at else "The run starts here."
-    after = (
-        f"Next is {_page_link(folder.pages[at + 1])}." if at + 1 < total else "The run ends here."
+    total = len(groups)
+    job = groups[at][0].choice
+    before = _place_before(groups[at - 1]) if at else "The run starts here."
+    after = _place_after(groups[at + 1]) if at + 1 < total else "The run ends here."
+    return (
+        f'<p class="neighbours">Protocol {at + 1} of {total}{_sibling(groups[at], here)}. '
+        f"{_guidance(folder, job)}{before} {after}</p>\n"
     )
-    return f'<p class="neighbours">Protocol {at + 1} of {total}. {before} {after}</p>\n'
+
+
+def _sibling(group: tuple[Page, ...], here: str) -> str:
+    """Return what this page adds to its place, where it is one of several ways of one job."""
+    if not group[0].choice:
+        return ""
+    others = _or([_page_link(page) for page in group if page.href != here])
+    return (
+        f", and one of {_count(len(group), 'way')} to {escape(group[0].choice)} — "
+        f"do this one or {others}, not both"
+    )
+
+
+def _guidance(folder: Folder, job: str) -> str:
+    """Return the link to what to weigh before picking a way, or nothing where nothing says."""
+    if not job or job not in folder.explained:
+        return ""
+    where = f"{escape(folder.index)}#topic-{escape(slug(job))}"
+    return f'<a href="{where}">How to choose</a> is on the overview. '
+
+
+def _place_before(group: tuple[Page, ...]) -> str:
+    """Return what the bench did before this place, whichever way it did it."""
+    if group[0].choice:
+        job = escape(group[0].choice)
+        return f"Comes after whichever of the {_count(len(group), 'way')} to {job} you did."
+    return f"Comes after {_page_link(group[0])}."
+
+
+def _place_after(group: tuple[Page, ...]) -> str:
+    """Return what the bench does next, naming every way where the next place is a choice."""
+    if group[0].choice:
+        job = escape(group[0].choice)
+        ways = _or([_page_link(page) for page in group])
+        return f"Next is one of the {_count(len(group), 'way')} to {job}: {ways}."
+    return f"Next is {_page_link(group[0])}."
 
 
 def _page_link(page: Page) -> str:

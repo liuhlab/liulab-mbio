@@ -166,6 +166,18 @@ is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line
 writes is this chain of protocols.
 _Avoid_: workflow, pipeline, campaign
 
+### Choice
+
+One job a run does one way out of several. Each **protocol** that is a way of doing it names the
+job, and protocols naming the same job are the ways: the bench does one of them, never all. The
+name is the contract, as an **item**'s is, and it is a job someone at the bench recognises —
+"read every well back" — so a page can say "one of two ways to read every well back". The ways
+stand together in one place of the run: numbered alike, listed as one entry, and each page names
+the others and says to do only one. What comes after a choice may depend only on what every way
+leaves behind. Nothing in the package picks a way; what to weigh is a topic the reader is told
+before the first protocol.
+_Avoid_: branch, option, variant, fork, conditional, Route A, Route B
+
 ### Build
 
 What one run of a **pipeline** chooses, as against what its method fixes: for a library, the

@@ -41,6 +41,7 @@ from liulab_mbio.protocol import (
     render_references,
     write_project_files,
 )
+from liulab_mbio.protocol.model import by_place
 
 from ..html import Node, parse
 
@@ -170,7 +171,14 @@ def chain() -> Project:
 
 def folder_of(project: Project) -> Folder:
     """The folder `write_project_files` would compute for `project`, without writing it."""
-    return Folder(tuple(Page.of(n, one) for n, one in enumerate(project.protocols, 1)))
+    return Folder(
+        tuple(
+            Page.of(at, one)
+            for at, group in enumerate(by_place(project.protocols, lambda one: one.choice), 1)
+            for one in group
+        ),
+        explained=tuple(topic.title for topic in project.background),
+    )
 
 
 @pytest.fixture(scope="module")
@@ -314,7 +322,7 @@ def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(
 def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocols(
     index: Node,
 ) -> None:
-    badges = index.find_all("li", cls="check")
+    badges = index.find_all("li", cls="check")[:2]
     assert [badge.find_all("span", cls="check-name")[0].text for badge in badges] == [
         "coverage",
         "fidelity",
@@ -448,6 +456,109 @@ def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got
         "2 steps",
         "2 steps",
     ]
+
+
+JOB = "read every well back"
+CALLS = Item("well calls", "one design name per well")
+
+
+def choosing() -> Project:
+    """A run whose middle place offers two ways of one job, and says how to pick between them."""
+    return Project(
+        "DMX",
+        background=(Topic(JOB, ("Ligation scales; index PCR is quicker to set up.",)),),
+        protocols=(
+            Protocol("Pick the colonies", produces=(VECTOR,), steps=(Step("Pick"),)),
+            Protocol(
+                "Cargo validation: barcode ligation",
+                choice=JOB,
+                consumes=(VECTOR,),
+                produces=(CALLS,),
+                steps=(Step("Ligate"),),
+            ),
+            Protocol(
+                "Cargo validation: index PCR",
+                choice=JOB,
+                consumes=(VECTOR,),
+                produces=(CALLS,),
+                steps=(Step("Amplify"), Step("Pool")),
+            ),
+            Protocol("Report", consumes=(CALLS,), steps=(Step("Write it up"),)),
+        ),
+    )
+
+
+def test_two_ways_of_one_job_take_one_place_in_the_run_and_two_file_names(tmp_path: Path) -> None:
+    written = write_project_files(choosing(), tmp_path)
+    assert [path.name for path in written.protocols] == [
+        "01-pick-the-colonies.html",
+        "02-cargo-validation-barcode-ligation.html",
+        "02-cargo-validation-index-pcr.html",
+        "03-report.html",
+    ]
+
+
+def test_a_way_names_its_sibling_and_the_page_after_a_choice_names_neither(
+    tmp_path: Path,
+) -> None:
+    write_project_files(choosing(), tmp_path)
+    read = {path.name: parse(path.read_text(encoding="utf-8")) for path in tmp_path.glob("*.html")}
+    [line] = read["02-cargo-validation-barcode-ligation.html"].find_all("p", cls="neighbours")
+    assert line.text.startswith(
+        "Protocol 2 of 3, and one of 2 ways to read every well back — do this one or "
+        "Cargo validation: index PCR, not both."
+    )
+    [guide] = [a for a in line.find_all("a") if a.text == "How to choose"]
+    assert guide.attrs["href"] == "index.html#topic-read-every-well-back"
+    [after] = read["03-report.html"].find_all("p", cls="neighbours")
+    assert "Comes after whichever of the 2 ways to read every well back you did." in after.text
+
+
+def test_the_index_lists_a_choice_as_one_entry_with_the_ways_under_it() -> None:
+    run = choosing()
+    index = parse(render_index(run, folder_of(run)))
+    [listed] = index.find_all("ol", cls="chain-pages")
+    # Three entries, because the run has three places and not four pages.
+    assert [one.tag for one in listed.children if isinstance(one, Node)] == ["li", "li", "li"]
+    [choice] = listed.find_all("li", cls="chain-choice")
+    assert choice.find_all("span", cls="choice-job")[0].text == "Read every well back"
+    assert "do one of these two" in choice.text
+    [ways] = choice.find_all("ul", cls="chain-ways")
+    assert [a.text for a in ways.find_all("a")] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    assert [one.attrs["data-steps"] for one in ways.find_all("li")] == ["ligate", "amplify pool"]
+
+
+def test_the_flow_chart_draws_one_box_for_a_choice_and_hands_on_what_every_way_leaves() -> None:
+    run = choosing()
+    index = parse(render_index(run, folder_of(run)))
+    [box] = index.find_all("div", cls="flow-choice")
+    assert box.find_all("span", cls="flow-title")[0].text == "Read every well back"
+    assert [a.text for a in box.find_all("ul", cls="flow-ways")[0].find_all("a")] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    said = {
+        item.find_all("span", cls="flow-item")[0].text: item.find_all("span", cls="flow-from")[
+            0
+        ].text
+        for item in index.find_all("li", cls="flow-hand-item")
+    }
+    assert said["well calls"] == "from whichever way to read every well back you did"
+
+
+def test_the_index_draws_the_chains_own_verdicts_beside_the_runs(index: Node) -> None:
+    """A badge the audit computes reaches no reader unless the index draws it."""
+    badges = index.find_all("li", cls="check")
+    assert [badge.find_all("span", cls="check-name")[0].text for badge in badges] == [
+        "coverage",
+        "fidelity",
+        "handoffs",
+        "sources",
+    ]
+    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges][2] == "fail"
 
 
 def test_the_reagents_page_merges_a_material_two_protocols_buy_into_one_row(
