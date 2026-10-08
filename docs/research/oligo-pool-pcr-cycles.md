@@ -79,11 +79,14 @@ same document as the band table:
 
 Its component table stores the pool at "-20°C for 24 months", 4 °C for 12, and -80 °C long term.
 
-Three things follow. The 20 ng/µL the PCR1 row above takes as template is a **floor on the
-stock**, not a figure the vendor ships at. The volume is **derived** from the label and that
-floor: resuspension volume (µl) = total yield (ng) / 20 leaves the stock exactly at the floor.
-And the yield is printed on the tube and written in no file, so the protocol states the division
-and the reader supplies the one number in front of them — a rule they can execute, not a hole.
+Three things follow. The 20 ng/µL the PCR1 row above takes as template is the **stock the reader
+prepares**, not a concentration the vendor ships at — DOC-4060's own amplification table asks for
+"Oligo pool (20 ng/µl), 20 ng, 1 µl", and "at least 20 ng/µl" is the separate rule for making
+that stock. The volume is **derived** from the label and that floor: resuspension volume (µl) =
+total yield (ng) / 20, rounded down, leaves the stock at the floor or above it, so the table's
+1 µl still delivers its 20 ng. And the yield is printed on the tube and written in no file, so
+the protocol states the division and the reader supplies the one number in front of them — a rule
+they can execute, not a hole.
 
 The rest of the reaction, where the two revisions differ:
 

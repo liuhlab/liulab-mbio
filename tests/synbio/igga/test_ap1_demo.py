@@ -304,13 +304,13 @@ def test_the_pool_is_in_buffer_before_anything_amplifies_it(protocol):
     """PCR1 takes 20 ng/µL of template, so the step before it says how the pool got there."""
     made = next(one for one in protocol.steps if one.title == "Resuspend the oligo pool")
     assert made.instructions[0] == (
-        "Divide the total yield in ng printed on the shipping tube label by 20 to get the "
-        "resuspension volume in µL."
+        "Divide the total yield in ng printed on the shipping tube label by 20, rounding down, "
+        "to get the resuspension volume in µL."
     )
     assert "10 mM Tris buffer, pH 8.0" in made.instructions[1]
     assert made.expected == (
-        "One tube of pool in solution at 20 ng/µL, with nothing left undissolved on the wall of "
-        "the tube.",
+        "One tube of pool in solution at 20 ng/µL or above, with nothing left undissolved on the "
+        "wall of the tube.",
     )
     assert not made.holes
 

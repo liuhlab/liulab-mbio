@@ -36,8 +36,6 @@ POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 
 #: What the dried pool is dissolved in, and the least it may be left at, ng/µL. Both are the
 #: vendor's, from the document the cycle count is read in: DOC-4060 REV 1.0, "Before You Begin".
-#: The volume follows from them and the yield printed on the tube, which is the one number only
-#: the bench holds.
 POOL_STOCK_BUFFER = "10 mM Tris buffer, pH 8.0"
 POOL_STOCK_NG_PER_UL = 20.0
 
@@ -243,20 +241,19 @@ def _pool_resuspend_step() -> Step:
         "Resuspend the oligo pool",
         key="resuspend-pool",
         instructions=(
-            f"Divide the total yield in ng printed on the shipping tube label by {floor} to get "
-            "the resuspension volume in µL.",
+            f"Divide the total yield in ng printed on the shipping tube label by {floor}, "
+            "rounding down, to get the resuspension volume in µL.",
             f"Add that volume of {POOL_STOCK_BUFFER} to the tube.",
-            "Vortex the tube until nothing is left undissolved, then spin it down.",
+            "Vortex the tube until nothing is left undissolved.",
         ),
         cautions=("Spin the tube down before taking the cap off.",),
         expected=(
-            f"One tube of pool in solution at {floor} ng/µL, with nothing left undissolved on "
-            "the wall of the tube.",
+            f"One tube of pool in solution at {floor} ng/µL or above, with nothing left "
+            "undissolved on the wall of the tube.",
         ),
         notes=(
-            "The pool ships dry and its total yield is printed on the shipping tube, so the "
-            "stock concentration is that yield over the volume it goes into, and at least "
-            f"{floor} ng/µL is what the amplification asks for: Twist Oligo Pools Amplification "
-            'Protocol DOC-4060 REV 1.0, "Before You Begin".',
+            f"Dividing by {floor} is what the vendor's own floor of at least {floor} ng/µL "
+            f"comes to, and the amplification then pipettes 1 µL of {floor} ng/µL: Twist Oligo "
+            'Pools Amplification Protocol DOC-4060 REV 1.0, "Before You Begin".',
         ),
     )
