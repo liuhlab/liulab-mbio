@@ -52,7 +52,7 @@ Files land in the directory you name:
 - `barcodes.tsv` — which barcode names which part, and its slot in the finished block
 - `changes.tsv` — every amino acid the overhang standard moved, wild type beside synthesised
 - `pool.tsv`, `pool-primers.tsv` — the oligo pool the blocks are built from, and the primers that
-  amplify it. Both appear where the project names a primer set, and the blocks are then not
+  amplify it. Both appear where the build names a primer set, and the blocks are then not
   ordered at all
 - `round-1.dna` … `product.dna` — one annotated record a round, the last the whole construct
 - `protocol/` — the run as a chain of protocols: `project.json` is the data, a draft you may
@@ -82,7 +82,7 @@ the plate layout are already in the pages, drawn beside the step that uses them.
 - **The overhang standard is charged to the proteins.** One standard serves the whole library, so
   a junction forces terminal residues on every member either side. `changes.tsv` is what the user
   is paying for — show it to them before they order.
-- **More positions means more overhangs from one set**, so a long project is likelier to refuse.
+- **More positions means more overhangs from one set**, so a long build is likelier to refuse.
 
 ## The vector decides one overhang
 
@@ -133,5 +133,5 @@ checking one coding sequence for a host. `primer-design` owns every primer quest
 already answer; the plan designs the two library read pairs against the simulated record and
 writes them with the other sheets. `build-protocol` owns the page:
 when the user wants a step this plan did not anticipate, edit `protocol/project.json` and
-render the folder again. A change to what the plan computes — the project's vector, host or
+render the folder again. A change to what the plan computes — the build's vector, host or
 completeness — goes back through `igga plan`, which writes the folder afresh.

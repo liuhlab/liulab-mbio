@@ -66,7 +66,7 @@ document agree:
 - "**Runs in the DMX vector**; the working vector takes only the finished cargo" (iGGA cargo).
 - "Assemble into the DMX vector" is step 9 of cargo construction; the working vector appears only
   at the final transfer.
-- `docs/research/ap1-demo-project.md` §2.1 puts all 72 parts in the DMX vector at the carrier
+- `docs/research/ap1-demo-project.md` §6 puts all 72 parts in the DMX vector at the carrier
   step.
 
 So issue #312's framing — "our working vector is not pET-22b(+)" — names the wrong vector.
