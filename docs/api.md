@@ -520,3 +520,5 @@ and every plan verb is the same spine: plan, write, and report what was written.
 ::: liulab_mbio.protocol.cli
 
 ::: liulab_mbio.plot.cli
+
+::: liulab_mbio.primers.cli

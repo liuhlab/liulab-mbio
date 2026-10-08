@@ -16,6 +16,10 @@ sets one.
   design was built from. No sequence is read, so any frozen stock can be read back. The run
   designs no DNA, so a protocol folder is the whole of what it writes.
   `docs/examples/ap1-readback` is one such run, over the AP-1 library's own cargo.
+- Three more commands write files. `barcode-design` writes a part list's barcodes and the checks
+  on them, `primers design` writes the order sheet and, on a genome, every amplicon the pair
+  makes there, and `codon-optimize --out` writes the coding sequence and the codons it moved.
+  Without `--out` it still prints, as before.
 - A ligase joins some overhangs far more rarely than another does, and that costs colonies rather
   than product. `liulab_mbio.overhangs.on_target` reports how often the ligase a matrix measured
   joined each overhang of a set to its own partner, and names the ones below the rate NEB calls a

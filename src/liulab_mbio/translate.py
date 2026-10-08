@@ -269,7 +269,7 @@ def _cleaned(
     enzymes = _resolved(forbidden)
     protein = translate(dna)
     _no_internal_stop(protein)
-    record, report = domesticate(_coding_record(dna, name), enzymes, usage=usage)
+    record, report = domesticate(coding_record(dna, name), enzymes, usage=usage)
     if left := find_sites(record, enzymes):
         raise SiteNotRemovableError(_why(left[0], record.sequence, usage, name))
     return CodingSequence(
@@ -283,8 +283,16 @@ def _cleaned(
     )
 
 
-def _coding_record(dna: str, name: str) -> SequenceRecord:
-    """Annotate the whole sequence as one coding sequence, which is what a synthesis part is."""
+def coding_record(dna: str, name: str) -> SequenceRecord:
+    """Return `dna` as a record annotating the whole of it as one coding sequence.
+
+    What a synthesis part is: bases to order, with the frame they are read in on them.
+
+    Examples
+    --------
+    >>> coding_record("ATGTGGTAA", "part A").features[0].type
+    'CDS'
+    """
     return SequenceRecord(
         dna,
         name=name,
