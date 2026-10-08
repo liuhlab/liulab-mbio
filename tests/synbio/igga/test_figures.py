@@ -7,6 +7,7 @@ import pytest
 
 from liulab_mbio.bench.pools import PrimerSite
 from liulab_mbio.cloning.plan import PRODUCT_FILE
+from liulab_mbio.edits import rotate
 from liulab_synbio.igga.cargo import PRIMER_LENGTH, design_pool
 from liulab_synbio.igga.figures import (
     OLIGO_FILE,
@@ -16,10 +17,14 @@ from liulab_synbio.igga.figures import (
 )
 from liulab_synbio.igga.method import ORTHOGONAL_SPLIT
 from liulab_synbio.igga.project import Build
-from liulab_synbio.igga.rounds import ROUND_FILE, assemble_rounds
+from liulab_synbio.igga.rounds import ROUND_FILE, assemble_rounds, representative
 
 from .test_cargo import bases, block
 from .test_rounds import POSITIONS, built, carrier, scheme
+
+#: How much vector the test carrier spells either side of its cassette, which is room enough for
+#: the margin a round's map draws around one.
+FLANK = 800
 
 
 @pytest.fixture(scope="module")
@@ -28,11 +33,14 @@ def made():
 
 
 @pytest.fixture(scope="module")
-def rounds(made):
-    from liulab_synbio.igga.rounds import representative
+def parts(made):
+    return representative(built(made)[1], POSITIONS)
 
-    parts = representative(built(made)[1], POSITIONS)
-    return assemble_rounds(carrier(made), parts, made, POSITIONS, name="library")
+
+@pytest.fixture(scope="module")
+def rounds(made, parts):
+    """Rounds on a vector with room either side of its cassette for a span to be drawn."""
+    return assemble_rounds(carrier(made, flank=FLANK), parts, made, POSITIONS, name="library")
 
 
 @pytest.fixture(scope="module")
@@ -55,13 +63,13 @@ def pooled():
     return design_pool([block("a", bases(rng, 200), 0)], project, primers=primers)
 
 
-def test_the_assembly_figure_names_the_record_every_round_writes(rounds):
-    """The rows are the files the plan writes, so the figure and the directory agree."""
-    figure = assembly_rows(rounds)
+def test_a_round_draws_what_it_opens_and_what_it_makes(rounds):
+    """The two rows are the files the plan writes, so the figure and the directory agree."""
+    figure = assembly_rows(rounds, lit=2, at="../")
 
     assert figure.records == (
-        *(ROUND_FILE.format(number=one.number) for one in rounds[:-1]),
-        PRODUCT_FILE,
+        "../" + ROUND_FILE.format(number=1),
+        "../" + ROUND_FILE.format(number=2),
     )
     assert figure.linear
     assert figure.enzymes is not None
@@ -73,8 +81,57 @@ def test_the_assembly_figure_names_the_record_every_round_writes(rounds):
     assert figure.citation.source == SOURCE_KEY
 
 
+def test_the_last_round_makes_the_product(rounds):
+    figure = assembly_rows(rounds, lit=len(rounds))
+
+    assert figure.records == (ROUND_FILE.format(number=len(rounds) - 1), PRODUCT_FILE)
+
+
+def test_round_one_opens_the_vector_record_the_build_names(rounds):
+    """Round 1 opens no round, so its first row is the vector the plan wrote."""
+    figure = assembly_rows(rounds, lit=1, vector="block-vector-1.dna", at="../")
+
+    assert figure.records == ("../block-vector-1.dna", "../" + ROUND_FILE.format(number=1))
+    assert "what it opens above, what it makes below" in figure.caption
+
+
+def test_round_one_draws_one_row_where_no_vector_record_is_written(rounds):
+    figure = assembly_rows(rounds, lit=1)
+
+    assert figure.records == (ROUND_FILE.format(number=1),)
+    assert "above" not in figure.caption
+
+
+def test_both_rows_are_drawn_over_the_cassette_and_not_the_backbone(rounds):
+    """A span the two records share: what the round changed, and a margin either side."""
+    one = rounds[1]
+    figure = assembly_rows(rounds, lit=2)
+
+    assert figure.span is not None
+    start, end = figure.span
+    assert start < one.entry.start
+    assert end > one.scar.end
+    assert end - start < len(one.destination)
+    assert one.destination.fits(start, end)
+
+
+def test_a_cassette_across_the_origin_draws_the_records_whole(made, parts):
+    """The edit moves the origin of what it made, so no one span falls on both records."""
+    turned = rotate(carrier(made, flank=FLANK), FLANK + 10)
+    across = assemble_rounds(turned, parts, made, POSITIONS)
+
+    assert assembly_rows(across, lit=1).span is None
+
+
+def test_a_vector_with_no_room_for_the_margin_draws_the_records_whole(made, parts):
+    """A span has to fall inside the record the round opened, and a short vector leaves none."""
+    tight = assemble_rounds(carrier(made), parts, made, POSITIONS)
+
+    assert assembly_rows(tight, lit=1).span is None
+
+
 def test_a_lit_round_lights_the_part_that_round_joined(rounds):
-    """Which round is lit is the parameter the published figure cannot offer."""
+    """Which round the step is at is the parameter the published figure cannot offer."""
     figure = assembly_rows(rounds, lit=2)
 
     assert figure.highlight == (rounds[1].part.name,)
@@ -82,13 +139,7 @@ def test_a_lit_round_lights_the_part_that_round_joined(rounds):
     assert rounds[1].entry_overhang in figure.caption
 
 
-def test_no_round_lit_leaves_every_row_in_colour(rounds):
-    figure = assembly_rows(rounds)
-    assert figure.highlight == ()
-    assert "in order" in figure.caption
-
-
-@pytest.mark.parametrize("lit", [-1, 99])
+@pytest.mark.parametrize("lit", [-1, 0, 99])
 def test_a_round_this_build_does_not_run_is_refused(rounds, lit):
     with pytest.raises(ValueError, match="not one"):
         assembly_rows(rounds, lit=lit)
@@ -96,7 +147,7 @@ def test_a_round_this_build_does_not_run_is_refused(rounds, lit):
 
 def test_an_assembly_figure_of_no_rounds_is_refused():
     with pytest.raises(ValueError, match="at least one round"):
-        assembly_rows(())
+        assembly_rows((), lit=1)
 
 
 def test_each_pcr_lights_its_own_pair_of_the_three_roles(pooled):

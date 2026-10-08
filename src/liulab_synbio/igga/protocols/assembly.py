@@ -93,13 +93,10 @@ class Assembly(Protocol):
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the pool, every round's eight steps, and the two reads that close the protocol."""
         made = [labelled(_pool_step(run), "Pool the part lists")]
+        vector = _vector_record(run)
         for place, (one, row) in enumerate(zip(run.rounds, run.bench, strict=True), 1):
-            made += [
-                labelled(step, f"Round {place}")
-                for step in _round_steps(
-                    run, one, row, assembly_rows(run.rounds, lit=place, at=run.records_at)
-                )
-            ]
+            rows = assembly_rows(run.rounds, lit=place, vector=vector, at=run.records_at)
+            made += [labelled(step, f"Round {place}") for step in _round_steps(run, one, row, rows)]
         reads = run.reads
         made += [
             labelled(
@@ -285,6 +282,16 @@ def _pool_masses(
 def _len_of(one: Part) -> int:
     """How many bases the part is ordered as."""
     return one.length
+
+
+def _vector_record(run: Run) -> str:
+    """Return what the plan calls the vector round 1 opens, or nothing where it writes none.
+
+    The first block vector is that vector: each is this build's own destination respelt for the
+    position whose blocks it holds, and position one's enters on the overhang it already spells.
+    """
+    first = run.block_vectors[:1]
+    return first[0][1] if first else ""
 
 
 def _round_steps(run: Run, one: Round, row: RoundBench, rows: Figure | None) -> list[Step]:

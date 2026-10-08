@@ -16,6 +16,7 @@ from typing import Literal
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.protocol.figures import SOURCE, SOURCE_KEY
 from liulab_mbio.protocol.model import Citation, Figure
+from liulab_mbio.sequence import Segment, across_the_origin
 from liulab_synbio.igga.cargo import PoolPlan
 from liulab_synbio.igga.rounds import ROUND_FILE, Round
 
@@ -39,6 +40,11 @@ ROLES = ("forward", "inner", "outer")
 #: the pool, or the inner pair that pulls one block out of that batch.
 type PoolStage = Literal["PCR1", "PCR2"]
 
+#: How many times the stuffer's own length a round's map draws either side of the cassette, so
+#: the flanks it sits between are in the picture. The margin a cassette is drawn with in
+#: `liulab_synbio.igga.protocols.validation`. A margin for the drawing, measured from nothing.
+STUFFER_MARGIN = 3
+
 #: Where in the note each figure's published equivalent stands.
 ASSEMBLY_CITATION = Citation(SOURCE_KEY, "section 4, iGGA")
 POOL_CITATION = Citation(SOURCE_KEY, "section 1, Baker's three-primer PCR design")
@@ -47,32 +53,37 @@ POOL_CITATION = Citation(SOURCE_KEY, "section 1, Baker's three-primer PCR design
 def assembly_rows(
     rounds: Sequence[Round],
     *,
-    lit: int = 0,
+    lit: int,
+    vector: str = "",
     at: str = "",
     caption: str = "",
     citation: Citation | None = ASSEMBLY_CITATION,
 ) -> Figure:
-    """Return every round of the assembly as a row, one round lit and the rest dimmed.
+    """Return what one round opens and what it makes, as two rows, the part it joins lit.
 
-    One row a round, drawn linear so a reader follows the parts left to right: the library each
-    round opened becomes the library the next one opens. `lit` is which round a step is at, so a
-    step for round 2 draws rounds 1 and 3 grey.
+    The library the round opens is drawn above the library it makes, which is how a figure shows
+    one molecule becoming the next, and the part the round joined is lit. Both rows are drawn to
+    the cassette wherever one span falls on both records, and not to the backbone either side.
 
     The rows are the records `liulab_synbio.igga.rounds.write_records` writes, named as it names
-    them, so the figure and the files cannot disagree.
+    them, so the figure and the files cannot disagree. Round 1 opens the vector instead of a
+    round, and a build writing no record of that vector draws the row it makes alone.
 
     Parameters
     ----------
     rounds
         Every round of the build, in order.
     lit
-        Which round the step is at, counting from one. Nothing is lit at zero, and every row
-        keeps its colours.
+        Which round the step is at, counting from one: the two rows are that round's, and the
+        part it joins is what the figure lights.
+    vector
+        What the plan calls the vector round 1 opens, relative to `at`; empty where it writes no
+        record of it.
     at
         Where the records sit, relative to the directory the protocol is read from: empty where
         they sit beside it, ``"../"`` where the protocol is one directory down.
     caption
-        What the figure shows. One is written from the rounds where this is empty.
+        What the figure shows. One is written from the round where this is empty.
     citation
         Where the published figure this is equivalent to was read.
 
@@ -83,21 +94,19 @@ def assembly_rows(
     """
     if not rounds:
         raise ValueError("an assembly figure draws at least one round")
-    if not 0 <= lit <= len(rounds):
+    if not 1 <= lit <= len(rounds):
         raise ValueError(f"this build runs {len(rounds)} round(s), so round {lit} is not one")
-    scheme = rounds[0].scheme
-    last = len(rounds) - 1
-    records = tuple(
-        at + (PRODUCT_FILE if index == last else ROUND_FILE.format(number=one.number))
-        for index, one in enumerate(rounds)
-    )
-    here = rounds[lit - 1] if lit else None
+    here = rounds[lit - 1]
+    scheme = here.scheme
+    made = at + (PRODUCT_FILE if lit == len(rounds) else ROUND_FILE.format(number=here.number))
+    opened = _opened(rounds, lit, vector, at)
     return Figure(
-        records,
-        caption or _caption(rounds, here),
+        (opened, made) if opened else (made,),
+        caption or _caption(rounds, here, opened=bool(opened)),
+        span=_cassette(here),
         linear=True,
         enzymes=(scheme.internal_enzyme, scheme.external_enzyme),
-        highlight=(here.part.name,) if here else (),
+        highlight=(here.part.name,),
         citation=citation,
     )
 
@@ -155,14 +164,37 @@ def pool_pcr_figure(
     )
 
 
-def _caption(rounds: Sequence[Round], at: Round | None) -> str:
-    """Return what the assembly figure shows: the positions, and the round a step is at."""
-    positions = ", ".join(one.position for one in rounds)
-    if at is None:
-        return f"Every round of the assembly, in order: {positions}"
+def _opened(rounds: Sequence[Round], lit: int, vector: str, at: str) -> str:
+    """Return the record the round opens: the round before's, or the vector round 1 opens.
+
+    Empty where round 1 is drawn and the build writes no record of its vector.
+    """
+    if lit > 1:
+        return at + ROUND_FILE.format(number=rounds[lit - 2].number)
+    return at + vector if vector else ""
+
+
+def _cassette(one: Round) -> tuple[int, int] | None:
+    """Return the stretch both rows are drawn to: the cassette the round changes, and a margin.
+
+    The two records count their bases alike up to the stuffer, so one span falls on the same
+    place in both — unless the round's edit ran across the origin, which moves the origin of what
+    it made, or the span is longer than the record it opened. Either of those draws both records
+    whole instead.
+    """
+    if across_the_origin(Segment(one.excised.start, one.excised.end), len(one.destination)):
+        return None
+    margin = (one.stuffer.end - one.stuffer.start) * STUFFER_MARGIN
+    span = max(0, one.entry.start - margin), min(len(one.product), one.scar.end + margin)
+    return span if one.destination.fits(*span) else None
+
+
+def _caption(rounds: Sequence[Round], at: Round, *, opened: bool) -> str:
+    """Return what the assembly figure shows: the round a step is at, and which row is which."""
+    rows = "what it opens above, what it makes below" if opened else "what it makes"
     return (
         f"Round {at.number} of {len(rounds)} joins {at.part.name} at position {at.position}, "
-        f"entering on {at.entry_overhang} and leaving {at.scar_overhang}"
+        f"entering on {at.entry_overhang} and leaving {at.scar_overhang}: {rows}"
     )
 
 
