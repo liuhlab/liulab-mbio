@@ -79,6 +79,12 @@ HOLE_KINDS = {
     "price": "no price record prices it",
 }
 
+#: What the holes block says above its list, on a protocol's page and on a run's index alike.
+HOLES_INTRO = (
+    "None is filled with a guess, and each says below what it waits on: a bench, a shelf, a "
+    "price, or a number nobody has published."
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Page:
@@ -606,9 +612,8 @@ def _run_hole_list(project: Project, folder: Folder, holes: tuple[Hole, ...]) ->
     )
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
-        f"<p>{_count(len(holes), 'number')} this run would otherwise have to invent. A hole is "
-        "a defect in what the package knows, not a failure of the run, and it is never filled "
-        f"with a guess.</p>\n<ul>{items}</ul>\n</section>\n"
+        f"<p>{_count(len(holes), 'number')} this run would otherwise have to invent. "
+        f"{HOLES_INTRO}</p>\n<ul>{items}</ul>\n</section>\n"
     )
 
 
@@ -1227,9 +1232,8 @@ def _holes(protocol: Protocol) -> str:
     items = "".join(_hole(hole) for hole in holes)
     return (
         '<section class="block holes" id="holes">\n<h2>Holes</h2>\n'
-        f"<p>{_count(len(holes), 'number')} this protocol would otherwise have to invent. None "
-        "is filled with a guess, and each says below what it waits on: a bench, a shelf, a "
-        f"price, or a number nobody has published.</p>\n<ul>{items}</ul>\n</section>\n"
+        f"<p>{_count(len(holes), 'number')} this protocol would otherwise have to invent. "
+        f"{HOLES_INTRO}</p>\n<ul>{items}</ul>\n</section>\n"
     )
 
 
