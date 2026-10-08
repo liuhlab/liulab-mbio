@@ -160,6 +160,20 @@ def test_a_pool_splits_ordering_from_making_the_cargo(pooled):
     assert [one.title for one in made.chain().protocols] == [ORDERING, CREATION, ASSEMBLY, FINAL]
 
 
+def test_a_run_without_a_pool_takes_its_cargo_from_the_vendors_tube(plan, pooled):
+    """A block ordered whole closes into no block vector, so the rounds take it as it shipped."""
+    made, _files = pooled
+    plain, with_pool = plan.chain(), made.chain()
+
+    assert [one.name for one in plain.protocols[1].consumes] == [
+        "synthesised blocks",
+        "block vector 1",
+    ]
+    assert "cargo archive plate" in {one.name for one in with_pool.protocols[2].consumes}
+    for chain in (plain, with_pool):
+        assert chain.audit()[0].status == "pass", chain.audit()[0].detail
+
+
 def test_each_protocol_of_the_chain_answers_for_its_own_page(plan):
     run = plan.chain()
     ordering, assembly = run.protocols[0], run.protocols[1]

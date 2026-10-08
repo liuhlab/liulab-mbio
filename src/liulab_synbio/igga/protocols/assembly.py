@@ -114,8 +114,18 @@ class Assembly(Protocol):
         return tuple(made)
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:
-        """Return the cargo, as the protocol before it left it, and the vector round 1 opens."""
-        cargo = (run.picked, run.calls) if run.validation is not None else (run.archive,)
+        """Return the cargo, as the protocol before it left it, and the vector round 1 opens.
+
+        A run reading its designs back takes the cargo from the clonal wells, and one making a
+        pool and reading nothing back from the archive plate those wells come off. A run
+        ordering its blocks whole takes it from the vendor's tube: a block ordered whole is
+        synthesised with its own external stuffers, so it closes into no block vector and no
+        archive plate is ever poured.
+        """
+        if run.validation is not None:
+            cargo = (run.picked, run.calls)
+        else:
+            cargo = (run.archive,) if run.pool else (run.ordered,)
         return (*cargo, *run.blocks[:1])
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
