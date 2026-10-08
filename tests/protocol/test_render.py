@@ -1,4 +1,5 @@
 import re
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -530,3 +531,14 @@ def test_a_short_order_sheet_stays_the_sheet_it_is() -> None:
 
     assert not section.find_all("details", cls="listing")
     assert "19 oligos" not in section.text
+
+
+def test_a_warned_row_is_seen_without_opening_the_summarised_sheet() -> None:
+    """A verdict a reader has to open the sheet to find is a verdict they do not see."""
+    one = _ordered(20)
+    warned = replace(one.oligos[2], status="warn", checks=(Check("length", "warn", "17 bases"),))
+    section = parse(render_html(replace(one, oligos=(*one.oligos[:2], warned, *one.oligos[3:]))))
+
+    toggles = section.find_all("section", cls="oligos")[0].find_all("details")
+
+    assert [t.attrs.get("class") for t in toggles] == ["listing", "oligo-checks"]

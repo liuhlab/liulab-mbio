@@ -279,7 +279,7 @@ def _materials(
                     f"{amplicon.name} primers",
                     storage="-20 °C",
                     amount=f"{PRIMER_STOCK_UM:g} µM each",
-                    note="ordered off the oligo sheet below; the manual asks for HPLC- or "
+                    note="ordered off the oligo sheet on this page; the manual asks for HPLC- or "
                     "PAGE-purified oligos where colonies are few",
                 ),
                 Material(

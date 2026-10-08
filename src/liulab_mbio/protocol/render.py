@@ -1011,8 +1011,7 @@ def _oligos(protocol: Protocol) -> str:
         copy_all = f"<p>{_copy(sheet, 'Copy all sequences')}</p>"
     sheet = (
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead>'
-        f"<tbody>{''.join(rows)}</tbody></table></div>"
-        f"{_oligo_checks(oligos)}{copy_all}"
+        f"<tbody>{''.join(rows)}</tbody></table></div>{copy_all}"
     )
     shown = sheet
     if len(oligos) >= OLIGO_SUMMARY:
@@ -1020,9 +1019,11 @@ def _oligos(protocol: Protocol) -> str:
             f"{_oligo_summary(oligos, seats)}"
             f'<details class="listing"><summary>All {len(oligos)} rows</summary>{sheet}</details>'
         )
+    # Which rows warn stays beside the summary and never inside it: a verdict a reader has to
+    # open the sheet to find is a verdict they do not see.
     return (
         '<section class="block oligos" id="oligos">\n<h2>Oligos</h2>\n'
-        f"{_order_sheet(protocol.order_sheet)}{shown}\n</section>\n"
+        f"{_order_sheet(protocol.order_sheet)}{shown}{_oligo_checks(oligos)}\n</section>\n"
     )
 
 
