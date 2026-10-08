@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "d6cf8ec02aadc030",
+  "key": "160b753ec3f9fa56",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -45,6 +45,7 @@
       "detail": "9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3' end stability"
     }
   ],
+  "choice": "",
   "consumes": [],
   "produces": [],
   "materials": [

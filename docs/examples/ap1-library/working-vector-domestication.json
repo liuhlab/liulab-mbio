@@ -1,6 +1,6 @@
 {
   "title": "Domesticating the working vector",
-  "key": "07cb7b0ca3ff6397",
+  "key": "921442d05c32ecac",
   "summary": "The library's working vector is pLVX-TetOne-Puro-GFP, which reads 6 BsaI and 2 BsmBI sites. This orders the same plasmid with all 8 taken out and confirms what arrives. It is a sitting of its own: the library run opens with the record it leaves behind.",
   "overview": {
     "Parent": "pLVX-TetOne-Puro-GFP, Addgene 171123",
@@ -35,6 +35,7 @@
       "detail": "BbsI reads 3 sites, SapI reads 2 sites; neither was in this job"
     }
   ],
+  "choice": "",
   "consumes": [
     {
       "name": "pLVX-TetOne-Puro-GFP",

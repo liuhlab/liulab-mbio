@@ -265,6 +265,10 @@ tfoot .muted { font-weight: 400; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
 .chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+/* A place the bench has a choice at is one entry, with the ways of the job nested under it. */
+.choice-job { font-weight: 600; }
+.chain-ways { list-style: none; margin: 0.2rem 0 0; padding: 0; }
+.chain-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 
 /* The run's index: what it explains, how it fits together and how long it takes. */
 .topic p:last-child { margin-bottom: 0; }
@@ -274,6 +278,10 @@ tfoot .muted { font-weight: 400; }
 .flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
 .flow-box:hover { text-decoration: underline; }
+.flow-choice { display: block; }
+.flow-choice:hover { text-decoration: none; }
+.flow-ways { list-style: none; margin: 0.3rem 0 0; padding: 0; }
+.flow-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 .flow-title { font-weight: 600; }
 .flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
 .flow-hand-item { position: relative; }
@@ -290,6 +298,9 @@ tfoot .muted { font-weight: 400; }
 .schedule td, .schedule th { vertical-align: top; }
 .schedule .num { white-space: normal; }
 .schedule td:first-child { white-space: nowrap; }
+/* A place the bench has a choice at is one row carrying a span, the ways indented under it. */
+.schedule-way td:first-child { padding-left: 1.2rem; }
+.schedule-way td:first-child::before { content: "\00B7\00A0"; color: var(--muted); }
 /* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
 .wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
 .schedule tbody tr:not(.wait-row) td { border-bottom: none; }
@@ -351,13 +362,13 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="42cf06763e50a4d3">
+<body data-protocol="07355615f170e75c">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="04-cargo-validation-index-pcr.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
-<div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li class="is-here"><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
+<div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li class="chain-choice"><span class="choice-job">Read every well back</span><ul class="chain-ways"><li><a href="04-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></li><li class="is-here"><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li></ul></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
 <header class="intro">
 <h1>Cargo validation: index PCR</h1>
-<p class="neighbours">Protocol 4 of 6. Comes after <a href="03-cargo-creation.html">Cargo creation</a>. Next is <a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a>.</p>
+<p class="neighbours">Protocol 4 of 6, and one of two ways to read every well back — do this one or <a href="04-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a>, not both. <a href="index.html#topic-read-every-well-back">How to choose</a> is on the overview. Comes after <a href="03-cargo-creation.html">Cargo creation</a>. Next is <a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a>.</p>
 <p class="summary">Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.</p>
 <div class="handover"><div><h3>Have in hand</h3><ul><li><span class="flow-item">cargo archive plate</span> <span class="muted">one well a design, polyclonal, sealed and frozen</span></li><li><span class="flow-item">Barcoded index primer plate</span> <span class="muted">the lab&#x27;s own index primers, prepared once and called for by a run</span> <span class="muted">· 1 µM each</span></li></ul></div><div><h3>Leaves you with</h3><ul><li><span class="flow-item">clonal picked plate</span> <span class="muted">one well a picked colony, each well one clone</span></li><li><span class="flow-item">well calls</span> <span class="muted">a pass or a fail a well, and which design each well holds</span></li></ul></div></div>
 <p class="hole-count"><a href="#holes"><strong>1</strong> number in this protocol has no source</a>.</p>
@@ -382,7 +393,7 @@ tfoot .muted { font-weight: 400; }
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-array-designs.1"><span>Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.</span></label></li><li><label><input type="checkbox" data-key="step-array-designs.2"><span>Grow overnight at 37 °C on 50 µg/mL kanamycin.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>One spot a design, at about 2,500 colonies a plate, which is the density picking wants.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A spot grows nothing</dt><dd>That design has no clone to read. Re-transform it from the archive before anyone re-synthesises it.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>This project reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.</li><li>The archive is untouched: this reads a copy of it.</li></ul></div>
+<div class="notes"><h3>Notes</h3><ul><li>This run reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.</li><li>The archive is untouched: this reads a copy of it.</li></ul></div>
 </section>
 <section class="step" id="step-pick-colonies">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-pick-colonies"><span class="step-n">2</span><span>Pick 4 colonies of each design</span></label></h2>

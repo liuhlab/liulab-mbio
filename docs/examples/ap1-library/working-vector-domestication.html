@@ -262,6 +262,10 @@ tfoot .muted { font-weight: 400; }
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
 .chain-pages .is-started .page-progress { color: var(--accent); font-weight: 600; }
+/* A place the bench has a choice at is one entry, with the ways of the job nested under it. */
+.choice-job { font-weight: 600; }
+.chain-ways { list-style: none; margin: 0.2rem 0 0; padding: 0; }
+.chain-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 
 /* The run's index: what it explains, how it fits together and how long it takes. */
 .topic p:last-child { margin-bottom: 0; }
@@ -271,6 +275,10 @@ tfoot .muted { font-weight: 400; }
 .flow-chain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .flow-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; text-decoration: none; color: var(--ink); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.5rem 0.8rem; }
 .flow-box:hover { text-decoration: underline; }
+.flow-choice { display: block; }
+.flow-choice:hover { text-decoration: none; }
+.flow-ways { list-style: none; margin: 0.3rem 0 0; padding: 0; }
+.flow-ways li::before { content: "\00B7\00A0"; color: var(--muted); }
 .flow-title { font-weight: 600; }
 .flow-hand { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 1.6rem; display: grid; gap: 0.25rem; font-size: 0.9rem; }
 .flow-hand-item { position: relative; }
@@ -287,6 +295,9 @@ tfoot .muted { font-weight: 400; }
 .schedule td, .schedule th { vertical-align: top; }
 .schedule .num { white-space: normal; }
 .schedule td:first-child { white-space: nowrap; }
+/* A place the bench has a choice at is one row carrying a span, the ways indented under it. */
+.schedule-way td:first-child { padding-left: 1.2rem; }
+.schedule-way td:first-child::before { content: "\00B7\00A0"; color: var(--muted); }
 /* The waiting is a row of its own: how long a vendor takes is whatever they say it is. */
 .wait-row td { border-bottom: 2px solid var(--line); padding-top: 0; font-size: 0.95em; }
 .schedule tbody tr:not(.wait-row) td { border-bottom: none; }
@@ -348,7 +359,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="07cb7b0ca3ff6397">
+<body data-protocol="921442d05c32ecac">
 <main class="page">
 <header class="intro">
 <h1>Domesticating the working vector</h1>

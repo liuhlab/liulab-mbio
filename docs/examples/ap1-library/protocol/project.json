@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "724cbb5d9dab30f2",
+  "key": "4d1605d92c02accf",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -12,6 +12,16 @@
         "The overhang standard changes 27 amino acid(s) across 26 part end(s); changes.tsv has wild type beside synthesised, and that is what you are about to pay for.",
         "The last round needs 195,386 colonies for a 0.99 chance that none of its 13,824 products is missing, which is 14x its products. A round short of that floor loses members no later round can put back.",
         "The finished barcode block is 41 bp and reads in the reverse of the order the rounds ran; barcodes.tsv says which barcode names which part."
+      ]
+    },
+    {
+      "title": "read every well back",
+      "body": [
+        "Both routes mark every well so that sequencing says which well a read came from, and both end with a pass or a fail for each well. Do one of them, never both.",
+        "How many wells each reaches is not what picks between them, and it does not rank them the way the bench's rule of thumb does. Barcode ligation addresses more than 330,000 wells from one plate of barcodes; index PCR addresses 9,216. Most runs sit well below either.",
+        "Barcode ligation carries a fixed cost and a fixed delay, paid once whatever the library's size: $695 of sequencing, and five days. Because they are paid once, the whole route costs less for each design the more designs there are, falling from $19.52 a design over 100 designs to $3.38 over 2,000. Nobody has published the same table for index PCR, so no price for it, and no price per well for either route, is stated anywhere here.",
+        "Index PCR runs one thermocycled reaction in every well, so thousands of wells need many thermocyclers. Barcode ligation needs none: a whole 1536-well plate marks in a single incubator. That is the only direct comparison of the two in print, and the barcode ligation route's own authors wrote it about the route they replaced; no independent measurement of one against the other was found.",
+        "Doing neither is also a choice. Every well is then enriched for the design it was built from, and nothing firmer than that can be said: the one published purity figure, 89.3% of 929 wells at 90% clonal purity or better, was measured on short arrayed fragments under 314 bases rather than on cargo from an oligo pool, and the same work found that polyclonality grows with length. Nothing measured says the material is even. To know what a well holds, read it back."
       ]
     }
   ],
@@ -46,18 +56,30 @@
       "storage": "-20 °C"
     },
     {
+      "name": "DMX barcode kit",
+      "what": "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation way only",
+      "spec": [],
+      "storage": "-20 °C"
+    },
+    {
       "name": "Barcoded index primer plate",
-      "what": "the lab's own index primers, prepared once and called for by a run",
+      "what": "the lab's own index primers, prepared once and called for by a run, for the index PCR way only",
       "spec": [
         "1 µM each"
       ],
+      "storage": "-20 °C"
+    },
+    {
+      "name": "working vector",
+      "what": "pLVX-TetOne-dom the finished library ends in",
+      "spec": [],
       "storage": "-20 °C"
     }
   ],
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "ab495951a65e3ccd",
+      "key": "09540dcb8a4306bc",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -67,6 +89,7 @@
       },
       "highlights": [],
       "checks": [],
+      "choice": "",
       "consumes": [],
       "produces": [
         {
@@ -2030,16 +2053,17 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "bdfe3118810d689e",
+      "key": "7054a8a1b1b08018",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
       "checks": [],
+      "choice": "",
       "consumes": [],
       "produces": [
         {
           "name": "oligo pool",
-          "what": "the pool resuspended and aliquoted",
+          "what": "the pool resuspended",
           "spec": [],
           "storage": "-20 °C"
         }
@@ -2050,7 +2074,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "-20 °C",
-          "amount": "131 oligos, every one 350 nt",
+          "amount": "131 oligos, every one 350 nt, resuspended to 20 ng/µL",
           "note": "ordered from pool.tsv, which says which block each oligo is a piece of",
           "contains": [],
           "rules": [],
@@ -2118,6 +2142,35 @@
             }
           ],
           "holes": []
+        },
+        {
+          "title": "Resuspend the oligo pool",
+          "key": "resuspend-pool",
+          "section": "Order and store",
+          "instructions": [
+            "Divide the total yield in ng printed on the shipping tube label by 20, rounding down, to get the resuspension volume in µL.",
+            "Add that volume of 10 mM Tris buffer, pH 8.0 to the tube.",
+            "Vortex the tube until nothing is left undissolved."
+          ],
+          "cautions": [
+            "Spin the tube down before taking the cap off."
+          ],
+          "notes": [
+            "Dividing by 20 is what the vendor's own floor of at least 20 ng/µL comes to, and the amplification then pipettes 1 µL of 20 ng/µL: Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0, \"Before You Begin\"."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "One tube of pool in solution at 20 ng/µL or above, with nothing left undissolved on the wall of the tube."
+          ],
+          "troubleshooting": [],
+          "holes": []
         }
       ],
       "references": [
@@ -2148,15 +2201,16 @@
     },
     {
       "title": "Cargo creation",
-      "key": "29b6ec1f7887d2b0",
+      "key": "d9662a22480dc315",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
       "checks": [],
+      "choice": "",
       "consumes": [
         {
           "name": "oligo pool",
-          "what": "the pool resuspended and aliquoted",
+          "what": "the pool resuspended",
           "spec": [],
           "storage": "-20 °C"
         },
@@ -2263,6 +2317,18 @@
           "citation": null
         },
         {
+          "name": "pLVX-TetOne-dom vector",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "the library's final home; PaqCI releases its ccdB cassette to admit the cargo",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
           "name": "SrfI",
           "supplier": "New England Biolabs",
           "catalog": "R0629",
@@ -2281,6 +2347,18 @@
           "storage": "",
           "amount": "",
           "note": "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Selective plates for the final transfer",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "",
+          "note": "the working vector's own antibiotic, which this plan does not name",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -2649,8 +2727,7 @@
               "missing": "no cycle count published for Q5 on a Twist oligo pool",
               "kind": "unpublished",
               "where": "PCR1, the polymerase the cycle count is stated against",
-              "filled_by": "a count Twist states against Q5, or a pilot on this pool",
-              "issue": "liuhlab/liulab-mbio#225"
+              "filled_by": "a count Twist states against Q5, or a pilot on this pool"
             }
           ]
         },
@@ -2885,8 +2962,7 @@
               "missing": "no cycle count for PCR2, which pulls one block out of an already-amplified batch",
               "kind": "unpublished",
               "where": "PCR2, the cycle count",
-              "filled_by": "a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus",
-              "issue": "liuhlab/liulab-mbio#225"
+              "filled_by": "a pilot titrated against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve plateaus"
             }
           ]
         },
@@ -3126,12 +3202,3877 @@
       "bill": null
     },
     {
-      "title": "Cargo validation: index PCR",
-      "key": "42cf06763e50a4d3",
+      "title": "Cargo validation: barcode ligation",
+      "key": "3bd0f5781bc114ec",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
       "checks": [],
+      "choice": "read every well back",
+      "consumes": [
+        {
+          "name": "cargo archive plate",
+          "what": "one well a design, polyclonal, sealed and frozen",
+          "spec": [],
+          "storage": "-80 °C glycerol stock"
+        },
+        {
+          "name": "DMX barcode kit",
+          "what": "the lab's own barcoding plasmids, one group a picked plate",
+          "spec": [],
+          "storage": "-20 °C"
+        }
+      ],
+      "produces": [
+        {
+          "name": "clonal picked plate",
+          "what": "one well a picked colony, each well one clone",
+          "spec": [],
+          "storage": ""
+        },
+        {
+          "name": "well calls",
+          "what": "a pass or a fail a well, and which design each well holds",
+          "spec": [],
+          "storage": ""
+        }
+      ],
+      "materials": [
+        {
+          "name": "25 cm BioAssay plate",
+          "supplier": "Corning",
+          "catalog": "431111",
+          "storage": "",
+          "amount": "one spot a design",
+          "note": "50 µg/mL kanamycin; about 2,500 colonies a plate",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": {
+            "source": "Qian SI",
+            "locator": "Day 2"
+          }
+        },
+        {
+          "name": "384-well culture plate",
+          "supplier": "Beckman Coulter",
+          "catalog": "c74290",
+          "storage": "",
+          "amount": "1, one a 384 wells",
+          "note": "60 µL low-salt LB with 50 µg/mL kanamycin a well",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": {
+            "source": "Qian SI",
+            "locator": "Day 3"
+          }
+        },
+        {
+          "name": "1536-well barcoding plate",
+          "supplier": "Greiner",
+          "catalog": "782270",
+          "storage": "",
+          "amount": "1, one a 4 picked plates",
+          "note": "",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": {
+            "source": "Qian SI",
+            "locator": "Day 4.1"
+          }
+        },
+        {
+          "name": "DMX barcode kit",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "96 plasmids, 4 groups of 24",
+          "note": "the lab's own stock; its sequences are read from the copy you hold",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Barcoding master mix",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "0.5 µL a well",
+          "note": "a well is 3.5 µL: 2 µL lysate, 0.5 µL barcodes, 0.5 µL water and 0.5 µL master mix",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": {
+            "source": "Qian SI",
+            "locator": "Day 4.1"
+          }
+        }
+      ],
+      "oligos": [],
+      "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
+      ],
+      "equipment": [
+        "QPix XE Microbial Colony Picker",
+        "ECHO 525 acoustic liquid handler",
+        "Incubator at 37 °C",
+        "A sequencer, and a demultiplexer that can check an address"
+      ],
+      "vessels": [],
+      "plates": [
+        {
+          "name": "picked 1",
+          "wells": 384,
+          "catalog": "Beckman Coulter #c74290",
+          "holds": "one picked colony each in 60 µL low-salt LB with 50 µg/mL kanamycin",
+          "seating": {},
+          "labels": {
+            "A1": "quarter 1",
+            "A3": "quarter 1",
+            "A5": "quarter 1",
+            "A7": "quarter 1",
+            "A9": "quarter 1",
+            "A11": "quarter 1",
+            "A13": "quarter 1",
+            "A15": "quarter 1",
+            "A17": "quarter 1",
+            "A19": "quarter 1",
+            "A21": "quarter 1",
+            "A23": "quarter 1",
+            "C1": "quarter 1",
+            "C3": "quarter 1",
+            "C5": "quarter 1",
+            "C7": "quarter 1",
+            "C9": "quarter 1",
+            "C11": "quarter 1",
+            "C13": "quarter 1",
+            "C15": "quarter 1",
+            "C17": "quarter 1",
+            "C19": "quarter 1",
+            "C21": "quarter 1",
+            "C23": "quarter 1",
+            "E1": "quarter 1",
+            "E3": "quarter 1",
+            "E5": "quarter 1",
+            "E7": "quarter 1",
+            "E9": "quarter 1",
+            "E11": "quarter 1",
+            "E13": "quarter 1",
+            "E15": "quarter 1",
+            "E17": "quarter 1",
+            "E19": "quarter 1",
+            "E21": "quarter 1",
+            "E23": "quarter 1",
+            "G1": "quarter 1",
+            "G3": "quarter 1",
+            "G5": "quarter 1",
+            "G7": "quarter 1",
+            "G9": "quarter 1",
+            "G11": "quarter 1",
+            "G13": "quarter 1",
+            "G15": "quarter 1",
+            "G17": "quarter 1",
+            "G19": "quarter 1",
+            "G21": "quarter 1",
+            "G23": "quarter 1",
+            "I1": "quarter 1",
+            "I3": "quarter 1",
+            "I5": "quarter 1",
+            "I7": "quarter 1",
+            "I9": "quarter 1",
+            "I11": "quarter 1",
+            "I13": "quarter 1",
+            "I15": "quarter 1",
+            "I17": "quarter 1",
+            "I19": "quarter 1",
+            "I21": "quarter 1",
+            "I23": "quarter 1",
+            "K1": "quarter 1",
+            "K3": "quarter 1",
+            "K5": "quarter 1",
+            "K7": "quarter 1",
+            "K9": "quarter 1",
+            "K11": "quarter 1",
+            "K13": "quarter 1",
+            "K15": "quarter 1",
+            "K17": "quarter 1",
+            "K19": "quarter 1",
+            "K21": "quarter 1",
+            "K23": "quarter 1",
+            "M1": "quarter 1",
+            "M3": "quarter 1",
+            "M5": "quarter 1",
+            "M7": "quarter 1",
+            "M9": "quarter 1",
+            "M11": "quarter 1",
+            "M13": "quarter 1",
+            "M15": "quarter 1",
+            "M17": "quarter 1",
+            "M19": "quarter 1",
+            "M21": "quarter 1",
+            "M23": "quarter 1",
+            "O1": "quarter 1",
+            "O3": "quarter 1",
+            "O5": "quarter 1",
+            "O7": "quarter 1",
+            "O9": "quarter 1",
+            "O11": "quarter 1",
+            "O13": "quarter 1",
+            "O15": "quarter 1",
+            "O17": "quarter 1",
+            "O19": "quarter 1",
+            "O21": "quarter 1",
+            "O23": "quarter 1",
+            "A2": "quarter 2",
+            "A4": "quarter 2",
+            "A6": "quarter 2",
+            "A8": "quarter 2",
+            "A10": "quarter 2",
+            "A12": "quarter 2",
+            "A14": "quarter 2",
+            "A16": "quarter 2",
+            "A18": "quarter 2",
+            "A20": "quarter 2",
+            "A22": "quarter 2",
+            "A24": "quarter 2",
+            "C2": "quarter 2",
+            "C4": "quarter 2",
+            "C6": "quarter 2",
+            "C8": "quarter 2",
+            "C10": "quarter 2",
+            "C12": "quarter 2",
+            "C14": "quarter 2",
+            "C16": "quarter 2",
+            "C18": "quarter 2",
+            "C20": "quarter 2",
+            "C22": "quarter 2",
+            "C24": "quarter 2",
+            "E2": "quarter 2",
+            "E4": "quarter 2",
+            "E6": "quarter 2",
+            "E8": "quarter 2",
+            "E10": "quarter 2",
+            "E12": "quarter 2",
+            "E14": "quarter 2",
+            "E16": "quarter 2",
+            "E18": "quarter 2",
+            "E20": "quarter 2",
+            "E22": "quarter 2",
+            "E24": "quarter 2",
+            "G2": "quarter 2",
+            "G4": "quarter 2",
+            "G6": "quarter 2",
+            "G8": "quarter 2",
+            "G10": "quarter 2",
+            "G12": "quarter 2",
+            "G14": "quarter 2",
+            "G16": "quarter 2",
+            "G18": "quarter 2",
+            "G20": "quarter 2",
+            "G22": "quarter 2",
+            "G24": "quarter 2",
+            "I2": "quarter 2",
+            "I4": "quarter 2",
+            "I6": "quarter 2",
+            "I8": "quarter 2",
+            "I10": "quarter 2",
+            "I12": "quarter 2",
+            "I14": "quarter 2",
+            "I16": "quarter 2",
+            "I18": "quarter 2",
+            "I20": "quarter 2",
+            "I22": "quarter 2",
+            "I24": "quarter 2",
+            "K2": "quarter 2",
+            "K4": "quarter 2",
+            "K6": "quarter 2",
+            "K8": "quarter 2",
+            "K10": "quarter 2",
+            "K12": "quarter 2",
+            "K14": "quarter 2",
+            "K16": "quarter 2",
+            "K18": "quarter 2",
+            "K20": "quarter 2",
+            "K22": "quarter 2",
+            "K24": "quarter 2",
+            "M2": "quarter 2",
+            "M4": "quarter 2",
+            "M6": "quarter 2",
+            "M8": "quarter 2",
+            "M10": "quarter 2",
+            "M12": "quarter 2",
+            "M14": "quarter 2",
+            "M16": "quarter 2",
+            "M18": "quarter 2",
+            "M20": "quarter 2",
+            "M22": "quarter 2",
+            "M24": "quarter 2",
+            "O2": "quarter 2",
+            "O4": "quarter 2",
+            "O6": "quarter 2",
+            "O8": "quarter 2",
+            "O10": "quarter 2",
+            "O12": "quarter 2",
+            "O14": "quarter 2",
+            "O16": "quarter 2",
+            "O18": "quarter 2",
+            "O20": "quarter 2",
+            "O22": "quarter 2",
+            "O24": "quarter 2",
+            "B1": "quarter 3",
+            "B3": "quarter 3",
+            "B5": "quarter 3",
+            "B7": "quarter 3",
+            "B9": "quarter 3",
+            "B11": "quarter 3",
+            "B13": "quarter 3",
+            "B15": "quarter 3",
+            "B17": "quarter 3",
+            "B19": "quarter 3",
+            "B21": "quarter 3",
+            "B23": "quarter 3",
+            "D1": "quarter 3",
+            "D3": "quarter 3",
+            "D5": "quarter 3",
+            "D7": "quarter 3",
+            "D9": "quarter 3",
+            "D11": "quarter 3",
+            "D13": "quarter 3",
+            "D15": "quarter 3",
+            "D17": "quarter 3",
+            "D19": "quarter 3",
+            "D21": "quarter 3",
+            "D23": "quarter 3",
+            "F1": "quarter 3",
+            "F3": "quarter 3",
+            "F5": "quarter 3",
+            "F7": "quarter 3",
+            "F9": "quarter 3",
+            "F11": "quarter 3",
+            "F13": "quarter 3",
+            "F15": "quarter 3",
+            "F17": "quarter 3",
+            "F19": "quarter 3",
+            "F21": "quarter 3",
+            "F23": "quarter 3",
+            "H1": "quarter 3",
+            "H3": "quarter 3",
+            "H5": "quarter 3",
+            "H7": "quarter 3",
+            "H9": "quarter 3",
+            "H11": "quarter 3",
+            "H13": "quarter 3",
+            "H15": "quarter 3",
+            "H17": "quarter 3",
+            "H19": "quarter 3",
+            "H21": "quarter 3",
+            "H23": "quarter 3",
+            "J1": "quarter 3",
+            "J3": "quarter 3",
+            "J5": "quarter 3",
+            "J7": "quarter 3",
+            "J9": "quarter 3",
+            "J11": "quarter 3",
+            "J13": "quarter 3",
+            "J15": "quarter 3",
+            "J17": "quarter 3",
+            "J19": "quarter 3",
+            "J21": "quarter 3",
+            "J23": "quarter 3",
+            "L1": "quarter 3",
+            "L3": "quarter 3",
+            "L5": "quarter 3",
+            "L7": "quarter 3",
+            "L9": "quarter 3",
+            "L11": "quarter 3",
+            "L13": "quarter 3",
+            "L15": "quarter 3",
+            "L17": "quarter 3",
+            "L19": "quarter 3",
+            "L21": "quarter 3",
+            "L23": "quarter 3",
+            "N1": "quarter 3",
+            "N3": "quarter 3",
+            "N5": "quarter 3",
+            "N7": "quarter 3",
+            "N9": "quarter 3",
+            "N11": "quarter 3",
+            "N13": "quarter 3",
+            "N15": "quarter 3",
+            "N17": "quarter 3",
+            "N19": "quarter 3",
+            "N21": "quarter 3",
+            "N23": "quarter 3",
+            "P1": "quarter 3",
+            "P3": "quarter 3",
+            "P5": "quarter 3",
+            "P7": "quarter 3",
+            "P9": "quarter 3",
+            "P11": "quarter 3",
+            "P13": "quarter 3",
+            "P15": "quarter 3",
+            "P17": "quarter 3",
+            "P19": "quarter 3",
+            "P21": "quarter 3",
+            "P23": "quarter 3"
+          },
+          "note": "288 of 384 wells picked, a quarter at a time"
+        },
+        {
+          "name": "lysate 1",
+          "wells": 1536,
+          "catalog": "Greiner #782270",
+          "holds": "3.5 µL: 2 µL lysate, barcodes, water and mastermix",
+          "seating": {},
+          "labels": {},
+          "note": "4 picked plates to one"
+        }
+      ],
+      "steps": [
+        {
+          "title": "Array 72 design(s) and grow",
+          "key": "array-designs",
+          "section": "Array and pick",
+          "instructions": [
+            "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
+            "Grow overnight at 37 °C on 50 µg/mL kanamycin."
+          ],
+          "cautions": [],
+          "notes": [
+            "This run reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
+            "The archive is untouched: this reads a copy of it."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
+          ],
+          "troubleshooting": [
+            {
+              "problem": "A spot grows nothing",
+              "solution": "That design has no clone to read. Re-transform it from the archive before anyone re-synthesises it.",
+              "citation": null
+            }
+          ],
+          "holes": []
+        },
+        {
+          "title": "Pick 4 colonies of each design",
+          "key": "pick-colonies",
+          "section": "Array and pick",
+          "instructions": [
+            "Pick 4 colonies a design into 60 µL low-salt LB with 50 µg/mL kanamycin, with the QPix XE Microbial Colony Picker.",
+            "Fill one quarter of each 384-well plate before starting the next.",
+            "Grow overnight at 37 °C."
+          ],
+          "cautions": [],
+          "notes": [
+            "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
+            "1 fragment(s): 40 design(s), 100.0% of picks clean",
+            "2 fragment(s): 16 design(s), 100.0% of picks clean",
+            "3 fragment(s): 6 design(s), 93.8% of picks clean",
+            "4 fragment(s): 9 design(s), 89.2% of picks clean",
+            "5 fragment(s): 1 design(s), 84.6% of picks clean",
+            "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "288 wells over 1 plate(s): 288 picked.",
+            "Every colony of one design sits on one plate."
+          ],
+          "troubleshooting": [
+            {
+              "problem": "A design in many fragments gives no clean colony",
+              "solution": "The chances above say which designs that is likeliest for. Pick more colonies of those designs before the plates are poured, not after.",
+              "citation": null
+            }
+          ],
+          "holes": []
+        },
+        {
+          "title": "Compress the picked plates into 1 barcoding plate(s)",
+          "key": "compress-plates",
+          "section": "Mark every well",
+          "instructions": [
+            "Invert the picked plates for 30 minutes so the cells gather at the meniscus.",
+            "Move 2 µL of each well into the 1536-well plate."
+          ],
+          "cautions": [],
+          "notes": [],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [
+            {
+              "title": "Compress 1 picked plates into lysate 1",
+              "moves": [
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "A48"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "B48"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "A24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "C24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "E24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "G24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "C48"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "I24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "K24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "M24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O2"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O4"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O6"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O8"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O10"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O12"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O14"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O16"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O18"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O20"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O22"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "O24"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "D48"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "B23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "D23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "F23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "H23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "E48"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F1"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F2"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F3"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F4"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F5"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F6"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F7"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F8"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F9"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F10"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F11"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "J23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F12"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F13"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F14"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F15"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F16"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F17"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F18"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F19"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F20"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F21"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F22"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F23"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "L23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F24"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F25"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F26"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F27"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F28"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F29"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F30"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F31"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F32"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F33"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F34"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F35"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "N23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F36"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P1"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F37"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P3"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F38"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P5"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F39"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P7"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F40"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P9"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F41"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P11"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F42"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P13"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F43"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P15"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F44"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P17"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F45"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P19"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F46"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P21"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F47"
+                  },
+                  "volume_ul": 2.0
+                },
+                {
+                  "source": {
+                    "plate": "picked 1",
+                    "well": "P23"
+                  },
+                  "destination": {
+                    "plate": "lysate 1",
+                    "well": "F48"
+                  },
+                  "volume_ul": 2.0
+                }
+              ],
+              "instrument": "ECHO 525 acoustic liquid handler",
+              "note": "Invert the picked plates for 30 minutes first, so the cells gather at the meniscus",
+              "citation": {
+                "source": "Qian SI",
+                "locator": "Day 4.1"
+              }
+            }
+          ],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "288 wells of lysate, 4 picked plates to one."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Barcode each well in lysate",
+          "key": "barcode-wells",
+          "section": "Mark every well",
+          "instructions": [
+            "Add one barcode from each of the 4 kit groups to every well, by the address that well's position gives.",
+            "Make each well up to 3.5 µL with 0.5 µL barcodes, 0.5 µL water and 0.5 µL master mix.",
+            "Run the ligation, then pool."
+          ],
+          "cautions": [],
+          "notes": [
+            "The address is worked out from where the well is, not looked up: three groups name the well and the fourth goes across the whole plate from a reservoir.",
+            "The kit's sequences are not shipped. Read them from the copy you hold."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [
+            {
+              "records": [
+                "../block-vector-1.dna"
+              ],
+              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.",
+              "span": [
+                280,
+                490
+              ],
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": null,
+              "highlight": [
+                "internal stuffer"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 3, DMX"
+              }
+            }
+          ],
+          "gels": [],
+          "expected": [
+            "One barcoded construct a well, carrying four barcodes chained head to tail."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Pool and sequence",
+          "key": "pool-and-sequence",
+          "section": "Mark every well",
+          "instructions": [
+            "Pool every well and amplify the three primer pairs separately. 2 miniprep columns, because one saturates.",
+            "Sequence the pool."
+          ],
+          "cautions": [],
+          "notes": [
+            "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "Reads for 288 wells, every well told from the rest by the marks it carries."
+          ],
+          "troubleshooting": [],
+          "holes": []
+        },
+        {
+          "title": "Call every well",
+          "key": "call-wells",
+          "section": "Call the wells",
+          "instructions": [
+            "Demultiplex the reads by address, checking each address rather than trusting a file.",
+            "Call a consensus a well, then compare it with that well's design base for base.",
+            "Reformat, compacting out the wells that failed."
+          ],
+          "cautions": [],
+          "notes": [
+            "A well read too thinly carries no verdict and is not a failure, so reformatting does not compact it out.",
+            "More than one consensus is mixed, and mixed fails.",
+            "A design with no passing well is picked again from the same archive spot before anyone re-synthesises it."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "A well read more than 150 times is called.",
+            "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
+          ],
+          "troubleshooting": [
+            {
+              "problem": "A well's call is the right protein and the wrong barcode",
+              "solution": "It fails. A barcode that no longer names its member cannot be put right by the linkage read later.",
+              "citation": null
+            }
+          ],
+          "holes": []
+        }
+      ],
+      "references": [
+        {
+          "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
+          "url": "https://doi.org/10.1038/s41467-026-76740-9"
+        },
+        {
+          "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach",
+          "url": "https://doi.org/10.1021/acssynbio.4c00625"
+        },
+        {
+          "text": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from",
+          "url": "https://doi.org/10.1021/acssynbio.3c00694"
+        }
+      ],
+      "sources": {
+        "figure-sources": {
+          "document": "liulab-mbio, Figure sources for four designs",
+          "edition": "",
+          "url": "",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/figure-sources.md"
+        },
+        "Qian SI": {
+          "document": "Qian et al. 2026, Supplementary Information",
+          "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
+          "url": "",
+          "read_as": "held under reference_docs/",
+          "date": "2026-10-06",
+          "note": ""
+        }
+      },
+      "holes": [],
+      "bill": null
+    },
+    {
+      "title": "Cargo validation: index PCR",
+      "key": "07355615f170e75c",
+      "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
+      "overview": {},
+      "highlights": [],
+      "checks": [],
+      "choice": "read every well back",
       "consumes": [
         {
           "name": "cargo archive plate",
@@ -3936,7 +7877,7 @@
           ],
           "cautions": [],
           "notes": [
-            "This project reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
+            "This run reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it."
           ],
           "tables": [],
@@ -7491,8 +11432,7 @@
               "missing": "no index mark set is named for the barcoded primer pairs",
               "kind": "lab",
               "where": "index PCR, the pair marking one well",
-              "filled_by": "the prepared primer plate the lab holds",
-              "issue": ""
+              "filled_by": "the prepared primer plate the lab holds"
             }
           ]
         },
@@ -7612,7 +11552,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "e830b71fc06dc174",
+      "key": "04687df9101ea424",
       "summary": "Join 3 part lists into 13824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -7634,6 +11574,7 @@
       },
       "highlights": [],
       "checks": [],
+      "choice": "",
       "consumes": [
         {
           "name": "clonal picked plate",
@@ -7706,6 +11647,18 @@
           "storage": "-20 °C",
           "amount": "3, one a position",
           "note": "opened by the internal digest in round 1, and to take each block's cargo. A part enters on its own position's entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "pLVX-TetOne-dom vector",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "the library's final home; PaqCI releases its ccdB cassette to admit the cargo",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -7878,6 +11831,18 @@
           "citation": null
         },
         {
+          "name": "Selective plates for the final transfer",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "",
+          "note": "the working vector's own antibiotic, which this plan does not name",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
           "name": "Plasmid prep kit",
           "supplier": "",
           "catalog": "",
@@ -7996,18 +11961,24 @@
                 {
                   "name": "BbsI-HF (R3539)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3539L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3539L, concentration"
+                  }
                 },
                 {
                   "name": "SrfI (R0629)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0629L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0629L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -8103,18 +12074,24 @@
                 {
                   "name": "BsaI-HFv2 (R3733)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3733L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3733L, concentration"
+                  }
                 },
                 {
                   "name": "PmeI (R0560)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0560L, 10 U/µL",
+                  "final": "25 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0560L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -8275,12 +12252,14 @@
           "figures": [
             {
               "records": [
-                "../round-1.dna",
-                "../round-2.dna",
-                "../product.dna"
+                "../block-vector-1.dna",
+                "../round-1.dna"
               ],
-              "caption": "Round 1 of 3 joins N_JUN at position N, entering on AGGA and leaving TTCC",
-              "span": null,
+              "caption": "Round 1 of 3 joins N_JUN at position N, entering on AGGA and leaving TTCC: what it opens above, what it makes below",
+              "span": [
+                280,
+                1262
+              ],
               "linear": true,
               "sequence_view": false,
               "enzymes": [
@@ -8509,18 +12488,24 @@
                 {
                   "name": "BbsI-HF (R3539)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3539L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3539L, concentration"
+                  }
                 },
                 {
                   "name": "SrfI (R0629)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0629L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0629L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -8616,18 +12601,24 @@
                 {
                   "name": "BsaI-HFv2 (R3733)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3733L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3733L, concentration"
+                  }
                 },
                 {
                   "name": "PmeI (R0560)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0560L, 10 U/µL",
+                  "final": "25 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0560L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -8789,11 +12780,13 @@
             {
               "records": [
                 "../round-1.dna",
-                "../round-2.dna",
-                "../product.dna"
+                "../round-2.dna"
               ],
-              "caption": "Round 2 of 3 joins DBD_JUN at position DBD, entering on AGAT and leaving TTCC",
-              "span": null,
+              "caption": "Round 2 of 3 joins DBD_JUN at position DBD, entering on AGAT and leaving TTCC: what it opens above, what it makes below",
+              "span": [
+                1033,
+                1454
+              ],
               "linear": true,
               "sequence_view": false,
               "enzymes": [
@@ -9022,18 +13015,24 @@
                 {
                   "name": "BbsI-HF (R3539)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3539L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3539L, concentration"
+                  }
                 },
                 {
                   "name": "SrfI (R0629)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0629L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0629L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -9129,18 +13128,24 @@
                 {
                   "name": "BsaI-HFv2 (R3733)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3733L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3733L, concentration"
+                  }
                 },
                 {
                   "name": "PmeI (R0560)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0560L, 10 U/µL",
+                  "final": "25 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0560L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -9301,12 +13306,14 @@
           "figures": [
             {
               "records": [
-                "../round-1.dna",
                 "../round-2.dna",
                 "../product.dna"
               ],
-              "caption": "Round 3 of 3 joins C_JUN at position C, entering on GCAT and leaving TTCC",
-              "span": null,
+              "caption": "Round 3 of 3 joins C_JUN at position C, entering on GCAT and leaving TTCC: what it opens above, what it makes below",
+              "span": [
+                1225,
+                1506
+              ],
               "linear": true,
               "sequence_view": false,
               "enzymes": [
@@ -9522,7 +13529,7 @@
           "notes": [
             "The block reads in the reverse of the order the rounds ran: each round inserted its barcode ahead of the ones already there.",
             "0.0% of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
-            "Takacsi-Nagy's Figures 1D and 1E read about 95% of their reads carrying a valid barcode at every position, and nearly 90% of the library correctly linked. That is what one source reached, not a mark this library is held to."
+            "This build passes the linkage read at 90.0% of reads carrying a barcode that still names its part. That is this run's own mark, not a published one."
           ],
           "tables": [],
           "programs": [],
@@ -9548,16 +13555,7 @@
               "citation": null
             }
           ],
-          "holes": [
-            {
-              "id": "H28",
-              "missing": "no pass mark for the linkage read: what share of reads must carry a barcode that still names its part",
-              "kind": "undecided",
-              "where": "the linkage read",
-              "filled_by": "this run, or a source that sets a mark rather than reporting what it reached",
-              "issue": "liuhlab/liulab-mbio#346"
-            }
-          ]
+          "holes": []
         },
         {
           "title": "Read representation",
@@ -9684,6 +13682,14 @@
           "date": "2026-10-06",
           "note": ""
         },
+        "NEB specifications": {
+          "document": "New England Biolabs product specification sheets",
+          "edition": "#R3733S/L, #R3539S/L, #R0629S/L, #R0560S/L",
+          "url": "",
+          "read_as": "plain curl",
+          "date": "2026-10-06",
+          "note": "docs/research/bench-numbers.md"
+        },
         "figure-sources": {
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
@@ -9696,36 +13702,34 @@
       "holes": [
         {
           "id": "H23",
-          "missing": "no published document describes the split digest; the one source is the paper itself",
+          "missing": "nobody has published two enzymes run in one tube, the second added to the first's reaction with no heat kill before the beads; the one source is the paper itself",
           "kind": "unpublished",
-          "where": "the split digest, units per reaction",
-          "filled_by": "nothing; it is the method's own",
-          "issue": "liuhlab/liulab-mbio#264"
-        },
-        {
-          "id": "H24",
-          "missing": "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector's mass nor the ratio it meets the cargo at is sourced",
-          "kind": "undecided",
-          "where": "final assembly, the one-pot reaction",
-          "filled_by": "a pilot",
-          "issue": "liuhlab/liulab-mbio#264"
+          "where": "the split digest, the procedure",
+          "filled_by": "nothing; it is the method's own"
         }
       ],
       "bill": null
     },
     {
       "title": "Final cargo ligation",
-      "key": "399838a85893e24b",
+      "key": "43a6c6e06eabd268",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
       "checks": [],
+      "choice": "",
       "consumes": [
         {
           "name": "library prep, round 3",
           "what": "the pooled library after round 3, as a plasmid prep",
           "spec": [],
           "storage": "-20 °C"
+        },
+        {
+          "name": "working vector",
+          "what": "the backbone the library ends in",
+          "spec": [],
+          "storage": ""
         }
       ],
       "produces": [
@@ -9744,6 +13748,30 @@
           "storage": "-20 °C",
           "amount": "3, one a position",
           "note": "opened by the internal digest in round 1, and to take each block's cargo. A part enters on its own position's entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "pLVX-TetOne-dom vector",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "the library's final home; PaqCI releases its ccdB cassette to admit the cargo",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "PaqCI",
+          "supplier": "New England Biolabs",
+          "catalog": "R0745",
+          "storage": "-20 °C",
+          "amount": "2.5 µL per digest",
+          "note": "admits the finished cargo to the working vector",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -9786,6 +13814,59 @@
           "citation": null
         },
         {
+          "name": "T7 DNA Ligase",
+          "supplier": "NEB",
+          "catalog": "#M0318L",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "3,000,000 U/mL. Refuses blunt ends, which is what removes escapees.",
+          "contains": [],
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "PEG",
+              "detail": "Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more.",
+              "when": "",
+              "citation": {
+                "source": "M0318",
+                "locator": "reaction conditions"
+              }
+            },
+            {
+              "kind": "forbids",
+              "subject": "heat inactivation",
+              "detail": "Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up.",
+              "when": "PEG",
+              "citation": {
+                "source": "M0318",
+                "locator": "note 4"
+              }
+            }
+          ],
+          "cautions": [],
+          "citation": {
+            "source": "M0318",
+            "locator": "reaction conditions"
+          }
+        },
+        {
+          "name": "StickTogether DNA Ligase Buffer",
+          "supplier": "NEB",
+          "catalog": "#B0535S",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.",
+          "contains": [
+            "PEG 6000"
+          ],
+          "rules": [],
+          "cautions": [],
+          "citation": {
+            "source": "M0318",
+            "locator": "reaction conditions"
+          }
+        },
+        {
           "name": "SPRI paramagnetic beads",
           "supplier": "",
           "catalog": "",
@@ -9821,6 +13902,18 @@
           "storage": "",
           "amount": "",
           "note": "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Selective plates for the final transfer",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "",
+          "note": "the working vector's own antibiotic, which this plan does not name",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -9876,16 +13969,17 @@
       "plates": [],
       "steps": [
         {
-          "title": "Pick the working vector",
+          "title": "Pick the working vector and confirm PaqCI opens it",
           "key": "pick-working-vector",
           "section": "Choose the working vector",
           "instructions": [
-            "Take one tube of the working vector stock for the application this library is built for.",
-            "Confirm its own cargo enzyme opens it on AGGA and TTCC, giving up the ccdB cassette the library displaces."
+            "Take one tube of pLVX-TetOne-dom stock.",
+            "Digest a little of it with PaqCI (R0745) and run it on a gel."
           ],
           "cautions": [],
           "notes": [
-            "The cargo enzyme is chosen against every molecule in this pot, so it has to be settled before the blocks are designed: the pipeline reads it off the working vector before it designs any block, so no block spells it."
+            "PaqCI reads no site in any molecule sharing the final-assembly pot.",
+            "ccdB is what makes the assembly self-selecting: a vector that took no cargo keeps the cassette and kills its host."
           ],
           "tables": [],
           "programs": [],
@@ -9896,19 +13990,17 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "One opened backbone and the ccdB cassette beside it, and nothing else cut."
+            "10284 bp opens on AGGA and TTCC, giving up its 385 bp ccdB cassette.",
+            "Two bands and no more: PaqCI reads this vector nowhere else."
           ],
-          "troubleshooting": [],
-          "holes": [
+          "troubleshooting": [
             {
-              "id": "H31",
-              "missing": "no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector's length",
-              "kind": "lab",
-              "where": "final assembly, the vector the library moves into",
-              "filled_by": "this run naming a working vector, which is a stock the lab holds and an application chooses",
-              "issue": ""
+              "problem": "The stock will not open",
+              "solution": "The cassette is not where the record says, or the enzyme has lost activity. Sequence the stock before assembling into it.",
+              "citation": null
             }
-          ]
+          ],
+          "holes": []
         },
         {
           "title": "Release the cargo with BsaI and PmeI",
@@ -9936,18 +14028,24 @@
                 {
                   "name": "BsaI-HFv2 (R3733)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R3733L, 20 U/µL",
+                  "final": "50 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R3733L, concentration"
+                  }
                 },
                 {
                   "name": "PmeI (R0560)",
                   "volume_ul": 2.5,
-                  "stock": "",
-                  "final": "",
+                  "stock": "R0560L, 10 U/µL",
+                  "final": "25 units",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "NEB specifications",
+                    "locator": "#R0560L, concentration"
+                  }
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -10042,18 +14140,54 @@
           "holes": []
         },
         {
-          "title": "Assemble the cargo into the working vector",
+          "title": "Assemble the cargo into pLVX-TetOne-dom with PaqCI",
           "key": "assemble-into-working-vector",
           "section": "Move the library across",
           "instructions": [
-            "Add the working vector, its cargo enzyme and the ligase to the release tube, and run the enzyme's own Golden Gate cycling."
+            "Add 75 ng of working vector, PaqCI (R0745) and T7 DNA Ligase in StickTogether DNA Ligase Buffer to the release tube.",
+            "Run the cycling below without purifying anything first."
           ],
           "cautions": [],
           "notes": [
-            "This is the one reaction where the working vector meets material the rounds made; the rounds all finish first."
+            "6435 bp of library goes in and the cargo alone comes out: the backbone the rounds ran in is shredded and stays behind.",
+            "The cycling is NEB's longer single-insert program, which it gives for library preparation rather than for cloning one gene.",
+            "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published figure."
           ],
           "tables": [],
-          "programs": [],
+          "programs": [
+            {
+              "stages": [
+                {
+                  "incubations": [
+                    {
+                      "label": "Assembly",
+                      "temperature_c": 37.0,
+                      "seconds": 3600,
+                      "delta_c": null,
+                      "citation": null
+                    }
+                  ],
+                  "cycles": 1,
+                  "citation": null
+                },
+                {
+                  "incubations": [
+                    {
+                      "label": "End soak",
+                      "temperature_c": 60.0,
+                      "seconds": 300,
+                      "delta_c": null,
+                      "citation": null
+                    }
+                  ],
+                  "cycles": 1,
+                  "citation": null
+                }
+              ],
+              "title": "Golden Gate assembly",
+              "lid_temperature_c": null
+            }
+          ],
           "timers": [],
           "waits": [],
           "hands_on_seconds": null,
@@ -10082,27 +14216,17 @@
           ],
           "gels": [],
           "expected": [
-            "One circular final vector a member, the ccdB cassette displaced by the cargo."
+            "One circular final vector a member, about 10975 bp, joined on AGGA and TTCC.",
+            "The ccdB cassette is displaced, so a vector that took no cargo kills its host."
           ],
-          "troubleshooting": [],
-          "holes": [
+          "troubleshooting": [
             {
-              "id": "H31",
-              "missing": "no working vector is named, so nothing names the cargo enzyme, its cycling or the final vector's length",
-              "kind": "lab",
-              "where": "final assembly, the vector the library moves into",
-              "filled_by": "this run naming a working vector, which is a stock the lab holds and an application chooses",
-              "issue": ""
-            },
-            {
-              "id": "H24",
-              "missing": "no mass for the one-pot assembly: the cargo arrives unpurified, so neither the working vector's mass nor the ratio it meets the cargo at is sourced",
-              "kind": "undecided",
-              "where": "final assembly, the one-pot reaction",
-              "filled_by": "a pilot",
-              "issue": "liuhlab/liulab-mbio#264"
+              "problem": "Colonies that are still ccdB-positive",
+              "solution": "The working vector was not opened to completion. Check the pick step's gel before repeating.",
+              "citation": null
             }
-          ]
+          ],
+          "holes": []
         },
         {
           "title": "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
@@ -10116,7 +14240,8 @@
           "cautions": [],
           "notes": [
             "This is a bottleneck like a round's, and the library can only lose members here. Electroporate all of the assembly rather than a measured part of it.",
-            "The settings are the cells' own and are keyed by their catalogue number, not set by this method."
+            "The settings are the cells' own and are keyed by their catalogue number, not set by this method.",
+            "ccdB does the selecting here, so the plates carry pLVX-TetOne-dom's own marker."
           ],
           "tables": [],
           "programs": [
@@ -10178,7 +14303,7 @@
           "key": "read-final-representation",
           "section": "Read the library back",
           "instructions": [
-            "Amplify across the barcode block again.",
+            "Amplify across the barcode block again, on Final representation read forward and Final representation read reverse from library-read-primers.tsv, which give a 149 bp amplicon.",
             "Sequence, decode each read against barcodes.tsv, and compare the counts with the read taken in the library backbone."
           ],
           "cautions": [],
@@ -10195,7 +14320,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into the working vector.",
+            "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into pLVX-TetOne-dom.",
             "At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations."
           ],
           "troubleshooting": [
@@ -10275,6 +14400,14 @@
         }
       ],
       "sources": {
+        "M0318": {
+          "document": "New England Biolabs #M0318 T7 DNA Ligase product page",
+          "edition": "",
+          "url": "https://www.neb.com/en/products/m0318-t7-dna-ligase",
+          "read_as": "r.jina.ai",
+          "date": "2026-10-06",
+          "note": ""
+        },
         "MA133": {
           "document": "Endura Competent Cells manual, Lucigen / Biosearch Technologies",
           "edition": "MA133 26Feb2018",
@@ -10282,6 +14415,14 @@
           "read_as": "plain curl",
           "date": "2026-10-06",
           "note": ""
+        },
+        "NEB specifications": {
+          "document": "New England Biolabs product specification sheets",
+          "edition": "#R3733S/L, #R3539S/L, #R0629S/L, #R0560S/L",
+          "url": "",
+          "read_as": "plain curl",
+          "date": "2026-10-06",
+          "note": "docs/research/bench-numbers.md"
         },
         "figure-sources": {
           "document": "liulab-mbio, Figure sources for four designs",
@@ -10305,22 +14446,22 @@
     {
       "name": "destination opens",
       "status": "pass",
-      "detail": "3 judged, worst: BbsI cuts each of the 1 destination(s) of round 1 opening in 2 places"
+      "detail": "4 judged, worst: BbsI cuts each of the 1 destination(s) of round 1 opening in 2 places"
     },
     {
       "name": "donor releases",
       "status": "pass",
-      "detail": "3 judged, worst: BsaI cuts each of the 24 donor(s) of round 1 release in 2 places"
+      "detail": "4 judged, worst: BsaI cuts each of the 24 donor(s) of round 1 release in 2 places"
     },
     {
       "name": "ends distinguishable",
       "status": "pass",
-      "detail": "3 judged, worst: the ends meeting in round 1 ligation read as AGGA, TTCC, which a ligation pairs one way"
+      "detail": "4 judged, worst: the ends meeting in round 1 ligation read as AGGA, TTCC, which a ligation pairs one way"
     },
     {
       "name": "ligation fidelity",
       "status": null,
-      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
+      "detail": "4 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
     },
     {
       "name": "barcode spacing",
@@ -10368,7 +14509,16 @@
       "detail": "the library product reads through what it keeps without a stop"
     }
   ],
-  "sources": {},
+  "sources": {
+    "prices": {
+      "document": "AP-1 demo price record",
+      "edition": "2026-10-08",
+      "url": "",
+      "read_as": "read from prices.csv",
+      "date": "",
+      "note": ""
+    }
+  },
   "bill": {
     "rows": [
       {
@@ -10376,158 +14526,122 @@
         "quantity": 131,
         "unit": "oligos",
         "key": "oligo-pool",
-        "charge": "",
+        "charge": "2575.00",
         "headroom": "131 count, 369 below the next band; 350 length, no slack above it at all",
-        "citation": null,
-        "hole": {
-          "id": "P1",
-          "missing": "nothing prices 131 oligos",
-          "kind": "price",
-          "where": "AP-1 DESynR oligo pool, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "citation": {
+          "source": "prices",
+          "locator": "oligo-pool count 101-500; length 301-350"
+        },
+        "hole": null
       },
       {
         "item": "Pool amplification primers",
         "quantity": 74,
         "unit": "primers",
         "key": "pool-primers",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P2",
-          "missing": "nothing prices 74 primers",
-          "kind": "price",
-          "where": "Pool amplification primers, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "charge": "370.00",
+        "headroom": "74 count, 22 below the next band",
+        "citation": {
+          "source": "prices",
+          "locator": "pool-primers count 1-96"
+        },
+        "hole": null
       },
       {
         "item": "BbsI-HF",
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3539",
-        "charge": "",
+        "charge": "41.4975",
         "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P3",
-          "missing": "nothing prices 7.5 µL",
-          "kind": "price",
-          "where": "BbsI-HF, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "citation": {
+          "source": "prices",
+          "locator": "R3539"
+        },
+        "hole": null
       },
       {
         "item": "BsaI-HFv2",
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3733",
-        "charge": "",
+        "charge": "12.450",
         "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P4",
-          "missing": "nothing prices 7.5 µL",
-          "kind": "price",
-          "where": "BsaI-HFv2, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "citation": {
+          "source": "prices",
+          "locator": "R3733"
+        },
+        "hole": null
       },
       {
         "item": "SrfI",
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0629",
-        "charge": "",
+        "charge": "27.900",
         "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P5",
-          "missing": "nothing prices 7.5 µL",
-          "kind": "price",
-          "where": "SrfI, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "citation": {
+          "source": "prices",
+          "locator": "R0629"
+        },
+        "hole": null
       },
       {
         "item": "PmeI",
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0560",
-        "charge": "",
+        "charge": "13.200",
         "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P6",
-          "missing": "nothing prices 7.5 µL",
-          "kind": "price",
-          "where": "PmeI, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "citation": {
+          "source": "prices",
+          "locator": "R0560"
+        },
+        "hole": null
       },
       {
         "item": "Endura ElectroCompetent Cells",
         "quantity": 3,
         "unit": "aliquots",
         "key": "60242-2",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P7",
-          "missing": "nothing prices 3 aliquots",
-          "kind": "price",
-          "where": "Endura ElectroCompetent Cells, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "charge": "71.04",
+        "headroom": "3 count, 21 below the next band",
+        "citation": {
+          "source": "prices",
+          "locator": "60242-2 count 1-24"
+        },
+        "hole": null
       },
       {
         "item": "Electroporation cuvettes",
         "quantity": 3,
         "unit": "cuvettes",
         "key": "cuvettes",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P8",
-          "missing": "nothing prices 3 cuvettes",
-          "kind": "price",
-          "where": "Electroporation cuvettes, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "charge": "11.82",
+        "headroom": "3 count, 47 below the next band",
+        "citation": {
+          "source": "prices",
+          "locator": "cuvettes count 1-50"
+        },
+        "hole": null
       },
       {
         "item": "Plasmid preps",
         "quantity": 3,
         "unit": "preps",
         "key": "plasmid prep",
-        "charge": "",
-        "headroom": "",
-        "citation": null,
-        "hole": {
-          "id": "P9",
-          "missing": "nothing prices 3 preps",
-          "kind": "price",
-          "where": "Plasmid preps, money",
-          "filled_by": "a price record holding a row for this item",
-          "issue": ""
-        }
+        "charge": "7.68",
+        "headroom": "3 count, 47 below the next band",
+        "citation": {
+          "source": "prices",
+          "locator": "plasmid prep count 1-50"
+        },
+        "hole": null
       }
     ],
     "title": "What this run consumes",
-    "currency": "",
-    "total": "",
-    "record": ""
+    "currency": "USD",
+    "total": "3130.5875",
+    "record": "prices"
   }
 }
