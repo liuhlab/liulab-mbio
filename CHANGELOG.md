@@ -330,8 +330,9 @@ sets one.
 ### Fixed
 
 - No library page now says an enzyme has stopped cutting a record it still cuts. Each round's
-  prep counts the sites its own product carries, and the final assembly says the cargo enzyme
-  cuts only the cassette it opens.
+  prep counts the sites its own product carries, the final assembly says the cargo enzyme cuts
+  only the cassette it opens, and the AP-1 maps name the four enzymes the method turns on, which
+  cut twice and so were drawn on none of them.
 - A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
   padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes

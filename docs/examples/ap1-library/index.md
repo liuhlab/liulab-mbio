@@ -161,11 +161,14 @@ seller before you order, and swap in your own account's numbers.
 
 ## The figures
 
-Each record is drawn by the same command, from the file beside it:
+Each record is drawn by the same command, from the file beside it. A map labels only the
+enzymes that cut a record once, so the four this method uses are named: all but SrfI cut twice,
+and the maps would otherwise show none of them.
 
 ```bash
 D=docs/examples/ap1-library
-pixi run liulab_mbio plot map $D/product.dna -o $D/product-map.pdf
+pixi run liulab_mbio plot map $D/product.dna \
+  --enzyme BbsI --enzyme BsaI --enzyme PmeI --enzyme SrfI -o $D/product-map.pdf
 pixi run liulab_mbio plot map $D/product.dna \
   --region 1368..1442 --sequence-view -o $D/barcode-block.pdf
 ```

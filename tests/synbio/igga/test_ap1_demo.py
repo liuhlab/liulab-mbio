@@ -18,6 +18,7 @@ from liulab_mbio.bench.amounts import dna_amount
 from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.io import read_record
+from liulab_mbio.plot.layers import items
 from liulab_mbio.protocol.model import Citation, write_project, write_protocol
 from liulab_mbio.sequence import SequenceRecord, span_text
 from liulab_mbio.sites import digest, find_sites
@@ -698,6 +699,20 @@ def test_a_prep_step_counts_the_sites_its_own_round_s_product_carries(plan, prot
         "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in "
         "2 places, as it cut the destination: the part brought none in."
     )
+
+
+def test_the_demo_maps_name_their_enzymes_because_a_default_map_draws_none():
+    """Every enzyme a round turns on cuts twice but SrfI, and a map labels the single cutters."""
+    product = read_record(DEMO / "product.dna")
+    named = ["BbsI", "BsaI", "PmeI", "SrfI"]
+
+    assert _cutters(items(product)) & set(named) == {"SrfI"}
+    assert _cutters(items(product, enzymes=named)) == set(named)
+
+
+def _cutters(drawn):
+    """The names of the enzymes a map labels."""
+    return {cutter.name for item in drawn for cutter in item.cutters}
 
 
 def test_a_page_lists_only_the_reagents_its_own_steps_reach(plan):

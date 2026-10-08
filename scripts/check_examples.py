@@ -39,6 +39,10 @@ READBACK = "docs/examples/ap1-readback"
 #: the one its example's page prints, so the two can be read against each other.
 OUT = "<out>"
 
+#: The iGGA enzymes each AP-1 map names: two cut sites each but SrfI's, so the unique cutters a
+#: map draws by default leave out the ones the method turns on.
+METHOD_ENZYMES = "--enzyme BbsI --enzyme BsaI --enzyme PmeI --enzyme SrfI"
+
 
 @dataclass(frozen=True)
 class Generator:
@@ -99,10 +103,10 @@ GENERATORS: tuple[Generator, ...] = (
         what="the AP-1 figures",
         directory=REPO / AP1,
         commands=(
-            f"liulab_mbio plot map {AP1}/vector.gb -o {OUT}/vector-map.pdf",
-            f"liulab_mbio plot map {AP1}/round-1.dna -o {OUT}/round-1-map.pdf",
-            f"liulab_mbio plot map {AP1}/round-2.dna -o {OUT}/round-2-map.pdf",
-            f"liulab_mbio plot map {AP1}/product.dna -o {OUT}/product-map.pdf",
+            f"liulab_mbio plot map {AP1}/vector.gb {METHOD_ENZYMES} -o {OUT}/vector-map.pdf",
+            f"liulab_mbio plot map {AP1}/round-1.dna {METHOD_ENZYMES} -o {OUT}/round-1-map.pdf",
+            f"liulab_mbio plot map {AP1}/round-2.dna {METHOD_ENZYMES} -o {OUT}/round-2-map.pdf",
+            f"liulab_mbio plot map {AP1}/product.dna {METHOD_ENZYMES} -o {OUT}/product-map.pdf",
             f"liulab_mbio plot map {AP1}/product.dna "
             f"--region 1368..1442 --sequence-view -o {OUT}/barcode-block.pdf",
         ),
