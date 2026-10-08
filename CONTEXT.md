@@ -120,8 +120,26 @@ _Avoid_: validation, rule, test
 ### Protocol
 
 A bench procedure someone can follow without asking anything: summary, materials, numbered
-steps, expected results and references. Rendered as one self-contained HTML page.
+steps, expected results and references. Rendered as one self-contained HTML page. It declares
+what it consumes and what it produces, and nothing else about the run it belongs to: everything
+else it needs it holds itself.
 _Avoid_: SOP, recipe, method
+
+### Item
+
+One thing passed from a protocol to the one after it: a plasmid, a plate of colonies, a pooled
+library. The name is the contract a **project** chains by; what it is, what it has to meet and
+where it waits are prose for the bench, which nothing parses.
+_Avoid_: input, output, artefact, deliverable
+
+### Project
+
+Protocols run in order, each handed what the ones before it produced. It holds what no single
+protocol owns: the background a reader is told before the first protocol, the bill for the whole
+run, and the checks that judge the design rather than one bench procedure. What a build chooses
+is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line; what a build
+writes is this chain of protocols.
+_Avoid_: workflow, pipeline, campaign
 
 ### Step
 

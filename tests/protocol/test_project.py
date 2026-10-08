@@ -13,6 +13,7 @@ from liulab_mbio.protocol.model import (
     Project,
     Protocol,
     Step,
+    Topic,
     read_project,
     write_project,
 )
@@ -73,10 +74,21 @@ def test_a_step_carries_a_section_label_and_the_steps_stay_one_flat_list() -> No
     assert [step.section for step in one.steps] == ["Day 1", ""]
 
 
+def test_a_project_carries_the_background_no_one_protocol_explains() -> None:
+    one = Project(
+        "Gateway cloning",
+        background=(Topic("Why two reactions", ("The entry clone is reused.",)),),
+    )
+    assert one.background[0].body == ("The entry clone is reused.",)
+    with pytest.raises(ValueError, match="title"):
+        Topic("", ("x",))
+
+
 def test_a_project_reads_back_equal_from_its_json(tmp_path: Path) -> None:
     one = Project(
         "Gateway cloning",
         summary="Two reactions, two days apart.",
+        background=(Topic("Why two reactions", ("The entry clone is reused.",)),),
         inputs=(Item("insert", "the amplicon, attB-tailed"),),
         protocols=(bp(), lr(steps=(Step("Set up the LR reaction", section="Day 2"),))),
         checks=(Check("junctions", "pass", "4 of 4 read in frame"),),

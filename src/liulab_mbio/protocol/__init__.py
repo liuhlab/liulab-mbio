@@ -44,6 +44,7 @@ A protocol declares what it consumes and what it produces, and nothing else abou
 run. A project chains protocols by those names, `write_project` writing one file of them::
 
     {"title": str, "summary": str,
+     "background": [{"title", "body": [paragraph]}],
      "inputs": [{"name", "what", "spec": [str], "storage"}],
      "protocols": [a protocol, as above],
      "checks": [{"name", "status", "detail"}], "bill": a bill, as above}
@@ -82,6 +83,7 @@ from liulab_mbio.protocol.model import (
     Step,
     ThermocyclerProgram,
     Timer,
+    Topic,
     Transfer,
     Troubleshooting,
     Vessel,
@@ -124,6 +126,7 @@ __all__ = [
     "Step",
     "ThermocyclerProgram",
     "Timer",
+    "Topic",
     "Transfer",
     "Troubleshooting",
     "Vessel",

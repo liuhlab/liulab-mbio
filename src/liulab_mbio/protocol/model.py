@@ -913,6 +913,29 @@ class Item:
 
 
 @dataclass(frozen=True, slots=True)
+class Topic:
+    """One thing a run's reader is told before any of its protocols: a heading and paragraphs.
+
+    It explains what no one protocol can — why the run is shaped as it is — so a step never has
+    to stop and explain a decision.
+
+    Parameters
+    ----------
+    title
+        The heading.
+    body
+        A paragraph each.
+    """
+
+    title: str
+    body: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Refuse a topic with no title."""
+        _require(bool(self.title.strip()), "a topic needs a title")
+
+
+@dataclass(frozen=True, slots=True)
 class Step:
     """One numbered step of a protocol.
 
@@ -1214,6 +1237,9 @@ class Project:
         What the run is called.
     summary
         One paragraph: what the run achieves.
+    background
+        What the reader is told before the first protocol: why the run is shaped as it is, a
+        topic at a time. Explanation a step would otherwise carry belongs here.
     inputs
         What the bench already holds before the first protocol.
     protocols
@@ -1230,6 +1256,7 @@ class Project:
     title: str
     _: KW_ONLY
     summary: str = ""
+    background: tuple[Topic, ...] = ()
     inputs: tuple[Item, ...] = ()
     protocols: tuple[Protocol, ...] = ()
     checks: tuple[Check, ...] = ()
