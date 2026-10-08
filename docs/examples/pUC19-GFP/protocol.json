@@ -44,6 +44,8 @@
       "detail": "9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3' end stability"
     }
   ],
+  "consumes": [],
+  "produces": [],
   "materials": [
     {
       "name": "pUC19 plasmid",
@@ -328,6 +330,7 @@
   "steps": [
     {
       "title": "Amplify pUC19 backbone",
+      "section": "",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the pUC19 template.",
@@ -498,6 +501,7 @@
     },
     {
       "title": "Amplify GFP",
+      "section": "",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -668,6 +672,7 @@
     },
     {
       "title": "Check the PCRs on a gel",
+      "section": "",
       "instructions": [
         "Pour a 1% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
@@ -737,6 +742,7 @@
     },
     {
       "title": "Digest the plasmid template with DpnI",
+      "section": "",
       "instructions": [
         "Add 20 units of DpnI to the pUC19 backbone PCR and mix.",
         "Incubate at 37 °C for 60 minutes."
@@ -770,6 +776,7 @@
     },
     {
       "title": "Purify every amplicon",
+      "section": "",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
@@ -796,6 +803,7 @@
     },
     {
       "title": "Measure every concentration",
+      "section": "",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
         "Work out the volume that carries the picomoles the next table asks for."
@@ -824,6 +832,7 @@
     },
     {
       "title": "Set up the Golden Gate reaction",
+      "section": "",
       "instructions": [
         "Thaw the master mix on ice and mix it well; it is viscous.",
         "Pipette the DNA into the tube first, then the rest.",
@@ -900,6 +909,7 @@
     },
     {
       "title": "Run the Golden Gate program",
+      "section": "",
       "instructions": [
         "Put the tube in the thermocycler and run the program below."
       ],
@@ -982,6 +992,7 @@
     },
     {
       "title": "Transform and plate",
+      "section": "",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
         "Add 2 µL of the assembly and flick the tube four or five times.",
@@ -1036,6 +1047,7 @@
     },
     {
       "title": "Screen colonies by PCR",
+      "section": "",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1217,6 +1229,7 @@
     },
     {
       "title": "Confirm the clone by sequencing",
+      "section": "",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",

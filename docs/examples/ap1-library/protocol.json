@@ -15,7 +15,7 @@
     "Barcode": "11 bp, block 41 bp",
     "Codon usage": "human",
     "Product": "AP-1 DESynR round 3, 6435 bp",
-    "Completeness": "P 0.99, 195,386 colonies at the end",
+    "Completeness": "0.99 chance nothing is missing, 195,386 colonies at the end",
     "Amino acids changed": "27 over 26 part end(s)",
     "Designs read back": "72, every one"
   },
@@ -99,6 +99,8 @@
       "detail": "the library product reads through what it keeps without a stop"
     }
   ],
+  "consumes": [],
+  "produces": [],
   "materials": [
     {
       "name": "N part list",
@@ -1195,6 +1197,7 @@
   "steps": [
     {
       "title": "Order the oligo pool and the primers that amplify it",
+      "section": "",
       "instructions": [
         "Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.",
         "Order every row of pool-primers.tsv as an ordinary oligo: 1 P1 batch forward, 72 P2 gene reverse, 1 P3 batch outer."
@@ -1224,6 +1227,7 @@
     },
     {
       "title": "PCR1: pull 1 batch out of the pool",
+      "section": "",
       "instructions": [
         "Set up 1 reaction, one a batch, with the pool as template.",
         "Give each its own pair: batch 1: OP107 with OP146.",
@@ -1434,6 +1438,7 @@
     },
     {
       "title": "PCR2: pull each of the 72 blocks out of its batch",
+      "section": "",
       "instructions": [
         "Set up one reaction a block, 72 in all, in PCR2 plate.",
         "Give each its batch's PCR1 product as template, that batch's forward primer, and the block's own inner primer.",
@@ -1640,6 +1645,7 @@
     },
     {
       "title": "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
+      "section": "",
       "instructions": [
         "Open DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna) with BbsI and SrfI, the digest a round opens the library with, and clean each up.",
         "Set up one assembly a well, holding that block's own PCR2 pieces, the opened destination of the position that block fills, and nothing from another well.",
@@ -1793,6 +1799,7 @@
     },
     {
       "title": "Array 72 design(s) and grow",
+      "section": "",
       "instructions": [
         "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
         "Grow overnight at 37 °C on 50 µg/mL kanamycin."
@@ -1821,6 +1828,7 @@
     },
     {
       "title": "Pick 4 colonies of each design",
+      "section": "",
       "instructions": [
         "Pick 4 colonies a design into 60 µL low-salt LB with 50 µg/mL kanamycin, with the QPix XE Microbial Colony Picker.",
         "Fill one quarter of each 384-well plate before starting the next.",
@@ -1856,6 +1864,7 @@
     },
     {
       "title": "Sample the picked plates into index plates",
+      "section": "",
       "instructions": [
         "Move 1 µL of each well into its 96-well plate, one quarter of the picked plate a pass."
       ],
@@ -5078,6 +5087,7 @@
     },
     {
       "title": "Amplify each well with its own pair",
+      "section": "",
       "instructions": [
         "Add 7 µL of the master mix below to each well, which already holds its 1 µL of culture.",
         "Add 2 µL of the pair its address names from the prepared primer plate, for 10 µL a well.",
@@ -5602,18 +5612,18 @@
       ],
       "holes": [
         {
-          "id": "B1",
+          "id": "IDX1",
           "missing": "no index mark set is named for the barcoded primer pairs",
           "kind": "lab",
-          "where": "route B, the pair marking one well",
+          "where": "index PCR, the pair marking one well",
           "filled_by": "the prepared primer plate the lab holds",
           "issue": "liuhlab/liulab-mbio#225"
         },
         {
-          "id": "B2",
+          "id": "IDX2",
           "missing": "the units of Taq one index PCR takes",
           "kind": "unread",
-          "where": "route B, the index PCR's polymerase",
+          "where": "index PCR, its polymerase",
           "filled_by": "NEB's own specification for M0267, which gives the stock concentration",
           "issue": "liuhlab/liulab-mbio#225"
         }
@@ -5621,6 +5631,7 @@
     },
     {
       "title": "Pool and sequence",
+      "section": "",
       "instructions": [
         "Pool each index plate on its own and clean the pool up.",
         "Sequence the pool."
@@ -5642,6 +5653,7 @@
     },
     {
       "title": "Call every well",
+      "section": "",
       "instructions": [
         "Demultiplex the reads by address, checking each address rather than trusting a file.",
         "Call a consensus a well, then compare it with that well's design base for base.",
@@ -5659,7 +5671,7 @@
       "transfers": [],
       "gels": [],
       "expected": [
-        "A well read more than 20 times is called; route B tolerates 10 reads and warns between the two.",
+        "A well read more than 20 times is called; the index PCR route tolerates 10 reads and warns between the two.",
         "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
       ],
       "troubleshooting": [
@@ -5673,6 +5685,7 @@
     },
     {
       "title": "Pool each part list",
+      "section": "",
       "instructions": [
         "Clean up each assembly and measure each concentration.",
         "Pool the members of each part list in equal picomoles, one tube a position: each member gives the position's total divided by its member count, which is unequal masses because the members differ in length.",
@@ -5712,6 +5725,7 @@
     },
     {
       "title": "Round 1: open DMX-iGGA with BbsI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BbsI alone, and start the program.",
         "After the first hour add SrfI and run the second."
@@ -5811,6 +5825,7 @@
     },
     {
       "title": "Round 1: release the N part list with BsaI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BsaI alone, and start the program.",
         "After the first hour add PmeI and run the second."
@@ -5911,6 +5926,7 @@
     },
     {
       "title": "Round 1: clean both digests up",
+      "section": "",
       "instructions": [
         "Add 2 volumes of SPRI paramagnetic beads to each digest and elute in water.",
         "Measure both concentrations; the ligation table asks for picomoles, not nanograms."
@@ -5939,6 +5955,7 @@
     },
     {
       "title": "Round 1: ligate the N part list into the library",
+      "section": "",
       "instructions": [
         "Pipette the two DNAs into the tube first, then the ligase, its buffer and water.",
         "Hold at room temperature for 30 minutes."
@@ -6004,6 +6021,7 @@
     },
     {
       "title": "Round 1: clean the ligation up",
+      "section": "",
       "instructions": [
         "Add 1 volume of SPRI paramagnetic beads and elute in water.",
         "Measure the concentration."
@@ -6031,6 +6049,7 @@
     },
     {
       "title": "Round 1: electroporate into Endura ElectroCompetent Cells",
+      "section": "",
       "instructions": [
         "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
@@ -6061,6 +6080,7 @@
     },
     {
       "title": "Round 1: recover and grow at 30 °C",
+      "section": "",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
         "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 1 titre, and grow the rest in selective broth.",
@@ -6130,6 +6150,7 @@
     },
     {
       "title": "Round 1: prep the library",
+      "section": "",
       "instructions": [
         "Harvest the whole culture rather than a single colony.",
         "Prep the plasmid and measure the concentration."
@@ -6158,6 +6179,7 @@
     },
     {
       "title": "Round 2: open AP-1 DESynR round 1 with BbsI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BbsI alone, and start the program.",
         "After the first hour add SrfI and run the second."
@@ -6257,6 +6279,7 @@
     },
     {
       "title": "Round 2: release the DBD part list with BsaI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BsaI alone, and start the program.",
         "After the first hour add PmeI and run the second."
@@ -6357,6 +6380,7 @@
     },
     {
       "title": "Round 2: clean both digests up",
+      "section": "",
       "instructions": [
         "Add 2 volumes of SPRI paramagnetic beads to each digest and elute in water.",
         "Measure both concentrations; the ligation table asks for picomoles, not nanograms."
@@ -6385,6 +6409,7 @@
     },
     {
       "title": "Round 2: ligate the DBD part list into the library",
+      "section": "",
       "instructions": [
         "Pipette the two DNAs into the tube first, then the ligase, its buffer and water.",
         "Hold at room temperature for 30 minutes."
@@ -6450,6 +6475,7 @@
     },
     {
       "title": "Round 2: clean the ligation up",
+      "section": "",
       "instructions": [
         "Add 1 volume of SPRI paramagnetic beads and elute in water.",
         "Measure the concentration."
@@ -6477,6 +6503,7 @@
     },
     {
       "title": "Round 2: electroporate into Endura ElectroCompetent Cells",
+      "section": "",
       "instructions": [
         "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
@@ -6507,6 +6534,7 @@
     },
     {
       "title": "Round 2: recover and grow at 30 °C",
+      "section": "",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
         "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 2 titre, and grow the rest in selective broth.",
@@ -6576,6 +6604,7 @@
     },
     {
       "title": "Round 2: prep the library",
+      "section": "",
       "instructions": [
         "Harvest the whole culture rather than a single colony.",
         "Prep the plasmid and measure the concentration."
@@ -6604,6 +6633,7 @@
     },
     {
       "title": "Round 3: open AP-1 DESynR round 2 with BbsI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BbsI alone, and start the program.",
         "After the first hour add SrfI and run the second."
@@ -6703,6 +6733,7 @@
     },
     {
       "title": "Round 3: release the C part list with BsaI",
+      "section": "",
       "instructions": [
         "Set the digest below up with BsaI alone, and start the program.",
         "After the first hour add PmeI and run the second."
@@ -6803,6 +6834,7 @@
     },
     {
       "title": "Round 3: clean both digests up",
+      "section": "",
       "instructions": [
         "Add 2 volumes of SPRI paramagnetic beads to each digest and elute in water.",
         "Measure both concentrations; the ligation table asks for picomoles, not nanograms."
@@ -6831,6 +6863,7 @@
     },
     {
       "title": "Round 3: ligate the C part list into the library",
+      "section": "",
       "instructions": [
         "Pipette the two DNAs into the tube first, then the ligase, its buffer and water.",
         "Hold at room temperature for 30 minutes."
@@ -6896,6 +6929,7 @@
     },
     {
       "title": "Round 3: clean the ligation up",
+      "section": "",
       "instructions": [
         "Add 1 volume of SPRI paramagnetic beads and elute in water.",
         "Measure the concentration."
@@ -6923,6 +6957,7 @@
     },
     {
       "title": "Round 3: electroporate into Endura ElectroCompetent Cells",
+      "section": "",
       "instructions": [
         "Thaw one aliquot of Endura ElectroCompetent Cells on ice, 25 µL a pulse.",
         "Add at most 100 ng of the purified ligation and mix without making bubbles.",
@@ -6953,6 +6988,7 @@
     },
     {
       "title": "Round 3: recover and grow at 30 °C",
+      "section": "",
       "instructions": [
         "Add recovery medium straight away and shake for the first hour.",
         "Plate a measured dilution of the recovery on 50 µg/mL kanamycin as round 3 titre, and grow the rest in selective broth.",
@@ -7022,6 +7058,7 @@
     },
     {
       "title": "Round 3: prep the library",
+      "section": "",
       "instructions": [
         "Harvest the whole culture rather than a single colony.",
         "Prep the plasmid and measure the concentration."
@@ -7050,6 +7087,7 @@
     },
     {
       "title": "Read linkage",
+      "section": "",
       "instructions": [
         "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward TCCCCTCTAGAAATAATTTTGTTTAACTTT and Linkage read reverse CAGCCGGATCTCATGTTT, which give a 1197 bp amplicon.",
         "Sequence the amplicon as a long read.",
@@ -7095,6 +7133,7 @@
     },
     {
       "title": "Read representation",
+      "section": "",
       "instructions": [
         "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward AGGAAAGTCTTCAGCCCG and Representation read reverse CAGCCGGATCTCATGTTT, which give a 134 bp amplicon.",
         "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
@@ -7131,6 +7170,7 @@
     },
     {
       "title": "Pick the working vector",
+      "section": "",
       "instructions": [
         "Take one tube of the working vector stock for the application this library is built for.",
         "Confirm its own cargo enzyme opens it on AGGA and TTCC, giving up the ccdB cassette the library displaces."
@@ -7161,6 +7201,7 @@
     },
     {
       "title": "Release the cargo with BsaI and PmeI",
+      "section": "",
       "instructions": [
         "Digest the finished library with BsaI and PmeI at 37 °C.",
         "Heat-kill, then leave the tube alone: nothing is purified between the two stages."
@@ -7284,6 +7325,7 @@
     },
     {
       "title": "Assemble the cargo into the working vector",
+      "section": "",
       "instructions": [
         "Add the working vector, its cargo enzyme and the ligase to the release tube, and run the enzyme's own Golden Gate cycling."
       ],
@@ -7321,6 +7363,7 @@
     },
     {
       "title": "Clean the assembly up and electroporate into Endura ElectroCompetent Cells",
+      "section": "",
       "instructions": [
         "Add SPRI paramagnetic beads at 1x the volume and elute in water, as every round did after its ligation.",
         "Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette.",
@@ -7385,6 +7428,7 @@
     },
     {
       "title": "Read representation in the final vector",
+      "section": "",
       "instructions": [
         "Amplify across the barcode block again.",
         "Sequence, decode each read against barcodes.tsv, and compare the counts with the read taken in the library backbone."
