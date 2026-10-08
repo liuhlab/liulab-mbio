@@ -140,6 +140,7 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: ReactionTable((Component("water", 1),), overage=-0.1),
         lambda: Stage((Incubation("x", 37, 60),), cycles=0),
         lambda: Incubation("x", 37, 0),
+        lambda: Incubation("x", 37, 60, 0),
         lambda: Timer("x", 0),
         lambda: Ladder("marker", ()),
         lambda: Lane("sample", (0,)),
