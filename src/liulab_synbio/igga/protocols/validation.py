@@ -14,6 +14,7 @@ from liulab_mbio.protocol.model import Citation, Figure, Material, Plate, Refere
 from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.sequence import Segment, SequenceRecord
 from liulab_synbio import dmx
+from liulab_synbio.igga.figures import STUFFER_MARGIN
 from liulab_synbio.igga.protocols.protocol import Protocol, labelled
 from liulab_synbio.igga.protocols.run import Run
 
@@ -22,10 +23,6 @@ VALIDATION = "Cargo validation"
 
 #: What a vector's own records call the piece its cassette's enzyme cuts out.
 STUFFER_FEATURE = "internal stuffer"
-
-#: How many times its own length a map of the cassette draws either side of the stuffer, so the
-#: flanks it sits between are in the picture. A margin for the drawing, measured from nothing.
-STUFFER_MARGIN = 3
 
 #: Where in ``docs/research/figure-sources.md`` the read-back figure's equivalent stands.
 VALIDATION_CITATION = Citation(FIGURE_SOURCE_KEY, "section 3, DMX")

@@ -123,11 +123,14 @@ def test_a_cassette_across_the_origin_draws_the_records_whole(made, parts):
     assert assembly_rows(across, lit=1).span is None
 
 
-def test_a_vector_with_no_room_for_the_margin_draws_the_records_whole(made, parts):
-    """A span has to fall inside the record the round opened, and a short vector leaves none."""
-    tight = assemble_rounds(carrier(made), parts, made, POSITIONS)
+def test_a_cassette_at_the_end_of_the_opened_record_draws_the_records_whole(made, parts):
+    """A span past the opened record's last base runs across its origin and not the other's."""
+    near = assemble_rounds(rotate(carrier(made, flank=FLANK), FLANK + 50), parts, made, POSITIONS)
+    one = near[0]
+    assert one.excised.end <= len(one.destination)
+    assert one.scar.end > len(one.destination)
 
-    assert assembly_rows(tight, lit=1).span is None
+    assert assembly_rows(near, lit=1).span is None
 
 
 def test_a_lit_round_lights_the_part_that_round_joined(rounds):

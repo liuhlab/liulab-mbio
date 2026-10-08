@@ -289,9 +289,12 @@ def _vector_record(run: Run) -> str:
 
     The first block vector is that vector: each is this build's own destination respelt for the
     position whose blocks it holds, and position one's enters on the overhang it already spells.
+    The file is returned as the run names it, for a figure to say where the records sit.
     """
-    first = run.block_vectors[:1]
-    return first[0][1] if first else ""
+    if not run.block_vectors:
+        return ""
+    _, file = run.block_vectors[0]
+    return file
 
 
 def _round_steps(run: Run, one: Round, row: RoundBench, rows: Figure | None) -> list[Step]:

@@ -40,9 +40,9 @@ ROLES = ("forward", "inner", "outer")
 #: the pool, or the inner pair that pulls one block out of that batch.
 type PoolStage = Literal["PCR1", "PCR2"]
 
-#: How many times the stuffer's own length a round's map draws either side of the cassette, so
-#: the flanks it sits between are in the picture. The margin a cassette is drawn with in
-#: `liulab_synbio.igga.protocols.validation`. A margin for the drawing, measured from nothing.
+#: How many times the stuffer's own length a map draws either side of what it shows, so the
+#: flanks it sits between are in the picture: either side of the stuffer in a vector's map, and
+#: either side of the cassette in a round's. A margin for the drawing, measured from nothing.
 STUFFER_MARGIN = 3
 
 #: Where in the note each figure's published equivalent stands.
@@ -63,7 +63,8 @@ def assembly_rows(
 
     The library the round opens is drawn above the library it makes, which is how a figure shows
     one molecule becoming the next, and the part the round joined is lit. Both rows are drawn to
-    the cassette wherever one span falls on both records, and not to the backbone either side.
+    the cassette wherever one span falls on both records, not to the kilobases of backbone the
+    round leaves alone.
 
     The rows are the records `liulab_synbio.igga.rounds.write_records` writes, named as it names
     them, so the figure and the files cannot disagree. Round 1 opens the vector instead of a
@@ -177,24 +178,26 @@ def _opened(rounds: Sequence[Round], lit: int, vector: str, at: str) -> str:
 def _cassette(one: Round) -> tuple[int, int] | None:
     """Return the stretch both rows are drawn to: the cassette the round changes, and a margin.
 
-    The two records count their bases alike up to the stuffer, so one span falls on the same
-    place in both — unless the round's edit ran across the origin, which moves the origin of what
-    it made, or the span is longer than the record it opened. Either of those draws both records
-    whole instead.
+    The two records count their bases alike up to the stuffer, so one span starts on the same
+    base in both. Nothing is spanned where the round's edit ran across the origin, which moves
+    the origin of what it made, or where the span would end past the record the round opened,
+    which on a circle is a span across that record's own origin. Either draws the records whole.
     """
     if across_the_origin(Segment(one.excised.start, one.excised.end), len(one.destination)):
         return None
     margin = (one.stuffer.end - one.stuffer.start) * STUFFER_MARGIN
-    span = max(0, one.entry.start - margin), min(len(one.product), one.scar.end + margin)
-    return span if one.destination.fits(*span) else None
+    start = max(0, one.entry.start - margin)
+    end = min(len(one.product), one.scar.end + margin)
+    return (start, end) if end <= len(one.destination) else None
 
 
-def _caption(rounds: Sequence[Round], at: Round, *, opened: bool) -> str:
+def _caption(rounds: Sequence[Round], here: Round, *, opened: bool) -> str:
     """Return what the assembly figure shows: the round a step is at, and which row is which."""
     rows = "what it opens above, what it makes below" if opened else "what it makes"
     return (
-        f"Round {at.number} of {len(rounds)} joins {at.part.name} at position {at.position}, "
-        f"entering on {at.entry_overhang} and leaving {at.scar_overhang}: {rows}"
+        f"Round {here.number} of {len(rounds)} joins {here.part.name} at position "
+        f"{here.position}, entering on {here.entry_overhang} and leaving {here.scar_overhang}: "
+        f"{rows}"
     )
 
 
