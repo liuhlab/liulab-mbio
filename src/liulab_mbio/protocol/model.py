@@ -1618,8 +1618,8 @@ class Project:
         Verdicts on the design, which one protocol of the run cannot judge alone. A verdict on
         one protocol's own work stays on that protocol.
     sources
-        Every document the run's own pages cite, as `Protocol.sources` holds a page's. A price
-        record is one: its rows price the bill, which is the run's and no protocol's.
+        Every document the run's own pages cite, as `Protocol.sources` holds a page's. The
+        record pricing `bill` is one.
     bill
         What the run consumes, and what it costs where a price record prices it. It is the
         run's, not each protocol's, because two protocols buying the same cells would otherwise

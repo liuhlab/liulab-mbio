@@ -537,6 +537,19 @@ def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
     ]
 
 
+def test_a_run_source_no_row_of_its_bill_cites_is_listed_with_no_citer() -> None:
+    """A record pricing nothing leaves every row a hole, so the bill cites it nowhere."""
+    run = Project(
+        "Unpriced",
+        sources={"prices": Source("prices.csv")},
+        bill=Bill((BillRow("pool", 1, key="S-1", hole=Hole("H1", "what a pool costs", "price")),)),
+    )
+    main = main_of(parse(render_references(run, folder_of(run))))
+    [listed] = main.find_all("section", cls="sources")[0].find_all("li")
+    assert listed.find_all("strong")[0].text == "prices"
+    assert not listed.find_all("span", cls="cited-by")
+
+
 def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) -> None:
     page = parse(render_html(project.protocols[0], folder=folder_of(project), here="01.html"))
     [wait] = page.find_all("li", cls="wait")

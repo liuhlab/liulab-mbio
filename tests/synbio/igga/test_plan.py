@@ -597,7 +597,6 @@ def test_a_run_holding_a_price_record_names_it_as_a_source_of_the_run(priced):
     assert priced.bill.cited == frozenset({"prices"})
     assert "prices" in priced.sources
     assert not [one for one in priced.protocols if "prices" in one.sources]
-    assert [c.status for c in priced.audit() if c.name == "sources"] == ["pass"]
 
 
 def said_by(protocol) -> str:

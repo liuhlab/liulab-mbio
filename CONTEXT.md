@@ -160,7 +160,8 @@ _Avoid_: input, output, artefact, deliverable
 
 Protocols run in order, each handed what the ones before it produced. It holds what no single
 protocol owns: the background a reader is told before the first protocol, the bill for the whole
-run, and the checks that judge the design rather than one bench procedure. What a build chooses
+run, the **source** its rows cite, and the checks that judge the design rather than one bench
+procedure. What a build chooses
 is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line; what a build
 writes is this chain of protocols.
 _Avoid_: workflow, pipeline, campaign

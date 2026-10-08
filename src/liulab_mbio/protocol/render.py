@@ -57,9 +57,8 @@ NO_VERDICT = "not judged"
 #: What stands where a number would, so a hole can never be read as a figure.
 NO_NUMBER = "no sourced number"
 
-#: What the references page names as citing a source the run itself holds, since the bill that
-#: cites one is on a shared page rather than any protocol's.
-BILL_CITER = "the bill"
+#: What the references page prints as citing a source the run itself names.
+CITED_BY_BILL = "the bill"
 
 #: What a project folder calls the data every one of its pages is rendered from.
 PROJECT_DATA_FILE = "project.json"
@@ -828,11 +827,14 @@ def _merged_references(project: Project) -> tuple[tuple[Reference, ...], tuple[s
 def _merged_sources(project: Project) -> tuple[dict[str, Source], dict[str, str]]:
     """Every document a number was read from, once each, with what cites it.
 
-    The run's own sources come first, cited by the bill: the bill is the run's and sits on a
-    page no protocol owns, so no protocol names the record that priced it.
+    The run's own come first, each cited by the bill where a row of it cites one;
+    `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all.
     """
+    billed = project.bill.cited if project.bill else frozenset()
     found: dict[str, Source] = dict(project.sources)
-    citers: dict[str, list[str]] = {key: [BILL_CITER] for key in project.sources}
+    citers: dict[str, list[str]] = {
+        key: [CITED_BY_BILL] for key in project.sources if key in billed
+    }
     for protocol in project.protocols:
         for key, source in protocol.sources.items():
             found.setdefault(key, source)
@@ -1735,7 +1737,8 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
 def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = None) -> str:
     """Every document a number was read from, so a citation resolves on the page itself.
 
-    `cited` names, key by key, which protocols of a run cite each, for the page a run shares.
+    `cited` names, key by key, what cites each on the page a run shares. A key it leaves out is
+    listed with no citer, which is what a source nothing on the run cites has.
     """
     if not sources:
         return ""
@@ -1752,7 +1755,11 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
             if source.url
             else ""
         )
-        + (f' <span class="cited-by">cited by {escape(cited[key])}</span>' if cited else "")
+        + (
+            f' <span class="cited-by">cited by {escape(cited[key])}</span>'
+            if cited and key in cited
+            else ""
+        )
         + "</li>"
         for key, source in sources.items()
     )

@@ -49,9 +49,10 @@ run. A project chains protocols by those names, `write_project` writing one file
 
     {"title": str, "key": str, "summary": str,
      "background": [{"title", "body": [paragraph]}],
-     "inputs": [{"name", "what", "spec": [str], "storage"}],
+     "files": [str], "inputs": [{"name", "what", "spec": [str], "storage"}],
      "protocols": [a protocol, as above],
-     "checks": [{"name", "status", "detail"}], "bill": a bill, as above}
+     "checks": [{"name", "status", "detail"}],
+     "sources": {key: a source, as above}, "bill": a bill, as above}
 
 A ``"key"`` is a handle and never prose: a step's anchors its page and keys the bench's check
 mark, a protocol's names the store those marks are kept in. A pipeline writes both, so rewording

@@ -19,11 +19,12 @@ bench, and nothing parses them.
 dangling input is still a document someone can read, and the page says which name nothing hands
 over.
 
-**The project holds what no single protocol owns.** The bill is the run's, since two protocols
-buying the same cells would be counted twice. Checks that judge the design rather than the bench
-are the project's; a protocol rendered alone keeps its own. The explanation of why the run is
-shaped as it is becomes `background`, a `Topic` at a time, so a step never stops to explain one.
-Materials, equipment, references, sources and holes stay on the protocol that owns them.
+**The project holds what no single protocol owns.** The bill is the run's: two protocols buying
+the same cells would be counted twice. Checks judging the design rather than the bench are the
+project's; a protocol rendered alone keeps its own. Why the run is shaped as it is becomes
+`background`, a `Topic` at a time, so no step stops to explain it. Materials, equipment,
+references and holes stay on the protocol that owns them; a source goes where the rows citing it
+are.
 
 `Step.section` is a label on the step, not a container: the steps stay one list and the numbering
 runs through it, so step 14 is one place in one document.
@@ -51,6 +52,6 @@ Every one-protocol plan writes a project of one, through `cloning.plan.as_projec
 reads a run reads one shape.
 
 A project is written as a folder: `project.json`, one page per protocol named by its place in
-the chain, an index, and the two pages the run shares. Routing inside a page cannot work on
-disk, so each page stays self-contained, links to the rest by relative address, and names its
-neighbours in a line that prints. One protocol still writes one page.
+the chain, an index, and the two shared pages. Routing inside a page cannot work on disk, so
+each page stays self-contained, links to the rest by relative address, and names its neighbours
+in a line that prints. One protocol still writes one page.
