@@ -349,7 +349,7 @@ Two things do have to be checked, and neither is a platform question:
 
 ## 5. How many are needed, and what the stock costs
 
-`src/liulab_synbio/dmx.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
+`src/liulab_synbio/dmx/method.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
 and 96 reverse marks addressing the plate: 9,216 wells on 192 primers.
 
 | Scheme | Forward | Reverse | Wells | Primers to hold |
@@ -437,7 +437,7 @@ third pair would be work whose output is strictly worse — unpublished, unvalid
 shorter. The package's own restraint rule applies: a narrower thing will do.
 
 **The marks are not ours to choose.** Route A's barcodes are already user-held, read from a copy
-the user holds, because the kit is a physical thing someone bought (`dmx.py`, and #260). A plate
+the user holds, because the kit is a physical thing someone bought (`dmx/kit.py`, and #260). A plate
 of 192 index primers is the same kind of object. Whether they come from an NEB kit, from an ONT
 kit or from a custom IDT plate, the lab holds them and the package must not pretend to have
 invented them. Shipping any vendor's index table is also the licence verdict §1 reaches.

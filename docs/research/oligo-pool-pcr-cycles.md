@@ -11,11 +11,14 @@ Everything below was retrieved on **2026-10-07** unless a row carries its own da
 
 ## The contradiction
 
-`igga/steps.py`'s `_pcr1_step` and `_pcr2_step` pass no `cycles`, so `pcr_program` falls through
-to the polymerase's own profile and the rendered protocol prints **30** for both. The AP-1 demo
-shows it: `docs/examples/ap1-library/protocol.json` carries `"cycles": 30` in the inner stage of
-PCR1 and of PCR2. The same step's troubleshooting says *"Take the fewest cycles that give a
-visible band."* A reader at the bench has a printed count and a rule that contradicts it.
+As read on 2026-10-07, the two cargo creation steps passed no `cycles`, so `pcr_program` fell
+through to the polymerase's own profile and the rendered protocol printed **30** for both PCR1
+and PCR2, while the same step's troubleshooting said *"Take the fewest cycles that give a
+visible band."* A reader at the bench had a printed count and a rule that contradicted it.
+
+**Section 7 has since landed.** `docs/examples/ap1-library/protocol/project.json` now prints
+Twist's fewest, 12, for PCR1 and no count at all for PCR2; the one `"cycles": 30` left in that
+file is the Golden Gate assembly's own cycling, which is not a PCR.
 
 ## How to read this note
 
@@ -252,12 +255,12 @@ the count is chosen per pool: by length, by polymerase, and by watching the reac
 
 ## 7. What this implies in code
 
-Not done here; #340 is a research ticket.
+Not done when this note was written; all five have landed since.
 
 1. `_pcr1_step` passes an explicit `cycles`, chosen from `project.oligo_length` against Twist's
    three-band table, with a citation on the program.
 2. `_pcr2_step` passes no count and carries a `Hole` instead, as `_assembly_step` already carries
-   `stages.POOL_HOLES`.
+   `stages.HOLES`.
 3. PCR1's troubleshooting entry changes its observable from "a smear rather than a band" to the
    heteroduplex hump on capillary electrophoresis, and gains the real-time stopping rule.
 4. A hole records that Twist's count is stated against KAPA HiFi HotStart or TrueAmp while the
