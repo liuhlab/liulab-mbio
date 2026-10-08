@@ -1210,6 +1210,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1378,6 +1380,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [
         {
@@ -1585,6 +1589,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [
         {
@@ -1777,6 +1783,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1812,6 +1820,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1847,6 +1857,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1875,6 +1887,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [
         {
           "title": "Sample a quarter of picked 1 into index 1",
@@ -5597,6 +5611,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5643,6 +5659,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5668,6 +5686,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5702,6 +5722,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5808,6 +5830,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5909,6 +5933,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -5938,6 +5964,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6005,6 +6033,8 @@
           "seconds": 1800
         }
       ],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6033,6 +6063,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6064,6 +6096,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6127,6 +6161,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6162,6 +6198,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6262,6 +6300,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6363,6 +6403,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6392,6 +6434,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6459,6 +6503,8 @@
           "seconds": 1800
         }
       ],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6487,6 +6533,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6518,6 +6566,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6581,6 +6631,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6616,6 +6668,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6716,6 +6770,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6817,6 +6873,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6846,6 +6904,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6913,6 +6973,8 @@
           "seconds": 1800
         }
       ],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6941,6 +7003,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -6972,6 +7036,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7035,6 +7101,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7070,6 +7138,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7102,6 +7172,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7147,6 +7219,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7182,6 +7256,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7308,6 +7384,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7336,6 +7414,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7410,6 +7490,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -7441,6 +7523,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [

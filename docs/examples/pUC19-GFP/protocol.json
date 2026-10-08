@@ -480,6 +480,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -651,6 +653,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -683,6 +687,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [
         {
@@ -760,6 +766,8 @@
           "seconds": 3600
         }
       ],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -787,6 +795,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -815,6 +825,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -893,6 +905,8 @@
       ],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -969,6 +983,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1025,6 +1041,8 @@
           "seconds": 3600
         }
       ],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
@@ -1170,6 +1188,8 @@
         }
       ],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [
         {
@@ -1243,6 +1263,8 @@
       "tables": [],
       "programs": [],
       "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
       "transfers": [],
       "gels": [],
       "expected": [
