@@ -8,8 +8,7 @@ import typer
 from liulab_mbio.bench.prices import PRICES_ENV
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.ligase import LIGASE_MATRIX_ENV
-from liulab_synbio.igga.plan import NAME_PATTERN, Kind, LibraryPlan, plan_igga
-from liulab_synbio.igga.vector import Site
+from liulab_synbio.igga.plan import NAME_PATTERN, Kind, LibraryPlan, Site, plan_igga
 
 app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=True)
 
