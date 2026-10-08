@@ -249,7 +249,7 @@ class Run:
     def ordered(self) -> Handed:
         """What the ordering protocol leaves behind: a pool, or the blocks themselves."""
         if self.pool:
-            return Handed(POOL_ITEM, "the pool resuspended and aliquoted", storage="-20 °C")
+            return Handed(POOL_ITEM, "the pool resuspended", storage="-20 °C")
         return Handed(BLOCKS_ITEM, "every block as the vendor shipped it", storage="-20 °C")
 
     @property

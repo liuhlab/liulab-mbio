@@ -225,7 +225,7 @@ def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
     assert "Order the oligo pool" in titles
-    assert titles[titles.index("Order the oligo pool") + 4] == "Pool each part list"
+    assert titles[titles.index("Order the oligo pool") + 5] == "Pool each part list"
 
 
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
@@ -286,17 +286,33 @@ def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
 
 
 def test_the_protocol_builds_the_blocks_it_has_a_pool_for_rather_than_ordering_them(protocol):
-    """With a pool designed, nothing is ordered as a block: the pool is, and four steps follow."""
+    """With a pool designed, nothing is ordered as a block: the pool is, resuspended, then used."""
     titles = [step.title for step in protocol.steps]
     start = titles.index("Order the oligo pool")
-    assert titles[start : start + 4] == [
+    assert titles[start : start + 5] == [
         "Order the oligo pool",
+        "Resuspend the oligo pool",
         "PCR1: pull 1 batch out of the pool",
         "PCR2: pull each of the 72 blocks out of its batch",
         "Assemble each cargo into its position's destination, from its 1 to 5 pieces",
     ]
     note = next(one.note for one in protocol.materials if one.name == "N part list")
     assert note == "assembled from the oligo pool; pool.tsv says which oligos"
+
+
+def test_the_pool_is_in_buffer_before_anything_amplifies_it(protocol):
+    """PCR1 takes 20 ng/µL of template, so the step before it says how the pool got there."""
+    made = next(one for one in protocol.steps if one.title == "Resuspend the oligo pool")
+    assert made.instructions[0] == (
+        "Divide the total yield in ng printed on the shipping tube label by 20 to get the "
+        "resuspension volume in µL."
+    )
+    assert "10 mM Tris buffer, pH 8.0" in made.instructions[1]
+    assert made.expected == (
+        "One tube of pool in solution at 20 ng/µL, with nothing left undissolved on the wall of "
+        "the tube.",
+    )
+    assert not made.holes
 
 
 def test_the_same_dna_is_billed_once(plan, protocol):
@@ -436,7 +452,7 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
         "Library assembly in rounds",
         "Final cargo ligation",
     ]
-    assert [len(one.steps) for one in chain.protocols] == [5, 1, 3, 6, 27, 5]
+    assert [len(one.steps) for one in chain.protocols] == [5, 2, 3, 6, 27, 5]
     assert [one.audit()[0].status for one in (chain,)] == ["pass"]
     handed = {item.name for item in chain.inputs}
     for one in chain.protocols:
@@ -459,6 +475,9 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
         ("Primer plates", "resuspend-primers"): (
             "Spin the plate down before taking the seal off.",
         ),
+        ("Cargo ordering and pool preparation", "resuspend-pool"): (
+            "Spin the tube down before taking the cap off.",
+        ),
         ("Cargo creation", "pcr1"): (POLYMERASE_ON_ICE,),
         ("Cargo creation", "pcr2"): (POLYMERASE_ON_ICE,),
         ("Cargo validation: index PCR", "index-pcr"): (POLYMERASE_ON_ICE,),
@@ -468,7 +487,7 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
         ("Final cargo ligation", "electroporate-and-grow"): (CUVETTE_ON_ICE,),
     }
     written = {step.key for one in chain.protocols for step in one.steps if step.cautions}
-    assert written == {"resuspend-primers"}
+    assert written == {"resuspend-primers", "resuspend-pool"}
 
 
 def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):

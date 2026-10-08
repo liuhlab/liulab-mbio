@@ -34,6 +34,13 @@ POOL_POLYMERASE: Polymerase = Q5
 #: The tube under the one name the reaction pipettes it by, NEB's M0491.
 POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 
+#: What the dried pool is dissolved in, and the least it may be left at, ng/µL. Both are the
+#: vendor's, from the document the cycle count is read in: DOC-4060 REV 1.0, "Before You Begin".
+#: The volume follows from them and the yield printed on the tube, which is the one number only
+#: the bench holds.
+POOL_STOCK_BUFFER = "10 mM Tris buffer, pH 8.0"
+POOL_STOCK_NG_PER_UL = 20.0
+
 #: Where PCR1's cycle count is read. Two independently revised Twist documents give the same
 #: three length bands, and the second's appendix answers what more cycles cost.
 POOL_CYCLE_REFERENCES: tuple[Reference, ...] = (
@@ -72,12 +79,15 @@ class Ordering(Protocol):
         return "Order every block this library is built from."
 
     def steps(self, run: Run) -> tuple[Step, ...]:
-        """Return the one step this protocol is: the order itself."""
+        """Return the order itself, and for a pool the resuspension that readies it."""
         if run.pool:
-            made = _pool_order_step(run.pool, run.pool_sheet, run.primer_sheet, run.plated)
+            made = (
+                _pool_order_step(run.pool, run.pool_sheet, run.primer_sheet, run.plated),
+                _pool_resuspend_step(),
+            )
         else:
-            made = _order_step(run)
-        return (labelled(made, "Order and store"),)
+            made = (_order_step(run),)
+        return tuple(labelled(one, "Order and store") for one in made)
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """Return the pool, or the blocks the vendor shipped."""
@@ -105,7 +115,8 @@ def pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[
         Material(
             "Oligo pool",
             storage="-20 °C",
-            amount=f"{pool.pool.count} oligos, every one {layout.length} nt",
+            amount=f"{pool.pool.count} oligos, every one {layout.length} nt, resuspended to "
+            f"{POOL_STOCK_NG_PER_UL:g} ng/µL",
             note=f"ordered from {pool_sheet}, which says which block each oligo is a piece of",
         ),
         Material(
@@ -221,5 +232,31 @@ def _pool_order_step(pool: PoolPlan, pool_sheet: str, primer_sheet: str, plated:
                 "for a different length wants this run's oligo length changed and the "
                 "design run again.",
             ),
+        ),
+    )
+
+
+def _pool_resuspend_step() -> Step:
+    """Put the dried pool into buffer, which is what both amplifications pipette from."""
+    floor = f"{POOL_STOCK_NG_PER_UL:g}"
+    return Step(
+        "Resuspend the oligo pool",
+        key="resuspend-pool",
+        instructions=(
+            f"Divide the total yield in ng printed on the shipping tube label by {floor} to get "
+            "the resuspension volume in µL.",
+            f"Add that volume of {POOL_STOCK_BUFFER} to the tube.",
+            "Vortex the tube until nothing is left undissolved, then spin it down.",
+        ),
+        cautions=("Spin the tube down before taking the cap off.",),
+        expected=(
+            f"One tube of pool in solution at {floor} ng/µL, with nothing left undissolved on "
+            "the wall of the tube.",
+        ),
+        notes=(
+            "The pool ships dry and its total yield is printed on the shipping tube, so the "
+            "stock concentration is that yield over the volume it goes into, and at least "
+            f"{floor} ng/µL is what the amplification asks for: Twist Oligo Pools Amplification "
+            'Protocol DOC-4060 REV 1.0, "Before You Begin".',
         ),
     )
