@@ -31,6 +31,7 @@ from liulab_mbio.protocol.model import (
     Source,
     Stage,
     ThermocyclerProgram,
+    Topic,
     Transfer,
     Well,
 )
@@ -234,6 +235,48 @@ ROUTES: dict[str, Route] = {
     ROUTE_LIGATION.name: ROUTE_LIGATION,
     ROUTE_INDEX_PCR.name: ROUTE_INDEX_PCR,
 }
+
+#: The job both routes are a way of doing, in the words a bench reader uses for it. A run
+#: offering both titles its guidance with this, which is what puts each way's page one link
+#: from what to weigh.
+READ_BACK = "read every well back"
+
+
+def route_choice() -> Topic:
+    """Return what to weigh before doing one of the two routes, for a run offering both.
+
+    Every figure is `docs/research/route-choice.md`'s, which is also what says which comparisons
+    no source carries. Those are written as cautions and never as figures: there is no published
+    cost for index PCR, no cost for either route per well, and no library size at which one
+    overtakes the other.
+    """
+    return Topic(
+        READ_BACK,
+        (
+            "Both routes mark every well so that sequencing says which well a read came from, "
+            "and both end with a pass or a fail for each well. Do one of them, never both.",
+            "How many wells each reaches is not what picks between them, and it does not rank "
+            "them the way the bench's rule of thumb does. Barcode ligation addresses more than "
+            "330,000 wells from one plate of barcodes; index PCR addresses 9,216. Most runs sit "
+            "well below either.",
+            "Barcode ligation pays a fixed price once, whatever the library's size: $695 of "
+            "sequencing, and five days. Shared over 100 designs that is $19.52 a design, and "
+            "over 2,000 designs $3.38. The more designs share it, the less each one carries. "
+            "Nobody has published the same table for index PCR, so no price for it, and no "
+            "price per well for either route, is stated anywhere here.",
+            "Index PCR runs one thermocycled reaction in every well, so thousands of wells need "
+            "many thermocyclers. Barcode ligation holds one temperature, and a whole 1536-well "
+            "plate marks in a single incubator. That is the only direct comparison of the two "
+            "in print, and Qian and colleagues wrote it about the route their own replaced; no "
+            "independent measurement of one against the other was found.",
+            "Doing neither is also a choice. Every well is then enriched for the design it was "
+            "built from, and nothing firmer than that can be said: the one published purity "
+            "figure, 89.3% of 929 wells at 90% clonal purity or better, was measured on short "
+            "arrayed fragments under 314 bases rather than on cargo from an oligo pool, and that "
+            "paper says polyclonality grows with length. Nothing measured says the material is "
+            "even. To know what a well holds, read it back.",
+        ),
+    )
 
 
 @dataclass(frozen=True, slots=True)

@@ -14,17 +14,14 @@ pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
 ```
 
 To change what these files say, change the code and run that command again. The same inputs
-write the same bytes, so a run that changes nothing leaves them alone. Point the command at
-`project-barcode-ligation.json` and an `--out` of your own to see the other read-back route;
-the design is the same and only the protocol differs.
+write the same bytes, so a run that changes nothing leaves them alone.
 
 ## What goes in
 
 | File | What it is |
 | --- | --- |
 | [parts.fasta](parts.fasta) | 72 proteins: 24 for each of the N, DBD and C positions |
-| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back by index PCR |
-| [project-barcode-ligation.json](project-barcode-ligation.json) | the same library read back by barcode ligation instead |
+| [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, and that every design is read back on both routes |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
 
@@ -33,11 +30,19 @@ what it is resuspended to, and what a working well holds. Leave it out and the p
 ordered with the pool, and the run has one sitting fewer. The package states none of the three:
 nothing publishes them, so they are the project author's to give.
 
-The two project files differ in one key. `route` says which of the two read-back routes reads
-the picked wells, and `validate_from` says which designs are read at all: a fragment count, at
-or above which a design is read back. Both files set it to `0`, so all 72 designs are read — 288
-wells, one 384-well pick plate and three 96-well index plates. Leave the two keys out and
+`routes` names the ways the picked wells are read back, and `validate_from` says which designs
+are read at all: a fragment count, at or above which a design is read back. This project names
+both routes and sets the floor to `0`, so all 72 designs are read — 288 wells and one 384-well
+pick plate either way, and three 96-well index plates on index PCR. Leave the two keys out and
 nothing is read, which is what a library headed for a pooled screen wants.
+
+The two routes are two ways of doing one job. They are not two steps, and nobody does both. A
+real run names the one it will do; this example names both so you can read each one, and every
+page that offers them says to pick one. What to weigh is on
+[the way in](protocol/index.html#topic-read-every-well-back). Barcode ligation pays a fixed
+price once, so it costs less per design the more designs share it. Index PCR runs one
+thermocycled reaction in every well, so a lot of wells need a lot of thermocyclers. How many
+wells each route reaches does not decide it: both reach far more than this library needs.
 
 The names say the position: `N_JUN` fills N, `DBD_JUN` fills DBD, `C_JUN` fills C. No overhang,
 stuffer, barcode or codon is given. The planner chooses all four.
@@ -60,14 +65,17 @@ stuffer, barcode or codon is given. The planner chooses all four.
 ## What the bench works through
 
 The run is not one sitting. The `protocol/` folder holds one page for each, in the order
-someone does them, and each page says what it is handed and what it leaves behind:
+someone does them, and each page says what it is handed and what it leaves behind. Reading every
+well back is one place in the run with a page for each route, and the bench works through one of
+them:
 
 | Page | What it is handed | What it leaves |
 | --- | --- | --- |
 | [Primer plates](protocol/01-primer-plates.html) | nothing yet | a primer stock plate, and a working copy |
 | [Cargo ordering and pool preparation](protocol/02-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
 | [Cargo creation](protocol/03-cargo-creation.html) | the pool, the working plate, and a block vector a position | one archived well a design |
-| [Cargo validation](protocol/04-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
+| [Cargo validation: barcode ligation](protocol/04-cargo-validation-barcode-ligation.html) | the archive plate, and the DMX barcode kit | clonal wells, and a call for each |
+| [Cargo validation: index PCR](protocol/04-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
 | [Library assembly in rounds](protocol/05-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
 | [Final cargo ligation](protocol/06-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
 

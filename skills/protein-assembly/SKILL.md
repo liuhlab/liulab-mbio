@@ -27,7 +27,7 @@ pixi run liulab_synbio igga plan project.json --out library/
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
 `host`, `oligo_length`, `batch_size`, `completeness`, and optionally `seed`, `reserved_extra`,
 `barcode`, `primers` and `bands` for the pool, `primer_plates` to lay those primers out as a
-stock plate and its copies, and `validate_from` with `route` for the read back. It is checked
+stock plate and its copies, and `validate_from` with `routes` for the read back. It is checked
 where it is read, so a bad value fails before anything is designed.
 Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.

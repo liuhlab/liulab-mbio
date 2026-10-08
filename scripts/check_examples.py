@@ -78,6 +78,7 @@ GENERATORS: tuple[Generator, ...] = (
             "protocol/01-primer-plates.html",
             "protocol/02-cargo-ordering-and-pool-preparation.html",
             "protocol/03-cargo-creation.html",
+            "protocol/04-cargo-validation-barcode-ligation.html",
             "protocol/04-cargo-validation-index-pcr.html",
             "protocol/05-library-assembly-in-rounds.html",
             "protocol/06-final-cargo-ligation.html",

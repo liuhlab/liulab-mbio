@@ -30,7 +30,10 @@
   "batch_size": 96,
   "completeness": 0.99,
   "validate_from": 0,
-  "route": "index PCR",
+  "routes": [
+    "barcode ligation",
+    "index PCR"
+  ],
   "seed": 0,
   "reserved_extra": [],
   "barcode": {

@@ -123,8 +123,10 @@ class Run:
     plan calls the sheets its pages point at, and `files` gathers them, with the block vectors'
     own records, as the pages link them.
 
-    `validation` is `None` for a build that states no fragment-count floor, and no read-back
-    protocol is written: the library stays polyclonal, which is the default.
+    `validations` is empty for a build that states no fragment-count floor, and no read-back
+    protocol is written: the library stays polyclonal, which is the default. A build naming more
+    than one route gets one read-back protocol per route, and they are the ways of one job: the
+    bench does one of them.
 
     `working` is the vector the finished library is moved into, and `None` for a build naming
     none. Without one the final protocol's steps still run, because it is a stage of the method,
@@ -165,7 +167,7 @@ class Run:
     barcodes: str
     changes: str = ""
     read_sheet: str = ""
-    validation: dmx.Validation | None = None
+    validations: tuple[dmx.Validation, ...] = ()
     prices: PriceRecord | None = None
     pool: PoolPlan | None = None
     pool_sheet: str = ""
@@ -305,9 +307,10 @@ class Run:
         )
 
     @property
-    def marking_stock(self) -> Handed | None:
-        """The lab stock the chosen marking route takes, which no protocol of this run makes."""
-        return dmx.marking_stock(self.validation)
+    def marking_stocks(self) -> tuple[Handed, ...]:
+        """The lab stock each offered marking route takes, which no protocol of this run makes."""
+        found = (dmx.marking_stock(one) for one in self.validations)
+        return tuple(one for one in found if one is not None)
 
     @property
     def round_references(self) -> tuple[Reference, ...]:

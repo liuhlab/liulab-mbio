@@ -70,7 +70,7 @@ def igga_protocols(directory: Path) -> tuple[tuple[str, Protocol], ...]:
             primers=PRIMERS,
             primer_plates=PrimerPlates(nanomoles=25, stock_um=100, working_ul=100),
             validate_from=0,
-            route=route,
+            routes=(route,),
         )
         found += [
             (f"igga, {route}", one) for one in plan_igga(build, parts=PARTS).chain().protocols

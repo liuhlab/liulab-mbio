@@ -18,8 +18,19 @@ from liulab_mbio.bench.prices import bill as priced
 from liulab_mbio.bench.steps import badges
 from liulab_mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
-from liulab_mbio.protocol.model import Bill, Material, Project, Source, Step, Topic, names
+from liulab_mbio.protocol.model import (
+    Bill,
+    Material,
+    Project,
+    Source,
+    Step,
+    Topic,
+    by_place,
+    names,
+)
 from liulab_mbio.protocol.model import Item as Handed
+from liulab_mbio.protocol.model import Protocol as Page
+from liulab_synbio import dmx
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import ENZYME_UL, STRAIN, STRAIN_CATALOG, choppers
 from liulab_synbio.igga.cargo import PoolPlan
@@ -45,7 +56,8 @@ def ordered(run: Run) -> tuple[Protocol, ...]:
 
     A run plating no primers opens at the ordering protocol; one ordering its blocks whole
     makes its cargo in the vendor's tube and writes no creation protocol; one stating no
-    fragment-count floor reads nothing back.
+    fragment-count floor reads nothing back. A run naming more than one route writes one
+    read-back protocol per route, next to each other, because they are the ways of one job.
     """
     made: list[Protocol] = []
     if run.plated:
@@ -53,8 +65,7 @@ def ordered(run: Run) -> tuple[Protocol, ...]:
     made.append(Ordering())
     if run.pool:
         made.append(Creation())
-    if run.validation is not None:
-        made.append(ReadBack())
+    made += [ReadBack(one) for one in run.validations]
     made += [Assembly(), FinalLigation()]
     return tuple(made)
 
@@ -82,12 +93,13 @@ def project(run: Run) -> Project:
         f"{len(run.rounds)} rounds",
         summary=(
             f"Join {len(run.parts)} synthesised parts into {run.constructs} distinct constructs "
-            f"in {len(run.rounds)} rounds, over {len(pages)} protocols. Each round opens the "
+            f"in {len(run.rounds)} rounds, over {_places(pages)} protocols. Each round opens "
+            f"the "
             f"library with {run.scheme.internal.name}, releases one part list with "
             f"{run.scheme.external.name}, ligates the two, and transforms, grows and preps the "
             "result for the round after it."
         ),
-        background=(Topic("How this library is designed", _highlights(run)),),
+        background=(Topic("How this library is designed", _highlights(run)), *_choosing(run)),
         files=run.files,
         inputs=_inputs(run),
         protocols=pages,
@@ -95,6 +107,25 @@ def project(run: Run) -> Project:
         sources={PRICES_SOURCE: run.prices.source} if run.prices else {},
         bill=_consumed(run),
     )
+
+
+def _places(pages: Sequence[Page]) -> int:
+    """Return how many places the run has, which is one per protocol and one per choice.
+
+    Two ways of one job stand in one place, so a run offering a choice has one page more than it
+    has protocols to work through.
+    """
+    return len(by_place(pages, lambda one: one.choice))
+
+
+def _choosing(run: Run) -> tuple[Topic, ...]:
+    """Return what to weigh where the run offers the bench more than one way to read back.
+
+    The topic is `dmx`'s, because comparing that method's own routes is the method's knowledge,
+    and it is titled by the job so each way's page is one link from it. A run offering one way
+    chooses nothing and is told nothing.
+    """
+    return (dmx.route_choice(),) if len(run.validations) > 1 else ()
 
 
 def _spread(
@@ -154,9 +185,7 @@ def _inputs(run: Run) -> tuple[Handed, ...]:
             storage="-20 °C",
         )
     ]
-    stock = run.marking_stock
-    if stock is not None:
-        made.append(stock)
+    made += run.marking_stocks
     if run.working is not None:
         made.append(
             Handed(

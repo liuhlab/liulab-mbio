@@ -146,36 +146,59 @@ def test_a_build_states_no_floor_and_no_route_by_default(tmp_path):
     """Validation is optional and polyclonal by default, so the package ships no floor."""
     made = read_build(write(tmp_path))
 
-    assert (made.validate_from, made.route) == (None, None)
+    assert (made.validate_from, made.routes) == (None, ())
 
 
 def test_a_floor_and_a_route_are_stated_together(tmp_path):
     """A floor with no route says which designs are read and not how; a route alone reads none."""
     made = read_build(
-        write(tmp_path, validate_from=0, route="barcode ligation", primers="primers.tsv")
+        write(tmp_path, validate_from=0, routes=["barcode ligation"], primers="primers.tsv")
     )
-    assert (made.validate_from, made.route) == (0, "barcode ligation")
+    assert (made.validate_from, made.routes) == (0, ("barcode ligation",))
 
     with pytest.raises(ValueError, match="'barcode ligation', 'index PCR'"):
         read_build(write(tmp_path, validate_from=3))
     with pytest.raises(ValueError, match="stated together"):
-        read_build(write(tmp_path, route="index PCR"))
+        read_build(write(tmp_path, routes=["index PCR"]))
+
+
+def test_a_build_may_name_both_routes_as_the_two_ways_of_one_job(tmp_path):
+    """The demo offers both; naming one twice is refused, since the bench picks between them."""
+    made = read_build(
+        write(
+            tmp_path,
+            validate_from=0,
+            routes=["barcode ligation", "index PCR"],
+            primers="primers.tsv",
+        )
+    )
+    assert made.routes == ("barcode ligation", "index PCR")
+
+    with pytest.raises(ValueError, match="the same route twice"):
+        read_build(
+            write(
+                tmp_path,
+                validate_from=0,
+                routes=["index PCR", "index PCR"],
+                primers="primers.tsv",
+            )
+        )
 
 
 def test_a_build_reading_designs_back_without_a_pool_is_refused(tmp_path):
     """A build naming no primer set orders each block whole, and DMX has no colony to pick."""
     with pytest.raises(ValueError, match="no colony to pick"):
-        read_build(write(tmp_path, validate_from=0, route="barcode ligation"))
+        read_build(write(tmp_path, validate_from=0, routes=["barcode ligation"]))
 
 
 def test_a_build_reads_no_route_but_the_two(tmp_path):
     with pytest.raises(ValueError, match="route is 'DMX'"):
-        read_build(write(tmp_path, validate_from=0, route="DMX"))
+        read_build(write(tmp_path, validate_from=0, routes=["DMX"]))
 
 
 def test_a_floor_counts_fragments(tmp_path):
     with pytest.raises(ValueError, match="omit it to read nothing"):
-        read_build(write(tmp_path, validate_from=-1, route="barcode ligation"))
+        read_build(write(tmp_path, validate_from=-1, routes=["barcode ligation"]))
 
 
 def test_only_the_index_pcr_route_names_an_index_plate(tmp_path):
@@ -184,7 +207,7 @@ def test_only_the_index_pcr_route_names_an_index_plate(tmp_path):
         write(
             tmp_path,
             validate_from=0,
-            route="index PCR",
+            routes=["index PCR"],
             primers="primers.tsv",
             index_plate="index plate IDX-1",
         )
@@ -195,17 +218,17 @@ def test_only_the_index_pcr_route_names_an_index_plate(tmp_path):
             write(
                 tmp_path,
                 validate_from=0,
-                route="barcode ligation",
+                routes=["barcode ligation"],
                 primers="primers.tsv",
                 index_plate="plate 1",
             )
         )
 
 
-def test_the_ap1_build_reads_every_design_back_by_index_pcr():
+def test_the_ap1_build_reads_every_design_back_on_both_routes():
     made = read_build(DEMO)
 
-    assert (made.validate_from, made.route) == (0, "index PCR")
+    assert (made.validate_from, made.routes) == (0, ("barcode ligation", "index PCR"))
 
 
 def test_a_build_names_the_working_vector_it_moves_into_or_none(tmp_path):

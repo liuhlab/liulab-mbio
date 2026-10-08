@@ -3,10 +3,11 @@
 `liulab_synbio.dmx` is a method of its own and takes any cargo; what a library run builds is one
 cargo among others. So nothing of the read-back is written here: this page is only its title,
 the figure of what a well holds, and its place in a library run's chain. The steps, the
-materials and the plates are `dmx`'s, for the route the build named.
+materials and the plates are `dmx`'s, for the route this page is written for.
 
 A build stating no fragment-count floor reads nothing back and this protocol is not in its
-chain.
+chain. A build naming more than one route writes one of these pages per route, and they are the
+ways of one job: the bench does one of them.
 """
 
 from liulab_mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
@@ -34,11 +35,23 @@ def validation_title(one: dmx.Validation) -> str:
 
 
 class ReadBack(Protocol):
-    """Array, pick, mark and call every design the build's floor asks to read back."""
+    """Array, pick, mark and call every design the build's floor asks to read back.
+
+    One of these is written for each route the build named, so a run offering two routes writes
+    two pages and the bench does one of them.
+    """
+
+    def __init__(self, one: dmx.Validation) -> None:
+        """Hold the read-back this page is written for, which is one route's."""
+        self.one = one
 
     def title(self, run: Run) -> str:
         """Return the page's heading, which names the route that marks its wells."""
-        return validation_title(_validation_of(run))
+        return validation_title(self.one)
+
+    def choice(self, run: Run) -> str:
+        """Name the job this page is one way of doing, where the run offers more than one way."""
+        return dmx.READ_BACK if len(run.validations) > 1 else ""
 
     def summary(self, run: Run) -> str:
         """Return what reading the designs back comes to."""
@@ -49,11 +62,11 @@ class ReadBack(Protocol):
 
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the route's own steps, each under the section `dmx` puts it in."""
-        return dmx.validation_steps(_validation_of(run), marking=_marking_figure(run))
+        return dmx.validation_steps(self.one, marking=_marking_figure(run, self.one))
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:
-        """Return the archive plate, and the lab stock the chosen route marks with."""
-        stock = run.marking_stock
+        """Return the archive plate, and the lab stock this page's own route marks with."""
+        stock = dmx.marking_stock(self.one)
         return (run.archive, *((stock,) if stock else ()))
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
@@ -62,15 +75,15 @@ class ReadBack(Protocol):
 
     def carried(self, run: Run) -> tuple[Material, ...]:
         """Return what the route buys, which no other protocol of the run does."""
-        return dmx.validation_materials(_validation_of(run))
+        return dmx.validation_materials(self.one)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware the route needs that no reagent table covers."""
-        return dmx.validation_equipment(_validation_of(run))
+        return dmx.validation_equipment(self.one)
 
     def plates(self, run: Run) -> tuple[Plate, ...]:
         """Return the plates the read-back fills, so every well a transfer names has one."""
-        return _validation_of(run).plates
+        return self.one.plates
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where the route's own numbers are read from."""
@@ -81,20 +94,7 @@ class ReadBack(Protocol):
         return dmx.SOURCES
 
 
-def _validation_of(run: Run) -> dmx.Validation:
-    """Return the run's read-back, which this protocol is only written for a run that has one.
-
-    Raises
-    ------
-    ValueError
-        If the build states no fragment-count floor, where this protocol is not in the chain.
-    """
-    if run.validation is None:
-        raise ValueError("this run states no validation floor and reads no design back")
-    return run.validation
-
-
-def _marking_figure(run: Run) -> Figure | None:
+def _marking_figure(run: Run, one: dmx.Validation) -> Figure | None:
     """Return what the route's own marking step works on: what a picked well holds.
 
     The cassette its design sits in, with the stuffer lit. Drawn as a map and not at base
@@ -108,7 +108,7 @@ def _marking_figure(run: Run) -> Figure | None:
     marks = (
         f"The kit chains its {dmx.GROUPS} barcodes on, {dmx.CHAIN[0]} through "
         f"{dmx.CHAIN[-1]}, reading on the strand the cargo reads on."
-        if _validation_of(run).route is dmx.ROUTE_LIGATION
+        if one.route is dmx.ROUTE_LIGATION
         else "The pair reads across it, and the band is that stretch plus the two marks the "
         "well's address names."
     )

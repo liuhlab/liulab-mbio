@@ -31,6 +31,7 @@ from liulab_synbio.dmx.build import Build, read_build, read_designs
 from liulab_synbio.dmx.kit import CHAIN, GROUPS, KIT_ENV, Kit, KitBarcode, read_kit
 from liulab_synbio.dmx.method import (
     PICKED_PLATE,
+    READ_BACK,
     REFERENCES,
     ROUTE_INDEX_PCR,
     ROUTE_LIGATION,
@@ -44,6 +45,7 @@ from liulab_synbio.dmx.method import (
     judge_well,
     marking_stock,
     refuse_unclonal,
+    route_choice,
     validation,
     validation_equipment,
     validation_materials,
@@ -56,6 +58,7 @@ __all__ = [
     "GROUPS",
     "KIT_ENV",
     "PICKED_PLATE",
+    "READ_BACK",
     "REFERENCES",
     "ROUTES",
     "ROUTE_INDEX_PCR",
@@ -78,6 +81,7 @@ __all__ = [
     "read_designs",
     "read_kit",
     "refuse_unclonal",
+    "route_choice",
     "validation",
     "validation_equipment",
     "validation_materials",

@@ -174,11 +174,12 @@ class Build:
         Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
         There is no default: `liulab_mbio.bench.readback.clean_colony_chance` gives a design's
         chance of a clean colony, not the chance worth paying to check.
-    route
-        Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
-        `validate_from` is, because an unread build needs no route. A build that reads anything
-        back names `primers` too: without a pool each block arrives as the vendor ships it, and
-        DMX has no colony to pick.
+    routes
+        Which of `liulab_synbio.dmx.ROUTES` read those wells back, one or more. Named exactly
+        when `validate_from` is, because an unread build needs no route. Name two and the run
+        writes a page for each, as the two ways of one job the bench does one of. A build that
+        reads anything back names `primers` too: without a pool each block arrives as the vendor
+        ships it, and DMX has no colony to pick.
     index_plate
         What this lab calls its prepared plate of barcoded primer pairs. Only the index PCR
         route takes one, so only that route may name it.
@@ -215,9 +216,10 @@ class Build:
     ------
     ValueError
         If a position is repeated or missing, a number is not positive, the completeness does not
-        lie between 0 and 1, the floor is negative, the route is neither of the two, the floor and
-        the route are not both there or both absent, an index plate is named on the route that
-        takes none, a route is named over cargo DMX cannot pick, a representation mark loosens
+        lie between 0 and 1, the floor is negative, a route is neither of the two or named twice,
+        the floor and the routes are not both there or both absent, an index plate is named
+        without the route that takes one, a route is named over cargo DMX cannot pick, a
+        representation mark loosens
         the sourced one, or the barcode and the method's cloning scar are not whole codons
         together — which names ``barcode-frame``.
     KeyError
@@ -238,7 +240,7 @@ class Build:
     working_vector: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     validate_from: int | None = None
-    route: str | None = None
+    routes: tuple[str, ...] = ()
     index_plate: str = ""
     seed: int = SEED
     reserved_extra: tuple[str, ...] = ()
@@ -334,31 +336,39 @@ class Build:
     def _check_validation(self) -> None:
         """Refuse a bad floor or route, one of the two alone, a stray plate, or unclonal cargo.
 
-        The floor and the route travel together: a floor with no route says which designs are
+        The floor and the routes travel together: a floor with no route says which designs are
         read and not how, and a route with no floor names a read nobody asked for. Whether
         there is anything to read back at all is DMX's own question, not a build's.
+
+        Naming a route twice is refused rather than collapsed: it would write one page twice and
+        ask the bench to choose between a page and itself.
         """
         if self.validate_from is not None and self.validate_from < 0:
             raise ValueError(
                 f"validate_from is {self.validate_from}, and a fragment-count floor counts "
                 "fragments; omit it to read nothing, or set 0 to read every design"
             )
-        if self.route is not None and self.route not in ROUTES:
+        for one in self.routes:
+            if one not in ROUTES:
+                raise ValueError(
+                    f"route is {one!r}, and a build reads its wells back on one of "
+                    f"{', '.join(repr(each) for each in ROUTES)}"
+                )
+        if len(set(self.routes)) != len(self.routes):
             raise ValueError(
-                f"route is {self.route!r}, and a build reads its wells back on one of "
-                f"{', '.join(repr(one) for one in ROUTES)}"
+                "routes names the same route twice, and the ways of one job are different ways"
             )
-        if (self.validate_from is None) != (self.route is None):
+        if (self.validate_from is None) != (not self.routes):
             raise ValueError(
-                "validate_from and route are stated together: a build that reads designs back "
+                "validate_from and routes are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
             )
-        if self.index_plate and self.route != ROUTE_INDEX_PCR.name:
+        if self.index_plate and ROUTE_INDEX_PCR.name not in self.routes:
             raise ValueError(
                 "index_plate names a plate of barcoded primer pairs, which only the "
                 f"{ROUTE_INDEX_PCR.name!r} route takes"
             )
-        if self.route is not None:
+        if self.routes:
             refuse_unclonal(
                 "a block as the vendor ships it, which is what a build naming no primer set orders",
                 clonal=self.primers is not None,
@@ -491,7 +501,12 @@ def read_build(path: str | os.PathLike[str]) -> Build:
         validate_from=(
             _whole(given, "validate_from", "a build") if "validate_from" in given else None
         ),
-        route=_text(given, "route", "a build") if "route" in given else None,
+        routes=tuple(
+            _one_text(one, f"routes[{index}]")
+            for index, one in enumerate(
+                _sequence(given, "routes", "a build") if "routes" in given else ()
+            )
+        ),
         index_plate=_text(given, "index_plate", "a build") if "index_plate" in given else "",
         representation_seen=(
             _number(given, "representation_seen", "a build")
@@ -546,7 +561,7 @@ _BUILD_OPTIONAL = frozenset(
         "working_vector",
         "bands",
         "validate_from",
-        "route",
+        "routes",
         "index_plate",
         "representation_seen",
         "representation_skew",

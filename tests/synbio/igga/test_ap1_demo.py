@@ -189,49 +189,84 @@ def rerouted(plan, **changes):
     return replace(plan, project=replace(plan.project, **changes))
 
 
+def read_back(plan, route="index PCR"):
+    """Return the run's read-back on one route, of the two this demo offers."""
+    return next(one for one in plan.validations if one.route.name == route)
+
+
 def test_the_demo_reads_all_72_designs_back_as_288_wells(plan):
-    one = plan.validation
-    assert (one.route.name, one.floor, len(one.designs)) == ("index PCR", 0, 72)
-    assert one.wells == 288 == 72 * 4
-    assert [len(picked.labels) for picked in one.picked] == [288]
-    assert [index.name for index in one.index] == ["index 1", "index 2", "index 3"]
+    """Both routes read the same designs into the same wells: they differ in how a well is marked."""
+    assert [one.route.name for one in plan.validations] == ["barcode ligation", "index PCR"]
+    for one in plan.validations:
+        assert (one.floor, len(one.designs)) == (0, 72)
+        assert one.wells == 288 == 72 * 4
+        assert [len(picked.labels) for picked in one.picked] == [288]
+    assert [index.name for index in read_back(plan).index] == ["index 1", "index 2", "index 3"]
 
 
 def test_a_floor_above_a_design_shrinks_the_plates_by_exactly_what_it_leaves_out(plan):
     """The bench is sized from the designs read, not from the part list."""
-    whole = plan.validation
-    fewer = rerouted(plan, validate_from=2).validation
+    whole = read_back(plan)
+    fewer = read_back(rerouted(plan, validate_from=2))
     left_out = len(whole.designs) - len(fewer.designs)
     assert left_out == 40
     assert fewer.wells == whole.wells - left_out * whole.colonies == 128
     assert sum(len(one.labels) for one in fewer.picked) == 128
-    fewest = rerouted(plan, validate_from=3).validation
+    fewest = read_back(rerouted(plan, validate_from=3))
     assert (len(fewest.designs), fewest.wells) == (16, 64)
     assert len(fewest.index) == 1 < len(whole.index)
-    assert rerouted(plan, validate_from=6).validation is None
+    assert rerouted(plan, validate_from=6).validations == ()
 
 
 def test_a_design_is_read_in_the_pieces_the_pool_was_split_into(plan):
     """The count is the split's own, because arithmetic on the oligo length only bounds it."""
-    counted = Counter(one.fragments for one in plan.validation.designs)
+    counted = Counter(one.fragments for one in read_back(plan).designs)
     assert dict(plan.pool.pool.fragment_counts()) == counted
     assert max(counted) == 5
 
 
 def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
     """Cargo validation is optional, and a project that asks for none gets none."""
-    polyclonal = rerouted(plan, validate_from=None, route=None)
-    assert polyclonal.validation is None
+    polyclonal = rerouted(plan, validate_from=None, routes=())
+    assert polyclonal.validations == ()
     titles = [step.title for step in whole(polyclonal.chain()).steps]
     assert "Pick 4 colonies of each design" not in titles
     assert "Order the oligo pool" in titles
     assert titles[titles.index("Order the oligo pool") + 5] == "Pool each part list"
 
 
+def test_the_demo_carries_both_read_back_routes_as_the_two_ways_of_one_job(plan):
+    """The demo offers both so a reader can read each; a run does one of them, never both."""
+    chain = plan.chain()
+    ways = [one for one in chain.protocols if one.choice]
+
+    assert [one.title for one in ways] == [
+        "Cargo validation: barcode ligation",
+        "Cargo validation: index PCR",
+    ]
+    assert {one.choice for one in ways} == {"read every well back"}
+    assert "Barcode each well in lysate" in [one.title for one in ways[0].steps]
+    assert "Amplify each well with its own pair" in [one.title for one in ways[1].steps]
+    left = {"clonal picked plate", "well calls"}
+    assert [{item.name for item in one.produces} for one in ways] == [left, left]
+    said = next(one for one in chain.background if one.title == "read every well back")
+    assert "Do one of them, never both." in said.body[0]
+
+
+def test_a_run_naming_one_route_offers_no_choice(plan):
+    """Choosing is the demo's; a build naming one route writes one page and no guidance."""
+    one = rerouted(plan, routes=("barcode ligation",)).chain()
+
+    assert [each.title for each in one.protocols][3] == "Cargo validation: barcode ligation"
+    assert not [each for each in one.protocols if each.choice]
+    assert [each.title for each in one.background] == ["How this library is designed"]
+    assert [check.name for check in one.audit()] == ["handoffs", "sources"]
+
+
 def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
-    """One set of parts, two project files: a second project is never a second branch."""
+    """One set of parts, both routes: the ways of one job, never a branch the package picks."""
     index_pcr = protocol
-    ligation = whole(rerouted(plan, route="barcode ligation").chain())
+    ligation = whole(rerouted(plan, routes=("barcode ligation",)).chain())
     assert "Amplify each well with its own pair" in [one.title for one in index_pcr.steps]
     assert "Barcode each well in lysate" in [one.title for one in ligation.steps]
     pcrs = ["H29", "H30"]
@@ -448,11 +483,12 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
         "Primer plates",
         "Cargo ordering and pool preparation",
         "Cargo creation",
+        "Cargo validation: barcode ligation",
         "Cargo validation: index PCR",
         "Library assembly in rounds",
         "Final cargo ligation",
     ]
-    assert [len(one.steps) for one in chain.protocols] == [5, 2, 3, 6, 27, 5]
+    assert [len(one.steps) for one in chain.protocols] == [5, 2, 3, 6, 6, 27, 5]
     assert [one.audit()[0].status for one in (chain,)] == ["pass"]
     handed = {item.name for item in chain.inputs}
     for one in chain.protocols:
@@ -506,14 +542,19 @@ def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
     ]
 
 
-def test_the_other_route_writes_its_own_protocol_and_both_at_once_is_refused(plan):
-    """A run marks its wells one way, so the chain carries that route's page and no other."""
-    ligation = rerouted(plan, route="barcode ligation").chain()
+def test_the_two_ways_take_one_place_and_the_run_says_how_to_pick(plan):
+    """Both ways leave the bench holding the same things, so what follows them is the same."""
+    chain = plan.chain()
+    checks = {check.name: check for check in chain.audit()}
 
-    assert [one.title for one in ligation.protocols][3] == "Cargo validation: barcode ligation"
-    assert ligation.audit()[0].status == "pass"
+    assert checks["choices"].status == "pass"
+    assert (
+        checks["choices"].detail
+        == "2 ways to read every well back, each leaving the same 2 things."
+    )
+    assert checks["handoffs"].status == "pass"
     with pytest.raises(ValueError, match="route is 'both'"):
-        rerouted(plan, route="both")
+        rerouted(plan, routes=("both",))
 
 
 def test_the_primer_plates_are_written_only_where_the_project_says_how(plan):

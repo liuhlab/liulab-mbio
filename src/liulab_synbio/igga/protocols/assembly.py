@@ -115,7 +115,7 @@ class Assembly(Protocol):
 
         A run ordering its blocks whole archives nothing, so its cargo is the vendor's tube.
         """
-        if run.validation is not None:
+        if run.validations:
             cargo = (run.picked, run.calls)
         else:
             cargo = (run.archive,) if run.pool else (run.ordered,)
@@ -150,7 +150,7 @@ class Assembly(Protocol):
             f"{position} {len(parts)}"
             for position, parts in zip(run.positions, run.part_lists, strict=True)
         )
-        scheme, standard, validation = run.scheme, run.standard, run.validation
+        scheme, standard = run.scheme, run.standard
         return {
             "Method": card(scheme.name, f"{len(run.positions)} positions"),
             "Part lists": card(sizes, f"{len(run.part_lists)} lists"),
@@ -178,17 +178,26 @@ class Assembly(Protocol):
                 f"{last.coverage.coverage:.0f}x",
             ),
             "Amino acids changed": (f"{standard.cost} over {len(standard.changes)} part end(s)"),
-            "Designs read back": (
-                card(
-                    f"{len(validation.designs)}, every one"
-                    if validation.floor == 0
-                    else f"{len(validation.designs)}, from {validation.floor} fragment(s)",
-                    f"by {validation.route.name}",
-                )
-                if validation
-                else "none; the library stays polyclonal"
-            ),
+            "Designs read back": _read_back(run),
         }
+
+
+def _read_back(run: Run) -> str:
+    """Return how many designs were read back and on which route, for the card that says so.
+
+    A run offering both routes says so rather than naming one: which route the bench did is the
+    bench's to pick, and the card has to read true whichever it was.
+    """
+    offered = run.validations
+    if not offered:
+        return "none; the library stays polyclonal"
+    one = offered[0]
+    read = (
+        f"{len(one.designs)}, every one"
+        if one.floor == 0
+        else f"{len(one.designs)}, from {one.floor} fragment(s)"
+    )
+    return card(read, f"by {one.route.name}" if len(offered) == 1 else "by either route")
 
 
 def _pool_step(run: Run) -> Step:

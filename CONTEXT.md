@@ -736,7 +736,8 @@ The **fragment count** at or above which a design is read back one well at a tim
 and zero reads every design. A read-back build always states one.
 No floor ships, because the measured curve gives a design's chance of a clean
 colony and not the chance worth paying to check. A build that states one also names which of
-the two marking routes reads its wells: **barcode ligation** or **index PCR**.
+the two marking routes reads its wells: **barcode ligation** or **index PCR**, or both, which
+makes them the two ways of a **choice**.
 _Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
 _Package_: liulab_synbio
 
