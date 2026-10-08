@@ -1216,7 +1216,8 @@
       "troubleshooting": [
         {
           "problem": "The vendor bins the pool by length",
-          "solution": "Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants the project's oligo length changed and the design run again."
+          "solution": "Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants the project's oligo length changed and the design run again.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1411,11 +1412,13 @@
       "troubleshooting": [
         {
           "problem": "No band",
-          "solution": "Drop the annealing temperature by 3 °C and check the pool went in."
+          "solution": "Drop the annealing temperature by 3 °C and check the pool went in.",
+          "citation": null
         },
         {
           "problem": "A hump after the peak on a Bioanalyzer or TapeStation trace",
-          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles. What too many cycles cost is dropout, chimeras and polymerase error; pooling the blocks equimolar later restores the evenness but none of those."
+          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles. What too many cycles cost is dropout, chimeras and polymerase error; pooling the blocks equimolar later restores the evenness but none of those.",
+          "citation": null
         }
       ],
       "holes": [
@@ -1615,11 +1618,13 @@
       "troubleshooting": [
         {
           "problem": "A band at PCR1's length",
-          "solution": "The outer primer region was not dropped. Check the inner primer went in, and that the template is PCR1's product and not the pool."
+          "solution": "The outer primer region was not dropped. Check the inner primer went in, and that the template is PCR1's product and not the pool.",
+          "citation": null
         },
         {
           "problem": "A hump after the peak on a Bioanalyzer or TapeStation trace",
-          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles; the forward primer is the whole batch's, so over-cycling here also pulls a neighbour's product into the well."
+          "solution": "Heteroduplexes, which is what over-amplification leaves. Run it again with fewer cycles; the forward primer is the whole batch's, so over-cycling here also pulls a neighbour's product into the well.",
+          "citation": null
         }
       ],
       "holes": [
@@ -1775,11 +1780,13 @@
       "troubleshooting": [
         {
           "problem": "A block comes out short",
-          "solution": "A piece was missing from the well. Check that well's PCR2 lane before assembling it again; the pieces of one block are not interchangeable."
+          "solution": "A piece was missing from the well. Check that well's PCR2 lane before assembling it again; the pieces of one block are not interchangeable.",
+          "citation": null
         },
         {
           "problem": "Colonies carrying the destination with no cargo",
-          "solution": "The destination was not opened to completion. Run a little of its digest on a gel before setting the plate up again."
+          "solution": "The destination was not opened to completion. Run a little of its digest on a gel before setting the plate up again.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1806,7 +1813,8 @@
       "troubleshooting": [
         {
           "problem": "A spot grows nothing",
-          "solution": "That design has no clone to read. Re-transform it from the archive before anyone re-synthesises it."
+          "solution": "That design has no clone to read. Re-transform it from the archive before anyone re-synthesises it.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1840,7 +1848,8 @@
       "troubleshooting": [
         {
           "problem": "A design in many fragments gives no clean colony",
-          "solution": "The chances above say which designs that is likeliest for. Pick more colonies of those designs before the plates are poured, not after."
+          "solution": "The chances above say which designs that is likeliest for. Pick more colonies of those designs before the plates are poured, not after.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5587,7 +5596,8 @@
       "troubleshooting": [
         {
           "problem": "A plate reads back far fewer wells than the others",
-          "solution": "LevSeq traces that to the amplification, not the sequencing: on a run of ten plates three returned under 60% of their variants. Check each pool on a gel before the library prep."
+          "solution": "LevSeq traces that to the amplification, not the sequencing: on a run of ten plates three returned under 60% of their variants. Check each pool on a gel before the library prep.",
+          "citation": null
         }
       ],
       "holes": [
@@ -5655,7 +5665,8 @@
       "troubleshooting": [
         {
           "problem": "A well's call is the right protein and the wrong barcode",
-          "solution": "It fails. A barcode that no longer names its member cannot be put right by the linkage read later."
+          "solution": "It fails. A barcode that no longer names its member cannot be put right by the linkage read later.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5688,11 +5699,13 @@
       "troubleshooting": [
         {
           "problem": "One member is much more dilute than the rest",
-          "solution": "Pool to the lowest member rather than to the mean; a member short here is short in every round after it."
+          "solution": "Pool to the lowest member rather than to the mean; a member short here is short in every round after it.",
+          "citation": null
         },
         {
           "problem": "The pool is below 22.3 ng/µL",
-          "solution": "Concentrate it, by SPRI at the round's own 2x ratio, or scale the digest up so the same mass arrives in a larger volume."
+          "solution": "Concentrate it, by SPRI at the round's own 2x ratio, or scale the digest up so the same mass arrives in a larger volume.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5790,7 +5803,8 @@
       "troubleshooting": [
         {
           "problem": "Mostly empty library later",
-          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
+          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5889,7 +5903,8 @@
       "troubleshooting": [
         {
           "problem": "A member is missing from the library later",
-          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
+          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5916,7 +5931,8 @@
       "troubleshooting": [
         {
           "problem": "Too dilute for the ligation",
-          "solution": "Elute in a smaller volume, or scale the ligation up."
+          "solution": "Elute in a smaller volume, or scale the ligation up.",
+          "citation": null
         }
       ],
       "holes": []
@@ -5980,7 +5996,8 @@
       "troubleshooting": [
         {
           "problem": "Few colonies after this round",
-          "solution": "Check that both digests went to completion; an uncut end cannot ligate."
+          "solution": "Check that both digests went to completion; an uncut end cannot ligate.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6006,7 +6023,8 @@
       "troubleshooting": [
         {
           "problem": "The eluate is still salty",
-          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
+          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6035,7 +6053,8 @@
       "troubleshooting": [
         {
           "problem": "The cuvette arcs",
-          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
+          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6098,11 +6117,13 @@
       "troubleshooting": [
         {
           "problem": "Fewer net colonies than the count above",
-          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
+          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again.",
+          "citation": null
         },
         {
           "problem": "The no-donor control is not empty",
-          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members."
+          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6129,7 +6150,8 @@
       "troubleshooting": [
         {
           "problem": "A low yield",
-          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
+          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6227,7 +6249,8 @@
       "troubleshooting": [
         {
           "problem": "Mostly empty library later",
-          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
+          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6326,7 +6349,8 @@
       "troubleshooting": [
         {
           "problem": "A member is missing from the library later",
-          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
+          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6353,7 +6377,8 @@
       "troubleshooting": [
         {
           "problem": "Too dilute for the ligation",
-          "solution": "Elute in a smaller volume, or scale the ligation up."
+          "solution": "Elute in a smaller volume, or scale the ligation up.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6417,7 +6442,8 @@
       "troubleshooting": [
         {
           "problem": "Few colonies after this round",
-          "solution": "Check that both digests went to completion; an uncut end cannot ligate."
+          "solution": "Check that both digests went to completion; an uncut end cannot ligate.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6443,7 +6469,8 @@
       "troubleshooting": [
         {
           "problem": "The eluate is still salty",
-          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
+          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6472,7 +6499,8 @@
       "troubleshooting": [
         {
           "problem": "The cuvette arcs",
-          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
+          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6535,11 +6563,13 @@
       "troubleshooting": [
         {
           "problem": "Fewer net colonies than the count above",
-          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
+          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again.",
+          "citation": null
         },
         {
           "problem": "The no-donor control is not empty",
-          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members."
+          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6566,7 +6596,8 @@
       "troubleshooting": [
         {
           "problem": "A low yield",
-          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
+          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6664,7 +6695,8 @@
       "troubleshooting": [
         {
           "problem": "Mostly empty library later",
-          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round."
+          "solution": "The destination was not opened to completion. Run a little of the digest on a gel before ligating the next round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6763,7 +6795,8 @@
       "troubleshooting": [
         {
           "problem": "A member is missing from the library later",
-          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round."
+          "solution": "Its block was under-represented in the pool, or its own digest was incomplete. Check the pool before repeating the round.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6790,7 +6823,8 @@
       "troubleshooting": [
         {
           "problem": "Too dilute for the ligation",
-          "solution": "Elute in a smaller volume, or scale the ligation up."
+          "solution": "Elute in a smaller volume, or scale the ligation up.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6854,7 +6888,8 @@
       "troubleshooting": [
         {
           "problem": "Few colonies after this round",
-          "solution": "Check that both digests went to completion; an uncut end cannot ligate."
+          "solution": "Check that both digests went to completion; an uncut end cannot ligate.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6880,7 +6915,8 @@
       "troubleshooting": [
         {
           "problem": "The eluate is still salty",
-          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse."
+          "solution": "Repeat the clean-up; salt carried into the cuvette arcs the pulse.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6909,7 +6945,8 @@
       "troubleshooting": [
         {
           "problem": "The cuvette arcs",
-          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells."
+          "solution": "The DNA carries salt. Clean it up again, elute in water, and use a fresh aliquot of cells.",
+          "citation": null
         }
       ],
       "holes": []
@@ -6972,11 +7009,13 @@
       "troubleshooting": [
         {
           "problem": "Fewer net colonies than the count above",
-          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again."
+          "solution": "The round has lost library members and no later round can put them back. Electroporate more of the ligation, or run the round again.",
+          "citation": null
         },
         {
           "problem": "The no-donor control is not empty",
-          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members."
+          "solution": "The destination was not opened to completion, or the blunt chopper missed. What grows is the round before's library, one position short, and it reaches the linkage read as truncated members.",
+          "citation": null
         }
       ],
       "holes": []
@@ -7003,7 +7042,8 @@
       "troubleshooting": [
         {
           "problem": "A low yield",
-          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker."
+          "solution": "The culture was grown too briefly, or the antibiotic was wrong for this backbone. Check the vector's own marker.",
+          "citation": null
         }
       ],
       "holes": []
@@ -7033,11 +7073,13 @@
       "troubleshooting": [
         {
           "problem": "A read carries fewer barcodes than there are rounds",
-          "solution": "A round did not go in. Check that round's prep against its own record before blaming the sequencing."
+          "solution": "A round did not go in. Check that round's prep against its own record before blaming the sequencing.",
+          "citation": null
         },
         {
           "problem": "A combination decodes to a member the coding bases are not",
-          "solution": "That round joined a block to the wrong barcode, so barcodes.tsv no longer names what the library holds. Rebuild that round rather than carrying the table forward; no later round repairs it."
+          "solution": "That round joined a block to the wrong barcode, so barcodes.tsv no longer names what the library holds. Rebuild that round rather than carrying the table forward; no later round repairs it.",
+          "citation": null
         }
       ],
       "holes": [
@@ -7076,11 +7118,13 @@
       "troubleshooting": [
         {
           "problem": "A combination is missing",
-          "solution": "It was lost at a round or at a bottleneck since, and no later step puts it back. Read the rounds' own titre plates before re-reading this one."
+          "solution": "It was lost at a round or at a bottleneck since, and no later step puts it back. Read the rounds' own titre plates before re-reading this one.",
+          "citation": null
         },
         {
           "problem": "The counts are heavily skewed",
-          "solution": "Members differ in length and a bottleneck can favour the short ones. Imkeller's Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs cells downstream rather than failing here."
+          "solution": "Members differ in length and a bottleneck can favour the short ones. Imkeller's Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs cells downstream rather than failing here.",
+          "citation": null
         }
       ],
       "holes": []
@@ -7232,7 +7276,8 @@
       "troubleshooting": [
         {
           "problem": "The library backbone survives the assembly",
-          "solution": "The blunt enzyme missed, or the heat kill was short. Both show up as colonies carrying the round's own vector rather than the working one."
+          "solution": "The blunt enzyme missed, or the heat kill was short. Both show up as colonies carrying the round's own vector rather than the working one.",
+          "citation": null
         }
       ],
       "holes": []
@@ -7332,7 +7377,8 @@
       "troubleshooting": [
         {
           "problem": "Fewer net colonies than the count above",
-          "solution": "The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo."
+          "solution": "The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo.",
+          "citation": null
         }
       ],
       "holes": []
@@ -7360,7 +7406,8 @@
       "troubleshooting": [
         {
           "problem": "Markedly fewer combinations than before the move",
-          "solution": "The transfer was the bottleneck, not the rounds. Compare the colony count with the step above before rebuilding anything."
+          "solution": "The transfer was the bottleneck, not the rounds. Compare the colony count with the step above before rebuilding anything.",
+          "citation": null
         }
       ],
       "holes": []

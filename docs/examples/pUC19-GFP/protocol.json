@@ -485,11 +485,13 @@
       "troubleshooting": [
         {
           "problem": "No band",
-          "solution": "Drop the annealing temperature by 3 °C and check the pUC19 template is there."
+          "solution": "Drop the annealing temperature by 3 °C and check the pUC19 template is there.",
+          "citation": null
         },
         {
           "problem": "Several bands",
-          "solution": "Raise the annealing temperature, or gel-purify the band of the right size."
+          "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
+          "citation": null
         }
       ],
       "holes": []
@@ -653,11 +655,13 @@
       "troubleshooting": [
         {
           "problem": "No band",
-          "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there."
+          "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
+          "citation": null
         },
         {
           "problem": "Several bands",
-          "solution": "Raise the annealing temperature, or gel-purify the band of the right size."
+          "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
+          "citation": null
         }
       ],
       "holes": []
@@ -725,7 +729,8 @@
       "troubleshooting": [
         {
           "problem": "A smear or an extra band",
-          "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones."
+          "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.",
+          "citation": null
         }
       ],
       "holes": []
@@ -757,7 +762,8 @@
       "troubleshooting": [
         {
           "problem": "Many colonies on the no-insert control",
-          "solution": "The template survived: digest longer, or use more DpnI."
+          "solution": "The template survived: digest longer, or use more DpnI.",
+          "citation": null
         }
       ],
       "holes": []
@@ -782,7 +788,8 @@
       "troubleshooting": [
         {
           "problem": "Low recovery",
-          "solution": "Elute twice through the same column, or pool two reactions before purifying."
+          "solution": "Elute twice through the same column, or pool two reactions before purifying.",
+          "citation": null
         }
       ],
       "holes": []
@@ -809,7 +816,8 @@
       "troubleshooting": [
         {
           "problem": "Too dilute to fit in the reaction",
-          "solution": "Concentrate the amplicon, or scale the reaction up."
+          "solution": "Concentrate the amplicon, or scale the reaction up.",
+          "citation": null
         }
       ],
       "holes": []
@@ -884,7 +892,8 @@
       "troubleshooting": [
         {
           "problem": "The DNA does not fit the reaction volume",
-          "solution": "Concentrate the fragments, or scale the whole reaction up."
+          "solution": "Concentrate the fragments, or scale the whole reaction up.",
+          "citation": null
         }
       ],
       "holes": []
@@ -960,11 +969,13 @@
       "troubleshooting": [
         {
           "problem": "Mostly empty vector later",
-          "solution": "Keep the 60 °C soak, and check the template was digested with DpnI."
+          "solution": "Keep the 60 °C soak, and check the template was digested with DpnI.",
+          "citation": null
         },
         {
           "problem": "Few colonies later",
-          "solution": "Raise the cycle count, or plate more of the outgrowth."
+          "solution": "Raise the cycle count, or plate more of the outgrowth.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1012,11 +1023,13 @@
       "troubleshooting": [
         {
           "problem": "No colonies",
-          "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth."
+          "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
+          "citation": null
         },
         {
           "problem": "A lawn",
-          "solution": "Plate a smaller volume or a greater dilution next time."
+          "solution": "Plate a smaller volume or a greater dilution next time.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1191,11 +1204,13 @@
       "troubleshooting": [
         {
           "problem": "No band in any lane",
-          "solution": "The colony was too much material: touch a smaller one, or dilute it."
+          "solution": "The colony was too much material: touch a smaller one, or dilute it.",
+          "citation": null
         },
         {
           "problem": "Every colony reads as empty vector",
-          "solution": "The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran."
+          "solution": "The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.",
+          "citation": null
         }
       ],
       "holes": []
@@ -1225,7 +1240,8 @@
       "troubleshooting": [
         {
           "problem": "The read starts too close to the junction",
-          "solution": "Move the primer further out; the first bases after a primer are unreadable."
+          "solution": "Move the primer further out; the first bases after a primer are unreadable.",
+          "citation": null
         }
       ],
       "holes": []
