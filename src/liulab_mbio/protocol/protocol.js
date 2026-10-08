@@ -52,16 +52,19 @@
 
   var groups = all("nav details[data-steps]");
 
-  function sections() {
-    var here = null;
+  function showSections() {
     groups.forEach(function (group) {
       var keys = stepKeys(group);
-      var done = ticked(state, keys);
       var label = group.querySelector(".section-progress");
-      if (label) label.textContent = done + " of " + keys.length + " done";
-      if (here === null && done < keys.length) here = group;
+      if (label) label.textContent = ticked(state, keys) + " of " + keys.length + " done";
     });
-    return here;
+  }
+
+  function currentSection() {
+    return groups.filter(function (group) {
+      var keys = stepKeys(group);
+      return ticked(state, keys) < keys.length;
+    })[0];
   }
 
   function refresh() {
@@ -72,7 +75,7 @@
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
-    sections();
+    showSections();
   }
 
   boxes.forEach(function (box) {
@@ -88,8 +91,9 @@
   refresh();
 
   // The section the bench is in — the first still holding an unticked step — opens on arrival,
-  // and the rest close. A section opened by hand after that stays open.
-  var current = sections();
+  // and the rest close. A section opened by hand after that stays open. Where this never runs,
+  // the page keeps the first section open, which is where a bench with no marks is.
+  var current = currentSection();
   if (current) {
     groups.forEach(function (group) { group.open = group === current; });
   }

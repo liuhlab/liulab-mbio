@@ -114,8 +114,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
 
 /* Both lists of steps — the standalone table of contents and a page's right column — are this
-   list: one group per section, collapsed, so three like rounds read as three rounds. The number
-   is in the markup because a collapsed group lays nothing out and a counter would renumber. */
+   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
+   number is in the markup, so no counter here. */
 .step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
 .step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
 .step-group + .step-group { margin-top: 0.45rem; }
@@ -123,7 +123,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
 /* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
 .section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
-.toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
+.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -288,7 +290,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   /* A flex item sizes to its content, so without this the widest table widens the page. */
   .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }

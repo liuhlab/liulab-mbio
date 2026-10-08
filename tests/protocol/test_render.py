@@ -260,6 +260,9 @@ def test_the_header_states_what_the_bench_is_handed_and_what_it_is_left_with() -
 
 def test_a_protocol_declaring_neither_states_no_handover(page: Node) -> None:
     assert not page.find_all("div", cls="handover")
+
+
+def test_a_protocol_declaring_one_side_states_that_side_alone() -> None:
     one = Protocol("Transform", produces=(Item("colonies", "transformed cells on a plate"),))
     [handover] = parse(render_html(one)).find_all("div", cls="handover")
     assert [h.text for h in handover.find_all("h3")] == ["Leaves you with"]
