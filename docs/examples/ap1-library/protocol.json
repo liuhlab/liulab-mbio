@@ -5763,7 +5763,7 @@
               "name": "DMX-iGGA",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.301042 pmol (1000 ng)",
+              "final": "0.301 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -5866,7 +5866,7 @@
               "name": "N part list",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "2.64825 pmol (1000 ng)",
+              "final": "2.65 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6000,7 +6000,7 @@
               "name": "DMX-iGGA, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00605451 pmol (20 ng)",
+              "final": "0.00605 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6008,7 +6008,7 @@
               "name": "N part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00605451 pmol (2.08 ng)",
+              "final": "0.00605 pmol (2.08 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6233,7 +6233,7 @@
               "name": "AP-1 DESynR round 1",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.263516 pmol (1000 ng)",
+              "final": "0.264 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6336,7 +6336,7 @@
               "name": "DBD part list",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "5.25316 pmol (1000 ng)",
+              "final": "5.25 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6470,7 +6470,7 @@
               "name": "AP-1 DESynR round 1, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0052961 pmol (20 ng)",
+              "final": "0.0053 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6478,7 +6478,7 @@
               "name": "DBD part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.0052961 pmol (0.83 ng)",
+              "final": "0.0053 pmol (0.83 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6703,7 +6703,7 @@
               "name": "AP-1 DESynR round 2",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.25495 pmol (1000 ng)",
+              "final": "0.255 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6806,7 +6806,7 @@
               "name": "C part list",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "4.6379 pmol (1000 ng)",
+              "final": "4.64 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6940,7 +6940,7 @@
               "name": "AP-1 DESynR round 2, opened",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00512313 pmol (20 ng)",
+              "final": "0.00512 pmol (20 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -6948,7 +6948,7 @@
               "name": "C part list, released",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.00512313 pmol (0.93 ng)",
+              "final": "0.00512 pmol (0.93 ng)",
               "master_mix": false,
               "citation": null
             },
@@ -7293,7 +7293,7 @@
               "name": "AP-1 DESynR round 3",
               "volume_ul": 1.0,
               "stock": "",
-              "final": "0.252295 pmol (1000 ng)",
+              "final": "0.252 pmol (1000 ng)",
               "master_mix": false,
               "citation": null
             },
