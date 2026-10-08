@@ -345,6 +345,11 @@ sets one.
   release contradicts.
 - An amplicon found across a circular genome's origin reads round it: `pUC19:2677..481`,
   rather than an end counted past the sequence's length.
+- The library run's pages no longer state a figure the package already computes. The equipment
+  list names a sequencer per platform the designed reads ask for, rather than one long-read
+  instrument for all three; the pool's concentration floor and the digest table that uses it are
+  one number; the stuffer's two lengths are named as the whole and the excised core they are; and
+  no page cites a kit the run never buys.
 - A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
   padded to A4's proportions, leaving two-thirds of the page blank.
 - The library run's last page is one the bench can work. It names the record the plan now writes

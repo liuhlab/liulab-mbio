@@ -187,23 +187,27 @@ def test_each_protocol_of_the_chain_answers_for_its_own_page(plan):
     assert assembly.equipment[: len(ROUND_EQUIPMENT)] == ROUND_EQUIPMENT
 
 
-def test_the_equipment_names_a_sequencer_for_every_platform_the_reads_ask_for(plan):
-    """The instruments follow from the reads designed, never from a sentence beside them."""
-    run = plan.chain()
-    assembly = run.protocols[1]
+def test_each_page_names_the_sequencer_its_own_reads_ask_for(plan):
+    """The instruments follow from the reads a page runs, never from a sentence beside them."""
+    chain = plan.chain()
+    assembly, final = chain.protocols[1], chain.protocols[2]
     reads = plan.reads
 
     assert reads is not None
-    platforms = {one.platform for one in reads.designed}
-    listed = [one for one in assembly.equipment if "sequencer" in one]
+    taken = {
+        assembly: (reads.linkage, reads.representation),
+        final: (reads.final_representation,),
+    }
+    for page, pairs in taken.items():
+        pairs = tuple(one for one in pairs if one is not None)
+        listed = [one for one in page.equipment if "sequencer" in one]
+        assert len(listed) == len({one.platform for one in pairs}), page.title
+        for one in pairs:
+            wanted = f"{one.platform.replace(' ', '-').capitalize()} sequencer"
+            assert one.name in next(item for item in listed if item.startswith(wanted))
 
-    assert len(listed) == len(platforms)
-    for one in reads.designed:
-        wanted = f"{one.platform.replace(' ', '-').capitalize()} sequencer"
-        said = next(item for item in listed if item.startswith(wanted))
-        assert one.name in said
-    # Nothing counts the reads wrongly, and no platform is named that no read asked for.
-    assert not [one for one in listed if one.startswith("Long-read") and "representation" in one]
+    # The page that never runs the linkage read does not ask for a long-read instrument.
+    assert not [one for one in final.equipment if one.startswith("Long-read")]
 
 
 def test_one_call_plans_every_round_and_every_part(plan):

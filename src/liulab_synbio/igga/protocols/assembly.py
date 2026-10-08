@@ -133,8 +133,11 @@ class Assembly(Protocol):
         return (run.destination_reagent, SELECTIVE, PREP_KIT, CUVETTES)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
-        """Return the hardware a round needs, which no reagent table covers."""
-        return round_equipment(run)
+        """Return the hardware a round needs, and the sequencing its own two reads ask for."""
+        reads = run.reads
+        if reads is None:
+            return round_equipment()
+        return round_equipment(reads.linkage, reads.representation)
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where a round's numbers come from, and where the scheme itself came from."""

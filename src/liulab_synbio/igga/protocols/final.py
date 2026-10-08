@@ -141,8 +141,9 @@ class FinalLigation(Protocol):
         return (run.working_reagent, FINAL_SELECTIVE, PREP_KIT, CUVETTES)
 
     def equipment(self, run: Run) -> tuple[str, ...]:
-        """Return the hardware this protocol needs, which is a round's."""
-        return round_equipment(run)
+        """Return a round's hardware, and the sequencing the one read this page takes asks for."""
+        reads = run.reads
+        return round_equipment(None if reads is None else reads.final_representation)
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where the numbers come from, and where the scheme itself came from.

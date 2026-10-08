@@ -488,22 +488,21 @@ def enzyme_amount(enzyme: Enzyme, note: str) -> Material:
     return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
 
 
-def round_equipment(run: Run) -> tuple[str, ...]:
-    """Return the hardware the rounds need, the sequencing following from the reads designed.
+def round_equipment(*reads: ReadPair | None) -> tuple[str, ...]:
+    """Return the hardware a round needs, the sequencing following from the reads it takes.
 
     A read says what it has to carry in one molecule and `liulab_synbio.igga.reads` reads that
     as its platform, so the instruments follow from the reads rather than being stated beside
-    them. A build designing no read lists no sequencer at all.
+    them. Each protocol passes the reads its own steps run, so no page asks for an instrument
+    it never loads; a build designing none lists no sequencer at all.
     """
-    return (*ROUND_EQUIPMENT, *_sequencers(run.reads))
+    return (*ROUND_EQUIPMENT, *_sequencers([one for one in reads if one is not None]))
 
 
-def _sequencers(reads: ReadPairs | None) -> tuple[str, ...]:
-    """Return one instrument per platform the designed reads ask for, naming its own reads."""
-    if reads is None:
-        return ()
+def _sequencers(reads: Sequence[ReadPair]) -> tuple[str, ...]:
+    """Return one instrument per platform these reads ask for, naming its own reads."""
     taken: dict[Platform, list[str]] = {}
-    for one in reads.designed:
+    for one in reads:
         taken.setdefault(one.platform, []).append(one.name)
     return tuple(
         f"{platform.replace(' ', '-').capitalize()} sequencer, for the {listed(names)} "
