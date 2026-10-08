@@ -137,9 +137,8 @@ class PoolPlan:
     def against_lund(self) -> tuple[tuple[int, int, float | None], ...]:
         """How many blocks take each fragment count, beside the share Lund saw clone perfectly.
 
-        The anchors are `liulab_mbio.bench.readback.CLEAN_COLONY_CURVE`, read as measured: a count
-        Lund did not measure carries ``None``, because this method reports what the paper saw
-        rather than an estimate between two of its points.
+        Read as measured from `liulab_mbio.bench.readback.CLEAN_COLONY_CURVE`: a count Lund did
+        not measure carries ``None``, because this reports what the paper saw, not an estimate.
         """
         measured = dict(CLEAN_COLONY_CURVE)
         counted = self.pool.fragment_counts()

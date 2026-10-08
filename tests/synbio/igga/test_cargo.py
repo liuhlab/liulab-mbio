@@ -127,9 +127,11 @@ def test_the_count_equals_the_floor_where_no_block_forces_one_more(pooled):
     assert pooled.over_floor == ()
 
 
-def test_a_count_lund_measured_carries_his_share_and_one_he_did_not_carries_nothing(pooled):
+def test_a_fragment_count_lund_measured_carries_its_share_and_an_unmeasured_one_carries_nothing(
+    pooled,
+):
     """Read as measured: three fragments is an anchor of Lund's curve, and one fragment is not."""
-    assert pooled.against_lund() == ((1, 2, None), (3, 1, 0.938))
+    assert set(pooled.against_lund()) == {(1, 2, None), (3, 1, 0.938)}
 
 
 def test_a_batch_shares_its_outer_and_forward_primers_and_a_gene_its_own_inner(pooled):

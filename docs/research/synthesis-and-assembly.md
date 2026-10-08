@@ -509,8 +509,8 @@ departure.
 
 **Colonies per design: four by default, and a project input.** Lund's four gave 343 of 458 genes
 error-free and it is the only measured anchor, but it is not fixed anywhere. The same table runs
-100% clean at 2 fragments, 84.6% at 5, 40% at 12 and 0% at 16, so four is right for a short gene
-and thin for a long one. The protocol states each design's predicted chance of a clean colony
+100% clean at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40% at 12 and 0% at 16, so four is
+right for a short gene and thin for a long one. The protocol states each design's predicted chance
 from that curve and that design's own fragment count, so a project raising the number reads the
 reason rather than guessing it. A design with no passing well is re-picked from the same archive
 spot before it is re-synthesised.
