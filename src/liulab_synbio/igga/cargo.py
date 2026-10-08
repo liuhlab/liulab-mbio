@@ -30,6 +30,7 @@ from math import ceil
 from pathlib import Path
 
 from liulab_mbio.bench.pools import (
+    SPACER,
     Oligo,
     OligoLayout,
     Pool,
@@ -39,7 +40,8 @@ from liulab_mbio.bench.pools import (
 )
 from liulab_mbio.bench.prices import Band, Item
 from liulab_mbio.bench.readback import CLEAN_COLONY_CURVE
-from liulab_mbio.sequence import SequenceRecord
+from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.split import CargoSplit, Fragment, fewest_pieces, split_cargo
 from liulab_synbio.igga.method import ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
@@ -291,6 +293,32 @@ def cargo_record(part: Part, scheme: Scheme) -> SequenceRecord:
     start = len(scheme.external_stuffer_5) - overhang
     end = len(part.sequence) - len(scheme.external_stuffer_3) + overhang
     return SequenceRecord(part.sequence[start:end], name=part.name)
+
+
+def carrier_part(part: Part, scheme: Scheme, *, spacer: str = SPACER) -> SequenceRecord:
+    """Return one part in the form its carrier takes it: its cargo between two inward sites.
+
+    The method gives a part two usable forms, the carrier plasmid and a product carrying the
+    `liulab_synbio.igga.method.SYNTHESIS_ENZYME` flank. This is the second, which is what is
+    seated: the cuts fall at the cargo's own two ends, so it comes back out on the overhangs it
+    already spells. The flank is the one every oligo of the pool already carries, laid round a
+    cargo carried whole rather than round a fragment of it.
+
+    Examples
+    --------
+    >>> from liulab_mbio.sequence import Segment
+    >>> from liulab_synbio.igga.method import IGGA
+    >>> bases = IGGA.external_stuffer_5 + "GGC" + IGGA.external_stuffer_3
+    >>> part = Part("FLAG", "N", index=0, sequence=bases, barcode="", protein="G",
+    ...             coding=Segment(29, 32))
+    >>> carrier_part(part, IGGA).sequence
+    'CGTCTCAAGGAGGCTTCCTGAGACG'
+    """
+    site = get_enzyme(SYNTHESIS_ENZYME).site
+    cargo = cargo_record(part, scheme)
+    opening = site + spacer
+    closing = reverse_complement(opening)
+    return SequenceRecord(opening + cargo.sequence + closing, name=cargo.name)
 
 
 def _check_batch(size: int) -> None:

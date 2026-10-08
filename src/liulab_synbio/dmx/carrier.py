@@ -21,8 +21,15 @@ from dataclasses import dataclass
 from liulab_mbio.bench import plates
 from liulab_mbio.checks import counted
 from liulab_mbio.edits import EditReport, insert, ordered
-from liulab_mbio.protocol.model import FORMATS, Material, Plate, Step, Troubleshooting
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from liulab_mbio.protocol.model import (
+    FORMATS,
+    Material,
+    Plate,
+    Reference,
+    Step,
+    Troubleshooting,
+)
+from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, position_text
 from liulab_mbio.sites import find_sites
 
 #: The enzyme that releases a part from its carrier, which the method reserves rather than
@@ -36,6 +43,16 @@ CARRIER_MARKER = "KanR"
 #: The kit the carrier is supplied in, linearised with topoisomerase I covalently bound.
 CARRIER_KIT = "Zero Blunt TOPO PCR Cloning Kit"
 
+#: Where the reaction's own numbers are read from: the kit's user guide, which
+#: ``docs/research/synthesis-and-assembly.md`` section 6.11 reads the blunt point against.
+REFERENCES: tuple[Reference, ...] = (
+    Reference(
+        "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector "
+        "supplied linearised with topoisomerase I bound to each 3' end and a 5 min "
+        "room-temperature reaction"
+    ),
+)
+
 #: The head-to-head pair topoisomerase I sits either side of. The enzyme cleaves after 5'-CCCTT
 #: on each strand, so a carrier is supplied opened halfway through this run.
 TOPO_SITE = "GCCCTTAAGGGC"
@@ -48,7 +65,9 @@ class SeatedParts:
     Parameters
     ----------
     plate
-        One well a part, seated in reading order.
+        One well a part, labelled in reading order. A part is no material, oligo, vessel or
+        plate, so the well carries its name as a label: `docs/adr/0015-a-well-may-be-labelled.md`
+        is why it is not a seating.
     parts
         The part names, in that order.
     records
@@ -103,8 +122,8 @@ def topo_site(carrier: SequenceRecord) -> int:
     if len(starts) > 1:
         raise ValueError(
             f"{named} carries {len(starts)} {TOPO_SITE} runs, at "
-            f"{', '.join(str(start) for start in starts)}: a part would be seated at whichever "
-            "one, so the product is undetermined"
+            f"{', '.join(position_text(start, length) for start in starts)}: a part would be "
+            "seated at whichever one, so the product is undetermined"
         )
     return (starts[0] + len(TOPO_SITE) // 2) % length
 
@@ -127,8 +146,8 @@ def released(part: SequenceRecord) -> tuple[str, str]:
     named = part.name or "the part"
     if len(sites) != 2:
         raise ValueError(
-            f"{named} carries {len(sites)} {ENZYME} site(s): a part is flanked by two, facing "
-            "inward, so it can be cut back out of its carrier"
+            f"{named} carries {counted(len(sites), f'{ENZYME} site')}: a part is flanked by "
+            "two, facing inward, so it can be cut back out of its carrier"
         )
     left, right = sites
     inward = left.strand is Strand.FORWARD and right.strand is Strand.REVERSE
@@ -167,8 +186,9 @@ def seat(
     sites = find_sites(carrier, ENZYME)
     if sites:
         raise ValueError(
-            f"{carrier.name or 'the carrier'} carries {len(sites)} {ENZYME} site(s): releasing "
-            "a part from it would cut the backbone as well"
+            f"{carrier.name or 'the carrier'} carries "
+            f"{counted(len(sites), f'{ENZYME} site')}: releasing a part from it would cut the "
+            "backbone as well"
         )
     pair = released(part)
     if overhangs is not None and pair not in overhangs:
@@ -212,7 +232,7 @@ def seat_parts(
     >>> carrier = SequenceRecord("AAAAGCCCTTAAGGGCTTTT", topology="circular", name="carrier")
     >>> part = SequenceRecord("CGTCTCATATGGGCAGGATGAGACG", name="FLAG")
     >>> seated = seat_parts([part], carrier=carrier)
-    >>> seated.plate.seating["A1"], seated.products, len(seated.records[0])
+    >>> seated.plate.labels["A1"], seated.products, len(seated.records[0])
     ('FLAG', 1, 45)
     """
     named = tuple(part.name for part in parts)
@@ -232,7 +252,7 @@ def seat_parts(
         plates.plate(
             name,
             fits[0],
-            seating=plates.seat(named, fits[0]),
+            labels=plates.seat(named, fits[0]),
             holds=f"one seated part each, selected on {CARRIER_MARKER}",
             note=f"{len(named)} of {fits[0]} wells used",
         ),
@@ -277,15 +297,14 @@ def carrier_step(seated: SeatedParts) -> Step:
             f"Transform each well on its own and select on {CARRIER_MARKER}.",
         ),
         expected=(
-            f"{seated.products} carrier plasmids, one a part, each still named by the well it "
-            "sits in.",
+            f"{counted(seated.products, 'carrier plasmid')}, one a part, each still named by "
+            "the well it sits in.",
             "No pool and no library: nothing here is mixed, so nothing has to be told apart "
             "afterwards.",
         ),
         notes=(
-            f"{ENZYME} releases a part from its carrier afterwards, and makes the last transfer "
-            "into a working vector. The method reserves it for those two, so a part block "
-            "spells its site nowhere else and the carrier backbone carries none.",
+            f"{ENZYME} releases a part from its carrier afterwards. The backbone carries no "
+            "site of it, so a part comes back out on its own and the plasmid stays whole.",
         ),
         troubleshooting=(
             Troubleshooting(

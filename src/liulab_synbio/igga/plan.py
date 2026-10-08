@@ -48,6 +48,7 @@ from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
 from liulab_synbio import dmx
+from liulab_synbio.dmx.carrier import SeatedParts, seat_parts
 from liulab_synbio.igga.bench import (
     RoundBench,
     digest_amount,
@@ -55,7 +56,13 @@ from liulab_synbio.igga.bench import (
     pool_floor_ng_ul,
     transformation_amount,
 )
-from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
+from liulab_synbio.igga.cargo import (
+    PoolPlan,
+    carrier_part,
+    design_pool,
+    read_bands,
+    read_primers,
+)
 from liulab_synbio.igga.chain import project as chain_of
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
@@ -110,6 +117,9 @@ BLOCK_VECTOR_FILE = "block-vector-{number}.dna"
 #: build named with the ccdB cassette in it. The build's own file is the backbone before that,
 #: so the bench needs this one and the page names it.
 WORKING_VECTOR_FILE = "working-vector-ccdb.dna"
+
+#: What the plate of seated parts is called, where the build names a carrier to seat them in.
+CARRIER_PLATE = "Part carrier plate"
 
 #: The folder the run's protocols are written into, beside the sheets and the records. A
 #: folder and not a flat pair: a chain of protocols names its own `project.json`, and the
@@ -241,6 +251,9 @@ class LibraryPlan:
     working
         The vector the finished library is moved into, where the build names one, and the
         enzyme chosen to admit it. `None` leaves the library in the destination vector.
+    seated
+        Every part in its own well of the carrier the build names. `None` where it names none,
+        and the parts are already in hand.
     """
 
     build: Build
@@ -261,6 +274,7 @@ class LibraryPlan:
     prices: PriceRecord | None = None
     pool: PoolPlan | None = None
     working: Working | None = None
+    seated: SeatedParts | None = None
 
     @property
     def product(self) -> SequenceRecord:
@@ -370,6 +384,7 @@ class LibraryPlan:
                 pcr1_cycles=self.build.pcr1_cycles,
                 pcr2_cycles=self.build.pcr2_cycles,
                 primer_plates=self.build.primer_plates,
+                seated=self.seated,
             )
         )
 
@@ -594,6 +609,7 @@ def plan_igga(
         seed=chosen.seed,
         reserved=reserved,
     )
+    seated = _seat(chosen, design, built, standard)
     destination = destination_vector(
         one,
         design if compatible else _restandardised(design, standard.entry_overhangs[0]),
@@ -642,6 +658,33 @@ def plan_igga(
         prices if prices is None or isinstance(prices, PriceRecord) else read_prices(prices),
         pool,
         working,
+        seated,
+    )
+
+
+def _seat(
+    build: Build, scheme: Scheme, parts: Sequence[Part], standard: Standard
+) -> SeatedParts | None:
+    """Seat every part in the carrier the build names, or none where it names none.
+
+    A part is seated in the form the method gives it a Type IIS flank in, so the enzyme that
+    releases it again cuts on the two overhangs its cargo already spells. Those are the pairs
+    the standard chose, one a position, and seating checks each part against them.
+
+    Raises
+    ------
+    ValueError
+        If the carrier is not one a part can be seated in, or a part not one it takes;
+        `liulab_synbio.dmx.carrier.seat` says which.
+    """
+    if build.carrier is None:
+        return None
+    pairs = {(one, scheme.scar_overhang) for one in standard.entry_overhangs}
+    return seat_parts(
+        [carrier_part(one, scheme) for one in parts],
+        carrier=as_record(build.carrier),
+        name=CARRIER_PLATE,
+        overhangs=pairs,
     )
 
 

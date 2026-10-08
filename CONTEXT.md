@@ -726,6 +726,8 @@ in the backbone, so a part is cut back out on its own and the plasmid stays whol
 is not a round: a round joins a part list to the library in one tube and hands back a pool, while
 this hands back one plasmid a well and makes no library. It is also not a **seating**, which is
 where things sit in a plate — a carrier holds a part, a seating says which well holds what.
+`plan_igga` plans the step where a **build** names a carrier, as the protocol its chain opens
+with; a build naming none holds its parts already and nothing is seated.
 _Avoid_: holding vector, shuttle vector, seating (where things sit in a plate, and its own entry)
 _Package_: liulab_synbio
 

@@ -152,6 +152,12 @@ class Build:
         The vector the finished library is moved into, circular, before its ccdB cassette: a
         stock the lab holds and an application chooses. Omitted, the library stays in the
         destination vector and the final assembly is written as what it cannot say.
+    carrier
+        The plasmid each part is kept in until a round wants it, circular and supplied
+        linearised: a stock the lab holds. Named, the run opens by seating every part in it;
+        omitted, the parts are already in hand and nothing is seated. The carrier plasmid and
+        the enzyme releasing a part from it are the method's, in
+        `liulab_synbio.dmx.carrier`; which one this lab holds is the build's.
     host
         The codon usage table the coding bases are written for.
     oligo_length
@@ -236,6 +242,7 @@ class Build:
     completeness: float
     primers: Path | None = None
     working_vector: Path | None = None
+    carrier: Path | None = None
     bands: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     validate_from: int | None = None
     routes: tuple[str, ...] = ()
@@ -261,6 +268,8 @@ class Build:
         object.__setattr__(self, "vector", Path(self.vector))
         if self.working_vector is not None:
             object.__setattr__(self, "working_vector", Path(self.working_vector))
+        if self.carrier is not None:
+            object.__setattr__(self, "carrier", Path(self.carrier))
         object.__setattr__(self, "bands", dict(self.bands))
         self._check_positions()
         self._check_numbers()
@@ -504,6 +513,13 @@ def read_build(path: str | os.PathLike[str]) -> Build:
             if "working_vector" in given
             else None
         ),
+        carrier=(
+            jsonfile.named_file(
+                file, jsonfile.text(given, "carrier", "a build's"), "carrier", "a build's"
+            )
+            if "carrier" in given
+            else None
+        ),
         bands=_bands(given.get("bands")),
         validate_from=(
             jsonfile.whole(given, "validate_from", "a build's")
@@ -580,6 +596,7 @@ _BUILD_OPTIONAL = frozenset(
         "barcode",
         "primers",
         "working_vector",
+        "carrier",
         "bands",
         "validate_from",
         "routes",

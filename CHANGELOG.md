@@ -9,6 +9,12 @@ sets one.
 
 ### Added
 
+- A library build may name the carrier its parts are kept in, and the run then opens by seating
+  all of them: one part a well, in a plasmid supplied linearised, with nothing added to join the
+  two. `plan_igga` writes it as the first protocol of the chain and the rounds pool their donors
+  out of its plate. A build naming no `carrier` holds its parts already and plans what it did
+  before. `docs/examples/ap1-library` seats its 72 parts in pCR-Blunt II-TOPO.
+
 - DMX has a way in of its own. `pixi run liulab_synbio dmx plan BUILD --out DIR` reads
   designs back one well at a time, from a plate a lab already holds and with no library run
   behind it. The build file names the designs sheet, the archive plate, the marking route

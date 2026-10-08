@@ -85,6 +85,11 @@ class PrimerSite:
         return len(self.sequence)
 
 
+#: What stands between a Type IIS site and the span it cuts, where no caller names another. How
+#: long it is the enzyme fixes; which base it spells nothing does, so one base serves everywhere.
+SPACER = "A"
+
+
 @dataclass(frozen=True, slots=True)
 class OligoLayout:
     """Where everything sits on one oligo, and what that leaves for the cargo.
@@ -118,7 +123,7 @@ class OligoLayout:
     enzyme: EnzymeLike
     primers: int = 3
     primer_length: int = 20
-    spacer: str = "A"
+    spacer: str = SPACER
 
     def __post_init__(self) -> None:
         """Check the spacer puts the cut where the span begins."""

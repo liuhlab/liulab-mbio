@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from liulab_mbio.checks import counted
 from liulab_mbio.cloning.cli import plan_command
 from liulab_synbio.dmx.plan import ReadBackPlan, plan_dmx
 
@@ -35,6 +36,7 @@ def _summary(made: ReadBackPlan) -> str:
     """Report the read-back in one line: what is read, how, and what it takes at the bench."""
     one = made.validation
     return (
-        f"{made.build.name}: {len(one.designs)} of {len(made.designs)} design(s) read back on "
-        f"{one.route.name}, {one.wells} well(s) over {len(one.picked)} picked plate(s)"
+        f"{made.build.name}: {len(one.designs)} of "
+        f"{counted(len(made.designs), 'design')} read back on {one.route.name}, "
+        f"{counted(one.wells, 'well')} over {counted(len(one.picked), 'picked plate')}"
     )

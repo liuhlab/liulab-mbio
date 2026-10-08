@@ -1,4 +1,4 @@
-"""Protocol 06: release the finished cargo and move it into the vector the application asks for.
+"""Protocol 07: release the finished cargo and move it into the vector the application asks for.
 
 One tube, staged: the cargo is freed and the enzymes that freed it are killed before the working
 vector, the cargo enzyme and the ligase go in. A build naming no working vector still runs these

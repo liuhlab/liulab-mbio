@@ -13,6 +13,7 @@ from liulab_synbio.igga.protocols.ordering import ORDERING, Ordering
 from liulab_synbio.igga.protocols.primer_plates import PRIMER_PLATES, PrimerPlating
 from liulab_synbio.igga.protocols.protocol import Protocol
 from liulab_synbio.igga.protocols.run import Run
+from liulab_synbio.igga.protocols.seating import SEATING, Seating
 from liulab_synbio.igga.protocols.validation import VALIDATION, ReadBack
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "FINAL",
     "ORDERING",
     "PRIMER_PLATES",
+    "SEATING",
     "VALIDATION",
     "Assembly",
     "Creation",
@@ -30,4 +32,5 @@ __all__ = [
     "Protocol",
     "ReadBack",
     "Run",
+    "Seating",
 ]

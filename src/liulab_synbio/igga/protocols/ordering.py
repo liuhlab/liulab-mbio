@@ -1,4 +1,4 @@
-"""Protocol 02: order the synthesised material a library is built from, and put it away.
+"""Protocol 03: order the synthesised material a library is built from, and put it away.
 
 A pool splits ordering from making the cargo: the pool is ordered and stored in one sitting,
 and pulled apart into blocks in another. Without one the blocks are bought whole and this is

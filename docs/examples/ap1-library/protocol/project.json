@@ -1,7 +1,7 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "d5c205a8c083ff32",
-  "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
+  "key": "53859f57eca0922c",
+  "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
       "title": "How this library is designed",
@@ -38,6 +38,13 @@
     "../working-vector-ccdb.dna"
   ],
   "inputs": [
+    {
+      "name": "parts to seat",
+      "what": "one part a tube, blunt and flanked so BsmBI releases it from its carrier",
+      "spec": [],
+      "storage": "-20 °C",
+      "rules": []
+    },
     {
       "name": "block vector 1",
       "what": "DMX-iGGA N, which a block of position 1 closes into",
@@ -84,6 +91,212 @@
     }
   ],
   "protocols": [
+    {
+      "title": "Part carrier",
+      "key": "1e6b9176da4228eb",
+      "summary": "Put each of 72 parts in its own pCR-Blunt II-TOPO, one part a well, so the collection keeps and BsmBI can release any of them again.",
+      "overview": {
+        "Parts": "72, one a well",
+        "Plate": "96 wells",
+        "Carrier": "pCR-Blunt II-TOPO",
+        "Kit": "Zero Blunt TOPO PCR Cloning Kit",
+        "Selection": "KanR",
+        "Released by": "BsmBI"
+      },
+      "highlights": [],
+      "checks": [],
+      "choice": "",
+      "consumes": [
+        {
+          "name": "parts to seat",
+          "what": "one part a tube, blunt and flanked so BsmBI releases it from its carrier",
+          "spec": [],
+          "storage": "-20 °C",
+          "rules": []
+        }
+      ],
+      "produces": [
+        {
+          "name": "part carrier plate",
+          "what": "one pCR-Blunt II-TOPO a part, one part a well, selected on KanR",
+          "spec": [],
+          "storage": "-80 °C glycerol stock",
+          "rules": []
+        }
+      ],
+      "materials": [
+        {
+          "name": "pCR-Blunt II-TOPO",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "the part carrier; its backbone carries no BsmBI site, which is what lets BsmBI release the part again later and leave the backbone whole",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Zero Blunt TOPO PCR Cloning Kit",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "one reaction per well",
+          "note": "supplies the carrier already linearised with topoisomerase I bound to each 3' end, so the reaction adds no ligase and no other enzyme",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        }
+      ],
+      "oligos": [],
+      "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
+      ],
+      "equipment": [],
+      "vessels": [],
+      "plates": [
+        {
+          "name": "Part carrier plate",
+          "wells": 96,
+          "catalog": "",
+          "holds": "one seated part each, selected on KanR",
+          "seating": {},
+          "labels": {
+            "A1": "N_JUN",
+            "A2": "N_JUNB",
+            "A3": "N_JUND",
+            "A4": "N_ATF2",
+            "A5": "N_ATF3",
+            "A6": "N_ATF4",
+            "A7": "N_ATF5",
+            "A8": "N_ATF6",
+            "A9": "N_ATF6B",
+            "A10": "N_ATF7",
+            "A11": "N_BATF",
+            "A12": "N_BATF2",
+            "B1": "N_BATF3",
+            "B2": "N_JDP2",
+            "B3": "N_MAF",
+            "B4": "N_MAFA",
+            "B5": "N_MAFB",
+            "B6": "N_MAFF",
+            "B7": "N_MAFG",
+            "B8": "N_MAFK",
+            "B9": "N_FOS",
+            "B10": "N_FOSB",
+            "B11": "N_FOSL1",
+            "B12": "N_FOSL2",
+            "C1": "DBD_JUN",
+            "C2": "DBD_JUNB",
+            "C3": "DBD_JUND",
+            "C4": "DBD_ATF2",
+            "C5": "DBD_ATF3",
+            "C6": "DBD_ATF4",
+            "C7": "DBD_ATF5",
+            "C8": "DBD_ATF6",
+            "C9": "DBD_ATF6B",
+            "C10": "DBD_ATF7",
+            "C11": "DBD_BATF",
+            "C12": "DBD_BATF2",
+            "D1": "DBD_BATF3",
+            "D2": "DBD_JDP2",
+            "D3": "DBD_MAF",
+            "D4": "DBD_MAFA",
+            "D5": "DBD_MAFB",
+            "D6": "DBD_MAFF",
+            "D7": "DBD_MAFG",
+            "D8": "DBD_MAFK",
+            "D9": "DBD_FOS",
+            "D10": "DBD_FOSB",
+            "D11": "DBD_FOSL1",
+            "D12": "DBD_FOSL2",
+            "E1": "C_JUN",
+            "E2": "C_JUNB",
+            "E3": "C_JUND",
+            "E4": "C_ATF2",
+            "E5": "C_ATF3",
+            "E6": "C_ATF4",
+            "E7": "C_ATF5",
+            "E8": "C_ATF6",
+            "E9": "C_ATF6B",
+            "E10": "C_ATF7",
+            "E11": "C_BATF",
+            "E12": "C_BATF2",
+            "F1": "C_BATF3",
+            "F2": "C_JDP2",
+            "F3": "C_MAF",
+            "F4": "C_MAFA",
+            "F5": "C_MAFB",
+            "F6": "C_MAFF",
+            "F7": "C_MAFG",
+            "F8": "C_MAFK",
+            "F9": "C_FOS",
+            "F10": "C_FOSB",
+            "F11": "C_FOSL1",
+            "F12": "C_FOSL2"
+          },
+          "rules": [],
+          "note": "72 of 96 wells used"
+        }
+      ],
+      "steps": [
+        {
+          "title": "Seat 72 parts in pCR-Blunt II-TOPO",
+          "key": "seat-parts",
+          "section": "",
+          "instructions": [
+            "Set up one Zero Blunt TOPO PCR Cloning Kit reaction per well of Part carrier plate, each holding one blunt part, the linearised carrier and the kit's salt solution.",
+            "Leave 5 min at room temperature. Topoisomerase I comes bound to the carrier, so nothing is added to join the two.",
+            "Transform each well on its own and select on KanR."
+          ],
+          "cautions": [],
+          "notes": [
+            "BsmBI releases a part from its carrier afterwards. The backbone carries no site of it, so a part comes back out on its own and the plasmid stays whole."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "72 carrier plasmids, one a part, each still named by the well it sits in.",
+            "No pool and no library: nothing here is mixed, so nothing has to be told apart afterwards."
+          ],
+          "troubleshooting": [
+            {
+              "problem": "Two parts end up in one well",
+              "solution": "The wells were pooled. One part a well is on purpose: a part that has met another cannot be re-cut back out on its own.",
+              "citation": null
+            }
+          ],
+          "holes": []
+        }
+      ],
+      "references": [
+        {
+          "text": "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector supplied linearised with topoisomerase I bound to each 3' end and a 5 min room-temperature reaction",
+          "url": ""
+        }
+      ],
+      "sources": {},
+      "holes": [],
+      "bill": null
+    },
     {
       "title": "Primer plates",
       "key": "4b4477d6f23d728f",
@@ -11599,7 +11812,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "1912041ca018f87b",
+      "key": "52c33f7390522692",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11623,6 +11836,13 @@
       "checks": [],
       "choice": "",
       "consumes": [
+        {
+          "name": "part carrier plate",
+          "what": "one pCR-Blunt II-TOPO a part, one part a well, selected on KanR",
+          "spec": [],
+          "storage": "-80 °C glycerol stock",
+          "rules": []
+        },
         {
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
@@ -14663,6 +14883,38 @@
         "hole": null
       },
       {
+        "item": "pCR-Blunt II-TOPO",
+        "quantity": null,
+        "unit": "",
+        "key": "pCR-Blunt II-TOPO",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P10",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "pCR-Blunt II-TOPO, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Zero Blunt TOPO PCR Cloning Kit",
+        "quantity": null,
+        "unit": "one reaction per well",
+        "key": "Zero Blunt TOPO PCR Cloning Kit",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P11",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Zero Blunt TOPO PCR Cloning Kit, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
         "item": "nuclease-free water",
         "quantity": null,
         "unit": "25,160 µL in all",
@@ -14671,7 +14923,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P10",
+          "id": "P12",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "nuclease-free water, money",
@@ -14687,7 +14939,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P11",
+          "id": "P13",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Empty 96-well plate, money",
@@ -14703,7 +14955,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P12",
+          "id": "P14",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Adhesive plate seals, money",
@@ -14719,7 +14971,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P13",
+          "id": "P15",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "NEBridge Golden Gate Assembly Kit, BsmBI-v2, money",
@@ -14735,7 +14987,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P14",
+          "id": "P16",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Q5 DNA Polymerase, money",
@@ -14751,7 +15003,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P15",
+          "id": "P17",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "dNTP mix, money",
@@ -14767,7 +15019,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P16",
+          "id": "P18",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMX-iGGA vector, money",
@@ -14783,7 +15035,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P17",
+          "id": "P19",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "CutSmart Buffer, money",
@@ -14799,7 +15051,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P18",
+          "id": "P20",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "SPRI paramagnetic beads, money",
@@ -14815,7 +15067,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P19",
+          "id": "P21",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Recovery medium, money",
@@ -14831,7 +15083,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P20",
+          "id": "P22",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Selective broth and plates, money",
@@ -14847,7 +15099,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P21",
+          "id": "P23",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "25 cm BioAssay plate, money",
@@ -14863,7 +15115,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P22",
+          "id": "P24",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "384-well culture plate, money",
@@ -14879,7 +15131,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P23",
+          "id": "P25",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "1536-well barcoding plate, money",
@@ -14895,7 +15147,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P24",
+          "id": "P26",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMX barcode kit, money",
@@ -14911,7 +15163,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P25",
+          "id": "P27",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Barcoding master mix, money",
@@ -14927,7 +15179,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P26",
+          "id": "P28",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "96-well half-skirted PCR plate, money",
@@ -14943,7 +15195,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P27",
+          "id": "P29",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Barcoded index primer plate, money",
@@ -14959,7 +15211,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P28",
+          "id": "P30",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "ThermoPol Reaction Buffer, money",
@@ -14975,7 +15227,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P29",
+          "id": "P31",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Taq DNA Polymerase, money",
@@ -14991,7 +15243,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P30",
+          "id": "P32",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DMSO, molecular biology grade, money",
@@ -15007,7 +15259,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P31",
+          "id": "P33",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "N part list, money",
@@ -15023,7 +15275,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P32",
+          "id": "P34",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "DBD part list, money",
@@ -15039,7 +15291,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P33",
+          "id": "P35",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "C part list, money",
@@ -15055,7 +15307,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P34",
+          "id": "P36",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "T7 DNA Ligase, money",
@@ -15071,7 +15323,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P35",
+          "id": "P37",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "StickTogether DNA Ligase Buffer, money",
@@ -15087,7 +15339,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P36",
+          "id": "P38",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "pLVX-TetOne-dom vector, money",
@@ -15103,7 +15355,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P37",
+          "id": "P39",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "PaqCI, money",
@@ -15119,7 +15371,7 @@
         "headroom": "",
         "citation": null,
         "hole": {
-          "id": "P38",
+          "id": "P40",
           "missing": "nothing prices this item",
           "kind": "price",
           "where": "Selective plates for the final transfer, money",

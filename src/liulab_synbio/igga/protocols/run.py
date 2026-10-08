@@ -27,6 +27,7 @@ from liulab_mbio.protocol.model import Item as Handed
 from liulab_mbio.protocol.model import Material, Reference
 from liulab_mbio.sequence import SequenceRecord
 from liulab_synbio import dmx
+from liulab_synbio.dmx.carrier import CARRIER, CARRIER_MARKER, ENZYME, SeatedParts
 from liulab_synbio.igga import stages
 from liulab_synbio.igga.bench import (
     CUTSMART,
@@ -79,6 +80,8 @@ ROUND_EQUIPMENT: tuple[str, ...] = (
 #: produces it and the one that consumes it spell it alike.
 POOL_ITEM = "oligo pool"
 BLOCKS_ITEM = "synthesised blocks"
+SEATING_ITEM = "parts to seat"
+CARRIER_ITEM = "part carrier plate"
 ARCHIVE_ITEM = "cargo archive plate"
 PREP_ITEM = "library prep, round {number}"
 LIBRARY_ITEM = "the library in its working vector"
@@ -151,6 +154,9 @@ class Run:
     `primer_plates` is how this lab lays the pool's primers out, and `None` for a build
     stating none.
 
+    `seated` is every part in its own well of the carrier, and `None` for a build naming no
+    carrier, whose parts are already in hand.
+
     `final_assembly`, `pcr1_cycles` and `pcr2_cycles` are what this build measured where the
     method leaves the number open, and `None` where it measured none. Stated, the step prints
     the number and says it is this run's own; left out, the hole stands as it does today.
@@ -190,6 +196,7 @@ class Run:
     block_vectors: Sequence[tuple[str, str]] = ()
     block_records: Sequence[Destination] = ()
     primer_plates: PrimerPlates | None = None
+    seated: SeatedParts | None = None
     records_at: str = RECORDS_AT
 
     @property
@@ -272,6 +279,24 @@ class Run:
         if self.pool:
             return Handed(POOL_ITEM, "the pool resuspended", storage="-20 °C")
         return Handed(BLOCKS_ITEM, "every block as the vendor shipped it", storage="-20 °C")
+
+    @property
+    def to_seat(self) -> Handed:
+        """The parts the bench holds before the first protocol, ready for their carrier."""
+        return Handed(
+            SEATING_ITEM,
+            f"one part a tube, blunt and flanked so {ENZYME} releases it from its carrier",
+            storage="-20 °C",
+        )
+
+    @property
+    def carrier_plate(self) -> Handed:
+        """One carrier plasmid a part, which is what seating leaves for the rounds."""
+        return Handed(
+            CARRIER_ITEM,
+            f"one {CARRIER} a part, one part a well, selected on {CARRIER_MARKER}",
+            storage="-80 °C glycerol stock",
+        )
 
     @property
     def blocks(self) -> tuple[Handed, ...]:

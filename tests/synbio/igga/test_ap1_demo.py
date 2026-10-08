@@ -26,12 +26,19 @@ from liulab_mbio.protocol.render import render_html
 from liulab_mbio.sequence import SequenceRecord, span_text
 from liulab_mbio.sites import digest, find_sites
 from liulab_mbio.translate import translate
+from liulab_synbio.dmx.carrier import released
 from liulab_synbio.igga import plan_igga
 from liulab_synbio.igga.bench import CUTSMART, SPRI_BEADS, STRAIN
-from liulab_synbio.igga.cargo import cargo_record
+from liulab_synbio.igga.cargo import cargo_record, carrier_part
 from liulab_synbio.igga.method import IGGA
 from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING, PRIMER_PLATES
-from liulab_synbio.igga.protocols.run import CUVETTES, FINAL_SELECTIVE, PREP_KIT, SELECTIVE
+from liulab_synbio.igga.protocols.run import (
+    CARRIER_ITEM,
+    CUVETTES,
+    FINAL_SELECTIVE,
+    PREP_KIT,
+    SELECTIVE,
+)
 from liulab_synbio.igga.reads import ALLOWANCE, FLANK
 from liulab_synbio.igga.vector import released_cargo
 
@@ -326,7 +333,7 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
     index_pcr = protocol
     alone = rerouted(plan, routes=("barcode ligation",)).chain()
     # A build naming one route writes one page, offers no choice and is told nothing.
-    assert [one.title for one in alone.protocols][3] == "Cargo validation: barcode ligation"
+    assert [one.title for one in alone.protocols][4] == "Cargo validation: barcode ligation"
     assert not [one for one in alone.protocols if one.choice]
     assert [one.title for one in alone.background] == ["How this library is designed"]
     assert [check.name for check in alone.audit()] == ["handoffs", "sources"]
@@ -599,6 +606,7 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
     chain = plan.chain()
 
     assert [one.title for one in chain.protocols] == [
+        "Part carrier",
         "Primer plates",
         "Cargo ordering and pool preparation",
         "Cargo creation",
@@ -607,13 +615,48 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
         "Library assembly in rounds",
         "Final cargo ligation",
     ]
-    assert [len(one.steps) for one in chain.protocols] == [5, 2, 3, 6, 6, 27, 5]
+    assert [len(one.steps) for one in chain.protocols] == [1, 5, 2, 3, 6, 6, 27, 5]
     assert [one.audit()[0].status for one in (chain,)] == ["pass"]
     handed = {item.name for item in chain.inputs}
     for one in chain.protocols:
         assert {item.name for item in one.consumes} <= handed, one.title
         handed |= {item.name for item in one.produces}
     assert "the library in its working vector" in handed
+
+
+def test_the_demo_seats_every_part_in_its_carrier_before_any_round_runs(plan):
+    """A part is a lab resource built once, so the run opens by putting all 72 away."""
+    seated = plan.seated
+    page = plan.chain().protocols[0]
+    rounds = next(one for one in plan.chain().protocols if one.title == ASSEMBLY)
+
+    assert seated is not None
+    assert (seated.products, seated.plate.wells) == (72, 96)
+    assert seated.plate.labels["A1"] == plan.parts[0].name
+    assert len(seated.records[0]) == 3519 + len(carrier_part(plan.parts[0], IGGA))
+    assert [step.key for step in page.steps] == ["seat-parts"]
+    assert [one.name for one in page.produces] == [CARRIER_ITEM]
+    # The rounds pool their donors out of it, so the chain reads across the new page.
+    assert CARRIER_ITEM in [one.name for one in rounds.consumes]
+
+
+def test_a_build_naming_no_carrier_seats_nothing_and_opens_where_it_did(plan):
+    """Parts already in hand need no reaction, so the run is the one it was before."""
+    bare = replace(plan, build=replace(plan.build, carrier=None), seated=None)
+    chain = bare.chain()
+
+    assert chain.protocols[0].title == PRIMER_PLATES
+    assert CARRIER_ITEM not in [one.name for one in chain.inputs]
+    assert chain.audit()[0].status == "pass"
+
+
+def test_a_part_is_seated_in_the_form_its_carrier_releases_it_from(plan):
+    """A part goes in flanked, so BsmBI cuts it back out on the overhangs its cargo spells."""
+    part = plan.parts[0]
+    seated = carrier_part(part, IGGA)
+
+    assert released(seated) == (plan.standard.entry_overhangs[0], IGGA.scar_overhang)
+    assert cargo_record(part, IGGA).sequence in seated.sequence
 
 
 def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one(plan):
@@ -650,7 +693,7 @@ def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):
     chain = plan.chain()
     rounds = next(one for one in chain.protocols if one.title == "Library assembly in rounds")
 
-    written = [one for one in chain.protocols if one.title != "Primer plates"]
+    written = [one for one in chain.protocols if one.title not in {"Part carrier", "Primer plates"}]
     assert all(step.section for one in written for step in one.steps)
     assert list(dict.fromkeys(step.section for step in rounds.steps)) == [
         "Pool the part lists",
@@ -668,7 +711,7 @@ def test_a_route_the_package_does_not_ship_is_refused(plan):
 
 def test_the_primer_plates_are_written_only_where_the_build_says_how(plan):
     """The amounts are nobody's to guess, so a build stating none gets no such sitting."""
-    plates = plan.chain().protocols[0]
+    plates = plan.chain().protocols[1]
     bare = rerouted(plan, primer_plates=None).chain()
 
     assert plates.title == "Primer plates"
@@ -681,7 +724,7 @@ def test_the_primer_plates_are_written_only_where_the_build_says_how(plan):
         "primer stock plate",
         "primer working plate 1",
     ]
-    assert bare.protocols[0].title == "Cargo ordering and pool preparation"
+    assert bare.protocols[1].title == "Cargo ordering and pool preparation"
     assert bare.audit()[0].status == "pass"
 
 
@@ -697,7 +740,7 @@ def test_the_primers_are_ordered_once_however_the_run_is_split(plan):
 
 
 def test_the_single_use_rule_reaches_both_pages_that_handle_the_working_plate(plan):
-    """Protocol 01 pours the plate and protocol 03 thaws it, so the rule travels to both."""
+    """Protocol 02 pours the plate and protocol 04 thaws it, so the rule travels to both."""
     pages = {one.title: one for one in plan.chain().protocols}
     handling = (pages[PRIMER_PLATES], pages[CREATION])
 
@@ -763,7 +806,7 @@ def test_a_page_lists_only_the_reagents_its_own_steps_reach(plan):
     carried = f"{working.record.name or 'Working'} vector"
     creation, rounds, final = listed[CREATION], listed[ASSEMBLY], listed[FINAL]
 
-    # Protocol 03 opens a destination, cleans up and transforms; it preps nothing and never
+    # Protocol 04 opens a destination, cleans up and transforms; it preps nothing and never
     # reaches the vector the library ends in.
     assert {destination, CUTSMART, SPRI_BEADS, STRAIN} <= creation
     assert any(one.startswith(IGGA.internal.name) for one in creation)

@@ -6,9 +6,9 @@ background a reader is told first, the bill for the whole run, and the checks th
 design. Each protocol is a module of `liulab_synbio.igga.protocols`, and adding a fact to one
 is an edit there.
 
-The chain is the order someone does the work in: plate the primers, order the blocks, make the
-cargo, read back the designs the build asks for, join the part lists round by round, and move
-the finished library into a working vector.
+The chain is the order someone does the work in: seat the parts in their carrier, plate the
+primers, order the blocks, make the cargo, read back the designs the build asks for, join the
+part lists round by round, and move the finished library into a working vector.
 """
 
 from collections.abc import Iterable, Sequence
@@ -50,6 +50,7 @@ from liulab_synbio.igga.protocols.run import (
     WORKING_ITEM,
     Run,
 )
+from liulab_synbio.igga.protocols.seating import Seating
 from liulab_synbio.igga.protocols.validation import ReadBack
 
 #: What a price record prices the synthesis order and the bill's own source by. Neither has a
@@ -63,12 +64,16 @@ PRICES_SOURCE = "prices"
 def ordered(run: Run) -> tuple[Protocol, ...]:
     """Return the protocols this run writes, in the order the bench works through them.
 
-    A run plating no primers opens at the ordering protocol; one ordering its blocks whole
-    makes its cargo in the vendor's tube and writes no creation protocol; one stating no
-    fragment-count floor reads nothing back. A run naming more than one route writes one
-    read-back protocol per route, next to each other, because they are the ways of one job.
+    A run naming a carrier opens by seating its parts, which is a lab resource built once and
+    goes in before any round runs; one naming none holds its parts already. A run plating no
+    primers opens at the ordering protocol; one ordering its blocks whole makes its cargo in
+    the vendor's tube and writes no creation protocol; one stating no fragment-count floor
+    reads nothing back. A run naming more than one route writes one read-back protocol per
+    route, next to each other, because they are the ways of one job.
     """
     made: list[Protocol] = []
+    if run.seated is not None:
+        made.append(Seating())
     if run.plated:
         made.append(PrimerPlating())
     made.append(Ordering())
@@ -189,7 +194,8 @@ def _sources(run: Run, made: Sequence[Protocol]) -> dict[str, Source]:
 
 def _inputs(run: Run) -> tuple[Handed, ...]:
     """Return what the bench holds before the first protocol: stock the run does not make."""
-    made = [
+    made = [run.to_seat] if run.seated is not None else []
+    made += [
         Handed(
             BLOCK_VECTOR_ITEM.format(number=number),
             f"{name}, which a block of position {number} closes into",

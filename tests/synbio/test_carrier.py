@@ -79,7 +79,7 @@ def test_the_carrier_ends_in_one_plasmid_a_well_and_no_pool():
         overhangs=[("TATG", "AGGA")],
     )
     assert seated.products == 4
-    assert sorted(seated.plate.seating) == ["A1", "A2", "A3", "A4"]
+    assert sorted(seated.plate.labels) == ["A1", "A2", "A3", "A4"]
     assert [record.name for record in seated.records] == [
         f"{name} in carrier" for name in seated.parts
     ]

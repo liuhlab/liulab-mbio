@@ -8,6 +8,7 @@
   "parts": "parts.fasta",
   "vector": "vector.gb",
   "working_vector": "working-vector.gb",
+  "carrier": "carrier.gb",
   "host": "human",
   "oligo_length": 350,
   "primers": "primers.tsv",

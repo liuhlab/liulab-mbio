@@ -1,4 +1,4 @@
-"""Protocol 05: join the part lists round by round, then read the finished library back.
+"""Protocol 06: join the part lists round by round, then read the finished library back.
 
 A round is two digests, a clean-up, a ligation, a second clean-up, an electroporation, a growth
 and a prep, and the rounds run in the order the scheme fills its positions. The two reads at
@@ -116,13 +116,15 @@ class Assembly(Protocol):
     def consumes(self, run: Run) -> tuple[Handed, ...]:
         """Return the cargo, as the protocol before it left it, and the vector round 1 opens.
 
-        A run ordering its blocks whole archives nothing, so its cargo is the vendor's tube.
+        A run ordering its blocks whole archives nothing, so its cargo is the vendor's tube. A
+        run that seated its parts pools them out of their carrier, so the plate comes in too.
         """
         if run.validations:
             cargo = (run.picked, run.calls)
         else:
             cargo = (run.archive,) if run.pool else (run.ordered,)
-        return (*cargo, *run.blocks[:1])
+        seated = (run.carrier_plate,) if run.seated is not None else ()
+        return (*seated, *cargo, *run.blocks[:1])
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """Return the pooled library after the last round, as a plasmid prep."""

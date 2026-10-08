@@ -112,8 +112,8 @@ def test_one_command_plans_the_library_and_prints_the_paths(build, tmp_path):
     assert result.exit_code == 0, result.output
     lines = plain(result.output).splitlines()
     assert lines[0].startswith("pool round 3:")
-    assert "8 construct(s)" in lines[0]
-    assert "3 round(s)" in lines[0]
+    assert "8 constructs" in lines[0]
+    assert "3 rounds" in lines[0]
     assert "checks pass" in lines[0]
     written = [Path(line) for line in lines[1:] if line.strip()]
     assert [path.name for path in written] == [

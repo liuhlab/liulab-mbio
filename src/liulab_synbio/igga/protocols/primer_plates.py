@@ -1,4 +1,4 @@
-"""Protocol 01: lay the pool's amplification primers out as the plates a run pipettes from.
+"""Protocol 02: lay the pool's amplification primers out as the plates a run pipettes from.
 
 The primers are the pool's own, so there is nothing to plate without one. Every amount is the
 build's; this invents none of them. The page is the shared primer-plate protocol, so its

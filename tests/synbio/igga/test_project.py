@@ -46,6 +46,7 @@ def test_the_ap1_build_reads_as_what_the_demo_plans():
     assert (made.oligo_length, made.batch_size) == (350, 96)
     assert (made.barcode.length, made.barcode.min_distance) == (11, 3)
     assert made.scheme is IGGA
+    assert made.carrier == DEMO.parent / "carrier.gb"
     assert made.retained_length == 75
 
 
@@ -282,6 +283,15 @@ def test_a_build_names_the_working_vector_it_moves_into_or_none(tmp_path):
     assert read_build(write(tmp_path)).working_vector is None
     named = read_build(write(tmp_path, working_vector="pWORK.fasta"))
     assert named.working_vector == tmp_path / "pWORK.fasta"
+
+
+def test_a_build_names_the_carrier_it_seats_its_parts_in_or_none(tmp_path):
+    """Whether a run seats its parts, and in which plasmid, is this lab's and not the method's."""
+    (tmp_path / "pCARRY.fasta").write_text(">pCARRY\nACGT\n", encoding="utf-8")
+
+    assert read_build(write(tmp_path)).carrier is None
+    named = read_build(write(tmp_path, carrier="pCARRY.fasta"))
+    assert named.carrier == tmp_path / "pCARRY.fasta"
 
 
 def test_a_build_may_tighten_each_representation_mark(tmp_path):

@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from liulab_mbio.bench.prices import PRICES_ENV
+from liulab_mbio.checks import counted
 from liulab_mbio.cloning.cli import plan_command
 from liulab_mbio.ligase import LIGASE_MATRIX_ENV
 from liulab_synbio.igga.plan import NAME_PATTERN, Kind, LibraryPlan, Site, plan_igga
@@ -103,11 +104,11 @@ def plan(
 def _summary(made: LibraryPlan) -> str:
     """Report the library in one line: what it makes, what it costs, and how it is judged."""
     return (
-        f"{made.product.name}: {len(made.product)} bp, {len(made.parts)} part(s) in "
-        f"{len(made.part_lists)} list(s), {made.constructs} construct(s), "
-        f"{len(made.rounds)} round(s), entry overhangs "
+        f"{made.product.name}: {len(made.product)} bp, {counted(len(made.parts), 'part')} in "
+        f"{counted(len(made.part_lists), 'list')}, {counted(made.constructs, 'construct')}, "
+        f"{counted(len(made.rounds), 'round')}, entry overhangs "
         f"{', '.join(made.standard.entry_overhangs)}, scar {made.standard.scar_overhang}, "
-        f"{made.standard.cost} amino acid change(s), checks {made.status}"
+        f"{counted(made.standard.cost, 'amino acid change')}, checks {made.status}"
     )
 
 

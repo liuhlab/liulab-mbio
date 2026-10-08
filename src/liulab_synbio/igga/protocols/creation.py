@@ -1,4 +1,4 @@
-"""Protocol 03: pull every block out of the ordered pool and close each cargo into its vector.
+"""Protocol 04: pull every block out of the ordered pool and close each cargo into its vector.
 
 Two nested PCRs and one assembly: the first pulls a batch out of the whole pool, the second
 pulls one block out of its batch, and the third closes that block's cargo into the vector for

@@ -1,4 +1,4 @@
-"""Protocol 04: take the archived designs to clonal wells and read each one back.
+"""Protocol 05: take the archived designs to clonal wells and read each one back.
 
 `liulab_synbio.dmx` is a method of its own and takes any cargo; what a library run builds is one
 cargo among others. So nothing of the read-back is written here: this page is only its title,

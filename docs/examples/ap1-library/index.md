@@ -28,6 +28,7 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | [project.json](project.json) | what this library chose: its three positions, its host, its completeness, its barcode rules, how its primers are plated, that every design is read back on both routes, and the numbers this lab set for itself |
 | [primers.tsv](primers.tsv) | the orthogonal primer set the oligo pool is amplified by |
 | [vector.gb](vector.gb) | the destination the first round opens |
+| [carrier.gb](carrier.gb) | the plasmid each part is kept in: pCR-Blunt II-TOPO, the Zero Blunt TOPO kit's own carrier. Leave `carrier` out and nothing is seated, which is what a lab that already holds its parts wants |
 | [working-vector.gb](working-vector.gb) | the backbone the finished library ends in: pLVX-TetOne-Puro-GFP, Addgene 171123, with its eight BsaI and BsmBI sites taken out. Swap in your own backbone and name a site in it |
 | [prices.csv](prices.csv) | what this lab pays for each thing the run buys. Replace every row with your own quote |
 
@@ -90,13 +91,14 @@ them:
 
 | Page | What it is handed | What it leaves |
 | --- | --- | --- |
-| [Primer plates](protocol/01-primer-plates.html) | nothing yet | a primer stock plate, and a working copy |
-| [Cargo ordering and pool preparation](protocol/02-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
-| [Cargo creation](protocol/03-cargo-creation.html) | the pool, the working plate, and a block vector a position | one archived well a design |
-| [Cargo validation: barcode ligation](protocol/04-cargo-validation-barcode-ligation.html) | the archive plate, and the DMX barcode kit | clonal wells, and a call for each |
-| [Cargo validation: index PCR](protocol/04-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
-| [Library assembly in rounds](protocol/05-library-assembly-in-rounds.html) | the clonal wells and their calls | the library after round 3 |
-| [Final cargo ligation](protocol/06-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
+| [Part carrier](protocol/01-part-carrier.html) | the 72 parts | one carrier plasmid a part, one part a well |
+| [Primer plates](protocol/02-primer-plates.html) | nothing yet | a primer stock plate, and a working copy |
+| [Cargo ordering and pool preparation](protocol/03-cargo-ordering-and-pool-preparation.html) | nothing yet | the oligo pool |
+| [Cargo creation](protocol/04-cargo-creation.html) | the pool, the working plate, and a block vector a position | one archived well a design |
+| [Cargo validation: barcode ligation](protocol/05-cargo-validation-barcode-ligation.html) | the archive plate, and the DMX barcode kit | clonal wells, and a call for each |
+| [Cargo validation: index PCR](protocol/05-cargo-validation-index-pcr.html) | the archive plate, and the index primer plate | clonal wells, and a call for each |
+| [Library assembly in rounds](protocol/06-library-assembly-in-rounds.html) | the carrier plate, and the clonal wells and their calls | the library after round 3 |
+| [Final cargo ligation](protocol/07-final-cargo-ligation.html) | the library after round 3 | the library in a working vector |
 
 [The way in](protocol/index.html) explains the design, draws the chain, and lists the run's own
 checks, how long it holds the bench and every number it has no source for.
