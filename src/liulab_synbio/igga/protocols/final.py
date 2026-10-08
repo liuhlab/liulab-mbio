@@ -7,6 +7,7 @@ steps, because they are a stage of the method, and what the vector would have fi
 
 from collections.abc import Sequence
 
+from liulab_mbio.bench.goldengate import assembly_program
 from liulab_mbio.bench.steps import listed
 from liulab_mbio.cloning.plan import PRODUCT_FILE
 from liulab_mbio.enzymes import Enzyme
@@ -302,8 +303,6 @@ def _assemble_step(
     scheme: Scheme, product: SequenceRecord, span: Segment | None, working: Working | None
 ) -> Step:
     """Join the freed cargo to the opened working vector, in the tube the release left."""
-    from liulab_mbio.bench.goldengate import assembly_program
-
     if working is None:
         return Step(
             "Assemble the cargo into the working vector",

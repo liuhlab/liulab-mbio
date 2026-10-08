@@ -12,6 +12,12 @@ from collections.abc import Iterable, Mapping, Sequence
 
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.goldengate import (
+    KIT,
+    assembly_amounts,
+    assembly_program,
+    assembly_reaction,
+)
 from liulab_mbio.bench.pcr import pcr_program, pcr_reaction
 from liulab_mbio.bench.plates import plate, seat
 from liulab_mbio.bench.steps import listed
@@ -377,13 +383,6 @@ def _assembly_step(run: Run, pool: PoolPlan) -> Step:
     and its cycling are NEB's kit table for the most pieces any block takes, so one master mix
     covers the plate.
     """
-    from liulab_mbio.bench.goldengate import (
-        KIT,
-        assembly_amounts,
-        assembly_program,
-        assembly_reaction,
-    )
-
     scheme = run.scheme
     opened: Amount = run.opened
     enzyme = get_enzyme(SYNTHESIS_ENZYME)

@@ -21,6 +21,7 @@ ends past the record's length.
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from liulab_mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
 from liulab_mbio.checks import Check
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.edits import EditReport, insert, replace
@@ -386,16 +387,11 @@ def _check_clean(record: SequenceRecord, cassette: Cassette, stuffer: Segment) -
 def cargo_candidates(scheme: Scheme = IGGA) -> tuple[str, ...]:
     """Return the enzymes a cargo enzyme is searched among, in the order the search reads them.
 
-    The Type IIS enzymes `liulab_mbio`'s Golden Gate pipeline ships a reaction and cycling
-    protocol for, less any reading a reserved enzyme's site and less its own last resort, which
-    ships no protocol. Derived rather than listed, so an enzyme the package stops shipping a
-    protocol for leaves this list with it.
-
-    The list is read from the cloning pipeline that ships those protocols, inside this function
-    so that importing a library plan does not load a cloning pipeline with it.
+    The Type IIS enzymes `liulab_mbio` ships a Golden Gate reaction and cycling protocol for,
+    less any reading a reserved enzyme's site and less its own last resort, which ships no
+    protocol. Derived rather than listed, so an enzyme the package stops shipping a protocol for
+    leaves this list with it.
     """
-    from liulab_mbio.cloning.goldengate.design import GOLDEN_GATE_ENZYMES, LAST_RESORT
-
     barred = {enzyme.site for enzyme in scheme.reserved_enzymes}
     return tuple(
         name
