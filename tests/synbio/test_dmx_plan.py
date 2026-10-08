@@ -1,6 +1,7 @@
 """DMX's way in: the build file, the designs sheet, and the protocol folder a plan writes."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -58,12 +59,28 @@ def test_a_build_names_a_sheet_resolved_against_its_own_directory(build):
         ({"route": "ligation"}, "reads its wells back"),
         ({"route": "barcode ligation", "index_plate": "plate 1"}, "only the 'index PCR' route"),
         ({"validate_from": "4"}, r"^a build's validate_from is str, not a whole number$"),
+        ({"archive": 1}, r"^a build's archive is int, not a string$"),
     ],
 )
 def test_a_build_is_refused_where_it_is_read(tmp_path, changed, said):
     """Each check says which field is wrong and what a build states instead."""
     with pytest.raises(ValueError, match=said):
         read_build(written(tmp_path, **changed))
+
+
+def test_a_build_is_refused_by_its_keys_and_by_a_sheet_that_is_not_there(tmp_path):
+    """A build is read by the keys it names, and the sheet it names is a file on disk."""
+    thin = tmp_path / "thin.json"
+    thin.write_text(json.dumps({"name": "thin"}), encoding="utf-8")
+    with pytest.raises(
+        ValueError, match=r"^a build is missing archive, designs, route, validate_from$"
+    ):
+        read_build(thin)
+    with pytest.raises(ValueError, match=r"^a build carries unknown key\(s\) scheme$"):
+        read_build(written(tmp_path, scheme="DMX"))
+    said = f"a build's designs is 'nowhere.tsv', and {tmp_path / 'nowhere.tsv'} is no file"
+    with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
+        read_build(written(tmp_path, designs="nowhere.tsv"))
 
 
 def test_a_sheet_that_is_not_two_named_columns_says_what_one_is(tmp_path):

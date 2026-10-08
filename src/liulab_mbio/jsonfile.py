@@ -1,7 +1,7 @@
-"""Read a JSON file of what one run chooses, and say what is wrong with it.
+"""Read a JSON file someone writes by hand, and say what is wrong with it.
 
-A file someone writes by hand is refused for a missing key, a key nothing reads, and a value of
-another JSON type, in words naming the key and what belongs there.
+A missing key, a key nothing reads, and a value of another JSON type are each refused in words
+naming the key and what belongs there.
 
 Nothing here knows what it reads for. Every refusal takes as `where` the subject it names, so a
 caller supplies its own word for the file, or for the object inside it a key sits in.
@@ -51,6 +51,15 @@ def text(data: Mapping[str, Any], key: str, where: str) -> str:
     ------
     ValueError
         If the value is of another JSON type.
+
+    Examples
+    --------
+    A refusal reads as `where` then the key, so `where` is the subject that owns it.
+
+    >>> text({"host": 1}, "host", "a build")
+    Traceback (most recent call last):
+        ...
+    ValueError: a build host is int, not a string
     """
     return one_text(data[key], f"{where} {key}")
 

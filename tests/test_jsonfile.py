@@ -1,4 +1,4 @@
-"""What a run's choices file is refused for, in the words a reader of the refusal sees."""
+"""What a hand-written JSON file is refused for, in the words a reader of the refusal sees."""
 
 import json
 import re

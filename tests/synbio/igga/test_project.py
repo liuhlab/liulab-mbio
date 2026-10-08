@@ -115,12 +115,16 @@ def test_a_missing_key_is_refused_naming_it(tmp_path):
     path = tmp_path / "thin.json"
     path.write_text(json.dumps({"name": "thin"}), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="missing batch_size"):
+    with pytest.raises(
+        ValueError,
+        match=r"^a build is missing batch_size, completeness, host, oligo_length, parts, "
+        r"positions, vector$",
+    ):
         read_build(path)
 
 
 def test_an_unknown_key_is_refused_naming_it(tmp_path):
-    with pytest.raises(ValueError, match="unknown key"):
+    with pytest.raises(ValueError, match=r"^a build carries unknown key\(s\) scheme$"):
         read_build(write(tmp_path, scheme="iGGA"))
 
 
