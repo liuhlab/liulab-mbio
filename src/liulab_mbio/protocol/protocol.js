@@ -36,18 +36,27 @@
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
-  // One section of the navigation, holding the keys of the steps under it: how far the bench got
-  // in it is counted from this page's own marks, never written down a second time.
+  // A thing carrying step keys — a section of this page, a page of the run — says which steps it
+  // stands for and how far the bench got in them. The marks are a store's, never a second count.
+  function stepKeys(item) {
+    return (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+  }
+
+  function ticked(marks, keys) {
+    var done = 0;
+    keys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    return done;
+  }
+
   var groups = all("nav details[data-steps]");
 
   function sections() {
     var here = null;
     groups.forEach(function (group) {
-      var keys = (group.getAttribute("data-steps") || "").split(" ").filter(Boolean);
-      var done = 0;
-      keys.forEach(function (key) {
-        if (state["step-" + key] === true) done += 1;
-      });
+      var keys = stepKeys(group);
+      var done = ticked(state, keys);
       var label = group.querySelector(".section-progress");
       if (label) label.textContent = done + " of " + keys.length + " done";
       if (here === null && done < keys.length) here = group;
@@ -90,7 +99,7 @@
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
     // Each step of that page by the key it is addressed under, which a reworded title keeps.
-    var stepKeys = (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+    var keys = stepKeys(item);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -100,12 +109,9 @@
     } catch (error) {
       return;
     }
-    if (!marks || !label || !stepKeys.length) return;
-    var done = 0;
-    stepKeys.forEach(function (key) {
-      if (marks["step-" + key] === true) done += 1;
-    });
-    label.textContent = done + " of " + steps(stepKeys.length) + " done";
+    if (!marks || !label || !keys.length) return;
+    var done = ticked(marks, keys);
+    label.textContent = done + " of " + steps(keys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 
