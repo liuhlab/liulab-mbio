@@ -1043,6 +1043,10 @@ def _materials(
     `used` names, row by row, which protocols of a run take each material, for the page a whole
     run shares. A protocol's own list leaves it empty. That page is what is ordered rather than
     what is laid out, so it drops the bench note and `note` is how.
+
+    A material's rules and cautions stand under the table, so someone laying the bench out reads
+    them here and not only on the steps that pipette the tube. Two tubes carrying one sentence
+    print it once, as `Protocol.cautions_for` prints it once on a step.
     """
     if not materials and not equipment:
         return ""
@@ -1076,6 +1080,10 @@ def _materials(
             f"<tbody>{rows}</tbody></table></div>"
         )
     carried = [(m, rule) for m in materials for rule in m.rules]
+    cautions = "".join(
+        f'<p class="caution"><strong>Caution:</strong> {escape(one)}</p>\n'
+        for one in dict.fromkeys(one for m in materials for one in m.cautions)
+    )
     line = ""
     if equipment:
         line = (
@@ -1083,7 +1091,7 @@ def _materials(
         )
     return (
         '<section class="block materials" id="materials">\n<h2>Materials</h2>\n'
-        f"{table}{line}{_rules(carried)}\n</section>\n"
+        f"{table}{line}{_rules(carried)}{cautions}\n</section>\n"
     )
 
 

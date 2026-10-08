@@ -113,6 +113,25 @@ def test_a_step_writing_out_a_caution_its_material_carries_shows_it_once() -> No
     assert one.cautions_for(written) == (materials.POLYMERASE_ON_ICE, "Spin the plate down.")
 
 
+def test_every_caution_a_catalogue_number_carries_reaches_the_reagents_page_once() -> None:
+    tubes = (
+        materials.material("Q5 DNA Polymerase", catalog="M0491"),
+        materials.material("Taq DNA Polymerase", catalog="M0267"),
+        materials.material("Endura electrocompetent cells", catalog="60242"),
+    )
+    steps = tuple(
+        Step("Pipette", tables=(ReactionTable((Component(tube.name, 0.5),)),)) for tube in tubes
+    )
+    page = parse(render_html(Protocol("PCR", materials=tubes, steps=steps)))
+    reagents = page.find_all("section", cls="materials")[0]
+    # Two polymerases carry the one sentence, so the page someone lays the bench out from
+    # states it once, not once per tube and not once per step that pipettes one.
+    assert [p.text for p in reagents.find_all("p", cls="caution")] == [
+        f"Caution: {materials.POLYMERASE_ON_ICE}",
+        f"Caution: {materials.CUVETTE_ON_ICE}",
+    ]
+
+
 def test_adding_peg_to_the_t7_reaction_fails_the_protocols_own_check() -> None:
     broken = protocol(ligation(extra=(Component("PEG 6000", 5.0),)))
     (check,) = [one for one in broken.audit() if one.name == "rules"]
