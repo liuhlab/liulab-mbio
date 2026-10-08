@@ -1140,31 +1140,64 @@ def _plate(one: Plate) -> str:
 
 
 def _figure(figure: Figure, base: Path, where: str) -> str:
-    """One record drawn as a map and inlined, as `_plate` inlines a plate.
+    """The figure's records drawn as maps and inlined, as `_plate` inlines a plate.
 
-    Laid out here and never stored, so the figure follows the design it is drawn from.
+    Laid out here and never stored, so the figure follows the design it is drawn from. Several
+    records stack as rows in the order they are named, each labelled by the record's own name,
+    which is how a figure shows one molecule becoming the next. One record draws as it did.
+
+    A highlight lights each row that answers to it and dims every other row whole, so a name only
+    the lit round's record carries lights that round. A name no record answers to is a mistake.
 
     Raises
     ------
     FileNotFoundError
-        If the record is not there, naming the step and the path.
+        If a record is not there, naming the step and the path.
+    ValueError
+        If no record of the figure answers to a name the highlight lights.
     """
-    (named,) = figure.records
-    path = base / named
+    rows = [_row(figure, base / named, where) for named in figure.records]
+    lit = frozenset().union(*(answering for _, answering in rows))
+    unlit = [name for name in figure.highlight if name.casefold() not in lit]
+    if unlit:
+        listed = ", ".join(repr(name) for name in unlit)
+        raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
+    if len(rows) == 1:
+        ((element, _),) = rows
+        drawn, stacked = element, ""
+    else:
+        drawn = "".join(element for element, _ in rows)
+        stacked = " rows"
+    return (
+        f'<figure class="drawing map{stacked}">{drawn}'
+        f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption></figure>\n"
+    )
+
+
+def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
+    """One record of a figure as its SVG element, and every name it answers to.
+
+    A stacked row carries the record's own name beside it, so a reader knows which molecule it is.
+    """
     if not path.is_file():
         raise FileNotFoundError(f"{where}: no record at {path} to draw")
     drawn = draw_map(
         path,
         region=figure.span,
-        highlight=figure.highlight,
         linear=figure.linear,
         sequence_view=figure.sequence_view,
         enzymes=figure.enzymes,
     )
-    return (
-        f'<figure class="drawing map">{drawn.element()}'
-        f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption></figure>\n"
-    )
+    if figure.highlight:
+        # Lit here rather than by `draw_map`, which refuses a name its one record does not draw:
+        # across rows a name belongs to the row it names, and dims every other row whole.
+        drawn = replace(drawn, highlight=figure.highlight)
+    answering = drawn.answering
+    element = drawn.element()
+    if len(figure.records) == 1:
+        return element, answering
+    label = f'<p class="row-name">{escape(drawn.record.name)}</p>'
+    return f'<div class="row">{label}{element}</div>', answering
 
 
 def _transfer(transfer: Transfer) -> str:

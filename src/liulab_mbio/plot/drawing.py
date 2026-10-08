@@ -126,6 +126,21 @@ class Drawing:
         """
         return self.layout.hidden
 
+    @property
+    def answering(self) -> frozenset[str]:
+        """Every name the record draws something under, casefolded: what a highlight may light.
+
+        A feature's or a primer's name, and the name of every enzyme that cuts. A caller lighting
+        one name across several records asks each which of them it answers to.
+        """
+        found: set[str] = set()
+        for item in _everything(self):
+            if item.cutters:
+                found.update(cutter.name.casefold() for cutter in item.cutters)
+            else:
+                found.add(item.name.casefold())
+        return frozenset(found)
+
     def element(self, *, outlines: bool = False) -> str:
         """Return the map as one SVG element, for a page or a protocol to embed.
 
@@ -289,12 +304,7 @@ def _lit(drawing: Drawing) -> None:
     """
     if not drawing.highlight:
         return
-    answering: set[str] = set()
-    for item in _everything(drawing):
-        if item.cutters:
-            answering.update(cutter.name.casefold() for cutter in item.cutters)
-        else:
-            answering.add(item.name.casefold())
+    answering = drawing.answering
     unknown = [name for name in drawing.highlight if name.casefold() not in answering]
     if unknown:
         listed = ", ".join(repr(name) for name in unknown)

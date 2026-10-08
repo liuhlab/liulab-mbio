@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.bench import plates
+from liulab_mbio.plot import layers
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
@@ -351,3 +352,56 @@ def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path
     one = Protocol("Clone", steps=(Step("Cut", figures=(Figure(("gone.dna",), "The vector"),)),))
     with pytest.raises(FileNotFoundError, match=r"step 1 'Cut'.*gone\.dna"):
         render_html(one, base=tmp_path)
+
+
+def test_several_records_stack_as_rows_each_labelled_by_its_own_name(data_dir: Path) -> None:
+    """A figure of more than one record is the rows the iGGA assembly figure stacks."""
+    figure = Figure(("pUC19.dna", "GFP.dna"), "The vector, then the insert", linear=True)
+    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
+
+    page = parse(render_html(one, base=data_dir))
+
+    [drawn] = page.find_all("figure", cls="rows")
+    rows = drawn.find_all("div", cls="row")
+    assert len(rows) == 2
+    assert [row.find_all("p", cls="row-name")[0].text for row in rows] == ["pUC19", "GFP"]
+    assert all(row.find_all("svg") for row in rows)
+
+
+def test_one_record_draws_as_it_did_with_no_row_around_it(data_dir: Path) -> None:
+    """A one-record figure is the common case and keeps the markup it had."""
+    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
+
+    [drawn] = page.find_all("figure", cls="map")
+
+    assert not drawn.find_all("div", cls="row")
+    assert "rows" not in drawn.attrs["class"]
+
+
+def test_a_highlight_lights_the_rows_answering_to_it_and_dims_the_rest(data_dir: Path) -> None:
+    """Which row is lit is the whole reason the assembly figure takes a round."""
+    figure = Figure(("pUC19.dna", "GFP.dna"), "The insert lit", linear=True, highlight=("GFP",))
+    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
+
+    rows = parse(render_html(one, base=data_dir)).find_all("div", cls="row")
+
+    unlit, named = (_paints(row) for row in rows)
+    assert unlit and set(unlit.values()) == {layers.DIM}
+    assert named["GFP"] != layers.DIM
+
+
+def _paints(row: Node) -> dict[str, str]:
+    """What each feature of a row is drawn in: `layers.DIM` wherever the highlight left it unlit."""
+    return {
+        group.attrs["data-name"]: next(
+            n.attrs["fill"] for n in group.iter() if n.attrs.get("fill", "none") != "none"
+        )
+        for group in row.find_all("g", cls="feature")
+    }
+
+
+def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None:
+    figure = Figure(("pUC19.dna", "GFP.dna"), "Nothing lit", linear=True, highlight=("mCherry",))
+    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
+    with pytest.raises(ValueError, match=r"step 1 'Join them'.*'mCherry'"):
+        render_html(one, base=data_dir)

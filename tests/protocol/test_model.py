@@ -146,7 +146,6 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         ),
         lambda: Reference("x", url="javascript:alert(1)"),
         lambda: Figure((), "The product"),
-        lambda: Figure(("a.dna", "b.dna"), "The product"),
         lambda: Figure(("a.dna",), " "),
         lambda: Figure(("a.dna",), "The product", span=(400, 100)),
         lambda: Step(""),

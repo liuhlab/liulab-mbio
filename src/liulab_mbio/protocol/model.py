@@ -600,7 +600,8 @@ class Figure:
     ----------
     records
         What is drawn: a path to a sequence file, relative to the directory the protocol was read
-        from. Exactly one for now; a tuple because a figure of several rows comes next.
+        from. Several are drawn as stacked rows, in the order given, each to the same span and
+        the same switches, which is how a figure shows one molecule becoming the next.
     caption
         What the figure shows, in the words a step uses.
     span
@@ -630,12 +631,9 @@ class Figure:
     citation: Citation | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a figure with no caption, without one record, or with a span that is empty."""
+        """Refuse a figure with no caption, with no record, or with a span that is empty."""
         _require(bool(self.caption.strip()), "a figure needs a caption")
-        _require(
-            len(self.records) == 1,
-            f"figure {self.caption!r}: one record is drawn, not {len(self.records)}",
-        )
+        _require(bool(self.records), f"figure {self.caption!r}: name a record to draw")
         if self.span is not None:
             start, end = self.span
             _require(
