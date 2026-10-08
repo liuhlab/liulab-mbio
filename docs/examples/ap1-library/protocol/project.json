@@ -2507,7 +2507,28 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../oligo.dna"
+              ],
+              "caption": "PCR1 pairs OP107 with OP146 and pulls one batch out of the pool, in 1 reaction(s)",
+              "span": null,
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": [
+                "BsmBI"
+              ],
+              "highlight": [
+                "OP107",
+                "OP146"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 1, Baker's three-primer PCR design"
+              }
+            }
+          ],
           "gels": [
             {
               "ladder": {
@@ -2717,7 +2738,28 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../oligo.dna"
+              ],
+              "caption": "PCR2 pairs OP107 with OP1 and pulls one block out of its batch, in 72 reaction(s)",
+              "span": null,
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": [
+                "BsmBI"
+              ],
+              "highlight": [
+                "OP107",
+                "OP1"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 1, Baker's three-primer PCR design"
+              }
+            }
+          ],
           "gels": [
             {
               "ladder": {
@@ -2912,7 +2954,29 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../block-vector-1.dna"
+              ],
+              "caption": "The stuffer BbsI cuts out of DMX-iGGA N, which a cargo replaces. The cargo enters on the four bases its position spells here.",
+              "span": [
+                346,
+                424
+              ],
+              "linear": true,
+              "sequence_view": true,
+              "enzymes": [
+                "BbsI",
+                "BsmBI"
+              ],
+              "highlight": [],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 2, Cargo GGA ligation"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "72 plasmids, one a block: its position's destination carrying that block's cargo, 83 to 1,099 bp of it.",
@@ -2956,6 +3020,13 @@
         }
       ],
       "sources": {
+        "figure-sources": {
+          "document": "liulab-mbio, Figure sources for four designs",
+          "edition": "",
+          "url": "",
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
+        },
         "LevSeq": {
           "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
           "edition": "",
@@ -7564,7 +7635,25 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../block-vector-1.dna"
+              ],
+              "caption": "What a picked well holds: its design in DMX-iGGA N. The pair reads across the cassette, and the band is that stretch plus the two marks the well's address names.",
+              "span": null,
+              "linear": false,
+              "sequence_view": false,
+              "enzymes": null,
+              "highlight": [
+                "internal stuffer"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 3, DMX"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and every well of one plate takes that plate's own reverse mark.",
@@ -7672,6 +7761,13 @@
         }
       ],
       "sources": {
+        "figure-sources": {
+          "document": "liulab-mbio, Figure sources for four designs",
+          "edition": "",
+          "url": "",
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
+        },
         "Qian SI": {
           "document": "Qian et al. 2026, Supplementary Information",
           "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
@@ -8311,7 +8407,30 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../round-1.dna",
+                "../round-2.dna",
+                "../product.dna"
+              ],
+              "caption": "Round 1 of 3 joins N_JUN at position N, entering on AGGA and leaving TTCC",
+              "span": null,
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": [
+                "BbsI",
+                "BsaI"
+              ],
+              "highlight": [
+                "N_JUN"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 4, iGGA"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the opened library is the 1:1 molar ratio."
@@ -8789,7 +8908,30 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../round-1.dna",
+                "../round-2.dna",
+                "../product.dna"
+              ],
+              "caption": "Round 2 of 3 joins DBD_JUN at position DBD, entering on AGAT and leaving TTCC",
+              "span": null,
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": [
+                "BbsI",
+                "BsaI"
+              ],
+              "highlight": [
+                "DBD_JUN"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 4, iGGA"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "Nothing visible. 0.0053 pmol of the released part list against 0.0053 pmol of the opened library is the 1:1 molar ratio."
@@ -9267,7 +9409,30 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../round-1.dna",
+                "../round-2.dna",
+                "../product.dna"
+              ],
+              "caption": "Round 3 of 3 joins C_JUN at position C, entering on GCAT and leaving TTCC",
+              "span": null,
+              "linear": true,
+              "sequence_view": false,
+              "enzymes": [
+                "BbsI",
+                "BsaI"
+              ],
+              "highlight": [
+                "C_JUN"
+              ],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 4, iGGA"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "Nothing visible. 0.00512 pmol of the released part list against 0.00512 pmol of the opened library is the 1:1 molar ratio."
@@ -9617,6 +9782,13 @@
           "url": "",
           "read_as": "plain curl",
           "date": "2026-10-06"
+        },
+        "figure-sources": {
+          "document": "liulab-mbio, Figure sources for four designs",
+          "edition": "",
+          "url": "",
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         }
       },
       "holes": [
@@ -9954,7 +10126,28 @@
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
-          "figures": [],
+          "figures": [
+            {
+              "records": [
+                "../product.dna"
+              ],
+              "caption": "The end the library is freed on, which the working vector takes: BsaI leaves AGGA here.",
+              "span": [
+                346,
+                398
+              ],
+              "linear": true,
+              "sequence_view": true,
+              "enzymes": [
+                "BsaI"
+              ],
+              "highlight": [],
+              "citation": {
+                "source": "figure-sources",
+                "locator": "section 2, Cargo GGA ligation"
+              }
+            }
+          ],
           "gels": [],
           "expected": [
             "One circular final vector a member, the ccdB cassette displaced by the cargo."
@@ -10150,6 +10343,13 @@
           "url": "",
           "read_as": "plain curl",
           "date": "2026-10-06"
+        },
+        "figure-sources": {
+          "document": "liulab-mbio, Figure sources for four designs",
+          "edition": "",
+          "url": "",
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         }
       },
       "holes": [],
