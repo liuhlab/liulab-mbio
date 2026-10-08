@@ -235,7 +235,7 @@ At 350 nt the span is 276 bases and holds 268 between its overhangs. **Both numb
 computed, never typed:** count the overhangs once and a 1,149 base part needs five pieces, not
 six.
 
-**Step 5, padding.** Every oligo is padded to the same length, which the project sets. Filler
+**Step 5, padding.** Every oligo is padded to the same length, which the build sets. Filler
 goes between the second BsmBI site and P2, outside the cut, so it never reaches the product. It
 is screened for the reserved enzyme sites, for the primer sites, and at both of its joins.
 
@@ -244,7 +244,7 @@ is screened for the reserved enzyme sites, for the primer sites, and at both of 
 **Step 5, batch size.** At most 96 genes a batch — one inner-primer plate, one PCR2 plate — and
 a larger library divides into equal batches, never full batches plus a remainder. Hold pieces
 per PCR1 tube roughly constant and let batch size fall as genes lengthen; the budget is a
-project input, inside the 96 to 768 pieces the Baker anchors derive.
+build input, inside the 96 to 768 pieces the Baker anchors derive.
 
 **Step 10.** Polyclonal by default.
 
@@ -254,14 +254,14 @@ prep for the set. No per-well normalisation.
 ### Cargo validation (optional)
 
 The cargo sits in the DMX vector either way; this section only reads each well. Identity stays
-with well position throughout. Choose the route per project. Each route states its own capacity
-below, and a project that reads designs back names one.
+with well position throughout. Choose the route per build. Each route states its own capacity
+below, and a build that reads designs back names one.
 
-**Which designs are read.** None, unless the project asks. A library headed for a pooled screen
+**Which designs are read.** None, unless the build asks. A library headed for a pooled screen
 takes its identity from that screen, so most libraries are never read back one design at a time.
-A project that wants the read names a fragment count. Every design in that many pieces or more
+A build that wants the read names a fragment count. Every design in that many pieces or more
 is read, and the rest stay polyclonal. Set the count to zero to read every design. The chance of
-a clean colony falls as a gene is cut into more pieces, so this is the line the project is really
+a clean colony falls as a gene is cut into more pieces, so this is the line the build is really
 drawing. The protocol prints each design's own chance beside it.
 
 #### Getting to clonal wells
@@ -278,10 +278,10 @@ the move out of it: barcode ligation takes four of these plates into one 1536-we
 PCR takes one into 96-well plates. Neither route amplifies or lyses in the plate the colonies were picked into.
 
 **Step 3, colonies per design.** Four by default, which is Lund's anchor and the only measured
-one, and a project may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
+one, and a build may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
 work shows why four is not always right: a gene in two pieces came out clean every time, one in
 five pieces 84.6% of the time, one in twelve 40%, and one in sixteen never. The protocol prints
-each design's own chance from that table, so a project that needs more picks knows it before the
+each design's own chance from that table, so a build that needs more picks knows it before the
 plates are poured.
 
 #### Barcode ligation
@@ -336,7 +336,7 @@ Is the read deep enough to call? If not, the well has **no verdict**. It is read
 again, and it is not a failure. The floor comes with the route, because each one was measured on
 its own. Barcode ligation wants more than 150 reads. Index PCR wants more than twenty, and a well
 at ten reads or more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
-depth to reach. A project may raise either.
+depth to reach. A build may raise either.
 
 Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
 barcode? Anything less fails, a silent change included, because a barcode that no longer names
@@ -377,7 +377,7 @@ amounts of DNA. A pool is built once, and cut again each round it supplies.
 
 **Step 5.** The control is the cut destination taken through the ligation with no donor added.
 Subtract its colonies from the count. Both plates grow while the pool does, so they cost no
-extra day. How many colonies a round needs is set by the project, not here: it follows from how
+extra day. How many colonies a round needs is set by the build, not here: it follows from how
 well the work downstream has to see each member. The source plates nothing at all, and
 `docs/research/synthesis-and-assembly.md` says why this page does.
 

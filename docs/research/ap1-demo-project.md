@@ -474,7 +474,7 @@ right number of reactions:
 | Round 2 | N+DBD library | C part list | BbsI + SrfI / BsaI + PmeI | 13,824 |
 | Final assembly | working vector | the finished library | PaqCI, one pot | 13,824 |
 
-All 72 parts are cloned into the DMX vector at the seating step, because our donor carries no
+All 72 parts are cloned into the DMX vector at the carrier step, because our donor carries no
 release sites of its own and cannot be a donor until it is cloned (the constraint recorded under
 open decision 6.7).
 
@@ -482,7 +482,7 @@ open decision 6.7).
 a position, so it plans three for this project. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
-the seating step, which runs BsmBI one well a part and makes no library. The pipeline has no
+the carrier step, which runs BsmBI one well a part and makes no library. The pipeline has no
 carrier to seat a part in, so this table is not reachable through it; the gap is the fifth item
 of #223.
 

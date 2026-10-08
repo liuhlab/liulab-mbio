@@ -41,8 +41,8 @@ for them and never write them into a project.
 naming it. Pass `--kind dna` where the sequences are already coded: those codons are checked and
 kept, not written again.
 
-`reserved_extra` names any further enzyme a step outside the rounds cuts the cargo with — seating
-a part in a carrier, or a last transfer into a working vector. It **adds** to the method's own
+`reserved_extra` names any further enzyme a step outside the rounds cuts the cargo with — the
+carrier step, or a last transfer into a working vector. It **adds** to the method's own
 list and never replaces it, and every block is held clear of the union, its stuffers included.
 Ask the user what cuts their cargo outside the rounds, and leave it out where nothing does.
 
