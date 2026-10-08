@@ -47,8 +47,7 @@ PALETTE = (
     "#92dadd",
 )
 
-#: The one fill every seated well takes where the plate holds more kinds than `PALETTE` can
-#: colour. No fill tells two of those kinds apart, but which wells are used still has to read.
+#: What a seated well takes where no palette colour is left for its kind.
 SEATED = PALETTE[0]
 
 
@@ -129,8 +128,7 @@ def layout(
         if well not in named:
             raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
     kinds = tuple(dict.fromkeys(held.values()))
-    coloured = len(kinds) <= len(PALETTE)
-    fills = dict(zip(kinds, PALETTE, strict=False)) if coloured else dict.fromkeys(kinds, SEATED)
+    fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
 
     pitch = min(MAX_PITCH, (WIDTH - 2 * MARGIN) / (columns + 1))
     size = pitch * (1 - GAP)
@@ -163,6 +161,7 @@ def layout(
         for column in range(columns):
             name = grid[row][column]
             holds = held.get(name, "")
+            fill = fills.get(holds, SEATED) if holds else EMPTY
             box = Box(
                 left + column * pitch + (pitch - size) / 2,
                 top + row * pitch + (pitch - size) / 2,
@@ -171,11 +170,10 @@ def layout(
             )
             shapes.append(
                 svg.Group(
-                    (svg.Rect(box, fills[holds] if holds else EMPTY, RULE, 0.4, size / 2),),
+                    (svg.Rect(box, fill, RULE, 0.4, size / 2),),
                     classes=("well",),
                     data={"well": name, "holds": holds} if holds else {"well": name},
                 )
             )
     extent = Box(0.0, 0.0, left + columns * pitch + MARGIN, top + rows * pitch + MARGIN)
-    legend = tuple(fills.items()) if coloured else ()
-    return PlateMap(tuple(shapes), extent, legend, len(kinds))
+    return PlateMap(tuple(shapes), extent, tuple(fills.items()), len(kinds))

@@ -72,6 +72,14 @@ def test_a_plate_past_ten_kinds_fills_every_seated_well_alike_and_lists_none_of_
     assert well_fills(laid).count(SEATED) == 11
 
 
+def test_a_plate_whose_every_well_is_seated_fills_every_one_of_them() -> None:
+    """One fill means used on every plate of a page, so a full plate is no bare grid."""
+    full = {well: f"kind {n}" for n, well in enumerate(Plate("plate", 96).well_names)}
+    laid = drawing(96, seating=full).layout
+    assert laid.kinds == 96
+    assert set(well_fills(laid)) == {SEATED}
+
+
 def test_a_drawing_is_laid_out_once_and_kept() -> None:
     one = drawing(1536)
     assert one.layout is one.layout
