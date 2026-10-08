@@ -96,3 +96,15 @@ def test_a_row_label_short_of_its_rows_is_refused() -> None:
 def test_a_well_seated_where_the_array_has_none_is_refused(well: str) -> None:
     with pytest.raises(ValueError, match=f"no well '{well}' on a 2 by 3 plate"):
         _ = draw_plate("plate", 2, 3, "AB", seating={well: "water"}).layout
+
+
+@pytest.mark.parametrize(
+    ("labels", "columns", "name"),
+    [(("A", "A"), 3, "A1"), (("A", "A1"), 11, "A11")],
+    ids=["a row label repeated", "a label colliding across the column digits"],
+)
+def test_two_wells_answering_to_one_name_are_refused(
+    labels: tuple[str, ...], columns: int, name: str
+) -> None:
+    with pytest.raises(ValueError, match=f"both named '{name}'"):
+        _ = draw_plate("plate", 2, columns, labels).layout

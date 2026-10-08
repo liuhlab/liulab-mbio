@@ -747,8 +747,8 @@ def draw_plate(
     Raises
     ------
     ValueError
-        If the array has no wells, there is not one label per row, or a well is seated where
-        the array has none.
+        If the array has no wells, there is not one label per row, two wells would answer to
+        one name, or a well is seated where the array has none.
 
     Examples
     --------

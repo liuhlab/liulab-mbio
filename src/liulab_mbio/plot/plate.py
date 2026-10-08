@@ -86,7 +86,7 @@ def layout(
     rows, columns
         The array's shape.
     row_labels
-        One per row, top to bottom.
+        One per row, top to bottom, no two of them spelling one well's name.
     title
         Drawn above the grid.
     seating
@@ -99,8 +99,8 @@ def layout(
     Raises
     ------
     ValueError
-        If the array has no wells, there is not one label per row, or a well is seated where
-        the array has none.
+        If the array has no wells, there is not one label per row, two wells would answer to
+        one name, or a well is seated where the array has none.
 
     Examples
     --------
@@ -116,7 +116,11 @@ def layout(
     # Each well is drawn under the name this grid gives it, so a seating is checked against the
     # same names: one not in it would be dropped from the drawing and still colour the legend.
     grid = [[f"{label}{column + 1}" for column in range(columns)] for label in row_labels]
-    named = {name for row in grid for name in row}
+    named: set[str] = set()
+    for name in (one for row in grid for one in row):
+        if name in named:
+            raise ValueError(f"two wells of a {rows} by {columns} plate are both named {name!r}")
+        named.add(name)
     for well in held:
         if well not in named:
             raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
