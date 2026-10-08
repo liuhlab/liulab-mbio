@@ -18,7 +18,7 @@ from liulab_mbio.cloning.goldengate.bench import (
     ligase_master_mix_component,
 )
 from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.overhangs import ligation_matrix
+from liulab_mbio.overhangs import ligation_source
 
 from ...reactions import total, volumes
 
@@ -160,9 +160,12 @@ def test_the_kit_program_counts_inserts_and_not_fragments() -> None:
     assert (eleven.cycles, eleven.incubations[0].seconds) == (30, 300)
 
 
-def test_the_ligation_fidelity_reference_quotes_the_citation_the_data_ships() -> None:
-    """A check names the paper in passing, so the reference it names has to be the same paper."""
-    matrix = ligation_matrix("BsaI")
-    assert matrix is not None
-    assert matrix.cited == "Pryor 2020"
-    assert any(matrix.citation in one.text for one in REFERENCES)
+def test_the_ligation_fidelity_reference_reads_as_the_paper_the_data_ships() -> None:
+    """The citation lives in the data file; the reference list prints it from there."""
+    source = ligation_source()
+    assert source.citation.startswith("Pryor, J.M.")
+    reference = next(one for one in REFERENCES if source.citation in one.text)
+    assert reference.text.endswith(
+        "Its S1-S5 Tables are what every ligation fidelity score is read from"
+    )
+    assert reference.url == source.url

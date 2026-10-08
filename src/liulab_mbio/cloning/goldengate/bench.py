@@ -17,6 +17,7 @@ from typing import Literal
 from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.overhangs import ligation_source
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
@@ -329,6 +330,15 @@ def _kit_stages(celsius: float, fragments: int, *, library: bool) -> tuple[Stage
     return (_cycle(celsius, 60 if inserts <= 10 else 300, 30),)
 
 
+def _ligation_reference() -> Reference:
+    """Return the paper every fidelity score is read from, quoted from the data that ships it."""
+    source = ligation_source()
+    return Reference(
+        f"{source.citation} Its S1-S5 Tables are what every ligation fidelity score is read from",
+        url=source.url,
+    )
+
+
 #: Where the numbers above come from, ready for a protocol's reference list.
 REFERENCES: tuple[Reference, ...] = (
     Reference(
@@ -349,11 +359,5 @@ REFERENCES: tuple[Reference, ...] = (
         url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
     ),
     # A ligation fidelity check names this in passing; here is the reference it names.
-    Reference(
-        "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. "
-        "(2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using "
-        "data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what "
-        "every ligation fidelity score is read from",
-        url="https://doi.org/10.1371/journal.pone.0238592",
-    ),
+    _ligation_reference(),
 )
