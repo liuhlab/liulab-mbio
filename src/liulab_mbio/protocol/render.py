@@ -543,7 +543,7 @@ def _step(n: int, step: Step, protocol: Protocol) -> str:
         )
     if step.troubleshooting:
         entries = "".join(
-            f"<dt>{escape(t.problem)}</dt><dd>{escape(t.solution)}</dd>"
+            f"<dt>{escape(t.problem)}</dt><dd>{escape(t.solution)}{_after(t.citation)}</dd>"
             for t in step.troubleshooting
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')

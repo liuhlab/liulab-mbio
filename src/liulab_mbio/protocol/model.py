@@ -88,7 +88,8 @@ class Citation:
     """Where in a source one row's number stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the cycling stage, the material or the bill row that carries the number.
+    the cycling stage, the material or the bill row that carries the number, and on the
+    troubleshooting entry whose solution it gives.
 
     Parameters
     ----------
@@ -566,10 +567,20 @@ class Timer:
 
 @dataclass(frozen=True, slots=True)
 class Troubleshooting:
-    """A problem the reader may see at a step, and what to do about it."""
+    """A problem the reader may see at a step, and what to do about it.
+
+    Parameters
+    ----------
+    problem, solution
+        What the reader sees, and what to do.
+    citation
+        The source that gives the solution.
+    """
 
     problem: str
     solution: str
+    _: KW_ONLY
+    citation: Citation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1050,6 +1061,7 @@ class Protocol:
                     for i in g.incubations
                 ),
                 *(t.citation for s in self.steps for t in s.transfers),
+                *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
