@@ -3024,25 +3024,22 @@
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
           "url": "",
-          "read_as": "",
-          "date": "",
-          "note": "docs/research/figure-sources.md"
-        },
-        "LevSeq": {
-          "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
-          "edition": "",
-          "url": "",
-          "read_as": "held under reference_docs/",
-          "date": "2026-10-06",
-          "note": ""
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         },
         "FRM-001034": {
           "document": "Twist Bioscience, Amplifying Twist Oligo Pools",
           "edition": "REV 8",
           "url": "https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf",
           "read_as": "plain curl",
-          "date": "2026-10-07",
-          "note": ""
+          "date": "2026-10-07"
+        },
+        "LevSeq": {
+          "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
+          "edition": "",
+          "url": "",
+          "read_as": "held under reference_docs/",
+          "date": "2026-10-06"
         }
       },
       "holes": [],
@@ -7771,25 +7768,22 @@
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
           "url": "",
-          "read_as": "",
-          "date": "",
-          "note": "docs/research/figure-sources.md"
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         },
         "Qian SI": {
           "document": "Qian et al. 2026, Supplementary Information",
           "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
           "url": "",
           "read_as": "held under reference_docs/",
-          "date": "2026-10-06",
-          "note": ""
+          "date": "2026-10-06"
         },
         "LevSeq": {
           "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
           "edition": "",
           "url": "",
           "read_as": "held under reference_docs/",
-          "date": "2026-10-06",
-          "note": ""
+          "date": "2026-10-06"
         }
       },
       "holes": [],
@@ -9773,10 +9767,6 @@
           "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
         },
         {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
           "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
           "url": ""
         }
@@ -9787,24 +9777,21 @@
           "edition": "",
           "url": "https://www.neb.com/en/products/m0318-t7-dna-ligase",
           "read_as": "r.jina.ai",
-          "date": "2026-10-06",
-          "note": ""
+          "date": "2026-10-06"
         },
         "MA133": {
           "document": "Endura Competent Cells manual, Lucigen / Biosearch Technologies",
           "edition": "MA133 26Feb2018",
           "url": "",
           "read_as": "plain curl",
-          "date": "2026-10-06",
-          "note": ""
+          "date": "2026-10-06"
         },
         "figure-sources": {
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
           "url": "",
-          "read_as": "",
-          "date": "",
-          "note": "docs/research/figure-sources.md"
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         }
       },
       "holes": [
@@ -10348,10 +10335,6 @@
           "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
         },
         {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
           "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
           "url": ""
         }
@@ -10362,16 +10345,14 @@
           "edition": "MA133 26Feb2018",
           "url": "",
           "read_as": "plain curl",
-          "date": "2026-10-06",
-          "note": ""
+          "date": "2026-10-06"
         },
         "figure-sources": {
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
           "url": "",
-          "read_as": "",
-          "date": "",
-          "note": "docs/research/figure-sources.md"
+          "read_as": "docs/research/figure-sources.md",
+          "date": ""
         }
       },
       "holes": [],
@@ -10402,7 +10383,7 @@
     {
       "name": "ligation fidelity",
       "status": null,
-      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
+      "detail": "3 judged, worst: round 1 ligation scores 1.000 on Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
     },
     {
       "name": "barcode spacing",
