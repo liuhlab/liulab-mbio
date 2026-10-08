@@ -484,9 +484,13 @@ class Incubation:
     label
         Such as ``"Annealing"``.
     temperature_c
-        Degrees Celsius.
+        Degrees Celsius, the first cycle's where `delta_c` steps it.
     seconds
         ``None`` holds until the reader stops it.
+    delta_c
+        Degrees Celsius added each later cycle, negative for a touchdown; ``None`` holds the
+        temperature. The last cycle's temperature follows from this and the stage's count, so a
+        touchdown is one cycled stage rather than one stage a cycle.
     citation
         Where the temperature and the time were read.
     """
@@ -494,14 +498,29 @@ class Incubation:
     label: str
     temperature_c: float
     seconds: float | None
+    delta_c: float | None = None
     citation: Citation | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a time that is not positive."""
+        """Refuse a time that is not positive, or a step that steps nowhere."""
         _require(
             self.seconds is None or self.seconds > 0,
             f"incubation {self.label!r}: seconds must be positive or null",
         )
+        _require(
+            self.delta_c != 0,
+            f"incubation {self.label!r}: delta_c must be non-zero or null",
+        )
+
+    def last_c(self, cycles: int) -> float:
+        """Return the temperature of the `cycles`-th cycle.
+
+        Examples
+        --------
+        >>> Incubation("Anneal", 68.0, 20, delta_c=-0.5).last_c(10)
+        63.5
+        """
+        return self.temperature_c + (self.delta_c or 0) * (cycles - 1)
 
 
 @dataclass(frozen=True, slots=True)

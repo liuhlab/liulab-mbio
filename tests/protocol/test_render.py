@@ -9,6 +9,7 @@ from liulab_mbio.plot import layers
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
+    Citation,
     Component,
     Figure,
     Incubation,
@@ -27,6 +28,7 @@ from liulab_mbio.protocol import (
     render_html,
     write_html,
 )
+from liulab_mbio.protocol.render import NO_NUMBER
 
 from ..html import Node, parse
 
@@ -249,7 +251,7 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     rows = [[c.text for c in r.find_all(("td", "th"))] for r in program.find_all("tr")][1:]
     assert rows == [
         ["Initial denaturation", "95 °C", "30 s", "1"],
-        ["Denaturation", "95 °C", "15 s", "30"],
+        ["Denaturation", "95 °C", "15 s", "×30"],
         ["Annealing", "55 °C", "15 s"],
         ["Extension", "68 °C", "1 min"],
         ["Final extension", "68 °C", "5 min", "1"],
@@ -258,6 +260,48 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     caption = program.find_all("figcaption")[0].text
     assert "105 °C" in caption
     assert "50 min 30 s" in caption
+
+
+def _program_rows(program: ThermocyclerProgram) -> tuple[Node, list[list[str]]]:
+    """One program rendered on a page of its own, as its figure and its body rows."""
+    page = parse(render_html(Protocol("Run", steps=(Step("Cycle", programs=(program,)),))))
+    figure = page.find_all(cls="program")[0]
+    rows = [[c.text for c in r.find_all("td")] for r in figure.find_all("tr")][1:]
+    return figure, rows
+
+
+def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_end() -> None:
+    """The end follows from the step and the count, so the page cannot contradict the model."""
+    cite = Citation("LevSeq", "thermal cycler table")
+    anneal = Incubation("Anneal", 68.0, 20, -0.5, cite)
+    figure, rows = _program_rows(
+        ThermocyclerProgram(
+            (
+                Stage((Incubation("Denature", 95.0, 20, citation=cite), anneal), cycles=10),
+                Stage((anneal,), cycles=None),
+            ),
+            title="Index PCR",
+        )
+    )
+    assert rows == [
+        ["Denature", "95 °C", "20 s", "×10"],
+        ["Anneal", "68 → 63.5 °C-0.5 °C a cycle", "20 s"],
+        ["Anneal", "68 °C-0.5 °C a cycle", "20 s", NO_NUMBER],
+    ]
+    # One source behind every row is the program's, so the rows carry no citation of their own.
+    assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
+        "LevSeq thermal cycler table"
+    ]
+    assert [body.attrs["class"] for body in figure.find_all("tbody")] == ["stage cycled", "stage"]
+
+
+def test_a_program_that_is_one_hold_is_not_given_ramps_it_does_not_run() -> None:
+    """A water bath is drawn as a program, and its one row takes its whole time."""
+    figure, rows = _program_rows(
+        ThermocyclerProgram((Stage((Incubation("Heat inactivation", 65.0, 1200),)),))
+    )
+    assert rows == [["Heat inactivation", "65 °C", "20 min", "1"]]
+    assert "plus ramps" not in figure.find_all("figcaption")[0].text
 
 
 def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:

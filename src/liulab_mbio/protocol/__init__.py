@@ -20,7 +20,7 @@ fields without a default are required; `write_protocol` writes every field::
              "components": [{"name", "volume_ul", "stock", "final", "master_mix"}]}],
          "programs": [{"title", "lid_temperature_c",
              "stages": [{"cycles", "citation",
-                 "incubations": [{"label", "temperature_c", "seconds"}]}]}],
+                 "incubations": [{"label", "temperature_c", "seconds", "delta_c"}]}]}],
          "timers": [{"label", "seconds"}],
          "waits": [{"what", "duration", "citation"}], "hands_on_seconds": int or null,
          "transfers": [{"title", "instrument", "note", "citation",
@@ -37,7 +37,8 @@ fields without a default are required; `write_protocol` writes every field::
              "hole"}]}}
 
 An incubation's ``"seconds": null`` holds indefinitely, and a stage's ``"cycles": null`` leaves
-the count blank where nothing sources it. A check's ``"status"`` is ``"pass"``,
+the count blank where nothing sources it. Its ``"delta_c"`` steps the temperature each cycle, so
+a touchdown is one cycled stage. A check's ``"status"`` is ``"pass"``,
 ``"warn"`` or ``"fail"``; an oligo's may also be absent, which says nothing judged that row. An
 ``"overview"`` value is a card: a few words, never a sentence.
 
