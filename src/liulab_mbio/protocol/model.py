@@ -1628,14 +1628,18 @@ class Project:
         )
 
     def audit(self) -> tuple[Check, ...]:
-        """Judge the chain: every consumed name is an input or an earlier protocol's output.
+        """Judge the chain, and the sources its own bill cites.
+
+        A consumed name resolves to an input or an earlier protocol's output. A citation on a
+        bill row resolves to a source some protocol of the run names, since the run's pages list
+        those and no others; each protocol answers for its own citations.
 
         Examples
         --------
         >>> [check.name for check in Project("Demo").audit()]
-        ['handoffs']
+        ['handoffs', 'sources']
         """
-        return (self._handoffs(),)
+        return (self._handoffs(), self._sources())
 
     def _handoffs(self) -> Check:
         handed = {item.name for item in self.inputs}
@@ -1655,6 +1659,18 @@ class Project:
             f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
         )
         return Check("handoffs", "pass", counted)
+
+    def _sources(self) -> Check:
+        cited = {
+            row.citation.source
+            for row in (self.bill.rows if self.bill else ())
+            if row.citation is not None
+        }
+        named = {key for protocol in self.protocols for key in protocol.sources}
+        dangling = sorted(cited - named)
+        if dangling:
+            return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
+        return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Project":

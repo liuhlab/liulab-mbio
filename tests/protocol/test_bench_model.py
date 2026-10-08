@@ -7,6 +7,8 @@ import pytest
 from liulab_mbio.bench import materials, plates
 from liulab_mbio.protocol import model
 from liulab_mbio.protocol.model import (
+    Bill,
+    BillRow,
     Check,
     Citation,
     Component,
@@ -15,6 +17,7 @@ from liulab_mbio.protocol.model import (
     Material,
     Move,
     Oligo,
+    Project,
     Protocol,
     ReactionTable,
     Source,
@@ -225,6 +228,21 @@ def test_a_protocol_keeps_the_sources_it_cites_and_drops_the_rest() -> None:
     one = citing(Protocol("x", materials=(LIGASE,), sources=catalogue))
     assert list(one.sources) == ["M0318"]
     assert [c.status for c in one.audit() if c.name == "sources"] == ["pass"]
+
+
+def test_a_project_reports_a_bill_row_citing_a_source_no_protocol_names() -> None:
+    """The run's pages list its protocols' sources, so a bill citing another one dangles."""
+    priced = Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("ACME")),))
+    elsewhere = Project(
+        "Demo", bill=priced, protocols=(Protocol("One", sources={"NEB": Source("NEB")}),)
+    )
+    (check,) = [c for c in elsewhere.audit() if c.name == "sources"]
+    assert check.status == "fail"
+    assert check.detail == "cited but not named: ACME"
+    named = Project(
+        "Demo", bill=priced, protocols=(Protocol("One", sources={"ACME": Source("ACME prices")}),)
+    )
+    assert [c.status for c in named.audit() if c.name == "sources"] == ["pass"]
 
 
 def test_a_hole_the_run_and_a_step_both_carry_is_collected_once() -> None:

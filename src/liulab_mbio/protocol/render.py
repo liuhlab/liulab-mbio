@@ -147,8 +147,8 @@ class Folder:
         """Return the page a citation on `here` finds its source on, empty where that is `here`.
 
         A protocol page lists its own sources and `references` lists the whole run's, so a
-        citation on either resolves where it stands; `Protocol.audit` is what judges whether a
-        protocol named every source it cites. Every other page the run shares carries no sources
+        citation on either resolves where it stands; `Protocol.audit` and `Project.audit` judge
+        whether every source cited was named. Every other page the run shares carries no sources
         list, and its citations reach the run's.
 
         Examples
