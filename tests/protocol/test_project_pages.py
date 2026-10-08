@@ -565,7 +565,7 @@ def timed(title: str, held: int, hands: int | None = None, choice: str = "") -> 
     )
 
 
-def timing() -> Project:
+def timed_choice() -> Project:
     """A run of three places whose middle one offers two ways, each taking its own time."""
     return Project(
         "DMX",
@@ -580,7 +580,7 @@ def timing() -> Project:
 
 def test_the_schedule_gives_a_choice_one_row_spanning_the_ways_standing_under_it() -> None:
     """The bench does one way, so one figure across two would be a number nobody measured."""
-    run = timing()
+    run = timed_choice()
     index = parse(render_index(run, folder_of(run)))
     rows, _ = schedule(index)
     assert [row[0] for row in rows[1:-1]] == [
@@ -594,12 +594,20 @@ def test_the_schedule_gives_a_choice_one_row_spanning_the_ways_standing_under_it
     assert [cell.text for cell in place.find_all("td")][1:3] == ["1", "1 h to 2 h"]
     assert [row[2] for row in rows[3:5]] == ["1 h", "2 h"]
     [block] = index.find_all("section", cls="schedule")
-    assert "A job offering several ways spans them, low to high" in block.text
+    assert "the row above them gives each column's range" in block.text
+
+
+def test_a_place_says_how_many_of_its_ways_stated_a_column_it_spans() -> None:
+    """One way timed and the other not is a span over one way, never the place's own figure."""
+    run = Project("DMX", protocols=(timed("A", 3600, 300, JOB), timed("B", 3600, choice=JOB)))
+    index = parse(render_index(run, folder_of(run)))
+    [place] = index.find_all("tr", cls="schedule-choice")
+    assert [cell.text for cell in place.find_all("td")][3] == "5 min over 1 of 2 ways"
 
 
 def test_the_schedule_total_spans_the_ways_and_counts_the_places_of_the_run() -> None:
     """The page says protocol 2 of 3 everywhere else, so a total over part of it says 3 too."""
-    run = timing()
+    run = timed_choice()
     index = parse(render_index(run, folder_of(run)))
     rows, _ = schedule(index)
     assert rows[-1][1:3] == ["3", "1 h 15 min to 2 h 15 min"]
@@ -608,6 +616,7 @@ def test_the_schedule_total_spans_the_ways_and_counts_the_places_of_the_run() ->
 
 
 def test_a_choice_whose_ways_take_the_same_time_prints_that_time_once() -> None:
+    """A span printing one number twice reads as two, and the bench reads this to plan a week."""
     run = Project("DMX", protocols=(timed("A", 3600, choice=JOB), timed("B", 3600, choice=JOB)))
     index = parse(render_index(run, folder_of(run)))
     rows, _ = schedule(index)

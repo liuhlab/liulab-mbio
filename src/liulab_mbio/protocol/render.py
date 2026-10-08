@@ -639,9 +639,8 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
     and the unattended share is the difference wherever a step states both. A column nothing
     states a number in is left out, and named once under the table.
 
-    A row is a place of the run, not a page, so the table counts what the rest of the page
-    counts. The ways of one job stand under their place, and the place carries what they take as
-    a span: the bench does one of them, and no single figure across two was ever measured.
+    A row is a place of the run and not a page, so the table counts what the rest of the page
+    counts. The ways of one job stand under their place, which spans each column across them.
     """
     if not folder.pages:
         return ""
@@ -664,12 +663,12 @@ def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
         else ""
     )
     spans = (
-        " A job offering several ways spans them, low to high, with the ways under it: the "
-        "bench does one."
+        " Where one job offers several ways, the row above them gives each column's range: you "
+        "do one way, and that way's own row says what it takes."
         if any(len(group) > 1 for group in places)
         else ""
     )
-    total, part = _total(places, shown)
+    total, part = _total(places, totals, shown)
     return (
         '<section class="block schedule" id="schedule">\n<h2>Schedule</h2>\n'
         '<div class="scroll"><table class="schedule"><thead><tr>'
@@ -706,15 +705,16 @@ def _schedule_place(group: _Place, shown: tuple[int, ...], sources: str) -> str:
 def _across(group: _Place, shown: tuple[int, ...]) -> str:
     """Return a place's own cells, each column spanned across its ways, low to high.
 
-    A span states what each way takes and invents nothing between them; one figure for two ways
-    would be a number nobody measured, and the longest of them discards the other.
+    Both ends are a way's own measurement, so the row invents nothing; what each way states in
+    full stands in its own row under this one.
     """
     hole = f'<span class="hole-none">{NO_NUMBER}</span>'
     cells = []
     for i in shown:
         said = [value for _, time in group if (value := time.values()[i]) is not None]
         figure = (
-            f"{_number(i, min(said), max(said))}{_over(len(said), len(group), 'way')}"
+            f"{_spanned(_bare(i, min(said)), _bare(i, max(said)))}"
+            f"{_over(len(said), len(group), 'way')}"
             if said
             else hole
         )
@@ -722,24 +722,26 @@ def _across(group: _Place, shown: tuple[int, ...]) -> str:
     return "".join(cells)
 
 
-def _number(column: int, low: float, high: float) -> str:
-    """One column's number, or the span two ways put it between, printed once where they agree."""
-    first, last = (
-        (_duration(low), _duration(high))
-        if column in SCHEDULE_DURATIONS
-        else (f"{round(low)}", f"{round(high)}")
-    )
-    return first if first == last else f"{first} to {last}"
+def _bare(column: int, value: float) -> str:
+    """One column's own number, in the words that column is read in."""
+    return _duration(value) if column in SCHEDULE_DURATIONS else f"{round(value)}"
 
 
-def _total(places: Sequence[_Place], shown: tuple[int, ...]) -> tuple[str, str]:
+def _spanned(low: str, high: str) -> str:
+    """Return both ends of a span, or the one figure where they read alike."""
+    return low if low == high else f"{low} to {high}"
+
+
+def _total(places: Sequence[_Place], totals: "_Time", shown: tuple[int, ...]) -> tuple[str, str]:
     """Return the footer's cells, and the sentence to add under the table where one is partial.
 
     A total of a column some protocol states nothing in is not what the run takes, and a reader
     plans a week around it. So it carries how many places it covers, beside the number, in the
-    same count the rest of the page prints. A place whose ways differ puts the total between two
-    numbers, and a place one of whose ways states nothing is not covered.
+    count the rest of the page prints; a place is covered where every way of it states the
+    column. Where a job offers ways, how many steps the run has is a span too, so the figures
+    stand alone and each protocol's own row keeps the steps behind them.
     """
+    spanning = any(len(group) > 1 for group in places)
     cells = []
     partial = False
     for i in shown:
@@ -749,9 +751,10 @@ def _total(places: Sequence[_Place], shown: tuple[int, ...]) -> tuple[str, str]:
             covered += len(said) == len(group)
             low, high = low + min(said, default=0.0), high + max(said, default=0.0)
         partial = partial or covered < len(places)
-        cells.append(
-            f'<td class="num">{_number(i, low, high)}{_over(covered, len(places), "protocol")}</td>'
+        figure = (
+            _spanned(_bare(i, low), _bare(i, high)) if spanning else (totals.columns()[i] or "")
         )
+        cells.append(f'<td class="num">{figure}{_over(covered, len(places), "protocol")}</td>')
     part = " A total that covers only part of the run says so beside it." if partial else ""
     return "".join(cells), part
 
