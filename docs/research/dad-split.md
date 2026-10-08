@@ -8,7 +8,7 @@ search:
 Research note for issue #235 (parent #225). Everything below was read on **2026-10-06** unless a
 line says otherwise. It establishes what the two existing implementations of the gene split
 actually do, judges the one that ships code, names the search problem, and draws the line between
-what `liulab_mbio` already covers and what #236 has to build.
+what `mbio` already covers and what #236 has to build.
 
 Step 3 of cargo synthesis is the split: break each gene into oligo-sized fragments whose internal
 overhangs are chosen on ligation fidelity, with `AGGA` and `TTCC` held out of the set. Nothing in
@@ -62,9 +62,9 @@ laboratory has significantly expanded the capacity of GGA by using ligase fideli
 fusion sites, a process termed data-optimized assembly design (DAD)."*
 
 That matters directly. Pryor 2020 is the paper this repository already ships data from, as
-`src/liulab_mbio/data/ligation_fidelity.json` under CC BY 4.0
+`src/mbio/data/ligation_fidelity.json` under CC BY 4.0
 (`docs/research/ligation-fidelity.md`). **The scoring function DAD is named for is already in the
-package**, computed by `liulab_mbio.overhangs.fidelity`. Section 4 checks that against the one
+package**, computed by `mbio.overhangs.fidelity`. Section 4 checks that against the one
 independent implementation available.
 
 ### 1.1 Nobody publishes the search
@@ -155,7 +155,7 @@ The README states its own caveat, which should be read before any of the judgeme
 > ÷ (every ligation either of them was seen making against the set and the set's reverse
 > complements)
 
-This is Pryor 2020's definition. It is the same quantity `liulab_mbio.overhangs.fidelity`
+This is Pryor 2020's definition. It is the same quantity `mbio.overhangs.fidelity`
 computes, down to counting both ends of each junction — the detail the docstring of our own
 function says is what reproduces the paper's worked examples. **Two independent implementations
 of the same formula agree, which is the best confirmation available that our scoring half is
@@ -371,7 +371,7 @@ instance needs, and brings a seed, a schedule and a convergence question we woul
 justify. Branch and bound over per-junction candidate lists is the right class, and the repository
 already runs that algorithm once (section 4).
 
-## 4. What `liulab_mbio` already has
+## 4. What `mbio` already has
 
 The ticket's claim is *"The scoring half exists; the search half does not."* Checked against the
 code, the first half is right and the second is too strong.
@@ -393,7 +393,7 @@ Everything DAD names as its objective is here, already cited, already licensed.
 | Where | Shape | Decides | Optimises |
 | --- | --- | --- | --- |
 | `cloning/goldengate/design.design_overhangs` | greedy, first-fit, one pass, **no backtracking**; junctions ordered least-free first | one overhang per junction; the junction may move within its own `window` | **nothing.** Free candidates are ranked by `table.count(one, reverse_complement(one))` — the overhang's own on-target count, a per-overhang proxy — and the first that `refusal` accepts is taken. `fidelity` is called once at the end to *report*, not to choose. |
-| `liulab_synbio.igga.standard._settle` | **exhaustive depth-first with a lower bound** — branch and bound — over per-junction candidate lists | one overhang per junction; positions fixed | minimum total amino-acid cost. Fidelity is not in the objective. |
+| `synbio.igga.standard._settle` | **exhaustive depth-first with a lower bound** — branch and bound — over per-junction candidate lists | one overhang per junction; positions fixed | minimum total amino-acid cost. Fidelity is not in the objective. |
 
 `_settle`'s own docstring states the structural fact the split problem shares: *"every rule is
 either about one overhang or about a pair of them, so a set is allowed exactly when each of its
@@ -412,7 +412,7 @@ exploited — in synbio, for a different objective.
 | Choose how many fragments a gene needs | **absent** |
 | Use fidelity as an objective rather than a report | **absent** |
 
-**The line, in one sentence: `liulab_mbio` can score any overhang set and refuse any candidate, and
+**The line, in one sentence: `mbio` can score any overhang set and refuse any candidate, and
 can fill in overhangs at positions a caller already chose — it cannot choose the positions, and it
 has never once used fidelity as an objective rather than as a report.**
 
@@ -455,7 +455,7 @@ ranks candidates by a per-overhang proxy and never consults the set score it the
 - Nothing trades a longer oligo, a different enzyme or a different reserved set against the
   fragment count, and the fragment count is the number Lund measures success against.
 - Whether a junction may recode to reach a better overhang. OMEGA never recodes; Lund recodes once,
-  before the split; `liulab_mbio.codons` could. Allowing it widens every candidate list and changes
+  before the split; `mbio.codons` could. Allowing it widens every candidate list and changes
   the problem.
 
 ### Settled since

@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.bench import materials
+from mbio.bench import materials
 
 
 def test_the_electroporation_program_belongs_to_the_cells_and_not_to_the_step() -> None:

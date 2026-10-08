@@ -2,8 +2,8 @@
 
 import pytest
 
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.split import Budget, fewest_pieces, split_cargo
+from mbio.sequence import SequenceRecord
+from mbio.split import Budget, fewest_pieces, split_cargo
 
 #: A cargo with no repeat, so every window offers real choices rather than one overhang.
 CARGO = SequenceRecord(

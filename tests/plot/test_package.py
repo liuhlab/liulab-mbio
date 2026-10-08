@@ -10,7 +10,7 @@ def test_importing_the_package_and_its_command_loads_no_converter() -> None:
         [
             sys.executable,
             "-c",
-            "import sys, liulab_mbio.plot.cli, liulab_mbio.plot.convert; print(*sys.modules)",
+            "import sys, mbio.plot.cli, mbio.plot.convert; print(*sys.modules)",
         ],
         capture_output=True,
         text=True,

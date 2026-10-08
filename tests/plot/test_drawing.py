@@ -16,7 +16,7 @@ import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import (
+from mbio.plot import (
     Drawing,
     circular,
     convert,
@@ -26,9 +26,9 @@ from liulab_mbio.plot import (
     sequence_view,
     svg,
 )
-from liulab_mbio.plot.fonts import BOLD, MONO, SANS
-from liulab_mbio.plot.labels import Box
-from liulab_mbio.sequence import (
+from mbio.plot.fonts import BOLD, MONO, SANS
+from mbio.plot.labels import Box
+from mbio.sequence import (
     BindingSite,
     Feature,
     Primer,

@@ -7,13 +7,13 @@ import pytest
 
 #: Every module under this prefix is one cloning method's pipeline, save `SHARED`. Nothing below
 #: the pipelines may load a method, and nor may a pipeline that is not a cloning method.
-CLONING = "liulab_mbio.cloning"
+CLONING = "mbio.cloning"
 
 #: What is not a method: the plan layer every plan is built on, and the package holding it.
-SHARED = ("liulab_mbio.cloning", "liulab_mbio.cloning.plan")
+SHARED = ("mbio.cloning", "mbio.cloning.plan")
 
 
-@pytest.mark.parametrize("package", ["liulab_mbio.bench", "liulab_synbio.igga"])
+@pytest.mark.parametrize("package", ["mbio.bench", "synbio.igga"])
 def test_no_cloning_pipeline_is_loaded(package: str) -> None:
     # A fresh interpreter: this one has already imported every module under `src/`.
     loaded = subprocess.run(

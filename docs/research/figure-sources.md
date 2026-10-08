@@ -94,11 +94,11 @@ lies on the other strand. It is the layout question our oligo drawing answers by
 
 ### Can the package draw it
 
-Yes. `liulab_synbio.igga.cargo` allots the three roles — it names them `inner`, `forward` and
+Yes. `synbio.igga.cargo` allots the three roles — it names them `inner`, `forward` and
 `outer` — groups blocks into batches each holding a forward and an outer primer, and exposes
 `inner_pairs()` as "the batch forward, the block inner", which is exactly row 2's pair.
-`liulab_mbio.bench.pools` builds each oligo as a record carrying its primer sites, its recognition
-sites and its filler. `liulab_mbio.plot.linear` draws a record with its features as named arrows
+`mbio.bench.pools` builds each oligo as a record carrying its primer sites, its recognition
+sites and its filler. `mbio.plot.linear` draws a record with its features as named arrows
 and each primer as a thin arrow at its binding site. Both rows and both arrow pairs are package
 data already.
 
@@ -174,14 +174,14 @@ with arrows converging into it and diverging out — and "Amplify assemblies".
 
 ### Can the package draw it
 
-Yes, and more directly than any of the other three. `liulab_mbio.plot.sequence_view` already draws
+Yes, and more directly than any of the other three. `mbio.plot.sequence_view` already draws
 this exact view: a position ruler, the top strand, a rail, the bottom strand, each cut site drawn
 through the top strand and through the bottom strand where each enzyme cuts it so the overhang
 shows, each feature as a bar under the bases, and a CDS's translation above its bar with each
 amino acid centred on its codon and a stop in red. That is Supplementary Fig. 4's whole content.
 The DMX vector record itself is in the repo: `scripts/build_dmx_vector.py` rebuilds the destination
 from `tests/data/dmx0001.gb`, and the `dmx` README's site table was counted with
-`liulab_mbio.sites` rather than read off a map.
+`mbio.sites` rather than read off a map.
 
 ## 3. DMX
 
@@ -235,7 +235,7 @@ across the range. It is a crossover argument drawn as two families of bars.
 
 ### What ours would have to vary
 
-- **The plate format and the compression ratio.** 4-to-1 into 384 is this lab's; `liulab_mbio.bench`
+- **The plate format and the compression ratio.** 4-to-1 into 384 is this lab's; `mbio.bench`
   holds the format parameter and the moves between wells.
 - **Which marking route the build chose.** The published panel only knows the DMX barcode route;
   a build may read its wells by index PCR instead, and then steps 6 and 7 are different steps.
@@ -254,13 +254,13 @@ across the range. It is a crossover argument drawn as two families of bars.
 In part.
 
 - **Panel b**: yes, as section 2 says.
-- **The plate steps of panel a** — 3, 4, 6 and 10: yes. `liulab_mbio.plot.plate` draws a plate's
+- **The plate steps of panel a** — 3, 4, 6 and 10: yes. `mbio.plot.plate` draws a plate's
   wells, and the protocol renderer already inlines one. Step 10's grid of correct and incorrect
-  wells is a plate coloured by a per-well verdict, and `liulab_synbio.dmx` holds a well's derived
+  wells is a plate coloured by a per-well verdict, and `synbio.dmx` holds a well's derived
   address and the pass rule that decides the colour.
 - **Panel c**: only once a run has been counted. The shape is a generic Sankey; nothing in
-  `liulab_mbio.plot` draws one today.
-- **Panel d**: the numbers come from `liulab_mbio.bench.prices`, which prices a bill from a tariff
+  `mbio.plot` draws one today.
+- **Panel d**: the numbers come from `mbio.bench.prices`, which prices a bill from a tariff
   the user holds. The chart itself is not drawn anywhere today.
 - **The serpentine track, the instrument icons and the timeline ribbon**: not package data at all.
   That is a drawing of a workflow, and the protocol model has no figure block to put one in.
@@ -341,17 +341,17 @@ matching overhangs when simulated on the published sequences.
 
 ### Can the package draw it
 
-Yes, bar one piece of layout. `liulab_synbio.igga.rounds` simulates each round and annotates the
+Yes, bar one piece of layout. `synbio.igga.rounds` simulates each round and annotates the
 records; `write_records` writes one record per round, and `plan_igga` also writes a block vector
 per position and the product. Each part block is built with its CDS, its stuffers and its barcode
 as features. The scheme's enzymes and entry overhangs are the method's own data. So every row of
-Figure S1A is a record the package already writes, `liulab_mbio.plot.linear` draws a record as a
-bar of named feature arrows, and `liulab_mbio.plot.sequence_view` draws the junction call-outs at
+Figure S1A is a record the package already writes, `mbio.plot.linear` draws a record as a
+bar of named feature arrows, and `mbio.plot.sequence_view` draws the junction call-outs at
 base level.
 
 What is missing is only the figure's arrangement: several records stacked as rows with dashed
 correspondence lines drawn between one row's cut and the next row's end. Nothing in
-`liulab_mbio.plot` lays out more than one record today.
+`mbio.plot` lays out more than one record today.
 
 ## Where a source is thin
 

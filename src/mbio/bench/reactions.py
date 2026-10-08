@@ -1,0 +1,134 @@
+"""One reaction table, filled to volume, however a pipeline's method mixes it.
+
+The rule is the same wherever it is used: the DNA goes in each tube and everything else into the
+master mix, what the components take is summed, DNA that cannot fit the reaction is refused with
+the fix named, and one last line fills the rest.
+"""
+
+from collections.abc import Sequence
+
+from mbio.bench.amounts import Amount
+from mbio.bench.steps import listed
+from mbio.protocol.model import Component, ReactionTable, number
+
+#: What fills a reaction to volume, where the method names nothing of its own to go in with it.
+WATER = "Nuclease-free water"
+
+
+def reaction_table(
+    amounts: Sequence[Amount] = (),
+    components: Sequence[Component] = (),
+    *,
+    volume_ul: float,
+    title: str = "",
+    filler: str = WATER,
+    reactions: int = 1,
+    what: str = "",
+) -> ReactionTable:
+    """Return one reaction: the DNA per tube, the rest of it, and the line that fills the volume.
+
+    Parameters
+    ----------
+    amounts
+        The DNA, one row each, carrying its picomoles and its weight. Each goes in its own tube
+        rather than into the master mix.
+    components
+        Everything else, in pipetting order.
+    volume_ul
+        What the reaction is made up to.
+    title
+        The table's.
+    filler
+        What the last line is called, where a method's own buffer goes in with the water.
+    reactions
+        How many reactions the table is scaled to.
+    what
+        What a refusal calls this reaction; the title by default.
+
+    Raises
+    ------
+    ValueError
+        If the DNA and the components do not fit `volume_ul`.
+
+    Examples
+    --------
+    >>> from mbio.bench.amounts import dna_amount
+    >>> table = reaction_table((dna_amount("pUC19", 2686, pmol=0.05),), volume_ul=15.0)
+    >>> [(one.name, one.volume_ul) for one in table.components]
+    [('pUC19', 1.0), ('Nuclease-free water', 14.0)]
+    """
+    taken_ul = sum(component.volume_ul for component in components)
+    fits(amounts, volume_ul=volume_ul, taken_ul=taken_ul, what=what or title)
+    used = sum(amount.volume_ul for amount in amounts) + taken_ul
+    rows = (
+        *dna_components(amounts),
+        *components,
+        Component(filler, round(volume_ul - used, 2), final=f"to {volume_ul:g} µL"),
+    )
+    return ReactionTable(rows, title=title, reactions=reactions)
+
+
+def dna_components(amounts: Sequence[Amount]) -> tuple[Component, ...]:
+    """Return one row a DNA, each added to its own tube rather than to the master mix."""
+    return tuple(
+        Component(
+            amount.name,
+            amount.volume_ul,
+            final=f"{number(amount.pmol)} pmol ({amount.nanograms:g} ng)",
+            master_mix=False,
+        )
+        for amount in amounts
+    )
+
+
+def fits(
+    amounts: Sequence[Amount], *, volume_ul: float, taken_ul: float = 0.0, what: str = ""
+) -> None:
+    """Refuse DNA that does not fit its reaction, naming what to concentrate or to scale.
+
+    `taken_ul` is what everything else takes, which is room the DNA does not have. A caller
+    building the table hands the rule its components; one measuring the DNA before there is a
+    table, as the library pipeline's own amounts do, hands it the volume they will take.
+
+    Raises
+    ------
+    ValueError
+        If the DNA and `taken_ul` reach `volume_ul`, leaving nothing to fill the rest with.
+    """
+    used = sum(amount.volume_ul for amount in amounts) + taken_ul
+    if used < volume_ul:
+        return
+    fix = "scale the reaction up"
+    if volume_ul > taken_ul and amounts:
+        weight = sum(amount.nanograms for amount in amounts)
+        needed = floor_ng_ul(weight, volume_ul=volume_ul, taken_ul=taken_ul)
+        names = listed([amount.name for amount in amounts])
+        fix = f"concentrate {names} to {needed:.3g} ng/µL or more, or {fix}"
+    raise ValueError(
+        f"{what}: {used:g} µL of components exceeds the {volume_ul:g} µL reaction; {fix}"
+    )
+
+
+def floor_ng_ul(nanograms: float, *, volume_ul: float, taken_ul: float = 0.0) -> float:
+    """Return the least DNA of this weight may be concentrated at to fit, ng/µL.
+
+    The reaction takes `nanograms` of DNA in `volume_ul`, and everything else in the tube takes
+    `taken_ul` of that, so the DNA has to arrive in what is left. This is `fits` read backwards:
+    the same rule, answered before there is anything to refuse.
+
+    Raises
+    ------
+    ValueError
+        If everything else fills the reaction, leaving the DNA no volume to arrive in.
+
+    Examples
+    --------
+    >>> round(floor_ng_ul(120.0, volume_ul=20.0, taken_ul=4.0), 2)
+    7.5
+    """
+    room = volume_ul - taken_ul
+    if room <= 0:
+        raise ValueError(
+            f"{taken_ul:g} µL of everything else leaves a {volume_ul:g} µL reaction no room"
+        )
+    return nanograms / room

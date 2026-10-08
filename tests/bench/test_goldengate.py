@@ -5,8 +5,8 @@ The source is `docs/research/golden-gate-assembly.md` for the reactions and cycl
 
 import pytest
 
-from liulab_mbio.bench.amounts import Amount, dna_amount
-from liulab_mbio.bench.goldengate import (
+from mbio.bench.amounts import Amount, dna_amount
+from mbio.bench.goldengate import (
     FRAGMENT_PMOL,
     GOLDEN_GATE_ENZYMES,
     KIT,
@@ -18,8 +18,8 @@ from liulab_mbio.bench.goldengate import (
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.overhangs import ligation_source
+from mbio.enzymes import get_enzyme
+from mbio.overhangs import ligation_source
 
 from ..reactions import total, volumes
 

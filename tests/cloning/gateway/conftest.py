@@ -9,8 +9,8 @@ import pytest
 from .records import attb_insert, destination_vector, donor_vector, entry_clone
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway import Amplicon, Plan
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.cloning.gateway import Amplicon, Plan
+    from mbio.sequence import SequenceRecord
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +40,7 @@ def donor() -> SequenceRecord:
 @pytest.fixture(scope="session")
 def gateway_plan(entry: SequenceRecord, destination: SequenceRecord) -> Plan:
     """That entry clone into that destination vector, every option left at its default."""
-    from liulab_mbio.cloning.gateway import plan_gateway
+    from mbio.cloning.gateway import plan_gateway
 
     return plan_gateway(entry, destination)
 
@@ -48,7 +48,7 @@ def gateway_plan(entry: SequenceRecord, destination: SequenceRecord) -> Plan:
 @pytest.fixture(scope="session")
 def staged_plan(insert: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord) -> Plan:
     """That attB insert through BP into the donor, then LR into that destination vector."""
-    from liulab_mbio.cloning.gateway import plan_gateway
+    from mbio.cloning.gateway import plan_gateway
 
     return plan_gateway(insert, destination, donor=donor)
 
@@ -56,7 +56,7 @@ def staged_plan(insert: SequenceRecord, destination: SequenceRecord, donor: Sequ
 @pytest.fixture(scope="session")
 def amplicon(gfp: SequenceRecord) -> Amplicon:
     """The attB PCR that puts an att site on each end of the plain GFP record."""
-    from liulab_mbio.cloning.gateway.design import amplify_attb
+    from mbio.cloning.gateway.design import amplify_attb
 
     return amplify_attb(gfp)
 
@@ -64,6 +64,6 @@ def amplicon(gfp: SequenceRecord) -> Amplicon:
 @pytest.fixture(scope="session")
 def amplified_plan(gfp: SequenceRecord, destination: SequenceRecord, donor: SequenceRecord) -> Plan:
     """That plain GFP amplified onto attB ends, then through BP and LR."""
-    from liulab_mbio.cloning.gateway import plan_gateway
+    from mbio.cloning.gateway import plan_gateway
 
     return plan_gateway(gfp, destination, donor=donor, amplify=True)

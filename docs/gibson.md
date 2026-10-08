@@ -9,7 +9,7 @@ Both sequence files ship with the repo, under `tests/data/`.
 ## Run it
 
 ```bash
-pixi run liulab_mbio cloning gibson plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/
+pixi run mbio cloning gibson plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/
 ```
 
 It prints one summary line, then the four paths it wrote:
@@ -99,7 +99,7 @@ Three kits are shipped as rows of data. Each carries its own overlap rule, react
 molar ratio and fragment count, each read from that supplier's own manual.
 
 ```bash
-pixi run liulab_mbio cloning gibson plan vector.dna insert.dna --out plan/ --product in-fusion
+pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/ --product in-fusion
 ```
 
 The start of a name is enough: `nebuilder`, `gibson` or `in-fusion`. Naming one changes the
@@ -114,7 +114,7 @@ A short part, such as a linker or a tag, can be built from oligos that overlap e
 tile both strands. They go into the same tube as everything else:
 
 ```bash
-pixi run liulab_mbio cloning gibson plan vector.dna linker.fasta --out plan/ --route stitch
+pixi run mbio cloning gibson plan vector.dna linker.fasta --out plan/ --route stitch
 ```
 
 Twelve oligos are the most the method allows, which tile 500 bases. Above that the command stops
@@ -125,7 +125,7 @@ Two fragments that share nothing can be joined by a single oligo carrying bases 
 Neither fragment then needs a tail, so an amplicon you already have goes in as it is:
 
 ```bash
-pixi run liulab_mbio cloning gibson plan vector.dna insert.dna --out plan/ --bridge "GFP:pUC19 backbone"
+pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/ --bridge "GFP:pUC19 backbone"
 ```
 
 Name the two parts in the order they go round the product. Both kinds of oligo land on the same
@@ -140,6 +140,6 @@ threshold judges it and its row carries no verdict.
 - Check that the product map holds what you meant to clone.
 - Check the three screening lanes can still be told apart.
 
-`pixi run liulab_mbio cloning gibson plan --help` lists the rest of the options: where the
+`pixi run mbio cloning gibson plan --help` lists the rest of the options: where the
 inserts go, which way round each one goes, which kit and polymerase to use, and which strain the
 protocol should name.

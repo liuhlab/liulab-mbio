@@ -23,7 +23,7 @@ default would make the paper's library one command. Against that, the paper's sc
 instance of a general pattern — any number of positions, any four enzymes — and a shipped default
 is the instance everyone would run, so the general path would stop being exercised. The stuffers
 and barcodes are also the paper's own sequences, whose licence the package would then answer for.
-That is hard to unwind: once they sit in `src/liulab_mbio/data/` they ship in every wheel, and
+That is hard to unwind: once they sit in `src/mbio/data/` they ship in every wheel, and
 every signature above them has assumed one scheme.
 
 ## Considered options

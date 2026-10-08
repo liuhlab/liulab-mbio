@@ -12,7 +12,7 @@ import dataclasses
 
 import pytest
 
-from liulab_mbio.cloning.restriction.digest import (
+from mbio.cloning.restriction.digest import (
     cut,
     diagnostic,
     excised,
@@ -22,9 +22,9 @@ from liulab_mbio.cloning.restriction.digest import (
     self_closing,
     turned,
 )
-from liulab_mbio.cloning.restriction.ligation import ligate
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
-from liulab_mbio.sites import find_sites
+from mbio.cloning.restriction.ligation import ligate
+from mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
+from mbio.sites import find_sites
 
 from .records import STUFFER, plasmid
 

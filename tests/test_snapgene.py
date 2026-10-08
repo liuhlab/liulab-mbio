@@ -3,9 +3,9 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from liulab_mbio.edits import delete
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
-from liulab_mbio.snapgene import read_dna, write_dna
+from mbio.edits import delete
+from mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from mbio.snapgene import read_dna, write_dna
 
 #: The packets the model holds, which the writer builds rather than keeping.
 MODELLED = (0x00, 0x05, 0x06, 0x0A)

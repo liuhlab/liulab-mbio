@@ -157,7 +157,7 @@ origin. Both matter to the reference picture, and the packages differ sharply. M
 | DNA Features Viewer | collapsed to one outer span, because its translator reads only `location.start` and `location.end` ([source](https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/BiopythonTranslator/BiopythonTranslatorBase.py#L32-L55)) | **a full ring** — open as [#29](https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/issues/29) |
 | pyCirclize `genomic_features` | **wrong on the reverse strand**: it takes the first part's start and the last part's end ([source](https://github.com/moshi4/pyCirclize/blob/5a0f36111a4bbfab3e3d765e7365a1108f891dcb/src/pycirclize/track.py#L1440-L1447)), but Biopython lists a reverse feature's parts in biological order, so AmpR drew with zero length and lacZα from the wrong ends | a wrong arc |
 
-For the matplotlib route this matters less than it looks: `liulab_mbio` already holds each
+For the matplotlib route this matters less than it looks: `mbio` already holds each
 feature as segments with the coordinate rule of ADR 0001, so a `plot` module would call
 pyCirclize's `arrow` and pyGenomeViz's `add_feature` per piece and split a span at the origin
 itself, never going through their SeqFeature readers.

@@ -6,14 +6,14 @@ search:
 # Fonts: the DejaVu release, its licence, and what the shipped tables are
 
 Research note for issue #90, carrying out the decision in #86. Read and measured on
-**2026-09-16**. It records where `src/liulab_mbio/data/fonts/` comes from, what the licence asks
+**2026-09-16**. It records where `src/mbio/data/fonts/` comes from, what the licence asks
 of it, which characters and kerning it holds, and how closely its numbers match what a browser
 draws.
 
 ## 1. What ships
 
 `scripts/build_fonts.py`, run as `pixi run build-fonts`, writes seven files, which
-`liulab_mbio.plot.fonts` reads:
+`mbio.plot.fonts` reads:
 
 | File | What it is |
 | --- | --- |

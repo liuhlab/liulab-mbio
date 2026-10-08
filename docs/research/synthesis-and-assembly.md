@@ -559,7 +559,7 @@ H2O."
 The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step
 removing the 17 bp and 13 bp stubs. One ratio throughout is supported by nothing read.
 
-Both are constants in `liulab_synbio.igga.bench`, landed by #280.
+Both are constants in `synbio.igga.bench`, landed by #280.
 `synthesis-and-assembly-materials.md` now carries them beside the beads, which is the half of
 this decision that was missing.
 
@@ -569,7 +569,7 @@ this decision that was missing.
 
 **In — the paper's masses, and nothing to choose.** 1 µg of plasmid pool per digest, 20 ng of
 digested destination per 200 µL ligation, up to 100 ng of purified ligation product
-electroporated. All three are constants in `liulab_synbio.igga.bench`.
+electroporated. All three are constants in `synbio.igga.bench`.
 
 **Out — a departure, recorded as one.** The paper plates nothing. Digest, SPRI, ligate, SPRI,
 electroporate, recover, grow, prep, next round: no colony count appears anywhere in it, and no
@@ -589,7 +589,7 @@ collection. iGGA yields a pool that goes to a pooled screen; no member is ever p
 re-identified, so the gate does not transfer. A multiple does not transfer between rounds
 either: one ratio against each round's own products is a different risk every round. What holds
 across rounds is the completeness — the chance no member of that round is missing — so that is
-what a build states, and `liulab_mbio.bench.coverage` computes each round's floor from it by
+what a build states, and `mbio.bench.coverage` computes each round's floor from it by
 Clarke & Carbon's rule. It refuses a default, and reports the multiple the floor works out at
 beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
 assumes every member equally represented, and synthesis skew breaks that.
@@ -643,7 +643,7 @@ The seated plasmid itself is no longer unsimulated. The carrier is supplied open
 point: `dmx/addgene/pCR-Blunt II-TOPO.dna` carries a single head-to-head `GCCCTT`/`AAGGGC` run,
 and the Zero Blunt TOPO user guide (`bench/thermo/zeroblunttopo_man.pdf`) says topoisomerase I
 cleaves after 5'-CCCTT on each strand, which puts the blunt point at **offset 336** of the
-3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.dmx.carrier.seat` inserts a
+3,519 bp circle, between the EcoRI sites at 324 and 342. `synbio.dmx.carrier.seat` inserts a
 part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
 keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
 overhang pair, backbone whole. The carrier's one BsaI site is at **797**, inside `ccdB`
@@ -686,7 +686,7 @@ certain to hopeless across one build's own designs, so a build-wide on-off would
 two-fragment design that never needs it, or skip every long one that does.
 
 The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
-`liulab_mbio.bench.readback.CLEAN_COLONY_CURVE` carries it.
+`mbio.bench.readback.CLEAN_COLONY_CURVE` carries it.
 
 ### 6.13 The pass mark for the library reads — iGGA
 
@@ -695,7 +695,7 @@ open.** Joung et al. 2017 set it for a plasmid library counted by a barcode ampl
 screen — under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at
 over 100 reads a member — and section 3.5 of `docs/research/vector-qc-panel.md` quotes it with
 its citation. Each is a default a build may tighten and may not loosen, as a read depth is in
-`liulab_synbio.dmx`.
+`synbio.dmx`.
 
 **It transfers because the counted amplicon is length-matched.** The usual objection is that this
 library's members span about 0.5 to 2.3 kb where an sgRNA is 20 nt, so amplification bias differs.
@@ -784,16 +784,16 @@ topology, the features and each feature's colour — 14 of 14 on the parent and 
 carrier, each the depositor's own; they drop SnapGene's enzyme set, its auto-matched primer
 library, the vendor notes, and each segment's own name and colour. Each record was renamed for
 the LOCUS line, which takes neither a space nor `®`. Redo one by reading the `.dna` with
-`liulab_mbio.io.read_record` and writing it back through that function; the bases, the topology,
+`mbio.io.read_record` and writing it back through that function; the bases, the topology,
 the colours and the one coding sequence the rebuild reads are what must survive, and
 `tests/scripts/test_build_dmx_vector.py` holds the rest to it.
 
 A colour carries because `color: #rrggbb` is one line — the note SnapGene itself exports for a
-feature of one segment, which `liulab_mbio.io` already reads. A segment's own name and colour do
+feature of one segment, which `mbio.io` already reads. A segment's own name and colour do
 not, and the names dropped are `AmpR`'s `signal sequence` on the parent and `lac promoter`'s
 `-35` and `-10` on the carrier. The writer names each one on stderr rather than losing it
 silently, and the loss is in the writer alone: `Segment` holds the name, SnapGene's reader reads
-it, and `liulab_mbio.io` reads it back out of the note SnapGene exports for a feature of several
+it, and `mbio.io` reads it back out of the note SnapGene exports for a feature of several
 segments. That note spells one segment a line, and only the line breaks tell a last segment's
 name from the prose SnapGene adds after the list, so a reader cannot be made to take the note
 whole. Biopython's
@@ -994,7 +994,7 @@ than it read.
   24-member library at the end of it. The method's carrier step is a different reaction: BsmBI,
   one well a part, 72 parts into a carrier, and no library made. **One round a position is what
   the pipeline models**, and the method's accounting needs a carrier the pipeline has none of.
-  That is a design question: `liulab_synbio.dmx.carrier` models the reaction, and no plan
+  That is a design question: `synbio.dmx.carrier` models the reaction, and no plan
   assembles it into a run.
 
 ### What the planner could not do

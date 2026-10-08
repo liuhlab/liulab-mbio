@@ -3,7 +3,7 @@
 
     pixi run build-fonts [--release PATH] [--out DIR]
 
-For each face `liulab_mbio.plot.fonts` draws with, DejaVu Sans, Sans Bold and Sans Mono, this
+For each face `mbio.plot.fonts` draws with, DejaVu Sans, Sans Bold and Sans Mono, this
 writes a table of advance widths, kerning pairs and glyph outlines, which the package measures
 and draws from, and a WOFF2 subset a page embeds. Each subset is renamed, as DejaVu's licence
 asks of a modified font, and keeps only the `kern` feature, so a browser shapes what the table
@@ -31,10 +31,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from liulab_mbio.plot.fonts import INVISIBLE
+from mbio.plot.fonts import INVISIBLE
 
 REPO = Path(__file__).resolve().parents[1]
-DATA = REPO / "src/liulab_mbio/data/fonts"
+DATA = REPO / "src/mbio/data/fonts"
 
 RELEASE = (
     "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/"
@@ -122,7 +122,7 @@ def unpack(archive: bytes) -> dict[str, bytes]:
 def characters(face: Face, cmap: Collection[int]) -> list[str]:
     """Return the characters a face ships: those of its blocks the font has, in code point order.
 
-    A character `liulab_mbio.plot.fonts` drops as invisible is left out.
+    A character `mbio.plot.fonts` drops as invisible is left out.
     """
     return [
         chr(point)

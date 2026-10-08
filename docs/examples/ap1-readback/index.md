@@ -8,7 +8,7 @@ of names.
 Every file in `protocol/` was written by the command below. Nothing here is edited by hand.
 
 ```bash
-pixi run liulab_synbio dmx plan docs/examples/ap1-readback/build.json \
+pixi run synbio dmx plan docs/examples/ap1-readback/build.json \
   --out docs/examples/ap1-readback/protocol
 ```
 
@@ -43,7 +43,7 @@ two fragments or more are read back and the 40 made in one are not. Set the floo
 | [protocol/01-design-read-back-index-pcr.html](protocol/01-design-read-back-index-pcr.html) | the bench page: array and pick, mark every well, call the wells |
 | [protocol/reagents.html](protocol/reagents.html) | what to order |
 | [protocol/references.html](protocol/references.html) | where each number was read from |
-| [protocol/project.json](protocol/project.json) | the run as data, which `liulab_mbio protocol render` turns back into these pages |
+| [protocol/project.json](protocol/project.json) | the run as data, which `mbio protocol render` turns back into these pages |
 
 This run picks 128 wells into one 384-well plate, and marks them over two 96-well plates. No DNA
 is designed, so there is no sequence file and no primer sheet here.

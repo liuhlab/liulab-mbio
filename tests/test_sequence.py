@@ -1,6 +1,6 @@
 import pytest
 
-from liulab_mbio.sequence import (
+from mbio.sequence import (
     BindingSite,
     Feature,
     Primer,

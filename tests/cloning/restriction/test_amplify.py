@@ -6,10 +6,10 @@ vector's own digest leaves. `test_plan.py` is where the protocol the PCR joins i
 
 import pytest
 
-from liulab_mbio.cloning.restriction.amplify import Amplicon, amplified
-from liulab_mbio.cloning.restriction.digest import Piece, opened, resolve
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
-from liulab_mbio.sites import SPACER_LENGTH, find_sites
+from mbio.cloning.restriction.amplify import Amplicon, amplified
+from mbio.cloning.restriction.digest import Piece, opened, resolve
+from mbio.sequence import SequenceRecord, reverse_complement
+from mbio.sites import SPACER_LENGTH, find_sites
 
 
 @pytest.fixture(scope="module")

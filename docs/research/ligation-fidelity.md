@@ -6,7 +6,7 @@ search:
 # Ligation fidelity data: sources, licence, and how a set of overhangs is scored
 
 Research note for issues #11 and #18. Everything below was retrieved on **2026-09-12**. It records where
-`src/liulab_mbio/data/ligation_fidelity.json` comes from, what its licence allows, how the
+`src/mbio/data/ligation_fidelity.json` comes from, what its licence allows, how the
 shipped matrices are read, and which overhang rules the code applies and on whose authority.
 
 Issue #4's note (`docs/research/golden-gate-assembly.md`, section 4) surveyed the field and drew
@@ -16,7 +16,7 @@ against the paper's own published numbers.
 ## 1. What the data file holds
 
 One file, `ligation_fidelity.json`, read with `importlib.resources` by
-`liulab_mbio.overhangs`. It holds five count matrices, one per enzyme, plus the
+`mbio.overhangs`. It holds five count matrices, one per enzyme, plus the
 attribution every copy of the data has to carry.
 
 | Field | Meaning |
@@ -59,7 +59,7 @@ The article's own permissions block, from the JATS XML at `journals.plos.org`:
 The licence is `http://creativecommons.org/licenses/by/4.0/` and the copyright line is
 `Copyright (c) 2020 Pryor et al`. Attribution is the only condition, and it is met three times
 over: in the data file's `source` block, in the module docstring of
-`liulab_mbio/overhangs.py`, and here.
+`mbio/overhangs.py`, and here.
 
 > Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020)
 > Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized
@@ -204,7 +204,7 @@ Pryor 2020 states the conventional rules and then shows they are the wrong abstr
 | `repeat` | an overhang already taken, or its reverse complement | Pryor 2020, above; NEB designs overhangs "unique" | none |
 | `near-duplicate` | fewer than two bases different from another overhang or its reverse complement | the modular cloning convention Pryor 2020 states | `min_distance` |
 | `uniform` | an overhang that is all G/C or all A/T | Pryor 2020, above; Potapov 2018's junction 6 truncation | `allow_uniform` |
-| `site` | an overhang no primer tail can carry without spelling a second site | `liulab_mbio.sites.primer_tail` | `avoid` |
+| `site` | an overhang no primer tail can carry without spelling a second site | `mbio.sites.primer_tail` | `avoid` |
 
 **The distance rule is two bases and it is an argument.** Potapov 2018 measured the convention
 as stricter than it needs to be:
@@ -371,8 +371,8 @@ A path under `~` is not one this project may depend on, so the example reads the
 directory is git-ignored: the download is the reader's own, and **nothing of it ships**.
 
 ```python
-from liulab_mbio.cloning.goldengate import plan_assembly
-from liulab_mbio.ligase import read_profile
+from mbio.cloning.goldengate import plan_assembly
+from mbio.ligase import read_profile
 
 profile = read_profile("reference_docs/ligation-fidelity/potapov2018/FileS03_T4_18h_25C.xlsx")
 plan_assembly(vector, insert, enzyme="PaqCI", profile=profile)
@@ -383,14 +383,14 @@ On the command line, as an option or as an environment variable:
 ```sh
 matrix=reference_docs/ligation-fidelity/potapov2018/FileS03_T4_18h_25C.xlsx
 
-liulab_mbio cloning goldengate plan vector.dna insert.dna --out run --ligase-matrix "$matrix"
+mbio cloning goldengate plan vector.dna insert.dna --out run --ligase-matrix "$matrix"
 
 export LIULAB_MBIO_LIGASE_MATRIX="$matrix"
-liulab_mbio cloning goldengate plan vector.dna insert.dna --out run
+mbio cloning goldengate plan vector.dna insert.dna --out run
 ```
 
 Both shapes load with the standard library alone. An `.xlsx` is read by the same `zipfile` and
-`xml.etree` code the build script uses, which moved into `liulab_mbio.ligase` so that
+`xml.etree` code the build script uses, which moved into `mbio.ligase` so that
 the package and the script share one reader; a `.csv` is read by `csv`. **No dependency was
 added.** A file that is not a count matrix is refused with a message saying what one is, rather
 than a stack trace: a header row of overhang labels, the same labels down the first column, and
@@ -460,7 +460,7 @@ stays the score; a second ligase's matrix is read for what it compares, not for 
 
 ### What it is read for instead: one overhang's on-target rate
 
-`liulab_mbio.overhangs.on_target` is what such a profile is read for. It reports, per overhang,
+`mbio.overhangs.on_target` is what such a profile is read for. It reports, per overhang,
 the correct Watson-Crick pair per 100,000 events on the profile's own sheet, and names the ones
 below `STRONG_LIGATION`. It returns no score, nothing ranks on it, and the fidelity number above
 does not move.
@@ -486,7 +486,7 @@ which at 175.8 is in no trouble at all.
 
 **The A/T-rich overhangs usually cited are unreachable, so they do not justify the floor.** The
 seven-fold losses quoted for `TTAA`, `TATA`, `TAAA`, `TTTA` and `AAAA` describe overhangs
-`liulab_mbio.overhangs.refusal` already refuses — the first two as palindromes, the last three as
+`mbio.overhangs.refusal` already refuses — the first two as palindromes, the last three as
 uniform. Of the 256 four-base overhangs, 216 are reachable and 40 are not (16 palindrome, 24
 uniform). The whole reachable tail below the floor is nine strand pairs:
 
@@ -510,12 +510,12 @@ worst at 175.8 silent, and a floor of 50 would warn on nothing at all.
 
 **What a low rate costs is colonies, not product.** Bilotti's counts are of the *correct* pair,
 so a threefold loss is threefold fewer good joins. Each iGGA round's tube holds one entry overhang
-and the cloning scar and nothing else — `liulab_synbio.igga.gate.LIGATION_OVERHANGS` — so its
+and the cloning scar and nothing else — `synbio.igga.gate.LIGATION_OVERHANGS` — so its
 fidelity saturates and a set comparison has nothing to discriminate at two. Yield is what is at
 risk, and section 11 records
 Strzelecki 2024 attributing it to duplex strength with no count matrix capturing it.
 
-**Nothing is designed on it.** `liulab_synbio.igga.standard` keeps ranking candidates on the
+**Nothing is designed on it.** `synbio.igga.standard` keeps ranking candidates on the
 enzyme's own shipped matrix. The profile is a file the user holds, so ranking on it would make the
 same build yield different overhangs depending on whether that file is present, and a design
 that is not reproducible from the build alone costs more than the overhangs it would save.

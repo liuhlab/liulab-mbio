@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.bench import materials, plates
-from liulab_mbio.protocol import model
-from liulab_mbio.protocol.model import (
+from mbio.bench import materials, plates
+from mbio.protocol import model
+from mbio.protocol.model import (
     Bill,
     BillRow,
     Check,
@@ -33,7 +33,7 @@ from liulab_mbio.protocol.model import (
     read_protocol,
     write_protocol,
 )
-from liulab_mbio.protocol.render import NO_NUMBER, render_html
+from mbio.protocol.render import NO_NUMBER, render_html
 
 from ..html import parse
 

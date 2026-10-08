@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.plot.sequence_view import LIMIT
-from liulab_mbio.protocol import Figure, Protocol, Step, render_html
-from liulab_mbio.protocol.figures import SOURCE, SOURCE_KEY, ligation_figure
-from liulab_mbio.sequence import SequenceRecord
+from mbio.plot.sequence_view import LIMIT
+from mbio.protocol import Figure, Protocol, Step, render_html
+from mbio.protocol.figures import SOURCE, SOURCE_KEY, ligation_figure
+from mbio.sequence import SequenceRecord
 
 from ..html import parse
 
@@ -72,7 +72,7 @@ def test_a_span_longer_than_a_sequence_view_holds_is_refused_where_it_is_chosen(
 
 def test_the_figure_a_library_chose_renders_like_any_other(data_dir: Path) -> None:
     """A library function's only product is a spec, so the page draws it with everything else."""
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     record = read_record(data_dir / "pUC19.dna")
     figure = ligation_figure(

@@ -9,7 +9,7 @@ shows the domestication instead of shipping a backbone someone cleaned by hand. 
 writes is what the library plan then reads, and the protocol beside it is its own sitting: the
 library run opens with this record already in hand and has no domestication step.
 
-Three of the eight sites lie in a coding sequence and `liulab_mbio.sites.domesticate` takes
+Three of the eight sites lie in a coding sequence and `mbio.sites.domesticate` takes
 those out by itself. The other five lie in none, so this script states the base it changes at
 each one. `docs/research/working-vector-plvx-tetone.md` section 7 prices all eight, and
 `docs/research/domestication-methods.md` section 3.2 is why the route is to order the plasmid
@@ -33,11 +33,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from liulab_mbio.bench.steps import enzyme_material
-from liulab_mbio.edits import replace
-from liulab_mbio.enzymes import Enzyme, enzymes, get_enzyme
-from liulab_mbio.io import read_record
-from liulab_mbio.protocol.model import (
+from mbio.bench.steps import enzyme_material
+from mbio.edits import replace
+from mbio.enzymes import Enzyme, enzymes, get_enzyme
+from mbio.io import read_record
+from mbio.protocol.model import (
     Check,
     Hole,
     Item,
@@ -47,10 +47,10 @@ from liulab_mbio.protocol.model import (
     read_protocol,
     write_protocol,
 )
-from liulab_mbio.protocol.render import minted, write_html
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
-from liulab_mbio.sites import DomesticationReport, domesticate, find_sites
-from liulab_mbio.translate import translate
+from mbio.protocol.render import minted, write_html
+from mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.sites import DomesticationReport, domesticate, find_sites
+from mbio.translate import translate
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -76,7 +76,7 @@ NAME = "pLVX-TetOne-dom"
 class Edit:
     """One base this build changes where the site lies in no coding sequence.
 
-    `liulab_mbio.sites.domesticate` hands these back untouched, because taking a site out of a
+    `mbio.sites.domesticate` hands these back untouched, because taking a site out of a
     non-coding element changes what the record spells and the package leaves that to its caller.
     These five are the demo's choice.
     """

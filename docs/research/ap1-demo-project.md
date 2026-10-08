@@ -481,7 +481,7 @@ own and cannot be a donor until it is cloned (the constraint recorded under open
 The carrier is the row above it and a different plasmid: a part is kept in pCR-Blunt II-TOPO so
 the collection keeps, and BsmBI cuts it back out when a round wants it.
 
-**The pipeline counts differently, and it is right to.** `liulab_synbio.igga` models one round
+**The pipeline counts differently, and it is right to.** `synbio.igga` models one round
 a position, so it plans three for this build. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
@@ -777,7 +777,7 @@ pool, and no member is re-identified. At 300x the three rounds would have asked 
 
 A multiple was the wrong parameter and not only the wrong value: one ratio against each round's
 own products buys a different risk every round. The completeness is what holds across them, so
-`liulab_mbio.bench.coverage` computes each round's floor from it — 183, 6,306 and 195,386
+`mbio.bench.coverage` computes each round's floor from it — 183, 6,306 and 195,386
 colonies, which no whole multiple reproduces. It is a **floor, not a sufficiency claim**: it
 assumes every member equally represented, and synthesis skew breaks that. What the screen
 downstream needs is still open, and stays in section 10.

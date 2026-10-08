@@ -12,7 +12,7 @@ A red run is fixed by running the example's own command and committing what it w
 check never writes into `docs/examples/`.
 
 The generators are named below rather than discovered. One of them is a script rather than a
-documented command, and another writes files that `tests/synbio/igga/test_gate.py` reads as its
+documented command, and another writes files that `tests/methods/igga/test_gate.py` reads as its
 known-good corpus; neither is reachable by reading a page. Another generator is a line added
 here, and an example that grows a file fails here until `writes` names it. That is the check
 working: knowing what a command writes without running it is what no discovery rule can do.
@@ -59,8 +59,7 @@ GENERATORS: tuple[Generator, ...] = (
         what="the pUC19-GFP Golden Gate plan",
         directory=REPO / PUC19,
         commands=(
-            f"liulab_mbio cloning goldengate plan "
-            f"tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",
+            f"mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",
         ),
         writes=("primers.tsv", "product.dna", "protocol.html", "protocol.json"),
     ),
@@ -68,7 +67,7 @@ GENERATORS: tuple[Generator, ...] = (
         what="the AP-1 library plan",
         directory=REPO / AP1,
         commands=(
-            f"liulab_synbio igga plan {AP1}/project.json --out {OUT} "
+            f"synbio igga plan {AP1}/project.json --out {OUT} "
             f"--working-site EGFP --prices {AP1}/prices.csv",
         ),
         writes=(
@@ -104,11 +103,11 @@ GENERATORS: tuple[Generator, ...] = (
         what="the AP-1 figures",
         directory=REPO / AP1,
         commands=(
-            f"liulab_mbio plot map {AP1}/vector.gb {METHOD_ENZYMES} -o {OUT}/vector-map.pdf",
-            f"liulab_mbio plot map {AP1}/round-1.dna {METHOD_ENZYMES} -o {OUT}/round-1-map.pdf",
-            f"liulab_mbio plot map {AP1}/round-2.dna {METHOD_ENZYMES} -o {OUT}/round-2-map.pdf",
-            f"liulab_mbio plot map {AP1}/product.dna {METHOD_ENZYMES} -o {OUT}/product-map.pdf",
-            f"liulab_mbio plot map {AP1}/product.dna "
+            f"mbio plot map {AP1}/vector.gb {METHOD_ENZYMES} -o {OUT}/vector-map.pdf",
+            f"mbio plot map {AP1}/round-1.dna {METHOD_ENZYMES} -o {OUT}/round-1-map.pdf",
+            f"mbio plot map {AP1}/round-2.dna {METHOD_ENZYMES} -o {OUT}/round-2-map.pdf",
+            f"mbio plot map {AP1}/product.dna {METHOD_ENZYMES} -o {OUT}/product-map.pdf",
+            f"mbio plot map {AP1}/product.dna "
             f"--region 1368..1442 --sequence-view -o {OUT}/barcode-block.pdf",
         ),
         writes=(
@@ -138,7 +137,7 @@ GENERATORS: tuple[Generator, ...] = (
     Generator(
         what="the AP-1 cargo read-back",
         directory=REPO / READBACK / "protocol",
-        commands=(f"liulab_synbio dmx plan {READBACK}/build.json --out {OUT}",),
+        commands=(f"synbio dmx plan {READBACK}/build.json --out {OUT}",),
         writes=(
             "01-design-read-back-index-pcr.html",
             "index.html",

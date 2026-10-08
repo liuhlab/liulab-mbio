@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.io import read_record
-from liulab_mbio.protocol import read_protocol
-from liulab_mbio.snapgene import read_dna, write_dna
+from mbio.cli import app
+from mbio.io import read_record
+from mbio.protocol import read_protocol
+from mbio.snapgene import read_dna, write_dna
 
 from .records import carrying
 

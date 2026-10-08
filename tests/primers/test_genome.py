@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.primers import THRESHOLDS, PairReport, Placement, amplicon_sizes, ranked_pairs
-from liulab_mbio.primers.genome import (
+from mbio.primers import THRESHOLDS, PairReport, Placement, amplicon_sizes, ranked_pairs
+from mbio.primers.genome import (
     Locus,
     design_pair_on_genome,
     evaluate_on_genome,
     evaluate_pair_on_genome,
 )
-from liulab_mbio.sequence import BindingSite, Primer, Segment, SequenceRecord, reverse_complement
+from mbio.sequence import BindingSite, Primer, Segment, SequenceRecord, reverse_complement
 
 from ..fasta import write_fasta
 from .sequences import M13_FWD, M13_REV, PUC_FWD, PUC_REV

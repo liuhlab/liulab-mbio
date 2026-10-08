@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.cloning.plan import as_project
-from liulab_mbio.protocol.model import (
+from mbio.cloning.plan import as_project
+from mbio.protocol.model import (
     Bill,
     BillRow,
     Check,

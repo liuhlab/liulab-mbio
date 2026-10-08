@@ -2,15 +2,15 @@
 
 import pytest
 
-from liulab_mbio.bench.readback import (
+from mbio.bench.readback import (
     CLEAN_COLONY_CURVE,
     WellVerdict,
     clean_colony_chance,
     identity_check,
     reformat,
 )
-from liulab_mbio.checks import Check
-from liulab_mbio.protocol.model import Well
+from mbio.checks import Check
+from mbio.protocol.model import Well
 
 
 def test_a_pass_is_an_exact_match_and_a_silent_change_is_not_one():

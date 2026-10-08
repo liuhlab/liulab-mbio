@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
-from liulab_mbio.cloning.gateway.recombination import recombine
-from liulab_mbio.edits import rotate
-from liulab_mbio.sequence import (
+from mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
+from mbio.cloning.gateway.recombination import recombine
+from mbio.edits import rotate
+from mbio.sequence import (
     BindingSite,
     Primer,
     Segment,
@@ -21,7 +21,7 @@ from liulab_mbio.sequence import (
 from .records import att_site, destination_vector
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway.recombination import Recombination
+    from mbio.cloning.gateway.recombination import Recombination
 
 
 @pytest.fixture(scope="module")

@@ -1,31 +1,31 @@
 # API reference
 
-Built from the docstrings in `src/liulab_mbio/` and `src/liulab_synbio/`, so this page and the
+Built from the docstrings in `src/mbio/` and `src/synbio/`, so this page and the
 code cannot drift apart. Write the docstring; this page follows.
 
 ## What to import
 
-`liulab_mbio` itself re-exports only `__version__`. Import a name from the module that owns it:
+`mbio` itself re-exports only `__version__`. Import a name from the module that owns it:
 
 ```python
-from liulab_mbio.io import read_record
-from liulab_mbio.cloning.goldengate import plan_assembly
+from mbio.io import read_record
+from mbio.cloning.goldengate import plan_assembly
 ```
 
 A few names are spelled more than once across the package on purpose. `Check`, `Junction`,
 `Part` and `Files` each mean something different in every module that defines one. A
-`liulab_mbio.checks.Check` is the judged check, with the value it measured. A
-`liulab_mbio.protocol.Check` is how a protocol page shows one. A `Junction` or a `Files` belongs
+`mbio.checks.Check` is the judged check, with the value it measured. A
+`mbio.protocol.Check` is how a protocol page shows one. A `Junction` or a `Files` belongs
 to the cloning method that defines it. A flat re-export would have to rename one of each, and
 would import every dependency the moment you imported the package. So the module path is the
 name.
 
-`liulab_mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
-`design` is **not** re-exported: reach it at `liulab_mbio.cloning.goldengate.design`.
+`mbio.cloning.goldengate` re-exports the pipeline's entry point and its result types.
+`design` is **not** re-exported: reach it at `mbio.cloning.goldengate.design`.
 
 ## The examples are tests
 
-`pixi run check` runs the `Examples` blocks in `src/liulab_mbio/`, so an example that no longer
+`pixi run check` runs the `Examples` blocks in `src/mbio/`, so an example that no longer
 matches its code fails the tests.
 
 Write one where it makes the object easier to use, and leave it out where it would not.
@@ -48,31 +48,31 @@ Everything else reads and writes these. Coordinates are 0-based and half-open, a
 across the origin of a circular record ends past the record's length — see
 [the coordinates decision](adr/0001-coordinates.md).
 
-::: liulab_mbio.sequence
+::: mbio.sequence
 
 ## Checks
 
-::: liulab_mbio.checks
+::: mbio.checks
 
 ## Files
 
-::: liulab_mbio.io
+::: mbio.io
 
-::: liulab_mbio.snapgene
+::: mbio.snapgene
 
-::: liulab_mbio.edits
+::: mbio.edits
 
-::: liulab_mbio.jsonfile
+::: mbio.jsonfile
 
 ## Enzymes, sites, codons and translation
 
-::: liulab_mbio.enzymes
+::: mbio.enzymes
 
-::: liulab_mbio.sites
+::: mbio.sites
 
-::: liulab_mbio.codons
+::: mbio.codons
 
-::: liulab_mbio.translate
+::: mbio.translate
 
 ## Barcodes
 
@@ -80,7 +80,7 @@ A barcode names one part, so that reading a product says which part it carries. 
 draws a set whose members stand far enough apart that no two read as one, and checks a set
 someone already holds by the same rules. The same seed draws the same set again.
 
-::: liulab_mbio.barcodes
+::: mbio.barcodes
 
 ## Overhangs and ligation
 
@@ -89,9 +89,9 @@ set should ligate. Every cloning method reads them here. `ligase` reads a fideli
 user holds on their own disk: that archive's licence forbids redistribution, so none of it ships
 with the package.
 
-::: liulab_mbio.overhangs
+::: mbio.overhangs
 
-::: liulab_mbio.ligase
+::: mbio.ligase
 
 ## Reactions
 
@@ -99,16 +99,16 @@ One tube: the molecules in it, each bound to the role it plays there, and the en
 them. A reaction holds no verdict — what must be true inside one is the method's to judge, which
 is what lets a gate say which tube a failure belongs to.
 
-::: liulab_mbio.reaction
+::: mbio.reaction
 
 ## Splitting a long cargo
 
 A sequence longer than one synthesised oligo is ordered as several and joined in one pot. This
 says where the cuts fall, how far each one could still move, and what overhang each leaves. It
 names no method: what the fragments are dressed as to be ordered is
-`liulab_mbio.bench.pools`'s, and which enzyme and which primers do the dressing is the caller's.
+`mbio.bench.pools`'s, and which enzyme and which primers do the dressing is the caller's.
 
-::: liulab_mbio.split
+::: mbio.split
 
 ## Maps
 
@@ -121,52 +121,52 @@ and `page` wraps them in the page. `convert` turns the shapes into a PNG or a PD
 letter drawn as its outline. `draw_plate` draws a plate's wells the same way, and `plate` lays
 the wells out.
 
-::: liulab_mbio.plot
+::: mbio.plot
     options:
       members: false
 
-::: liulab_mbio.plot.drawing
+::: mbio.plot.drawing
 
-::: liulab_mbio.plot.layers
+::: mbio.plot.layers
 
-::: liulab_mbio.plot.circular
+::: mbio.plot.circular
 
-::: liulab_mbio.plot.linear
+::: mbio.plot.linear
 
-::: liulab_mbio.plot.sequence_view
+::: mbio.plot.sequence_view
 
-::: liulab_mbio.plot.labels
+::: mbio.plot.labels
 
-::: liulab_mbio.plot.fonts
+::: mbio.plot.fonts
 
-::: liulab_mbio.plot.svg
+::: mbio.plot.svg
 
-::: liulab_mbio.plot.page
+::: mbio.plot.page
 
-::: liulab_mbio.plot.convert
+::: mbio.plot.convert
 
-::: liulab_mbio.plot.plate
+::: mbio.plot.plate
 
 ## Primers
 
-Every public name in the modules below imports from `liulab_mbio.primers` too:
-`from liulab_mbio.primers import design_pair` works as well as the longer path.
+Every public name in the modules below imports from `mbio.primers` too:
+`from mbio.primers import design_pair` works as well as the longer path.
 
-::: liulab_mbio.primers
+::: mbio.primers
     options:
       members: false
 
-::: liulab_mbio.primers.polymerase
+::: mbio.primers.polymerase
 
-::: liulab_mbio.primers.thresholds
+::: mbio.primers.thresholds
 
-::: liulab_mbio.primers.placement
+::: mbio.primers.placement
 
-::: liulab_mbio.primers.evaluation
+::: mbio.primers.evaluation
 
-::: liulab_mbio.primers.design
+::: mbio.primers.design
 
-::: liulab_mbio.primers.genome
+::: mbio.primers.genome
 
 ## Protocols
 
@@ -177,15 +177,15 @@ judged it; `OVERVIEW_CHARS` is the character budget for a header card, and a lon
 refused rather than truncated. `figures` is the library of named figures a step may show, each
 a spec the renderer draws and never a drawing.
 
-::: liulab_mbio.protocol
+::: mbio.protocol
     options:
       members: false
 
-::: liulab_mbio.protocol.model
+::: mbio.protocol.model
 
-::: liulab_mbio.protocol.figures
+::: mbio.protocol.figures
 
-::: liulab_mbio.protocol.render
+::: mbio.protocol.render
 
 ## Bench
 
@@ -196,81 +196,81 @@ clone, heat inactivation, what each material brings with it, a plate and the mov
 wells, a price record and the bill it makes, the phenotype a clone should show, the primer
 order sheet, an oligo pool as a vendor takes it, and the protocol steps any pipeline reuses.
 
-Every public name in the modules below imports from `liulab_mbio.bench` too, `goldengate`,
+Every public name in the modules below imports from `mbio.bench` too, `goldengate`,
 `coverage` and `pools` excepted. Each of those three is imported by module: `goldengate`'s
 `REFERENCES` and `SOURCES` are one chemistry's, `coverage`'s are one sizing rule's, and
-`pools`'s `Pool` is a vendor's order rather than `liulab_mbio.reaction`'s molecules in one tube.
-A module that cites a source keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES`
+`pools`'s `Pool` is a vendor's order rather than `mbio.reaction`'s molecules in one tube.
+A module that cites a source keeps its own `REFERENCES`, and `mbio.bench.REFERENCES`
 gathers the ones re-exported. `steps` is re-exported, and a protocol cites its `DPNI_REFERENCE`
 and `PLATE_REFERENCE` only when it runs the step they belong to.
 
-::: liulab_mbio.bench
+::: mbio.bench
     options:
       members: false
 
-::: liulab_mbio.bench.amounts
+::: mbio.bench.amounts
 
-::: liulab_mbio.bench.reactions
+::: mbio.bench.reactions
 
-::: liulab_mbio.bench.pcr
+::: mbio.bench.pcr
 
-::: liulab_mbio.bench.goldengate
+::: mbio.bench.goldengate
 
-::: liulab_mbio.bench.gels
+::: mbio.bench.gels
 
-::: liulab_mbio.bench.coverage
+::: mbio.bench.coverage
 
-::: liulab_mbio.bench.readback
+::: mbio.bench.readback
 
-::: liulab_mbio.bench.validation
+::: mbio.bench.validation
 
-::: liulab_mbio.bench.inactivation
+::: mbio.bench.inactivation
 
-::: liulab_mbio.bench.materials
+::: mbio.bench.materials
 
-::: liulab_mbio.bench.plates
+::: mbio.bench.plates
 
-::: liulab_mbio.bench.prices
+::: mbio.bench.prices
 
-::: liulab_mbio.bench.phenotype
+::: mbio.bench.phenotype
 
-::: liulab_mbio.bench.oligos
+::: mbio.bench.oligos
 
-::: liulab_mbio.bench.pools
+::: mbio.bench.pools
 
-::: liulab_mbio.bench.steps
+::: mbio.bench.steps
 
 ## Cloning
 
-A cloning method is a package under `liulab_mbio.cloning`, and `plan` is what every method's
+A cloning method is a package under `mbio.cloning`, and `plan` is what every method's
 plan shares: the files any plan writes, its status, and taking a record already read.
 
-::: liulab_mbio.cloning
+::: mbio.cloning
     options:
       members: false
 
-::: liulab_mbio.cloning.plan
+::: mbio.cloning.plan
 
 ## Golden Gate
 
 `plan_assembly` is the way in, and `Plan.write` puts the product, the primer sheet and the
 protocol in one directory. The inserts are varargs, so `Plan.inserts` is a tuple — plural,
 because one reaction joins as many inserts as the overhangs allow. The reaction and the cycling
-are not here: a library build runs the same tables, so they sit in `liulab_mbio.bench.goldengate`.
+are not here: a library build runs the same tables, so they sit in `mbio.bench.goldengate`.
 
-::: liulab_mbio.cloning.goldengate
+::: mbio.cloning.goldengate
     options:
       members: false
 
-::: liulab_mbio.cloning.goldengate.plan
+::: mbio.cloning.goldengate.plan
 
-::: liulab_mbio.cloning.goldengate.design
+::: mbio.cloning.goldengate.design
 
-::: liulab_mbio.cloning.goldengate.assembly
+::: mbio.cloning.goldengate.assembly
 
-::: liulab_mbio.cloning.goldengate.oligos
+::: mbio.cloning.goldengate.oligos
 
-::: liulab_mbio.cloning.goldengate.steps
+::: mbio.cloning.goldengate.steps
 
 ## Gibson assembly
 
@@ -285,21 +285,21 @@ One name means two things in a plan here, so read it carefully. `Plan.product` i
 reaction, the incubation and the fragment count. The plasmid the assembly makes is
 `Plan.plasmid`. Golden Gate's `Plan.product` is the record, so the two plans differ here.
 
-::: liulab_mbio.cloning.gibson
+::: mbio.cloning.gibson
     options:
       members: false
 
-::: liulab_mbio.cloning.gibson.plan
+::: mbio.cloning.gibson.plan
 
-::: liulab_mbio.cloning.gibson.design
+::: mbio.cloning.gibson.design
 
-::: liulab_mbio.cloning.gibson.assembly
+::: mbio.cloning.gibson.assembly
 
-::: liulab_mbio.cloning.gibson.bench
+::: mbio.cloning.gibson.bench
 
-::: liulab_mbio.cloning.gibson.oligos
+::: mbio.cloning.gibson.oligos
 
-::: liulab_mbio.cloning.gibson.steps
+::: mbio.cloning.gibson.steps
 
 ## Restriction and ligation
 
@@ -315,29 +315,29 @@ designed oligo is for, `bench` holds this method's own numbers with the source o
 back with no verdict rather than a pass. `steps` writes the protocol.
 
 Nothing here is re-exported above the method, and only `plan_restriction` and its result types
-are re-exported from `liulab_mbio.cloning.restriction` itself.
+are re-exported from `mbio.cloning.restriction` itself.
 
-::: liulab_mbio.cloning.restriction
+::: mbio.cloning.restriction
     options:
       members: false
 
-::: liulab_mbio.cloning.restriction.plan
+::: mbio.cloning.restriction.plan
 
-::: liulab_mbio.cloning.restriction.design
+::: mbio.cloning.restriction.design
 
-::: liulab_mbio.cloning.restriction.digest
+::: mbio.cloning.restriction.digest
 
-::: liulab_mbio.cloning.restriction.amplify
+::: mbio.cloning.restriction.amplify
 
-::: liulab_mbio.cloning.restriction.ligation
+::: mbio.cloning.restriction.ligation
 
-::: liulab_mbio.cloning.restriction.oligos
+::: mbio.cloning.restriction.oligos
 
-::: liulab_mbio.cloning.restriction.bench
+::: mbio.cloning.restriction.bench
 
-::: liulab_mbio.cloning.restriction.verdicts
+::: mbio.cloning.restriction.verdicts
 
-::: liulab_mbio.cloning.restriction.steps
+::: mbio.cloning.restriction.steps
 
 ## Gateway
 
@@ -349,7 +349,7 @@ well. Nothing is cut and nothing is ligated here: two att sites recombine, and t
 rewrites the sites themselves.
 
 The modules under it are its steps. `att` owns the eight att sequences, which one pairs with
-which, and the arithmetic a junction follows. It is not `liulab_mbio.sites`, which means enzyme
+which, and the arithmetic a junction follows. It is not `mbio.sites`, which means enzyme
 cut sites. `design` owns the attB primer tail and the PCR that puts it on an insert.
 `recombination` simulates one reaction on two records. `checks` holds the verdicts that span
 both reactions — including the one nothing sourced can judge, which comes back with no verdict
@@ -360,25 +360,25 @@ Two names here repay a second look. A `Junction` is the att site one reaction wr
 bases straddle the boundary between the two records that made the product, so where the moved
 DNA starts and stops is `Recombination.boundaries` rather than the junction's own span.
 
-::: liulab_mbio.cloning.gateway
+::: mbio.cloning.gateway
     options:
       members: false
 
-::: liulab_mbio.cloning.gateway.plan
+::: mbio.cloning.gateway.plan
 
-::: liulab_mbio.cloning.gateway.att
+::: mbio.cloning.gateway.att
 
-::: liulab_mbio.cloning.gateway.design
+::: mbio.cloning.gateway.design
 
-::: liulab_mbio.cloning.gateway.recombination
+::: mbio.cloning.gateway.recombination
 
-::: liulab_mbio.cloning.gateway.checks
+::: mbio.cloning.gateway.checks
 
-::: liulab_mbio.cloning.gateway.oligos
+::: mbio.cloning.gateway.oligos
 
-::: liulab_mbio.cloning.gateway.bench
+::: mbio.cloning.gateway.bench
 
-::: liulab_mbio.cloning.gateway.steps
+::: mbio.cloning.gateway.steps
 
 ## Libraries
 
@@ -397,65 +397,65 @@ the two figures only this method needs. `protocols` is one module a protocol of 
 owning what its own page prints, and `chain` holds the order they run in.
 
 How many colonies a round needs is not here: any pipeline building a library in rounds counts
-them the same way, so that is `liulab_mbio.bench.coverage`.
+them the same way, so that is `mbio.bench.coverage`.
 
 A library is a pipeline over Golden Gate rather than a cloning method of its own — see
-[the library rounds decision](adr/0004-library-rounds.md). It is `liulab_synbio`'s, because it
+[the library rounds decision](adr/0004-library-rounds.md). It is `synbio`'s, because it
 fixes one method's enzymes, stuffers and round order; everything it builds on is
-`liulab_mbio`'s. The method is code and one build's choices are a file — see
+`mbio`'s. The method is code and one build's choices are a file — see
 [the method decision](adr/0010-method-in-code.md).
 
-::: liulab_synbio.igga
+::: synbio.igga
     options:
       members: false
 
-::: liulab_synbio.igga.plan
+::: synbio.igga.plan
 
-::: liulab_synbio.igga.method
+::: synbio.igga.method
 
-::: liulab_synbio.igga.project
+::: synbio.igga.project
 
-::: liulab_synbio.igga.gate
+::: synbio.igga.gate
 
-::: liulab_synbio.igga.standard
+::: synbio.igga.standard
 
-::: liulab_synbio.igga.parts
+::: synbio.igga.parts
 
-::: liulab_synbio.igga.cargo
+::: synbio.igga.cargo
 
-::: liulab_synbio.igga.vector
+::: synbio.igga.vector
 
-::: liulab_synbio.igga.rounds
+::: synbio.igga.rounds
 
-::: liulab_synbio.igga.reads
+::: synbio.igga.reads
 
-::: liulab_synbio.igga.bench
+::: synbio.igga.bench
 
-::: liulab_synbio.igga.stages
+::: synbio.igga.stages
 
-::: liulab_synbio.igga.figures
+::: synbio.igga.figures
 
-::: liulab_synbio.igga.chain
+::: synbio.igga.chain
 
-::: liulab_synbio.igga.protocols
+::: synbio.igga.protocols
     options:
       members: false
 
-::: liulab_synbio.igga.protocols.protocol
+::: synbio.igga.protocols.protocol
 
-::: liulab_synbio.igga.protocols.run
+::: synbio.igga.protocols.run
 
-::: liulab_synbio.igga.protocols.primer_plates
+::: synbio.igga.protocols.primer_plates
 
-::: liulab_synbio.igga.protocols.ordering
+::: synbio.igga.protocols.ordering
 
-::: liulab_synbio.igga.protocols.validation
+::: synbio.igga.protocols.validation
 
-::: liulab_synbio.igga.protocols.creation
+::: synbio.igga.protocols.creation
 
-::: liulab_synbio.igga.protocols.assembly
+::: synbio.igga.protocols.assembly
 
-::: liulab_synbio.igga.protocols.final
+::: synbio.igga.protocols.final
 
 ## DMX
 
@@ -466,7 +466,7 @@ reads back designs the lab already holds, so there is no DNA to design, no recor
 
 DMX is its own protocol for multiplexed validation. A design sits one per well, the well is
 marked, sequenced and called on its own, and identity stays with well position throughout. It
-takes any cargo, and what `liulab_synbio.igga` builds is one kind of cargo among others, so
+takes any cargo, and what `synbio.igga` builds is one kind of cargo among others, so
 `dmx` stands beside `igga` rather than downstream of it: iGGA chains this protocol as any
 caller would, and so does the `dmx plan` command.
 
@@ -477,49 +477,49 @@ document each number came from. `steps` writes them up as protocol steps. `carri
 method's carrier step — one part a well, nothing pooled at the end — which is why it is no
 **round**.
 
-::: liulab_synbio.dmx
+::: synbio.dmx
     options:
       members: false
 
-::: liulab_synbio.dmx.plan
+::: synbio.dmx.plan
 
-::: liulab_synbio.dmx.build
+::: synbio.dmx.build
 
-::: liulab_synbio.dmx.kit
+::: synbio.dmx.kit
 
-::: liulab_synbio.dmx.method
+::: synbio.dmx.method
 
-::: liulab_synbio.dmx.steps
+::: synbio.dmx.steps
 
-::: liulab_synbio.dmx.carrier
+::: synbio.dmx.carrier
 
 ## The command line
 
 The whole module, because typer makes every verb a plain function with a docstring, and
-`liulab_mbio.cli:app` and `liulab_synbio.cli:app` — the two objects `[project.scripts]`
+`mbio.cli:app` and `synbio.cli:app` — the two objects `[project.scripts]`
 registers — are built from them. One cloning method is one sub-app under the `cloning` group,
 and every plan verb is the same spine: plan, write, and report what was written.
 
-::: liulab_mbio.cli
+::: mbio.cli
 
-::: liulab_mbio.cloning.cli
+::: mbio.cloning.cli
 
-::: liulab_mbio.cloning.goldengate.cli
+::: mbio.cloning.goldengate.cli
 
-::: liulab_mbio.cloning.gibson.cli
+::: mbio.cloning.gibson.cli
 
-::: liulab_mbio.cloning.restriction.cli
+::: mbio.cloning.restriction.cli
 
-::: liulab_mbio.cloning.gateway.cli
+::: mbio.cloning.gateway.cli
 
-::: liulab_synbio.cli
+::: synbio.cli
 
-::: liulab_synbio.dmx.cli
+::: synbio.dmx.cli
 
-::: liulab_synbio.igga.cli
+::: synbio.igga.cli
 
-::: liulab_mbio.protocol.cli
+::: mbio.protocol.cli
 
-::: liulab_mbio.plot.cli
+::: mbio.plot.cli
 
-::: liulab_mbio.primers.cli
+::: mbio.primers.cli

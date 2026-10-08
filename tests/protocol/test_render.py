@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.bench import plates
-from liulab_mbio.plot import layers
-from liulab_mbio.protocol import (
+from mbio.bench import plates
+from mbio.plot import layers
+from mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
     Citation,
@@ -33,7 +33,7 @@ from liulab_mbio.protocol import (
     render_html,
     write_html,
 )
-from liulab_mbio.protocol.render import NO_NUMBER, page_key
+from mbio.protocol.render import NO_NUMBER, page_key
 
 from ..html import Node, parse
 

@@ -10,8 +10,8 @@ the route it takes for each of its critical edge cases.
 
 import pytest
 
-from liulab_mbio.cloning.restriction import Plan, plan_restriction
-from liulab_mbio.cloning.restriction.bench import (
+from mbio.cloning.restriction import Plan, plan_restriction
+from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     COHESIVE_SECONDS,
     HIGH_LIGASE_UNITS_UL,
@@ -21,13 +21,13 @@ from liulab_mbio.cloning.restriction.bench import (
     ROOM_CELSIUS,
     phosphatase_units,
 )
-from liulab_mbio.cloning.restriction.design import refusal
-from liulab_mbio.cloning.restriction.digest import resolve
-from liulab_mbio.edits import flipped, rotate
-from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.protocol.render import minted
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
-from liulab_mbio.snapgene import read_dna
+from mbio.cloning.restriction.design import refusal
+from mbio.cloning.restriction.digest import resolve
+from mbio.edits import flipped, rotate
+from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol.render import minted
+from mbio.sequence import SequenceRecord, reverse_complement
+from mbio.snapgene import read_dna
 
 from .records import BAMHI, ECORI, STUFFER, carrying, padded
 

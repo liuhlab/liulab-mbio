@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.enzymes import EndType, Enzyme
-from liulab_mbio.ligase import LigaseProfile
-from liulab_mbio.overhangs import (
+from mbio.enzymes import EndType, Enzyme
+from mbio.ligase import LigaseProfile
+from mbio.overhangs import (
     MIN_DISTANCE,
     MODEST_MISMATCH,
     STRONG_LIGATION,

@@ -19,7 +19,7 @@ same versions the tests ran on.
 Plan a Golden Gate cloning job from a vector file and an insert file:
 
 ```bash
-pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
 ```
 
 Four files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
@@ -29,13 +29,13 @@ as data. `protocol.html` is the page made from that data, one page you can follo
 If you edit `protocol.json`, turn it back into a page:
 
 ```bash
-pixi run liulab_mbio protocol render plan/protocol.json
+pixi run mbio protocol render plan/protocol.json
 ```
 
 The same thing from Python:
 
 ```python
-from liulab_mbio.cloning.goldengate import plan_assembly
+from mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "insert.dna")
 plan.write("plan/")
@@ -44,7 +44,7 @@ plan.write("plan/")
 Sequence files are read into one shared model, whatever their format:
 
 ```python
-from liulab_mbio.io import read_record
+from mbio.io import read_record
 
 record = read_record("vector.dna")
 ```
@@ -52,13 +52,13 @@ record = read_record("vector.dna")
 A primer pair can also be checked against a whole genome, so you learn where else it would
 amplify before you order it — see [check primers on a genome](genome-check.md).
 
-A second package, `liulab_synbio`, comes with the same install. It holds the methods this lab
+A second package, `synbio`, comes with the same install. It holds the methods this lab
 works by. One of them joins several lists of proteins into a library of every combination, a
 list at a time, and tags each protein so that sequencing says which ones a plasmid carries.
 Write down what you want in a file, then plan the whole run:
 
 ```bash
-pixi run liulab_synbio igga plan project.json --out library/
+pixi run synbio igga plan project.json --out library/
 ```
 
 [Put GFP into pUC19](golden-gate.md) walks through one job from end to end.
@@ -88,8 +88,8 @@ pixi run docs-build
 
 | Path | What it holds |
 | --- | --- |
-| `src/liulab_mbio/` | the general package: sequences, enzymes, primers, maps, protocols and the four cloning methods |
-| `src/liulab_synbio/` | the lab's own methods and what they plan, built on the first |
+| `src/mbio/` | the general package: sequences, enzymes, primers, maps, protocols and the four cloning methods |
+| `src/synbio/` | the lab's own methods and what they plan, built on the first |
 | `tests/` | the tests |
 | `docs/` | this site |
 | `scripts/check.sh` | the gate every commit has to pass |

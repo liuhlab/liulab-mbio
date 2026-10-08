@@ -1,9 +1,9 @@
 import pytest
 
-from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand
-from liulab_mbio.sites import has_site
-from liulab_mbio.translate import (
+from mbio.enzymes import Enzyme
+from mbio.sequence import Segment, SequenceRecord, Strand
+from mbio.sites import has_site
+from mbio.translate import (
     SiteNotRemovableError,
     in_frame,
     optimize_coding_sequence,

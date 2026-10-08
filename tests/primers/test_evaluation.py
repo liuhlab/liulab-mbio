@@ -4,14 +4,14 @@
 
 import pytest
 
-from liulab_mbio.primers import (
+from mbio.primers import (
     ONETAQ,
     design_pair,
     evaluate_pair,
     evaluate_primer,
     melting_temperature,
 )
-from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand, reverse_complement
+from mbio.sequence import BindingSite, Primer, SequenceRecord, Strand, reverse_complement
 
 from .sequences import M13_FWD, M13_REV, MCS_FWD, PUC_FWD, PUC_REV
 

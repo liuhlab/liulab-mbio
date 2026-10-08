@@ -1,7 +1,7 @@
 ---
 name: plot-map
 description: >-
-  Draw a sequence record as a map with `liulab_mbio`, as SnapGene Viewer's Map and Sequence tabs
+  Draw a sequence record as a map with `mbio`, as SnapGene Viewer's Map and Sequence tabs
   show it: a circle or a line, the whole record or one region, its features, primers and enzyme
   cut sites labelled so no label overlaps another, and the bases with it on request. Writes one
   offline HTML page to explore, or a PNG or PDF figure. Use whenever someone wants a record drawn
@@ -12,7 +12,7 @@ description: >-
 
 # Plot a map
 
-`liulab_mbio.plot` lays the record out and draws it. Your job is to choose the record, the
+`mbio.plot` lays the record out and draws it. Your job is to choose the record, the
 stretch, what shows and the files to write, then hand those files over. Never draw a map
 yourself or state a position from your own knowledge: the drawing places every feature, primer
 and cut site from the record, and nothing checks one you placed.
@@ -20,10 +20,10 @@ and cut site from the record, and nothing checks one you placed.
 ## Run it
 
 ```bash
-pixi run liulab_mbio plot map plasmid.dna -o map.html
-pixi run liulab_mbio plot map plasmid.gb -o map.png -o map.pdf --sequence-view
-pixi run liulab_mbio plot map plasmid.dna --region insert -o insert.html
-pixi run liulab_mbio plot map plasmid.dna --region 2680..10 --enzyme BsaI --enzyme BsmBI -o sites.pdf
+pixi run mbio plot map plasmid.dna -o map.html
+pixi run mbio plot map plasmid.gb -o map.png -o map.pdf --sequence-view
+pixi run mbio plot map plasmid.dna --region insert -o insert.html
+pixi run mbio plot map plasmid.dna --region 2680..10 --enzyme BsaI --enzyme BsmBI -o sites.pdf
 ```
 
 The suffix picks the format, and `-o` repeats to write several from one layout. It prints each
@@ -59,13 +59,13 @@ takes the span 0-based and half-open (`docs/adr/0001-coordinates.md`). Quote pos
 user as the drawing prints them. To find a feature's exact name:
 
 ```bash
-pixi run python -c "from liulab_mbio.io import read_record; print([f.name for f in read_record('plasmid.dna').features])"
+pixi run python -c "from mbio.io import read_record; print([f.name for f in read_record('plasmid.dna').features])"
 ```
 
 ## From Python
 
 ```python
-from liulab_mbio.plot import draw_map
+from mbio.plot import draw_map
 
 drawing = draw_map("plasmid.dna", region="insert", sequence_view=True)
 drawing.write("map.html")
@@ -77,7 +77,7 @@ drawing.hidden  # each label the map left out, in the order it hid
 rather than reconstructing a call:
 
 ```bash
-pixi run python -c "from liulab_mbio.plot import draw_map; help(draw_map)"
+pixi run python -c "from mbio.plot import draw_map; help(draw_map)"
 ```
 
 ## A crowded map

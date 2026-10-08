@@ -1,7 +1,7 @@
 import pytest
 
-from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import SequenceRecord, Strand
+from mbio.enzymes import Enzyme
+from mbio.sequence import SequenceRecord, Strand
 
 # A BsaI site at index 4, its spacer base, and the four bases it leaves single-stranded.
 FORWARD = "AAAAGGTCTCGTTTTCCCC"

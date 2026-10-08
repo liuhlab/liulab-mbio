@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.protocol import (
+from mbio.protocol import (
     REAGENTS_FILE,
     REFERENCES_FILE,
     Bill,

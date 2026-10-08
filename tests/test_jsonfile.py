@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio import jsonfile
+from mbio import jsonfile
 
 
 @dataclass(frozen=True)

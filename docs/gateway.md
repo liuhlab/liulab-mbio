@@ -32,19 +32,19 @@ Three commands, and the files you hold decide which one you want.
 An entry clone already in hand, so only the LR reaction is needed:
 
 ```bash
-pixi run liulab_mbio cloning gateway plan entry.dna destination.dna --out plan/
+pixi run mbio cloning gateway plan entry.dna destination.dna --out plan/
 ```
 
 A fragment that already carries att ends, so BP runs first:
 
 ```bash
-pixi run liulab_mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/
+pixi run mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/
 ```
 
 A plain gene, which has to be amplified onto att ends first:
 
 ```bash
-pixi run liulab_mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/
+pixi run mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/
 ```
 
 ## What it prints
@@ -82,7 +82,7 @@ To change what the page says without changing the design, edit `protocol.json` a
 into a page:
 
 ```bash
-pixi run liulab_mbio protocol render protocol.json
+pixi run mbio protocol render protocol.json
 ```
 
 ## How to read the protocol
@@ -187,5 +187,5 @@ message names attL sites when it was given something that should be an entry clo
 - Check that the product map holds what you meant to clone.
 - Check that the two screening bands can still be told apart.
 
-`pixi run liulab_mbio cloning gateway plan --help` lists the rest of the options: which
+`pixi run mbio cloning gateway plan --help` lists the rest of the options: which
 polymerase to amplify with, which strain the protocol names, and what to call the product.

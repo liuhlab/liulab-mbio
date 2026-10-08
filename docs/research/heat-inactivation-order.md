@@ -5,7 +5,7 @@ search:
 
 # Does an 80 °C hold inactivate an enzyme listed at 65 °C?
 
-Research note for issue #522. `liulab_mbio.bench.inactivation.heat_inactivations` groups the
+Research note for issue #522. `mbio.bench.inactivation.heat_inactivations` groups the
 enzymes in one tube by the condition each supplier gives, so a tube holding BsaI-HFv2 and PmeI
 is held twice: 80 °C for 20 minutes, then 65 °C for 20 minutes. Forty minutes, two stages, one
 tube.
@@ -33,7 +33,7 @@ document was searched and states nothing; it is not an invitation to supply a fi
 | NEBcutter 3 enzyme table | **no source** — no such field | **no source** — no such field |
 | NEBridge Golden Gate kit manual | not applicable | **no source** — the word *inactivation* is absent |
 
-The two readings agree with each other and with what `src/liulab_mbio/data/enzymes.json`
+The two readings agree with each other and with what `src/mbio/data/enzymes.json`
 already ships, which `docs/research/restriction-enzyme-data.md` section 6 records as checked
 live on 2026-09-18.
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.barcodes import (
+from mbio.barcodes import (
     GC_BAND,
     MAX_HOMOPOLYMER,
     METRIC,
@@ -17,8 +17,8 @@ from liulab_mbio.barcodes import (
     design_barcodes,
     separation,
 )
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import has_site
+from mbio.sequence import SequenceRecord
+from mbio.sites import has_site
 
 # The published scheme: an 11-base barcode joined to the one before it by a four-base cloning
 # scar, so a barcode and its scar are five codons and the block stays in frame.

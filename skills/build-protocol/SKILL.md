@@ -12,19 +12,19 @@ description: >-
 
 # Build a protocol
 
-The model and the renderer are `liulab_mbio.protocol`; they hold no task-specific content. Your
+The model and the renderer are `mbio.protocol`; they hold no task-specific content. Your
 job is what goes in the protocol. Write the data, render it, read the page back.
 
 ## Render
 
 ```bash
-pixi run liulab_mbio protocol render protocol.json -o protocol.html
+pixi run mbio protocol render protocol.json -o protocol.html
 ```
 
 From Python, when another module computes the numbers:
 
 ```python
-from liulab_mbio.protocol import Protocol, read_protocol, render_html, write_html
+from mbio.protocol import Protocol, read_protocol, render_html, write_html
 
 write_html(read_protocol("protocol.json"), "protocol.html")  # from a data file
 write_html(Protocol(title="...", steps=(...)), "protocol.html")  # built in code
@@ -35,14 +35,14 @@ Never hand-edit the HTML: change the data and render again.
 
 ## The data format
 
-JSON keys are the field names of the classes in `liulab_mbio.protocol.model`, lists become
+JSON keys are the field names of the classes in `mbio.protocol.model`, lists become
 tuples, and only fields without a default are required. Two places to look:
 
 ```bash
-pixi run python -c "import liulab_mbio.protocol as p; print(p.__doc__)"   # the outline
+pixi run python -c "import mbio.protocol as p; print(p.__doc__)"   # the outline
 ```
 
-`src/liulab_mbio/protocol/model.py` — each class docstring says what its fields mean.
+`src/mbio/protocol/model.py` — each class docstring says what its fields mean.
 `tests/data/pcr-protocol.json` — a worked example.
 
 Text is escaped, so write plain sentences; markup will show up as characters.
@@ -96,7 +96,7 @@ A run of several protocols writes `project.json` instead, holding every protocol
 page each beside an index. Edit that one file and render the whole folder again:
 
 ```sh
-pixi run liulab_mbio protocol render PLAN_DIR
+pixi run mbio protocol render PLAN_DIR
 ```
 
 Make simple edits straight in the JSON. Add a step with computed numbers in Python, so a builder
@@ -105,10 +105,10 @@ computes them rather than you typing them:
 ```python
 import dataclasses
 
-from liulab_mbio.protocol import read_protocol, write_protocol
+from mbio.protocol import read_protocol, write_protocol
 
 protocol = read_protocol("protocol.json")
-step = ...  # a builder from liulab_mbio.bench.steps, given the package's numbers
+step = ...  # a builder from mbio.bench.steps, given the package's numbers
 steps = (*protocol.steps[:at], step, *protocol.steps[at:])
 write_protocol(dataclasses.replace(protocol, steps=steps), "protocol.json")
 ```

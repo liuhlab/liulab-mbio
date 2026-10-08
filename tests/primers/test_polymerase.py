@@ -6,7 +6,7 @@ import re
 
 import pytest
 
-from liulab_mbio.primers import ONETAQ, PHUSION, Q5, TAQ, get_polymerase, melting_temperature
+from mbio.primers import ONETAQ, PHUSION, Q5, TAQ, get_polymerase, melting_temperature
 
 from .sequences import M13_FWD, M13_REV, PUC_FWD, PUC_REV
 

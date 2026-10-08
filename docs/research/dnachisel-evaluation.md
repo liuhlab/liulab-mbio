@@ -52,7 +52,7 @@ The three ideas worth taking are in §6. None of them needs the dependency.
 
 ## 3. Function by function: what would be replaced
 
-Read against `src/liulab_mbio/` at `818e4e1`.
+Read against `src/mbio/` at `818e4e1`.
 
 ### 3.1 `codons` — replaced in form, not in substance
 
@@ -384,7 +384,7 @@ junction.
 
 **What it does not have is the fidelity model.** Its junction rule is Hamming distance on the
 four bases. Nothing from Potapov 2018 or Pryor 2020 — those live in separate EGF packages
-(`tatapov`, `Overhang`, `kappagate`) that DnaWeaver does not depend on. `src/liulab_mbio/overhangs.py`
+(`tatapov`, `Overhang`, `kappagate`) that DnaWeaver does not depend on. `src/mbio/overhangs.py`
 and `ligase.py` are strictly stronger here.
 
 That is the half #235 says is missing, restated: *"the scoring half exists; the search half does

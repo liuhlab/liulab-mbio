@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.bench.oligos import SHEET_COLUMNS
-from liulab_mbio.cli import app
-from liulab_mbio.primers.cli import GENOME_COLUMNS, GENOME_FILE, SHEET_FILE
+from mbio.bench.oligos import SHEET_COLUMNS
+from mbio.cli import app
+from mbio.primers.cli import GENOME_COLUMNS, GENOME_FILE, SHEET_FILE
 
 #: The genome region the designed pair amplifies, 1-based with both ends included.
 REGION = "chrI:401..700"

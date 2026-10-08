@@ -11,7 +11,7 @@ Both sequence files ship with the repo, under `tests/data/`.
 ## Run it
 
 ```bash
-pixi run liulab_mbio cloning restriction plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/ --enzyme EcoRI --enzyme BamHI
+pixi run mbio cloning restriction plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/ --enzyme EcoRI --enzyme BamHI
 ```
 
 It prints one summary line, then the four paths it wrote:
@@ -81,7 +81,7 @@ To change what the page says without changing the design, edit `protocol.json` a
 into a page:
 
 ```bash
-pixi run liulab_mbio protocol render protocol.json
+pixi run mbio protocol render protocol.json
 ```
 
 ## How to read the protocol
@@ -188,5 +188,5 @@ protein would not change. Whether to do it is your call, not the tool's.
 - Check that the product map holds what you meant to clone.
 - Check that the screening bands can still be told apart.
 
-`pixi run liulab_mbio cloning restriction plan --help` lists the rest of the options: which
+`pixi run mbio cloning restriction plan --help` lists the rest of the options: which
 polymerase to amplify with, which strain the protocol names, and what to call the product.

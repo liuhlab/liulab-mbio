@@ -15,22 +15,22 @@ from itertools import pairwise
 
 import pytest
 
-from liulab_mbio.bench import (
+from mbio.bench import (
     COLONY_ALLOWANCE,
     COLONY_FLANK,
     JUNCTION_OFFSET,
     SANGER_ALLOWANCE,
     SANGER_FLANK,
 )
-from liulab_mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
-from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.cloning.goldengate import plan_assembly
-from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
-from liulab_mbio.edits import rotate
-from liulab_mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
-from liulab_mbio.protocol.render import minted
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.snapgene import read_dna
+from mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
+from mbio.bench.oligos import primer_sheet
+from mbio.cloning.goldengate import plan_assembly
+from mbio.cloning.goldengate.oligos import DesignedOligo
+from mbio.edits import rotate
+from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
+from mbio.protocol.render import minted
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+from mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)

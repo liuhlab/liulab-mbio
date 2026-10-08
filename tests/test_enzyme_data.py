@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.enzymes import Enzyme, enzymes, get_enzyme
+from mbio.enzymes import Enzyme, enzymes, get_enzyme
 
 # The PoC set: the pUC19 multiple cloning site, the Type IIS enzymes used for Golden Gate, and
 # the two blunt eight-base cutters the iterative library scheme needs.

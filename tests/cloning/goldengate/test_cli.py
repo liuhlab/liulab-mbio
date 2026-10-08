@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.sequence import reverse_complement
-from liulab_mbio.snapgene import read_dna
+from mbio.cli import app
+from mbio.sequence import reverse_complement
+from mbio.snapgene import read_dna
 
 from .inserts import LINKER, ORIENTATIONS
 

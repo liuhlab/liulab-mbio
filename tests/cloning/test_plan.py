@@ -2,8 +2,8 @@
 
 import pytest
 
-from liulab_mbio.cloning.plan import insertion_span
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Topology
+from mbio.cloning.plan import insertion_span
+from mbio.sequence import Feature, Segment, SequenceRecord, Topology
 
 
 def vector(*segments: Segment, topology: Topology = "circular") -> SequenceRecord:

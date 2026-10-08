@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.bench import prices
+from mbio.bench import prices
 
 RECORD = """# name: Vendor list, captured 2026-10-06
 # date: 2026-10-06

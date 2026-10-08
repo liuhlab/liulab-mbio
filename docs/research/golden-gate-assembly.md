@@ -596,7 +596,7 @@ BsmBI-v2's Dam/Dcm cells were not readable in the archived chart, and BtgZI has 
 Gate protocol at all.
 
 **For #11 (overhang design).** Ship Pryor 2020 S1–S5 (CC BY 4.0) as package data under
-`src/liulab_mbio/data/`, one file per enzyme, with a `LICENSE`/attribution file naming the
+`src/mbio/data/`, one file per enzyme, with a `LICENSE`/attribution file naming the
 paper, DOI and CC BY 4.0, and a regeneration script that re-downloads from the
 `journals.plos.org` URL pattern in §4.4. Convert the xlsx to a compact tabular form but keep
 the integer counts, since the fidelity formula needs `N_correct / N_total`. Do **not** ship

@@ -16,7 +16,7 @@ pixi install
 Plan a Golden Gate cloning job from a vector file and an insert file:
 
 ```bash
-pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
 ```
 
 Four files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
@@ -27,13 +27,13 @@ reagents, reaction tables, programs, expected bands and troubleshooting.
 If you edit `protocol.json`, turn it back into a page:
 
 ```bash
-pixi run liulab_mbio protocol render plan/protocol.json
+pixi run mbio protocol render plan/protocol.json
 ```
 
 The same thing from Python:
 
 ```python
-from liulab_mbio.cloning.goldengate import plan_assembly
+from mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "insert.dna")
 plan.write("plan/")
@@ -42,14 +42,14 @@ plan.write("plan/")
 Sequence files are read into one shared model, whatever their format:
 
 ```python
-from liulab_mbio.io import read_record
+from mbio.io import read_record
 
 record = read_record("vector.dna")
 ```
 
-One wheel, two import packages. `liulab_mbio` is the general toolkit above; `liulab_synbio`
+One wheel, two import packages. `mbio` is the general toolkit above; `synbio`
 holds the lab's own named methods and has its own command, so a barcoded combinatorial library
-is planned with `pixi run liulab_synbio igga plan`.
+is planned with `pixi run synbio igga plan`.
 
 A primer pair can also be checked against a whole genome, so you learn where else it would
 amplify before you order it:

@@ -2,12 +2,12 @@
 
 ## Glossary
 
-One glossary for both import packages. An entry is `liulab_mbio`'s unless it ends with a
+One glossary for both import packages. An entry is `mbio`'s unless it ends with a
 `_Package_` line naming another.
 
 ### mbio
 
-`liulab_mbio`, the general import package: everything a different method could use unchanged —
+`mbio`, the general import package: everything a different method could use unchanged —
 the sequence model, the file formats, enzymes and sites, codons, barcodes, overhangs, maps,
 primers, the protocol model and the bench. A module is here when a different method could use it
 unchanged. It imports **synbio** nowhere.
@@ -15,7 +15,7 @@ _Avoid_: core, common, the base package
 
 ### synbio
 
-`liulab_synbio`, the import package holding this lab's own named methods, one subpackage each:
+`synbio`, the import package holding this lab's own named methods, one subpackage each:
 **iGGA** and **DMX**. A module is here when it encodes one method's choices. It imports
 **mbio**, and one distribution ships both at one version.
 _Avoid_: the library package, extension, plugin
@@ -193,7 +193,7 @@ what only this lab's bench or its shelf settles — which closes that **hole**; 
 leaves the hole standing. What a build writes is a **project**, which is the chain of protocols
 and a different thing.
 _Avoid_: project (the chain of protocols, and its own entry), configuration, run
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Step
 
@@ -702,7 +702,7 @@ a pass per well, so identity is read per member and stays with well position. It
 place a member is picked or read on its own. Whether a design is read back at all is a **build**
 choice, and the cargo an **iGGA** round consumes is made here.
 _Avoid_: cargo pipeline, the validation pipeline
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### DMX
 
@@ -716,7 +716,7 @@ step, the plate and the depth floor are the route's own. The two
 floors are not a strict and a lenient pair: one is where consensus calling starts, the other
 where a reader stops trusting a well, over different amplification and different read filters.
 _Avoid_: the validation pipeline, read-back pipeline, QC
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Carrier
 
@@ -729,7 +729,7 @@ where things sit in a plate — a carrier holds a part, a seating says which wel
 `plan_igga` plans the step where a **build** names a carrier, as the protocol its chain opens
 with; a build naming none holds its parts already and nothing is seated.
 _Avoid_: holding vector, shuttle vector, seating (where things sit in a plate, and its own entry)
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Validation floor
 
@@ -741,7 +741,7 @@ colony and not the chance worth paying to check. A build that states one also na
 the two marking routes reads its wells: **barcode ligation** or **index PCR**, or both, which
 makes them the two ways of a **choice**.
 _Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### iGGA
 
@@ -753,7 +753,7 @@ linkage reads over the whole pool — which combinations are there and how evenl
 combination goes with which cargo — never a read of one member. A bound taken from a gate whose
 purpose was pickable clones does not transfer to it.
 _Avoid_: iterative assembly, library build, the library pipeline
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Part list
 
@@ -772,7 +772,7 @@ supplies — `docs/adr/0010-method-in-code.md` reversed that, so a second scheme
 method rather than a second file. A **part list** fills one of its positions, and what one
 **build** chooses sits beside it without overriding any of it.
 _Avoid_: config, standard, design, layout
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Entry overhang
 
@@ -781,7 +781,7 @@ it to. Each position has its own: a part's 5' external stuffer begins with its o
 and its internal stuffer begins with the next position's, which is how a part carries its place.
 Every member of a part list shares them, which is what lets one round take a whole list.
 _Avoid_: fusion site, position tag, adapter
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Internal stuffer
 
@@ -790,7 +790,7 @@ it. It holds that enzyme's two sites facing inward and a blunt enzyme's site in 
 excised piece is cut again and cannot ligate back. Its first bases are the next position's entry
 overhang.
 _Avoid_: filler, spacer, placeholder, dummy insert
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### External stuffer
 
@@ -799,7 +799,7 @@ external enzyme cuts inside it to release the part as a digest fragment, and a b
 further out so that what is left of the block cannot ligate back. The 5' one ends with the
 part's own entry overhang.
 _Avoid_: adapter, arm, flank, tail
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Block vector
 
@@ -809,7 +809,7 @@ so it has to be opened on the overhang that position's parts enter on: one backb
 pair, and a build over several positions needs one block vector each. They are the build's own
 destination vector, differing only in the bases of that overhang.
 _Avoid_: block backbone, donor plasmid, part vector
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Barcode
 
@@ -828,7 +828,7 @@ address rather than a recorded draw. The sequences are not
 shipped: they are read from a copy the user holds. A member of this kit is not a **barcode**,
 which names one part of a library.
 _Avoid_: index set, tag kit, barcode plate
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Distance metric
 
@@ -864,7 +864,7 @@ which is what lets the next round open it. The first round opens the destination
 the library before any part list has been appended, so a build over _n_ positions runs _n_ rounds.
 A step that seats one part in a carrier makes no library and is not a round.
 _Avoid_: cycle, iteration, step
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Synthesis order sheet
 
@@ -873,7 +873,7 @@ ordered under, the whole synthesised block 5' to 3', its length, the position it
 barcode. The barcode stands on the same row, so the sheet ordered from is also what decodes the
 sequencing afterwards.
 _Avoid_: gene list, construct table, primer order sheet (the oligo one, and its own entry)
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Library coverage
 
@@ -930,21 +930,21 @@ _Avoid_: part type, slot, component
 
 ### Gate
 
-What judges a finished design: the predicates `liulab_mbio` holds, called with one method's
+What judges a finished design: the predicates `mbio` holds, called with one method's
 parameters, over the molecules of each reaction. It reads reactions rather than bare records, so
 it is blind to how a design was reached and still says which tube a failure belongs to. A design
 an agent composed and one a pipeline wrote are judged the same way.
 _Avoid_: validator, linter, QC
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Judgement
 
 One check the gate made, what it judged, and the findings behind it. A finding is whatever domain
-object `liulab_mbio` already returns where the gate looked -- a cut site, a span -- so a failure
+object `mbio` already returns where the gate looked -- a cut site, a span -- so a failure
 can be drawn on the record it occurred in. A failing judgement names what is wrong and need not
 name a remedy.
 _Avoid_: violation, error, issue
-_Package_: liulab_synbio
+_Package_: synbio
 
 ### Vessel
 
@@ -1013,7 +1013,7 @@ _Avoid_: reference (the protocol's own bibliography entry), provenance
 
 ### Store
 
-Where a fact is kept. There are five: a file the user holds, `src/liulab_mbio/data/`, a
+Where a fact is kept. There are five: a file the user holds, `src/mbio/data/`, a
 catalogue-keyed table on a **material**, the protocol JSON, and a sourced constant in the
 method's own bench module. A new fact goes in the first that fits, asked in that order, so two
 facts of one kind cannot end up apart.

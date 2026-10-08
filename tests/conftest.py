@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.goldengate import Plan
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.cloning.goldengate import Plan
+    from mbio.sequence import SequenceRecord
 
 
 @pytest.fixture(scope="session")
@@ -37,7 +37,7 @@ def gfp_file(data_dir: Path) -> Path:
 @pytest.fixture(scope="session")
 def puc19(puc19_file: Path) -> SequenceRecord:
     """The pUC19 vector, circular, with its multiple cloning site annotated."""
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     return read_record(puc19_file)
 
@@ -45,7 +45,7 @@ def puc19(puc19_file: Path) -> SequenceRecord:
 @pytest.fixture(scope="session")
 def gfp(gfp_file: Path) -> SequenceRecord:
     """The GFP coding sequence, linear."""
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     return read_record(gfp_file)
 
@@ -59,7 +59,7 @@ def plvx(data_dir: Path) -> SequenceRecord:
     on it, and `reference_docs/synthesis_and_assembly/working-vector/` the files it was built
     from.
     """
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     return read_record(data_dir / "pLVX-TetOne-Puro-GFP.gb")
 
@@ -72,7 +72,7 @@ def dmx0001(data_dir: Path) -> SequenceRecord:
     `scripts/build_dmx_vector.py` rebuilds `docs/examples/ap1-library/vector.gb` from it, and
     `docs/research/synthesis-and-assembly.md` holds its provenance.
     """
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     return read_record(data_dir / "dmx0001.gb")
 
@@ -85,7 +85,7 @@ def pcr_blunt_ii_topo(data_dir: Path) -> SequenceRecord:
     rebuild takes its `NeoR/KanR` coding sequence as the marker that replaces the parent's
     `AmpR`, and the same note holds its provenance.
     """
-    from liulab_mbio.io import read_record
+    from mbio.io import read_record
 
     return read_record(data_dir / "pcr-blunt-ii-topo.gb")
 
@@ -97,7 +97,7 @@ def across_origin() -> SequenceRecord:
     Feature ``g`` reads 91..98 then 2..8 across the origin, and ``site`` is one reverse segment
     across it, 97..4, where primer ``p`` binds.
     """
-    from liulab_mbio.sequence import (
+    from mbio.sequence import (
         BindingSite,
         Feature,
         Primer,
@@ -133,6 +133,6 @@ def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
     A plan and its records are frozen, so a test wanting another builds it, with
     `dataclasses.replace` or `plan_assembly`.
     """
-    from liulab_mbio.cloning.goldengate import plan_assembly
+    from mbio.cloning.goldengate import plan_assembly
 
     return plan_assembly(puc19, gfp)

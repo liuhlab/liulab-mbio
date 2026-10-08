@@ -11,7 +11,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from liulab_mbio.protocol.model import Project, Protocol
+    from mbio.protocol.model import Project, Protocol
 
 
 def whole(project: Project) -> Protocol:
@@ -21,7 +21,7 @@ def whole(project: Project) -> Protocol:
     working through the pages meets it. The run's own bill comes with the run's own sources, so
     a row citing the price record still resolves here.
     """
-    from liulab_mbio.protocol.model import Protocol
+    from mbio.protocol.model import Protocol
 
     return Protocol(
         project.title,

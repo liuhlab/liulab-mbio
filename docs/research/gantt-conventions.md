@@ -7,7 +7,7 @@ search:
 
 Research note for issue #404. Everything below was read or measured on **2026-10-07**.
 
-Issue #404 measured one `liulab_mbio` bench protocol: of 42 steps, 17 hold a bounded duration
+Issue #404 measured one `mbio` bench protocol: of 42 steps, 17 hold a bounded duration
 (70.0 h in total) and 24 hold none; four unattended overnight outgrowths are 74% of the held
 hours; and no dependency, parallelism or hands-on time is recorded anywhere. The strings
 "meanwhile", "in parallel", "next day" and "stopping point" appear zero times.
@@ -33,7 +33,7 @@ whose end is unknown, and neither is a convention anyone else follows (section 3
 established answer to an unknown duration is to guess one, flag the guess, and draw the guess.
 
 That is the one thing this repo has already refused to do. A `Hole` in
-`liulab_mbio.protocol.model` is "a number nobody sourced, standing where the number would be",
+`mbio.protocol.model` is "a number nobody sourced, standing where the number would be",
 and "filling one with a guess is the defect a hole exists to prevent". Adopting the
 estimated-duration convention means adopting the defect.
 
@@ -67,7 +67,7 @@ table stops being mostly holes.
 - **Measured locally**: `vl_convert` 1.9.0 in this repo's pixi environment, driven from
   `pixi run python`. Four Gantt-shaped Vega-Lite specs were compiled with `vegalite_to_svg` and
   one inspected through `vegalite_to_scenegraph`. Every count in section 4 is from that run.
-- **Read**: the `Step` and `Hole` dataclasses in `src/liulab_mbio/protocol/model.py`.
+- **Read**: the `Step` and `Hole` dataclasses in `src/mbio/protocol/model.py`.
 - **Read with a link**: tool documentation, library source and journal author instructions, as
   cited. Where a source is silent rather than negative, this note says so.
 - The four non-Vega-Lite renderers were read, not run.
@@ -160,7 +160,7 @@ holds the rect — `(x=75, x2=None, width=None)` — and it has no geometry, so 
 caller must supply a finish. Any open end is a picture we design and a number we invent.
 
 **One dependency note.** `vl-convert-python` is already a dependency, but
-`src/liulab_mbio/plot/convert.py` uses only `svg_to_png` and `svg_to_pdf` — the package treats it
+`src/mbio/plot/convert.py` uses only `svg_to_png` and `svg_to_pdf` — the package treats it
 as an SVG rasteriser. `vegalite_to_svg` would be a new use of a shipped library, not a new
 library.
 
@@ -246,7 +246,7 @@ A **schedule table**, one row per step, in the shape the venues already use:
 | Missing | A `Hole`, where the protocol holds no duration |
 
 A hole here is the same device the package already uses for an unsourced number, so 24 untimed
-steps become 24 visible questions rather than 24 invented bars. `liulab_mbio.protocol.model.Step`
+steps become 24 visible questions rather than 24 invented bars. `mbio.protocol.model.Step`
 holds `timers`, `programs` and `holes` today and no duration, hands-on or predecessor field; the
 table is what those fields would feed.
 

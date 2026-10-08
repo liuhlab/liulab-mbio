@@ -12,23 +12,23 @@ and `test_design.py`.
 
 import pytest
 
-from liulab_mbio.bench.oligos import primer_sheet
-from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify_step
-from liulab_mbio.bench.validation import ColonyCheck, SangerRead
-from liulab_mbio.cloning.gibson import Plan, plan_gibson
-from liulab_mbio.cloning.gibson.bench import IN_FUSION, NEBUILDER_HIFI
-from liulab_mbio.cloning.gibson.design import BRIDGE_HOMOLOGY_BP
-from liulab_mbio.cloning.gibson.steps import (
+from mbio.bench.oligos import primer_sheet
+from mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE, quantify_step
+from mbio.bench.validation import ColonyCheck, SangerRead
+from mbio.cloning.gibson import Plan, plan_gibson
+from mbio.cloning.gibson.bench import IN_FUSION, NEBUILDER_HIFI
+from mbio.cloning.gibson.design import BRIDGE_HOMOLOGY_BP
+from mbio.cloning.gibson.steps import (
     CLEANUP_FRAGMENTS,
     CORRECT_AT_FIVE,
     MOLECULES_PER_ERROR,
     SCREENED_COLONIES,
 )
-from liulab_mbio.edits import flipped
-from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.protocol.render import minted
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.snapgene import read_dna
+from mbio.edits import flipped
+from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol.render import minted
+from mbio.sequence import SequenceRecord
+from mbio.snapgene import read_dna
 
 #: Where the fixture's own MCS feature sits.
 MCS = (395, 452)
@@ -126,7 +126,7 @@ def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_fr
 
 
 def test_the_screening_steps_are_the_shared_builders_and_not_a_second_copy(made):
-    # `liulab_mbio.bench` is the only place these are built; this method is its second consumer.
+    # `mbio.bench` is the only place these are built; this method is its second consumer.
     assert isinstance(made.colony, ColonyCheck)
     assert all(isinstance(read, SangerRead) for read in made.reads)
     steps = {step.title: step for step in made.protocol().steps}

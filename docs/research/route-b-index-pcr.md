@@ -289,7 +289,7 @@ Each of these is a real disagreement in the published material, not a reading di
    issued when **fewer than** 20 reads are assigned, which passes a well at exactly 20. One well in
    many will land exactly on the line; the two documents judge it differently.
    **Settled by #310: the SI governs**, because its checklist decides whether a well's data may be
-   used — the question `liulab_synbio.dmx.depth_check` answers — while the article's number is
+   used — the question `synbio.dmx.depth_check` answers — while the article's number is
    where its software warns. Where that leaves the boundary still contested, the stricter reading
    stands: a well wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
    So a well at exactly 20 is called and warns instead of passing, which is where the SI's own
@@ -343,7 +343,7 @@ Point 3 is the only place the two notes meet, and they meet on the same 200 fmol
   rate of a per-position binomial test whose default is 10%. Whether the checklist's number is that
   same rate is never said. **#310 named this a hole rather than modelling it**: a well reaches this
   package as a read count and a consensus call, and the per-position base counts that rate is a
-  mean over are never among them, so `liulab_synbio.dmx` would have to invent the input before it
+  mean over are never among them, so `synbio.dmx` would have to invent the input before it
   could judge the criterion. A well that passes `depth_check` may still fail LevSeq's second test.
 - **The preprint's SI was not compared with the published SI.** Only the version-of-record SI was
   read. If a number ever has to be redistributed rather than cited, the CC BY-NC preprint is where
@@ -398,7 +398,7 @@ combined between plates by equal mass; and read to 20 reads a well. Every value 
 citation, and the three that are disagreements carry both readings.
 
 It supplies no primer sequences. The one number it supplies to `src/` is the Taq stock of
-section 9, which `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL` carries.
+section 9, which `synbio.dmx.method.TAQ_STOCK_UNITS_UL` carries.
 
 ## Sources
 

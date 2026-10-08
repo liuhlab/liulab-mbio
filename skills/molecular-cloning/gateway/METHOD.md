@@ -2,7 +2,7 @@
 
 Read this once `SKILL.md` has chosen Gateway.
 
-`liulab_mbio` does the design, and one command turns an insert and the vectors into clone maps,
+`mbio` does the design, and one command turns an insert and the vectors into clone maps,
 an oligo order sheet and a bench protocol. Never invent an att sequence, a primer tail, a DNA
 amount, an incubation or a band size: the package works each one out from the sequences and the
 vendor's own documented numbers, and nothing checks a number you made up.
@@ -15,9 +15,9 @@ sites themselves, so there is no enzyme to choose and no overhang to score.
 Three routes, and the records you have decide which:
 
 ```bash
-pixi run liulab_mbio cloning gateway plan entry.dna destination.dna --out plan/
-pixi run liulab_mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/
-pixi run liulab_mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/
+pixi run mbio cloning gateway plan entry.dna destination.dna --out plan/
+pixi run mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/
+pixi run mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/
 ```
 
 An entry clone alone plans LR. A donor vector as well plans BP first, feeding its entry clone
@@ -79,7 +79,7 @@ with the guidance beside it. Read that as unmeasured, never as fine.
 ## From Python
 
 ```python
-from liulab_mbio.cloning.gateway import plan_gateway
+from mbio.cloning.gateway import plan_gateway
 
 plan = plan_gateway("entry.dna", "destination.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo

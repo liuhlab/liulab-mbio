@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.io import read_record, read_region
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
-from liulab_mbio.snapgene import write_dna
+from mbio.io import read_record, read_region
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from mbio.snapgene import write_dna
 
 from .fasta import write_fasta
 

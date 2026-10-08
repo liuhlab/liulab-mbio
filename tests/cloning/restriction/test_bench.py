@@ -4,7 +4,7 @@ Every number is NEB's, through ``docs/research/restriction-ligation.md``. `test_
 where the protocol these reach is checked.
 """
 
-from liulab_mbio.cloning.restriction.bench import (
+from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     COHESIVE_SECONDS,
     LIGASE_KILL_CELSIUS,
@@ -16,7 +16,7 @@ from liulab_mbio.cloning.restriction.bench import (
     ligation_program,
     shared_buffer,
 )
-from liulab_mbio.enzymes import get_enzyme
+from mbio.enzymes import get_enzyme
 
 
 def test_a_double_digest_is_nebs_typical_reaction_in_the_buffer_both_enzymes_share():

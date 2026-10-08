@@ -9,7 +9,7 @@ import pytest
 from .records import carrying
 
 if TYPE_CHECKING:
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.sequence import SequenceRecord
 
 
 @pytest.fixture(scope="session")

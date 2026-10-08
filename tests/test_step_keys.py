@@ -18,9 +18,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.goldengate import Plan
-    from liulab_mbio.protocol import Protocol
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.cloning.goldengate import Plan
+    from mbio.protocol import Protocol
+    from mbio.sequence import SequenceRecord
 
 #: Three part lists of two members each, which is a whole iGGA build the gate can afford.
 PARTS = (
@@ -40,12 +40,12 @@ def igga_protocols(directory: Path) -> tuple[tuple[str, Protocol], ...]:
     not the shorter one a plainer build writes, and each route writes its own validation
     protocol.
     """
-    from liulab_mbio.sequence import SequenceRecord
-    from liulab_mbio.snapgene import write_dna
-    from liulab_synbio.dmx import ROUTES
-    from liulab_synbio.igga.method import IGGA
-    from liulab_synbio.igga.plan import plan_igga
-    from liulab_synbio.igga.project import Build, PrimerPlates
+    from mbio.sequence import SequenceRecord
+    from mbio.snapgene import write_dna
+    from synbio.dmx import ROUTES
+    from synbio.igga.method import IGGA
+    from synbio.igga.plan import plan_igga
+    from synbio.igga.project import Build, PrimerPlates
 
     pad = ("TA" * 80)[:80]
     (directory / "parts.fasta").write_text(
@@ -83,9 +83,9 @@ def shipped(
     plan: Plan, puc19: SequenceRecord, gfp: SequenceRecord, tmp_path_factory: pytest.TempPathFactory
 ) -> tuple[tuple[str, Protocol], ...]:
     """Every protocol every shipped pipeline writes, each named by the pipeline that wrote it."""
-    from liulab_mbio.cloning.gateway import plan_gateway
-    from liulab_mbio.cloning.gibson import plan_gibson
-    from liulab_mbio.cloning.restriction import plan_restriction
+    from mbio.cloning.gateway import plan_gateway
+    from mbio.cloning.gibson import plan_gibson
+    from mbio.cloning.restriction import plan_restriction
 
     from .cloning.gateway.records import (
         attb_insert,

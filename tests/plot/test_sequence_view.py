@@ -11,10 +11,10 @@ from itertools import combinations, pairwise
 
 import pytest
 
-from liulab_mbio.plot import layers, sequence_view, svg
-from liulab_mbio.plot.fonts import BOLD, SANS
-from liulab_mbio.plot.labels import Box, Point
-from liulab_mbio.sequence import (
+from mbio.plot import layers, sequence_view, svg
+from mbio.plot.fonts import BOLD, SANS
+from mbio.plot.labels import Box, Point
+from mbio.sequence import (
     BindingSite,
     Feature,
     Primer,

@@ -2,10 +2,10 @@
 
 import pytest
 
-from liulab_mbio.bench.pcr import cycle_citation
-from liulab_mbio.bench.phenotype import Phenotype
-from liulab_mbio.bench.plates import primer_plates
-from liulab_mbio.bench.steps import (
+from mbio.bench.pcr import cycle_citation
+from mbio.bench.phenotype import Phenotype
+from mbio.bench.plates import primer_plates
+from mbio.bench.steps import (
     WORKING_PLATE_SINGLE_USE,
     dpni_step,
     pcr_step,
@@ -13,9 +13,9 @@ from liulab_mbio.bench.steps import (
     primer_plate_protocol,
     primer_plate_steps,
 )
-from liulab_mbio.primers import Q5
-from liulab_mbio.protocol.model import Citation, Oligo, Protocol
-from liulab_mbio.sequence import Feature, Segment, Strand
+from mbio.primers import Q5
+from mbio.protocol.model import Citation, Oligo, Protocol
+from mbio.sequence import Feature, Segment, Strand
 
 
 def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:

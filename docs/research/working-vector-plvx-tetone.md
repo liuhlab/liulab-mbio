@@ -9,8 +9,8 @@ Issue #230, under the AP-1 demo spec #225. `docs/research/ap1-demo-project.md` s
 four requirements a lentiviral parent has to meet and names none. The lab has now named
 **pLVX-TetOne-Puro-GFP**, Addgene 171123. This note measures the real map against all four.
 
-Every number below was counted on the map itself, with `liulab_mbio.sites` and
-`liulab_mbio.translate`, on **2026-10-06**. Coordinates are the package's: 0-based, half-open.
+Every number below was counted on the map itself, with `mbio.sites` and
+`mbio.translate`, on **2026-10-06**. Coordinates are the package's: 0-based, half-open.
 Addgene's own `features.json` is 1-based inclusive and was converted once, at the boundary.
 
 **Two requirements fail as written and one cannot be settled from this map.** The failures are
@@ -57,7 +57,7 @@ GenBank file behind the login.
 Requirement: no BsaI and no BsmBI outside the designed cassette.
 
 **Eight sites: six BsaI, two BsmBI.** Seven of the eight lie between the LTRs, so they travel
-into the cell. Counted with `liulab_mbio.sites.find_sites`; every one is certain.
+into the cell. Counted with `mbio.sites.find_sites`; every one is certain.
 
 | Enzyme | Site | Strand | Where it sits | Between the LTRs |
 | --- | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ For reference, the same count gives **3 BbsI** (24, 6398, 6682), **2 SapI** (110
 Four of the eight are cheap and four are not.
 
 - **Coding, so a synonymous codon change does it**: BsaI 5730 and BsmBI 5636 in PuroR, BsaI 8720
-  in AmpR. `liulab_mbio.sites.domesticate` is the tool, and PuroR and AmpR both translate
+  in AmpR. `mbio.sites.domesticate` is the tool, and PuroR and AmpR both translate
   cleanly, so it has a frame to work in.
 - **No annotated element**: BsaI 6472, in the 206 bp between the end of the WPRE (6452) and the
   start of the 3' LTR (6658). Nothing on the map claims that stretch. Cheapest site on the list,
@@ -272,7 +272,7 @@ measured that**, against twenty-two deposits, and it holds.
 Issue #485, under map #462. Section 1 counted the eight sites; this section says of each one
 whether a substitution is available and what it costs. Every count was reproduced on
 **2026-10-08** against `tests/data/pLVX-TetOne-Puro-GFP.gb`, the record this repo ships, with
-`liulab_mbio.sites`. The eight positions, strands and elements come back identical to section 1.
+`mbio.sites`. The eight positions, strands and elements come back identical to section 1.
 
 Four sequences were read the same day and the placements they give are this section's new
 measurements: GenBank **K03455.1** (HIV-1 HXB2) and **AF324493.2** (pNL4-3), to say which bases

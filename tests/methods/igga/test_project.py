@@ -1,0 +1,366 @@
+"""What a build chooses, what it composes with the method, and what it refuses when read."""
+
+import json
+import re
+from pathlib import Path
+
+import pytest
+
+from mbio.bench.coverage import REPRESENTATION_MARKS
+from synbio.igga.method import IGGA
+from synbio.igga.project import Barcode, Build, FinalAssembly, read_build
+
+DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
+
+#: A whole build, as a user writes one.
+WRITTEN = {
+    "name": "demo",
+    "positions": ["N", "DBD", "C"],
+    "parts": "parts.fasta",
+    "vector": "vector.dna",
+    "host": "human",
+    "oligo_length": 350,
+    "batch_size": 96,
+    "completeness": 0.99,
+}
+
+
+def write(directory: Path, **changes) -> Path:
+    """Write a `project.json` and the files it names, with any key replaced."""
+    (directory / "parts.fasta").write_text(">N_a\nMKTAEK\n")
+    (directory / "vector.dna").write_text("not read here")
+    (directory / "primers.tsv").write_text("not read here")
+    path = directory / "project.json"
+    path.write_text(json.dumps({**WRITTEN, **changes}), encoding="utf-8")
+    return path
+
+
+def test_the_ap1_build_reads_as_what_the_demo_plans():
+    made = read_build(DEMO)
+
+    assert made.name == "AP-1 DESynR"
+    assert made.positions == ("N", "DBD", "C")
+    assert made.parts.name == "parts.fasta"
+    assert made.vector.is_file()
+    assert (made.host, made.completeness, made.seed) == ("human", 0.99, 0)
+    assert (made.oligo_length, made.batch_size) == (350, 96)
+    assert (made.barcode.length, made.barcode.min_distance) == (11, 3)
+    assert made.scheme is IGGA
+    assert made.carrier == DEMO.parent / "carrier.gb"
+    assert made.retained_length == 75
+
+
+def test_a_path_is_resolved_against_the_project_file(tmp_path):
+    made = read_build(write(tmp_path))
+
+    assert made.parts == tmp_path / "parts.fasta"
+    assert made.vector == tmp_path / "vector.dna"
+
+
+def test_the_method_s_defaults_stand_where_a_build_states_nothing(tmp_path):
+    made = read_build(write(tmp_path))
+
+    assert (made.barcode.length, made.barcode.min_distance) == (11, 3)
+    assert made.reserved_extra == ()
+
+
+def test_reserved_enzymes_compose_rather_than_replace(tmp_path):
+    made = read_build(write(tmp_path, reserved_extra=["EcoRI"]))
+
+    assert made.reserved == ("BsmBI", "EcoRI")
+    assert [one.name for one in made.reserved_enzymes] == ["BsmBI", "EcoRI"]
+    # Whatever a build says, what the method reserves stays reserved.
+    assert IGGA.reserved[0] in made.reserved
+
+
+def test_the_barcode_frame_rule_refuses_12_and_admits_14(tmp_path):
+    with pytest.raises(ValueError, match="barcode-frame"):
+        read_build(write(tmp_path, barcode={"length": 12}))
+
+    assert read_build(write(tmp_path, barcode={"length": 14})).barcode.length == 14
+
+
+def test_a_position_named_twice_is_refused(tmp_path):
+    with pytest.raises(ValueError, match="twice"):
+        read_build(write(tmp_path, positions=["N", "C", "N"]))
+
+
+def test_a_build_with_no_position_is_refused(tmp_path):
+    with pytest.raises(ValueError, match="at least one position"):
+        read_build(write(tmp_path, positions=[]))
+
+
+@pytest.mark.parametrize("given", [0, 1, 1.5])
+def test_a_completeness_that_is_not_a_chance_is_refused(tmp_path, given):
+    with pytest.raises(ValueError, match="completeness"):
+        read_build(write(tmp_path, completeness=given))
+
+
+def test_a_path_naming_no_file_is_refused(tmp_path):
+    said = f"a build's vector is 'nowhere.dna', and {tmp_path / 'nowhere.dna'} is no file"
+    with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
+        read_build(write(tmp_path, vector="nowhere.dna"))
+
+
+def test_an_unshipped_host_is_refused(tmp_path):
+    with pytest.raises(KeyError, match="codon usage table"):
+        read_build(write(tmp_path, host="nowhere"))
+
+
+def test_an_unshipped_reserved_enzyme_is_refused(tmp_path):
+    with pytest.raises(KeyError):
+        read_build(write(tmp_path, reserved_extra=["NotAnEnzyme"]))
+
+
+def test_a_missing_key_is_refused_naming_it(tmp_path):
+    path = tmp_path / "thin.json"
+    path.write_text(json.dumps({"name": "thin"}), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError,
+        match=r"^a build is missing batch_size, completeness, host, oligo_length, parts, "
+        r"positions, vector$",
+    ):
+        read_build(path)
+
+
+def test_an_unknown_key_is_refused_naming_it(tmp_path):
+    with pytest.raises(ValueError, match=r"^a build carries unknown key\(s\) scheme$"):
+        read_build(write(tmp_path, scheme="iGGA"))
+
+
+#: One fault a build file can carry, and the whole refusal a user reads for it. Every subject
+#: is here because `jsonfile` takes each from its caller, so only this file pins iGGA's words.
+REFUSED = [
+    ({"name": 1}, "a build's name is int, not a string"),
+    ({"positions": "N"}, "a build's positions is str, not a list"),
+    ({"positions": ["N", 2]}, "positions[1] is int, not a string"),
+    ({"oligo_length": "350"}, "a build's oligo_length is str, not a whole number"),
+    ({"completeness": "0.99"}, "a build's completeness is str, not a number"),
+    ({"validate_from": 0, "routes": [1]}, "routes[0] is int, not a string"),
+    ({"reserved_extra": [1]}, "reserved_extra[0] is int, not a string"),
+    ({"barcode": 11}, "a build's barcode is int, not an object"),
+    ({"barcode": {"size": 11}}, "a build's barcode carries unknown key(s) size"),
+    ({"barcode": {"length": "11"}}, "a build's barcode length is str, not a whole number"),
+    ({"bands": 1}, "a build's bands are int, not an object"),
+    ({"bands": {"oligos": "1-100"}}, "a build's bands oligos is str, not a list"),
+    ({"bands": {"oligos": [1]}}, "bands oligos[0] is int, not a string"),
+    ({"final_assembly": 1}, "a build's final_assembly is int, not an object"),
+    (
+        {"final_assembly": {"vector_ng": 20, "ratio": 2}},
+        "a build's final_assembly carries unknown key(s) ratio",
+    ),
+    ({"primer_plates": 1}, "a build's primer_plates is int, not an object"),
+    (
+        {"primers": "primers.tsv", "primer_plates": {"nanomoles": 10, "stock_um": 100}},
+        "a build's primer_plates is missing working_ul",
+    ),
+    (
+        {
+            "primers": "primers.tsv",
+            "primer_plates": {"nanomoles": 10, "stock_um": 100, "working_ul": "5"},
+        },
+        "a build's primer_plates working_ul is str, not a number",
+    ),
+]
+
+
+@pytest.mark.parametrize(("changes", "said"), REFUSED)
+def test_a_build_file_is_refused_naming_the_subject_that_owns_the_fault(tmp_path, changes, said):
+    """A key of a build is a build's, as DMX already spells it; a list item is where it sits."""
+    with pytest.raises(ValueError, match=f"^{re.escape(said)}$"):
+        read_build(write(tmp_path, **changes))
+
+
+def test_a_build_made_in_code_is_checked_the_same_way(tmp_path):
+    with pytest.raises(ValueError, match="barcode-frame"):
+        Build(
+            "demo",
+            positions=("N",),
+            parts=tmp_path / "parts.fasta",
+            vector=tmp_path / "vector.dna",
+            host="human",
+            oligo_length=350,
+            batch_size=96,
+            completeness=0.99,
+            barcode=Barcode(12),
+        )
+
+
+def test_a_build_states_no_floor_and_no_route_by_default(tmp_path):
+    """Validation is optional and polyclonal by default, so the package ships no floor."""
+    made = read_build(write(tmp_path))
+
+    assert (made.validate_from, made.routes) == (None, ())
+
+
+def test_a_floor_and_a_route_are_stated_together(tmp_path):
+    """A floor with no route says which designs are read and not how; a route alone reads none."""
+    made = read_build(
+        write(tmp_path, validate_from=0, routes=["barcode ligation"], primers="primers.tsv")
+    )
+    assert (made.validate_from, made.routes) == (0, ("barcode ligation",))
+
+    with pytest.raises(ValueError, match="'barcode ligation', 'index PCR'"):
+        read_build(write(tmp_path, validate_from=3))
+    with pytest.raises(ValueError, match="stated together"):
+        read_build(write(tmp_path, routes=["index PCR"]))
+
+
+def test_a_build_may_name_both_routes_as_the_two_ways_of_one_job(tmp_path):
+    """The demo offers both; naming one twice is refused, since the bench picks between them."""
+    made = read_build(
+        write(
+            tmp_path,
+            validate_from=0,
+            routes=["barcode ligation", "index PCR"],
+            primers="primers.tsv",
+        )
+    )
+    assert made.routes == ("barcode ligation", "index PCR")
+
+    with pytest.raises(ValueError, match="the same route twice"):
+        read_build(
+            write(
+                tmp_path,
+                validate_from=0,
+                routes=["index PCR", "index PCR"],
+                primers="primers.tsv",
+            )
+        )
+
+
+def test_a_build_reading_designs_back_without_a_pool_is_refused(tmp_path):
+    """A build naming no primer set orders each block whole, and DMX has no colony to pick."""
+    with pytest.raises(ValueError, match="no colony to pick"):
+        read_build(write(tmp_path, validate_from=0, routes=["barcode ligation"]))
+
+
+def test_a_build_reads_no_route_but_the_two(tmp_path):
+    with pytest.raises(ValueError, match="route is 'DMX'"):
+        read_build(write(tmp_path, validate_from=0, routes=["DMX"]))
+
+
+def test_a_floor_counts_fragments(tmp_path):
+    with pytest.raises(ValueError, match="omit it to read nothing"):
+        read_build(write(tmp_path, validate_from=-1, routes=["barcode ligation"]))
+
+
+def test_only_the_index_pcr_route_names_an_index_plate(tmp_path):
+    """Naming the prepared plate is what closes the index marks, and only one route takes one."""
+    made = read_build(
+        write(
+            tmp_path,
+            validate_from=0,
+            routes=["index PCR"],
+            primers="primers.tsv",
+            index_plate="index plate IDX-1",
+        )
+    )
+    assert made.index_plate == "index plate IDX-1"
+    with pytest.raises(ValueError, match="only the 'index PCR' route"):
+        read_build(
+            write(
+                tmp_path,
+                validate_from=0,
+                routes=["barcode ligation"],
+                primers="primers.tsv",
+                index_plate="plate 1",
+            )
+        )
+
+
+def test_the_ap1_build_reads_every_design_back_on_both_routes():
+    made = read_build(DEMO)
+
+    assert (made.validate_from, made.routes) == (0, ("barcode ligation", "index PCR"))
+
+
+def test_a_build_names_the_working_vector_it_moves_into_or_none(tmp_path):
+    """The vector the library ends in is an application's choice, so a build may name one."""
+    (tmp_path / "pWORK.fasta").write_text(">pWORK\nACGT\n", encoding="utf-8")
+
+    assert read_build(write(tmp_path)).working_vector is None
+    named = read_build(write(tmp_path, working_vector="pWORK.fasta"))
+    assert named.working_vector == tmp_path / "pWORK.fasta"
+
+
+def test_a_build_names_the_carrier_it_seats_its_parts_in_or_none(tmp_path):
+    """Whether a run seats its parts, and in which plasmid, is this lab's and not the method's."""
+    (tmp_path / "pCARRY.fasta").write_text(">pCARRY\nACGT\n", encoding="utf-8")
+
+    assert read_build(write(tmp_path)).carrier is None
+    named = read_build(write(tmp_path, carrier="pCARRY.fasta"))
+    assert named.carrier == tmp_path / "pCARRY.fasta"
+
+
+def test_a_build_may_tighten_each_representation_mark(tmp_path):
+    """The sourced mark is a floor the method stands on, as a read depth is in `dmx`."""
+    made = read_build(
+        write(
+            tmp_path,
+            representation_seen=0.999,
+            representation_skew=4.0,
+            reads_per_member=200,
+        )
+    )
+
+    assert made.marks.seen == 0.999
+    assert made.marks.skew == 4.0
+    assert made.marks.reads_per_member == 200
+
+
+def test_a_build_stating_no_mark_takes_joungs(tmp_path):
+    assert read_build(write(tmp_path)).marks == REPRESENTATION_MARKS
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "says"),
+    [
+        ("representation_seen", 0.9, "raise"),
+        ("representation_skew", 20.0, "lower the skew ratio"),
+        ("reads_per_member", 50, "raise"),
+    ],
+)
+def test_a_build_may_not_loosen_a_representation_mark(tmp_path, field, value, says):
+    """Each one is Joung's, and a build that loosened it would be judged by nothing."""
+    with pytest.raises(ValueError, match=says):
+        read_build(write(tmp_path, **{field: value}))
+
+
+def test_linkage_fidelity_has_no_default(tmp_path):
+    """Nothing published sets a mark for it, so a build stating none is held to none."""
+    assert read_build(write(tmp_path)).linkage_fidelity is None
+    assert read_build(write(tmp_path, linkage_fidelity=0.9)).linkage_fidelity == 0.9
+
+
+def test_a_build_states_what_its_own_pilot_measured_or_nothing(tmp_path):
+    """The three a pilot settles: none has a default, and none is invented where it is absent."""
+    plain = read_build(write(tmp_path))
+    assert (plain.final_assembly, plain.pcr1_cycles, plain.pcr2_cycles) == (None, None, None)
+
+    measured = read_build(
+        write(
+            tmp_path,
+            final_assembly={"vector_ng": 75.0},
+            pcr1_cycles=16,
+            pcr2_cycles=18,
+        )
+    )
+    assert measured.final_assembly == FinalAssembly(75.0)
+    assert (measured.pcr1_cycles, measured.pcr2_cycles) == (16, 18)
+
+
+@pytest.mark.parametrize(
+    ("changes", "says"),
+    [
+        ({"pcr1_cycles": 0}, "pcr1_cycles is 0"),
+        ({"pcr2_cycles": -1}, "pcr2_cycles is -1"),
+        ({"final_assembly": {"vector_ng": 0.0}}, "final_assembly.vector_ng is 0"),
+        ({"final_assembly": {"vector_ng": -1.0}}, "final_assembly.vector_ng is -1"),
+    ],
+)
+def test_a_build_refuses_a_measurement_that_is_not_physical(tmp_path, changes, says):
+    """A pilot number still has to be a number the bench could have produced."""
+    with pytest.raises(ValueError, match=says):
+        read_build(write(tmp_path, **changes))

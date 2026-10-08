@@ -17,7 +17,7 @@ somewhere else.
 in `docs/research/synthesis-and-assembly.md` §7 records the download. DMX0002 (Addgene 247435,
 5,842 bp) sits beside it and measures the same way; the rebuild uses the first.
 
-Measured with `liulab_mbio.sites`, not read off the map:
+Measured with `mbio.sites`, not read off the map:
 
 | | sites |
 | --- | --- |
@@ -105,7 +105,7 @@ span, so the swap does not touch them and the next step still has all four to cl
 ### 2.4 BbsI leaves the backbone
 
 Four parental sites. Two (4878, 5217 on the parent; 4432, 4771 after the edits above) lie inside
-`lacI`, and `liulab_mbio.sites.domesticate` takes both away with one synonymous codon each,
+`lacI`, and `mbio.sites.domesticate` takes both away with one synonymous codon each,
 `GAC` to `GAT`.
 
 The other two (4130, 4490 on the parent; 3684, 4044 after) lie in **no annotated feature at

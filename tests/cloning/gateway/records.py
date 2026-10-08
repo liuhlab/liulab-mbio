@@ -1,6 +1,6 @@
 """The worked-example records, built here rather than downloaded from a vendor.
 
-Both vectors are put together from the att sequences `liulab_mbio.cloning.gateway.att` ships
+Both vectors are put together from the att sequences `mbio.cloning.gateway.att` ships
 and the two attP arms `docs/research/gateway-cloning.md` §2 prints, by the formulas that same
 section gives: attL is attP's first 75 bases with the junction's region, and attR is the
 region with the first 100 bases of attP's other arm. The insert is the GFP record already
@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.sequence import SequenceRecord
 
 #: attP1 and attP2 in full, 233 bases each, from US 7,670,823 B1 FIG. 9 as the note restates it.
 ATTP = {
@@ -51,7 +51,7 @@ def att_site(name: str) -> str:
     attB is the recombination region alone, attP the 233 bp the patent prints, attL its first
     75 bases with the region, and attR the region with 100 bases of the other arm.
     """
-    from liulab_mbio.cloning.gateway.att import REGIONS
+    from mbio.cloning.gateway.att import REGIONS
 
     kind, number = name[:-1], int(name[-1])
     region, arm = REGIONS[name], ATTP[number]
@@ -72,7 +72,7 @@ _TAIL = "GGGG"
 
 def attb_insert(insert: str, *, name: str = "attB-GFP") -> SequenceRecord:
     """Return a linear attB-flanked fragment: attB1, the insert, then attB2 the other way."""
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
     left, right = att_site("attB1"), reverse_complement(att_site("attB2"))
     bases = _TAIL + left + insert + right + _TAIL
@@ -86,7 +86,7 @@ def attb_insert(insert: str, *, name: str = "attB-GFP") -> SequenceRecord:
 
 def donor_vector(*, name: str = "pDONR-test", marker: str = "KanR") -> SequenceRecord:
     """Return a donor vector: a ccdB cassette between attP1 and attP2, and a marker."""
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
     left, right = att_site("attP1"), reverse_complement(att_site("attP2"))
     bases = _BACKBONE + left + _CASSETTE + right + _BACKBONE
@@ -115,7 +115,7 @@ def entry_clone(
     strand: two bases at the N terminus and one at the C, as `docs/research/gateway-cloning.md`
     §8 counts them.
     """
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
     before, after = added
     left, right = att_site("attL1"), reverse_complement(att_site("attL2"))
@@ -140,7 +140,7 @@ def destination_vector(
     `tag` names an N-terminal fusion tag, annotated as the three codons that run straight into
     attR1, which is the frame a fusion has to keep.
     """
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 
     promoter, site = "TAATACGACTCACTATAGGG", "AAGGAGAT"
     coding = "ATGAGCGGC" if tag else ""

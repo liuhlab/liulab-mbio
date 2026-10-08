@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from liulab_mbio.edits import (
+from mbio.edits import (
     EditReport,
     annealed,
     carried,
@@ -13,7 +13,7 @@ from liulab_mbio.edits import (
     replace,
     rotate,
 )
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 
 def _feature(name: str, *spans: tuple[int, int], strand: Strand = Strand.FORWARD) -> Feature:

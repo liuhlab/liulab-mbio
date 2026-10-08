@@ -8,30 +8,30 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.bench.phenotype import read_phenotype
-from liulab_mbio.cloning.gateway.bench import DEFAULT_HOST, PROPAGATION_HOST, bp_amounts
-from liulab_mbio.cloning.gateway.checks import plan_checks
-from liulab_mbio.cloning.gateway.design import C_TERMINAL_FRAME, N_TERMINAL_FRAME
-from liulab_mbio.cloning.gateway.recombination import PlannedReaction, recombine
-from liulab_mbio.cloning.gateway.steps import protocol
-from liulab_mbio.cloning.plan import status
-from liulab_mbio.edits import rotate
-from liulab_mbio.sequence import Feature, Segment, Strand, reverse_complement
+from mbio.bench.phenotype import read_phenotype
+from mbio.cloning.gateway.bench import DEFAULT_HOST, PROPAGATION_HOST, bp_amounts
+from mbio.cloning.gateway.checks import plan_checks
+from mbio.cloning.gateway.design import C_TERMINAL_FRAME, N_TERMINAL_FRAME
+from mbio.cloning.gateway.recombination import PlannedReaction, recombine
+from mbio.cloning.gateway.steps import protocol
+from mbio.cloning.plan import status
+from mbio.edits import rotate
+from mbio.sequence import Feature, Segment, Strand, reverse_complement
 
 from .records import att_site, destination_vector, donor_vector, entry_clone
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from liulab_mbio.bench.amounts import Amount
-    from liulab_mbio.checks import Check
-    from liulab_mbio.cloning.gateway import Plan
-    from liulab_mbio.cloning.gateway.design import Fusion
-    from liulab_mbio.cloning.gateway.recombination import Recombination
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.bench.amounts import Amount
+    from mbio.checks import Check
+    from mbio.cloning.gateway import Plan
+    from mbio.cloning.gateway.design import Fusion
+    from mbio.cloning.gateway.recombination import Recombination
+    from mbio.sequence import SequenceRecord
 
 #: What a fusion primer adds at each end, read on the top strand: the forward tail's bases as
-#: `liulab_mbio.cloning.gateway.design` writes them, and the reverse tail's turned over, because
+#: `mbio.cloning.gateway.design` writes them, and the reverse tail's turned over, because
 #: that tail is written on the other strand. The frame judged here is the one those primers make.
 FRAME_BASES = (N_TERMINAL_FRAME, reverse_complement(C_TERMINAL_FRAME))
 

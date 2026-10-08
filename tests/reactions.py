@@ -1,6 +1,6 @@
 """A reaction table read the way the bench tests check one."""
 
-from liulab_mbio.protocol import ReactionTable
+from mbio.protocol import ReactionTable
 
 
 def volumes(table: ReactionTable) -> dict[str, float]:

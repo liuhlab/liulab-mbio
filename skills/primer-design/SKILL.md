@@ -1,7 +1,7 @@
 ---
 name: primer-design
 description: >-
-  Design and check PCR primers for a fragment or a molecular cloning step with `liulab_mbio`:
+  Design and check PCR primers for a fragment or a molecular cloning step with `mbio`:
   state how far each primer may move as a placement — anchored by a tail, near a target it must
   read across, or free inside a region — and the package searches every binding site that
   placement allows and ranks them on every check, so a primer warns only where nothing nearby
@@ -15,7 +15,7 @@ description: >-
 
 # Primer design
 
-`liulab_mbio.primers` designs the primer and judges it. Your job is to say where each primer may
+`mbio.primers` designs the primer and judges it. Your job is to say where each primer may
 lie — its **placement** — and to read back what the package found. Never write a primer, a Tm or
 a band size from your own knowledge: nothing checks a number you invented, and the package
 computes each one (`docs/adr/0002-editable-protocols.md`).
@@ -35,8 +35,8 @@ where it must. Bound one end, or both; a placement bounding neither is refused.
 ## Design it
 
 ```python
-from liulab_mbio.primers import Placement, design_pair, design_primer
-from liulab_mbio.sequence import Segment, Strand
+from mbio.primers import Placement, design_pair, design_primer
+from mbio.sequence import Segment, Strand
 
 design_primer(template, position, Strand.FORWARD, placement=..., tail=..., name=...)
 design_pair(template, start, end, forward_placement=..., reverse_placement=...)
@@ -50,7 +50,7 @@ Each case is worked through in the docstrings, on a template you can paste. Read
 than reconstructing a span:
 
 ```bash
-pixi run python -c "from liulab_mbio.primers import design_primer; help(design_primer)"
+pixi run python -c "from mbio.primers import design_primer; help(design_primer)"
 ```
 
 Judge what comes back, or anything the user hands you, with `evaluate_primer(primer, template)`
@@ -81,7 +81,7 @@ A user asking for primers no longer than 25 bases is setting a band, not choosin
 ```python
 import dataclasses
 
-from liulab_mbio.primers import THRESHOLDS, Band
+from mbio.primers import THRESHOLDS, Band
 
 thresholds = dataclasses.replace(THRESHOLDS, length=Band(18, 25, 15, 25))
 ```
@@ -115,7 +115,7 @@ main and in no release yet: say so rather than guessing a cache layout.
 The search runs `ipcr`, which `pixi install` brings in — a pixi dependency, not on PyPI.
 
 ```python
-from liulab_mbio.primers import Locus, design_pair_on_genome, evaluate_pair_on_genome
+from mbio.primers import Locus, design_pair_on_genome, evaluate_pair_on_genome
 
 evaluate_pair_on_genome(forward, reverse, fasta, assembly, intended=Locus(name, start, end))
 design_pair_on_genome(fasta, assembly, Locus(name, start, end), flank=200)

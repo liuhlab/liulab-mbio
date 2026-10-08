@@ -1,6 +1,6 @@
 import pytest
 
-from liulab_mbio.codons import codon_tables, codon_usage
+from mbio.codons import codon_tables, codon_usage
 
 
 def test_the_shipped_table_counts_the_whole_e_coli_k12_genome() -> None:

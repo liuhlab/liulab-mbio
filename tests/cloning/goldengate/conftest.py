@@ -17,8 +17,8 @@ import pytest
 from .inserts import LINKER, ORIENTATIONS, TAG, fasta
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.goldengate import Plan
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.cloning.goldengate import Plan
+    from mbio.sequence import SequenceRecord
 
 
 @pytest.fixture(scope="package")
@@ -54,14 +54,14 @@ def four(
     The middle one goes in the other way round, so one plan takes both the many-part route and
     the reversed-insert route.
     """
-    from liulab_mbio.cloning.goldengate import plan_assembly
+    from mbio.cloning.goldengate import plan_assembly
 
     return plan_assembly(puc19, gfp, linker, tag, orientation=ORIENTATIONS)
 
 
 def _synthesised(name: str, sequence: str, color: str) -> SequenceRecord:
     """An insert written in code, its one feature drawn in a colour of its own."""
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
     return SequenceRecord(
         sequence,

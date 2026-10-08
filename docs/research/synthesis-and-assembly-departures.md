@@ -18,7 +18,7 @@ the paper answers it and our design matches, so it was never a difference. D18 w
 decision in #259 on what bounds a round.
 
 Pointers into the method document name its sections, so they survive an edit to it. Everything
-here was simulated with `liulab_mbio`, not read off the page.
+here was simulated with `mbio`, not read off the page.
 
 ## D1. The two enzyme roles moved up one enzyme
 

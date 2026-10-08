@@ -5,7 +5,7 @@ search:
 
 # The method is code and a project is a file, which reverses ADR 0005
 
-`liulab_synbio.igga.method` holds `IGGA`: one `Scheme` instance built in code, whose
+`synbio.igga.method` holds `IGGA`: one `Scheme` instance built in code, whose
 invariants are checked when the module is imported. What one build chooses — its positions, its
 parts, its vector, its host, its oligo length, its batch size, its completeness, its seed, its
 barcode length and distance, and any further enzyme it needs kept clear — is read from one

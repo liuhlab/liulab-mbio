@@ -3,8 +3,8 @@
 Each record is 100 bases written in code, so every span below is read off it by eye.
 """
 
-from liulab_mbio.bench.phenotype import read_phenotype, selection_marker
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from mbio.bench.phenotype import read_phenotype, selection_marker
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
 
 def plasmid(*features: Feature) -> SequenceRecord:

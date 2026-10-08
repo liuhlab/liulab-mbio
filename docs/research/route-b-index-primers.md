@@ -26,8 +26,8 @@ out of the sequence by software, not by the flow cell.
 ## How to read this note
 
 Every coordinate is the package's own: 0-based, half-open, measured by running
-`liulab_mbio.io.read_record`, `liulab_mbio.sites.find_sites` and
-`liulab_mbio.primers.placement.find_binding_sites` over the Addgene record this repository
+`mbio.io.read_record`, `mbio.sites.find_sites` and
+`mbio.primers.placement.find_binding_sites` over the Addgene record this repository
 already holds. A row marked **derived** is arithmetic on measured or quoted values, and the
 arithmetic is shown. Nothing here is from memory.
 
@@ -131,7 +131,7 @@ Run against DMX0001 with `find_binding_sites`, both match **exactly and once**:
 | `ATCTCGATCCCGCGAAATTAATACGACTCAC` | 31 nt | `[245, 276)` | forward | none | 71.0 °C | 45.2% |
 | `GCCCCAAGGGGTTATGCTAGTTATTGCTC` | 29 nt | `[883, 912)` | reverse | none | 72.8 °C | 51.7% |
 
-Tm is `liulab_mbio.primers.polymerase.melting_temperature` at the package's Taq conditions. Both
+Tm is `mbio.primers.polymerase.melting_temperature` at the package's Taq conditions. Both
 sit above LevSeq's touchdown ceiling of 68 °C, which is what a touchdown from 68 °C down to
 63.5 °C is for — so **#298's cycling applies unchanged**.
 
@@ -336,7 +336,7 @@ Two things do have to be checked, and neither is a platform question:
    problem. Nanopore's dominant error is the indel, which is why LevSeq's 24 nt barcodes come from
    the ONT native barcoding kit and why Route A's DMX barcodes are chosen on Sequence-Levenshtein
    distance — see `docs/research/barcode-design.md`. An 8 nt set at Hamming distance 3 is not the
-   same guarantee as a 24 nt set at Levenshtein distance 3. `liulab_mbio.barcodes` already measures
+   same guarantee as a 24 nt set at Levenshtein distance 3. `mbio.barcodes` already measures
    this, so the question is answerable rather than open: **any candidate set is run through the
    package's own distance check before it is ordered.** Length is the thing to watch — 8 nt is a
    third of what LevSeq uses.
@@ -349,7 +349,7 @@ Two things do have to be checked, and neither is a platform question:
 
 ## 5. How many are needed, and what the stock costs
 
-`src/liulab_synbio/dmx/method.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
+`src/synbio/dmx/method.py` builds Route B as `INDEX_WELLS = 96` forward marks addressing the well
 and 96 reverse marks addressing the plate: 9,216 wells on 192 primers.
 
 | Scheme | Forward | Reverse | Wells | Primers to hold |
@@ -449,7 +449,7 @@ invented them. Shipping any vendor's index table is also the licence verdict §1
 | --- | --- | --- |
 | Each annealing region binds the simulated DMX vector exactly once, right strand, spanning the cargo | `primers.placement.find_binding_sites` | a rebuild that broke a site (§2.7) |
 | No cargo contains either annealing region | the same call, per design | a well that would amplify twice |
-| The mark set is far enough apart under Sequence-Levenshtein, and carries no enzyme site | `liulab_mbio.barcodes` | an Illumina set borrowed without re-checking for indels (§4) |
+| The mark set is far enough apart under Sequence-Levenshtein, and carries no enzyme site | `mbio.barcodes` | an Illumina set borrowed without re-checking for indels (§4) |
 
 So `primers/` is used, but for evaluation, not placement. That keeps Route B's shape — "a marking
 shape, a plate and a depth floor" — and adds the one thing it was missing, which is a pair of

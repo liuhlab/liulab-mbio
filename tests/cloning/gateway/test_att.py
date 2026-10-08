@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from liulab_mbio.cloning.gateway.att import (
+from mbio.cloning.gateway.att import (
     CROSSOVER,
     MISMATCHES,
     OVERLAP_BP,
@@ -19,7 +19,7 @@ from liulab_mbio.cloning.gateway.att import (
     overlap,
     writes,
 )
-from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
+from mbio.sequence import SequenceRecord, Strand, reverse_complement
 
 NUMBERS = (1, 2)
 

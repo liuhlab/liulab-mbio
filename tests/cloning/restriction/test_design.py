@@ -10,11 +10,11 @@ import re
 
 import pytest
 
-from liulab_mbio.cloning.restriction.design import candidates, choose_pair, refusal
-from liulab_mbio.cloning.restriction.digest import resolve
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
-from liulab_mbio.sites import find_sites
+from mbio.cloning.restriction.design import candidates, choose_pair, refusal
+from mbio.cloning.restriction.digest import resolve
+from mbio.enzymes import Enzyme, get_enzyme
+from mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.sites import find_sites
 
 #: Bases spelling no site of any enzyme named below, for padding a record written in code.
 FILLER = "ACGT" * 6

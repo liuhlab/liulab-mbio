@@ -6,7 +6,7 @@ search:
 # Feature colours: where a default colour for each feature type can come from
 
 Research note for issue #79. Everything below was read or measured on **2026-09-16**. It settles
-where `liulab_mbio.plot` takes the colour of a feature whose file gives it none, under a licence
+where `mbio.plot` takes the colour of a feature whose file gives it none, under a licence
 this MIT package can ship, and which feature types that default has to cover. The rule it serves
 is already settled on the map (#76): a feature keeps the colour its file gives it, and only a
 feature without one takes a colour chosen by its type.
@@ -42,7 +42,7 @@ and would serve equally well with the black-or-white rule; that choice is a judg
 
 ## 2. What the files already hold
 
-Read from `src/liulab_mbio/sequence.py`, `snapgene.py` and `io.py`; measured with
+Read from `src/mbio/sequence.py`, `snapgene.py` and `io.py`; measured with
 `read_record` on `docs/examples/pUC19-GFP/product.dna` and on a three-feature GenBank test file.
 
 | Where | What the model keeps |

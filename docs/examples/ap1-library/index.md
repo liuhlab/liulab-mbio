@@ -9,7 +9,7 @@ choices this library made, bar the two the command below adds; copy it to start 
 own. The method it is built by is the package's own and is not in the file.
 
 ```bash
-pixi run liulab_synbio igga plan docs/examples/ap1-library/project.json \
+pixi run synbio igga plan docs/examples/ap1-library/project.json \
   --out docs/examples/ap1-library \
   --working-site EGFP --prices docs/examples/ap1-library/prices.csv
 ```
@@ -104,7 +104,7 @@ them:
 checks, how long it holds the bench and every number it has no source for.
 [The reagents](protocol/reagents.html), which is what to order, and
 [the references](protocol/references.html) are shared by every page. The whole chain is [protocol/project.json](protocol/project.json), which
-`liulab_mbio protocol render` turns back into these pages after an edit.
+`mbio protocol render` turns back into these pages after an edit.
 
 A page names the one before it and the one after it, so each is complete on its own: mail one
 page to whoever runs that sitting, or zip the folder and send the run.
@@ -169,9 +169,9 @@ and the maps would otherwise show none of them.
 
 ```bash
 D=docs/examples/ap1-library
-pixi run liulab_mbio plot map $D/product.dna \
+pixi run mbio plot map $D/product.dna \
   --enzyme BbsI --enzyme BsaI --enzyme PmeI --enzyme SrfI -o $D/product-map.pdf
-pixi run liulab_mbio plot map $D/product.dna \
+pixi run mbio plot map $D/product.dna \
   --region 1368..1442 --sequence-view -o $D/barcode-block.pdf
 ```
 

@@ -2,7 +2,7 @@
 
 Read this once `SKILL.md` has chosen Gibson.
 
-`liulab_mbio` does the design, and one command turns a vector and its inserts into a product
+`mbio` does the design, and one command turns a vector and its inserts into a product
 map, an oligo order sheet and a bench protocol. Never invent an overlap, a primer, a volume, an
 incubation or a band size: the package works each one out from the sequences and the kit's own
 documented numbers, and nothing checks a number you made up.
@@ -10,8 +10,8 @@ documented numbers, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_mbio cloning gibson plan vector.dna insert.dna --out plan/
-pixi run liulab_mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/
+pixi run mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/
 ```
 
 Give the inserts in the order they go round the product. The vector is opened by PCR across the
@@ -82,7 +82,7 @@ because Takara publishes neither. Read "not judged" as unmeasured, never as fine
 ## From Python
 
 ```python
-from liulab_mbio.cloning.gibson import plan_gibson
+from mbio.cloning.gibson import plan_gibson
 
 plan = plan_gibson("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo
@@ -94,7 +94,7 @@ bases at each junction, `plan.checks` every verdict, `plan.colony.clones` the ex
 candidate clone, and `plan.phenotype` how the plate should read.
 
 For an amount of vector the user holds, replace `plan.amounts` with
-`liulab_mbio.cloning.gibson.bench.assembly_amounts` at their own `vector_ng`, using
+`mbio.cloning.gibson.bench.assembly_amounts` at their own `vector_ng`, using
 `dataclasses.replace`, and write the plan again.
 
 ## Before you hand it over

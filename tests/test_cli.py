@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio import __version__
-from liulab_mbio.barcodes import BarcodeRules, design_barcodes
-from liulab_mbio.cli import (
+from mbio import __version__
+from mbio.barcodes import BarcodeRules, design_barcodes
+from mbio.cli import (
     BARCODE_COLUMNS,
     BARCODE_FILE,
     CHANGE_COLUMNS,
@@ -18,7 +18,7 @@ from liulab_mbio.cli import (
     CODING_FILE,
     app,
 )
-from liulab_mbio.io import read_record
+from mbio.io import read_record
 
 
 def _plain(output: str) -> str:

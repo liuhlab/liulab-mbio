@@ -5,7 +5,7 @@ search:
 
 # A coding sequence is what the bases spell, not what the feature type says
 
-`liulab_mbio.sites.domesticate` treats a feature as a coding sequence when the record types it
+`mbio.sites.domesticate` treats a feature as a coding sequence when the record types it
 `CDS`, **or** when the feature's own bases spell a whole protein: `ATG`, whole codons of
 definite bases, one stop as the last codon and none before it. Nothing else changes. A site in
 no such feature is still reported rather than edited.

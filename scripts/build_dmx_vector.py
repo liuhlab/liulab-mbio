@@ -25,13 +25,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from liulab_mbio.edits import insert, replace
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.io import read_record
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import CutSite, domesticate, find_sites
-from liulab_synbio.igga.method import IGGA
-from liulab_synbio.igga.vector import destination_vector, released_cargo, round_cassette
+from mbio.edits import insert, replace
+from mbio.enzymes import Enzyme, get_enzyme
+from mbio.io import read_record
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+from mbio.sites import CutSite, domesticate, find_sites
+from synbio.igga.method import IGGA
+from synbio.igga.vector import destination_vector, released_cargo, round_cassette
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,7 @@ PARENT = REPO / "tests/data/dmx0001.gb"
 MARKER_SOURCE = REPO / "tests/data/pcr-blunt-ii-topo.gb"
 
 #: The marker the rebuild takes out, the coding sequence the source map draws it in place of,
-#: and what the result calls that one. `liulab_mbio.bench.phenotype.SELECTION` reads the last
+#: and what the result calls that one. `mbio.bench.phenotype.SELECTION` reads the last
 #: and names kanamycin for it, which is what a round then plates on.
 MARKER_OUT = "AmpR"
 MARKER_SOURCE_FEATURE = "NeoR/KanR"
@@ -169,7 +169,7 @@ def _excised(record: SequenceRecord) -> Segment:
 def _domesticated(record: SequenceRecord) -> tuple[SequenceRecord, list[Change]]:
     """Take the method's enzymes out of the backbone, leaving the cassette's own sites alone.
 
-    A site inside a coding sequence goes by a synonymous codon, which is `liulab_mbio.sites`'
+    A site inside a coding sequence goes by a synonymous codon, which is `mbio.sites`'
     own rule. A site in no coding sequence is one that rule leaves, because changing it changes
     what the record spells; here it is in backbone nothing annotates, so this script changes one
     base and says which.
@@ -227,7 +227,7 @@ def _annotated(record: SequenceRecord) -> SequenceRecord:
     """Name the record and annotate what the rebuild put in: the cassette and the blunt sites.
 
     The stuffer is drawn over what the internal enzyme excises, which is the convention
-    `liulab_synbio.igga.rounds` draws every later one by: a round then leaves none of it behind.
+    `synbio.igga.rounds` draws every later one by: a round then leaves none of it behind.
     """
     features = [
         *record.features,
@@ -250,7 +250,7 @@ def _annotated(record: SequenceRecord) -> SequenceRecord:
 def write_genbank(record: SequenceRecord, path: Path) -> None:
     """Write `record` as GenBank, carrying its features, their colours and its topology.
 
-    A feature's colour goes out as SnapGene's own one-line ``color:`` note, which `liulab_mbio.io`
+    A feature's colour goes out as SnapGene's own one-line ``color:`` note, which `mbio.io`
     reads back. A segment's name is dropped, and each one is named on stderr as it goes: GenBank
     spells a segment name only in the note whose meaning is in its line breaks, and Biopython's
     writer wraps a qualifier at a fixed width instead of honouring them. A trailing full stop is

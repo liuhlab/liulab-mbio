@@ -1,7 +1,7 @@
 """Heat inactivation, read from the enzyme record."""
 
-from liulab_mbio.bench.inactivation import heat_inactivation, heat_inactivations
-from liulab_mbio.enzymes import get_enzyme
+from mbio.bench.inactivation import heat_inactivation, heat_inactivations
+from mbio.enzymes import get_enzyme
 
 
 def test_heat_inactivation_comes_from_the_enzyme_record() -> None:

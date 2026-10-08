@@ -452,13 +452,13 @@ A procedure, in the order that spends least.
 
 1. **Count the sites for every candidate enzyme, not just the one you meant to use.** Section 1's
    table is for HIV-1; run the same count on the backbone in hand with
-   `liulab_mbio.sites.find_sites`. If one enzyme is already clean, the whole question closes.
+   `mbio.sites.find_sites`. If one enzyme is already clean, the whole question closes.
 2. **Separate the sites you must clear from the sites you merely found.** Only the enzyme an
    assembly reaction actually sees matters. #230 made this point on pLVX: narrowing the
    requirement from "no BsaI and no BsmBI" to "no BsmBI" turned two research questions into two
    synonymous codon changes.
 3. **Sort what is left by this map.** Coding sequence first — a synonymous change is free and
-   `liulab_mbio.sites.domesticate` makes it. Then unannotated spacer. Then the elements this note
+   `mbio.sites.domesticate` makes it. Then unannotated spacer. Then the elements this note
    marks permissive. Leave sequence-critical elements alone; for structure-critical ones, design
    a compensating change and check the fold.
 4. **Count the copies before you count the edits.** A site in R or U5 exists in both LTRs. A site
