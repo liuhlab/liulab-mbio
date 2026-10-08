@@ -476,14 +476,17 @@ departure from the source that is left once they go.
 it is not, and a call either matches the design or it does not. Neither route changes the second,
 so the judgement is shared and only the floor travels with the route.
 
-**The floor travels with the route, because each number was measured on its own.** Qian's
-consensus depth above 150 was measured on a pooled amplicon carrying four UMIs, where 1,536 wells
-demultiplex in-read. LevSeq's twenty wanted and ten tolerable were measured on one amplicon per
-well, with the index on the primer. Picking one of the two for both routes would apply a figure
-to a library prep that never produced it. Each route's wanted depth is a default a build may
-raise; the tolerable one is the route's own and nothing overrides it. The wanted depth is
-exceeded; the tolerable one is reached, so a well at exactly ten reads warns rather than going
-unjudged.
+**The floor travels with the route, because the two numbers are not a strict and a lenient
+setting of one scale.** Both came off SQK-LSK114 on a FLO-MIN114 flow cell, so the platform is
+not what separates them. Qian's consensus depth above 150 is where consensus calling starts: a
+pooled amplicon carrying four UMIs, ten cycles of a high-fidelity polymerase, counted over reads
+already filtered to Q15 and a length window. LevSeq's twenty wanted and ten tolerable are where
+a reader stops trusting a well: one 35-cycle Taq amplicon per well with the index on the primer,
+counted as alignments. Picking one of the two for both routes would read a consensus-calling
+parameter as a quality check, or the reverse. `docs/research/route-choice.md` section 4 works
+the comparison through. Each route's wanted depth is a default a build may raise; the tolerable
+one is the route's own and nothing overrides it. The wanted depth is exceeded; the tolerable one
+is reached, so a well at exactly ten reads warns rather than going unjudged.
 
 **Below the floor a well gets no verdict, not a fail.** That is already `CONTEXT.md`'s rule for a
 `Check` — one no sourced threshold judges carries no verdict and says so — and here it reaches

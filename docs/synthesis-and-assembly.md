@@ -333,9 +333,11 @@ well, not looked up in a file, so a demultiplexer can check an address instead o
 Two questions, in order.
 
 Is the read deep enough to call? If not, the well has **no verdict**. It is read again or picked
-again, and it is not a failure. The floor comes with the route, because each one was measured on
-its own. Barcode ligation wants more than 150 reads. Index PCR wants more than twenty, and a well
-at ten reads or more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
+again, and it is not a failure. The floor comes with the route. The two floors are not a strict
+and a lenient setting of one scale. One is where consensus calling starts; the other is where a
+reader stops trusting a well, over different amplification and different read filters. Barcode
+ligation wants more than 150 reads. Index PCR wants more than twenty, and a well at ten reads or
+more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
 depth to reach. A build may raise the wanted depth. It cannot move the tolerable one, which
 comes with the route.
 
