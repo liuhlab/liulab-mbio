@@ -223,10 +223,14 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .chain-pages { margin: 0; padding-left: 1.4rem; }
 .chain-pages li { margin-bottom: 0.3rem; }
 
+/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
-  .frame { display: block; max-width: 54rem; }
-  .column { position: static; max-height: none; overflow: visible; padding-block: 0 1rem; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; }
+  .frame { display: flex; flex-direction: column; max-width: 54rem; }
+  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column li { margin-bottom: 0; }
+  .column .is-here > a { text-decoration: underline; }
 }
 
 @media print {
