@@ -1025,12 +1025,12 @@ def _oligos(protocol: Protocol) -> str:
 
 
 class _Seat(NamedTuple):
-    """Where one name sits: the plate's place in the protocol, and the well's in reading order."""
+    """Where one name sits. Ordered by the plate's place in the protocol, then reading order."""
 
-    plate: int
+    order: int
     row: int
     column: int
-    name: str
+    plate: str
     well: str
 
 
@@ -1103,10 +1103,10 @@ def _where(seats: Sequence[_Seat]) -> str:
         return ""
     first, last = seats[0], seats[-1]
     if first == last:
-        return f"{first.name} {first.well}"
-    if first.name == last.name:
-        return f"{first.name} {first.well} to {last.well}"
-    return f"{first.name} {first.well} to {last.name} {last.well}"
+        return f"{first.plate} {first.well}"
+    if first.plate == last.plate:
+        return f"{first.plate} {first.well} to {last.well}"
+    return f"{first.plate} {first.well} to {last.plate} {last.well}"
 
 
 def _verdict(status: Status | None) -> str:
