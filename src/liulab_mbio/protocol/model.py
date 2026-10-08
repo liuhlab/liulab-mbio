@@ -11,7 +11,6 @@ import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
-from itertools import groupby
 from pathlib import Path
 from types import MappingProxyType, NoneType, UnionType
 from typing import Any, Literal, TypeAliasType, Union, get_args, get_origin, get_type_hints
@@ -1591,8 +1590,7 @@ def by_place[T](items: Iterable[T], choice: Callable[[T], str]) -> tuple[tuple[T
     """Return `items` one place of the run at a time, `choice` naming the job each is a way of.
 
     The ways of one job take a single place, so they are numbered alike and listed as one entry;
-    everything else stands alone. Nothing stores an ordinal: the audit, the pages and the chain
-    they stand in all walk the list the same way.
+    everything else stands alone. Nothing stores an ordinal.
 
     Examples
     --------
@@ -1608,6 +1606,20 @@ def by_place[T](items: Iterable[T], choice: Callable[[T], str]) -> tuple[tuple[T
         groups[-1].append(item)
         last = here
     return tuple(tuple(group) for group in groups)
+
+
+def left_by_every(protocols: Iterable[Protocol]) -> set[str]:
+    """Return the names every one of `protocols` produces, which is what one place hands on.
+
+    Where they are the ways of one job the bench did only one of them, so a name one way makes
+    and another does not is not certainly there.
+
+    Examples
+    --------
+    >>> left_by_every((Protocol("A", produces=(Item("calls", "per well"),)),))
+    {'calls'}
+    """
+    return set.intersection(*({item.name for item in one.produces} for one in protocols))
 
 
 def _leaving(every: set[str]) -> str:
@@ -1688,7 +1700,8 @@ class Project:
             f"two protocols are keyed {shared!r}: a key names one page's store, so a protocol "
             "copied from another needs its own key or none",
         )
-        jobs = [job for job, _ in groupby(one.choice for one in self.protocols) if job]
+        places = by_place(self.protocols, lambda one: one.choice)
+        jobs = [group[0].choice for group in places if group[0].choice]
         apart = next((job for job in jobs if jobs.count(job) > 1), "")
         _require(
             not apart,
@@ -1723,8 +1736,7 @@ class Project:
                     for item in protocol.consumes
                     if item.name not in handed
                 ]
-            # The bench did one of the ways, so only a name every one of them makes is there.
-            handed |= set.intersection(*({item.name for item in one.produces} for one in group))
+            handed |= left_by_every(group)
         if dangling:
             return Check("handoffs", "fail", "; ".join(dangling))
         counted = (
@@ -1741,9 +1753,8 @@ class Project:
             job = group[0].choice
             if not job:
                 continue
-            made = [{item.name for item in one.produces} for one in group]
-            every = set.intersection(*made)
-            odd = sorted(set.union(*made) - every)
+            every = left_by_every(group)
+            odd = sorted({item.name for one in group for item in one.produces} - every)
             if len(group) < 2:
                 wrong.append(f"Only one way to {job} is written, so there is nothing to choose.")
             elif odd:

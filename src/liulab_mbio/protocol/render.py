@@ -147,8 +147,8 @@ class Folder:
     reagents, references
         The two pages the whole run shares.
     explained
-        The jobs the overview carries guidance on, one `Topic` each. A way's page links that
-        guidance only where there is some, so no page offers a reader a link to nothing.
+        What the overview's own topics are titled. A way's page links the guidance on its job
+        only where a topic titles that job, so no page offers a reader a link to nothing.
     """
 
     pages: tuple[Page, ...]
@@ -156,6 +156,22 @@ class Folder:
     reagents: str = REAGENTS_FILE
     references: str = REFERENCES_FILE
     explained: tuple[str, ...] = ()
+
+    @classmethod
+    def of(cls, project: Project) -> "Folder":
+        """Return the folder `project` is written into: one page per protocol, in its place.
+
+        The ways of one job share a place, so this is the one spot the run's numbering is
+        derived, and every page of the folder is addressed by what it derived.
+        """
+        return cls(
+            tuple(
+                Page.of(at, one)
+                for at, group in enumerate(by_place(project.protocols, lambda one: one.choice), 1)
+                for one in group
+            ),
+            explained=tuple(topic.title for topic in project.background),
+        )
 
     @property
     def places(self) -> tuple[tuple[Page, ...], ...]:
@@ -354,8 +370,8 @@ def render_index(project: Project, folder: Folder) -> str:
 
     The explanation of why the run is shaped as it is stands here and on no protocol page, so a
     step never stops to explain a decision. The badges carry the run's own verdicts beside the
-    chain's, which `Project.audit` computes here and never stores: `docs/adr/0002` lets an agent
-    edit the data and render it again, and a stored verdict goes stale against that edit.
+    chain's, computed here rather than read from the data, so an edited file is judged as edited
+    (`docs/adr/0002-editable-protocols.md`).
     """
     sources = folder.sources_at(folder.index)
     holes = _run_holes(project, folder)
@@ -504,9 +520,19 @@ def _opening(job: str) -> str:
     return job[:1].upper() + job[1:]
 
 
+#: How many ways a page spells out rather than printing as a figure. A count a reader never
+#: counts out reads as a word, and every page of one run says it the same way.
+SPELLED = ("", "", "two", "three", "four", "five")
+
+
+def _spelled(ways: int) -> str:
+    """Return how many ways a page says there are."""
+    return SPELLED[ways] if ways < len(SPELLED) else str(ways)
+
+
 def _one_of(ways: int) -> str:
-    """How a page tells the bench to do one way of a job and not the others."""
-    return "one of these two" if ways == 2 else f"one of these {ways}"
+    """Return how a page tells the bench to do one way of a job and not the others."""
+    return "this one" if ways < 2 else f"one of these {_spelled(ways)}"
 
 
 def _flow(project: Project, folder: Folder) -> str:
@@ -539,8 +565,8 @@ def _flow(project: Project, folder: Folder) -> str:
         # The step count stands in the Protocols list, where `protocol.js` keeps it up to date;
         # printed here too it would be the same number twice, one of them stale.
         boxes.append(f"<li>{hand}{_flow_box(group)}</li>")
-        job = group[0][1].choice
-        source = f"from whichever way to {job} you did" if job else f"from {group[0][0].title}"
+        first, job = group[0][0], group[0][1].choice
+        source = f"from whichever way to {job} you did" if job else f"from {first.title}"
         # Only a name every way makes stands below the box: the bench did one of them.
         every = set.intersection(*({one.name for one in p.produces} for _, p in group))
         for name, item in made.items():
@@ -927,14 +953,7 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
     out.mkdir(parents=True, exist_ok=True)
     data = write_project(minted(project), out / PROJECT_DATA_FILE)
     written = read_project(data)
-    folder = Folder(
-        tuple(
-            Page.of(at, one)
-            for at, group in enumerate(by_place(written.protocols, lambda one: one.choice), 1)
-            for one in group
-        ),
-        explained=tuple(topic.title for topic in written.background),
-    )
+    folder = Folder.of(written)
     protocols = tuple(
         write_html(one, out / page.href, folder=folder)
         for one, page in zip(written.protocols, folder.pages, strict=True)
@@ -1099,9 +1118,10 @@ def _sibling(group: tuple[Page, ...], here: str) -> str:
     if not group[0].choice:
         return ""
     others = _or([_page_link(page) for page in group if page.href != here])
+    alone = "not both" if len(group) == 2 else "not the others"
     return (
-        f", and one of {_count(len(group), 'way')} to {escape(group[0].choice)} — "
-        f"do this one or {others}, not both"
+        f", and one of {_spelled(len(group))} ways to {escape(group[0].choice)} — "
+        f"do this one or {others}, {alone}"
     )
 
 
@@ -1117,7 +1137,7 @@ def _place_before(group: tuple[Page, ...]) -> str:
     """Return what the bench did before this place, whichever way it did it."""
     if group[0].choice:
         job = escape(group[0].choice)
-        return f"Comes after whichever of the {_count(len(group), 'way')} to {job} you did."
+        return f"Comes after whichever of the {_spelled(len(group))} ways to {job} you did."
     return f"Comes after {_page_link(group[0])}."
 
 
@@ -1126,7 +1146,7 @@ def _place_after(group: tuple[Page, ...]) -> str:
     if group[0].choice:
         job = escape(group[0].choice)
         ways = _or([_page_link(page) for page in group])
-        return f"Next is one of the {_count(len(group), 'way')} to {job}: {ways}."
+        return f"Next is one of the {_spelled(len(group))} ways to {job}: {ways}."
     return f"Next is {_page_link(group[0])}."
 
 

@@ -322,12 +322,19 @@ def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(
 def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocols(
     index: Node,
 ) -> None:
-    badges = index.find_all("li", cls="check")[:2]
+    badges = index.find_all("li", cls="check")
     assert [badge.find_all("span", cls="check-name")[0].text for badge in badges] == [
         "coverage",
         "fidelity",
+        "handoffs",
+        "sources",
     ]
-    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges] == ["pass", "warn"]
+    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges] == [
+        "pass",
+        "warn",
+        "fail",
+        "pass",
+    ]
     [banner] = index.find_all("p", cls="hole-count")
     assert banner.text.startswith("3 numbers in this run have no source")
     found = {
@@ -505,13 +512,13 @@ def test_a_way_names_its_sibling_and_the_page_after_a_choice_names_neither(
     read = {path.name: parse(path.read_text(encoding="utf-8")) for path in tmp_path.glob("*.html")}
     [line] = read["02-cargo-validation-barcode-ligation.html"].find_all("p", cls="neighbours")
     assert line.text.startswith(
-        "Protocol 2 of 3, and one of 2 ways to read every well back — do this one or "
+        "Protocol 2 of 3, and one of two ways to read every well back — do this one or "
         "Cargo validation: index PCR, not both."
     )
     [guide] = [a for a in line.find_all("a") if a.text == "How to choose"]
     assert guide.attrs["href"] == "index.html#topic-read-every-well-back"
     [after] = read["03-report.html"].find_all("p", cls="neighbours")
-    assert "Comes after whichever of the 2 ways to read every well back you did." in after.text
+    assert "Comes after whichever of the two ways to read every well back you did." in after.text
 
 
 def test_the_index_lists_a_choice_as_one_entry_with_the_ways_under_it() -> None:
@@ -549,16 +556,10 @@ def test_the_flow_chart_draws_one_box_for_a_choice_and_hands_on_what_every_way_l
     assert said["well calls"] == "from whichever way to read every well back you did"
 
 
-def test_the_index_draws_the_chains_own_verdicts_beside_the_runs(index: Node) -> None:
-    """A badge the audit computes reaches no reader unless the index draws it."""
-    badges = index.find_all("li", cls="check")
-    assert [badge.find_all("span", cls="check-name")[0].text for badge in badges] == [
-        "coverage",
-        "fidelity",
-        "handoffs",
-        "sources",
-    ]
-    assert [badge.find_all("span", cls="verdict")[0].text for badge in badges][2] == "fail"
+def test_the_index_says_which_name_the_chain_hands_nobody(index: Node) -> None:
+    """A verdict the audit computes reaches no reader unless the index draws its detail too."""
+    [said] = [one for one in index.find_all("p", cls="check-detail") if "handoffs" in one.text]
+    assert "consumes 'barcode map', which nothing hands it" in said.text
 
 
 def test_the_reagents_page_merges_a_material_two_protocols_buy_into_one_row(
