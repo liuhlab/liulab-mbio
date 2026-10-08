@@ -10,7 +10,6 @@ What the method leaves unpublished -- the ligase's units, the buffer's strength 
 saying so rather than a number invented here.
 """
 
-import math
 from collections.abc import Mapping, Sequence
 
 from liulab_mbio.barcodes import deletion_ambiguity
@@ -64,11 +63,11 @@ from liulab_synbio.igga.protocols.protocol import Protocol, figured, labelled
 from liulab_synbio.igga.protocols.run import (
     CUVETTES,
     PREP_KIT,
-    ROUND_EQUIPMENT,
     SELECTIVE,
     Run,
     as_platform,
     marks_sentence,
+    round_equipment,
     with_pair,
 )
 from liulab_synbio.igga.reads import ReadPair
@@ -135,7 +134,7 @@ class Assembly(Protocol):
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware a round needs, which no reagent table covers."""
-        return ROUND_EQUIPMENT
+        return round_equipment(run)
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where a round's numbers come from, and where the scheme itself came from."""
@@ -218,7 +217,7 @@ def _pool_step(run: Run) -> Step:
     concentration floor and each member's share are fixed downstream rather than chosen.
     """
     bench, parts, pool = run.bench, run.parts, run.pool
-    floor = _stated_floor()
+    floor = pool_floor_ng_ul()
     left = DIGEST_VOLUME_UL - 2 * ENZYME_UL
     members = {position: _at(parts, position) for position in {row.position for row in bench}}
     first = (
@@ -252,6 +251,10 @@ def _pool_step(run: Run) -> Step:
             "members that no later round can put back.",
             "Equal picomoles are unequal masses: a short member weighs less than a long one for "
             "the same number of molecules, and weighing them equally would not pool them equally.",
+            f"Every round's digest table is laid out at {floor:g} ng/µL, which is the floor and "
+            "not a target: at it the pool takes almost the whole tube and the buffer and water "
+            "line all but disappears. Concentrate well above it and pipette less pool; the "
+            "buffer and water line makes the volume up either way.",
             *_pool_masses(bench, members),
         ),
         troubleshooting=(
@@ -272,11 +275,6 @@ def _pool_step(run: Run) -> Step:
 def _at(parts: Sequence[Part], position: str) -> tuple[Part, ...]:
     """Return the parts filling one position, in the order they were designed."""
     return tuple(one for one in parts if one.position == position)
-
-
-def _stated_floor() -> float:
-    """Return the pool's floor as a page states it, rounded up so it is never below the real one."""
-    return math.ceil(pool_floor_ng_ul() * 10) / 10
 
 
 def _pool_masses(
@@ -698,17 +696,20 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
     """Count which combinations the library holds and how evenly, over the barcode block alone.
 
     This is the read a bottleneck repeats, so it spans the block and nothing else: the forward
-    anchor is the internal stuffer every member keeps, which is a method constant.
+    anchor is the stuffer the last round leaves behind, which no later digest excises. It is
+    the span `liulab_synbio.igga.reads` placed the primer in, so the two cannot disagree.
     """
     scheme, rounds = run.scheme, run.rounds
     constructs, barcodes, marks = run.constructs, run.barcodes, run.marks
     block = scheme.barcode_block_length(run.barcode_length, len(run.positions))
+    retained = rounds[-1].stuffer
+    kept = retained.end - retained.start
     return Step(
         "Read representation",
         key="read-representation",
         instructions=(
             f"Amplify across the {block} bp barcode block alone, forward from the "
-            f"{len(scheme.internal_stuffer)} bp internal stuffer every member keeps and back "
+            f"{kept} bp internal stuffer every member keeps and back "
             f"from the vector past the final {rounds[0].scar_overhang}"
             f"{with_pair(pair, run.read_sheet)}.",
             f"Sequence the amplicon{as_platform(pair)}, decode each read against {barcodes}, "

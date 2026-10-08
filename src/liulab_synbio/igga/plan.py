@@ -52,6 +52,7 @@ from liulab_synbio.igga.bench import (
     RoundBench,
     digest_amount,
     ligation_amounts,
+    pool_floor_ng_ul,
     transformation_amount,
 )
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
@@ -922,6 +923,11 @@ def _bench(
     A round cuts a whole part list in one tube, so the donor is weighed at the pool's mean block
     length; every member carries the same stuffers, so the released fragment is that mean less
     what the external stuffers keep. The destination is one molecule and is weighed exactly.
+
+    The donor arrives at `pool_floor_ng_ul`, which is the concentration the protocol tells the
+    bench to reach, so the digest table pipettes the volume that floor implies rather than the
+    stand-in volume an unmeasured DNA carries. The destination is a plasmid prep and nothing
+    states its concentration, so it keeps the stand-in.
     """
     made: list[RoundBench] = []
     for one, row in zip(rounds, coverage, strict=True):
@@ -935,7 +941,7 @@ def _bench(
                 one.number,
                 one.position,
                 destination_digest=digest_amount((destination, len(one.destination))),
-                donor_digest=digest_amount((donor, block)),
+                donor_digest=digest_amount((donor, block), concentration_ng_ul=pool_floor_ng_ul()),
                 ligation=_ligation(
                     destination, len(one.destination) - one.excised.length, donor, released
                 ),

@@ -50,7 +50,7 @@ from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
 from liulab_synbio.igga.project import FinalAssembly, PrimerPlates
-from liulab_synbio.igga.reads import ReadPair, ReadPairs
+from liulab_synbio.igga.reads import Platform, ReadPair, ReadPairs
 from liulab_synbio.igga.rounds import Round
 from liulab_synbio.igga.standard import PartList, Standard
 from liulab_synbio.igga.vector import Destination, Working
@@ -66,14 +66,14 @@ FINAL_SELECTIVE = "Selective plates for the final transfer"
 PREP_KIT = "Plasmid prep kit"
 CUVETTES = "Electroporation cuvettes"
 
-#: The hardware a round needs, which no reagent table covers.
+#: The hardware a round needs whatever it reads back, which no reagent table covers. What it
+#: sequences on is not here: that follows from the reads themselves, through `round_equipment`.
 ROUND_EQUIPMENT: tuple[str, ...] = (
     f"Incubator or heat block at {DIGEST_CELSIUS:g} °C",
     "Magnetic rack for the bead clean-ups",
     "Electroporator and cuvettes",
     f"Shaking incubator at {GROWTH_CELSIUS:g} °C",
     "Spectrophotometer or fluorometer",
-    "Long-read sequencer, for the two reads of the finished library",
 )
 
 #: What one protocol hands the next, by name. The name is the contract, so the protocol that
@@ -469,6 +469,30 @@ class Run:
 def enzyme_amount(enzyme: Enzyme, note: str) -> Material:
     """Return one enzyme as a material, carrying what every digest takes of it."""
     return enzyme_material(enzyme, amount=f"{ENZYME_UL:g} µL per digest", note=note)
+
+
+def round_equipment(run: Run) -> tuple[str, ...]:
+    """Return the hardware the rounds need, the sequencing following from the reads designed.
+
+    A read says what it has to carry in one molecule and `liulab_synbio.igga.reads` reads that
+    as its platform, so the instruments follow from the reads rather than being stated beside
+    them. A build designing no read lists no sequencer at all.
+    """
+    return (*ROUND_EQUIPMENT, *_sequencers(run.reads))
+
+
+def _sequencers(reads: ReadPairs | None) -> tuple[str, ...]:
+    """Return one instrument per platform the designed reads ask for, naming its own reads."""
+    if reads is None:
+        return ()
+    taken: dict[Platform, list[str]] = {}
+    for one in reads.designed:
+        taken.setdefault(one.platform, []).append(one.name)
+    return tuple(
+        f"{platform.replace(' ', '-').capitalize()} sequencer, for the {listed(names)} "
+        f"{'read' if len(names) == 1 else 'reads'} of the finished library"
+        for platform, names in taken.items()
+    )
 
 
 def vector_names(destinations: Sequence[tuple[str, str]]) -> list[str]:

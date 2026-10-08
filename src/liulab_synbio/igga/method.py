@@ -327,22 +327,31 @@ INTERFACE_OVERHANGS: Mapping[str, tuple[str, str]] = MappingProxyType(
 )
 
 #: The method. Its invariants are checked here, once, when this module is imported.
+#: The internal stuffer iGGA names, in the two pieces a round tells apart: the prefix ending in
+#: the entry overhang, which stays on the library, and the core the internal enzyme excises.
+#: Both lengths are read off these, so the whole stuffer and the piece that comes out cannot be
+#: stated at odds with each other.
+_STUFFER_PREFIX = "AGGA"
+_STUFFER_CORE = "AAGTCTTCAGCCCGGGCAGAAGACAATTCC"
+
 IGGA = Scheme(
     "iGGA",
     internal_enzyme="BbsI",
     external_enzyme="BsaI",
     blunt_enzymes=("SrfI", "PmeI"),
-    internal_stuffer_prefix="AGGA",
-    internal_stuffer_core="AAGTCTTCAGCCCGGGCAGAAGACAATTCC",
+    internal_stuffer_prefix=_STUFFER_PREFIX,
+    internal_stuffer_core=_STUFFER_CORE,
     external_stuffer_5="GTTTAAACACATTCAGCGGGTCTCAAGGA",
     external_stuffer_3="TTCCTGAGACCCGCTGAATGTGTTTAAAC",
     cloning_scar="TTCC",
     reserved=("BsmBI",),
     source=(
-        "docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base "
-        "internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at "
-        "the offsets their own cut offsets ask for, so every overhang is read off the DNA rather "
-        "than stated."
+        "docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The "
+        f"{len(_STUFFER_PREFIX) + len(_STUFFER_CORE)}-base internal stuffer is the method page's "
+        f"own, and a round excises the {len(_STUFFER_CORE)}-base core of it: the two figures are "
+        "the same stuffer, counted whole and counted after the entry overhang it opens on. The "
+        "external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so "
+        "every overhang is read off the DNA rather than stated."
     ),
 )
 

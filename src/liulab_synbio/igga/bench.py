@@ -14,6 +14,7 @@ units nor its volume, so the last line of a ligation is the supplier's own, and 
 round uses belong to the scheme.
 """
 
+import math
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
 
@@ -158,6 +159,12 @@ def pool_floor_ng_ul(
     No source states this floor, which is why the vendors' 10 ng/µL resuspension floor does not
     settle it.
 
+    The answer is rounded up to the tenth a page can state. That rounding is what makes it a
+    concentration the digest accepts rather than one that exactly fills it: at the unrounded
+    limit the DNA leaves the rest of the tube nothing, and `liulab_mbio.bench.reactions.fits`
+    refuses it. The pool's digest is laid out at this same number, so what a page tells the
+    bench to concentrate to and what its table pipettes cannot disagree.
+
     Raises
     ------
     ValueError
@@ -165,10 +172,11 @@ def pool_floor_ng_ul(
 
     Examples
     --------
-    >>> round(pool_floor_ng_ul(), 2)
-    22.22
+    >>> pool_floor_ng_ul()
+    22.3
     """
-    return floor_ng_ul(nanograms, volume_ul=volume_ul, taken_ul=taken_ul)
+    limit = floor_ng_ul(nanograms, volume_ul=volume_ul, taken_ul=taken_ul)
+    return math.ceil(limit * 10) / 10
 
 
 def ligation_amounts(

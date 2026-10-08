@@ -59,10 +59,10 @@ from liulab_synbio.igga.protocols.run import (
     CUVETTES,
     FINAL_SELECTIVE,
     PREP_KIT,
-    ROUND_EQUIPMENT,
     WORKING_ITEM,
     Run,
     marks_sentence,
+    round_equipment,
     with_pair,
 )
 from liulab_synbio.igga.reads import ReadPair
@@ -139,7 +139,7 @@ class FinalLigation(Protocol):
 
     def equipment(self, run: Run) -> tuple[str, ...]:
         """Return the hardware this protocol needs, which is a round's."""
-        return ROUND_EQUIPMENT
+        return round_equipment(run)
 
     def references(self, run: Run) -> tuple[Reference, ...]:
         """Where the numbers come from, and where the scheme itself came from."""

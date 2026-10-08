@@ -11,6 +11,7 @@ from typing import cast
 
 import pytest
 
+from liulab_mbio.bench.amounts import DNA_VOLUME_UL
 from liulab_mbio.bench.prices import read_prices
 from liulab_mbio.checks import worst
 from liulab_mbio.cloning.plan import PRODUCT_FILE
@@ -183,7 +184,26 @@ def test_each_protocol_of_the_chain_answers_for_its_own_page(plan):
     assert ordering.summary == "Order every block this library is built from."
     # Only the protocols running a round's chemistry buy the reagents the rounds share.
     assert not ordering.equipment
-    assert assembly.equipment == ROUND_EQUIPMENT
+    assert assembly.equipment[: len(ROUND_EQUIPMENT)] == ROUND_EQUIPMENT
+
+
+def test_the_equipment_names_a_sequencer_for_every_platform_the_reads_ask_for(plan):
+    """The instruments follow from the reads designed, never from a sentence beside them."""
+    run = plan.chain()
+    assembly = run.protocols[1]
+    reads = plan.reads
+
+    assert reads is not None
+    platforms = {one.platform for one in reads.designed}
+    listed = [one for one in assembly.equipment if "sequencer" in one]
+
+    assert len(listed) == len(platforms)
+    for one in reads.designed:
+        wanted = f"{one.platform.replace(' ', '-').capitalize()} sequencer"
+        said = next(item for item in listed if item.startswith(wanted))
+        assert one.name in said
+    # Nothing counts the reads wrongly, and no platform is named that no read asked for.
+    assert not [one for one in listed if one.startswith("Long-read") and "representation" in one]
 
 
 def test_one_call_plans_every_round_and_every_part(plan):
@@ -704,7 +724,46 @@ def test_the_pooling_floor_is_computed_from_the_digest_and_never_typed(protocol)
     """The floor is what the digest leaves room for, so the two can never disagree."""
     step = next(one for one in protocol.steps if one.title == "Pool each part list")
 
-    floor = DIGEST_NG / (DIGEST_VOLUME_UL - 2 * ENZYME_UL)
+    limit = DIGEST_NG / (DIGEST_VOLUME_UL - 2 * ENZYME_UL)
+    floor = pool_floor_ng_ul()
 
-    assert round(pool_floor_ng_ul(), 10) == round(floor, 10)
-    assert f"at least {math.ceil(floor * 10) / 10:g} ng/µL" in " ".join(step.instructions)
+    # Rounded up to the tenth a page states, which is also what `fits` accepts: at the bare
+    # limit the DNA fills the tube exactly and nothing is left to make the volume up with.
+    assert floor == math.ceil(limit * 10) / 10
+    assert floor > limit
+    assert f"at least {floor:g} ng/µL" in " ".join(step.instructions)
+
+
+def test_the_digest_table_pipettes_the_volume_the_stated_floor_implies(plan, protocol):
+    """The floor a page states and the volume its digest table asks for are one number."""
+    floor = pool_floor_ng_ul()
+    step = next(one for one in protocol.steps if one.key == "round-1-release")
+    (table,) = step.tables
+    pool = next(one for one in table.components if not one.master_mix)
+
+    # The stand-in volume an unmeasured DNA carries would say the pool is at 1,000 ng/µL.
+    assert pool.volume_ul != DNA_VOLUME_UL
+    assert pool.volume_ul == round(plan.bench[0].donor_digest.nanograms / floor, 2)
+    assert sum(one.volume_ul for one in table.components) == DIGEST_VOLUME_UL
+
+
+def test_the_two_stuffer_figures_are_one_stuffer_counted_two_ways(plan, protocol, scheme):
+    """30 and 34 are the whole stuffer and its excised core, and no page leaves them at odds."""
+    kept = plan.rounds[-1].stuffer
+    whole_stuffer = len(scheme.internal_stuffer)
+    core = len(scheme.internal_stuffer_core)
+
+    opened = next(one for one in protocol.steps if one.key == "round-1-open")
+    read = next(one for one in protocol.steps if one.key == "read-representation")
+    said = " ".join(read.instructions)
+
+    # Each round excises the core; what the last round leaves is the span the read anchors in.
+    assert plan.rounds[0].excised.length == core
+    assert f"The {core} bp internal stuffer comes out" in " ".join(opened.expected)
+    assert kept.end - kept.start == core
+    assert f"{core} bp internal stuffer every member keeps" in said
+    assert f"{whole_stuffer} bp internal stuffer" not in said
+
+    # The method's own provenance is where the two numbers meet, so it carries both.
+    assert f"{whole_stuffer}-base internal stuffer" in scheme.source
+    assert f"{core}-base core" in scheme.source
