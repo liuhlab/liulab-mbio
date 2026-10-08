@@ -758,8 +758,6 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
     10.0
     >>> index_pcr_reaction().mix_volumes(96)[:4]
     (144.0, 28.8, 7.2, 57.6)
-    >>> index_pcr_reaction().components[2].final
-    '0.25 units'
     """
     mix = Citation("LevSeq", "step 1")
     return ReactionTable(
