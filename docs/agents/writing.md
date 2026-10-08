@@ -5,7 +5,7 @@ search:
 
 # Writing rules
 
-Three rules. Two are checked by `vale` in `pixi run check`; the third is on you.
+Four rules. Two are checked by `vale` in `pixi run check`; the other two are on you.
 
 ## 1. Be concise
 
@@ -58,9 +58,31 @@ reply, so it is on you: when a human asks, answer in plain language and explain 
 you would otherwise reach for. An unexplained term in conversation is the same failure as
 one in the README.
 
+## 4. Protocol text is written for the bench
+
+Every field a protocol renders is read by someone standing at the bench with gloves on, who
+cannot ask you anything. Nothing checks these, so the rule is on you.
+
+| Field | What it holds |
+| --- | --- |
+| `instructions` | one imperative sentence an arm can execute: the action, the thing, the amount, the vessel, the time or temperature. No clause explaining the choice |
+| `cautions` | what would hurt the person or the material, written as the action to take |
+| `expected` | what the reader sees if it worked, written as an observation |
+| `notes` | the only place a *why* may stand, and only with a citation. An uncited note is deleted |
+
+Four things are forbidden in every rendered field: a name the reader cannot look up, such as a
+route named by a letter; a code identifier or a module name; a tracker or code reference; and
+this package's own vocabulary where a bench word exists.
+
+The explanation you delete has a home already. A decision true for this run goes in the
+protocol's own `overview` and `highlights`; a fact about the method goes to `docs/research/` or
+the method's `METHOD.md`; a trade-off goes to an ADR.
+
 ## Which is which
 
 Agent-facing means written for a machine that has to act: capped, exempt from the jargon
 and readability rules, kept out of the site navigation. Human-facing means written for a
 person reading the published site: checked for jargon and readability, uncapped. A file is
 one or the other — if you are adding a document and cannot tell, it is human-facing.
+Rendered protocol text is neither. It is product, `vale` reads none of it, and rule 4 governs
+it.

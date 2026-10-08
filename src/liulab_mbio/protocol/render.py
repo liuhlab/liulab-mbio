@@ -351,14 +351,16 @@ def _hole_count(holes: tuple[Hole, ...]) -> str:
 
 
 def _hole(hole: Hole) -> str:
-    """One hole, which reads as a hole and never as a value."""
+    """One hole, which reads as a hole and never as a value.
+
+    `Hole.issue` is not printed: the bench page is read by someone who cannot open a tracker.
+    """
     where = f"{escape(hole.where)}: " if hole.where else ""
     filled = f" <em>Filled by {escape(hole.filled_by)}.</em>" if hole.filled_by else ""
-    issue = f' <span class="hole-issue">{escape(hole.issue)}</span>' if hole.issue else ""
     return (
         f'<li class="hole" id="hole-{escape(hole.id)}"><span class="hole-id">{escape(hole.id)}'
         f'</span> <span class="hole-none">{NO_NUMBER}</span> — {where}{escape(hole.missing)} '
-        f'<span class="hole-kind">{escape(HOLE_KINDS[hole.kind])}</span>{filled}{issue}</li>'
+        f'<span class="hole-kind">{escape(HOLE_KINDS[hole.kind])}</span>{filled}</li>'
     )
 
 

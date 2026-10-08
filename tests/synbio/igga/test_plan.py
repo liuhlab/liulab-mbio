@@ -478,7 +478,10 @@ def test_each_round_is_sized_for_the_completeness_asked_for(plan):
 
 def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(protocol):
     """Every page the count reaches states the chance asked for; the multiple is what it costs."""
-    assert protocol.overview["Completeness"] == "P 0.99, 51 colonies at the end"
+    assert (
+        protocol.overview["Completeness"]
+        == "0.99 chance nothing is missing, 51 colonies at the end"
+    )
     assert "51 colonies for a 0.99 chance that none of its 8 products is missing" in " ".join(
         protocol.highlights
     )

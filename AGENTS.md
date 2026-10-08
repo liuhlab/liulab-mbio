@@ -137,9 +137,10 @@ Four traps:
 
 ## Writing rules
 
-Three rules, all enforced by `vale`: be concise; agent-facing documents have word caps;
-human-facing prose avoids jargon and stays readable. Read `docs/agents/writing.md` before
-writing either kind — the caps are lower than you expect, and this file is subject to one.
+Four rules, two enforced by `vale`: be concise; agent-facing documents have word caps;
+human-facing prose avoids jargon and stays readable; and protocol text is written for the
+bench. Read `docs/agents/writing.md` before writing any of them — the caps are lower than you
+expect, and this file is subject to one.
 
 ### Comments and docstrings are short
 

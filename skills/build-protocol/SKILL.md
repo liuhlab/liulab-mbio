@@ -51,6 +51,7 @@ Text is escaped, so write plain sentences; markup will show up as characters.
 
 Picture the reader: standing at the bench, gloves on, your page open, unable to ask you
 anything. Everything they need to decide what to do next is on the page, or it does not exist.
+Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before you write one.
 
 - **A header in three parts.** `summary` is one paragraph. `overview` is the facts they check
   before starting — what goes in, what comes out — a few words each, because it renders as a grid

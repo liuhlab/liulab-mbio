@@ -152,6 +152,7 @@ def test_a_hole_renders_and_never_reads_as_a_value() -> None:
     assert NO_NUMBER in page
     assert "H23" in page
     assert "nobody published it" in page
+    assert "liuhlab/liulab-mbio#264" not in page
     assert (
         "1 number has no source"
         in [check.detail for check in protocol(Step("Ligate", holes=(hole,))).audit()][3]
@@ -241,7 +242,7 @@ def test_everything_new_round_trips_through_json(tmp_path: Path) -> None:
         Step("Plate", troubleshooting=(FRESH_BUFFER,)),
         plates=(plates.plate("picked", 96, seating={"A1": "T7 DNA Ligase"}),),
         vessels=(Vessel("reservoir", kind="trough"),),
-        holes=(Hole("H1", "no polymerase is named", "undecided"),),
+        holes=(Hole("H1", "no polymerase is named", "undecided", issue="liuhlab/liulab-mbio#264"),),
     )
     path = write_protocol(one, tmp_path / "protocol.json")
     assert read_protocol(path) == one

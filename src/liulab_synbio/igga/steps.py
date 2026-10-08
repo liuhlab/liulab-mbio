@@ -504,7 +504,8 @@ def _overview(
         "Codon usage": host,
         "Product": card(f"{product.name}, {len(product)} bp", f"{len(product)} bp"),
         "Completeness": card(
-            f"P {last.coverage.completeness:g}, {last.coverage.colonies:,} colonies at the end",
+            f"{last.coverage.completeness:g} chance nothing is missing, "
+            f"{last.coverage.colonies:,} colonies at the end",
             f"{last.coverage.coverage:.0f}x",
         ),
         "Amino acids changed": f"{standard.cost} over {len(standard.changes)} part end(s)",
