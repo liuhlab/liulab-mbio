@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "8bf706805cd33e71",
+  "key": "fd2290f28e0196cc",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -10303,10 +10303,10 @@
         "citation": null,
         "hole": {
           "id": "P1",
-          "missing": "no row prices 'oligo-pool' at 131 oligos",
+          "missing": "nothing prices 131 oligos",
           "kind": "price",
           "where": "AP-1 DESynR oligo pool, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10320,10 +10320,10 @@
         "citation": null,
         "hole": {
           "id": "P2",
-          "missing": "no row prices 'pool-primers' at 74 primers",
+          "missing": "nothing prices 74 primers",
           "kind": "price",
           "where": "Pool amplification primers, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10337,10 +10337,10 @@
         "citation": null,
         "hole": {
           "id": "P3",
-          "missing": "no row prices 'R3539' at 7.5 µL",
+          "missing": "nothing prices 7.5 µL",
           "kind": "price",
           "where": "BbsI-HF, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10354,10 +10354,10 @@
         "citation": null,
         "hole": {
           "id": "P4",
-          "missing": "no row prices 'R3733' at 7.5 µL",
+          "missing": "nothing prices 7.5 µL",
           "kind": "price",
           "where": "BsaI-HFv2, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10371,10 +10371,10 @@
         "citation": null,
         "hole": {
           "id": "P5",
-          "missing": "no row prices 'R0629' at 7.5 µL",
+          "missing": "nothing prices 7.5 µL",
           "kind": "price",
           "where": "SrfI, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10388,10 +10388,10 @@
         "citation": null,
         "hole": {
           "id": "P6",
-          "missing": "no row prices 'R0560' at 7.5 µL",
+          "missing": "nothing prices 7.5 µL",
           "kind": "price",
           "where": "PmeI, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10405,10 +10405,10 @@
         "citation": null,
         "hole": {
           "id": "P7",
-          "missing": "no row prices '60242-2' at 3 aliquots",
+          "missing": "nothing prices 3 aliquots",
           "kind": "price",
           "where": "Endura ElectroCompetent Cells, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10422,10 +10422,10 @@
         "citation": null,
         "hole": {
           "id": "P8",
-          "missing": "no row prices 'cuvettes' at 3 cuvettes",
+          "missing": "nothing prices 3 cuvettes",
           "kind": "price",
           "where": "Electroporation cuvettes, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       },
@@ -10439,10 +10439,10 @@
         "citation": null,
         "hole": {
           "id": "P9",
-          "missing": "no row prices 'plasmid prep' at 3 preps",
+          "missing": "nothing prices 3 preps",
           "kind": "price",
           "where": "Plasmid preps, money",
-          "filled_by": "a price record holding a row for this key",
+          "filled_by": "a price record holding a row for this item",
           "issue": ""
         }
       }
