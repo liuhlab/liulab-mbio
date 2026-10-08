@@ -23,11 +23,10 @@ from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.io import read_record
 from liulab_mbio.ligase import LigaseProfile
 from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
-from liulab_mbio.sites import CutSite
+from liulab_mbio.sites import CutSite, released
 from liulab_synbio.igga.gate import (
     WELL_PRIMERS,
     Verdict,
-    _released,
     check_dmx_vector,
     check_library,
     check_reaction,
@@ -476,7 +475,7 @@ def test_a_donor_held_in_a_circular_backbone_is_judged_on_its_cargo(judge, block
         name="N in a DMX backbone",
     )
 
-    assert len(_released(circular, IGGA.external)) == 2
+    assert len(released(circular, IGGA.external)) == 2
     assert judge(blocks=_swap_record(blocks, "N", 0, circular)).status == "pass"
 
 

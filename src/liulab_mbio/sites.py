@@ -448,6 +448,25 @@ def digest(
     )
 
 
+def released(
+    record: SequenceRecord, enzymes: EnzymeLike | Iterable[EnzymeLike]
+) -> tuple[Fragment, ...]:
+    """Return the pieces of a digest with an overhang at each end: what a ligation takes.
+
+    A piece blunt at either end carries an end of a linear record, or an end a blunt cutter
+    made, so matched overhangs cannot put it back in.
+
+    Examples
+    --------
+    >>> cut = released(SequenceRecord("AAAAGGTCTCGTTTTCCCCCCGAGACCAAAA"), "BsaI")
+    >>> [piece.length for piece in cut]
+    [5]
+    """
+    return tuple(
+        piece for piece in digest(record, enzymes) if piece.left_overhang and piece.right_overhang
+    )
+
+
 def insert_site(
     record: SequenceRecord,
     enzyme: EnzymeLike,

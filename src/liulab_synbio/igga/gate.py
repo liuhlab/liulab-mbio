@@ -22,7 +22,7 @@ from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
 from liulab_mbio.reaction import Pool, Reaction, Role
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
+from liulab_mbio.sites import CutSite, find_sites, released
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
 from liulab_synbio.igga.project import Build
@@ -666,22 +666,15 @@ def _cargo(block: SequenceRecord, project: Build) -> SequenceRecord:
         If no piece ends on the scar, or more than one does.
     """
     scar = project.scheme.cloning_scar
-    released = [
-        piece for piece in _released(block, project.scheme.external) if piece.right_overhang == scar
+    pieces = [
+        piece for piece in released(block, project.scheme.external) if piece.right_overhang == scar
     ]
-    if len(released) != 1:
+    if len(pieces) != 1:
         raise ValueError(
-            f"{project.scheme.external.name} releases {len(released)} piece(s) of this block "
+            f"{project.scheme.external.name} releases {len(pieces)} piece(s) of this block "
             f"ending on the cloning scar {scar}, and a donor carries one cargo"
         )
-    return SequenceRecord(block.bases(released[0].start, released[0].end))
-
-
-def _released(record: SequenceRecord, enzyme: Enzyme) -> tuple[Fragment, ...]:
-    """Return the pieces of a digest with an overhang at each end: what a ligation takes."""
-    return tuple(
-        piece for piece in digest(record, enzyme) if piece.left_overhang and piece.right_overhang
-    )
+    return SequenceRecord(block.bases(pieces[0].start, pieces[0].end))
 
 
 def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
@@ -798,7 +791,7 @@ def _ends(reaction: Reaction, project: Build) -> set[str]:
     for pool in reaction.pools:
         enzyme = pool.cutter or cutters[pool.role]
         for record in pool:
-            for piece in _released(record, enzyme):
+            for piece in released(record, enzyme):
                 found.update((piece.left_overhang, piece.right_overhang))
     return found
 
