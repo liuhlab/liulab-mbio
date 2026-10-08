@@ -84,7 +84,7 @@ class Assembly(Protocol):
     def summary(self, run: Run) -> str:
         """Return what the rounds come to, which is the whole library."""
         return (
-            f"Join {len(run.part_lists)} part lists into {run.constructs} distinct constructs in "
+            f"Join {len(run.part_lists)} part lists into {run.constructs:,} distinct constructs in "
             f"{len(run.rounds)} rounds, each round opening the library with "
             f"{run.scheme.internal.name} and ligating one part list into it, then read the "
             "finished library back."

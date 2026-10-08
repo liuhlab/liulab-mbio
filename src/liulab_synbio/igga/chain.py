@@ -92,7 +92,7 @@ def project(run: Run) -> Project:
         f"{run.vector.name or 'Library'}: {len(run.part_lists)} part lists in "
         f"{len(run.rounds)} rounds",
         summary=(
-            f"Join {len(run.parts)} synthesised parts into {run.constructs} distinct constructs "
+            f"Join {len(run.parts)} synthesised parts into {run.constructs:,} distinct constructs "
             f"in {len(run.rounds)} rounds, over {_places(pages)} protocols. Each round opens "
             f"the library with {run.scheme.internal.name}, releases one part list with "
             f"{run.scheme.external.name}, ligates the two, and transforms, grows and preps the "
@@ -199,7 +199,7 @@ def _highlights(run: Run) -> tuple[str, ...]:
     last = run.bench[-1]
     said = [
         f"One round appends one part list to every member of the library at once, so "
-        f"{len(run.rounds)} rounds make {run.constructs} constructs out of "
+        f"{len(run.rounds)} rounds make {run.constructs:,} constructs out of "
         f"{sum(one.coverage.part_list_size for one in run.bench)} synthesised parts.",
         f"The product keeps {scheme.internal.name}'s sites, which is what lets the next round "
         f"open it, and loses {scheme.external.name}'s with the external stuffers.",
