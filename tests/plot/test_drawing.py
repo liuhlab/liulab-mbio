@@ -1367,6 +1367,85 @@ def test_the_page_says_what_its_own_map_hid_that_shows_and_the_drawing_what_a_pd
     assert _placed(page) == _placed(whole)
 
 
+def _label_fills(page: Node, kind: str) -> dict[str, str]:
+    """What each label of a kind is written in, by the name of the item it labels."""
+    return {
+        group.attrs["data-name"]: group.find_all("text")[0].attrs["fill"]
+        for group in page.find_all("g", cls="label", data_kind=kind)
+    }
+
+
+def test_a_highlight_keeps_what_it_names_in_colour_and_dims_every_other_item(
+    puc19: SequenceRecord,
+) -> None:
+    plain, lit = (parse(draw_map(puc19, **asked).element()) for asked in ({}, {"highlight": "AmpR"}))
+    before, after = _items(plain), _items(lit)
+
+    assert set(before) == set(after) and "AmpR" in after
+    assert _fills(after["AmpR"][0]) == _fills(before["AmpR"][0]) != [layers.DIM]
+    assert {
+        fill for name, groups in after.items() if name != "AmpR" for fill in _fills(groups[0])
+    } == {layers.DIM}
+    # An enzyme lights every cut site naming it, and a name matches whatever its case.
+    sites = _label_fills(parse(draw_map(puc19, highlight="ecori").element()), "cut_site")
+    assert sites["EcoRI"] == layers.ENZYME.lower()
+    assert set(sites.values()) == {layers.ENZYME.lower(), layers.DIM}
+
+
+def test_a_highlight_dims_a_name_and_a_translation_an_unlit_item_owns() -> None:
+    """Two paints are dark whatever the item's own colour: a name beside it, and its residues."""
+    record = SequenceRecord(
+        "ATGTAA" + "ACGT" * 10,
+        name="dim",
+        features=(
+            Feature("a long coding name", "CDS", (Segment(0, 6),), strand=Strand.FORWARD),
+            Feature("tag", "promoter", (Segment(10, 40),)),
+        ),
+    )
+
+    drawing = draw_map(record, sequence_view=True, highlight="tag", cut_sites=False)
+
+    assert {
+        line.fill for line in _lines(drawing.layout.shapes) if line.text == "a long coding name"
+    } == {layers.DIM}
+    assert {
+        text.attrs["fill"]
+        for group in parse(drawing.element()).find_all("g", cls="translation")
+        for text in group.find_all("text")
+    } == {layers.DIM}
+
+
+def test_a_highlight_moves_no_label(puc19: SequenceRecord, puc19_file: Path) -> None:
+    """Colour moves no shape, so the no-overlap rule holds with a highlight as without one."""
+    assert draw_map(puc19_file).hidden == ()
+
+    plain, lit = (draw_map(puc19, **asked) for asked in ({}, {"highlight": "AmpR"}))
+
+    assert _placed(parse(lit.element())) == _placed(parse(plain.element()))
+
+
+def test_a_lit_label_is_the_last_to_hide_where_labels_crowd(
+    primed_crowd: tuple[SequenceRecord, Node],
+) -> None:
+    record, _ = primed_crowd
+    enzymes = ["EcoRI", "HindIII"]
+    plain = draw_map(record, enzymes=enzymes)
+    crowded_out = next(item.name for item in plain.hidden if item.kind == "primer")
+
+    lit = draw_map(record, enzymes=enzymes, highlight=crowded_out)
+
+    assert crowded_out not in {item.name for item in lit.hidden}
+    assert len(lit.hidden) >= len(plain.hidden)
+
+
+@pytest.mark.parametrize("highlight", ["nope", ["AmpR", "nope"]])
+def test_a_highlight_naming_nothing_the_record_draws_is_refused(
+    puc19: SequenceRecord, highlight: str | list[str]
+) -> None:
+    with pytest.raises(ValueError, match="no feature, primer or enzyme called 'nope'"):
+        draw_map(puc19, highlight=highlight)
+
+
 def test_a_map_with_room_for_every_label_hides_none_and_says_nothing(
     puc19_file: Path, puc19_page: tuple[str, Node]
 ) -> None:

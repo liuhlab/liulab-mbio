@@ -86,6 +86,9 @@ class Drawing:
         How many bases each row of the sequence view holds.
     both_strands
         Whether the sequence view's bottom strand, under the top one, is switched on.
+    highlight
+        The names lit; every other item is dimmed, in every view and every format. Nothing is lit
+        when it is empty.
     """
 
     record: SequenceRecord
@@ -96,6 +99,7 @@ class Drawing:
     with_sequence_view: bool
     bases_per_row: int
     both_strands: bool
+    highlight: tuple[str, ...] = ()
     _kept: dict[tuple[object, ...], object] = field(default_factory=dict, init=False, repr=False)
 
     @property
@@ -167,6 +171,7 @@ def draw_map(
     record: SequenceRecord | str | os.PathLike[str],
     *,
     region: Region | None = None,
+    highlight: str | Iterable[str] = (),
     linear: bool = False,
     sequence_view: bool = False,
     features: bool = True,
@@ -184,6 +189,10 @@ def draw_map(
     and a region of any record, is always drawn as a line, numbered as the record is. The sequence
     view draws the same stretch base by base, as the map numbers it.
 
+    A `highlight` points the map at what it names: those items keep their colours and every other
+    one, its label with it, dims to one pale grey. Nothing moves, so each label keeps the box it
+    was measured in; a lit label is the last to hide where labels crowd.
+
     What is switched off is left out of a PNG or a PDF, and a page keeps it behind its switches,
     shown first as asked: the layers, the feature types, the sequence view of a stretch up to
     `sequence_view.LIMIT` bases, and its bottom strand. Nothing is laid out until it is needed.
@@ -197,6 +206,10 @@ def draw_map(
         is drawn, or a ``(start, end)`` span, 0-based and half-open, ending past the record's
         length across the origin. A name matches whatever its case, and the first feature in the
         record's order answers when several do. The whole record when ``None``.
+    highlight
+        The name, or names, of what the map points at: a feature, a primer, or an enzyme, which
+        lights every cut site naming it. A name matches whatever its case, and every item
+        answering to one lights. Nothing is lit, and nothing dims, when it is empty.
     linear
         Whether a circular record drawn whole is opened as a line.
     sequence_view
@@ -222,8 +235,9 @@ def draw_map(
         If no shipped enzyme answers to a name in `enzymes`.
     ValueError
         If the file cannot be read as a record, the record has no bases, `region` names no
-        feature or lies off the record, `bases_per_row` is less than 1, or a sequence view would
-        draw more than `sequence_view.LIMIT` bases.
+        feature or lies off the record, `highlight` names nothing the record draws,
+        `bases_per_row` is less than 1, or a sequence view would draw more than
+        `sequence_view.LIMIT` bases.
 
     Examples
     --------
@@ -250,7 +264,7 @@ def draw_map(
         frozenset(kind for kind, on in kinds.items() if on),
         frozenset(hide_types) | (frozenset() if source else {"source"}),
     )
-    return Drawing(
+    drawing = Drawing(
         record,
         switches,
         named,
@@ -259,7 +273,35 @@ def draw_map(
         sequence_view,
         bases_per_row,
         both_strands,
+        (highlight,) if isinstance(highlight, str) else tuple(highlight),
     )
+    _lit(drawing)
+    return drawing
+
+
+def _lit(drawing: Drawing) -> None:
+    """Check that an item of the record answers to each name the highlight lights.
+
+    Raises
+    ------
+    ValueError
+        If one answers to none, as `region` refuses a name no feature answers to.
+    """
+    if not drawing.highlight:
+        return
+    answering: set[str] = set()
+    for item in _everything(drawing):
+        if item.cutters:
+            answering.update(cutter.name.casefold() for cutter in item.cutters)
+        else:
+            answering.add(item.name.casefold())
+    unknown = [name for name in drawing.highlight if name.casefold() not in answering]
+    if unknown:
+        listed = ", ".join(repr(name) for name in unknown)
+        raise ValueError(
+            f"record {drawing.record.name!r} draws no feature, primer or enzyme "
+            f"called {listed} to highlight"
+        )
 
 
 def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:
@@ -316,11 +358,14 @@ def _uncut(drawing: Drawing) -> tuple[layers.Item, ...]:
     return _kept(
         drawing,
         ("uncut",),
-        lambda: layers.items(
-            drawing.record,
-            cut_sites=False,
-            source=True,
-            translations=_carries_sequence_view(drawing),
+        lambda: _painted(
+            drawing,
+            layers.items(
+                drawing.record,
+                cut_sites=False,
+                source=True,
+                translations=_carries_sequence_view(drawing),
+            ),
         ),
     )
 
@@ -330,10 +375,22 @@ def _cuts(drawing: Drawing) -> tuple[layers.Item, ...]:
     return _kept(
         drawing,
         ("cuts",),
-        lambda: layers.items(
-            drawing.record, features=False, primers=False, enzymes=drawing.enzymes
+        lambda: _painted(
+            drawing,
+            layers.items(drawing.record, features=False, primers=False, enzymes=drawing.enzymes),
         ),
     )
+
+
+def _painted(drawing: Drawing, items: tuple[layers.Item, ...]) -> tuple[layers.Item, ...]:
+    """Return `items` with every one the highlight leaves unlit dimmed, and each lit one as it is.
+
+    Every view and every format draws what this gives, so one highlight serves them all.
+    """
+    if not drawing.highlight:
+        return items
+    names = frozenset(name.casefold() for name in drawing.highlight)
+    return tuple(one if layers.lights(one, names) else layers.dimmed(one) for one in items)
 
 
 def _everything(drawing: Drawing) -> tuple[layers.Item, ...]:

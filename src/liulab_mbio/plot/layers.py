@@ -7,7 +7,8 @@ record, and each enzyme at a cut site how its cuts in the two strands stagger.
 
 A feature draws in its file's colour, and a segment in its own where that differs. One the file
 gives no colour takes Paul Tol's light scheme by the group its type falls in, and pale grey for a
-type in none. Primers are purple and enzyme names black.
+type in none. Primers are purple and enzyme names black. An item a highlight leaves unlit paints
+every colour it owns in one pale grey instead, and nothing it draws moves.
 
 Positions a person reads, in labels and hover details, are 1-based and inclusive. A cut site is
 numbered as SnapGene numbers one: by the base after which its enzymes cut the top strand.
@@ -19,9 +20,10 @@ Where labels crowd past what a map grows to, they hide in the order `hiding` sor
 `notice` says how many hid.
 """
 
+import dataclasses
 import re
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import cache
 from typing import Literal
@@ -120,6 +122,9 @@ PRIMER = "#AA3377"
 
 #: The colour of an enzyme's name.
 ENZYME = "#000000"
+
+#: The one pale grey every paint of an item a highlight leaves unlit takes.
+DIM = "#dddddd"
 
 #: What joins the names of the enzymes cutting at one position.
 SEPARATOR = " - "
@@ -228,6 +233,8 @@ class Item:
         Where a primer's base does not pair with the record's in its binding site, found by
         comparing the two: 0-based positions less than the record's length, in order along the
         site.
+    dim
+        Whether a highlight left it unlit, so every paint it owns is `DIM`.
     """
 
     kind: Kind
@@ -241,6 +248,7 @@ class Item:
     translation: tuple[Codon, ...] = field(default=(), hash=False)
     tail: int = 0
     mismatches: tuple[int, ...] = ()
+    dim: bool = False
 
     @property
     def color(self) -> str:
@@ -391,12 +399,40 @@ def merge_cuts(
     return tuple(merged)
 
 
-def hiding(item: Item) -> tuple[int, int, int]:
+def lights(item: Item, names: Collection[str]) -> bool:
+    """Return whether `names`, each casefolded, light `item`.
+
+    A feature or a primer answers to its own name, and a cut site to each enzyme it names, so every
+    item one name answers to lights at once.
+
+    Examples
+    --------
+    >>> site = merge_cuts([("BanII", 406), ("SacI", 406)], 2686)[0]
+    >>> lights(site, {"saci"}), lights(site, {"bsai"})
+    (True, False)
+    """
+    if item.cutters:
+        return any(cutter.name.casefold() in names for cutter in item.cutters)
+    return item.name.casefold() in names
+
+
+def dimmed(item: Item) -> Item:
+    """Return `item` painted in `DIM`, as every view draws one a highlight leaves unlit.
+
+    Nothing moves: each span keeps where it lies, so a label drawn with a highlight keeps the box
+    it was measured in without one.
+    """
+    spans = tuple(Span(span.start, span.end, DIM) for span in item.spans)
+    return dataclasses.replace(item, spans=spans, dim=True)
+
+
+def hiding(item: Item) -> tuple[int, int, int, int]:
     """Return where an item's label comes in the order labels hide: sort by it, first to hide first.
 
-    Cut sites hide first, those whose enzymes cut most often before the rest, then primers, then
-    features, and within each the longest label first. A cut site naming several enzymes hides as
-    late as the one among them that cuts least often.
+    An item a highlight leaves unlit hides before every item it lights. Then cut sites hide first,
+    those whose enzymes cut most often before the rest, then primers, then features, and within
+    each the longest label first. A cut site naming several enzymes hides as late as the one among
+    them that cuts least often.
 
     Examples
     --------
@@ -406,7 +442,7 @@ def hiding(item: Item) -> tuple[int, int, int]:
     """
     kind = _HIDING.index(item.kind)
     cuts = min((cutter.cuts for cutter in item.cutters), default=0)
-    return kind, -cuts, -len(item.label)
+    return int(not item.dim), kind, -cuts, -len(item.label)
 
 
 def notice(hidden: Iterable[Item]) -> str:

@@ -33,6 +33,7 @@ from liulab_mbio.plot import labels
 from liulab_mbio.plot.fonts import BOLD, MONO, SANS, Font
 from liulab_mbio.plot.labels import Box, Point
 from liulab_mbio.plot.layers import (
+    DIM,
     Codon,
     Item,
     Piece,
@@ -616,7 +617,7 @@ def _row(
         elif id(run) in under:
             below = middle + _BAR / 2 + _PADDING[1] + _height(SANS, LABEL_SIZE) / 2
             bar = max(mine, key=lambda one: one.body.width)
-            names.append(Name(bar, _set(label, under[id(run)], below, _INK), False))
+            names.append(Name(bar, _set(label, under[id(run)], below, _ink(run.item)), False))
             shapes.append(names[-1].letters)
 
     arrows: list[Arrow] = []
@@ -1007,8 +1008,11 @@ def _translation(run: _Run, first: int, middle: float) -> Translation:
     placed: dict[bool, list[tuple[float, str]]] = {False: [], True: []}
     for position, codon in run.codons:
         placed[codon.stop].append(((position - first + 0.5) * CELL, codon.name))
+    stop = DIM if run.item.dim else STOP
     return Translation(
-        run.item, _residues(placed[False], middle, _INK), _residues(placed[True], middle, STOP)
+        run.item,
+        _residues(placed[False], middle, _ink(run.item)),
+        _residues(placed[True], middle, stop),
     )
 
 
@@ -1129,6 +1133,11 @@ def _label(label: Label) -> Group:
     return Group(
         tuple(shapes), classes=(item.kind, "label"), data={"kind": item.kind, **item.hover}
     )
+
+
+def _ink(item: Item) -> str:
+    """Return the colour of a paint of `item` that is dark whatever the item's own colour is."""
+    return DIM if item.dim else _INK
 
 
 def _set(text: str, left: float, middle: float, fill: str) -> Letters:
