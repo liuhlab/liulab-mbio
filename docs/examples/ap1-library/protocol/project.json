@@ -1,12 +1,12 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "4d1605d92c02accf",
-  "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
+  "key": "795cd5ae91ec635e",
+  "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
       "title": "How this library is designed",
       "body": [
-        "One round appends one part list to every member of the library at once, so 3 rounds make 13824 constructs out of 72 synthesised parts.",
+        "One round appends one part list to every member of the library at once, so 3 rounds make 13,824 constructs out of 72 synthesised parts.",
         "The product keeps BbsI's sites, which is what lets the next round open it, and loses BsaI's with the external stuffers.",
         "Your vector already carried an internal stuffer, so every part enters position N on AGGA, which is the overhang that stuffer spells: DNA that exists cannot be re-chosen.",
         "The overhang standard changes 27 amino acid(s) across 26 part end(s); changes.tsv has wild type beside synthesised, and that is what you are about to pay for.",
@@ -15,7 +15,7 @@
       ]
     },
     {
-      "title": "read every well back",
+      "title": "Read every well back",
       "body": [
         "Both routes mark every well so that sequencing says which well a read came from, and both end with a pass or a fail for each well. Do one of them, never both.",
         "How many wells each reaches is not what picks between them, and it does not rank them the way the bench's rule of thumb does. Barcode ligation addresses more than 330,000 wells from one plate of barcodes; index PCR addresses 9,216. Most runs sit well below either.",
@@ -2201,7 +2201,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "d9662a22480dc315",
+      "key": "ee9f149a97821c1f",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2554,7 +2554,7 @@
                   "name": "Q5 DNA Polymerase",
                   "volume_ul": 0.5,
                   "stock": "2 U/µL",
-                  "final": "1 units",
+                  "final": "1 unit",
                   "master_mix": true,
                   "citation": null
                 },
@@ -2792,7 +2792,7 @@
                   "name": "Q5 DNA Polymerase",
                   "volume_ul": 0.5,
                   "stock": "2 U/µL",
-                  "final": "1 units",
+                  "final": "1 unit",
                   "master_mix": true,
                   "citation": null
                 },
@@ -11552,8 +11552,8 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "04687df9101ea424",
-      "summary": "Join 3 part lists into 13824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
+      "key": "de73a1bd51f20a1c",
+      "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
         "Part lists": "N 24, DBD 24, C 24",

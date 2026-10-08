@@ -174,7 +174,7 @@ pixi run liulab_mbio plot map $D/product.dna \
 | [vector-map.pdf](vector-map.pdf) | the destination the first round opens |
 | [round-1-map.pdf](round-1-map.pdf), [round-2-map.pdf](round-2-map.pdf) | what each round leaves |
 | [product-map.pdf](product-map.pdf) | one finished member |
-| [barcode-block.pdf](barcode-block.pdf) | the 75 bases the barcode block reads, with the bases shown |
+| [barcode-block.pdf](barcode-block.pdf) | the 41 bp barcode block and the stuffer ahead of it: 75 bases, every one shown on the second page |
 
 The gel and the plate layouts are in the protocol pages, drawn where the step that uses them is.
 

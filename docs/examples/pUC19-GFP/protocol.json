@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "160b753ec3f9fa56",
+  "key": "dbb9dc17bcbcd1b5",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -412,7 +412,7 @@
               "name": "Q5 DNA Polymerase",
               "volume_ul": 0.5,
               "stock": "2 U/µL",
-              "final": "1 units",
+              "final": "1 unit",
               "master_mix": true,
               "citation": null
             },
@@ -593,7 +593,7 @@
               "name": "Q5 DNA Polymerase",
               "volume_ul": 0.5,
               "stock": "2 U/µL",
-              "final": "1 units",
+              "final": "1 unit",
               "master_mix": true,
               "citation": null
             },
