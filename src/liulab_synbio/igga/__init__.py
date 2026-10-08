@@ -1,6 +1,6 @@
 """A barcoded combinatorial library, assembled one round at a time.
 
-`plan_igga` is the way in: it takes one project file naming lists of proteins or coding DNA
+`plan_igga` is the way in: it takes one build, a file naming lists of proteins or coding DNA
 and a destination vector, and runs the whole design. `LibraryPlan.write` puts the synthesis order
 sheet, the barcode table, the amino-acid change table, a record for each round, the assembled
 product, the block vector each position's cargo closes into, the protocol as data and the page
@@ -9,7 +9,8 @@ rendered from it in one directory.
 The submodules are the steps it is made of -- `method`, `project`, `standard`, `parts`, `cargo`,
 `vector`, `rounds`, `reads`, `bench` and `stages` -- and `gate`, which judges a finished design
 whoever composed it. `method` holds `IGGA`, the one method, checked when it is imported;
-`project` holds what one build chooses, checked as it is read; `gate` judges each reaction's
+`project` holds what one build chooses, checked as it is read, and keeps that name because
+the file it reads is the user's own `project.json`; `gate` judges each reaction's
 molecules by the method's rules; `standard` chooses the overhang set by what it costs the
 proteins; `parts` writes each part's synthesis sequence and `cargo` the oligo pool it is ordered
 as; `vector` accepts or retrofits the destination and holds the working vector's own ccdB

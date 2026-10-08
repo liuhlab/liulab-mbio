@@ -195,7 +195,7 @@ class LibraryPlan:
 
     Parameters
     ----------
-    project
+    build
         What this build chose: its positions, its inputs and its dials.
     scheme
         The method the build was planned by.
@@ -243,7 +243,7 @@ class LibraryPlan:
         enzyme chosen to admit it. `None` leaves the library in the destination vector.
     """
 
-    project: Build
+    build: Build
     scheme: Scheme
     vector: SequenceRecord
     destination: Destination
@@ -307,11 +307,11 @@ class LibraryPlan:
             dmx.validation(
                 dmx.ROUTES[name],
                 chosen,
-                self.project.validate_from,
+                self.build.validate_from,
                 selection=selection_for(self.destination.record),
-                index_plate=self.project.index_plate,
+                index_plate=self.build.index_plate,
             )
-            for name in self.project.routes
+            for name in self.build.routes
         )
         return tuple(one for one in found if one is not None)
 
@@ -338,8 +338,8 @@ class LibraryPlan:
         return chain_of(
             Run(
                 scheme=self.scheme,
-                positions=self.project.positions,
-                barcode_length=self.project.barcode.length,
+                positions=self.build.positions,
+                barcode_length=self.build.barcode.length,
                 vector=self.vector,
                 destination=self.destination,
                 part_lists=self.part_lists,
@@ -363,13 +363,13 @@ class LibraryPlan:
                 block_records=self.block_vectors,
                 working=self.working,
                 reads=self.reads,
-                marks=self.project.marks,
-                linkage_fidelity=self.project.linkage_fidelity,
+                marks=self.build.marks,
+                linkage_fidelity=self.build.linkage_fidelity,
                 working_file="" if self.working is None else WORKING_VECTOR_FILE,
-                final_assembly=self.project.final_assembly,
-                pcr1_cycles=self.project.pcr1_cycles,
-                pcr2_cycles=self.project.pcr2_cycles,
-                primer_plates=self.project.primer_plates,
+                final_assembly=self.build.final_assembly,
+                pcr1_cycles=self.build.pcr1_cycles,
+                pcr2_cycles=self.build.pcr2_cycles,
+                primer_plates=self.build.primer_plates,
             )
         )
 
@@ -386,9 +386,7 @@ class LibraryPlan:
         sheet = out / PARTS_FILE
         sheet.write_text(synthesis_sheet(self.parts), encoding="utf-8")
         barcodes = out / BARCODE_FILE
-        barcodes.write_text(
-            barcode_table(self.parts, self.project.position_count), encoding="utf-8"
-        )
+        barcodes.write_text(barcode_table(self.parts, self.build.position_count), encoding="utf-8")
         changes = out / CHANGE_FILE
         changes.write_text(change_table(self.standard), encoding="utf-8")
         records = write_records(self.rounds, out)
@@ -461,7 +459,7 @@ def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, .
 
 
 def plan_igga(
-    project: Build | str | os.PathLike[str],
+    build: Build | str | os.PathLike[str],
     *,
     parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
@@ -475,7 +473,7 @@ def plan_igga(
     profile: LigaseProfile | str | os.PathLike[str] | None = None,
     profile_sheet: str | int | None = None,
 ) -> LibraryPlan:
-    """Plan the whole library `project` asks for, by the method `project` is built under.
+    """Plan the whole library `build` asks for, by the method `build` is built under.
 
     One round appends one part list to every member of the library at once, so the rounds run in
     the build's own order and the product of each opens the next. The same inputs return the
@@ -487,7 +485,7 @@ def plan_igga(
 
     Parameters
     ----------
-    project
+    build
         What this build chooses, or a path to the JSON holding it;
         `liulab_synbio.igga.project.read_build` reads one. It names the parts FASTA and the
         vector by path.
@@ -546,7 +544,7 @@ def plan_igga(
     >>> plan = plan_igga("project.json")  # doctest: +SKIP
     >>> plan.write("library/")  # doctest: +SKIP
     """
-    chosen = project if isinstance(project, Build) else read_build(project)
+    chosen = build if isinstance(build, Build) else read_build(build)
     # Read before anything is designed, so a file that is not a matrix is refused at once.
     ligase = _profile(profile, profile_sheet)
     design = chosen.scheme
@@ -678,21 +676,21 @@ def _named(record: SequenceRecord, position: str) -> SequenceRecord:
     return dataclasses.replace(record, name=f"{record.name} {position}".strip())
 
 
-def _pool(project: Build, parts: Sequence[Part]) -> PoolPlan | None:
+def _pool(build: Build, parts: Sequence[Part]) -> PoolPlan | None:
     """Design the oligo pool, or none where the build names no primer set.
 
     The sites that cut a fragment out are templated on the oligo rather than carried by a
     primer, so a pool cannot be written at all without the set. A build naming none still
     plans every other output.
     """
-    if project.primers is None:
+    if build.primers is None:
         return None
     return design_pool(
         parts,
-        project,
-        primers=read_primers(project.primers),
-        bands=read_bands(project.bands),
-        seed=project.seed,
+        build,
+        primers=read_primers(build.primers),
+        bands=read_bands(build.bands),
+        seed=build.seed,
     )
 
 

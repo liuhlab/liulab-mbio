@@ -1,9 +1,9 @@
 # Highly Parallel DNA Synthesis and Assembly
 
 This is the strategy the pipeline is built against. Design specifics are settled when the code
-is written and the first project runs. An item marked undecided here is work the package will
+is written and the first build runs. An item marked undecided here is work the package will
 own, not work forgotten. The evidence behind each choice, and every open decision, is in
-`docs/research/synthesis-and-assembly.md`. One project that answers each open decision for
+`docs/research/synthesis-and-assembly.md`. One build that answers each open decision for
 itself is `docs/research/ap1-demo-project.md`.
 
 **This page covers two experiments.** **DAD-GGA-DMX** builds cargo from an oligo pool and reads

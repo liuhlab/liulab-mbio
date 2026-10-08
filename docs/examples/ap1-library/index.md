@@ -34,17 +34,17 @@ write the same bytes, so a run that changes nothing leaves them alone.
 `primer_plates` says how this lab lays the primers out: what the vendor delivers in a well,
 what it is resuspended to, and what a working well holds. Leave it out and the primers are
 ordered with the pool, and the run has one sitting fewer. The package states none of the three:
-nothing publishes them, so they are the project author's to give.
+nothing publishes them, so they are the build's author's to give.
 
 Two more keys are this lab's own and not the method's. `linkage_fidelity` is the share of
-reads whose barcode must still name its part, which this project puts at 0.9. `final_assembly`
+reads whose barcode must still name its part, which this build puts at 0.9. `final_assembly`
 sizes the last tube: 75 ng of working vector, with the cargo meeting it at 2:1. Leave either
 out and the pages say the number has no source instead of printing one. **Replace both with
 your own before you run this.** The pages label them as this run's own figures, so a reader who
 copies the file and does not change them is carrying someone else's settings to the bench.
 
 `routes` names the ways the picked wells are read back, and `validate_from` says which designs
-are read at all: a fragment count, at or above which a design is read back. This project names
+are read at all: a fragment count, at or above which a design is read back. This build names
 both routes and sets the floor to `0`, so all 72 designs are read — 288 wells and one 384-well
 pick plate either way, and three 96-well index plates on index PCR. Leave the two keys out and
 nothing is read, which is what a library headed for a pooled screen wants.

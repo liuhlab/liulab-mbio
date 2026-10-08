@@ -275,7 +275,7 @@ def _consumed(run: Run, listed: Sequence[Sequence[Material]] = ()) -> Bill:
     computes a number for them. Leaving one off would be the bill's own promise broken: where
     nothing prices a row, the money is a hole.
 
-    **The blocks are bought once or not at all.** A project with a pool buys oligos and the
+    **The blocks are bought once or not at all.** A build with a pool buys oligos and the
     primers that amplify them, and assembles its blocks from those; one without buys the blocks
     themselves. Billing both would charge the same DNA twice.
     """

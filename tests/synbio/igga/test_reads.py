@@ -12,12 +12,12 @@ from liulab_synbio.igga.plan import plan_igga
 from liulab_synbio.igga.reads import read_pairs, read_sheet
 from liulab_synbio.igga.vector import working_vector
 
-from .test_plan import LISTS, inputs, project, scheme  # noqa: F401
+from .test_plan import LISTS, build, inputs, scheme  # noqa: F401
 
 
 @pytest.fixture(scope="module")
 def plan(inputs):  # noqa: F811
-    return plan_igga(project(inputs), parts=LISTS)
+    return plan_igga(build(inputs), parts=LISTS)
 
 
 @pytest.fixture(scope="module")
@@ -30,7 +30,7 @@ def test_linkage_spans_the_whole_cargo_and_representation_spans_the_block(pairs,
     assert pairs.linkage.amplicon_length > pairs.representation.amplicon_length
     assert pairs.linkage.platform == "long read"
     assert pairs.representation.platform == "short read"
-    block = plan.project.barcode_block_length
+    block = plan.build.barcode_block_length
     assert pairs.representation.amplicon_length > block
 
 

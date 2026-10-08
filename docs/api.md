@@ -387,7 +387,8 @@ lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis o
 barcode and amino-acid change tables, a record for each round, the product and a `protocol`
 folder of the run's protocols in one directory. The modules under it are its steps. `method`
 holds `IGGA`, the one method, checked when it is imported; `project` holds what one build
-chooses, checked as it is read; `gate` judges a finished design reaction by reaction. `standard`
+chooses, checked as it is read, and keeps that name because the file it reads is the user's
+own `project.json`; `gate` judges a finished design reaction by reaction. `standard`
 picks the overhang set, `parts` writes each synthesis block and `cargo` orders a block too long
 to synthesise as an oligo pool. `vector` takes the destination or retrofits it, `rounds`
 simulates each round, and `reads` designs the reads that judge the finished library. `bench` turns the

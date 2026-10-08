@@ -262,6 +262,11 @@ sets one.
 
 ### Changed
 
+- What one library run chooses is a **build** everywhere, as it already is for a read-back:
+  `LibraryPlan.build`, `plan_igga(build, ...)` and every `build=` the gate takes. A project is
+  the chain of protocols a build writes, and nothing else. The file a user writes keeps the
+  name `project.json`, so no build file has to move.
+
 - A protocol now fails its own check when a number is missing only because nobody read the
   document that gives it. Every other missing number leaves the check with no verdict, as
   before: a number a bench settles, one the lab's own shelf settles, one a price list settles,

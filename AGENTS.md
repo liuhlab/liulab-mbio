@@ -100,7 +100,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | a restriction and ligation plan | `pixi run liulab_mbio cloning restriction plan VECTOR INSERT --out DIR` |
 | a Gateway plan | `pixi run liulab_mbio cloning gateway plan CARRIER DESTINATION --out DIR` |
 | a read-back plan | `pixi run liulab_synbio dmx plan BUILD --out DIR` |
-| a library plan | `pixi run liulab_synbio igga plan PROJECT --out DIR` |
+| a library plan | `pixi run liulab_synbio igga plan BUILD --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
 ## Layout

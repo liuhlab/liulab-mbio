@@ -1,7 +1,7 @@
 """The AP-1 demo planned end to end, from the amino acid sequences and nothing else.
 
-The inputs are `docs/examples/ap1-library`, specified by `docs/research/ap1-demo-project.md`:
-72 proteins, a project file and a destination. Every assertion here is on the planned product and
+The inputs are `docs/examples/ap1-library`, specified by `docs/research/ap1-demo-build.md`:
+72 proteins, a build file and a destination. Every assertion here is on the planned product and
 the blocks that make it, not on how the design reached them.
 """
 
@@ -90,7 +90,7 @@ def test_the_product_keeps_one_barcode_a_round_in_reverse_order(plan):
     codes = [one.barcode for one in plan.representative_parts]
     assert scar.join(reversed(codes)) in bases
     retained = bases[plan.rounds[-1].retained.start : plan.rounds[-1].retained.end]
-    assert len(retained) == plan.project.retained_length == 75
+    assert len(retained) == plan.build.retained_length == 75
     assert "*" not in translate(retained)
 
 
@@ -106,9 +106,9 @@ def test_the_block_meets_the_homopolymer_cap_at_a_scar_junction_and_never_passes
     assert max(runs) <= MAX_HOMOPOLYMER
 
 
-def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_project_length(plan):
+def test_the_pool_is_one_oligo_a_fragment_every_one_at_the_build_length(plan):
     pool = plan.pool.pool
-    assert {len(one) for one in pool.oligos} == {plan.project.oligo_length}
+    assert {len(one) for one in pool.oligos} == {plan.build.oligo_length}
     assert pool.spread == 0.0
     assert pool.count == len(pool.oligos)
 
@@ -242,8 +242,8 @@ def test_the_cargo_the_reads_run_across_is_the_cargo_the_release_digest_frees(pl
 
 
 def rerouted(plan, **changes):
-    """Return the same plan with the project's validation keys replaced."""
-    return replace(plan, project=replace(plan.project, **changes))
+    """Return the same plan with the build's validation keys replaced."""
+    return replace(plan, build=replace(plan.build, **changes))
 
 
 def read_back(plan, route="index PCR"):
@@ -282,8 +282,8 @@ def test_a_design_is_read_in_the_pieces_the_pool_was_split_into(plan):
     assert max(counted) == 5
 
 
-def test_a_project_with_no_floor_writes_a_protocol_with_no_validation(plan):
-    """Cargo validation is optional, and a project that asks for none gets none."""
+def test_a_build_with_no_floor_writes_a_protocol_with_no_validation(plan):
+    """Cargo validation is optional, and a build that asks for none gets none."""
     polyclonal = rerouted(plan, validate_from=None, routes=())
     assert polyclonal.validations == ()
     titles = [step.title for step in whole(polyclonal.chain()).steps]
@@ -435,7 +435,7 @@ def test_the_pool_is_in_buffer_before_anything_amplifies_it(protocol):
 
 
 def test_the_same_dna_is_billed_once(plan, protocol):
-    """A pool buys oligos and primers; a project without one buys blocks. Never both."""
+    """A pool buys oligos and primers; a build without one buys blocks. Never both."""
     pooled = [row.item for row in protocol.bill.rows]
     assert "Synthesised blocks" not in pooled
     assert pooled[:2] == ["AP-1 DESynR oligo pool", "Pool amplification primers"]
@@ -666,8 +666,8 @@ def test_a_route_the_package_does_not_ship_is_refused(plan):
         rerouted(plan, routes=("both",))
 
 
-def test_the_primer_plates_are_written_only_where_the_project_says_how(plan):
-    """The amounts are nobody's to guess, so a project stating none gets no such sitting."""
+def test_the_primer_plates_are_written_only_where_the_build_says_how(plan):
+    """The amounts are nobody's to guess, so a build stating none gets no such sitting."""
     plates = plan.chain().protocols[0]
     bare = rerouted(plan, primer_plates=None).chain()
 

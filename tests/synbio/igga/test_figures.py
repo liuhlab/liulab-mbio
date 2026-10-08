@@ -50,7 +50,7 @@ def pooled():
     primers = tuple(
         PrimerSite(role, f"P{index}", bases(rng, PRIMER_LENGTH)) for index, role in enumerate(roles)
     )
-    project = Build(
+    build = Build(
         "tiny",
         positions=("N",),
         parts=Path("parts.fasta"),
@@ -60,7 +60,7 @@ def pooled():
         batch_size=2,
         completeness=0.99,
     )
-    return design_pool([block("a", bases(rng, 200), 0)], project, primers=primers)
+    return design_pool([block("a", bases(rng, 200), 0)], build, primers=primers)
 
 
 def test_a_round_draws_what_it_opens_and_what_it_makes(rounds):

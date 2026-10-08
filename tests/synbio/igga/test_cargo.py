@@ -58,7 +58,7 @@ def rows(count):
 
 
 @pytest.fixture(scope="module")
-def project():
+def build():
     return Build(
         "tiny",
         positions=("N",),
@@ -92,8 +92,8 @@ def parts():
 
 
 @pytest.fixture(scope="module")
-def pooled(parts, project, primers):
-    return design_pool(parts, project, primers=primers)
+def pooled(parts, build, primers):
+    return design_pool(parts, build, primers=primers)
 
 
 def test_the_cargo_split_is_the_block_without_the_stuffers_its_destination_carries(parts):
@@ -142,17 +142,17 @@ def test_a_batch_shares_its_outer_and_forward_primers_and_a_gene_its_own_inner(p
     assert [one.name for one in pooled.pool.primers] == ["P96", "P0", "P131", "P1", "P97", "P132"]
 
 
-def test_no_internal_junction_spells_the_vector_s_two_overhangs(pooled, project):
-    held = {project.scheme.entry_overhang, project.scheme.scar_overhang}
+def test_no_internal_junction_spells_the_vector_s_two_overhangs(pooled, build):
+    held = {build.scheme.entry_overhang, build.scheme.scar_overhang}
     for oligo in pooled.pool.oligos:
         assert not held & set(oligo.overhangs[1:-1])
 
 
 def test_the_same_seed_writes_the_same_oligos_and_another_draws_other_filler(
-    parts, project, primers, pooled
+    parts, build, primers, pooled
 ):
-    again = design_pool(parts, project, primers=primers)
-    other = design_pool(parts, project, primers=primers, seed=5)
+    again = design_pool(parts, build, primers=primers)
+    other = design_pool(parts, build, primers=primers, seed=5)
     assert [one.sequence for one in again.pool.oligos] == [
         one.sequence for one in pooled.pool.oligos
     ]
@@ -160,12 +160,12 @@ def test_the_same_seed_writes_the_same_oligos_and_another_draws_other_filler(
 
 
 def test_the_bill_line_carries_its_key_and_the_headroom_of_the_bands_it_is_given(
-    parts, project, primers, pooled
+    parts, build, primers, pooled
 ):
     assert pooled.item.headroom == ()
     banded = design_pool(
         parts,
-        project,
+        build,
         primers=primers,
         bands=read_bands({"count": ["1-4", "5-"], "length": ["301-350"]}),
         key="vendor-pool",
@@ -177,33 +177,33 @@ def test_the_bill_line_carries_its_key_and_the_headroom_of_the_bands_it_is_given
     }
 
 
-def test_a_block_that_spells_no_legal_overhang_set_is_refused_and_says_so(project, primers):
+def test_a_block_that_spells_no_legal_overhang_set_is_refused_and_says_so(build, primers):
     with pytest.raises(ValueError, match=r"block 'flat'.*no legal overhang set exists"):
-        design_pool([block("flat", "A" * 600)], project, primers=primers)
+        design_pool([block("flat", "A" * 600)], build, primers=primers)
 
 
 def test_a_primer_set_short_of_the_allotment_is_refused_and_says_what_it_allots(
-    parts, project, primers
+    parts, build, primers
 ):
     with pytest.raises(ValueError, match=rf"allots {TOTAL} primers .* {TOTAL - 1} were given"):
-        design_pool(parts, project, primers=primers[:-1])
+        design_pool(parts, build, primers=primers[:-1])
 
 
-def test_an_empty_block_is_refused_by_name(parts, project, primers):
+def test_an_empty_block_is_refused_by_name(parts, build, primers):
     hollow = Part("hollow", "N", index=3, sequence="", barcode="", protein="", coding=Segment(0, 1))
     with pytest.raises(ValueError, match="block 'hollow' is empty"):
-        design_pool([*parts, hollow], project, primers=primers)
+        design_pool([*parts, hollow], build, primers=primers)
 
 
-def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_offset(project, primers):
+def test_a_block_carrying_the_synthesis_site_names_the_block_and_the_offset(build, primers):
     """A hand-built block spelling BsmBI on its bottom strand: the split refuses it."""
     carrier = block("carrier", bases(random.Random(3), 97) + "GAGACG" + bases(random.Random(4), 97))
     with pytest.raises(ValueError, match=r"block 'carrier'.*BsmBI site\(s\), the first at 101 "):
-        design_pool([carrier], project, primers=primers, seed=7)
+        design_pool([carrier], build, primers=primers, seed=7)
 
 
-def test_a_batch_wider_than_the_plate_of_inner_primers_is_refused(parts, project, primers):
-    wide = replace(project, batch_size=INNER + 1)
+def test_a_batch_wider_than_the_plate_of_inner_primers_is_refused(parts, build, primers):
+    wide = replace(build, batch_size=INNER + 1)
     with pytest.raises(ValueError, match=rf"batch_size is {INNER + 1}.*{INNER} .*one plate"):
         design_pool(parts, wide, primers=primers)
 

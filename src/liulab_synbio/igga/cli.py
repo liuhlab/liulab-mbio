@@ -15,13 +15,13 @@ app = typer.Typer(help="Plan combinatorial protein libraries.", no_args_is_help=
 
 @app.command()
 def plan(
-    project: Annotated[
+    build: Annotated[
         Path,
         typer.Argument(
             exists=True,
             dir_okay=False,
             readable=True,
-            help="Project JSON: the positions, the parts and vector files, and the dials.",
+            help="The build, as JSON: the positions, the parts and vector files, and the dials.",
         ),
     ],
     out: Annotated[
@@ -83,10 +83,10 @@ def plan(
         ),
     ] = "",
 ) -> None:
-    """Plan the library PROJECT asks for, and write its sheets, records and protocol into OUT."""
+    """Plan the library BUILD asks for, and write its sheets, records and protocol into OUT."""
     plan_command(
         lambda: plan_igga(
-            project,
+            build,
             kind=_kind(kind),
             site=_site(site),
             working_site=_site(working_site),

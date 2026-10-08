@@ -1,6 +1,6 @@
 """Planning a whole library: the way in, the files it writes, and the vector-standard seam.
 
-The method is `IGGA` and the project is written into a temporary directory, as a user writes one.
+The method is `IGGA` and the build is written into a temporary directory, as a user writes one.
 The part lists are three of two members, so a whole build stays small enough for the gate.
 """
 
@@ -97,10 +97,10 @@ def inputs(tmp_path_factory, scheme):
     return out
 
 
-def project(
+def build(
     inputs, *, vector: str = "carrier.dna", working: str | None = None, primers: Path | None = None
 ) -> Build:
-    """The project a test plans, naming the inputs written into `inputs`."""
+    """The build a test plans, naming the inputs written into `inputs`."""
     return Build(
         "library",
         positions=POSITIONS,
@@ -125,7 +125,7 @@ def carrier(inputs):
 
 @pytest.fixture(scope="module")
 def plan(inputs):
-    return plan_igga(project(inputs), parts=LISTS)
+    return plan_igga(build(inputs), parts=LISTS)
 
 
 @pytest.fixture(scope="module")
@@ -141,7 +141,7 @@ PRIMERS = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "pri
 @pytest.fixture(scope="module")
 def pooled(inputs, tmp_path_factory):
     """The same build with a pool designed, and the files it writes."""
-    made = plan_igga(project(inputs, primers=PRIMERS), parts=LISTS)
+    made = plan_igga(build(inputs, primers=PRIMERS), parts=LISTS)
     return made, made.write(tmp_path_factory.mktemp("pooled"))
 
 
@@ -158,7 +158,7 @@ def test_a_plain_run_orders_its_blocks_assembles_and_moves_the_library(plan):
 def test_a_pool_splits_ordering_from_making_the_cargo(pooled):
     made, _files = pooled
 
-    # This project states no primer plates, so the pool's primers are ordered with the pool.
+    # This build states no primer plates, so the pool's primers are ordered with the pool.
     assert [one.title for one in made.chain().protocols] == [ORDERING, CREATION, ASSEMBLY, FINAL]
 
 
@@ -255,7 +255,7 @@ def test_a_pool_writes_the_block_vector_each_position_closes_into(pooled):
     assert set(files.block_vectors) <= set(files.paths)
 
 
-def test_a_project_naming_no_primer_set_writes_no_block_vector(written):
+def test_a_build_naming_no_primer_set_writes_no_block_vector(written):
     """A block ordered whole carries its own stuffers, so nothing has to supply them."""
     made, files = written
 
@@ -324,8 +324,8 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
     made, _files = pooled
     stated = dataclasses.replace(
         made,
-        project=dataclasses.replace(
-            made.project,
+        build=dataclasses.replace(
+            made.build,
             linkage_fidelity=0.9,
             final_assembly=FinalAssembly(75.0),
             pcr1_cycles=16,
@@ -424,7 +424,7 @@ def test_a_compatible_vector_pins_position_one_to_the_overhang_its_stuffer_spell
 
 
 def test_a_retrofitted_vector_carries_the_overhang_the_standard_chose(scheme, inputs):
-    made = plan_igga(project(inputs, vector="bare.dna"), parts=LISTS, site=(100, 140))
+    made = plan_igga(build(inputs, vector="bare.dna"), parts=LISTS, site=(100, 140))
 
     assert made.destination.edit is not None
     opened = [
@@ -467,7 +467,7 @@ def test_a_working_vector_fixes_the_cargo_enzyme_before_a_block_is_designed(inpu
     assert find_sites(SequenceRecord(lists[0]["N_a"]), alone)
 
     made = plan_igga(
-        project(inputs, working="bare.dna"), parts=lists, kind="dna", working_site=(100, 140)
+        build(inputs, working="bare.dna"), parts=lists, kind="dna", working_site=(100, 140)
     )
 
     assert made.working is not None
@@ -481,7 +481,7 @@ def test_a_working_vector_fixes_the_cargo_enzyme_before_a_block_is_designed(inpu
 def test_a_working_vector_is_written_out_with_its_cassette_in(inputs, tmp_path):
     """The backbone the build names does not open; the record the plan writes does."""
     made = plan_igga(
-        project(inputs, working="bare.dna"), parts=coded(), kind="dna", working_site=(100, 140)
+        build(inputs, working="bare.dna"), parts=coded(), kind="dna", working_site=(100, 140)
     )
 
     files = made.write(tmp_path)
@@ -493,13 +493,13 @@ def test_a_working_vector_is_written_out_with_its_cassette_in(inputs, tmp_path):
     assert files.working_vector in files.paths
 
 
-def test_a_project_naming_no_working_vector_reserves_nothing_of_its_own(inputs):
+def test_a_build_naming_no_working_vector_reserves_nothing_of_its_own(inputs):
     """Nothing is added to the reserved set where there is no working vector to read one off."""
     lists = coded()
     alone = cargo_enzyme([SequenceRecord(pad(200))], scheme=IGGA).enzyme
     assert alone is not None
 
-    made = plan_igga(project(inputs), parts=lists, kind="dna")
+    made = plan_igga(build(inputs), parts=lists, kind="dna")
 
     assert made.working is None
     assert any(find_sites(SequenceRecord(one.sequence), alone) for one in made.parts)
@@ -521,7 +521,7 @@ def test_the_plan_is_judged_by_the_gate_and_by_nothing_of_its_own(plan, inputs):
     )
     judged = check_product(
         broken,
-        project=plan.project,
+        build=plan.build,
         barcodes={one.position: [one.barcode] for one in plan.representative_parts},
     )
     opens = next(one for one in judged if one.name == "product opens")
@@ -538,7 +538,7 @@ def test_dna_input_is_read_for_its_protein_and_kept_rather_than_re_coded(inputs,
     }
     lists = tuple({name: supplied[name] for name in one} for one in LISTS)
 
-    made = plan_igga(project(inputs), parts=lists, kind="dna")
+    made = plan_igga(build(inputs), parts=lists, kind="dna")
 
     assert [one.protein for one in made.parts] == [one.protein for one in plan.parts]
     # The bases handed over are the ones kept; which codons survive is `design_parts`'s promise.
@@ -553,14 +553,14 @@ def test_dna_that_is_not_a_coding_sequence_is_refused(inputs):
     lists = ({"N_a": "ATGAA", "N_b": "ATGAAA"}, LISTS[1], LISTS[2])
 
     with pytest.raises(ValueError, match="part 'N_a' is not a coding sequence"):
-        plan_igga(project(inputs), parts=lists, kind="dna")
+        plan_igga(build(inputs), parts=lists, kind="dna")
 
 
 def test_a_stop_inside_a_coded_part_is_refused(inputs):
     lists = ({"N_a": "ATGTAAAAA", "N_b": "ATGAAAAAA"}, LISTS[1], LISTS[2])
 
     with pytest.raises(ValueError, match="part 'N_a' spells a stop"):
-        plan_igga(project(inputs), parts=lists, kind="dna")
+        plan_igga(build(inputs), parts=lists, kind="dna")
 
 
 def test_a_fasta_is_sorted_into_one_part_list_a_position(tmp_path):
@@ -600,19 +600,19 @@ def test_one_name_cannot_fill_two_part_lists(inputs):
     lists = (LISTS[0], LISTS[1], {"N_a": "MKTHGK", "C_b": "MKTWGK"})
 
     with pytest.raises(ValueError, match="names a part in two part lists"):
-        plan_igga(project(inputs), parts=lists)
+        plan_igga(build(inputs), parts=lists)
 
 
 def test_part_lists_must_be_one_a_position(inputs):
     with pytest.raises(ValueError, match="part list"):
-        plan_igga(project(inputs), parts=LISTS[:2])
+        plan_igga(build(inputs), parts=LISTS[:2])
 
 
 def test_a_kind_that_is_neither_is_refused(inputs):
     # Cast deliberately: the annotation already forbids this, and the runtime guard is what a
     # caller reaching the function from the command line or from JSON actually meets.
     with pytest.raises(ValueError, match="kind is 'protein' or 'dna'"):
-        plan_igga(project(inputs), parts=LISTS, kind=cast(Kind, "rna"))
+        plan_igga(build(inputs), parts=LISTS, kind=cast(Kind, "rna"))
 
 
 def test_each_round_is_sized_for_the_completeness_asked_for(plan):

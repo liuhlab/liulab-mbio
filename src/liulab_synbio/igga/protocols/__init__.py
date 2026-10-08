@@ -2,7 +2,7 @@
 
 `Protocol` is what each module implements, one method a thing the page shows, and `Run` is the
 build every one of them is written against.
-`liulab_synbio.igga.chain` holds the order and the project assembly, and nothing else names a
+`liulab_synbio.igga.chain` holds the order and the build assembly, and nothing else names a
 protocol by its title.
 """
 

@@ -51,7 +51,7 @@ FILLER = "ACGATCGTTA" * 20
 
 
 @pytest.fixture(scope="module")
-def project():
+def build():
     return read_build(DEMO / "project.json")
 
 
@@ -84,7 +84,7 @@ def products():
 
 
 @pytest.fixture(scope="module")
-def judge(project, destination, blocks, barcodes, products):
+def judge(build, destination, blocks, barcodes, products):
     """Judge the AP-1 design, with whatever part of it a test swapped out."""
 
     def run(**changed) -> Verdict:
@@ -95,7 +95,7 @@ def judge(project, destination, blocks, barcodes, products):
             "products": products,
             **changed,
         }
-        return check_library(project, **given)
+        return check_library(build, **given)
 
     return run
 
@@ -153,7 +153,7 @@ def test_the_gate_passes_the_ap1_design_it_was_given(good):
     assert not good.failures
 
 
-def test_the_gate_judges_every_molecule_of_the_design(good, project):
+def test_the_gate_judges_every_molecule_of_the_design(good, build):
     named = {one.name for one in good.judgements}
     assert named == {
         "destination opens",
@@ -227,8 +227,8 @@ def test_an_overhang_the_ligase_joins_rarely_warns_and_names_the_sheet(judge):
     assert not judged.failures
 
 
-def test_the_chain_is_two_digests_and_a_ligation_a_round(project, destination, blocks, products):
-    made = library_reactions(project, destination=destination, blocks=blocks, products=products)
+def test_the_chain_is_two_digests_and_a_ligation_a_round(build, destination, blocks, products):
+    made = library_reactions(build, destination=destination, blocks=blocks, products=products)
     assert [one.kind for one in made] == ["digest", "digest", "ligation"] * 3
     assert made[0]["destination"].one is destination
     assert made[3]["destination"].one is products[0]
@@ -295,13 +295,11 @@ def test_two_barcodes_inside_the_distance_rule_are_caught(judge, barcodes):
 
 
 def test_a_product_that_does_not_carry_the_barcodes_the_table_names_is_caught(
-    judge, project, products
+    judge, build, products
 ):
     bases = str(products[-1].sequence)
-    at = bases.find(project.scheme.internal_stuffer_core) + len(
-        project.scheme.internal_stuffer_core
-    )
-    broken = bases[:at] + "AAATTTGGGCC" + bases[at + project.barcode.length :]
+    at = bases.find(build.scheme.internal_stuffer_core) + len(build.scheme.internal_stuffer_core)
+    broken = bases[:at] + "AAATTTGGGCC" + bases[at + build.barcode.length :]
     verdict = judge(
         products=[*products[:-1], SequenceRecord(broken, topology="circular", name="broken")]
     )
@@ -327,25 +325,25 @@ def test_a_destination_the_round_cannot_open_cleanly_is_caught(judge, destinatio
 # The DMX vector, which the validating experiment amplifies a well of.
 
 
-def test_a_blunt_site_between_a_releasing_site_and_the_primer_is_where_it_belongs(project):
+def test_a_blunt_site_between_a_releasing_site_and_the_primer_is_where_it_belongs(build):
     """The two the cassette carries are judged; the one the cargo's stuffer carries is not."""
     vector = _dmx_vector()
     bases = str(vector.sequence)
     forward = WELL_PRIMERS[0]
     clear = f"{bases.index(forward) + len(forward) + 1} .. {bases.index('GGTCTC')}"
-    (judged,) = check_dmx_vector(vector, project=project)
+    (judged,) = check_dmx_vector(vector, build=build)
     assert judged.status == "pass"
     assert "GCCCGGGC" in bases
     assert judged.check.value == bases.count("GTTTAAAC")
     assert clear in judged.check.detail
 
 
-def test_a_blunt_site_inside_a_primers_footprint_is_caught(project):
+def test_a_blunt_site_inside_a_primers_footprint_is_caught(build):
     vector = _dmx_vector(broken="GTTTAAAC")
     bases = str(vector.sequence)
     reads = WELL_PRIMERS[0][10:]
     clear = bases.index(reads) + len(reads) + 1
-    (judged,) = check_dmx_vector(vector, project=project)
+    (judged,) = check_dmx_vector(vector, build=build)
     assert judged.status == "fail"
     assert f"PmeI at {bases.index('GTTTAAAC') + 1} .." in judged.check.detail
     assert f"outside {clear} .." in judged.check.detail
@@ -354,10 +352,10 @@ def test_a_blunt_site_inside_a_primers_footprint_is_caught(project):
     assert finding.enzyme.name == "PmeI"
 
 
-def test_a_vector_a_primer_no_longer_reads_says_so_rather_than_passing(project):
+def test_a_vector_a_primer_no_longer_reads_says_so_rather_than_passing(build):
     bases = str(_dmx_vector().sequence).replace(WELL_PRIMERS[0], FILLER[: len(WELL_PRIMERS[0])])
     (judged,) = check_dmx_vector(
-        SequenceRecord(bases, topology="circular", name="unread"), project=project
+        SequenceRecord(bases, topology="circular", name="unread"), build=build
     )
     assert judged.status == "fail"
     assert "binds it in 0 places" in judged.check.detail
@@ -429,12 +427,12 @@ def final():
     return library, working
 
 
-def test_the_final_assembly_is_two_digests_and_a_ligation(project, final):
+def test_the_final_assembly_is_two_digests_and_a_ligation(build, final):
     library, working = final
     made = final_assembly_reactions(
-        project, library=library, working=working, cargo=get_enzyme(CARGO)
+        build, library=library, working=working, cargo=get_enzyme(CARGO)
     )
-    judged = [one for reaction in made for one in check_reaction(reaction, project=project)]
+    judged = [one for reaction in made for one in check_reaction(reaction, build=build)]
 
     assert [one.kind for one in made] == ["digest", "digest", "ligation"]
     assert made[-1]["destination"].cutter == get_enzyme(CARGO)
@@ -443,14 +441,12 @@ def test_the_final_assembly_is_two_digests_and_a_ligation(project, final):
     assert "AGGA, TTCC" in judged[2].check.detail
 
 
-def test_a_working_vector_opening_on_the_wrong_ends_fails_the_ligation(project, final):
+def test_a_working_vector_opening_on_the_wrong_ends_fails_the_ligation(build, final):
     """The digest passes it: two cuts is two cuts. Only the ends it leaves say it is wrong."""
     library, _ = final
     askew = _carrying(_cassette(get_enzyme(CARGO), "ACGTTGCA" * 20, left="AAAA", right="TTTT"))
-    made = final_assembly_reactions(
-        project, library=library, working=askew, cargo=get_enzyme(CARGO)
-    )
-    judged = [one for reaction in made for one in check_reaction(reaction, project=project)]
+    made = final_assembly_reactions(build, library=library, working=askew, cargo=get_enzyme(CARGO))
+    judged = [one for reaction in made for one in check_reaction(reaction, build=build)]
 
     assert [one.status for one in judged[:2]] == ["pass", "pass"]
     assert judged[2].status == "fail"

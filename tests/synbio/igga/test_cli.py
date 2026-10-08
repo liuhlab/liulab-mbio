@@ -29,8 +29,8 @@ PRICES = """key,item,bands,charge,basis,currency
 synthesised blocks,gene fragments,count 1-100; length_nt 1-2000,1200.00,per order,USD
 """
 
-#: The project every test here plans, as a user writes one.
-PROJECT = {
+#: The build every test here plans, as a user writes one.
+BUILD = {
     "name": "pool",
     "positions": ["N", "bZIP", "C"],
     "parts": "parts.fasta",
@@ -49,7 +49,7 @@ def plain(text: str) -> str:
 
 
 def write_inputs(directory: Path, *, parts: str = "parts.fasta", working: bool = False) -> Path:
-    """Write a parts FASTA, a vector carrying no stuffer, and the project naming both.
+    """Write a parts FASTA, a vector carrying no stuffer, and the build naming both.
 
     With `working`, a second such vector is written and named as the one the library moves into.
     It carries no ccdB cassette either, so the run has to be told where to put one.
@@ -66,20 +66,20 @@ def write_inputs(directory: Path, *, parts: str = "parts.fasta", working: bool =
             SequenceRecord("TA" * 100, topology="circular", name="stock"), directory / "stock.dna"
         )
         named = {"working_vector": "stock.dna"}
-    project = directory / "project.json"
-    project.write_text(json.dumps({**PROJECT, "parts": parts, **named}), encoding="utf-8")
-    return project
+    build = directory / "project.json"
+    build.write_text(json.dumps({**BUILD, "parts": parts, **named}), encoding="utf-8")
+    return build
 
 
 @pytest.fixture(scope="module")
-def project(tmp_path_factory):
-    """The project file, written once for every test here."""
+def build(tmp_path_factory):
+    """The build file, written once for every test here."""
     return write_inputs(tmp_path_factory.mktemp("inputs"))
 
 
-def run(project: Path, out: Path, *extra: str):
-    """Invoke `igga plan` over that project."""
-    return CliRunner().invoke(app, ["igga", "plan", str(project), "--out", str(out), *extra])
+def run(build: Path, out: Path, *extra: str):
+    """Invoke `igga plan` over that build."""
+    return CliRunner().invoke(app, ["igga", "plan", str(build), "--out", str(out), *extra])
 
 
 def one_run(out: Path):
@@ -87,7 +87,7 @@ def one_run(out: Path):
     return whole(read_project(out / "protocol" / "project.json"))
 
 
-def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
+def test_one_command_plans_the_library_and_prints_the_paths(build, tmp_path):
     out = tmp_path / "library"
 
     prices = tmp_path / "prices.csv"
@@ -95,9 +95,9 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
 
     # One run for the wiring of every option: what the FASTA holds, the span a stuffer goes at,
     # the pattern the part names are read with, and the price record the bill is costed against.
-    # The rest is the project file's own.
+    # The rest is the build file's own.
     result = run(
-        project,
+        build,
         out,
         "--kind",
         "protein",
@@ -142,9 +142,9 @@ def test_one_command_plans_the_library_and_prints_the_paths(project, tmp_path):
 
 
 def test_a_working_vector_carrying_no_cassette_is_planned_from_the_site_named(tmp_path):
-    """The project names the backbone; only the command line says where its cassette goes.
+    """The build names the backbone; only the command line says where its cassette goes.
 
-    A run of its own, because this project's bare vector donates no cargo and so cannot pass the
+    A run of its own, because this build's bare vector donates no cargo and so cannot pass the
     gate the shared one passes.
     """
     out = tmp_path / "library"
@@ -177,11 +177,11 @@ def ligase_matrix(tmp_path_factory) -> Path:
     return path
 
 
-def test_a_ligase_matrix_reports_each_round_on_the_sheet_it_names(project, tmp_path, ligase_matrix):
+def test_a_ligase_matrix_reports_each_round_on_the_sheet_it_names(build, tmp_path, ligase_matrix):
     out = tmp_path / "library"
 
     result = run(
-        project,
+        build,
         out,
         "--site",
         "100-140",
@@ -198,10 +198,8 @@ def test_a_ligase_matrix_reports_each_round_on_the_sheet_it_names(project, tmp_p
     assert SHEETS[0] not in checks[0].detail
 
 
-def test_a_workbook_of_several_sheets_is_refused_until_one_is_named(
-    project, tmp_path, ligase_matrix
-):
-    result = run(project, tmp_path / "library", "--ligase-matrix", str(ligase_matrix))
+def test_a_workbook_of_several_sheets_is_refused_until_one_is_named(build, tmp_path, ligase_matrix):
+    result = run(build, tmp_path / "library", "--ligase-matrix", str(ligase_matrix))
 
     assert result.exit_code == 1
     assert all(name in plain(result.output) for name in SHEETS)
@@ -259,8 +257,8 @@ def _sheet(count: int) -> str:
     )
 
 
-def test_a_kind_that_is_neither_protein_nor_dna_is_refused(project, tmp_path):
-    result = run(project, tmp_path / "library", "--kind", "rna")
+def test_a_kind_that_is_neither_protein_nor_dna_is_refused(build, tmp_path):
+    result = run(build, tmp_path / "library", "--kind", "rna")
 
     assert result.exit_code == 1
     assert "--kind is 'protein' or 'dna'" in plain(result.output)
@@ -276,11 +274,11 @@ def test_a_name_that_says_no_position_is_refused_naming_it(tmp_path):
     assert "'Q_zero' says no position" in plain(result.output)
 
 
-def test_a_project_the_barcode_frame_rule_refuses_fails_where_it_is_read(tmp_path):
-    project = write_inputs(tmp_path)
-    project.write_text(json.dumps({**PROJECT, "barcode": {"length": 12}}), encoding="utf-8")
+def test_a_build_the_barcode_frame_rule_refuses_fails_where_it_is_read(tmp_path):
+    build = write_inputs(tmp_path)
+    build.write_text(json.dumps({**BUILD, "barcode": {"length": 12}}), encoding="utf-8")
 
-    result = run(project, tmp_path / "library")
+    result = run(build, tmp_path / "library")
 
     assert result.exit_code == 1
     assert "barcode-frame" in plain(result.output)

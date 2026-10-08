@@ -162,7 +162,7 @@ class Verdict:
 def check_cargo(
     cargo: SequenceRecord,
     *,
-    project: Build,
+    build: Build,
     where: str = "cargo",
     ends_chain: bool = False,
     annealing: Sequence[str] = WELL_PRIMERS,
@@ -183,7 +183,7 @@ def check_cargo(
     ----------
     cargo
         The released molecule, its entry overhang first.
-    project
+    build
         What the build chose, which carries the method and the reserved enzymes.
     where
         What to call this cargo in a message.
@@ -192,7 +192,7 @@ def check_cargo(
     annealing
         What each primer that reads a well anneals to, 5' to 3'.
     """
-    held = project.reserved_enzymes
+    held = build.reserved_enzymes
     found = find_sites(cargo, held)
     named = ", ".join(sorted({site.enzyme.name for site in found}))
     sites = Judgement(
@@ -242,7 +242,7 @@ def check_cargo(
 
 
 def check_barcode_set(
-    codes: Sequence[str], *, project: Build, where: str = "this part list"
+    codes: Sequence[str], *, build: Build, where: str = "this part list"
 ) -> tuple[Judgement, ...]:
     """Judge one part list's barcodes: how far apart they stand, and what each one reads as.
 
@@ -251,10 +251,10 @@ def check_barcode_set(
     `liulab_mbio.barcodes` holds all of them; this names them for this method.
     """
     rules = barcode_rules(
-        project.scheme,
-        project.barcode.length,
-        distance=project.barcode.min_distance,
-        reserved=project.reserved_extra,
+        build.scheme,
+        build.barcode.length,
+        distance=build.barcode.min_distance,
+        reserved=build.reserved_extra,
     )
     apart = separation(codes, metric=rules.metric) if len(codes) > 1 else rules.distance
     spacing = Judgement(
@@ -286,7 +286,7 @@ def check_barcode_set(
 def check_product(
     product: SequenceRecord,
     *,
-    project: Build,
+    build: Build,
     barcodes: Mapping[str, Sequence[str]],
     where: str = "the library product",
 ) -> tuple[Judgement, ...]:
@@ -299,13 +299,13 @@ def check_product(
     keeps past its last part -- that stuffer and that block -- is then read as codons, because
     every library member translates through it.
     """
-    opened = _opening(product, project, where)
+    opened = _opening(product, build, where)
     bases = str(product.sequence)
     circular = product.topology == "circular"
     haystack = bases * 2 if circular else bases
-    core = project.scheme.internal_stuffer_core
+    core = build.scheme.internal_stuffer_core
     at = haystack.find(core)
-    opens = at - len(project.scheme.internal_stuffer_prefix)
+    opens = at - len(build.scheme.internal_stuffer_prefix)
     if at < 0 or opens < 0:
         return (
             opened,
@@ -320,7 +320,7 @@ def check_product(
                 where,
             ),
         )
-    read, missing, ends = _block(haystack, at + len(core), project, barcodes)
+    read, missing, ends = _block(haystack, at + len(core), build, barcodes)
     block = Judgement(
         Check(
             "barcode block",
@@ -329,7 +329,7 @@ def check_product(
             f"{where} keeps one barcode a round, {' then '.join(read)}, "
             "in the reverse of the order the rounds ran"
             if not missing
-            else f"{where} keeps {len(read)} of the {project.position_count} barcodes a round "
+            else f"{where} keeps {len(read)} of the {build.position_count} barcodes a round "
             f"leaves: {missing}",
         ),
         where,
@@ -366,7 +366,7 @@ def check_product(
 def check_dmx_vector(
     vector: SequenceRecord,
     *,
-    project: Build,
+    build: Build,
     annealing: Sequence[str] = WELL_PRIMERS,
     where: str = "the DMX vector",
 ) -> tuple[Judgement, ...]:
@@ -385,14 +385,14 @@ def check_dmx_vector(
     ----------
     vector
         The rebuilt DMX vector, as it is held.
-    project
+    build
         What the build chose, which carries the method's enzymes.
     annealing
         What each primer that reads a well anneals to, 5' to 3'.
     where
         What to call this vector in a message.
     """
-    external = project.scheme.external
+    external = build.scheme.external
     flanks, missing = _flanks(vector, external, annealing)
     if missing:
         return (
@@ -408,7 +408,7 @@ def check_dmx_vector(
         )
     judged: list[CutSite] = []
     stray: list[tuple[CutSite, Segment]] = []
-    for site in find_sites(vector, project.scheme.blunt):
+    for site in find_sites(vector, build.scheme.blunt):
         for flank, clear in flanks:
             if not _meets(vector, flank, site.span):
                 continue
@@ -440,7 +440,7 @@ def check_dmx_vector(
 
 
 def check_reaction(
-    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
+    reaction: Reaction, *, build: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Judge one tube: whether every molecule in it is cut where this method cuts it.
 
@@ -456,12 +456,12 @@ def check_reaction(
     joins each of those overhangs. With no profile a ligation carries its two checks alone.
     """
     if reaction.kind == "ligation":
-        return _ligation(reaction, project=project, profile=profile)
+        return _ligation(reaction, build=build, profile=profile)
     return tuple(_cutting(reaction, pool) for pool in reaction.pools)
 
 
 def library_reactions(
-    project: Build,
+    build: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -478,32 +478,32 @@ def library_reactions(
     ValueError
         If there is not one product and one part list a position.
     """
-    if len(products) != project.position_count:
+    if len(products) != build.position_count:
         raise ValueError(
-            f"this build fills {project.position_count} position(s) and {len(products)} "
+            f"this build fills {build.position_count} position(s) and {len(products)} "
             "product(s) were given, one a round"
         )
     made: list[Reaction] = []
     standing = destination
-    for number, position in enumerate(project.positions, start=1):
+    for number, position in enumerate(build.positions, start=1):
         if position not in blocks:
             raise ValueError(f"no block was given for position {position!r}")
         donors = tuple(blocks[position])
-        opened = Pool("destination", (standing,), enzyme=project.scheme.internal)
-        donated = Pool("donor", donors, enzyme=project.scheme.external)
+        opened = Pool("destination", (standing,), enzyme=build.scheme.internal)
+        donated = Pool("donor", donors, enzyme=build.scheme.external)
         made.extend(
             (
                 Reaction(
                     f"round {number} opening",
                     "digest",
                     pools=(opened,),
-                    enzymes=(project.scheme.internal,),
+                    enzymes=(build.scheme.internal,),
                 ),
                 Reaction(
                     f"round {number} release",
                     "digest",
                     pools=(donated,),
-                    enzymes=(project.scheme.external,),
+                    enzymes=(build.scheme.external,),
                 ),
                 Reaction(f"round {number} ligation", "ligation", pools=(opened, donated)),
             )
@@ -513,7 +513,7 @@ def library_reactions(
 
 
 def final_assembly_reactions(
-    project: Build, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
+    build: Build, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
 ) -> tuple[Reaction, ...]:
     """Compose the final assembly: two digests and the ligation that joins what they leave.
 
@@ -522,11 +522,11 @@ def final_assembly_reactions(
     the two. The gate reads it as three reactions because the ends meeting at the end were made by
     two different enzymes, which is the one thing a round never does.
     """
-    freed = Pool("donor", (library,), enzyme=project.scheme.external)
+    freed = Pool("donor", (library,), enzyme=build.scheme.external)
     opened = Pool("destination", (working,), enzyme=cargo)
     return (
         Reaction(
-            "final assembly release", "digest", pools=(freed,), enzymes=(project.scheme.external,)
+            "final assembly release", "digest", pools=(freed,), enzymes=(build.scheme.external,)
         ),
         Reaction("final assembly opening", "digest", pools=(opened,), enzymes=(cargo,)),
         Reaction("final assembly ligation", "ligation", pools=(opened, freed)),
@@ -534,7 +534,7 @@ def final_assembly_reactions(
 
 
 def check_library(
-    project: Build,
+    build: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -557,7 +557,7 @@ def check_library(
 
     Parameters
     ----------
-    project
+    build
         What the build chose.
     destination
         The vector the first round opens, judged as a rebuilt DMX vector where one is given.
@@ -589,41 +589,39 @@ def check_library(
         )
     made: list[Judgement] = []
     if _read_by_a_well_primer(destination, WELL_PRIMERS):
-        made.extend(check_dmx_vector(destination, project=project))
-    reactions = library_reactions(
-        project, destination=destination, blocks=blocks, products=products
-    )
+        made.extend(check_dmx_vector(destination, build=build))
+    reactions = library_reactions(build, destination=destination, blocks=blocks, products=products)
     if working is not None and cargo is not None:
         reactions += final_assembly_reactions(
-            project, library=products[-1], working=working, cargo=cargo
+            build, library=products[-1], working=working, cargo=cargo
         )
     for reaction in reactions:
-        made.extend(check_reaction(reaction, project=project, profile=profile))
-    last = project.positions[-1]
-    for position in project.positions:
+        made.extend(check_reaction(reaction, build=build, profile=profile))
+    last = build.positions[-1]
+    for position in build.positions:
         if position not in barcodes:
             raise ValueError(f"no barcode list was given for position {position!r}")
-        made.extend(check_barcode_set(barcodes[position], project=project, where=position))
+        made.extend(check_barcode_set(barcodes[position], build=build, where=position))
         for index, block in enumerate(blocks[position]):
             made.extend(
                 check_cargo(
-                    _cargo(block, project),
-                    project=project,
+                    _cargo(block, build),
+                    build=build,
                     where=f"the {position} cargo {index + 1}",
                     ends_chain=position == last,
                 )
             )
-    made.extend(check_product(products[-1], project=project, barcodes=barcodes))
+    made.extend(check_product(products[-1], build=build, barcodes=barcodes))
     return Verdict(made)
 
 
-def _opening(product: SequenceRecord, project: Build, where: str) -> Judgement:
+def _opening(product: SequenceRecord, build: Build, where: str) -> Judgement:
     """Whether the internal enzyme still cuts the finished product where a further round opens it.
 
     The method leaves the library openable after its last round, which is what a further round or
     a transfer into a working vector reads.
     """
-    enzyme = project.scheme.internal
+    enzyme = build.scheme.internal
     found = find_sites(product, (enzyme,))
     opens = len(found) == CUTS
     return Judgement(
@@ -668,7 +666,7 @@ def _worst(name: str, group: Sequence[Check]) -> Check:
     return Check(name, kept.status, kept.value, detail)
 
 
-def _cargo(block: SequenceRecord, project: Build) -> SequenceRecord:
+def _cargo(block: SequenceRecord, build: Build) -> SequenceRecord:
     """Return what the external enzyme releases from one block, its entry overhang first.
 
     The piece is taken by the end it leaves on and not by being the only one: a block held in a
@@ -682,13 +680,13 @@ def _cargo(block: SequenceRecord, project: Build) -> SequenceRecord:
     ValueError
         If no piece ends on the scar, or more than one does.
     """
-    scar = project.scheme.cloning_scar
+    scar = build.scheme.cloning_scar
     pieces = [
-        piece for piece in released(block, project.scheme.external) if piece.right_overhang == scar
+        piece for piece in released(block, build.scheme.external) if piece.right_overhang == scar
     ]
     if len(pieces) != 1:
         raise ValueError(
-            f"{project.scheme.external.name} releases {len(pieces)} piece(s) of this block "
+            f"{build.scheme.external.name} releases {len(pieces)} piece(s) of this block "
             f"ending on the cloning scar {scar}, and a donor carries one cargo"
         )
     return SequenceRecord(block.bases(pieces[0].start, pieces[0].end))
@@ -723,10 +721,10 @@ def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
 
 
 def _ligation(
-    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
+    reaction: Reaction, *, build: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Whether the ends meeting in one tube can be told apart, and how well they ligate."""
-    ends = sorted(_ends(reaction, project))
+    ends = sorted(_ends(reaction, build))
     distinguishable = len(ends) == LIGATION_OVERHANGS and not any(
         one == reverse_complement(other) for one in ends for other in ends
     )
@@ -746,7 +744,7 @@ def _ligation(
     )
     if not ends:
         return (told,)
-    report = fidelity(ends, project.scheme.internal)
+    report = fidelity(ends, build.scheme.internal)
     scored = Judgement(
         Check(
             "ligation fidelity",
@@ -790,7 +788,7 @@ def _on_target(reaction: Reaction, ends: Sequence[str], profile: LigaseProfile) 
     )
 
 
-def _ends(reaction: Reaction, project: Build) -> set[str]:
+def _ends(reaction: Reaction, build: Build) -> set[str]:
     """Every overhang the molecules of a ligation present, read off the digest that made it.
 
     A pool naming its own cutter is read off that one. The method's round is what the rest fall
@@ -799,10 +797,10 @@ def _ends(reaction: Reaction, project: Build) -> set[str]:
     the cargo enzyme instead.
     """
     cutters: dict[Role, Enzyme] = {
-        "destination": project.scheme.internal,
-        "donor": project.scheme.external,
-        "insert": project.scheme.external,
-        "carrier": project.scheme.external,
+        "destination": build.scheme.internal,
+        "donor": build.scheme.external,
+        "insert": build.scheme.external,
+        "carrier": build.scheme.external,
     }
     found: set[str] = set()
     for pool in reaction.pools:
@@ -814,23 +812,23 @@ def _ends(reaction: Reaction, project: Build) -> set[str]:
 
 
 def _block(
-    bases: str, at: int, project: Build, barcodes: Mapping[str, Sequence[str]]
+    bases: str, at: int, build: Build, barcodes: Mapping[str, Sequence[str]]
 ) -> tuple[tuple[str, ...], str, int]:
     """Walk the barcode block from `at`, one barcode a round joined by the cloning scar.
 
     Returns what was read, a phrase saying where the walk stopped -- empty where it read one
     barcode for every position -- and where it stopped.
     """
-    scar = project.scheme.cloning_scar
-    length = project.barcode.length
+    scar = build.scheme.cloning_scar
+    length = build.barcode.length
     read: list[str] = []
-    for position in reversed(project.positions):
+    for position in reversed(build.positions):
         code = bases[at : at + length]
         if code not in barcodes.get(position, ()):
             return tuple(read), f"{code!r} names no part of position {position}", at
         read.append(code)
         at += length
-        if len(read) < project.position_count:
+        if len(read) < build.position_count:
             if bases[at : at + len(scar)] != scar:
                 return tuple(read), f"no cloning scar follows the {position} barcode", at
             at += len(scar)

@@ -114,7 +114,7 @@ def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
     )
 
 
-def project(made: Scheme) -> Build:
+def build_of(made: Scheme) -> Build:
     """A build made under `made`, for the gate to read its own choices off."""
     return Build(
         "test",
@@ -243,7 +243,7 @@ def test_a_stop_in_the_retained_region_is_the_gate_s_to_report_not_a_round_s():
     assert translate(final.product.extract(final.retained)).startswith("*")
     judged = check_product(
         final.product,
-        project=project(stopping),
+        build=build_of(stopping),
         barcodes={one.position: [one.barcode] for one in representative(parts, POSITIONS)},
     )
     stops = next(one for one in judged if one.name == "terminal stop")

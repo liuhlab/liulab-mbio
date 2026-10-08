@@ -69,8 +69,8 @@ GAP = (600, 700)
 #: `test_the_cargo_enzyme_search_leaves_plvx_only_paqci` measures again.
 CARGO = "PaqCI"
 
-#: Where the project the gate reads lives. A digest is judged on the acting enzymes alone, so any
-#: project answers, and this is the one the suite already has.
+#: Where the build the gate reads lives. A digest is judged on the acting enzymes alone, so any
+#: build answers, and this is the one the suite already has.
 DEMO = Path(__file__).parents[3] / "docs" / "examples" / "ap1-library" / "project.json"
 
 
@@ -423,7 +423,7 @@ def test_the_gate_passes_the_tube_the_cargo_enzyme_opens_a_working_vector_in(wor
         enzymes=[CARGO],
     )
 
-    judged = check_reaction(reaction, project=read_build(DEMO))
+    judged = check_reaction(reaction, build=read_build(DEMO))
 
     assert [one.status for one in judged] == ["pass"]
     assert "in 2 places" in judged[0].check.detail
