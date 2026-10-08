@@ -1333,7 +1333,7 @@ def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
     return f'<div class="row">{label}{element}</div>', answering
 
 
-def _transfer(transfer: Transfer, plates: tuple[Plate, ...] = ()) -> str:
+def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     """Return a transfer drawn as the pattern it repeats, or as a table where it repeats none.
 
     A stamp is the two plates with every well it touches filled, since the pattern is what the

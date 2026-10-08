@@ -880,7 +880,11 @@ shape covers every move: one source to one destination is a plain or an acoustic
 sources to one destination is a **pool**, and a dense re-layout that leaves out the wells that
 failed is a **compaction**. A protocol step says where a thing is by holding the transfer rather
 than describing it.
-_Avoid_: dispense, stamp, reformat
+
+A transfer whose moves take every destination well from one source plate at one stride, at one
+volume, is a **stamp**: a stride and the source well it starts at stand for the whole move list,
+and a page draws the two plates rather than printing a row each.
+_Avoid_: dispense, reformat
 
 ### Source
 
