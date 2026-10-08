@@ -146,9 +146,10 @@ class Folder:
     def sources_at(self, here: str) -> str:
         """Return the page a citation on `here` finds its source on, empty where that is `here`.
 
-        A protocol page lists the sources it cites, and `references` lists the whole run's, so a
-        citation on either resolves where it stands. Every other page the run shares carries no
-        sources list, and its citations reach the run's.
+        A protocol page lists its own sources and `references` lists the whole run's, so a
+        citation on either resolves where it stands; `Protocol.audit` is what judges whether a
+        protocol named every source it cites. Every other page the run shares carries no sources
+        list, and its citations reach the run's.
 
         Examples
         --------
@@ -333,10 +334,9 @@ def render_index(project: Project, folder: Folder) -> str:
     """Return the way in to a run: what it achieves, how it fits together and how long it takes.
 
     The explanation of why the run is shaped as it is stands here and on no protocol page, so a
-    step never stops to explain a decision. The page carries no sources list of its own, so
-    every citation on it reaches the run's.
+    step never stops to explain a decision.
     """
-    at = folder.sources_at(folder.index)
+    sources = folder.sources_at(folder.index)
     holes = _run_holes(project, folder)
     said = _linked(project.summary, project.files)
     summary = f'<p class="summary">{said}</p>\n' if project.summary else ""
@@ -349,7 +349,7 @@ def render_index(project: Project, folder: Folder) -> str:
     for anchor, label, block in (
         ("flow", "How the run fits together", _flow(project, folder)),
         ("protocols", "Protocols", _protocols(folder)),
-        ("schedule", "Schedule", _schedule(project, folder, at)),
+        ("schedule", "Schedule", _schedule(project, folder, sources)),
         ("holes", "Holes", _run_hole_list(project, folder, holes)),
     ):
         if block:
@@ -365,14 +365,12 @@ def render_reagents(project: Project, folder: Folder) -> str:
 
     Merged across the protocols, each row naming which of them take it. A protocol page keeps
     its own list, which is what the bench reads while it works; this is what is ordered.
-
-    The page carries no sources list of its own, so every citation on it reaches the run's.
     """
-    at = folder.sources_at(folder.reagents)
+    sources = folder.sources_at(folder.reagents)
     blocks = (
-        ("materials", "Materials", _merged_materials(project, at)),
+        ("materials", "Materials", _merged_materials(project, sources)),
         ("kit", "Equipment and plasticware", _kit(project)),
-        ("bill", "Bill", _bill(project.bill, at)),
+        ("bill", "Bill", _bill(project.bill, sources)),
     )
     jumps = [(anchor, label) for anchor, label, block in blocks if block]
     lead = (
@@ -528,7 +526,7 @@ def _item_named(item: Item) -> str:
 SCHEDULE_COLUMNS = ("Steps", "Held", "Hands-on", "Unattended", "Holding nothing")
 
 
-def _schedule(project: Project, folder: Folder, at: str = "") -> str:
+def _schedule(project: Project, folder: Folder, sources: str = "") -> str:
     """Return the run's time plan as a table, with a hole wherever nothing states a number.
 
     A table and not a bar chart: most of a run's calendar is time nobody attends and nobody can
@@ -547,7 +545,7 @@ def _schedule(project: Project, folder: Folder, at: str = "") -> str:
     rows = "".join(
         f'<tr><td><a href="{escape(page.href)}">{escape(page.title)}</a></td>'
         f'{time.cells(shown)}</tr><tr class="wait-row"><td colspan="{len(shown) + 1}">'
-        f"{_waiting(time.waits, at)}</td></tr>"
+        f"{_waiting(time.waits, sources)}</td></tr>"
         for page, time in zip(folder.pages, times, strict=True)
     )
     head = "<th>Protocol</th>" + "".join(
@@ -658,11 +656,11 @@ def _taken(seconds: float, said: int, steps: int = 0) -> str | None:
     return f"{_duration(seconds)}{_over(said, steps, 'step')}"
 
 
-def _waiting(waits: tuple[Wait, ...], at: str = "") -> str:
+def _waiting(waits: tuple[Wait, ...], sources: str = "") -> str:
     """Return the wait row: what is waited on and for how long, or that nothing recorded any."""
     if not waits:
         return '<span class="muted">No waiting recorded.</span>'
-    return _waits(waits, at)
+    return _waits(waits, sources)
 
 
 def _time_of(protocol: Protocol) -> _Time:
@@ -760,7 +758,7 @@ def _hole_item(group: tuple[Hole, ...], where: tuple[str, str]) -> str:
     )
 
 
-def _merged_materials(project: Project, at: str = "") -> str:
+def _merged_materials(project: Project, sources: str = "") -> str:
     """Every material the run takes, merged by name and catalogue number.
 
     Two protocols buying one thing is one row on a shopping list. Where they state different
@@ -775,7 +773,7 @@ def _merged_materials(project: Project, at: str = "") -> str:
             found[key] = material if kept is None else replace(kept, amount=_join(kept, material))
             takers.setdefault(key, []).append(protocol.title)
     used = tuple(", ".join(dict.fromkeys(names)) for names in takers.values())
-    return _materials(tuple(found.values()), (), used, project.files, note=False, at=at)
+    return _materials(tuple(found.values()), (), used, project.files, note=False, sources=sources)
 
 
 def _join(kept: Material, found: Material) -> str:
@@ -1144,15 +1142,15 @@ def _materials(
     paths: Sequence[str] = (),
     *,
     note: bool = True,
-    at: str = "",
+    sources: str = "",
 ) -> str:
     """Everything that is not an oligo, and the hardware as one light line under it.
 
     `used` names, row by row, which protocols of a run take each material, for the page a whole
     run shares. A protocol's own list leaves it empty. That page is what is ordered rather than
     what is laid out, so it drops the bench note and `note` is how. `paths` is what the page
-    links a file name to, so a note saying which sheet a reagent is ordered from opens it. `at`
-    is where a citation resolves, which that page reads from `Folder.sources_at`.
+    links a file name to, so a note saying which sheet a reagent is ordered from opens it.
+    `sources` is the page a citation on this one resolves against, from `Folder.sources_at`.
 
     A material's rules and its cautions stand under the table, so they reach a reader of this
     list and not only the steps that pipette the tube. Two tubes carrying one sentence state it
@@ -1180,7 +1178,7 @@ def _materials(
         rows = "".join(
             f"<tr><td>{escape(material.name)}</td>"
             + "".join(f"<td>{_linked(get(material), paths)}</td>" for _, get in shown)
-            + (f"<td>{_cite(material.citation, at)}</td>" if cited else "")
+            + (f"<td>{_cite(material.citation, sources)}</td>" if cited else "")
             + (f"<td>{escape(used[i])}</td>" if used else "")
             + "</tr>"
             for i, material in enumerate(materials)
@@ -1198,7 +1196,7 @@ def _materials(
         )
     return (
         '<section class="block materials" id="materials">\n<h2>Materials</h2>\n'
-        f"{table}{line}{_rules(carried, at)}{cautions}\n</section>\n"
+        f"{table}{line}{_rules(carried, sources)}{cautions}\n</section>\n"
     )
 
 
@@ -1379,27 +1377,27 @@ def _oligo_checks(oligos: tuple[Oligo, ...]) -> str:
     )
 
 
-def _cite(citation: Citation | None, at: str = "") -> str:
+def _cite(citation: Citation | None, sources: str = "") -> str:
     """One citation, as the page shows it beside the number it carries.
 
-    `at` is the page the sources list stands on, as `Folder.sources_at` gives it, and is empty
-    where that is the page being rendered.
+    `sources` is the page the sources list stands on, as `Folder.sources_at` gives it, and is
+    empty where that is the page being rendered.
     """
     if citation is None:
         return ""
     where = f" {citation.locator}" if citation.locator else ""
     return (
-        f'<a class="cite" href="{escape(at)}#source-{escape(slug(citation.source))}">'
+        f'<a class="cite" href="{escape(sources)}#source-{escape(slug(citation.source))}">'
         f"{escape(citation.source + where)}</a>"
     )
 
 
-def _after(citation: Citation | None, at: str = "") -> str:
+def _after(citation: Citation | None, sources: str = "") -> str:
     """`_cite`, set off from the text before it; nothing when uncited."""
-    return f" {_cite(citation, at)}" if citation else ""
+    return f" {_cite(citation, sources)}" if citation else ""
 
 
-def _rules(rules: Iterable[tuple[Material, Rule]], at: str = "") -> str:
+def _rules(rules: Iterable[tuple[Material, Rule]], sources: str = "") -> str:
     """Every rule the materials in this step carry, computed from the material, never stored.
 
     A rule hangs on the material, so it shows wherever the material is and no edit to a step's
@@ -1408,7 +1406,7 @@ def _rules(rules: Iterable[tuple[Material, Rule]], at: str = "") -> str:
     items = "".join(
         f'<li class="rule is-{rule.kind}"><strong>{escape(material.name)}: '
         f"{escape('never' if rule.kind == 'forbids' else 'always')} "
-        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation, at)}</li>"
+        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation, sources)}</li>"
         for material, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
@@ -1684,7 +1682,7 @@ def _moves(transfer: Transfer) -> str:
     )
 
 
-def _bill(bill: Bill | None, at: str = "") -> str:
+def _bill(bill: Bill | None, sources: str = "") -> str:
     """Return the bill: what the run consumes, and a hole wherever no row priced it."""
     if bill is None:
         return ""
@@ -1695,7 +1693,7 @@ def _bill(bill: Bill | None, at: str = "") -> str:
         charge = (
             f'<span class="hole-none">{NO_NUMBER}</span>'
             if row.hole
-            else escape(row.charge) + _after(row.citation, at)
+            else escape(row.charge) + _after(row.citation, sources)
         )
         cells = [
             f"<td>{escape(row.item)}</td>",
@@ -1810,7 +1808,7 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
     return "".join(parts)
 
 
-def _waits(waits: tuple[Wait, ...], at: str = "") -> str:
+def _waits(waits: tuple[Wait, ...], sources: str = "") -> str:
     """Return what the step waits on and for how long, where the waiting falls.
 
     How long is whatever the vendor states, in their words; an unstated turnaround reads as a
@@ -1825,7 +1823,7 @@ def _waits(waits: tuple[Wait, ...], at: str = "") -> str:
             if wait.duration
             else f'<span class="hole-none">{NO_NUMBER}</span>'
         )
-        + f"{_after(wait.citation, at)}</li>"
+        + f"{_after(wait.citation, sources)}</li>"
         for wait in waits
     )
     return f'<ul class="waits" aria-label="Waiting">{items}</ul>\n'

@@ -553,7 +553,8 @@ def test_every_mark_a_filled_page_links_to_stands_on_the_page_it_names(tmp_path:
             where, _, mark = anchor.attrs["href"].partition("#")
             if not mark or where.startswith(("http:", "https:", "mailto:")):
                 continue
-            assert mark in marks[where or name], f"{name} links to {anchor.attrs['href']}"
+            found = marks.get(where or name, set())
+            assert mark in found, f"{name} links to {anchor.attrs['href']}"
 
 
 def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_page_with_none(
