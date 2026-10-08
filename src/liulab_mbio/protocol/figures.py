@@ -19,7 +19,7 @@ from liulab_mbio.sequence import SequenceRecord
 SOURCE_KEY = "figure-sources"
 SOURCE = Source(
     "liulab-mbio, Figure sources for four designs",
-    read_as="docs/research/figure-sources.md",
+    note="docs/research/figure-sources.md",
 )
 
 #: Where in the note a ligation figure's equivalent stands.

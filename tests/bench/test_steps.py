@@ -30,6 +30,8 @@ def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
     )
 
     assert step.title == "Amplify GFP"
+    # Keyed by the amplicon and not by the title, so rewording the title keeps the step's mark.
+    assert step.key == "pcr-gfp"
     assert step.instructions[-1] == (
         "Run the program below: 61 °C annealing and 20 s extension for a 749 bp product."
     )

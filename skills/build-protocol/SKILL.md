@@ -88,6 +88,10 @@ the user asks for what the pipeline did not anticipate — skip, add or reword a
 file in place and render it again. The folder ends with one final `protocol.json` and one page:
 a run is one session's job, so keep no copies and no record of the edits.
 
+Leave every `key` where it stands. A step's key anchors it and holds the bench's tick; a
+protocol's names the store those ticks are kept in. Reword a title and the ticks stay; change a
+key and they are lost. A step you add needs one of its own, saying what the step does.
+
 A run of several protocols writes `project.json` instead, holding every protocol in order, and a
 page each beside an index. Edit that one file and render the whole folder again:
 

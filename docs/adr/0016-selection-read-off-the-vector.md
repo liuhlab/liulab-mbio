@@ -41,4 +41,4 @@ named without one rather than given a number nobody published.
 
 Each stage now takes the drug its own vector carries: the cargo read-back and every round on the
 KanR destination, the final transfer on the working vector's own. Adding a marker to
-`SELECTION`, or a concentration to `stages.SELECTION_PLATE`, changes every page at once.
+`SELECTION`, or a concentration to `SELECTION_PLATE` beside it, changes every page at once.

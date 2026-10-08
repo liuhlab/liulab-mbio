@@ -1,10 +1,10 @@
-"""Seating: one part a well, simulated in its carrier, and no library at the end of it."""
+"""DMX seating: one part a well, simulated in its carrier, and no library at the end."""
 
 import pytest
 
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord
 from liulab_mbio.sites import digest, find_sites
-from liulab_synbio import seating
+from liulab_synbio.dmx import seating
 
 #: A carrier the size of a test: one blunt point, no site the releasing enzyme reads, and a
 #: feature the insertion falls inside so the report has something to say.
@@ -85,6 +85,12 @@ def test_the_seating_reaction_is_topoisomerase_and_names_no_enzyme_the_user_adds
     assert "topoisomerase" in " ".join(step.instructions).lower()
     assert "2 carrier plasmids" in " ".join(step.expected)
     assert "no pool and no library" in " ".join(step.expected).lower()
+
+
+def test_the_seating_step_carries_the_handle_its_builder_assigned():
+    """No pipeline writes this step, so `tests/test_step_keys.py` never sees its key."""
+    seated = seating.seat_parts([part("FLAG")], carrier=CARRIER)
+    assert seating.seating_step(seated).key == "seat-parts"
 
 
 def test_the_plate_is_the_smallest_format_that_holds_the_parts():

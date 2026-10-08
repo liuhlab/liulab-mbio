@@ -15,6 +15,7 @@ import pytest
 
 from liulab_mbio.barcodes import MAX_HOMOPOLYMER
 from liulab_mbio.bench.amounts import dna_amount
+from liulab_mbio.bench.materials import CUVETTE_ON_ICE, POLYMERASE_ON_ICE
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.protocol.model import Citation, write_protocol
 from liulab_mbio.sequence import SequenceRecord
@@ -248,7 +249,6 @@ def test_the_demo_emits_a_protocol_on_each_route(plan, protocol):
         *pcrs,
         *blocks,
         "IDX1",
-        "IDX2",
         *linkage,
         *final,
     ]
@@ -443,6 +443,32 @@ def test_the_run_is_one_protocol_a_sitting_and_every_handover_resolves(plan):
         assert {item.name for item in one.consumes} <= handed, one.title
         handed |= {item.name for item in one.produces}
     assert "the library in its working vector" in handed
+
+
+def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one(plan):
+    """A caution the bench reads on four pages is one sentence, carried by the tube it is about."""
+    chain = plan.chain()
+    shown = {
+        (one.title, step.key): one.cautions_for(step)
+        for one in chain.protocols
+        for step in one.steps
+        if one.cautions_for(step)
+    }
+
+    assert shown == {
+        ("Primer plates", "resuspend-primers"): (
+            "Spin the plate down before taking the seal off.",
+        ),
+        ("Cargo creation", "pcr1"): (POLYMERASE_ON_ICE,),
+        ("Cargo creation", "pcr2"): (POLYMERASE_ON_ICE,),
+        ("Cargo validation: index PCR", "index-pcr"): (POLYMERASE_ON_ICE,),
+        ("Library assembly in rounds", "round-1-electroporate"): (CUVETTE_ON_ICE,),
+        ("Library assembly in rounds", "round-2-electroporate"): (CUVETTE_ON_ICE,),
+        ("Library assembly in rounds", "round-3-electroporate"): (CUVETTE_ON_ICE,),
+        ("Final cargo ligation", "electroporate-and-grow"): (CUVETTE_ON_ICE,),
+    }
+    written = {step.key for one in chain.protocols for step in one.steps if step.cautions}
+    assert written == {"resuspend-primers"}
 
 
 def test_every_step_sits_under_a_stage_of_its_own_protocol(plan):

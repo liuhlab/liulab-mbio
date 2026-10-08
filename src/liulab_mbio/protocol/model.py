@@ -7,6 +7,7 @@ non-positive volume, time, cycle count or band size, or a link that is not http(
 import json
 import math
 import os
+import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import KW_ONLY, MISSING, asdict, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
@@ -27,10 +28,31 @@ FORMATS: Mapping[int, tuple[int, int]] = MappingProxyType(
     {12: (3, 4), 24: (4, 6), 96: (8, 12), 384: (16, 24), 1536: (32, 48)}
 )
 
+#: The longest a slug runs: a step's key, and a protocol's title in the file its page is written
+#: to. Long enough to stay readable, short enough for a file name on any filesystem.
+NAME_CHARS = 48
+
 
 def _require(ok: bool, message: str) -> None:
     if not ok:
         raise ValueError(message)
+
+
+def slug(text: str) -> str:
+    """Return `text` as a handle: lowercase, one dash where it is not a letter or a digit.
+
+    Capped at `NAME_CHARS`, so it fits a file name and reads as one word. Slugging a slug
+    returns it unchanged, so a key a builder already wrote this way survives a round trip.
+
+    Examples
+    --------
+    >>> slug("Set up the Golden Gate reaction")
+    'set-up-the-golden-gate-reaction'
+    >>> slug("Digest, then ligate")
+    'digest-then-ligate'
+    """
+    dashed = "".join(char if char.isalnum() else "-" for char in text.casefold())
+    return re.sub("-+", "-", dashed).strip("-")[:NAME_CHARS].strip("-")
 
 
 def row_label(row: int) -> str:
@@ -48,6 +70,30 @@ def row_label(row: int) -> str:
         if row == 0:
             return letters
         row -= 1
+
+
+def well_at(well: str) -> tuple[int, int] | None:
+    """Return a well name's 0-based row and column, or `None` where it names neither.
+
+    The inverse of `row_label` with the column read off the digits, so a position a plate
+    could hold reads back as the place it names and anything else says it is not one.
+
+    Examples
+    --------
+    >>> well_at("A1"), well_at("AF48"), well_at("reservoir")
+    ((0, 0), (31, 47), None)
+    """
+    name = well.strip().upper()
+    if not name.isascii():
+        return None
+    cut = len(name) - len(name.lstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+    letters, digits = name[:cut], name[cut:]
+    if not letters or not digits.isdigit():
+        return None
+    row = 0
+    for letter in letters:
+        row = row * 26 + ord(letter) - ord("A") + 1
+    return row - 1, int(digits) - 1
 
 
 _SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
@@ -92,6 +138,9 @@ class Source:
         How it was read, such as ``"plain curl"``.
     date
         When it was read.
+    note
+        The research note it was read into, as a repo-relative path. Empty where the document
+        has no note of its own.
     """
 
     document: str
@@ -100,6 +149,7 @@ class Source:
     url: str = ""
     read_as: str = ""
     date: str = ""
+    note: str = ""
 
     def __post_init__(self) -> None:
         """Refuse a source with no document, or a link that is not http or https."""
@@ -201,7 +251,9 @@ def names(subject: str, among: Iterable[str]) -> bool:
 
 
 #: Why a number is missing. A ``"price"`` hole names no issue: a price nobody loaded is a missing
-#: input of the user's, not a defect in what the package knows.
+#: input of the user's, not a defect in what the package knows. Only ``"unread"`` fails
+#: `Protocol.audit`: the other four name a gap no source closes, which is what a finished plan
+#: keeps, while a source nobody read is work left undone.
 type HoleKind = Literal["undecided", "unpublished", "lab", "unread", "price"]
 
 
@@ -274,6 +326,9 @@ class Material:
         rule conditional on the tube's contents is matched against these.
     rules
         What must not, or must, happen where this material is used.
+    cautions
+        What to watch out for wherever it is used, a sentence each. It hangs here for the
+        reason a rule does, and shows on every step naming the material.
     citation
         Where its parameters were read.
     """
@@ -287,6 +342,7 @@ class Material:
     note: str = ""
     contains: tuple[str, ...] = ()
     rules: tuple[Rule, ...] = ()
+    cautions: tuple[str, ...] = ()
     citation: Citation | None = None
 
 
@@ -315,6 +371,18 @@ class Check:
             self.status is None or self.status in STATUSES,
             f"check {self.name!r}: status is one of {', '.join(STATUSES)}, got {self.status!r}",
         )
+
+
+def _sources_check(cited: frozenset[str], named: frozenset[str]) -> Check:
+    """Return the `sources` verdict: every key `cited` is one of those `named`.
+
+    A protocol is judged against the sources it names itself; a project's bill against the
+    sources it and its protocols name, which are the ones the run's pages list.
+    """
+    dangling = sorted(cited - named)
+    if dangling:
+        return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
+    return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
 
 
 @dataclass(frozen=True, slots=True)
@@ -449,16 +517,19 @@ class ReactionTable:
 
 @dataclass(frozen=True, slots=True)
 class Incubation:
-    """One temperature held for a time.
+    """One temperature held for a time, stepped each cycle where it is a touchdown.
 
     Parameters
     ----------
     label
         Such as ``"Annealing"``.
     temperature_c
-        Degrees Celsius.
+        Degrees Celsius, the first cycle's where `delta_c` steps it.
     seconds
         ``None`` holds until the reader stops it.
+    delta_c
+        Degrees Celsius added each later cycle, negative for a touchdown; ``None`` holds the
+        temperature. `last_c` reads the end off it, so a touchdown is one cycled stage.
     citation
         Where the temperature and the time were read.
     """
@@ -466,14 +537,30 @@ class Incubation:
     label: str
     temperature_c: float
     seconds: float | None
+    _: KW_ONLY
+    delta_c: float | None = None
     citation: Citation | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a time that is not positive."""
+        """Refuse a time that is not positive, or a step that steps nowhere."""
         _require(
             self.seconds is None or self.seconds > 0,
             f"incubation {self.label!r}: seconds must be positive or null",
         )
+        _require(
+            self.delta_c != 0,
+            f"incubation {self.label!r}: delta_c must be non-zero or null",
+        )
+
+    def last_c(self, cycles: int) -> float:
+        """Return the temperature of the `cycles`-th cycle.
+
+        Examples
+        --------
+        >>> Incubation("Anneal", 68.0, 20, delta_c=-0.5).last_c(10)
+        63.5
+        """
+        return self.temperature_c + (self.delta_c or 0) * (cycles - 1)
 
 
 @dataclass(frozen=True, slots=True)
@@ -852,6 +939,60 @@ class Move:
         _require(self.volume_ul > 0, "a move's volume_ul must be positive")
 
 
+#: A stride in words, one entry per stride a stamp can have. The widest a format allows is 4:
+#: a 1536-well plate sampled into a 96-well one takes every fourth row and column.
+_STRIDES = ("", "", "every other", "every third", "every fourth")
+
+
+@dataclass(frozen=True, slots=True)
+class Stamp:
+    """The one pattern a transfer repeats, in place of the moves that spell it out.
+
+    Destination (row, column) comes from source (``stride`` · row + `row`, ``stride`` ·
+    column + `column`), so three numbers stand for the whole move list and a page can draw
+    the pattern rather than print a row each.
+
+    Parameters
+    ----------
+    stride
+        How far apart the source wells stand: 1 well for well, 2 every other row and column.
+    row, column
+        Where on the source the pattern starts, 0-based.
+    """
+
+    stride: int
+    row: int
+    column: int
+
+    def __post_init__(self) -> None:
+        """Refuse a stride no plate format allows, or a start off the plate."""
+        _require(
+            1 <= self.stride < len(_STRIDES),
+            f"a stamp's stride is 1 to {len(_STRIDES) - 1}, not {self.stride}",
+        )
+        _require(min(self.row, self.column) >= 0, "a stamp starts on the plate")
+
+    @property
+    def start(self) -> str:
+        """The source well the pattern starts at, such as ``A2``."""
+        return f"{row_label(self.row)}{self.column + 1}"
+
+    @property
+    def words(self) -> str:
+        """The pattern as the bench follows it: which source wells, and where it starts.
+
+        Examples
+        --------
+        >>> Stamp(1, 0, 0).words, Stamp(2, 0, 1).words
+        ('each well into the same well', 'every other row and column, starting A2')
+        """
+        if self.stride == 1:
+            if not self.row and not self.column:
+                return "each well into the same well"
+            return f"the same layout, starting {self.start}"
+        return f"{_STRIDES[self.stride]} row and column, starting {self.start}"
+
+
 @dataclass(frozen=True, slots=True)
 class Transfer:
     """Material moved between wells, shown as a table beside a step's prose.
@@ -892,6 +1033,41 @@ class Transfer:
             name for move in self.moves for name in (move.source.plate, move.destination.plate)
         )
         return tuple(seen)
+
+    @property
+    def stamp(self) -> Stamp | None:
+        """The one pattern every move repeats, or `None` where the moves are not one pattern.
+
+        A stamp runs one volume from one plate into another and takes every destination well
+        from the source at one stride. That is what the bench does by hand, so a page draws it
+        once instead of printing a row per move; anything else is a list and stays one.
+
+        Examples
+        --------
+        >>> picked = (Well("picked", "A1"), Well("picked", "A3"))
+        >>> moves = tuple(Move(one, Well("index", f"A{n}"), 1.0) for n, one in enumerate(picked, 1))
+        >>> Transfer("Sample a quarter", moves).stamp
+        Stamp(stride=2, row=0, column=0)
+        """
+        if len(self.plates) != 2 or len({move.volume_ul for move in self.moves}) != 1:
+            return None
+        source, destination = self.plates
+        places: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        for move in self.moves:
+            if (move.source.plate, move.destination.plate) != (source, destination):
+                return None
+            at, to = well_at(move.source.well), well_at(move.destination.well)
+            if at is None or to is None:
+                return None
+            places.append((at, to))
+        for stride in range(1, len(_STRIDES)):
+            offsets = {(at[0] - stride * to[0], at[1] - stride * to[1]) for at, to in places}
+            if len(offsets) != 1:
+                continue
+            row, column = offsets.pop()
+            if min(row, column) >= 0:
+                return Stamp(stride, row, column)
+        return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -956,7 +1132,8 @@ class Bill:
     total
         The sum over the rows that priced, written out. Empty where none did.
     record
-        The key of the `Protocol.sources` entry naming the price record.
+        The key of the `sources` entry naming the price record, on whichever of `Protocol` and
+        `Project` holds the bill.
     """
 
     rows: tuple[BillRow, ...]
@@ -969,6 +1146,17 @@ class Bill:
     def __post_init__(self) -> None:
         """Refuse an empty bill."""
         _require(bool(self.rows), f"bill {self.title!r} has no row")
+
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this bill's rows name.
+
+        Examples
+        --------
+        >>> Bill((BillRow("cells", 1, citation=Citation("NEB")),)).cited
+        frozenset({'NEB'})
+        """
+        return frozenset(row.citation.source for row in self.rows if row.citation)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1034,6 +1222,10 @@ class Step:
     ----------
     title
         What the step achieves, such as ``"Run the thermocycler"``.
+    key
+        What this step is, whatever its title is reworded to: the handle its anchor and the
+        bench's check mark are kept under. The builder assigns it, for the step's job and not
+        its wording, and it is slugged as a title is. Empty, it falls back to the title's slug.
     section
         What stage of the protocol the step belongs to, such as ``"Day 1"``. A label and not a
         container: the steps stay one list and the numbering runs through it.
@@ -1066,6 +1258,7 @@ class Step:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     section: str = ""
     instructions: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
@@ -1083,13 +1276,14 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title, or a hands-on time below zero."""
+        """Refuse an empty title or a hands-on time below zero, and slug the key or the title."""
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,
             f"step {self.title!r}: hands_on_seconds is zero or more, or null where nobody "
             "stated it",
         )
+        object.__setattr__(self, "key", slug(self.key or self.title))
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -1117,9 +1311,9 @@ class Step:
 
         Examples
         --------
-        >>> Step("Rest the tube", timers=(Timer("rest", 600),)).held_seconds
+        >>> Step("Rest the tube", key="rest", timers=(Timer("rest", 600),)).held_seconds
         600.0
-        >>> Step("Mix the reaction").held_seconds is None
+        >>> Step("Mix the reaction", key="mix").held_seconds is None
         True
         """
         bounded = [float(timer.seconds) for timer in self.timers]
@@ -1140,6 +1334,10 @@ class Protocol:
     ----------
     title
         The page heading.
+    key
+        What the rendered page remembers the bench's check marks under, minted from the content
+        where a pipeline writes the JSON and left alone after, so an agent's edit keeps the ticks
+        already made. Empty where nobody has minted one.
     summary
         One paragraph: what the protocol does.
     overview
@@ -1158,6 +1356,14 @@ class Protocol:
     materials, oligos, equipment
         The reagents, the oligos to order, and the hardware. Three lists and not one, because an
         order sheet and a reagent list want different columns.
+    order_sheet
+        The file holding `oligos` as a sheet to send a supplier, as a path from the page. The
+        page links it rather than being the thing that is ordered from.
+    files
+        The files the run writes, each as a path from the page. Rendered text naming one by its
+        file name links it, so a bare filename is never one the reader cannot open. A file the
+        page never names costs nothing, so a run declares what it writes once rather than each
+        page declaring what it mentions.
     vessels, plates
         What the run holds material in, and where each thing sits.
     steps, references
@@ -1172,6 +1378,7 @@ class Protocol:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     summary: str = ""
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
@@ -1180,6 +1387,8 @@ class Protocol:
     produces: tuple[Item, ...] = ()
     materials: tuple[Material, ...] = ()
     oligos: tuple[Oligo, ...] = ()
+    order_sheet: str = ""
+    files: tuple[str, ...] = ()
     equipment: tuple[str, ...] = ()
     vessels: tuple[Vessel, ...] = ()
     plates: tuple[Plate, ...] = ()
@@ -1190,8 +1399,9 @@ class Protocol:
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse an empty title, or an overview value too long to be a card."""
+        """Refuse an empty title, or an overview value too long to be a card; slug the key."""
         _require(bool(self.title.strip()), "a protocol needs a title")
+        object.__setattr__(self, "key", slug(self.key))
         for label, value in self.overview.items():
             _require(
                 len(value) <= OVERVIEW_CHARS,
@@ -1224,12 +1434,19 @@ class Protocol:
 
         Examples
         --------
-        >>> steps = (Step("Mix"), Step("Rest", timers=(Timer("rest", 60),)))
+        >>> steps = (Step("Mix", key="mix"), Step("Rest", key="rest", timers=(Timer("rest", 60),)))
         >>> Protocol("Demo", steps=steps).held_seconds
         (60.0, 1)
         """
         held = [step.held_seconds for step in self.steps]
         return sum((one for one in held if one is not None), 0.0), held.count(None)
+
+    def materials_for(self, step: Step) -> tuple[Material, ...]:
+        """Return the materials `step` names, which are the ones whose facts reach it.
+
+        What a material carries reaches a step through this and nowhere else.
+        """
+        return tuple(one for one in self.materials if names(one.name, step.named))
 
     def rules_for(self, step: Step) -> tuple[tuple[Material, Rule], ...]:
         """Return each rule that bears on `step`, with the material carrying it.
@@ -1238,16 +1455,20 @@ class Protocol:
         edited out of a step because it was never written into one.
         """
         contents = self.contents_of(step)
-        found: list[tuple[Material, Rule]] = []
-        for material in self.materials:
-            if not names(material.name, step.named):
-                continue
-            found += [
-                (material, rule)
-                for rule in material.rules
-                if not rule.when or names(rule.when, contents)
-            ]
-        return tuple(found)
+        return tuple(
+            (material, rule)
+            for material in self.materials_for(step)
+            for rule in material.rules
+            if not rule.when or names(rule.when, contents)
+        )
+
+    def cautions_for(self, step: Step) -> tuple[str, ...]:
+        """Return every caution `step` shows: its materials' first, then its own, each once.
+
+        A step's own stands where no material carries one.
+        """
+        carried = (one for material in self.materials_for(step) for one in material.cautions)
+        return tuple(dict.fromkeys((*carried, *step.cautions)))
 
     def contents_of(self, step: Step) -> tuple[str, ...]:
         """Return what is in the step's tubes: what it pipettes, and what each of those brings."""
@@ -1301,17 +1522,12 @@ class Protocol:
                 *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(w.citation for s in self.steps for w in s.waits),
-                *(row.citation for row in (self.bill.rows if self.bill else ())),
             )
             if citation
-        )
+        ) | (self.bill.cited if self.bill else frozenset())
 
     def _sources(self) -> Check:
-        cited = self.cited
-        dangling = sorted(cited - set(self.sources))
-        if dangling:
-            return Check("sources", "fail", f"cited but not named: {', '.join(dangling)}")
-        return Check("sources", "pass", f"{len(cited)} of {len(cited)} citations resolve")
+        return _sources_check(self.cited, frozenset(self.sources))
 
     def _wells(self) -> Check:
         known = {
@@ -1347,6 +1563,9 @@ class Protocol:
         holes = self.all_holes
         if not holes:
             return Check("holes", "pass", "no number is missing")
+        unread = [hole.id for hole in holes if hole.kind == "unread"]
+        if unread:
+            return Check("holes", "fail", f"a source nobody read would fill: {', '.join(unread)}")
         ids = ", ".join(hole.id for hole in holes)
         count = f"{len(holes)} numbers have" if len(holes) > 1 else "1 number has"
         return Check("holes", None, f"{count} no source: {ids}")
@@ -1381,11 +1600,16 @@ class Project:
     ----------
     title
         What the run is called.
+    key
+        What the run's own pages remember under, as `Protocol.key` is. Each protocol carries its
+        own and no two may share one, since a key names one page's store.
     summary
         One paragraph: what the run achieves.
     background
         What the reader is told before the first protocol: why the run is shaped as it is, a
         topic at a time. Explanation a step would otherwise carry belongs here.
+    files
+        The files the run writes, as `Protocol.files` holds them, for the run's own pages.
     inputs
         What the bench already holds before the first protocol.
     protocols
@@ -1393,6 +1617,9 @@ class Project:
     checks
         Verdicts on the design, which one protocol of the run cannot judge alone. A verdict on
         one protocol's own work stays on that protocol.
+    sources
+        Every document the run's own pages cite, as `Protocol.sources` holds a page's. The
+        record pricing `bill` is one.
     bill
         What the run consumes, and what it costs where a price record prices it. It is the
         run's, not each protocol's, because two protocols buying the same cells would otherwise
@@ -1401,26 +1628,41 @@ class Project:
 
     title: str
     _: KW_ONLY
+    key: str = ""
     summary: str = ""
     background: tuple[Topic, ...] = ()
+    files: tuple[str, ...] = ()
     inputs: tuple[Item, ...] = ()
     protocols: tuple[Protocol, ...] = ()
     checks: tuple[Check, ...] = ()
+    sources: Mapping[str, Source] = field(default_factory=dict, hash=False)
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a project with no title."""
+        """Refuse a project with no title, or two protocols keyed alike; slug the key."""
         _require(bool(self.title.strip()), "a project needs a title")
+        object.__setattr__(self, "key", slug(self.key))
+        keys = [one.key for one in self.protocols if one.key]
+        shared = next((key for key in keys if keys.count(key) > 1), "")
+        _require(
+            not shared,
+            f"two protocols are keyed {shared!r}: a key names one page's store, so a protocol "
+            "copied from another needs its own key or none",
+        )
 
     def audit(self) -> tuple[Check, ...]:
-        """Judge the chain: every consumed name is an input or an earlier protocol's output.
+        """Judge the chain, and the sources its own bill cites.
+
+        A consumed name resolves to an input or an earlier protocol's output, and a bill row's
+        citation to a source the run or one of its protocols names. Each protocol judges its own
+        citations.
 
         Examples
         --------
         >>> [check.name for check in Project("Demo").audit()]
-        ['handoffs']
+        ['handoffs', 'sources']
         """
-        return (self._handoffs(),)
+        return (self._handoffs(), self._sources())
 
     def _handoffs(self) -> Check:
         handed = {item.name for item in self.inputs}
@@ -1440,6 +1682,12 @@ class Project:
             f"{consumed} consumed items resolve" if consumed != 1 else "1 consumed item resolves"
         )
         return Check("handoffs", "pass", counted)
+
+    def _sources(self) -> Check:
+        named = frozenset(self.sources).union(
+            key for protocol in self.protocols for key in protocol.sources
+        )
+        return _sources_check(self.bill.cited if self.bill else frozenset(), named)
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Project":

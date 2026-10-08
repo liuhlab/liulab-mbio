@@ -15,7 +15,7 @@ from liulab_synbio.igga.figures import (
     pool_pcr_figure,
 )
 from liulab_synbio.igga.method import ORTHOGONAL_SPLIT
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 from liulab_synbio.igga.rounds import ROUND_FILE, assemble_rounds
 
 from .test_cargo import bases, block
@@ -42,7 +42,7 @@ def pooled():
     primers = tuple(
         PrimerSite(role, f"P{index}", bases(rng, PRIMER_LENGTH)) for index, role in enumerate(roles)
     )
-    project = Project(
+    project = Build(
         "tiny",
         positions=("N",),
         parts=Path("parts.fasta"),

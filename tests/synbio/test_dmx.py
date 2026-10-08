@@ -1,15 +1,15 @@
-"""The DMX stage: how a well is addressed, how deep its read must be, and what passes."""
+"""DMX: how a well is addressed, how deep its read must be, and what the kit has to be."""
 
 import pytest
 
 from liulab_mbio.protocol.model import Citation, Well
-from liulab_synbio import dmx
+from liulab_synbio.dmx import kit, method, steps
 
 KIT = """name\tgroup\tindex\toverhang5\tumi\toverhang3\tfinal_seq
 """
 
 
-def kit_text(groups: int = dmx.GROUPS, size: int = dmx.GROUP_SIZE) -> str:
+def kit_text(groups: int = kit.GROUPS, size: int = kit.GROUP_SIZE) -> str:
     """Return a kit file of `groups` groups of `size`, chaining the way the real one does."""
     chain = ["AGGA", "GTTC", "CCTT", "TCAG", "TTCC"]
     lines = [KIT.strip()]
@@ -32,43 +32,48 @@ def write_kit(tmp_path, text: str):
 
 def test_address_factorises_across_the_axes():
     """A well's marks are its index in mixed radix, and the plate is its own axis."""
-    first = dmx.address(dmx.ROUTE_LIGATION, plate=0, well=0)
+    first = method.address(method.ROUTE_LIGATION, plate=0, well=0)
     assert first.marks == (1, 1, 1, 1)
-    last = dmx.address(dmx.ROUTE_LIGATION, plate=0, well=dmx.ROUTE_LIGATION.wells_per_plate - 1)
+    last = method.address(
+        method.ROUTE_LIGATION, plate=0, well=method.ROUTE_LIGATION.wells_per_plate - 1
+    )
     assert last.marks == (24, 24, 24, 1)
-    assert len({dmx.address(dmx.ROUTE_LIGATION, plate=0, well=n).marks for n in range(500)}) == 500
+    assert (
+        len({method.address(method.ROUTE_LIGATION, plate=0, well=n).marks for n in range(500)})
+        == 500
+    )
 
 
 def test_the_plate_axis_tells_two_plates_apart():
     """Two wells at the same position on different plates differ only in the plate's mark."""
-    here = dmx.address(dmx.ROUTE_INDEX_PCR, plate=0, well=7)
-    there = dmx.address(dmx.ROUTE_INDEX_PCR, plate=5, well=7)
+    here = method.address(method.ROUTE_INDEX_PCR, plate=0, well=7)
+    there = method.address(method.ROUTE_INDEX_PCR, plate=5, well=7)
     assert here.well_marks == there.well_marks
     assert (here.plate_mark, there.plate_mark) == (1, 6)
 
 
 def test_ligation_addresses_a_compressed_plate_and_index_pcr_the_levseq_set():
     """Three groups reach past 1,536 wells, and 96 by 96 reaches 9,216."""
-    assert dmx.ROUTE_LIGATION.wells_per_plate >= dmx.COMPRESSED_WELLS
-    assert dmx.ROUTE_INDEX_PCR.capacity == 9216
+    assert method.ROUTE_LIGATION.wells_per_plate >= method.COMPRESSED_WELLS
+    assert method.ROUTE_INDEX_PCR.capacity == 9216
 
 
 def test_an_address_past_the_route_is_refused():
     """A well or a plate the route cannot tell apart is named rather than wrapped."""
     with pytest.raises(ValueError, match="past the last"):
-        dmx.address(dmx.ROUTE_INDEX_PCR, plate=0, well=dmx.INDEX_WELLS)
+        method.address(method.ROUTE_INDEX_PCR, plate=0, well=method.INDEX_WELLS)
     with pytest.raises(ValueError, match="past the last"):
-        dmx.address(dmx.ROUTE_INDEX_PCR, plate=dmx.INDEX_WELLS, well=0)
+        method.address(method.ROUTE_INDEX_PCR, plate=method.INDEX_WELLS, well=0)
 
 
 def test_below_the_floor_is_no_verdict_rather_than_a_fail():
     """A well nobody could call carries None, which is what keeps it out of the compaction."""
-    assert dmx.depth_check(dmx.ROUTE_LIGATION, 151).status == "pass"
-    assert dmx.depth_check(dmx.ROUTE_LIGATION, 150).status is None
-    assert dmx.depth_check(dmx.ROUTE_LIGATION, 149).status is None
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 21).status == "pass"
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 11).status == "warn"
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 9).status is None
+    assert method.depth_check(method.ROUTE_LIGATION, 151).status == "pass"
+    assert method.depth_check(method.ROUTE_LIGATION, 150).status is None
+    assert method.depth_check(method.ROUTE_LIGATION, 149).status is None
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 21).status == "pass"
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 11).status == "warn"
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 9).status is None
 
 
 def test_the_wanted_mark_is_exceeded_and_the_tolerable_one_is_reached():
@@ -76,68 +81,45 @@ def test_the_wanted_mark_is_exceeded_and_the_tolerable_one_is_reached():
 
     So 20 itself is only tolerated, while 10 itself still carries a verdict.
     """
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 20).status == "warn"
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 10).status == "warn"
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 20).status == "warn"
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 10).status == "warn"
 
 
 def test_the_floor_travels_with_the_route_and_a_project_may_only_raise_it():
     """Each floor was measured on its own library prep, so neither is the other's."""
-    assert dmx.ROUTE_LIGATION.wanted_reads != dmx.ROUTE_INDEX_PCR.wanted_reads
-    assert dmx.depth_check(dmx.ROUTE_INDEX_PCR, 25, wanted=30).status == "warn"
+    assert method.ROUTE_LIGATION.wanted_reads != method.ROUTE_INDEX_PCR.wanted_reads
+    assert method.depth_check(method.ROUTE_INDEX_PCR, 25, wanted=30).status == "warn"
     with pytest.raises(ValueError, match="raise"):
-        dmx.depth_check(dmx.ROUTE_INDEX_PCR, 25, wanted=5)
+        method.depth_check(method.ROUTE_INDEX_PCR, 25, wanted=5)
 
 
-def test_a_pass_is_an_exact_match_and_a_silent_change_is_not_one():
-    """A barcode that no longer names its member cannot be put right by the linkage read."""
-    designed = "AGGAATGAAACCGTTCC"
-    assert dmx.identity_check((designed,), designed).status == "pass"
-    assert dmx.identity_check((designed[:-1] + "A",), designed).status == "fail"
-    assert dmx.identity_check((designed, designed[:-1] + "A"), designed).status == "fail"
-    assert dmx.identity_check((), designed).status is None
-
-
-def test_reformatting_compacts_out_failures_and_keeps_the_uncalled():
-    """Compacting out a well nobody read throws away a design that may be clean."""
+def test_a_well_too_thin_to_call_is_judged_on_its_depth_alone():
+    """The two questions run in order, which is why a shallow well is never a failure."""
     designed = "AGGAATGTTCC"
-    kept = dmx.judge_well(
-        Well("picked", "A1"), route=dmx.ROUTE_LIGATION, reads=4, called=(), designed=designed
+    thin = method.judge_well(
+        Well("picked", "A1"), route=method.ROUTE_LIGATION, reads=4, called=(), designed=designed
     )
-    gone = dmx.judge_well(
+    deep = method.judge_well(
         Well("picked", "A2"),
-        route=dmx.ROUTE_LIGATION,
+        route=method.ROUTE_LIGATION,
         reads=400,
         called=("AGGAA",),
         designed=designed,
     )
-    passed = dmx.judge_well(
-        Well("picked", "A3"),
-        route=dmx.ROUTE_LIGATION,
-        reads=400,
-        called=(designed,),
-        designed=designed,
-    )
-    assert (kept.status, gone.status, passed.status) == ("pass", "fail", "pass")
-    assert kept.called is False
-    assert [one.well.well for one in dmx.reformat((kept, gone, passed))] == ["A1", "A3"]
-
-
-def test_the_clean_colony_curve_returns_its_measured_anchors():
-    """Every anchor is Lund's own; between them the curve is interpolated and says so."""
-    for fragments, chance in dmx.CLEAN_COLONY_CURVE:
-        assert dmx.clean_colony_chance(fragments) == pytest.approx(chance)
-    assert dmx.clean_colony_chance(1) == 1.0
-    assert dmx.clean_colony_chance(20) == 0.0
-    assert 0.846 < dmx.clean_colony_chance(4) < 0.938
+    assert [one.name for one in thin.checks] == ["reads_per_well"]
+    assert thin.called is False
+    assert [one.name for one in deep.checks] == ["reads_per_well", "well_identity"]
+    assert deep.status == "fail"
 
 
 def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):
     """The sequences are not package data, and a file that is not the kit is refused by name."""
-    kit = dmx.read_kit(write_kit(tmp_path, kit_text()))
-    assert len(kit.barcodes) == dmx.GROUPS * dmx.GROUP_SIZE
-    assert kit.at(2, 3).name == "DMX_2_3"
+    held = kit.read_kit(write_kit(tmp_path, kit_text()))
+    assert len(held.barcodes) == kit.GROUPS * kit.GROUP_SIZE
+    assert held.at(2, 3).name == "DMX_2_3"
     names = [
-        one.name for one in dmx.barcodes_for(kit, dmx.address(dmx.ROUTE_LIGATION, plate=0, well=0))
+        one.name
+        for one in method.barcodes_for(held, method.address(method.ROUTE_LIGATION, plate=0, well=0))
     ]
     assert names == ["DMX_1_1", "DMX_2_1", "DMX_3_1", "DMX_4_1"]
 
@@ -145,101 +127,101 @@ def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):
 def test_a_file_that_is_not_the_kit_says_what_one_is(tmp_path):
     """A short file, a missing column and a broken chain are each refused with the shape."""
     with pytest.raises(ValueError, match="rows, not 96"):
-        dmx.read_kit(write_kit(tmp_path, kit_text(size=2)))
+        kit.read_kit(write_kit(tmp_path, kit_text(size=2)))
     with pytest.raises(ValueError, match="missing column"):
-        dmx.read_kit(write_kit(tmp_path, "name\tgroup\n"))
+        kit.read_kit(write_kit(tmp_path, "name\tgroup\n"))
 
 
 def test_the_kit_is_not_shipped_and_the_refusal_says_where_to_put_one(monkeypatch):
     """Finding it the way the ligase matrix is found means an env var and no default file."""
-    monkeypatch.delenv(dmx.KIT_ENV, raising=False)
-    with pytest.raises(ValueError, match=dmx.KIT_ENV):
-        dmx.read_kit()
+    monkeypatch.delenv(kit.KIT_ENV, raising=False)
+    with pytest.raises(ValueError, match=kit.KIT_ENV):
+        kit.read_kit()
 
 
 def test_index_pcr_seats_each_sample_under_the_pair_its_address_names(tmp_path):
     """The plate is derived from the address, so there is no plate map to carry."""
-    plate = dmx.index_plate("index", 96, plate=3)
-    assert plate.wells == dmx.INDEX_WELLS
+    plate = method.index_plate("index", 96, plate=3)
+    assert plate.wells == method.INDEX_WELLS
     assert plate.labels["A1"] == "forward 1, reverse 4"
     assert plate.labels["H12"] == "forward 96, reverse 4"
     with pytest.raises(ValueError, match="do not fit"):
-        dmx.index_plate("index", 97)
+        method.index_plate("index", 97)
 
 
 def test_picking_fills_one_quarter_of_the_plate_at_a_time():
     """288 wells give three full index plates, not four part-filled ones."""
-    picked = dmx.picked_plate("picked 1", 288)
+    picked = method.picked_plate("picked 1", 288)
     assert len(picked.labels) == 288
-    assert picked.catalog == dmx.PICKED_CATALOG
+    assert picked.catalog == method.PICKED_CATALOG
     assert set(picked.labels.values()) == {"quarter 1", "quarter 2", "quarter 3"}
     assert picked.labels["A1"] == "quarter 1"
     assert picked.labels["B1"] == "quarter 3"
     assert "B2" not in picked.labels
     with pytest.raises(ValueError, match="do not fit"):
-        dmx.picked_plate("picked 1", 385)
+        method.picked_plate("picked 1", 385)
 
 
 def test_index_pcr_samples_one_quarter_of_a_picked_plate_into_each_index_plate():
     """One well in four lines up under the head, so each pass is one full index plate."""
-    picked = dmx.picked_plate("picked 1", 288)
-    index = [dmx.index_plate(f"index {n}", 96, plate=n - 1) for n in (1, 2, 3)]
-    moves = dmx.sampling(picked, index)
+    picked = method.picked_plate("picked 1", 288)
+    index = [method.index_plate(f"index {n}", 96, plate=n - 1) for n in (1, 2, 3)]
+    moves = method.sampling(picked, index)
     assert [len(one.moves) for one in moves] == [96, 96, 96]
-    assert moves[0].instrument == dmx.MULTICHANNEL
-    assert moves[0].moves[0].volume_ul == dmx.SAMPLE_UL
+    assert moves[0].instrument == method.MULTICHANNEL
+    assert moves[0].moves[0].volume_ul == method.SAMPLE_UL
     assert moves[0].moves[1].source.well == "A3"
     assert moves[0].moves[1].destination.well == "A2"
-    assert index[0].catalog == dmx.INDEX_CATALOG
+    assert index[0].catalog == method.INDEX_CATALOG
     with pytest.raises(ValueError, match="one index plate covers one quarter"):
-        dmx.sampling(picked, index[:2])
+        method.sampling(picked, index[:2])
 
 
 def sized(route, designs, floor):
     """Return what these designs take to read back, refusing the None a floor reading none gives."""
-    one = dmx.validation(route, designs, floor)
+    one = method.validation(route, designs, floor)
     assert one is not None
     return one
 
 
 def test_a_floor_reads_back_every_design_in_that_many_fragments_or_more():
     """Omitted reads nothing, zero reads every design, and the rest is a comparison."""
-    some = (dmx.Design("two", 2), dmx.Design("five", 5), dmx.Design("twelve", 12))
-    assert dmx.validated(some, None) == ()
-    assert dmx.validated(some, 0) == some
-    assert [one.name for one in dmx.validated(some, 5)] == ["five", "twelve"]
-    assert dmx.validated(some, 13) == ()
+    some = (method.Design("two", 2), method.Design("five", 5), method.Design("twelve", 12))
+    assert method.validated(some, None) == ()
+    assert method.validated(some, 0) == some
+    assert [one.name for one in method.validated(some, 5)] == ["five", "twelve"]
+    assert method.validated(some, 13) == ()
     with pytest.raises(ValueError, match="below none"):
-        dmx.validated(some, -1)
+        method.validated(some, -1)
     with pytest.raises(ValueError, match="at least one fragment"):
-        dmx.Design("none", 0)
+        method.Design("none", 0)
 
 
 def test_the_bench_is_sized_from_the_designs_read_and_not_from_the_design_list():
     """A design the floor leaves out costs no well, so the plates shrink by exactly those wells."""
-    some = tuple(dmx.Design(f"d{n}", 1 + n % 4) for n in range(72))
-    whole = sized(dmx.ROUTE_INDEX_PCR, some, 0)
+    some = tuple(method.Design(f"d{n}", 1 + n % 4) for n in range(72))
+    whole = sized(method.ROUTE_INDEX_PCR, some, 0)
     assert (whole.wells, len(whole.picked), len(whole.index)) == (288, 1, 3)
     assert [len(one.labels) for one in whole.picked] == [288]
-    fewer = sized(dmx.ROUTE_INDEX_PCR, some, 4)
+    fewer = sized(method.ROUTE_INDEX_PCR, some, 4)
     assert len(fewer.designs) == 18
     assert fewer.wells == 72
     assert [len(one.labels) for one in fewer.picked] == [72]
     assert len(fewer.index) == 1
-    assert dmx.validation(dmx.ROUTE_INDEX_PCR, some, 5) is None
-    assert dmx.validation(dmx.ROUTE_INDEX_PCR, some, None) is None
+    assert method.validation(method.ROUTE_INDEX_PCR, some, 5) is None
+    assert method.validation(method.ROUTE_INDEX_PCR, some, None) is None
 
 
 def test_ligation_compresses_four_picked_plates_into_one_and_index_pcr_neither():
     """Each route's plates follow from the shared wells, and neither pours the other's."""
-    many = tuple(dmx.Design(f"d{n}", 2) for n in range(400))
-    ligation = sized(dmx.ROUTE_LIGATION, many, 0)
+    many = tuple(method.Design(f"d{n}", 2) for n in range(400))
+    ligation = sized(method.ROUTE_LIGATION, many, 0)
     assert ligation.wells == 1600
     assert len(ligation.picked) == 5
     assert len(ligation.compressed) == 2
     with pytest.raises(ValueError, match="only the index PCR route"):
         assert ligation.index
-    index_pcr = sized(dmx.ROUTE_INDEX_PCR, many, 0)
+    index_pcr = sized(method.ROUTE_INDEX_PCR, many, 0)
     assert len(index_pcr.index) == 17
     assert [one.labels["A1"] for one in index_pcr.index[:2]] == [
         "forward 1, reverse 1",
@@ -251,56 +233,68 @@ def test_ligation_compresses_four_picked_plates_into_one_and_index_pcr_neither()
 
 def test_the_steps_print_each_design_chance_beside_the_floor():
     """The number reads as a choice: the floor is stated and the curve is printed beside it."""
-    some = (dmx.Design("two", 2), dmx.Design("eight", 8))
-    one = sized(dmx.ROUTE_INDEX_PCR, some, 2)
-    steps = dmx.validation_steps(one)
-    assert [step.title for step in steps][:2] == [
+    some = (method.Design("two", 2), method.Design("eight", 8))
+    one = sized(method.ROUTE_INDEX_PCR, some, 2)
+    made = steps.validation_steps(one)
+    assert [step.title for step in made][:2] == [
         "Array 2 design(s) and grow",
         "Pick 4 colonies of each design",
     ]
-    assert "2 fragment(s) or more" in " ".join(steps[0].notes)
-    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in steps[1].notes
-    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in steps[1].notes
+    assert "2 fragment(s) or more" in " ".join(made[0].notes)
+    assert "2 fragment(s): 1 design(s), 100.0% of picks clean" in made[1].notes
+    assert "8 fragment(s): 1 design(s), 66.7% of picks clean" in made[1].notes
+
+
+def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
+    """A page renders what a step says and nothing more, so Markdown reads as punctuation."""
+    some = (method.Design("one", 2),)
+    said = [
+        text
+        for route in (method.ROUTE_INDEX_PCR, method.ROUTE_LIGATION)
+        for step in steps.validation_steps(sized(route, some, 2))
+        for text in (*step.instructions, *step.notes, *step.expected)
+    ]
+    assert [text for text in said if "*" in text] == []
 
 
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():
-    """The 192 index sequences are lab stock, and no source gives the Taq stock they amplify on."""
-    some = (dmx.Design("one", 2),)
-    index_pcr = dmx.validation_steps(sized(dmx.ROUTE_INDEX_PCR, some, 0))
-    assert [hole.id for step in index_pcr for hole in step.holes] == ["IDX1", "IDX2"]
-    ligation = dmx.validation_steps(sized(dmx.ROUTE_LIGATION, some, 0))
+    """The 192 index sequences are lab stock, which only the lab's own plate fills."""
+    some = (method.Design("one", 2),)
+    index_pcr = steps.validation_steps(sized(method.ROUTE_INDEX_PCR, some, 0))
+    assert [hole.id for step in index_pcr for hole in step.holes] == ["IDX1"]
+    ligation = steps.validation_steps(sized(method.ROUTE_LIGATION, some, 0))
     assert [hole.id for step in ligation for hole in step.holes] == []
 
 
 def test_the_plates_a_pick_fills_name_where_their_numbers_were_read():
     """Both routes pick into these two, so a reader of either page can follow the numbers back."""
-    some = (dmx.Design("one", 2),)
-    for route in (dmx.ROUTE_LIGATION, dmx.ROUTE_INDEX_PCR):
+    some = (method.Design("one", 2),)
+    for route in (method.ROUTE_LIGATION, method.ROUTE_INDEX_PCR):
         cited = {
             one.name: one.citation
-            for one in dmx.validation_materials(sized(route, some, 0))
+            for one in method.validation_materials(sized(route, some, 0))
             if one.citation
         }
         assert cited["25 cm BioAssay plate"] == Citation("Qian SI", "Day 2")
-        assert cited[f"{dmx.PICKED_WELLS}-well culture plate"] == Citation("Qian SI", "Day 3")
-        assert all(one.source in dmx.SOURCES for one in cited.values())
+        assert cited[f"{method.PICKED_WELLS}-well culture plate"] == Citation("Qian SI", "Day 3")
+        assert all(one.source in method.SOURCES for one in cited.values())
 
 
 def test_the_index_pcr_is_one_wells_share_of_levseqs_published_mix():
-    """Scaled back to a full plate the table is the SI's own, and the Taq carries no unit count."""
-    table = dmx.index_pcr_reaction()
-    assert round(sum(one.volume_ul for one in table.components), 2) == dmx.INDEX_PCR_UL
-    assert table.mix_volumes(dmx.INDEX_WELLS)[:4] == (144.0, 28.8, 7.2, 57.6)
+    """Scaled back to a full plate the table is the SI's own, and the Taq carries its units."""
+    table = method.index_pcr_reaction()
+    assert round(sum(one.volume_ul for one in table.components), 2) == method.INDEX_PCR_UL
+    assert table.mix_volumes(method.INDEX_WELLS)[:4] == (144.0, 28.8, 7.2, 57.6)
     taq = next(one for one in table.components if one.name.startswith("Taq"))
-    assert (taq.volume_ul, taq.stock, taq.final) == (0.05, "", "")
+    assert (taq.volume_ul, taq.stock, taq.final) == (0.05, "5 U/µL", "0.25 units")
 
 
 def test_the_index_pcr_touches_down_before_it_plateaus():
-    """Ten cycles half a degree apart, then 25 more: 35 in all, as the SI's two loops spell out."""
-    stages = dmx.index_pcr_program().stages
-    assert [stage.cycles for stage in stages[1:-2]] == [1] * 10 + [25]
-    annealing = [stage.incubations[1].temperature_c for stage in stages[1 : 1 + 10]]
-    assert annealing == [68.0, 67.5, 67.0, 66.5, 66.0, 65.5, 65.0, 64.5, 64.0, 63.5]
+    """One stepping stage of ten cycles, then 25 more: 35 in all, the SI's two loops as two."""
+    stages = method.index_pcr_program().stages
+    assert [stage.cycles for stage in stages] == [1, 10, 25, 1, 1]
+    anneal = stages[1].incubations[1]
+    assert (anneal.temperature_c, anneal.delta_c, anneal.last_c(10)) == (68.0, -0.5, 63.5)
 
 
 def said_by(one) -> str:
@@ -308,16 +302,16 @@ def said_by(one) -> str:
     return " ".join(
         (
             *(plate.holds for plate in one.picked),
-            *(material.note or "" for material in dmx.validation_materials(one)),
-            *(line for step in dmx.validation_steps(one) for line in step.instructions),
+            *(material.note or "" for material in method.validation_materials(one)),
+            *(line for step in steps.validation_steps(one) for line in step.instructions),
         )
     )
 
 
 def test_every_plate_is_selected_on_the_drug_the_caller_read_off_the_vector():
     """This method rebuilt its DMX vector KanR, so nothing the read-back pours is carbenicillin."""
-    one = dmx.validation(
-        dmx.ROUTE_LIGATION, (dmx.Design("one", 2),), 0, selection="50 µg/mL kanamycin"
+    one = method.validation(
+        method.ROUTE_LIGATION, (method.Design("one", 2),), 0, selection="50 µg/mL kanamycin"
     )
     assert one is not None
 
@@ -329,7 +323,7 @@ def test_every_plate_is_selected_on_the_drug_the_caller_read_off_the_vector():
 
 def test_a_read_that_cannot_name_the_drug_leaves_it_to_the_record():
     """A caller naming none prints the vector's own antibiotic rather than the paper's."""
-    said = said_by(sized(dmx.ROUTE_LIGATION, (dmx.Design("one", 2),), 0))
+    said = said_by(sized(method.ROUTE_LIGATION, (method.Design("one", 2),), 0))
 
     assert "carbenicillin" not in said
     assert said.count("the vector's own antibiotic") == 5

@@ -1,6 +1,6 @@
-"""One combinatorial library, planned from a project file and nothing else.
+"""One combinatorial library, planned from a `project.json` and nothing else.
 
-`plan_igga` is the one way in. It reads the project, sorts the part lists, chooses the overhang
+`plan_igga` is the one way in. It reads the build, sorts the part lists, chooses the overhang
 standard the proteins cost least, builds every part's synthesis sequence, makes the vector a
 destination, simulates every round, works out what each round takes at the bench and how many
 colonies it needs, and hands the finished records to `liulab_synbio.igga.gate` to be judged.
@@ -9,7 +9,8 @@ synthesis order sheet, the barcode table, the amino-acid change table, a record 
 a block vector for every position, the protocol as JSON data, and the page rendered from it.
 
 The method is `liulab_synbio.igga.method.IGGA` and is not an argument. What a build chooses is
-the project's, and `docs/adr/0010-method-in-code.md` draws the line between them.
+`liulab_synbio.igga.project.Build`'s, and `docs/adr/0010-method-in-code.md` draws the line
+between them.
 
 **The vector and the standard have to agree about position one.** A vector already carrying an
 internal stuffer spells an entry overhang in DNA that exists, so position one's overhang is
@@ -32,6 +33,7 @@ from typing import Literal
 
 from liulab_mbio.barcodes import BarcodeRules
 from liulab_mbio.bench.amounts import Amount
+from liulab_mbio.bench.coverage import RoundCoverage, constructs, plan_coverage
 from liulab_mbio.bench.pools import oligo_record, pool_sheet, primer_inventory
 from liulab_mbio.bench.prices import PriceRecord, read_prices
 from liulab_mbio.checks import Check, Status
@@ -39,18 +41,21 @@ from liulab_mbio.cloning.plan import as_record, status
 from liulab_mbio.codons import codon_usage
 from liulab_mbio.ligase import LigaseProfile, read_profile
 from liulab_mbio.overhangs import MIN_DISTANCE
-
-# A project is the input file here and a chain of protocols there; both keep their names.
-from liulab_mbio.protocol.model import Project as Chain
+from liulab_mbio.protocol.model import Project
 from liulab_mbio.protocol.render import write_project_files
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.sites import digest
 from liulab_mbio.snapgene import write_dna
 from liulab_mbio.translate import translate
 from liulab_synbio import dmx
-from liulab_synbio.igga.bench import digest_amount, ligation_amounts, transformation_amount
+from liulab_synbio.igga.bench import (
+    RoundBench,
+    digest_amount,
+    ligation_amounts,
+    transformation_amount,
+)
 from liulab_synbio.igga.cargo import PoolPlan, design_pool, read_bands, read_primers
-from liulab_synbio.igga.coverage import RoundCoverage, constructs, plan_coverage
+from liulab_synbio.igga.chain import project as chain_of
 from liulab_synbio.igga.figures import OLIGO_FILE
 from liulab_synbio.igga.gate import Verdict, check_library
 from liulab_synbio.igga.method import Scheme
@@ -62,13 +67,12 @@ from liulab_synbio.igga.parts import (
     design_parts,
     synthesis_sheet,
 )
-from liulab_synbio.igga.project import Project, read_project
+from liulab_synbio.igga.project import Build, read_build
+from liulab_synbio.igga.protocols import Run
 from liulab_synbio.igga.reads import ReadPairs, read_pairs, read_sheet
 from liulab_synbio.igga.rounds import Round, assemble_rounds, representative, write_records
 from liulab_synbio.igga.stages import selection_for
 from liulab_synbio.igga.standard import PartList, Standard, design_standard
-from liulab_synbio.igga.steps import RoundBench
-from liulab_synbio.igga.steps import project as project_for
 from liulab_synbio.igga.vector import (
     Destination,
     Site,
@@ -102,8 +106,8 @@ READ_PRIMER_FILE = "library-read-primers.tsv"
 BLOCK_VECTOR_FILE = "block-vector-{number}.dna"
 
 #: The folder the run's protocols are written into, beside the sheets and the records. A
-#: folder and not a flat pair: a project names its own data file, and a run reads the
-#: library's choices out of a file of that name already.
+#: folder and not a flat pair: a chain of protocols names its own `project.json`, and the
+#: build was read from a file of that name already.
 PROTOCOL_DIR = "protocol"
 
 
@@ -128,7 +132,7 @@ class Files:
         then the two pages the run shares.
     pool, pool_primers
         The oligo pool to order and the primers that amplify it. Both are ``None`` where the
-        project names no primer set, because the primer sites are templated on the oligo and
+        build names no primer set, because the primer sites are templated on the oligo and
         nothing can be written without them.
     oligo
         One oligo of the pool as a record, carrying the three primer roles at the sites it spells
@@ -138,7 +142,7 @@ class Files:
         The pairs that read the finished library back, designed against the simulated records:
         linkage, representation, and representation again after the move into a working vector.
     block_vectors
-        One position's block vector a file, in the project's order. Empty where the project names
+        One position's block vector a file, in the build's order. Empty where the build names
         no primer set, because a block ordered whole carries its own external stuffers and needs
         no vector to supply them.
     """
@@ -189,12 +193,12 @@ class LibraryPlan:
     destination
         The vector a round can open, and what making it one changed.
     block_vectors
-        The block vector a position's cargo closes into, one a position in the project's order. A
+        The block vector a position's cargo closes into, one a position in the build's order. A
         part enters on its own position's entry overhang, so each offers that overhang and nothing
-        else about them differs. Empty where the project names no primer set and the blocks are
+        else about them differs. Empty where the build names no primer set and the blocks are
         ordered whole.
     part_lists
-        One per position, in the project's order: each member's name and the protein it codes for,
+        One per position, in the build's order: each member's name and the protein it codes for,
         whether it was given as protein or read off DNA.
     coding
         One per position: the coding sequence a member came already coded in, empty for a member
@@ -221,14 +225,14 @@ class LibraryPlan:
         The price record the protocol's bill is costed against, if the caller holds one. Its
         quantities compute either way; with no record every money cell is a hole.
     pool
-        The oligo pool every block is synthesised from, where the project names a primer set.
+        The oligo pool every block is synthesised from, where the build names a primer set.
         `liulab_synbio.igga.cargo` designs it.
     working
-        The vector the finished library is moved into, where the project names one, and the
+        The vector the finished library is moved into, where the build names one, and the
         enzyme chosen to admit it. `None` leaves the library in the destination vector.
     """
 
-    project: Project
+    project: Build
     scheme: Scheme
     vector: SequenceRecord
     destination: Destination
@@ -277,9 +281,9 @@ class LibraryPlan:
 
     @property
     def validation(self) -> dmx.Validation | None:
-        """What reading these designs back takes, or `None` where the project reads none.
+        """What reading these designs back takes, or `None` where the build reads none.
 
-        The project's floor chooses the designs and its route reads them. The bench is sized
+        The build's floor chooses the designs and its route reads them. The bench is sized
         from that set and not from the part list, so a design the floor leaves out costs no
         well, no plate and no reagent. Every plate it pours is selected on the destination's own
         marker, which is not the marker the published read-back was written for.
@@ -307,36 +311,44 @@ class LibraryPlan:
         """The worst status of any check."""
         return status(self.checks)
 
-    def chain(self) -> Chain:
-        """Return this plan as the chain of protocols the bench works through, in order."""
-        return project_for(
-            scheme=self.scheme,
-            positions=self.project.positions,
-            barcode_length=self.project.barcode.length,
-            vector=self.vector,
-            destination=self.destination,
-            part_lists=self.part_lists,
-            standard=self.standard,
-            parts=self.parts,
-            rounds=self.rounds,
-            bench=self.bench,
-            constructs=self.constructs,
-            checks=self.verdict.summary,
-            host=self.host,
-            sheet=PARTS_FILE,
-            barcodes=BARCODE_FILE,
-            validation=self.validation,
-            prices=self.prices,
-            pool=self.pool,
-            pool_sheet=POOL_FILE,
-            primer_sheet=POOL_PRIMER_FILE,
-            block_vectors=self.named_block_vectors,
-            block_records=self.block_vectors,
-            working=self.working,
-            reads=self.reads,
-            marks=self.project.marks,
-            linkage_fidelity=self.project.linkage_fidelity,
-            primer_plates=self.project.primer_plates,
+    def chain(self) -> Project:
+        """Return this plan as the chain of protocols the bench works through, in order.
+
+        The `Project` returned is `liulab_mbio.protocol.model.Project`, a chain of protocols,
+        and not what this plan was made from, which is a `Build`.
+        """
+        return chain_of(
+            Run(
+                scheme=self.scheme,
+                positions=self.project.positions,
+                barcode_length=self.project.barcode.length,
+                vector=self.vector,
+                destination=self.destination,
+                part_lists=self.part_lists,
+                standard=self.standard,
+                parts=self.parts,
+                rounds=self.rounds,
+                bench=self.bench,
+                constructs=self.constructs,
+                checks=self.verdict.summary,
+                host=self.host,
+                sheet=PARTS_FILE,
+                barcodes=BARCODE_FILE,
+                changes=CHANGE_FILE,
+                read_sheet=READ_PRIMER_FILE,
+                validation=self.validation,
+                prices=self.prices,
+                pool=self.pool,
+                pool_sheet=POOL_FILE,
+                primer_sheet=POOL_PRIMER_FILE,
+                block_vectors=self.named_block_vectors,
+                block_records=self.block_vectors,
+                working=self.working,
+                reads=self.reads,
+                marks=self.project.marks,
+                linkage_fidelity=self.project.linkage_fidelity,
+                primer_plates=self.project.primer_plates,
+            )
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
@@ -402,7 +414,7 @@ def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, .
     That count is what a design's chance of a clean colony falls with, so it is read off the
     split rather than guessed from the block's length: a fragment gives up bases to the overhang
     either side, so arithmetic on the oligo length alone only ever bounds it from below. A
-    project naming no primer set writes no pool, and each block is then one ordered piece.
+    build naming no primer set writes no pool, and each block is then one ordered piece.
 
     Raises
     ------
@@ -422,7 +434,7 @@ def designs(parts: Sequence[Part], pool: PoolPlan | None) -> tuple[dmx.Design, .
 
 
 def plan_igga(
-    project: Project | str | os.PathLike[str],
+    project: Build | str | os.PathLike[str],
     *,
     parts: Sequence[Mapping[str, str]] | None = None,
     kind: Kind = "protein",
@@ -439,10 +451,10 @@ def plan_igga(
     """Plan the whole library `project` asks for, by the method `project` is built under.
 
     One round appends one part list to every member of the library at once, so the rounds run in
-    the project's own order and the product of each opens the next. The same inputs return the
-    same design: the barcodes are drawn from the project's seed, and nothing else here is random.
+    the build's own order and the product of each opens the next. The same inputs return the
+    same design: the barcodes are drawn from the build's seed, and nothing else here is random.
 
-    Where the project names a working vector, the enzyme that admits cargo to it is chosen from
+    Where the build names a working vector, the enzyme that admits cargo to it is chosen from
     that vector alone before any block is designed, and reserved so no block spells it. The
     ordering is the pipeline's, not the user's.
 
@@ -450,10 +462,10 @@ def plan_igga(
     ----------
     project
         What this build chooses, or a path to the JSON holding it;
-        `liulab_synbio.igga.project.read_project` reads one. It names the parts FASTA and the
+        `liulab_synbio.igga.project.read_build` reads one. It names the parts FASTA and the
         vector by path.
     parts
-        One already-sorted mapping per position, in the project's order. The project's own parts
+        One already-sorted mapping per position, in the build's order. The build's own parts
         FASTA is read where this is not given.
     kind
         What the part lists hold. ``"dna"`` is checked and kept rather than written again; only a
@@ -462,12 +474,12 @@ def plan_igga(
         Where to put an internal stuffer, as a feature name or a ``(start, end)`` span. Read only
         where the vector carries none.
     working_site
-        The same, for the ccdB cassette of the working vector the project names. Read only where
+        The same, for the ccdB cassette of the working vector the build names. Read only where
         that vector carries none.
     pattern
         How a record's name says which part list it belongs to; see `NAME_PATTERN`.
     rules
-        What every barcode holds to. Built from the project's own barcode length and distance by
+        What every barcode holds to. Built from the build's own barcode length and distance by
         default; see `liulab_synbio.igga.parts.barcode_rules`.
     min_distance, allow_uniform
         How far apart the standard's overhangs must stand, and whether one base kind is allowed.
@@ -491,14 +503,14 @@ def plan_igga(
     Raises
     ------
     ValueError
-        If a record's name says no position of the project or says more than one, if two records
+        If a record's name says no position of the build or says more than one, if two records
         share a name, if a part is not a protein or not a coding sequence, if no overhang
         standard fits the part lists, if a block spells a site the method does not expect or
         gives up no cargo, if the vector cannot be made a destination, if a round cannot ligate,
         if `prices` names a file that is not a price record, or if `profile` names one that is
         not a ligation count matrix.
     KeyError
-        If the project names a codon usage table or an enzyme this package does not ship.
+        If the build names a codon usage table or an enzyme this package does not ship.
     liulab_mbio.barcodes.SpaceExhaustedError
         If a part list is larger than the barcodes its rules allow.
 
@@ -507,7 +519,7 @@ def plan_igga(
     >>> plan = plan_igga("project.json")  # doctest: +SKIP
     >>> plan.write("library/")  # doctest: +SKIP
     """
-    chosen = project if isinstance(project, Project) else read_project(project)
+    chosen = project if isinstance(project, Build) else read_build(project)
     # Read before anything is designed, so a file that is not a matrix is refused at once.
     ligase = _profile(profile, profile_sheet)
     design = chosen.scheme
@@ -639,11 +651,11 @@ def _named(record: SequenceRecord, position: str) -> SequenceRecord:
     return dataclasses.replace(record, name=f"{record.name} {position}".strip())
 
 
-def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
-    """Design the oligo pool, or none where the project names no primer set.
+def _pool(project: Build, parts: Sequence[Part]) -> PoolPlan | None:
+    """Design the oligo pool, or none where the build names no primer set.
 
     The sites that cut a fragment out are templated on the oligo rather than carried by a
-    primer, so a pool cannot be written at all without the set. A project naming none still
+    primer, so a pool cannot be written at all without the set. A build naming none still
     plans every other output.
     """
     if project.primers is None:
@@ -660,7 +672,7 @@ def _pool(project: Project, parts: Sequence[Part]) -> PoolPlan | None:
 def read_part_lists(
     path: str | os.PathLike[str], positions: Sequence[str], *, pattern: str = NAME_PATTERN
 ) -> tuple[dict[str, str], ...]:
-    """Read one FASTA and sort its records into one part list a position, in the project's order.
+    """Read one FASTA and sort its records into one part list a position, in the build's order.
 
     A record is ordered under the name the FASTA gives it, and that name is what says which
     position it fills.
@@ -718,14 +730,14 @@ def _sorted(
         hit = [index for index, matcher in enumerate(matchers) if matcher.search(named)]
         if not hit:
             raise ValueError(
-                f"the name {named!r} says no position of this project, whose positions are "
+                f"the name {named!r} says no position of this build, whose positions are "
                 f"{', '.join(names)}. Rename the record, or pass a pattern that reads the "
                 "names you already have"
             )
         if len(hit) > 1:
             said = ", ".join(names[index] for index in hit)
             raise ValueError(
-                f"the name {named!r} says {len(hit)} positions of this project — {said} — so "
+                f"the name {named!r} says {len(hit)} positions of this build — {said} — so "
                 "which part list it belongs to is ambiguous"
             )
         lists[hit[0]][named] = sequence
@@ -750,7 +762,7 @@ def _checked(
     if len(lists) != len(positions):
         said = ", ".join(positions)
         raise ValueError(
-            f"this project has {len(positions)} position(s) — {said} — and "
+            f"this build has {len(positions)} position(s) — {said} — and "
             f"{len(lists)} part list(s) were given"
         )
     seen: set[str] = set()

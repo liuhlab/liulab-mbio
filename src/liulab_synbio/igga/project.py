@@ -1,10 +1,13 @@
-"""The project: everything one library build chooses, read from JSON and checked as it is read.
+"""The `Build`: what one build chooses, read from `project.json` and checked as it is read.
 
-A project holds what the method leaves open — which positions, which proteins, which vector, how
-deep to sample — and nothing the method's own molecules already carry. A second project is a
+A build holds what the method leaves open — which positions, which proteins, which vector, how
+deep to sample — and nothing the method's own molecules already carry. A second build is a
 second file and no change to this package. `docs/adr/0010-method-in-code.md` draws the line.
 
-Nothing a project states replaces a method constant. Where the two meet they compose: the
+The file keeps the name `project.json`, which is what a user writes. A `Project` is something
+else here: `liulab_mbio.protocol.model.Project`, the chain of protocols a build writes.
+
+Nothing a build states replaces a method constant. Where the two meet they compose: the
 enzymes a block is kept clear of are the method's unioned with `reserved_extra`, and the barcode
 length is checked against the method's cloning scar rather than against a number stated here.
 """
@@ -17,17 +20,17 @@ from pathlib import Path
 from typing import Any
 
 from liulab_mbio.barcodes import MIN_DISTANCE, SEED
+from liulab_mbio.bench.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_mbio.bench.pcr import PRIMER_STOCK_UM
 from liulab_mbio.codons import codon_tables
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_synbio.dmx import ROUTES
-from liulab_synbio.igga.coverage import REPRESENTATION_MARKS, RepresentationMarks
 from liulab_synbio.igga.method import IGGA, Scheme, refuse
 
-#: The method's own barcode length, which a project takes unless it states another.
+#: The method's own barcode length, which a build takes unless it states another.
 BARCODE_LENGTH = 11
 
-#: The plate format a primer order comes in unless a project names another, and how many working
+#: The plate format a primer order comes in unless a build names another, and how many working
 #: copies it splits. Neither is a measurement: one is the format every supplier quotes a plated
 #: oligo order in, the other is one plate a run.
 PRIMER_PLATE_WELLS = 96
@@ -55,9 +58,9 @@ class Barcode:
 class PrimerPlates:
     """How a run lays its routine primers out, which is the lab's own and not the method's.
 
-    The amounts are the project author's: what the vendor delivers in a well and what this lab
+    The amounts are the build author's: what the vendor delivers in a well and what this lab
     resuspends and dilutes to. None of them is published anywhere this package can cite, so a
-    project that wants the plates states them and one that does not gets no such protocol.
+    build that wants the plates states them and one that does not gets no such protocol.
 
     Parameters
     ----------
@@ -95,7 +98,7 @@ class PrimerPlates:
         ):
             if value <= 0:
                 raise ValueError(
-                    f"primer_plates.{key} is {value}, and a project states a positive one"
+                    f"primer_plates.{key} is {value}, and a build states a positive one"
                 )
         if self.working_um >= self.stock_um:
             raise ValueError(
@@ -105,8 +108,8 @@ class PrimerPlates:
 
 
 @dataclass(frozen=True, slots=True)
-class Project:
-    """One library build's own choices, checked on construction.
+class Build:
+    """What one build chooses, checked on construction.
 
     Parameters
     ----------
@@ -141,23 +144,23 @@ class Project:
     validate_from
         The fragment-count floor at or above which a design is read back one well at a time.
         Omitted, nothing is read and the library stays polyclonal; ``0`` reads every design.
-        There is no default: `liulab_synbio.dmx.clean_colony_chance` gives a design's chance of
-        a clean colony, not the chance worth paying to check.
+        There is no default: `liulab_mbio.bench.readback.clean_colony_chance` gives a design's
+        chance of a clean colony, not the chance worth paying to check.
     route
         Which of `liulab_synbio.dmx.ROUTES` reads those wells back. Named exactly when
-        `validate_from` is, because an unread project needs no route.
+        `validate_from` is, because an unread build needs no route.
     seed
         The seed the barcodes are drawn with.
     reserved_extra
-        Further enzymes this project needs a block kept clear of, added to the method's own.
+        Further enzymes this build needs a block kept clear of, added to the method's own.
     representation_seen, representation_skew, reads_per_member
         What this build holds the representation read to: the share of combinations that must be
         read at all, the skew ratio the counts must stay under, and the depth both are judged at.
-        Each takes `liulab_synbio.igga.coverage.REPRESENTATION_MARKS` where the project states
+        Each takes `liulab_mbio.bench.coverage.REPRESENTATION_MARKS` where the build states
         none, and each may only be tightened.
     linkage_fidelity
         The share of reads whose barcode must still name its part. No default: nothing published
-        sets a mark for it, so a project that states none is read against no mark at all.
+        sets a mark for it, so a build that states none is read against no mark at all.
     barcode
         What one part's barcode holds to.
     primer_plates
@@ -165,7 +168,7 @@ class Project:
         Omitted, no such protocol is written: an empty page is worse than a step, and the
         amounts are nobody's to guess. It needs `primers`, which is what there is to plate.
     scheme
-        The method the project is built by. There is one, and it is `IGGA`.
+        The method the build is made by. There is one, and it is `IGGA`.
 
     Raises
     ------
@@ -233,10 +236,10 @@ class Project:
 
     @property
     def reserved(self) -> tuple[str, ...]:
-        """Every enzyme a block is kept clear of: the method's, then this project's own.
+        """Every enzyme a block is kept clear of: the method's, then this build's own.
 
-        A project adds and never replaces, so an enzyme the method reserves stays reserved
-        whatever a project says.
+        A build adds and never replaces, so an enzyme the method reserves stays reserved
+        whatever a build says.
         """
         return tuple(dict.fromkeys((*self.scheme.reserved, *self.reserved_extra)))
 
@@ -256,16 +259,16 @@ class Project:
         return self.scheme.retained_length(self.barcode.length, self.position_count)
 
     def _check_positions(self) -> None:
-        """Refuse a project with no position, an unnamed one, or one named twice."""
+        """Refuse a build with no position, an unnamed one, or one named twice."""
         if not self.positions:
-            raise ValueError("a project needs at least one position")
+            raise ValueError("a build needs at least one position")
         if any(not one for one in self.positions):
-            raise ValueError("every position of a project is named")
+            raise ValueError("every position of a build is named")
         if len(set(self.positions)) != len(self.positions):
             raise ValueError(f"the positions {', '.join(self.positions)} name one of them twice")
 
     def _check_numbers(self) -> None:
-        """Refuse a project whose lengths or counts are not positive, or whose chance is not one."""
+        """Refuse a build whose lengths or counts are not positive, or whose chance is not one."""
         for named, value in (
             ("oligo_length", self.oligo_length),
             ("batch_size", self.batch_size),
@@ -273,11 +276,10 @@ class Project:
             ("barcode.min_distance", self.barcode.min_distance),
         ):
             if value <= 0:
-                raise ValueError(f"{named} is {value}, and a project states a positive one")
+                raise ValueError(f"{named} is {value}, and a build states a positive one")
         if not 0.0 < self.completeness < 1.0:
             raise ValueError(
-                f"completeness is {self.completeness}, and a project states a chance between "
-                "0 and 1"
+                f"completeness is {self.completeness}, and a build states a chance between 0 and 1"
             )
 
     def _check_validation(self) -> None:
@@ -293,31 +295,31 @@ class Project:
             )
         if self.route is not None and self.route not in ROUTES:
             raise ValueError(
-                f"route is {self.route!r}, and a project reads its wells back on one of "
+                f"route is {self.route!r}, and a build reads its wells back on one of "
                 f"{', '.join(repr(one) for one in ROUTES)}"
             )
         if (self.validate_from is None) != (self.route is None):
             raise ValueError(
-                "validate_from and route are stated together: a project that reads designs back "
+                "validate_from and route are stated together: a build that reads designs back "
                 f"says which, and on which of {', '.join(repr(one) for one in ROUTES)}"
             )
 
     def _check_plates(self) -> None:
         """Refuse primer plates where there is no primer set to plate.
 
-        The plates seat the primers that amplify the pool, and a project naming no primer set
+        The plates seat the primers that amplify the pool, and a build naming no primer set
         writes no pool and no primer.
         """
         if self.primer_plates is not None and self.primers is None:
             raise ValueError(
-                "primer_plates lays out the primers that amplify the pool, so a project naming "
+                "primer_plates lays out the primers that amplify the pool, so a build naming "
                 "it names primers too"
             )
 
     def _check_marks(self) -> None:
         """Refuse a representation mark that loosens the sourced one, or a share outside 0 to 1.
 
-        A project tightens and never loosens, the same rule `liulab_synbio.dmx.depth_check`
+        A build tightens and never loosens, the same rule `liulab_synbio.dmx.depth_check`
         holds a read depth to: the sourced mark is the floor the method stands on.
         """
         for named, value in (
@@ -325,16 +327,16 @@ class Project:
             ("linkage_fidelity", self.linkage_fidelity),
         ):
             if value is not None and not 0.0 < value <= 1.0:
-                raise ValueError(f"{named} is {value}, and a project states a share of 1 or less")
+                raise ValueError(f"{named} is {value}, and a build states a share of 1 or less")
         sourced = REPRESENTATION_MARKS
         if self.representation_seen is not None and self.representation_seen < sourced.seen:
             raise ValueError(
-                f"representation_seen is {self.representation_seen}, and a project may only "
+                f"representation_seen is {self.representation_seen}, and a build may only "
                 f"raise the {sourced.seen} share Joung sets, not lower it"
             )
         if self.representation_skew is not None and self.representation_skew > sourced.skew:
             raise ValueError(
-                f"representation_skew is {self.representation_skew}, and a project may only "
+                f"representation_skew is {self.representation_skew}, and a build may only "
                 f"lower the skew ratio of {sourced.skew} Joung allows, not raise it"
             )
         if self.representation_skew is not None and self.representation_skew < 1.0:
@@ -344,7 +346,7 @@ class Project:
             )
         if self.reads_per_member is not None and self.reads_per_member < sourced.reads_per_member:
             raise ValueError(
-                f"reads_per_member is {self.reads_per_member}, and a project may only raise the "
+                f"reads_per_member is {self.reads_per_member}, and a build may only raise the "
                 f"{sourced.reads_per_member} reads a member Joung judges at, not lower it"
             )
 
@@ -381,76 +383,76 @@ class Project:
             )
 
 
-def read_project(path: str | os.PathLike[str]) -> Project:
-    """Read a project from JSON, resolving every file path against the file's own directory.
+def read_build(path: str | os.PathLike[str]) -> Build:
+    """Read a build from JSON, resolving every file path against the file's own directory.
 
     Raises
     ------
     ValueError
         On a missing or unknown key, a value of another JSON type, a path naming no file, or any
-        check `Project` makes.
+        check `Build` makes.
     KeyError
         If it names an enzyme or a codon usage table this package does not ship.
 
     Examples
     --------
-    >>> read_project("project.json").positions  # doctest: +SKIP
+    >>> read_build("project.json").positions  # doctest: +SKIP
     ('N', 'DBD', 'C')
     """
     file = Path(path)
     data = json.loads(file.read_text(encoding="utf-8"))
     if not isinstance(data, Mapping):
         raise ValueError(f"{os.fspath(path)} holds {type(data).__name__}, not an object")
-    _keys(data, _PROJECT_KEYS, _PROJECT_OPTIONAL, "a project")
+    _keys(data, _BUILD_KEYS, _BUILD_OPTIONAL, "a build")
     given = dict(data)
-    return Project(
-        _text(given, "name", "a project"),
+    return Build(
+        _text(given, "name", "a build"),
         positions=tuple(
             _one_text(one, f"positions[{index}]")
-            for index, one in enumerate(_sequence(given, "positions", "a project"))
+            for index, one in enumerate(_sequence(given, "positions", "a build"))
         ),
-        parts=_file(file, _text(given, "parts", "a project"), "parts"),
-        vector=_file(file, _text(given, "vector", "a project"), "vector"),
-        host=_text(given, "host", "a project"),
-        oligo_length=_whole(given, "oligo_length", "a project"),
-        batch_size=_whole(given, "batch_size", "a project"),
-        completeness=_number(given, "completeness", "a project"),
+        parts=_file(file, _text(given, "parts", "a build"), "parts"),
+        vector=_file(file, _text(given, "vector", "a build"), "vector"),
+        host=_text(given, "host", "a build"),
+        oligo_length=_whole(given, "oligo_length", "a build"),
+        batch_size=_whole(given, "batch_size", "a build"),
+        completeness=_number(given, "completeness", "a build"),
         primers=(
-            _file(file, _text(given, "primers", "a project"), "primers")
+            _file(file, _text(given, "primers", "a build"), "primers")
             if "primers" in given
             else None
         ),
         working_vector=(
-            _file(file, _text(given, "working_vector", "a project"), "working_vector")
+            _file(file, _text(given, "working_vector", "a build"), "working_vector")
             if "working_vector" in given
             else None
         ),
         bands=_bands(given.get("bands")),
         validate_from=(
-            _whole(given, "validate_from", "a project") if "validate_from" in given else None
+            _whole(given, "validate_from", "a build") if "validate_from" in given else None
         ),
-        route=_text(given, "route", "a project") if "route" in given else None,
+        route=_text(given, "route", "a build") if "route" in given else None,
         representation_seen=(
-            _number(given, "representation_seen", "a project")
+            _number(given, "representation_seen", "a build")
             if "representation_seen" in given
             else None
         ),
         representation_skew=(
-            _number(given, "representation_skew", "a project")
+            _number(given, "representation_skew", "a build")
             if "representation_skew" in given
             else None
         ),
         reads_per_member=(
-            _whole(given, "reads_per_member", "a project") if "reads_per_member" in given else None
+            _whole(given, "reads_per_member", "a build") if "reads_per_member" in given else None
         ),
         linkage_fidelity=(
-            _number(given, "linkage_fidelity", "a project") if "linkage_fidelity" in given else None
+            _number(given, "linkage_fidelity", "a build") if "linkage_fidelity" in given else None
         ),
-        seed=_whole(given, "seed", "a project") if "seed" in given else SEED,
+        seed=_whole(given, "seed", "a build") if "seed" in given else SEED,
         reserved_extra=tuple(
             _one_text(one, f"reserved_extra[{index}]")
             for index, one in enumerate(
-                _sequence(given, "reserved_extra", "a project") if "reserved_extra" in given else ()
+                _sequence(given, "reserved_extra", "a build") if "reserved_extra" in given else ()
             )
         ),
         barcode=_barcode(given.get("barcode")),
@@ -458,8 +460,8 @@ def read_project(path: str | os.PathLike[str]) -> Project:
     )
 
 
-#: The keys a project is written with, and the ones it may leave out.
-_PROJECT_KEYS = frozenset(
+#: The keys a build is written with, and the ones it may leave out.
+_BUILD_KEYS = frozenset(
     {
         "name",
         "positions",
@@ -471,7 +473,7 @@ _PROJECT_KEYS = frozenset(
         "completeness",
     }
 )
-_PROJECT_OPTIONAL = frozenset(
+_BUILD_OPTIONAL = frozenset(
     {
         "seed",
         "reserved_extra",
@@ -494,7 +496,7 @@ _PLATES_OPTIONAL = frozenset({"working_um", "wells", "copies"})
 
 
 def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
-    """Read the vendor's bands a project states, as a quantity naming its tiers.
+    """Read the vendor's bands a build states, as a quantity naming its tiers.
 
     Raises
     ------
@@ -504,11 +506,11 @@ def _bands(entry: Any) -> Mapping[str, tuple[str, ...]]:
     if entry is None:
         return {}
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project's bands are {type(entry).__name__}, not an object")
+        raise ValueError(f"a build's bands are {type(entry).__name__}, not an object")
     return {
         quantity: tuple(
             _one_text(one, f"bands {quantity}[{index}]")
-            for index, one in enumerate(_sequence(entry, quantity, "a project's"))
+            for index, one in enumerate(_sequence(entry, quantity, "a build's"))
         )
         for quantity in entry
     }
@@ -525,18 +527,18 @@ def _barcode(entry: Any) -> Barcode:
     if entry is None:
         return Barcode()
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project barcode is {type(entry).__name__}, not an object")
-    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a project barcode")
+        raise ValueError(f"a build barcode is {type(entry).__name__}, not an object")
+    _keys(entry, frozenset(), _BARCODE_OPTIONAL, "a build barcode")
     return Barcode(
-        _whole(entry, "length", "a project barcode") if "length" in entry else BARCODE_LENGTH,
-        _whole(entry, "min_distance", "a project barcode")
+        _whole(entry, "length", "a build barcode") if "length" in entry else BARCODE_LENGTH,
+        _whole(entry, "min_distance", "a build barcode")
         if "min_distance" in entry
         else MIN_DISTANCE,
     )
 
 
 def _primer_plates(entry: Any) -> PrimerPlates | None:
-    """Build the primer-plate amounts from parsed JSON, or `None` where a project states none.
+    """Build the primer-plate amounts from parsed JSON, or `None` where a build states none.
 
     Three amounts are required because nothing publishes them: what the vendor delivers, what
     this lab resuspends to, and what a working well holds. The other three have a default.
@@ -549,9 +551,9 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
     if entry is None:
         return None
     if not isinstance(entry, Mapping):
-        raise ValueError(f"a project's primer_plates is {type(entry).__name__}, not an object")
-    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a project's primer_plates")
-    where = "a project's primer_plates"
+        raise ValueError(f"a build's primer_plates is {type(entry).__name__}, not an object")
+    _keys(entry, _PLATES_REQUIRED, _PLATES_OPTIONAL, "a build's primer_plates")
+    where = "a build's primer_plates"
     return PrimerPlates(
         _number(entry, "nanomoles", where),
         _number(entry, "stock_um", where),
@@ -562,8 +564,8 @@ def _primer_plates(entry: Any) -> PrimerPlates | None:
     )
 
 
-def _file(project: Path, named: str, key: str) -> Path:
-    """Resolve a path a project names against the project file's own directory.
+def _file(file: Path, named: str, key: str) -> Path:
+    """Resolve a path a build names against the `project.json` file's own directory.
 
     Raises
     ------
@@ -571,9 +573,9 @@ def _file(project: Path, named: str, key: str) -> Path:
         If nothing is there to read.
     """
     found = Path(named)
-    resolved = found if found.is_absolute() else project.parent / found
+    resolved = found if found.is_absolute() else file.parent / found
     if not resolved.is_file():
-        raise ValueError(f"a project's {key} is {named!r}, and {os.fspath(resolved)} is no file")
+        raise ValueError(f"a build's {key} is {named!r}, and {os.fspath(resolved)} is no file")
     return resolved
 
 

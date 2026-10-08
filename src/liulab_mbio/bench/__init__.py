@@ -1,20 +1,37 @@
-"""The bench any cloning pipeline shares: reactions, programs, validation and protocol steps.
+"""The bench any pipeline shares: reactions, programs, validation and protocol steps.
 
-Every public name in its modules imports from here as well. A module that cites a source keeps
-it as its own `REFERENCES`; `REFERENCES` here gathers them.
+Every public name in its modules imports from here as well, `goldengate`, `coverage` and
+`pools` excepted. A module that cites a source keeps it as its own `REFERENCES`; `REFERENCES`
+here gathers the ones re-exported.
 
 - `amounts`: the weight of DNA, picomoles from nanograms, and what to pipette.
-- `reactions`: one reaction table, filled to volume, and what it refuses.
+- `reactions`: one reaction table, filled to volume, what it refuses, and the least DNA may
+  be concentrated at to fit.
 - `pcr`: the PCR and colony PCR reactions and programs.
 - `gels`: the ladder and agarose percentage a range of bands takes.
+- `goldengate`: NEB's Golden Gate enzymes, assembly reaction and cycling, which the Golden Gate
+  cloning pipeline and a library build both run. The other methods' numbers stay with their own
+  pipeline, because only this chemistry has two callers. Imported by module: its `REFERENCES`
+  and `SOURCES` are one chemistry's, not this package's.
 - `validation`: the colony PCR that reads an assembly's junctions, and the Sanger reads.
-- `inactivation`: an enzyme's heat inactivation.
+- `coverage`: how many constructs a set of part lists yields, the colonies a round takes for a
+  stated chance that none of its products is missing, and the marks a pooled library's
+  representation read is held to. It cites sources, so it sits in this layer rather than beside
+  `barcodes`; what calls it is any pipeline that builds a library in rounds. Imported by module:
+  its `REFERENCES` are one sizing rule's, not this package's.
+- `readback`: what one well's read came to, where a construct is read back one well at a time,
+  and how often one picked colony is clean.
+- `inactivation`: an enzyme's heat inactivation, and one tube's grouped by it.
 - `materials`: what a material brings with it -- its own program, what it puts in the tube, and
   the rules it carries. A number attaches to the thing that changes it.
 - `plates`: a plate at any format, where each thing sits in it, and the moves between wells.
 - `prices`: a banded price record the user holds, the charge it gives a quantity, and the bill.
-- `phenotype`: what a clone is expected to show, read off the product's own features.
+- `phenotype`: what a clone is expected to show, read off the product's own features,
+  and what the plate that selects it is poured with.
 - `oligos`: the primer order sheet.
+- `pools`: an oligo pool as a vendor takes it -- one oligo a fragment, padded to one length --
+  and the sheet it is ordered from. Imported by module: its `Pool` is a vendor's order, not
+  `liulab_mbio.reaction`'s molecules in one tube.
 - `steps`: the protocol steps any pipeline reuses, built from plain facts, and the smaller
   pieces both pipelines shape the same way. Its two references are cited only by a protocol
   that runs the step they belong to.
@@ -32,7 +49,7 @@ from liulab_mbio.bench.amounts import (
     to_pmol,
 )
 from liulab_mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
-from liulab_mbio.bench.inactivation import heat_inactivation
+from liulab_mbio.bench.inactivation import heat_inactivation, heat_inactivations
 from liulab_mbio.bench.materials import Electroporation, electroporation, material
 from liulab_mbio.bench.oligos import (
     SHEET_COLUMNS,
@@ -57,6 +74,7 @@ from liulab_mbio.bench.pcr import (
 from liulab_mbio.bench.phenotype import (
     MEDIUM,
     SELECTION,
+    SELECTION_PLATE,
     Phenotype,
     read_phenotype,
     selection_marker,
@@ -71,7 +89,14 @@ from liulab_mbio.bench.plates import (
     wells_of,
 )
 from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
-from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
+from liulab_mbio.bench.reactions import WATER, dna_components, fits, floor_ng_ul, reaction_table
+from liulab_mbio.bench.readback import (
+    CLEAN_COLONY_CURVE,
+    WellVerdict,
+    clean_colony_chance,
+    identity_check,
+    reformat,
+)
 from liulab_mbio.bench.steps import (
     ASSEMBLY_UL,
     CELLS_UL,
@@ -143,6 +168,7 @@ REFERENCES: tuple[Reference, ...] = (*pcr.REFERENCES, *amounts.REFERENCES, *gels
 __all__ = [
     "ASSEMBLY_UL",
     "CELLS_UL",
+    "CLEAN_COLONY_CURVE",
     "COLONY_ALLOWANCE",
     "COLONY_FLANK",
     "COLONY_HOLD_CELSIUS",
@@ -184,6 +210,7 @@ __all__ = [
     "SANGER_ALLOWANCE",
     "SANGER_FLANK",
     "SELECTION",
+    "SELECTION_PLATE",
     "SEQUENCING_TITLE",
     "SHEET_COLUMNS",
     "THAW_SECONDS",
@@ -202,12 +229,14 @@ __all__ = [
     "PrimerPlates",
     "SangerRead",
     "Transformation",
+    "WellVerdict",
     "agarose_percent",
     "badges",
     "bill",
     "card",
     "catalogued",
     "choose_ladder",
+    "clean_colony_chance",
     "cleanup_step",
     "colony_pcr_check",
     "colony_pcr_master_mix_component",
@@ -222,8 +251,11 @@ __all__ = [
     "electroporation",
     "enzyme_material",
     "fits",
+    "floor_ng_ul",
     "gel_step",
     "heat_inactivation",
+    "heat_inactivations",
+    "identity_check",
     "listed",
     "material",
     "molecular_weight",
@@ -244,6 +276,7 @@ __all__ = [
     "reaction_table",
     "read_phenotype",
     "read_prices",
+    "reformat",
     "sanger_primers",
     "seat",
     "selection_marker",

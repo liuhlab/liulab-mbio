@@ -47,6 +47,9 @@ PALETTE = (
     "#92dadd",
 )
 
+#: What a seated well takes where no palette colour is left for its kind.
+SEATED = PALETTE[0]
+
 
 @dataclass(frozen=True, slots=True)
 class PlateMap:
@@ -86,19 +89,21 @@ def layout(
     rows, columns
         The array's shape.
     row_labels
-        One per row, top to bottom.
+        One per row, top to bottom, no two of them spelling one well's name.
     title
         Drawn above the grid.
     seating
-        Well name to what sits there. A well named nothing is drawn empty, and every distinct
-        content gets a fill of its own while there are no more kinds than `PALETTE` has
-        colours. Past that no fill tells two kinds apart and no legend is readable, so every
-        well is drawn empty and the legend is dropped.
+        Well name to what sits there, named as this array names its wells: a row label and a
+        1-based column. A well named nothing is drawn empty, and every distinct content gets a
+        fill of its own while there are no more kinds than `PALETTE` has colours. Past that no
+        fill tells two kinds apart and no legend is readable, so the legend is dropped and every
+        seated well takes `SEATED`: which wells are used is what is left to read.
 
     Raises
     ------
     ValueError
-        If the array has no wells, or there is not one label per row.
+        If the array has no wells, there is not one label per row, two wells would answer to
+        one name, or a well is seated where the array has none.
 
     Examples
     --------
@@ -111,6 +116,17 @@ def layout(
     if len(row_labels) != rows:
         raise ValueError(f"{len(row_labels)} labels for {rows} rows")
     held = seating or {}
+    # Each well is drawn under the name this grid gives it, so a seating is checked against the
+    # same names: one not in it would be dropped from the drawing and still colour the legend.
+    grid = [[f"{label}{column + 1}" for column in range(columns)] for label in row_labels]
+    named: set[str] = set()
+    for name in (one for row in grid for one in row):
+        if name in named:
+            raise ValueError(f"two wells of a {rows} by {columns} plate are both named {name!r}")
+        named.add(name)
+    for well in held:
+        if well not in named:
+            raise ValueError(f"no well {well!r} on a {rows} by {columns} plate")
     kinds = tuple(dict.fromkeys(held.values()))
     fills = dict(zip(kinds, PALETTE, strict=False)) if len(kinds) <= len(PALETTE) else {}
 
@@ -143,8 +159,9 @@ def layout(
             )
         )
         for column in range(columns):
-            name = f"{row_labels[row]}{column + 1}"
+            name = grid[row][column]
             holds = held.get(name, "")
+            fill = fills.get(holds, SEATED) if holds else EMPTY
             box = Box(
                 left + column * pitch + (pitch - size) / 2,
                 top + row * pitch + (pitch - size) / 2,
@@ -153,7 +170,7 @@ def layout(
             )
             shapes.append(
                 svg.Group(
-                    (svg.Rect(box, fills.get(holds, EMPTY), RULE, 0.4, size / 2),),
+                    (svg.Rect(box, fill, RULE, 0.4, size / 2),),
                     classes=("well",),
                     data={"well": name, "holds": holds} if holds else {"well": name},
                 )

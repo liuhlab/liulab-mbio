@@ -2,12 +2,8 @@
 
 import pytest
 
-from liulab_mbio.cloning.goldengate.design import (
-    GOLDEN_GATE_ENZYMES,
-    LAST_RESORT,
-    choose_enzyme,
-    design_overhangs,
-)
+from liulab_mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
+from liulab_mbio.cloning.goldengate.design import choose_enzyme, design_overhangs
 from liulab_mbio.enzymes import get_enzyme
 from liulab_mbio.overhangs import Junction, ligation_matrix
 from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
@@ -88,12 +84,6 @@ def test_btgzi_ranks_last_because_neb_publishes_no_golden_gate_protocol_for_it()
     assert ranked[-1].enzyme.name == "BtgZI"
     assert "BtgZI" in LAST_RESORT
     assert "BtgZI" in GOLDEN_GATE_ENZYMES
-
-
-def test_only_an_enzyme_cutting_outside_its_site_joins_the_golden_gate_set() -> None:
-    # SrfI and PmeI ship for the library scheme, and cut inside their own site.
-    assert {"SrfI", "PmeI"}.isdisjoint(GOLDEN_GATE_ENZYMES)
-    assert all(get_enzyme(name).type == "IIS" for name in GOLDEN_GATE_ENZYMES)
 
 
 def test_a_scarless_junction_takes_the_overhang_the_record_already_spells() -> None:

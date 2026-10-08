@@ -7,18 +7,25 @@ import pytest
 from liulab_mbio.bench import materials, plates
 from liulab_mbio.protocol import model
 from liulab_mbio.protocol.model import (
+    Bill,
+    BillRow,
+    Check,
     Citation,
     Component,
     Hole,
     Incubation,
     Material,
+    Move,
     Oligo,
+    Project,
     Protocol,
     ReactionTable,
     Source,
     Stage,
+    Stamp,
     Step,
     ThermocyclerProgram,
+    Transfer,
     Troubleshooting,
     Vessel,
     Well,
@@ -79,6 +86,52 @@ def test_the_rule_travels_with_the_material_and_no_step_stores_it() -> None:
     assert [rule.subject for _, rule in protocol(step).rules_for(step)] == [
         "PEG",
         "heat inactivation",
+    ]
+
+
+def test_the_caution_travels_with_the_polymerase_and_no_step_stores_it() -> None:
+    tube = materials.material("Q5 DNA Polymerase", catalog="M0491")
+    amplifying = Step("Amplify", tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),))
+    one = Protocol("PCR", materials=(tube,), steps=(amplifying,))
+    assert amplifying.cautions == ()
+    assert one.cautions_for(amplifying) == (materials.POLYMERASE_ON_ICE,)
+    assert materials.POLYMERASE_ON_ICE in render_html(one)
+
+
+def test_a_materials_cautions_are_written_to_json_and_read_back(tmp_path: Path) -> None:
+    one = Protocol("PCR", materials=(materials.material("Q5 DNA Polymerase", catalog="M0491"),))
+    path = write_protocol(one, tmp_path / "protocol.json")
+    assert materials.POLYMERASE_ON_ICE in path.read_text(encoding="utf-8")
+    assert read_protocol(path) == one
+
+
+def test_a_step_writing_out_a_caution_its_material_carries_shows_it_once() -> None:
+    tube = materials.material("Q5 DNA Polymerase", catalog="M0491")
+    written = Step(
+        "Amplify",
+        cautions=(materials.POLYMERASE_ON_ICE, "Spin the plate down."),
+        tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),),
+    )
+    one = Protocol("PCR", materials=(tube,), steps=(written,))
+    assert one.cautions_for(written) == (materials.POLYMERASE_ON_ICE, "Spin the plate down.")
+
+
+def test_every_caution_a_catalogue_number_carries_reaches_the_reagents_page_once() -> None:
+    tubes = (
+        materials.material("Q5 DNA Polymerase", catalog="M0491"),
+        materials.material("Taq DNA Polymerase", catalog="M0267"),
+        materials.material("Endura electrocompetent cells", catalog="60242"),
+    )
+    steps = tuple(
+        Step("Pipette", tables=(ReactionTable((Component(tube.name, 0.5),)),)) for tube in tubes
+    )
+    # Two tubes carry the polymerase sentence, and every step pipettes one: the two ways the
+    # list could print a caution twice.
+    page = parse(render_html(Protocol("Build", materials=tubes, steps=steps)))
+    reagents = page.find_all("section", cls="materials")[0]
+    assert [p.text for p in reagents.find_all("p", cls="caution")] == [
+        f"Caution: {materials.POLYMERASE_ON_ICE}",
+        f"Caution: {materials.CUVETTE_ON_ICE}",
     ]
 
 
@@ -151,7 +204,7 @@ def test_a_hole_renders_and_never_reads_as_a_value() -> None:
     page = render_html(protocol(Step("Ligate", holes=(hole,))))
     assert NO_NUMBER in page
     assert "H23" in page
-    assert "nobody published it" in page
+    assert "Waiting on a number nobody has published." in page
     assert "liuhlab/liulab-mbio#264" not in page
     assert (
         "1 number has no source"
@@ -175,6 +228,32 @@ def test_a_protocol_keeps_the_sources_it_cites_and_drops_the_rest() -> None:
     one = citing(Protocol("x", materials=(LIGASE,), sources=catalogue))
     assert list(one.sources) == ["M0318"]
     assert [c.status for c in one.audit() if c.name == "sources"] == ["pass"]
+
+
+def test_a_project_reports_a_bill_row_citing_a_source_no_protocol_names() -> None:
+    """The run's pages list its protocols' sources, so a bill citing another one dangles."""
+    priced = Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("ACME")),))
+    elsewhere = Project(
+        "Demo", bill=priced, protocols=(Protocol("One", sources={"NEB": Source("NEB")}),)
+    )
+    (check,) = [c for c in elsewhere.audit() if c.name == "sources"]
+    assert check.status == "fail"
+    assert check.detail == "cited but not named: ACME"
+    named = Project(
+        "Demo", bill=priced, protocols=(Protocol("One", sources={"ACME": Source("ACME prices")}),)
+    )
+    assert [c.status for c in named.audit() if c.name == "sources"] == ["pass"]
+
+
+def test_a_project_names_the_record_its_own_bill_cites_and_no_protocol_has_to() -> None:
+    """The bill is the run's, so the document pricing it is a source of the run itself."""
+    run = Project(
+        "Demo",
+        sources={"ACME": Source("ACME prices")},
+        bill=Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("ACME")),)),
+        protocols=(Protocol("One", sources={"NEB": Source("NEB")}),),
+    )
+    assert [c.status for c in run.audit() if c.name == "sources"] == ["pass"]
 
 
 def test_a_hole_the_run_and_a_step_both_carry_is_collected_once() -> None:
@@ -202,6 +281,35 @@ def test_the_banner_counts_bench_numbers_apart_from_prices() -> None:
     assert "<strong>3</strong> numbers in this protocol have no source" in page
     assert "2 bench numbers and 1 price." in page
     assert "ready to run" not in page
+
+
+def holes_verdict(*holes: Hole) -> Check:
+    (check,) = [c for c in protocol(Step("Assemble", holes=holes)).audit() if c.name == "holes"]
+    return check
+
+
+def test_a_protocol_missing_no_number_passes_its_own_hole_check() -> None:
+    assert holes_verdict().status == "pass"
+
+
+def test_a_hole_no_source_closes_leaves_the_verdict_open_rather_than_failing() -> None:
+    """ADR 0017: a plan is finished with these still standing, so they are no failure."""
+    standing = tuple(
+        Hole(f"H{n}", "nothing sources it", kind)
+        for n, kind in enumerate(("undecided", "unpublished", "lab", "price"), 1)
+    )
+    assert holes_verdict(*standing).status is None
+
+
+def test_a_hole_waiting_on_a_source_nobody_read_fails_and_is_named() -> None:
+    """ADR 0017: a hole naming a source nobody read is work left undone, not a finished plan."""
+    check = holes_verdict(
+        Hole("H24", "nothing sources it", "undecided"),
+        Hole("IDX2", "the units one reaction takes", "unread"),
+    )
+    assert check.status == "fail"
+    assert "IDX2" in check.detail
+    assert "H24" not in check.detail
 
 
 def test_a_price_hole_names_no_issue() -> None:
@@ -281,3 +389,30 @@ def test_a_label_does_not_excuse_a_seated_well_naming_nothing_declared() -> None
 def test_a_label_off_the_array_is_refused_as_a_seating_is() -> None:
     with pytest.raises(ValueError, match="has no well"):
         plates.plate("picked", 96, labels={"Z1": "quarter 1"})
+
+
+def test_a_transfer_that_repeats_one_pattern_answers_with_the_pattern() -> None:
+    """96 moves of a quarter-sampling are one stride and one start, so a page can draw them."""
+    moved = Transfer(
+        "Sample a quarter",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A2", "A1"), ("A4", "A2"), ("C2", "B1"))
+        ),
+    )
+
+    stamp = moved.stamp
+
+    assert stamp is not None
+    assert stamp == Stamp(2, 0, 1)
+    assert stamp.words == "every other row and column, starting A2"
+
+
+def test_moves_that_repeat_no_one_pattern_stay_a_list() -> None:
+    """A compaction leaves out the wells that failed, so no stride describes it."""
+    pooled = plates.plate("pooled", 96)
+    moved = plates.compact(
+        [Well("picked", "A1"), Well("picked", "B4")], pooled, 2.0, title="Compact"
+    )
+
+    assert moved.stamp is None

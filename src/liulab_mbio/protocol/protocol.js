@@ -36,6 +36,37 @@
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
+  // A thing carrying step keys — a section of this page, a page of the run — says which steps it
+  // stands for and how far the bench got in them. The marks are a store's, never a second count.
+  function stepKeys(item) {
+    return (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+  }
+
+  function ticked(marks, keys) {
+    var done = 0;
+    keys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    return done;
+  }
+
+  var groups = all("nav details[data-steps]");
+
+  function showSections() {
+    groups.forEach(function (group) {
+      var keys = stepKeys(group);
+      var label = group.querySelector(".section-progress");
+      if (label) label.textContent = ticked(state, keys) + " of " + keys.length + " done";
+    });
+  }
+
+  function currentSection() {
+    return groups.filter(function (group) {
+      var keys = stepKeys(group);
+      return ticked(state, keys) < keys.length;
+    })[0];
+  }
+
   function refresh() {
     var done = 0;
     stepBoxes.forEach(function (box) {
@@ -44,6 +75,7 @@
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
+    showSections();
   }
 
   boxes.forEach(function (box) {
@@ -58,11 +90,20 @@
   });
   refresh();
 
+  // The section the bench is in — the first still holding an unticked step — opens on arrival,
+  // and the rest close. A section opened by hand after that stays open. Where this never runs,
+  // the page keeps the first section open, which is where a bench with no marks is.
+  var current = currentSection();
+  if (current) {
+    groups.forEach(function (group) { group.open = group === current; });
+  }
+
   // A run's index: how far the bench got in each protocol, read from that page's own store.
-  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // Every file:// page shares one store, and each page has a key of its own, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
-    var total = Number(item.getAttribute("data-steps")) || 0;
+    // Each step of that page by the key it is addressed under, which a reworded title keeps.
+    var keys = stepKeys(item);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -72,22 +113,20 @@
     } catch (error) {
       return;
     }
-    if (!marks || !label || !total) return;
-    var done = 0;
-    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + steps(total) + " done";
+    if (!marks || !label || !keys.length) return;
+    var done = ticked(marks, keys);
+    label.textContent = done + " of " + steps(keys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -130,7 +169,10 @@
       return reactions;
     }
 
+    // A browser restores a typed-in value across a reload, so the count is set either way: what
+    // the page remembers, or the count render.py wrote.
     if (typeof state[key] === "number") input.value = String(state[key]);
+    else input.value = input.getAttribute("value") || "1";
     update();
     input.addEventListener("input", function () {
       state[key] = update();
@@ -209,7 +251,11 @@
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
   all("button.timer").forEach(function (button) {
+    var key = button.getAttribute("data-key");
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -228,33 +274,53 @@
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();

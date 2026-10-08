@@ -1,4 +1,5 @@
 import re
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -8,17 +9,31 @@ from liulab_mbio.plot import layers
 from liulab_mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
+    Citation,
     Component,
     Figure,
+    Folder,
+    Incubation,
+    Item,
+    Material,
+    Move,
     Oligo,
+    Page,
     Plate,
     Protocol,
     ReactionTable,
+    Stage,
     Step,
+    ThermocyclerProgram,
+    Timer,
+    Transfer,
+    Troubleshooting,
+    Well,
     read_protocol,
     render_html,
     write_html,
 )
+from liulab_mbio.protocol.render import NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -102,6 +117,165 @@ def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
     assert len(set(keys)) == len(keys)
 
 
+def reworded() -> tuple[Protocol, Protocol]:
+    """One protocol and the same one with every step's title rewritten, as an agent edits it."""
+    before = Protocol(
+        "Assemble",
+        key="assemble",
+        steps=(
+            Step("Set the reaction up", key="set-up", instructions=("Thaw the mix.",)),
+            Step("Run the thermocycler", key="cycle", timers=(Timer("ligate", 60),)),
+        ),
+    )
+    after = replace(
+        before,
+        steps=(
+            replace(before.steps[0], title="Set up the Golden Gate reaction"),
+            replace(before.steps[1], title="Cycle it"),
+        ),
+    )
+    return before, after
+
+
+def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_its_ticks() -> None:
+    """ADR 0002's own case: an agent rewords the steps, renders again, nothing is ticked twice."""
+    marks = [
+        sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
+        for one in reworded()
+    ]
+    assert marks[0] == ["step-cycle", "step-set-up", "step-set-up.1"]
+    assert marks[1] == marks[0]
+
+
+def test_a_page_remembers_under_the_key_its_protocol_carries() -> None:
+    before, after = reworded()
+    stores = [
+        parse(render_html(one)).find_all("body")[0].attrs["data-protocol"]
+        for one in (before, after)
+    ]
+    assert stores == ["assemble", "assemble"]
+    # A protocol nobody has keyed falls back to a digest of its content, which an edit changes.
+    unkeyed = [replace(one, key="") for one in (before, after)]
+    assert page_key(unkeyed[0]) != page_key(unkeyed[1])
+
+
+def test_no_two_marks_of_one_page_are_alike_however_its_steps_are_keyed() -> None:
+    """A duplicate is a defect the package's own tests catch; the page renders regardless.
+
+    The keys below are the ones that collide where a repeat is numbered once and left: ``cut``
+    twice beside a step already called ``cut-2``.
+    """
+    protocol = Protocol(
+        "Digest",
+        steps=(
+            Step("Digest", key="cut"),
+            Step("Digest again", key="cut"),
+            Step("Digest once more", key="cut-2"),
+            Step("Set up", key="set-up", instructions=("Thaw the mix.",)),
+            Step("Set up again", key="set-up-1"),
+        ),
+    )
+    page = parse(render_html(protocol))
+    assert [one.attrs["id"] for one in page.find_all("section", cls="step")] == [
+        "step-cut",
+        "step-cut-2",
+        "step-cut-2-3",
+        "step-set-up",
+        "step-set-up-1",
+    ]
+    marks = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
+    assert len(set(marks)) == len(marks)
+
+
+def rounds() -> Protocol:
+    """A protocol of two like rounds between a step that opens it and one that closes it."""
+    return Protocol(
+        "Assemble in rounds",
+        steps=(
+            Step("Pool each part list", key="pool"),
+            *(
+                Step(f"Round {n}: {what}", key=f"round-{n}-{what}", section=f"Round {n}")
+                for n in (1, 2)
+                for what in ("open", "ligate")
+            ),
+            Step("Read the library back", key="read", section="Read the library back"),
+        ),
+    )
+
+
+def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> None:
+    [nav] = parse(render_html(rounds())).find_all("nav", cls="toc")
+    groups = nav.find_all("details")
+    assert [g.attrs["data-steps"] for g in groups] == [
+        "round-1-open round-1-ligate",
+        "round-2-open round-2-ligate",
+        "read",
+    ]
+    counts = [g.find_all("summary")[0].text for g in groups]
+    assert counts == [
+        "Round 1 0 of 2 done",
+        "Round 2 0 of 2 done",
+        "Read the library back 0 of 1 done",
+    ]
+    # The bench arrives at the top of the run, so the first section is the one standing open.
+    assert [("open" in g.attrs) for g in groups] == [True, False, False]
+    # A step naming no section is not forced into one, and the numbering runs through every list.
+    assert [a.text for a in nav.find_all("a")][:2] == ["1 Pool each part list", "2 Round 1: open"]
+    assert nav.find_all("a")[-1].text == "6 Read the library back"
+
+
+def test_both_navigation_lists_of_one_page_are_the_same_list() -> None:
+    """The right column of a page in a run and the standalone list it shows alone, alike."""
+    one = rounds()
+    [standalone] = parse(render_html(one)).find_all("nav", cls="toc")
+    [column] = parse(
+        render_html(one, folder=Folder((Page.of(1, one),)), here="01-x.html")
+    ).find_all("nav", cls="within")
+    assert [g.attrs["data-steps"] for g in column.find_all("details")] == [
+        g.attrs["data-steps"] for g in standalone.find_all("details")
+    ]
+    # One or the other: a page shows the list in its header or in its column, never twice.
+    assert not parse(render_html(one)).find_all("nav", cls="within")
+
+
+def test_steps_naming_no_section_stay_the_one_list_they_were(page: Node) -> None:
+    [nav] = page.find_all("nav", cls="toc")
+    assert not nav.find_all("details")
+    assert next(a.attrs["href"] for a in nav.find_all("a")).startswith("#step-")
+
+
+def test_the_header_states_what_the_bench_is_handed_and_what_it_is_left_with() -> None:
+    one = Protocol(
+        "Transform",
+        overview={"Strain": "DH10B"},
+        consumes=(Item("ligation", "the joined plasmid", spec=("≥10 ng/µL",)),),
+        produces=(Item("colonies", "transformed cells on a plate"),),
+    )
+    header = parse(render_html(one)).find_all("header", cls="intro")[0]
+    blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
+    assert blocks[:3] == ["h1", "overview", "handover"]
+    [handover] = header.find_all("div", cls="handover")
+    assert [h.text for h in handover.find_all("h3")] == ["Have in hand", "Leaves you with"]
+    assert handover.find_all("li")[0].text == "ligation the joined plasmid · ≥10 ng/µL"
+    assert handover.find_all("li")[1].text == "colonies transformed cells on a plate"
+
+
+def test_a_protocol_declaring_neither_states_no_handover(page: Node) -> None:
+    assert not page.find_all("div", cls="handover")
+
+
+def test_a_protocol_declaring_one_side_states_that_side_alone() -> None:
+    one = Protocol("Transform", produces=(Item("colonies", "transformed cells on a plate"),))
+    [handover] = parse(render_html(one)).find_all("div", cls="handover")
+    assert [h.text for h in handover.find_all("h3")] == ["Leaves you with"]
+
+
+def test_the_toolbar_offers_to_reset_everything_the_page_remembers(page: Node) -> None:
+    """One button for one store: `protocol.js` empties it, marks, counts and timers alike."""
+    [button] = page.find_all("button", cls="reset")
+    assert button.text == "Reset page"
+
+
 def test_an_oligo_is_an_order_sheet_row_and_never_a_material(page: Node) -> None:
     materials = page.find_all("section", cls="materials")[0]
     assert "M13 fwd" not in materials.text
@@ -175,7 +349,7 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
     table = page.find_all(cls="reaction")[0]
     assert table.find_all("input", type="number")[0].attrs["value"] == "4"
     # Per-reaction volume x 4 reactions x 1.1 for overage, to three figures; the last cell is
-    # the mix total.
+    # the mix total, which says so because a component is added per tube and not to the mix.
     assert [c.text for c in table.find_all("td", cls="mix")] == [
         "87.5",
         "11",
@@ -183,7 +357,7 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
         "2.2",
         "2.2",
         "0.55",
-        "106",
+        "106mix only",
     ]
     template = next(r for r in table.find_all("tr") if "Template DNA" in r.text)
     assert "each tube" in template.text
@@ -235,7 +409,7 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     rows = [[c.text for c in r.find_all(("td", "th"))] for r in program.find_all("tr")][1:]
     assert rows == [
         ["Initial denaturation", "95 °C", "30 s", "1"],
-        ["Denaturation", "95 °C", "15 s", "30"],
+        ["Denaturation", "95 °C", "15 s", "×30"],
         ["Annealing", "55 °C", "15 s"],
         ["Extension", "68 °C", "1 min"],
         ["Final extension", "68 °C", "5 min", "1"],
@@ -244,6 +418,52 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     caption = program.find_all("figcaption")[0].text
     assert "105 °C" in caption
     assert "50 min 30 s" in caption
+
+
+def _program_rows(program: ThermocyclerProgram) -> tuple[Node, list[list[str]]]:
+    """One program rendered on a page of its own, as its figure and its body rows."""
+    page = parse(render_html(Protocol("Run", steps=(Step("Cycle", programs=(program,)),))))
+    figure = page.find_all(cls="program")[0]
+    rows = [[c.text for c in r.find_all("td")] for r in figure.find_all("tr")][1:]
+    return figure, rows
+
+
+def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_end() -> None:
+    """The end follows from the step and the count, so the page cannot contradict the model."""
+    cite = Citation("LevSeq", "thermal cycler table")
+    anneal = Incubation("Anneal", 68.0, 20, delta_c=-0.5, citation=cite)
+    figure, rows = _program_rows(
+        ThermocyclerProgram(
+            (
+                Stage((Incubation("Denature", 95.0, 20, citation=cite), anneal), cycles=10),
+                Stage((anneal,), cycles=None),
+            ),
+            title="Index PCR",
+        )
+    )
+    assert rows == [
+        ["Denature", "95 °C", "20 s", "×10"],
+        ["Anneal", "68 → 63.5 °C-0.5 °C a cycle", "20 s"],
+        ["Anneal", "68 °C-0.5 °C a cycle", "20 s", NO_NUMBER],
+    ]
+    # One source behind every row is the program's, so the rows carry no citation of their own.
+    assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
+        "LevSeq thermal cycler table"
+    ]
+
+
+def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() -> None:
+    """A water bath and an incubator are drawn as programs, and their rows take the whole time."""
+    figure, rows = _program_rows(
+        ThermocyclerProgram(
+            (
+                Stage((Incubation("Recovery, shaking", 30.0, 3600),)),
+                Stage((Incubation("Outgrowth", 30.0, 43200),)),
+            )
+        )
+    )
+    assert rows == [["Recovery, shaking", "30 °C", "1 h", "1"], ["Outgrowth", "30 °C", "12 h", "1"]]
+    assert "plus ramps" not in figure.find_all("figcaption")[0].text
 
 
 def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:
@@ -271,6 +491,35 @@ def test_a_timer_starts_from_its_duration(page: Node) -> None:
     timer = page.find_all("button", cls="timer")[0]
     assert timer.attrs["data-seconds"] == "1800"
     assert "30:00" in timer.text
+
+
+def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
+    """`protocol.js` keeps a deadline under this key, so a key is a timer's own and no other's."""
+    protocol = Protocol(
+        "Incubate",
+        steps=(
+            Step("Digest", timers=(Timer("digest", 60), Timer("heat", 120))),
+            Step("Ligate", timers=(Timer("ligate", 60),)),
+        ),
+    )
+    page = parse(render_html(protocol))
+    keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
+    assert keys == ["step-digest.timer.1", "step-digest.timer.2", "step-ligate.timer.1"]
+
+
+def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
+    """Nothing a bench reads in hours is planned to the second, so the seconds are not printed."""
+    program = ThermocyclerProgram(
+        (
+            Stage(
+                (Incubation("hold", 72.0, 3661), Incubation("rest", 4.0, 59)),
+            ),
+        )
+    )
+    page = parse(render_html(Protocol("Run", steps=(Step("Cycle", programs=(program,)),))))
+    times = [cell.text for cell in page.find_all("td", cls="num")]
+    assert "1 h 1 min" in times
+    assert "59 s" in times
 
 
 def test_expected_results_troubleshooting_and_references_are_shown(page: Node) -> None:
@@ -405,3 +654,187 @@ def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None
     one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
     with pytest.raises(ValueError, match=r"step 1 'Join them'.*'mCherry'"):
         render_html(one, base=data_dir)
+
+
+def _sampled() -> Transfer:
+    return Transfer(
+        "Sample a quarter",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A2", "A1"), ("A4", "A2"), ("C2", "B1"))
+        ),
+        instrument="multichannel pipette",
+    )
+
+
+def test_a_stamp_is_drawn_as_its_two_plates_and_keeps_its_moves_behind_a_toggle() -> None:
+    """One pattern draws once: the move list spells the same thing out a row at a time."""
+    one = Protocol(
+        "Index",
+        plates=(Plate("picked", 384), Plate("index", 96)),
+        steps=(Step("Sample", transfers=(_sampled(),)),),
+    )
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert len(figure.find_all("svg")) == 2
+    caption = figure.find_all("figcaption")[0].text
+    assert "every other row and column, starting A2" in caption
+    assert "3 moves" in caption
+    assert "1 µL each" in caption
+    toggle = figure.find_all("details")[0]
+    assert "open" not in toggle.attrs
+    assert "picked C2" in toggle.text
+
+
+def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table() -> None:
+    """Nothing says what those wells look like, so the moves are all the page has."""
+    one = Protocol("Index", steps=(Step("Sample", transfers=(_sampled(),)),))
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert not figure.find_all("svg")
+    assert not figure.find_all("details")
+    assert "picked C2" in figure.find_all("table")[0].text
+
+
+def _ordered(count: int) -> Protocol:
+    oligos = tuple(
+        Oligo(f"OP{n}", "ACGT" * (5 + n % 2), purpose="index" if n % 2 else "gene", tm_c=60.0 + n)
+        for n in range(1, count + 1)
+    )
+    stock = Plate("stock", 96)
+    seating = dict(zip(stock.well_names, (oligo.name for oligo in oligos), strict=False))
+    return Protocol(
+        "Order",
+        oligos=oligos,
+        order_sheet="../primers.tsv",
+        plates=(Plate("stock", 96, seating=seating),),
+    )
+
+
+def test_a_long_order_sheet_is_summarised_and_the_rows_go_behind_a_toggle() -> None:
+    """A page says what 20 rows have in common; the rows themselves are what the file is for."""
+    section = parse(render_html(_ordered(20))).find_all("section", cls="oligos")[0]
+
+    assert section.find_all("a", href="../primers.tsv")
+    assert "20 oligos · 20 to 24 bases · Tm 61.0 to 80.0 °C" in section.text
+    summary = section.find_all("table")[0]
+    index = next(r for r in summary.find_all("tr") if "index" in r.text)
+    assert [cell.text for cell in index.find_all("td")] == [
+        "index",
+        "OP1 to OP19",
+        "10",
+        "stock A1 to B7",
+    ]
+    toggle = section.find_all("details", cls="listing")[0]
+    assert toggle.find_all("summary")[0].text == "All 20 rows"
+    assert "OP20" in toggle.text
+
+
+def _naming_files() -> Protocol:
+    """A protocol whose text says the sheets its run writes, as the bench says them."""
+    return Protocol(
+        "Order",
+        summary="Order pool.tsv, then amplify it.",
+        overview={"Ordered from": "pool.tsv"},
+        highlights=("pool-primers.tsv pairs a primer to a block.",),
+        files=("../pool.tsv", "../pool-primers.tsv", "../changes.tsv"),
+        materials=(
+            Material(
+                "Oligo pool",
+                note="ordered from pool.tsv",
+                cautions=("Thaw the tubes pool.tsv names on ice.",),
+            ),
+        ),
+        steps=(
+            Step(
+                "Order the pool",
+                instructions=("Order every row of pool.tsv.",),
+                notes=("pool.tsv names each oligo's block.",),
+                expected=("One pool, as pool.tsv has it.",),
+                troubleshooting=(Troubleshooting("A short row", "Order pool.tsv again."),),
+            ),
+        ),
+    )
+
+
+def test_a_file_the_run_writes_is_linked_wherever_the_page_says_its_name() -> None:
+    """A filename a gloved reader cannot open is not a filename, so every mention is a link."""
+    html = render_html(_naming_files())
+    page = parse(html)
+
+    assert {a.attrs["href"] for a in page.find_all("a") if a.text.endswith(".tsv")} == {
+        "../pool.tsv",
+        "../pool-primers.tsv",
+    }
+    # No field says a file name as bare text, whichever field the pipeline put it in.
+    assert ".tsv" not in re.sub(r"<[^>]+>", " ", re.sub(r"<a [^>]*>[^<]*</a>", "", html))
+    # `changes.tsv` is written by the run and said by no page of it, so it links nowhere.
+    assert "changes.tsv" not in page.find_all("main", cls="page")[0].text
+
+
+def test_a_file_name_spelled_inside_a_longer_one_is_not_linked_on_its_own() -> None:
+    """`pool.tsv` and `pool-primers.tsv` are two files, and a reader must reach the right one."""
+    one = Protocol(
+        "Order",
+        files=("../pool.tsv", "../pool-primers.tsv"),
+        steps=(Step("Amplify", instructions=("Use pool-primers.tsv on the pool.",)),),
+    )
+
+    page = parse(render_html(one))
+
+    linked = [(a.attrs["href"], a.text) for a in page.find_all("a") if a.text.endswith(".tsv")]
+    assert linked == [("../pool-primers.tsv", "pool-primers.tsv")]
+
+
+def test_text_beside_a_linked_file_name_is_still_escaped() -> None:
+    one = Protocol(
+        "Order",
+        files=("../pool.tsv",),
+        steps=(Step("Order", instructions=("Order <b>pool.tsv</b> & nothing else.",)),),
+    )
+
+    html = render_html(one)
+
+    assert 'Order &lt;b&gt;<a href="../pool.tsv">pool.tsv</a>&lt;/b&gt; &amp; nothing' in html
+
+
+def test_a_short_order_sheet_stays_the_sheet_it_is() -> None:
+    section = parse(render_html(_ordered(19))).find_all("section", cls="oligos")[0]
+
+    assert not section.find_all("details", cls="listing")
+    assert "19 oligos" not in section.text
+
+
+def test_a_warned_row_is_seen_without_opening_the_summarised_sheet() -> None:
+    """A verdict a reader has to open the sheet to find is a verdict they do not see."""
+    one = _ordered(20)
+    warned = replace(one.oligos[2], status="warn", checks=(Check("length", "warn", "17 bases"),))
+    section = parse(render_html(replace(one, oligos=(*one.oligos[:2], warned, *one.oligos[3:]))))
+
+    toggles = section.find_all("section", cls="oligos")[0].find_all("details")
+
+    assert [t.attrs.get("class") for t in toggles] == ["listing", "oligo-checks"]
+
+
+def test_a_move_through_a_well_the_declared_plate_has_not_got_stays_a_table() -> None:
+    """A drawing that silently left out the wells it cannot place would claim the wrong move."""
+    moved = Transfer(
+        "Sample",
+        tuple(
+            Move(Well("picked", at), Well("index", to), 1.0)
+            for at, to in (("A1", "A1"), ("E5", "B2"))
+        ),
+    )
+    one = Protocol(
+        "Index",
+        plates=(Plate("picked", 12), Plate("index", 12)),
+        steps=(Step("Sample", transfers=(moved,)),),
+    )
+
+    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
+
+    assert moved.stamp is not None
+    assert not figure.find_all("svg")
+    assert "picked E5" in figure.find_all("table")[0].text

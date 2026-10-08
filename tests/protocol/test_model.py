@@ -1,5 +1,7 @@
+import ast
 import re
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -27,6 +29,10 @@ from liulab_mbio.protocol import (
     read_protocol,
     write_protocol,
 )
+from liulab_mbio.protocol.model import NAME_CHARS
+
+#: The checkout a `Source.note` is relative to.
+REPO = Path(__file__).resolve().parents[2]
 
 
 def test_an_unknown_key_is_refused_and_located() -> None:
@@ -136,6 +142,7 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: ReactionTable((Component("water", 1),), overage=-0.1),
         lambda: Stage((Incubation("x", 37, 60),), cycles=0),
         lambda: Incubation("x", 37, 0),
+        lambda: Incubation("x", 37, 60, delta_c=0),
         lambda: Timer("x", 0),
         lambda: Ladder("marker", ()),
         lambda: Lane("sample", (0,)),
@@ -267,6 +274,7 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
         [
             "{",
             '  "title": "Spin at 4 °C",',
+            '  "key": "",',
             '  "summary": "",',
             '  "overview": {},',
             '  "highlights": [],',
@@ -275,6 +283,8 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "produces": [],',
             '  "materials": [],',
             '  "oligos": [],',
+            '  "order_sheet": "",',
+            '  "files": [],',
             '  "equipment": [],',
             '  "vessels": [],',
             '  "plates": [],',
@@ -287,6 +297,27 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             "",
         ]
     ).encode("utf-8")
+
+
+def test_a_step_with_no_key_is_named_after_its_title() -> None:
+    assert Step("Set up the Golden Gate reaction").key == "set-up-the-golden-gate-reaction"
+    # A title too long to be a handle is cut where a page name is cut.
+    assert len(Step("Spin " * 40).key) <= NAME_CHARS
+
+
+def test_a_key_the_builder_writes_outlives_the_wording_of_the_title() -> None:
+    """ADR 0002's own case: an agent rewords a step and the bench keeps what it ticked."""
+    step = Step("Anneal the barcodes", key="anneal-barcodes")
+    assert replace(step, title="Anneal the barcode oligos").key == step.key
+    # It is slugged as a title is, so an anchor and a stored mark never need escaping.
+    assert Step("Anneal", key="Anneal The Barcodes").key == "anneal-the-barcodes"
+
+
+def test_two_protocols_of_one_run_may_not_remember_under_one_key() -> None:
+    one = Protocol("Digest", key="digest")
+    with pytest.raises(ValueError, match="two protocols are keyed 'digest'"):
+        Project("Run", protocols=(one, replace(one, title="Digest again")))
+    assert Project("Run", protocols=(one, Protocol("Ligate"))).protocols[1].key == ""
 
 
 def test_a_step_waits_on_a_vendor_nobody_attends() -> None:
@@ -364,6 +395,36 @@ def test_a_figure_cites_its_source_as_a_note_does() -> None:
     assert one.cited == frozenset({"k"})
     (check,) = [c for c in one.audit() if c.name == "sources"]
     assert check.status == "fail"
+
+
+def _notes() -> set[str]:
+    """Every note a `Source(...)` call in `src/` spells as a literal `note=`.
+
+    Read off the source text, so a source built inside a function counts; a path a function
+    computes does not, and no scan would see one.
+    """
+    found: set[str] = set()
+    for path in (REPO / "src").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if "Source(" not in text:
+            continue
+        for node in ast.walk(ast.parse(text)):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            if node.func.id != "Source":
+                continue
+            for keyword in node.keywords:
+                if keyword.arg == "note" and isinstance(keyword.value, ast.Constant):
+                    found.add(str(keyword.value.value))
+    return found
+
+
+def test_every_note_a_source_names_is_on_disk() -> None:
+    """`Source.note` is a repo-relative path, so a note that moves or goes fails here.
+
+    A source naming no note is not a failure, so naming none anywhere is not one either.
+    """
+    assert sorted(note for note in _notes() if not (REPO / note).is_file()) == []
 
 
 def test_a_span_that_is_not_a_pair_of_numbers_is_refused_where_it_stands() -> None:

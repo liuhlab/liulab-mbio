@@ -1,38 +1,23 @@
-"""The DMX stage of DAD-GGA-DMX: how a well is marked, how deeply it is read, and what passes.
+"""How a well is marked, how deeply it is read, and what reading a plate back takes.
 
-This is the **validating** experiment, not the pooled one. A design sits one per well, the well
-is marked, sequenced and called on its own, and identity stays with well position throughout.
-`liulab_synbio.igga` is iGGA, whose product is a pool nothing re-identifies per member, so
-nothing here is a gate on a library.
+Two routes mark a well and one judgement reads them, and `liulab_synbio.dmx` says what each
+one is. The picking, the pass rule and the reformat are shared; the marking step, the plate and
+the depth floor are the route's own, because each floor was measured on its own library prep.
 
-Two routes mark a well and one judgement reads them. The barcode ligation route ligates four
-DMX barcodes into the construct in lysate; the index PCR route amplifies each well with one
-barcoded primer pair. The picking,
-the pass rule and the reformat are shared; the marking step, the plate and the depth floor are
-the route's own, because each floor was measured on its own library prep.
-
-**A well's marks are arithmetic, not a recorded draw.** The address factorises across the
-barcode axes and one axis is the plate, so two plates on one flow cell are told apart by
-construction and a demultiplexer can check an address instead of trusting a file.
-
-The 96 barcode sequences are not shipped. They are read from a copy the user holds, the way
-`liulab_mbio.bench.prices` and `liulab_mbio.ligase` read theirs; `read_kit` finds one.
+Every number a read-back prints is here, with the document it was read from beside it.
+`liulab_synbio.dmx.steps` writes them up as steps.
 """
 
-import csv
-import itertools
-import os
-from collections import Counter
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass
-from pathlib import Path
 
 from liulab_mbio.bench import plates
-from liulab_mbio.checks import Check, Status, worst
+from liulab_mbio.bench.materials import material
+from liulab_mbio.bench.readback import WellVerdict, clean_colony_chance, identity_check
+from liulab_mbio.checks import Check, Status
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
-    Figure,
     Hole,
     Incubation,
     Material,
@@ -41,38 +26,15 @@ from liulab_mbio.protocol.model import (
     Reference,
     Source,
     Stage,
-    Step,
     ThermocyclerProgram,
     Transfer,
-    Troubleshooting,
     Well,
 )
+from liulab_synbio.dmx.kit import GROUP_SIZE, GROUPS, Kit, KitBarcode
 
-#: The kit: 96 plasmids in four groups of 24, used as supplied.
-#: ``docs/research/synthesis-and-assembly-barcode-kit.md``.
-GROUPS = 4
-GROUP_SIZE = 24
-
-#: The overhangs the four groups chain on, read on the strand the cargo reads on, so the four
-#: barcodes assemble in one order and none can be left out.
-CHAIN: tuple[str, ...] = ("AGGA", "GTTC", "CCTT", "TCAG", "TTCC")
-
-#: The two universal primers flanking the design, which exist only after barcoding because they
-#: come from the barcodes. Group 4's 3' constant and the reverse complement of group 1's 5'.
-DMX0 = "TTTGATACGCAGGAAGATGGCCCAC"
-DMX7 = "ATCGGTGACGGCGATTCTCACATTT"
-
-#: Colonies picked per design, and the fragment counts Lund measured a clean colony at. Four is
-#: the only measured anchor and is a project input, not a constant of the method.
+#: Colonies picked per design. Four is Lund's only measured anchor, and it is a project input
+#: rather than a constant of the method.
 COLONIES_PER_DESIGN = 4
-CLEAN_COLONY_CURVE: tuple[tuple[int, float], ...] = (
-    (2, 1.0),
-    (3, 0.938),
-    (5, 0.846),
-    (8, 0.667),
-    (12, 0.40),
-    (16, 0.0),
-)
 
 #: The plate each stage uses. Colonies are picked into 384-well plates and four of those are
 #: compressed into one 1536-well plate, which is why the format parameter has to reach 1536.
@@ -117,6 +79,7 @@ MULTICHANNEL = "multichannel pipette"
 INDEX_PCR_UL = 10.0
 INDEX_MIX_UL = 7.0
 INDEX_PRIMER_UL = 2.0
+INDEX_TAQ_UL = 0.05
 INDEX_DENATURE_C = 95.0
 INDEX_TOUCHDOWN_C = (68.0, 63.5)
 INDEX_TOUCHDOWN_STEP_C = 0.5
@@ -142,26 +105,17 @@ DNTP_CATALOG = "NEB #N0447"
 TAQ_CATALOG = "NEB #M0267"
 DMSO_CATALOG = "MP Biomedicals #194819"
 
+#: What the Taq stock is worth, which LevSeq never states and NEB's own specification for M0267
+#: does. ``docs/research/route-b-index-pcr.md`` section 9.
+TAQ_STOCK_UNITS_UL = 5.0
+TAQ_SOURCE_KEY = "PS-M0267"
+
 #: Colonies a 25 cm BioAssay plate carries before picking gets hard. Qian SI Day 2.
 BIOASSAY_COLONIES = 2500
 BIOASSAY_CATALOG = "Corning #431111"
 
 #: Columns a pooled 1536-well plate takes, because one saturates. Qian SI Day 4.1.
 POOL_COLUMNS = 2
-
-#: Where the 96 barcode sequences are read from when a caller names no file. The package ships
-#: none; this points at a copy the user holds.
-KIT_ENV = "LIULAB_SYNBIO_DMX_BARCODES"
-
-#: The columns one of those files holds, in any order.
-KIT_COLUMNS = ("name", "group", "index", "overhang5", "umi", "overhang3", "final_seq")
-
-#: What a file has to hold to be one of these, said in the refusal so a caller need not guess.
-KIT_EXPECTED = (
-    f"a tab-separated file with the columns {', '.join(KIT_COLUMNS)}, holding "
-    f"{GROUPS * GROUP_SIZE} rows: {GROUPS} groups of {GROUP_SIZE}, indexed 1 to {GROUP_SIZE} "
-    "within each group, every UMI distinct"
-)
 
 #: The documents these numbers were read from.
 SOURCES: dict[str, Source] = {
@@ -176,76 +130,15 @@ SOURCES: dict[str, Source] = {
         read_as="held under reference_docs/",
         date="2026-10-06",
     ),
+    TAQ_SOURCE_KEY: Source(
+        "New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer",
+        edition="PS-M0267S/L/X/E v2.0, effective 12 Feb 2020",
+        url="https://www.neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf",
+        read_as="plain curl",
+        date="2026-10-08",
+        note="docs/research/route-b-index-pcr.md",
+    ),
 }
-
-
-@dataclass(frozen=True, slots=True)
-class Barcode:
-    """One member of the kit: which group it belongs to, what it spells, and how it chains.
-
-    Parameters
-    ----------
-    name
-        What the kit calls it, such as ``"DMX_1_1"``.
-    group, index
-        Which of the `GROUPS` groups it is in, counting from one, and which of `GROUP_SIZE`.
-    overhang5, overhang3
-        The two overhangs it chains on, which are its group's and not its own.
-    umi
-        The bases that tell it from the rest of its group.
-    sequence
-        The whole barcode as it is ordered.
-    """
-
-    name: str
-    _: KW_ONLY
-    group: int
-    index: int
-    overhang5: str
-    overhang3: str
-    umi: str
-    sequence: str
-
-
-@dataclass(frozen=True, slots=True)
-class Kit:
-    """The 96 barcodes a user holds, grouped as the kit groups them.
-
-    Parameters
-    ----------
-    path
-        The file they were read from, so a report can say which copy was used.
-    barcodes
-        Every barcode, in group and then index order.
-    """
-
-    path: Path
-    barcodes: tuple[Barcode, ...]
-
-    def group(self, group: int) -> tuple[Barcode, ...]:
-        """Return one group's barcodes, in index order.
-
-        Raises
-        ------
-        ValueError
-            If the kit has no such group.
-        """
-        if not 1 <= group <= GROUPS:
-            raise ValueError(f"the kit has groups 1 to {GROUPS}, and {group} is not one of them")
-        return tuple(one for one in self.barcodes if one.group == group)
-
-    def at(self, group: int, index: int) -> Barcode:
-        """Return the barcode at one group and index, both counting from one.
-
-        Raises
-        ------
-        ValueError
-            If the kit holds no barcode there.
-        """
-        found = [one for one in self.group(group) if one.index == index]
-        if not found:
-            raise ValueError(f"the kit holds no barcode {index} of group {group}")
-        return found[0]
 
 
 @dataclass(frozen=True, slots=True)
@@ -407,7 +300,7 @@ def address(route: Route, *, plate: int, well: int) -> Address:
     return Address(route, plate=plate, well=well, well_marks=tuple(marks), plate_mark=plate + 1)
 
 
-def barcodes_for(kit: Kit, one: Address) -> tuple[Barcode, ...]:
+def barcodes_for(kit: Kit, one: Address) -> tuple[KitBarcode, ...]:
     """Return the four kit barcodes an address names, in chain order.
 
     Raises
@@ -421,37 +314,6 @@ def barcodes_for(kit: Kit, one: Address) -> tuple[Barcode, ...]:
             f"address was worked out on the {one.route.name} route"
         )
     return tuple(kit.at(group, mark) for group, mark in enumerate(one.marks, start=1))
-
-
-def read_kit(path: str | os.PathLike[str] | None = None) -> Kit:
-    """Read the 96 barcode sequences from a copy the user holds.
-
-    The package ships none. `path` names the file, or `KIT_ENV` does.
-
-    Raises
-    ------
-    ValueError
-        If no file is named, or the file is not one of these, saying what one is.
-
-    Examples
-    --------
-    >>> read_kit("dmx-barcodes.tsv").barcodes[0].group  # doctest: +SKIP
-    1
-    """
-    named = path if path is not None else os.environ.get(KIT_ENV)
-    if not named:
-        raise ValueError(
-            f"the DMX barcode sequences are not shipped: name the file, or set {KIT_ENV}. "
-            f"It is {KIT_EXPECTED}"
-        )
-    one = Path(named)
-    try:
-        barcodes = _kit_rows(one.read_text(encoding="utf-8-sig").splitlines())
-    except (KeyError, TypeError, ValueError) as error:
-        raise ValueError(
-            f"{one.name} is not the DMX barcode kit ({error}); expected {KIT_EXPECTED}"
-        ) from error
-    return Kit(one, barcodes)
 
 
 def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check:
@@ -498,70 +360,6 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
     )
 
 
-def identity_check(called: Sequence[str], designed: str) -> Check:
-    """Return the verdict on whether a well's call is the design, base for base.
-
-    A pass is an exact match across the whole designed region — both entry overhangs, the
-    fragment, the stuffer and the barcode. A silent mismatch is not a pass: it leaves the
-    protein right and the barcode wrong, and a barcode that no longer names its member cannot be
-    put right by the linkage read. More than one consensus is mixed, and mixed fails. No
-    consensus at all is nothing to judge, so it carries no verdict.
-
-    Raises
-    ------
-    ValueError
-        If `designed` is empty.
-
-    Examples
-    --------
-    >>> identity_check(("ACGT",), "ACGT").status
-    'pass'
-    >>> identity_check(("ACGT", "ACGA"), "ACGT").status
-    'fail'
-    """
-    if not designed:
-        raise ValueError("a well is judged against a designed region, and this one is empty")
-    consensus = [one.upper() for one in called]
-    if not consensus:
-        return Check("well_identity", None, 0.0, "no consensus was called from this well")
-    if len(consensus) > 1:
-        return Check(
-            "well_identity",
-            "fail",
-            float(len(consensus)),
-            f"{len(consensus)} consensus sequences: the well is mixed",
-        )
-    if consensus[0] != designed.upper():
-        return Check("well_identity", "fail", 1.0, "the call is not the design, base for base")
-    return Check("well_identity", "pass", 1.0, "the call is the design across its whole length")
-
-
-@dataclass(frozen=True, slots=True)
-class WellVerdict:
-    """What one well's read came to, and whether reformatting carries it forward.
-
-    Parameters
-    ----------
-    well
-        Where the well is, as a plate name and a well name.
-    checks
-        The depth and the identity, in that order.
-    """
-
-    well: Well
-    checks: tuple[Check, ...]
-
-    @property
-    def status(self) -> Status:
-        """The worst verdict the well carries, by `liulab_mbio.checks.worst`."""
-        return worst(one.status for one in self.checks)
-
-    @property
-    def called(self) -> bool:
-        """Whether anything judged this well at all."""
-        return any(one.status is not None for one in self.checks)
-
-
 def judge_well(
     well: Well,
     *,
@@ -584,49 +382,6 @@ def judge_well(
     if depth.status is None:
         return WellVerdict(well, (depth,))
     return WellVerdict(well, (depth, identity_check(called, designed)))
-
-
-def reformat(verdicts: Sequence[WellVerdict]) -> tuple[WellVerdict, ...]:
-    """Return the wells reformatting carries forward: everything that did not fail.
-
-    A well nobody could call is kept. Compacting it out would throw away a design that may be
-    clean and has only been read too thinly.
-
-    Examples
-    --------
-    >>> reformat(())
-    ()
-    """
-    return tuple(one for one in verdicts if one.status != "fail")
-
-
-def clean_colony_chance(fragments: int) -> float:
-    """Return the chance one picked colony carries a clean copy of a design of this many pieces.
-
-    Linear interpolation between Lund's six measured anchors, `CLEAN_COLONY_CURVE`: a design in
-    two pieces came out clean every time, one in sixteen never. Fewer pieces than the first
-    anchor takes the first anchor's value and more than the last takes the last's, because
-    nothing was measured outside them.
-
-    Raises
-    ------
-    ValueError
-        If `fragments` is not positive.
-
-    Examples
-    --------
-    >>> clean_colony_chance(8), clean_colony_chance(16)
-    (0.667, 0.0)
-    """
-    if fragments < 1:
-        raise ValueError(f"a design is built from at least one fragment, got {fragments}")
-    anchors = CLEAN_COLONY_CURVE
-    if fragments <= anchors[0][0]:
-        return anchors[0][1]
-    for (low, left), (high, right) in itertools.pairwise(anchors):
-        if fragments <= high:
-            return left + (right - left) * (fragments - low) / (high - low)
-    return anchors[-1][1]
 
 
 @dataclass(frozen=True, slots=True)
@@ -684,7 +439,7 @@ def validated(designs: Sequence[Design], floor: int | None) -> tuple[Design, ...
     return tuple(one for one in designs if one.fragments >= floor)
 
 
-def _selected_on(selection: str) -> str:
+def selected_on(selection: str) -> str:
     """Return what a plate of this read's transformants carries, named or left to the record.
 
     The drug is the vector's, read off its marker by the caller: this method's own DMX vector is
@@ -725,7 +480,7 @@ def picked_plate(name: str, colonies: int, selection: str = "") -> Plate:
         PICKED_WELLS,
         catalog=PICKED_CATALOG,
         holds=f"one picked colony each in {CULTURE_UL:g} µL low-salt LB with "
-        f"{_selected_on(selection)}",
+        f"{selected_on(selection)}",
         labels=labels,
         note=f"{colonies} of {PICKED_WELLS} wells picked, a quarter at a time",
     )
@@ -976,28 +731,16 @@ def validation(
     return Validation(route, read, floor=floor, colonies=colonies, selection=selection)
 
 
-#: The index PCR marks, which the package holds none of. The two annealing regions are published
-#: bind the DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab
-#: and holds, as the barcode ligation kit is. ``docs/research/route-b-index-primers.md`` §7.
+#: The index PCR marks, which the package holds none of. The published annealing regions bind the
+#: DMX vector verbatim; which 192 index sequences sit on their 5' ends is a plate the lab holds,
+#: as the barcode ligation kit is. It names no ticket, because no ticket closes it: the plate is
+#: the user's own stock. ``docs/research/route-b-index-primers.md`` §7.
 INDEX_MARKS = Hole(
     "IDX1",
     "no index mark set is named for the barcoded primer pairs",
     "lab",
     where="index PCR, the pair marking one well",
     filled_by="the prepared primer plate the lab holds",
-    issue="liuhlab/liulab-mbio#225",
-)
-
-#: What 0.05 µL of Taq is worth. LevSeq states the volume and never the enzyme's concentration,
-#: and NEB's specification for M0267 could not be read, so the table prints the volume and the
-#: unit count stands empty. ``docs/research/route-b-index-pcr.md`` section 8.
-INDEX_TAQ_UNITS = Hole(
-    "IDX2",
-    "the units of Taq one index PCR takes",
-    "unread",
-    where="index PCR, its polymerase",
-    filled_by="NEB's own specification for M0267, which gives the stock concentration",
-    issue="liuhlab/liulab-mbio#225",
 )
 
 
@@ -1006,8 +749,8 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
 
     The first five lines are the master mix, each one well's share of the mix LevSeq states per
     plate; at `INDEX_OVERAGE` they scale back to that table. The pair and the culture go in a
-    well at a time, because each well takes its own pair. How many units 0.05 µL of Taq is
-    nobody published, so `INDEX_TAQ_UNITS` stands where the unit count would.
+    well at a time, because each well takes its own pair. LevSeq never gives the Taq stock, so
+    the unit count comes from the supplier's own specification.
 
     Examples
     --------
@@ -1021,7 +764,13 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
         (
             Component("ThermoPol Reaction Buffer", 1.0, stock="10X", final="1X", citation=mix),
             Component("dNTP mix", 0.2, stock="10 mM each", final="0.2 mM each", citation=mix),
-            Component("Taq DNA Polymerase", 0.05, citation=mix),
+            Component(
+                "Taq DNA Polymerase",
+                INDEX_TAQ_UL,
+                stock=f"{TAQ_STOCK_UNITS_UL:g} U/µL",
+                final=f"{INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
+                citation=mix,
+            ),
             Component("DMSO", 0.4, stock="100%", final="4% (v/v)", citation=mix),
             Component("Nuclease-free water", 5.35, citation=mix),
             Component(
@@ -1046,62 +795,44 @@ def index_pcr_reaction(reactions: int = 1) -> ReactionTable:
 
 
 def index_pcr_program() -> ThermocyclerProgram:
-    """Return LevSeq's touchdown program, the SI's two loop lines spelled out.
+    """Return LevSeq's touchdown program, the SI's two loop lines as two stages.
 
-    Ten cycles drop the annealing temperature `INDEX_TOUCHDOWN_STEP_C` each, over
-    `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more anneal and extend together at the top of it.
-    The touchdown is one stage a cycle, because a stage holds one temperature.
+    The touchdown is one stage of `INDEX_TOUCHDOWN_CYCLES` cycles whose annealing step drops
+    `INDEX_TOUCHDOWN_STEP_C` a cycle, across `INDEX_TOUCHDOWN_C`; `INDEX_PLATEAU_CYCLES` more
+    anneal and extend together at the top of it.
 
     Examples
     --------
-    >>> stages = index_pcr_program().stages
-    >>> stages[1].incubations[1].temperature_c, stages[10].incubations[1].temperature_c
-    (68.0, 63.5)
+    >>> touchdown = index_pcr_program().stages[1]
+    >>> anneal = touchdown.incubations[1]
+    >>> anneal.temperature_c, anneal.delta_c, anneal.last_c(touchdown.cycles)
+    (68.0, -0.5, 63.5)
     """
     cite = Citation("LevSeq", "thermal cycler table")
     top = INDEX_TOUCHDOWN_C[0]
-    denature = Incubation("Denature", INDEX_DENATURE_C, 20, cite)
-    extend = Incubation("Extend", top, INDEX_EXTENSION_SECONDS, cite)
+    denature = Incubation("Denature", INDEX_DENATURE_C, 20, citation=cite)
     return ThermocyclerProgram(
         (
-            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, cite),)),
-            *(
-                Stage(
-                    (
-                        denature,
-                        Incubation("Anneal", top - at * INDEX_TOUCHDOWN_STEP_C, 20, cite),
-                        extend,
-                    )
-                )
-                for at in range(INDEX_TOUCHDOWN_CYCLES)
+            Stage((Incubation("Initial denaturation", INDEX_DENATURE_C, 300, citation=cite),)),
+            Stage(
+                (
+                    denature,
+                    Incubation("Anneal", top, 20, delta_c=-INDEX_TOUCHDOWN_STEP_C, citation=cite),
+                    Incubation("Extend", top, INDEX_EXTENSION_SECONDS, citation=cite),
+                ),
+                cycles=INDEX_TOUCHDOWN_CYCLES,
             ),
             Stage(
-                (denature, Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, cite)),
+                (
+                    denature,
+                    Incubation("Anneal and extend", top, INDEX_EXTENSION_SECONDS, citation=cite),
+                ),
                 cycles=INDEX_PLATEAU_CYCLES,
             ),
-            Stage((Incubation("Final extension", top, 300, cite),)),
-            Stage((Incubation("Hold", 4.0, None, cite),)),
+            Stage((Incubation("Final extension", top, 300, citation=cite),)),
+            Stage((Incubation("Hold", 4.0, None, citation=cite),)),
         ),
         title="Index PCR",
-    )
-
-
-def chances(designs: Sequence[Design]) -> tuple[str, ...]:
-    """Return one line a fragment count: how many designs it covers, and each one's chance.
-
-    Grouped rather than listed, because every design of one fragment count carries the same
-    chance and a library has more designs than a page has room for.
-
-    Examples
-    --------
-    >>> chances((Design("a", 2), Design("b", 2), Design("c", 8)))
-    ('2 fragment(s): 2 design(s), 100.0% of picks clean', '8 fragment(s): 1 design(s), 66.7% of picks clean')
-    """
-    counted = Counter(one.fragments for one in designs)
-    return tuple(
-        f"{pieces} fragment(s): {number} design(s), "
-        f"{clean_colony_chance(pieces):.1%} of picks clean"
-        for pieces, number in sorted(counted.items())
     )
 
 
@@ -1113,7 +844,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Corning",
             catalog=BIOASSAY_CATALOG.split("#")[-1],
             amount="one spot a design",
-            note=f"{_selected_on(one.selection)}; about {BIOASSAY_COLONIES:,} colonies a plate",
+            note=f"{selected_on(one.selection)}; about {BIOASSAY_COLONIES:,} colonies a plate",
             citation=Citation("Qian SI", "Day 2"),
         ),
         Material(
@@ -1121,7 +852,7 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
             supplier="Beckman Coulter",
             catalog=PICKED_CATALOG.split("#")[-1],
             amount=f"{len(one.picked)}, one a {PICKED_WELLS} wells",
-            note=f"{CULTURE_UL:g} µL low-salt LB with {_selected_on(one.selection)} a well",
+            note=f"{CULTURE_UL:g} µL low-salt LB with {selected_on(one.selection)} a well",
             citation=Citation("Qian SI", "Day 3"),
         ),
     ]
@@ -1184,15 +915,15 @@ def validation_materials(one: Validation) -> tuple[Material, ...]:
                 amount="0.2 µL a reaction, 10 mM each",
                 citation=Citation("LevSeq", "step 1"),
             ),
-            Material(
+            material(
                 "Taq DNA Polymerase",
                 supplier="NEB",
                 catalog=TAQ_CATALOG.split("#")[-1],
                 storage="-20 °C",
-                amount="0.05 µL a reaction",
-                note="LevSeq gives the volume and no source gives the stock, so the reaction "
-                "carries no unit count",
-                citation=Citation("LevSeq", "step 1"),
+                amount=f"{INDEX_TAQ_UL:g} µL a reaction",
+                note=f"{TAQ_STOCK_UNITS_UL:g} U/µL, so one reaction takes "
+                f"{INDEX_TAQ_UL * TAQ_STOCK_UNITS_UL:g} units",
+                citation=Citation(TAQ_SOURCE_KEY, "Concentration"),
             ),
             Material(
                 "DMSO, molecular biology grade",
@@ -1221,326 +952,6 @@ def validation_equipment(one: Validation) -> tuple[str, ...]:
         "Incubator at 37 °C",
         "A sequencer, and a demultiplexer that can check an address",
     )
-
-
-def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
-    """Return the steps that read these designs back, the route's own in the middle.
-
-    The picking is shared and the calling is shared; between them sits the route's own marking.
-
-    `marking` is drawn on the one step of the route that changes a molecule: the lysate ligation
-    on one route, the index PCR on the other. The records it names belong to the run, which this
-    module does not hold, so the caller chooses it.
-
-    Examples
-    --------
-    >>> one = validation(ROUTE_INDEX_PCR, (Design("a", 4),), 0)
-    >>> for step in validation_steps(one):
-    ...     print(step.title)
-    Array 1 design(s) and grow
-    Pick 4 colonies of each design
-    Sample the picked plates into index plates
-    Amplify each well with its own pair
-    Pool and sequence
-    Call every well
-    """
-    route = (
-        _ligation_steps(one, marking)
-        if one.route is ROUTE_LIGATION
-        else _index_pcr_steps(one, marking)
-    )
-    return (_array_step(one), _pick_step(one), *route, _call_step(one))
-
-
-def _array_step(one: Validation) -> Step:
-    """Spot every design the floor reads back, which is where the read-back set is chosen."""
-    floor = (
-        "every design, which a floor of zero does"
-        if one.floor == 0
-        else f"every design in {one.floor} fragment(s) or more"
-    )
-    return Step(
-        f"Array {len(one.designs)} design(s) and grow",
-        instructions=(
-            "Spot each design from its archive plate as its own spot on a 25 cm BioAssay plate.",
-            f"Grow overnight at 37 °C on {_selected_on(one.selection)}.",
-        ),
-        expected=(
-            f"One spot a design, at about {BIOASSAY_COLONIES:,} colonies a plate, which is the "
-            "density picking wants.",
-        ),
-        notes=(
-            f"This project reads back {floor}: {len(one.designs)} design(s). The rest stay "
-            "polyclonal and are never read one design at a time.",
-            "The archive is untouched: this reads a copy of it.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "A spot grows nothing",
-                "That design has no clone to read. Re-transform it from the archive before "
-                "anyone re-synthesises it.",
-            ),
-        ),
-    )
-
-
-def _pick_step(one: Validation) -> Step:
-    """Pick the colonies, a quarter of a plate at a time, and print what each pick is worth."""
-    sizes = ", ".join(f"{len(plate.labels)}" for plate in one.picked)
-    return Step(
-        f"Pick {one.colonies} colonies of each design",
-        instructions=(
-            f"Pick {one.colonies} colonies a design into {CULTURE_UL:g} µL low-salt LB with "
-            f"{_selected_on(one.selection)}, with the {PICKER}.",
-            f"Fill one quarter of each {PICKED_WELLS}-well plate before starting the next.",
-            "Grow overnight at 37 °C.",
-        ),
-        expected=(
-            f"{one.wells} wells over {len(one.picked)} plate(s): {sizes} picked.",
-            "Every colony of one design sits on one plate.",
-        ),
-        notes=(
-            f"{one.colonies} colonies a design is Lund's anchor and the only measured one; four "
-            "gave a clean copy of 343 of 458 genes.",
-            *chances(one.designs),
-            "A quarter at a time is what makes a part-filled plate give full plates downstream, "
-            "and what keeps a mark off a plate that is mostly empty.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "A design in many fragments gives no clean colony",
-                "The chances above say which designs that is likeliest for. Pick more colonies "
-                "of those designs before the plates are poured, not after.",
-            ),
-        ),
-    )
-
-
-def _ligation_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
-    """Compress into 1536, barcode in lysate, then pool and sequence."""
-    moves = tuple(
-        compression(one.picked[at : at + PLATES_COMPRESSED], plate)
-        for at, plate in zip(
-            range(0, len(one.picked), PLATES_COMPRESSED), one.compressed, strict=True
-        )
-    )
-    return (
-        Step(
-            f"Compress the picked plates into {len(one.compressed)} barcoding plate(s)",
-            instructions=(
-                "Invert the picked plates for 30 minutes so the cells gather at the meniscus.",
-                f"Move {LYSATE_UL:g} µL of each well into the {COMPRESSED_WELLS}-well plate.",
-            ),
-            transfers=moves,
-            expected=(f"{one.wells} wells of lysate, {PLATES_COMPRESSED} picked plates to one.",),
-        ),
-        Step(
-            "Barcode each well in lysate",
-            figures=() if marking is None else (marking,),
-            instructions=(
-                f"Add one barcode from each of the {GROUPS} kit groups to every well, by the "
-                "address that well's position gives.",
-                f"Make each well up to {WELL_UL:g} µL with {BARCODE_UL:g} µL barcodes, "
-                f"{WATER_UL:g} µL water and {MASTERMIX_UL:g} µL master mix.",
-                "Run the ligation, then pool.",
-            ),
-            expected=(
-                "One barcoded construct a well, carrying four barcodes chained head to tail.",
-            ),
-            notes=(
-                "The address is worked out from where the well is, not looked up: three groups "
-                "name the well and the fourth goes across the whole plate from a reservoir.",
-                "The kit's sequences are not shipped. Read them from the copy you hold.",
-            ),
-        ),
-        _sequencing_step(
-            one,
-            f"Pool every well and amplify the three primer pairs separately. {POOL_COLUMNS} "
-            "miniprep columns, because one saturates.",
-        ),
-    )
-
-
-def _index_pcr_steps(one: Validation, marking: Figure | None = None) -> tuple[Step, ...]:
-    """Sample a quarter at a time into index plates, amplify on the pair each well's address names."""
-    at = 0
-    moves: list[Transfer] = []
-    for plate in one.picked:
-        many = -(-len(plate.labels) // INDEX_WELLS)
-        moves += sampling(plate, one.index[at : at + many])
-        at += many
-    return (
-        Step(
-            "Sample the picked plates into index plates",
-            instructions=(
-                f"Move {SAMPLE_UL:g} µL of each well into its {INDEX_WELLS}-well plate, one "
-                "quarter of the picked plate a pass.",
-            ),
-            transfers=tuple(moves),
-            expected=(f"{len(one.index)} index plate(s), {one.wells} reactions in all.",),
-            notes=(
-                "One well in four lines up under a head built for the smaller format, so a "
-                "quarter moves in one pass.",
-            ),
-        ),
-        Step(
-            "Amplify each well with its own pair",
-            figures=() if marking is None else (marking,),
-            instructions=(
-                f"Add {INDEX_MIX_UL:g} µL of the master mix below to each well, which already "
-                f"holds its {SAMPLE_UL:g} µL of culture.",
-                f"Add {INDEX_PRIMER_UL:g} µL of the pair its address names from the prepared "
-                f"primer plate, for {INDEX_PCR_UL:g} µL a well.",
-                "Seal the plate, spin it down, and run the program below.",
-            ),
-            cautions=("Keep the polymerase on ice.",),
-            tables=(index_pcr_reaction(one.wells),),
-            programs=(index_pcr_program(),),
-            expected=(
-                "One barcoded amplicon a well. Well *n* of a plate takes forward mark *n*, and "
-                "every well of one plate takes that plate's own reverse mark.",
-                "One band a well, the design plus about 100 bp: the two marks, and the stretch "
-                "between the primer sites and the reading frame.",
-            ),
-            notes=(
-                f"{INDEX_WELLS} forward marks and {INDEX_WELLS} reverse reach "
-                f"{ROUTE_INDEX_PCR.capacity:,} wells, so the pairs already held cover far more than this "
-                "run needs.",
-                "The primer plate is built once as lab stock and a run calls for it; this "
-                "protocol does not build one.",
-                f"The first {INDEX_TOUCHDOWN_CYCLES} cycles touch down from "
-                f"{INDEX_TOUCHDOWN_C[0]:g} to {INDEX_TOUCHDOWN_C[1]:g} °C, "
-                f"{INDEX_TOUCHDOWN_STEP_C:g} °C a cycle, and {INDEX_PLATEAU_CYCLES} more run at "
-                f"{INDEX_TOUCHDOWN_C[0]:g} °C.",
-                f"Extension is {INDEX_EXTENSION_SECONDS // 60} minutes, what the authors ran for "
-                "a gene below 1 kb. The published rule is at least one minute a kilobase, so a "
-                "longer design wants it raised.",
-                f"The mix is made {1 + INDEX_OVERAGE:g} times what the wells take, which is what "
-                "LevSeq's own per-plate table spells out. Nothing says what the surplus is for.",
-            ),
-            troubleshooting=(
-                Troubleshooting(
-                    "A plate reads back far fewer wells than the others",
-                    "LevSeq traces that to the amplification, not the sequencing: on a run of "
-                    "ten plates three returned under 60% of their variants. Check each pool on "
-                    "a gel before the library prep.",
-                ),
-            ),
-            holes=(INDEX_MARKS, INDEX_TAQ_UNITS),
-        ),
-        _sequencing_step(one, "Pool each index plate on its own and clean the pool up."),
-    )
-
-
-def _sequencing_step(one: Validation, pooling_instruction: str) -> Step:
-    """Pool the marked wells and sequence them, which both routes end their own stretch on."""
-    return Step(
-        "Pool and sequence",
-        instructions=(pooling_instruction, "Sequence the pool."),
-        expected=(
-            f"Reads for {one.wells} wells, every well told from the rest by the marks it carries.",
-        ),
-        notes=(
-            "Two plates on one flow cell are told apart by construction, because one axis of "
-            "the address is the plate.",
-        ),
-    )
-
-
-def _call_step(one: Validation) -> Step:
-    """Demultiplex, judge each well on depth and then identity, and compact out what failed."""
-    tolerated = (
-        "."
-        if one.route.tolerable_reads is None
-        else f"; the {one.route.name} route tolerates {one.route.tolerable_reads} reads and "
-        "warns between the two."
-    )
-    return Step(
-        "Call every well",
-        instructions=(
-            "Demultiplex the reads by address, checking each address rather than trusting a file.",
-            "Call a consensus a well, then compare it with that well's design base for base.",
-            "Reformat, compacting out the wells that failed.",
-        ),
-        expected=(
-            f"A well read more than {one.route.wanted_reads} times is called{tolerated}",
-            "A pass matches across the whole designed region: both entry overhangs, the "
-            "fragment, the stuffer and the barcode.",
-        ),
-        notes=(
-            "A well read too thinly carries no verdict and is not a failure, so reformatting "
-            "does not compact it out.",
-            "More than one consensus is mixed, and mixed fails.",
-            "A design with no passing well is picked again from the same archive spot before "
-            "anyone re-synthesises it.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "A well's call is the right protein and the wrong barcode",
-                "It fails. A barcode that no longer names its member cannot be put right by the "
-                "linkage read later.",
-            ),
-        ),
-    )
-
-
-def _kit_rows(lines: Sequence[str]) -> tuple[Barcode, ...]:
-    """Parse the barcode rows, refusing a file that is not the kit.
-
-    Raises
-    ------
-    ValueError
-        Naming what is wrong with it.
-    """
-    reader = csv.DictReader(lines, delimiter="\t")
-    if missing := sorted(set(KIT_COLUMNS) - set(reader.fieldnames or ())):
-        raise ValueError(f"missing column(s) {', '.join(missing)}")
-    found = [
-        Barcode(
-            row["name"],
-            group=int(row["group"]),
-            index=int(row["index"]),
-            overhang5=row["overhang5"].upper(),
-            overhang3=row["overhang3"].upper(),
-            umi=row["umi"].upper(),
-            sequence=row["final_seq"].upper(),
-        )
-        for row in reader
-    ]
-    _check_kit(found)
-    return tuple(sorted(found, key=lambda one: (one.group, one.index)))
-
-
-def _check_kit(found: Sequence[Barcode]) -> None:
-    """Refuse a kit that is not four groups of 24 with distinct UMIs chaining in one order.
-
-    Raises
-    ------
-    ValueError
-        Naming what is wrong with it.
-    """
-    if len(found) != GROUPS * GROUP_SIZE:
-        raise ValueError(f"{len(found)} rows, not {GROUPS * GROUP_SIZE}")
-    if len({one.umi for one in found}) != len(found):
-        raise ValueError("two rows share a UMI")
-    for group in range(1, GROUPS + 1):
-        members = [one for one in found if one.group == group]
-        if sorted(one.index for one in members) != list(range(1, GROUP_SIZE + 1)):
-            raise ValueError(f"group {group} is not indexed 1 to {GROUP_SIZE}")
-        ends = {(one.overhang5, one.overhang3) for one in members}
-        if len(ends) != 1:
-            raise ValueError(f"group {group} chains on {len(ends)} different overhang pairs")
-    # Head to tail, so a barcode cannot land in the wrong position and none can be left out.
-    # Checked strand-agnostically: a copy held on the map strand spells the chain reversed and
-    # complemented, and the adjacency is the same either way.
-    for group in range(1, GROUPS):
-        left = next(one for one in found if one.group == group)
-        right = next(one for one in found if one.group == group + 1)
-        if left.overhang3 != right.overhang5:
-            raise ValueError(
-                f"group {group} ends on {left.overhang3} and group {group + 1} begins on "
-                f"{right.overhang5}, so the four do not chain head to tail"
-            )
 
 
 #: Where the numbers above come from, ready for a protocol's reference list.

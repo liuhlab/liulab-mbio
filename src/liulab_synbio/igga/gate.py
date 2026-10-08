@@ -22,10 +22,10 @@ from liulab_mbio.overhangs import fidelity, on_target
 from liulab_mbio.primers.placement import find_binding_sites
 from liulab_mbio.reaction import Pool, Reaction, Role
 from liulab_mbio.sequence import Segment, SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import CutSite, Fragment, digest, find_sites
+from liulab_mbio.sites import CutSite, find_sites, released
 from liulab_mbio.translate import stop_codons
 from liulab_synbio.igga.parts import barcode_rules
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 from liulab_synbio.igga.stages import LIGASE, LIGASE_BUFFER
 
 #: What stands behind a check: a domain object `liulab_mbio` already returns, so `plot` can draw
@@ -155,7 +155,7 @@ class Verdict:
 def check_cargo(
     cargo: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     where: str = "cargo",
     ends_chain: bool = False,
     annealing: Sequence[str] = WELL_PRIMERS,
@@ -163,7 +163,7 @@ def check_cargo(
     """Judge one cargo: the sites it must not carry, the frame it keeps, and what it must not read.
 
     A cargo is what the external enzyme releases from a synthesised block, counted from the
-    first base of the overhang a part enters on. Every enzyme the project reserves is one no
+    first base of the overhang a part enters on. Every enzyme the build reserves is one no
     block spells anywhere, its stuffers included, because the step that reserved it cuts the
     cargo in a tube of its own. A cargo another part follows is whole codons; the one that ends
     the chain is one base past them, which is the method's capping block.
@@ -235,11 +235,11 @@ def check_cargo(
 
 
 def check_barcode_set(
-    codes: Sequence[str], *, project: Project, where: str = "this part list"
+    codes: Sequence[str], *, project: Build, where: str = "this part list"
 ) -> tuple[Judgement, ...]:
     """Judge one part list's barcodes: how far apart they stand, and what each one reads as.
 
-    The rules are the project's length and distance with the method's cloning scar, the frame the
+    The rules are the build's length and distance with the method's cloning scar, the frame the
     finished block reads the barcode in, and the enzymes a block is kept clear of.
     `liulab_mbio.barcodes` holds all of them; this names them for this method.
     """
@@ -279,7 +279,7 @@ def check_barcode_set(
 def check_product(
     product: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     barcodes: Mapping[str, Sequence[str]],
     where: str = "the library product",
 ) -> tuple[Judgement, ...]:
@@ -359,7 +359,7 @@ def check_product(
 def check_dmx_vector(
     vector: SequenceRecord,
     *,
-    project: Project,
+    project: Build,
     annealing: Sequence[str] = WELL_PRIMERS,
     where: str = "the DMX vector",
 ) -> tuple[Judgement, ...]:
@@ -433,7 +433,7 @@ def check_dmx_vector(
 
 
 def check_reaction(
-    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Judge one tube: whether every molecule in it is cut where this method cuts it.
 
@@ -454,7 +454,7 @@ def check_reaction(
 
 
 def library_reactions(
-    project: Project,
+    project: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -506,7 +506,7 @@ def library_reactions(
 
 
 def final_assembly_reactions(
-    project: Project, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
+    project: Build, *, library: SequenceRecord, working: SequenceRecord, cargo: Enzyme
 ) -> tuple[Reaction, ...]:
     """Compose the final assembly: two digests and the ligation that joins what they leave.
 
@@ -527,7 +527,7 @@ def final_assembly_reactions(
 
 
 def check_library(
-    project: Project,
+    project: Build,
     *,
     destination: SequenceRecord,
     blocks: Mapping[str, Sequence[SequenceRecord]],
@@ -610,7 +610,7 @@ def check_library(
     return Verdict(made)
 
 
-def _opening(product: SequenceRecord, project: Project, where: str) -> Judgement:
+def _opening(product: SequenceRecord, project: Build, where: str) -> Judgement:
     """Whether the internal enzyme still cuts the finished product where a further round opens it.
 
     The method leaves the library openable after its last round, which is what a further round or
@@ -651,7 +651,7 @@ def _worst(name: str, group: Sequence[Check]) -> Check:
     return Check(name, kept.status, kept.value, detail)
 
 
-def _cargo(block: SequenceRecord, project: Project) -> SequenceRecord:
+def _cargo(block: SequenceRecord, project: Build) -> SequenceRecord:
     """Return what the external enzyme releases from one block, its entry overhang first.
 
     The piece is taken by the end it leaves on and not by being the only one: a block held in a
@@ -666,22 +666,15 @@ def _cargo(block: SequenceRecord, project: Project) -> SequenceRecord:
         If no piece ends on the scar, or more than one does.
     """
     scar = project.scheme.cloning_scar
-    released = [
-        piece for piece in _released(block, project.scheme.external) if piece.right_overhang == scar
+    pieces = [
+        piece for piece in released(block, project.scheme.external) if piece.right_overhang == scar
     ]
-    if len(released) != 1:
+    if len(pieces) != 1:
         raise ValueError(
-            f"{project.scheme.external.name} releases {len(released)} piece(s) of this block "
+            f"{project.scheme.external.name} releases {len(pieces)} piece(s) of this block "
             f"ending on the cloning scar {scar}, and a donor carries one cargo"
         )
-    return SequenceRecord(block.bases(released[0].start, released[0].end))
-
-
-def _released(record: SequenceRecord, enzyme: Enzyme) -> tuple[Fragment, ...]:
-    """Return the pieces of a digest with an overhang at each end: what a ligation takes."""
-    return tuple(
-        piece for piece in digest(record, enzyme) if piece.left_overhang and piece.right_overhang
-    )
+    return SequenceRecord(block.bases(pieces[0].start, pieces[0].end))
 
 
 def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
@@ -713,7 +706,7 @@ def _cutting(reaction: Reaction, pool: Pool) -> Judgement:
 
 
 def _ligation(
-    reaction: Reaction, *, project: Project, profile: LigaseProfile | None = None
+    reaction: Reaction, *, project: Build, profile: LigaseProfile | None = None
 ) -> tuple[Judgement, ...]:
     """Whether the ends meeting in one tube can be told apart, and how well they ligate."""
     ends = sorted(_ends(reaction, project))
@@ -780,7 +773,7 @@ def _on_target(reaction: Reaction, ends: Sequence[str], profile: LigaseProfile) 
     )
 
 
-def _ends(reaction: Reaction, project: Project) -> set[str]:
+def _ends(reaction: Reaction, project: Build) -> set[str]:
     """Every overhang the molecules of a ligation present, read off the digest that made it.
 
     A pool naming its own cutter is read off that one. The method's round is what the rest fall
@@ -798,13 +791,13 @@ def _ends(reaction: Reaction, project: Project) -> set[str]:
     for pool in reaction.pools:
         enzyme = pool.cutter or cutters[pool.role]
         for record in pool:
-            for piece in _released(record, enzyme):
+            for piece in released(record, enzyme):
                 found.update((piece.left_overhang, piece.right_overhang))
     return found
 
 
 def _block(
-    bases: str, at: int, project: Project, barcodes: Mapping[str, Sequence[str]]
+    bases: str, at: int, project: Build, barcodes: Mapping[str, Sequence[str]]
 ) -> tuple[tuple[str, ...], str, int]:
     """Walk the barcode block from `at`, one barcode a round joined by the cloning scar.
 
@@ -851,13 +844,13 @@ def _flanks(
         forward = site.strand is Strand.FORWARD
         best: tuple[Segment, Segment] | None = None
         for cut in opened:
-            clear = _span(record, *((site.end, cut.start) if forward else (cut.end, site.start)))
+            clear = _reach(record, *((site.end, cut.start) if forward else (cut.end, site.start)))
             if clear is None or (best and clear.end - clear.start >= best[1].end - best[1].start):
                 continue
             flank = (
-                _span(record, site.end - len(region), clear.end)
+                _reach(record, site.end - len(region), clear.end)
                 if forward
-                else _span(record, clear.start, site.start + len(region))
+                else _reach(record, clear.start, site.start + len(region))
             )
             if flank is not None:
                 best = (flank, clear)
@@ -867,10 +860,12 @@ def _flanks(
     return tuple(found), ""
 
 
-def _span(record: SequenceRecord, start: int, end: int) -> Segment | None:
-    """Return the bases from `start` to `end` as the top strand reads them, or ``None``.
+def _reach(record: SequenceRecord, start: int, end: int) -> Segment | None:
+    """Return the bases from `start` forward to `end` as the top strand reads them, or ``None``.
 
-    There are none where the two meet. A span across the origin ends past the record's length.
+    There are none where the two meet. The reach is counted forward, so a span across the origin
+    ends past the record's length. This is not `SequenceRecord.span`, which is handed a width
+    rather than the far end.
     """
     length = len(record)
     if record.topology == "circular":

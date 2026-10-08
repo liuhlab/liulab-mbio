@@ -72,6 +72,19 @@ def cycle_citation(polymerase: Polymerase = Q5) -> Citation:
     return Citation(polymerase.pcr.cycles_source, CYCLES_LOCATOR)
 
 
+def polymerase_name(polymerase: Polymerase = Q5) -> str:
+    """Return what the tube is called: the row `pcr_reaction` pipettes, and its material's name.
+
+    One name, so a step pipetting it names the material it comes from.
+
+    Examples
+    --------
+    >>> polymerase_name(Q5)
+    'Q5 DNA Polymerase'
+    """
+    return f"{polymerase.name} DNA Polymerase"
+
+
 #: NEB's colony PCR: a 2X master mix, a colony picked with a toothpick, and a lysis step long
 #: enough to open the cells.
 COLONY_PCR_MASTER_MIX = "OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)"
@@ -124,7 +137,7 @@ def pcr_reaction(
         ),
         Component("Template DNA", template_volume_ul, master_mix=False),
         Component(
-            f"{polymerase.name} DNA Polymerase",
+            polymerase_name(polymerase),
             round(volume_ul * profile.units_per_ul / profile.stock_units_ul, 2),
             stock=f"{profile.stock_units_ul:g} U/µL",
             final=f"{volume_ul * profile.units_per_ul:g} units",

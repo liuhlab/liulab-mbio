@@ -10,6 +10,7 @@ import pytest
 
 from liulab_mbio.protocol import (
     REAGENTS_FILE,
+    REFERENCES_FILE,
     Bill,
     BillRow,
     Check,
@@ -24,6 +25,7 @@ from liulab_mbio.protocol import (
     Project,
     Protocol,
     Reference,
+    Rule,
     Source,
     Stage,
     Step,
@@ -33,7 +35,6 @@ from liulab_mbio.protocol import (
     Vessel,
     Wait,
     page_key,
-    page_name,
     render_html,
     render_index,
     render_reagents,
@@ -69,7 +70,14 @@ def chain() -> Project:
         ),
         bill=Bill(
             (
-                BillRow("oligo pool", 1, unit="pool", key="S-1", charge="1200.00"),
+                BillRow(
+                    "oligo pool",
+                    1,
+                    unit="pool",
+                    key="S-1",
+                    charge="1200.00",
+                    citation=Citation("NEB", "price list"),
+                ),
                 BillRow(
                     "sequencing",
                     2,
@@ -103,7 +111,20 @@ def chain() -> Project:
                 produces=(BLOCKS,),
                 materials=(
                     Material("Nuclease-free water", supplier="Thermo", catalog="AM9937"),
-                    Material("BsaI-HFv2", supplier="NEB", catalog="R3733"),
+                    Material(
+                        "BsaI-HFv2",
+                        supplier="NEB",
+                        catalog="R3733",
+                        citation=Citation("M0491", "step 2"),
+                        rules=(
+                            Rule(
+                                "forbids",
+                                "PEG",
+                                "PEG inhibits the ligase.",
+                                citation=Citation("M0491"),
+                            ),
+                        ),
+                    ),
                 ),
                 equipment=("Thermocycler", "Plate reader"),
                 vessels=(Vessel("pool tube", kind="1.5 mL tube"),),
@@ -149,12 +170,7 @@ def chain() -> Project:
 
 def folder_of(project: Project) -> Folder:
     """The folder `write_project_files` would compute for `project`, without writing it."""
-    return Folder(
-        tuple(
-            Page(one.title, page_name(n, one.title), len(one.steps), page_key(one))
-            for n, one in enumerate(project.protocols, 1)
-        )
-    )
+    return Folder(tuple(Page.of(n, one) for n, one in enumerate(project.protocols, 1)))
 
 
 @pytest.fixture(scope="module")
@@ -176,6 +192,20 @@ def test_the_index_explains_the_run_before_any_protocol_does(index: Node, projec
     [topic] = index.find_all("section", cls="topic")
     assert topic.find_all("h2")[0].text == "Why one pool"
     assert [p.text for p in topic.find_all("p")] == list(project.background[0].body)
+
+
+def test_the_index_links_a_file_the_run_writes_where_its_background_names_it() -> None:
+    """The index's own text names sheets no protocol page does, and links them the same way."""
+    run = Project(
+        "AP-1 library",
+        files=("../changes.tsv",),
+        background=(Topic("What it costs", ("changes.tsv has wild type beside synthesised.",)),),
+    )
+
+    index = parse(render_index(run, folder_of(run)))
+
+    [link] = [a for a in index.find_all("a") if a.text.endswith(".tsv")]
+    assert link.attrs["href"] == "../changes.tsv"
 
 
 def test_the_background_renders_on_the_index_and_on_no_protocol_page(project: Project) -> None:
@@ -202,6 +232,7 @@ def test_the_flow_chart_boxes_every_protocol_in_order_and_links_each_to_its_page
         one.title for one in project.protocols
     ]
     assert [box.attrs["href"] for box in boxes] == [page.href for page in folder_of(project).pages]
+    assert not any("step" in box.text for box in boxes)
 
 
 def test_the_flow_chart_says_where_each_handed_name_comes_from(index: Node) -> None:
@@ -234,7 +265,7 @@ def test_the_schedule_holds_each_protocol_and_totals_the_seconds_they_hold(
     assert [row[1] for row in body] == ["1", "2", "2"]
     assert [row[2] for row in body] == ["no sourced number", "1 h", "3 min"]
     assert sum(one.held_seconds[0] for one in project.protocols) == 3780.0
-    assert rows[-1][2] == "1 h 3 min"
+    assert rows[-1][2].startswith("1 h 3 min")
 
 
 def test_the_schedule_counts_the_steps_holding_nothing_rather_than_timing_them(
@@ -254,6 +285,20 @@ def test_the_schedule_draws_a_hole_where_nobody_stated_a_number(index: Node) -> 
     assert rows[1][3] == "no sourced number"
     assert rows[1][4] == "no sourced number"
     assert "1 min" in rows[3][3]
+
+
+def test_a_schedule_column_nothing_states_is_left_out_and_named_once_under_the_table() -> None:
+    """A column that is a hole in every row says the same thing once per row, so it goes."""
+    run = Project(
+        "Untimed",
+        protocols=(Protocol("Mix", steps=(Step("Pipette"),)),),
+    )
+    index = parse(render_index(run, folder_of(run)))
+    [table] = index.find_all("table", cls="schedule")
+    head = [cell.text for cell in table.find_all("tr")[0].find_all("th")]
+    assert head == ["Protocol", "Steps", "Holding nothing"]
+    [block] = index.find_all("section", cls="schedule")
+    assert "No protocol here states held, hands-on or unattended time" in block.text
 
 
 def test_the_schedule_gives_the_waiting_a_row_of_its_own_under_each_protocol(
@@ -282,10 +327,107 @@ def test_the_index_carries_the_run_checks_and_the_holes_summed_over_its_protocol
         for hole in index.find_all("li", cls="hole")
     }
     assert found == {
-        "H9": f"{REAGENTS_FILE}#hole-H9",
+        # The reagents page prints a price hole as the bill row whose money it stands in.
+        "H9": f"{REAGENTS_FILE}#bill",
         "H3": "02-build-the-blocks.html#hole-H3",
         "H7": "03-pool-and-sequence.html#hole-H7",
     }
+
+
+def test_a_hole_states_itself_in_sentences_rather_than_clauses_run_together(index: Node) -> None:
+    """Four statements with nothing between them are re-parsed halfway through."""
+    [listed] = index.find_all("section", cls="holes")
+    [depth] = [one for one in listed.find_all("li", cls="hole") if one.attrs.get("id") == "hole-H7"]
+    assert depth.text == (
+        "H7 no sourced number — the depth one library needs. "
+        "Waiting on a number nobody has published. Stands on Pool and sequence."
+    )
+
+
+@pytest.fixture(scope="module")
+def unpriced() -> Node:
+    """The index of a run whose bill leaves three rows unpriced for one reason, beside a hole."""
+    fills = "a price record holding a row for this item"
+    run = Project(
+        "Unpriced",
+        bill=Bill(
+            tuple(
+                BillRow(
+                    f"reagent {n}",
+                    1,
+                    unit="tube",
+                    key=f"R-{n}",
+                    hole=Hole(
+                        f"P{n}",
+                        "nothing prices 1 tube",
+                        "price",
+                        where=f"reagent {n}, money",
+                        filled_by=fills,
+                    ),
+                )
+                for n in (1, 2, 3)
+            )
+        ),
+        protocols=(
+            Protocol(
+                "Mix",
+                holes=(Hole("H1", "how long the colonies grow", "lab", filled_by="the lab"),),
+                steps=(Step("Pipette"),),
+            ),
+        ),
+    )
+    return parse(render_index(run, folder_of(run)))
+
+
+def test_holes_waiting_on_one_thing_say_it_once_and_every_one_of_them_stays_listed(
+    unpriced: Node,
+) -> None:
+    """Three holes repeating one sentence is one fact told at three times the length."""
+    index = unpriced
+    [group] = index.find_all("details", cls="hole-group")
+    [summary] = group.find_all("summary")
+    assert "3 numbers, each waiting on the same thing" in summary.text
+    assert summary.text.count("Waiting on a price record.") == 1
+    assert summary.text.count("Filled by") == 1
+    assert summary.find_all("span", cls="hole-id")[0].text == "P1, P2, P3"
+    # None is dropped: each keeps its id, its own line and what it is missing, one click away.
+    inside = group.find_all("li", cls="hole")
+    assert [one.attrs["id"] for one in inside] == ["hole-P1", "hole-P2", "hole-P3"]
+    assert "reagent 2, money: nothing prices 1 tube." in inside[1].text
+    [banner] = index.find_all("p", cls="hole-count")
+    assert banner.text.startswith("4 numbers in this run have no source")
+
+
+def test_a_hole_standing_alone_is_not_put_behind_a_disclosure(unpriced: Node) -> None:
+    [alone] = [
+        one for one in unpriced.find_all("li", cls="hole") if one.attrs.get("id") == "hole-H1"
+    ]
+    assert not alone.find_all("details")
+    assert "Waiting on the lab's own stock." in alone.text
+
+
+def test_a_total_summed_over_part_of_the_run_says_so_beside_itself(index: Node) -> None:
+    """A reader plans a week around this number, so it may not read as the whole run."""
+    rows, _ = schedule(index)
+    assert rows[-1][2].endswith("over 2 of 3 protocols")
+    # The steps are counted on every protocol, so that total carries no such qualification.
+    assert rows[-1][1] == "5"
+    [block] = index.find_all("section", cls="schedule")
+    assert "covers only part of the run says so beside it" in block.text
+
+
+def test_a_total_over_the_whole_run_is_qualified_by_nothing() -> None:
+    step = Step("Pipette", timers=(Timer("mix", 60),))
+    run = Project("Timed", protocols=(Protocol("Mix", steps=(step,)),))
+    index = parse(render_index(run, folder_of(run)))
+    [table] = index.find_all("table", cls="schedule")
+    assert [cell.text for cell in table.find_all("tr")[-1].find_all(("th", "td"))] == [
+        "Total",
+        "1",
+        "1 min",
+        "0",
+    ]
+    assert "covers only part of the run" not in index.find_all("section", cls="schedule")[0].text
 
 
 def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got(
@@ -296,7 +438,11 @@ def test_the_index_hands_every_page_its_key_so_it_can_show_how_far_the_bench_got
     assert [item.attrs["data-page-key"] for item in items] == [
         page_key(one) for one in project.protocols
     ]
-    assert [item.attrs["data-steps"] for item in items] == ["1", "2", "2"]
+    assert [item.attrs["data-steps"] for item in items] == [
+        "order-the-pool",
+        "set-the-reaction-up plate-the-colonies",
+        "run-the-thermocycler send-the-plate-away",
+    ]
     assert [item.find_all("span", cls="page-progress")[0].text for item in items] == [
         "1 step",
         "2 steps",
@@ -335,6 +481,20 @@ def test_the_reagents_page_lists_the_equipment_the_plasticware_and_the_run_bill(
     assert "1200.00" in bill.text
 
 
+def test_the_reagents_page_states_a_caution_two_protocols_both_bring_once() -> None:
+    chilled = ("Keep the polymerase on ice.",)
+    run = Project(
+        "Two sittings",
+        protocols=(
+            Protocol("Amplify", materials=(Material("Q5", catalog="M0491", cautions=chilled),)),
+            Protocol("Index", materials=(Material("Taq", catalog="M0267", cautions=chilled),)),
+        ),
+    )
+    page = parse(render_reagents(run, folder_of(run)))
+    [block] = main_of(page).find_all("section", cls="materials")
+    assert [p.text for p in block.find_all("p", cls="caution")] == [f"Caution: {chilled[0]}"]
+
+
 def test_the_references_page_names_every_protocol_citing_each_document(project: Project) -> None:
     main = main_of(parse(render_references(project, folder_of(project))))
     [listed] = main.find_all("ol")
@@ -354,6 +514,40 @@ def test_the_references_page_names_every_protocol_citing_each_document(project: 
         "NEB": "cited by Order the pool, Build the blocks",
         "M0491": "cited by Build the blocks",
     }
+
+
+def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
+    """A price record prices the run's bill, which sits on a page no protocol owns."""
+    run = Project(
+        "Priced",
+        sources={"prices": Source("prices.csv")},
+        bill=Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("prices")),)),
+        protocols=(Protocol("Order the pool", sources={"NEB": Source("NEB catalogue")}),),
+    )
+    folder = folder_of(run)
+    main = main_of(parse(render_references(run, folder)))
+    sources = {
+        item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
+        for item in main.find_all("section", cls="sources")[0].find_all("li")
+    }
+    assert sources == {"prices": "cited by the bill", "NEB": "cited by Order the pool"}
+    [bill] = main_of(parse(render_reagents(run, folder))).find_all("section", cls="bill")
+    assert [one.attrs["href"] for one in bill.find_all("a", cls="cite")] == [
+        f"{REFERENCES_FILE}#source-prices"
+    ]
+
+
+def test_a_run_source_no_row_of_its_bill_cites_is_listed_with_no_citer() -> None:
+    """A record pricing nothing leaves every row a hole, so the bill cites it nowhere."""
+    run = Project(
+        "Unpriced",
+        sources={"prices": Source("prices.csv")},
+        bill=Bill((BillRow("pool", 1, key="S-1", hole=Hole("H1", "what a pool costs", "price")),)),
+    )
+    main = main_of(parse(render_references(run, folder_of(run))))
+    [listed] = main.find_all("section", cls="sources")[0].find_all("li")
+    assert listed.find_all("strong")[0].text == "prices"
+    assert not listed.find_all("span", cls="cited-by")
 
 
 def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) -> None:
@@ -380,3 +574,33 @@ def test_every_link_a_filled_page_writes_resolves_inside_the_folder(tmp_path: Pa
             if href.startswith(("#", "http:", "https:", "mailto:")):
                 continue
             assert href.split("#")[0] in written, f"{path.name} links to {href}"
+
+
+def test_every_mark_a_filled_page_links_to_stands_on_the_page_it_names(tmp_path: Path) -> None:
+    write_project_files(chain(), tmp_path)
+    pages = {p.name: parse(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.html")}
+    marks = {
+        name: {node.attrs["id"] for node in page.iter() if "id" in node.attrs}
+        for name, page in pages.items()
+    }
+    for name, page in pages.items():
+        for anchor in page.find_all("a"):
+            where, _, mark = anchor.attrs["href"].partition("#")
+            if not mark or where.startswith(("http:", "https:", "mailto:")):
+                continue
+            found = marks.get(where or name, set())
+            assert mark in found, f"{name} links to {anchor.attrs['href']}"
+
+
+def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_page_with_none(
+    project: Project,
+) -> None:
+    folder = folder_of(project)
+    shared = parse(render_reagents(project, folder))
+    assert {a.attrs["href"] for a in shared.find_all("a", cls="cite")} == {
+        "references.html#source-m0491",
+        "references.html#source-neb",
+    }
+    one = project.protocols[1]
+    for page in (render_html(one), render_html(one, folder=folder, here=folder.pages[1].href)):
+        assert {a.attrs["href"] for a in parse(page).find_all("a", cls="cite")} == {"#source-m0491"}

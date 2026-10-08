@@ -14,6 +14,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import KW_ONLY, dataclass
 from itertools import product
 
+from liulab_mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
 from liulab_mbio.codons import CodonUsage
 from liulab_mbio.enzymes import Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile
@@ -45,23 +46,6 @@ from liulab_mbio.sites import (
     domesticate,
     site_counts,
 )
-
-#: The Type IIS enzymes a design ranks by default: the ones NEB's Ligase Master Mix table
-#: covers, plus BtgZI, which that table does not.
-GOLDEN_GATE_ENZYMES: tuple[str, ...] = (
-    "BbsI",
-    "BsaI",
-    "BsmBI",
-    "BspQI",
-    "Esp3I",
-    "PaqCI",
-    "SapI",
-    "BtgZI",
-)
-
-#: Ranked behind every other enzyme whatever its site count: NEB publishes no Golden Gate
-#: protocol for BtgZI, and its cut ends re-ligate poorly.
-LAST_RESORT = frozenset({"BtgZI"})
 
 
 @dataclass(frozen=True, slots=True)

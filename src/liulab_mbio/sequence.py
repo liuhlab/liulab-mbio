@@ -367,6 +367,31 @@ class SequenceRecord:
             return end <= n
         return start < n and end - start <= n
 
+    def span(self, start: int, width: int) -> Segment:
+        """Return the `width` bases at `start`, counted round the origin, clipped on a line.
+
+        A circular record counts `start` round the circle, so a span reaching past the last
+        base ends past the record's length. A linear record has nothing outside its bases, so
+        a span hanging off either end is cut back to them. `bases` is handed the far end
+        instead of a width.
+
+        Raises
+        ------
+        ValueError
+            If nothing is left: a width of no bases, or a linear span wholly off the record.
+
+        Examples
+        --------
+        >>> SequenceRecord("AACCGGTTAC", topology="circular").span(18, 4)
+        Segment(start=8, end=12, name='', color=None)
+        >>> SequenceRecord("AACCGGTTAC").span(-2, 6)
+        Segment(start=0, end=4, name='', color=None)
+        """
+        if self.topology == "circular":
+            first = start % len(self)
+            return Segment(first, first + width)
+        return Segment(max(start, 0), min(start + width, len(self)))
+
     def _check_feature(self, feature: Feature) -> None:
         owner, segments = f"feature {feature.name!r}", feature.segments
         if self.topology == "linear":

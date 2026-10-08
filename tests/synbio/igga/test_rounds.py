@@ -20,7 +20,7 @@ from liulab_mbio.translate import translate
 from liulab_synbio.igga.gate import check_product
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import barcode_rules, design_parts
-from liulab_synbio.igga.project import Barcode, Project
+from liulab_synbio.igga.project import Barcode, Build
 from liulab_synbio.igga.rounds import (
     PRODUCT_FILE,
     ROUND_FILE,
@@ -45,7 +45,7 @@ SCAR = "AGCG"
 
 HOST = "e-coli-k12"
 
-#: How many bases name one part, as a project states.
+#: How many bases name one part, as a build states.
 BARCODE = 11
 
 #: Three part lists, two members each, so a whole build stays small.
@@ -114,9 +114,9 @@ def carrier(made: Scheme, *, flank: int = 80) -> SequenceRecord:
     )
 
 
-def project(made: Scheme) -> Project:
-    """A project built under `made`, for the gate to read this build's own choices off."""
-    return Project(
+def project(made: Scheme) -> Build:
+    """A build made under `made`, for the gate to read its own choices off."""
+    return Build(
         "test",
         positions=POSITIONS,
         parts=Path("parts.fasta"),

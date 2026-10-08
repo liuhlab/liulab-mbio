@@ -76,7 +76,7 @@ candidate clone, and `plan.phenotype` what the product says about itself — wha
 inserts, whether anything should be translated, and how a plate reads.
 
 A value the user gives goes in here. For another amount of DNA, replace `plan.amounts` with
-`liulab_mbio.cloning.goldengate.bench.assembly_amounts` at that amount, using `dataclasses.replace`,
+`liulab_mbio.bench.goldengate.assembly_amounts` at that amount, using `dataclasses.replace`,
 and write the plan again.
 
 ## Before you hand it over

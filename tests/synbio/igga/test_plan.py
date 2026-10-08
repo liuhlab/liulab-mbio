@@ -38,7 +38,9 @@ from liulab_synbio.igga.plan import (
     plan_igga,
     read_part_lists,
 )
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
+from liulab_synbio.igga.protocols import ASSEMBLY, CREATION, FINAL, ORDERING
+from liulab_synbio.igga.protocols.run import ROUND_EQUIPMENT
 from liulab_synbio.igga.rounds import ROUND_FILE
 from liulab_synbio.igga.vector import cargo_enzyme
 
@@ -95,9 +97,9 @@ def inputs(tmp_path_factory, scheme):
 
 def project(
     inputs, *, vector: str = "carrier.dna", working: str | None = None, primers: Path | None = None
-) -> Project:
+) -> Build:
     """The project a test plans, naming the inputs written into `inputs`."""
-    return Project(
+    return Build(
         "library",
         positions=POSITIONS,
         parts=inputs / "parts.fasta",
@@ -145,6 +147,42 @@ def pooled(inputs, tmp_path_factory):
 def protocol(plan):
     """Every protocol of the run as one, which is what most of these tests ask about."""
     return whole(plan.chain())
+
+
+def test_a_plain_run_orders_its_blocks_assembles_and_moves_the_library(plan):
+    assert [one.title for one in plan.chain().protocols] == [ORDERING, ASSEMBLY, FINAL]
+
+
+def test_a_pool_splits_ordering_from_making_the_cargo(pooled):
+    made, _files = pooled
+
+    # This project states no primer plates, so the pool's primers are ordered with the pool.
+    assert [one.title for one in made.chain().protocols] == [ORDERING, CREATION, ASSEMBLY, FINAL]
+
+
+def test_a_run_without_a_pool_takes_its_cargo_from_the_vendors_tube(plan, pooled):
+    """A run that archives nothing takes the blocks as the vendor shipped them."""
+    made, _files = pooled
+    plain, with_pool = plan.chain(), made.chain()
+    rounds = [
+        next(one for one in chain.protocols if one.title == ASSEMBLY)
+        for chain in (plain, with_pool)
+    ]
+
+    assert [one.name for one in rounds[0].consumes] == ["synthesised blocks", "block vector 1"]
+    assert "cargo archive plate" in {one.name for one in rounds[1].consumes}
+    for chain in (plain, with_pool):
+        assert chain.audit()[0].status == "pass", chain.audit()[0].detail
+
+
+def test_each_protocol_of_the_chain_answers_for_its_own_page(plan):
+    run = plan.chain()
+    ordering, assembly = run.protocols[0], run.protocols[1]
+
+    assert ordering.summary == "Order every block this library is built from."
+    # Only the protocols running a round's chemistry buy the reagents the rounds share.
+    assert not ordering.equipment
+    assert assembly.equipment == ROUND_EQUIPMENT
 
 
 def test_one_call_plans_every_round_and_every_part(plan):
@@ -262,10 +300,35 @@ def test_both_read_steps_name_their_pair_and_its_amplicon(plan, protocol):
 
     for step, pair in ((linkage, pairs.linkage), (representation, pairs.representation)):
         said = " ".join(step.instructions)
-        assert pair.forward.sequence in said
-        assert pair.reverse.sequence in said
+        # The oligos are named, never spelled out: the sheet is where a sequence belongs.
+        assert pair.forward.name in said
+        assert pair.reverse.name in said
+        assert pair.forward.sequence not in said
         assert f"{pair.amplicon_length} bp amplicon" in said
+        # And where to find the pair, which is the sheet the plan wrote it to.
+        assert "library-read-primers.tsv" in said
     assert "long read" in " ".join(linkage.instructions)
+
+
+def test_every_sheet_the_run_writes_is_one_its_pages_can_link(plan, pooled):
+    """A page links a filename only where the run states the file, so the run states them all."""
+    run = plan.chain()
+    assert run.files == (
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../library-read-primers.tsv",
+    )
+    assert [one.files for one in run.protocols] == [run.files] * len(run.protocols)
+    # A build with a pool writes the two pool sheets and a block vector a position besides.
+    made, _files = pooled
+    assert set(made.chain().files) - set(run.files) == {
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna",
+    }
 
 
 def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):
@@ -492,10 +555,13 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
     )
     growth = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
     assert "At least 51 net colonies" in growth.expected[0]
-    assert "floor for the 0.99 chance the project asked for" in growth.expected[0]
+    assert "floor for the 0.99 chance this design asked for" in growth.expected[0]
     assert "it works out at 6x this round's products" in " ".join(growth.notes)
     final = next(one for one in protocol.steps if one.title.startswith("Clean the assembly up"))
-    assert "At least 51 net colonies: the floor for the 0.99 chance" in final.expected[0]
+    assert (
+        "At least 51 net colonies: the floor for the 0.99 chance this design asked for"
+        in final.expected[0]
+    )
 
 
 #: A price record as a user writes one: the synthesis order banded by count and by length, and
@@ -519,11 +585,16 @@ def test_the_bill_computes_its_quantities_and_holes_the_money_with_no_record(pla
     assert bill.total == ""
 
 
-def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path):
-    record = tmp_path / "prices.csv"
+@pytest.fixture(scope="module")
+def priced(plan, tmp_path_factory):
+    """The same run with a price record loaded, which is what makes its bill cite one."""
+    record = tmp_path_factory.mktemp("prices") / "prices.csv"
     record.write_text(PRICES, encoding="utf-8")
+    return dataclasses.replace(plan, prices=read_prices(record)).chain()
 
-    bill = dataclasses.replace(plan, prices=read_prices(record)).chain().bill
+
+def test_a_price_record_prices_the_bill_and_reports_its_headroom(priced):
+    bill = priced.bill
 
     assert bill is not None
     blocks = bill.rows[0]
@@ -533,6 +604,14 @@ def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path)
     assert (bill.currency, bill.total) == ("USD", "1200.00")
     # Everything else the run buys is still a hole, and no figure is estimated for one.
     assert all(row.hole is not None for row in bill.rows[1:])
+
+
+def test_a_run_holding_a_price_record_names_it_as_a_source_of_the_run(priced):
+    """The bill is the run's, so the record it cites is named there and on no protocol."""
+    assert priced.bill is not None
+    assert priced.bill.cited == frozenset({"prices"})
+    assert "prices" in priced.sources
+    assert not [one for one in priced.protocols if "prices" in one.sources]
 
 
 def said_by(protocol) -> str:

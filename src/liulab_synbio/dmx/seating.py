@@ -41,7 +41,7 @@ TOPO_SITE = "GCCCTTAAGGGC"
 
 
 @dataclass(frozen=True, slots=True)
-class Seating:
+class SeatedParts:
     """Every part seated in its own carrier, and where each one sits.
 
     Parameters
@@ -56,7 +56,8 @@ class Seating:
     Notes
     -----
     There is no library field, and that is the point: seating ends in one plasmid a well, each
-    still identified by where it sits.
+    still identified by where it sits. The name is not `Seating`, which `liulab_mbio` already
+    uses for where things sit in a plate.
     """
 
     plate: Plate
@@ -194,7 +195,7 @@ def seat_parts(
     carrier: SequenceRecord,
     name: str = "parts",
     overhangs: Collection[tuple[str, str]] | None = None,
-) -> Seating:
+) -> SeatedParts:
     """Seat each part in its own well of the smallest plate format that holds them all.
 
     A well is named by the part sitting in it, so a part is named by its record.
@@ -226,7 +227,7 @@ def seat_parts(
             f"{len(named)} parts do not fit the largest plate format, {max(FORMATS)} wells"
         )
     records = tuple(seat(carrier, part, overhangs=overhangs)[0] for part in parts)
-    return Seating(
+    return SeatedParts(
         plates.plate(
             name,
             fits[0],
@@ -262,10 +263,11 @@ def materials() -> tuple[Material, ...]:
     )
 
 
-def seating_step(seated: Seating) -> Step:
+def seating_step(seated: SeatedParts) -> Step:
     """Return the step that seats every part, which ends in plasmids and not in a library."""
     return Step(
         f"Seat {seated.products} part(s) in {CARRIER}",
+        key="seat-parts",
         instructions=(
             f"Set up one {CARRIER_KIT} reaction per well of {seated.plate.name}, each holding "
             "one blunt part, the linearised carrier and the kit's salt solution.",

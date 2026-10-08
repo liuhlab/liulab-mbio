@@ -71,9 +71,11 @@ cannot ask you anything. Nothing checks these, so the rule is on you.
 | `notes` | the only place a *why* may stand, and only with a citation. An uncited note is deleted |
 | `figures` | one, on a step that changes a molecule: a PCR, a digest, a ligation, an assembly, a recombination. It draws what the step makes, with what the step changed lit. A step that moves, waits, incubates or reads carries none, and a plate draws itself. A figure that replaces no explanation is decoration |
 
-Four things are forbidden in every rendered field: a name the reader cannot look up, such as a
-route named by a letter; a code identifier or a module name; a tracker or code reference; and
-this package's own vocabulary where a bench word exists.
+Five things are forbidden in every rendered field: a name the reader cannot look up, such as a
+route named by a letter, or a file the page does not link — `Protocol.files` is how it links
+one; markup, which renders as the characters it spells and not as emphasis; a code identifier
+or a module name; a tracker or code reference; and this package's own vocabulary where a bench
+word exists.
 
 The explanation you delete has a home already. A decision true for this run goes in the
 protocol's own `overview` and `highlights`; a fact about the method goes to `docs/research/` or

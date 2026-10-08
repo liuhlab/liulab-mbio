@@ -19,17 +19,18 @@ inside one of them -- `docs/adr/0007-cloning-methods.md` says why:
   and whether it is specific to the enzyme.
 
 The fidelity data is `src/liulab_mbio/data/ligation_fidelity.json`, from the supplementary
-tables of Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S.
-(2020) *PLoS One* 15(9): e0238592, used under CC BY 4.0.
+tables of Pryor et al. 2020, used under CC BY 4.0. It carries its own citation, which
+`ligation_source` reads for anything printing the paper in full.
 `docs/research/ligation-fidelity.md` records the licence, the axis convention and the rules.
 """
 
 import json
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass, field
 from functools import cache
 from importlib.resources import files
-from typing import Literal
+from typing import Any, Literal
 
 from liulab_mbio.enzymes import EndType, Enzyme, get_enzyme
 from liulab_mbio.ligase import LigaseProfile
@@ -139,6 +140,27 @@ def compatible(one: End, other: End) -> bool:
 
 
 @dataclass(frozen=True, slots=True)
+class LigationSource:
+    """The paper the shipped ligation data was measured in.
+
+    Parameters
+    ----------
+    citation
+        The paper in full, as a reference list prints it.
+    doi
+        Its DOI, bare.
+    """
+
+    citation: str
+    doi: str
+
+    @property
+    def doi_url(self) -> str:
+        """Where the DOI resolves. The data file's own ``url`` is its supplementary files."""
+        return f"https://doi.org/{self.doi}"
+
+
+@dataclass(frozen=True, slots=True)
 class LigationMatrix:
     """How often each overhang pair was seen ligating, measured with one enzyme.
 
@@ -177,9 +199,20 @@ class LigationMatrix:
         return tuple(self.counts)
 
     @property
+    def cited(self) -> str:
+        """The paper by first author and year, or the whole citation where it gives neither."""
+        # The data ships the citation whole and not in parts, so the short form is read off it.
+        surname, _, rest = self.citation.partition(",")
+        year = re.search(r"\((\d{4})\)", rest)
+        return f"{surname} {year.group(1)}" if surname and year else self.citation
+
+    @property
     def source(self) -> str:
-        """Where a report should say this number came from."""
-        return f"{self.citation} {self.table}, measured with {self.product}"
+        """The paper in passing and which of its tables, as a check cites it.
+
+        The reference in full belongs under References, not in a sentence read at the bench.
+        """
+        return f"{self.cited} {self.table}, measured with {self.product}"
 
     def count(self, top: str, bottom: str) -> int:
         """How often a top-strand overhang was seen ligating to a bottom-strand one."""
@@ -427,11 +460,32 @@ class Choice:
 
 
 @cache
+def _document() -> Mapping[str, Any]:
+    """Read the shipped ligation data file whole."""
+    text = (files("liulab_mbio") / "data" / "ligation_fidelity.json").read_text(encoding="utf-8")
+    return json.loads(text)
+
+
+def ligation_source() -> LigationSource:
+    """Return the paper the shipped ligation data was measured in.
+
+    The data file is the citation's one home, so anything printing the paper -- a reference
+    list, a check naming it in passing -- reads it from here.
+
+    Examples
+    --------
+    >>> ligation_source().doi_url.startswith("https://doi.org/")
+    True
+    """
+    source = _document()["source"]
+    return LigationSource(source["citation"], source["doi"])
+
+
+@cache
 def _shipped() -> Mapping[str, LigationMatrix]:
     """Read the shipped ligation data, keyed by the enzyme it was measured with."""
-    text = (files("liulab_mbio") / "data" / "ligation_fidelity.json").read_text(encoding="utf-8")
-    document = json.loads(text)
-    citation = document["source"]["citation"]
+    document = _document()
+    citation = ligation_source().citation
     return {
         one["enzyme"]: LigationMatrix(
             one["enzyme"],

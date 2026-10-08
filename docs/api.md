@@ -99,6 +99,15 @@ is what lets a gate say which tube a failure belongs to.
 
 ::: liulab_mbio.reaction
 
+## Splitting a long cargo
+
+A sequence longer than one synthesised oligo is ordered as several and joined in one pot. This
+says where the cuts fall, how far each one could still move, and what overhang each leaves. It
+names no method: what the fragments are dressed as to be ordered is
+`liulab_mbio.bench.pools`'s, and which enzyme and which primers do the dressing is the caller's.
+
+::: liulab_mbio.split
+
 ## Maps
 
 `draw_map` draws a sequence record as a map. `Drawing.write` writes it as one HTML page that
@@ -163,7 +172,8 @@ The model a bench protocol is written in, and the renderer that turns one into a
 self-contained HTML page. `Check` is how a page shows a verdict, with no value; `Oligo` is one
 row of the order sheet, carrying its own verdict and the checks that fired where something
 judged it; `OVERVIEW_CHARS` is the character budget for a header card, and a longer value is
-refused rather than truncated.
+refused rather than truncated. `figures` is the library of named figures a step may show, each
+a spec the renderer draws and never a drawing.
 
 ::: liulab_mbio.protocol
     options:
@@ -171,18 +181,26 @@ refused rather than truncated.
 
 ::: liulab_mbio.protocol.model
 
+::: liulab_mbio.protocol.figures
+
 ::: liulab_mbio.protocol.render
 
 ## Bench
 
-The numbers any cloning pipeline shares: DNA amounts, the reaction table filled to volume, PCR
-and colony PCR, gels, the checks that confirm a clone, heat inactivation, what each material
-brings with it, a plate and the moves between its wells, a price record and the bill it makes,
-the phenotype a clone should show, the primer order sheet, and the protocol steps any pipeline reuses. Every public
-name in the modules below imports from `liulab_mbio.bench` too. A module that cites a source
-keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES` gathers them all. `steps` is the
-one exception: a protocol cites its `DPNI_REFERENCE` and `PLATE_REFERENCE` only when it runs the
-step they belong to.
+The numbers any pipeline shares: DNA amounts, the reaction table filled to volume, PCR and
+colony PCR, Golden Gate's own enzymes, reaction and cycling, gels, how many colonies a library
+round needs and what reading one back a well at a time comes to, the checks that confirm a
+clone, heat inactivation, what each material brings with it, a plate and the moves between its
+wells, a price record and the bill it makes, the phenotype a clone should show, the primer
+order sheet, an oligo pool as a vendor takes it, and the protocol steps any pipeline reuses.
+
+Every public name in the modules below imports from `liulab_mbio.bench` too, `goldengate`,
+`coverage` and `pools` excepted. Each of those three is imported by module: `goldengate`'s
+`REFERENCES` and `SOURCES` are one chemistry's, `coverage`'s are one sizing rule's, and
+`pools`'s `Pool` is a vendor's order rather than `liulab_mbio.reaction`'s molecules in one tube.
+A module that cites a source keeps its own `REFERENCES`, and `liulab_mbio.bench.REFERENCES`
+gathers the ones re-exported. `steps` is re-exported, and a protocol cites its `DPNI_REFERENCE`
+and `PLATE_REFERENCE` only when it runs the step they belong to.
 
 ::: liulab_mbio.bench
     options:
@@ -194,7 +212,13 @@ step they belong to.
 
 ::: liulab_mbio.bench.pcr
 
+::: liulab_mbio.bench.goldengate
+
 ::: liulab_mbio.bench.gels
+
+::: liulab_mbio.bench.coverage
+
+::: liulab_mbio.bench.readback
 
 ::: liulab_mbio.bench.validation
 
@@ -209,6 +233,8 @@ step they belong to.
 ::: liulab_mbio.bench.phenotype
 
 ::: liulab_mbio.bench.oligos
+
+::: liulab_mbio.bench.pools
 
 ::: liulab_mbio.bench.steps
 
@@ -227,7 +253,8 @@ plan shares: the files any plan writes, its status, and taking a record already 
 
 `plan_assembly` is the way in, and `Plan.write` puts the product, the primer sheet and the
 protocol in one directory. The inserts are varargs, so `Plan.inserts` is a tuple — plural,
-because one reaction joins as many inserts as the overhangs allow.
+because one reaction joins as many inserts as the overhangs allow. The reaction and the cycling
+are not here: a library build runs the same tables, so they sit in `liulab_mbio.bench.goldengate`.
 
 ::: liulab_mbio.cloning.goldengate
     options:
@@ -238,8 +265,6 @@ because one reaction joins as many inserts as the overhangs allow.
 ::: liulab_mbio.cloning.goldengate.design
 
 ::: liulab_mbio.cloning.goldengate.assembly
-
-::: liulab_mbio.cloning.goldengate.bench
 
 ::: liulab_mbio.cloning.goldengate.oligos
 
@@ -358,17 +383,23 @@ DNA starts and stops is `Recombination.boundaries` rather than the junction's ow
 `plan_igga` is the way in. It builds a barcoded library of every combination of the part
 lists it is given, one round at a time. `LibraryPlan.write` puts the synthesis order sheet, the
 barcode and amino-acid change tables, a record for each round, the product and a `protocol`
-folder of the run's protocols in one directory. The modules under it are its steps. `method` holds `IGGA`, the one method,
-checked when it is imported; `project` holds what one build chooses, checked as it is read;
-`standard` picks the overhang set, and `parts` writes each synthesis block. `vector`
-takes the destination or retrofits it, `rounds` simulates each round, and `coverage` counts the
-colonies a round needs. `bench` and `steps` turn the method into amounts and protocol steps, and `stages` says what
-each stage asks of the bench model.
+folder of the run's protocols in one directory. The modules under it are its steps. `method`
+holds `IGGA`, the one method, checked when it is imported; `project` holds what one build
+chooses, checked as it is read; `gate` judges a finished design reaction by reaction. `standard`
+picks the overhang set, `parts` writes each synthesis block and `cargo` orders a block too long
+to synthesise as an oligo pool. `vector` takes the destination or retrofits it, `rounds`
+simulates each round, and `reads` designs the reads that judge the finished library. `bench` turns the
+method into amounts, `stages` says what each stage asks of the bench model, and `figures` picks
+the two figures only this method needs. `protocols` is one module a protocol of the run, each
+owning what its own page prints, and `chain` holds the order they run in.
+
+How many colonies a round needs is not here: any pipeline building a library in rounds counts
+them the same way, so that is `liulab_mbio.bench.coverage`.
 
 A library is a pipeline over Golden Gate rather than a cloning method of its own — see
 [the library rounds decision](adr/0004-library-rounds.md). It is `liulab_synbio`'s, because it
 fixes one method's enzymes, stuffers and round order; everything it builds on is
-`liulab_mbio`'s. The method is code and a project is a file — see
+`liulab_mbio`'s. The method is code and one build's choices are a file — see
 [the method decision](adr/0010-method-in-code.md).
 
 ::: liulab_synbio.igga
@@ -387,21 +418,67 @@ fixes one method's enzymes, stuffers and round order; everything it builds on is
 
 ::: liulab_synbio.igga.parts
 
+::: liulab_synbio.igga.cargo
+
 ::: liulab_synbio.igga.vector
 
 ::: liulab_synbio.igga.rounds
 
-::: liulab_synbio.igga.coverage
+::: liulab_synbio.igga.reads
 
 ::: liulab_synbio.igga.bench
 
-::: liulab_synbio.igga.steps
-
 ::: liulab_synbio.igga.stages
 
-::: liulab_synbio.dmx
+::: liulab_synbio.igga.figures
 
-::: liulab_synbio.seating
+::: liulab_synbio.igga.chain
+
+::: liulab_synbio.igga.protocols
+    options:
+      members: false
+
+::: liulab_synbio.igga.protocols.protocol
+
+::: liulab_synbio.igga.protocols.run
+
+::: liulab_synbio.igga.protocols.primer_plates
+
+::: liulab_synbio.igga.protocols.ordering
+
+::: liulab_synbio.igga.protocols.validation
+
+::: liulab_synbio.igga.protocols.creation
+
+::: liulab_synbio.igga.protocols.assembly
+
+::: liulab_synbio.igga.protocols.final
+
+## DMX
+
+DMX is its own protocol for multiplexed validation. A design sits one per well, the well is
+marked, sequenced and called on its own, and identity stays with well position throughout. It
+takes any cargo, and what `liulab_synbio.igga` builds is one kind of cargo among others, so
+`dmx` stands beside `igga` rather than downstream of it: iGGA chains this protocol as any
+caller would.
+
+`kit` is the barcode kit a user holds, read from their own copy because the sequences are not
+shipped. `method` holds the two marking routes, each route's depth floor, a well's derived
+address and the pass rule, with the document each number came from. `steps` writes them up as
+protocol steps. `seating` is the method's carrier step — one part a well, nothing pooled at the
+end — which is why it is no **round**.
+
+::: liulab_synbio.dmx
+    options:
+      members: false
+
+::: liulab_synbio.dmx.kit
+
+::: liulab_synbio.dmx.method
+
+::: liulab_synbio.dmx.steps
+
+::: liulab_synbio.dmx.seating
 
 ## The command line
 

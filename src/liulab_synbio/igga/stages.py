@@ -13,10 +13,8 @@ and which materials carry which rule — a different method would call the same 
 its own numbers.
 """
 
-from collections.abc import Mapping
-
 from liulab_mbio.bench import materials
-from liulab_mbio.bench.phenotype import SELECTION, selection_marker
+from liulab_mbio.bench.phenotype import SELECTION, SELECTION_PLATE, selection_marker
 from liulab_mbio.protocol.model import Citation, Hole, Material, Source, Vessel
 from liulab_mbio.sequence import SequenceRecord
 
@@ -45,15 +43,6 @@ LIGASE_BUFFER = materials.material(
     note="Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.",
     citation=Citation("M0318", "reaction conditions"),
 )
-
-#: What a plate carries for each drug `liulab_mbio.bench.phenotype.SELECTION` names, where this
-#: method has a concentration sourced for it. Kanamycin is Zero Blunt TOPO UG p. 13, the guide
-#: for this method's own part carrier; carbenicillin is Qian SI Day 2. A drug absent from here is
-#: named without a concentration rather than given one nobody published.
-SELECTION_PLATE: Mapping[str, str] = {
-    "kanamycin": "50 µg/mL kanamycin",
-    "ampicillin or carbenicillin": "100 µg/mL carbenicillin",
-}
 
 
 def selection_for(record: SequenceRecord) -> str:
@@ -122,7 +111,7 @@ def holes_for(record: SequenceRecord) -> tuple[Hole, ...]:
 
 
 #: What the linkage read alone cannot be judged by. The representation read is held to Joung's
-#: pooled-library bar, in `liulab_synbio.igga.coverage`; nothing published says what share of
+#: pooled-library bar, in `liulab_mbio.bench.coverage`; nothing published says what share of
 #: reads must carry a barcode that still names its part, and the source's own figure is what one
 #: library reached rather than a mark it set.
 READ_PASS_MARK = Hole(
@@ -131,7 +120,7 @@ READ_PASS_MARK = Hole(
     "names its part",
     "undecided",
     where="the linkage read",
-    filled_by="the project, or a source that sets a mark rather than reporting what it reached",
+    filled_by="this run, or a source that sets a mark rather than reporting what it reached",
     issue="liuhlab/liulab-mbio#346",
 )
 
@@ -144,7 +133,7 @@ WORKING_VECTOR = Hole(
     "vector's length",
     "lab",
     where="final assembly, the vector the library moves into",
-    filled_by="the project naming a working vector, which is a stock the lab holds and an "
+    filled_by="this run naming a working vector, which is a stock the lab holds and an "
     "application chooses",
 )
 

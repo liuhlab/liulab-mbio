@@ -50,7 +50,7 @@ def test_an_item_that_names_nothing_or_says_nothing_is_refused(build) -> None:
 
 def test_a_project_chains_one_protocols_output_into_the_next() -> None:
     one = Project("Gateway cloning", protocols=(bp(), lr()))
-    assert one.audit() == (Check("handoffs", "pass", "1 consumed item resolves"),)
+    assert one.audit()[0] == Check("handoffs", "pass", "1 consumed item resolves")
 
 
 def test_what_the_project_was_handed_satisfies_a_consumer() -> None:
@@ -59,13 +59,13 @@ def test_what_the_project_was_handed_satisfies_a_consumer() -> None:
 
 
 def test_a_consumed_name_nothing_produces_is_a_badge_and_not_an_exception() -> None:
-    (check,) = Project("Gateway cloning", protocols=(lr(),)).audit()
+    check = Project("Gateway cloning", protocols=(lr(),)).audit()[0]
     assert check.status == "fail"
     assert check.detail == "LR reaction consumes 'entry clone', which nothing hands it"
 
 
 def test_a_later_protocol_does_not_feed_an_earlier_one() -> None:
-    (check,) = Project("Gateway cloning", protocols=(lr(), bp())).audit()
+    check = Project("Gateway cloning", protocols=(lr(), bp())).audit()[0]
     assert check.status == "fail"
 
 

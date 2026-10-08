@@ -12,6 +12,17 @@ from liulab_mbio import checks as judged
 from liulab_mbio.bench import REFERENCES as BENCH_REFERENCES
 from liulab_mbio.bench.amounts import Amount
 from liulab_mbio.bench.gels import choose_ladder
+from liulab_mbio.bench.goldengate import (
+    GOLDEN_GATE_PCR_CYCLES,
+    GOLDEN_GATE_PCR_CYCLES_CITATION,
+    assembly_program,
+    assembly_reaction,
+    enzyme_component,
+    golden_gate_temperature,
+    ligase_master_mix_component,
+)
+from liulab_mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
+from liulab_mbio.bench.goldengate import SOURCES as GOLDEN_GATE_SOURCES
 from liulab_mbio.bench.inactivation import heat_inactivation
 from liulab_mbio.bench.oligos import oligo_row
 from liulab_mbio.bench.pcr import (
@@ -52,17 +63,6 @@ from liulab_mbio.bench.steps import (
 )
 from liulab_mbio.bench.validation import ColonyCheck, SangerRead
 from liulab_mbio.cloning.goldengate.assembly import Assembly, Junction, Part
-from liulab_mbio.cloning.goldengate.bench import (
-    GOLDEN_GATE_PCR_CYCLES,
-    GOLDEN_GATE_PCR_CYCLES_CITATION,
-    REFERENCES,
-    SOURCES,
-    assembly_program,
-    assembly_reaction,
-    enzyme_component,
-    golden_gate_temperature,
-    ligase_master_mix_component,
-)
 from liulab_mbio.cloning.goldengate.design import OverhangSet
 from liulab_mbio.cloning.goldengate.oligos import DesignedOligo
 from liulab_mbio.enzymes import Enzyme
@@ -174,7 +174,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, overhangs, phenotype),
-        sources={**PCR_SOURCES, **SOURCES},
+        sources={**PCR_SOURCES, **GOLDEN_GATE_SOURCES},
     )
     return citing(one)
 
@@ -419,6 +419,7 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
     total = sum(component.volume_ul for component in table.components)
     return Step(
         "Set up the Golden Gate reaction",
+        key="set-up-assembly",
         instructions=(
             "Thaw the master mix on ice and mix it well; it is viscous.",
             "Pipette the DNA into the tube first, then the rest.",
@@ -457,6 +458,7 @@ def _cycling_step(enzyme: Enzyme, fragments: int, junctions: Sequence[Junction])
     ]
     return Step(
         "Run the Golden Gate program",
+        key="run-assembly",
         instructions=("Put the tube in the thermocycler and run the program below.",),
         programs=tuple(programs),
         expected=tuple(expected),
@@ -478,7 +480,7 @@ def _references(
     parts: Sequence[Part], overhangs: OverhangSet, phenotype: Phenotype
 ) -> tuple[Reference, ...]:
     """Where the numbers come from."""
-    items = [*REFERENCES, *BENCH_REFERENCES, Reference(overhangs.fidelity.source)]
+    items = [*GOLDEN_GATE_REFERENCES, *BENCH_REFERENCES, Reference(overhangs.fidelity.source)]
     if any(part.dpni for part in parts):
         items.append(DPNI_REFERENCE)
     if phenotype.blue_white:

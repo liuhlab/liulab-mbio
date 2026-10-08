@@ -38,7 +38,7 @@ from liulab_mbio.sequence import (
     Strand,
     across_the_origin,
 )
-from liulab_mbio.sites import Fragment, digest
+from liulab_mbio.sites import Fragment, digest, released
 from liulab_mbio.snapgene import write_dna
 from liulab_synbio.igga.method import Scheme
 from liulab_synbio.igga.parts import Part
@@ -132,7 +132,7 @@ class Round:
         `liulab_synbio.igga.method.Scheme.retained_length`.
         """
         carried = _barcode_at(self.part, self.scheme) - self.part.coding.end
-        return _span(self.coding.end, carried + _length(self.block), len(self.product))
+        return self.product.span(self.coding.end, carried + _length(self.block))
 
 
 def assemble_round(
@@ -185,7 +185,7 @@ def assemble_round(
             f"{destination.topology}"
         )
     donor = SequenceRecord(part.sequence, name=part.name)
-    released = _released(donor, part, scheme)
+    released = _only_released(donor, part, scheme)
     excised = _excised(destination, released, part, scheme, number)
     barcode_at = _barcode_at(part, scheme)
     bases = donor.bases(released.start, released.end)
@@ -199,16 +199,14 @@ def assemble_round(
         """Where a base of the part's block lands in the product."""
         return at + index - released.start
 
-    coding = _span(moved(part.coding.start), part.coding.end - part.coding.start, total)
-    stuffer = _span(moved(inner.start), inner.end - inner.start, total)
-    barcode = _span(moved(barcode_at), len(part.barcode), total)
-    block = _span(
-        barcode.start,
-        number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar),
-        total,
+    coding = product.span(moved(part.coding.start), part.coding.end - part.coding.start)
+    stuffer = product.span(moved(inner.start), inner.end - inner.start)
+    barcode = product.span(moved(barcode_at), len(part.barcode))
+    block = product.span(
+        barcode.start, number * len(part.barcode) + (number - 1) * len(scheme.cloning_scar)
     )
-    entry = _span(at, len(released.left_overhang), total)
-    scar = _span(at + len(bases), len(released.right_overhang), total)
+    entry = product.span(at, len(released.left_overhang))
+    scar = product.span(at + len(bases), len(released.right_overhang))
     drawn = _drawn(part, scheme, number, coding=coding, stuffer=stuffer, barcode=barcode)
     joins = _joins(part, number, entry=entry, scar=scar)
     titled = f"{name} round {number}".strip() if name else f"round {number}"
@@ -337,12 +335,6 @@ def _length(span: Segment) -> int:
     return span.end - span.start
 
 
-def _span(start: int, length: int, total: int) -> Segment:
-    """Return a span of `length` bases from `start`, reduced onto a record of `total` bases."""
-    first = start % total
-    return Segment(first, first + length)
-
-
 def _check_parts(parts: Sequence[Part], positions: Sequence[str]) -> None:
     """Refuse parts that are not one a position, in the order the rounds fill them."""
     if len(parts) != len(positions):
@@ -359,8 +351,8 @@ def _check_parts(parts: Sequence[Part], positions: Sequence[str]) -> None:
             )
 
 
-def _released(donor: SequenceRecord, part: Part, scheme: Scheme) -> Fragment:
-    """Return the piece the external enzyme releases from a part's block.
+def _only_released(donor: SequenceRecord, part: Part, scheme: Scheme) -> Fragment:
+    """Return the one piece the external enzyme releases from a part's block.
 
     It is the one piece with an overhang at each end: the remnants either side carry the ends of
     the block itself, which a blunt enzyme cuts again so that neither can ligate back.
@@ -370,11 +362,7 @@ def _released(donor: SequenceRecord, part: Part, scheme: Scheme) -> Fragment:
     ValueError
         Unless exactly one piece has two overhangs.
     """
-    pieces = [
-        piece
-        for piece in digest(donor, scheme.external)
-        if piece.left_overhang and piece.right_overhang
-    ]
+    pieces = released(donor, scheme.external)
     if len(pieces) != 1:
         raise ValueError(
             f"{scheme.external.name} releases {len(pieces)} piece(s) with an overhang at each end "

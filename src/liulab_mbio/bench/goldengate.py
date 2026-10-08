@@ -1,8 +1,8 @@
-"""What a Golden Gate assembly takes at the bench: its reaction and its cycling.
+"""What a Golden Gate assembly takes at the bench: its enzymes, its reaction and its cycling.
 
-Every number is NEB's, through ``docs/research/golden-gate-assembly.md``. Functions return
-`liulab_mbio.protocol` values, so a protocol prints them unchanged. What any cloning pipeline
-shares -- DNA amounts, PCR, gels and validation -- is `liulab_mbio.bench`.
+Every number is NEB's, through ``docs/research/golden-gate-assembly.md``, and none of it is one
+method's choice: `liulab_mbio.cloning.goldengate` and `liulab_synbio.igga` run the same tables.
+Functions return `liulab_mbio.protocol` values, so a protocol prints them unchanged.
 
 NEB ships two Golden Gate systems and their tables do not mix. `LIGASE_MASTER_MIX` is NEBridge
 Ligase Master Mix (M1100), which takes any NEB Type IIS enzyme; `KIT` is one of the kits, which
@@ -17,6 +17,7 @@ from typing import Literal
 from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.bench.reactions import reaction_table
 from liulab_mbio.enzymes import Enzyme
+from liulab_mbio.overhangs import ligation_source
 from liulab_mbio.protocol.model import (
     Citation,
     Component,
@@ -109,6 +110,15 @@ _GOLDEN_GATE_CELSIUS: Mapping[str, int] = {
     "PaqCI": 37,
     "SapI": 37,
 }
+
+#: The enzymes a Golden Gate design may still reach for although nothing above covers them:
+#: BtgZI cuts outside its site but NEB publishes no protocol for it, and its cut ends re-ligate
+#: poorly.
+LAST_RESORT = frozenset({"BtgZI"})
+
+#: The Type IIS enzymes a Golden Gate design ranks by default, the last resorts last. Derived
+#: from the cycling table, so an enzyme this module stops covering leaves the list with it.
+GOLDEN_GATE_ENZYMES: tuple[str, ...] = (*_GOLDEN_GATE_CELSIUS, *sorted(LAST_RESORT))
 
 #: The kit built around each enzyme, by catalogue number.
 _KIT_CATALOG: Mapping[str, str] = {"BsaI": "E1601", "BsmBI": "E1602"}
@@ -329,6 +339,15 @@ def _kit_stages(celsius: float, fragments: int, *, library: bool) -> tuple[Stage
     return (_cycle(celsius, 60 if inserts <= 10 else 300, 30),)
 
 
+def _ligation_reference() -> Reference:
+    """Return the paper every fidelity score is read from, quoted from the data that ships it."""
+    source = ligation_source()
+    return Reference(
+        f"{source.citation} Its S1-S5 Tables are what every ligation fidelity score is read from",
+        url=source.doi_url,
+    )
+
+
 #: Where the numbers above come from, ready for a protocol's reference list.
 REFERENCES: tuple[Reference, ...] = (
     Reference(
@@ -348,4 +367,6 @@ REFERENCES: tuple[Reference, ...] = (
         "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
         url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
     ),
+    # A ligation fidelity check names this in passing; here is the reference it names.
+    _ligation_reference(),
 )

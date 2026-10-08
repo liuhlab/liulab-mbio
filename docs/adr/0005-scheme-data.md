@@ -30,7 +30,7 @@ every signature above them has assumed one scheme.
 
 - **Ship the paper's scheme as package data**, as the enzyme and codon tables ship. It takes on
   the licence question and makes one instance the default.
-- **Hard-code it in `library/`.** The parameters become constants, so a second scheme is a rewrite
+- **Hard-code it in `igga/`.** The parameters become constants, so a second scheme is a rewrite
   and not a file.
 - **Take the parts of the scheme as separate arguments.** They would cross every boundary one at a
   time, and the rules between them — a stuffer prefix ending in the next position's entry

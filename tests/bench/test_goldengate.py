@@ -6,9 +6,11 @@ The source is `docs/research/golden-gate-assembly.md` for the reactions and cycl
 import pytest
 
 from liulab_mbio.bench.amounts import Amount, dna_amount
-from liulab_mbio.cloning.goldengate.bench import (
+from liulab_mbio.bench.goldengate import (
     FRAGMENT_PMOL,
+    GOLDEN_GATE_ENZYMES,
     KIT,
+    REFERENCES,
     assembly_amounts,
     assembly_program,
     assembly_reaction,
@@ -17,8 +19,9 @@ from liulab_mbio.cloning.goldengate.bench import (
     ligase_master_mix_component,
 )
 from liulab_mbio.enzymes import get_enzyme
+from liulab_mbio.overhangs import ligation_source
 
-from ...reactions import total, volumes
+from ..reactions import total, volumes
 
 
 def two_fragments() -> tuple[Amount, ...]:
@@ -97,6 +100,12 @@ def test_no_kit_carries_bbsi() -> None:
         assembly_reaction(get_enzyme("BbsI"), two_fragments(), system=KIT)
 
 
+def test_only_an_enzyme_cutting_outside_its_site_joins_the_golden_gate_set() -> None:
+    # SrfI and PmeI ship for the library scheme, and cut inside their own site.
+    assert {"SrfI", "PmeI"}.isdisjoint(GOLDEN_GATE_ENZYMES)
+    assert all(get_enzyme(name).type == "IIS" for name in GOLDEN_GATE_ENZYMES)
+
+
 def test_an_enzyme_neb_gives_no_golden_gate_protocol_for_is_refused() -> None:
     with pytest.raises(ValueError, match="no Golden Gate protocol"):
         assembly_reaction(get_enzyme("BtgZI"), two_fragments())
@@ -156,3 +165,12 @@ def test_the_kit_program_counts_inserts_and_not_fragments() -> None:
     eleven = assembly_program(get_enzyme("BsaI"), fragments=12, system=KIT).stages[0]
     assert (single.cycles, single.incubations[0].seconds) == (1, 300)
     assert (eleven.cycles, eleven.incubations[0].seconds) == (30, 300)
+
+
+def test_the_ligation_fidelity_reference_reads_as_the_paper_the_data_ships() -> None:
+    """The citation lives in the data file; the reference list prints it from there, whole."""
+    source = ligation_source()
+    named = [one for one in REFERENCES if "Pryor" in one.text]
+    assert len(named) == 1
+    assert named[0].text.startswith(source.citation)
+    assert named[0].url == source.doi_url

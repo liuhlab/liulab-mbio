@@ -261,7 +261,7 @@ def _pair(
 
 def _near(position: int, record: SequenceRecord) -> Segment:
     """Return the positions `ALLOWANCE` either way of one, wrapped round a circular origin."""
-    return _span(position - ALLOWANCE, 2 * ALLOWANCE + 1, record)
+    return record.span(position - ALLOWANCE, 2 * ALLOWANCE + 1)
 
 
 def _inside(span: Segment) -> Placement:
@@ -274,14 +274,6 @@ def _inside(span: Segment) -> Placement:
         five_prime=Segment(span.start, span.start + ALLOWANCE),
         three_prime=Segment(span.start + ALLOWANCE, span.end + 1),
     )
-
-
-def _span(start: int, width: int, record: SequenceRecord) -> Segment:
-    """Return `width` positions from `start`, wrapped on a circular record and clipped on a line."""
-    if record.topology == "circular":
-        start %= len(record)
-        return Segment(start, start + width)
-    return Segment(max(start, 0), min(start + width, len(record)))
 
 
 def read_sheet(pairs: ReadPairs) -> str:

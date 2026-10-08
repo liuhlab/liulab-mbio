@@ -1,16 +1,22 @@
 # liulab-mbio
 
-Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Two pipelines
-plan an experiment end to end: a cloning job from a vector and its inserts, by any method under
-`cloning/`, and a barcoded combinatorial library built from lists of proteins in rounds. Each
-picks its enzymes, designs the DNA, simulates the product, and writes a bench protocol someone
-can follow. Repo-local skills call them; the lab uses both. Distribution name
+Molecular biology design tools for DNA sequences, enzymes, primers and cloning. Five pipelines
+plan an experiment end to end: a cloning job from a vector and its inserts, by any of the four
+methods under `cloning/`, and a barcoded combinatorial library built from lists of proteins in
+rounds. Each picks its enzymes, designs the DNA, simulates the product, and writes a bench
+protocol someone can follow. Repo-local skills call them. Distribution name
 **`liulab-mbio`**, import names **`liulab_mbio`** and **`liulab_synbio`**.
 
 **The package boundary.** One distribution ships both, at one version. `liulab_synbio` holds
-one named method's pipelines: **synbio imports mbio; mbio imports synbio nowhere.** Which side
+each named method's pipelines: **synbio imports mbio; mbio imports synbio nowhere.** Which side
 a module is on: could a different method use it unchanged? If yes it is mbio's; if it encodes
 one method's choices it is synbio's.
+
+Worked, both ways. A BsaI site reads the same whoever cuts it, so `sites` is mbio's. Which
+overhang set iGGA fixes is that method's choice, so `igga/standard` is synbio's. Judge the
+content, not the caller: only `igga/` imports `bench/coverage`, and it is mbio's anyway, because
+any method building a library in rounds sizes a round the same way. Rule 14 checks the
+direction; this half is yours.
 
 **Easiest thing to get wrong: coordinates.** Every module is 0-based and half-open, and a span
 across the origin of a circular record ends past the record's length. Read
@@ -25,31 +31,30 @@ One direction, bottom to top — nothing lower imports anything higher.
 | --- | --- | --- |
 | model | `sequence`, `checks` | `SequenceRecord`, `Feature`, `Segment`, `Primer`, the coordinate rule; `Check`, its status and the worst-of rule |
 | files | `io`, `snapgene`, `edits` | reading and writing records; editing spans, and carrying what a record annotates into another one |
-| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase`, `reaction` | shipped enzyme data, cut sites, domestication; reverse translation, whole-sequence codon choice, and whether a span reads in frame without a stop; distance-separated barcode sets and how far apart one stands; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds; one tube, each molecule's role in it and the enzymes acting |
+| biology | `enzymes`, `sites`, `codons`, `translate`, `barcodes`, `overhangs`, `ligase`, `reaction`, `split` | shipped enzyme data, cut sites, domestication; reverse translation, whole-sequence codon choice, and whether a span reads in frame without a stop; distance-separated barcode sets and how far apart one stands; whether two cut ends anneal, the rules an overhang set is held to, its ligation fidelity, and a ligase profile the user holds; one tube, each molecule's role in it and the enzymes acting; where to cut a cargo too long to synthesise |
 | plot | `plot/` | a record drawn as a map: `drawing` is the way in, `layers` resolves items, `circular`, `linear` and `sequence_view` lay them out, `labels` keeps labels apart, `fonts` measures, `svg` and `page` write, `convert` makes a PNG or PDF; `plate` draws a plate's wells on the same substrate |
 | primers | `primers/` | `polymerase`: Tm, Ta and its PCR profile; `thresholds` and their wording; `placement`, `evaluation`, `design`; `genome`, which runs `ipcr` |
 | protocol | `protocol/` | `model`, read from and written to JSON, `figures`, a named figure a step shows, and `render`, its self-contained HTML page |
-| bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters and rules keyed by catalogue number; `prices`, a price record the user holds and the bill it makes |
-| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `bench` (its reaction and cycling), `oligos`, `steps`, joined by its own `plan`; `gibson/`: the same modules, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: those modules again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
-| method | `liulab_synbio.dmx`, `liulab_synbio.seating` | the validating experiment's side: the barcode kit a user holds, its two routes, a well's derived address, each route's depth floor and the pass rule; and one part a well in its carrier, which ends in no library |
-| pipeline | `liulab_synbio.igga/` | synbio's, and its only pipeline so far: `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `vector`, `stages`, `rounds`, `coverage`, `bench`, `figures`, `steps`, joined by `plan` |
+| bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `readback`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters, rules and cautions keyed by catalogue number; `prices`, a price record the user holds and the bill it makes. Three are imported by module, not re-exported: `goldengate`, NEB's enzymes, reaction and cycling; `coverage`, the colonies a library round takes; `pools`, an oligo pool as a vendor takes it |
+| pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `oligos`, `steps`, joined by its own `plan`, its reaction and cycling being `bench/goldengate`'s; `gibson/`: those modules plus `bench`, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: the same again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
+| method | `liulab_synbio.dmx/` | DMX, its own protocol for multiplexed validation, standing beside `igga/` and taking any cargo: `kit`, the barcode kit a user holds; `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `steps`; and `seating`, one part a well in its carrier, which ends in no library |
+| pipeline | `liulab_synbio.igga/` | `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `cargo`, `vector`, `stages`, `rounds`, `reads`, `bench`, `figures`, and `protocols/`, one module a protocol of the run, ordered by `chain` and joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: each package's root app mounts one sub-app per feature it holds, `cloning/cli` one per method and the spine they share |
 
-Each pipeline has one way in. `cloning.goldengate.plan_assembly` writes four files: the
-product, the primer sheet, `protocol.json` and the `protocol.html` rendered from it.
-`cloning.gibson.plan_gibson` and `cloning.restriction.plan_restriction` write the same four.
-`cloning.gateway.plan_gateway` writes those four, and the entry clone as a fifth where it
-planned a BP reaction.
+Each pipeline has one way in. `plan_assembly`, `plan_gibson` and `plan_restriction` each write
+four files: the product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
+it. `plan_gateway` writes those four, and the entry clone as a fifth where it planned a BP
+reaction.
 `liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
 amino-acid change tables, a record per round, a block vector per position, the product, and a
 `protocol` folder: the run as a chain of protocols, one page each. The
-method is code and a project is a file: `docs/adr/0010-method-in-code.md` draws that line.
-A pipeline's protocol is data an agent may edit and render again, never a place to invent a
+method is code and one build's choices are a file: `docs/adr/0010-method-in-code.md` draws that
+line. A pipeline's protocol is data an agent may edit and render again, never a place to invent a
 number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 A subpackage re-exports its own way in, for callers outside it. Inside the package, import a
 name from the module that owns it; the top-level `__init__.py` re-exports only `__version__`,
 and `Check`, `Junction`, `Part` and `Files` each mean different things in every module that
-defines one — a `Junction` and a `Files` belong to the cloning method that defines them.
+defines one.
 
 Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
@@ -100,7 +105,7 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 
 ```text
 src/liulab_mbio/   the general package
-src/liulab_synbio/ one method's pipelines
+src/liulab_synbio/ the lab's own named methods
 tests/             pytest, mirroring src/
 docs/              the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
 skills/            repo-local agent skills

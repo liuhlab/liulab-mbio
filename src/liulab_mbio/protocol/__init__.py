@@ -3,24 +3,26 @@
 JSON keys are the field names of the classes below, lists stand for tuples, and only the
 fields without a default are required; `write_protocol` writes every field::
 
-    {"title": str, "summary": str, "overview": {label: short value},
+    {"title": str, "key": str, "summary": str, "overview": {label: short value},
      "highlights": [sentence], "checks": [{"name", "status", "detail"}],
      "consumes": [{"name", "what", "spec": [str], "storage"}],
      "produces": [{"name", "what", "spec": [str], "storage"}],
      "materials": [{"name", "supplier", "catalog", "storage", "amount", "note",
          "contains": [str], "citation": {"source", "locator"},
-         "rules": [{"kind", "subject", "detail", "when", "citation"}]}],
+         "rules": [{"kind", "subject", "detail", "when", "citation"}],
+         "cautions": [str]}],
      "oligos": [{"name", "sequence", "purpose", "tm_c", "stock", "note", "status",
          "checks": [{"name", "status", "detail"}]}],
      "equipment": [str],
      "vessels": [{"name", "kind", "catalog", "holds", "note"}],
      "plates": [{"name", "wells", "catalog", "holds", "seating": {well: name}, "note"}],
-     "steps": [{"title", "section", "instructions": [str], "cautions": [str], "notes": [str],
+     "steps": [{"title", "key", "section", "instructions": [str], "cautions": [str],
+         "notes": [str],
          "tables": [{"title", "reactions", "overage",
              "components": [{"name", "volume_ul", "stock", "final", "master_mix"}]}],
          "programs": [{"title", "lid_temperature_c",
              "stages": [{"cycles", "citation",
-                 "incubations": [{"label", "temperature_c", "seconds"}]}]}],
+                 "incubations": [{"label", "temperature_c", "seconds", "delta_c"}]}]}],
          "timers": [{"label", "seconds"}],
          "waits": [{"what", "duration", "citation"}], "hands_on_seconds": int or null,
          "transfers": [{"title", "instrument", "note", "citation",
@@ -30,25 +32,32 @@ fields without a default are required; `write_protocol` writes every field::
          "gels": [{"title", "ladder": {"name", "bands_bp"}, "lanes": [{"label", "bands_bp"}]}],
          "expected": [str], "troubleshooting": [{"problem", "solution"}]}],
      "references": [{"text", "url"}],
-     "sources": {key: {"document", "edition", "url", "read_as", "date"}},
+     "sources": {key: {"document", "edition", "url", "read_as", "date", "note"}},
      "holes": [{"id", "missing", "kind", "where", "filled_by", "issue"}],
      "bill": {"title", "currency", "total", "record",
          "rows": [{"item", "quantity", "unit", "key", "charge", "headroom", "citation",
              "hole"}]}}
 
 An incubation's ``"seconds": null`` holds indefinitely, and a stage's ``"cycles": null`` leaves
-the count blank where nothing sources it. A check's ``"status"`` is ``"pass"``,
+the count blank where nothing sources it. Its ``"delta_c"`` steps the temperature each cycle, so
+a touchdown is one cycled stage. A check's ``"status"`` is ``"pass"``,
 ``"warn"`` or ``"fail"``; an oligo's may also be absent, which says nothing judged that row. An
 ``"overview"`` value is a card: a few words, never a sentence.
 
 A protocol declares what it consumes and what it produces, and nothing else about its place in a
 run. A project chains protocols by those names, `write_project` writing one file of them::
 
-    {"title": str, "summary": str,
+    {"title": str, "key": str, "summary": str,
      "background": [{"title", "body": [paragraph]}],
-     "inputs": [{"name", "what", "spec": [str], "storage"}],
+     "files": [str], "inputs": [{"name", "what", "spec": [str], "storage"}],
      "protocols": [a protocol, as above],
-     "checks": [{"name", "status", "detail"}], "bill": a bill, as above}
+     "checks": [{"name", "status", "detail"}],
+     "sources": {key: a source, as above}, "bill": a bill, as above}
+
+A ``"key"`` is a handle and never prose: a step's anchors its page and keys the bench's check
+mark, a protocol's names the store those marks are kept in. A pipeline writes both, so rewording
+a title costs the bench nothing. Left empty, a step falls back to its title and a page to a
+digest of its content.
 
 A number's provenance is its row's ``"citation"``, whose ``"source"`` keys ``"sources"``. A
 number nobody published is a ``"hole"``: the field it belongs to stays empty and the hole stands
@@ -82,6 +91,7 @@ from liulab_mbio.protocol.model import (
     Rule,
     Source,
     Stage,
+    Stamp,
     Step,
     ThermocyclerProgram,
     Timer,
@@ -96,6 +106,7 @@ from liulab_mbio.protocol.model import (
     read_project,
     read_protocol,
     row_label,
+    well_at,
     write_project,
     write_protocol,
 )
@@ -150,6 +161,7 @@ __all__ = [
     "Rule",
     "Source",
     "Stage",
+    "Stamp",
     "Step",
     "ThermocyclerProgram",
     "Timer",
@@ -170,6 +182,7 @@ __all__ = [
     "render_reagents",
     "render_references",
     "row_label",
+    "well_at",
     "write_html",
     "write_project",
     "write_project_files",

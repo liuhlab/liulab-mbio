@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from liulab_mbio.plot import draw_plate
-from liulab_mbio.plot.plate import EMPTY, PALETTE, PlateMap
+from liulab_mbio.plot.plate import EMPTY, PALETTE, SEATED, PlateMap
 from liulab_mbio.plot.svg import Group, Rect
 from liulab_mbio.protocol.model import FORMATS, Plate
 
@@ -19,13 +19,13 @@ def seat(kinds: int) -> dict[str, str]:
     return {f"A{n + 1}": f"kind {n}" for n in range(kinds)}
 
 
-def well_fills(laid: PlateMap) -> set[str]:
-    fills = set()
+def well_fills(laid: PlateMap) -> list[str]:
+    fills = []
     for shape in laid.shapes:
         if isinstance(shape, Group):
             (rect,) = shape.shapes
             assert isinstance(rect, Rect)
-            fills.add(rect.fill)
+            fills.append(rect.fill)
     return fills
 
 
@@ -61,14 +61,23 @@ def test_a_plate_of_ten_kinds_keeps_a_fill_for_each() -> None:
     laid = drawing(96, seating=seat(10)).layout
     assert laid.kinds == 10
     assert laid.legend == tuple(zip(seat(10).values(), PALETTE, strict=True))
-    assert well_fills(laid) == {EMPTY, *PALETTE}
+    assert set(well_fills(laid)) == {EMPTY, *PALETTE}
 
 
-def test_a_plate_past_ten_kinds_draws_uncoloured_and_lists_none_of_them() -> None:
+def test_a_plate_past_ten_kinds_fills_every_seated_well_alike_and_lists_none_of_them() -> None:
     laid = drawing(96, seating=seat(11)).layout
     assert laid.kinds == 11
     assert laid.legend == ()
-    assert well_fills(laid) == {EMPTY}
+    assert set(well_fills(laid)) == {EMPTY, SEATED}
+    assert well_fills(laid).count(SEATED) == 11
+
+
+def test_a_plate_whose_every_well_is_seated_fills_every_one_of_them() -> None:
+    """One fill means used on every plate of a page, so a full plate is no bare grid."""
+    full = {well: f"kind {n}" for n, well in enumerate(Plate("plate", 96).well_names)}
+    laid = drawing(96, seating=full).layout
+    assert laid.kinds == 96
+    assert set(well_fills(laid)) == {SEATED}
 
 
 def test_a_drawing_is_laid_out_once_and_kept() -> None:
@@ -90,3 +99,21 @@ def test_a_suffix_nothing_writes_is_refused(tmp_path: Path) -> None:
 def test_a_row_label_short_of_its_rows_is_refused() -> None:
     with pytest.raises(ValueError, match="1 labels for 2 rows"):
         _ = draw_plate("plate", 2, 3, "A").layout
+
+
+@pytest.mark.parametrize("well", ["A4", "C1"], ids=["past the last column", "past the last row"])
+def test_a_well_seated_where_the_array_has_none_is_refused(well: str) -> None:
+    with pytest.raises(ValueError, match=f"no well '{well}' on a 2 by 3 plate"):
+        _ = draw_plate("plate", 2, 3, "AB", seating={well: "water"}).layout
+
+
+@pytest.mark.parametrize(
+    ("labels", "columns", "name"),
+    [(("A", "A"), 3, "A1"), (("A", "A1"), 11, "A11")],
+    ids=["a row label repeated", "a label colliding across the column digits"],
+)
+def test_two_wells_answering_to_one_name_are_refused(
+    labels: tuple[str, ...], columns: int, name: str
+) -> None:
+    with pytest.raises(ValueError, match=f"both named '{name}'"):
+        _ = draw_plate("plate", 2, columns, labels).layout

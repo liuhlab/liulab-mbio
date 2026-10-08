@@ -27,6 +27,8 @@
   --ladder: #a9bbff;
   --gel-ink: #c9ced6;
   --radius: 10px;
+  /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
+  --bar: 0rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,6 +79,11 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
+/* What the bench holds before this protocol and what it is left with, beside the overview cards. */
+.handover { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.45rem; margin: 0 0 1rem; }
+.handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
+.handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+
 .highlights { max-width: 44rem; margin: 0 0 1rem; }
 .highlights p:last-child { margin-bottom: 0; }
 
@@ -110,13 +117,25 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
-.toc li { counter-increment: toc; }
+.toc { margin: 0 0 1.5rem; }
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+/* Both lists of steps — the standalone table of contents and a page's right column — are this
+   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
+   number is in the markup, so no counter here. */
+.step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
+.step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
+.step-group + .step-group { margin-top: 0.45rem; }
+.step-group summary { cursor: pointer; font-weight: 600; }
+.step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
+/* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
+.section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
+/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
+.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
-.step { scroll-margin-top: 1rem; }
+.block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
 .step.is-done { opacity: 0.6; }
 .step > * + * { margin-top: 0.9rem; }
 
@@ -176,7 +195,8 @@ button.timer.is-running { border-color: var(--accent); background: var(--accent-
 button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
-.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+/* A gel is taller than it is wide, so its height is what has to fit on the screen. */
+.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
 .gel-bg { fill: var(--gel); }
 .well { fill: var(--well); }
 .band { fill: var(--band); }
@@ -206,6 +226,12 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .hole-id { font-weight: 700; }
 .hole-kind { color: var(--muted); }
 .is-holed .num { color: var(--fail); }
+/* Gathered holes share one box, so each inside it is a line rather than a box of its own. */
+.hole-group > summary { cursor: pointer; }
+.hole-group .holes-here { margin-top: 0.4rem; gap: 0.2rem; }
+.hole-group .hole { border: none; border-radius: 0; background: none; padding: 0 0 0 0.7rem; border-left: 2px dashed var(--fail); }
+/* How much of the run a total covers is said beside it, and is not itself a figure. */
+tfoot .muted { font-weight: 400; }
 
 /* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
    laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
@@ -214,6 +240,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .drawing.rows { display: grid; gap: 0.7rem; }
 .row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.listing { font-size: 0.9rem; margin-top: 0.6rem; }
+.listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
 
@@ -221,9 +249,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
-.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
-.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
 .column li { margin-bottom: 0.3rem; }
@@ -272,9 +300,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
-  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  /* A flex item sizes to its content, so without this the widest table widens the page. */
+  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }
@@ -305,9 +335,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .caution, .expected { border: 1px solid var(--line); }
   /* The verdict word carries the badge on paper, where the fill does not print. */
   .check { border: 1px solid var(--line); }
-  /* Paper has no toggle, so the reasons print with the sheet. */
-  .oligo-checks:not([open]) > ul { display: block; }
-  .oligo-checks::details-content { content-visibility: visible; }
+  /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
+  .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
+  .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
@@ -318,34 +348,35 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 }
 </style>
 </head>
-<body data-protocol="335d4ad7ca924362">
+<body data-protocol="bdfe3118810d689e">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="02-cargo-ordering-and-pool-preparation.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-primer-plates.html">Primer plates</a></li><li class="is-here"><a href="02-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="03-cargo-creation.html">Cargo creation</a></li><li><a href="04-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li><li><a href="05-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="06-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
 <header class="intro">
 <h1>Cargo ordering and pool preparation</h1>
-<p class="neighbours">Protocol 2 of 6. Comes after Primer plates. Next is Cargo creation.</p>
+<p class="neighbours">Protocol 2 of 6. Comes after <a href="01-primer-plates.html">Primer plates</a>. Next is <a href="03-cargo-creation.html">Cargo creation</a>.</p>
 <p class="summary">Order the synthesised material this library is built from, and put it away ready for the bench.</p>
-<div class="toolbar"><span class="progress" aria-live="polite">0 of 1 step done</span><button type="button" class="print">Print</button><button type="button" class="clear">Clear checks</button></div>
+<div class="handover"><div><h3>Leaves you with</h3><ul><li><span class="flow-item">oligo pool</span> <span class="muted">the pool resuspended and aliquoted</span></li></ul></div></div>
+<div class="toolbar"><span class="progress" aria-live="polite">0 of 1 step done</span><button type="button" class="print">Print</button><button type="button" class="reset">Reset page</button></div>
 </header>
 <section class="block materials" id="materials">
 <h2>Materials</h2>
-<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td>ordered from pool.tsv, which says which block each oligo is a piece of</td></tr><tr><td>Q5 High-Fidelity DNA Polymerase</td><td>NEB</td><td>M0491</td><td>-20 °C</td><td>one reaction per batch, then one per block</td><td>the buffer the annealing temperatures below were computed in</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>Oligo pool</td><td></td><td></td><td>-20 °C</td><td>131 oligos, every one 350 nt</td><td>ordered from <a href="../pool.tsv">pool.tsv</a>, which says which block each oligo is a piece of</td></tr><tr><td>NEBridge Golden Gate Assembly Kit, BsmBI-v2</td><td>NEB</td><td>E1602</td><td>-20 °C</td><td>one assembly per block</td><td>its mix carries the BsmBI that cuts every oligo back to its own fragment, which this method reserves, and the T4 DNA Ligase that joins them</td></tr></tbody></table></div>
 </section>
 <p class="step-section">Order and store</p>
-<section class="step" id="step-1">
-<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-1"><span class="step-n">1</span><span>Order the oligo pool</span></label></h2>
-<ol class="instructions"><li><label><input type="checkbox" data-key="step-1-1"><span>Order every row of pool.tsv as one synthesised oligo pool, 131 members at 350 nt.</span></label></li></ol>
+<section class="step" id="step-order-pool">
+<h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-order-pool"><span class="step-n">1</span><span>Order the oligo pool</span></label></h2>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-order-pool.1"><span>Order every row of <a href="../pool.tsv">pool.tsv</a> as one synthesised oligo pool, 131 members at 350 nt.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for.</li></ul></div>
-<div class="trouble"><h3>Troubleshooting</h3><dl><dt>The vendor bins the pool by length</dt><dd>Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants the project&#x27;s oligo length changed and the design run again.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>pool.tsv names each oligo&#x27;s block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.</li><li>131 oligos is the fewest the length budget allows for.</li></ul></div>
+<div class="trouble"><h3>Troubleshooting</h3><dl><dt>The vendor bins the pool by length</dt><dd>Every oligo is padded to one length, so the spread is zero. A vendor asking for a different length wants this run&#x27;s oligo length changed and the design run again.</dd></dl></div>
+<div class="notes"><h3>Notes</h3><ul><li><a href="../pool.tsv">pool.tsv</a> names each oligo&#x27;s block, which piece of it that is, and the primers that pull it out, so an oligo is traceable to its protein.</li><li>131 oligos is the fewest the length budget allows for.</li></ul></div>
 </section>
 <section class="block references" id="references">
 <h2>References</h2>
 <ol><li>NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)</li><li>NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)</li><li>NEB, Agarose Gel Resolution, for the percentage a band range resolves on</li><li>Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool&#x27;s length</li><li>Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity</li></ol>
 </section>
 </main>
-<nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ol><li><a href="#step-1">Order the oligo pool</a></li></ol></nav>
+<nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ul class="step-nav"><li class="step-group"><details data-steps="order-pool" open><summary>Order and store <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-order-pool"><span class="step-mark">1</span> <span>Order the oligo pool</span></a></li></ul></details></li></ul></nav>
 </div>
 <script>
 (function () {
@@ -386,6 +417,37 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   var stepBoxes = all("input.done");
   var progress = document.querySelector(".progress");
 
+  // A thing carrying step keys — a section of this page, a page of the run — says which steps it
+  // stands for and how far the bench got in them. The marks are a store's, never a second count.
+  function stepKeys(item) {
+    return (item.getAttribute("data-steps") || "").split(" ").filter(Boolean);
+  }
+
+  function ticked(marks, keys) {
+    var done = 0;
+    keys.forEach(function (key) {
+      if (marks["step-" + key] === true) done += 1;
+    });
+    return done;
+  }
+
+  var groups = all("nav details[data-steps]");
+
+  function showSections() {
+    groups.forEach(function (group) {
+      var keys = stepKeys(group);
+      var label = group.querySelector(".section-progress");
+      if (label) label.textContent = ticked(state, keys) + " of " + keys.length + " done";
+    });
+  }
+
+  function currentSection() {
+    return groups.filter(function (group) {
+      var keys = stepKeys(group);
+      return ticked(state, keys) < keys.length;
+    })[0];
+  }
+
   function refresh() {
     var done = 0;
     stepBoxes.forEach(function (box) {
@@ -394,6 +456,7 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
+    showSections();
   }
 
   boxes.forEach(function (box) {
@@ -408,11 +471,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   });
   refresh();
 
+  // The section the bench is in — the first still holding an unticked step — opens on arrival,
+  // and the rest close. A section opened by hand after that stays open. Where this never runs,
+  // the page keeps the first section open, which is where a bench with no marks is.
+  var current = currentSection();
+  if (current) {
+    groups.forEach(function (group) { group.open = group === current; });
+  }
+
   // A run's index: how far the bench got in each protocol, read from that page's own store.
-  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // Every file:// page shares one store, and each page has a key of its own, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
-    var total = Number(item.getAttribute("data-steps")) || 0;
+    // Each step of that page by the key it is addressed under, which a reworded title keeps.
+    var keys = stepKeys(item);
     var label = item.querySelector(".page-progress");
     var marks;
     try {
@@ -422,22 +494,20 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     } catch (error) {
       return;
     }
-    if (!marks || !label || !total) return;
-    var done = 0;
-    for (var n = 1; n <= total; n += 1) if (marks["step-" + n] === true) done += 1;
-    label.textContent = done + " of " + steps(total) + " done";
+    if (!marks || !label || !keys.length) return;
+    var done = ticked(marks, keys);
+    label.textContent = done + " of " + steps(keys.length) + " done";
     item.classList.toggle("is-started", done > 0);
   });
 
-  var clear = document.querySelector("button.clear");
-  if (clear) {
-    clear.addEventListener("click", function () {
-      boxes.forEach(function (box) {
-        box.checked = false;
-        delete state[box.getAttribute("data-key")];
-      });
+  // Everything this page remembers is one object, so resetting it is emptying that object and
+  // reading the page again: marks, reaction counts and timers all go back to what was written.
+  var reset = document.querySelector("button.reset");
+  if (reset) {
+    reset.addEventListener("click", function () {
+      Object.keys(state).forEach(function (key) { delete state[key]; });
       save();
-      refresh();
+      window.location.reload();
     });
   }
 
@@ -480,7 +550,10 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       return reactions;
     }
 
+    // A browser restores a typed-in value across a reload, so the count is set either way: what
+    // the page remembers, or the count render.py wrote.
     if (typeof state[key] === "number") input.value = String(state[key]);
+    else input.value = input.getAttribute("value") || "1";
     update();
     input.addEventListener("input", function () {
       state[key] = update();
@@ -559,7 +632,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
+  // page or closing the tab does not lose an incubation. A deadline already past comes back
+  // finished and silent: the sound belongs to the moment it ran out, not to the page load.
   all("button.timer").forEach(function (button) {
+    var key = button.getAttribute("data-key");
     var total = parseFloat(button.getAttribute("data-seconds")) || 0;
     var left = total;
     var end = 0;
@@ -578,33 +655,53 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
       button.classList.remove("is-running");
     }
 
+    function run() {
+      handle = window.setInterval(tick, 250);
+      button.classList.add("is-running");
+      show("Pause");
+    }
+
+    function finish(sound) {
+      stop();
+      left = 0;
+      button.classList.add("is-finished");
+      show("Reset");
+      if (sound) alarm();
+    }
+
     function tick() {
       left = Math.max(0, (end - Date.now()) / 1000);
-      if (left <= 0) {
-        stop();
-        left = 0;
-        button.classList.add("is-finished");
-        show("Reset");
-        alarm();
-      } else {
-        show("Pause");
-      }
+      if (left <= 0) finish(true);
+      else show("Pause");
+    }
+
+    var kept = state[key];
+    if (kept && typeof kept.ends === "number") {
+      end = kept.ends;
+      left = Math.max(0, (end - Date.now()) / 1000);
+      if (left > 0) run();
+      else finish(false);
+    } else if (kept && typeof kept.left === "number") {
+      left = kept.left;
+      show("Resume");
     }
 
     button.addEventListener("click", function () {
       if (handle !== null) {
         stop();
+        state[key] = { left: left };
         show("Resume");
       } else if (left <= 0) {
         left = total;
         button.classList.remove("is-finished");
+        delete state[key];
         show("Start");
       } else {
         end = Date.now() + left * 1000;
-        handle = window.setInterval(tick, 250);
-        button.classList.add("is-running");
-        show("Pause");
+        state[key] = { ends: end };
+        run();
       }
+      save();
     });
   });
 })();

@@ -38,16 +38,12 @@ from liulab_mbio.bench.pools import (
     pool_item,
 )
 from liulab_mbio.bench.prices import Band, Item
+from liulab_mbio.bench.readback import CLEAN_COLONY_CURVE
 from liulab_mbio.sequence import SequenceRecord
 from liulab_mbio.split import CargoSplit, Fragment, fewest_pieces, split_cargo
-from liulab_synbio.igga.method import (
-    LUND_SUCCESS,
-    ORTHOGONAL_SPLIT,
-    SYNTHESIS_ENZYME,
-    Scheme,
-)
+from liulab_synbio.igga.method import ORTHOGONAL_SPLIT, SYNTHESIS_ENZYME, Scheme
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 
 #: How long one primer of the orthogonal set is.
 PRIMER_LENGTH = 20
@@ -141,12 +137,12 @@ class PoolPlan:
     def against_lund(self) -> tuple[tuple[int, int, float | None], ...]:
         """How many blocks take each fragment count, beside the share Lund saw clone perfectly.
 
-        A count Lund did not measure carries ``None``: nothing here interpolates one.
+        Read as measured from `liulab_mbio.bench.readback.CLEAN_COLONY_CURVE`: a count Lund did
+        not measure carries ``None``, because this reports what the paper saw, not an estimate.
         """
+        measured = dict(CLEAN_COLONY_CURVE)
         counted = self.pool.fragment_counts()
-        return tuple(
-            (pieces, blocks, LUND_SUCCESS.get(pieces)) for pieces, blocks in counted.items()
-        )
+        return tuple((pieces, blocks, measured.get(pieces)) for pieces, blocks in counted.items())
 
 
 def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:
@@ -188,7 +184,7 @@ def read_primers(path: str | os.PathLike[str]) -> tuple[PrimerSite, ...]:
 
 def design_pool(
     parts: Sequence[Part],
-    project: Project,
+    project: Build,
     *,
     primers: Sequence[PrimerSite],
     bands: Mapping[str, Sequence[Band]] | None = None,
@@ -199,7 +195,7 @@ def design_pool(
 
     A batch is one PCR1 and one plate of PCR2, so a gene takes its own inner primer from the
     batch it sits in and the batch takes a forward and an outer primer of its own. The batches
-    are equal, which is what the evenness measurement behind `Project.batch_size` argues for.
+    are equal, which is what the evenness measurement behind `Build.batch_size` argues for.
 
     Parameters
     ----------

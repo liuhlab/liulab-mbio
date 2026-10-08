@@ -5,6 +5,30 @@
 One glossary for both import packages. An entry is `liulab_mbio`'s unless it ends with a
 `_Package_` line naming another.
 
+### mbio
+
+`liulab_mbio`, the general import package: everything a different method could use unchanged —
+the sequence model, the file formats, enzymes and sites, codons, barcodes, overhangs, maps,
+primers, the protocol model and the bench. A module is here when a different method could use it
+unchanged. It imports **synbio** nowhere.
+_Avoid_: core, common, the base package
+
+### synbio
+
+`liulab_synbio`, the import package holding this lab's own named methods, one subpackage each:
+**iGGA** and **DMX**. A module is here when it encodes one method's choices. It imports
+**mbio**, and one distribution ships both at one version.
+_Avoid_: the library package, extension, plugin
+
+### Pipeline
+
+One way in that plans a whole experiment from the records it is given: it picks the enzymes,
+designs the DNA, simulates the product and writes what the bench follows — one **protocol** for
+each of the four cloning methods, and a whole **project** of them for a library. Five ship:
+`plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` and `plan_igga`, each the
+single entry point of its own subpackage. A module below one decides a detail of the design.
+_Avoid_: workflow, driver, orchestrator
+
 ### Sequence record
 
 One DNA sequence with its topology, features, primers and notes: what a sequence file holds,
@@ -136,16 +160,50 @@ _Avoid_: input, output, artefact, deliverable
 
 Protocols run in order, each handed what the ones before it produced. It holds what no single
 protocol owns: the background a reader is told before the first protocol, the bill for the whole
-run, and the checks that judge the design rather than one bench procedure. What a build chooses
+run, the **source** its rows cite, and the checks that judge the design rather than one bench
+procedure. What a build chooses
 is a file it is read from, and `docs/adr/0010-method-in-code.md` draws that line; what a build
 writes is this chain of protocols.
 _Avoid_: workflow, pipeline, campaign
+
+### Build
+
+What one run of a **pipeline** chooses, as against what its method fixes: for a library, the
+positions and their part lists, the vector, the host, the oligo length, the batch size, the
+completeness, the seed, the barcode length and distance, and any further enzyme to keep clear.
+It is read from one `project.json` and checked where it is read. It overrides nothing the method
+states: where both have a say, the two compose. What a build writes is a **project**, which is
+the chain of protocols and a different thing.
+_Avoid_: project (the chain of protocols, and its own entry), configuration, run
+_Package_: liulab_synbio
 
 ### Step
 
 One numbered unit of a protocol: what to do, what it needs, what a successful result looks
 like, and what to do when the result is wrong.
 _Avoid_: task, procedure
+
+### Section
+
+Where in a protocol a step belongs, such as `Day 1` or `Round 2`. A label, not a container: the
+steps stay one list and the numbering runs through them. Both navigation lists group by it, one
+collapsible group each, counted from the bench's own marks.
+_Avoid_: stage, phase, part
+
+### Key
+
+What a step, a protocol or a **project** is addressed by, assigned by its builder and never
+derived from its wording, so rewording a title moves no tick the bench has made. A page's
+anchors and its marks are built from it, and a key holds no dot, which is what keeps one step's
+marks out of another's.
+_Avoid_: id, name, slug (what a key is spelled as)
+
+### Mint
+
+To give a protocol or a **project** the **key** it was built without, from a digest of its own
+content, so that one run's protocols are addressed apart from every other run's. Two protocols
+of one run that mint the same key are a builder defect, and the run is refused.
+_Avoid_: generate, hash, assign
 
 ### Wait
 
@@ -165,7 +223,8 @@ _Avoid_: mix table, recipe
 
 ### Thermocycler program
 
-Stages run in order, each a list of incubations repeated for a number of cycles.
+Stages run in order, each a list of incubations repeated for a number of cycles. An incubation
+whose temperature steps a set amount each cycle makes its stage a **touchdown**.
 _Avoid_: cycling conditions, PCR conditions
 
 ### Figure
@@ -619,20 +678,32 @@ _Avoid_: internal primer, screening primer
 
 The experiment that makes cargo and reads it back, one design at a time. A gene is split into
 fragments, the fragments come out of an oligo pool by nested PCR and assemble into the DMX
-vector, and one design is archived per well. Reading it back takes that archive to clonal wells,
-marks each well by the DMX barcode kit or by index PCR, sequences it, and calls a pass per well,
-so identity is read per member and stays with well position. It is the only place a member is
-picked or read on its own. Whether a design is read back at all is a project choice, and the
-cargo an **iGGA** round consumes is made here.
-_Avoid_: cargo pipeline, DMX, the validation pipeline
+vector, and one design is archived per well. Reading it back is **DMX**: it takes that archive
+to clonal wells, marks each well by the DMX barcode kit or by index PCR, sequences it, and calls
+a pass per well, so identity is read per member and stays with well position. It is the only
+place a member is picked or read on its own. Whether a design is read back at all is a **build**
+choice, and the cargo an **iGGA** round consumes is made here.
+_Avoid_: cargo pipeline, the validation pipeline
+_Package_: liulab_synbio
+
+### DMX
+
+A protocol of its own for multiplexed validation: a design sits one per well, the well is
+marked, sequenced and called on its own, and identity stays with well position throughout. It
+takes any cargo, and what **iGGA** builds is one kind of cargo among others, so DMX stands
+beside iGGA rather than downstream of it — a caller chains it. Two routes mark a well, barcode
+ligation or index PCR, and one judgement reads them; the picking, the pass rule and the reformat
+are shared, while the marking step, the plate and the depth floor are the route's own, because
+each floor was measured on its own library prep.
+_Avoid_: the validation pipeline, read-back pipeline, QC
 _Package_: liulab_synbio
 
 ### Validation floor
 
-The **fragment count** at or above which a design is read back one well at a time. A project
+The **fragment count** at or above which a design is read back one well at a time. A **build**
 states it or leaves it out: left out, nothing is read and the cargo stays polyclonal, and zero
 reads every design. No floor ships, because the measured curve gives a design's chance of a clean
-colony and not the chance worth paying to check. A project that states one also names which of
+colony and not the chance worth paying to check. A build that states one also names which of
 the two marking routes reads its wells: **barcode ligation** or **index PCR**.
 _Avoid_: validation threshold, QC cutoff, validation level, Route A, Route B
 _Package_: liulab_synbio
@@ -659,10 +730,12 @@ _Avoid_: pool, insert list, position list
 
 ### Scheme
 
-What a library design is given rather than works out: the positions, the enzymes that cut
-internally, externally and bluntly, the stuffers, the cloning scar and the barcode length. It is
-one object the user supplies, checked as it is read, and any one scheme is an instance of the
-pattern rather than the only one. A part list is what fills one of its positions.
+What a method fixes rather than works out: the positions, the enzymes that cut internally,
+externally and bluntly, the stuffers, the cloning scar and the barcode length. It is one object
+built in code, whose invariants are checked when its module is imported, and not a file anyone
+supplies — `docs/adr/0010-method-in-code.md` reversed that, so a second scheme is a second
+method rather than a second file. A **part list** fills one of its positions, and what one
+**build** chooses sits beside it without overriding any of it.
 _Avoid_: config, standard, design, layout
 _Package_: liulab_synbio
 
@@ -711,6 +784,16 @@ together are a whole number of codons, and the barcodes of one part list stand f
 by the set's distance metric, that no two read as one. It lies in the product's reading frame, so
 it spells no stop.
 _Avoid_: index, tag, UMI, identifier
+
+### Barcode kit
+
+The 96 plasmids **DMX** marks wells with, in four groups of 24, used as supplied. One member is
+a plasmid carrying a group, an index and a UMI, and a well's marks are arithmetic from its
+address rather than a recorded draw. The sequences are not
+shipped: they are read from a copy the user holds. A member of this kit is not a **barcode**,
+which names one part of a library.
+_Avoid_: index set, tag kit, barcode plate
+_Package_: liulab_synbio
 
 ### Distance metric
 
@@ -764,7 +847,6 @@ colonies counted against the number of those products. A round short of the cove
 loses members no later round can put back, so it is counted for each round and not once at the
 end.
 _Avoid_: complexity, depth, diversity, representation
-_Package_: liulab_synbio
 
 ### Map
 
@@ -880,29 +962,56 @@ shape covers every move: one source to one destination is a plain or an acoustic
 sources to one destination is a **pool**, and a dense re-layout that leaves out the wells that
 failed is a **compaction**. A protocol step says where a thing is by holding the transfer rather
 than describing it.
-_Avoid_: dispense, stamp, reformat
+
+A transfer whose moves take every destination well from one source plate at one stride, at one
+volume, is a **stamp**: a stride and the source well it starts at stand for the whole move list,
+and a page draws the two plates rather than printing a row each.
+_Avoid_: dispense, reformat
 
 ### Source
 
-A document a number was read from: what it is, its edition, where it was read, how, and when. A
-protocol names each one once; a **citation** of a source and a locator hangs on the row that
-carries the number.
+A document a number was read from: what it is, its edition, where it was read, how, when, and
+the research note under `docs/research/` it was read into, where it has one. A protocol names
+each one once, and a run names the ones its own shared pages cite, such as the record pricing
+its bill; a **citation** of a source and a locator hangs on the row that carries the number.
 _Avoid_: reference (the protocol's own bibliography entry), provenance
+
+### Store
+
+Where a fact is kept. There are five: a file the user holds, `src/liulab_mbio/data/`, a
+catalogue-keyed table on a **material**, the protocol JSON, and a sourced constant in the
+method's own bench module. A new fact goes in the first that fits, asked in that order, so two
+facts of one kind cannot end up apart.
+`docs/adr/0020-a-fact-goes-in-the-first-store-that-fits.md` holds the questions.
+_Avoid_: location, home, storage
+
+### Material
+
+Something a protocol consumes, named as the bench names it, with its supplier and catalogue
+number where it has one. It carries what it brings into the tube, its own parameters, the
+**rules** that follow it into every step that uses it, and its cautions — what would hurt the
+person or the material, written as the action to take. A fact keyed by a catalogue number hangs
+on the material and never on a step that mentions it, so it cannot be edited out of one step and
+left in another. How much of it a step takes is the step's, since the same material is pipetted
+at different amounts.
+_Avoid_: reagent, consumable
 
 ### Rule
 
-A prohibition or a requirement attached to a material, which follows it into every step that
+A prohibition or a requirement attached to a **material**, which follows it into every step that
 uses it: `forbids` keeps something out of the tube, `requires` keeps it in, and each may be
 conditional on what else the tube holds. A rule that computes a number is not one of these; that
-stays a function.
-_Avoid_: constraint, caution, warning
+stays a function. Nor is a caution: that is a separate thing a material carries beside its
+rules, and it names the action that keeps someone or something safe.
+_Avoid_: constraint, warning
 
 ### Hole
 
 A number nobody sourced, standing where the number would be. The field it belongs to stays
 empty and the hole stands beside it, so a hole is never read as a value and never judged. It
-says what is missing, why, what would fill it, and the ticket it is routed to. A hole is a
-finding; a guess is a defect.
+says what is missing, why and what would fill it, and names the ticket it is routed to where one
+owns it. A hole naming a gap no source closes is what a finished plan keeps; a hole waiting on a
+source nobody has read fails the plan. A guess is a defect.
 _Avoid_: missing value, TODO, placeholder
 
 ### Price record

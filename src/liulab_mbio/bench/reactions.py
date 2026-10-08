@@ -99,11 +99,36 @@ def fits(
     if used < volume_ul:
         return
     fix = "scale the reaction up"
-    room = volume_ul - taken_ul
-    if room > 0 and amounts:
-        needed = sum(amount.nanograms for amount in amounts) / room
+    if volume_ul > taken_ul and amounts:
+        weight = sum(amount.nanograms for amount in amounts)
+        needed = floor_ng_ul(weight, volume_ul=volume_ul, taken_ul=taken_ul)
         names = listed([amount.name for amount in amounts])
         fix = f"concentrate {names} to {needed:.3g} ng/µL or more, or {fix}"
     raise ValueError(
         f"{what}: {used:g} µL of components exceeds the {volume_ul:g} µL reaction; {fix}"
     )
+
+
+def floor_ng_ul(nanograms: float, *, volume_ul: float, taken_ul: float = 0.0) -> float:
+    """Return the least DNA of this weight may be concentrated at to fit, ng/µL.
+
+    The reaction takes `nanograms` of DNA in `volume_ul`, and everything else in the tube takes
+    `taken_ul` of that, so the DNA has to arrive in what is left. This is `fits` read backwards:
+    the same rule, answered before there is anything to refuse.
+
+    Raises
+    ------
+    ValueError
+        If everything else fills the reaction, leaving the DNA no volume to arrive in.
+
+    Examples
+    --------
+    >>> round(floor_ng_ul(120.0, volume_ul=20.0, taken_ul=4.0), 2)
+    7.5
+    """
+    room = volume_ul - taken_ul
+    if room <= 0:
+        raise ValueError(
+            f"{taken_ul:g} µL of everything else leaves a {volume_ul:g} µL reaction no room"
+        )
+    return nanograms / room

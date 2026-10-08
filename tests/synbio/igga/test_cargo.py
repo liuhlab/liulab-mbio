@@ -22,7 +22,7 @@ from liulab_synbio.igga.cargo import (
 )
 from liulab_synbio.igga.method import IGGA, ORTHOGONAL_SPLIT
 from liulab_synbio.igga.parts import Part
-from liulab_synbio.igga.project import Project
+from liulab_synbio.igga.project import Build
 
 INNER, FORWARD, OUTER = (count for _, count in ORTHOGONAL_SPLIT)
 TOTAL = INNER + FORWARD + OUTER
@@ -59,7 +59,7 @@ def rows(count):
 
 @pytest.fixture(scope="module")
 def project():
-    return Project(
+    return Build(
         "tiny",
         positions=("N",),
         parts=Path("parts.fasta"),
@@ -125,6 +125,13 @@ def test_a_block_becomes_one_named_oligo_a_fragment(pooled):
 def test_the_count_equals_the_floor_where_no_block_forces_one_more(pooled):
     assert pooled.floor == pooled.pool.count == 5
     assert pooled.over_floor == ()
+
+
+def test_a_fragment_count_lund_measured_carries_its_share_and_an_unmeasured_one_carries_nothing(
+    pooled,
+):
+    """Read as measured: three fragments is an anchor of Lund's curve, and one fragment is not."""
+    assert set(pooled.against_lund()) == {(1, 2, None), (3, 1, 0.938)}
 
 
 def test_a_batch_shares_its_outer_and_forward_primers_and_a_gene_its_own_inner(pooled):

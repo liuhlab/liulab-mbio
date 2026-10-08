@@ -509,8 +509,8 @@ departure.
 
 **Colonies per design: four by default, and a project input.** Lund's four gave 343 of 458 genes
 error-free and it is the only measured anchor, but it is not fixed anywhere. The same table runs
-100% clean at 2 fragments, 84.6% at 5, 40% at 12 and 0% at 16, so four is right for a short gene
-and thin for a long one. The protocol states each design's predicted chance of a clean colony
+100% clean at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40% at 12 and 0% at 16, so four is
+right for a short gene and thin for a long one. The protocol states each design's predicted chance
 from that curve and that design's own fragment count, so a project raising the number reads the
 reason rather than guessing it. A design with no passing well is re-picked from the same archive
 spot before it is re-synthesised.
@@ -583,7 +583,7 @@ collection. iGGA yields a pool that goes to a pooled screen; no member is ever p
 re-identified, so the gate does not transfer. A multiple does not transfer between rounds
 either: one ratio against each round's own products is a different risk every round. What holds
 across rounds is the completeness — the chance no member of that round is missing — so that is
-what a project states, and `liulab_synbio.igga.coverage` computes each round's floor from it by
+what a project states, and `liulab_mbio.bench.coverage` computes each round's floor from it by
 Clarke & Carbon's rule. It refuses a default, and reports the multiple the floor works out at
 beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
 assumes every member equally represented, and synthesis skew breaks that.
@@ -637,7 +637,7 @@ The seated plasmid itself is no longer unsimulated. The carrier is supplied open
 point: `dmx/addgene/pCR-Blunt II-TOPO.dna` carries a single head-to-head `GCCCTT`/`AAGGGC` run,
 and the Zero Blunt TOPO user guide (`bench/thermo/zeroblunttopo_man.pdf`) says topoisomerase I
 cleaves after 5'-CCCTT on each strand, which puts the blunt point at **offset 336** of the
-3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.seating.seat` inserts a
+3,519 bp circle, between the EcoRI sites at 324 and 342. `liulab_synbio.dmx.seating.seat` inserts a
 part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
 keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
 overhang pair, backbone whole. The carrier's one BsaI site is at **797**, inside `ccdB`
@@ -680,8 +680,7 @@ certain to hopeless across one project's own designs, so a project-wide on-off w
 two-fragment design that never needs it, or skip every long one that does.
 
 The fragment-count table is Lund's, held in `long_fragment_GGA/README.md`, and
-`liulab_synbio.dmx.CLEAN_COLONY_CURVE` carries it. #306 restores the two anchors it dropped,
-and #305 builds the floor.
+`liulab_mbio.bench.readback.CLEAN_COLONY_CURVE` carries it.
 
 ### 6.13 The pass mark for the library reads — iGGA
 

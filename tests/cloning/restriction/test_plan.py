@@ -25,6 +25,7 @@ from liulab_mbio.cloning.restriction.design import refusal
 from liulab_mbio.cloning.restriction.digest import resolve
 from liulab_mbio.edits import flipped, rotate
 from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from liulab_mbio.protocol.render import minted
 from liulab_mbio.sequence import SequenceRecord, reverse_complement
 from liulab_mbio.snapgene import read_dna
 
@@ -121,7 +122,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == made.product
-    assert read_protocol(outputs.protocol_data) == made.protocol()
+    assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
         read_protocol(outputs.protocol_data)
     )
@@ -147,6 +148,19 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
         "Screen colonies by PCR",
         "Check a miniprep by digesting it with EcoRI and BamHI",
         "Confirm the clone by sequencing",
+    ]
+    # Keyed by what each step does and not by its wording. The two digests are told apart by
+    # their role, since a run cutting a record out of itself would name both the same.
+    assert [step.key for step in protocol.steps] == [
+        "digest-vector",
+        "digest-insert",
+        "gel-purify",
+        "quantify",
+        "ligate",
+        "transform",
+        "colony-pcr",
+        "diagnostic-digest",
+        "sequencing",
     ]
     for step in protocol.steps:
         assert step.expected, step.title

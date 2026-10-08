@@ -20,6 +20,8 @@
   --ladder: #a9bbff;
   --gel-ink: #c9ced6;
   --radius: 10px;
+  /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
+  --bar: 0rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -70,6 +72,11 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .overview dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .overview dd { margin: 0.1rem 0 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
+/* What the bench holds before this protocol and what it is left with, beside the overview cards. */
+.handover { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.45rem; margin: 0 0 1rem; }
+.handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
+.handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
+
 .highlights { max-width: 44rem; margin: 0 0 1rem; }
 .highlights p:last-child { margin-bottom: 0; }
 
@@ -103,13 +110,25 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; margin: 0 0 1.5rem; counter-reset: toc; }
-.toc li { counter-increment: toc; }
+.toc { margin: 0 0 1.5rem; }
 .toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-.toc a::before { content: counter(toc) ". "; color: var(--muted); }
+
+/* Both lists of steps — the standalone table of contents and a page's right column — are this
+   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
+   number is in the markup, so no counter here. */
+.step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
+.step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
+.step-group + .step-group { margin-top: 0.45rem; }
+.step-group summary { cursor: pointer; font-weight: 600; }
+.step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
+/* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
+.section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
+/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
+.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
-.step { scroll-margin-top: 1rem; }
+.block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
 .step.is-done { opacity: 0.6; }
 .step > * + * { margin-top: 0.9rem; }
 
@@ -169,7 +188,8 @@ button.timer.is-running { border-color: var(--accent); background: var(--accent-
 button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
-.gel-image { display: block; width: 100%; max-width: 30rem; height: auto; }
+/* A gel is taller than it is wide, so its height is what has to fit on the screen. */
+.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
 .gel-bg { fill: var(--gel); }
 .well { fill: var(--well); }
 .band { fill: var(--band); }
@@ -199,6 +219,12 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .hole-id { font-weight: 700; }
 .hole-kind { color: var(--muted); }
 .is-holed .num { color: var(--fail); }
+/* Gathered holes share one box, so each inside it is a line rather than a box of its own. */
+.hole-group > summary { cursor: pointer; }
+.hole-group .holes-here { margin-top: 0.4rem; gap: 0.2rem; }
+.hole-group .hole { border: none; border-radius: 0; background: none; padding: 0 0 0 0.7rem; border-left: 2px dashed var(--fail); }
+/* How much of the run a total covers is said beside it, and is not itself a figure. */
+tfoot .muted { font-weight: 400; }
 
 /* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
    laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
@@ -207,6 +233,8 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .drawing.rows { display: grid; gap: 0.7rem; }
 .row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.listing { font-size: 0.9rem; margin-top: 0.6rem; }
+.listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 .cite { color: var(--muted); font-size: 0.85em; }
 
@@ -214,9 +242,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .site a { color: var(--muted); text-decoration: none; font-size: 0.9rem; padding: 0.15rem 0; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
-.frame { display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
+.frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
-.column { position: sticky; top: 3.1rem; max-height: calc(100vh - 4.5rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
+.column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
 .column li { margin-bottom: 0.3rem; }
@@ -265,9 +293,11 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
 /* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
-  .frame .page { order: 1; padding-block: 0.5rem 4rem; }
+  /* A flex item sizes to its content, so without this the widest table widens the page. */
+  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
-  .column ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
+  .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
   .column .is-here > a { text-decoration: underline; }
 }
@@ -298,9 +328,9 @@ button.timer.is-finished { border-color: var(--caution); background: var(--cauti
   .caution, .expected { border: 1px solid var(--line); }
   /* The verdict word carries the badge on paper, where the fill does not print. */
   .check { border: 1px solid var(--line); }
-  /* Paper has no toggle, so the reasons print with the sheet. */
-  .oligo-checks:not([open]) > ul { display: block; }
-  .oligo-checks::details-content { content-visibility: visible; }
+  /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
+  .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
+  .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
   button.timer { border: 1px solid var(--line); animation: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
