@@ -299,13 +299,12 @@ def _assemble_step(
     so the amounts are H24 rather than a figure.
     """
     vector = "the working vector" if sized is None else f"{sized.vector_ng:g} ng of working vector"
-    met = "" if sized is None else f", so the cargo meets it at {number(sized.ratio)}:1"
-    measured = (
+    measured_note = (
         ()
         if sized is None
         else (
-            f"{sized.vector_ng:g} ng at {number(sized.ratio)}:1 is what this run measured. "
-            "No published reaction sizes this pot.",
+            f"{sized.vector_ng:g} ng of vector, at {number(sized.ratio)}:1 cargo to vector, is "
+            "what this run measured, not a published figure.",
         )
     )
     if working is None:
@@ -313,7 +312,7 @@ def _assemble_step(
             "Assemble the cargo into the working vector",
             key="assemble-into-working-vector",
             instructions=(
-                f"Add {vector}, its cargo enzyme and the ligase to the release tube{met}, and "
+                f"Add {vector}, its cargo enzyme and the ligase to the release tube, and "
                 "run the enzyme's own Golden Gate cycling.",
             ),
             expected=(
@@ -322,9 +321,9 @@ def _assemble_step(
             notes=(
                 "This is the one reaction where the working vector meets material the rounds "
                 "made; the rounds all finish first.",
-                *measured,
+                *measured_note,
             ),
-            holes=(stages.WORKING_VECTOR, *(() if sized else (stages.FINAL_MASSES,))),
+            holes=(stages.WORKING_VECTOR, *(() if sized is not None else (stages.FINAL_MASSES,))),
         )
     cargo = working.enzyme
     joined = (
@@ -337,7 +336,7 @@ def _assemble_step(
         key="assemble-into-working-vector",
         instructions=(
             f"Add {vector}, {cargo.supplier_label} and {LIGASE} in "
-            f"{LIGASE_BUFFER} to the release tube{met}.",
+            f"{LIGASE_BUFFER} to the release tube.",
             "Run the cycling below without purifying anything first.",
         ),
         programs=(assembly_program(cargo, fragments=2, library=True),),
@@ -351,7 +350,7 @@ def _assemble_step(
             "the rounds ran in is shredded and stays behind.",
             "The cycling is NEB's longer single-insert program, which it gives for library "
             "preparation rather than for cloning one gene.",
-            *measured,
+            *measured_note,
         ),
         troubleshooting=(
             Troubleshooting(
@@ -360,7 +359,7 @@ def _assemble_step(
                 "before repeating.",
             ),
         ),
-        holes=() if sized else (stages.FINAL_MASSES,),
+        holes=() if sized is not None else (stages.FINAL_MASSES,),
     )
 
 

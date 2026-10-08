@@ -274,8 +274,12 @@ def _pcr1_step(
     band = (
         f"Twist's band for a {length_bp} nt pool is {fewest} to {most} cycles; Twist Oligo "
         "Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ "
-        "answers that more cycles give worse uniformity, so "
-        + (f"{fewest} is what prints." if measured is None else "stay at the fewest that works.")
+        "answers that more cycles give worse uniformity"
+        + (
+            f", so {fewest} is what prints."
+            if measured is None
+            else ", and it is stated against another polymerase."
+        )
     )
     return Step(
         f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",

@@ -46,32 +46,39 @@ DIGEST_VOLUME_UL = 50.0
 #: the second for a second hour. The destination digest is "the same protocol".
 #: METHOD DETAILS p. e4.
 ENZYME_UL = 2.5
+DIGEST_SECONDS = 3600
+DIGEST_CELSIUS = 37.0
 
-#: What `ENZYME_UL` of each enzyme the digest runs on is worth: the product the paper's Key
-#: Resources Table names, and that product's concentration in U/µL. Keyed by catalogue number
-#: and never by enzyme name, because the size letter sets the concentration: BbsI-HF also ships
-#: as R3539M at 50 U/µL, where the same volume would be 125 units. The paper gives volumes and
-#: no units, so a unit count is this multiplication on two quoted values, as
-#: `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL` is.
-#: ``docs/research/bench-numbers.md``, "H23 re-checked".
-DIGEST_STOCKS: dict[str, tuple[str, float]] = {
-    "R3733": ("R3733L", 20.0),
-    "R0629": ("R0629L", 20.0),
-    "R3539": ("R3539L", 20.0),
-    "R0560": ("R0560L", 10.0),
+#: What one µL of a product is worth, U/µL, keyed by the catalogue number that determines it —
+#: size letter and all, never the enzyme name. BbsI-HF ships as R3539S/L at 20 U/µL and as
+#: R3539M at 50 U/µL, where the same volume is 125 units and not 50. Each is that product's own
+#: NEB specification. ``docs/research/bench-numbers.md``, "H23 re-checked".
+DIGEST_STOCK_UNITS_UL: dict[str, float] = {
+    "R3733L": 20.0,
+    "R0629L": 20.0,
+    "R3539L": 20.0,
+    "R0560L": 10.0,
+}
+
+#: Which of those products the split digest runs on, against the catalogue number the shipped
+#: enzyme record carries, which has no size. The paper's Key Resources Table names each one, so
+#: this half of the unit count is the paper's and the concentration above is NEB's.
+DIGEST_PRODUCTS: dict[str, str] = {
+    "R3733": "R3733L",
+    "R0629": "R0629L",
+    "R3539": "R3539L",
+    "R0560": "R0560L",
 }
 
 #: The documents those concentrations were read from, and the key a digest line cites them by.
 DIGEST_SOURCE_KEY = "NEB specifications"
 DIGEST_SOURCE = Source(
     "New England Biolabs product specification sheets",
-    edition="#R3733, #R3539, #R0629, #R0560",
+    edition="#R3733S/L, #R3539S/L, #R0629S/L, #R0560S/L",
     read_as="plain curl",
     date="2026-10-06",
     note="docs/research/bench-numbers.md",
 )
-DIGEST_SECONDS = 3600
-DIGEST_CELSIUS = 37.0
 
 #: SPRI bead volume ratios, both eluted in water. They differ: twice the volume after the
 #: digest, once after the ligation. METHOD DETAILS pp. e4-e5, which cleans the last transfer up
@@ -342,8 +349,9 @@ def digest_reaction(
     The buffer is one line with the water because the method names `CUTSMART` and not the
     strength it is supplied at, so its own volume is the supplier's to set.
 
-    An enzyme `DIGEST_STOCKS` names the paper's product for carries that product's concentration
-    and what the volume is worth in units; one it does not carries the volume alone.
+    An enzyme whose product `DIGEST_PRODUCTS` names carries that product and its
+    concentration, and what the volume is worth in units; one it does not name carries the
+    volume alone.
 
     Raises
     ------
@@ -362,14 +370,14 @@ def digest_reaction(
 
 def _digest_component(enzyme: Enzyme) -> Component:
     """Return one enzyme's line of a digest, with its unit count where its product is known."""
-    stock = DIGEST_STOCKS.get(enzyme.catalog_number or "")
-    if stock is None:
+    catalog = DIGEST_PRODUCTS.get(enzyme.catalog_number or "")
+    units_ul = DIGEST_STOCK_UNITS_UL.get(catalog or "")
+    if catalog is None or units_ul is None:
         return Component(enzyme.supplier_label, ENZYME_UL)
-    catalog, units_ul = stock
     return Component(
-        f"{enzyme.commercial_name or enzyme.name} ({catalog})",
+        enzyme.supplier_label,
         ENZYME_UL,
-        stock=f"{units_ul:g} U/µL",
+        stock=f"{catalog}, {units_ul:g} U/µL",
         final=f"{units_ul * ENZYME_UL:g} units",
         citation=Citation(DIGEST_SOURCE_KEY, f"#{catalog}, concentration"),
     )

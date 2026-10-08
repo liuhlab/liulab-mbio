@@ -185,9 +185,9 @@ positions and their part lists, the vector, the host, the oligo length, the batc
 completeness, the seed, the barcode length and distance, and any further enzyme to keep clear.
 It is read from one `project.json` and checked where it is read. It overrides nothing the method
 states: where both have a say, the two compose. It may also state what the method leaves open —
-what only this lab's bench or its shelf settles — which fills that **hole**; stating none leaves
-the hole standing. What a build writes is a **project**, which is the chain of protocols and a
-different thing.
+what only this lab's bench or its shelf settles — which closes that **hole**; stating none
+leaves the hole standing. What a build writes is a **project**, which is the chain of protocols
+and a different thing.
 _Avoid_: project (the chain of protocols, and its own entry), configuration, run
 _Package_: liulab_synbio
 
@@ -1037,8 +1037,9 @@ A number nobody sourced, standing where the number would be. The field it belong
 empty and the hole stands beside it, so a hole is never read as a value and never judged. It
 says what is missing, why and what would fill it. A hole naming a gap no source closes is what a
 finished plan keeps; a hole waiting on a source nobody has read fails the plan. A guess is a
-defect. A **build** may fill one the method leaves open, where only a bench or a shelf settles
-it: the step then prints the number and says it is that run's own, never a published figure.
+defect. A **build** may close one the method leaves open, where only a bench or a shelf
+settles it: the step then prints the number and says it is that run's own, never a published
+figure.
 _Avoid_: missing value, TODO, placeholder
 
 ### Price record

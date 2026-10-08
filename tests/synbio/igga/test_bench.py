@@ -100,8 +100,10 @@ def test_a_digest_line_is_worth_a_unit_count_its_catalogue_number_determines() -
 
     lines = digest_reaction(dna_amount("library", 5000, pmol=0.3), enzymes).components[1:3]
 
-    assert [one.name for one in lines] == ["BsaI-HFv2 (R3733L)", "PmeI (R0560L)"]
-    assert [one.stock for one in lines] == ["20 U/µL", "10 U/µL"]
+    # The reagent keeps the one name the bill and the materials give it; the pack size that
+    # determines the unit count rides the concentration.
+    assert [one.name for one in lines] == ["BsaI-HFv2 (R3733)", "PmeI (R0560)"]
+    assert [one.stock for one in lines] == ["R3733L, 20 U/µL", "R0560L, 10 U/µL"]
     # 2.5 µL of each, so 50 units of the 20 U/µL product and 25 of the 10 U/µL one.
     assert [one.final for one in lines] == ["50 units", "25 units"]
     assert [one.citation and one.citation.source for one in lines] == [DIGEST_SOURCE_KEY] * 2
