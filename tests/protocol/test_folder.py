@@ -16,6 +16,7 @@ from liulab_mbio.protocol import (
     PROJECT_DATA_FILE,
     REAGENTS_FILE,
     REFERENCES_FILE,
+    Figure,
     Item,
     Project,
     Protocol,
@@ -241,3 +242,15 @@ def test_the_cli_refuses_one_output_file_for_a_folder_of_pages(tmp_path: Path) -
         app, ["protocol", "render", str(tmp_path), "-o", str(tmp_path / "one.html")]
     )
     assert result.exit_code == 1
+
+
+def test_a_figure_resolves_beside_the_project_data_file(data_dir: Path, tmp_path: Path) -> None:
+    """Every page of a folder is written beside the data, so a figure's record is there too."""
+    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    figure = Figure(("pUC19.dna",), "The vector", span=(400, 700))
+    one = Protocol("Cut", steps=(Step("Cut the vector", figures=(figure,)),))
+
+    files = write_project_files(Project("Run", protocols=(one,)), tmp_path)
+
+    [page] = files.protocols
+    assert "<svg" in page.read_text(encoding="utf-8")

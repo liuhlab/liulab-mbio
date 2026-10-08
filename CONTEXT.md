@@ -168,6 +168,15 @@ _Avoid_: mix table, recipe
 Stages run in order, each a list of incubations repeated for a number of cycles.
 _Avoid_: cycling conditions, PCR conditions
 
+### Figure
+
+What a step shows rather than describes: the record to draw, the stretch of it, which view, and
+what the map is pointed at. It is a spec and never a drawing, so it cannot disagree with the
+design it names, and the page lays it out when it renders. A record is named by a path, relative
+to the directory the protocol was read from, since a protocol holds no bases of its own. A map is
+what a figure becomes, not another word for one.
+_Avoid_: image, illustration, panel, picture
+
 ### Simulated gel
 
 A drawing of the agarose gel a step should produce: a ladder lane and sample lanes, each band
