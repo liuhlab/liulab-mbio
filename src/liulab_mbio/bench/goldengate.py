@@ -111,6 +111,23 @@ _GOLDEN_GATE_CELSIUS: Mapping[str, int] = {
     "SapI": 37,
 }
 
+#: The Type IIS enzymes a Golden Gate design ranks by default: the ones NEB's Ligase Master Mix
+#: table covers, plus BtgZI, which that table does not.
+GOLDEN_GATE_ENZYMES: tuple[str, ...] = (
+    "BbsI",
+    "BsaI",
+    "BsmBI",
+    "BspQI",
+    "Esp3I",
+    "PaqCI",
+    "SapI",
+    "BtgZI",
+)
+
+#: Ranked behind every other enzyme whatever its site count: NEB publishes no Golden Gate
+#: protocol for BtgZI, and its cut ends re-ligate poorly.
+LAST_RESORT = frozenset({"BtgZI"})
+
 #: The kit built around each enzyme, by catalogue number.
 _KIT_CATALOG: Mapping[str, str] = {"BsaI": "E1601", "BsmBI": "E1602"}
 

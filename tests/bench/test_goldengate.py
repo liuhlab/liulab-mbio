@@ -8,7 +8,9 @@ import pytest
 from liulab_mbio.bench.amounts import Amount, dna_amount
 from liulab_mbio.bench.goldengate import (
     FRAGMENT_PMOL,
+    GOLDEN_GATE_ENZYMES,
     KIT,
+    LAST_RESORT,
     REFERENCES,
     assembly_amounts,
     assembly_program,
@@ -97,6 +99,22 @@ def test_the_kit_reaction_is_twenty_microlitres_with_its_own_enzyme_mix() -> Non
 def test_no_kit_carries_bbsi() -> None:
     with pytest.raises(ValueError, match="no NEBridge kit"):
         assembly_reaction(get_enzyme("BbsI"), two_fragments(), system=KIT)
+
+
+def test_only_an_enzyme_cutting_outside_its_site_joins_the_golden_gate_set() -> None:
+    # SrfI and PmeI ship for the library scheme, and cut inside their own site.
+    assert {"SrfI", "PmeI"}.isdisjoint(GOLDEN_GATE_ENZYMES)
+    assert all(get_enzyme(name).type == "IIS" for name in GOLDEN_GATE_ENZYMES)
+
+
+def test_a_last_resort_enzyme_is_exactly_one_this_module_ships_no_table_for() -> None:
+    assert set(GOLDEN_GATE_ENZYMES) > LAST_RESORT
+    for name in GOLDEN_GATE_ENZYMES:
+        if name in LAST_RESORT:
+            with pytest.raises(ValueError, match="no Golden Gate protocol"):
+                golden_gate_temperature(get_enzyme(name))
+        else:
+            assert golden_gate_temperature(get_enzyme(name)) in (37.0, 42.0)
 
 
 def test_an_enzyme_neb_gives_no_golden_gate_protocol_for_is_refused() -> None:
