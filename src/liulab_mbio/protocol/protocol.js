@@ -59,7 +59,7 @@
   refresh();
 
   // A run's index: how far the bench got in each protocol, read from that page's own store.
-  // Every file:// page shares one store, and each page keys by its own content, so the index
+  // Every file:// page shares one store, and each page has a key of its own, so the index
   // reads the marks without the protocol pages writing anything twice.
   all("[data-page-key]").forEach(function (item) {
     // Each step of that page by the key it is addressed under, which a reworded title keeps.
