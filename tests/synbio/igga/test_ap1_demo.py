@@ -467,8 +467,6 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
         ("Library assembly in rounds", "round-3-electroporate"): (CUVETTE_ON_ICE,),
         ("Final cargo ligation", "electroporate-and-grow"): (CUVETTE_ON_ICE,),
     }
-    # Only the plate's own unrepeated caution is still a step's; the other seven are carried,
-    # so an agent editing the protocol JSON cannot take one off its page.
     written = {step.key for one in chain.protocols for step in one.steps if step.cautions}
     assert written == {"resuspend-primers"}
 

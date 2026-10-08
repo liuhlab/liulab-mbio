@@ -327,9 +327,8 @@ class Material:
     rules
         What must not, or must, happen where this material is used.
     cautions
-        What to watch out for wherever it is used, a sentence each. A caution hangs on the
-        material for the reason a rule does: it then shows on every step naming the material,
-        and no edit to a step's prose can drop it.
+        What to watch out for wherever it is used, a sentence each. It hangs here for the
+        reason a rule does, and shows on every step naming the material.
     citation
         Where its parameters were read.
     """
@@ -1412,11 +1411,10 @@ class Protocol:
         held = [step.held_seconds for step in self.steps]
         return sum((one for one in held if one is not None), 0.0), held.count(None)
 
-    def bearing_on(self, step: Step) -> tuple[Material, ...]:
-        """Return the materials `step` names, which are the ones whose facts it carries.
+    def materials_for(self, step: Step) -> tuple[Material, ...]:
+        """Return the materials `step` names, which are the ones whose facts reach it.
 
-        What a material carries reaches the step through this and nowhere else, so a rule and a
-        caution are on a step together or on neither.
+        What a material carries reaches a step through this and nowhere else.
         """
         return tuple(one for one in self.materials if names(one.name, step.named))
 
@@ -1429,7 +1427,7 @@ class Protocol:
         contents = self.contents_of(step)
         return tuple(
             (material, rule)
-            for material in self.bearing_on(step)
+            for material in self.materials_for(step)
             for rule in material.rules
             if not rule.when or names(rule.when, contents)
         )
@@ -1437,10 +1435,9 @@ class Protocol:
     def cautions_for(self, step: Step) -> tuple[str, ...]:
         """Return every caution `step` shows: its materials' first, then its own, each once.
 
-        A caution the step was written with stands where no material carries one; where one
-        does, the step cannot be edited out of it.
+        A step's own stands where no material carries one.
         """
-        carried = (one for material in self.bearing_on(step) for one in material.cautions)
+        carried = (one for material in self.materials_for(step) for one in material.cautions)
         return tuple(dict.fromkeys((*carried, *step.cautions)))
 
     def contents_of(self, step: Step) -> tuple[str, ...]:

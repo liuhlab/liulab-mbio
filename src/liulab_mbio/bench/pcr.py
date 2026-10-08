@@ -75,8 +75,7 @@ def cycle_citation(polymerase: Polymerase = Q5) -> Citation:
 def polymerase_name(polymerase: Polymerase = Q5) -> str:
     """Return what the tube is called: the row `pcr_reaction` pipettes, and its material's name.
 
-    One name, so the material is named by the step that uses it and hands the step what it
-    carries.
+    One name, so a step pipetting it names the material it comes from.
 
     Examples
     --------

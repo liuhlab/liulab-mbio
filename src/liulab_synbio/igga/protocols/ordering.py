@@ -31,8 +31,7 @@ PRIMER_MATERIAL = "Pool amplification primers"
 #: What amplifies the pool. The package's high-fidelity default, named here so the two PCRs
 #: and the material agree about which buffer the annealing temperatures were computed in.
 POOL_POLYMERASE: Polymerase = Q5
-#: The tube under the one name the reaction pipettes it by: a material a step never names hands
-#: that step nothing it carries.
+#: The tube under the one name the reaction pipettes it by, NEB's M0491.
 POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 
 #: Where PCR1's cycle count is read. Two independently revised Twist documents give the same

@@ -318,8 +318,8 @@ def pcr_step(
             f"Run the program below: {annealing_temperature:g} °C annealing and "
             f"{extension_seconds} s extension for a {length_bp} bp product.",
         ),
-        # The cloning methods' polymerase material carries no catalogue number, so nothing
-        # hands this step the caution; #394 takes it off once they name one.
+        # The cloning methods' polymerase material carries no catalogue number, so the step
+        # states the caution that a material with one would hand it.
         cautions=(POLYMERASE_ON_ICE,),
         tables=(pcr_reaction(polymerase, title=f"{name} PCR"),),
         programs=(

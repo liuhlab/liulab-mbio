@@ -95,6 +95,13 @@ def test_the_caution_travels_with_the_polymerase_and_no_step_stores_it() -> None
     assert materials.POLYMERASE_ON_ICE in render_html(one)
 
 
+def test_a_materials_cautions_are_written_to_json_and_read_back(tmp_path: Path) -> None:
+    one = Protocol("PCR", materials=(materials.material("Q5 DNA Polymerase", catalog="M0491"),))
+    path = write_protocol(one, tmp_path / "protocol.json")
+    assert materials.POLYMERASE_ON_ICE in path.read_text(encoding="utf-8")
+    assert read_protocol(path) == one
+
+
 def test_a_step_writing_out_a_caution_its_material_carries_shows_it_once() -> None:
     tube = materials.material("Q5 DNA Polymerase", catalog="M0491")
     written = Step(

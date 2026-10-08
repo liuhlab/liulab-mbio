@@ -8,8 +8,7 @@ cells and the number changes while the step does not.
 
 A rule the material carries travels with it the same way. T7 DNA ligase refuses blunt ends
 only because the PEG stays low, so the two rules below hang on the ligase and on its buffer
-and reach every step that uses either. A caution rides the same key, so the sentence about
-keeping a polymerase cold is written once and reaches every step that pipettes one.
+and reach every step that uses either. A caution rides the same key.
 
 Every number here is sourced in ``docs/research/bench-numbers.md``.
 """
@@ -154,9 +153,9 @@ RULES: Mapping[str, tuple[Rule, ...]] = MappingProxyType(
 POLYMERASE_ON_ICE = "Keep the polymerase on ice."
 CUVETTE_ON_ICE = "Keep the cells and the cuvette on ice; a warm cuvette arcs."
 
-#: What to watch out for where a material is used, keyed by catalogue number. A caution hangs
-#: here rather than in a step's prose for the reason a rule does: prose an agent edits can be
-#: deleted, and one sentence written into four steps is four places to fix.
+#: What to watch out for where a material is used, keyed by catalogue number. ADR 0020 puts it
+#: here: the same sentence written into each step that needs it is as many places to fix, and
+#: an agent editing the protocol JSON can delete any of them.
 CAUTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
     {
         "M0491": (POLYMERASE_ON_ICE,),
@@ -230,9 +229,8 @@ def material(
 ) -> Material:
     """Return a material carrying its own parameters: what it brings, rules and cautions.
 
-    The caller names the thing; what travels with it is looked up, so neither a rule nor a
-    caution can be left off a protocol that uses the material. A material with a catalogue
-    number is built here, because one built around this carries nothing.
+    The caller names the thing and what travels with it is looked up, so a material built here
+    cannot reach a protocol without them. One built around this carries none of them.
 
     Examples
     --------
