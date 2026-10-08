@@ -409,8 +409,10 @@ def _plate(one: Plate) -> str:
         f'<li><span class="swatch" style="background:{fill}"></span>{escape(kind)}</li>'
         for kind, fill in drawn.layout.legend
     )
+    # The count stands for the legend where the plate holds more kinds than a legend can list.
+    kinds = _count(drawn.layout.kinds, "kind") if drawn.layout.kinds else ""
     facts = " · ".join(
-        text for text in (f"{one.wells} wells", one.catalog, one.holds, one.note) if text
+        text for text in (f"{one.wells} wells", kinds, one.catalog, one.holds, one.note) if text
     )
     return (
         f'<figure class="plate" data-plate="{escape(one.name)}">{drawn.element()}'

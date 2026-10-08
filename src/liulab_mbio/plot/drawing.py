@@ -674,6 +674,6 @@ def draw_plate(
     --------
     >>> drawn = draw_plate("barcodes", 2, 3, "AB", seating={"A1": "UMI-1"})
     >>> drawn.layout.legend
-    (('UMI-1', '#e48b8b'),)
+    (('UMI-1', '#3f90da'),)
     """
     return PlateDrawing(name, rows, columns, tuple(row_labels), dict(seating or {}))

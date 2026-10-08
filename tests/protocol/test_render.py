@@ -8,6 +8,7 @@ from liulab_mbio.protocol import (
     Check,
     Component,
     Oligo,
+    Plate,
     Protocol,
     ReactionTable,
     Step,
@@ -287,3 +288,14 @@ def test_write_html_writes_the_rendered_page(data_dir: Path, tmp_path: Path) -> 
     protocol = read_protocol(data_dir / "pcr-protocol.json")
     path = write_html(protocol, tmp_path / "protocol.html")
     assert path.read_text(encoding="utf-8") == render_html(protocol)
+
+
+def test_a_plate_says_its_kind_count_and_drops_the_legend_past_ten() -> None:
+    """A page with a 96-entry legend under it is unreadable, so the count stands instead."""
+    seating = {f"A{n + 1}": f"mark {n}" for n in range(11)}
+    page = parse(render_html(Protocol("x", plates=(Plate("index", 96, seating=seating),))))
+
+    figure = page.find_all("figure", cls="plate")[0]
+
+    assert not figure.find_all("ul", cls="plate-legend")
+    assert "11 kinds" in figure.find_all("figcaption")[0].text
