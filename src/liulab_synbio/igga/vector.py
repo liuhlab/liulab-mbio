@@ -467,7 +467,9 @@ def cargo_enzyme(
             f"cannot be one pot: {blocked}"
         )
     else:
-        detail = f"{chosen.name} reads no site in any molecule sharing the final-assembly pot"
+        # The cassette is built around this enzyme after it is chosen, so the pot does carry its
+        # sites: what the search settles is that nothing else there does.
+        detail = f"{chosen.name} cuts nothing in the final-assembly pot but the cassette it opens"
     return Cargo(
         chosen,
         search,

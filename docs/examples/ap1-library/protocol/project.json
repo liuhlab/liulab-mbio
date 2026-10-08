@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "ec8fda1005b094ca",
+  "key": "b27244ec0e3d2e35",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -13720,7 +13720,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "52c525b1e7b5f72a",
+      "key": "320826234b0a9850",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -13964,7 +13964,7 @@
           ],
           "cautions": [],
           "notes": [
-            "PaqCI reads no site in any molecule sharing the final-assembly pot.",
+            "PaqCI cuts nothing in the final-assembly pot but the cassette it opens.",
             "ccdB is what makes the assembly self-selecting: a vector that took no cargo keeps the cassette and kills its host."
           ],
           "tables": [],
