@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "1f1e00ebd23f9613",
+  "key": "cbfa3a8577c5cb26",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -21,7 +21,10 @@
     "../changes.tsv",
     "../pool.tsv",
     "../pool-primers.tsv",
-    "../library-read-primers.tsv"
+    "../library-read-primers.tsv",
+    "../block-vector-1.dna",
+    "../block-vector-2.dna",
+    "../block-vector-3.dna"
   ],
   "inputs": [
     {
@@ -54,7 +57,7 @@
   "protocols": [
     {
       "title": "Primer plates",
-      "key": "6f5a8d2d11a1139f",
+      "key": "ab495951a65e3ccd",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -891,7 +894,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [
         "Multichannel pipette",
@@ -2024,7 +2030,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "70607e12828790f1",
+      "key": "bdfe3118810d689e",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2072,7 +2078,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [],
       "vessels": [],
@@ -2139,7 +2148,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "f245a533ed9d0a1a",
+      "key": "29b6ec1f7887d2b0",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2310,7 +2319,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [
         "Thermocycler taking a 96-well plate",
@@ -3115,7 +3127,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "c361171c9c7f7f15",
+      "key": "42cf06763e50a4d3",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3282,7 +3294,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
@@ -7460,7 +7475,7 @@
           ],
           "gels": [],
           "expected": [
-            "One barcoded amplicon a well. Each well of a plate takes the forward mark its own place in the plate names, and every well of one plate takes that plate's own reverse mark.",
+            "One barcoded amplicon a well. A well's own place in the plate names its forward mark — the first well the first mark — and every well of one plate takes that plate's own reverse mark.",
             "One band a well, the design plus about 100 bp: the two marks, and the stretch between the primer sites and the reading frame."
           ],
           "troubleshooting": [
@@ -7597,7 +7612,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "cbea5d8e905c10b0",
+      "key": "e830b71fc06dc174",
       "summary": "Join 3 part lists into 13824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -7895,7 +7910,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
@@ -9697,7 +9715,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "4e87df47fdc7d654",
+      "key": "399838a85893e24b",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -9841,7 +9859,10 @@
         "../changes.tsv",
         "../pool.tsv",
         "../pool-primers.tsv",
-        "../library-read-primers.tsv"
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
