@@ -336,7 +336,8 @@ Is the read deep enough to call? If not, the well has **no verdict**. It is read
 again, and it is not a failure. The floor comes with the route, because each one was measured on
 its own. Barcode ligation wants more than 150 reads. Index PCR wants more than twenty, and a well
 at ten reads or more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
-depth to reach. A build may raise either.
+depth to reach. A build may raise the wanted depth. It cannot move the tolerable one, which
+comes with the route.
 
 Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
 barcode? Anything less fails, a silent change included, because a barcode that no longer names
