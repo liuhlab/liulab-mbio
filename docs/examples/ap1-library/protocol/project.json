@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "74e65b79188d7df2",
+  "key": "724cbb5d9dab30f2",
   "summary": "Join 72 synthesised parts into 13824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -10368,6 +10368,7 @@
       "detail": "the library product reads through what it keeps without a stop"
     }
   ],
+  "sources": {},
   "bill": {
     "rows": [
       {
