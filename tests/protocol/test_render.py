@@ -294,12 +294,17 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
     ]
 
 
-def test_a_program_that_is_one_hold_is_not_given_ramps_it_does_not_run() -> None:
-    """A water bath is drawn as a program, and its one row takes its whole time."""
+def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() -> None:
+    """A water bath and an incubator are drawn as programs, and their rows take the whole time."""
     figure, rows = _program_rows(
-        ThermocyclerProgram((Stage((Incubation("Heat inactivation", 65.0, 1200),)),))
+        ThermocyclerProgram(
+            (
+                Stage((Incubation("Recovery, shaking", 30.0, 3600),)),
+                Stage((Incubation("Outgrowth", 30.0, 43200),)),
+            )
+        )
     )
-    assert rows == [["Heat inactivation", "65 °C", "20 min", "1"]]
+    assert rows == [["Recovery, shaking", "30 °C", "1 h", "1"], ["Outgrowth", "30 °C", "12 h", "1"]]
     assert "plus ramps" not in figure.find_all("figcaption")[0].text
 
 

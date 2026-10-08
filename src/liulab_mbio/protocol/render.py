@@ -1629,14 +1629,16 @@ def _program(program: ThermocyclerProgram) -> str:
     meta = []
     if program.lid_temperature_c is not None:
         meta.append(f"lid {number(program.lid_temperature_c)} °C")
+    steps = [step for stage in program.stages for step in stage.incubations]
     if program.duration_seconds is not None:
-        # One incubation run once is a hold, not a cycled run, so it has no ramps to add.
-        only = program.stages[0]
-        held = len(program.stages) == 1 and len(only.incubations) == 1 and only.cycles == 1
+        # A ramp is the block changing temperature, so a program held at one has none to add.
+        held = len({step.temperature_c for step in steps}) == 1 and not any(
+            step.delta_c for step in steps
+        )
         meta.append(_duration(program.duration_seconds) + ("" if held else " plus ramps"))
     title = escape(program.title or "Thermocycler program")
     caption = f' <span class="muted">· {escape(" · ".join(meta))}</span>' if meta else ""
-    cited = {step.citation for stage in program.stages for step in stage.incubations}
+    cited = {step.citation for step in steps}
     # One source behind every incubation is the program's, so it is cited once above the table.
     shared = cited.pop() if len(cited) == 1 else None
     bodies = []
