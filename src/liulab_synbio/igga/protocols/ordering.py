@@ -11,6 +11,7 @@ protocols print.
 
 from liulab_mbio.bench.gels import REFERENCES as GEL_REFERENCES
 from liulab_mbio.bench.pcr import REFERENCES as PCR_REFERENCES
+from liulab_mbio.bench.pcr import polymerase_name
 from liulab_mbio.bench.steps import catalogued, listed
 from liulab_mbio.primers.polymerase import Q5, Polymerase
 from liulab_mbio.protocol.model import Item as Handed
@@ -30,7 +31,9 @@ PRIMER_MATERIAL = "Pool amplification primers"
 #: What amplifies the pool. The package's high-fidelity default, named here so the two PCRs
 #: and the material agree about which buffer the annealing temperatures were computed in.
 POOL_POLYMERASE: Polymerase = Q5
-POOL_POLYMERASE_PRODUCT = "Q5 High-Fidelity DNA Polymerase (M0491)"
+#: The tube under the one name the reaction pipettes it by: a material a step never names hands
+#: that step nothing it carries.
+POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 
 #: Where PCR1's cycle count is read. Two independently revised Twist documents give the same
 #: three length bands, and the second's appendix answers what more cycles cost.
