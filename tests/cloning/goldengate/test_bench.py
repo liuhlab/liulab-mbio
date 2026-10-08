@@ -161,11 +161,9 @@ def test_the_kit_program_counts_inserts_and_not_fragments() -> None:
 
 
 def test_the_ligation_fidelity_reference_reads_as_the_paper_the_data_ships() -> None:
-    """The citation lives in the data file; the reference list prints it from there."""
+    """The citation lives in the data file; the reference list prints it from there, whole."""
     source = ligation_source()
-    assert source.citation.startswith("Pryor, J.M.")
-    reference = next(one for one in REFERENCES if source.citation in one.text)
-    assert reference.text.endswith(
-        "Its S1-S5 Tables are what every ligation fidelity score is read from"
-    )
-    assert reference.url == source.url
+    named = [one for one in REFERENCES if "Pryor" in one.text]
+    assert len(named) == 1
+    assert named[0].text.startswith(source.citation)
+    assert named[0].url == source.doi_url

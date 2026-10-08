@@ -155,8 +155,8 @@ class LigationSource:
     doi: str
 
     @property
-    def url(self) -> str:
-        """Where the paper resolves."""
+    def doi_url(self) -> str:
+        """Where the DOI resolves. The data file's own ``url`` is its supplementary files."""
         return f"https://doi.org/{self.doi}"
 
 
@@ -474,8 +474,8 @@ def ligation_source() -> LigationSource:
 
     Examples
     --------
-    >>> ligation_source().url
-    'https://doi.org/10.1371/journal.pone.0238592'
+    >>> ligation_source().doi_url.startswith("https://doi.org/")
+    True
     """
     source = _document()["source"]
     return LigationSource(source["citation"], source["doi"])

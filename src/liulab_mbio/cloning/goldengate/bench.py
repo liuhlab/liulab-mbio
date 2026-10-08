@@ -335,7 +335,7 @@ def _ligation_reference() -> Reference:
     source = ligation_source()
     return Reference(
         f"{source.citation} Its S1-S5 Tables are what every ligation fidelity score is read from",
-        url=source.url,
+        url=source.doi_url,
     )
 
 
