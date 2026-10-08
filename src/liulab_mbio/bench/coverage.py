@@ -262,9 +262,8 @@ class RepresentationMarks:
     """What a pooled library's representation read has to reach.
 
     Every one is Joung's, measured on an sgRNA library counted by a barcode amplicon before a
-    screen. They transfer because the iGGA representation read amplifies the barcode block
-    alone, so every member's counted amplicon is the same length. A project may tighten each
-    and may not loosen it.
+    screen. They transfer to any read that amplifies the barcode alone, so that every member's
+    counted amplicon is the same length. A caller may tighten each and may not loosen it.
 
     Parameters
     ----------
