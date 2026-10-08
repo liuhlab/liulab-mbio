@@ -57,6 +57,10 @@ NO_VERDICT = "not judged"
 #: What stands where a number would, so a hole can never be read as a figure.
 NO_NUMBER = "no sourced number"
 
+#: What the references page names as citing a source the run itself holds, since the bill that
+#: cites one is on a shared page rather than any protocol's.
+BILL_CITER = "the bill"
+
 #: What a project folder calls the data every one of its pages is rendered from.
 PROJECT_DATA_FILE = "project.json"
 
@@ -822,9 +826,13 @@ def _merged_references(project: Project) -> tuple[tuple[Reference, ...], tuple[s
 
 
 def _merged_sources(project: Project) -> tuple[dict[str, Source], dict[str, str]]:
-    """Every document a number was read from, once each, with the protocols citing it."""
-    found: dict[str, Source] = {}
-    citers: dict[str, list[str]] = {}
+    """Every document a number was read from, once each, with what cites it.
+
+    The run's own sources come first, cited by the bill: the bill is the run's and sits on a
+    page no protocol owns, so no protocol names the record that priced it.
+    """
+    found: dict[str, Source] = dict(project.sources)
+    citers: dict[str, list[str]] = {key: [BILL_CITER] for key in project.sources}
     for protocol in project.protocols:
         for key, source in protocol.sources.items():
             found.setdefault(key, source)

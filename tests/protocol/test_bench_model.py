@@ -245,6 +245,17 @@ def test_a_project_reports_a_bill_row_citing_a_source_no_protocol_names() -> Non
     assert [c.status for c in named.audit() if c.name == "sources"] == ["pass"]
 
 
+def test_a_project_names_the_record_its_own_bill_cites_and_no_protocol_has_to() -> None:
+    """The bill is the run's, so the document pricing it is a source of the run itself."""
+    run = Project(
+        "Demo",
+        sources={"ACME": Source("ACME prices")},
+        bill=Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("ACME")),)),
+        protocols=(Protocol("One", sources={"NEB": Source("NEB")}),),
+    )
+    assert [c.status for c in run.audit() if c.name == "sources"] == ["pass"]
+
+
 def test_a_hole_the_run_and_a_step_both_carry_is_collected_once() -> None:
     hole = Hole("H24", "no mass for the one-pot assembly", "undecided")
     one = protocol(Step("Assemble", holes=(hole,)), holes=(hole,))

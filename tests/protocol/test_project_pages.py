@@ -10,6 +10,7 @@ import pytest
 
 from liulab_mbio.protocol import (
     REAGENTS_FILE,
+    REFERENCES_FILE,
     Bill,
     BillRow,
     Check,
@@ -513,6 +514,27 @@ def test_the_references_page_names_every_protocol_citing_each_document(project: 
         "NEB": "cited by Order the pool, Build the blocks",
         "M0491": "cited by Build the blocks",
     }
+
+
+def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
+    """A price record prices the run's bill, which sits on a page no protocol owns."""
+    run = Project(
+        "Priced",
+        sources={"prices": Source("prices.csv")},
+        bill=Bill((BillRow("pool", 1, key="S-1", charge="9.00", citation=Citation("prices")),)),
+        protocols=(Protocol("Order the pool", sources={"NEB": Source("NEB catalogue")}),),
+    )
+    folder = folder_of(run)
+    main = main_of(parse(render_references(run, folder)))
+    sources = {
+        item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
+        for item in main.find_all("section", cls="sources")[0].find_all("li")
+    }
+    assert sources == {"prices": "cited by the bill", "NEB": "cited by Order the pool"}
+    [bill] = main_of(parse(render_reagents(run, folder))).find_all("section", cls="bill")
+    assert [one.attrs["href"] for one in bill.find_all("a", cls="cite")] == [
+        f"{REFERENCES_FILE}#source-prices"
+    ]
 
 
 def test_a_step_says_what_it_waits_on_where_the_waiting_falls(project: Project) -> None:

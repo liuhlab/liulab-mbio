@@ -377,7 +377,7 @@ def _sources_check(cited: frozenset[str], named: frozenset[str]) -> Check:
     """Return the `sources` verdict: every key `cited` is one of those `named`.
 
     A protocol is judged against the sources it names itself; a project's bill against the
-    sources its protocols name, which are the ones the run's pages list.
+    sources it and its protocols name, which are the ones the run's pages list.
     """
     dangling = sorted(cited - named)
     if dangling:
@@ -1132,7 +1132,8 @@ class Bill:
     total
         The sum over the rows that priced, written out. Empty where none did.
     record
-        The key of the `Protocol.sources` entry naming the price record.
+        The key of the `sources` entry naming the price record, on whichever of `Protocol` and
+        `Project` holds the bill.
     """
 
     rows: tuple[BillRow, ...]
@@ -1616,6 +1617,9 @@ class Project:
     checks
         Verdicts on the design, which one protocol of the run cannot judge alone. A verdict on
         one protocol's own work stays on that protocol.
+    sources
+        Every document the run's own pages cite, as `Protocol.sources` holds a page's. A price
+        record is one: its rows price the bill, which is the run's and no protocol's.
     bill
         What the run consumes, and what it costs where a price record prices it. It is the
         run's, not each protocol's, because two protocols buying the same cells would otherwise
@@ -1631,6 +1635,7 @@ class Project:
     inputs: tuple[Item, ...] = ()
     protocols: tuple[Protocol, ...] = ()
     checks: tuple[Check, ...] = ()
+    sources: Mapping[str, Source] = field(default_factory=dict, hash=False)
     bill: Bill | None = None
 
     def __post_init__(self) -> None:
@@ -1649,7 +1654,8 @@ class Project:
         """Judge the chain, and the sources its own bill cites.
 
         A consumed name resolves to an input or an earlier protocol's output, and a bill row's
-        citation to a source one of the protocols names. Each protocol judges its own citations.
+        citation to a source the run or one of its protocols names. Each protocol judges its own
+        citations.
 
         Examples
         --------
@@ -1678,7 +1684,9 @@ class Project:
         return Check("handoffs", "pass", counted)
 
     def _sources(self) -> Check:
-        named = frozenset(key for protocol in self.protocols for key in protocol.sources)
+        named = frozenset(self.sources).union(
+            key for protocol in self.protocols for key in protocol.sources
+        )
         return _sources_check(self.bill.cited if self.bill else frozenset(), named)
 
     @classmethod

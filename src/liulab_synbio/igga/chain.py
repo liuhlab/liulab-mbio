@@ -66,7 +66,8 @@ def project(run: Run) -> Project:
 
     The bill and the design checks are the run's, not one protocol's: two protocols buying the
     same cells would otherwise be counted twice, and no one protocol judges the design. Money
-    comes only from `run.prices`, and every row it does not price carries a hole.
+    comes only from `run.prices`, and every row it does not price carries a hole. The record
+    those rows cite is the run's own source, since the bill sits on a page no protocol owns.
     """
     made = ordered(run)
     staged = [one.steps(run) for one in made]
@@ -91,6 +92,7 @@ def project(run: Run) -> Project:
         inputs=_inputs(run),
         protocols=pages,
         checks=badges(run.checks),
+        sources={PRICES_SOURCE: run.prices.source} if run.prices else {},
         bill=_consumed(run),
     )
 
@@ -133,8 +135,6 @@ def _sources(run: Run, made: Sequence[Protocol]) -> dict[str, Source]:
     found = dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
     for one in made:
         found |= one.sources(run)
-    if run.prices:
-        found[PRICES_SOURCE] = run.prices.source
     return found
 
 

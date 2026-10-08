@@ -570,11 +570,16 @@ def test_the_bill_computes_its_quantities_and_holes_the_money_with_no_record(pla
     assert bill.total == ""
 
 
-def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path):
-    record = tmp_path / "prices.csv"
+@pytest.fixture(scope="module")
+def priced(plan, tmp_path_factory):
+    """The same run with a price record loaded, which is what makes its bill cite one."""
+    record = tmp_path_factory.mktemp("prices") / "prices.csv"
     record.write_text(PRICES, encoding="utf-8")
+    return dataclasses.replace(plan, prices=read_prices(record)).chain()
 
-    bill = dataclasses.replace(plan, prices=read_prices(record)).chain().bill
+
+def test_a_price_record_prices_the_bill_and_reports_its_headroom(priced):
+    bill = priced.bill
 
     assert bill is not None
     blocks = bill.rows[0]
@@ -584,6 +589,15 @@ def test_a_price_record_prices_the_bill_and_reports_its_headroom(plan, tmp_path)
     assert (bill.currency, bill.total) == ("USD", "1200.00")
     # Everything else the run buys is still a hole, and no figure is estimated for one.
     assert all(row.hole is not None for row in bill.rows[1:])
+
+
+def test_a_run_holding_a_price_record_names_it_as_a_source_of_the_run(priced):
+    """The bill is the run's, so the record it cites is named there and on no protocol."""
+    assert priced.bill is not None
+    assert priced.bill.cited == frozenset({"prices"})
+    assert "prices" in priced.sources
+    assert not [one for one in priced.protocols if "prices" in one.sources]
+    assert [c.status for c in priced.audit() if c.name == "sources"] == ["pass"]
 
 
 def said_by(protocol) -> str:
