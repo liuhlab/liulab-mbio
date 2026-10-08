@@ -81,3 +81,32 @@ def test_interleaving_refuses_a_format_no_head_covers_in_whole_passes() -> None:
         plates.interleave(96, 384)
     with pytest.raises(ValueError, match="no format"):
         plates.interleave(100, 96)
+
+
+def test_primer_plates_seat_the_stock_plate_and_every_copy_alike() -> None:
+    made = plates.primer_plates(["IDX1", "IDX2", "IDX3"], wells=96, copies=2)
+    assert [one.name for one in made.plates] == [
+        "primer stock plate",
+        "primer working plate 1",
+        "primer working plate 2",
+    ]
+    assert made.stock.seating == {"A1": "IDX1", "A2": "IDX2", "A3": "IDX3"}
+    assert all(one.seating == made.stock.seating for one in made.working)
+    assert all(one.wells == 96 for one in made.plates)
+
+
+def test_primer_plates_take_the_names_the_caller_gives_them() -> None:
+    made = plates.primer_plates(["IDX1"], wells=12, copies=1, stock="index stock", working="index")
+    assert [one.name for one in made.plates] == ["index stock", "index 1"]
+
+
+def test_primer_plates_refuse_more_primers_than_the_format_holds() -> None:
+    with pytest.raises(ValueError, match="run past"):
+        plates.primer_plates(["IDX"] * 13, wells=12, copies=1)
+
+
+def test_primer_plates_refuse_a_run_with_no_primer_and_one_with_no_working_plate() -> None:
+    with pytest.raises(ValueError, match="at least one primer"):
+        plates.primer_plates([], wells=96, copies=1)
+    with pytest.raises(ValueError, match="at least one working plate"):
+        plates.primer_plates(["IDX1"], wells=96, copies=0)

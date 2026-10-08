@@ -61,7 +61,15 @@ from liulab_mbio.bench.phenotype import (
     read_phenotype,
     selection_marker,
 )
-from liulab_mbio.bench.plates import compact, plate, pool, seat, wells_of
+from liulab_mbio.bench.plates import (
+    PrimerPlates,
+    compact,
+    plate,
+    pool,
+    primer_plates,
+    seat,
+    wells_of,
+)
 from liulab_mbio.bench.prices import Item, PriceRecord, PriceRow, bill, read_prices
 from liulab_mbio.bench.reactions import WATER, dna_components, fits, reaction_table
 from liulab_mbio.bench.steps import (
@@ -84,9 +92,12 @@ from liulab_mbio.bench.steps import (
     PLATE_DILUTION,
     PLATE_REFERENCE,
     PLATE_UL,
+    PRIMER_PLATE_EQUIPMENT,
+    PRIMER_PLATE_STORAGE,
     RECOVER_SECONDS,
     SEQUENCING_TITLE,
     THAW_SECONDS,
+    WORKING_PLATE_SINGLE_USE,
     XGAL_UG_ML,
     Transformation,
     badges,
@@ -102,6 +113,8 @@ from liulab_mbio.bench.steps import (
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    primer_plate_protocol,
+    primer_plate_steps,
     quantify_step,
     sequencing_step,
     transform_step,
@@ -161,6 +174,8 @@ __all__ = [
     "PLATE_DILUTION",
     "PLATE_REFERENCE",
     "PLATE_UL",
+    "PRIMER_PLATE_EQUIPMENT",
+    "PRIMER_PLATE_STORAGE",
     "PRIMER_STOCK_UM",
     "RECOVER_SECONDS",
     "REFERENCES",
@@ -173,6 +188,7 @@ __all__ = [
     "SHEET_COLUMNS",
     "THAW_SECONDS",
     "WATER",
+    "WORKING_PLATE_SINGLE_USE",
     "XGAL_UG_ML",
     "Amount",
     "Clone",
@@ -183,6 +199,7 @@ __all__ = [
     "Phenotype",
     "PriceRecord",
     "PriceRow",
+    "PrimerPlates",
     "SangerRead",
     "Transformation",
     "agarose_percent",
@@ -219,6 +236,9 @@ __all__ = [
     "phenotype_sentences",
     "plate",
     "pool",
+    "primer_plate_protocol",
+    "primer_plate_steps",
+    "primer_plates",
     "primer_sheet",
     "quantify_step",
     "reaction_table",

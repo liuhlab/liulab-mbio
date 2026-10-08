@@ -12,6 +12,7 @@ pool both.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 
 from liulab_mbio.protocol.model import (
     FORMATS,
@@ -27,6 +28,7 @@ from liulab_mbio.protocol.model import (
 __all__ = [
     "FORMATS",
     "Plate",
+    "PrimerPlates",
     "Transfer",
     "Vessel",
     "Well",
@@ -34,6 +36,7 @@ __all__ = [
     "interleave",
     "plate",
     "pool",
+    "primer_plates",
     "row_label",
     "seat",
     "wells_of",
@@ -107,6 +110,72 @@ def seat(names: Iterable[str], wells: int, *, start: int = 0) -> dict[str, str]:
         f"{row_label(row)}{column}" for row in range(rows) for column in range(1, columns + 1)
     ]
     return dict(zip(places[start:], names, strict=False))
+
+
+@dataclass(frozen=True, slots=True)
+class PrimerPlates:
+    """A stock plate and the working plates split from it, seated alike.
+
+    One seating covers them all, so a well's address names the same primer on every plate and a
+    step can give one address for all of them.
+
+    Parameters
+    ----------
+    stock
+        The plate the primers are resuspended in, thawed only to split a working plate from it.
+    working
+        One plate per copy, numbered from 1.
+    """
+
+    stock: Plate
+    working: tuple[Plate, ...]
+
+    @property
+    def plates(self) -> tuple[Plate, ...]:
+        """Every plate, the stock first."""
+        return (self.stock, *self.working)
+
+
+def primer_plates(
+    names: Sequence[str],
+    *,
+    wells: int,
+    copies: int = 1,
+    stock: str = "primer stock plate",
+    working: str = "primer working plate",
+    catalog: str = "",
+) -> PrimerPlates:
+    """Return `names` seated in one stock plate and `copies` working plates of the same format.
+
+    The names are seated in reading order, and every plate carries that one seating.
+
+    Raises
+    ------
+    ValueError
+        If there is no primer or no working plate, `wells` is no format, or the names run past
+        the last well.
+
+    Examples
+    --------
+    >>> made = primer_plates(["IDX1", "IDX2"], wells=96, copies=2)
+    >>> [one.name for one in made.plates]
+    ['primer stock plate', 'primer working plate 1', 'primer working plate 2']
+    >>> made.working[1].seating["A2"]
+    'IDX2'
+    """
+    ordered = tuple(names)
+    if not ordered:
+        raise ValueError("a primer plate holds at least one primer")
+    if copies < 1:
+        raise ValueError(f"{copies} copies is none to run from: make at least one working plate")
+    seating = seat(ordered, wells)
+    return PrimerPlates(
+        plate(stock, wells, catalog=catalog, seating=seating),
+        tuple(
+            plate(f"{working} {number}", wells, catalog=catalog, seating=seating)
+            for number in range(1, copies + 1)
+        ),
+    )
 
 
 def interleave(wells: int, into: int) -> tuple[tuple[str, ...], ...]:
