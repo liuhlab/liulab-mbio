@@ -1,8 +1,8 @@
 import pytest
 
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.reaction import Pool, Reaction
-from liulab_mbio.sequence import SequenceRecord
+from mbio.enzymes import get_enzyme
+from mbio.reaction import Pool, Reaction
+from mbio.sequence import SequenceRecord
 
 
 @pytest.fixture

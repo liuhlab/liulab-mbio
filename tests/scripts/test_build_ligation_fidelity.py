@@ -1,6 +1,6 @@
 """The ligation fidelity build script, on a workbook built here rather than fetched.
 
-The workbook reader it calls is the package's, `liulab_mbio.ligase`, so the sheet a matrix of
+The workbook reader it calls is the package's, `mbio.ligase`, so the sheet a matrix of
 several is read from is pinned here too, on a workbook built here the same way.
 """
 
@@ -16,14 +16,14 @@ from types import ModuleType
 
 import pytest
 
-from liulab_mbio.ligase import (
+from mbio.ligase import (
     RELATIONSHIP_NS,
     SPREADSHEET_NS,
     column_index,
     read_profile,
     read_workbook,
 )
-from liulab_mbio.sequence import reverse_complement
+from mbio.sequence import reverse_complement
 
 REPO = Path(__file__).resolve().parents[2]
 

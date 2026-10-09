@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.protocol import (
+from mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
     Citation,
@@ -29,7 +29,7 @@ from liulab_mbio.protocol import (
     read_protocol,
     write_protocol,
 )
-from liulab_mbio.protocol.model import NAME_CHARS
+from mbio.protocol.model import NAME_CHARS
 
 #: The checkout a `Source.note` is relative to.
 REPO = Path(__file__).resolve().parents[2]

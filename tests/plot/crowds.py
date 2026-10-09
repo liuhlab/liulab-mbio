@@ -5,9 +5,9 @@ import csv
 from functools import cache
 from pathlib import Path
 
-from liulab_mbio.io import read_record
-from liulab_mbio.plot import layers
-from liulab_mbio.sequence import BindingSite, Primer, SequenceRecord, Strand
+from mbio.io import read_record
+from mbio.plot import layers
+from mbio.sequence import BindingSite, Primer, SequenceRecord, Strand
 
 DATA = Path(__file__).parents[1] / "data"
 

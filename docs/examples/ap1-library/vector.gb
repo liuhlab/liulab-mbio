@@ -48,7 +48,7 @@ FEATURES             Location/Qualifiers
                      /note="color: #ffffff"
      CDS             complement(1145..1939)
                      /label="KanR"
-     misc_feature    371..404
+     misc_feature    371..400
                      /label="internal stuffer"
      protein_bind    351..358
                      /label="PmeI"

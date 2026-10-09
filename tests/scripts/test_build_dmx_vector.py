@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     import pytest
 
-    from liulab_mbio.sequence import Feature, SequenceRecord
+    from mbio.sequence import Feature, SequenceRecord
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -45,7 +45,7 @@ def _cds(record: SequenceRecord, name: str) -> Feature:
 
 def test_dmx0001_carries_the_ampr_the_rebuild_replaces(dmx0001: SequenceRecord) -> None:
     """The parent, and the marker the rebuild takes out: a joined CDS on the reverse strand."""
-    from liulab_mbio.sequence import Strand
+    from mbio.sequence import Strand
 
     assert (len(dmx0001), dmx0001.topology) == (5839, "circular")
     ampr = _cds(dmx0001, "AmpR")
@@ -57,7 +57,7 @@ def test_pcr_blunt_ii_topo_carries_the_marker_that_goes_in(
     pcr_blunt_ii_topo: SequenceRecord,
 ) -> None:
     """The carrier, and the coding sequence the rebuild lifts out of it."""
-    from liulab_mbio.sequence import Strand
+    from mbio.sequence import Strand
 
     assert (len(pcr_blunt_ii_topo), pcr_blunt_ii_topo.topology) == (3519, "circular")
     marker = _cds(pcr_blunt_ii_topo, "NeoR/KanR")
@@ -67,8 +67,8 @@ def test_pcr_blunt_ii_topo_carries_the_marker_that_goes_in(
 
 def test_the_genbank_written_carries_each_feature_colour(tmp_path: Path) -> None:
     """A coloured record reads back coloured: the writer spells the note the reader takes."""
-    from liulab_mbio.io import read_record
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+    from mbio.io import read_record
+    from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
     features = (
         Feature("ori", "rep_origin", (Segment(0, 12),), color="#ffff00"),
@@ -92,8 +92,8 @@ def test_the_genbank_written_loses_a_segment_name_and_says_which(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The lossy edge the writer documents, named on stderr rather than lost in silence."""
-    from liulab_mbio.io import read_record
-    from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+    from mbio.io import read_record
+    from mbio.sequence import Feature, Segment, SequenceRecord
 
     promoter = Feature(
         "lac promoter",
@@ -115,7 +115,7 @@ def test_the_definition_line_ends_in_one_full_stop_however_the_description_ends(
     tmp_path: Path,
 ) -> None:
     """Biopython terminates ``DEFINITION`` itself, so a description's own stop would double it."""
-    from liulab_mbio.sequence import SequenceRecord
+    from mbio.sequence import SequenceRecord
 
     for index, described in enumerate(("a stuffer.", "a stuffer")):
         record = SequenceRecord("ACGT" * 16, name="stuffer", notes={"Description": described})

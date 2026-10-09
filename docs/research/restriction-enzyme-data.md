@@ -7,7 +7,7 @@ search:
 
 Research note for issue #7. Everything below was retrieved on **2026-09-12** unless a section
 stamps its own date. It records where
-`src/liulab_mbio/data/enzymes.json` comes from, what each source allows, and which values are
+`src/mbio/data/enzymes.json` comes from, what each source allows, and which values are
 still unverified.
 
 ## 1. What the data file holds, and who supplied each field
@@ -232,7 +232,7 @@ pixi run python scripts/build_enzymes.py --withrefm FILE    # from a local copy
 ```
 
 The script fetches REBASE, merges `scripts/enzyme_properties.toml`, and writes
-`src/liulab_mbio/data/enzymes.json`. Tests never reach the network: they parse excerpts.
+`src/mbio/data/enzymes.json`. Tests never reach the network: they parse excerpts.
 
 The REBASE release is recorded in the data file as `rebase_version`; this build used **609**.
 REBASE updates daily, so a later run may move a cut offset or add an isoschizomer. That is the

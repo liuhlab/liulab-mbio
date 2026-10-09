@@ -7,7 +7,7 @@ search:
 
 Research note for issue #119, the first sub-issue of spec #116 under #74. Everything below was
 retrieved on **2026-09-18** unless a different date is given next to the source. It answers the
-fourteen questions the ticket asks, and it is where every number in `liulab_mbio.cloning.gibson`
+fourteen questions the ticket asks, and it is where every number in `mbio.cloning.gibson`
 must come from.
 
 ## How to read this note
@@ -251,7 +251,7 @@ The ticket's question 3, which also asks whether `docs/research/primer-design-an
   gene-specific sequence of the primer can be calculated using the Tm calculator found on the NEB
   website" (E2621 manual, p. 3, pointing at `tmcalculator.neb.com`; the E2611 manual points at the
   older `neb.com/TmCalculator` URL). So the Ta for the PCR comes from the annealing region, as
-  `liulab_mbio.primers` already models it.
+  `mbio.primers` already models it.
 - **The length band NEB gives is on a figure, and the figure is in the older manual.** The E2611
   manual **version 2.0_10/21**, Figure 4A, labels the two parts "Overlap Region (≥15 nt)" and
   "Gene-specific Sequence (18-25 nt)". The same figure in versions 3.0_1/26 and in the E2621 manual
@@ -907,7 +907,7 @@ documents no bridging oligo at all. A plan that names In-Fusion should refuse bo
 than substitute NEB's numbers.
 
 **For the order sheet.** A stitching or bridging oligo primes nothing, so none of the three oligo
-roles in `liulab_mbio.primers.thresholds` judges it. What the sources hold such an oligo to is:
+roles in `mbio.primers.thresholds` judges it. What the sources hold such an oligo to is:
 standard desalted purity is enough — "Standard, desalted primers may be used" (NEB), "Gel or HPLC
 purification of oligonucleotides is not required" (Takara) — a length near 60–70 bases, and a
 concentration. No source gives it a Tm, a hairpin or a dimer threshold. A fourth role would have

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from liulab_mbio.bench.pools import (
+from mbio.bench.pools import (
     OligoLayout,
     Pool,
     PrimerSite,
@@ -16,10 +16,10 @@ from liulab_mbio.bench.pools import (
     pool_sheet,
     primer_inventory,
 )
-from liulab_mbio.bench.prices import Band
-from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
-from liulab_mbio.sites import find_sites
-from liulab_mbio.split import split_cargo
+from mbio.bench.prices import Band
+from mbio.sequence import SequenceRecord, Strand, reverse_complement
+from mbio.sites import find_sites
+from mbio.split import split_cargo
 
 CARGO = SequenceRecord(
     "".join(

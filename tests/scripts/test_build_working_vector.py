@@ -15,10 +15,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import find_sites
-from liulab_mbio.translate import translate
+from mbio.enzymes import get_enzyme
+from mbio.sequence import SequenceRecord
+from mbio.sites import find_sites
+from mbio.translate import translate
 
 if TYPE_CHECKING:
     from types import ModuleType

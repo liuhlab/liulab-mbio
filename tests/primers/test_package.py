@@ -1,6 +1,6 @@
-from liulab_mbio import primers
+from mbio import primers
 
-#: Every public name `liulab_mbio.primers` defined while it was one module.
+#: Every public name `mbio.primers` defined while it was one module.
 PUBLIC_NAMES = (
     "ONETAQ",
     "PHUSION",

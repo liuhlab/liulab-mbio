@@ -10,12 +10,12 @@ from itertools import combinations
 
 import pytest
 
-from liulab_mbio.enzymes import enzymes
-from liulab_mbio.plot import circular, layers, svg
-from liulab_mbio.plot.fonts import SANS
-from liulab_mbio.plot.labels import Box, Point
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
-from liulab_mbio.sites import find_sites
+from mbio.enzymes import enzymes
+from mbio.plot import circular, layers, svg
+from mbio.plot.fonts import SANS
+from mbio.plot.labels import Box, Point
+from mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from mbio.sites import find_sites
 
 from . import crowds
 

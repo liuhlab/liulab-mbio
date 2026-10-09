@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.io import read_record
-from liulab_mbio.protocol import read_protocol
-from liulab_mbio.snapgene import read_dna, write_dna
+from mbio.cli import app
+from mbio.io import read_record
+from mbio.protocol import read_protocol
+from mbio.snapgene import read_dna, write_dna
 
 from .records import carrying
 
@@ -64,7 +64,7 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     assert summary.startswith("pUC19-GFP: 3388 bp, EcoRI, BamHI")
-    assert "GAATTC at 396" in summary
+    assert "GAATTC at 397" in summary
     assert read_dna(out / "product.dna").name == "pUC19-GFP"
     # A polymerase is read whatever the case of its name, and the strain is the one asked for.
     materials = [one.name for one in read_protocol(out / "protocol.json").materials]

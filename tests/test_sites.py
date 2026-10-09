@@ -1,10 +1,10 @@
 import pytest
 
-from liulab_mbio.codons import codon_usage
-from liulab_mbio.edits import EditReport
-from liulab_mbio.enzymes import Enzyme, get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
-from liulab_mbio.sites import (
+from mbio.codons import codon_usage
+from mbio.edits import EditReport
+from mbio.enzymes import Enzyme, get_enzyme
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from mbio.sites import (
     digest,
     domesticate,
     find_sites,

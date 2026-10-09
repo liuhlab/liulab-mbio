@@ -2,7 +2,7 @@
 
 Read this once `SKILL.md` has chosen Golden Gate.
 
-`liulab_mbio` does the design, and one command turns a vector and its inserts into a product
+`mbio` does the design, and one command turns a vector and its inserts into a product
 map, a primer order sheet and a bench protocol. Never invent a primer, an overhang, a band size
 or any other number the package computes: it works each one out from the sequences and checks
 it, and nothing checks a number you made up.
@@ -10,8 +10,8 @@ it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_mbio cloning goldengate plan vector.dna insert.dna --out plan/
-pixi run liulab_mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
 ```
 
 One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
@@ -63,7 +63,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 When you need the numbers rather than the files:
 
 ```python
-from liulab_mbio.cloning.goldengate import plan_assembly
+from mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
@@ -76,7 +76,7 @@ candidate clone, and `plan.phenotype` what the product says about itself — wha
 inserts, whether anything should be translated, and how a plate reads.
 
 A value the user gives goes in here. For another amount of DNA, replace `plan.amounts` with
-`liulab_mbio.bench.goldengate.assembly_amounts` at that amount, using `dataclasses.replace`,
+`mbio.bench.goldengate.assembly_amounts` at that amount, using `dataclasses.replace`,
 and write the plan again.
 
 ## Before you hand it over

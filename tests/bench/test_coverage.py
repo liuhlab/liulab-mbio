@@ -2,7 +2,7 @@
 
 import pytest
 
-from liulab_mbio.bench.coverage import (
+from mbio.bench.coverage import (
     REPRESENTATION_MARKS,
     RoundCoverage,
     absent_probability,

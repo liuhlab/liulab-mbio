@@ -9,9 +9,9 @@ from itertools import combinations, pairwise
 
 import pytest
 
-from liulab_mbio.plot import layers, linear, svg
-from liulab_mbio.plot.labels import Box, Point
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from mbio.plot import layers, linear, svg
+from mbio.plot.labels import Box, Point
+from mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
 
 from . import crowds
 

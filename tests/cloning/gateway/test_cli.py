@@ -7,8 +7,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.snapgene import write_dna
+from mbio.cli import app
+from mbio.snapgene import write_dna
 
 from .records import destination_vector, donor_vector
 

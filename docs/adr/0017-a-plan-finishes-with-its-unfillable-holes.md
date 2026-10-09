@@ -9,10 +9,9 @@ A number nobody published is left as a hole rather than guessed, so "no hole lef
 finishes a design. Some holes close only at a bench, and some only when a lab names its own stock.
 
 The AP-1 demo's final assembly is where this first bites. Two holes stand there. **H24** asks the
-working vector's mass and the ratio it meets the cargo at; departure D12 purifies nothing between
-the release and the assembly, so the pot already holds 50 µL. NEB's 15 µL reaction, Qian's
-column-cleaned assembly and the paper's own T7 ligation each size a different tube, none of them
-this one. Only a pilot settles it. **H31** asks which backbone the library ends in, which is a
+working vector's mass; departure D12 purifies nothing between the release and the assembly, so
+the pot already holds 50 µL. NEB's 15 µL reaction, Qian's column-cleaned assembly and the paper's
+own T7 ligation each size a different tube, none of them this one. Only a pilot settles it. **H31** asks which backbone the library ends in, which is a
 stock a lab holds and an application chooses.
 
 So a plan is finished when every hole left is of that sort: `undecided` where only a bench
@@ -31,19 +30,18 @@ work, and the step that carries it is where to look.
 
 ## Amendment: a build may state what only a bench or a shelf settles
 
-A lab that has run the pilot is not held to a hole. A build may state the assembly's mass and
-ratio, the two pool cycle counts, the linkage pass mark and the working vector, each optional
-and each leaving its hole standing by default. Stated, the step prints it as that run's own
-measurement, never a published figure. The measurement and the five kinds stand.
+A lab that has run the pilot is not held to a hole. A build may state the assembly's vector
+mass, the two pool cycle counts, the linkage pass mark and the working vector, each optional and
+each leaving its hole standing by default. Not the cargo against it: the release is never
+purified, so the digest fixes that mass and the ratio it meets the vector at. Stated, the step
+prints the run's own measurement, never a published figure. The five kinds stand.
 
 ## Amendment: the demo names a working vector
 
-A builder script takes the eight sites out and `--working-site` places the cassette, so two
-of those costs are gone; the corpus move was paid. The build states the assembly and the
-linkage mark too, so a run leaves no hole there. Neither had a pilot; what differs is the
-number: a mass and a ratio are what this run will pipette, true once written. A cycle
-count is what one pool on one machine turns out to need, so writing one claims a reading
-nobody took. That is why the demo states neither.
+A builder script takes the eight sites out and `--working-site` places the cassette, so two of
+those costs are gone. The build states the assembly and the linkage mark, leaving no hole there,
+and no cycle count: a mass is what this run will pipette, true once written, while a cycle count
+is a reading nobody took.
 
 ## Consequences
 
@@ -52,3 +50,6 @@ states the assembly, so a run leaves none there; a hole naming a source nobody r
 
 A project of the user's own that names a working vector drops H31 and keeps H24 until it states
 the assembly too, and a demo stays what a reader copies rather than a record of one lab's shelf.
+
+Money obeys it too: every item a run names is a row of its bill, carrying a charge or a `price`
+hole and never an empty cell.

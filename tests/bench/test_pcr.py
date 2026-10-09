@@ -5,7 +5,7 @@ The source is `docs/research/primer-design-and-pcr.md` for the PCR programs.
 
 import pytest
 
-from liulab_mbio.bench.pcr import (
+from mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
     SOURCES,
     colony_pcr_master_mix_component,
@@ -15,7 +15,7 @@ from liulab_mbio.bench.pcr import (
     pcr_program,
     pcr_reaction,
 )
-from liulab_mbio.primers import ONETAQ, POLYMERASES, Q5, Polymerase
+from mbio.primers import ONETAQ, POLYMERASES, Q5, Polymerase
 
 from ..reactions import total, volumes
 

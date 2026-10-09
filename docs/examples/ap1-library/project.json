@@ -8,6 +8,7 @@
   "parts": "parts.fasta",
   "vector": "vector.gb",
   "working_vector": "working-vector.gb",
+  "carrier": "carrier.gb",
   "host": "human",
   "oligo_length": 350,
   "primers": "primers.tsv",
@@ -39,8 +40,7 @@
   "reserved_extra": [],
   "linkage_fidelity": 0.9,
   "final_assembly": {
-    "vector_ng": 75,
-    "ratio": 2
+    "vector_ng": 75
   },
   "barcode": {
     "length": 11,

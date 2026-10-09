@@ -5,8 +5,8 @@ from itertools import islice
 
 import pytest
 
-from liulab_mbio.checks import STATUSES
-from liulab_mbio.primers import (
+from mbio.checks import STATUSES
+from mbio.primers import (
     TARGET_TM,
     THRESHOLDS,
     THRESHOLDS_FOR,
@@ -21,7 +21,7 @@ from liulab_mbio.primers import (
     melting_temperature,
     ranked_pairs,
 )
-from liulab_mbio.sequence import (
+from mbio.sequence import (
     BindingSite,
     Primer,
     Segment,

@@ -1,7 +1,7 @@
 ---
 name: molecular-cloning
 description: >-
-  Choose the cloning method a job calls for and plan it with `liulab_mbio`, weighing how many
+  Choose the cloning method a job calls for and plan it with `mbio`, weighing how many
   fragments are joined, whether the junction may gain bases, what the parts already carry, and
   what the method costs in time and money. Golden Gate, Gibson assembly, classical restriction
   and ligation and Gateway cloning are planned end to end from the user's own sequence files:
@@ -16,13 +16,13 @@ description: >-
 
 # Molecular cloning
 
-`liulab_mbio` plans the cloning. This skill chooses the method; the method's own file carries
+`mbio` plans the cloning. This skill chooses the method; the method's own file carries
 the detail, and you read it only after the choice is made.
 
 ## What this package plans
 
 ```bash
-pixi run liulab_mbio cloning --help
+pixi run mbio cloning --help
 ```
 
 That list is the supported set. Read it off the command rather than off prose, which ages. Each

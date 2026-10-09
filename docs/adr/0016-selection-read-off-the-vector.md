@@ -11,9 +11,9 @@ AmpR to KanR before first use, so the last transfer moves cargo between two vect
 share a marker. The source protocol plates on carbenicillin. Carbenicillin on a KanR plasmid
 selects nothing, and a reader following the page as shipped reads an empty plate or a lawn.
 
-So the marker decides. `liulab_mbio.bench.phenotype.selection_marker` reads it off the record and
+So the marker decides. `mbio.bench.phenotype.selection_marker` reads it off the record and
 `SELECTION` names its drug, exactly as the four cloning methods already do.
-`liulab_synbio.igga.stages.selection_for` adds the concentration this method has a source for and
+`synbio.igga.stages.selection_for` adds the concentration this method has a source for and
 returns one phrase; `dmx.Validation` carries that phrase as `selection` and prints it wherever a
 plate, a well or a broth is named. Where the record annotates no marker, the page says *the
 vector's own antibiotic* and hole **H22** stands. Where it annotates one, H22 is answered and

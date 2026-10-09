@@ -1,4 +1,4 @@
-from liulab_mbio.checks import Check, worst, worst_of
+from mbio.checks import Check, worst, worst_of
 
 
 def test_the_worst_verdict_is_the_result() -> None:

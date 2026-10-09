@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.cloning.plan import write_protocol_files
-from liulab_mbio.protocol import (
+from mbio.cli import app
+from mbio.cloning.plan import write_protocol_files
+from mbio.protocol import (
     INDEX_FILE,
     PROJECT_DATA_FILE,
     REAGENTS_FILE,

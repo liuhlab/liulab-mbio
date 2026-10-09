@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
-DATA = REPO / "src/liulab_mbio/data/codon_usage.json"
+DATA = REPO / "src/mbio/data/codon_usage.json"
 
 #: NCBI asks scripted callers to name themselves. No address is sent with it.
 EFETCH = (

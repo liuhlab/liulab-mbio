@@ -2,19 +2,20 @@
 
 import pytest
 
-from liulab_mbio.bench.pcr import cycle_citation
-from liulab_mbio.bench.phenotype import Phenotype
-from liulab_mbio.bench.plates import primer_plates
-from liulab_mbio.bench.steps import (
+from mbio.bench.pcr import cycle_citation
+from mbio.bench.phenotype import Phenotype
+from mbio.bench.plates import primer_plates
+from mbio.bench.steps import (
+    WORKING_PLATE_SINGLE_USE,
     dpni_step,
     pcr_step,
     phenotype_sentences,
     primer_plate_protocol,
     primer_plate_steps,
 )
-from liulab_mbio.primers import Q5
-from liulab_mbio.protocol.model import Citation, Oligo, Protocol
-from liulab_mbio.sequence import Feature, Segment, Strand
+from mbio.primers import Q5
+from mbio.protocol.model import Citation, Oligo, Protocol
+from mbio.sequence import Feature, Segment, Strand
 
 
 def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
@@ -128,15 +129,28 @@ def test_a_primer_plate_protocol_produces_one_item_per_plate() -> None:
 
 
 def test_a_working_plate_carries_the_rule_that_it_is_never_put_back() -> None:
+    """It reaches both steps that name a plate: the one splitting them and the one storing them."""
     one = _plate_protocol()
-    stored = one.steps[-1]
+    split, stored = one.steps[-2], one.steps[-1]
 
-    assert [(material.name, rule.subject) for material, rule in one.rules_for(stored)] == [
+    assert [(carrier, rule.subject) for carrier, rule in one.rules_for(stored)] == [
         ("primer working plate 1", "return to the freezer"),
         ("primer working plate 2", "return to the freezer"),
     ]
+    assert [carrier for carrier, _ in one.rules_for(split)] == [
+        "primer working plate 1",
+        "primer working plate 2",
+    ]
     assert {rule.kind for _, rule in one.rules_for(stored)} == {"forbids"}
     assert [check.status for check in one.audit()] == ["pass", "pass", "pass", "pass"]
+
+    # The item carries it, so it travels to whichever protocol is handed the plate. Not a
+    # material row, which would have a reader order what this protocol makes, and not the
+    # plate, which stands on this page alone.
+    assert "primer working plate 1" not in [material.name for material in one.materials]
+    handed = next(item for item in one.produces if item.name == "primer working plate 1")
+    assert handed.rules == (WORKING_PLATE_SINGLE_USE,)
+    assert [plate.rules for plate in one.plates] == [(), (), ()]
 
 
 def test_the_primers_ordered_once_are_the_protocols_own_order_sheet() -> None:

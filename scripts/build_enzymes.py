@@ -32,7 +32,7 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
 PROPERTIES = Path(__file__).resolve().parent / "enzyme_properties.toml"
-DATA = REPO / "src/liulab_mbio/data/enzymes.json"
+DATA = REPO / "src/mbio/data/enzymes.json"
 WITHREFM_URL = "https://rebase.neb.com/rebase/link_withrefm"
 
 #: Which supplier fields the curated table carries, and so which need a source named.
@@ -67,7 +67,7 @@ def parse_site(notation: str) -> tuple[str, int, int]:
 
     REBASE marks a cut inside the site with ``^`` and one outside it with offsets in
     parentheses, counted from the 3' end of the site. Both become offsets from the first base
-    of the site, as `liulab_mbio.enzymes` defines them.
+    of the site, as `mbio.enzymes` defines them.
 
     Raises
     ------

@@ -10,10 +10,10 @@ import pypdf
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.plot import circular, draw_map, linear
-from liulab_mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
-from liulab_mbio.snapgene import write_dna
+from mbio.cli import app
+from mbio.plot import circular, draw_map, linear
+from mbio.sequence import BindingSite, Feature, Primer, Segment, SequenceRecord, Strand
+from mbio.snapgene import write_dna
 
 from ..html import Node, parse
 from . import crowds

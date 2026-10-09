@@ -2,7 +2,7 @@
 name: protein-assembly
 description: >-
   Build a barcoded combinatorial library from lists of protein or DNA sequences by iterative
-  Golden Gate with `liulab_synbio`: design every part's synthesis block, choose the overhang
+  Golden Gate with `synbio`: design every part's synthesis block, choose the overhang
   standard that costs the proteins fewest amino acids, draw a barcode for each part, accept or
   retrofit the destination vector, simulate every round, size each round's colonies for the
   completeness asked for, and write an interactive HTML bench protocol covering all the rounds. Use
@@ -13,7 +13,7 @@ description: >-
 
 # Protein library assembly
 
-`liulab_synbio.igga` does the design. This skill is the way in: one command turns a project
+`synbio.igga` does the design. This skill is the way in: one command turns a build
 file naming lists of proteins and a vector into a synthesis order sheet, annotated records and a
 bench protocol. Never invent a block, a barcode, an overhang, an amount or a colony count: the package
 works each one out and checks it, and nothing checks a number you made up.
@@ -21,7 +21,7 @@ works each one out and checks it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_synbio igga plan project.json --out library/
+pixi run synbio igga plan project.json --out library/
 ```
 
 `project.json` is what the user writes: `name`, `positions`, `parts` and `vector` by path,
@@ -29,7 +29,7 @@ pixi run liulab_synbio igga plan project.json --out library/
 `barcode`, `primers` and `bands` for the pool, `primer_plates` to lay those primers out as a
 stock plate and its copies, and `validate_from` with `routes` for the read back. It is checked
 where it is read, so a bad value fails before anything is designed.
-Copy [the AP-1 project](../../docs/examples/ap1-library/project.json), a whole run with its
+Copy [the AP-1 build](../../docs/examples/ap1-library/project.json), a whole run with its
 inputs and outputs beside it.
 
 The method itself is code, not a file, and `docs/adr/0010-method-in-code.md` says why: its
@@ -95,7 +95,7 @@ the plate layout are already in the pages, drawn beside the step that uses them.
 ## From Python
 
 ```python
-from liulab_synbio.igga.plan import plan_igga
+from synbio.igga.plan import plan_igga
 
 plan = plan_igga("project.json")
 plan.status  # "pass", "warn" or "fail" over every round's checks

@@ -2,7 +2,7 @@
 
 Read this once `SKILL.md` has chosen restriction and ligation.
 
-`liulab_mbio` does the design, and one command turns a vector and an insert into a product map,
+`mbio` does the design, and one command turns a vector and an insert into a product map,
 an oligo order sheet and a bench protocol. Never invent an enzyme pair, a primer tail, a band
 size or a ligation amount: the package works each one out from the sequences and checks it, and
 nothing checks a number you made up.
@@ -10,8 +10,8 @@ nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run liulab_mbio cloning restriction plan vector.dna insert.dna --out plan/
-pixi run liulab_mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI
+pixi run mbio cloning restriction plan vector.dna insert.dna --out plan/
+pixi run mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI
 ```
 
 The second argument is the insert, or the plasmid it is cut out of. Name no enzyme and the pair
@@ -78,7 +78,7 @@ assumed.
 When you need the numbers rather than the files:
 
 ```python
-from liulab_mbio.cloning.restriction import plan_restriction
+from mbio.cloning.restriction import plan_restriction
 
 plan = plan_restriction("vector.dna", "insert.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo

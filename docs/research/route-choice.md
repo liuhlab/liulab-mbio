@@ -34,7 +34,7 @@ issue states, and section 1 below confirms that neither of them decides anything
 | Route | Addressable wells | Source |
 | --- | --- | --- |
 | barcode ligation | ">330k wells to be tagged from a single 96-well plate of UMIs (24^4)" | Qian article |
-| barcode ligation, as coded | 24³ wells × 24 plates = 13,824 per plate set | `liulab_synbio.dmx.method.ROUTE_LIGATION` |
+| barcode ligation, as coded | 24³ wells × 24 plates = 13,824 per plate set | `synbio.dmx.method.ROUTE_LIGATION` |
 | index PCR | "theoretically possible to demultiplex and sequence 9,216 variants" | LevSeq article |
 
 AP-1 needs 1,536. Both routes clear it by a wide margin, and the smaller of the two is index
@@ -227,7 +227,7 @@ as a measured fact.
 
 ## 4. Where each depth floor was measured
 
-`liulab_synbio.dmx.method` states that "each floor was measured on its own library prep". That
+`synbio.dmx.method` states that "each floor was measured on its own library prep". That
 is true, but it is not where the difference lies — **the ONT kit and flow cell are the same in
 both papers**, and reading the docstring as "different platforms, so don't compare" would be
 wrong for the wrong reason.
@@ -273,7 +273,7 @@ statement is that each route is run at the depth its own published pipeline was 
 
 The sourced basis for three sentences of demo guidance, and an explicit list of the figures that
 must not appear in them. It supplies **no new number to `src/`**: every value above is either
-already carried by `liulab_synbio.dmx.method` and the two bench notes, or is a cost figure the
+already carried by `synbio.dmx.method` and the two bench notes, or is a cost figure the
 package does not compute.
 
 The one thing it changes about existing text is a caution: `dmx/method.py`'s "each floor was

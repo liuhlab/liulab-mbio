@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
+from mbio.cli import app
 
 
 def test_the_cli_renders_a_protocol_to_the_file_it_is_given(data_dir: Path, tmp_path: Path) -> None:

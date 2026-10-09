@@ -5,7 +5,7 @@ The source is `docs/research/primer-design-and-pcr.md` for ng to pmol.
 
 import pytest
 
-from liulab_mbio.bench.amounts import (
+from mbio.bench.amounts import (
     DNA_VOLUME_UL,
     Amount,
     dna_amount,

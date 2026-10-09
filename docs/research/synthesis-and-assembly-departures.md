@@ -5,7 +5,7 @@ search:
 
 # How our design departs from the paper
 
-Every way the iGGA design in `docs/synthesis-and-assembly.md` differs from Takacsi-Nagy et al.,
+Every way the iGGA design differs from Takacsi-Nagy et al.,
 what forced each change, and whether the reason survives checking. The paper itself, and what
 was measured from it, are in `docs/research/protein-library-assembly.md`. The design's other
 sources, and every decision still open, are in `docs/research/synthesis-and-assembly.md`.
@@ -18,7 +18,7 @@ the paper answers it and our design matches, so it was never a difference. D18 w
 decision in #259 on what bounds a round.
 
 Pointers into the method document name its sections, so they survive an edit to it. Everything
-here was simulated with `liulab_mbio`, not read off the page.
+here was simulated with `mbio`, not read off the page.
 
 ## D1. The two enzyme roles moved up one enzyme
 

@@ -1,0 +1,4 @@
+name	status	value	detail
+rules	pass	0	every barcode holds
+separation	pass	3	sequence-levenshtein, against a rule of 3
+deletion_ambiguity		0	share of one-base deletions another barcode could leave too

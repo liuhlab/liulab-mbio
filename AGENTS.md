@@ -5,10 +5,9 @@ plan an experiment end to end: a vector and its inserts joined by any of the fou
 `cloning/`; a barcoded combinatorial library built from lists of proteins in rounds; and a
 read-back of designs a lab holds. Each writes a bench protocol someone can follow, and the five
 that design DNA pick the enzymes and simulate the product. Repo-local skills call them.
-Distribution name
-**`liulab-mbio`**, import names **`liulab_mbio`** and **`liulab_synbio`**.
+Distribution name **`liulab-mbio`**, import names **`mbio`** and **`synbio`**.
 
-**The package boundary.** One distribution ships both, at one version. `liulab_synbio` holds
+**The package boundary.** One distribution ships both, at one version. `synbio` holds
 each named method's pipelines: **synbio imports mbio; mbio imports synbio nowhere.** Which side
 a module is on: could a different method use it unchanged? If yes it is mbio's; if it encodes
 one method's choices it is synbio's.
@@ -38,26 +37,25 @@ One direction, bottom to top — nothing lower imports anything higher.
 | protocol | `protocol/` | `model`, read from and written to JSON, `figures`, a named figure a step shows, and `render`, its self-contained HTML page |
 | bench | `bench/` | what any pipeline shares: `amounts`, `reactions`, `pcr`, `gels`, `validation`, `inactivation`, `phenotype`, `oligos`, `readback`, `steps`; `plates`, the format parameter and the moves between wells; `materials`, a material's own parameters, rules and cautions keyed by catalogue number; `prices`, a price record the user holds and the bill it makes. Three are imported by module, not re-exported: `goldengate`, NEB's enzymes, reaction and cycling; `coverage`, the colonies a library round takes; `pools`, an oligo pool as a vendor takes it |
 | pipeline | `cloning/` | `plan`, what every cloning plan writes and how it is judged; `goldengate/`: `design`, `assembly`, `oligos`, `steps`, joined by its own `plan`, its reaction and cycling being `bench/goldengate`'s; `gibson/`: those modules plus `bench`, where `design` chooses each junction's overlap and lays out a stitched part's and a bridging oligo, and `bench` holds each assembly product's own numbers; `restriction/`: the same again, plus `digest`, `amplify`, `ligation` and `verdicts`, where `design` chooses the enzyme pair; `gateway/`: `att`, the site sequences and the arithmetic a junction follows, then `design` for the attB tail and its PCR, `recombination` for one reaction on two records, `checks`, `oligos`, `bench` and `steps` |
-| pipeline | `liulab_synbio.dmx/` | DMX, standing beside `igga/` and taking any cargo: `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `kit`, the barcode kit a user holds; `carrier`, one part a well in its own plasmid, which ends in no library; `build`, what one run chooses; `steps`; and `plan`, its way in |
-| pipeline | `liulab_synbio.igga/` | `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `cargo`, `vector`, `stages`, `rounds`, `reads`, `bench`, `figures`, and `protocols/`, one module a protocol of the run, ordered by `chain` and joined by `plan` |
+| pipeline | `synbio.dmx/` | DMX, standing beside `igga/` and taking any cargo: `method`, the two marking routes, a well's derived address, each route's depth floor and the pass rule; `kit`, the barcode kit a user holds; `carrier`, one part a well in its own plasmid, which ends in no library; `build`, what one run chooses; `steps`; and `plan`, its way in |
+| pipeline | `synbio.igga/` | `method`, the one method as code; `project`, what one build chooses; `gate`, which judges a finished design reaction by reaction in the method's own words; then `standard`, `parts`, `cargo`, `vector`, `stages`, `rounds`, `reads`, `bench`, `figures`, and `protocols/`, one module a protocol of the run, ordered by `chain` and joined by `plan` |
 | command line | `cli`, and each feature's own `cli` | the verbs: each package's root app mounts one sub-app per feature it holds, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `plan_assembly`, `plan_gibson` and `plan_restriction` each write
 four files: the product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
 it; `plan_gateway` writes those four plus the entry clone where it planned a BP reaction.
-`liulab_synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and
-amino-acid change tables, a record per round, a block vector per position, the product, and a
-`protocol` folder: the run as a chain of protocols, one page each.
-`liulab_synbio.dmx.plan_dmx` turns its output directory into the protocol folder, and writes no
-record and no sheet. The
-method is code and one build's choices are a file: `docs/adr/0010-method-in-code.md` draws that
-line. A pipeline's protocol is data an agent may edit and render again, never a place to invent a
-number the package computes: `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
+`synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and amino-acid change
+tables, a record per round, a block vector per position, the product, and a `protocol` folder:
+the run as a chain of protocols, one page each. `synbio.dmx.plan_dmx` turns its output directory
+into the protocol folder, and writes no record and no sheet. The method is code and one build's
+choices are a file: `docs/adr/0010-method-in-code.md` draws that line. A pipeline's protocol is
+data an agent may edit and render again, never a place to invent a number the package computes:
+`build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
 A subpackage re-exports its own way in, for callers outside it. Inside the package, import a
 name from the module that owns it; the top-level `__init__.py` re-exports only `__version__`,
 and `Check`, `Junction`, `Part` and `Files` each mean different things in different modules.
 
-Package data is in `src/liulab_mbio/data/`. Each file is rebuilt by a script in `scripts/` and
+Package data is in `src/mbio/data/`. Each file is rebuilt by a script in `scripts/` and
 sourced in a note under `docs/research/`. Never hand-edit one, and ship nothing whose licence
 forbids it — a ligase matrix is read from a copy the user holds. A file a shipped artefact is
 built from is an input, not a reference document: it is tracked, converted to a text format, in
@@ -95,19 +93,19 @@ evidence; a defect it might also catch is not. Removing one that misfires is a c
 | the gate | `pixi run check` |
 | one test | `pixi run test -- tests/test_sites.py::test_name` |
 | the docs | `pixi install -e docs`, then `pixi run docs-build` |
-| a Golden Gate plan | `pixi run liulab_mbio cloning goldengate plan VECTOR INSERT --out DIR` |
-| a Gibson plan | `pixi run liulab_mbio cloning gibson plan VECTOR INSERT --out DIR` |
-| a restriction and ligation plan | `pixi run liulab_mbio cloning restriction plan VECTOR INSERT --out DIR` |
-| a Gateway plan | `pixi run liulab_mbio cloning gateway plan CARRIER DESTINATION --out DIR` |
-| a read-back plan | `pixi run liulab_synbio dmx plan BUILD --out DIR` |
-| a library plan | `pixi run liulab_synbio igga plan PROJECT --out DIR` |
+| a Golden Gate plan | `pixi run mbio cloning goldengate plan VECTOR INSERT --out DIR` |
+| a Gibson plan | `pixi run mbio cloning gibson plan VECTOR INSERT --out DIR` |
+| a restriction and ligation plan | `pixi run mbio cloning restriction plan VECTOR INSERT --out DIR` |
+| a Gateway plan | `pixi run mbio cloning gateway plan CARRIER DESTINATION --out DIR` |
+| a read-back plan | `pixi run synbio dmx plan BUILD --out DIR` |
+| a library plan | `pixi run synbio igga plan BUILD --out DIR` |
 | the skills | `python skills/install.py --target all`, and `--check` |
 
 ## Layout
 
 ```text
-src/liulab_mbio/   the general package
-src/liulab_synbio/ the lab's own named methods
+src/mbio/          the general package
+src/synbio/        the lab's own named methods
 tests/             pytest, mirroring src/
 docs/              the published site; docs/adr/, docs/agents/ and docs/research/ are agent-facing
 skills/            repo-local agent skills
@@ -178,3 +176,4 @@ Where a fact has to survive, it has a home that is checked:
 | Filing or working an issue | `docs/agents/issue-tracker.md` |
 | Labelling someone else's issue | `docs/agents/triage-labels.md` |
 | Writing anything | `docs/agents/writing.md` |
+| Looking for evidence already gathered | `docs/research/index.md` |

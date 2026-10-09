@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
-from liulab_mbio.cloning.gateway.recombination import recombine
-from liulab_mbio.edits import rotate
-from liulab_mbio.sequence import (
+from mbio.cloning.gateway.att import CROSSOVER, REGIONS, find_att_sites
+from mbio.cloning.gateway.recombination import recombine
+from mbio.edits import rotate
+from mbio.sequence import (
     BindingSite,
     Primer,
     Segment,
@@ -21,7 +21,7 @@ from liulab_mbio.sequence import (
 from .records import att_site, destination_vector
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway.recombination import Recombination
+    from mbio.cloning.gateway.recombination import Recombination
 
 
 @pytest.fixture(scope="module")
@@ -79,6 +79,22 @@ def test_every_feature_of_both_records_is_carried_to_its_new_coordinates(
     assert product.extract(named["GFP"]).startswith("ATG")
     starts = [feature.segments[0].start for feature in product.features]
     assert starts == sorted(starts)
+
+
+def test_an_expression_clone_is_not_drawn_with_the_entry_clone_s_att_sites(
+    bp: Recombination, destination: SequenceRecord, insert: SequenceRecord
+) -> None:
+    """BP names the entry clone's attL sites, and LR must not carry the far half of one on."""
+    entry = bp.product
+    assert {one.name for one in entry.features if one.type == "misc_recomb"} == {"attL1", "attL2"}
+
+    product = recombine(entry, destination, reaction="LR").product
+    assert {one.name for one in product.features if one.type == "misc_recomb"} == {
+        "attB1",
+        "attB2",
+    }
+    [gfp] = [one for one in product.features if one.name == "GFP"]
+    assert len(product.extract(gfp)) == len(insert.extract(insert.features[0]))
 
 
 def test_a_primer_of_the_source_records_is_annotated_where_it_still_binds(
@@ -164,6 +180,19 @@ def test_junctions_across_the_product_s_origin_leave_spans_ending_past_its_lengt
     start, end = made.recombined
     assert start < len(made.product) < end
     assert made.product.extract(Segment(start, end)) == lr.product.extract(Segment(*lr.recombined))
+
+
+def test_a_junction_check_names_each_site_one_based_on_a_product_crossing_the_origin(
+    entry: SequenceRecord, destination: SequenceRecord
+) -> None:
+    # Turned to 89, the vector's first base falls inside the first junction's att region.
+    made = recombine(entry, rotate(destination, 89), reaction="LR")
+    first, second = made.junctions
+
+    assert made.recombined[0] < len(made.product) < made.recombined[1]
+    assert made.checks[0].detail == (
+        f"{first.name} at {first.start + 1}, {second.name} at {second.start + 1}"
+    )
 
 
 def test_bp_writes_an_entry_clone_carrying_the_insert_between_its_attl_sites(

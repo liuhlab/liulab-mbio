@@ -1,7 +1,7 @@
 ---
 name: barcode-design
 description: >-
-  Design a set of DNA barcodes with `liulab_mbio`: every pair of one part list far enough apart,
+  Design a set of DNA barcodes with `mbio`: every pair of one part list far enough apart,
   by the set's distance metric, that no two read as one, no restriction or Type IIS site in either orientation,
   the junction with the cloning scar included, and no stop codon where the construct translates
   the barcode. The set is reproducible from a seed, and a set someone already holds is checked
@@ -12,7 +12,7 @@ description: >-
 
 # Barcode design
 
-`liulab_mbio.barcodes` designs the set and judges it. Your job is to state the length, the
+`mbio.barcodes` designs the set and judges it. Your job is to state the length, the
 cloning scar, the reading frame and the enzymes. Never write a barcode from your own knowledge:
 nothing checks a base you invented, and the package draws each one
 (`docs/adr/0002-editable-protocols.md`).
@@ -20,7 +20,7 @@ nothing checks a base you invented, and the package draws each one
 ## State the rules, then design
 
 ```python
-from liulab_mbio.barcodes import BarcodeRules, check_barcodes, design_barcodes
+from mbio.barcodes import BarcodeRules, check_barcodes, design_barcodes
 
 rules = BarcodeRules(11, scar="AGCG", phase=0, forbidden=["BsaI", "BbsI"])
 design_barcodes(24, rules)
@@ -30,7 +30,7 @@ design_barcodes(24, rules)
 rather than at the bench. Read the docstrings rather than reconstructing a call:
 
 ```bash
-pixi run python -c "from liulab_mbio.barcodes import design_barcodes; help(design_barcodes)"
+pixi run python -c "from mbio.barcodes import design_barcodes; help(design_barcodes)"
 ```
 
 ## The four things to ask the user

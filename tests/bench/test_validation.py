@@ -7,9 +7,9 @@ from itertools import pairwise
 
 import pytest
 
-from liulab_mbio import edits
-from liulab_mbio.bench.gels import LADDER_100_BP
-from liulab_mbio.bench.validation import (
+from mbio import edits
+from mbio.bench.gels import LADDER_100_BP
+from mbio.bench.validation import (
     COLONY_ALLOWANCE,
     COLONY_FLANK,
     CORRECT_CLONE,
@@ -22,7 +22,7 @@ from liulab_mbio.bench.validation import (
     colony_pcr_check,
     sanger_primers,
 )
-from liulab_mbio.sequence import Primer, SequenceRecord, reverse_complement
+from mbio.sequence import Primer, SequenceRecord, reverse_complement
 
 #: The multiple cloning site of the fixture, 0-based and half-open, and the GFP that replaces it.
 MCS = (395, 452)

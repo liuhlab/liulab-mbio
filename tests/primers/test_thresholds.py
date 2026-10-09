@@ -1,8 +1,8 @@
 import dataclasses
 
-from liulab_mbio.checks import Check
-from liulab_mbio.primers import THRESHOLDS, THRESHOLDS_FOR, Band, evaluate_primer, reading
-from liulab_mbio.sequence import Primer
+from mbio.checks import Check
+from mbio.primers import THRESHOLDS, THRESHOLDS_FOR, Band, evaluate_primer, reading
+from mbio.sequence import Primer
 
 from .sequences import M13_FWD
 

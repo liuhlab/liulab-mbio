@@ -7,7 +7,7 @@ search:
 
 Research note for issue #78. Everything below was read or measured on **2026-09-16**.
 
-It compares the ways the planned `liulab_mbio.plot` module could write a sequence record as one
+It compares the ways the planned `mbio.plot` module could write a sequence record as one
 HTML file that opens offline: a map, the sequence view below it, details on hover, layers and
 feature types shown or hidden, and two switches at the top right, as in SnapGene Viewer — circular
 or linear, and the sequence view shown or hidden. It also asks what the same drawing gives as PNG

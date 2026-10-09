@@ -6,7 +6,7 @@ names the function that decided the value rather than the pipeline that read it.
 
 import pytest
 
-from liulab_mbio.cloning.gibson.assembly import (
+from mbio.cloning.gibson.assembly import (
     Assembly,
     Part,
     amplify,
@@ -14,11 +14,11 @@ from liulab_mbio.cloning.gibson.assembly import (
     given_vector,
     open_vector,
 )
-from liulab_mbio.cloning.gibson.bench import NEBUILDER_HIFI
-from liulab_mbio.cloning.gibson.design import overlap_after, overlap_before
-from liulab_mbio.edits import rotate
-from liulab_mbio.primers.thresholds import THRESHOLDS_FOR
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from mbio.cloning.gibson.bench import NEBUILDER_HIFI
+from mbio.cloning.gibson.design import overlap_after, overlap_before
+from mbio.edits import rotate
+from mbio.primers.thresholds import THRESHOLDS_FOR
+from mbio.sequence import SequenceRecord, reverse_complement
 
 #: Where the fixture's own MCS feature sits, which is the span the insert replaces.
 MCS = (395, 452)

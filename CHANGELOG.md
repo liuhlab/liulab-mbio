@@ -9,15 +9,34 @@ sets one.
 
 ### Added
 
-- DMX has a way in of its own. `pixi run liulab_synbio dmx plan BUILD --out DIR` reads
+- The published site has a page for each method the package plans: Golden Gate, Gibson,
+  restriction and ligation, Gateway, primer design with its genome check, barcode sets, codon
+  optimisation, and maps and figures, under one page that chooses between them. Each one prints
+  the command, the line that command really prints, and links the files that run wrote.
+- Eight more worked examples ship, every byte of them written by the command its page prints:
+  the same two records joined by Gibson and by restriction and ligation, a Gateway BP and LR
+  pair on a donor and a destination built from the published att sequences, a primer pair, a
+  24-barcode set, GFP written for *E. coli*, and three drawings of pUC19 and the finished
+  plasmid. `scripts/check_examples.py` compares all fourteen.
+- A library build may name the carrier its parts are kept in, and the run then opens by seating
+  all of them: one part a well, in a plasmid supplied linearised, with nothing added to join the
+  two. `plan_igga` writes it as the first protocol of the chain and the rounds pool their donors
+  out of its plate. A build naming no `carrier` holds its parts already and plans what it did
+  before. `docs/examples/ap1-library` seats its 72 parts in pCR-Blunt II-TOPO.
+
+- DMX has a way in of its own. `pixi run synbio dmx plan BUILD --out DIR` reads
   designs back one well at a time, from a plate a lab already holds and with no library run
   behind it. The build file names the designs sheet, the archive plate, the marking route
   and the fragment-count floor. The sheet is two columns: a name, and how many fragments the
   design was built from. No sequence is read, so any frozen stock can be read back. The run
   designs no DNA, so a protocol folder is the whole of what it writes.
   `docs/examples/ap1-readback` is one such run, over the AP-1 library's own cargo.
+- Three more commands write files. `barcode-design` writes a part list's barcodes and the checks
+  on them, `primers design` writes the order sheet and, on a genome, every amplicon the pair
+  makes there, and `codon-optimize --out` writes the coding sequence and the codons it moved.
+  Without `--out` it still prints, as before.
 - A ligase joins some overhangs far more rarely than another does, and that costs colonies rather
-  than product. `liulab_mbio.overhangs.on_target` reports how often the ligase a matrix measured
+  than product. `mbio.overhangs.on_target` reports how often the ligase a matrix measured
   joined each overhang of a set to its own partner, and names the ones below the rate NEB calls a
   strong pair. A library plan reads one where you point it at a matrix you hold, with
   `--ligase-matrix` and `--ligase-sheet` or the `LIULAB_MBIO_LIGASE_MATRIX` variable, and every
@@ -42,7 +61,7 @@ sets one.
   into 1536 wells, index PCR's index plates and the reagents all follow from that set, so a design
   the floor leaves out costs no well. Picking fills one quarter of a picked plate at a time, which
   is what makes a part-filled plate give full index plates: the AP-1 demo's 288 wells give three
-  index plates at 96, not four at 72. `liulab_mbio.bench.plates.interleave` is the general move
+  index plates at 96, not four at 72. `mbio.bench.plates.interleave` is the general move
   behind it.
 - The AP-1 example reads its wells back both ways at once, and says how to pick one. Its
   project file names both routes, so the run writes a page for each and marks them as the two
@@ -50,7 +69,7 @@ sets one.
   one of them. What to weigh is on the way in — a fixed cost per run that falls as more designs
   share it, against one thermocycled reaction in every well. How many wells each route reaches
   does not decide it, and the page says so. Nothing in the code picks a way.
-- Gateway cloning, end to end. `liulab_mbio.cloning.gateway.plan_gateway` and `liulab_mbio
+- Gateway cloning, end to end. `mbio.cloning.gateway.plan_gateway` and `mbio
   cloning gateway plan` take an insert and a destination vector and plan both reactions. Nothing
   is cut and nothing is ligated here: two att sites recombine, and the reaction rewrites the
   sites themselves. So there is no enzyme to pick and no overhang to score. There are three
@@ -81,7 +100,7 @@ sets one.
   methods on the same five things, with a `variants.md` beside it for the published routes this
   command does not plan. A docs page follows one Gateway job end to end.
 - Classical restriction and ligation cloning, end to end.
-  `liulab_mbio.cloning.restriction.plan_restriction` takes a vector and an insert, plans both
+  `mbio.cloning.restriction.plan_restriction` takes a vector and an insert, plans both
   digests and the gel that separates their fragments, works the ligation out in picomoles, and
   designs the colony PCR, the diagnostic digest and the sequencing that confirm the clone. It
   says what each junction now reads, because this method's join puts the enzyme's own site back,
@@ -89,7 +108,7 @@ sets one.
   four files every cloning plan writes. The second record may be the insert itself or the
   plasmid it is cut out of. One already carrying both sites is cut out and taken off a gel. One
   carrying neither is amplified first, with a spacer and the site on each primer tail.
-- `liulab_mbio cloning restriction plan` on the command line, and a `restriction-ligation`
+- `mbio cloning restriction plan` on the command line, and a `restriction-ligation`
   method file behind the `molecular-cloning` skill, which now sends a job to this method instead
   of calling it unsupported.
 - The enzyme pair is chosen for you when you name none. Every pair of the 18 shipped enzymes
@@ -104,7 +123,7 @@ sets one.
   also go in either way round, so the colony PCR reads out of the insert itself and draws a lane
   for the reversed clone. Where the two ends cannot pair, that lane is left off: it was a lane
   for a plasmid that cannot exist.
-- Gibson assembly, end to end. `liulab_mbio.cloning.gibson.plan_gibson` and `liulab_mbio cloning
+- Gibson assembly, end to end. `mbio.cloning.gibson.plan_gibson` and `mbio cloning
   gibson plan` take a vector and up to five inserts, in the order they go round the product and
   either way round. Nothing is cut, so a part that reads a site for every Type IIS enzyme still
   goes in as it is. The vector is opened by PCR across the span the inserts replace, or handed in
@@ -138,7 +157,7 @@ sets one.
   All sixteen multiple cloning site enzymes read `rCutSmart Buffer`, so any pair of them can be
   cut in one tube; BsmBI-v2 and BspQI read `NEBuffer r3.1`. The buffer belongs to the product
   rather than to the enzyme name, and each one was read from that product's own page.
-- A map of a sequence record. `liulab_mbio.plot.draw_map` and `liulab_mbio plot map RECORD -o
+- A map of a sequence record. `mbio.plot.draw_map` and `mbio plot map RECORD -o
   map.html` draw a `.dna`, GenBank or FASTA file as a circular map, written as one HTML page that
   opens offline. A feature keeps the colour its file gives it. One with no colour takes a
   default for its type that people with colour blindness can tell apart. A feature's name sits on
@@ -216,32 +235,32 @@ sets one.
   domestication names the codons it would move to. The strain the protocol transforms is still
   `--host`, and still *E. coli*.
 - A barcoded library of protein combinations, built in rounds rather than one pot.
-  `liulab_mbio.library.plan_library` takes lists of proteins, or coding DNA, with a scheme and a
+  `mbio.library.plan_library` takes lists of proteins, or coding DNA, with a scheme and a
   destination vector. It picks the overhang standard that costs the proteins fewest changed
   residues, writes each part's synthesis sequence with its own barcode, fits a vector that cannot
   be opened yet, simulates every round, and counts the colonies a round needs for the coverage
   asked for. `LibraryPlan.write` puts the synthesis order sheet, the barcode table, the
   amino-acid change table, a record for each round, the assembled product, the protocol as JSON
   and the page rendered from it in one directory.
-- `liulab_mbio library plan` on the command line, and a repo-local `protein-assembly` skill that
+- `mbio library plan` on the command line, and a repo-local `protein-assembly` skill that
   calls it.
 - Writing DNA for a protein, and choosing its codons for a host while clearing sites it must not
-  spell (`liulab_mbio.translate`); and barcode sets held a set distance apart
-  (`liulab_mbio.barcodes`). Each has its own skill, `codon-optimize` and `barcode-design`,
+  spell (`mbio.translate`); and barcode sets held a set distance apart
+  (`mbio.barcodes`). Each has its own skill, `codon-optimize` and `barcode-design`,
   because both are wanted outside a library build.
 - SrfI and PmeI join the shipped enzymes, rebuilt through the enzyme-data builder.
 - Two research notes: the library method with every number sourced to the paper it comes from,
   and whether a barcode set needs limits on GC and on repeated bases. The second measured the
   evidence rather than following custom, and the answer is a cap on repeated bases and no GC
   band at all.
-- Golden Gate cloning, end to end. `liulab_mbio.goldengate.plan_assembly` takes a vector and
+- Golden Gate cloning, end to end. `mbio.goldengate.plan_assembly` takes a vector and
   any number of inserts, picks a Type IIS enzyme with no site in the parts, designs the whole
   overhang set, checks every primer, simulates the assembly, and designs the colony PCR and
   sequencing that confirm the clone. `Plan.write` writes the annotated product, the primer
   order sheet, the protocol as JSON data (`write_protocol`), and an interactive HTML bench
   protocol rendered from that data, whose order sheet carries each oligo's verdict, and says
   which check fired and what it measured.
-- `liulab_mbio goldengate plan` and `liulab_mbio protocol render` on the command line, and a
+- `mbio goldengate plan` and `mbio protocol render` on the command line, and a
   repo-local `golden-gate-assembly` skill that calls them.
 - SnapGene `.dna` read and write, with editing that carries features and primer binding sites,
   under one 0-based half-open coordinate model shared by every module.
@@ -253,10 +272,30 @@ sets one.
 - Primer design and evaluation against NEB's published rules, per polymerase.
 - Fidelity scoring against a ligase matrix the user holds, by `--ligase-matrix` or
   `LIULAB_MBIO_LIGASE_MATRIX`. Nothing from that archive ships here.
-- Docs: a walkthrough of GFP into pUC19, the plan it writes published as a live example, and
-  an API reference covering every public module.
+- Docs: a walkthrough of GFP into pUC19, with the plan it writes published as a live example.
+- Docs: five reference pages, each written for a lookup rather than a tour of the modules.
+  `reference/python.md` names the 61 calls a script makes, grouped by the job they do, and each
+  heading prints the import line to copy. `reference/cli.md` documents every verb of both
+  commands, its arguments and the files it writes, and a test holds that list to the apps
+  themselves rather than to anything they print. Three lookups join them: what a ligation
+  fidelity figure predicts and which enzyme stands in for which where nobody has measured one,
+  the shape of the DMX barcode kit, whose 96 sequences you hold your own copy of, and what
+  ships with the package against what it reads from your disk.
 
 ### Changed
+
+- The documentation site is arranged by what a reader is doing: Home, Methods, Protocols,
+  Projects and Reference. A page is named for the thing it covers, so the menu now lists what
+  the package ships. Protocols is a catalogue of the bench procedures it writes, with two pages
+  under it on reading one and changing one. Projects holds the two methods this lab runs end to
+  end. `Highly parallel DNA synthesis and assembly` becomes a page for iGGA and a page for DMX,
+  each taking its worked run from the example it already had, and the specification behind both
+  moves to the note that holds its evidence.
+
+- What one library run chooses is a **build** everywhere, as it already is for a read-back:
+  `LibraryPlan.build`, `plan_igga(build, ...)` and every `build=` the gate takes. A project is
+  the chain of protocols a build writes, and nothing else. The file a user writes keeps the
+  name `project.json`, so no build file has to move.
 
 - A protocol now fails its own check when a number is missing only because nobody read the
   document that gives it. Every other missing number leaves the check with no verdict, as
@@ -267,19 +306,19 @@ sets one.
   specification sheet for the enzyme. The page names that sheet beside the number.
 
 - The combinatorial library pipeline is named after its method rather than its product:
-  `liulab_synbio.igga`, with `plan_igga` as its way in and `liulab_synbio igga plan` on the
+  `synbio.igga`, with `plan_igga` as its way in and `synbio igga plan` on the
   command line. Every cloning pipeline already names its way in after the method —
   `plan_assembly`, `plan_gibson`, `plan_restriction`, `plan_gateway` — and iGGA is what this one
   does. Nothing else changed: the same modules, the same tests, the same files written with the
   same bytes. "Library" still names the product everywhere it means the pool of constructs.
-- The combinatorial library pipeline moved to `liulab_synbio`, the package for one named
+- The combinatorial library pipeline moved to `synbio`, the package for one named
   method's pipelines. It fixes one method's enzymes, stuffers and round order, so it sits on
   synbio's side of the boundary. Nothing was rewritten: the same eleven modules, the same tests,
-  the same files written with the same bytes. The command is now `liulab_synbio library plan`
-  rather than `liulab_mbio library plan`, and the import path moves with it:
-  `liulab_synbio.library.plan_library`. `liulab_mbio` imports nothing from `liulab_synbio`.
+  the same files written with the same bytes. The command is now `synbio library plan`
+  rather than `mbio library plan`, and the import path moves with it:
+  `synbio.library.plan_library`. `mbio` imports nothing from `synbio`.
 - A plate step now names the medium the drug needs, and reads a marker the table does not know.
-  `liulab_mbio.bench.phenotype` gained the markers Gateway's vectors carry: kanamycin, Zeocin
+  `mbio.bench.phenotype` gained the markers Gateway's vectors carry: kanamycin, Zeocin
   and spectinomycin. Zeocin only works in low-salt medium, so `Phenotype.medium` sits beside the
   antibiotic and every method's plate step reads it. A resistance gene the table cannot name is
   now found anyway and named on the plate, rather than left out. A marker inside the piece a
@@ -293,17 +332,17 @@ sets one.
   activity each keeps in the other's buffer, which nothing this package may ship states.
 - An insert with no room for a junction primer no longer stops a colony PCR being designed. A
   junction primer anneals 100 bases inside the insert, so a linker or a tag is too short to hold
-  one. `liulab_mbio.bench.validation.colony_pcr_check` used to refuse; it now leaves that primer
+  one. `mbio.bench.validation.colony_pcr_check` used to refuse; it now leaves that primer
   off, keeps the flanking pair that reads across the junction, and says the gel cannot tell an
   insert that short from one the wrong way round. Golden Gate plans of a short insert are
   designed rather than refused for the same reason.
-- The cloning methods are grouped under one verb. `liulab_mbio goldengate plan` is now
-  `liulab_mbio cloning goldengate plan`, and `liulab_mbio cloning --help` lists the methods this
-  package plans. `liulab_mbio library plan` is unchanged. The import path moves with the verb:
-  `liulab_mbio.cloning.goldengate.plan_assembly`. The plan writes the same four files, with the
+- The cloning methods are grouped under one verb. `mbio goldengate plan` is now
+  `mbio cloning goldengate plan`, and `mbio cloning --help` lists the methods this
+  package plans. `mbio library plan` is unchanged. The import path moves with the verb:
+  `mbio.cloning.goldengate.plan_assembly`. The plan writes the same four files, with the
   same names and the same bytes. The `golden-gate-assembly` skill is now `molecular-cloning`,
   which picks the method for the job and reads `golden-gate/METHOD.md` once it has.
-- Barcode sets are designed on an indel-aware distance by default. `liulab_mbio.barcodes` takes
+- Barcode sets are designed on an indel-aware distance by default. `mbio.barcodes` takes
   the metric as a dial: `sequence-levenshtein`, which counts a lost or gained base, or `hamming`,
   which counts mismatches and cannot see one. Measured over the 11-mer space, between 19% and
   46% of the single deletions of a Hamming set read as another barcode of the same set, against
@@ -318,6 +357,11 @@ sets one.
   while a PCR primer still needs 18. A design picks the primer length that warns least on
   length, GC, GC clamp and Tm. A band no published rule sets, such as the GC clamp, reads as
   proposed on the order sheet.
+- The import packages and the two commands are now `mbio` and `synbio`. Every `liulab_mbio` and
+  `liulab_synbio` import becomes `mbio` and `synbio`, and `pixi run liulab_mbio …` becomes
+  `pixi run mbio …`. There is no alias and no deprecation period. The distribution is still
+  `liulab-mbio`, so nothing about installing changes, and the `LIULAB_MBIO_*` and
+  `LIULAB_SYNBIO_*` environment variables keep their names.
 
 ### Removed
 
@@ -325,6 +369,48 @@ sets one.
 
 ### Fixed
 
+- Drawing a map into a directory that is not there makes it, as every verb taking an output
+  directory already did. `mbio plot map RECORD -o figures/map.pdf` used to end in a traceback.
+- No Gateway clone is drawn with the site it no longer carries. The piece that moves brings the
+  far half of its own att site along, and the old name was kept over bases the reaction had
+  renamed, so an expression clone's map read `attL1` across part of its attB1. A recombination
+  site the reaction has named in full is now the only one drawn there; every other annotation
+  inside those 25 bases is left alone.
+- A handling rule now reaches every page that handles the thing, not only the page that makes
+  it. A rule hangs on the item a protocol hands over, so the protocol thawing a single-use
+  primer plate states what it may never do just as the protocol pouring it does.
+- No library page now says an enzyme has stopped cutting a record it still cuts. Each round's
+  prep counts the sites its own product carries, the final assembly says the cargo enzyme cuts
+  only the cassette it opens, and the AP-1 maps name the four enzymes the method turns on, which
+  cut twice and so were drawn on none of them.
+- A position printed for a reader counts from 1, as a span already did. Every junction,
+  site and locus a bench page, a check or a summary line names is converted through
+  `mbio.sequence.position_text`, and a genome locus reads `NAME:START..END`, the
+  spelling `--region` takes.
+- A run's bill tells the whole truth about money. Every reagent a protocol names is a row, with
+  a charge where the record prices it and a declared hole where nothing does, so no item is
+  passed over in silence. Money prints to the cent, and the column adds up to the total under
+  it. A library build now states the working vector's mass alone: the release is never purified,
+  so the digest fixes the cargo against it and a build can no longer ask for a ratio its own
+  release contradicts.
+- An amplicon found across a circular genome's origin reads round it: `pUC19:2677..481`,
+  rather than an end counted past the sequence's length.
+- The library run's pages no longer state a figure the package already computes. The equipment
+  list names a sequencer per platform the designed reads ask for, rather than one long-read
+  instrument for all three; the pool's concentration floor and the digest table that uses it are
+  one number; the stuffer's two lengths are named as the whole and the excised core they are; and
+  no page cites a kit the run never buys.
+- A PDF page of the sequence view is now as tall as the rows on it. A short view used to be
+  padded to A4's proportions, leaving two-thirds of the page blank.
+- The library run's last page is one the bench can work. It names the record the plan now writes
+  for the working vector with its ccdB cassette in, gives the one-pot assembly a reaction table
+  carrying the cargo's own mass, buys one aliquot and one cuvette per pulse rather than per
+  round, and names the plate the final transfer selects on.
+- A feature now grows over new bases only where it has bases of its own either side of the
+  edit, so a round's internal stuffer no longer reads over the whole cargo that replaced it.
+- Bench text reads as the bench reads it: a count and its noun agree, so no page prints
+  `tube(s)`; a span printed for a reader counts from 1 and includes its last base; and a
+  protocol's materials table lists what its own steps reach and nothing else.
 - A whole-number headroom on a bill row reads `350 length` again, not `350.0 length`. The
   quantity reached it as a float, and the trailing zero showed on every row carrying a band.
 - The reversed-insert lane of a colony PCR is now read off a plasmid that can exist. The lane

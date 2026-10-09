@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "dbb9dc17bcbcd1b5",
+  "key": "75448250f08948bc",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -37,7 +37,7 @@
     {
       "name": "junctions",
       "status": "pass",
-      "detail": "ATGA at 395, TGGC at 1112"
+      "detail": "ATGA at 396, TGGC at 1113"
     },
     {
       "name": "primers",
@@ -977,7 +977,7 @@
       ],
       "cautions": [],
       "notes": [
-        "Junction positions are 0-based, on the product."
+        "Junction positions are 1-based, on the product."
       ],
       "tables": [],
       "programs": [
@@ -1041,8 +1041,8 @@
       "gels": [],
       "expected": [
         "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.",
-        "The product carries ATGA at 395, joining pUC19 backbone to GFP.",
-        "The product carries TGGC at 1112, joining GFP to pUC19 backbone."
+        "The product carries ATGA at 396, joining pUC19 backbone to GFP.",
+        "The product carries TGGC at 1113, joining GFP to pUC19 backbone."
       ],
       "troubleshooting": [
         {

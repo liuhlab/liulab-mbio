@@ -1,7 +1,7 @@
 ---
 name: codon-optimize
 description: >-
-  Write a protein as a synthesis-ready coding sequence for a named host with `liulab_mbio`:
+  Write a protein as a synthesis-ready coding sequence for a named host with `mbio`:
   reverse-translate it with the codons that host counts most often, take out every restriction
   or Type IIS site you name by synonymous codon change, and report every codon it moved. A
   sequence already coded is checked rather than written again. Use whenever someone wants a gene
@@ -12,7 +12,7 @@ description: >-
 
 # Codon optimise
 
-`liulab_mbio.translate` writes the DNA and checks it. Your job is to name the host and the
+`mbio.translate` writes the DNA and checks it. Your job is to name the host and the
 enzymes, and to read back what it changed. Never write a codon, a sequence or a site position
 from your own knowledge: the package works each one out from a shipped codon usage table, and
 nothing checks a base you invented (`docs/adr/0002-editable-protocols.md`).
@@ -21,16 +21,16 @@ nothing checks a base you invented (`docs/adr/0002-editable-protocols.md`).
 
 Each shipped table is counted over one genome. Ask the user which host the construct expresses
 in, and pass that table's name. Never guess a host, and never write a codon table: a table
-comes from `liulab_mbio.codons` or it does not exist.
+comes from `mbio.codons` or it does not exist.
 
 ```bash
-pixi run python -c "from liulab_mbio.codons import codon_tables; print(codon_tables())"
+pixi run python -c "from mbio.codons import codon_tables; print(codon_tables())"
 ```
 
 ## Run it
 
 ```bash
-pixi run liulab_mbio codon-optimize PROTEIN --kind protein --host HOST --forbid BsaI --forbid BbsI
+pixi run mbio codon-optimize PROTEIN --kind protein --host HOST --forbid BsaI --forbid BbsI
 ```
 
 `--kind` says what you passed, `protein` or `dna`, and it is required: A, C, G and T are all
@@ -40,7 +40,7 @@ enzyme. It prints a summary line, one line per codon it changed, and the sequenc
 ## From Python
 
 ```python
-from liulab_mbio.translate import optimize_coding_sequence, optimize_protein, reverse_translate
+from mbio.translate import optimize_coding_sequence, optimize_protein, reverse_translate
 
 optimize_protein(protein, host="e-coli-k12", forbidden=["BsaI"], name="part A")
 optimize_coding_sequence(dna, host="e-coli-k12", forbidden=["BsaI"], name="part A")
@@ -55,7 +55,7 @@ protein-to-DNA step on its own, with no site removal.
 Read the docstrings rather than reconstructing a call:
 
 ```bash
-pixi run python -c "from liulab_mbio.translate import optimize_protein; help(optimize_protein)"
+pixi run python -c "from mbio.translate import optimize_protein; help(optimize_protein)"
 ```
 
 ## A coded sequence is checked, not written again

@@ -5,9 +5,9 @@ search:
 
 # The AP-1 demo build
 
-Specification for issue #217, under the spec at #210. One real build against
-`docs/synthesis-and-assembly.md`, end to end, so development has something concrete to build
-toward.
+Specification for issue #217, under the spec at #210. One real build against the method
+specified in `docs/research/synthesis-and-assembly.md`, end to end, so development has
+something concrete to build toward.
 
 **Everything decided here is decided for this build only.** The method page keeps carrying
 each question as open, and nothing below is a package default. Where this note answers a
@@ -470,22 +470,24 @@ right number of reactions:
 
 | Step | Destination | Donor | Enzymes | Distinct products |
 | --- | --- | --- | --- | --- |
-| Seat every part | DMX vector | all 72 parts, one design per well | BsmBI | 72 designs |
+| Seat every part | part carrier | all 72 parts, one a well | topoisomerase I | 72 plasmids |
+| Make the cargo | DMX vector | all 72 parts, one design per well | BsmBI | 72 designs |
 | Round 1 | N part list | DBD part list | BbsI + SrfI / BsaI + PmeI | 576 |
 | Round 2 | N+DBD library | C part list | BbsI + SrfI / BsaI + PmeI | 13,824 |
 | Final assembly | working vector | the finished library | PaqCI, one pot | 13,824 |
 
-All 72 parts are cloned into the DMX vector at the carrier step, because our donor carries no
-release sites of its own and cannot be a donor until it is cloned (the constraint recorded under
-open decision 6.7).
+All 72 parts are cloned into the DMX vector, because our donor carries no release sites of its
+own and cannot be a donor until it is cloned (the constraint recorded under open decision 6.7).
+The carrier is the row above it and a different plasmid: a part is kept in pCR-Blunt II-TOPO so
+the collection keeps, and BsmBI cuts it back out when a round wants it.
 
-**The pipeline counts differently, and it is right to.** `liulab_synbio.igga` models one round
+**The pipeline counts differently, and it is right to.** `synbio.igga` models one round
 a position, so it plans three for this build. Measured on 2026-10-06: its first round opens the
 destination with the internal enzyme, ligates the N part list released by the external enzyme,
 transforms it and sizes it for 24 products — the same reaction as the two after it. That is not
-the carrier step, which runs BsmBI one well a part and makes no library. No pipeline seats a part
-in a carrier, so this table is not reachable through one: `liulab_synbio.dmx.carrier` models
-the reaction, and no plan assembles it into a run.
+the carrier step, which seats one part a well and makes no library. The build names the carrier
+and `plan_igga` plans that step as the protocol its chain opens with, so every row of this table
+is reachable by running the demo's own command.
 
 After round 2: the linkage read, then the representation read. Representation is read again
 after the final assembly, after packaging and after transduction — each is a bottleneck that
@@ -775,7 +777,7 @@ pool, and no member is re-identified. At 300x the three rounds would have asked 
 
 A multiple was the wrong parameter and not only the wrong value: one ratio against each round's
 own products buys a different risk every round. The completeness is what holds across them, so
-`liulab_mbio.bench.coverage` computes each round's floor from it — 183, 6,306 and 195,386
+`mbio.bench.coverage` computes each round's floor from it — 183, 6,306 and 195,386
 colonies, which no whole multiple reproduces. It is a **floor, not a sufficiency claim**: it
 assumes every member equally represented, and synthesis skew breaks that. What the screen
 downstream needs is still open, and stays in section 10.
@@ -850,4 +852,5 @@ Every measurement cited above is recorded in one of these, and none is recompute
 - `docs/research/barcode-design.md` — the distance metric, the absent GC band, the homopolymer
   cap and the draw order.
 - `docs/research/codon-usage.md` — the `human` table, counted from hg38 through liulab-genome.
-- `docs/synthesis-and-assembly.md` — the method itself, which keeps every question above open.
+- `docs/research/synthesis-and-assembly.md`, *The method as specified* — the method itself,
+  which keeps every question above open.

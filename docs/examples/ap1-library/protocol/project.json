@@ -1,7 +1,7 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "795cd5ae91ec635e",
-  "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 6 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
+  "key": "61dd82fff408607c",
+  "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
       "title": "How this library is designed",
@@ -9,7 +9,7 @@
         "One round appends one part list to every member of the library at once, so 3 rounds make 13,824 constructs out of 72 synthesised parts.",
         "The product keeps BbsI's sites, which is what lets the next round open it, and loses BsaI's with the external stuffers.",
         "Your vector already carried an internal stuffer, so every part enters position N on AGGA, which is the overhang that stuffer spells: DNA that exists cannot be re-chosen.",
-        "The overhang standard changes 27 amino acid(s) across 26 part end(s); changes.tsv has wild type beside synthesised, and that is what you are about to pay for.",
+        "The overhang standard changes 27 amino acids across 26 part ends; changes.tsv has wild type beside synthesised, and that is what you are about to pay for.",
         "The last round needs 195,386 colonies for a 0.99 chance that none of its 13,824 products is missing, which is 14x its products. A round short of that floor loses members no later round can put back.",
         "The finished barcode block is 41 bp and reads in the reverse of the order the rounds ran; barcodes.tsv says which barcode names which part."
       ]
@@ -34,32 +34,44 @@
     "../library-read-primers.tsv",
     "../block-vector-1.dna",
     "../block-vector-2.dna",
-    "../block-vector-3.dna"
+    "../block-vector-3.dna",
+    "../working-vector-ccdb.dna"
   ],
   "inputs": [
+    {
+      "name": "parts to seat",
+      "what": "one part a tube, blunt and flanked so BsmBI releases it from its carrier",
+      "spec": [],
+      "storage": "-20 °C",
+      "rules": []
+    },
     {
       "name": "block vector 1",
       "what": "DMX-iGGA N, which a block of position 1 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "block vector 2",
       "what": "DMX-iGGA DBD, which a block of position 2 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "block vector 3",
       "what": "DMX-iGGA C, which a block of position 3 closes into",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "DMX barcode kit",
       "what": "the lab's own barcoding plasmids, one group a picked plate, for the barcode ligation way only",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "Barcoded index primer plate",
@@ -67,19 +79,227 @@
       "spec": [
         "1 µM each"
       ],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     },
     {
       "name": "working vector",
       "what": "pLVX-TetOne-dom the finished library ends in",
       "spec": [],
-      "storage": "-20 °C"
+      "storage": "-20 °C",
+      "rules": []
     }
   ],
   "protocols": [
     {
+      "title": "Part carrier",
+      "key": "1e6b9176da4228eb",
+      "summary": "Put each of 72 parts in its own pCR-Blunt II-TOPO, one part a well, so the collection keeps and BsmBI can release any of them again.",
+      "overview": {
+        "Parts": "72, one a well",
+        "Plate": "96 wells",
+        "Carrier": "pCR-Blunt II-TOPO",
+        "Kit": "Zero Blunt TOPO PCR Cloning Kit",
+        "Selection": "KanR",
+        "Released by": "BsmBI"
+      },
+      "highlights": [],
+      "checks": [],
+      "choice": "",
+      "consumes": [
+        {
+          "name": "parts to seat",
+          "what": "one part a tube, blunt and flanked so BsmBI releases it from its carrier",
+          "spec": [],
+          "storage": "-20 °C",
+          "rules": []
+        }
+      ],
+      "produces": [
+        {
+          "name": "part carrier plate",
+          "what": "one pCR-Blunt II-TOPO a part, one part a well, selected on KanR",
+          "spec": [],
+          "storage": "-80 °C glycerol stock",
+          "rules": []
+        }
+      ],
+      "materials": [
+        {
+          "name": "pCR-Blunt II-TOPO",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "the part carrier; its backbone carries no BsmBI site, which is what lets BsmBI release the part again later and leave the backbone whole",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Zero Blunt TOPO PCR Cloning Kit",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "one reaction per well",
+          "note": "supplies the carrier already linearised with topoisomerase I bound to each 3' end, so the reaction adds no ligase and no other enzyme",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        }
+      ],
+      "oligos": [],
+      "order_sheet": "",
+      "files": [
+        "../parts.tsv",
+        "../barcodes.tsv",
+        "../changes.tsv",
+        "../pool.tsv",
+        "../pool-primers.tsv",
+        "../library-read-primers.tsv",
+        "../block-vector-1.dna",
+        "../block-vector-2.dna",
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
+      ],
+      "equipment": [],
+      "vessels": [],
+      "plates": [
+        {
+          "name": "Part carrier plate",
+          "wells": 96,
+          "catalog": "",
+          "holds": "one seated part each, selected on KanR",
+          "seating": {},
+          "labels": {
+            "A1": "N_JUN",
+            "A2": "N_JUNB",
+            "A3": "N_JUND",
+            "A4": "N_ATF2",
+            "A5": "N_ATF3",
+            "A6": "N_ATF4",
+            "A7": "N_ATF5",
+            "A8": "N_ATF6",
+            "A9": "N_ATF6B",
+            "A10": "N_ATF7",
+            "A11": "N_BATF",
+            "A12": "N_BATF2",
+            "B1": "N_BATF3",
+            "B2": "N_JDP2",
+            "B3": "N_MAF",
+            "B4": "N_MAFA",
+            "B5": "N_MAFB",
+            "B6": "N_MAFF",
+            "B7": "N_MAFG",
+            "B8": "N_MAFK",
+            "B9": "N_FOS",
+            "B10": "N_FOSB",
+            "B11": "N_FOSL1",
+            "B12": "N_FOSL2",
+            "C1": "DBD_JUN",
+            "C2": "DBD_JUNB",
+            "C3": "DBD_JUND",
+            "C4": "DBD_ATF2",
+            "C5": "DBD_ATF3",
+            "C6": "DBD_ATF4",
+            "C7": "DBD_ATF5",
+            "C8": "DBD_ATF6",
+            "C9": "DBD_ATF6B",
+            "C10": "DBD_ATF7",
+            "C11": "DBD_BATF",
+            "C12": "DBD_BATF2",
+            "D1": "DBD_BATF3",
+            "D2": "DBD_JDP2",
+            "D3": "DBD_MAF",
+            "D4": "DBD_MAFA",
+            "D5": "DBD_MAFB",
+            "D6": "DBD_MAFF",
+            "D7": "DBD_MAFG",
+            "D8": "DBD_MAFK",
+            "D9": "DBD_FOS",
+            "D10": "DBD_FOSB",
+            "D11": "DBD_FOSL1",
+            "D12": "DBD_FOSL2",
+            "E1": "C_JUN",
+            "E2": "C_JUNB",
+            "E3": "C_JUND",
+            "E4": "C_ATF2",
+            "E5": "C_ATF3",
+            "E6": "C_ATF4",
+            "E7": "C_ATF5",
+            "E8": "C_ATF6",
+            "E9": "C_ATF6B",
+            "E10": "C_ATF7",
+            "E11": "C_BATF",
+            "E12": "C_BATF2",
+            "F1": "C_BATF3",
+            "F2": "C_JDP2",
+            "F3": "C_MAF",
+            "F4": "C_MAFA",
+            "F5": "C_MAFB",
+            "F6": "C_MAFF",
+            "F7": "C_MAFG",
+            "F8": "C_MAFK",
+            "F9": "C_FOS",
+            "F10": "C_FOSB",
+            "F11": "C_FOSL1",
+            "F12": "C_FOSL2"
+          },
+          "rules": [],
+          "note": "72 of 96 wells used"
+        }
+      ],
+      "steps": [
+        {
+          "title": "Seat 72 parts in pCR-Blunt II-TOPO",
+          "key": "seat-parts",
+          "section": "",
+          "instructions": [
+            "Set up one Zero Blunt TOPO PCR Cloning Kit reaction per well of Part carrier plate, each holding one blunt part, the linearised carrier and the kit's salt solution.",
+            "Leave 5 min at room temperature. Topoisomerase I comes bound to the carrier, so nothing is added to join the two.",
+            "Transform each well on its own and select on KanR."
+          ],
+          "cautions": [],
+          "notes": [
+            "BsmBI releases a part from its carrier afterwards. The backbone carries no site of it, so a part comes back out on its own and the plasmid stays whole."
+          ],
+          "tables": [],
+          "programs": [],
+          "timers": [],
+          "waits": [],
+          "hands_on_seconds": null,
+          "transfers": [],
+          "figures": [],
+          "gels": [],
+          "expected": [
+            "72 carrier plasmids, one a part, each still named by the well it sits in.",
+            "No pool and no library: nothing here is mixed, so nothing has to be told apart afterwards."
+          ],
+          "troubleshooting": [
+            {
+              "problem": "Two parts end up in one well",
+              "solution": "The wells were pooled. One part a well is on purpose: a part that has met another cannot be re-cut back out on its own.",
+              "citation": null
+            }
+          ],
+          "holes": []
+        }
+      ],
+      "references": [
+        {
+          "text": "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector supplied linearised with topoisomerase I bound to each 3' end and a 5 min room-temperature reaction",
+          "url": ""
+        }
+      ],
+      "sources": {},
+      "holes": [],
+      "bill": null
+    },
+    {
       "title": "Primer plates",
-      "key": "09540dcb8a4306bc",
+      "key": "4b4477d6f23d728f",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -98,7 +318,8 @@
           "spec": [
             "100 µM"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "primer working plate 1",
@@ -107,7 +328,16 @@
             "10 µM",
             "100 µL per well"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ]
         }
       ],
       "materials": [
@@ -144,26 +374,6 @@
           "note": "",
           "contains": [],
           "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "primer working plate 1",
-          "supplier": "",
-          "catalog": "",
-          "storage": "-20 °C",
-          "amount": "100 µL per well",
-          "note": "10 µM",
-          "contains": [],
-          "rules": [
-            {
-              "kind": "forbids",
-              "subject": "return to the freezer",
-              "detail": "a thawed working plate is used once and discarded",
-              "when": "",
-              "citation": null
-            }
-          ],
           "cautions": [],
           "citation": null
         }
@@ -920,7 +1130,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Multichannel pipette",
@@ -1011,6 +1222,7 @@
             "G2": "OP80"
           },
           "labels": {},
+          "rules": [],
           "note": ""
         },
         {
@@ -1095,7 +1307,8 @@
             "G2": "OP80"
           },
           "labels": {},
-          "note": ""
+          "rules": [],
+          "note": "10 µM, 100 µL per well, -20 °C"
         }
       ],
       "steps": [
@@ -2053,7 +2266,7 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "7054a8a1b1b08018",
+      "key": "0b80c36fd8ed311d",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2065,7 +2278,8 @@
           "name": "oligo pool",
           "what": "the pool resuspended",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [
@@ -2105,7 +2319,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [],
       "vessels": [],
@@ -2175,23 +2390,7 @@
       ],
       "references": [
         {
-          "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
-          "url": ""
-        },
-        {
-          "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
-          "url": ""
-        },
-        {
-          "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool's length",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity",
+          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
           "url": ""
         }
       ],
@@ -2201,7 +2400,7 @@
     },
     {
       "title": "Cargo creation",
-      "key": "ee9f149a97821c1f",
+      "key": "4c9e683cf89da3b3",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2212,7 +2411,8 @@
           "name": "oligo pool",
           "what": "the pool resuspended",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "primer working plate 1",
@@ -2221,25 +2421,37 @@
             "10 µM",
             "100 µL per well"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": [
+            {
+              "kind": "forbids",
+              "subject": "return to the freezer",
+              "detail": "a thawed working plate is used once and discarded",
+              "when": "",
+              "citation": null
+            }
+          ]
         },
         {
           "name": "block vector 1",
           "what": "DMX-iGGA N, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 2",
           "what": "DMX-iGGA DBD, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 3",
           "what": "DMX-iGGA C, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -2247,7 +2459,8 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         }
       ],
       "materials": [
@@ -2317,12 +2530,12 @@
           "citation": null
         },
         {
-          "name": "pLVX-TetOne-dom vector",
-          "supplier": "",
-          "catalog": "",
+          "name": "BbsI-HF",
+          "supplier": "New England Biolabs",
+          "catalog": "R3539",
           "storage": "-20 °C",
-          "amount": "",
-          "note": "the library's final home; PaqCI releases its ccdB cassette to admit the cargo",
+          "amount": "2.5 µL per digest",
+          "note": "opens the library, excising its stuffer",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -2341,48 +2554,65 @@
           "citation": null
         },
         {
+          "name": "CutSmart Buffer",
+          "supplier": "",
+          "catalog": "",
+          "storage": "-20 °C",
+          "amount": "",
+          "note": "both digests run in it",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "SPRI paramagnetic beads",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "2 volumes after a digest, 1 after a ligation",
+          "note": "the two ratios differ; both elute in water",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
+          "name": "Endura ElectroCompetent Cells",
+          "supplier": "Lucigen",
+          "catalog": "60242-2",
+          "storage": "-80 °C",
+          "amount": "4 aliquots, one a pulse, 25 µL each",
+          "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
+          "contains": [],
+          "rules": [],
+          "cautions": [
+            "Keep the cells and the cuvette on ice; a warm cuvette arcs."
+          ],
+          "citation": {
+            "source": "MA133",
+            "locator": "p. 4-5"
+          }
+        },
+        {
+          "name": "Recovery medium",
+          "supplier": "",
+          "catalog": "",
+          "storage": "",
+          "amount": "one outgrowth per round",
+          "note": "",
+          "contains": [],
+          "rules": [],
+          "cautions": [],
+          "citation": null
+        },
+        {
           "name": "Selective broth and plates",
           "supplier": "",
           "catalog": "",
           "storage": "",
           "amount": "",
           "note": "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "Selective plates for the final transfer",
-          "supplier": "",
-          "catalog": "",
-          "storage": "",
-          "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "Plasmid prep kit",
-          "supplier": "",
-          "catalog": "",
-          "storage": "",
-          "amount": "one prep per round",
-          "note": "",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "Electroporation cuvettes",
-          "supplier": "",
-          "catalog": "",
-          "storage": "",
-          "amount": "3, one per round",
-          "note": "",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -2400,7 +2630,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Thermocycler taking a 96-well plate",
@@ -2488,6 +2719,7 @@
             "F11": "C_FOSL1",
             "F12": "C_FOSL2"
           },
+          "rules": [],
           "note": "1 plate, one a batch; batch 1 holds 72"
         }
       ],
@@ -2658,7 +2890,7 @@
               "records": [
                 "../oligo.dna"
               ],
-              "caption": "PCR1 pairs OP107 with OP146 and pulls one batch out of the pool, in 1 reaction(s)",
+              "caption": "PCR1 pairs OP107 with OP146 and pulls one batch out of the pool, in 1 reaction",
               "span": null,
               "linear": true,
               "sequence_view": false,
@@ -2893,7 +3125,7 @@
               "records": [
                 "../oligo.dna"
               ],
-              "caption": "PCR2 pairs OP107 with OP1 and pulls one block out of its batch, in 72 reaction(s)",
+              "caption": "PCR2 pairs OP107 with OP1 and pulls one block out of its batch, in 72 reactions",
               "span": null,
               "linear": true,
               "sequence_view": false,
@@ -3168,11 +3400,19 @@
           "url": ""
         },
         {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the same three bands, and for the FAQ answering that more cycles give worse uniformity",
+          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
           "url": ""
         }
       ],
       "sources": {
+        "MA133": {
+          "document": "Endura Competent Cells manual, Lucigen / Biosearch Technologies",
+          "edition": "MA133 26Feb2018",
+          "url": "",
+          "read_as": "plain curl",
+          "date": "2026-10-06",
+          "note": ""
+        },
         "figure-sources": {
           "document": "liulab-mbio, Figure sources for four designs",
           "edition": "",
@@ -3203,7 +3443,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "3bd0f5781bc114ec",
+      "key": "27879237f03b9b08",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3214,13 +3454,15 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         },
         {
           "name": "DMX barcode kit",
           "what": "the lab's own barcoding plasmids, one group a picked plate",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "produces": [
@@ -3228,13 +3470,15 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "materials": [
@@ -3322,7 +3566,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
@@ -3628,6 +3873,7 @@
             "P21": "quarter 3",
             "P23": "quarter 3"
           },
+          "rules": [],
           "note": "288 of 384 wells picked, a quarter at a time"
         },
         {
@@ -3637,12 +3883,13 @@
           "holds": "3.5 µL: 2 µL lysate, barcodes, water and mastermix",
           "seating": {},
           "labels": {},
+          "rules": [],
           "note": "4 picked plates to one"
         }
       ],
       "steps": [
         {
-          "title": "Array 72 design(s) and grow",
+          "title": "Array 72 designs and grow",
           "key": "array-designs",
           "section": "Array and pick",
           "instructions": [
@@ -3651,7 +3898,7 @@
           ],
           "cautions": [],
           "notes": [
-            "This run reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
+            "This run reads back every design, which a floor of zero does: 72 designs. The rest stay polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it."
           ],
           "tables": [],
@@ -3686,11 +3933,11 @@
           "cautions": [],
           "notes": [
             "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
-            "1 fragment(s): 40 design(s), 100.0% of picks clean",
-            "2 fragment(s): 16 design(s), 100.0% of picks clean",
-            "3 fragment(s): 6 design(s), 93.8% of picks clean",
-            "4 fragment(s): 9 design(s), 89.2% of picks clean",
-            "5 fragment(s): 1 design(s), 84.6% of picks clean",
+            "1 fragment: 40 designs, 100.0% of picks clean",
+            "2 fragments: 16 designs, 100.0% of picks clean",
+            "3 fragments: 6 designs, 93.8% of picks clean",
+            "4 fragments: 9 designs, 89.2% of picks clean",
+            "5 fragments: 1 design, 84.6% of picks clean",
             "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
           ],
           "tables": [],
@@ -3702,7 +3949,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "288 wells over 1 plate(s): 288 picked.",
+            "288 wells over 1 plate: 288 picked.",
             "Every colony of one design sits on one plate."
           ],
           "troubleshooting": [
@@ -3715,7 +3962,7 @@
           "holes": []
         },
         {
-          "title": "Compress the picked plates into 1 barcoding plate(s)",
+          "title": "Compress the picked plates into 1 barcoding plate",
           "key": "compress-plates",
           "section": "Mark every well",
           "instructions": [
@@ -6943,7 +7190,7 @@
               "records": [
                 "../block-vector-1.dna"
               ],
-              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.",
+              "caption": "The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.",
               "span": [
                 280,
                 490
@@ -6972,12 +7219,16 @@
           "key": "pool-and-sequence",
           "section": "Mark every well",
           "instructions": [
-            "Pool every well and amplify the three primer pairs separately. 2 miniprep columns, because one saturates.",
+            "Pool each barcoding plate into its own reservoir.",
+            "Clean up each pool across 2 miniprep columns.",
+            "Amplify each cleaned pool with the barcode kit's own flanking primer pairs, one reaction a pair.",
             "Sequence the pool."
           ],
           "cautions": [],
           "notes": [
-            "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+            "A pool saturates one miniprep column, which is why Qian's clean-up runs 2 columns.",
+            "Each pair starts at a different barcode, so every amplicon still carries the design and all four barcodes. Qian runs the pairs separately and pools what they make.",
+            "This read pools 1 plate. One axis of the address is the plate, so the marks tell 24 plates apart on one flow cell."
           ],
           "tables": [],
           "programs": [],
@@ -7067,7 +7318,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "07355615f170e75c",
+      "key": "139b5f98e4c6e753",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -7078,7 +7329,8 @@
           "name": "cargo archive plate",
           "what": "one well a design, polyclonal, sealed and frozen",
           "spec": [],
-          "storage": "-80 °C glycerol stock"
+          "storage": "-80 °C glycerol stock",
+          "rules": []
         },
         {
           "name": "Barcoded index primer plate",
@@ -7086,7 +7338,8 @@
           "spec": [
             "1 µM each"
           ],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "produces": [
@@ -7094,13 +7347,15 @@
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "materials": [
@@ -7238,7 +7493,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "QPix XE Microbial Colony Picker",
@@ -7545,6 +7801,7 @@
             "P21": "quarter 3",
             "P23": "quarter 3"
           },
+          "rules": [],
           "note": "288 of 384 wells picked, a quarter at a time"
         },
         {
@@ -7651,6 +7908,7 @@
             "H11": "forward 95, reverse 1",
             "H12": "forward 96, reverse 1"
           },
+          "rules": [],
           "note": "plate mark 1; 96 of 96 wells used"
         },
         {
@@ -7757,6 +8015,7 @@
             "H11": "forward 95, reverse 2",
             "H12": "forward 96, reverse 2"
           },
+          "rules": [],
           "note": "plate mark 2; 96 of 96 wells used"
         },
         {
@@ -7863,12 +8122,13 @@
             "H11": "forward 95, reverse 3",
             "H12": "forward 96, reverse 3"
           },
+          "rules": [],
           "note": "plate mark 3; 96 of 96 wells used"
         }
       ],
       "steps": [
         {
-          "title": "Array 72 design(s) and grow",
+          "title": "Array 72 designs and grow",
           "key": "array-designs",
           "section": "Array and pick",
           "instructions": [
@@ -7877,7 +8137,7 @@
           ],
           "cautions": [],
           "notes": [
-            "This run reads back every design, which a floor of zero does: 72 design(s). The rest stay polyclonal and are never read one design at a time.",
+            "This run reads back every design, which a floor of zero does: 72 designs. The rest stay polyclonal and are never read one design at a time.",
             "The archive is untouched: this reads a copy of it."
           ],
           "tables": [],
@@ -7912,11 +8172,11 @@
           "cautions": [],
           "notes": [
             "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
-            "1 fragment(s): 40 design(s), 100.0% of picks clean",
-            "2 fragment(s): 16 design(s), 100.0% of picks clean",
-            "3 fragment(s): 6 design(s), 93.8% of picks clean",
-            "4 fragment(s): 9 design(s), 89.2% of picks clean",
-            "5 fragment(s): 1 design(s), 84.6% of picks clean",
+            "1 fragment: 40 designs, 100.0% of picks clean",
+            "2 fragments: 16 designs, 100.0% of picks clean",
+            "3 fragments: 6 designs, 93.8% of picks clean",
+            "4 fragments: 9 designs, 89.2% of picks clean",
+            "5 fragments: 1 design, 84.6% of picks clean",
             "A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty."
           ],
           "tables": [],
@@ -7928,7 +8188,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "288 wells over 1 plate(s): 288 picked.",
+            "288 wells over 1 plate: 288 picked.",
             "Every colony of one design sits on one plate."
           ],
           "troubleshooting": [
@@ -11162,7 +11422,7 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "3 index plate(s), 288 reactions in all."
+            "3 index plates, 288 reactions in all."
           ],
           "troubleshooting": [],
           "holes": []
@@ -11397,7 +11657,7 @@
               "records": [
                 "../block-vector-1.dna"
               ],
-              "caption": "What a picked well holds: its design in the cassette DMX-iGGA N carries. The pair reads across it, and the band is that stretch plus the two marks the well's address names.",
+              "caption": "The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The pair reads across it, and the band is that stretch plus the two marks the well's address names.",
               "span": [
                 280,
                 490
@@ -11446,7 +11706,7 @@
           ],
           "cautions": [],
           "notes": [
-            "Two plates on one flow cell are told apart by construction, because one axis of the address is the plate."
+            "This read pools 3 plates. One axis of the address is the plate, so the marks tell 96 plates apart on one flow cell."
           ],
           "tables": [],
           "programs": [],
@@ -11552,7 +11812,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "de73a1bd51f20a1c",
+      "key": "5d71b8ca20412104",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11569,7 +11829,7 @@
         "Codon usage": "human",
         "Product": "AP-1 DESynR round 3, 6435 bp",
         "Completeness": "0.99 chance nothing is missing, 195,386 colonies at the end",
-        "Amino acids changed": "27 over 26 part end(s)",
+        "Amino acids changed": "27 over 26 part ends",
         "Designs read back": "72, every one"
       },
       "highlights": [],
@@ -11577,22 +11837,32 @@
       "choice": "",
       "consumes": [
         {
+          "name": "part carrier plate",
+          "what": "one pCR-Blunt II-TOPO a part, one part a well, selected on KanR",
+          "spec": [],
+          "storage": "-80 °C glycerol stock",
+          "rules": []
+        },
+        {
           "name": "clonal picked plate",
           "what": "one well a picked colony, each well one clone",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "well calls",
           "what": "a pass or a fail a well, and which design each well holds",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         },
         {
           "name": "block vector 1",
           "what": "DMX-iGGA N, ready to open",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -11600,7 +11870,8 @@
           "name": "library prep, round 3",
           "what": "the pooled library after round 3, as a plasmid prep",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [
@@ -11647,18 +11918,6 @@
           "storage": "-20 °C",
           "amount": "3, one a position",
           "note": "opened by the internal digest in round 1, and to take each block's cargo. A part enters on its own position's entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
-          "name": "pLVX-TetOne-dom vector",
-          "supplier": "",
-          "catalog": "",
-          "storage": "-20 °C",
-          "amount": "",
-          "note": "the library's final home; PaqCI releases its ccdB cassette to admit the cargo",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -11794,7 +12053,7 @@
           "supplier": "Lucigen",
           "catalog": "60242-2",
           "storage": "-80 °C",
-          "amount": "one aliquot per round, 25 µL a pulse",
+          "amount": "4 aliquots, one a pulse, 25 µL each",
           "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
           "contains": [],
           "rules": [],
@@ -11831,18 +12090,6 @@
           "citation": null
         },
         {
-          "name": "Selective plates for the final transfer",
-          "supplier": "",
-          "catalog": "",
-          "storage": "",
-          "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
           "name": "Plasmid prep kit",
           "supplier": "",
           "catalog": "",
@@ -11859,7 +12106,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "",
-          "amount": "3, one per round",
+          "amount": "4, one a pulse",
           "note": "",
           "contains": [],
           "rules": [],
@@ -11878,7 +12125,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
@@ -11886,7 +12134,8 @@
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
         "Spectrophotometer or fluorometer",
-        "Long-read sequencer, for the two reads of the finished library"
+        "Long-read sequencer, for the linkage read of the finished library",
+        "Short-read sequencer, for the representation read of the finished library"
       ],
       "vessels": [],
       "plates": [],
@@ -11904,6 +12153,7 @@
           "notes": [
             "Library coverage is counted on equally represented members, so an uneven pool loses members that no later round can put back.",
             "Equal picomoles are unequal masses: a short member weighs less than a long one for the same number of molecules, and weighing them equally would not pool them equally.",
+            "Every round's digest table is laid out at 22.3 ng/µL, which is the floor and not a target: at it the pool takes almost the whole tube and the buffer and water line all but disappears. Concentrate well above it and pipette less pool; the buffer and water line makes the volume up either way.",
             "N: 0.11 pmol a member is 9.99 ng of its shortest at 147 bp and 78.1 ng of its longest at 1,149 bp.",
             "DBD: 0.219 pmol a member is 39.2 ng of its shortest at 291 bp and 48.9 ng of its longest at 363 bp.",
             "C: 0.193 pmol a member is 15.8 ng of its shortest at 133 bp and 125 ng of its longest at 1,048 bp."
@@ -11917,9 +12167,9 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "N: one tube, 24 member(s), at least 1,000 ng at 22.3 ng/µL or above, 0.11 pmol of each member.",
-            "DBD: one tube, 24 member(s), at least 1,000 ng at 22.3 ng/µL or above, 0.219 pmol of each member.",
-            "C: one tube, 24 member(s), at least 1,000 ng at 22.3 ng/µL or above, 0.193 pmol of each member."
+            "N: one tube, 24 members, at least 1,000 ng at 22.3 ng/µL or above, 0.11 pmol of each member.",
+            "DBD: one tube, 24 members, at least 1,000 ng at 22.3 ng/µL or above, 0.219 pmol of each member.",
+            "C: one tube, 24 members, at least 1,000 ng at 22.3 ng/µL or above, 0.193 pmol of each member."
           ],
           "troubleshooting": [
             {
@@ -12065,7 +12315,7 @@
               "components": [
                 {
                   "name": "N part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "2.65 pmol (1000 ng)",
                   "master_mix": false,
@@ -12095,7 +12345,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -12451,7 +12701,7 @@
           "gels": [],
           "expected": [
             "One pool of plasmid, 6161 bp per molecule. This is the destination round 2 opens.",
-            "BbsI still cuts it and BsaI no longer does."
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {
@@ -12592,7 +12842,7 @@
               "components": [
                 {
                   "name": "DBD part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "5.25 pmol (1000 ng)",
                   "master_mix": false,
@@ -12622,7 +12872,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -12978,7 +13228,7 @@
           "gels": [],
           "expected": [
             "One pool of plasmid, 6368 bp per molecule. This is the destination round 3 opens.",
-            "BbsI still cuts it and BsaI no longer does."
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {
@@ -13119,7 +13369,7 @@
               "components": [
                 {
                   "name": "C part list",
-                  "volume_ul": 1.0,
+                  "volume_ul": 44.84,
                   "stock": "",
                   "final": "4.64 pmol (1000 ng)",
                   "master_mix": false,
@@ -13149,7 +13399,7 @@
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
-                  "volume_ul": 44.0,
+                  "volume_ul": 0.16,
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
@@ -13504,8 +13754,8 @@
           "figures": [],
           "gels": [],
           "expected": [
-            "One pool of plasmid, 6435 bp per molecule. This is the finished library.",
-            "BbsI still cuts it and BsaI no longer does."
+            "One pool of plasmid, 6435 bp per molecule. This is the library the rounds built.",
+            "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
           "troubleshooting": [
             {
@@ -13521,14 +13771,14 @@
           "key": "read-linkage",
           "section": "Read the library back",
           "instructions": [
-            "Amplify the whole cargo out of the finished library, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse from library-read-primers.tsv, which give a 1197 bp amplicon.",
+            "Amplify the whole cargo out of the library the rounds built, from the vector before the first AGGA to the vector past the final TTCC, so one read carries a member's parts and its barcode block together, on Linkage read forward and Linkage read reverse from library-read-primers.tsv, which give a 1197 bp amplicon.",
             "Sequence the amplicon as a long read.",
             "Decode each read's block against barcodes.tsv, then read the coding bases beside it against the member that block names."
           ],
           "cautions": [],
           "notes": [
             "The block reads in the reverse of the order the rounds ran: each round inserted its barcode ahead of the ones already there.",
-            "0.0% of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
+            "None of the single-base deletions a barcode can carry leave a read another barcode of the same part list could leave, which no read can be assigned through.",
             "This build passes the linkage read at 90.0% of reads carrying a barcode that still names its part. That is this run's own mark, not a published one."
           ],
           "tables": [],
@@ -13541,7 +13791,7 @@
           "gels": [],
           "expected": [
             "A table from barcode combination to cargo: each read decodes to one member of each part list, and the coding bases it carries are that member's.",
-            "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1401-1442 of the representative construct."
+            "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1402 .. 1442 of the representative construct."
           ],
           "troubleshooting": [
             {
@@ -13562,7 +13812,7 @@
           "key": "read-representation",
           "section": "Read the library back",
           "instructions": [
-            "Amplify across the 41 bp barcode block alone, forward from the 34 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse from library-read-primers.tsv, which give a 134 bp amplicon.",
+            "Amplify across the 41 bp barcode block alone, forward from the 30 bp internal stuffer every member keeps and back from the vector past the final TTCC, on Representation read forward and Representation read reverse from library-read-primers.tsv, which give a 134 bp amplicon.",
             "Sequence the amplicon as a short read, decode each read against barcodes.tsv, and count the reads each barcode combination gets."
           ],
           "cautions": [],
@@ -13641,28 +13891,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26",
-          "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf"
-        },
-        {
-          "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
-          "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100"
-        },
-        {
-          "text": "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
-          "url": "https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines"
-        },
-        {
-          "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
-          "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
-        },
-        {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": ""
+          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
         }
       ],
       "sources": {
@@ -13712,7 +13942,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "43a6c6e06eabd268",
+      "key": "ae42b1b405a19eef",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -13723,13 +13953,15 @@
           "name": "library prep, round 3",
           "what": "the pooled library after round 3, as a plasmid prep",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         },
         {
           "name": "working vector",
           "what": "the backbone the library ends in",
           "spec": [],
-          "storage": ""
+          "storage": "",
+          "rules": []
         }
       ],
       "produces": [
@@ -13737,22 +13969,11 @@
           "name": "the library in its working vector",
           "what": "3 part lists joined, pooled and ready for the screen",
           "spec": [],
-          "storage": "-20 °C"
+          "storage": "-20 °C",
+          "rules": []
         }
       ],
       "materials": [
-        {
-          "name": "DMX-iGGA vector",
-          "supplier": "",
-          "catalog": "",
-          "storage": "-20 °C",
-          "amount": "3, one a position",
-          "note": "opened by the internal digest in round 1, and to take each block's cargo. A part enters on its own position's entry overhang, so there is one a position: DMX-iGGA N (block-vector-1.dna), DMX-iGGA DBD (block-vector-2.dna) and DMX-iGGA C (block-vector-3.dna)",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
         {
           "name": "pLVX-TetOne-dom vector",
           "supplier": "",
@@ -13883,7 +14104,7 @@
           "supplier": "Lucigen",
           "catalog": "60242-2",
           "storage": "-80 °C",
-          "amount": "one aliquot per round, 25 µL a pulse",
+          "amount": "4 aliquots, one a pulse, 25 µL each",
           "note": "pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette",
           "contains": [],
           "rules": [],
@@ -13896,24 +14117,12 @@
           }
         },
         {
-          "name": "Selective broth and plates",
-          "supplier": "",
-          "catalog": "",
-          "storage": "",
-          "amount": "",
-          "note": "LB with 50 µg/mL kanamycin, the destination vector's own marker (KanR)",
-          "contains": [],
-          "rules": [],
-          "cautions": [],
-          "citation": null
-        },
-        {
           "name": "Selective plates for the final transfer",
           "supplier": "",
           "catalog": "",
           "storage": "",
           "amount": "",
-          "note": "the working vector's own antibiotic, which this plan does not name",
+          "note": "LB with 100 µg/mL carbenicillin, the working vector's own marker (AmpR)",
           "contains": [],
           "rules": [],
           "cautions": [],
@@ -13936,7 +14145,7 @@
           "supplier": "",
           "catalog": "",
           "storage": "",
-          "amount": "3, one per round",
+          "amount": "4, one a pulse",
           "note": "",
           "contains": [],
           "rules": [],
@@ -13955,7 +14164,8 @@
         "../library-read-primers.tsv",
         "../block-vector-1.dna",
         "../block-vector-2.dna",
-        "../block-vector-3.dna"
+        "../block-vector-3.dna",
+        "../working-vector-ccdb.dna"
       ],
       "equipment": [
         "Incubator or heat block at 37 °C",
@@ -13963,7 +14173,7 @@
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
         "Spectrophotometer or fluorometer",
-        "Long-read sequencer, for the two reads of the finished library"
+        "Short-read sequencer, for the final representation read of the finished library"
       ],
       "vessels": [],
       "plates": [],
@@ -13973,12 +14183,13 @@
           "key": "pick-working-vector",
           "section": "Choose the working vector",
           "instructions": [
-            "Take one tube of pLVX-TetOne-dom stock.",
+            "Take one tube of pLVX-TetOne-dom stock: the backbone the build named with this plan's ccdB cassette put in, 10284 bp in all.",
+            "Have it made to working-vector-ccdb.dna, which is the record every length below is read off. The backbone alone does not open.",
             "Digest a little of it with PaqCI (R0745) and run it on a gel."
           ],
           "cautions": [],
           "notes": [
-            "PaqCI reads no site in any molecule sharing the final-assembly pot.",
+            "PaqCI cuts nothing in the final-assembly pot but the cassette it opens.",
             "ccdB is what makes the assembly self-selecting: a vector that took no cargo keeps the cassette and kills its host."
           ],
           "tables": [],
@@ -14007,7 +14218,7 @@
           "key": "release-cargo",
           "section": "Move the library across",
           "instructions": [
-            "Digest the finished library with BsaI and PmeI at 37 °C.",
+            "Digest the library the rounds built with BsaI and PmeI at 37 °C.",
             "Heat-kill, then leave the tube alone: nothing is purified between the two stages."
           ],
           "cautions": [],
@@ -14151,9 +14362,50 @@
           "notes": [
             "6435 bp of library goes in and the cargo alone comes out: the backbone the rounds ran in is shredded and stays behind.",
             "The cycling is NEB's longer single-insert program, which it gives for library preparation rather than for cloning one gene.",
-            "75 ng of vector, at 2:1 cargo to vector, is what this run measured, not a published figure."
+            "75 ng of vector is what this run measured, not a published figure. The cargo is not measured out: the release tube goes in whole.",
+            "The release delivers the cargo at 20.5:1 over the vector, which is what the digest frees and not a ratio anyone sets."
           ],
-          "tables": [],
+          "tables": [
+            {
+              "components": [
+                {
+                  "name": "AP-1 DESynR round 3 cargo, in the release",
+                  "volume_ul": 50.0,
+                  "stock": "",
+                  "final": "0.252 pmol (167.21 ng)",
+                  "master_mix": false,
+                  "citation": null
+                },
+                {
+                  "name": "pLVX-TetOne-dom, opened",
+                  "volume_ul": 1.0,
+                  "stock": "",
+                  "final": "0.0123 pmol (75 ng)",
+                  "master_mix": false,
+                  "citation": null
+                },
+                {
+                  "name": "PaqCI (R0745)",
+                  "volume_ul": 2.5,
+                  "stock": "",
+                  "final": "",
+                  "master_mix": true,
+                  "citation": null
+                },
+                {
+                  "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
+                  "volume_ul": 146.5,
+                  "stock": "",
+                  "final": "to 200 µL",
+                  "master_mix": true,
+                  "citation": null
+                }
+              ],
+              "title": "One-pot assembly",
+              "reactions": 1,
+              "overage": 0.1
+            }
+          ],
           "programs": [
             {
               "stages": [
@@ -14375,8 +14627,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, version 5.0_6/26",
-          "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf"
+          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
         },
         {
           "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
@@ -14389,14 +14641,6 @@
         {
           "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
           "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
-        },
-        {
-          "text": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592. Its S1-S5 Tables are what every ligation fidelity score is read from",
-          "url": "https://doi.org/10.1371/journal.pone.0238592"
-        },
-        {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own; the external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": ""
         }
       ],
       "sources": {
@@ -14441,17 +14685,17 @@
     {
       "name": "blunt sites",
       "status": "pass",
-      "detail": "the 2 blunt site(s) beside the DMX vector's cassette sit between a BsaI site and the primer that reads a well, in 277..363 or 416..503"
+      "detail": "2 blunt sites beside the DMX vector's cassette, each between a BsaI site and the primer that reads a well, in 277 .. 363 or 416 .. 503"
     },
     {
       "name": "destination opens",
       "status": "pass",
-      "detail": "4 judged, worst: BbsI cuts each of the 1 destination(s) of round 1 opening in 2 places"
+      "detail": "4 judged, worst: BbsI cuts 1 destination of round 1 opening, each in 2 places"
     },
     {
       "name": "donor releases",
       "status": "pass",
-      "detail": "4 judged, worst: BsaI cuts each of the 24 donor(s) of round 1 release in 2 places"
+      "detail": "4 judged, worst: BsaI cuts 24 donors of round 1 release, each in 2 places"
     },
     {
       "name": "ends distinguishable",
@@ -14461,7 +14705,7 @@
     {
       "name": "ligation fidelity",
       "status": null,
-      "detail": "4 judged, worst: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
+      "detail": "4 measured, including: round 1 ligation scores 1.000 on Pryor 2020 S4 Table, measured with BbsI-HF, a T4 ligase measurement cycled with the enzyme present; this round ligates with T7 DNA Ligase in StickTogether DNA Ligase Buffer"
     },
     {
       "name": "barcode spacing",
@@ -14552,7 +14796,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3539",
-        "charge": "41.4975",
+        "charge": "41.50",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14565,7 +14809,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R3733",
-        "charge": "12.450",
+        "charge": "12.45",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14578,7 +14822,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0629",
-        "charge": "27.900",
+        "charge": "27.90",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14591,7 +14835,7 @@
         "quantity": 7.5,
         "unit": "µL",
         "key": "R0560",
-        "charge": "13.200",
+        "charge": "13.20",
         "headroom": "",
         "citation": {
           "source": "prices",
@@ -14626,7 +14870,7 @@
         "hole": null
       },
       {
-        "item": "Plasmid preps",
+        "item": "Plasmid prep kit",
         "quantity": 3,
         "unit": "preps",
         "key": "plasmid prep",
@@ -14637,11 +14881,507 @@
           "locator": "plasmid prep count 1-50"
         },
         "hole": null
+      },
+      {
+        "item": "pCR-Blunt II-TOPO",
+        "quantity": null,
+        "unit": "",
+        "key": "pCR-Blunt II-TOPO",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P10",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "pCR-Blunt II-TOPO, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Zero Blunt TOPO PCR Cloning Kit",
+        "quantity": null,
+        "unit": "one reaction per well",
+        "key": "Zero Blunt TOPO PCR Cloning Kit",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P11",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Zero Blunt TOPO PCR Cloning Kit, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "nuclease-free water",
+        "quantity": null,
+        "unit": "25,160 µL in all",
+        "key": "nuclease-free water",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P12",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "nuclease-free water, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Empty 96-well plate",
+        "quantity": null,
+        "unit": "1 for the working plates",
+        "key": "Empty 96-well plate",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P13",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Empty 96-well plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Adhesive plate seals",
+        "quantity": null,
+        "unit": "2 seals",
+        "key": "Adhesive plate seals",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P14",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Adhesive plate seals, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "NEBridge Golden Gate Assembly Kit, BsmBI-v2",
+        "quantity": null,
+        "unit": "one assembly per block",
+        "key": "E1602",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P15",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "NEBridge Golden Gate Assembly Kit, BsmBI-v2, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Q5 DNA Polymerase",
+        "quantity": null,
+        "unit": "one reaction per batch, then one per block",
+        "key": "M0491",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P16",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Q5 DNA Polymerase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "dNTP mix",
+        "quantity": null,
+        "unit": "0.2 µL a reaction, 10 mM each",
+        "key": "N0447",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P17",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "dNTP mix, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMX-iGGA vector",
+        "quantity": null,
+        "unit": "3, one a position",
+        "key": "DMX-iGGA vector",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P18",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMX-iGGA vector, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "CutSmart Buffer",
+        "quantity": null,
+        "unit": "",
+        "key": "CutSmart Buffer",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P19",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "CutSmart Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "SPRI paramagnetic beads",
+        "quantity": null,
+        "unit": "2 volumes after a digest, 1 after a ligation",
+        "key": "SPRI paramagnetic beads",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P20",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "SPRI paramagnetic beads, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Recovery medium",
+        "quantity": null,
+        "unit": "one outgrowth per round",
+        "key": "Recovery medium",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P21",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Recovery medium, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Selective broth and plates",
+        "quantity": null,
+        "unit": "",
+        "key": "Selective broth and plates",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P22",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Selective broth and plates, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "25 cm BioAssay plate",
+        "quantity": null,
+        "unit": "one spot a design",
+        "key": "431111",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P23",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "25 cm BioAssay plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "384-well culture plate",
+        "quantity": null,
+        "unit": "1, one a 384 wells",
+        "key": "c74290",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P24",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "384-well culture plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "1536-well barcoding plate",
+        "quantity": null,
+        "unit": "1, one a 4 picked plates",
+        "key": "782270",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P25",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "1536-well barcoding plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMX barcode kit",
+        "quantity": null,
+        "unit": "96 plasmids, 4 groups of 24",
+        "key": "DMX barcode kit",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P26",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMX barcode kit, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Barcoding master mix",
+        "quantity": null,
+        "unit": "0.5 µL a well",
+        "key": "Barcoding master mix",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P27",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Barcoding master mix, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "96-well half-skirted PCR plate",
+        "quantity": null,
+        "unit": "3, one a quarter of a picked plate",
+        "key": "1402-9700",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P28",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "96-well half-skirted PCR plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Barcoded index primer plate",
+        "quantity": null,
+        "unit": "2 µL a well at 1 µM each, 96 forward and 96 reverse",
+        "key": "Barcoded index primer plate",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P29",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Barcoded index primer plate, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "ThermoPol Reaction Buffer",
+        "quantity": null,
+        "unit": "1 µL a reaction, 10X",
+        "key": "B9004",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P30",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "ThermoPol Reaction Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Taq DNA Polymerase",
+        "quantity": null,
+        "unit": "0.05 µL a reaction",
+        "key": "M0267",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P31",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Taq DNA Polymerase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DMSO, molecular biology grade",
+        "quantity": null,
+        "unit": "0.4 µL a reaction, 4% (v/v) in the well",
+        "key": "194819",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P32",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DMSO, molecular biology grade, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "N part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "N part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P33",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "N part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "DBD part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "DBD part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P34",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "DBD part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "C part list",
+        "quantity": null,
+        "unit": "24 members, pooled",
+        "key": "C part list",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P35",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "C part list, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "T7 DNA Ligase",
+        "quantity": null,
+        "unit": "",
+        "key": "#M0318L",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P36",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "T7 DNA Ligase, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "StickTogether DNA Ligase Buffer",
+        "quantity": null,
+        "unit": "",
+        "key": "#B0535S",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P37",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "StickTogether DNA Ligase Buffer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "pLVX-TetOne-dom vector",
+        "quantity": null,
+        "unit": "",
+        "key": "pLVX-TetOne-dom vector",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P38",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "pLVX-TetOne-dom vector, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "PaqCI",
+        "quantity": null,
+        "unit": "2.5 µL per digest",
+        "key": "R0745",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P39",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "PaqCI, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
+      },
+      {
+        "item": "Selective plates for the final transfer",
+        "quantity": null,
+        "unit": "",
+        "key": "Selective plates for the final transfer",
+        "charge": "",
+        "headroom": "",
+        "citation": null,
+        "hole": {
+          "id": "P40",
+          "missing": "nothing prices this item",
+          "kind": "price",
+          "where": "Selective plates for the final transfer, money",
+          "filled_by": "a quantity the design sizes, and a price record holding a row for this item"
+        }
       }
     ],
     "title": "What this run consumes",
     "currency": "USD",
-    "total": "3130.5875",
+    "total": "3130.59",
     "record": "prices"
   }
 }

@@ -4,8 +4,8 @@ import re
 
 import pytest
 
-from liulab_mbio.bench.amounts import dna_amount, to_pmol
-from liulab_mbio.bench.reactions import floor_ng_ul, reaction_table
+from mbio.bench.amounts import dna_amount, to_pmol
+from mbio.bench.reactions import floor_ng_ul, reaction_table
 
 #: The one refusal, which names both ways out: concentrate the DNA, or scale the reaction.
 REFUSAL = (

@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.cloning.gateway.att import find_att_sites
-from liulab_mbio.cloning.gateway.design import (
+from mbio.cloning.gateway.att import find_att_sites
+from mbio.cloning.gateway.design import (
     C_TERMINAL_FRAME,
     FUSIONS,
     N_TERMINAL_FRAME,
@@ -17,12 +17,12 @@ from liulab_mbio.cloning.gateway.design import (
     attb_tails,
     attb_thresholds,
 )
-from liulab_mbio.primers.polymerase import Q5, melting_temperature
-from liulab_mbio.primers.thresholds import THRESHOLDS
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
+from mbio.primers.polymerase import Q5, melting_temperature
+from mbio.primers.thresholds import THRESHOLDS
+from mbio.sequence import SequenceRecord, reverse_complement
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway import Amplicon
+    from mbio.cloning.gateway import Amplicon
 
 #: The whole tail MAN0000470 page 13 asks for, as the note's own table writes it (note §7).
 FORWARD_TAIL = "GGGGACAAGTTTGTACAAAAAAGCAGGCT"

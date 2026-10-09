@@ -2,8 +2,8 @@
 
 import pytest
 
-from liulab_mbio.bench import plates
-from liulab_mbio.protocol.model import FORMATS, Well
+from mbio.bench import plates
+from mbio.protocol.model import FORMATS, Well
 
 
 @pytest.mark.parametrize("wells", sorted(FORMATS))

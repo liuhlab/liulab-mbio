@@ -9,10 +9,10 @@ import dataclasses
 
 import pytest
 
-from liulab_mbio.bench.amounts import dna_amount
-from liulab_mbio.cloning.restriction.digest import Diagnostic, opened, resolve
-from liulab_mbio.cloning.restriction.ligation import Junction
-from liulab_mbio.cloning.restriction.verdicts import (
+from mbio.bench.amounts import dna_amount
+from mbio.cloning.restriction.digest import Diagnostic, opened, resolve
+from mbio.cloning.restriction.ligation import Junction
+from mbio.cloning.restriction.verdicts import (
     buffer_check,
     cleanup_check,
     diagnostic_check,
@@ -22,8 +22,8 @@ from liulab_mbio.cloning.restriction.verdicts import (
     self_ligation_check,
     temperature_check,
 )
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.enzymes import get_enzyme
+from mbio.sequence import Feature, Segment, SequenceRecord
 
 #: Bases spelling no site of any enzyme named below, for padding a record written in code.
 FILLER = "ACGT" * 6

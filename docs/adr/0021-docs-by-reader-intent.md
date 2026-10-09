@@ -14,11 +14,11 @@ The axis costs the other reader. Someone who thinks in packages has no branch to
 page per module; the source is their reference, CLAUDE.md's architecture table the only
 tree. That reader is a contributor, agent-facing anyway.
 
-## The reference is 59 symbols, and no gate keeps the list honest
+## The reference is 61 symbols, and no gate keeps the list honest
 
-A module directive documents what a package holds, not what anyone calls: `api.md`'s 96
-rendered over a thousand headings nobody read. `reference/python.md` names 59 of 1,191 public
-top-level names, grouped by the reader's task.
+A module directive documents what a package holds, not what anyone calls: `api.md`'s 132
+rendered over a thousand headings nobody read. `reference/python.md` names 61 symbols, grouped
+by the reader's task.
 
 So a symbol someone wants may be documented nowhere, and the list goes stale the first time a
 signature changes and nobody opens the page. **No conformance rule polices it, deliberately.** A

@@ -9,8 +9,8 @@ from itertools import pairwise
 
 import pytest
 
-from liulab_mbio.cloning.gibson.assembly import Part, stitch
-from liulab_mbio.cloning.gibson.bench import (
+from mbio.cloning.gibson.assembly import Part, stitch
+from mbio.cloning.gibson.bench import (
     ASSEMBLY_PRODUCTS,
     GIBSON_MASTER_MIX,
     IN_FUSION,
@@ -25,7 +25,7 @@ from liulab_mbio.cloning.gibson.bench import (
     assembly_reaction,
     fragment_check,
 )
-from liulab_mbio.cloning.gibson.design import (
+from mbio.cloning.gibson.design import (
     BRIDGE_HOMOLOGY_BP,
     STITCH_OLIGO_BASES,
     STITCH_OLIGOS,
@@ -41,7 +41,7 @@ from liulab_mbio.cloning.gibson.design import (
     stitch_oligos,
     wallace_tm,
 )
-from liulab_mbio.sequence import SequenceRecord, Strand, reverse_complement
+from mbio.sequence import SequenceRecord, Strand, reverse_complement
 
 #: The band and floor NEBuilder HiFi documents for two or three fragments.
 NEB_RULE = NEBUILDER_HIFI.tiers[0].overlap

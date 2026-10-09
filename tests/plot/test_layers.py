@@ -1,7 +1,7 @@
 """What the map reads off an item's spans: where it starts and ends, and the pieces it lies in."""
 
-from liulab_mbio.plot import layers
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.plot import layers
+from mbio.sequence import Feature, Segment, SequenceRecord
 
 
 def test_a_join_whose_segments_overlap_spans_them_and_not_the_whole_circle() -> None:

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.barcodes import (
+from mbio.barcodes import (
     GC_BAND,
     MAX_HOMOPOLYMER,
     METRIC,
@@ -17,8 +17,8 @@ from liulab_mbio.barcodes import (
     design_barcodes,
     separation,
 )
-from liulab_mbio.sequence import SequenceRecord
-from liulab_mbio.sites import has_site
+from mbio.sequence import SequenceRecord
+from mbio.sites import has_site
 
 # The published scheme: an 11-base barcode joined to the one before it by a four-base cloning
 # scar, so a barcode and its scar are five codons and the block stays in frame.
@@ -113,7 +113,7 @@ def test_the_indel_aware_metric_reads_its_paper_s_worked_example_as_two_edits() 
     # substituting one base leaves CGT, which a read running on into a C spells as CGTC.
     rules = BarcodeRules(4, phase=None, max_homopolymer=None, metric="sequence-levenshtein")
     assert check_barcodes(["CAGG", "CGTC"], rules) == (
-        "CAGG and CGTC stand 2 edit(s) apart, under the 3 one part list needs",
+        "CAGG and CGTC stand 2 edits apart, under the 3 one part list needs",
     )
     assert check_barcodes(["CAGG", "CGTC"], dataclasses.replace(rules, metric="hamming")) == ()
 
@@ -125,7 +125,7 @@ def test_a_held_set_of_two_lengths_is_checked_wherever_the_metric_can_count_it()
     rules = BarcodeRules(5, phase=None, max_homopolymer=None)
     assert check_barcodes(["ACGTT", "ACGT"], rules) == (
         "ACGT is 4 bases, not the 5 asked for",
-        "ACGTT and ACGT stand 0 edit(s) apart, under the 3 one part list needs",
+        "ACGTT and ACGT stand 0 edits apart, under the 3 one part list needs",
     )
     assert check_barcodes(["ACGTT", "ACGT"], dataclasses.replace(rules, metric="hamming")) == (
         "ACGT is 4 bases, not the 5 asked for",

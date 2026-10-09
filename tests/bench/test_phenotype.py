@@ -3,8 +3,8 @@
 Each record is 100 bases written in code, so every span below is read off it by eye.
 """
 
-from liulab_mbio.bench.phenotype import read_phenotype, selection_marker
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from mbio.bench.phenotype import read_phenotype, selection_marker
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
 
 def plasmid(*features: Feature) -> SequenceRecord:
@@ -49,6 +49,27 @@ def test_a_marker_inside_a_replaced_span_past_the_origin_is_passed_over():
     marker = selection_marker(vector, outside=(95, 105))
     assert marker is not None
     assert marker.name == "KanR"
+
+
+def test_a_marker_is_read_off_its_name_whatever_a_vendor_render_typed_it():
+    """A render that types every feature ``misc_feature`` still names the gene."""
+    vector = plasmid(feature("AmpR", "misc_feature", (0, 50)))
+    marker = selection_marker(vector)
+    assert marker is not None
+    assert marker.name == "AmpR"
+
+
+def test_a_drug_this_package_knows_beats_a_marker_matched_by_its_name_alone():
+    """PuroR is a marker and names no plate; AmpR names one, so AmpR is what a plate reads."""
+    vector = plasmid(feature("PuroR", "CDS", (0, 50)), feature("AmpR", "CDS", (60, 80)))
+    marker = selection_marker(vector)
+    assert marker is not None
+    assert marker.name == "AmpR"
+
+
+def test_a_primer_binding_site_named_for_a_marker_is_not_one():
+    vector = plasmid(feature("AmpR", "primer_bind", (0, 20)))
+    assert selection_marker(vector) is None
 
 
 def test_an_insertion_that_replaces_nothing_breaks_a_coding_sequence_only_inside_it():

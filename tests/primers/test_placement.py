@@ -1,7 +1,7 @@
 import pytest
 
-from liulab_mbio.primers import Placement, find_binding_sites, find_priming_sites
-from liulab_mbio.sequence import BindingSite, Segment, SequenceRecord, Strand
+from mbio.primers import Placement, find_binding_sites, find_priming_sites
+from mbio.sequence import BindingSite, Segment, SequenceRecord, Strand
 
 from .sequences import M13_FWD, M13_REV, MCS_FWD
 

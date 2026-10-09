@@ -5,7 +5,7 @@ search:
 
 # A record knows which tube it is digested in
 
-`liulab_synbio.igga.vector` held one barred set: a destination had to be free of every enzyme
+`synbio.igga.vector` held one barred set: a destination had to be free of every enzyme
 the method names, outside the piece it gives up. That refused the method's own vector. A round's
 destination is a plasmid, transformed and prepped every round, and its backbone is what frees the
 cargo at the end — so it carries the external enzyme's sites, and a blunt chopper's outboard of

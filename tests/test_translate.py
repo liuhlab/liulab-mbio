@@ -1,9 +1,9 @@
 import pytest
 
-from liulab_mbio.enzymes import Enzyme
-from liulab_mbio.sequence import Segment, SequenceRecord, Strand
-from liulab_mbio.sites import has_site
-from liulab_mbio.translate import (
+from mbio.enzymes import Enzyme
+from mbio.sequence import Segment, SequenceRecord, Strand
+from mbio.sites import has_site
+from mbio.translate import (
     SiteNotRemovableError,
     in_frame,
     optimize_coding_sequence,
@@ -95,7 +95,9 @@ def test_a_coded_sequence_is_checked_and_not_written_again() -> None:
 
 
 def test_a_site_whose_amino_acids_have_one_codon_each_is_refused_by_name() -> None:
-    with pytest.raises(SiteNotRemovableError, match="part A: the TrpI site at 3-9 on the forward"):
+    with pytest.raises(
+        SiteNotRemovableError, match=r"part A: the TrpI site at 4 \.\. 9 on the forward"
+    ):
         optimize_protein("MWW*", host=HOST, forbidden=[TRPI], name="part A")
 
 

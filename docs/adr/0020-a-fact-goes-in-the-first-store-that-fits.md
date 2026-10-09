@@ -15,7 +15,7 @@ Ask these four in order. The first yes is the store. Four noes, and the next sec
 1. **Does a licence forbid shipping it, or is it the lab's own and going stale?** A file the user
    holds, read at run time. Where the file is absent a `Hole` stands in its place, never an
    estimate (`ligase.py`, `bench/prices.py`).
-2. **Does a script rebuild it from a tracked input?** `src/liulab_mbio/data/`, built by a script
+2. **Does a script rebuild it from a tracked input?** `src/mbio/data/`, built by a script
    in `scripts/` and sourced in `docs/research/` (`enzymes.json`, `ligation_fidelity.json`).
 3. **Does it belong to a thing the bench names by catalogue number, and hold wherever that thing
    is used?** A table in `bench/materials.py` keyed by that number, read through `material()`:

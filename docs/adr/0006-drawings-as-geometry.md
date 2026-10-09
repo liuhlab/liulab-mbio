@@ -5,7 +5,7 @@ search:
 
 # A drawing is laid out as geometry in our own SVG before anything draws
 
-`liulab_mbio.plot` computes every shape of a map in Python, in points: arrows, ticks, label boxes
+`mbio.plot` computes every shape of a map in Python, in points: arrows, ticks, label boxes
 and their leaders, with each label as wide as the pinned font the package ships measures it. Only
 then does `svg` write those shapes, and the page, the PNG and the PDF all draw that one SVG. No
 plotting library draws a map, and nothing is laid out in the browser.

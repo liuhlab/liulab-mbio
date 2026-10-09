@@ -9,9 +9,9 @@ enzyme's own; the pUC19 and GFP fixtures are where a two-enzyme product is pinne
 
 import pytest
 
-from liulab_mbio.cloning.restriction.digest import excised, opened, resolve
-from liulab_mbio.cloning.restriction.ligation import ligate
-from liulab_mbio.sequence import SequenceRecord
+from mbio.cloning.restriction.digest import excised, opened, resolve
+from mbio.cloning.restriction.ligation import ligate
+from mbio.sequence import SequenceRecord
 
 #: Bases spelling no site of the enzymes named below: the vector's, and what it is given.
 FILLER = "TAAGGTCA" * 2

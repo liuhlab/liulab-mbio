@@ -79,7 +79,7 @@ The kit insert is the whole source for this stage. It is the best-sourced of the
 
 The retailoring primer's own structure, `5'-[spacer]-CGTCTC-N-[new overhang]-[annealing]-3'`,
 is the method page's and is designed per part, not sourced. Its Ta is the package's to compute
-from `liulab_mbio.primers.polymerase`, once a polymerase is named.
+from `mbio.primers.polymerase`, once a polymerase is named.
 
 ### The TOPO reaction
 
@@ -434,7 +434,7 @@ what the digest leaves room for.
 **The vendor default does not reach it, and that is the trap.** At 10 ng/µL an equimolar 1,000 ng
 pool occupies 100 µL, more than twice the 45 µL the digest has for it. Following the vendor
 figure literally makes the next step impossible, so the number the pool is brought to is set by
-the digest and never typed into a step: `liulab_synbio.igga.bench.pool_floor_ng_ul` computes it
+the digest and never typed into a step: `synbio.igga.bench.pool_floor_ng_ul` computes it
 from the three constants already in that row, and the step states what it returns.
 
 The two digests never share a tube. That is the method page's rule and the source's practice.
@@ -536,7 +536,7 @@ of yes. ADR 0017 asks what *kind* of hole is left, not whether a number was quot
 this note's own convention is that a derived row is arithmetic on quoted values with the
 arithmetic shown. #428 closed IDX2 on exactly this route — LevSeq gives 0.05 µL of Taq and never
 a unit count, NEB's M0267 specification gives 5,000 units/mL, and the derived 0.25 units went
-into the code as `liulab_synbio.dmx.method.TAQ_STOCK_UNITS_UL`, cited to the specification. The
+into the code as `synbio.dmx.method.TAQ_STOCK_UNITS_UL`, cited to the specification. The
 split digest is the same shape with better inputs, because the paper names the catalogue number
 and LevSeq did not.
 
@@ -758,7 +758,7 @@ before that pass still resolves. What closed:
 - **H1.** **No polymerase is named.** The kit insert says "a thermostable proofreading polymerase" and
   names Platinum Pfx only as an example in an ordering table. The method page names none at
   all. *Filled by:* the lab choosing one and a catalogue number, after which Tm, Ta and the
-  PCR profile come from `liulab_mbio.primers.polymerase`.
+  PCR profile come from `mbio.primers.polymerase`.
 - **H2.** **No insert-to-vector molar ratio for the TOPO reaction.** The guide gives 0.5-4 µL of PCR
   product and nothing else. *Filled by:* measuring the product's concentration and fixing a
   ratio, or accepting the volume range as the specification.

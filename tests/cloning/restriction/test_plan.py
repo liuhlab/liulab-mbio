@@ -10,8 +10,8 @@ the route it takes for each of its critical edge cases.
 
 import pytest
 
-from liulab_mbio.cloning.restriction import Plan, plan_restriction
-from liulab_mbio.cloning.restriction.bench import (
+from mbio.cloning.restriction import Plan, plan_restriction
+from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     COHESIVE_SECONDS,
     HIGH_LIGASE_UNITS_UL,
@@ -21,13 +21,13 @@ from liulab_mbio.cloning.restriction.bench import (
     ROOM_CELSIUS,
     phosphatase_units,
 )
-from liulab_mbio.cloning.restriction.design import refusal
-from liulab_mbio.cloning.restriction.digest import resolve
-from liulab_mbio.edits import flipped, rotate
-from liulab_mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
-from liulab_mbio.protocol.render import minted
-from liulab_mbio.sequence import SequenceRecord, reverse_complement
-from liulab_mbio.snapgene import read_dna
+from mbio.cloning.restriction.design import refusal
+from mbio.cloning.restriction.digest import resolve
+from mbio.edits import flipped, rotate
+from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol.render import minted
+from mbio.sequence import SequenceRecord, reverse_complement
+from mbio.snapgene import read_dna
 
 from .records import BAMHI, ECORI, STUFFER, carrying, padded
 
@@ -192,8 +192,8 @@ def test_the_page_says_what_each_junction_now_spells_and_which_buffer_both_enzym
     assert all(len(value) <= OVERVIEW_CHARS for value in protocol.overview.values())
     prose = " ".join(protocol.highlights)
     assert "not scarless" in prose
-    assert "GAATTC at 396 (EcoRI)" in prose
-    assert "GGATCC at 1119 (BamHI)" in prose
+    assert "GAATTC at 397 (EcoRI)" in prose
+    assert "GGATCC at 1120 (BamHI)" in prose
     said = " ".join(note for step in protocol.steps for note in step.notes)
     assert "Both enzymes are supplied in rCutSmart Buffer" in said
 

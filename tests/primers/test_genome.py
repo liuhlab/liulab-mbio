@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.primers import THRESHOLDS, PairReport, Placement, amplicon_sizes, ranked_pairs
-from liulab_mbio.primers.genome import (
+from mbio.primers import THRESHOLDS, PairReport, Placement, amplicon_sizes, ranked_pairs
+from mbio.primers.genome import (
     Locus,
     design_pair_on_genome,
     evaluate_on_genome,
     evaluate_pair_on_genome,
 )
-from liulab_mbio.sequence import BindingSite, Primer, Segment, SequenceRecord, reverse_complement
+from mbio.sequence import BindingSite, Primer, Segment, SequenceRecord, reverse_complement
 
 from ..fasta import write_fasta
 from .sequences import M13_FWD, M13_REV, PUC_FWD, PUC_REV
@@ -118,6 +118,24 @@ def test_on_a_plasmid_the_amplicons_are_the_template_checks(puc19, tmp_path) -> 
     ]
 
 
+def test_a_locus_across_the_origin_is_read_round_the_plasmid(puc19, tmp_path) -> None:
+    """An amplicon across the origin ends past the length; its text comes round, as ADR 0001 has it."""
+    fasta = tmp_path / "pUC19.fa"
+    fasta.write_text(f">pUC19\n{puc19.sequence}\n")
+    across = puc19.sequence[-10:] + puc19.sequence[:10]
+    elsewhere = Locus("pUC19", 2680, 100 + len(puc19))
+    found, missing = evaluate_on_genome(
+        [_pair((across, M13_REV)), _pair((across, M13_REV))],
+        fasta,
+        "pUC19",
+        intended=[None, elsewhere],
+        circular=True,
+    )
+    assert [(one.start, one.end) for one in found.amplicons] == [(2676, 481 + len(puc19))]
+    assert "pUC19:2677..481" in found["off_target_amplicons"].detail
+    assert "none at pUC19:2681..100" in missing["intended_amplicon"].detail
+
+
 def test_a_second_binding_site_gives_an_off_target_amplicon(reports) -> None:
     report = reports[0]
     assert report.assembly == "planted"
@@ -128,7 +146,7 @@ def test_a_second_binding_site_gives_an_off_target_amplicon(reports) -> None:
     assert [one.start for one in report.off_target] == [220]
     off_target = report["off_target_amplicons"]
     assert (off_target.status, off_target.value) == ("warn", 1)
-    assert "chrI__ce11:220-460" in off_target.detail
+    assert "chrI__ce11:221..460" in off_target.detail
     assert "240 bp" in off_target.detail
 
 
@@ -138,7 +156,7 @@ def test_an_intended_amplicon_is_marked_and_one_that_is_absent_warns(reports) ->
     assert present["intended_amplicon"].status == "pass"
     assert not any(one.intended for one in absent.amplicons)
     assert absent["intended_amplicon"].status == "warn"
-    assert "chrI__ce11:0-460" in absent["intended_amplicon"].detail
+    assert "chrI__ce11:1..460" in absent["intended_amplicon"].detail
 
 
 def test_a_primer_facing_itself_makes_an_amplicon_alone(reports) -> None:

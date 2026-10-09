@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.bench import plates
-from liulab_mbio.plot import layers
-from liulab_mbio.protocol import (
+from mbio.bench import plates
+from mbio.plot import layers
+from mbio.protocol import (
     OVERVIEW_CHARS,
     Check,
     Citation,
@@ -33,7 +33,7 @@ from liulab_mbio.protocol import (
     render_html,
     write_html,
 )
-from liulab_mbio.protocol.render import NO_NUMBER, page_key
+from mbio.protocol.render import NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -698,9 +698,17 @@ def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table()
     assert "picked C2" in figure.find_all("table")[0].text
 
 
-def _ordered(count: int) -> Protocol:
+def _ordered(count: int, *, blocks: bool = False) -> Protocol:
+    """A sheet of `count` primers for two purposes, seated in the order it lists them.
+
+    The purposes alternate down the plate, or take half of it each where `blocks`.
+    """
+
+    def purpose(n: int) -> str:
+        return ("gene" if n * 2 <= count else "index") if blocks else ("index" if n % 2 else "gene")
+
     oligos = tuple(
-        Oligo(f"OP{n}", "ACGT" * (5 + n % 2), purpose="index" if n % 2 else "gene", tm_c=60.0 + n)
+        Oligo(f"OP{n}", "ACGT" * (5 + n % 2), purpose=purpose(n), tm_c=60.0 + n)
         for n in range(1, count + 1)
     )
     stock = Plate("stock", 96)
@@ -713,23 +721,43 @@ def _ordered(count: int) -> Protocol:
     )
 
 
+def _summary_row(one: Protocol, purpose: str) -> list[str]:
+    """Return the summary row for `purpose`, cell by cell."""
+    section = parse(render_html(one)).find_all("section", cls="oligos")[0]
+    summary = section.find_all("table")[0]
+    row = next(r for r in summary.find_all("tr") if purpose in r.text)
+    return [cell.text for cell in row.find_all("td")]
+
+
 def test_a_long_order_sheet_is_summarised_and_the_rows_go_behind_a_toggle() -> None:
     """A page says what 20 rows have in common; the rows themselves are what the file is for."""
     section = parse(render_html(_ordered(20))).find_all("section", cls="oligos")[0]
 
     assert section.find_all("a", href="../primers.tsv")
     assert "20 oligos · 20 to 24 bases · Tm 61.0 to 80.0 °C" in section.text
-    summary = section.find_all("table")[0]
-    index = next(r for r in summary.find_all("tr") if "index" in r.text)
-    assert [cell.text for cell in index.find_all("td")] == [
-        "index",
-        "OP1 to OP19",
-        "10",
-        "stock A1 to B7",
-    ]
     toggle = section.find_all("details", cls="listing")[0]
     assert toggle.find_all("summary")[0].text == "All 20 rows"
     assert "OP20" in toggle.text
+
+
+def test_a_purpose_seated_among_others_claims_neither_a_run_of_names_nor_of_wells() -> None:
+    """Ten of the twenty sit every other well, so counting ten off A1 stops short of B7."""
+    assert _summary_row(_ordered(20), "index") == [
+        "index",
+        "some of OP1 to OP19",
+        "10",
+        "stock, 10 wells from A1 to B7",
+    ]
+
+
+def test_a_purpose_filling_its_own_block_of_the_plate_reads_as_a_range() -> None:
+    """Every name and every well between the ends is the group's, so the ends are a range."""
+    assert _summary_row(_ordered(20, blocks=True), "index") == [
+        "index",
+        "OP11 to OP20",
+        "10",
+        "stock A11 to B8",
+    ]
 
 
 def _naming_files() -> Protocol:

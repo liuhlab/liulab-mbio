@@ -2,12 +2,12 @@
 
 import pytest
 
-from liulab_mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
-from liulab_mbio.cloning.goldengate.design import choose_enzyme, design_overhangs
-from liulab_mbio.enzymes import get_enzyme
-from liulab_mbio.overhangs import Junction, ligation_matrix
-from liulab_mbio.sequence import Feature, Segment, SequenceRecord, Strand
-from liulab_mbio.sites import find_sites, primer_tail
+from mbio.bench.goldengate import GOLDEN_GATE_ENZYMES, LAST_RESORT
+from mbio.cloning.goldengate.design import choose_enzyme, design_overhangs
+from mbio.enzymes import get_enzyme
+from mbio.overhangs import Junction, ligation_matrix
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
+from mbio.sites import find_sites, primer_tail
 
 
 def test_the_fixtures_leave_bbsi_and_paqci_free(puc19: SequenceRecord, gfp: SequenceRecord) -> None:

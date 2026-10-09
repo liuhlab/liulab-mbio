@@ -8,7 +8,7 @@ search:
 Research note for issue #83. Everything below was read or measured on **2026-09-16**.
 
 It asks what one rule keeps every label clear of every other label, and of the drawing, on the
-circular map, the linear map and the sequence view of the planned `liulab_mbio.plot` module,
+circular map, the linear map and the sequence view of the planned `mbio.plot` module,
 however crowded the record. The tool that draws is not chosen yet (#77, #78, #80), so the rule has
 to hold whichever tool draws.
 
@@ -43,7 +43,7 @@ in milliseconds.
 
 ## 2. How this was read and measured
 
-- **Records**, read by `liulab_mbio.io.read_record`: pUC19 from SnapGene's plasmid collection
+- **Records**, read by `mbio.io.read_record`: pUC19 from SnapGene's plasmid collection
   (2,686 bp, 9 features), pUC19-GFP from `docs/examples/` (3,347 bp, 12 features, 4 primer binding
   sites), and phage lambda from the same collection (48,514 bp, 188 features) as an extreme.
 - **Enzyme sets.** The 28 shipped enzymes, found with `sites.find_sites`, cut pUC19 once at 16

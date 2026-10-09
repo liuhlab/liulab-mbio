@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.plot import draw_plate
-from liulab_mbio.plot.plate import EMPTY, PALETTE, SEATED, PlateMap
-from liulab_mbio.plot.svg import Group, Rect
-from liulab_mbio.protocol.model import FORMATS, Plate
+from mbio.plot import draw_plate
+from mbio.plot.plate import EMPTY, PALETTE, SEATED, PlateMap
+from mbio.plot.svg import Group, Rect
+from mbio.protocol.model import FORMATS, Plate
 
 
 def drawing(wells: int, **rest: object):

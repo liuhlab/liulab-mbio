@@ -16,7 +16,7 @@ import pytest
 import vl_convert
 from pypdf.generic import DictionaryObject
 
-from liulab_mbio.plot import (
+from mbio.plot import (
     Drawing,
     circular,
     convert,
@@ -26,9 +26,9 @@ from liulab_mbio.plot import (
     sequence_view,
     svg,
 )
-from liulab_mbio.plot.fonts import BOLD, MONO, SANS
-from liulab_mbio.plot.labels import Box
-from liulab_mbio.sequence import (
+from mbio.plot.fonts import BOLD, MONO, SANS
+from mbio.plot.labels import Box
+from mbio.sequence import (
     BindingSite,
     Feature,
     Primer,
@@ -155,6 +155,17 @@ def test_a_suffix_it_does_not_write_is_refused(
     with pytest.raises(ValueError, match=r"the suffix must be \.html, \.png, \.pdf"):
         draw_map(puc19).write(tmp_path / name)
     assert not (tmp_path / name).exists()
+
+
+def test_a_directory_that_is_not_there_is_made(puc19: SequenceRecord, tmp_path: Path) -> None:
+    written = draw_map(puc19).write(tmp_path / "figures" / "maps" / "map.html")
+    assert written.exists()
+
+
+def test_a_refused_suffix_makes_no_directory(puc19: SequenceRecord, tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=r"the suffix must be"):
+        draw_map(puc19).write(tmp_path / "figures" / "map.svg")
+    assert not (tmp_path / "figures").exists()
 
 
 @pytest.fixture(scope="module")
@@ -300,21 +311,25 @@ def test_a_pdf_has_the_map_then_as_many_whole_rows_to_a_page_as_fit(
     assert first == sorted(first)
     assert set(first) == set(range(len(boxes) - 1))
     assert all(box[2] == pytest.approx(view.extent.width, abs=0.01) for box in boxes[1:])
-    assert all(box[3] >= tall - 0.01 for box in boxes[1:])
+    # Every page is as tall as the rows on it and their margins, and no taller.
+    margin = view.rows[0].extent.y - view.extent.y
+    for index in sorted(set(first)):
+        held = [row for row, found in zip(view.rows, first, strict=True) if found == index]
+        top = held[0].extent.y - margin
+        bottom = held[-1].extent.y + held[-1].extent.height + margin
+        assert boxes[1 + index][1] == pytest.approx(top, abs=0.01)
+        assert boxes[1 + index][3] == pytest.approx(bottom - top, abs=0.01)
     # A page ends only where the next row would not fit it, and a row that fits no page has one of
     # its own, as tall as it needs.
-    margin = view.rows[0].extent.y - view.extent.y
     for index, row in enumerate(view.rows[1:], start=1):
         if first[index] != first[index - 1]:
             top = boxes[1 + first[index - 1]][1]
             assert row.extent.y + row.extent.height + margin > top + tall
-    assert all(
-        boxes[1 + page][3] == pytest.approx(tall, abs=0.01)
-        for page in first
-        if first.count(page) > 1
-    )
+    assert all(boxes[1 + page][3] <= tall + 0.01 for page in first if first.count(page) > 1)
     assert max(first.count(page) for page in first) > 1
     assert any(box[3] > tall + 1 for box in boxes[1:])
+    # A page whose rows stop early ends there, shorter than the A-ratio would make it.
+    assert any(box[3] < tall - 1 for box in boxes[1:])
 
 
 def _inside(inner: Box, outer: list[float]) -> bool:

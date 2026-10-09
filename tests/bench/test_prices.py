@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from liulab_mbio.bench import prices
+from mbio.bench import prices
 
 RECORD = """# name: Vendor list, captured 2026-10-06
 # date: 2026-10-06
@@ -120,3 +120,35 @@ def test_a_band_that_names_no_span_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="is not 'quantity low-high'"):
         prices.read_prices(path)
+
+
+def test_money_prints_to_the_cent_and_the_column_sums_to_the_total(
+    record: prices.PriceRecord,
+) -> None:
+    """A bench page never shows $41.4975, and the rounded rows add up to the printed total."""
+    bill = prices.bill(
+        [
+            prices.Item("BsaI-HFv2", 7.5, unit="µL", key="R3733"),
+            prices.Item("BsaI-HFv2 again", 7.5, unit="µL", key="R3733"),
+        ],
+        record,
+    )
+
+    assert [row.charge for row in bill.rows] == ["3.15", "3.15"]
+    assert bill.total == "6.30"
+    assert sum(Decimal(row.charge) for row in bill.rows) == Decimal(bill.total)
+
+
+def test_an_item_the_design_does_not_size_still_gets_a_row_and_a_hole(
+    record: prices.PriceRecord,
+) -> None:
+    """Naming an item and billing nothing for it is the one thing the bill may not do."""
+    bill = prices.bill(
+        [prices.Item("SPRI beads", unit="2 volumes after a digest", key="beads")], record
+    )
+    (row,) = bill.rows
+
+    assert (row.quantity, row.unit) == (None, "2 volumes after a digest")
+    assert row.charge == ""
+    assert row.hole is not None
+    assert (row.hole.kind, row.hole.missing) == ("price", "nothing prices this item")

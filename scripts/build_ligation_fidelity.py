@@ -9,7 +9,7 @@ licence, the axis convention and what each table measured.
 
 Without `--from` the five workbooks are downloaded from `journals.plos.org`; with it they are
 read from a directory holding files named as PLOS serves them. A workbook is read by
-`liulab_mbio.ligase`, which the package itself reads a user's own matrix with, so no
+`mbio.ligase`, which the package itself reads a user's own matrix with, so no
 spreadsheet library is needed here either.
 """
 
@@ -25,10 +25,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from liulab_mbio.ligase import read_workbook
+from mbio.ligase import read_workbook
 
 REPO = Path(__file__).resolve().parents[1]
-DATA = REPO / "src/liulab_mbio/data/ligation_fidelity.json"
+DATA = REPO / "src/mbio/data/ligation_fidelity.json"
 
 DOI = "10.1371/journal.pone.0238592"
 

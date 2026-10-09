@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from liulab_mbio.cli import app
-from liulab_mbio.io import read_record
-from liulab_mbio.sequence import reverse_complement
+from mbio.cli import app
+from mbio.io import read_record
+from mbio.sequence import reverse_complement
 
 #: Where the fixture's own MCS feature sits, and where GFP is cut in two to go in as two inserts.
 MCS = (395, 452)

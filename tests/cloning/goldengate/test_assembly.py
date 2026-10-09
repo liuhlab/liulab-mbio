@@ -1,6 +1,6 @@
 """Golden Gate assembly simulated on the fixtures.
 
-pUC19 (circular) and the GFP CDS (linear) are read through `liulab_mbio.io`. BsaI reads a site
+pUC19 (circular) and the GFP CDS (linear) are read through `mbio.io`. BsaI reads a site
 in both, so the enzyme here is BbsI or PaqCI. Nothing about the fixtures is hard-coded into the
 package: the spans and overhangs below are read off the records and pinned here.
 """
@@ -9,15 +9,15 @@ import dataclasses
 
 import pytest
 
-from liulab_mbio import edits
-from liulab_mbio.bench.steps import dam_sites
-from liulab_mbio.cloning.goldengate.assembly import (
+from mbio import edits
+from mbio.bench.steps import dam_sites
+from mbio.cloning.goldengate.assembly import (
     JUNCTION_COLOR,
     amplify,
     assemble,
     open_vector,
 )
-from liulab_mbio.sequence import (
+from mbio.sequence import (
     BindingSite,
     Primer,
     Segment,
@@ -25,8 +25,8 @@ from liulab_mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from liulab_mbio.sites import find_sites, has_site, insert_site
-from liulab_mbio.snapgene import read_dna, write_dna
+from mbio.sites import find_sites, has_site, insert_site
+from mbio.snapgene import read_dna, write_dna
 
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6

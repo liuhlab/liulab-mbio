@@ -8,23 +8,23 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from liulab_mbio.bench.gels import agarose_percent
-from liulab_mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE
-from liulab_mbio.bench.validation import CORRECT_CLONE, EMPTY_CLONE, SANGER_FLANK
-from liulab_mbio.cloning.gateway import plan_gateway
-from liulab_mbio.cloning.gateway.att import REGIONS
-from liulab_mbio.cloning.gateway.bench import (
+from mbio.bench.gels import agarose_percent
+from mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE
+from mbio.bench.validation import CORRECT_CLONE, EMPTY_CLONE, SANGER_FLANK
+from mbio.cloning.gateway import plan_gateway
+from mbio.cloning.gateway.att import REGIONS
+from mbio.cloning.gateway.bench import (
     BP_CELSIUS,
     BP_VOLUME_UL,
     ENTRY_NG,
     LR_CELSIUS,
     LR_VOLUME_UL,
 )
-from liulab_mbio.io import read_record
-from liulab_mbio.sequence import Segment, SequenceRecord, reverse_complement
+from mbio.io import read_record
+from mbio.sequence import Segment, SequenceRecord, reverse_complement
 
 if TYPE_CHECKING:
-    from liulab_mbio.cloning.gateway import Plan
+    from mbio.cloning.gateway import Plan
 
 
 def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(

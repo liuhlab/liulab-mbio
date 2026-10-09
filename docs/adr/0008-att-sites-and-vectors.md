@@ -11,7 +11,7 @@ destination vector in a file someone hands it. `docs/research/gateway-cloning.md
 licence question for both — the sequences may ship, on two independent footings, and a vendor
 vector catalogue could legally ship too.
 
-So: the eight 25 bp regions ship as constants `liulab_mbio.cloning.gateway.att` owns. No vector
+So: the eight 25 bp regions ship as constants `mbio.cloning.gateway.att` owns. No vector
 catalogue ships. And a vector is recognised by **finding** its sites rather than by matching a
 shipped constant — the 7 bp overlap exactly, the rest of the region within one base.
 

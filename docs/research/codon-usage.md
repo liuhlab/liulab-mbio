@@ -7,7 +7,7 @@ search:
 
 Research note for issue #10. Sections 1 to 6 were read on **2026-09-12**, and section 7, on
 the human and mouse tables added afterwards, on **2026-09-14**. It records where
-`src/liulab_mbio/data/codon_usage.json` comes from, which published tables were rejected and
+`src/mbio/data/codon_usage.json` comes from, which published tables were rejected and
 why, and what the shipped tables are and are not.
 
 ## 1. The verdict, first
