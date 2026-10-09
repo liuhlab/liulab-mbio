@@ -68,7 +68,7 @@ cannot ask you anything. Nothing checks these, so the rule is on you.
 | `instructions` | one imperative sentence an arm can execute: the action, the thing, the amount, the vessel, the time or temperature. No clause explaining the choice |
 | `cautions` | what would hurt the person or the material, written as the action to take |
 | `expected` | what the reader sees if it worked, written as an observation |
-| `notes` | the only place a *why* may stand, and only with a citation. An uncited note is deleted |
+| `notes` | the only place a *why* may stand. Three kinds, and no fourth: what this run computed or chose, which cites nothing; what a document says, which carries the document's `Citation`; what the reader can check against the page's own numbers. A *why* from memory is not a note |
 | `figures` | one, on a step that changes a molecule: a PCR, a digest, a ligation, an assembly, a recombination. It draws what the step makes, with what the step changed lit. A step that moves, waits, incubates or reads carries none, and a plate draws itself. A figure that replaces no explanation is decoration |
 
 Five things are forbidden in every rendered field: a name the reader cannot look up, such as a
@@ -76,6 +76,15 @@ route named by a letter, or a file the page does not link — `Protocol.files` i
 one; markup, which renders as the characters it spells and not as emphasis; a code identifier
 or a module name; a tracker or code reference; and this package's own vocabulary where a bench
 word exists.
+
+**The note test.** Ask where the sentence gets its authority, and take the only three answers.
+**This run** — its records, the numbers the package computed, the values it chose: keep it, cite
+nothing, and where a reader could mistake it for a published figure, say whose it is ("what this
+run measured, not a published figure"). **A document** — attach its `Citation` and take the
+vendor's name back out of the sentence, so the page carries the link and the note carries the
+reason. **Nobody** — go and find the document, or delete the sentence. A sentence an arm could
+execute, a hazard, an observation or a fix for something gone wrong is not a note at all: it
+belongs in `instructions`, `cautions`, `expected` or `troubleshooting`.
 
 The explanation you delete has a home already. A decision true for this run goes in the
 protocol's own `overview` and `highlights`; a fact about the method goes to `docs/research/` or

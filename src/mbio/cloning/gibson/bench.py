@@ -16,8 +16,9 @@ comes from is named beside it. What any cloning pipeline shares -- DNA amounts, 
 validation -- is `mbio.bench`.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from mbio.bench.amounts import Amount, dna_amount, to_pmol
 from mbio.bench.reactions import reaction_table
@@ -27,6 +28,7 @@ from mbio.protocol.model import (
     Incubation,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     ThermocyclerProgram,
 )
@@ -195,6 +197,25 @@ NEBUILDER_HIFI = AssemblyProduct(
     0.2,
     True,
     NEBUILDER_REFERENCES,
+)
+
+#: The manual of each product, keyed by its catalogue number, so a note citing what the
+#: manual states resolves on the page. A run cites one of them and `citing` drops the other.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "E2621": Source(
+            "New England Biolabs #E2621S/L/X and #E5520S NEBuilder HiFi DNA Assembly Master "
+            "Mix / Cloning Kit instruction manual",
+            edition="version 6.0_1/26",
+            url="https://www.neb.com/-/media/nebus/files/manuals/manuale2621_e5520.pdf",
+        ),
+        "E2611": Source(
+            "New England Biolabs #E2611S/L and #E5510S Gibson Assembly Master Mix / Gibson "
+            "Assembly Cloning Kit instruction manual",
+            edition="version 3.0_1/26",
+            url="https://www.neb.com/-/media/nebus/files/manuals/manuale2611_e5510.pdf",
+        ),
+    }
 )
 
 #: The Gibson Assembly Master Mix manual, and NEB's own CC BY posting of its reaction (§1).

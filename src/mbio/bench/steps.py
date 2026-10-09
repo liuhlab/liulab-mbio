@@ -36,6 +36,7 @@ from mbio.protocol.model import (
     Item,
     Lane,
     Material,
+    Note,
     Oligo,
     Protocol,
     Reference,
@@ -287,7 +288,7 @@ def pcr_step(
     extension_seconds: int | None,
     cycles: int | None,
     cycles_citation: Citation | None,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the step that makes one amplicon by PCR.
 
@@ -389,7 +390,7 @@ def dpni_step(
     *,
     seconds: int = DPNI_SECONDS,
     inactivation: Incubation | None = None,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the DpnI digest that takes the plasmid template away, so it cannot transform.
 
@@ -450,11 +451,12 @@ def dpni_step(
     )
 
 
-def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
-    """Return the spin-column cleanup of every amplicon, carrying the caller's own notes."""
+def cleanup_step(*, cautions: Sequence[str] = (), notes: Sequence[Note | str] = ()) -> Step:
+    """Return the spin-column cleanup of every amplicon, carrying the caller's own words."""
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
+        cautions=tuple(cautions),
         instructions=(
             "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
         ),
@@ -508,7 +510,7 @@ def transform_step(
     title: str = "Transform and plate",
     key: str = "transform",
     expected: Sequence[str] = (),
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the transformation and plating, with the colour the plate should show.
 
@@ -538,7 +540,7 @@ def transform_step(
             f"{phenotype.reporter.name}, which is then not there to complete the host's own."
         )
     results.extend(expected)
-    said = [
+    said: list[Note | str] = [
         f"The plate reads colour only with an alpha-complementing host, such as {host}. "
         "A host that cannot complement gives white colonies whatever the clone carries."
         if phenotype.blue_white
@@ -595,7 +597,7 @@ def colony_pcr_step(
     check: ColonyCheck,
     *,
     junctions: int,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
     """Return the colony PCR screen, saying which band means what.
@@ -668,7 +670,7 @@ def sequencing_step(
     *,
     junctions: Sequence[str],
     inserts: Sequence[str],
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the sequencing that confirms the junctions, which is the only thing that settles it.
 

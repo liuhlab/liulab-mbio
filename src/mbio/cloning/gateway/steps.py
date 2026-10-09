@@ -461,6 +461,10 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 "temperature.",
                 f"Add {BP_CLONASE_UL:g} µL of {BP_CLONASE}, mix well and spin down.",
             ),
+            cautions=(
+                f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or "
+                f"{BP_TOTAL_MAX_NG:g} ng of DNA altogether: excess DNA inhibits the reaction.",
+            ),
             tables=(bp_reaction(bp.amounts),),
             expected=(f"A {BP_VOLUME_UL:g} µL reaction holding both DNAs.",),
             notes=(
@@ -468,8 +472,6 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 f"The manual fixes the picomoles and not the weight: {BP_PMOL * 1000:g} fmol of "
                 f"each, the attB DNA down to {BP_SUBSTRATE_MIN_PMOL * 1000:g} fmol, weighed "
                 "here from each record's own length.",
-                f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or "
-                f"{BP_TOTAL_MAX_NG:g} ng of DNA altogether: excess DNA inhibits the reaction.",
                 "A linear attB product and a supercoiled donor vector are the substrates the "
                 "manual calls most efficient for BP.",
             ),
@@ -573,13 +575,13 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
                 f"Add {LR_CLONASE_UL:g} µL of {LR_CLONASE}, mix well and spin down.",
             ),
+            cautions=(f"Do not go over {ENTRY_NG:g} ng of entry clone.",),
             tables=(lr_reaction(lr.amounts),),
             expected=(f"A {LR_VOLUME_UL:g} µL reaction holding both plasmids.",),
             notes=(
                 _pipetting_note("nanograms"),
-                f"Do not go over {ENTRY_NG:g} ng of entry clone: the manual reports colonies "
-                f"carrying several molecules above it, and fewer colonies below "
-                f"{ENTRY_MIN_NG:g} ng.",
+                f"Above {ENTRY_NG:g} ng of entry clone the manual reports colonies carrying "
+                f"several molecules, and below {ENTRY_MIN_NG:g} ng, fewer colonies.",
                 "Supercoiled plasmids are the substrates the manual calls most efficient for LR.",
             ),
             troubleshooting=(_volume_trouble(),),

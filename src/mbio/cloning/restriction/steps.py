@@ -575,6 +575,7 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
             f"Mix the reaction below, {amount.nanograms:g} ng of miniprep first.",
             f"Incubate at {_celsius(diagnostic.enzymes)} for {DIGEST_SECONDS // 60} minutes.",
             f"Run the whole digest on a {percent:g}% agarose gel beside the ladder.",
+            "Sequence only a miniprep that gives the clone's bands.",
         ),
         tables=(digest_reaction(diagnostic.enzymes, amount, title="Diagnostic digest"),),
         timers=(Timer("Diagnostic digest", DIGEST_SECONDS),),
@@ -593,7 +594,6 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
         notes=(
             "The junctions put both recognition sites back, so the pair that made the clone is "
             "what cuts the insert out of it again.",
-            "Sequence only a miniprep that gives the clone's bands.",
         ),
         troubleshooting=(
             Troubleshooting(
@@ -728,14 +728,16 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             else ()
         ),
         cleanup_step(
+            cautions=(
+                f"Keep the eluate under {MAX_DNA_FRACTION:.0%} of the digest below; it carries "
+                "salt.",
+            ),
             notes=(
                 f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
                 "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon "
                 "and nothing else.",
-                f"Its eluate carries salt, so keep it under {MAX_DNA_FRACTION:.0%} of the "
-                "digest below.",
                 *_template_note(amplicon),
-            )
+            ),
         ),
     )
 
@@ -787,13 +789,12 @@ def _digest_step(
             )
             for piece in pieces
         ),
-        notes=(
-            _buffer_note(enzymes),
-            f"Keep the DNA solution under {room} of the reaction; a column eluate carries salt, "
-            "and salt leaves the digest incomplete.",
-            *notes,
+        cautions=(
+            f"Keep the DNA solution under {room} of the reaction; a column eluate carries "
+            "salt, and salt leaves the digest incomplete.",
             *STAR_ACTIVITY,
         ),
+        notes=(_buffer_note(enzymes), *notes),
         troubleshooting=(
             Troubleshooting(
                 "An uncut band remains",
@@ -957,11 +958,13 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             ),
             f"{low:g} to {high:g} µL of this goes into the cells; the rest keeps at -20 °C.",
         ),
+        cautions=(
+            f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
+            "fragment closes on itself instead of joining its partner.",
+        ),
         notes=(
             "Picomoles, not nanograms: the table asks for a molar ratio, and the shorter "
             "fragment weighs less at the same ratio.",
-            f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
-            "fragment closes on itself instead of joining its partner.",
             *_blunt_cost(ligation),
             "Junction positions are 1-based, on the product.",
         ),

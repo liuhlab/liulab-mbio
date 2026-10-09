@@ -7,6 +7,7 @@ a supplier's number name the section of ``docs/research/gibson-assembly.md`` it 
 """
 
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
@@ -51,6 +52,7 @@ from mbio.bench.steps import (
 )
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.gibson.assembly import Assembly, Junction, Part
+from mbio.cloning.gibson.bench import SOURCES as ASSEMBLY_SOURCES
 from mbio.cloning.gibson.bench import (
     AssemblyProduct,
     assembly_program,
@@ -65,10 +67,13 @@ from mbio.cloning.gibson.oligos import DesignedOligo
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
     Incubation,
     Material,
+    Note,
     Protocol,
     Reference,
+    Source,
     Step,
     Timer,
     Troubleshooting,
@@ -118,6 +123,21 @@ SCREENING_REFERENCES: tuple[Reference, ...] = (
         "kilobases. Nat. Methods 6, 343-345, for the junction error rate",
         url="https://doi.org/10.1038/nmeth.1318",
     ),
+)
+
+#: The two documents the screening notes read their numbers from.
+SCREENING_SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "In-Fusion": Source(
+            "Takara Bio, In-Fusion Cloning FAQs",
+            url="https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
+        ),
+        "Gibson 2009": Source(
+            "Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several "
+            "hundred kilobases. Nat. Methods 6, 343-345",
+            url="https://doi.org/10.1038/nmeth.1318",
+        ),
+    }
 )
 
 #: The hardware a run needs, which no reagent table covers.
@@ -213,7 +233,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, product, phenotype),
-        sources=PCR_SOURCES,
+        sources={**PCR_SOURCES, **ASSEMBLY_SOURCES, **SCREENING_SOURCES},
     )
     return citing(one)
 
@@ -418,23 +438,35 @@ def _steps(
                 seconds=DPNI_DIGEST_SECONDS,
                 inactivation=DPNI_INACTIVATION,
                 notes=(
-                    "This digest is NEB's own, not this package's: its dose, its time and its "
-                    "heat inactivation are the ones the assembly manual prints.",
-                    "NEB's other answer to template background is to keep it low in the first "
-                    "place: 0.1-0.5 ng of plasmid per 50 µL PCR.",
+                    Note(
+                        "The dose, the time and the heat inactivation are the assembly "
+                        "manual's, not this package's.",
+                        citation=Citation(product.catalog),
+                    ),
+                    Note(
+                        "The other answer to template background is to keep it low in the "
+                        "first place: 0.1-0.5 ng of plasmid per 50 µL PCR.",
+                        citation=Citation(product.catalog),
+                    ),
                 ),
             )
         )
     steps.append(
         cleanup_step(
             notes=(
-                f"NEB calls a column optional below {CLEANUP_FRAGMENTS} PCR fragments: a "
-                "product more than 90% pure goes into the reaction unpurified, within the "
-                "fraction the assembly step gives.",
-                f"At {CLEANUP_FRAGMENTS} fragments or more, or a fragment over {CLEANUP_KB} kb, "
-                "NEB calls it highly recommended and puts the gain in assembly and "
-                "transformation at two- to tenfold. A PCR showing anything but one band is "
-                "gel-purified whatever the count.",
+                Note(
+                    f"A column is optional below {CLEANUP_FRAGMENTS} PCR fragments: a product "
+                    "more than 90% pure goes into the reaction unpurified, within the fraction "
+                    "the assembly step gives.",
+                    citation=Citation(product.catalog),
+                ),
+                Note(
+                    f"At {CLEANUP_FRAGMENTS} fragments or more, or a fragment over "
+                    f"{CLEANUP_KB} kb, a column is highly recommended, and the gain in "
+                    "assembly and transformation is put at two- to tenfold. A PCR showing "
+                    "anything but one band is gel-purified whatever the count.",
+                    citation=Citation(product.catalog),
+                ),
             )
         )
     )
@@ -458,9 +490,12 @@ def _steps(
             junctions=[one.overlap for one in assembly.junctions],
             inserts=inserts,
             notes=(
-                f"Gibson 2009 sequenced 210 repaired junctions and found about one error per "
-                f"{MOLECULES_PER_ERROR} molecules joined, so a gel that reads right is not the "
-                "same as a junction that is right.",
+                Note(
+                    f"About one error per {MOLECULES_PER_ERROR} molecules joined was found in "
+                    "210 sequenced junctions, so a gel that reads right is not the same as a "
+                    "junction that is right.",
+                    citation=Citation("Gibson 2009"),
+                ),
             ),
         )
     )
@@ -532,19 +567,21 @@ def _assembly_step(
     table = assembly_reaction(product, amounts)
     tier = product.tier(len(amounts))
     total = sum(component.volume_ul for component in table.components)
-    ratio = (
+    ratio = Note(
         f"Each insert goes in at {tier.insert_ratio:g} times the vector's moles, and any insert "
-        f"under {product.short_insert_bp} bp at {product.short_insert_ratio:g} times, which is "
-        f"what {product.supplier} asks for at this fragment count. The table gives each in "
-        "picomoles and in nanograms, so it can be pipetted at whatever concentration it is."
+        f"under {product.short_insert_bp} bp at {product.short_insert_ratio:g} times, at this "
+        "fragment count. The table gives each in picomoles and in nanograms, so it can be "
+        "pipetted at whatever concentration it is.",
+        citation=Citation(product.catalog),
     )
-    unpurified = (
-        f"{product.supplier} takes unpurified PCR product straight from the tube for up to "
+    unpurified = Note(
+        f"Unpurified PCR product goes straight from the tube for up to "
         f"{product.unpurified_fraction:.0%} of the reaction, which is {product.unpurified_ul:g} "
         "µL here, as long as the product is a single band."
         if product.unpurified_fraction is not None
-        else f"{product.supplier} asks for purified PCR product and documents no allowance for "
-        "unpurified DNA in the reaction."
+        else "Only purified PCR product goes in: no allowance for unpurified DNA in the "
+        "reaction is published.",
+        citation=Citation(product.catalog),
     )
     return Step(
         f"Set up the {product.name} reaction",
@@ -559,20 +596,26 @@ def _assembly_step(
         notes=(
             ratio,
             "The volumes above assume each fragment is concentrated enough to carry its "
-            "picomoles in the microlitre the table gives; make the difference up with water.",
+            "picomoles in the microlitre the table gives.",
             unpurified,
             *(
-                f"{part.name} goes in as its {len(part.oligos)} oligos rather than as an "
-                f"amplicon: {product.supplier} asks for {STITCH_OLIGO_NM:g} nM of each in the "
-                "reaction, and they assemble into the fragment the table gives picomoles for. "
-                "There is no separate annealing step."
+                Note(
+                    f"{part.name} goes in as its {len(part.oligos)} oligos rather than as an "
+                    f"amplicon: the reaction takes {STITCH_OLIGO_NM:g} nM of each, and they "
+                    "assemble into the fragment the table gives picomoles for. There is no "
+                    "separate annealing step.",
+                    citation=Citation(product.catalog),
+                )
                 for part in parts
                 if part.stitched
             ),
             *(
-                f"{one.bridge} goes in at {BRIDGE_OLIGO_PMOL:g} pmol, which is the dose "
-                f"{product.supplier} publishes for this route: 5 µL of a 0.2 µM preparation "
-                "against 30 ng of linearised vector."
+                Note(
+                    f"{one.bridge} goes in at {BRIDGE_OLIGO_PMOL:g} pmol, the dose published "
+                    "for this route: 5 µL of a 0.2 µM preparation against 30 ng of linearised "
+                    "vector.",
+                    citation=Citation(product.catalog),
+                )
                 for one in junctions
                 if one.bridge
             ),
@@ -617,8 +660,11 @@ def _incubation_step(
             ),
         ),
         notes=(
-            f"{tier.incubation_seconds // 60} minutes is what {product.supplier} asks for at "
-            f"this fragment count. {product.incubation_note}",
+            Note(
+                f"{tier.incubation_seconds // 60} minutes is what this fragment count takes. "
+                f"{product.incubation_note}",
+                citation=Citation(product.catalog),
+            ),
             "Junction positions are 1-based, on the product.",
         ),
         troubleshooting=(
@@ -642,10 +688,14 @@ def _colony_pcr_step(colony: ColonyCheck, assembly: Assembly) -> Step:
         colony,
         junctions=len(assembly.junctions),
         notes=(
-            f"Pick {SCREENED_COLONIES}. Takara's In-Fusion series is the only one that measures "
-            f"how the correct fraction falls with fragment count: {SCREENED_COLONIES} of "
-            f"{SCREENED_COLONIES} correct at two fragments, {CORRECT_AT_FIVE} of "
-            f"{SCREENED_COLONIES} at five. That is In-Fusion's number and not this product's.",
+            f"This screen reads {SCREENED_COLONIES} colonies.",
+            Note(
+                f"The correct fraction falls with fragment count: {SCREENED_COLONIES} of "
+                f"{SCREENED_COLONIES} correct at two fragments, {CORRECT_AT_FIVE} of "
+                f"{SCREENED_COLONIES} at five. That is the In-Fusion series' number, the only "
+                "one measured against fragment count, and not this product's.",
+                citation=Citation("In-Fusion"),
+            ),
             "Where nothing grew at all, NEB asks for the same PCR on the assembly reaction "
             "itself, with primers flanking the assembled product.",
         ),

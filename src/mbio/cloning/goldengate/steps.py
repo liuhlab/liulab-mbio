@@ -69,8 +69,10 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
     Component,
     Material,
+    Note,
     Protocol,
     Reference,
     Step,
@@ -351,16 +353,23 @@ def _steps(
                 [part.name for part in cut],
                 [(part.template.name, dam_sites(part.template)) for part in cut],
                 notes=(
-                    "This step is not in NEB's Golden Gate protocol; the incubation is this "
-                    "package's choice.",
+                    Note(
+                        "The kit's own protocol has no step for a methylated template, so the "
+                        "incubation is this package's choice.",
+                        citation=Citation("E1601"),
+                    ),
                 ),
             )
         )
     steps.append(
         cleanup_step(
             notes=(
-                "NEB asks for purified amplicons: polymerase carried over from the PCR fills in "
-                "the four-base overhangs, which blunts the ends and mis-assembles them.",
+                Note(
+                    "The reaction takes purified amplicons: polymerase carried over from the "
+                    "PCR fills in the four-base overhangs, which blunts the ends and "
+                    "mis-assembles them.",
+                    citation=Citation("E1601"),
+                ),
             )
         )
     )
@@ -405,8 +414,8 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
         cycles=GOLDEN_GATE_PCR_CYCLES,
         cycles_citation=GOLDEN_GATE_PCR_CYCLES_CITATION,
         notes=(
-            "The cycle count is the fewest NEB finds enough for an amplicon going into an "
-            "assembly; fewer cycles means fewer PCR errors.",
+            "The cycle count is the fewest enough for an amplicon going into an assembly; "
+            "fewer cycles means fewer PCR errors.",
             f"The primers carry a {enzyme.name} site pointing back into the part, so "
             f"cutting the amplicon leaves {part.left_overhang} and {part.right_overhang}.",
         ),
@@ -422,16 +431,14 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
         key="set-up-assembly",
         instructions=(
             "Thaw the master mix on ice and mix it well; it is viscous.",
+            "Pipette the volume that gives each fragment its picomoles, and make the "
+            "difference up with water.",
             "Pipette the DNA into the tube first, then the rest.",
             "Mix gently and spin down.",
         ),
         tables=(table,),
         expected=(f"A {total:g} µL reaction holding every fragment.",),
-        notes=(
-            "The volumes above assume the concentrations measured in the step before; "
-            "pipette the volume that gives the picomoles, and make the difference up with "
-            "water.",
-        ),
+        notes=("The volumes above assume the concentrations measured in the step before.",),
         troubleshooting=(
             Troubleshooting(
                 "The DNA does not fit the reaction volume",
