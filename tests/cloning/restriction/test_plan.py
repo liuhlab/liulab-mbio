@@ -19,6 +19,7 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_KILL_SECONDS,
     PHOSPHATASE_SECONDS,
     ROOM_CELSIUS,
+    SALT_LOCATOR,
     STAR_ACTIVITY,
     STAR_LOCATOR,
     phosphatase_units,
@@ -231,16 +232,19 @@ def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
 # --------------------------------------------------------------------------------------
 
 
-def test_every_star_activity_caution_links_the_guide_it_was_read_from(made):
+def test_every_caution_the_guide_states_links_the_page_it_stands_on(made, tailed):
     """NEB's name leaves the sentence; the page carries the link and the caution the hazard."""
     protocol = made.protocol()
-    digest = next(one for one in protocol.steps if one.key == "digest-vector")
-    read = Citation("NEB-technical-guide", STAR_LOCATOR)
+    steps = {step.key: step for step in protocol.steps}
+    star = Citation("NEB-technical-guide", STAR_LOCATOR)
+    salt = Citation("NEB-technical-guide", SALT_LOCATOR)
 
-    assert [one.citation for one in STAR_ACTIVITY] == [read] * len(STAR_ACTIVITY)
-    assert {one.citation for one in digest.cautioned if one.citation} == {read}
+    assert [one.citation for one in STAR_ACTIVITY] == [star] * len(STAR_ACTIVITY)
+    assert [one.citation for one in steps["digest-vector"].cautioned] == [salt, *([star] * 4)]
+    purify = next(one for one in tailed.protocol().steps if one.key == "purify-amplicons")
+    assert [one.citation for one in purify.cautioned] == [salt]
     # `citing` has already dropped every source nothing names, so this one is reachable.
-    assert read.source in protocol.sources
+    assert star.source in protocol.sources
 
 
 def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_wrote_it_on(

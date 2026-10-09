@@ -31,6 +31,7 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import ONETAQ, Polymerase
 from mbio.protocol.model import (
     OVERVIEW_CHARS,
+    Caution,
     Check,
     Citation,
     Gel,
@@ -494,7 +495,7 @@ def dpni_step(
 
 def cleanup_step(
     *,
-    cautions: Sequence[str] = (),
+    cautions: Sequence[Caution | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:

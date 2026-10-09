@@ -78,8 +78,22 @@ METHYLATION_FREE_HOST = "dam⁻/dcm⁻ Competent E. coli (NEB #C2925)"
 MAX_ENZYME_FRACTION = 0.1
 
 #: What the DNA solution may not pass, as a fraction of the reaction: a spin-column eluate
-#: carries salt, and salt inhibits the digest. Technical Guide, §2.
+#: carries salt, and salt inhibits the digest. §2, and `SALT_LOCATOR` is the guide's own page.
 MAX_DNA_FRACTION = 0.25
+
+#: Where in the guide that fraction stands: the row for a digest that did not finish.
+SALT_LOCATOR = "salt inhibition, p. 10"
+
+#: That fraction as the two steps carrying a column eluate warn of it, each carrying the page.
+ELUATE_CAUTION = Caution(
+    f"Keep the eluate under {MAX_DNA_FRACTION:.0%} of the digest below; it carries salt.",
+    citation=Citation("NEB-technical-guide", SALT_LOCATOR),
+)
+SALT_CAUTION = Caution(
+    f"Keep the DNA solution under {MAX_DNA_FRACTION:.0%} of the reaction; a column eluate "
+    "carries salt, and salt leaves the digest incomplete.",
+    citation=Citation("NEB-technical-guide", SALT_LOCATOR),
+)
 
 #: What NEB asks for between a recognition site and the end of a PCR product, and what its own
 #: per-enzyme table measures: at one or two spacer bases most of these enzymes cut poorly, and

@@ -71,10 +71,10 @@ from mbio.cloning.restriction.bench import (
     COLUMN_REFERENCE,
     CONTROLS,
     DIGEST_SECONDS,
+    ELUATE_CAUTION,
     HIGH_LIGASE_UNITS_UL,
     LIGASE_UNITS_UL,
     LIGATION_NG_UL,
-    MAX_DNA_FRACTION,
     OVERNIGHT_CELSIUS,
     PHOSPHATASE,
     PHOSPHATASE_CELSIUS,
@@ -84,6 +84,7 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_SECONDS,
     REFERENCES,
     ROOM_CELSIUS,
+    SALT_CAUTION,
     STAR_ACTIVITY,
     TRANSFORM_UL,
     digest_amount,
@@ -791,10 +792,7 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             else ()
         ),
         cleanup_step(
-            cautions=(
-                f"Keep the eluate under {MAX_DNA_FRACTION:.0%} of the digest below; it carries "
-                "salt.",
-            ),
+            cautions=(ELUATE_CAUTION,),
             notes=(
                 Note(
                     f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
@@ -835,7 +833,6 @@ def _digest_step(
     both the same.
     """
     named = listed([enzyme.name for enzyme in enzymes])
-    room = f"{MAX_DNA_FRACTION:.0%}"
     return Step(
         f"Digest {record.name} with {named}",
         key=key,
@@ -855,11 +852,7 @@ def _digest_step(
             )
             for piece in pieces
         ),
-        cautions=(
-            f"Keep the DNA solution under {room} of the reaction; a column eluate carries "
-            "salt, and salt leaves the digest incomplete.",
-            *STAR_ACTIVITY,
-        ),
+        cautions=(SALT_CAUTION, *STAR_ACTIVITY),
         notes=(_buffer_note(enzymes), *notes),
         troubleshooting=(
             Troubleshooting(
