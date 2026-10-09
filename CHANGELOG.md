@@ -284,6 +284,19 @@ sets one.
 
 ### Changed
 
+- Every bench page the package writes now reads the same way, whichever method wrote it. A note,
+  a caution and a troubleshooting row each carry the document they were read from, so the page
+  links the manual and the sentence keeps the reason without the vendor's name inside it; a
+  sentence that only told the reader what to do is an instruction now, where it belongs. What a
+  run leaves on disk follows its length rather than its name: a run of one protocol writes
+  `protocol.json` and `protocol.html` side by side, and a run of several writes the folder of
+  linked pages it always did. So `synbio dmx plan` writes two files where it wrote a folder of
+  five, and the four cloning plans are as they were. Every cloning reaction now shows the
+  molecule it makes, with what the reaction joined lit: the Golden Gate assembly, the Gibson
+  incubation, the ligation, and both Gateway reactions. And every plan draws on its product each
+  primer it designed, colony PCR and sequencing primers included, so the record you open carries
+  the whole sheet and not only the pair that made the insert.
+
 - The documentation site is arranged by what a reader is doing: Home, Methods, Protocols,
   Projects and Reference. A page is named for the thing it covers, so the menu now lists what
   the package ships. Protocols is a catalogue of the bench procedures it writes, with two pages
