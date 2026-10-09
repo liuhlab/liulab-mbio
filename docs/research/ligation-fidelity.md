@@ -120,8 +120,9 @@ From NEB's Ligase Fidelity Viewer help page:
 
 So **the Watson-Crick entry of a row is the column spelling its reverse complement**, and the
 cell where a row meets the column of the same name is a mispair. Row `TTTT` against column
-`AAAA` holds 635 in the BsaI table while row `TTTT` against column `TTTT` holds 4. Getting this
-backwards would read every fidelity as near zero, which is why a test pins it.
+`AAAA` holds 635 in the BsaI table, while row `TTTT` against column `TTTT` holds nothing at all:
+a pair never observed is absent rather than zero. Getting this backwards would read every
+fidelity as near zero, which is why a test pins it.
 
 ## 5. Fidelity, as the paper defines it and as the code computes it
 

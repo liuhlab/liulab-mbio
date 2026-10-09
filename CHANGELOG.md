@@ -274,6 +274,14 @@ sets one.
   `LIULAB_MBIO_LIGASE_MATRIX`. Nothing from that archive ships here.
 - Docs: a walkthrough of GFP into pUC19, the plan it writes published as a live example, and
   an API reference covering every public module.
+- Docs: five reference pages, each written for a lookup rather than a tour of the modules.
+  `reference/python.md` names the 61 calls a script makes, grouped by the job they do, and each
+  heading prints the import line to copy. `reference/cli.md` documents every verb of both
+  commands, its arguments and the files it writes, and a test holds that list to the apps
+  themselves rather than to anything they print. Three lookups join them: what a ligation
+  fidelity figure predicts and which enzyme stands in for which where nobody has measured one,
+  the shape of the DMX barcode kit, whose 96 sequences you hold your own copy of, and what
+  ships with the package against what it reads from your disk.
 
 ### Changed
 
