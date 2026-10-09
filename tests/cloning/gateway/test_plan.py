@@ -220,8 +220,8 @@ def test_the_protocol_reads_as_two_staged_reactions_with_a_miniprep_between_them
     stop = " ".join(steps["Stop the BP reaction with proteinase K"].instructions)
     assert "37 °C for 10 minutes" in stop
     assert any(
-        "not the stopped BP reaction" in note
-        for note in steps["Pick and miniprep the entry clone"].notes
+        "not the stopped BP reaction" in note.text
+        for note in steps["Pick and miniprep the entry clone"].noted
     )
 
 
@@ -366,7 +366,7 @@ def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequenc
     assert not any("reversed" in line.lower() for line in screen.expected)
     # Gateway asks for no junction primer, so the line saying where one stops is left out.
     assert not any("junction primer" in line for line in screen.expected)
-    assert any("pCR8/GW/TOPO" in note for note in confirm.notes)
+    assert any("pCR8/GW/TOPO" in n.text for n in confirm.noted)
     assert REGIONS["attB1"] in " ".join(confirm.expected)
 
 

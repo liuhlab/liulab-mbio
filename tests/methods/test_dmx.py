@@ -240,9 +240,9 @@ def test_the_steps_print_each_design_chance_beside_the_floor():
         "Array 2 designs and grow",
         "Pick 4 colonies of each design",
     ]
-    assert "2 fragments or more" in " ".join(made[0].notes)
-    assert "2 fragments: 1 design, 100.0% of picks clean" in made[1].notes
-    assert "8 fragments: 1 design, 66.7% of picks clean" in made[1].notes
+    assert "2 fragments or more" in " ".join(n.text for n in made[0].noted)
+    assert "2 fragments: 1 design, 100.0% of picks clean" in [n.text for n in made[1].noted]
+    assert "8 fragments: 1 design, 66.7% of picks clean" in [n.text for n in made[1].noted]
 
 
 def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
@@ -252,7 +252,7 @@ def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
         text
         for route in (method.ROUTE_INDEX_PCR, method.ROUTE_LIGATION)
         for step in steps.validation_steps(sized(route, some, 2))
-        for text in (*step.instructions, *step.notes, *step.expected)
+        for text in (*step.instructions, *(n.text for n in step.noted), *step.expected)
     ]
     assert [text for text in said if "*" in text] == []
 
@@ -281,12 +281,12 @@ def test_the_flow_cell_note_counts_the_plates_this_read_pools():
     """Both numbers follow from the run: what it pools, and what its address could tell apart."""
     one = sized(method.ROUTE_LIGATION, (method.Design("one", 2),), 0)
     assert len(steps.pooled_plates(one)) == 1
-    note = " ".join(pooling(one).notes)
+    note = " ".join(n.text for n in pooling(one).noted)
     assert "This read pools 1 plate." in note
     assert f"tell {method.ROUTE_LIGATION.plate_axis} plates apart" in note
     many = sized(method.ROUTE_INDEX_PCR, tuple(method.Design(f"d{n}", 2) for n in range(50)), 0)
     assert len(steps.pooled_plates(many)) == 3
-    assert "This read pools 3 plates." in " ".join(pooling(many).notes)
+    assert "This read pools 3 plates." in " ".join(n.text for n in pooling(many).noted)
 
 
 def test_index_pcr_carries_a_hole_at_the_marks_and_ligation_carries_none():

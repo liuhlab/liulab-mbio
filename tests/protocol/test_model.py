@@ -1,4 +1,5 @@
 import ast
+import json
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import replace
@@ -16,16 +17,19 @@ from mbio.protocol import (
     Incubation,
     Ladder,
     Lane,
+    Note,
     Oligo,
     Project,
     Protocol,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     Step,
     ThermocyclerProgram,
     Timer,
     Wait,
+    citing,
     read_protocol,
     write_protocol,
 )
@@ -405,6 +409,27 @@ def test_a_figure_cites_its_source_as_a_note_does() -> None:
     assert one.cited == frozenset({"k"})
     (check,) = [c for c in one.audit() if c.name == "sources"]
     assert check.status == "fail"
+
+
+def test_a_note_is_a_bare_string_until_it_cites_something(tmp_path: Path) -> None:
+    """A hand-written note stays the string it was, and only a cited one grows an object."""
+    read = Note("The manual asks for it.", citation=Citation("m", "p. 1"))
+    one = Protocol("t", steps=(Step("Digest it", notes=("The run chose this.", read)),))
+    assert one.steps[0].noted == (Note("The run chose this."), read)
+    written = json.loads((write_protocol(one, tmp_path / "protocol.json")).read_text())
+    assert written["steps"][0]["notes"][0] == "The run chose this."
+    assert written["steps"][0]["notes"][1]["citation"] == {"source": "m", "locator": "p. 1"}
+    assert read_protocol(tmp_path / "protocol.json") == one
+
+
+def test_a_notes_source_is_swept_like_any_other_rows() -> None:
+    """`cited` reads the notes, so the audit sees a missing source and `citing` keeps the named."""
+    one = Protocol("t", steps=(Step("Digest it", notes=(Note("Why.", citation=Citation("m")),)),))
+    assert one.cited == frozenset({"m"})
+    (check,) = [c for c in one.audit() if c.name == "sources"]
+    assert check.status == "fail"
+    kept = citing(replace(one, sources={"m": Source("A manual"), "x": Source("Nothing cites it")}))
+    assert list(kept.sources) == ["m"]
 
 
 def _notes() -> set[str]:

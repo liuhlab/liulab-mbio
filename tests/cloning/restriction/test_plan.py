@@ -194,7 +194,7 @@ def test_the_page_says_what_each_junction_now_spells_and_which_buffer_both_enzym
     assert "not scarless" in prose
     assert "GAATTC at 397 (EcoRI)" in prose
     assert "GGATCC at 1120 (BamHI)" in prose
-    said = " ".join(note for step in protocol.steps for note in step.notes)
+    said = " ".join(n.text for step in protocol.steps for n in step.noted)
     assert "Both enzymes are supplied in rCutSmart Buffer" in said
 
 
@@ -211,7 +211,7 @@ def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(ma
     assert not made.colony.reversed_clones
     assert [clone.name for clone in made.colony.clones] == ["Correct clone", "Empty vector"]
     step = next(one for one in made.protocol().steps if one.title == "Screen colonies by PCR")
-    said = " ".join((*step.expected, *step.notes))
+    said = " ".join((*step.expected, *(n.text for n in step.noted)))
     assert "cannot go in the other way round" in said
     assert "Reversed insert" not in said
 
@@ -298,7 +298,7 @@ def test_a_blunt_ligation_is_held_longer_and_the_page_says_what_that_costs(blunt
     step = next(one for one in blunt.protocol().steps if one.title.startswith("Ligate"))
     hold = step.programs[0].stages[0].incubations[0]
     assert (hold.temperature_c, hold.seconds) == (ROOM_CELSIUS, BLUNT_SECONDS)
-    said = " ".join(step.notes)
+    said = " ".join(n.text for n in step.noted)
     # The cost against a cohesive ligation is the incubation, which is all NEB states: the
     # longer hold, or the same short one with five times the ligase.
     assert (
@@ -355,7 +355,7 @@ def test_the_protocol_gains_the_pcr_its_program_the_amplicon_gel_and_the_templat
     assert [stage.incubations[0].label for stage in pcr.programs[0].stages]
     assert [lane.bands_bp for lane in gel.gels[0].lanes] == [(tailed.amplicon.length,)]
     # A linear template neither transforms nor ligates, so the column is what takes it away.
-    assert "take GFP away" in " ".join(cleanup.notes)
+    assert "take GFP away" in " ".join(n.text for n in cleanup.noted)
     assert [row.purpose for row in protocol.oligos][:2] == ["Amplify GFP"] * 2
     said = " ".join(protocol.highlights)
     assert "forward primer, 6 spacer bases and the EcoRI site" in said

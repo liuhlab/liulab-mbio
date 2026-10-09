@@ -2208,9 +2208,11 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')
     if step.notes:
-        parts.append(
-            f'<div class="notes"><h3>Notes</h3>{_bullets(step.notes, protocol.files)}</div>\n'
+        items = "".join(
+            f"<li>{_linked(note.text, protocol.files)}{_after(note.citation)}</li>"
+            for note in step.noted
         )
+        parts.append(f'<div class="notes"><h3>Notes</h3><ul>{items}</ul></div>\n')
     parts.append("</section>\n")
     return "".join(parts)
 

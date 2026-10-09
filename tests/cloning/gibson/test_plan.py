@@ -99,7 +99,7 @@ def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_fea
     assert protocol.overview["Selection"] == phenotype.antibiotic
     assert phenotype.reporter.name in " ".join(protocol.highlights)
     plating = next(step for step in protocol.steps if step.title == "Transform and plate")
-    told = " ".join((*plating.expected, *plating.notes))
+    told = " ".join((*plating.expected, *(n.text for n in plating.noted)))
     assert "white" in told
     assert "blue" in told
     # The lac promoter reads the other way and no ribosome binding site is annotated.
@@ -110,13 +110,13 @@ def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_fea
 def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_from(made):
     protocol = made.protocol()
     steps = {step.title: step for step in protocol.steps}
-    purify = " ".join(steps["Purify every amplicon"].notes)
+    purify = " ".join(n.text for n in steps["Purify every amplicon"].noted)
     assert f"below {CLEANUP_FRAGMENTS} PCR fragments" in purify
     assert steps[COLONY_PCR_TITLE].gels == (made.colony.gel,)
-    screen = " ".join(steps[COLONY_PCR_TITLE].notes)
+    screen = " ".join(n.text for n in steps[COLONY_PCR_TITLE].noted)
     assert f"{SCREENED_COLONIES} of {SCREENED_COLONIES} correct at two fragments" in screen
     assert f"{CORRECT_AT_FIVE} of {SCREENED_COLONIES} at five" in screen
-    confirm = " ".join(steps[SEQUENCING_TITLE].notes)
+    confirm = " ".join(n.text for n in steps[SEQUENCING_TITLE].noted)
     assert f"one error per {MOLECULES_PER_ERROR} molecules" in confirm
     citations = " ".join(one.text for one in protocol.references)
     for cited in ("In-Fusion Cloning FAQs", "Gibson, D.G.", "NEBuilder", "protocols.io", "REBASE"):
@@ -440,7 +440,7 @@ def test_an_oligo_with_no_verdict_survives_the_protocol_being_written_and_read_a
 
 def test_the_assembly_step_doses_each_route_the_way_its_own_source_does(routed):
     step = next(one for one in routed.protocol().steps if one.title.startswith("Set up"))
-    said = " ".join(step.notes)
+    said = " ".join(n.text for n in step.noted)
     assert "45 nM of each" in said
     assert "no separate annealing step" in said.lower()
     assert "1 pmol" in said

@@ -496,7 +496,13 @@ def _sentences(protocol) -> str:
     for oligo in protocol.oligos:
         parts += [oligo.name, oligo.purpose]
     for step in protocol.steps:
-        parts += [step.title, *step.instructions, *step.cautions, *step.notes, *step.expected]
+        parts += [
+            step.title,
+            *step.instructions,
+            *step.cautions,
+            *(n.text for n in step.noted),
+            *step.expected,
+        ]
         for entry in step.troubleshooting:
             parts += [entry.problem, entry.solution]
     return " ".join(parts)

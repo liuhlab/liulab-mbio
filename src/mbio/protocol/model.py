@@ -9,11 +9,11 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, asdict, dataclass, field, replace
+from dataclasses import KW_ONLY, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal, get_args
+from typing import Any, Literal, cast, get_args
 
 from mbio import jsonfile
 from mbio.checks import STATUSES, Status
@@ -765,6 +765,24 @@ class Wait:
 
 
 @dataclass(frozen=True, slots=True)
+class Note:
+    """A *why* a step shows after its instructions, and where the *why* came from.
+
+    Parameters
+    ----------
+    text
+        The sentence the reader sees.
+    citation
+        The document it was read from. Absent where the note is what this run computed or
+        chose, which no document states, or what the reader checks against the page itself.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -1238,8 +1256,10 @@ class Step:
         container: the steps stay one list and the numbering runs through it.
     instructions
         Ordered actions, one sentence each.
-    cautions, notes
-        Shown before and after the instructions.
+    cautions
+        Shown before the instructions.
+    notes
+        Shown after them. A bare string is a note citing nothing.
     tables, programs, timers
         Reaction tables, thermocycler programs and countdowns the step uses.
     waits
@@ -1269,7 +1289,7 @@ class Step:
     section: str = ""
     instructions: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
-    notes: tuple[str, ...] = ()
+    notes: tuple[Note | str, ...] = ()
     tables: tuple[ReactionTable, ...] = ()
     programs: tuple[ThermocyclerProgram, ...] = ()
     timers: tuple[Timer, ...] = ()
@@ -1283,7 +1303,7 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title or a hands-on time below zero, and slug the key or the title."""
+        """Refuse an empty title or a negative hands-on time; slug the key; make each note one."""
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,
@@ -1291,6 +1311,20 @@ class Step:
             "stated it",
         )
         object.__setattr__(self, "key", slug(self.key or self.title))
+        object.__setattr__(
+            self, "notes", tuple(Note(n) if isinstance(n, str) else n for n in self.notes)
+        )
+
+    @property
+    def noted(self) -> tuple[Note, ...]:
+        """Every note, each a `Note`: `__post_init__` makes one of any bare string.
+
+        Examples
+        --------
+        >>> Step("Rest the tube", notes=("It settles.",)).noted
+        (Note(text='It settles.', citation=None),)
+        """
+        return cast("tuple[Note, ...]", self.notes)
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -1584,6 +1618,7 @@ class Protocol:
                 *(t.citation for s in self.steps for t in s.transfers),
                 *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
+                *(n.citation for s in self.steps for n in s.noted),
                 *(w.citation for s in self.steps for w in s.waits),
             )
             if citation
@@ -1899,8 +1934,27 @@ def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
 
 def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    out.write_text(json.dumps(asdict(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(_plain(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return out
+
+
+def _plain(value: Any) -> Any:
+    """Return `value` as JSON data, writing a note that cites nothing as its text alone.
+
+    So the common note stays the bare string a hand-edited file writes, and only a note
+    carrying a citation grows an object.
+    """
+    match value:
+        case Note(citation=None):
+            return value.text
+        case _ if is_dataclass(value) and not isinstance(value, type):
+            return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}
+        case Mapping():
+            return {key: _plain(item) for key, item in value.items()}
+        case tuple() | list():
+            return [_plain(item) for item in value]
+        case _:
+            return value
 
 
 _PROTOCOL = jsonfile.reader(Protocol)

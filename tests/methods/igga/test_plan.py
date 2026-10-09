@@ -295,8 +295,10 @@ def test_every_step_says_what_a_good_result_looks_like_and_carries_its_mixes(pla
 
 
 def test_the_protocol_carries_the_traps_this_method_has(protocol):
-    said = " ".join(note for step in protocol.steps for note in step.notes)
-    linkage, representation = (" ".join(step.notes) for step in protocol.steps[-7:-5])
+    said = " ".join(n.text for step in protocol.steps for n in step.noted)
+    linkage, representation = (
+        " ".join(n.text for n in step.noted) for step in protocol.steps[-7:-5]
+    )
 
     assert "2 volumes here and 1 after the ligation" in said
     # The designed set is indel-aware, so the share is nil — and it is printed rather than implied,
@@ -315,7 +317,7 @@ def test_the_finished_library_is_read_for_linkage_and_for_representation(protoco
     # barcode-to-part fidelity. Representation is held to Joung's bar, so it carries none.
     assert [hole.id for hole in linkage.holes] == ["H28"]
     assert representation.holes == ()
-    said = " ".join(note for step in protocol.steps for note in step.notes)
+    said = " ".join(n.text for step in protocol.steps for n in step.noted)
     assert said.count("after every later bottleneck") == 1
 
 
@@ -334,7 +336,9 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
     )
     before, after = whole(made.chain()), whole(stated.chain())
     said = " ".join(
-        text for step in after.steps for text in (*step.instructions, *step.notes, *step.expected)
+        text
+        for step in after.steps
+        for text in (*step.instructions, *(n.text for n in step.noted), *step.expected)
     )
 
     assert [hole.id for step in before.steps for hole in step.holes] == [
@@ -634,7 +638,7 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
     growth = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
     assert "At least 51 net colonies" in growth.expected[0]
     assert "floor for the 0.99 chance this design asked for" in growth.expected[0]
-    assert "it works out at 6x this round's products" in " ".join(growth.notes)
+    assert "it works out at 6x this round's products" in " ".join(n.text for n in growth.noted)
     final = next(one for one in protocol.steps if one.title.startswith("Clean the assembly up"))
     assert (
         "At least 51 net colonies: the floor for the 0.99 chance this design asked for"

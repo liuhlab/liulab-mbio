@@ -198,6 +198,9 @@ def _converter(hint: Any) -> _Convert:
     if origin in (Union, UnionType) and len(args) == 2 and NoneType in args:
         (inner,) = (arg for arg in args if arg is not NoneType)
         return _or_null(_converter(inner))
+    if origin in (Union, UnionType) and len(args) == 2 and str in args:
+        (inner,) = (arg for arg in args if arg is not str)
+        return _or_text(_converter(inner))
     if origin is tuple and args[1:] == (...,):
         return _list(_converter(args[0]))
     if origin is tuple:
@@ -251,6 +254,11 @@ def _mapping(value: _Convert) -> _Convert:
 
 def _or_null(convert: _Convert) -> _Convert:
     return lambda data, where: None if data is None else convert(data, where)
+
+
+def _or_text(convert: _Convert) -> _Convert:
+    """Take a string as itself, so a shorthand for an object may stand where the object does."""
+    return lambda data, where: data if isinstance(data, str) else convert(data, where)
 
 
 def _scalar(expected: str, accepts: Callable[[Any], bool]) -> _Convert:
