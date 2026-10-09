@@ -783,6 +783,24 @@ class Note:
 
 
 @dataclass(frozen=True, slots=True)
+class Caution:
+    """What a step warns of before its instructions, and where the warning came from.
+
+    Parameters
+    ----------
+    text
+        The sentence the reader sees.
+    citation
+        The document it was read from. Absent where the hazard is general bench practice no
+        document states, or a limit this run chose.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -1257,7 +1275,7 @@ class Step:
     instructions
         Ordered actions, one sentence each.
     cautions
-        Shown before the instructions.
+        Shown before the instructions. A bare string is a caution citing nothing.
     notes
         Shown after them. A bare string is a note citing nothing.
     tables, programs, timers
@@ -1288,7 +1306,7 @@ class Step:
     key: str = ""
     section: str = ""
     instructions: tuple[str, ...] = ()
-    cautions: tuple[str, ...] = ()
+    cautions: tuple[Caution | str, ...] = ()
     notes: tuple[Note | str, ...] = ()
     tables: tuple[ReactionTable, ...] = ()
     programs: tuple[ThermocyclerProgram, ...] = ()
@@ -1303,7 +1321,7 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title or a negative hands-on time; slug the key; make each note one."""
+        """Refuse an empty title or a negative hands-on time; slug the key; make each text one."""
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,
@@ -1314,6 +1332,22 @@ class Step:
         object.__setattr__(
             self, "notes", tuple(Note(n) if isinstance(n, str) else n for n in self.notes)
         )
+        object.__setattr__(
+            self,
+            "cautions",
+            tuple(Caution(c) if isinstance(c, str) else c for c in self.cautions),
+        )
+
+    @property
+    def cautioned(self) -> tuple[Caution, ...]:
+        """Every caution, each a `Caution`: `__post_init__` makes one of any bare string.
+
+        Examples
+        --------
+        >>> Step("Thaw the mix", cautions=("Keep it on ice.",)).cautioned
+        (Caution(text='Keep it on ice.', citation=None),)
+        """
+        return cast("tuple[Caution, ...]", self.cautions)
 
     @property
     def noted(self) -> tuple[Note, ...]:
@@ -1559,13 +1593,20 @@ class Protocol:
             if not rule.when or names(rule.when, contents)
         )
 
-    def cautions_for(self, step: Step) -> tuple[str, ...]:
+    def cautions_for(self, step: Step) -> tuple[Caution, ...]:
         """Return every caution `step` shows: its materials' first, then its own, each once.
 
-        A step's own stands where no material carries one.
+        A step's own stands where no material carries one. Where one sentence is both, the
+        one naming a document wins, so deduplication never costs the page a citation.
         """
-        carried = (one for material in self.materials_for(step) for one in material.cautions)
-        return tuple(dict.fromkeys((*carried, *step.cautions)))
+        carried = (
+            Caution(one) for material in self.materials_for(step) for one in material.cautions
+        )
+        each: dict[str, Caution] = {}
+        for one in (*carried, *step.cautioned):
+            if one.text not in each or (one.citation and not each[one.text].citation):
+                each[one.text] = one
+        return tuple(each.values())
 
     def contents_of(self, step: Step) -> tuple[str, ...]:
         """Return what is in the step's tubes: what it pipettes, and what each of those brings."""
@@ -1618,6 +1659,7 @@ class Protocol:
                 *(t.citation for s in self.steps for t in s.transfers),
                 *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
+                *(c.citation for s in self.steps for c in s.cautioned),
                 *(n.citation for s in self.steps for n in s.noted),
                 *(w.citation for s in self.steps for w in s.waits),
             )
@@ -1939,13 +1981,13 @@ def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
 
 
 def _plain(value: Any) -> Any:
-    """Return `value` as JSON data, writing a note that cites nothing as its text alone.
+    """Return `value` as JSON data, writing a note or caution citing nothing as its text alone.
 
-    So the common note stays the bare string a hand-edited file writes, and only a note
+    So the common sentence stays the bare string a hand-edited file writes, and only one
     carrying a citation grows an object.
     """
     match value:
-        case Note(citation=None):
+        case Note(citation=None) | Caution(citation=None):
             return value.text
         case _ if is_dataclass(value) and not isinstance(value, type):
             return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}

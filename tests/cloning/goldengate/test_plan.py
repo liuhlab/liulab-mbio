@@ -510,7 +510,7 @@ def _sentences(protocol) -> str:
         parts += [
             step.title,
             *step.instructions,
-            *step.cautions,
+            *(c.text for c in step.cautioned),
             *(n.text for n in step.noted),
             *step.expected,
         ]

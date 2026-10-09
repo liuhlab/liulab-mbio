@@ -663,7 +663,7 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
     """A caution the bench reads on four pages is one sentence, carried by the tube it is about."""
     chain = plan.chain()
     shown = {
-        (one.title, step.key): one.cautions_for(step)
+        (one.title, step.key): tuple(c.text for c in one.cautions_for(step))
         for one in chain.protocols
         for step in one.steps
         if one.cautions_for(step)

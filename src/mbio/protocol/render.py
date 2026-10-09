@@ -25,6 +25,7 @@ from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
 from mbio.protocol.model import (
     Bill,
+    Caution,
     Check,
     Citation,
     Figure,
@@ -1563,7 +1564,8 @@ def _materials(
             f"<tbody>{rows}</tbody></table></div>"
         )
     carried = [(m.name, rule) for m in materials for rule in m.rules]
-    cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions), paths)
+    said = dict.fromkeys(c for m in materials for c in m.cautions)
+    cautions = _cautions([Caution(one) for one in said], paths)
     line = ""
     if equipment:
         line = (
@@ -1808,14 +1810,16 @@ def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
 
 
-def _cautions(texts: Iterable[str], paths: Sequence[str] = ()) -> str:
+def _cautions(cautions: Iterable[Caution], paths: Sequence[str] = ()) -> str:
     """Every caution, as the one paragraph both the steps and the reagents page show it in.
 
-    One site renders it, so a sentence cannot read two ways on two pages.
+    One site renders it, so a sentence cannot read two ways on two pages, and a cited one
+    anchors into the Sources section where a troubleshooting row does.
     """
     return "".join(
-        f'<p class="caution"><strong>Caution:</strong> {_linked(text, paths)}</p>\n'
-        for text in texts
+        f'<p class="caution"><strong>Caution:</strong> {_linked(one.text, paths)}'
+        f"{_after(one.citation)}</p>\n"
+        for one in cautions
     )
 
 

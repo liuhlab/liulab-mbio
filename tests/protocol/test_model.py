@@ -9,6 +9,7 @@ import pytest
 
 from mbio.protocol import (
     OVERVIEW_CHARS,
+    Caution,
     Check,
     Citation,
     Component,
@@ -17,6 +18,7 @@ from mbio.protocol import (
     Incubation,
     Ladder,
     Lane,
+    Material,
     Note,
     Oligo,
     Project,
@@ -430,6 +432,31 @@ def test_a_notes_source_is_swept_like_any_other_rows() -> None:
     assert check.status == "fail"
     kept = citing(replace(one, sources={"m": Source("A manual"), "x": Source("Nothing cites it")}))
     assert list(kept.sources) == ["m"]
+
+
+def test_a_caution_is_a_bare_string_until_it_cites_something(tmp_path: Path) -> None:
+    """A caution carries its source the way a note does, and writes back as the string it was."""
+    read = Caution("Excess DNA inhibits the reaction.", citation=Citation("m", "p. 21"))
+    one = Protocol("t", steps=(Step("Load it", cautions=("Keep it on ice.", read)),))
+    assert one.steps[0].cautioned == (Caution("Keep it on ice."), read)
+    assert one.cited == frozenset({"m"})
+    written = json.loads((write_protocol(one, tmp_path / "protocol.json")).read_text())
+    assert written["steps"][0]["cautions"][0] == "Keep it on ice."
+    assert written["steps"][0]["cautions"][1]["citation"] == {"source": "m", "locator": "p. 21"}
+    assert read_protocol(tmp_path / "protocol.json") == one
+
+
+def test_a_cited_caution_outlives_the_same_sentence_a_material_carries() -> None:
+    """Deduplication keeps one sentence, and keeps the one that can be followed to a document."""
+    said = "Keep the enzymes under 10% of the reaction."
+    step = Step("Digest", cautions=(Caution(said, citation=Citation("m", "§2")),))
+    one = Protocol(
+        "t",
+        sources={"m": Source("A guide")},
+        materials=(Material("BsaI-HFv2", cautions=(said,)),),
+        steps=(step,),
+    )
+    assert one.cautions_for(step) == (Caution(said, citation=Citation("m", "§2")),)
 
 
 def _notes() -> set[str]:
