@@ -29,10 +29,10 @@ from mbio.protocol.model import (
     ThermocyclerProgram,
 )
 
-#: The guide a caution here is read from, so the sentence carries a link and not a vendor's
-#: name. It is declared here rather than in `steps`: `steps` imports this module, so a source
+#: The documents a caution here is read from, so the sentence carries a link and not a vendor's
+#: name. They are declared here rather than in `steps`: `steps` imports this module, so a source
 #: a constant here cites can have no other home. Read through
-#: ``docs/research/restriction-ligation.md`` section 2.
+#: ``docs/research/restriction-ligation.md`` sections 2 and 7.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
         "NEB-technical-guide": Source(
@@ -40,6 +40,12 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             edition="version 5.0 - 7/17",
             url="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
             read_as="neb-online.de mirror",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "M0202": Source(
+            "New England Biolabs #M0202 protocol, Ligation Protocol with T4 DNA Ligase",
+            url="https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202",
+            date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
     }
@@ -291,10 +297,14 @@ INSERT_RATIO = 3.0
 #: The range that ratio is optimal in, insert to vector. §7.
 RATIO_RANGE = (1.0, 10.0)
 
-#: What the vector and insert together should reach, ng/µL: below the floor a fragment closes on
-#: itself instead of joining its partner. §7, printed rather than computed -- a plan does not
-#: know the concentrations the bench will measure.
+#: What the vector and insert together should reach, ng/µL. NEB's range whole, not a pick inside
+#: one: it recommends 1-10 ng/µL, and says that below 1 a fragment closes on itself instead of
+#: joining its partner. §7, printed rather than computed -- a plan does not know the
+#: concentrations the bench will measure.
 LIGATION_NG_UL = (1.0, 10.0)
+
+#: Where on NEB's ligation protocol that range and its floor stand.
+LIGATION_LOCATOR = "General Guidelines, DNA"
 
 #: The incubations NEB's own table gives at room temperature, seconds: cohesive ends, and blunt
 #: ends or a single-base overhang. The twelvefold difference is the only cost a supplier states

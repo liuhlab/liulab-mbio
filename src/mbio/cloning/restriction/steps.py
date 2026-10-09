@@ -75,6 +75,7 @@ from mbio.cloning.restriction.bench import (
     ELUATE_CAUTION,
     HIGH_LIGASE_UNITS_UL,
     LIGASE_UNITS_UL,
+    LIGATION_LOCATOR,
     LIGATION_NG_UL,
     OVERNIGHT_CELSIUS,
     PHOSPHATASE,
@@ -105,6 +106,7 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Caution,
     Citation,
     Figure,
     Gel,
@@ -1026,8 +1028,11 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             f"{low:g} to {high:g} µL of this goes into the cells; the rest keeps at -20 °C.",
         ),
         cautions=(
-            f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
-            "fragment closes on itself instead of joining its partner.",
+            Caution(
+                f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below "
+                "that a fragment closes on itself instead of joining its partner.",
+                citation=Citation("M0202", LIGATION_LOCATOR),
+            ),
         ),
         notes=(
             "Picomoles, not nanograms: the table asks for a molar ratio, and the shorter "

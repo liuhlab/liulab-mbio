@@ -17,6 +17,7 @@ from mbio.cloning.restriction.bench import (
     COHESIVE_SECONDS,
     HIGH_LIGASE_UNITS_UL,
     LIGASE_UNITS_UL,
+    LIGATION_LOCATOR,
     PHOSPHATASE_KILL_SECONDS,
     PHOSPHATASE_SECONDS,
     ROOM_CELSIUS,
@@ -33,6 +34,7 @@ from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord, reverse_complement
 from mbio.snapgene import read_dna
 
+from ...html import parse
 from .records import BAMHI, ECORI, STUFFER, carrying, padded
 
 # --------------------------------------------------------------------------------------
@@ -246,6 +248,26 @@ def test_every_caution_the_guide_states_links_the_page_it_stands_on(made, tailed
     assert [one.citation for one in purify.cautioned] == [salt]
     # `citing` has already dropped every source nothing names, so this one is reachable.
     assert star.source in protocol.sources
+
+
+def test_the_ligation_concentration_band_is_nebs_own_and_links_the_protocol_it_prints(
+    made, tmp_path
+):
+    """1 to 10 ng/µL is what M0202 recommends, so the page carries M0202 and not a bare number."""
+    protocol = made.protocol()
+    ligate = next(one for one in protocol.steps if one.key == "ligate")
+    cited = Citation("M0202", LIGATION_LOCATOR)
+
+    assert [one.citation for one in ligate.cautioned] == [cited]
+    assert "1 to 10 ng/\u00b5L" in ligate.cautioned[0].text
+    assert cited.source in protocol.sources
+
+    page = parse(made.write(tmp_path / "cited").protocol.read_text(encoding="utf-8"))
+    said = [one for one in page.find_all(cls="caution") if "1 to 10 ng" in one.text]
+    assert [a.attrs["href"] for one in said for a in one.find_all("a", cls="cite")] == [
+        "#source-m0202"
+    ]
+    assert page.find_all(id="source-m0202")
 
 
 def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_wrote_it_on(
