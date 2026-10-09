@@ -1,6 +1,6 @@
 {
   "title": "Restriction and ligation: GFP amplicon insert into pUC19",
-  "key": "fde8176c3e7f95b2",
+  "key": "50b1f46744f27bae",
   "summary": "Amplify GFP with a recognition site on each primer's 5' tail. Cut pUC19 and GFP amplicon with HindIII and SphI, gel-purify the 2684 bp backbone and the 719 bp insert, ligate them, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -385,7 +385,7 @@
     {
       "title": "Amplify GFP",
       "key": "pcr-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -578,7 +578,7 @@
     {
       "title": "Check the PCRs on a gel",
       "key": "pcr-gel",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Pour a 2% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
@@ -641,7 +641,7 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
@@ -690,7 +690,7 @@
     {
       "title": "Digest pUC19 with HindIII and SphI",
       "key": "digest-vector",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Mix the reaction below, 1000 ng of pUC19 first.",
         "Incubate at 37 °C for 60 minutes."
@@ -829,7 +829,7 @@
     {
       "title": "Digest GFP amplicon with HindIII and SphI",
       "key": "digest-insert",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Mix the reaction below, 1000 ng of GFP amplicon first.",
         "Incubate at 37 °C for 60 minutes."
@@ -968,7 +968,7 @@
     {
       "title": "Separate the digests on a gel and recover the two fragments",
       "key": "gel-purify",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Pour a 1% agarose gel and load each whole digest beside the ladder.",
         "Run until the bands below are apart.",
@@ -1062,7 +1062,7 @@
     {
       "title": "Measure every concentration",
       "key": "quantify",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
         "Work out the volume that carries the picomoles the next table asks for."
@@ -1095,7 +1095,7 @@
     {
       "title": "Ligate the insert into the backbone",
       "key": "ligate",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Mix the reaction below, the DNA first and the ligase last.",
         "Hold at 25 °C for 10 minutes, or overnight at 16 °C.",
@@ -1250,7 +1250,7 @@
     {
       "title": "Transform and plate",
       "key": "transform",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
         "Add 2 µL of the assembly and flick the tube four or five times.",
@@ -1316,7 +1316,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1506,7 +1506,7 @@
     {
       "title": "Check a miniprep by digesting it with HindIII and SphI",
       "key": "diagnostic-digest",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three of the colonies the PCR called correct.",
         "Mix the reaction below, 1000 ng of miniprep first.",
@@ -1651,7 +1651,7 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",

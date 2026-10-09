@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "4384373eba60209b",
+  "key": "656a8e1923982bc0",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -353,7 +353,7 @@
     {
       "title": "Amplify pUC19 backbone",
       "key": "pcr-puc19-backbone",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the pUC19 template.",
@@ -540,7 +540,7 @@
     {
       "title": "Amplify GFP",
       "key": "pcr-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -727,7 +727,7 @@
     {
       "title": "Check the PCRs on a gel",
       "key": "pcr-gel",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Pour a 1% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
@@ -804,7 +804,7 @@
     {
       "title": "Digest the plasmid template with DpnI",
       "key": "dpni-digest",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Add 20 units of DpnI to the pUC19 backbone PCR and mix.",
         "Incubate at 37 °C for 60 minutes."
@@ -851,7 +851,7 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
@@ -891,7 +891,7 @@
     {
       "title": "Measure every concentration",
       "key": "quantify",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
         "Work out the volume that carries the picomoles the next table asks for."
@@ -924,7 +924,7 @@
     {
       "title": "Set up the Golden Gate reaction",
       "key": "set-up-assembly",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Thaw the master mix on ice and mix it well; it is viscous.",
         "Pipette the volume that gives each fragment its picomoles, and make the difference up with water.",
@@ -1009,7 +1009,7 @@
     {
       "title": "Run the Golden Gate program",
       "key": "run-assembly",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Put the tube in the thermocycler and run the program below."
       ],
@@ -1123,7 +1123,7 @@
     {
       "title": "Transform and plate",
       "key": "transform",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
         "Add 2 µL of the assembly and flick the tube four or five times.",
@@ -1185,7 +1185,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1383,7 +1383,7 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",

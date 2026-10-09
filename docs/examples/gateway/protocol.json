@@ -1,6 +1,6 @@
 {
   "title": "Gateway BP then LR: attB-GFP into pDEST-demo",
-  "key": "da3448fde891fb43",
+  "key": "b538f4e77dc356ee",
   "summary": "Recombine the 751 bp between attB-GFP's attB sites into pDONR-demo, giving the entry clone pDONR-demo-attB-GFP; grow that up and recombine it into pDEST-demo. Two staged reactions, each with its own incubation, stop, transformation and plate.",
   "overview": {
     "attB PCR": "775 bp product, 29 and 29 bp tails",
@@ -413,7 +413,7 @@
     {
       "title": "Amplify attB-GFP",
       "key": "pcr-attb-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -613,7 +613,7 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
@@ -661,7 +661,7 @@
     {
       "title": "Set up the BP reaction",
       "key": "set-up-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Thaw the enzyme mix on ice and vortex it briefly twice.",
         "Pipette the attB DNA, the donor vector and the TE buffer into a tube at room temperature.",
@@ -756,7 +756,7 @@
     {
       "title": "Run the BP reaction",
       "key": "run-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Incubate at 25 °C for 1 hour."
       ],
@@ -820,7 +820,7 @@
     {
       "title": "Stop the BP reaction with proteinase K",
       "key": "stop-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Add 1 µL of proteinase K at 2 µg/µL.",
         "Incubate at 37 °C for 10 minutes."
@@ -857,7 +857,7 @@
     {
       "title": "Transform and plate the BP reaction",
       "key": "transform-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Thaw 50 µL of TOP10 chemically competent E. coli on ice.",
         "Add 1 µL of the BP reaction and flick the tube four or five times.",
@@ -927,7 +927,7 @@
     {
       "title": "Pick and miniprep the entry clone",
       "key": "miniprep-entry-clone",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Pick single colonies into overnight cultures on the plate's own antibiotic.",
         "Miniprep each culture and measure what it yielded.",
@@ -982,7 +982,7 @@
     {
       "title": "Set up the LR reaction",
       "key": "set-up-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Thaw the enzyme mix on ice and vortex it briefly twice.",
         "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
@@ -1077,7 +1077,7 @@
     {
       "title": "Run the LR reaction",
       "key": "run-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Incubate at 25 °C for 1 hour."
       ],
@@ -1141,7 +1141,7 @@
     {
       "title": "Stop the LR reaction with proteinase K",
       "key": "stop-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Add 1 µL of proteinase K at 2 µg/µL.",
         "Incubate at 37 °C for 10 minutes."
@@ -1178,7 +1178,7 @@
     {
       "title": "Transform and plate the LR reaction",
       "key": "transform-lr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of TOP10 chemically competent E. coli on ice.",
         "Add 1 µL of the LR reaction and flick the tube four or five times.",
@@ -1248,7 +1248,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1454,7 +1454,7 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",
