@@ -81,6 +81,22 @@ def test_every_feature_of_both_records_is_carried_to_its_new_coordinates(
     assert starts == sorted(starts)
 
 
+def test_an_expression_clone_is_not_drawn_with_the_entry_clone_s_att_sites(
+    bp: Recombination, destination: SequenceRecord, insert: SequenceRecord
+) -> None:
+    """BP names the entry clone's attL sites, and LR must not carry the far half of one on."""
+    entry = bp.product
+    assert {one.name for one in entry.features if one.type == "misc_recomb"} == {"attL1", "attL2"}
+
+    product = recombine(entry, destination, reaction="LR").product
+    assert {one.name for one in product.features if one.type == "misc_recomb"} == {
+        "attB1",
+        "attB2",
+    }
+    [gfp] = [one for one in product.features if one.name == "GFP"]
+    assert len(product.extract(gfp)) == len(insert.extract(insert.features[0]))
+
+
 def test_a_primer_of_the_source_records_is_annotated_where_it_still_binds(
     entry: SequenceRecord, destination: SequenceRecord, gfp: SequenceRecord
 ) -> None:

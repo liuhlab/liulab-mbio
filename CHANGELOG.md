@@ -9,6 +9,15 @@ sets one.
 
 ### Added
 
+- The published site has a page for each method the package plans: Golden Gate, Gibson,
+  restriction and ligation, Gateway, primer design with its genome check, barcode sets, codon
+  optimisation, and maps and figures, under one page that chooses between them. Each one prints
+  the command, the line that command really prints, and links the files that run wrote.
+- Eight more worked examples ship, every byte of them written by the command its page prints:
+  the same two records joined by Gibson and by restriction and ligation, a Gateway BP and LR
+  pair on a donor and a destination built from the published att sequences, a primer pair, a
+  24-barcode set, GFP written for *E. coli*, and three drawings of pUC19 and the finished
+  plasmid. `scripts/check_examples.py` compares all fourteen.
 - A library build may name the carrier its parts are kept in, and the run then opens by seating
   all of them: one part a well, in a plasmid supplied linearised, with nothing added to join the
   two. `plan_igga` writes it as the first protocol of the chain and the rounds pool their donors
@@ -345,6 +354,13 @@ sets one.
 
 ### Fixed
 
+- Drawing a map into a directory that is not there makes it, as every verb taking an output
+  directory already did. `mbio plot map RECORD -o figures/map.pdf` used to end in a traceback.
+- No Gateway clone is drawn with the site it no longer carries. The piece that moves brings the
+  far half of its own att site along, and the old name was kept over bases the reaction had
+  renamed, so an expression clone's map read `attL1` across part of its attB1. A recombination
+  site the reaction has named in full is now the only one drawn there; every other annotation
+  inside those 25 bases is left alone.
 - A handling rule now reaches every page that handles the thing, not only the page that makes
   it. A rule hangs on the item a protocol hands over, so the protocol thawing a single-use
   primer plate states what it may never do just as the protocol pouring it does.

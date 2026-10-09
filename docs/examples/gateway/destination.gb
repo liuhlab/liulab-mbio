@@ -1,0 +1,27 @@
+LOCUS       pDEST-demo               473 bp    DNA     circular UNK 01-JAN-1980
+DEFINITION  .
+ACCESSION   pDEST-demo
+VERSION     pDEST-demo
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     CDS             1..60
+                     /label="AmpR"
+     promoter        61..80
+                     /label="T7 promoter"
+     RBS             81..88
+                     /label="RBS"
+     CDS             214..288
+                     /label="ccdB"
+ORIGIN
+        1 ttgaccgctt aaggctaacg tcagttgcat gccttaaggc ttgaccaatg cgttcaggct
+       61 taatacgact cactataggg aaggagatac aagtttgtac aaaaaagctg aacgagaaac
+      121 gtaaaatgat ataaatatca atatattaaa ttagattttg cataaaaaac agactacata
+      181 atactgtaaa acacaacata tccagtcact atgatgcagt ttaaggttta cacctataaa
+      241 agagagagcc gttatcgtct gtttgtggat gtacagagtg atatttaaca tagtgactgg
+      301 atatgttgtg ttttacagta ttatgtagtc tgttttttat gcaaaatcta atttaatata
+      361 ttgatattta tatcatttta cgtttctcgt tcagctttct tgtacaaagt ggtgcatcgt
+      421 agcctatgac gatcagtcca tgaactgcta aggtcatcag gctatcggat caa
+//

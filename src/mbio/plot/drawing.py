@@ -167,6 +167,9 @@ class Drawing:
         zoom in steps, and the sequence view of a stretch up to `sequence_view.LIMIT` bases. A PNG
         and a PDF draw only what is switched on, the line at its one length.
 
+        A directory `path` names and that is not there is made, as every verb taking an output
+        directory makes its own.
+
         Raises
         ------
         ValueError
@@ -178,6 +181,7 @@ class Drawing:
         if writer is None:
             formats = ", ".join(_WRITERS)
             raise ValueError(f"cannot write a map as {out.name!r}: the suffix must be {formats}")
+        out.parent.mkdir(parents=True, exist_ok=True)
         writer(self, out, dpi)
         return out
 
@@ -698,12 +702,16 @@ class PlateDrawing:
     def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
         """Write the plate to `path`, in the format its suffix names, and return the path.
 
+        A directory `path` names and that is not there is made.
+
         Raises
         ------
         ValueError
             If the suffix names no format this writes.
         """
         out = Path(path)
+        if out.suffix.lower() in {".html", ".png", ".pdf"}:
+            out.parent.mkdir(parents=True, exist_ok=True)
         match out.suffix.lower():
             case ".html":
                 out.write_text(

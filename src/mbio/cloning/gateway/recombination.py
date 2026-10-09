@@ -319,7 +319,7 @@ def recombine(
         over, kept = carried(
             piece.record, *piece.span, offset=at - piece.span[0], length=len(bases)
         )
-        features.extend(over)
+        features.extend(one for one in over if not _superseded(one, junctions))
         primers.extend(kept)
     features.extend(_junction_feature(one) for one in junctions)
     product = SequenceRecord(
@@ -401,6 +401,26 @@ def _turned(junction: Junction, origin: int, length: int) -> Junction:
         junction.strand,
         junction.before,
         junction.after,
+    )
+
+
+def _superseded(feature: Feature, junctions: tuple[Junction, Junction]) -> bool:
+    """Say whether a junction the reaction wrote has already named every base of `feature`.
+
+    Each record going in annotates its own att sites, and the piece that moves carries the far
+    side of one into the product. Those bases now read as the site the reaction wrote, which
+    `_junction_feature` names in full, so the stub left of the old name is a second label on
+    bases that are no longer the site it names. Only a recombination site is dropped: anything
+    else lying inside those 25 bases is the reader's own annotation and is left alone.
+    """
+    if feature.type != "misc_recomb":
+        return False
+    return any(
+        all(
+            junction.span.start <= segment.start and segment.end <= junction.span.end
+            for segment in feature.segments
+        )
+        for junction in junctions
     )
 
 

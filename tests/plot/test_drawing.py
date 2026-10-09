@@ -157,6 +157,17 @@ def test_a_suffix_it_does_not_write_is_refused(
     assert not (tmp_path / name).exists()
 
 
+def test_a_directory_that_is_not_there_is_made(puc19: SequenceRecord, tmp_path: Path) -> None:
+    written = draw_map(puc19).write(tmp_path / "figures" / "maps" / "map.html")
+    assert written.exists()
+
+
+def test_a_refused_suffix_makes_no_directory(puc19: SequenceRecord, tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=r"the suffix must be"):
+        draw_map(puc19).write(tmp_path / "figures" / "map.svg")
+    assert not (tmp_path / "figures").exists()
+
+
 @pytest.fixture(scope="module")
 def small() -> Drawing:
     """The smallest map to convert: a short circular record with no features."""

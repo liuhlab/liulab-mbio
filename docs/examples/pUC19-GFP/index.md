@@ -17,4 +17,5 @@ write the same bytes, so a run that changes nothing leaves them alone.
 | [product.dna](product.dna) | the finished plasmid, for SnapGene |
 | [primers.tsv](primers.tsv) | the nine oligos to order |
 
-[Put GFP into pUC19](../../golden-gate.md) explains how to read them.
+[Golden Gate assembly](../../methods/golden-gate.md) names and links all four, and explains how
+to read them.
