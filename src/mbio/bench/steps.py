@@ -722,6 +722,7 @@ def sequencing_step(
     *,
     junctions: Sequence[str],
     inserts: Sequence[str],
+    instructions: Sequence[str] = (),
     notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the sequencing that confirms the junctions, which is the only thing that settles it.
@@ -734,6 +735,8 @@ def sequencing_step(
         The bases each junction spells.
     inserts
         What the inserts are called.
+    instructions
+        The caller's own, after the step's, such as what its provider asks to be sent.
     notes
         The caller's own, after the step's, such as how often its method misjoins a junction.
     """
@@ -748,6 +751,7 @@ def sequencing_step(
         instructions=(
             "Miniprep two or three colonies that read as correct.",
             "Send each with both sequencing primers.",
+            *instructions,
             "Check the read across every junction and the whole of each insert.",
         ),
         expected=(

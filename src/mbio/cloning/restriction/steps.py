@@ -107,6 +107,7 @@ from mbio.protocol.model import (
     Ladder,
     Lane,
     Material,
+    Note,
     Protocol,
     Reference,
     Source,
@@ -136,6 +137,24 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             "colonies?",
             edition="capture 2019-11-23",
             read_as="Wayback Machine",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "T1130": Source(
+            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+            edition="version 1.0 06.24",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-double-digests": Source(
+            "New England Biolabs usage guideline, Double Digests",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-cleavage": Source(
+            "New England Biolabs usage guideline, Cleavage Close to the End of DNA Fragments",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -685,8 +704,12 @@ def _phosphatase_steps(
                 "vector.",
                 "rSAP is active in every restriction enzyme buffer, so it goes into the digest "
                 "as it stands; one unit takes the phosphates off one picomole of DNA ends.",
-                "The heat step takes the restriction enzymes with it, which is what NEB asks "
-                "for; the gel purification is what stops any of them heat does not.",
+                Note(
+                    "The heat step takes the restriction enzymes with it, which is what the "
+                    "protocol asks for; the gel purification is what stops any of them heat "
+                    "does not.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
+                ),
                 "Only the vector is dephosphorylated: the insert keeps its own 5' phosphates, "
                 "and those are what the ligase seals.",
             ),
@@ -743,9 +766,12 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
                 f"Each primer's 5' tail is a spacer and a recognition site, {ends}. The tail is "
                 "not on the template, so it does not anneal in the first cycles and the "
                 "annealing temperature above is read from the annealing regions alone.",
-                "The spacer is what lets the enzyme cut a site this close to the end of a "
-                "fragment; NEB measures cleavage at one to five bases and answers six for an "
-                "enzyme it does not list.",
+                Note(
+                    "The spacer is what lets the enzyme cut a site this close to the end of a "
+                    "fragment: cleavage is measured at one to five bases, and six is the "
+                    "answer for an enzyme the table does not list.",
+                    citation=Citation("NEB-cleavage", "cleavage close to the end"),
+                ),
             ),
         ),
         gel_step([(amplicon.name, amplicon.length)]),
@@ -769,9 +795,12 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
                 "salt.",
             ),
             notes=(
-                f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
-                "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon "
-                "and nothing else.",
+                Note(
+                    f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
+                    "polymerase, the primers and the dNTPs away, so the digest cuts the "
+                    "amplicon and nothing else.",
+                    citation=Citation("T1130", "typical recovery"),
+                ),
                 *_template_note(amplicon),
             ),
         ),
@@ -847,7 +876,7 @@ def _digest_step(
     )
 
 
-def _buffer_note(enzymes: Sequence[Enzyme]) -> str:
+def _buffer_note(enzymes: Sequence[Enzyme]) -> Note | str:
     """Say which buffer the digest runs in, or that nothing sourced here can say."""
     buffer = shared_buffer(enzymes)
     if buffer is None:
@@ -856,9 +885,10 @@ def _buffer_note(enzymes: Sequence[Enzyme]) -> str:
             f"verdict rather than a pass: look the pair up in {BUFFER_FINDER} before putting "
             "both in one tube."
         )
-    return (
-        f"Both enzymes are supplied in {buffer}, which is NEB's own rule for digesting two of "
-        "them together."
+    return Note(
+        f"Both enzymes are supplied in {buffer}, which is the rule for digesting two of them "
+        "together.",
+        citation=Citation("NEB-double-digests", "choosing a buffer"),
     )
 
 
