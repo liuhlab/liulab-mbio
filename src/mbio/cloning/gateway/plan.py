@@ -17,7 +17,7 @@ cites from `docs/research/gateway-cloning.md`.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
@@ -44,6 +44,7 @@ from mbio.cloning.gateway.steps import protocol as protocol_for
 from mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    annotated,
     as_project,
     as_record,
     ordered_from_sheet,
@@ -336,8 +337,20 @@ def plan_gateway(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(lr.product, boundaries, thresholds=thresholds["sequencing"])
+    lr = _drawn_on(lr, colony, reads)
     designed = _designed(made, colony, reads, lr.product, thresholds)
     return Plan(lr, bp, host, colony, reads, designed, made, fusion, thresholds)
+
+
+def _drawn_on(
+    lr: PlannedReaction, colony: ColonyCheck, reads: Sequence[SangerRead]
+) -> PlannedReaction:
+    """Return the LR reaction with the oligos designed on its clone drawn where they anneal.
+
+    The product is the reaction's own, so it is reached through the recombination that made it.
+    """
+    made = lr.recombination
+    return replace(lr, recombination=replace(made, product=annotated(made.product, colony, reads)))
 
 
 def _designed(

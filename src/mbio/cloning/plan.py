@@ -3,9 +3,10 @@
 A method's own plan module holds its design, its `Plan` and the file set it writes. What every
 one of them repeats is here: the shape a plan and its written files take, the names of the
 records and sheets any plan writes, a protocol read as the run of one it is, the worst-of rule a
-plan's status follows, where a method puts its inserts and which way round they go, how its
-oligos are judged as one, and taking a record the caller already read. What a run writes to disk
-is `mbio.protocol.render.write_run_files`, which every pipeline shares.
+plan's status follows, where a method puts its inserts and which way round they go, which oligos
+the product it writes is drawn with, how its oligos are judged as one, and taking a record the
+caller already read. What a run writes to disk is `mbio.protocol.render.write_run_files`, which
+every pipeline shares.
 
 The library pipeline is not a cloning method -- `docs/adr/0004-library-rounds.md` says why --
 but its plan writes the same files, so it uses this module too.
@@ -19,6 +20,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Literal
 
+from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.checks import Check, Status, worst, worst_of
 from mbio.io import read_record
 from mbio.primers.evaluation import PrimerReport
@@ -177,6 +179,21 @@ def _named(record: SequenceRecord, name: str) -> Feature | None:
     return next(
         (feature for feature in record.features if feature.name.lower() == name.lower()), None
     )
+
+
+def annotated(
+    product: SequenceRecord, colony: ColonyCheck, reads: Iterable[SangerRead]
+) -> SequenceRecord:
+    """Return `product` drawing the oligos a plan designed on it, each where it anneals.
+
+    Every cloning plan annotates every primer it designed, so a map of one method's product
+    reads like a map of another's. A part's amplification primers reach the product with the
+    part; the colony PCR and sequencing primers are designed on the product itself, so each
+    already carries the site it binds and what it was missing is a place on the record the user
+    opens.
+    """
+    designed = (*colony.primers, *(read.primer for read in reads))
+    return replace(product, primers=(*product.primers, *designed))
 
 
 def primer_check(reports: Sequence[PrimerReport]) -> Check:

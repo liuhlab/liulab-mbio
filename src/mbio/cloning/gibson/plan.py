@@ -68,6 +68,7 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    annotated,
     as_project,
     as_record,
     insertion_span,
@@ -414,6 +415,7 @@ def plan_gibson(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(built.product, boundaries, thresholds=thresholds["sequencing"])
+    built = dataclasses.replace(built, product=annotated(built.product, colony, reads))
     return Plan(
         one,
         going,

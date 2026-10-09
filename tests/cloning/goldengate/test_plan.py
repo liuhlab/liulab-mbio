@@ -100,6 +100,17 @@ def test_every_designed_primer_passes_evaluation(plan):
     assert plan.status != "fail"
 
 
+def test_every_designed_oligo_is_drawn_on_the_product_where_it_anneals(plan):
+    placed = {one.name: one for one in plan.product.primers}
+    assert set(placed) == {report.primer.name for report in plan.reports}
+    for primer in placed.values():
+        site = primer.binding_sites[0]
+        annealed = plan.product.extract(Segment(site.start, site.end))
+        assert primer.sequence.endswith(
+            annealed if site.strand == Strand.FORWARD else reverse_complement(annealed)
+        )
+
+
 def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp):
     bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
     insert_bp = plan.phenotype.insert[1] - plan.phenotype.insert[0]

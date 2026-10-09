@@ -37,6 +37,7 @@ from mbio.checks import Check, Status
 from mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    annotated,
     as_project,
     as_record,
     ordered_from_sheet,
@@ -396,7 +397,7 @@ def plan_restriction(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(built.product, junctions, thresholds=thresholds["sequencing"])
-    built = _annotated(built, (*colony.primers, *(read.primer for read in reads)))
+    built = dataclasses.replace(built, product=annotated(built.product, colony, reads))
     return Plan(
         into,
         holder,
@@ -470,19 +471,6 @@ def _designed(
             )
             for read in reads
         ),
-    )
-
-
-def _annotated(built: Ligation, designed: Sequence[Primer]) -> Ligation:
-    """Return the ligation with its designed oligos drawn on the product where they anneal.
-
-    They were designed on the product, so each already carries the site it binds; what they were
-    missing is a place on the record the user opens.
-    """
-    product = built.product
-    return dataclasses.replace(
-        built,
-        product=dataclasses.replace(product, primers=(*product.primers, *designed)),
     )
 
 

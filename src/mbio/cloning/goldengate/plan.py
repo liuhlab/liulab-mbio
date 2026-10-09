@@ -15,7 +15,7 @@ own features.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
@@ -44,6 +44,7 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    annotated,
     as_project,
     as_record,
     insertion_span,
@@ -372,6 +373,7 @@ def plan_assembly(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(built.product, junctions, thresholds=thresholds["sequencing"])
+    built = replace(built, product=annotated(built.product, colony, reads))
     return Plan(
         one,
         tuple(going),

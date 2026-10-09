@@ -353,6 +353,20 @@ def test_the_sequencing_primers_read_in_from_outside_each_junction(gateway_plan:
         assert read.read_bp >= second.end - first.start
 
 
+def test_every_designed_oligo_is_drawn_on_the_expression_clone_where_it_anneals(
+    amplified_plan: Plan,
+) -> None:
+    placed = {one.name: one for one in amplified_plan.product.primers}
+
+    assert set(placed) == {report.primer.name for report in amplified_plan.reports}
+    for primer in placed.values():
+        site = primer.binding_sites[0]
+        annealed = amplified_plan.product.extract(Segment(site.start, site.end))
+        assert primer.sequence.endswith(
+            annealed if site.strand > 0 else reverse_complement(annealed)
+        )
+
+
 def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequencing(
     gateway_plan: Plan,
 ) -> None:

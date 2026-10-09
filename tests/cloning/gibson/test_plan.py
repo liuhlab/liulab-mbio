@@ -59,16 +59,19 @@ def test_the_junctions_are_the_vectors_own_bases_and_the_insert_carries_them_as_
 
 def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
     placed = {one.name: one.binding_sites[0] for one in made.plasmid.primers}
-    designed = [
-        one.report.primer.name for one in made.designed_oligos if one.role == "amplification"
-    ]
+    designed = [one.report.primer.name for one in made.designed_oligos]
     assert designed == [
         "pUC19 backbone forward",
         "pUC19 backbone reverse",
         "GFP forward",
         "GFP reverse",
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse",
+        "Sequencing forward",
+        "Sequencing reverse",
     ]
-    assert set(designed) <= set(placed)
+    assert set(designed) == set(placed)
     for name in designed:
         assert 0 <= placed[name].start < placed[name].end <= len(made.plasmid)
     # The insert's forward primer anneals to the insert's own first bases, past its tail.
