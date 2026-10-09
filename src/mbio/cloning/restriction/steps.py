@@ -94,6 +94,7 @@ from mbio.cloning.restriction.bench import (
     phosphatase_units,
     shared_buffer,
 )
+from mbio.cloning.restriction.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.restriction.design import Refusal
 from mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from mbio.cloning.restriction.ligation import Junction, Ligation
@@ -266,7 +267,7 @@ def protocol(
             dephosphorylate=dephosphorylate,
         ),
         references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
-        sources={**BENCH_SOURCES, **PCR_SOURCES, **SOURCES},
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
 

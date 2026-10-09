@@ -47,13 +47,12 @@ from mbio.cloning.gateway.bench import (
     BP_CLONASE_CATALOG,
     BP_CLONASE_UL,
     BP_COLONIES,
-    BP_DONOR_MAX_NG,
+    BP_LOAD_CAUTION,
     BP_LONG_BP,
     BP_LONG_SECONDS,
     BP_PMOL,
     BP_SECONDS,
     BP_SUBSTRATE_MIN_PMOL,
-    BP_TOTAL_MAX_NG,
     BP_TRANSFORMATION,
     BP_VOLUME_UL,
     CELL_EFFICIENCY_CFU_UG,
@@ -67,6 +66,7 @@ from mbio.cloning.gateway.bench import (
     LR_CLONASE_CATALOG,
     LR_CLONASE_UL,
     LR_COLONIES,
+    LR_LOAD_CAUTION,
     LR_LONG_BP,
     LR_LONG_SECONDS,
     LR_SECONDS,
@@ -88,6 +88,7 @@ from mbio.cloning.gateway.bench import (
     bp_reaction,
     lr_reaction,
 )
+from mbio.cloning.gateway.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
 from mbio.cloning.gateway.oligos import DesignedOligo
 from mbio.cloning.gateway.recombination import Junction, PlannedReaction
@@ -108,22 +109,11 @@ from mbio.protocol.model import (
 from mbio.sequence import SequenceRecord, position_text
 
 #: The documents this method's own rows and notes cite, read into
-#: `docs/research/gateway-cloning.md`, which names where each was fetched from. The same
-#: documents stand in `REFERENCES`, which lists what a run read rather than what a row names.
+#: `docs/research/gateway-cloning.md`, which names where each was fetched from. The two a
+#: caution cites are in `bench`, beside the numbers whose pages they are. The same documents
+#: stand in `REFERENCES`, which lists what a run read rather than what a row names.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
-        "MAN0000470": Source(
-            "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
-            edition="part 25-0749, revision 2 April 2012",
-            date="2026-09-18",
-            note="docs/research/gateway-cloning.md",
-        ),
-        "MAN0001032": Source(
-            "Thermo Fisher Scientific #MAN0001032 Gateway LR Clonase II enzyme mix product sheet",
-            edition="revision A.0",
-            date="2026-09-18",
-            note="docs/research/gateway-cloning.md",
-        ),
         "11789": Source(
             "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
             edition="11789.II.pps, revision 31 October 2010",
@@ -198,7 +188,7 @@ def protocol(
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
         references=(*REFERENCES, *BENCH_REFERENCES),
-        sources={**BENCH_SOURCES, **PCR_SOURCES, **SOURCES},
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
 
@@ -523,10 +513,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 "temperature.",
                 f"Add {BP_CLONASE_UL:g} µL of {BP_CLONASE}, mix well and spin down.",
             ),
-            cautions=(
-                f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or "
-                f"{BP_TOTAL_MAX_NG:g} ng of DNA altogether: excess DNA inhibits the reaction.",
-            ),
+            cautions=(BP_LOAD_CAUTION,),
             tables=(bp_reaction(bp.amounts),),
             expected=(f"A {BP_VOLUME_UL:g} µL reaction holding both DNAs.",),
             notes=(
@@ -659,7 +646,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
                 f"Add {LR_CLONASE_UL:g} µL of {LR_CLONASE}, mix well and spin down.",
             ),
-            cautions=(f"Do not go over {ENTRY_NG:g} ng of entry clone.",),
+            cautions=(LR_LOAD_CAUTION,),
             tables=(lr_reaction(lr.amounts),),
             expected=(f"A {LR_VOLUME_UL:g} µL reaction holding both plasmids.",),
             notes=(

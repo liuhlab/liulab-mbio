@@ -19,12 +19,14 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_KILL_SECONDS,
     PHOSPHATASE_SECONDS,
     ROOM_CELSIUS,
+    STAR_ACTIVITY,
+    STAR_LOCATOR,
     phosphatase_units,
 )
 from mbio.cloning.restriction.design import refusal
 from mbio.cloning.restriction.digest import resolve
 from mbio.edits import flipped, rotate
-from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord, reverse_complement
 from mbio.snapgene import read_dna
@@ -227,6 +229,18 @@ def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
 # --------------------------------------------------------------------------------------
 # The insert written on the other strand, and the pair chosen rather than named
 # --------------------------------------------------------------------------------------
+
+
+def test_every_star_activity_caution_links_the_guide_it_was_read_from(made):
+    """NEB's name leaves the sentence; the page carries the link and the caution the hazard."""
+    protocol = made.protocol()
+    digest = next(one for one in protocol.steps if one.key == "digest-vector")
+    read = Citation("NEB-technical-guide", STAR_LOCATOR)
+
+    assert [one.citation for one in STAR_ACTIVITY] == [read] * len(STAR_ACTIVITY)
+    assert {one.citation for one in digest.cautioned if one.citation} == {read}
+    # `citing` has already dropped every source nothing names, so this one is reachable.
+    assert read.source in protocol.sources
 
 
 def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_wrote_it_on(

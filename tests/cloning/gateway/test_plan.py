@@ -21,10 +21,29 @@ from mbio.cloning.gateway.bench import (
     LR_VOLUME_UL,
 )
 from mbio.io import read_record
+from mbio.protocol import Citation
 from mbio.sequence import Segment, SequenceRecord, reverse_complement
 
 if TYPE_CHECKING:
     from mbio.cloning.gateway import Plan
+
+
+def test_each_reaction_warns_of_its_own_ceiling_and_links_the_manual_it_came_from(
+    staged_plan: Plan,
+) -> None:
+    """A caution carries its source, so the hazard's page is one click from the warning."""
+    protocol = staged_plan.protocol()
+    steps = {step.key: step for step in protocol.steps}
+    cited = {
+        key: [one.citation for one in steps[key].cautioned] for key in ("set-up-bp", "set-up-lr")
+    }
+
+    assert cited == {
+        "set-up-bp": [Citation("MAN0000470", "p. 21")],
+        "set-up-lr": [Citation("MAN0001032", "p. 2")],
+    }
+    # `citing` has already dropped every source nothing names, so these two are reachable.
+    assert {"MAN0000470", "MAN0001032"} <= set(protocol.sources)
 
 
 def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(

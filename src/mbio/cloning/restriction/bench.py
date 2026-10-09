@@ -11,18 +11,38 @@ ligation table NEB prints is 50 ng of a 4 kb vector against 37.5 ng of a 1 kb in
 an example of the rule and not the rule; the rule is picomoles, and that is what is computed.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio.bench.amounts import Amount, dna_amount, to_pmol
 from mbio.bench.reactions import fits, reaction_table
 from mbio.enzymes import Enzyme
 from mbio.protocol.model import (
+    Caution,
+    Citation,
     Component,
     Incubation,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     ThermocyclerProgram,
+)
+
+#: The guide a caution here is read from, so the sentence carries a link and not a vendor's
+#: name. It is declared here rather than in `steps`: `steps` imports this module, so a source
+#: a constant here cites can have no other home. Read through
+#: ``docs/research/restriction-ligation.md`` section 2.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "NEB-technical-guide": Source(
+            "New England Biolabs, Restriction Endonuclease Technical Guide",
+            edition="version 5.0 - 7/17",
+            url="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
+            read_as="neb-online.de mirror",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
 )
 
 # --------------------------------------------------------------------------------------
@@ -70,14 +90,20 @@ CLEAVAGE_REFERENCE = Reference(
     url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
 )
 
+#: Where in the guide the conditions and their countermeasures are tabled.
+STAR_LOCATOR = "avoiding star activity, p. 5"
+
 #: The conditions NEB names as contributing to star activity, each with its own countermeasure.
 #: Printed, never predicted: NEB's own caveat is that their weight varies from enzyme to enzyme.
-#: §2.
-STAR_ACTIVITY: tuple[str, ...] = (
-    "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
-    "Use the buffer the supplier supplies each enzyme in wherever you can.",
-    "Use the fewest units and the shortest incubation that digest completely.",
-    "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+#: §2, and each carries the guide's own page so the page a bencher reads links it.
+STAR_ACTIVITY: tuple[Caution, ...] = tuple(
+    Caution(text, citation=Citation("NEB-technical-guide", STAR_LOCATOR))
+    for text in (
+        "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
+        "Use the buffer the supplier supplies each enzyme in wherever you can.",
+        "Use the fewest units and the shortest incubation that digest completely.",
+        "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+    )
 )
 
 

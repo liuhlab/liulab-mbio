@@ -8,11 +8,33 @@ the same table filled from two manuals. Every number cites `docs/research/gatewa
 
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
+from types import MappingProxyType
 
 from mbio.bench.amounts import DNA_VOLUME_UL, Amount, dna_amount, to_pmol
 from mbio.bench.reactions import dna_components, fits
 from mbio.bench.steps import Transformation
-from mbio.protocol.model import Component, ReactionTable, Reference
+from mbio.protocol.model import Caution, Citation, Component, ReactionTable, Reference, Source
+
+#: The manual a caution here is read from, so the sentence carries a link and not a vendor's
+#: name. They are declared here rather than in `steps`, which cites them too: `steps` imports
+#: this module, so a source a constant here cites can have no other home. Read through
+#: ``docs/research/gateway-cloning.md`` sections 10 and 11.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "MAN0000470": Source(
+            "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
+            edition="part 25-0749, revision 2 April 2012",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
+        "MAN0001032": Source(
+            "Thermo Fisher Scientific #MAN0001032 Gateway LR Clonase II enzyme mix product sheet",
+            edition="revision A.0",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
+    }
+)
 
 #: The BP reaction with BP Clonase II, from product sheet 11789.II.pps revision 31 October 2010
 #: page 3 and MAN0000470 page 23 (note §10): microlitres, then what the DNA is made up to
@@ -32,6 +54,13 @@ BP_SUBSTRATE_MIN_PMOL = 0.02
 #: DNA will inhibit the reaction" (MAN0000470 page 21; note §10).
 BP_DONOR_MAX_NG = 250.0
 BP_TOTAL_MAX_NG = 500.0
+
+#: Those two caps as the step warns of them, carrying the page they stand on.
+BP_LOAD_CAUTION = Caution(
+    f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or {BP_TOTAL_MAX_NG:g} ng of DNA "
+    "altogether: excess DNA inhibits the reaction.",
+    citation=Citation("MAN0000470", "p. 21"),
+)
 
 #: The incubation, and how far it is extended for an attB substrate the manual calls large
 #: (MAN0000470 page 23 and its troubleshooting table, pages 43-44; note §10, §16): degrees
@@ -53,6 +82,12 @@ LR_CLONASE_UL = 2.0
 ENTRY_NG = 150.0
 ENTRY_MIN_NG = 50.0
 DESTINATION_NG = 150.0
+
+#: That ceiling as the step warns of it, carrying the page it stands on.
+LR_LOAD_CAUTION = Caution(
+    f"Do not go over {ENTRY_NG:g} ng of entry clone.",
+    citation=Citation("MAN0001032", "p. 2"),
+)
 
 #: The incubation, and how far it may be extended for a plasmid the manual calls large
 #: (MAN0000470 page 32; note §11): degrees Celsius, seconds and base pairs.
