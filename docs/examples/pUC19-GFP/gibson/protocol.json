@@ -1,6 +1,6 @@
 {
   "title": "Gibson assembly: GFP into pUC19",
-  "key": "d2eb0257ca14bbd5",
+  "key": "dabc8b28d76f44de",
   "summary": "Open pUC19 by PCR across 395-452, amplify GFP with the overlap at each junction carried as a primer tail, join the 2 fragments in one NEBuilder HiFi DNA Assembly Master Mix reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -19,6 +19,7 @@
     "There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.",
     "The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG."
   ],
+  "background": [],
   "checks": [
     {
       "name": "pUC19 backbone",
@@ -550,12 +551,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the pUC19 template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -731,12 +738,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -810,7 +823,10 @@
         {
           "problem": "A smear or an extra band",
           "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
         }
       ],
       "holes": []
@@ -827,8 +843,20 @@
       "cautions": [],
       "notes": [
         "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (15 Dam sites) and leaves the PCR product, which carries no methylation.",
-        "This digest is NEB's own, not this package's: its dose, its time and its heat inactivation are the ones the assembly manual prints.",
-        "NEB's other answer to template background is to keep it low in the first place: 0.1-0.5 ng of plasmid per 50 µL PCR."
+        {
+          "text": "The dose, the time and the heat inactivation are the assembly manual's, not this package's.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        },
+        {
+          "text": "The other answer to template background is to keep it low in the first place: 0.1-0.5 ng of plasmid per 50 µL PCR.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -854,7 +882,10 @@
         {
           "problem": "Many colonies on the no-insert control",
           "solution": "The template survived: digest longer, or use more DpnI.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
         }
       ],
       "holes": []
@@ -868,8 +899,20 @@
       ],
       "cautions": [],
       "notes": [
-        "NEB calls a column optional below 3 PCR fragments: a product more than 90% pure goes into the reaction unpurified, within the fraction the assembly step gives.",
-        "At 3 fragments or more, or a fragment over 5 kb, NEB calls it highly recommended and puts the gain in assembly and transformation at two- to tenfold. A PCR showing anything but one band is gel-purified whatever the count."
+        {
+          "text": "A column is optional below 3 PCR fragments: a product more than 90% pure goes into the reaction unpurified, within the fraction the assembly step gives.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        },
+        {
+          "text": "At 3 fragments or more, or a fragment over 5 kb, a column is highly recommended, and the gain in assembly and transformation is put at two- to tenfold. A PCR showing anything but one band is gel-purified whatever the count.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -886,7 +929,10 @@
         {
           "problem": "Low recovery",
           "solution": "Elute twice through the same column, or pool two reactions before purifying.",
-          "citation": null
+          "citation": {
+            "source": "T1020",
+            "locator": "troubleshooting, low DNA yield"
+          }
         }
       ],
       "holes": []
@@ -935,9 +981,21 @@
       ],
       "cautions": [],
       "notes": [
-        "Each insert goes in at 2 times the vector's moles, and any insert under 200 bp at 5 times, which is what New England Biolabs asks for at this fragment count. The table gives each in picomoles and in nanograms, so it can be pipetted at whatever concentration it is.",
-        "The volumes above assume each fragment is concentrated enough to carry its picomoles in the microlitre the table gives; make the difference up with water.",
-        "New England Biolabs takes unpurified PCR product straight from the tube for up to 20% of the reaction, which is 4 µL here, as long as the product is a single band."
+        {
+          "text": "Each insert goes in at 2 times the vector's moles, and any insert under 200 bp at 5 times, at this fragment count. The table gives each in picomoles and in nanograms, so it can be pipetted at whatever concentration it is.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        },
+        "The volumes above assume each fragment is concentrated enough to carry its picomoles in the microlitre the table gives.",
+        {
+          "text": "Unpurified PCR product goes straight from the tube for up to 20% of the reaction, which is 4 µL here, as long as the product is a single band.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        }
       ],
       "tables": [
         {
@@ -994,12 +1052,18 @@
         {
           "problem": "The DNA does not fit the reaction volume",
           "solution": "Concentrate the fragments, or scale the whole reaction up and add master mix in proportion.",
-          "citation": null
+          "citation": {
+            "source": "E2621",
+            "locator": "reaction setup, scale footnote"
+          }
         },
         {
           "problem": "Colonies later carry the empty vector",
           "solution": "The backbone PCR carried its plasmid template through; digest it with DpnI again, or gel-purify the backbone.",
-          "citation": null
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, clones without the insert"
+          }
         }
       ],
       "holes": []
@@ -1014,7 +1078,13 @@
       ],
       "cautions": [],
       "notes": [
-        "15 minutes is what New England Biolabs asks for at this fragment count. Incubating longer than 15 minutes improves some assemblies, up to four hours; overnight is refused.",
+        {
+          "text": "15 minutes is what this fragment count takes. Incubating longer than 15 minutes improves some assemblies, up to four hours; overnight is refused.",
+          "citation": {
+            "source": "E2621",
+            "locator": ""
+          }
+        },
         "Junction positions are 1-based, on the product."
       ],
       "tables": [],
@@ -1061,7 +1131,23 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
-      "figures": [],
+      "figures": [
+        {
+          "records": [
+            "product.dna"
+          ],
+          "caption": "pUC19-GFP as the incubation closes it: the overlaps the parts share, 16 bp and 16 bp.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [],
+          "highlight": [
+            "pUC19 backbone-GFP overlap",
+            "GFP-pUC19 backbone overlap"
+          ],
+          "citation": null
+        }
+      ],
       "gels": [],
       "expected": [
         "Nothing visible. One exonuclease, one polymerase and one ligase work together at this one temperature; there is nothing to cycle.",
@@ -1072,12 +1158,18 @@
         {
           "problem": "Few colonies later",
           "solution": "Run the kit's positive control beside the assembly; it tells a bad master mix from a bad design.",
-          "citation": null
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, no colonies"
+          }
         },
         {
           "problem": "No colonies later",
           "solution": "Run the reaction on a gel: an efficient assembly shows the fragments gone and a product of the right size.",
-          "citation": null
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, no colonies"
+          }
         }
       ],
       "holes": []
@@ -1131,7 +1223,10 @@
         {
           "problem": "No colonies",
           "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "A lawn",
@@ -1153,8 +1248,14 @@
       "cautions": [],
       "notes": [
         "The long first step at 94 °C lyses the cells; there is no purified template.",
-        "Pick 10. Takara's In-Fusion series is the only one that measures how the correct fraction falls with fragment count: 10 of 10 correct at two fragments, 4 of 10 at five. That is In-Fusion's number and not this product's.",
-        "Where nothing grew at all, NEB asks for the same PCR on the assembly reaction itself, with primers flanking the assembled product."
+        "This screen reads 10 colonies.",
+        {
+          "text": "The correct fraction falls with fragment count: 10 of 10 correct at two fragments, 4 of 10 at five. That is the In-Fusion series' number, the only one measured against fragment count, and not this product's.",
+          "citation": {
+            "source": "In-Fusion",
+            "locator": ""
+          }
+        }
       ],
       "tables": [
         {
@@ -1325,17 +1426,34 @@
         {
           "problem": "No band in any lane",
           "solution": "The colony was too much material: touch a smaller one, or dilute it.",
-          "citation": null
+          "citation": {
+            "source": "colony-pcr",
+            "locator": "template"
+          }
+        },
+        {
+          "problem": "Nothing grew at all",
+          "solution": "Run the same PCR on the assembly reaction itself, with primers flanking the assembled product.",
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, no colonies"
+          }
         },
         {
           "problem": "Every colony reads as empty vector",
-          "solution": "NEB's answer is the template: a PCR-generated vector carries uncut plasmid through, so digest it with DpnI again or gel-purify the backbone.",
-          "citation": null
+          "solution": "A PCR-generated vector carries uncut plasmid through; digest it with DpnI again, or gel-purify the backbone.",
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, clones without the insert"
+          }
         },
         {
           "problem": "A colony gives a band of the wrong size",
-          "solution": "The PCR that made a part was not a single band; gel-purify it and assemble again. NEB suggests NEB Stable Competent E. coli (#C3040) for an insert carrying repeats.",
-          "citation": null
+          "solution": "The PCR that made a part was not a single band; gel-purify it and assemble again. NEB Stable Competent E. coli (#C3040) suits an insert carrying repeats.",
+          "citation": {
+            "source": "E2621",
+            "locator": "troubleshooting, wrong product"
+          }
         }
       ],
       "holes": []
@@ -1353,7 +1471,13 @@
       "notes": [
         "Only a read across the junctions confirms the assembly, whatever the screen said.",
         "A provider whose read is shorter than the lengths above needs a further primer inside the inserts.",
-        "Gibson 2009 sequenced 210 repaired junctions and found about one error per 50 molecules joined, so a gel that reads right is not the same as a junction that is right."
+        {
+          "text": "About one error per 50 molecules joined was found in 210 sequenced junctions, so a gel that reads right is not the same as a junction that is right.",
+          "citation": {
+            "source": "Gibson 2009",
+            "locator": ""
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -1372,7 +1496,10 @@
         {
           "problem": "The read starts too close to the junction",
           "solution": "Move the primer further out; the first bases after a primer are unreadable.",
-          "citation": null
+          "citation": {
+            "source": "genewiz-sanger",
+            "locator": "sequencing primer design"
+          }
         }
       ],
       "holes": []
@@ -1429,12 +1556,68 @@
       "date": "2026-09-12",
       "note": ""
     },
+    "NEB-cloning": {
+      "document": "New England Biolabs, Troubleshooting Guide for Cloning",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1020": {
+      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.1_4/21",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "colony-pcr": {
+      "document": "New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes",
+      "edition": "Y. Xu, 11/13",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "genewiz-sanger": {
+      "document": "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+      "edition": "",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
     "M0480": {
       "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
       "edition": "protocols.io version 2, 2022-02-21",
       "url": "https://dx.doi.org/10.17504/protocols.io.bd24i8gw",
       "read_as": "",
       "date": "2026-09-12",
+      "note": ""
+    },
+    "E2621": {
+      "document": "New England Biolabs #E2621S/L/X and #E5520S NEBuilder HiFi DNA Assembly Master Mix / Cloning Kit instruction manual",
+      "edition": "version 6.0_1/26",
+      "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale2621_e5520.pdf",
+      "read_as": "",
+      "date": "",
+      "note": ""
+    },
+    "In-Fusion": {
+      "document": "Takara Bio, In-Fusion Cloning FAQs",
+      "edition": "",
+      "url": "https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
+      "read_as": "",
+      "date": "",
+      "note": ""
+    },
+    "Gibson 2009": {
+      "document": "Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several hundred kilobases. Nat. Methods 6, 343-345",
+      "edition": "",
+      "url": "https://doi.org/10.1038/nmeth.1318",
+      "read_as": "",
+      "date": "",
       "note": ""
     }
   },

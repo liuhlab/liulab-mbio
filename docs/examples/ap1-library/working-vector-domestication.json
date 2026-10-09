@@ -1,6 +1,6 @@
 {
   "title": "Domesticating the working vector",
-  "key": "a51139a92c40923e",
+  "key": "349cdf84cd678dd0",
   "summary": "The library's working vector is pLVX-TetOne-Puro-GFP, which reads 6 BsaI and 2 BsmBI sites. This orders the same plasmid with all 8 taken out and confirms what arrives. It is a sitting of its own: the library run opens with the record it leaves behind.",
   "overview": {
     "Parent": "pLVX-TetOne-Puro-GFP, Addgene 171123",
@@ -18,6 +18,7 @@
     "The BsmBI site in the hPGK promoter has no precedent anywhere. The base chosen neither makes nor breaks a CpG, which is the most this run can say for it.",
     "Only BsaI and BsmBI were taken out. The result still reads BbsI 3, SapI 2, so an assembly whose own enzyme is one of those meets those sites unchanged."
   ],
+  "background": [],
   "checks": [
     {
       "name": "sites",

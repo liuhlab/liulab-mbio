@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "61dd82fff408607c",
+  "key": "76fcbcada252e552",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -93,7 +93,7 @@
   "protocols": [
     {
       "title": "Part carrier",
-      "key": "1e6b9176da4228eb",
+      "key": "a3c12b45fd4b23cc",
       "summary": "Put each of 72 parts in its own pCR-Blunt II-TOPO, one part a well, so the collection keeps and BsmBI can release any of them again.",
       "overview": {
         "Parts": "72, one a well",
@@ -104,6 +104,7 @@
         "Released by": "BsmBI"
       },
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [
@@ -299,7 +300,7 @@
     },
     {
       "title": "Primer plates",
-      "key": "4b4477d6f23d728f",
+      "key": "ccff76fac711c73c",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -308,6 +309,7 @@
         "Storage": "-20 °C"
       },
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [],
@@ -2266,10 +2268,11 @@
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "0b80c36fd8ed311d",
+      "key": "259589bc4f03c615",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [],
@@ -2400,10 +2403,11 @@
     },
     {
       "title": "Cargo creation",
-      "key": "4c9e683cf89da3b3",
+      "key": "0ad188224491aa87",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [
@@ -3443,10 +3447,11 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "27879237f03b9b08",
+      "key": "74c68347759c0a46",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "read every well back",
       "consumes": [
@@ -7318,10 +7323,11 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "139b5f98e4c6e753",
+      "key": "49e0af3a4fae9ebc",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "read every well back",
       "consumes": [
@@ -11812,7 +11818,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "5d71b8ca20412104",
+      "key": "ccfec1f972a39577",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -11833,6 +11839,7 @@
         "Designs read back": "72, every one"
       },
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [
@@ -13942,10 +13949,11 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "ae42b1b405a19eef",
+      "key": "5df991ae6ad146a5",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
+      "background": [],
       "checks": [],
       "choice": "",
       "consumes": [
