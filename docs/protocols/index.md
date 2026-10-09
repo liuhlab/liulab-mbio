@@ -32,14 +32,14 @@ The catalogue runs in the order a job does: design and order, build, validate.
 | --- | --- |
 | [Cargo validation: barcode ligation](../examples/ap1-library/protocol/05-cargo-validation-barcode-ligation.html) | taking archived designs to clonal wells and marking each so sequencing names it: one of two routes |
 | [Cargo validation: index PCR](../examples/ap1-library/protocol/05-cargo-validation-index-pcr.html) | the same job marked by index PCR, the other route. A run picks one; nobody does both |
-| [AP-1 cargo read-back](../examples/ap1-readback/protocol/index.html) | the same job as a run of its own, over a plate of frozen stock and a list of names |
-| [Design read-back: index PCR](../examples/ap1-readback/protocol/01-design-read-back-index-pcr.html) | its bench page: array and pick, mark every well, then call each one |
+| [AP-1 cargo read-back](../examples/ap1-readback/protocol.html) | the same job as a run of its own, over a plate of frozen stock and a list of names: array and pick, mark every well, then call each one |
 
 ## Work through a run of many sittings
 
-A cloning run is one page. A library run is a chain of them: one page a sitting, in the order
-someone does them, each saying what it is handed and what it leaves behind. Mail one page to
-whoever runs that sitting, or send the folder and they have the run.
+A run someone works through in one sitting is one page, whatever planned it. A library run is a
+chain of them: one page a sitting, in the order someone does them, each saying what it is handed
+and what it leaves behind. Mail one page to whoever runs that sitting, or send the folder and
+they have the run.
 
 [The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks on
 the design, and collects every number the run has no source for.

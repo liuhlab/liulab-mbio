@@ -151,15 +151,9 @@ GENERATORS: tuple[Generator, ...] = (
     ),
     Generator(
         what="the AP-1 cargo read-back",
-        directory=REPO / READBACK / "protocol",
+        directory=REPO / READBACK,
         commands=(f"synbio dmx plan {READBACK}/build.json --out {OUT}",),
-        writes=(
-            "01-design-read-back-index-pcr.html",
-            "index.html",
-            "project.json",
-            "reagents.html",
-            "references.html",
-        ),
+        writes=("protocol.html", "protocol.json"),
     ),
     Generator(
         what="the pUC19-GFP Gibson plan",

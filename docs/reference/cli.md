@@ -287,9 +287,9 @@ which a design is read back.
 | --- | --- | --- |
 | `--out`, `-o` | required | Folder to write into |
 
-The folder becomes the protocol itself: `project.json`, an index page, one page per protocol,
-and the reagents and references pages. There is no sequence file and no order sheet, because a
-design is read back as a name and a count of its pieces rather than as bases.
+A read-back is one sitting, so the folder gets one page and its data: `protocol.html` and
+`protocol.json`. There is no sequence file and no order sheet, because a design is read back as
+a name and a count of its pieces rather than as bases.
 
 The two routes are `barcode ligation` and `index PCR`. Barcode ligation uses the lab's own
 barcode kit, whose sequences this package does not ship.
