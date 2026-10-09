@@ -68,19 +68,21 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    annotated,
+    as_project,
     as_record,
     insertion_span,
     ordered_from_sheet,
     orientations,
     primer_check,
     status,
-    write_protocol_files,
 )
 from mbio.edits import flipped
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import Protocol
+from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.snapgene import write_dna
 
@@ -258,7 +260,8 @@ class Plan:
         """Write the plasmid, the oligo sheet, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The four files are named by
-        `mbio.cloning.plan`, and a second run over the same inputs writes the same bytes.
+        `mbio.cloning.plan` and `mbio.protocol.render`, and a second run over the same inputs
+        writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -266,7 +269,7 @@ class Plan:
         write_dna(self.plasmid, plasmid)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports, oligos=self.ordered_oligos), encoding="utf-8")
-        written = write_protocol_files(self.protocol(), out)
+        written = write_run_files(as_project(self.protocol()), out)
         return Files(plasmid, sheet, written.data, written.page)
 
 
@@ -412,6 +415,7 @@ def plan_gibson(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(built.product, boundaries, thresholds=thresholds["sequencing"])
+    built = dataclasses.replace(built, product=annotated(built.product, colony, reads))
     return Plan(
         one,
         going,

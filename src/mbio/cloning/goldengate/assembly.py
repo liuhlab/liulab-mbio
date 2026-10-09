@@ -309,6 +309,11 @@ class Junction:
         """The junction's bases, as a segment of the product."""
         return Segment(self.start, self.end)
 
+    @property
+    def feature_name(self) -> str:
+        """What the product's own feature for this junction is called."""
+        return _junction_name(self.overhang)
+
 
 @dataclass(frozen=True, slots=True)
 class Assembly:
@@ -507,11 +512,16 @@ def _occurrences(haystack: str, needle: str) -> int:
     return found
 
 
+def _junction_name(overhang: str) -> str:
+    """Return what a junction pairing on these bases is called."""
+    return f"{overhang} junction"
+
+
 def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Feature:
     """Draw the junction that begins at `at`, where `before` gives way to `after`."""
     overhang = after.left_overhang
     return Feature(
-        f"{overhang} junction",
+        _junction_name(overhang),
         "misc_feature",
         (Segment(at, at + len(overhang)),),
         color=JUNCTION_COLOR,

@@ -7,9 +7,10 @@ leave the volumes, masses, counts and temperatures alone.
 
 ## Find the file
 
-A cloning run leaves `protocol.json` beside `protocol.html`, in the directory you named with
-`--out`. A library run leaves one `project.json` in the `protocol/` folder, holding the whole
-chain of pages. A read-back run writes its `project.json` straight into `--out`.
+A run of one sitting leaves `protocol.json` beside `protocol.html`, in the directory you named
+with `--out`: that is what a cloning run and a read-back run each write. A library run is
+several sittings, so it leaves one `project.json` in the `protocol/` folder, holding the whole
+chain of pages.
 
 The file is plain text, and the words in it are the words on the page. Search it for a sentence
 you can see and you have found the field holding it.

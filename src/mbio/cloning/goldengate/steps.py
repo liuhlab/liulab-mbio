@@ -61,21 +61,33 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from mbio.cloning.goldengate.design import OverhangSet
 from mbio.cloning.goldengate.oligos import DesignedOligo
+from mbio.cloning.plan import (
+    JOIN_SECTION,
+    MAKE_SECTION,
+    PRODUCT_FILE,
+    SCREEN_SECTION,
+)
 from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
     Component,
+    Figure,
     Material,
+    Note,
     Protocol,
     Reference,
     Step,
     Troubleshooting,
     citing,
+    figured,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -174,7 +186,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, overhangs, phenotype),
-        sources={**PCR_SOURCES, **GOLDEN_GATE_SOURCES},
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **GOLDEN_GATE_SOURCES},
     )
     return citing(one)
 
@@ -343,54 +355,69 @@ def _steps(
     """Return the steps in the order they happen, the shared ones carrying Golden Gate's notes."""
     enzyme = assembly.enzyme
     cut = [part for part in parts if part.dpni]
-    steps = [_pcr_step(part, enzyme, polymerase) for part in parts]
-    steps.append(gel_step([(part.name, part.length) for part in parts]))
+    made = [_pcr_step(part, enzyme, polymerase) for part in parts]
+    made.append(gel_step([(part.name, part.length) for part in parts]))
     if cut:
-        steps.append(
+        made.append(
             dpni_step(
                 [part.name for part in cut],
                 [(part.template.name, dam_sites(part.template)) for part in cut],
                 notes=(
-                    "This step is not in NEB's Golden Gate protocol; the incubation is this "
-                    "package's choice.",
+                    Note(
+                        "The kit's own protocol has no step for a methylated template, so the "
+                        "incubation is this package's choice.",
+                        citation=Citation("E1601"),
+                    ),
                 ),
             )
         )
-    steps.append(
+    made.append(
         cleanup_step(
             notes=(
-                "NEB asks for purified amplicons: polymerase carried over from the PCR fills in "
-                "the four-base overhangs, which blunts the ends and mis-assembles them.",
+                Note(
+                    "The reaction takes purified amplicons: polymerase carried over from the "
+                    "PCR fills in the four-base overhangs, which blunts the ends and "
+                    "mis-assembles them.",
+                    citation=Citation("E1601"),
+                ),
             )
         )
     )
-    steps.append(quantify_step(amounts))
-    steps.append(_assembly_step(enzyme, amounts))
-    steps.append(_cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)))
-    steps.append(
-        transform_step(
-            host,
-            phenotype,
-            inserts=inserts,
-            colonies=f"Hundreds of colonies; NEB counts about {NEB_COLONIES} correct ones from a "
-            "single-insert assembly with 2.5 µL of the outgrowth plated.",
-        )
-    )
-    steps.append(
-        colony_pcr_step(
-            colony,
-            junctions=len(assembly.junctions),
-            troubleshooting=(
-                Troubleshooting(
-                    "Every colony reads as empty vector",
-                    "The template survived the DpnI digest, or the vector re-closed; check the "
-                    "60 °C soak ran.",
+    made.append(quantify_step(amounts))
+    return (
+        *sectioned(MAKE_SECTION, *made),
+        *sectioned(
+            JOIN_SECTION,
+            _assembly_step(enzyme, amounts),
+            figured(
+                _cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)),
+                _assembly_figure(assembly),
+            ),
+        ),
+        *sectioned(
+            SCREEN_SECTION,
+            transform_step(
+                host,
+                phenotype,
+                inserts=inserts,
+                colonies=f"Hundreds of colonies; NEB counts about {NEB_COLONIES} correct ones "
+                "from a single-insert assembly with 2.5 µL of the outgrowth plated.",
+            ),
+            colony_pcr_step(
+                colony,
+                junctions=len(assembly.junctions),
+                troubleshooting=(
+                    Troubleshooting(
+                        "Every colony reads as empty vector",
+                        "The template survived the DpnI digest, or the vector re-closed; check "
+                        "the 60 °C soak ran.",
+                        citation=Citation("E1601", "FAQ 10"),
+                    ),
                 ),
             ),
-        )
+            sequencing_step(reads, junctions=overhangs.overhangs, inserts=inserts),
+        ),
     )
-    steps.append(sequencing_step(reads, junctions=overhangs.overhangs, inserts=inserts))
-    return tuple(steps)
 
 
 def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
@@ -405,8 +432,8 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
         cycles=GOLDEN_GATE_PCR_CYCLES,
         cycles_citation=GOLDEN_GATE_PCR_CYCLES_CITATION,
         notes=(
-            "The cycle count is the fewest NEB finds enough for an amplicon going into an "
-            "assembly; fewer cycles means fewer PCR errors.",
+            "The cycle count is the fewest enough for an amplicon going into an assembly; "
+            "fewer cycles means fewer PCR errors.",
             f"The primers carry a {enzyme.name} site pointing back into the part, so "
             f"cutting the amplicon leaves {part.left_overhang} and {part.right_overhang}.",
         ),
@@ -422,20 +449,19 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
         key="set-up-assembly",
         instructions=(
             "Thaw the master mix on ice and mix it well; it is viscous.",
+            "Pipette the volume that gives each fragment its picomoles, and make the "
+            "difference up with water.",
             "Pipette the DNA into the tube first, then the rest.",
             "Mix gently and spin down.",
         ),
         tables=(table,),
         expected=(f"A {total:g} µL reaction holding every fragment.",),
-        notes=(
-            "The volumes above assume the concentrations measured in the step before; "
-            "pipette the volume that gives the picomoles, and make the difference up with "
-            "water.",
-        ),
+        notes=("The volumes above assume the concentrations measured in the step before.",),
         troubleshooting=(
             Troubleshooting(
                 "The DNA does not fit the reaction volume",
                 "Concentrate the fragments, or scale the whole reaction up.",
+                citation=Citation("E1601", "assembly reaction, note 6"),
             ),
         ),
     )
@@ -470,12 +496,27 @@ def _cycling_step(
             Troubleshooting(
                 "Mostly empty vector later",
                 "Keep the 60 °C soak, and check the template was digested with DpnI.",
+                citation=Citation("E1601", "FAQ 10"),
             ),
             Troubleshooting(
                 "Few colonies later",
                 "Raise the cycle count, or plate more of the outgrowth.",
+                citation=Citation("E1601", "FAQ 14"),
             ),
         ),
+    )
+
+
+def _assembly_figure(assembly: Assembly) -> Figure:
+    """Return the plasmid the reaction closes, every junction it spells lit."""
+    enzyme = assembly.enzyme.name
+    spelled = listed([one.overhang for one in assembly.junctions])
+    return Figure(
+        (PRODUCT_FILE,),
+        f"{assembly.product.name} as the reaction closes it: the {spelled} junctions it spells, "
+        f"and every {enzyme} site left on it.",
+        enzymes=(enzyme,),
+        highlight=tuple(dict.fromkeys(one.feature_name for one in assembly.junctions)),
     )
 
 

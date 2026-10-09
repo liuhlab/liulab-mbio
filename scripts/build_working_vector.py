@@ -45,6 +45,7 @@ from mbio.protocol.model import (
     Reference,
     Step,
     read_protocol,
+    sectioned,
     write_protocol,
 )
 from mbio.protocol.render import minted, write_html
@@ -391,81 +392,92 @@ def _checks(
 
 
 def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, ...]:
-    """Return the four steps: order it, grow it, show nothing cuts it, read both repeats."""
+    """Return the four steps: order it, grow it, show nothing cuts it, read both repeats.
+
+    They fall either side of the wait for the order, which is what the two sections name. No
+    step carries a figure: the supplier makes the molecule, and the three bench steps move,
+    cut nothing and read.
+    """
     return (
-        Step(
-            "Order the domesticated plasmid",
-            key="order",
-            instructions=(
-                f"Send {RECORD_FILE} to a supplier that builds whole plasmids, as one clonal "
-                f"construct of {length} bp.",
-                "Declare the two 634 bp direct repeats on the order form.",
-                "Ask for the plasmid verified over its whole sequence.",
-            ),
-            cautions=(
-                "A supplier whose clonal genes stop at 7 kb cannot build this plasmid; ask for "
-                "a long-construct quote before ordering.",
-            ),
-            notes=(
-                "A direct repeat longer than 200 bases is a high-complexity sequence, which is "
-                "priced and scheduled apart from the rest, so declaring it up front saves a "
-                "rejected order (Twist Bioscience, gene synthesis sequence acceptance "
-                "criteria).",
-                "The change at transcript position +4 goes into both repeats because a vector "
-                "whose two repeats differ there changes what reverse transcription copies "
-                "(Haellman et al. 2021, which made the same change in both).",
-            ),
-            expected=("The supplier accepts the sequence and quotes a build.",),
-        ),
-        Step(
-            "Transform and pick a colony",
-            key="transform",
-            instructions=(
-                "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
-                "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
-                "Pick one colony into 5 mL of LB with carbenicillin, grow overnight at 30 °C, "
-                "and miniprep it.",
-            ),
-            cautions=(
-                "Use a recombination-deficient strain and a 5 mL culture; a larger one is not "
-                "worth the deletions it returns.",
-            ),
-            expected=(
-                "Colonies by the next morning at the latest, and a miniprep of a few micrograms.",
+        *sectioned(
+            "Order the plasmid",
+            Step(
+                "Order the domesticated plasmid",
+                key="order",
+                instructions=(
+                    f"Send {RECORD_FILE} to a supplier that builds whole plasmids, as one clonal "
+                    f"construct of {length} bp.",
+                    "Declare the two 634 bp direct repeats on the order form.",
+                    "Ask for the plasmid verified over its whole sequence.",
+                ),
+                cautions=(
+                    "A supplier whose clonal genes stop at 7 kb cannot build this plasmid; ask for "
+                    "a long-construct quote before ordering.",
+                ),
+                notes=(
+                    "A direct repeat longer than 200 bases is a high-complexity sequence, which is "
+                    "priced and scheduled apart from the rest, so declaring it up front saves a "
+                    "rejected order (Twist Bioscience, gene synthesis sequence acceptance "
+                    "criteria).",
+                    "The change at transcript position +4 goes into both repeats because a vector "
+                    "whose two repeats differ there changes what reverse transcription copies "
+                    "(Haellman et al. 2021, which made the same change in both).",
+                ),
+                expected=("The supplier accepts the sequence and quotes a build.",),
             ),
         ),
-        Step(
-            "Show that neither enzyme cuts",
-            key="confirm-digest",
-            instructions=(
-                "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for "
-                "1 hour at 37 °C.",
-                "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at "
-                "55 °C.",
-                f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
-                "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
+        *sectioned(
+            "Confirm what arrives",
+            Step(
+                "Transform and pick a colony",
+                key="transform",
+                instructions=(
+                    "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
+                    "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
+                    "Pick one colony into 5 mL of LB with carbenicillin, grow overnight at 30 °C, "
+                    "and miniprep it.",
+                ),
+                cautions=(
+                    "Use a recombination-deficient strain and a 5 mL culture; a larger one is not "
+                    "worth the deletions it returns.",
+                ),
+                expected=(
+                    "Colonies by the next morning at the latest, and a miniprep of a few micrograms.",
+                ),
             ),
-            expected=(
-                "The BsaI and BsmBI lanes look like the undigested lane.",
-                f"The control lane is one band at about {length} bp.",
+            Step(
+                "Show that neither enzyme cuts",
+                key="confirm-digest",
+                instructions=(
+                    "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for "
+                    "1 hour at 37 °C.",
+                    "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at "
+                    "55 °C.",
+                    f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
+                    "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
+                ),
+                expected=(
+                    "The BsaI and BsmBI lanes look like the undigested lane.",
+                    f"The control lane is one band at about {length} bp.",
+                ),
+                notes=(
+                    "An enzyme that did not cut and an enzyme nobody added look the same on a gel, "
+                    "which is what the control lane tells apart (New England Biolabs, single "
+                    "enzyme digest protocol).",
+                ),
             ),
-            notes=(
-                "An enzyme that did not cut and an enzyme nobody added look the same on a gel, "
-                "which is what the control lane tells apart (New England Biolabs, single "
-                "enzyme digest protocol).",
-            ),
-        ),
-        Step(
-            "Read both repeats",
-            key="confirm-sequence",
-            instructions=(
-                "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the "
-                "whole plasmid assembled rather than reads from primers.",
-                f"Compare the assembled consensus with {RECORD_FILE} base by base.",
-                "Confirm that both long terminal repeats carry their change, one at a time.",
-            ),
-            expected=(
-                f"The consensus matches {RECORD_FILE} at every base, both repeats included.",
+            Step(
+                "Read both repeats",
+                key="confirm-sequence",
+                instructions=(
+                    "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the "
+                    "whole plasmid assembled rather than reads from primers.",
+                    f"Compare the assembled consensus with {RECORD_FILE} base by base.",
+                    "Confirm that both long terminal repeats carry their change, one at a time.",
+                ),
+                expected=(
+                    f"The consensus matches {RECORD_FILE} at every base, both repeats included.",
+                ),
             ),
         ),
     )

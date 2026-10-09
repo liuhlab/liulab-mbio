@@ -42,7 +42,7 @@ from mbio.codons import codon_usage
 from mbio.ligase import LigaseProfile, read_profile
 from mbio.overhangs import MIN_DISTANCE
 from mbio.protocol.model import Project
-from mbio.protocol.render import write_project_files
+from mbio.protocol.render import write_run_files
 from mbio.sequence import SequenceRecord
 from mbio.sites import digest
 from mbio.snapgene import write_dna
@@ -101,7 +101,7 @@ NAME_PATTERN = r"(?<![A-Za-z0-9]){position}(?![A-Za-z0-9])"
 
 #: What `LibraryPlan.write` calls the sheets it writes. The records are named by
 #: `synbio.igga.rounds`, which writes one for each round and the product for the
-#: last, and the protocol pair by `mbio.cloning.plan`.
+#: last, and the run's own pages by `mbio.protocol.render`.
 PARTS_FILE = "parts.tsv"
 BARCODE_FILE = "barcodes.tsv"
 CHANGE_FILE = "changes.tsv"
@@ -120,11 +120,6 @@ WORKING_VECTOR_FILE = "working-vector-ccdb.dna"
 
 #: What the plate of seated parts is called, where the build names a carrier to seat them in.
 CARRIER_PLATE = "Part carrier plate"
-
-#: The folder the run's protocols are written into, beside the sheets and the records. A
-#: folder and not a flat pair: a chain of protocols names its own `project.json`, and the
-#: build was read from a file of that name already.
-PROTOCOL_DIR = "protocol"
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,7 +176,10 @@ class Files:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written, in that order: the sheets, the records, the protocol, the pool."""
+        """Every file written, by kind: the sheets, the records, the protocol, then the pool.
+
+        Not the order they were written: the pool is written before the pages render.
+        """
         written = (
             self.parts,
             self.barcodes,
@@ -393,8 +391,8 @@ class LibraryPlan:
 
         The directory is made when it is not there. The files are named by `PARTS_FILE`,
         `BARCODE_FILE`, `CHANGE_FILE` and `BLOCK_VECTOR_FILE`, by `synbio.igga.rounds`
-        for the records and by `mbio.protocol.render` inside `PROTOCOL_DIR`, and a second
-        run over the same inputs writes the same bytes.
+        for the records and by `mbio.protocol.render`, which puts a chain of protocols in
+        its own `PROTOCOL_DIR`, and a second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -429,7 +427,7 @@ class LibraryPlan:
                 oligo,
             )
         # The pages draw the records beside them, so every record is written before they render.
-        written = write_project_files(self.chain(), out / PROTOCOL_DIR)
+        written = write_run_files(self.chain(), out)
         reads = out / READ_PRIMER_FILE
         reads.write_text(read_sheet(self.reads), encoding="utf-8")
         return Files(
@@ -438,7 +436,7 @@ class LibraryPlan:
             changes,
             records,
             written.data,
-            (written.index, *written.protocols, written.reagents, written.references),
+            written.pages,
             pool,
             primers,
             oligo,

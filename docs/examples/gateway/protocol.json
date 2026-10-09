@@ -1,6 +1,6 @@
 {
   "title": "Gateway BP then LR: attB-GFP into pDEST-demo",
-  "key": "87e3dd56ca516baf",
+  "key": "b538f4e77dc356ee",
   "summary": "Recombine the 751 bp between attB-GFP's attB sites into pDONR-demo, giving the entry clone pDONR-demo-attB-GFP; grow that up and recombine it into pDEST-demo. Two staged reactions, each with its own incubation, stop, transformation and plate.",
   "overview": {
     "attB PCR": "775 bp product, 29 and 29 bp tails",
@@ -22,6 +22,7 @@
     "GFP reads on the same strand as T7 promoter, 8 bp downstream of it.",
     "There is a ribosome binding site annotated ahead of GFP, so the clone may make its protein."
   ],
+  "background": [],
   "checks": [
     {
       "name": "primers",
@@ -79,11 +80,14 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "10 µM each",
-      "note": "ordered off the oligo sheet on this page; the manual asks for HPLC- or PAGE-purified oligos where colonies are few",
+      "note": "ordered off the oligo sheet on this page; HPLC- or PAGE-purified oligos are the published answer where colonies are few",
       "contains": [],
       "rules": [],
       "cautions": [],
-      "citation": null
+      "citation": {
+        "source": "MAN0000470",
+        "locator": "pp. 43-44"
+      }
     },
     {
       "name": "Q5 DNA Polymerase",
@@ -91,11 +95,14 @@
       "catalog": "",
       "storage": "-20 °C",
       "amount": "",
-      "note": "the manual's answer to an entry clone made of primer-dimers is a hot-start enzyme, so use one",
+      "note": "a hot-start enzyme is the published answer to an entry clone made of primer-dimers, so use one",
       "contains": [],
       "rules": [],
       "cautions": [],
-      "citation": null
+      "citation": {
+        "source": "MAN0000470",
+        "locator": "pp. 43-44"
+      }
     },
     {
       "name": "PCR and gel cleanup spin columns",
@@ -406,7 +413,7 @@
     {
       "title": "Amplify attB-GFP",
       "key": "pcr-attb-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -416,9 +423,21 @@
         "Keep the polymerase on ice."
       ],
       "notes": [
-        "Each primer carries a whole attB tail: 4 G residues, the 25 bp att site and the frame bases the fusion needs, 29 bases forward and 29 reverse. The manual's own cause of few or no colonies is a tail short of that.",
+        {
+          "text": "Each primer carries a whole attB tail: 4 G residues, the 25 bp att site and the frame bases the fusion needs, 29 bases forward and 29 reverse. A tail short of that is a published cause of few or no colonies.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 43-44"
+          }
+        },
         "The annealing temperature above is read from the annealing regions alone; a tail pairs with nothing on the template in the first cycles.",
-        "Over 70 bp of primer the manual switches to a two-step adapter PCR, which installs the same whole tail in two rounds and is not planned here."
+        {
+          "text": "Over 70 bp of primer a two-step adapter PCR installs the same whole tail in two rounds; it is not planned here.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 47-48"
+          }
+        }
       ],
       "tables": [
         {
@@ -575,12 +594,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -588,14 +613,19 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
       "cautions": [],
       "notes": [
-        "The BP reaction takes purified attB DNA: gel-purifying the product is the manual's fix for few or no colonies, and it takes the attB primers and their dimers away.",
-        "An entry clone running as a 2.2 kb supercoiled plasmid is a BP reaction that cloned attB primer-dimers instead."
+        {
+          "text": "The BP reaction takes purified attB DNA: gel-purifying the product is the published fix for few or no colonies, and it takes the attB primers and their dimers away.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 43-44"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -612,7 +642,18 @@
         {
           "problem": "Low recovery",
           "solution": "Elute twice through the same column, or pool two reactions before purifying.",
-          "citation": null
+          "citation": {
+            "source": "T1020",
+            "locator": "troubleshooting, low DNA yield"
+          }
+        },
+        {
+          "problem": "An entry clone later runs as a 2.2 kb supercoiled plasmid",
+          "solution": "The BP reaction cloned attB primer-dimers instead; gel-purify this product before running BP again.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 43-44"
+          }
         }
       ],
       "holes": []
@@ -620,18 +661,37 @@
     {
       "title": "Set up the BP reaction",
       "key": "set-up-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Thaw the enzyme mix on ice and vortex it briefly twice.",
         "Pipette the attB DNA, the donor vector and the TE buffer into a tube at room temperature.",
         "Add 2 µL of Gateway BP Clonase II enzyme mix, mix well and spin down."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Do not go over 250 ng of donor vector or 500 ng of DNA altogether: excess DNA inhibits the reaction.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 21"
+          }
+        }
+      ],
       "notes": [
-        "The volumes above take each DNA at the concentration the manual's own table assumes; pipette what your prep needs for the picomoles and make the difference up with TE buffer, pH 8.0.",
-        "The manual fixes the picomoles and not the weight: 50 fmol of each, the attB DNA down to 20 fmol, weighed here from each record's own length.",
-        "Do not go over 250 ng of donor vector or 500 ng of DNA altogether: excess DNA inhibits the reaction.",
-        "A linear attB product and a supercoiled donor vector are the substrates the manual calls most efficient for BP."
+        "The volumes above take each DNA at the concentration the table assumes; pipette what your prep needs for the picomoles and make the difference up with TE buffer, pH 8.0.",
+        {
+          "text": "What is fixed is the picomoles and not the weight: 50 fmol of each, the attB DNA down to 20 fmol, weighed here from each record's own length.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 21-22"
+          }
+        },
+        {
+          "text": "A linear attB product and a supercoiled donor vector are the most efficient substrates for BP.",
+          "citation": {
+            "source": "11789",
+            "locator": "p. 2"
+          }
+        }
       ],
       "tables": [
         {
@@ -696,13 +756,19 @@
     {
       "title": "Run the BP reaction",
       "key": "run-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Incubate at 25 °C for 1 hour."
       ],
       "cautions": [],
       "notes": [
-        "An attB substrate of 5,000 bp or more runs up to 18 hours instead; efficiency falls as the DNA gets longer.",
+        {
+          "text": "An attB substrate of 5,000 bp or more runs up to 18 hours instead; efficiency falls as the DNA gets longer.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 23"
+          }
+        },
         "Junction positions are 1-based, on the entry clone."
       ],
       "tables": [],
@@ -716,7 +782,23 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
-      "figures": [],
+      "figures": [
+        {
+          "records": [
+            "entry-clone.dna"
+          ],
+          "caption": "The entry clone the reaction makes: attL1 and attL2, the sites it writes where the two molecules crossed over.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [],
+          "highlight": [
+            "attL1",
+            "attL2"
+          ],
+          "citation": null
+        }
+      ],
       "gels": [],
       "expected": [
         "Nothing visible: the reaction is a recombination, not a digest.",
@@ -727,7 +809,10 @@
         {
           "problem": "Few or no colonies later, though the transformation control worked",
           "solution": "Use an attB substrate with a donor vector (attP): the BP reaction takes those and no others. Do not freeze and thaw the enzyme mix more than ten times.",
-          "citation": null
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 40"
+          }
         }
       ],
       "holes": []
@@ -735,14 +820,20 @@
     {
       "title": "Stop the BP reaction with proteinase K",
       "key": "stop-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Add 1 µL of proteinase K at 2 µg/µL.",
         "Incubate at 37 °C for 10 minutes."
       ],
       "cautions": [],
       "notes": [
-        "The manual lists an untreated reaction as a cause of few or no colonies, so this step is not optional."
+        {
+          "text": "An untreated reaction is a published cause of few or no colonies, so this step is not optional.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 40"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -766,7 +857,7 @@
     {
       "title": "Transform and plate the BP reaction",
       "key": "transform-bp",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Thaw 50 µL of TOP10 chemically competent E. coli on ice.",
         "Add 1 µL of the BP reaction and flick the tube four or five times.",
@@ -782,8 +873,7 @@
       "notes": [
         "Colour does not report this insertion; screen every colony by PCR.",
         "The clone is not expected to make GFP: no ribosome binding site is annotated ahead of it.",
-        "Unreacted donor vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that.",
-        "Two sizes of colony here mean the donor vector's ccdB gene has mutated or been deleted; the negative control then gives a similar count."
+        "Unreacted donor vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that."
       ],
       "tables": [],
       "programs": [],
@@ -813,12 +903,23 @@
         {
           "problem": "No colonies",
           "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "A lawn",
           "solution": "Plate a smaller volume or a greater dilution next time.",
           "citation": null
+        },
+        {
+          "problem": "Two sizes of colony on the plate",
+          "solution": "The donor vector's ccdB gene has mutated or been deleted; the negative control then gives a similar count.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 41"
+          }
         }
       ],
       "holes": []
@@ -826,7 +927,7 @@
     {
       "title": "Pick and miniprep the entry clone",
       "key": "miniprep-entry-clone",
-      "section": "",
+      "section": "Make the entry clone",
       "instructions": [
         "Pick single colonies into overnight cultures on the plate's own antibiotic.",
         "Miniprep each culture and measure what it yielded.",
@@ -835,8 +936,20 @@
       "cautions": [],
       "notes": [
         "The LR reaction takes purified entry clone and not the stopped BP reaction: 50-150 ng is a weight of miniprep DNA, and no plan can weigh a yield nobody has measured yet.",
-        "Supercoiled miniprep DNA is the substrate the manual calls most efficient for LR.",
-        "The vendor's one-tube protocol chains the two reactions without this step and gives at least 10-20% of the expression clones the staged route gives, each of which it says to sequence. It runs on its own timings and is not the protocol below."
+        {
+          "text": "Supercoiled miniprep DNA is the most efficient substrate for LR.",
+          "citation": {
+            "source": "MAN0001032",
+            "locator": "p. 2"
+          }
+        },
+        {
+          "text": "The one-tube protocol chains the two reactions without this step and gives at least 10-20% of the expression clones the staged route gives, each of which it says to sequence. It runs on its own timings and is not the protocol below.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 45-46"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -857,8 +970,11 @@
         },
         {
           "problem": "The prep runs as a 2.2 kb supercoiled plasmid",
-          "solution": "That size is the manual's signature for a BP reaction that cloned attB primer-dimers. Gel-purify the attB DNA and amplify it with a hot-start polymerase before running BP again.",
-          "citation": null
+          "solution": "That size is a BP reaction that cloned attB primer-dimers. Gel-purify the attB DNA and amplify it with a hot-start polymerase before running BP again.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "pp. 43-44"
+          }
         }
       ],
       "holes": []
@@ -866,17 +982,37 @@
     {
       "title": "Set up the LR reaction",
       "key": "set-up-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Thaw the enzyme mix on ice and vortex it briefly twice.",
         "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
         "Add 2 µL of Gateway LR Clonase II enzyme mix, mix well and spin down."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Do not go over 150 ng of entry clone.",
+          "citation": {
+            "source": "MAN0001032",
+            "locator": "p. 2"
+          }
+        }
+      ],
       "notes": [
-        "The volumes above take each DNA at the concentration the manual's own table assumes; pipette what your prep needs for the nanograms and make the difference up with TE buffer, pH 8.0.",
-        "Do not go over 150 ng of entry clone: the manual reports colonies carrying several molecules above it, and fewer colonies below 50 ng.",
-        "Supercoiled plasmids are the substrates the manual calls most efficient for LR."
+        "The volumes above take each DNA at the concentration the table assumes; pipette what your prep needs for the nanograms and make the difference up with TE buffer, pH 8.0.",
+        {
+          "text": "Above 150 ng of entry clone the colonies carry several molecules, and below 50 ng there are fewer of them.",
+          "citation": {
+            "source": "MAN0001032",
+            "locator": "p. 2"
+          }
+        },
+        {
+          "text": "Supercoiled plasmids are the most efficient substrates for LR.",
+          "citation": {
+            "source": "MAN0001032",
+            "locator": "p. 2"
+          }
+        }
       ],
       "tables": [
         {
@@ -941,13 +1077,19 @@
     {
       "title": "Run the LR reaction",
       "key": "run-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Incubate at 25 °C for 1 hour."
       ],
       "cautions": [],
       "notes": [
-        "A plasmid of 10,000 bp or more runs up to 18 hours instead; efficiency falls as the DNA gets longer.",
+        {
+          "text": "A plasmid of 10,000 bp or more runs up to 18 hours instead; efficiency falls as the DNA gets longer.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 32"
+          }
+        },
         "Junction positions are 1-based, on the expression clone."
       ],
       "tables": [],
@@ -961,7 +1103,23 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
-      "figures": [],
+      "figures": [
+        {
+          "records": [
+            "product.dna"
+          ],
+          "caption": "The expression clone the reaction makes: attB1 and attB2, the sites it writes where the two molecules crossed over.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [],
+          "highlight": [
+            "attB1",
+            "attB2"
+          ],
+          "citation": null
+        }
+      ],
       "gels": [],
       "expected": [
         "Nothing visible: the reaction is a recombination, not a digest.",
@@ -972,7 +1130,10 @@
         {
           "problem": "Few or no colonies later, though the transformation control worked",
           "solution": "Use an entry clone (attL) with a destination vector (attR): the LR reaction takes those and no others. Do not freeze and thaw the enzyme mix more than ten times.",
-          "citation": null
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 40"
+          }
         }
       ],
       "holes": []
@@ -980,14 +1141,20 @@
     {
       "title": "Stop the LR reaction with proteinase K",
       "key": "stop-lr",
-      "section": "",
+      "section": "Recombine",
       "instructions": [
         "Add 1 µL of proteinase K at 2 µg/µL.",
         "Incubate at 37 °C for 10 minutes."
       ],
       "cautions": [],
       "notes": [
-        "The manual lists an untreated reaction as a cause of few or no colonies, so this step is not optional."
+        {
+          "text": "An untreated reaction is a published cause of few or no colonies, so this step is not optional.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 40"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -1011,7 +1178,7 @@
     {
       "title": "Transform and plate the LR reaction",
       "key": "transform-lr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of TOP10 chemically competent E. coli on ice.",
         "Add 1 µL of the LR reaction and flick the tube four or five times.",
@@ -1027,8 +1194,7 @@
       "notes": [
         "Colour does not report this insertion; screen every colony by PCR.",
         "Unreacted destination vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that.",
-        "The expression clone lost the chloramphenicol cassette with the by-product, so restreaking a colony on 30 µg/mL chloramphenicol confirms it: a true expression clone does not grow there, and one carrying a mutated ccdB gene does.",
-        "Small colonies beside large ones are usually unreacted pDONR-demo-attB-GFP co-transforming; restreak them on the entry clone's own antibiotic to tell."
+        "The expression clone lost the chloramphenicol cassette with the by-product, so restreaking a colony on 30 µg/mL chloramphenicol confirms it: a true expression clone does not grow there, and one carrying a mutated ccdB gene does."
       ],
       "tables": [],
       "programs": [],
@@ -1058,12 +1224,23 @@
         {
           "problem": "No colonies",
           "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "A lawn",
           "solution": "Plate a smaller volume or a greater dilution next time.",
           "citation": null
+        },
+        {
+          "problem": "Small colonies beside large ones",
+          "solution": "Usually unreacted pDONR-demo-attB-GFP co-transforming; restreak them on the entry clone's own antibiotic to tell.",
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 41"
+          }
         }
       ],
       "holes": []
@@ -1071,7 +1248,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1082,7 +1259,13 @@
         "The long first step at 94 °C lyses the cells; there is no purified template.",
         "Both primers sit in the destination vector's backbone, so one product crosses both attB junctions and an unrecombined vector gives a band of its own.",
         "An unrecombined destination vector still carries ccdB, which kills TOP10 chemically competent E. coli, so its lane is what a strain supplying ccdA or a damaged ccdB gene would put on the plate.",
-        "The manual asks for a restriction digest alongside the first time this is run: mispriming and contaminating template both give artefacts."
+        {
+          "text": "A restriction digest beside this screen is recommended the first time it is run: mispriming and contaminating template both give artefacts.",
+          "citation": {
+            "source": "MAN0000291",
+            "locator": "p. 10"
+          }
+        }
       ],
       "tables": [
         {
@@ -1252,12 +1435,18 @@
         {
           "problem": "No band in any lane",
           "solution": "The colony was too much material: touch a smaller one, or dilute it.",
-          "citation": null
+          "citation": {
+            "source": "colony-pcr",
+            "locator": "template"
+          }
         },
         {
           "problem": "The plate carries large colonies and small ones",
           "solution": "The small ones are usually unreacted pDONR-demo-attB-GFP co-transforming. It carries neither of these primers, so it adds no band here; restreak on the entry clone's own antibiotic to tell.",
-          "citation": null
+          "citation": {
+            "source": "MAN0000470",
+            "locator": "p. 41"
+          }
         }
       ],
       "holes": []
@@ -1265,18 +1454,24 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",
+        "Send at least 500 ng of plasmid with 5-50 pmol of each primer.",
         "Check the read across every junction and the whole of each insert."
       ],
       "cautions": [],
       "notes": [
         "Only a read across the junctions confirms the assembly, whatever the screen said.",
         "A provider whose read is shorter than the lengths above needs a further primer inside the inserts.",
-        "No vendor primer reads these junctions: GW1 and GW2 are suitable for pCR8/GW/TOPO alone, and an M13 primer crosses at least 130 bp of vector first. Both primers above are designed against this record.",
-        "Send at least 500 ng of plasmid with 5-50 pmol of each primer."
+        {
+          "text": "No kit primer reads these junctions: GW1 and GW2 suit pCR8/GW/TOPO alone, and an M13 primer crosses at least 130 bp of vector first. Both primers above are designed against this record.",
+          "citation": {
+            "source": "MAN0000437",
+            "locator": "p. 13"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -1295,7 +1490,10 @@
         {
           "problem": "The read starts too close to the junction",
           "solution": "Move the primer further out; the first bases after a primer are unreadable.",
-          "citation": null
+          "citation": {
+            "source": "genewiz-sanger",
+            "locator": "sequencing primer design"
+          }
         }
       ],
       "holes": []
@@ -1356,6 +1554,38 @@
       "date": "2026-09-12",
       "note": ""
     },
+    "NEB-cloning": {
+      "document": "New England Biolabs, Troubleshooting Guide for Cloning",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1020": {
+      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.1_4/21",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "colony-pcr": {
+      "document": "New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes",
+      "edition": "Y. Xu, 11/13",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "genewiz-sanger": {
+      "document": "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+      "edition": "",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
     "M0480": {
       "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
       "edition": "protocols.io version 2, 2022-02-21",
@@ -1363,6 +1593,46 @@
       "read_as": "",
       "date": "2026-09-12",
       "note": ""
+    },
+    "MAN0000470": {
+      "document": "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
+      "edition": "part 25-0749, revision 2 April 2012",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "MAN0001032": {
+      "document": "Thermo Fisher Scientific #MAN0001032 Gateway LR Clonase II enzyme mix product sheet",
+      "edition": "revision A.0",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "11789": {
+      "document": "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
+      "edition": "11789.II.pps, revision 31 October 2010",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "MAN0000291": {
+      "document": "Thermo Fisher Scientific #MAN0000291 Gateway pDONR Vectors user guide",
+      "edition": "part 25-0531, revised 29 March 2012",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "MAN0000437": {
+      "document": "Thermo Fisher Scientific #MAN0000437 pCR8/GW/TOPO TA Cloning Kit user guide",
+      "edition": "part 25-0706, revised 23 March 2012",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
     }
   },
   "holes": [],

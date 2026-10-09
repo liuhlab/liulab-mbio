@@ -56,7 +56,7 @@ from synbio.igga.standard import PartList, Standard
 from synbio.igga.vector import Destination, Working
 
 #: Where the records a figure draws sit, relative to the pages that draw them:
-#: `synbio.igga.plan.PROTOCOL_DIR` puts the pages one directory below the records.
+#: `mbio.protocol.render.PROTOCOL_DIR` puts the pages one directory below the records.
 RECORDS_AT = "../"
 
 #: The consumables the rounds share, named here so a protocol claims its own by the same name.

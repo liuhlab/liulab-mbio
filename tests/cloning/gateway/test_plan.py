@@ -11,7 +11,7 @@ import pytest
 from mbio.bench.gels import agarose_percent
 from mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE
 from mbio.bench.validation import CORRECT_CLONE, EMPTY_CLONE, SANGER_FLANK
-from mbio.cloning.gateway import plan_gateway
+from mbio.cloning.gateway import ENTRY_FILE, plan_gateway
 from mbio.cloning.gateway.att import REGIONS
 from mbio.cloning.gateway.bench import (
     BP_CELSIUS,
@@ -20,11 +20,31 @@ from mbio.cloning.gateway.bench import (
     LR_CELSIUS,
     LR_VOLUME_UL,
 )
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.io import read_record
+from mbio.protocol import Citation
 from mbio.sequence import Segment, SequenceRecord, reverse_complement
 
 if TYPE_CHECKING:
     from mbio.cloning.gateway import Plan
+
+
+def test_each_reaction_warns_of_its_own_ceiling_and_links_the_manual_it_came_from(
+    staged_plan: Plan,
+) -> None:
+    """A caution carries its source, so the hazard's page is one click from the warning."""
+    protocol = staged_plan.protocol()
+    steps = {step.key: step for step in protocol.steps}
+    cited = {
+        key: [one.citation for one in steps[key].cautioned] for key in ("set-up-bp", "set-up-lr")
+    }
+
+    assert cited == {
+        "set-up-bp": [Citation("MAN0000470", "p. 21")],
+        "set-up-lr": [Citation("MAN0001032", "p. 2")],
+    }
+    # `citing` has already dropped every source nothing names, so these two are reachable.
+    assert {"MAN0000470", "MAN0001032"} <= set(protocol.sources)
 
 
 def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
@@ -220,8 +240,8 @@ def test_the_protocol_reads_as_two_staged_reactions_with_a_miniprep_between_them
     stop = " ".join(steps["Stop the BP reaction with proteinase K"].instructions)
     assert "37 °C for 10 minutes" in stop
     assert any(
-        "not the stopped BP reaction" in note
-        for note in steps["Pick and miniprep the entry clone"].notes
+        "not the stopped BP reaction" in note.text
+        for note in steps["Pick and miniprep the entry clone"].noted
     )
 
 
@@ -353,6 +373,20 @@ def test_the_sequencing_primers_read_in_from_outside_each_junction(gateway_plan:
         assert read.read_bp >= second.end - first.start
 
 
+def test_every_designed_oligo_is_drawn_on_the_expression_clone_where_it_anneals(
+    amplified_plan: Plan,
+) -> None:
+    placed = {one.name: one for one in amplified_plan.product.primers}
+
+    assert set(placed) == {report.primer.name for report in amplified_plan.reports}
+    for primer in placed.values():
+        site = primer.binding_sites[0]
+        annealed = amplified_plan.product.extract(Segment(site.start, site.end))
+        assert primer.sequence.endswith(
+            annealed if site.strand > 0 else reverse_complement(annealed)
+        )
+
+
 def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequencing(
     gateway_plan: Plan,
 ) -> None:
@@ -366,7 +400,7 @@ def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequenc
     assert not any("reversed" in line.lower() for line in screen.expected)
     # Gateway asks for no junction primer, so the line saying where one stops is left out.
     assert not any("junction primer" in line for line in screen.expected)
-    assert any("pCR8/GW/TOPO" in note for note in confirm.notes)
+    assert any("pCR8/GW/TOPO" in n.text for n in confirm.noted)
     assert REGIONS["attB1"] in " ".join(confirm.expected)
 
 
@@ -386,3 +420,16 @@ def test_both_sets_of_oligos_reach_the_order_sheet_with_what_each_is_for(
     assert purposes["Colony PCR forward"] == COLONY_PCR_TITLE
     assert purposes["Sequencing reverse"] == SEQUENCING_TITLE
     assert purposes[amplified_plan.designed_oligos[0].report.primer.name].startswith("Amplify")
+
+
+def test_each_recombination_step_shows_the_clone_it_makes_with_its_att_sites_lit(staged_plan):
+    """Two reactions, two figures: BP draws the entry clone it writes, LR the expression clone."""
+    figured = [one for one in staged_plan.protocol().steps if one.figures]
+
+    assert [one.key for one in figured] == ["run-bp", "run-lr"]
+    assert [one.figures[0].records for one in figured] == [(ENTRY_FILE,), (PRODUCT_FILE,)]
+    assert figured[0].figures[0].highlight == ("attL1", "attL2")
+    assert figured[1].figures[0].highlight == ("attB1", "attB2")
+    assert set(figured[1].figures[0].highlight) <= {
+        one.name for one in staged_plan.product.features
+    }

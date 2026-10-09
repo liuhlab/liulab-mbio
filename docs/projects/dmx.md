@@ -40,11 +40,8 @@ pixi run synbio dmx plan docs/examples/ap1-readback/build.json --out readback/
 
 ```text
 AP-1 cargo read-back: 32 of 72 designs read back on index PCR, 128 wells over 1 picked plate
-readback/project.json
-readback/index.html
-readback/01-design-read-back-index-pcr.html
-readback/reagents.html
-readback/references.html
+readback/protocol.json
+readback/protocol.html
 ```
 
 The floor is a fragment count, and this build set it at 2: the 32 designs stitched from two
@@ -52,18 +49,15 @@ pieces or more are read, and the 40 made in one are not. Set it to zero to read 
 on the sheet. Four colonies a design is 128 wells, which fits one 384-well plate and fills two
 index plates.
 
-Nothing here is designed, so the command writes a protocol folder, with no sequence file and
-no primer sheet.
+Nothing here is designed, so the command writes the protocol and nothing else: no sequence
+file and no primer sheet. The run is one sitting, so it is one page rather than a folder.
 
 ## What it wrote
 
 | File | What it is |
 | --- | --- |
-| [index.html](../examples/ap1-readback/protocol/index.html) | the way in: what is read, what the bench is handed, and how long it is held |
-| [01-design-read-back-index-pcr.html](../examples/ap1-readback/protocol/01-design-read-back-index-pcr.html) | the bench page: array and pick, mark every well, call every well |
-| [reagents.html](../examples/ap1-readback/protocol/reagents.html) | what to order |
-| [references.html](../examples/ap1-readback/protocol/references.html) | where each number was read from |
-| [project.json](../examples/ap1-readback/protocol/project.json) | the run as data, which `mbio protocol render` turns back into these pages |
+| [protocol.html](../examples/ap1-readback/protocol.html) | the bench page: what is read, what to order, array and pick, mark every well, call every well |
+| [protocol.json](../examples/ap1-readback/protocol.json) | the run as data, which `mbio protocol render` turns back into that page |
 
 Each name links to what that run wrote, published here unedited; the same two inputs always
 write the same bytes.

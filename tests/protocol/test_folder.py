@@ -10,10 +10,10 @@ import pytest
 from typer.testing import CliRunner
 
 from mbio.cli import app
-from mbio.cloning.plan import write_protocol_files
 from mbio.protocol import (
     INDEX_FILE,
     PROJECT_DATA_FILE,
+    PROTOCOL_DIR,
     REAGENTS_FILE,
     REFERENCES_FILE,
     Figure,
@@ -21,8 +21,11 @@ from mbio.protocol import (
     Project,
     Protocol,
     Step,
+    Topic,
     page_key,
     write_project_files,
+    write_protocol_files,
+    write_run_files,
 )
 
 from ..html import Node, parse
@@ -218,6 +221,32 @@ def test_a_protocol_written_on_its_own_carries_no_frame(tmp_path: Path) -> None:
     assert not page.find_all("nav", cls="site")
     assert not page.find_all("div", cls="frame")
     assert page.find_all("nav", cls="toc")
+
+
+def test_the_shape_written_follows_the_chain_length_and_not_the_pipeline(tmp_path: Path) -> None:
+    """One protocol writes one flat page; two or more write the folder below `PROTOCOL_DIR`."""
+    alone = write_run_files(Project("Run", protocols=chain().protocols[:1]), tmp_path / "one")
+    many = write_run_files(chain(), tmp_path / "many")
+
+    assert [path.name for path in alone.paths] == ["protocol.json", "protocol.html"]
+    assert not (tmp_path / "one" / PROTOCOL_DIR).exists()
+    assert {path.parent for path in many.paths} == {tmp_path / "many" / PROTOCOL_DIR}
+    assert many.page.name == INDEX_FILE
+
+
+def test_a_run_of_one_hands_its_page_what_it_said_over_it(tmp_path: Path) -> None:
+    """No index means no second home for the run's own title and background."""
+    run = Project(
+        "AP-1 cargo read-back",
+        background=(Topic("Why one plate", ("Four colonies a design fills one plate.",)),),
+        protocols=(Protocol("Design read-back", steps=(Step("Pick four colonies", key="pick"),)),),
+    )
+
+    page = parse(write_run_files(run, tmp_path).page.read_text(encoding="utf-8"))
+
+    assert page.find_all("h1")[0].text == "AP-1 cargo read-back"
+    [topic] = page.find_all("section", cls="topic")
+    assert topic.find_all("h2")[0].text == "Why one plate"
 
 
 def test_the_cli_renders_a_whole_folder_again_after_an_edit(tmp_path: Path) -> None:

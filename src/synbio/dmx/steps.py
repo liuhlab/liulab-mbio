@@ -10,11 +10,10 @@ run and this module holds none.
 
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import replace
 
 from mbio.bench.readback import clean_colony_chance
 from mbio.checks import counted
-from mbio.protocol.model import Figure, Plate, Step, Transfer, Troubleshooting
+from mbio.protocol.model import Figure, Plate, Step, Transfer, Troubleshooting, sectioned
 from synbio.dmx.kit import GROUPS
 from synbio.dmx.method import (
     BARCODE_UL,
@@ -85,12 +84,6 @@ def pooled_plates(one: Validation) -> tuple[Plate, ...]:
     return one.compressed if one.route is ROUTE_LIGATION else one.index
 
 
-#: What each step belongs under, in the order a reader works through them.
-ARRAY_SECTION = "Array and pick"
-MARK_SECTION = "Mark every well"
-CALL_SECTION = "Call the wells"
-
-
 def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple[Step, ...]:
     """Return the steps that read these designs back, the route's own in the middle.
 
@@ -120,10 +113,9 @@ def validation_steps(one: Validation, *, marking: Figure | None = None) -> tuple
         else _index_pcr_steps(one, marking)
     )
     return (
-        replace(_array_step(one), section=ARRAY_SECTION),
-        replace(_pick_step(one), section=ARRAY_SECTION),
-        *(replace(step, section=MARK_SECTION) for step in route),
-        replace(_call_step(one), section=CALL_SECTION),
+        *sectioned("Array and pick", _array_step(one), _pick_step(one)),
+        *sectioned("Mark every well", *route),
+        *sectioned("Call the wells", _call_step(one)),
     )
 
 

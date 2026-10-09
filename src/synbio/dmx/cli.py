@@ -28,7 +28,7 @@ def plan(
         typer.Option("--out", "-o", file_okay=False, help="Directory to write the outputs into."),
     ],
 ) -> None:
-    """Plan the read-back BUILD asks for, and write its protocol folder into OUT."""
+    """Plan the read-back BUILD asks for, and write its protocol into OUT."""
     plan_command(lambda: plan_dmx(build), out, _summary)
 
 

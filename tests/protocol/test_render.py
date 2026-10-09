@@ -8,6 +8,7 @@ from mbio.bench import plates
 from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
+    Caution,
     Check,
     Citation,
     Component,
@@ -17,11 +18,13 @@ from mbio.protocol import (
     Item,
     Material,
     Move,
+    Note,
     Oligo,
     Page,
     Plate,
     Protocol,
     ReactionTable,
+    Source,
     Stage,
     Step,
     ThermocyclerProgram,
@@ -758,6 +761,53 @@ def test_a_purpose_filling_its_own_block_of_the_plate_reads_as_a_range() -> None
         "10",
         "stock A11 to B8",
     ]
+
+
+def test_a_note_that_cites_a_document_anchors_it_where_a_troubleshooting_row_does() -> None:
+    """A reader follows the *why* back to the document without leaving the page."""
+    one = Protocol(
+        "Digest",
+        sources={"NEB": Source("NEB Technical Guide")},
+        steps=(
+            Step(
+                "Set up the digest",
+                notes=(
+                    "This run chose 2 hours.",
+                    Note("Glycerol above 5% is what stars.", citation=Citation("NEB", "§2")),
+                ),
+            ),
+        ),
+    )
+    notes = parse(render_html(one)).find_all(cls="notes")[0]
+    assert [item.text for item in notes.find_all("li")] == [
+        "This run chose 2 hours.",
+        "Glycerol above 5% is what stars. NEB §2",
+    ]
+    assert [a.attrs["href"] for a in notes.find_all("a", cls="cite")] == ["#source-neb"]
+
+
+def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
+    """A hazard the bench is warned of says whose warning it is, and links the document."""
+    one = Protocol(
+        "Recombine",
+        sources={"MAN": Source("Gateway Technology with Clonase II")},
+        steps=(
+            Step(
+                "Set up the BP reaction",
+                cautions=(
+                    "Keep the enzyme mix on ice.",
+                    Caution("Excess DNA inhibits it.", citation=Citation("MAN", "p. 21")),
+                ),
+            ),
+        ),
+    )
+    page = parse(render_html(one))
+    said = [one.text for one in page.find_all(cls="caution")]
+    assert said == [
+        "Caution: Keep the enzyme mix on ice.",
+        "Caution: Excess DNA inhibits it. MAN p. 21",
+    ]
+    assert [a.attrs["href"] for a in page.find_all("a", cls="cite")] == ["#source-man"]
 
 
 def _naming_files() -> Protocol:

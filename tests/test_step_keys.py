@@ -1,12 +1,16 @@
-"""No protocol a shipped pipeline writes holds two steps under one key.
+"""What every protocol a shipped pipeline writes has to hold, read off the whole corpus.
 
-A key is a step's handle: the page anchors it there and the bench's check mark is kept under it,
-so two steps sharing one would share a tick. A page must still render, so the renderer numbers a
-repeat rather than refusing it; this is where a duplicate is caught instead, in the pipeline that
-wrote it, the day it lands.
+No two steps under one key. A key is a step's handle: the page anchors it there and the bench's
+check mark is kept under it, so two steps sharing one would share a tick. A page must still
+render, so the renderer numbers a repeat rather than refusing it; this is where a duplicate is
+caught instead, in the pipeline that wrote it, the day it lands.
+
+Every citation resolves, and every troubleshooting row of the four cloning methods carries one
+bar the rows named below. `Protocol.audit` sees a key naming no source; nothing but this sees a
+row naming no key at all.
 
 Every pipeline is planned on inputs small enough to cost the gate little, since what is asked of
-each plan is only the titles and keys of its steps.
+each plan is only its steps and the sources they name.
 """
 
 from __future__ import annotations
@@ -122,3 +126,48 @@ def test_no_shipped_pipeline_writes_two_steps_under_one_key(
         for where, keys in counted.items()
         if any(seen > 1 for seen in keys.values())
     }
+
+
+#: The cloning troubleshooting rows no document states, by the pipeline that writes them: each
+#: is arithmetic on this run's own volumes, or on how much of the outgrowth was plated.
+RUN_FACTS = frozenset(
+    {
+        ("gateway", "A lawn"),
+        ("gateway", "The DNA does not fit the reaction volume"),
+        ("gateway, BP then LR", "A lawn"),
+        ("gateway, BP then LR", "The DNA does not fit the reaction volume"),
+        ("gateway, BP then LR", "The prep is too dilute for the reaction"),
+        ("gibson", "A lawn"),
+        ("gibson", "Too dilute to fit in the reaction"),
+        ("goldengate", "A lawn"),
+        ("goldengate", "Too dilute to fit in the reaction"),
+        ("restriction", "A lawn"),
+        ("restriction", "Too dilute to fit in the reaction"),
+    }
+)
+
+
+def test_every_citation_a_shipped_protocol_renders_resolves(
+    shipped: tuple[tuple[str, Protocol], ...],
+) -> None:
+    assert [
+        (pipeline, check.detail)
+        for pipeline, protocol in shipped
+        for check in protocol.audit()
+        if check.name == "sources" and check.status != "pass"
+    ] == []
+
+
+def test_every_cloning_troubleshooting_row_names_its_source(
+    shipped: tuple[tuple[str, Protocol], ...],
+) -> None:
+    cloning = [one for one in shipped if not one[0].startswith("igga")]
+    rows = [
+        (pipeline, row)
+        for pipeline, protocol in cloning
+        for step in protocol.steps
+        for row in step.troubleshooting
+    ]
+    # The four methods all write rows, so nothing here passes by having found none.
+    assert len(rows) > len(cloning)
+    assert {(pipeline, row.problem) for pipeline, row in rows if row.citation is None} == RUN_FACTS

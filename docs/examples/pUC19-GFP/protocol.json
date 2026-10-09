@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "75448250f08948bc",
+  "key": "656a8e1923982bc0",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -18,6 +18,7 @@
     "There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.",
     "The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG."
   ],
+  "background": [],
   "checks": [
     {
       "name": "sites",
@@ -352,7 +353,7 @@
     {
       "title": "Amplify pUC19 backbone",
       "key": "pcr-puc19-backbone",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the pUC19 template.",
@@ -362,7 +363,7 @@
         "Keep the polymerase on ice."
       ],
       "notes": [
-        "The cycle count is the fewest NEB finds enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.",
+        "The cycle count is the fewest enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.",
         "The primers carry a BbsI site pointing back into the part, so cutting the amplicon leaves TGGC and ATGA."
       ],
       "tables": [
@@ -520,12 +521,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the pUC19 template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -533,7 +540,7 @@
     {
       "title": "Amplify GFP",
       "key": "pcr-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -543,7 +550,7 @@
         "Keep the polymerase on ice."
       ],
       "notes": [
-        "The cycle count is the fewest NEB finds enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.",
+        "The cycle count is the fewest enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors.",
         "The primers carry a BbsI site pointing back into the part, so cutting the amplicon leaves ATGA and TGGC."
       ],
       "tables": [
@@ -701,12 +708,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -714,7 +727,7 @@
     {
       "title": "Check the PCRs on a gel",
       "key": "pcr-gel",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Pour a 1% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
@@ -780,7 +793,10 @@
         {
           "problem": "A smear or an extra band",
           "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
         }
       ],
       "holes": []
@@ -788,7 +804,7 @@
     {
       "title": "Digest the plasmid template with DpnI",
       "key": "dpni-digest",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Add 20 units of DpnI to the pUC19 backbone PCR and mix.",
         "Incubate at 37 °C for 60 minutes."
@@ -796,7 +812,13 @@
       "cautions": [],
       "notes": [
         "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (15 Dam sites) and leaves the PCR product, which carries no methylation.",
-        "This step is not in NEB's Golden Gate protocol; the incubation is this package's choice."
+        {
+          "text": "The kit's own protocol has no step for a methylated template, so the incubation is this package's choice.",
+          "citation": {
+            "source": "E1601",
+            "locator": ""
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -818,7 +840,10 @@
         {
           "problem": "Many colonies on the no-insert control",
           "solution": "The template survived: digest longer, or use more DpnI.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
         }
       ],
       "holes": []
@@ -826,13 +851,19 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
       "cautions": [],
       "notes": [
-        "NEB asks for purified amplicons: polymerase carried over from the PCR fills in the four-base overhangs, which blunts the ends and mis-assembles them."
+        {
+          "text": "The reaction takes purified amplicons: polymerase carried over from the PCR fills in the four-base overhangs, which blunts the ends and mis-assembles them.",
+          "citation": {
+            "source": "E1601",
+            "locator": ""
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -849,7 +880,10 @@
         {
           "problem": "Low recovery",
           "solution": "Elute twice through the same column, or pool two reactions before purifying.",
-          "citation": null
+          "citation": {
+            "source": "T1020",
+            "locator": "troubleshooting, low DNA yield"
+          }
         }
       ],
       "holes": []
@@ -857,7 +891,7 @@
     {
       "title": "Measure every concentration",
       "key": "quantify",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
         "Work out the volume that carries the picomoles the next table asks for."
@@ -890,15 +924,16 @@
     {
       "title": "Set up the Golden Gate reaction",
       "key": "set-up-assembly",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Thaw the master mix on ice and mix it well; it is viscous.",
+        "Pipette the volume that gives each fragment its picomoles, and make the difference up with water.",
         "Pipette the DNA into the tube first, then the rest.",
         "Mix gently and spin down."
       ],
       "cautions": [],
       "notes": [
-        "The volumes above assume the concentrations measured in the step before; pipette the volume that gives the picomoles, and make the difference up with water."
+        "The volumes above assume the concentrations measured in the step before."
       ],
       "tables": [
         {
@@ -963,7 +998,10 @@
         {
           "problem": "The DNA does not fit the reaction volume",
           "solution": "Concentrate the fragments, or scale the whole reaction up.",
-          "citation": null
+          "citation": {
+            "source": "E1601",
+            "locator": "assembly reaction, note 6"
+          }
         }
       ],
       "holes": []
@@ -971,7 +1009,7 @@
     {
       "title": "Run the Golden Gate program",
       "key": "run-assembly",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Put the tube in the thermocycler and run the program below."
       ],
@@ -1037,7 +1075,25 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
-      "figures": [],
+      "figures": [
+        {
+          "records": [
+            "product.dna"
+          ],
+          "caption": "pUC19-GFP as the reaction closes it: the ATGA and TGGC junctions it spells, and every BbsI site left on it.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [
+            "BbsI"
+          ],
+          "highlight": [
+            "ATGA junction",
+            "TGGC junction"
+          ],
+          "citation": null
+        }
+      ],
       "gels": [],
       "expected": [
         "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.",
@@ -1048,12 +1104,18 @@
         {
           "problem": "Mostly empty vector later",
           "solution": "Keep the 60 °C soak, and check the template was digested with DpnI.",
-          "citation": null
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 10"
+          }
         },
         {
           "problem": "Few colonies later",
           "solution": "Raise the cycle count, or plate more of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 14"
+          }
         }
       ],
       "holes": []
@@ -1061,7 +1123,7 @@
     {
       "title": "Transform and plate",
       "key": "transform",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
         "Add 2 µL of the assembly and flick the tube four or five times.",
@@ -1107,7 +1169,10 @@
         {
           "problem": "No colonies",
           "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "A lawn",
@@ -1120,7 +1185,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1299,12 +1364,18 @@
         {
           "problem": "No band in any lane",
           "solution": "The colony was too much material: touch a smaller one, or dilute it.",
-          "citation": null
+          "citation": {
+            "source": "colony-pcr",
+            "locator": "template"
+          }
         },
         {
           "problem": "Every colony reads as empty vector",
           "solution": "The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.",
-          "citation": null
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 10"
+          }
         }
       ],
       "holes": []
@@ -1312,7 +1383,7 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",
@@ -1340,7 +1411,10 @@
         {
           "problem": "The read starts too close to the junction",
           "solution": "Move the primer further out; the first bases after a primer are unreadable.",
-          "citation": null
+          "citation": {
+            "source": "genewiz-sanger",
+            "locator": "sequencing primer design"
+          }
         }
       ],
       "holes": []
@@ -1397,6 +1471,46 @@
     }
   ],
   "sources": {
+    "M0491": {
+      "document": "New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page",
+      "edition": "capture 2024-08-04",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "2026-09-12",
+      "note": ""
+    },
+    "NEB-cloning": {
+      "document": "New England Biolabs, Troubleshooting Guide for Cloning",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1020": {
+      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.1_4/21",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "colony-pcr": {
+      "document": "New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes",
+      "edition": "Y. Xu, 11/13",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "genewiz-sanger": {
+      "document": "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+      "edition": "",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
     "M0480": {
       "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
       "edition": "protocols.io version 2, 2022-02-21",

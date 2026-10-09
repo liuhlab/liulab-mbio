@@ -24,8 +24,9 @@ from mbio.cloning.gibson.steps import (
     MOLECULES_PER_ERROR,
     SCREENED_COLONIES,
 )
+from mbio.cloning.plan import MAKE_SECTION, PRODUCT_FILE
 from mbio.edits import flipped
-from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html, sectioned
 from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import read_dna
@@ -59,16 +60,19 @@ def test_the_junctions_are_the_vectors_own_bases_and_the_insert_carries_them_as_
 
 def test_every_designed_primer_is_annotated_where_it_binds_on_the_product(made):
     placed = {one.name: one.binding_sites[0] for one in made.plasmid.primers}
-    designed = [
-        one.report.primer.name for one in made.designed_oligos if one.role == "amplification"
-    ]
+    designed = [one.report.primer.name for one in made.designed_oligos]
     assert designed == [
         "pUC19 backbone forward",
         "pUC19 backbone reverse",
         "GFP forward",
         "GFP reverse",
+        "Colony PCR forward",
+        "Colony PCR reverse",
+        "Junction reverse",
+        "Sequencing forward",
+        "Sequencing reverse",
     ]
-    assert set(designed) <= set(placed)
+    assert set(designed) == set(placed)
     for name in designed:
         assert 0 <= placed[name].start < placed[name].end <= len(made.plasmid)
     # The insert's forward primer anneals to the insert's own first bases, past its tail.
@@ -99,7 +103,7 @@ def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_fea
     assert protocol.overview["Selection"] == phenotype.antibiotic
     assert phenotype.reporter.name in " ".join(protocol.highlights)
     plating = next(step for step in protocol.steps if step.title == "Transform and plate")
-    told = " ".join((*plating.expected, *plating.notes))
+    told = " ".join((*plating.expected, *(n.text for n in plating.noted)))
     assert "white" in told
     assert "blue" in told
     # The lac promoter reads the other way and no ribosome binding site is annotated.
@@ -110,13 +114,13 @@ def test_the_page_says_what_the_plate_should_look_like_from_the_products_own_fea
 def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_from(made):
     protocol = made.protocol()
     steps = {step.title: step for step in protocol.steps}
-    purify = " ".join(steps["Purify every amplicon"].notes)
+    purify = " ".join(n.text for n in steps["Purify every amplicon"].noted)
     assert f"below {CLEANUP_FRAGMENTS} PCR fragments" in purify
     assert steps[COLONY_PCR_TITLE].gels == (made.colony.gel,)
-    screen = " ".join(steps[COLONY_PCR_TITLE].notes)
+    screen = " ".join(n.text for n in steps[COLONY_PCR_TITLE].noted)
     assert f"{SCREENED_COLONIES} of {SCREENED_COLONIES} correct at two fragments" in screen
     assert f"{CORRECT_AT_FIVE} of {SCREENED_COLONIES} at five" in screen
-    confirm = " ".join(steps[SEQUENCING_TITLE].notes)
+    confirm = " ".join(n.text for n in steps[SEQUENCING_TITLE].noted)
     assert f"one error per {MOLECULES_PER_ERROR} molecules" in confirm
     citations = " ".join(one.text for one in protocol.references)
     for cited in ("In-Fusion Cloning FAQs", "Gibson, D.G.", "NEBuilder", "protocols.io", "REBASE"):
@@ -130,7 +134,11 @@ def test_the_screening_steps_are_the_shared_builders_and_not_a_second_copy(made)
     assert isinstance(made.colony, ColonyCheck)
     assert all(isinstance(read, SangerRead) for read in made.reads)
     steps = {step.title: step for step in made.protocol().steps}
-    assert steps["Measure every concentration"] == quantify_step(made.amounts)
+    # A section is attached at the step list, so it is all the builder's own step gains there.
+    assert (
+        steps["Measure every concentration"]
+        == sectioned(MAKE_SECTION, quantify_step(made.amounts))[0]
+    )
 
 
 def test_the_plans_status_is_the_worst_of_its_checks(made):
@@ -203,7 +211,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     assert read_dna(outputs.product) == made.plasmid
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data)
+        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
     )
 
 
@@ -440,7 +448,7 @@ def test_an_oligo_with_no_verdict_survives_the_protocol_being_written_and_read_a
 
 def test_the_assembly_step_doses_each_route_the_way_its_own_source_does(routed):
     step = next(one for one in routed.protocol().steps if one.title.startswith("Set up"))
-    said = " ".join(step.notes)
+    said = " ".join(n.text for n in step.noted)
     assert "45 nM of each" in said
     assert "no separate annealing step" in said.lower()
     assert "1 pmol" in said
@@ -466,3 +474,14 @@ def test_a_bridge_naming_a_junction_this_assembly_has_not_got_is_refused(puc19, 
 def test_there_is_one_route_for_each_insert(puc19, gfp):
     with pytest.raises(ValueError, match="2 values for 1 insert"):
         plan_gibson(puc19, gfp, route=["amplify", "stitch"])
+
+
+def test_the_assembly_step_shows_the_product_with_every_overlap_lit(made):
+    """One figure, on the step that incubates the reaction, drawing the file written beside it."""
+    [step] = [one for one in made.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "run-assembly"
+    assert figure.records == (PRODUCT_FILE,)
+    assert set(figure.highlight) == {one.feature_name for one in made.assembly.junctions}
+    assert set(figure.highlight) <= {one.name for one in made.plasmid.features}

@@ -8,13 +8,15 @@ are here too.
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass, replace
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from mbio.bench.gels import agarose_percent, choose_ladder
 from mbio.bench.materials import POLYMERASE_ON_ICE, material
+from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
     colony_pcr_program,
     colony_pcr_reaction,
@@ -29,6 +31,7 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import ONETAQ, Polymerase
 from mbio.protocol.model import (
     OVERVIEW_CHARS,
+    Caution,
     Check,
     Citation,
     Gel,
@@ -36,16 +39,52 @@ from mbio.protocol.model import (
     Item,
     Lane,
     Material,
+    Note,
     Oligo,
     Protocol,
     Reference,
     Rule,
+    Source,
     Step,
     Timer,
     Troubleshooting,
     number,
 )
 from mbio.sequence import SequenceRecord
+
+#: The documents these shared steps read their troubleshooting from. A pipeline building any of
+#: them merges this into its own `sources`, so the keys its rows cite resolve; `citing` drops
+#: the ones that run never named. The polymerase protocol comes with it, because the PCR step's
+#: own rows cite it.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "M0491": PCR_SOURCES["M0491"],
+        "NEB-cloning": Source(
+            "New England Biolabs, Troubleshooting Guide for Cloning",
+            url="https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "T1020": Source(
+            "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
+            edition="version 2.1_4/21",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "colony-pcr": Source(
+            "New England Biolabs application note, Robust Colony PCR from Multiple E. coli "
+            "Strains using OneTaq Quick-Load Master Mixes",
+            edition="Y. Xu, 11/13",
+            date="2026-09-12",
+            note="docs/research/primer-design-and-pcr.md",
+        ),
+        "genewiz-sanger": Source(
+            "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+            date="2026-09-12",
+            note="docs/research/primer-design-and-pcr.md",
+        ),
+    }
+)
 
 #: The DpnI digest that takes the plasmid template away. No supplier's table sets these, so they
 #: are this package's choices; `docs/research/golden-gate-assembly.md` §3 justifies the digest
@@ -287,7 +326,7 @@ def pcr_step(
     extension_seconds: int | None,
     cycles: int | None,
     cycles_citation: Citation | None,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the step that makes one amplicon by PCR.
 
@@ -341,10 +380,12 @@ def pcr_step(
                 "No band",
                 f"Drop the annealing temperature by 3 °C and check the {template} template is "
                 "there.",
+                citation=Citation("M0491", "annealing temperature"),
             ),
             Troubleshooting(
                 "Several bands",
                 "Raise the annealing temperature, or gel-purify the band of the right size.",
+                citation=Citation("M0491", "annealing temperature"),
             ),
         ),
     )
@@ -378,6 +419,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
                 "A smear or an extra band",
                 "Gel-purify the band of the right size; a wrong template in the assembly gives "
                 "wrong clones.",
+                citation=Citation("NEB-cloning", "colonies contain the wrong construct"),
             ),
         ),
     )
@@ -389,7 +431,7 @@ def dpni_step(
     *,
     seconds: int = DPNI_SECONDS,
     inactivation: Incubation | None = None,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the DpnI digest that takes the plasmid template away, so it cannot transform.
 
@@ -445,16 +487,23 @@ def dpni_step(
             Troubleshooting(
                 "Many colonies on the no-insert control",
                 "The template survived: digest longer, or use more DpnI.",
+                citation=Citation("NEB-cloning", "colonies contain the wrong construct"),
             ),
         ),
     )
 
 
-def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
-    """Return the spin-column cleanup of every amplicon, carrying the caller's own notes."""
+def cleanup_step(
+    *,
+    cautions: Sequence[Caution | str] = (),
+    notes: Sequence[Note | str] = (),
+    troubleshooting: Sequence[Troubleshooting] = (),
+) -> Step:
+    """Return the spin-column cleanup of every amplicon, carrying the caller's own words."""
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
+        cautions=tuple(cautions),
         instructions=(
             "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
         ),
@@ -464,7 +513,9 @@ def cleanup_step(*, notes: Sequence[str] = ()) -> Step:
             Troubleshooting(
                 "Low recovery",
                 "Elute twice through the same column, or pool two reactions before purifying.",
+                citation=Citation("T1020", "troubleshooting, low DNA yield"),
             ),
+            *troubleshooting,
         ),
     )
 
@@ -508,7 +559,8 @@ def transform_step(
     title: str = "Transform and plate",
     key: str = "transform",
     expected: Sequence[str] = (),
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
+    troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
     """Return the transformation and plating, with the colour the plate should show.
 
@@ -528,7 +580,7 @@ def transform_step(
         The step's, for a method that transforms more than once and has to tell them apart.
     key
         The step's handle, which such a method also gives each of its transformations.
-    expected, notes
+    expected, notes, troubleshooting
         The caller's own, after the step's.
     """
     results = [colonies]
@@ -538,7 +590,7 @@ def transform_step(
             f"{phenotype.reporter.name}, which is then not there to complete the host's own."
         )
     results.extend(expected)
-    said = [
+    said: list[Note | str] = [
         f"The plate reads colour only with an alpha-complementing host, such as {host}. "
         "A host that cannot complement gives white colonies whatever the clone carries."
         if phenotype.blue_white
@@ -582,11 +634,13 @@ def transform_step(
                 "No colonies",
                 "Check the antibiotic and the cells' efficiency, and plate the rest of the "
                 "outgrowth.",
+                citation=Citation("NEB-cloning", "few or no transformants"),
             ),
             Troubleshooting(
                 "A lawn",
                 "Plate a smaller volume or a greater dilution next time.",
             ),
+            *troubleshooting,
         ),
     )
 
@@ -595,7 +649,7 @@ def colony_pcr_step(
     check: ColonyCheck,
     *,
     junctions: int,
-    notes: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
     """Return the colony PCR screen, saying which band means what.
@@ -657,6 +711,7 @@ def colony_pcr_step(
             Troubleshooting(
                 "No band in any lane",
                 "The colony was too much material: touch a smaller one, or dilute it.",
+                citation=Citation("colony-pcr", "template"),
             ),
             *troubleshooting,
         ),
@@ -668,7 +723,8 @@ def sequencing_step(
     *,
     junctions: Sequence[str],
     inserts: Sequence[str],
-    notes: Sequence[str] = (),
+    instructions: Sequence[str] = (),
+    notes: Sequence[Note | str] = (),
 ) -> Step:
     """Return the sequencing that confirms the junctions, which is the only thing that settles it.
 
@@ -680,6 +736,8 @@ def sequencing_step(
         The bases each junction spells.
     inserts
         What the inserts are called.
+    instructions
+        The caller's own, after the step's, such as what its provider asks to be sent.
     notes
         The caller's own, after the step's, such as how often its method misjoins a junction.
     """
@@ -694,6 +752,7 @@ def sequencing_step(
         instructions=(
             "Miniprep two or three colonies that read as correct.",
             "Send each with both sequencing primers.",
+            *instructions,
             "Check the read across every junction and the whole of each insert.",
         ),
         expected=(
@@ -710,6 +769,7 @@ def sequencing_step(
             Troubleshooting(
                 "The read starts too close to the junction",
                 "Move the primer further out; the first bases after a primer are unreadable.",
+                citation=Citation("genewiz-sanger", "sequencing primer design"),
             ),
         ),
     )

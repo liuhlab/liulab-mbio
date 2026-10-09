@@ -16,7 +16,8 @@ the protocol's steps and their order. What any pipeline shares is `mbio.bench`, 
 
 from mbio.cloning.gateway.bench import DEFAULT_HOST
 from mbio.cloning.gateway.design import FUSIONS, Amplicon, Fusion
-from mbio.cloning.gateway.plan import ENTRY_FILE, Files, Plan, plan_gateway
+from mbio.cloning.gateway.plan import Files, Plan, plan_gateway
+from mbio.cloning.gateway.steps import ENTRY_FILE
 
 __all__ = [
     "DEFAULT_HOST",

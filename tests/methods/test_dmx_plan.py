@@ -1,4 +1,4 @@
-"""DMX's way in: the build file, the designs sheet, and the protocol folder a plan writes."""
+"""DMX's way in: the build file, the designs sheet, and the protocol page a plan writes."""
 
 import json
 import re
@@ -171,18 +171,18 @@ def test_the_same_build_writes_the_same_bytes(tmp_path, build):
         assert here.read_bytes() == there.read_bytes()
 
 
-def test_the_verb_writes_the_folder_and_turns_a_refusal_into_an_error_line(tmp_path, build):
-    """One real run of the verb, and one build it cannot read."""
+def test_the_verb_writes_the_page_and_turns_a_refusal_into_an_error_line(tmp_path, build):
+    """One real run of the verb, and one build it cannot read.
+
+    A read-back is one protocol, so it is one page and never a folder: `docs/adr/0018`.
+    """
     out = tmp_path / "out"
     result = CliRunner().invoke(app, ["dmx", "plan", str(build), "--out", str(out)])
     assert result.exit_code == 0, result.output
-    assert sorted(path.name for path in out.iterdir()) == [
-        "01-design-read-back-index-pcr.html",
-        "index.html",
-        "project.json",
-        "reagents.html",
-        "references.html",
-    ]
+    assert sorted(path.name for path in out.iterdir()) == ["protocol.html", "protocol.json"]
+    page = (out / "protocol.html").read_text(encoding="utf-8")
+    assert "<h1>Shelf read-back</h1>" in page
+    assert "How a well is told from the rest" in page
     refused = CliRunner().invoke(
         app, ["dmx", "plan", str(written(tmp_path / "bad", route="ligation")), "--out", str(out)]
     )

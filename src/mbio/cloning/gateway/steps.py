@@ -10,6 +10,7 @@ cites.
 """
 
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
@@ -37,6 +38,7 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.gateway.att import REGION_BP
 from mbio.cloning.gateway.bench import (
@@ -45,13 +47,12 @@ from mbio.cloning.gateway.bench import (
     BP_CLONASE_CATALOG,
     BP_CLONASE_UL,
     BP_COLONIES,
-    BP_DONOR_MAX_NG,
+    BP_LOAD_CAUTION,
     BP_LONG_BP,
     BP_LONG_SECONDS,
     BP_PMOL,
     BP_SECONDS,
     BP_SUBSTRATE_MIN_PMOL,
-    BP_TOTAL_MAX_NG,
     BP_TRANSFORMATION,
     BP_VOLUME_UL,
     CELL_EFFICIENCY_CFU_UG,
@@ -65,6 +66,7 @@ from mbio.cloning.gateway.bench import (
     LR_CLONASE_CATALOG,
     LR_CLONASE_UL,
     LR_COLONIES,
+    LR_LOAD_CAUTION,
     LR_LONG_BP,
     LR_LONG_SECONDS,
     LR_SECONDS,
@@ -86,21 +88,60 @@ from mbio.cloning.gateway.bench import (
     bp_reaction,
     lr_reaction,
 )
+from mbio.cloning.gateway.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
 from mbio.cloning.gateway.oligos import DesignedOligo
 from mbio.cloning.gateway.recombination import Junction, PlannedReaction
+from mbio.cloning.plan import MAKE_SECTION, PRODUCT_FILE, SCREEN_SECTION
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
+    Figure,
     Material,
+    Note,
     Oligo,
     Protocol,
+    Source,
     Step,
     Timer,
     Troubleshooting,
     citing,
+    figured,
     number,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
+
+#: The documents this method's own rows and notes cite, read into
+#: `docs/research/gateway-cloning.md`, which names where each was fetched from. The two a
+#: caution cites are in `bench`, beside the numbers whose pages they are. The same documents
+#: stand in `REFERENCES`, which lists what a run read rather than what a row names.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "11789": Source(
+            "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
+            edition="11789.II.pps, revision 31 October 2010",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
+        "MAN0000291": Source(
+            "Thermo Fisher Scientific #MAN0000291 Gateway pDONR Vectors user guide",
+            edition="part 25-0531, revised 29 March 2012",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
+        "MAN0000437": Source(
+            "Thermo Fisher Scientific #MAN0000437 pCR8/GW/TOPO TA Cloning Kit user guide",
+            edition="part 25-0706, revised 23 March 2012",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
+    }
+)
+
+#: What a Gateway plan calls the entry clone BP makes, which is the one file no other method
+#: writes, and which the BP step's own figure draws. The rest are named by `mbio.cloning.plan`.
+ENTRY_FILE = "entry-clone.dna"
 
 #: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
 #: PCR, so the thermocycler and the gel rig are here rather than beside the attB PCR.
@@ -155,7 +196,7 @@ def protocol(
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
         references=(*REFERENCES, *BENCH_REFERENCES),
-        sources=PCR_SOURCES,
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
 
@@ -279,14 +320,16 @@ def _materials(
                     f"{amplicon.name} primers",
                     storage="-20 °C",
                     amount=f"{PRIMER_STOCK_UM:g} µM each",
-                    note="ordered off the oligo sheet on this page; the manual asks for HPLC- or "
-                    "PAGE-purified oligos where colonies are few",
+                    note="ordered off the oligo sheet on this page; HPLC- or PAGE-purified "
+                    "oligos are the published answer where colonies are few",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
                 ),
                 Material(
                     f"{amplicon.polymerase.name} DNA Polymerase",
                     storage="-20 °C",
-                    note="the manual's answer to an entry clone made of primer-dimers is a "
-                    "hot-start enzyme, so use one",
+                    note="a hot-start enzyme is the published answer to an entry clone made "
+                    "of primer-dimers, so use one",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
                 ),
                 Material("PCR and gel cleanup spin columns"),
             )
@@ -318,9 +361,10 @@ def _materials(
                 f"{entry.name} entry clone",
                 storage="-20 °C",
                 amount=f"{ENTRY_NG:g} ng per reaction",
-                note="supercoiled, which is the substrate the manual calls most efficient"
+                note="supercoiled, which is the most efficient substrate"
                 if bp is None
                 else "the miniprep from the BP plate, which is what this reaction takes",
+                citation=Citation("MAN0001032", "p. 2") if bp is None else None,
             ),
             Material(
                 f"{destination.name} destination vector",
@@ -414,7 +458,8 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
     if amplicon is None:
         return ()
     forward, reverse = amplicon.tails
-    return (
+    return sectioned(
+        MAKE_SECTION,
         pcr_step(
             amplicon.name,
             amplicon.template.name or "the insert",
@@ -425,24 +470,40 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
             cycles=amplicon.polymerase.pcr.cycles,
             cycles_citation=cycle_citation(amplicon.polymerase),
             notes=(
-                f"Each primer carries a whole attB tail: {len(SPACER)} G residues, the "
-                f"{REGION_BP} bp att site and the frame bases the fusion needs, {len(forward)} "
-                f"bases forward and {len(reverse)} reverse. The manual's own cause of few or no "
-                "colonies is a tail short of that.",
+                Note(
+                    f"Each primer carries a whole attB tail: {len(SPACER)} G residues, the "
+                    f"{REGION_BP} bp att site and the frame bases the fusion needs, "
+                    f"{len(forward)} bases forward and {len(reverse)} reverse. A tail short of "
+                    "that is a published cause of few or no colonies.",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
+                ),
                 "The annealing temperature above is read from the annealing regions alone; a "
                 "tail pairs with nothing on the template in the first cycles.",
-                "Over 70 bp of primer the manual switches to a two-step adapter PCR, which "
-                "installs the same whole tail in two rounds and is not planned here.",
+                Note(
+                    "Over 70 bp of primer a two-step adapter PCR installs the same whole tail "
+                    "in two rounds; it is not planned here.",
+                    citation=Citation("MAN0000470", "pp. 47-48"),
+                ),
             ),
         ),
         cleanup_step(
             notes=(
-                "The BP reaction takes purified attB DNA: gel-purifying the product is the "
-                "manual's fix for few or no colonies, and it takes the attB primers and their "
-                "dimers away.",
-                f"An entry clone running as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid "
-                "is a BP reaction that cloned attB primer-dimers instead.",
-            )
+                Note(
+                    "The BP reaction takes purified attB DNA: gel-purifying the product is the "
+                    "published fix for few or no colonies, and it takes the attB primers and "
+                    "their dimers away.",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
+                ),
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    f"An entry clone later runs as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled "
+                    "plasmid",
+                    "The BP reaction cloned attB primer-dimers instead; gel-purify this "
+                    "product before running BP again.",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
+                ),
+            ),
         ),
     )
 
@@ -451,7 +512,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
     """Return the first stage, or nothing where an entry clone was given."""
     if bp is None:
         return ()
-    return (
+    setup, run, *rest = (
         Step(
             "Set up the BP reaction",
             key="set-up-bp",
@@ -461,17 +522,22 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 "temperature.",
                 f"Add {BP_CLONASE_UL:g} µL of {BP_CLONASE}, mix well and spin down.",
             ),
+            cautions=(BP_LOAD_CAUTION,),
             tables=(bp_reaction(bp.amounts),),
             expected=(f"A {BP_VOLUME_UL:g} µL reaction holding both DNAs.",),
             notes=(
                 _pipetting_note("picomoles"),
-                f"The manual fixes the picomoles and not the weight: {BP_PMOL * 1000:g} fmol of "
-                f"each, the attB DNA down to {BP_SUBSTRATE_MIN_PMOL * 1000:g} fmol, weighed "
-                "here from each record's own length.",
-                f"Do not go over {BP_DONOR_MAX_NG:g} ng of donor vector or "
-                f"{BP_TOTAL_MAX_NG:g} ng of DNA altogether: excess DNA inhibits the reaction.",
-                "A linear attB product and a supercoiled donor vector are the substrates the "
-                "manual calls most efficient for BP.",
+                Note(
+                    f"What is fixed is the picomoles and not the weight: {BP_PMOL * 1000:g} "
+                    f"fmol of each, the attB DNA down to {BP_SUBSTRATE_MIN_PMOL * 1000:g} fmol, "
+                    "weighed here from each record's own length.",
+                    citation=Citation("MAN0000470", "pp. 21-22"),
+                ),
+                Note(
+                    "A linear attB product and a supercoiled donor vector are the most "
+                    "efficient substrates for BP.",
+                    citation=Citation("11789", "p. 2"),
+                ),
             ),
             troubleshooting=(_volume_trouble(),),
         ),
@@ -485,9 +551,12 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 *(_junction_sentence(one, "entry clone", len(bp.product)) for one in bp.junctions),
             ),
             notes=(
-                f"An attB substrate of {BP_LONG_BP:,} bp or more runs up to "
-                f"{BP_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
-                "longer.",
+                Note(
+                    f"An attB substrate of {BP_LONG_BP:,} bp or more runs up to "
+                    f"{BP_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
+                    "longer.",
+                    citation=Citation("MAN0000470", "p. 23"),
+                ),
                 "Junction positions are 1-based, on the entry clone.",
             ),
             troubleshooting=(
@@ -496,6 +565,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                     "Use an attB substrate with a donor vector (attP): the BP reaction takes "
                     "those and no others. Do not freeze and thaw the enzyme mix more than ten "
                     "times.",
+                    citation=Citation("MAN0000470", "p. 40"),
                 ),
             ),
         ),
@@ -516,12 +586,19 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 "Unreacted donor vector and the by-product both keep the ccdB gene, which "
                 f"kills {host}, so they do not grow. A strain carrying F' would supply ccdA "
                 "and cancel that.",
-                "Two sizes of colony here mean the donor vector's ccdB gene has mutated or "
-                "been deleted; the negative control then gives a similar count.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Two sizes of colony on the plate",
+                    "The donor vector's ccdB gene has mutated or been deleted; the negative "
+                    "control then gives a similar count.",
+                    citation=Citation("MAN0000470", "p. 41"),
+                ),
             ),
         ),
         _miniprep_step(entry),
     )
+    return sectioned("Make the entry clone", setup, figured(run, _bp_figure(bp)), *rest)
 
 
 def _miniprep_step(entry: SequenceRecord) -> Step:
@@ -542,10 +619,16 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
             "The LR reaction takes purified entry clone and not the stopped BP reaction: "
             f"{ENTRY_MIN_NG:g}-{ENTRY_NG:g} ng is a weight of miniprep DNA, and no plan can "
             "weigh a yield nobody has measured yet.",
-            "Supercoiled miniprep DNA is the substrate the manual calls most efficient for LR.",
-            f"The vendor's one-tube protocol chains the two reactions without this step and "
-            f"gives {ONE_TUBE_YIELD}, each of which it says to sequence. It runs on its own "
-            "timings and is not the protocol below.",
+            Note(
+                "Supercoiled miniprep DNA is the most efficient substrate for LR.",
+                citation=Citation("MAN0001032", "p. 2"),
+            ),
+            Note(
+                f"The one-tube protocol chains the two reactions without this step and gives "
+                f"{ONE_TUBE_YIELD}, each of which it says to sequence. It runs on its own "
+                "timings and is not the protocol below.",
+                citation=Citation("MAN0000470", "pp. 45-46"),
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -554,9 +637,9 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
             ),
             Troubleshooting(
                 f"The prep runs as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid",
-                "That size is the manual's signature for a BP reaction that cloned attB "
-                "primer-dimers. Gel-purify the attB DNA and amplify it with a hot-start "
-                "polymerase before running BP again.",
+                "That size is a BP reaction that cloned attB primer-dimers. Gel-purify the "
+                "attB DNA and amplify it with a hot-start polymerase before running BP again.",
+                citation=Citation("MAN0000470", "pp. 43-44"),
             ),
         ),
     )
@@ -564,7 +647,7 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
 
 def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
     """Return the LR stage, which every plan runs."""
-    return (
+    setup, run, stop, transform = (
         Step(
             "Set up the LR reaction",
             key="set-up-lr",
@@ -573,14 +656,20 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 "Pipette the two plasmids and the TE buffer into a tube at room temperature.",
                 f"Add {LR_CLONASE_UL:g} µL of {LR_CLONASE}, mix well and spin down.",
             ),
+            cautions=(LR_LOAD_CAUTION,),
             tables=(lr_reaction(lr.amounts),),
             expected=(f"A {LR_VOLUME_UL:g} µL reaction holding both plasmids.",),
             notes=(
                 _pipetting_note("nanograms"),
-                f"Do not go over {ENTRY_NG:g} ng of entry clone: the manual reports colonies "
-                f"carrying several molecules above it, and fewer colonies below "
-                f"{ENTRY_MIN_NG:g} ng.",
-                "Supercoiled plasmids are the substrates the manual calls most efficient for LR.",
+                Note(
+                    f"Above {ENTRY_NG:g} ng of entry clone the colonies carry several "
+                    f"molecules, and below {ENTRY_MIN_NG:g} ng there are fewer of them.",
+                    citation=Citation("MAN0001032", "p. 2"),
+                ),
+                Note(
+                    "Supercoiled plasmids are the most efficient substrates for LR.",
+                    citation=Citation("MAN0001032", "p. 2"),
+                ),
             ),
             troubleshooting=(_volume_trouble(),),
         ),
@@ -597,9 +686,12 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 ),
             ),
             notes=(
-                f"A plasmid of {LR_LONG_BP:,} bp or more runs up to "
-                f"{LR_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
-                "longer.",
+                Note(
+                    f"A plasmid of {LR_LONG_BP:,} bp or more runs up to "
+                    f"{LR_LONG_SECONDS // 3600} hours instead; efficiency falls as the DNA gets "
+                    "longer.",
+                    citation=Citation("MAN0000470", "p. 32"),
+                ),
                 "Junction positions are 1-based, on the expression clone.",
             ),
             troubleshooting=(
@@ -608,6 +700,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                     "Use an entry clone (attL) with a destination vector (attR): the LR "
                     "reaction takes those and no others. Do not freeze and thaw the enzyme mix "
                     "more than ten times.",
+                    citation=Citation("MAN0000470", "p. 40"),
                 ),
             ),
         ),
@@ -632,11 +725,20 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 f"restreaking a colony on {CHLORAMPHENICOL_UG_ML} µg/mL chloramphenicol "
                 "confirms it: a true expression clone does not grow there, and one carrying a "
                 "mutated ccdB gene does.",
-                f"Small colonies beside large ones are usually unreacted "
-                f"{_carrier(lr).name} co-transforming; restreak them on the entry clone's own "
-                "antibiotic to tell.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Small colonies beside large ones",
+                    f"Usually unreacted {_carrier(lr).name} co-transforming; restreak them on "
+                    "the entry clone's own antibiotic to tell.",
+                    citation=Citation("MAN0000470", "p. 41"),
+                ),
             ),
         ),
+    )
+    return (
+        *sectioned("Recombine", setup, figured(run, _lr_figure(lr)), stop),
+        *sectioned(SCREEN_SECTION, transform),
     )
 
 
@@ -654,7 +756,8 @@ def _validation_steps(
     a sequencing read has to cover, and neither exists until LR has run.
     """
     entry, insert = _carrier(lr).name, lr.recombination.moved.name or "the insert"
-    return (
+    return sectioned(
+        SCREEN_SECTION,
         colony_pcr_step(
             colony,
             junctions=len(lr.junctions),
@@ -664,8 +767,11 @@ def _validation_steps(
                 f"An unrecombined destination vector still carries ccdB, which kills {host}, so "
                 "its lane is what a strain supplying ccdA or a damaged ccdB gene would put on "
                 "the plate.",
-                "The manual asks for a restriction digest alongside the first time this is run: "
-                "mispriming and contaminating template both give artefacts.",
+                Note(
+                    "A restriction digest beside this screen is recommended the first time it "
+                    "is run: mispriming and contaminating template both give artefacts.",
+                    citation=Citation("MAN0000291", "p. 10"),
+                ),
             ),
             troubleshooting=(
                 Troubleshooting(
@@ -673,6 +779,7 @@ def _validation_steps(
                     f"The small ones are usually unreacted {entry} co-transforming. It carries "
                     "neither of these primers, so it adds no band here; restreak on the entry "
                     "clone's own antibiotic to tell.",
+                    citation=Citation("MAN0000470", "p. 41"),
                 ),
             ),
         ),
@@ -680,12 +787,17 @@ def _validation_steps(
             reads,
             junctions=[one.bases for one in lr.junctions],
             inserts=[insert],
-            notes=(
-                f"No vendor primer reads these junctions: GW1 and GW2 are suitable for "
-                f"pCR8/GW/TOPO alone, and an M13 primer crosses at least {M13_VECTOR_BP} bp of "
-                "vector first. Both primers above are designed against this record.",
+            instructions=(
                 f"Send at least {SEQUENCING_NG:g} ng of plasmid with "
                 f"{SEQUENCING_MIN_PMOL:g}-{SEQUENCING_MAX_PMOL:g} pmol of each primer.",
+            ),
+            notes=(
+                Note(
+                    "No kit primer reads these junctions: GW1 and GW2 suit pCR8/GW/TOPO alone, "
+                    f"and an M13 primer crosses at least {M13_VECTOR_BP} bp of vector first. "
+                    "Both primers above are designed against this record.",
+                    citation=Citation("MAN0000437", "p. 13"),
+                ),
                 *(
                     ()
                     if fusion == "none"
@@ -711,18 +823,20 @@ def _stop_step(reaction: str) -> Step:
         timers=(Timer(f"Proteinase K, {reaction}", STOP_SECONDS),),
         expected=("A reaction that can go straight into competent cells.",),
         notes=(
-            "The manual lists an untreated reaction as a cause of few or no colonies, so this "
-            "step is not optional.",
+            Note(
+                "An untreated reaction is a published cause of few or no colonies, so this "
+                "step is not optional.",
+                citation=Citation("MAN0000470", "p. 40"),
+            ),
         ),
     )
 
 
 def _pipetting_note(units: str) -> str:
-    """Say that the table's volumes assume the manual's own concentrations."""
+    """Say that the table's volumes assume the concentrations the table itself prints."""
     return (
-        f"The volumes above take each DNA at the concentration the manual's own table assumes; "
-        f"pipette what your prep needs for the {units} and make the difference up with "
-        f"{TE_BUFFER}."
+        f"The volumes above take each DNA at the concentration the table assumes; pipette what "
+        f"your prep needs for the {units} and make the difference up with {TE_BUFFER}."
     )
 
 
@@ -732,6 +846,28 @@ def _volume_trouble() -> Troubleshooting:
         "The DNA does not fit the reaction volume",
         "Concentrate either DNA, or scale the whole reaction up keeping the enzyme mix at its "
         "stated fraction of the volume.",
+    )
+
+
+def _bp_figure(bp: PlannedReaction) -> Figure:
+    """Return the entry clone BP makes, the attL sites it writes lit."""
+    return _recombination_figure(bp, ENTRY_FILE, "entry clone")
+
+
+def _lr_figure(lr: PlannedReaction) -> Figure:
+    """Return the expression clone LR makes, the attB sites it writes lit."""
+    return _recombination_figure(lr, PRODUCT_FILE, "expression clone")
+
+
+def _recombination_figure(reaction: PlannedReaction, path: str, clone: str) -> Figure:
+    """Return the clone one reaction makes, every att site it rewrote lit."""
+    named = tuple(dict.fromkeys(one.name for one in reaction.junctions))
+    return Figure(
+        (path,),
+        f"The {clone} the reaction makes: {listed(list(named))}, the sites it writes where the "
+        f"two molecules crossed over.",
+        enzymes=(),
+        highlight=named,
     )
 
 

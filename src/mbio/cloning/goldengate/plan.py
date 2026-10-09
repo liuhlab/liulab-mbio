@@ -15,7 +15,7 @@ own features.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
@@ -44,13 +44,14 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    annotated,
+    as_project,
     as_record,
     insertion_span,
     ordered_from_sheet,
     orientations,
     primer_check,
     status,
-    write_protocol_files,
 )
 from mbio.codons import DEFAULT_TABLE, CodonUsage, codon_usage
 from mbio.edits import flipped
@@ -61,6 +62,7 @@ from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import Protocol
+from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.sites import EnzymeLike
 from mbio.snapgene import write_dna
@@ -219,7 +221,7 @@ class Plan:
         """Write the product, the primer sheet, the protocol data and its page into `directory`.
 
         The directory is made when it is not there. The four files are named by `PRODUCT_FILE`
-        and `PRIMER_FILE`, and by `mbio.cloning.plan` for the protocol pair, and a
+        and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol pair, and a
         second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
@@ -228,7 +230,7 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        written = write_protocol_files(self.protocol(), out)
+        written = write_run_files(as_project(self.protocol()), out)
         return Files(product, sheet, written.data, written.page)
 
 
@@ -371,6 +373,7 @@ def plan_assembly(
         thresholds=thresholds["colony PCR"],
     )
     reads = sanger_primers(built.product, junctions, thresholds=thresholds["sequencing"])
+    built = replace(built, product=annotated(built.product, colony, reads))
     return Plan(
         one,
         tuple(going),

@@ -8,11 +8,9 @@ why that one is reached through `model` here.
 """
 
 from collections.abc import Mapping, Sequence
-from dataclasses import replace
 
 from mbio.protocol import model
 from mbio.protocol.model import (
-    Figure,
     Hole,
     Material,
     Plate,
@@ -25,6 +23,9 @@ from mbio.protocol.model import (
     Item as Handed,
 )
 from synbio.igga.protocols.run import Run
+
+#: The reads that close the run, which two protocols both label.
+READ_BACK_SECTION = "Read the library back"
 
 
 class Protocol:
@@ -132,13 +133,3 @@ class Protocol:
                 holes=self.holes(run),
             )
         )
-
-
-def labelled(step: Step, section: str) -> Step:
-    """Return `step` under the stage of its protocol it belongs to."""
-    return replace(step, section=section)
-
-
-def figured(step: Step, figure: Figure | None) -> Step:
-    """Return `step` showing `figure`, or unchanged where there is no record to draw."""
-    return step if figure is None else replace(step, figures=(figure,))

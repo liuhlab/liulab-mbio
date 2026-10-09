@@ -9,6 +9,7 @@ from mbio.protocol import model
 from mbio.protocol.model import (
     Bill,
     BillRow,
+    Caution,
     Check,
     Citation,
     Component,
@@ -94,7 +95,7 @@ def test_the_caution_travels_with_the_polymerase_and_no_step_stores_it() -> None
     amplifying = Step("Amplify", tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),))
     one = Protocol("PCR", materials=(tube,), steps=(amplifying,))
     assert amplifying.cautions == ()
-    assert one.cautions_for(amplifying) == (materials.POLYMERASE_ON_ICE,)
+    assert one.cautions_for(amplifying) == (Caution(materials.POLYMERASE_ON_ICE),)
     assert materials.POLYMERASE_ON_ICE in render_html(one)
 
 
@@ -113,7 +114,10 @@ def test_a_step_writing_out_a_caution_its_material_carries_shows_it_once() -> No
         tables=(ReactionTable((Component("Q5 DNA Polymerase", 0.5),)),),
     )
     one = Protocol("PCR", materials=(tube,), steps=(written,))
-    assert one.cautions_for(written) == (materials.POLYMERASE_ON_ICE, "Spin the plate down.")
+    assert one.cautions_for(written) == (
+        Caution(materials.POLYMERASE_ON_ICE),
+        Caution("Spin the plate down."),
+    )
 
 
 def test_every_caution_a_catalogue_number_carries_reaches_the_reagents_page_once() -> None:

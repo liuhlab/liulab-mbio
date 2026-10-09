@@ -10,25 +10,31 @@ the route it takes for each of its critical edge cases.
 
 import pytest
 
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.cloning.restriction import Plan, plan_restriction
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     COHESIVE_SECONDS,
     HIGH_LIGASE_UNITS_UL,
     LIGASE_UNITS_UL,
+    LIGATION_LOCATOR,
     PHOSPHATASE_KILL_SECONDS,
     PHOSPHATASE_SECONDS,
     ROOM_CELSIUS,
+    SALT_LOCATOR,
+    STAR_ACTIVITY,
+    STAR_LOCATOR,
     phosphatase_units,
 )
 from mbio.cloning.restriction.design import refusal
 from mbio.cloning.restriction.digest import resolve
 from mbio.edits import flipped, rotate
-from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord, reverse_complement
 from mbio.snapgene import read_dna
 
+from ...html import parse
 from .records import BAMHI, ECORI, STUFFER, carrying, padded
 
 # --------------------------------------------------------------------------------------
@@ -124,7 +130,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     assert read_dna(outputs.product) == made.product
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data)
+        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
     )
 
 
@@ -194,7 +200,7 @@ def test_the_page_says_what_each_junction_now_spells_and_which_buffer_both_enzym
     assert "not scarless" in prose
     assert "GAATTC at 397 (EcoRI)" in prose
     assert "GGATCC at 1120 (BamHI)" in prose
-    said = " ".join(note for step in protocol.steps for note in step.notes)
+    said = " ".join(n.text for step in protocol.steps for n in step.noted)
     assert "Both enzymes are supplied in rCutSmart Buffer" in said
 
 
@@ -211,7 +217,7 @@ def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(ma
     assert not made.colony.reversed_clones
     assert [clone.name for clone in made.colony.clones] == ["Correct clone", "Empty vector"]
     step = next(one for one in made.protocol().steps if one.title == "Screen colonies by PCR")
-    said = " ".join((*step.expected, *step.notes))
+    said = " ".join((*step.expected, *(n.text for n in step.noted)))
     assert "cannot go in the other way round" in said
     assert "Reversed insert" not in said
 
@@ -227,6 +233,41 @@ def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
 # --------------------------------------------------------------------------------------
 # The insert written on the other strand, and the pair chosen rather than named
 # --------------------------------------------------------------------------------------
+
+
+def test_every_caution_the_guide_states_links_the_page_it_stands_on(made, tailed):
+    """NEB's name leaves the sentence; the page carries the link and the caution the hazard."""
+    protocol = made.protocol()
+    steps = {step.key: step for step in protocol.steps}
+    star = Citation("NEB-technical-guide", STAR_LOCATOR)
+    salt = Citation("NEB-technical-guide", SALT_LOCATOR)
+
+    assert [one.citation for one in STAR_ACTIVITY] == [star] * len(STAR_ACTIVITY)
+    assert [one.citation for one in steps["digest-vector"].cautioned] == [salt, *([star] * 4)]
+    purify = next(one for one in tailed.protocol().steps if one.key == "purify-amplicons")
+    assert [one.citation for one in purify.cautioned] == [salt]
+    # `citing` has already dropped every source nothing names, so this one is reachable.
+    assert star.source in protocol.sources
+
+
+def test_the_ligation_concentration_band_is_nebs_own_and_links_the_protocol_it_prints(
+    made, tmp_path
+):
+    """1 to 10 ng/µL is what M0202 recommends, so the page carries M0202 and not a bare number."""
+    protocol = made.protocol()
+    ligate = next(one for one in protocol.steps if one.key == "ligate")
+    cited = Citation("M0202", LIGATION_LOCATOR)
+
+    assert [one.citation for one in ligate.cautioned] == [cited]
+    assert "1 to 10 ng/\u00b5L" in ligate.cautioned[0].text
+    assert cited.source in protocol.sources
+
+    page = parse(made.write(tmp_path / "cited").protocol.read_text(encoding="utf-8"))
+    said = [one for one in page.find_all(cls="caution") if "1 to 10 ng" in one.text]
+    assert [a.attrs["href"] for one in said for a in one.find_all("a", cls="cite")] == [
+        "#source-m0202"
+    ]
+    assert page.find_all(id="source-m0202")
 
 
 def test_the_insert_goes_in_the_same_way_round_whichever_strand_its_own_plasmid_wrote_it_on(
@@ -298,7 +339,7 @@ def test_a_blunt_ligation_is_held_longer_and_the_page_says_what_that_costs(blunt
     step = next(one for one in blunt.protocol().steps if one.title.startswith("Ligate"))
     hold = step.programs[0].stages[0].incubations[0]
     assert (hold.temperature_c, hold.seconds) == (ROOM_CELSIUS, BLUNT_SECONDS)
-    said = " ".join(step.notes)
+    said = " ".join(n.text for n in step.noted)
     # The cost against a cohesive ligation is the incubation, which is all NEB states: the
     # longer hold, or the same short one with five times the ligase.
     assert (
@@ -355,7 +396,7 @@ def test_the_protocol_gains_the_pcr_its_program_the_amplicon_gel_and_the_templat
     assert [stage.incubations[0].label for stage in pcr.programs[0].stages]
     assert [lane.bands_bp for lane in gel.gels[0].lanes] == [(tailed.amplicon.length,)]
     # A linear template neither transforms nor ligates, so the column is what takes it away.
-    assert "take GFP away" in " ".join(cleanup.notes)
+    assert "take GFP away" in " ".join(n.text for n in cleanup.noted)
     assert [row.purpose for row in protocol.oligos][:2] == ["Amplify GFP"] * 2
     said = " ".join(protocol.highlights)
     assert "forward primer, 6 spacer bases and the EcoRI site" in said
@@ -381,3 +422,15 @@ def test_a_tail_spelling_a_second_site_against_the_insert_is_refused_naming_the_
     edge = SequenceRecord("TAGA" + gfp.sequence, name="GFP")
     with pytest.raises(ValueError, match=r"XbaI cuts GFP amplicon 2 time"):
         plan_restriction(puc19, edge, enzymes=["EcoRI", "XbaI"])
+
+
+def test_the_ligation_step_shows_the_product_with_both_junctions_lit(made):
+    """One figure, on the step that joins the fragments, drawing the file written beside it."""
+    [step] = [one for one in made.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "ligate"
+    assert figure.records == (PRODUCT_FILE,)
+    assert figure.enzymes == tuple(one.name for one in made.enzymes)
+    assert set(figure.highlight) == {one.feature_name for one in made.ligation.junctions}
+    assert set(figure.highlight) <= {one.name for one in made.product.features}

@@ -14,7 +14,7 @@ from mbio.bench.steps import (
     primer_plate_steps,
 )
 from mbio.primers import Q5
-from mbio.protocol.model import Citation, Oligo, Protocol
+from mbio.protocol.model import Citation, Note, Oligo, Protocol
 from mbio.sequence import Feature, Segment, Strand
 
 
@@ -63,7 +63,7 @@ def test_a_pcr_step_leaves_an_unsourced_count_blank_and_carries_the_callers_note
 
     assert step.programs[0].stages[1].cycles is None
     assert step.programs[0].stages[1].citation is None
-    assert step.notes == ("Why this PCR is special.",)
+    assert step.noted == (Note("Why this PCR is special."),)
 
 
 def test_a_callers_note_sits_after_the_steps_own() -> None:
@@ -72,10 +72,12 @@ def test_a_callers_note_sits_after_the_steps_own() -> None:
     )
 
     assert step.instructions[0] == "Add 20 units of DpnI to the backbone PCR and mix."
-    assert step.notes == (
-        "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (19 Dam sites) and "
-        "leaves the PCR product, which carries no methylation.",
-        "This pipeline's own reason for the digest.",
+    assert step.noted == (
+        Note(
+            "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (19 Dam sites) "
+            "and leaves the PCR product, which carries no methylation."
+        ),
+        Note("This pipeline's own reason for the digest."),
     )
 
 

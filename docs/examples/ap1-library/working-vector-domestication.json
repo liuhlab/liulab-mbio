@@ -1,6 +1,6 @@
 {
   "title": "Domesticating the working vector",
-  "key": "a51139a92c40923e",
+  "key": "decb017d543a108e",
   "summary": "The library's working vector is pLVX-TetOne-Puro-GFP, which reads 6 BsaI and 2 BsmBI sites. This orders the same plasmid with all 8 taken out and confirms what arrives. It is a sitting of its own: the library run opens with the record it leaves behind.",
   "overview": {
     "Parent": "pLVX-TetOne-Puro-GFP, Addgene 171123",
@@ -18,6 +18,7 @@
     "The BsmBI site in the hPGK promoter has no precedent anywhere. The base chosen neither makes nor breaks a CpG, which is the most this run can say for it.",
     "Only BsaI and BsmBI were taken out. The result still reads BbsI 3, SapI 2, so an assembly whose own enzyme is one of those meets those sites unchanged."
   ],
+  "background": [],
   "checks": [
     {
       "name": "sites",
@@ -112,7 +113,7 @@
     {
       "title": "Order the domesticated plasmid",
       "key": "order",
-      "section": "",
+      "section": "Order the plasmid",
       "instructions": [
         "Send working-vector.gb to a supplier that builds whole plasmids, as one clonal construct of 9,895 bp.",
         "Declare the two 634 bp direct repeats on the order form.",
@@ -142,7 +143,7 @@
     {
       "title": "Transform and pick a colony",
       "key": "transform",
-      "section": "",
+      "section": "Confirm what arrives",
       "instructions": [
         "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
         "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
@@ -169,7 +170,7 @@
     {
       "title": "Show that neither enzyme cuts",
       "key": "confirm-digest",
-      "section": "",
+      "section": "Confirm what arrives",
       "instructions": [
         "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for 1 hour at 37 °C.",
         "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at 55 °C.",
@@ -198,7 +199,7 @@
     {
       "title": "Read both repeats",
       "key": "confirm-sequence",
-      "section": "",
+      "section": "Confirm what arrives",
       "instructions": [
         "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the whole plasmid assembled rather than reads from primers.",
         "Compare the assembled consensus with working-vector.gb base by base.",

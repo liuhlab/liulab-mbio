@@ -78,7 +78,7 @@ def test_one_run_writes_the_four_outputs_the_options_asked_for(planned) -> None:
 
 
 def test_a_step_deleted_from_the_protocol_data_is_gone_from_the_page_rendered_again(
-    planned, tmp_path: Path
+    planned,
 ) -> None:
     out, _ = planned
     dropped = "Digest the plasmid template with DpnI"
@@ -86,11 +86,12 @@ def test_a_step_deleted_from_the_protocol_data_is_gone_from_the_page_rendered_ag
     protocol = json.loads((out / "protocol.json").read_text(encoding="utf-8"))
     kept = [step for step in protocol["steps"] if step["title"] != dropped]
     assert len(kept) == len(protocol["steps"]) - 1
-    data = tmp_path / "protocol.json"
+    # The edit is rendered where the plan wrote its records, which is where a figure reads them.
+    data = out / "edited.json"
     data.write_text(json.dumps({**protocol, "steps": kept}), encoding="utf-8")
     result = CliRunner().invoke(app, ["protocol", "render", str(data)])
     assert result.exit_code == 0, result.output
-    page = tmp_path / "protocol.html"
+    page = out / "edited.html"
     assert plain(result.output).splitlines() == [str(page)]
     rendered = page.read_text(encoding="utf-8")
     assert dropped not in rendered

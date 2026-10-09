@@ -1,9 +1,9 @@
 # Projects
 
 A project is a named method this lab runs end to end, built on the methods this site already
-describes. It is a long run, not one reaction: one file goes in, and a folder of bench pages
-comes out, one page for each sitting. The method fixes the molecules, the enzymes and the
-order; a run chooses only its own numbers.
+describes. It is a long run, not one reaction: one file goes in, and the bench pages come out,
+one for each sitting. The method fixes the molecules, the enzymes and the order; a run chooses
+only its own numbers.
 
 ## What earns a page
 

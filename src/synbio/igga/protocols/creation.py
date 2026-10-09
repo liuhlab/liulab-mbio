@@ -23,7 +23,7 @@ from mbio.bench.plates import plate, seat
 from mbio.bench.steps import listed
 from mbio.enzymes import get_enzyme
 from mbio.primers.polymerase import melting_temperature
-from mbio.protocol.figures import ligation_figure
+from mbio.protocol.figures import LIGATION_CITATION, ligation_figure
 from mbio.protocol.model import (
     Citation,
     Figure,
@@ -35,6 +35,8 @@ from mbio.protocol.model import (
     Source,
     Step,
     Troubleshooting,
+    figured,
+    sectioned,
 )
 from mbio.protocol.model import (
     Item as Handed,
@@ -49,7 +51,7 @@ from synbio.igga.protocols.ordering import (
     pool_materials,
 )
 from synbio.igga.protocols.primer_plates import working_plate
-from synbio.igga.protocols.protocol import Protocol, figured, labelled
+from synbio.igga.protocols.protocol import Protocol
 from synbio.igga.protocols.run import RECOVERY, SELECTIVE, Run, vector_names
 
 #: What the page is headed and what the chain names it by.
@@ -123,16 +125,16 @@ class Creation(Protocol):
             ),
         )
         return (
-            *(
-                labelled(
-                    figured(one, pool_pcr_figure(pool, stage=stage, path=run.oligo)),
-                    "Amplify the pool",
-                )
-                for one, stage in zip(made, POOL_STAGES, strict=True)
+            *sectioned(
+                "Amplify the pool",
+                *(
+                    figured(one, pool_pcr_figure(pool, stage=stage, path=run.oligo))
+                    for one, stage in zip(made, POOL_STAGES, strict=True)
+                ),
             ),
-            labelled(
-                figured(_assembly_step(run, pool), _cargo_ligation_figure(run)),
+            *sectioned(
                 "Close each cargo into its vector",
+                figured(_assembly_step(run, pool), _cargo_ligation_figure(run)),
             ),
         )
 
@@ -517,4 +519,5 @@ def _cargo_ligation_figure(run: Run) -> Figure | None:
             f"The stuffer {scheme.internal.name} cuts out of {name}, which a cargo replaces. "
             "The cargo enters on the four bases its position spells here."
         ),
+        citation=LIGATION_CITATION,
     )

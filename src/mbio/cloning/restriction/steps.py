@@ -14,6 +14,7 @@ NEB's four controls and their ratios rather than by a number.
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
@@ -58,7 +59,14 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
+from mbio.cloning.plan import (
+    JOIN_SECTION,
+    MAKE_SECTION,
+    PRODUCT_FILE,
+    SCREEN_SECTION,
+)
 from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
@@ -69,10 +77,11 @@ from mbio.cloning.restriction.bench import (
     COLUMN_REFERENCE,
     CONTROLS,
     DIGEST_SECONDS,
+    ELUATE_CAUTION,
     HIGH_LIGASE_UNITS_UL,
     LIGASE_UNITS_UL,
+    LIGATION_LOCATOR,
     LIGATION_NG_UL,
-    MAX_DNA_FRACTION,
     OVERNIGHT_CELSIUS,
     PHOSPHATASE,
     PHOSPHATASE_CELSIUS,
@@ -82,6 +91,7 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_SECONDS,
     REFERENCES,
     ROOM_CELSIUS,
+    SALT_CAUTION,
     STAR_ACTIVITY,
     TRANSFORM_UL,
     digest_amount,
@@ -92,6 +102,7 @@ from mbio.cloning.restriction.bench import (
     phosphatase_units,
     shared_buffer,
 )
+from mbio.cloning.restriction.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.restriction.design import Refusal
 from mbio.cloning.restriction.digest import Diagnostic, Piece, said_ends, self_closing
 from mbio.cloning.restriction.ligation import Junction, Ligation
@@ -100,22 +111,75 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Caution,
+    Citation,
+    Figure,
     Gel,
     Ladder,
     Lane,
     Material,
+    Note,
     Protocol,
     Reference,
+    Source,
     Step,
     Timer,
     Troubleshooting,
     citing,
+    figured,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
 #: Who sells the products this protocol names. Every catalogue number it prints comes out of an
 #: enzyme record or a product name a supplier wrote; none is written here.
 SUPPLIER = "New England Biolabs"
+
+#: The documents this method's own rows cite, beside the ones `mbio.bench.steps` brings. Each is
+#: read into `docs/research/restriction-ligation.md`, which names where it was fetched from.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "T1120": Source(
+            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+            edition="version 2.0 10.25",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-background-faq": Source(
+            "New England Biolabs FAQ, How can I reduce the number of vector-only background "
+            "colonies?",
+            edition="capture 2019-11-23",
+            read_as="Wayback Machine",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "T1130": Source(
+            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+            edition="version 1.0 06.24",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-double-digests": Source(
+            "New England Biolabs usage guideline, Double Digests",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-cleavage": Source(
+            "New England Biolabs usage guideline, Cleavage Close to the End of DNA Fragments",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "M0371": Source(
+            "New England Biolabs #M0371 protocol, Dephosphorylation of 5\u00b4-ends of DNA "
+            "using rSAP",
+            url="https://www.neb.com/en-us/protocols/protocol-for-dephosphorylation-of-5-ends-of-dna-neb-m0371",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
+)
 
 #: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
 #: that supplies the rest of the lacZ fragment the vector carries, which this one does.
@@ -215,7 +279,7 @@ def protocol(
             dephosphorylate=dephosphorylate,
         ),
         references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
-        sources=PCR_SOURCES,
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
 
@@ -527,35 +591,46 @@ def _steps(
     """Return the steps in the order they happen, the shared ones carrying this method's notes."""
     backbone, insert = ligation.pieces
     return (
-        *_amplify_steps(amplicon, polymerase),
-        _digest_step(
-            vector, enzymes, vector_pieces, digests[0], key="digest-vector", keeping=backbone
+        *sectioned(MAKE_SECTION, *_amplify_steps(amplicon, polymerase)),
+        *sectioned(
+            "Cut and recover",
+            _digest_step(
+                vector, enzymes, vector_pieces, digests[0], key="digest-vector", keeping=backbone
+            ),
+            *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
+            _digest_step(
+                digested,
+                enzymes,
+                source_pieces,
+                digests[1],
+                key="digest-insert",
+                keeping=insert,
+                notes=_stubs(amplicon, insert),
+            ),
+            _purify_step(
+                vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)
+            ),
+            quantify_step(amounts),
         ),
-        *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
-        _digest_step(
-            digested,
-            enzymes,
-            source_pieces,
-            digests[1],
-            key="digest-insert",
-            keeping=insert,
-            notes=_stubs(amplicon, insert),
+        *sectioned(
+            JOIN_SECTION,
+            figured(_ligation_step(ligation, amounts), _ligation_figure(ligation, enzymes)),
         ),
-        _purify_step(vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)),
-        quantify_step(amounts),
-        _ligation_step(ligation, amounts),
-        transform_step(
-            host,
-            phenotype,
-            inserts=[insert.name],
-            colonies="No supplier states a colony count for this method, so run the controls "
-            "below and read the plate against them rather than against a number.",
-            expected=CONTROLS,
-        ),
-        colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
-        _diagnostic_step(diagnostic, product=ligation.product),
-        sequencing_step(
-            reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+        *sectioned(
+            SCREEN_SECTION,
+            transform_step(
+                host,
+                phenotype,
+                inserts=[insert.name],
+                colonies="No supplier states a colony count for this method, so run the controls "
+                "below and read the plate against them rather than against a number.",
+                expected=CONTROLS,
+            ),
+            colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
+            _diagnostic_step(diagnostic, product=ligation.product),
+            sequencing_step(
+                reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+            ),
         ),
     )
 
@@ -575,6 +650,7 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
             f"Mix the reaction below, {amount.nanograms:g} ng of miniprep first.",
             f"Incubate at {_celsius(diagnostic.enzymes)} for {DIGEST_SECONDS // 60} minutes.",
             f"Run the whole digest on a {percent:g}% agarose gel beside the ladder.",
+            "Sequence only a miniprep that gives the clone's bands.",
         ),
         tables=(digest_reaction(diagnostic.enzymes, amount, title="Diagnostic digest"),),
         timers=(Timer("Diagnostic digest", DIGEST_SECONDS),),
@@ -593,18 +669,19 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
         notes=(
             "The junctions put both recognition sites back, so the pair that made the clone is "
             "what cuts the insert out of it again.",
-            "Sequence only a miniprep that gives the clone's bands.",
         ),
         troubleshooting=(
             Troubleshooting(
                 "Every miniprep gives the vector's bands",
                 "The background is uncut or religated vector; run the controls under the "
                 "transformation to find which.",
+                citation=Citation("NEB-cloning", "too much background"),
             ),
             Troubleshooting(
                 "One band, at the plasmid's full length",
                 "Only one site cut. Check the enzymes' methylation sensitivity against the "
                 "strain the miniprep was grown in.",
+                citation=Citation("NEB-cloning", "incomplete restriction enzyme digestion"),
             ),
         ),
     )
@@ -651,8 +728,12 @@ def _phosphatase_steps(
                 "vector.",
                 "rSAP is active in every restriction enzyme buffer, so it goes into the digest "
                 "as it stands; one unit takes the phosphates off one picomole of DNA ends.",
-                "The heat step takes the restriction enzymes with it, which is what NEB asks "
-                "for; the gel purification is what stops any of them heat does not.",
+                Note(
+                    "The heat step takes the restriction enzymes with it, which is what the "
+                    "protocol asks for; the gel purification is what stops any of them heat "
+                    "does not.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
+                ),
                 "Only the vector is dephosphorylated: the insert keeps its own 5' phosphates, "
                 "and those are what the ligase seals.",
             ),
@@ -661,11 +742,13 @@ def _phosphatase_steps(
                     "Empty vector all over the plate",
                     "The dephosphorylation was incomplete: use fresh rSAP and give it the whole "
                     "incubation before the heat step.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
                 ),
                 Troubleshooting(
                     "No colonies at all",
                     "A phosphatase still working takes the insert's phosphates too. Check the "
                     "heat step ran, or clean the digest up on a column before the ligase.",
+                    citation=Citation("NEB-cloning", "few or no transformants"),
                 ),
             ),
         ),
@@ -707,9 +790,12 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
                 f"Each primer's 5' tail is a spacer and a recognition site, {ends}. The tail is "
                 "not on the template, so it does not anneal in the first cycles and the "
                 "annealing temperature above is read from the annealing regions alone.",
-                "The spacer is what lets the enzyme cut a site this close to the end of a "
-                "fragment; NEB measures cleavage at one to five bases and answers six for an "
-                "enzyme it does not list.",
+                Note(
+                    "The spacer is what lets the enzyme cut a site this close to the end of a "
+                    "fragment: cleavage is measured at one to five bases, and six is the "
+                    "answer for an enzyme the table does not list.",
+                    citation=Citation("NEB-cleavage", "cleavage close to the end"),
+                ),
             ),
         ),
         gel_step([(amplicon.name, amplicon.length)]),
@@ -728,14 +814,16 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             else ()
         ),
         cleanup_step(
+            cautions=(ELUATE_CAUTION,),
             notes=(
-                f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
-                "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon "
-                "and nothing else.",
-                f"Its eluate carries salt, so keep it under {MAX_DNA_FRACTION:.0%} of the "
-                "digest below.",
+                Note(
+                    f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
+                    "polymerase, the primers and the dNTPs away, so the digest cuts the "
+                    "amplicon and nothing else.",
+                    citation=Citation("T1130", "typical recovery"),
+                ),
                 *_template_note(amplicon),
-            )
+            ),
         ),
     )
 
@@ -767,7 +855,6 @@ def _digest_step(
     both the same.
     """
     named = listed([enzyme.name for enzyme in enzymes])
-    room = f"{MAX_DNA_FRACTION:.0%}"
     return Step(
         f"Digest {record.name} with {named}",
         key=key,
@@ -787,28 +874,25 @@ def _digest_step(
             )
             for piece in pieces
         ),
-        notes=(
-            _buffer_note(enzymes),
-            f"Keep the DNA solution under {room} of the reaction; a column eluate carries salt, "
-            "and salt leaves the digest incomplete.",
-            *notes,
-            *STAR_ACTIVITY,
-        ),
+        cautions=(SALT_CAUTION, *STAR_ACTIVITY),
+        notes=(_buffer_note(enzymes), *notes),
         troubleshooting=(
             Troubleshooting(
                 "An uncut band remains",
                 "Add more units or incubate longer, and check the enzymes' methylation "
                 "sensitivity against the strain the plasmid was grown in.",
+                citation=Citation("NEB-cloning", "incomplete restriction enzyme digestion"),
             ),
             Troubleshooting(
                 "Extra bands",
                 "Star activity: use fewer units, a shorter incubation and the supplied buffer.",
+                citation=Citation("NEB-cloning", "extra bands"),
             ),
         ),
     )
 
 
-def _buffer_note(enzymes: Sequence[Enzyme]) -> str:
+def _buffer_note(enzymes: Sequence[Enzyme]) -> Note | str:
     """Say which buffer the digest runs in, or that nothing sourced here can say."""
     buffer = shared_buffer(enzymes)
     if buffer is None:
@@ -817,9 +901,10 @@ def _buffer_note(enzymes: Sequence[Enzyme]) -> str:
             f"verdict rather than a pass: look the pair up in {BUFFER_FINDER} before putting "
             "both in one tube."
         )
-    return (
-        f"Both enzymes are supplied in {buffer}, which is NEB's own rule for digesting two of "
-        "them together."
+    return Note(
+        f"Both enzymes are supplied in {buffer}, which is the rule for digesting two of them "
+        "together.",
+        citation=Citation("NEB-double-digests", "choosing a buffer"),
     )
 
 
@@ -888,10 +973,12 @@ def _purify_step(
             Troubleshooting(
                 "Two bands did not separate",
                 "Run the gel further, or pour it at a percentage that resolves that size range.",
+                citation=Citation("T1120", "agarose concentration, p. 6"),
             ),
             Troubleshooting(
                 "Little DNA comes off the column",
                 "Elute twice through the same column, and keep the agarose percentage low.",
+                citation=Citation("T1020", "troubleshooting, low DNA yield"),
             ),
         ),
     )
@@ -957,11 +1044,16 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             ),
             f"{low:g} to {high:g} µL of this goes into the cells; the rest keeps at -20 °C.",
         ),
+        cautions=(
+            Caution(
+                f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below "
+                "that a fragment closes on itself instead of joining its partner.",
+                citation=Citation("M0202", LIGATION_LOCATOR),
+            ),
+        ),
         notes=(
             "Picomoles, not nanograms: the table asks for a molar ratio, and the shorter "
             "fragment weighs less at the same ratio.",
-            f"Keep the two fragments together at {floor:g} to {ceiling:g} ng/µL. Below that a "
-            "fragment closes on itself instead of joining its partner.",
             *_blunt_cost(ligation),
             "Junction positions are 1-based, on the product.",
         ),
@@ -970,13 +1062,28 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
                 "No colonies later",
                 "At least one fragment has to carry a 5' phosphate; vary the ratio, and use a "
                 "fresh buffer aliquot, because its ATP goes over freeze-thaws.",
+                citation=Citation("NEB-cloning", "few or no transformants"),
             ),
             Troubleshooting(
                 "Empty vector on the plate",
                 "The backbone band carried some uncut plasmid; run the gel further and cut the "
                 "band clean.",
+                citation=Citation("NEB-background-faq", "reducing vector-only background colonies"),
             ),
         ),
+    )
+
+
+def _ligation_figure(ligation: Ligation, enzymes: Sequence[Enzyme]) -> Figure:
+    """Return the plasmid the ligation closes, every junction it makes lit."""
+    named = [one.name for one in enzymes]
+    spelled = listed([one.label for one in ligation.junctions])
+    return Figure(
+        (PRODUCT_FILE,),
+        f"{ligation.product.name} as the ligation closes it: the {spelled} junctions it spells, "
+        f"and where {listed(named)} cut it.",
+        enzymes=tuple(dict.fromkeys(named)),
+        highlight=tuple(dict.fromkeys(one.feature_name for one in ligation.junctions)),
     )
 
 

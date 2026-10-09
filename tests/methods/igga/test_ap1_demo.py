@@ -528,12 +528,12 @@ def test_the_final_assembly_is_written_out_from_what_the_build_states(protocol):
     cargo, vector = steps[2].tables[0].components[:2]
     assert (cargo.final, cargo.volume_ul) == ("0.252 pmol (167.21 ng)", 50.0)
     assert vector.final == "0.0123 pmol (75 ng)"
-    assert steps[2].notes[-2:] == (
+    assert [n.text for n in steps[2].noted[-2:]] == [
         "75 ng of vector is what this run measured, not a published figure. The cargo is not "
         "measured out: the release tube goes in whole.",
         "The release delivers the cargo at 20.5:1 over the vector, which is what the digest "
         "frees and not a ratio anyone sets.",
-    )
+    ]
     assert not [hole.id for step in steps for hole in step.holes]
 
 
@@ -663,7 +663,7 @@ def test_a_repeated_caution_rides_its_material_and_no_step_of_the_run_stores_one
     """A caution the bench reads on four pages is one sentence, carried by the tube it is about."""
     chain = plan.chain()
     shown = {
-        (one.title, step.key): one.cautions_for(step)
+        (one.title, step.key): tuple(c.text for c in one.cautions_for(step))
         for one in chain.protocols
         for step in one.steps
         if one.cautions_for(step)
@@ -890,7 +890,7 @@ def test_only_the_library_in_its_working_vector_is_called_finished(plan, protoco
     said = " ".join(
         text
         for step in protocol.steps
-        for text in (*step.instructions, *step.expected, *step.notes)
+        for text in (*step.instructions, *step.expected, *(n.text for n in step.noted))
     )
     assert "finished library" not in said
 
@@ -898,7 +898,7 @@ def test_only_the_library_in_its_working_vector_is_called_finished(plan, protoco
 def test_a_share_of_nothing_reads_as_none(plan, protocol):
     """0.0% is what a rounded share prints; none of them is what this one means."""
     linkage = next(one for one in protocol.steps if one.key == "read-linkage")
-    said = " ".join(linkage.notes)
+    said = " ".join(n.text for n in linkage.noted)
 
     assert "None of the single-base deletions" in said
     assert "0.0% of the single-base deletions" not in said

@@ -26,6 +26,7 @@ from mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
 from mbio.bench.oligos import primer_sheet
 from mbio.cloning.goldengate import plan_assembly
 from mbio.cloning.goldengate.oligos import DesignedOligo
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.edits import rotate
 from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from mbio.protocol.render import minted
@@ -100,6 +101,17 @@ def test_every_designed_primer_passes_evaluation(plan):
     assert plan.status != "fail"
 
 
+def test_every_designed_oligo_is_drawn_on_the_product_where_it_anneals(plan):
+    placed = {one.name: one for one in plan.product.primers}
+    assert set(placed) == {report.primer.name for report in plan.reports}
+    for primer in placed.values():
+        site = primer.binding_sites[0]
+        annealed = plan.product.extract(Segment(site.start, site.end))
+        assert primer.sequence.endswith(
+            annealed if site.strand == Strand.FORWARD else reverse_complement(annealed)
+        )
+
+
 def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp):
     bands = {clone.name: clone.bands_bp for clone in plan.colony.clones}
     insert_bp = plan.phenotype.insert[1] - plan.phenotype.insert[0]
@@ -131,7 +143,7 @@ def test_the_four_files_land_where_they_are_named_and_hold_what_the_plan_holds(p
     assert read_dna(outputs.product) == plan.product
     assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
-    assert page == render_html(read_protocol(outputs.protocol_data))
+    assert page == render_html(read_protocol(outputs.protocol_data), base=tmp_path / "run")
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
@@ -221,7 +233,7 @@ def test_every_cycle_count_cites_the_document_it_came_from(plan):
     }
     assert cited[("Amplify GFP", GOLDEN_GATE_PCR_CYCLES)] == Citation("E1601", "FAQ 11")
     assert cited[("Screen colonies by PCR", 30)] == Citation("M0480", "thermocycling conditions")
-    assert set(protocol.sources) == {"E1601", "M0480"}
+    assert {"E1601", "M0480"} <= set(protocol.sources)
 
 
 def test_the_equipment_is_named_apart_from_the_reagents(plan):
@@ -496,7 +508,25 @@ def _sentences(protocol) -> str:
     for oligo in protocol.oligos:
         parts += [oligo.name, oligo.purpose]
     for step in protocol.steps:
-        parts += [step.title, *step.instructions, *step.cautions, *step.notes, *step.expected]
+        parts += [
+            step.title,
+            *step.instructions,
+            *(c.text for c in step.cautioned),
+            *(n.text for n in step.noted),
+            *step.expected,
+        ]
         for entry in step.troubleshooting:
             parts += [entry.problem, entry.solution]
     return " ".join(parts)
+
+
+def test_the_assembly_step_shows_the_product_with_every_junction_lit(plan):
+    """One figure, on the step that joins the fragments, drawing the file written beside it."""
+    [step] = [one for one in plan.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "run-assembly"
+    assert figure.records == (PRODUCT_FILE,)
+    assert figure.enzymes == (plan.assembly.enzyme.name,)
+    assert set(figure.highlight) == {one.feature_name for one in plan.assembly.junctions}
+    assert set(figure.highlight) <= {one.name for one in plan.product.features}

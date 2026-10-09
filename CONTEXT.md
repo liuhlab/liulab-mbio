@@ -206,6 +206,13 @@ _Avoid_: task, procedure
 Where in a protocol a step belongs, such as `Day 1` or `Round 2`. A label, not a container: the
 steps stay one list and the numbering runs through them. Both navigation lists group by it, one
 collapsible group each, counted from the bench's own marks.
+
+It is written in sentence case, in the voice a step title has, naming what the bench achieves
+over that stretch. It labels a run of consecutive steps, so `sectioned` names it once where the
+step list is assembled. A section is a convention and not a closed set: one generated for a
+round belongs beside one typed by hand, and no two pipelines have to agree on a word. A constant
+is minted only where two or more modules share one label; everywhere else it is written at its
+one use.
 _Avoid_: stage, phase, part
 
 ### Key

@@ -359,7 +359,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="a51139a92c40923e">
+<body data-protocol="decb017d543a108e">
 <main class="page">
 <header class="intro">
 <h1>Domesticating the working vector</h1>
@@ -371,12 +371,13 @@ tfoot .muted { font-weight: 400; }
 <p class="check-detail"><strong>other enzymes warn:</strong> BbsI reads 3 sites, SapI reads 2 sites; neither was in this job</p>
 <p class="hole-count"><a href="#holes"><strong>2</strong> numbers in this protocol have no source</a>.</p>
 <div class="toolbar"><span class="progress" aria-live="polite">0 of 4 steps done</span><button type="button" class="print">Print</button><button type="button" class="reset">Reset page</button></div>
-<nav class="toc" aria-label="Steps"><ul class="step-nav step-list"><li><a href="#step-order"><span class="step-mark">1</span> <span>Order the domesticated plasmid</span></a></li><li><a href="#step-transform"><span class="step-mark">2</span> <span>Transform and pick a colony</span></a></li><li><a href="#step-confirm-digest"><span class="step-mark">3</span> <span>Show that neither enzyme cuts</span></a></li><li><a href="#step-confirm-sequence"><span class="step-mark">4</span> <span>Read both repeats</span></a></li></ul></nav>
+<nav class="toc" aria-label="Steps"><ul class="step-nav"><li class="step-group"><details data-steps="order" open><summary>Order the plasmid <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-order"><span class="step-mark">1</span> <span>Order the domesticated plasmid</span></a></li></ul></details></li><li class="step-group"><details data-steps="transform confirm-digest confirm-sequence"><summary>Confirm what arrives <span class="section-progress muted">0 of 3 done</span></summary><ul class="step-list"><li><a href="#step-transform"><span class="step-mark">2</span> <span>Transform and pick a colony</span></a></li><li><a href="#step-confirm-digest"><span class="step-mark">3</span> <span>Show that neither enzyme cuts</span></a></li><li><a href="#step-confirm-sequence"><span class="step-mark">4</span> <span>Read both repeats</span></a></li></ul></details></li></ul></nav>
 </header>
 <section class="block materials" id="materials">
 <h2>Materials</h2>
 <div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th></tr></thead><tbody><tr><td>BsaI-HFv2</td><td>New England Biolabs</td><td>R3733</td><td>-20 °C</td><td>10 units a digest</td><td>reads nothing in the result</td></tr><tr><td>BsmBI-v2</td><td>New England Biolabs</td><td>R0739</td><td>-20 °C</td><td>10 units a digest</td><td>reads nothing in the result</td></tr><tr><td>BamHI-HF</td><td>New England Biolabs</td><td>R3136</td><td>-20 °C</td><td>10 units a digest</td><td>the control lane, one cut</td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Heat block or thermocycler holding 37 °C and 55 °C, Agarose gel rig and a transilluminator</p>
 </section>
+<p class="step-section">Order the plasmid</p>
 <section class="step" id="step-order">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-order"><span class="step-n">1</span><span>Order the domesticated plasmid</span></label></h2>
 <p class="caution"><strong>Caution:</strong> A supplier whose clonal genes stop at 7 kb cannot build this plasmid; ask for a long-construct quote before ordering.</p>
@@ -384,6 +385,7 @@ tfoot .muted { font-weight: 400; }
 <div class="expected"><h3>Expected result</h3><ul><li>The supplier accepts the sequence and quotes a build.</li></ul></div>
 <div class="notes"><h3>Notes</h3><ul><li>A direct repeat longer than 200 bases is a high-complexity sequence, which is priced and scheduled apart from the rest, so declaring it up front saves a rejected order (Twist Bioscience, gene synthesis sequence acceptance criteria).</li><li>The change at transcript position +4 goes into both repeats because a vector whose two repeats differ there changes what reverse transcription copies (Haellman et al. 2021, which made the same change in both).</li></ul></div>
 </section>
+<p class="step-section">Confirm what arrives</p>
 <section class="step" id="step-transform">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-transform"><span class="step-n">2</span><span>Transform and pick a colony</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Use a recombination-deficient strain and a 5 mL culture; a larger one is not worth the deletions it returns.</p>

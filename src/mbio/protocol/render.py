@@ -3,6 +3,9 @@
 A protocol on its own is one page that loads nothing. A run of several is a folder: one page
 each, an index, and two pages the run shares. Every link between them is relative and every
 page is still self-contained, so the folder opens from disk and survives being zipped.
+
+`write_run_files` is the way in for a pipeline: the shape follows the chain's length, so no
+pipeline chooses whether it writes a page or a folder.
 """
 
 import hashlib
@@ -22,6 +25,7 @@ from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
 from mbio.protocol.model import (
     Bill,
+    Caution,
     Check,
     Citation,
     Figure,
@@ -42,14 +46,17 @@ from mbio.protocol.model import (
     Step,
     ThermocyclerProgram,
     Timer,
+    Topic,
     Transfer,
     Wait,
     by_place,
     number,
     read_project,
+    read_protocol,
     slug,
     well_at,
     write_project,
+    write_protocol,
 )
 
 #: What the page reads where a check carries no verdict, so it is never taken for a pass.
@@ -61,6 +68,10 @@ NO_NUMBER = "no sourced number"
 #: What the references page prints as citing a source the run itself names.
 CITED_BY_BILL = "the bill"
 
+#: What one protocol written alone is called, as the data and as the page rendered from it.
+PROTOCOL_DATA_FILE = "protocol.json"
+PROTOCOL_FILE = "protocol.html"
+
 #: What a project folder calls the data every one of its pages is rendered from.
 PROJECT_DATA_FILE = "project.json"
 
@@ -68,6 +79,10 @@ PROJECT_DATA_FILE = "project.json"
 INDEX_FILE = "index.html"
 REAGENTS_FILE = "reagents.html"
 REFERENCES_FILE = "references.html"
+
+#: The directory a run writes its folder into, below the directory it was given. A folder and
+#: not a flat set: it names its own `project.json`, and a build file may be called that already.
+PROTOCOL_DIR = "protocol"
 
 #: From how many oligos a sheet is summarised. Fewer than this reads as a sheet; past it the
 #: rows repeat one pattern and the page states the pattern instead.
@@ -226,6 +241,56 @@ class ProjectFiles:
         return (self.data, *self.protocols, self.index, self.reagents, self.references)
 
 
+@dataclass(frozen=True, slots=True)
+class ProtocolFiles:
+    """The pair one protocol wrote on its own: the data, and the page rendered from it.
+
+    Parameters
+    ----------
+    data
+        The bench protocol as JSON, which ``protocol render`` turns back into the page.
+    page
+        The interactive bench protocol, as one self-contained HTML page.
+    """
+
+    data: Path
+    page: Path
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Both, in the order they were written."""
+        return (self.data, self.page)
+
+
+@dataclass(frozen=True, slots=True)
+class RunFiles:
+    """What one run wrote, whichever shape its chain length called for.
+
+    Parameters
+    ----------
+    data
+        The run as JSON, which ``protocol render`` turns back into the pages.
+    pages
+        What was written beside it: the one page, where the run is one protocol; the index, a
+        page per protocol and the two shared pages, where it is a chain. The way in leads them,
+        which `page` reads, so a folder's pages are not in the order they were written --
+        `ProjectFiles.paths` is the one that reports that.
+    """
+
+    data: Path
+    pages: tuple[Path, ...]
+
+    @property
+    def page(self) -> Path:
+        """The way in: the only page where the run is one protocol, the index where it is many."""
+        return self.pages[0]
+
+    @property
+    def paths(self) -> tuple[Path, ...]:
+        """Every file written: the data, then the pages with the way in leading them."""
+        return (self.data, *self.pages)
+
+
 def page_key(value: Protocol | Project) -> str:
     """Return what a page remembers its check marks under: the key it carries, or its content.
 
@@ -321,6 +386,7 @@ def render_html(
     body = "".join(
         [
             _header(protocol, keys, toc=folder is None, place=place),
+            _background(protocol.background, protocol.files),
             _materials(protocol.materials, protocol.equipment, paths=protocol.files),
             _oligos(protocol),
             _plates(protocol),
@@ -382,7 +448,7 @@ def render_index(project: Project, folder: Folder) -> str:
         f'<header class="intro">\n<h1>{escape(project.title)}</h1>\n{summary}'
         f"{_checks((*project.checks, *project.audit()))}"
         f"{_hole_count(holes, 'this run')}</header>\n",
-        _background(project),
+        _background(project.background, project.files),
     ]
     for anchor, label, block in (
         ("flow", "How the run fits together", _flow(project, folder)),
@@ -471,14 +537,18 @@ def _jumps(jumps: Iterable[tuple[str, str]]) -> str:
     )
 
 
-def _background(project: Project) -> str:
-    """Return what the reader is told before the first protocol, one topic to a block."""
+def _background(topics: Sequence[Topic], paths: Sequence[str] = ()) -> str:
+    """Return what the reader is told before the first step, one topic to a block.
+
+    A run says it on its index and a page written alone says it on itself, so one renderer
+    serves both.
+    """
     return "".join(
         f'<section class="block topic" id="topic-{escape(slug(topic.title))}">\n'
         f"<h2>{escape(topic.title)}</h2>\n"
-        + "".join(f"<p>{_linked(line, project.files)}</p>" for line in topic.body)
+        + "".join(f"<p>{_linked(line, paths)}</p>" for line in topic.body)
         + "\n</section>\n"
-        for topic in project.background
+        for topic in topics
     )
 
 
@@ -1053,6 +1123,57 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
     )
 
 
+def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) -> ProtocolFiles:
+    """Write `protocol` into `directory` as `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`.
+
+    The directory is made when it is not there, and the page is rendered from the data as
+    written, so the two cannot disagree. The data carries the key its page remembers the bench's
+    check marks under, so an agent editing it and rendering again keeps the ticks already made.
+    The same protocol writes the same bytes.
+    """
+    out = Path(directory)
+    out.mkdir(parents=True, exist_ok=True)
+    data = write_protocol(minted(protocol), out / PROTOCOL_DATA_FILE)
+    return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+
+
+def write_run_files(project: Project, directory: str | os.PathLike[str]) -> RunFiles:
+    """Write `project` into `directory`, in the shape its chain length calls for.
+
+    One protocol writes one self-contained page, flat in `directory`; two or more write the
+    folder of linked pages, in `PROTOCOL_DIR` below it. The shape follows the chain and never
+    the pipeline, so no caller chooses it:
+    `docs/adr/0018-a-project-chains-protocols.md` says why.
+    """
+    if len(project.protocols) == 1:
+        alone = write_protocol_files(_alone(project), directory)
+        return RunFiles(alone.data, (alone.page,))
+    folder = write_project_files(project, Path(directory) / PROTOCOL_DIR)
+    return RunFiles(
+        folder.data, (folder.index, *folder.protocols, folder.reagents, folder.references)
+    )
+
+
+def _alone(project: Project) -> Protocol:
+    """Return the one protocol of a run of one, carrying what the run says over it.
+
+    A page written alone has no index to hold the run's own title, rationale, verdicts, bill or
+    sources, so each travels onto the protocol rather than being dropped for having been said a
+    level up. What the run was handed is already the protocol's `consumes`.
+    """
+    one = project.protocols[0]
+    return replace(
+        one,
+        title=project.title or one.title,
+        summary=project.summary or one.summary,
+        background=project.background or one.background,
+        checks=(*one.checks, *project.checks),
+        files=one.files or project.files,
+        sources={**project.sources, **one.sources},
+        bill=one.bill or project.bill,
+    )
+
+
 def _write(html: str, path: Path) -> Path:
     path.write_text(html, encoding="utf-8")
     return path
@@ -1443,7 +1564,8 @@ def _materials(
             f"<tbody>{rows}</tbody></table></div>"
         )
     carried = [(m.name, rule) for m in materials for rule in m.rules]
-    cautions = _cautions(dict.fromkeys(c for m in materials for c in m.cautions), paths)
+    said = dict.fromkeys(c for m in materials for c in m.cautions)
+    cautions = _cautions([Caution(one) for one in said], paths)
     line = ""
     if equipment:
         line = (
@@ -1688,14 +1810,16 @@ def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
 
 
-def _cautions(texts: Iterable[str], paths: Sequence[str] = ()) -> str:
+def _cautions(cautions: Iterable[Caution], paths: Sequence[str] = ()) -> str:
     """Every caution, as the one paragraph both the steps and the reagents page show it in.
 
-    One site renders it, so a sentence cannot read two ways on two pages.
+    One site renders it, so a sentence cannot read two ways on two pages, and a cited one
+    anchors into the Sources section where a troubleshooting row does.
     """
     return "".join(
-        f'<p class="caution"><strong>Caution:</strong> {_linked(text, paths)}</p>\n'
-        for text in texts
+        f'<p class="caution"><strong>Caution:</strong> {_linked(one.text, paths)}'
+        f"{_after(one.citation)}</p>\n"
+        for one in cautions
     )
 
 
@@ -2090,9 +2214,11 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')
     if step.notes:
-        parts.append(
-            f'<div class="notes"><h3>Notes</h3>{_bullets(step.notes, protocol.files)}</div>\n'
+        items = "".join(
+            f"<li>{_linked(note.text, protocol.files)}{_after(note.citation)}</li>"
+            for note in step.noted
         )
+        parts.append(f'<div class="notes"><h3>Notes</h3><ul>{items}</ul></div>\n')
     parts.append("</section>\n")
     return "".join(parts)
 

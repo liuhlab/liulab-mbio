@@ -9,11 +9,11 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, asdict, dataclass, field, replace
+from dataclasses import KW_ONLY, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal, get_args
+from typing import Any, Literal, cast, get_args
 
 from mbio import jsonfile
 from mbio.checks import STATUSES, Status
@@ -765,6 +765,42 @@ class Wait:
 
 
 @dataclass(frozen=True, slots=True)
+class Note:
+    """A *why* a step shows after its instructions, and where the *why* came from.
+
+    Parameters
+    ----------
+    text
+        The sentence the reader sees.
+    citation
+        The document it was read from. Absent where the note is what this run computed or
+        chose, which no document states, or what the reader checks against the page itself.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Caution:
+    """What a step warns of before its instructions, and where the warning came from.
+
+    Parameters
+    ----------
+    text
+        The sentence the reader sees.
+    citation
+        The document it was read from. Absent where the hazard is general bench practice no
+        document states, or a limit this run chose.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -1238,8 +1274,10 @@ class Step:
         container: the steps stay one list and the numbering runs through it.
     instructions
         Ordered actions, one sentence each.
-    cautions, notes
-        Shown before and after the instructions.
+    cautions
+        Shown before the instructions. A bare string is a caution citing nothing.
+    notes
+        Shown after them. A bare string is a note citing nothing.
     tables, programs, timers
         Reaction tables, thermocycler programs and countdowns the step uses.
     waits
@@ -1268,8 +1306,8 @@ class Step:
     key: str = ""
     section: str = ""
     instructions: tuple[str, ...] = ()
-    cautions: tuple[str, ...] = ()
-    notes: tuple[str, ...] = ()
+    cautions: tuple[Caution | str, ...] = ()
+    notes: tuple[Note | str, ...] = ()
     tables: tuple[ReactionTable, ...] = ()
     programs: tuple[ThermocyclerProgram, ...] = ()
     timers: tuple[Timer, ...] = ()
@@ -1283,7 +1321,7 @@ class Step:
     holes: tuple[Hole, ...] = ()
 
     def __post_init__(self) -> None:
-        """Refuse an empty title or a hands-on time below zero, and slug the key or the title."""
+        """Refuse an empty title or a negative hands-on time; slug the key; make each text one."""
         _require(bool(self.title.strip()), "a step needs a title")
         _require(
             self.hands_on_seconds is None or self.hands_on_seconds >= 0,
@@ -1291,6 +1329,36 @@ class Step:
             "stated it",
         )
         object.__setattr__(self, "key", slug(self.key or self.title))
+        object.__setattr__(
+            self, "notes", tuple(Note(n) if isinstance(n, str) else n for n in self.notes)
+        )
+        object.__setattr__(
+            self,
+            "cautions",
+            tuple(Caution(c) if isinstance(c, str) else c for c in self.cautions),
+        )
+
+    @property
+    def cautioned(self) -> tuple[Caution, ...]:
+        """Every caution, each a `Caution`: `__post_init__` makes one of any bare string.
+
+        Examples
+        --------
+        >>> Step("Thaw the mix", cautions=("Keep it on ice.",)).cautioned
+        (Caution(text='Keep it on ice.', citation=None),)
+        """
+        return cast("tuple[Caution, ...]", self.cautions)
+
+    @property
+    def noted(self) -> tuple[Note, ...]:
+        """Every note, each a `Note`: `__post_init__` makes one of any bare string.
+
+        Examples
+        --------
+        >>> Step("Rest the tube", notes=("It settles.",)).noted
+        (Note(text='It settles.', citation=None),)
+        """
+        return cast("tuple[Note, ...]", self.notes)
 
     @property
     def named(self) -> tuple[str, ...]:
@@ -1333,6 +1401,39 @@ class Step:
         return tuple(c.name for table in self.tables for c in table.components)
 
 
+def sectioned(section: str, *steps: Step) -> tuple[Step, ...]:
+    """Return `steps` labelled as one stretch of a protocol.
+
+    A section labels a run of consecutive steps, so it is named once where the list is
+    assembled. Sentence case, in the voice a step title has, naming what the bench achieves
+    over that stretch.
+
+    Examples
+    --------
+    >>> made = sectioned("Day 1", Step("Thaw the cells"), Step("Plate them"))
+    >>> [step.section for step in made]
+    ['Day 1', 'Day 1']
+    """
+    return tuple(replace(step, section=section) for step in steps)
+
+
+def figured(step: Step, figure: Figure | None) -> Step:
+    """Return `step` showing `figure`, or unchanged where there is no record to draw.
+
+    What a step draws is the plan's to choose, so a builder that knows the chemistry hands the
+    step over without one.
+
+    Examples
+    --------
+    >>> drawn = figured(Step("Ligate"), Figure(("product.dna",), "the join"))
+    >>> drawn.figures[0].caption
+    'the join'
+    >>> figured(Step("Ligate"), None).figures
+    ()
+    """
+    return step if figure is None else replace(step, figures=(figure,))
+
+
 @dataclass(frozen=True, slots=True)
 class Protocol:
     """A bench protocol.
@@ -1353,6 +1454,10 @@ class Protocol:
     highlights
         What a fact means, a sentence each, shown as prose under the cards. A statement a reader
         has to read rather than scan goes here and not in `overview`.
+    background
+        Why the work is shaped as it is, a topic at a time, read before the first step. A run of
+        several protocols says it once, on `Project.background`; a protocol written as a page of
+        its own says it here, so the rationale reaches its reader either way.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
     choice
@@ -1395,6 +1500,7 @@ class Protocol:
     summary: str = ""
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
+    background: tuple[Topic, ...] = ()
     checks: tuple[Check, ...] = ()
     choice: str = ""
     consumes: tuple[Item, ...] = ()
@@ -1487,13 +1593,20 @@ class Protocol:
             if not rule.when or names(rule.when, contents)
         )
 
-    def cautions_for(self, step: Step) -> tuple[str, ...]:
+    def cautions_for(self, step: Step) -> tuple[Caution, ...]:
         """Return every caution `step` shows: its materials' first, then its own, each once.
 
-        A step's own stands where no material carries one.
+        A step's own stands where no material carries one. Where one sentence is both, the
+        one naming a document wins, so deduplication never costs the page a citation.
         """
-        carried = (one for material in self.materials_for(step) for one in material.cautions)
-        return tuple(dict.fromkeys((*carried, *step.cautions)))
+        carried = (
+            Caution(one) for material in self.materials_for(step) for one in material.cautions
+        )
+        each: dict[str, Caution] = {}
+        for one in (*carried, *step.cautioned):
+            if one.text not in each or (one.citation and not each[one.text].citation):
+                each[one.text] = one
+        return tuple(each.values())
 
     def contents_of(self, step: Step) -> tuple[str, ...]:
         """Return what is in the step's tubes: what it pipettes, and what each of those brings."""
@@ -1546,6 +1659,8 @@ class Protocol:
                 *(t.citation for s in self.steps for t in s.transfers),
                 *(f.citation for s in self.steps for f in s.figures),
                 *(t.citation for s in self.steps for t in s.troubleshooting),
+                *(c.citation for s in self.steps for c in s.cautioned),
+                *(n.citation for s in self.steps for n in s.noted),
                 *(w.citation for s in self.steps for w in s.waits),
             )
             if citation
@@ -1861,8 +1976,27 @@ def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
 
 def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    out.write_text(json.dumps(asdict(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(_plain(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return out
+
+
+def _plain(value: Any) -> Any:
+    """Return `value` as JSON data, writing a note or caution citing nothing as its text alone.
+
+    So the common sentence stays the bare string a hand-edited file writes, and only one
+    carrying a citation grows an object.
+    """
+    match value:
+        case Note(citation=None) | Caution(citation=None):
+            return value.text
+        case _ if is_dataclass(value) and not isinstance(value, type):
+            return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}
+        case Mapping():
+            return {key: _plain(item) for key, item in value.items()}
+        case tuple() | list():
+            return [_plain(item) for item in value]
+        case _:
+            return value
 
 
 _PROTOCOL = jsonfile.reader(Protocol)

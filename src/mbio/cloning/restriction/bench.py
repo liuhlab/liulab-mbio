@@ -11,18 +11,44 @@ ligation table NEB prints is 50 ng of a 4 kb vector against 37.5 ng of a 1 kb in
 an example of the rule and not the rule; the rule is picomoles, and that is what is computed.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio.bench.amounts import Amount, dna_amount, to_pmol
 from mbio.bench.reactions import fits, reaction_table
 from mbio.enzymes import Enzyme
 from mbio.protocol.model import (
+    Caution,
+    Citation,
     Component,
     Incubation,
     ReactionTable,
     Reference,
+    Source,
     Stage,
     ThermocyclerProgram,
+)
+
+#: The documents a caution here is read from, so the sentence carries a link and not a vendor's
+#: name. They are declared here rather than in `steps`: `steps` imports this module, so a source
+#: a constant here cites can have no other home. Read through
+#: ``docs/research/restriction-ligation.md`` sections 2 and 7.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "NEB-technical-guide": Source(
+            "New England Biolabs, Restriction Endonuclease Technical Guide",
+            edition="version 5.0 - 7/17",
+            url="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
+            read_as="neb-online.de mirror",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "M0202": Source(
+            "New England Biolabs #M0202 protocol, Ligation Protocol with T4 DNA Ligase",
+            url="https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
 )
 
 # --------------------------------------------------------------------------------------
@@ -58,8 +84,22 @@ METHYLATION_FREE_HOST = "dam⁻/dcm⁻ Competent E. coli (NEB #C2925)"
 MAX_ENZYME_FRACTION = 0.1
 
 #: What the DNA solution may not pass, as a fraction of the reaction: a spin-column eluate
-#: carries salt, and salt inhibits the digest. Technical Guide, §2.
+#: carries salt, and salt inhibits the digest. §2, and `SALT_LOCATOR` is the guide's own page.
 MAX_DNA_FRACTION = 0.25
+
+#: Where in the guide that fraction stands: the row for a digest that did not finish.
+SALT_LOCATOR = "salt inhibition, p. 10"
+
+#: That fraction as the two steps carrying a column eluate warn of it, each carrying the page.
+ELUATE_CAUTION = Caution(
+    f"Keep the eluate under {MAX_DNA_FRACTION:.0%} of the digest below; it carries salt.",
+    citation=Citation("NEB-technical-guide", SALT_LOCATOR),
+)
+SALT_CAUTION = Caution(
+    f"Keep the DNA solution under {MAX_DNA_FRACTION:.0%} of the reaction; a column eluate "
+    "carries salt, and salt leaves the digest incomplete.",
+    citation=Citation("NEB-technical-guide", SALT_LOCATOR),
+)
 
 #: What NEB asks for between a recognition site and the end of a PCR product, and what its own
 #: per-enzyme table measures: at one or two spacer bases most of these enzymes cut poorly, and
@@ -70,14 +110,20 @@ CLEAVAGE_REFERENCE = Reference(
     url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
 )
 
+#: Where in the guide the conditions and their countermeasures are tabled.
+STAR_LOCATOR = "avoiding star activity, p. 5"
+
 #: The conditions NEB names as contributing to star activity, each with its own countermeasure.
 #: Printed, never predicted: NEB's own caveat is that their weight varies from enzyme to enzyme.
-#: §2.
-STAR_ACTIVITY: tuple[str, ...] = (
-    "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
-    "Use the buffer the supplier supplies each enzyme in wherever you can.",
-    "Use the fewest units and the shortest incubation that digest completely.",
-    "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+#: §2, and each carries the guide's own page so the page a bencher reads links it.
+STAR_ACTIVITY: tuple[Caution, ...] = tuple(
+    Caution(text, citation=Citation("NEB-technical-guide", STAR_LOCATOR))
+    for text in (
+        "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
+        "Use the buffer the supplier supplies each enzyme in wherever you can.",
+        "Use the fewest units and the shortest incubation that digest completely.",
+        "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+    )
 )
 
 
@@ -251,10 +297,14 @@ INSERT_RATIO = 3.0
 #: The range that ratio is optimal in, insert to vector. §7.
 RATIO_RANGE = (1.0, 10.0)
 
-#: What the vector and insert together should reach, ng/µL: below the floor a fragment closes on
-#: itself instead of joining its partner. §7, printed rather than computed -- a plan does not
-#: know the concentrations the bench will measure.
+#: What the vector and insert together should reach, ng/µL. NEB's range whole, not a pick inside
+#: one: it recommends 1-10 ng/µL, and says that below 1 a fragment closes on itself instead of
+#: joining its partner. §7, printed rather than computed -- a plan does not know the
+#: concentrations the bench will measure.
 LIGATION_NG_UL = (1.0, 10.0)
+
+#: Where on NEB's ligation protocol that range and its floor stand.
+LIGATION_LOCATOR = "General Guidelines, DNA"
 
 #: The incubations NEB's own table gives at room temperature, seconds: cohesive ends, and blunt
 #: ends or a single-base overhang. The twelvefold difference is the only cost a supplier states

@@ -1,8 +1,9 @@
-"""`plan_dmx`: the way in. One build file in, one protocol folder out.
+"""`plan_dmx`: the way in. One build file in, one protocol page out.
 
 A run reads designs the lab already holds, so there is no DNA to design and no record to write:
 what a plan is here is the protocol someone works through, as a run of one through
-`mbio.cloning.plan.as_project`.
+`mbio.cloning.plan.as_project`. A run of one is written as one page, so what the build says
+about the shape of the run rides on that page rather than on an index of one.
 
 The run is one protocol in three sections, as `synbio.igga` has rendered these same steps
 since it first chained them.
@@ -15,7 +16,7 @@ from pathlib import Path
 from mbio.checks import counted
 from mbio.cloning.plan import as_project
 from mbio.protocol.model import Item, Project, Protocol, Topic, citing
-from mbio.protocol.render import write_project_files
+from mbio.protocol.render import write_run_files
 from synbio.dmx.build import Build, read_build, read_designs
 from synbio.dmx.method import (
     PICKED_PLATE,
@@ -40,19 +41,19 @@ class Files:
     Parameters
     ----------
     protocol_data
-        The run as one JSON file, which ``protocol render`` turns back into pages.
+        The run as one JSON file, which ``protocol render`` turns back into the page.
     protocol
-        Every page rendered from `protocol_data`: the index first, then the protocol, then the
-        two pages the run shares.
+        The interactive bench protocol, as one self-contained HTML page rendered from
+        `protocol_data`.
     """
 
     protocol_data: Path
-    protocol: tuple[Path, ...]
+    protocol: Path
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written, the first written first."""
-        return (self.protocol_data, *self.protocol)
+        """Both, in the order they were written."""
+        return (self.protocol_data, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,17 +118,14 @@ class ReadBackPlan:
         )
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the run's data and its pages into `directory`, which becomes the folder.
+        """Write the run's data and its page into `directory`.
 
         The directory is made when it is not there, the files are named by
         `mbio.protocol.render`, and a second run over the same inputs writes the same
-        bytes.
+        bytes. A run of one protocol is one page, so nothing here is a folder.
         """
-        written = write_project_files(self.chain(), Path(directory))
-        return Files(
-            written.data,
-            (written.index, *written.protocols, written.reagents, written.references),
-        )
+        written = write_run_files(self.chain(), Path(directory))
+        return Files(written.data, written.page)
 
     def _overview(self) -> dict[str, str]:
         """Return the facts a reader scans before starting."""
@@ -201,7 +199,7 @@ def plan_dmx(build: Build | str | os.PathLike[str]) -> ReadBackPlan:
     Returns
     -------
     ReadBackPlan
-        The plan, whose `write` puts the run's data and its pages in one directory.
+        The plan, whose `write` puts the run's data and its page in one directory.
 
     Raises
     ------

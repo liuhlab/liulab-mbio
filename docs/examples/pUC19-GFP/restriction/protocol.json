@@ -1,6 +1,6 @@
 {
   "title": "Restriction and ligation: GFP amplicon insert into pUC19",
-  "key": "40c97641b47dca9c",
+  "key": "50b1f46744f27bae",
   "summary": "Amplify GFP with a recognition site on each primer's 5' tail. Cut pUC19 and GFP amplicon with HindIII and SphI, gel-purify the 2684 bp backbone and the 719 bp insert, ligate them, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -20,6 +20,7 @@
     "There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.",
     "The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG."
   ],
+  "background": [],
   "checks": [
     {
       "name": "buffer",
@@ -384,7 +385,7 @@
     {
       "title": "Amplify GFP",
       "key": "pcr-gfp",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
         "Mix the master mix and put it in each tube, then add the GFP template.",
@@ -395,7 +396,13 @@
       ],
       "notes": [
         "Each primer's 5' tail is a spacer and a recognition site, SphI on the forward end and HindIII on the reverse end. The tail is not on the template, so it does not anneal in the first cycles and the annealing temperature above is read from the annealing regions alone.",
-        "The spacer is what lets the enzyme cut a site this close to the end of a fragment; NEB measures cleavage at one to five bases and answers six for an enzyme it does not list."
+        {
+          "text": "The spacer is what lets the enzyme cut a site this close to the end of a fragment: cleavage is measured at one to five bases, and six is the answer for an enzyme the table does not list.",
+          "citation": {
+            "source": "NEB-cleavage",
+            "locator": "cleavage close to the end"
+          }
+        }
       ],
       "tables": [
         {
@@ -552,12 +559,18 @@
         {
           "problem": "No band",
           "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         },
         {
           "problem": "Several bands",
           "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
-          "citation": null
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
         }
       ],
       "holes": []
@@ -565,7 +578,7 @@
     {
       "title": "Check the PCRs on a gel",
       "key": "pcr-gel",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Pour a 2% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
@@ -617,7 +630,10 @@
         {
           "problem": "A smear or an extra band",
           "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
         }
       ],
       "holes": []
@@ -625,14 +641,27 @@
     {
       "title": "Purify every amplicon",
       "key": "purify-amplicons",
-      "section": "",
+      "section": "Make the fragments",
       "instructions": [
         "Run each reaction over a spin column and elute in the smallest volume the kit allows."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Keep the eluate under 25% of the digest below; it carries salt.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "salt inhibition, p. 10"
+          }
+        }
+      ],
       "notes": [
-        "A column recovers 70% to 90% of the reaction and takes the polymerase, the primers and the dNTPs away, so the digest cuts the amplicon and nothing else.",
-        "Its eluate carries salt, so keep it under 25% of the digest below.",
+        {
+          "text": "A column recovers 70% to 90% of the reaction and takes the polymerase, the primers and the dNTPs away, so the digest cuts the amplicon and nothing else.",
+          "citation": {
+            "source": "T1130",
+            "locator": "typical recovery"
+          }
+        },
         "Nothing further has to take GFP away: it reads neither enzyme's site, so its ends cannot join the backbone. A DpnI digest earns a step only against a Dam-methylated plasmid template."
       ],
       "tables": [],
@@ -650,7 +679,10 @@
         {
           "problem": "Low recovery",
           "solution": "Elute twice through the same column, or pool two reactions before purifying.",
-          "citation": null
+          "citation": {
+            "source": "T1020",
+            "locator": "troubleshooting, low DNA yield"
+          }
         }
       ],
       "holes": []
@@ -658,19 +690,56 @@
     {
       "title": "Digest pUC19 with HindIII and SphI",
       "key": "digest-vector",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Mix the reaction below, 1000 ng of pUC19 first.",
         "Incubate at 37 °C for 60 minutes."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Keep the DNA solution under 25% of the reaction; a column eluate carries salt, and salt leaves the digest incomplete.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "salt inhibition, p. 10"
+          }
+        },
+        {
+          "text": "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Use the buffer the supplier supplies each enzyme in wherever you can.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Use the fewest units and the shortest incubation that digest completely.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        }
+      ],
       "notes": [
-        "Both enzymes are supplied in rCutSmart Buffer, which is NEB's own rule for digesting two of them together.",
-        "Keep the DNA solution under 25% of the reaction; a column eluate carries salt, and salt leaves the digest incomplete.",
-        "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
-        "Use the buffer the supplier supplies each enzyme in wherever you can.",
-        "Use the fewest units and the shortest incubation that digest completely.",
-        "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal."
+        {
+          "text": "Both enzymes are supplied in rCutSmart Buffer, which is the rule for digesting two of them together.",
+          "citation": {
+            "source": "NEB-double-digests",
+            "locator": "choosing a buffer"
+          }
+        }
       ],
       "tables": [
         {
@@ -741,12 +810,18 @@
         {
           "problem": "An uncut band remains",
           "solution": "Add more units or incubate longer, and check the enzymes' methylation sensitivity against the strain the plasmid was grown in.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "incomplete restriction enzyme digestion"
+          }
         },
         {
           "problem": "Extra bands",
           "solution": "Star activity: use fewer units, a shorter incubation and the supplied buffer.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "extra bands"
+          }
         }
       ],
       "holes": []
@@ -754,20 +829,57 @@
     {
       "title": "Digest GFP amplicon with HindIII and SphI",
       "key": "digest-insert",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Mix the reaction below, 1000 ng of GFP amplicon first.",
         "Incubate at 37 °C for 60 minutes."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Keep the DNA solution under 25% of the reaction; a column eluate carries salt, and salt leaves the digest incomplete.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "salt inhibition, p. 10"
+          }
+        },
+        {
+          "text": "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Use the buffer the supplier supplies each enzyme in wherever you can.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Use the fewest units and the shortest incubation that digest completely.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        },
+        {
+          "text": "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal.",
+          "citation": {
+            "source": "NEB-technical-guide",
+            "locator": "avoiding star activity, p. 5"
+          }
+        }
+      ],
       "notes": [
-        "Both enzymes are supplied in rCutSmart Buffer, which is NEB's own rule for digesting two of them together.",
-        "Keep the DNA solution under 25% of the reaction; a column eluate carries salt, and salt leaves the digest incomplete.",
-        "The two tails come off as 11 and 11 bp ends. They run off the bottom of the gel and neither can close the circle, so the insert is the only band to cut out.",
-        "Keep the enzymes under 10% of the reaction, which keeps glycerol under 5%.",
-        "Use the buffer the supplier supplies each enzyme in wherever you can.",
-        "Use the fewest units and the shortest incubation that digest completely.",
-        "Keep the DNA free of organic solvents, and use Mg²⁺ rather than another metal."
+        {
+          "text": "Both enzymes are supplied in rCutSmart Buffer, which is the rule for digesting two of them together.",
+          "citation": {
+            "source": "NEB-double-digests",
+            "locator": "choosing a buffer"
+          }
+        },
+        "The two tails come off as 11 and 11 bp ends. They run off the bottom of the gel and neither can close the circle, so the insert is the only band to cut out."
       ],
       "tables": [
         {
@@ -837,12 +949,18 @@
         {
           "problem": "An uncut band remains",
           "solution": "Add more units or incubate longer, and check the enzymes' methylation sensitivity against the strain the plasmid was grown in.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "incomplete restriction enzyme digestion"
+          }
         },
         {
           "problem": "Extra bands",
           "solution": "Star activity: use fewer units, a shorter incubation and the supplied buffer.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "extra bands"
+          }
         }
       ],
       "holes": []
@@ -850,7 +968,7 @@
     {
       "title": "Separate the digests on a gel and recover the two fragments",
       "key": "gel-purify",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Pour a 1% agarose gel and load each whole digest beside the ladder.",
         "Run until the bands below are apart.",
@@ -925,12 +1043,18 @@
         {
           "problem": "Two bands did not separate",
           "solution": "Run the gel further, or pour it at a percentage that resolves that size range.",
-          "citation": null
+          "citation": {
+            "source": "T1120",
+            "locator": "agarose concentration, p. 6"
+          }
         },
         {
           "problem": "Little DNA comes off the column",
           "solution": "Elute twice through the same column, and keep the agarose percentage low.",
-          "citation": null
+          "citation": {
+            "source": "T1020",
+            "locator": "troubleshooting, low DNA yield"
+          }
         }
       ],
       "holes": []
@@ -938,7 +1062,7 @@
     {
       "title": "Measure every concentration",
       "key": "quantify",
-      "section": "",
+      "section": "Cut and recover",
       "instructions": [
         "Measure each purified amplicon by A260 or with a fluorometer.",
         "Work out the volume that carries the picomoles the next table asks for."
@@ -971,16 +1095,23 @@
     {
       "title": "Ligate the insert into the backbone",
       "key": "ligate",
-      "section": "",
+      "section": "Assemble",
       "instructions": [
         "Mix the reaction below, the DNA first and the ligase last.",
         "Hold at 25 °C for 10 minutes, or overnight at 16 °C.",
         "Then run the heat step below, and chill on ice."
       ],
-      "cautions": [],
+      "cautions": [
+        {
+          "text": "Keep the two fragments together at 1 to 10 ng/µL. Below that a fragment closes on itself instead of joining its partner.",
+          "citation": {
+            "source": "M0202",
+            "locator": "General Guidelines, DNA"
+          }
+        }
+      ],
       "notes": [
         "Picomoles, not nanograms: the table asks for a molar ratio, and the shorter fragment weighs less at the same ratio.",
-        "Keep the two fragments together at 1 to 10 ng/µL. Below that a fragment closes on itself instead of joining its partner.",
         "Junction positions are 1-based, on the product."
       ],
       "tables": [
@@ -1070,7 +1201,26 @@
       "waits": [],
       "hands_on_seconds": null,
       "transfers": [],
-      "figures": [],
+      "figures": [
+        {
+          "records": [
+            "product.dna"
+          ],
+          "caption": "pUC19-GFP as the ligation closes it: the GCATGC and AAGCTT junctions it spells, and where HindIII and SphI cut it.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [
+            "HindIII",
+            "SphI"
+          ],
+          "highlight": [
+            "GCATGC junction",
+            "AAGCTT junction"
+          ],
+          "citation": null
+        }
+      ],
       "gels": [],
       "expected": [
         "The product carries GCATGC at 442, joining pUC19 backbone to GFP amplicon insert.",
@@ -1081,12 +1231,18 @@
         {
           "problem": "No colonies later",
           "solution": "At least one fragment has to carry a 5' phosphate; vary the ratio, and use a fresh buffer aliquot, because its ATP goes over freeze-thaws.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "Empty vector on the plate",
           "solution": "The backbone band carried some uncut plasmid; run the gel further and cut the band clean.",
-          "citation": null
+          "citation": {
+            "source": "NEB-background-faq",
+            "locator": "reducing vector-only background colonies"
+          }
         }
       ],
       "holes": []
@@ -1094,7 +1250,7 @@
     {
       "title": "Transform and plate",
       "key": "transform",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
         "Add 2 µL of the assembly and flick the tube four or five times.",
@@ -1144,7 +1300,10 @@
         {
           "problem": "No colonies",
           "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
         },
         {
           "problem": "A lawn",
@@ -1157,7 +1316,7 @@
     {
       "title": "Screen colonies by PCR",
       "key": "colony-pcr",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
         "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
@@ -1336,7 +1495,10 @@
         {
           "problem": "No band in any lane",
           "solution": "The colony was too much material: touch a smaller one, or dilute it.",
-          "citation": null
+          "citation": {
+            "source": "colony-pcr",
+            "locator": "template"
+          }
         }
       ],
       "holes": []
@@ -1344,17 +1506,17 @@
     {
       "title": "Check a miniprep by digesting it with HindIII and SphI",
       "key": "diagnostic-digest",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three of the colonies the PCR called correct.",
         "Mix the reaction below, 1000 ng of miniprep first.",
         "Incubate at 37 °C for 60 minutes.",
-        "Run the whole digest on a 1% agarose gel beside the ladder."
+        "Run the whole digest on a 1% agarose gel beside the ladder.",
+        "Sequence only a miniprep that gives the clone's bands."
       ],
       "cautions": [],
       "notes": [
-        "The junctions put both recognition sites back, so the pair that made the clone is what cuts the insert out of it again.",
-        "Sequence only a miniprep that gives the clone's bands."
+        "The junctions put both recognition sites back, so the pair that made the clone is what cuts the insert out of it again."
       ],
       "tables": [
         {
@@ -1470,12 +1632,18 @@
         {
           "problem": "Every miniprep gives the vector's bands",
           "solution": "The background is uncut or religated vector; run the controls under the transformation to find which.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "too much background"
+          }
         },
         {
           "problem": "One band, at the plasmid's full length",
           "solution": "Only one site cut. Check the enzymes' methylation sensitivity against the strain the miniprep was grown in.",
-          "citation": null
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "incomplete restriction enzyme digestion"
+          }
         }
       ],
       "holes": []
@@ -1483,7 +1651,7 @@
     {
       "title": "Confirm the clone by sequencing",
       "key": "sequencing",
-      "section": "",
+      "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each with both sequencing primers.",
@@ -1511,7 +1679,10 @@
         {
           "problem": "The read starts too close to the junction",
           "solution": "Move the primer further out; the first bases after a primer are unreadable.",
-          "citation": null
+          "citation": {
+            "source": "genewiz-sanger",
+            "locator": "sequencing primer design"
+          }
         }
       ],
       "holes": []
@@ -1584,6 +1755,38 @@
       "date": "2026-09-12",
       "note": ""
     },
+    "NEB-cloning": {
+      "document": "New England Biolabs, Troubleshooting Guide for Cloning",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1020": {
+      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.1_4/21",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "colony-pcr": {
+      "document": "New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes",
+      "edition": "Y. Xu, 11/13",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "genewiz-sanger": {
+      "document": "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+      "edition": "",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
     "M0480": {
       "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
       "edition": "protocols.io version 2, 2022-02-21",
@@ -1591,6 +1794,62 @@
       "read_as": "",
       "date": "2026-09-12",
       "note": ""
+    },
+    "NEB-technical-guide": {
+      "document": "New England Biolabs, Restriction Endonuclease Technical Guide",
+      "edition": "version 5.0 - 7/17",
+      "url": "https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
+      "read_as": "neb-online.de mirror",
+      "date": "",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "M0202": {
+      "document": "New England Biolabs #M0202 protocol, Ligation Protocol with T4 DNA Ligase",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1120": {
+      "document": "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.0 10.25",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "NEB-background-faq": {
+      "document": "New England Biolabs FAQ, How can I reduce the number of vector-only background colonies?",
+      "edition": "capture 2019-11-23",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1130": {
+      "document": "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+      "edition": "version 1.0 06.24",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "NEB-double-digests": {
+      "document": "New England Biolabs usage guideline, Double Digests",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "NEB-cleavage": {
+      "document": "New England Biolabs usage guideline, Cleavage Close to the End of DNA Fragments",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
     }
   },
   "holes": [],
