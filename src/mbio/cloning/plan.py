@@ -34,6 +34,15 @@ PRODUCT_FILE = "product.dna"
 #: What a plan calls the sheet it orders its oligos from.
 PRIMER_FILE = "primers.tsv"
 
+#: The stretch where the pieces to be joined are made, named by every method that amplifies one.
+MAKE_SECTION = "Make the fragments"
+
+#: The stretch where the pieces become one molecule.
+JOIN_SECTION = "Assemble"
+
+#: The stretch where the joined molecule goes into cells and the right colony is found.
+SCREEN_SECTION = "Transform and screen"
+
 #: Where a method puts its inserts: a feature name, a span, or `None` to look for `MCS_FEATURE`.
 type Site = str | tuple[int, int] | None
 

@@ -66,7 +66,12 @@ from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from mbio.cloning.goldengate.design import OverhangSet
 from mbio.cloning.goldengate.oligos import DesignedOligo
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import (
+    JOIN_SECTION,
+    MAKE_SECTION,
+    PRODUCT_FILE,
+    SCREEN_SECTION,
+)
 from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
@@ -82,6 +87,7 @@ from mbio.protocol.model import (
     Troubleshooting,
     citing,
     figured,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -349,10 +355,10 @@ def _steps(
     """Return the steps in the order they happen, the shared ones carrying Golden Gate's notes."""
     enzyme = assembly.enzyme
     cut = [part for part in parts if part.dpni]
-    steps = [_pcr_step(part, enzyme, polymerase) for part in parts]
-    steps.append(gel_step([(part.name, part.length) for part in parts]))
+    made = [_pcr_step(part, enzyme, polymerase) for part in parts]
+    made.append(gel_step([(part.name, part.length) for part in parts]))
     if cut:
-        steps.append(
+        made.append(
             dpni_step(
                 [part.name for part in cut],
                 [(part.template.name, dam_sites(part.template)) for part in cut],
@@ -365,7 +371,7 @@ def _steps(
                 ),
             )
         )
-    steps.append(
+    made.append(
         cleanup_step(
             notes=(
                 Note(
@@ -377,39 +383,41 @@ def _steps(
             )
         )
     )
-    steps.append(quantify_step(amounts))
-    steps.append(_assembly_step(enzyme, amounts))
-    steps.append(
-        figured(
-            _cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)),
-            _assembly_figure(assembly),
-        )
-    )
-    steps.append(
-        transform_step(
-            host,
-            phenotype,
-            inserts=inserts,
-            colonies=f"Hundreds of colonies; NEB counts about {NEB_COLONIES} correct ones from a "
-            "single-insert assembly with 2.5 µL of the outgrowth plated.",
-        )
-    )
-    steps.append(
-        colony_pcr_step(
-            colony,
-            junctions=len(assembly.junctions),
-            troubleshooting=(
-                Troubleshooting(
-                    "Every colony reads as empty vector",
-                    "The template survived the DpnI digest, or the vector re-closed; check the "
-                    "60 °C soak ran.",
-                    citation=Citation("E1601", "FAQ 10"),
+    made.append(quantify_step(amounts))
+    return (
+        *sectioned(MAKE_SECTION, *made),
+        *sectioned(
+            JOIN_SECTION,
+            _assembly_step(enzyme, amounts),
+            figured(
+                _cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)),
+                _assembly_figure(assembly),
+            ),
+        ),
+        *sectioned(
+            SCREEN_SECTION,
+            transform_step(
+                host,
+                phenotype,
+                inserts=inserts,
+                colonies=f"Hundreds of colonies; NEB counts about {NEB_COLONIES} correct ones "
+                "from a single-insert assembly with 2.5 µL of the outgrowth plated.",
+            ),
+            colony_pcr_step(
+                colony,
+                junctions=len(assembly.junctions),
+                troubleshooting=(
+                    Troubleshooting(
+                        "Every colony reads as empty vector",
+                        "The template survived the DpnI digest, or the vector re-closed; check "
+                        "the 60 °C soak ran.",
+                        citation=Citation("E1601", "FAQ 10"),
+                    ),
                 ),
             ),
-        )
+            sequencing_step(reads, junctions=overhangs.overhangs, inserts=inserts),
+        ),
     )
-    steps.append(sequencing_step(reads, junctions=overhangs.overhangs, inserts=inserts))
-    return tuple(steps)
 
 
 def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:

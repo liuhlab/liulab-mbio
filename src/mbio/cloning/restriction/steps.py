@@ -61,7 +61,12 @@ from mbio.bench.steps import (
 )
 from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import (
+    JOIN_SECTION,
+    MAKE_SECTION,
+    PRODUCT_FILE,
+    SCREEN_SECTION,
+)
 from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
@@ -122,6 +127,7 @@ from mbio.protocol.model import (
     Troubleshooting,
     citing,
     figured,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -585,35 +591,46 @@ def _steps(
     """Return the steps in the order they happen, the shared ones carrying this method's notes."""
     backbone, insert = ligation.pieces
     return (
-        *_amplify_steps(amplicon, polymerase),
-        _digest_step(
-            vector, enzymes, vector_pieces, digests[0], key="digest-vector", keeping=backbone
+        *sectioned(MAKE_SECTION, *_amplify_steps(amplicon, polymerase)),
+        *sectioned(
+            "Cut and recover",
+            _digest_step(
+                vector, enzymes, vector_pieces, digests[0], key="digest-vector", keeping=backbone
+            ),
+            *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
+            _digest_step(
+                digested,
+                enzymes,
+                source_pieces,
+                digests[1],
+                key="digest-insert",
+                keeping=insert,
+                notes=_stubs(amplicon, insert),
+            ),
+            _purify_step(
+                vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)
+            ),
+            quantify_step(amounts),
         ),
-        *_phosphatase_steps(vector, backbone, digests[0], dephosphorylate=dephosphorylate),
-        _digest_step(
-            digested,
-            enzymes,
-            source_pieces,
-            digests[1],
-            key="digest-insert",
-            keeping=insert,
-            notes=_stubs(amplicon, insert),
+        *sectioned(
+            JOIN_SECTION,
+            figured(_ligation_step(ligation, amounts), _ligation_figure(ligation, enzymes)),
         ),
-        _purify_step(vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)),
-        quantify_step(amounts),
-        figured(_ligation_step(ligation, amounts), _ligation_figure(ligation, enzymes)),
-        transform_step(
-            host,
-            phenotype,
-            inserts=[insert.name],
-            colonies="No supplier states a colony count for this method, so run the controls "
-            "below and read the plate against them rather than against a number.",
-            expected=CONTROLS,
-        ),
-        colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
-        _diagnostic_step(diagnostic, product=ligation.product),
-        sequencing_step(
-            reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+        *sectioned(
+            SCREEN_SECTION,
+            transform_step(
+                host,
+                phenotype,
+                inserts=[insert.name],
+                colonies="No supplier states a colony count for this method, so run the controls "
+                "below and read the plate against them rather than against a number.",
+                expected=CONTROLS,
+            ),
+            colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
+            _diagnostic_step(diagnostic, product=ligation.product),
+            sequencing_step(
+                reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+            ),
         ),
     )
 

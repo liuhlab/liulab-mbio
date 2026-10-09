@@ -24,9 +24,9 @@ from mbio.cloning.gibson.steps import (
     MOLECULES_PER_ERROR,
     SCREENED_COLONIES,
 )
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import MAKE_SECTION, PRODUCT_FILE
 from mbio.edits import flipped
-from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
+from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html, sectioned
 from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import read_dna
@@ -134,7 +134,11 @@ def test_the_screening_steps_are_the_shared_builders_and_not_a_second_copy(made)
     assert isinstance(made.colony, ColonyCheck)
     assert all(isinstance(read, SangerRead) for read in made.reads)
     steps = {step.title: step for step in made.protocol().steps}
-    assert steps["Measure every concentration"] == quantify_step(made.amounts)
+    # A section is attached at the step list, so it is all the builder's own step gains there.
+    assert (
+        steps["Measure every concentration"]
+        == sectioned(MAKE_SECTION, quantify_step(made.amounts))[0]
+    )
 
 
 def test_the_plans_status_is_the_worst_of_its_checks(made):

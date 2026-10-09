@@ -65,7 +65,12 @@ from mbio.cloning.gibson.design import (
     STITCH_OVERLAP_BP,
 )
 from mbio.cloning.gibson.oligos import DesignedOligo
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import (
+    JOIN_SECTION,
+    MAKE_SECTION,
+    PRODUCT_FILE,
+    SCREEN_SECTION,
+)
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
@@ -82,6 +87,7 @@ from mbio.protocol.model import (
     Troubleshooting,
     citing,
     figured,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -434,12 +440,12 @@ def _steps(
     on the gel, so neither step names it and neither happens at all where no part is amplified.
     """
     cut = [part for part in parts if part.dpni]
-    made = [part for part in parts if part.amplified]
-    steps = [_pcr_step(part, assembly, polymerase) for part in made]
-    if made:
-        steps.append(gel_step([(part.name, part.length) for part in made]))
+    amplified = [part for part in parts if part.amplified]
+    made = [_pcr_step(part, assembly, polymerase) for part in amplified]
+    if amplified:
+        made.append(gel_step([(part.name, part.length) for part in amplified]))
     if cut:
-        steps.append(
+        made.append(
             dpni_step(
                 [part.name for part in cut],
                 [(part.template.name, dam_sites(part.template)) for part in cut],
@@ -459,7 +465,7 @@ def _steps(
                 ),
             )
         )
-    steps.append(
+    made.append(
         cleanup_step(
             notes=(
                 Note(
@@ -478,41 +484,43 @@ def _steps(
             )
         )
     )
-    steps.append(quantify_step(amounts))
-    steps.append(_assembly_step(product, amounts, parts, assembly.junctions))
-    steps.append(
-        figured(
-            _incubation_step(product, assembly.junctions, len(parts), len(assembly.product)),
-            _assembly_figure(assembly),
-        )
-    )
-    steps.append(
-        transform_step(
-            host,
-            phenotype,
-            inserts=inserts,
-            colonies=f"Hundreds of colonies. NEB's own lot test asks for more than "
-            f"{RELEASE_COLONIES} from a six-fragment assembly with a tenth of the outgrowth "
-            f"plated; this reaction joins {len(parts)}.",
-        )
-    )
-    steps.append(_colony_pcr_step(colony, assembly))
-    steps.append(
-        sequencing_step(
-            reads,
-            junctions=[one.overlap for one in assembly.junctions],
-            inserts=inserts,
-            notes=(
-                Note(
-                    f"About one error per {MOLECULES_PER_ERROR} molecules joined was found in "
-                    "210 sequenced junctions, so a gel that reads right is not the same as a "
-                    "junction that is right.",
-                    citation=Citation("Gibson 2009"),
+    made.append(quantify_step(amounts))
+    return (
+        *sectioned(MAKE_SECTION, *made),
+        *sectioned(
+            JOIN_SECTION,
+            _assembly_step(product, amounts, parts, assembly.junctions),
+            figured(
+                _incubation_step(product, assembly.junctions, len(parts), len(assembly.product)),
+                _assembly_figure(assembly),
+            ),
+        ),
+        *sectioned(
+            SCREEN_SECTION,
+            transform_step(
+                host,
+                phenotype,
+                inserts=inserts,
+                colonies=f"Hundreds of colonies. NEB's own lot test asks for more than "
+                f"{RELEASE_COLONIES} from a six-fragment assembly with a tenth of the outgrowth "
+                f"plated; this reaction joins {len(parts)}.",
+            ),
+            _colony_pcr_step(colony, assembly),
+            sequencing_step(
+                reads,
+                junctions=[one.overlap for one in assembly.junctions],
+                inserts=inserts,
+                notes=(
+                    Note(
+                        f"About one error per {MOLECULES_PER_ERROR} molecules joined was found "
+                        "in 210 sequenced junctions, so a gel that reads right is not the same "
+                        "as a junction that is right.",
+                        citation=Citation("Gibson 2009"),
+                    ),
                 ),
             ),
-        )
+        ),
     )
-    return tuple(steps)
 
 
 def _pcr_step(part: Part, assembly: Assembly, polymerase: Polymerase) -> Step:

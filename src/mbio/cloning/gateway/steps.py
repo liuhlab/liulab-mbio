@@ -92,7 +92,7 @@ from mbio.cloning.gateway.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
 from mbio.cloning.gateway.oligos import DesignedOligo
 from mbio.cloning.gateway.recombination import Junction, PlannedReaction
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import MAKE_SECTION, PRODUCT_FILE, SCREEN_SECTION
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import (
     Citation,
@@ -108,6 +108,7 @@ from mbio.protocol.model import (
     citing,
     figured,
     number,
+    sectioned,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -457,7 +458,8 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
     if amplicon is None:
         return ()
     forward, reverse = amplicon.tails
-    return (
+    return sectioned(
+        MAKE_SECTION,
         pcr_step(
             amplicon.name,
             amplicon.template.name or "the insert",
@@ -596,7 +598,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
         ),
         _miniprep_step(entry),
     )
-    return (setup, figured(run, _bp_figure(bp)), *rest)
+    return sectioned("Make the entry clone", setup, figured(run, _bp_figure(bp)), *rest)
 
 
 def _miniprep_step(entry: SequenceRecord) -> Step:
@@ -645,7 +647,7 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
 
 def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
     """Return the LR stage, which every plan runs."""
-    setup, run, *rest = (
+    setup, run, stop, transform = (
         Step(
             "Set up the LR reaction",
             key="set-up-lr",
@@ -734,7 +736,10 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             ),
         ),
     )
-    return (setup, figured(run, _lr_figure(lr)), *rest)
+    return (
+        *sectioned("Recombine", setup, figured(run, _lr_figure(lr)), stop),
+        *sectioned(SCREEN_SECTION, transform),
+    )
 
 
 def _validation_steps(
@@ -751,7 +756,8 @@ def _validation_steps(
     a sequencing read has to cover, and neither exists until LR has run.
     """
     entry, insert = _carrier(lr).name, lr.recombination.moved.name or "the insert"
-    return (
+    return sectioned(
+        SCREEN_SECTION,
         colony_pcr_step(
             colony,
             junctions=len(lr.junctions),
