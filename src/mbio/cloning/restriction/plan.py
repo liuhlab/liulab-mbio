@@ -37,11 +37,11 @@ from mbio.checks import Check, Status
 from mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    as_project,
     as_record,
     ordered_from_sheet,
     primer_check,
     status,
-    write_protocol_files,
 )
 from mbio.cloning.restriction.amplify import Amplicon, amplified
 from mbio.cloning.restriction.bench import digest_amount, ligation_amounts
@@ -76,6 +76,7 @@ from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import Protocol
+from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord, counted_round
 from mbio.sites import EnzymeLike, find_sites
 from mbio.snapgene import write_dna
@@ -276,8 +277,8 @@ class Plan:
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the product, the oligo sheet, the protocol data and its page into `directory`.
 
-        The directory is made when it is not there. All four names are
-        `mbio.cloning.plan`'s, and a second run over the same inputs writes the same bytes.
+        The directory is made when it is not there. The names are `mbio.cloning.plan`'s and
+        `mbio.protocol.render`'s, and a second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
@@ -285,7 +286,7 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        written = write_protocol_files(self.protocol(), out)
+        written = write_run_files(as_project(self.protocol()), out)
         return Files(product, sheet, written.data, written.page)
 
 

@@ -1386,6 +1386,10 @@ class Protocol:
     highlights
         What a fact means, a sentence each, shown as prose under the cards. A statement a reader
         has to read rather than scan goes here and not in `overview`.
+    background
+        Why the work is shaped as it is, a topic at a time, read before the first step. A run of
+        several protocols says it once, on `Project.background`; a protocol written as a page of
+        its own says it here, so the rationale reaches its reader either way.
     checks
         Verdicts on the work, shown as a strip of badges, so a warning is seen and not read.
     choice
@@ -1428,6 +1432,7 @@ class Protocol:
     summary: str = ""
     overview: Mapping[str, str] = field(default_factory=dict, hash=False)
     highlights: tuple[str, ...] = ()
+    background: tuple[Topic, ...] = ()
     checks: tuple[Check, ...] = ()
     choice: str = ""
     consumes: tuple[Item, ...] = ()

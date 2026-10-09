@@ -4,6 +4,7 @@ The frame around them — the nav bar, the two columns and the links between pag
 `test_folder.py`'s. This file reads what fills them.
 """
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -202,9 +203,17 @@ def test_the_index_links_a_file_the_run_writes_where_its_background_names_it() -
     assert link.attrs["href"] == "../changes.tsv"
 
 
-def test_the_background_renders_on_the_index_and_on_no_protocol_page(project: Project) -> None:
-    page = parse(render_html(project.protocols[0], folder=Folder.of(project), here="01.html"))
-    assert not page.find_all("section", cls="topic")
+def test_a_protocol_page_shows_its_own_background_and_not_the_runs(project: Project) -> None:
+    """The run says it once, on the index; a protocol page says only what it carries itself."""
+    one = project.protocols[0]
+    borrowed = parse(render_html(one, folder=Folder.of(project), here="01.html"))
+    assert not borrowed.find_all("section", cls="topic")
+
+    own = replace(one, background=(Topic("Why one tube", ("Two tubes would be mixed up.",)),))
+    [topic] = parse(render_html(own, folder=Folder.of(project), here="01.html")).find_all(
+        "section", cls="topic"
+    )
+    assert topic.find_all("h2")[0].text == "Why one tube"
 
 
 def test_every_name_on_the_flow_chart_is_an_item_some_protocol_declared(

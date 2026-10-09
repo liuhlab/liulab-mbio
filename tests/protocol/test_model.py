@@ -286,6 +286,7 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "summary": "",',
             '  "overview": {},',
             '  "highlights": [],',
+            '  "background": [],',
             '  "checks": [],',
             '  "choice": "",',
             '  "consumes": [],',

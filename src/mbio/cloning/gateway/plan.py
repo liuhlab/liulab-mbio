@@ -44,16 +44,17 @@ from mbio.cloning.gateway.steps import protocol as protocol_for
 from mbio.cloning.plan import (
     PRIMER_FILE,
     PRODUCT_FILE,
+    as_project,
     as_record,
     ordered_from_sheet,
     primer_check,
     status,
-    write_protocol_files,
 )
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import Protocol
+from mbio.protocol.render import write_run_files
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import write_dna
 
@@ -218,7 +219,7 @@ class Plan:
 
         The directory is made when it is not there. The entry clone is written only where BP
         was planned, under `ENTRY_FILE`; the rest are named by `PRODUCT_FILE`, `PRIMER_FILE` and
-        by `mbio.cloning.plan` for the protocol pair. A second run over the same inputs
+        by `mbio.protocol.render` for the protocol pair. A second run over the same inputs
         writes the same bytes.
         """
         out = Path(directory)
@@ -231,7 +232,7 @@ class Plan:
         write_dna(self.product, product)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
-        written = write_protocol_files(self.protocol(), out)
+        written = write_run_files(as_project(self.protocol()), out)
         return Files(entry, product, sheet, written.data, written.page)
 
 

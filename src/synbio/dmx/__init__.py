@@ -18,7 +18,7 @@ barcode axes and one axis is the plate, so two plates on one flow cell are told 
 construction and a demultiplexer can check an address instead of trusting a file.
 
 `plan_dmx` is the way in: it takes one build file naming a sheet of designs and the plate they
-are spotted from, and writes the run as a protocol folder. `build` holds what one run chooses,
+are spotted from, and writes the run as one protocol page. `build` holds what one run chooses,
 checked as it is read; `method` holds the routes, the addresses, the plates and the protocol's
 own pieces; `steps` writes them up as the steps a reader works through; `kit` holds the 96
 barcodes, which are not shipped and are read from a copy the user holds; `carrier` puts one part

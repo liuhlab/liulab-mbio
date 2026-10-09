@@ -1,20 +1,21 @@
 """What every cloning plan is: the files it writes, its status, and the records it was made from.
 
 A method's own plan module holds its design, its `Plan` and the file set it writes. What every
-one of them repeats is here: the shape a plan and its written files take, the names of the files
-any plan writes, the protocol pair, the worst-of rule a plan's status follows, where a method
-puts its inserts and which way round they go, how its oligos are judged as one, and taking a
-record the caller already read.
+one of them repeats is here: the shape a plan and its written files take, the names of the
+records and sheets any plan writes, a protocol read as the run of one it is, the worst-of rule a
+plan's status follows, where a method puts its inserts and which way round they go, how its
+oligos are judged as one, and taking a record the caller already read. What a run writes to disk
+is `mbio.protocol.render.write_run_files`, which every pipeline shares.
 
 The library pipeline is not a cloning method -- `docs/adr/0004-library-rounds.md` says why --
-but its plan writes the same protocol pair, so it uses this module too.
+but its plan writes the same files, so it uses this module too.
 """
 
 import os
 import typing  # Spelled out: `Protocol` here is the bench protocol imported below.
 from collections import Counter
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from pathlib import Path
 from typing import Literal
 
@@ -22,8 +23,7 @@ from mbio.checks import Check, Status, worst, worst_of
 from mbio.io import read_record
 from mbio.primers.evaluation import PrimerReport
 from mbio.primers.thresholds import reading
-from mbio.protocol.model import Project, Protocol, read_protocol, write_protocol
-from mbio.protocol.render import minted, write_html
+from mbio.protocol.model import Project, Protocol
 from mbio.sequence import Feature, SequenceRecord, across_the_origin
 
 #: What a plan calls the product it writes: the annotated plasmid the design makes.
@@ -31,10 +31,6 @@ PRODUCT_FILE = "product.dna"
 
 #: What a plan calls the sheet it orders its oligos from.
 PRIMER_FILE = "primers.tsv"
-
-#: What a plan calls its protocol, as the data and as the page rendered from it.
-PROTOCOL_DATA_FILE = "protocol.json"
-PROTOCOL_FILE = "protocol.html"
 
 #: Where a method puts its inserts: a feature name, a span, or `None` to look for `MCS_FEATURE`.
 type Site = str | tuple[int, int] | None
@@ -67,37 +63,6 @@ class Planned(typing.Protocol):
         ...
 
 
-@dataclass(frozen=True, slots=True)
-class ProtocolFiles:
-    """The protocol pair a plan writes, which the plan's own file set carries.
-
-    Parameters
-    ----------
-    data
-        The bench protocol as JSON, which ``protocol render`` turns back into a page.
-    page
-        The interactive bench protocol, as one self-contained HTML page rendered from `data`.
-    """
-
-    data: Path
-    page: Path
-
-
-def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) -> ProtocolFiles:
-    """Write `protocol` into `directory` as `PROTOCOL_DATA_FILE` and `PROTOCOL_FILE`.
-
-    The directory is made when it is not there, and the page is rendered from the data as
-    written, so the two cannot disagree. The data carries the key its page remembers the bench's
-    check marks under, so an agent editing it and rendering again keeps the ticks already made.
-    The same protocol writes the same bytes. A plan of several protocols writes a folder of
-    linked pages instead, through `protocol.render.write_project_files`.
-    """
-    out = Path(directory)
-    out.mkdir(parents=True, exist_ok=True)
-    data = write_protocol(minted(protocol), out / PROTOCOL_DATA_FILE)
-    return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
-
-
 def ordered_from_sheet(protocol: Protocol) -> Protocol:
     """Return `protocol` naming the primer sheet its plan writes beside its page.
 
@@ -113,7 +78,8 @@ def as_project(protocol: Protocol) -> Project:
 
     What it consumes is what the bench already holds, so those are the project's inputs and the
     chain resolves. Whatever reads a run then reads one shape, and a run of several protocols is
-    no special case of it.
+    no special case of it. What that run writes still follows its length:
+    `mbio.protocol.render.write_run_files` turns a run of one back into one page.
     """
     return Project(
         protocol.title,
