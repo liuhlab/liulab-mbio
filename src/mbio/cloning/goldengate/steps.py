@@ -66,12 +66,14 @@ from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from mbio.cloning.goldengate.design import OverhangSet
 from mbio.cloning.goldengate.oligos import DesignedOligo
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
     Citation,
     Component,
+    Figure,
     Material,
     Note,
     Protocol,
@@ -79,6 +81,7 @@ from mbio.protocol.model import (
     Step,
     Troubleshooting,
     citing,
+    figured,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -376,7 +379,12 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(enzyme, amounts))
-    steps.append(_cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)))
+    steps.append(
+        figured(
+            _cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)),
+            _assembly_figure(assembly),
+        )
+    )
     steps.append(
         transform_step(
             host,
@@ -488,6 +496,19 @@ def _cycling_step(
                 citation=Citation("E1601", "FAQ 14"),
             ),
         ),
+    )
+
+
+def _assembly_figure(assembly: Assembly) -> Figure:
+    """Return the plasmid the reaction closes, every junction it spells lit."""
+    enzyme = assembly.enzyme.name
+    spelled = listed([one.overhang for one in assembly.junctions])
+    return Figure(
+        (PRODUCT_FILE,),
+        f"{assembly.product.name} as the reaction closes it: the {spelled} junctions it spells, "
+        f"and every {enzyme} site left on it.",
+        enzymes=(enzyme,),
+        highlight=tuple(dict.fromkeys(one.feature_name for one in assembly.junctions)),
     )
 
 

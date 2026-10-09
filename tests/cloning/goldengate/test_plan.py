@@ -26,6 +26,7 @@ from mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
 from mbio.bench.oligos import primer_sheet
 from mbio.cloning.goldengate import plan_assembly
 from mbio.cloning.goldengate.oligos import DesignedOligo
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.edits import rotate
 from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from mbio.protocol.render import minted
@@ -142,7 +143,7 @@ def test_the_four_files_land_where_they_are_named_and_hold_what_the_plan_holds(p
     assert read_dna(outputs.product) == plan.product
     assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
-    assert page == render_html(read_protocol(outputs.protocol_data))
+    assert page == render_html(read_protocol(outputs.protocol_data), base=tmp_path / "run")
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
@@ -517,3 +518,15 @@ def _sentences(protocol) -> str:
         for entry in step.troubleshooting:
             parts += [entry.problem, entry.solution]
     return " ".join(parts)
+
+
+def test_the_assembly_step_shows_the_product_with_every_junction_lit(plan):
+    """One figure, on the step that joins the fragments, drawing the file written beside it."""
+    [step] = [one for one in plan.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "run-assembly"
+    assert figure.records == (PRODUCT_FILE,)
+    assert figure.enzymes == (plan.assembly.enzyme.name,)
+    assert set(figure.highlight) == {one.feature_name for one in plan.assembly.junctions}
+    assert set(figure.highlight) <= {one.name for one in plan.product.features}

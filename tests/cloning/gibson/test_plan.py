@@ -24,6 +24,7 @@ from mbio.cloning.gibson.steps import (
     MOLECULES_PER_ERROR,
     SCREENED_COLONIES,
 )
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.edits import flipped
 from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html
 from mbio.protocol.render import minted
@@ -206,7 +207,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     assert read_dna(outputs.product) == made.plasmid
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data)
+        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
     )
 
 
@@ -469,3 +470,14 @@ def test_a_bridge_naming_a_junction_this_assembly_has_not_got_is_refused(puc19, 
 def test_there_is_one_route_for_each_insert(puc19, gfp):
     with pytest.raises(ValueError, match="2 values for 1 insert"):
         plan_gibson(puc19, gfp, route=["amplify", "stitch"])
+
+
+def test_the_assembly_step_shows_the_product_with_every_overlap_lit(made):
+    """One figure, on the step that incubates the reaction, drawing the file written beside it."""
+    [step] = [one for one in made.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "run-assembly"
+    assert figure.records == (PRODUCT_FILE,)
+    assert set(figure.highlight) == {one.feature_name for one in made.assembly.junctions}
+    assert set(figure.highlight) <= {one.name for one in made.plasmid.features}

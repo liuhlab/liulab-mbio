@@ -23,7 +23,7 @@ from mbio.bench.plates import plate, seat
 from mbio.bench.steps import listed
 from mbio.enzymes import get_enzyme
 from mbio.primers.polymerase import melting_temperature
-from mbio.protocol.figures import ligation_figure
+from mbio.protocol.figures import LIGATION_CITATION, ligation_figure
 from mbio.protocol.model import (
     Citation,
     Figure,
@@ -519,4 +519,5 @@ def _cargo_ligation_figure(run: Run) -> Figure | None:
             f"The stuffer {scheme.internal.name} cuts out of {name}, which a cargo replaces. "
             "The cargo enters on the four bases its position spells here."
         ),
+        citation=LIGATION_CITATION,
     )

@@ -61,6 +61,7 @@ from mbio.bench.steps import (
 )
 from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
@@ -105,6 +106,7 @@ from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
     Citation,
+    Figure,
     Gel,
     Ladder,
     Lane,
@@ -117,6 +119,7 @@ from mbio.protocol.model import (
     Timer,
     Troubleshooting,
     citing,
+    figured,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -596,7 +599,7 @@ def _steps(
         ),
         _purify_step(vector, digested, vector_pieces, source_pieces, keeping=(backbone, insert)),
         quantify_step(amounts),
-        _ligation_step(ligation, amounts),
+        figured(_ligation_step(ligation, amounts), _ligation_figure(ligation, enzymes)),
         transform_step(
             host,
             phenotype,
@@ -1046,6 +1049,19 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
                 citation=Citation("NEB-background-faq", "reducing vector-only background colonies"),
             ),
         ),
+    )
+
+
+def _ligation_figure(ligation: Ligation, enzymes: Sequence[Enzyme]) -> Figure:
+    """Return the plasmid the ligation closes, every junction it makes lit."""
+    named = [one.name for one in enzymes]
+    spelled = listed([one.label for one in ligation.junctions])
+    return Figure(
+        (PRODUCT_FILE,),
+        f"{ligation.product.name} as the ligation closes it: the {spelled} junctions it spells, "
+        f"and where {listed(named)} cut it.",
+        enzymes=tuple(dict.fromkeys(named)),
+        highlight=tuple(dict.fromkeys(one.feature_name for one in ligation.junctions)),
     )
 
 

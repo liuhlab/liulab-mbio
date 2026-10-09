@@ -6,7 +6,7 @@ import pytest
 
 from mbio.plot.sequence_view import LIMIT
 from mbio.protocol import Figure, Protocol, Step, render_html
-from mbio.protocol.figures import SOURCE, SOURCE_KEY, ligation_figure
+from mbio.protocol.figures import LIGATION_CITATION, SOURCE, SOURCE_KEY, ligation_figure
 from mbio.sequence import SequenceRecord
 
 from ..html import parse
@@ -20,6 +20,7 @@ def _figure(**over: object) -> Figure:
         "junction": (40, 44),
         "enzymes": ["BsaI"],
         "caption": "The entry junction",
+        "citation": LIGATION_CITATION,
     }
     return ligation_figure(PLASMID, **(fields | over))  # type: ignore[arg-type]
 
@@ -54,6 +55,17 @@ def test_a_ligation_figure_cites_the_note_its_equivalent_was_read_in() -> None:
     one = Protocol("t", steps=(Step("Join", figures=(_figure(),)),), sources={SOURCE_KEY: SOURCE})
     assert one.cited == frozenset({SOURCE_KEY})
     assert next(c for c in one.audit() if c.name == "sources").status == "pass"
+
+
+def test_a_figure_computed_from_a_design_cites_nothing() -> None:
+    """The note covers one method's own ligation, so no other caller is made to cite it."""
+    assert _figure(citation=None).citation is None
+    assert (
+        ligation_figure(
+            PLASMID, path="product.dna", junction=(40, 44), enzymes=[], caption="A join"
+        ).citation
+        is None
+    )
 
 
 def test_context_below_zero_is_refused() -> None:

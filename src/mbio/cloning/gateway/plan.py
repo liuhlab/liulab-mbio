@@ -40,6 +40,7 @@ from mbio.cloning.gateway.recombination import (
     Recombination,
     recombine,
 )
+from mbio.cloning.gateway.steps import ENTRY_FILE
 from mbio.cloning.gateway.steps import protocol as protocol_for
 from mbio.cloning.plan import (
     PRIMER_FILE,
@@ -58,10 +59,6 @@ from mbio.protocol.model import Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import write_dna
-
-#: What a Gateway plan calls the entry clone BP makes, which is the one file no other method
-#: writes. The rest are named by `mbio.cloning.plan`.
-ENTRY_FILE = "entry-clone.dna"
 
 
 @dataclass(frozen=True, slots=True)

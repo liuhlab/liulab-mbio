@@ -93,6 +93,11 @@ class Junction:
         """What the junction is called: the site it spells, or the overhang where it spells none."""
         return self.spells or self.overhang or "blunt"
 
+    @property
+    def feature_name(self) -> str:
+        """What the product's own feature for this junction is called."""
+        return f"{self.label} junction"
+
 
 @dataclass(frozen=True, slots=True)
 class Ligation:
@@ -294,7 +299,7 @@ def _junction_feature(junction: Junction) -> Feature:
     if junction.enzyme:
         note += f", {junction.enzyme} site restored"
     return Feature(
-        f"{junction.label} junction",
+        junction.feature_name,
         "misc_feature",
         (junction.marked,),
         color=JUNCTION_COLOR,

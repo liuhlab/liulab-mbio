@@ -65,10 +65,12 @@ from mbio.cloning.gibson.design import (
     STITCH_OVERLAP_BP,
 )
 from mbio.cloning.gibson.oligos import DesignedOligo
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
     Citation,
+    Figure,
     Incubation,
     Material,
     Note,
@@ -79,6 +81,7 @@ from mbio.protocol.model import (
     Timer,
     Troubleshooting,
     citing,
+    figured,
 )
 from mbio.sequence import SequenceRecord, position_text
 
@@ -477,7 +480,12 @@ def _steps(
     )
     steps.append(quantify_step(amounts))
     steps.append(_assembly_step(product, amounts, parts, assembly.junctions))
-    steps.append(_incubation_step(product, assembly.junctions, len(parts), len(assembly.product)))
+    steps.append(
+        figured(
+            _incubation_step(product, assembly.junctions, len(parts), len(assembly.product)),
+            _assembly_figure(assembly),
+        )
+    )
     steps.append(
         transform_step(
             host,
@@ -688,6 +696,18 @@ def _incubation_step(
                 citation=Citation(product.catalog, "troubleshooting, no colonies"),
             ),
         ),
+    )
+
+
+def _assembly_figure(assembly: Assembly) -> Figure:
+    """Return the plasmid the incubation closes, every junction it repairs lit."""
+    spelled = listed([f"{one.length} bp" for one in assembly.junctions])
+    return Figure(
+        (PRODUCT_FILE,),
+        f"{assembly.product.name} as the incubation closes it: the overlaps the parts share, "
+        f"{spelled}.",
+        enzymes=(),
+        highlight=tuple(dict.fromkeys(one.feature_name for one in assembly.junctions)),
     )
 
 

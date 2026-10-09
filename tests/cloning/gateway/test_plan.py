@@ -11,7 +11,7 @@ import pytest
 from mbio.bench.gels import agarose_percent
 from mbio.bench.steps import COLONY_PCR_TITLE, SEQUENCING_TITLE
 from mbio.bench.validation import CORRECT_CLONE, EMPTY_CLONE, SANGER_FLANK
-from mbio.cloning.gateway import plan_gateway
+from mbio.cloning.gateway import ENTRY_FILE, plan_gateway
 from mbio.cloning.gateway.att import REGIONS
 from mbio.cloning.gateway.bench import (
     BP_CELSIUS,
@@ -20,6 +20,7 @@ from mbio.cloning.gateway.bench import (
     LR_CELSIUS,
     LR_VOLUME_UL,
 )
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.io import read_record
 from mbio.protocol import Citation
 from mbio.sequence import Segment, SequenceRecord, reverse_complement
@@ -419,3 +420,16 @@ def test_both_sets_of_oligos_reach_the_order_sheet_with_what_each_is_for(
     assert purposes["Colony PCR forward"] == COLONY_PCR_TITLE
     assert purposes["Sequencing reverse"] == SEQUENCING_TITLE
     assert purposes[amplified_plan.designed_oligos[0].report.primer.name].startswith("Amplify")
+
+
+def test_each_recombination_step_shows_the_clone_it_makes_with_its_att_sites_lit(staged_plan):
+    """Two reactions, two figures: BP draws the entry clone it writes, LR the expression clone."""
+    figured = [one for one in staged_plan.protocol().steps if one.figures]
+
+    assert [one.key for one in figured] == ["run-bp", "run-lr"]
+    assert [one.figures[0].records for one in figured] == [(ENTRY_FILE,), (PRODUCT_FILE,)]
+    assert figured[0].figures[0].highlight == ("attL1", "attL2")
+    assert figured[1].figures[0].highlight == ("attB1", "attB2")
+    assert set(figured[1].figures[0].highlight) <= {
+        one.name for one in staged_plan.product.features
+    }

@@ -10,6 +10,7 @@ the route it takes for each of its critical edge cases.
 
 import pytest
 
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.cloning.restriction import Plan, plan_restriction
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
@@ -127,7 +128,7 @@ def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path)
     assert read_dna(outputs.product) == made.product
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data)
+        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
     )
 
 
@@ -399,3 +400,15 @@ def test_a_tail_spelling_a_second_site_against_the_insert_is_refused_naming_the_
     edge = SequenceRecord("TAGA" + gfp.sequence, name="GFP")
     with pytest.raises(ValueError, match=r"XbaI cuts GFP amplicon 2 time"):
         plan_restriction(puc19, edge, enzymes=["EcoRI", "XbaI"])
+
+
+def test_the_ligation_step_shows_the_product_with_both_junctions_lit(made):
+    """One figure, on the step that joins the fragments, drawing the file written beside it."""
+    [step] = [one for one in made.protocol().steps if one.figures]
+    [figure] = step.figures
+
+    assert step.key == "ligate"
+    assert figure.records == (PRODUCT_FILE,)
+    assert figure.enzymes == tuple(one.name for one in made.enzymes)
+    assert set(figure.highlight) == {one.feature_name for one in made.ligation.junctions}
+    assert set(figure.highlight) <= {one.name for one in made.product.features}

@@ -92,9 +92,11 @@ from mbio.cloning.gateway.bench import SOURCES as REACTION_SOURCES
 from mbio.cloning.gateway.design import SPACER, Amplicon, Fusion
 from mbio.cloning.gateway.oligos import DesignedOligo
 from mbio.cloning.gateway.recombination import Junction, PlannedReaction
+from mbio.cloning.plan import PRODUCT_FILE
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import (
     Citation,
+    Figure,
     Material,
     Note,
     Oligo,
@@ -104,6 +106,7 @@ from mbio.protocol.model import (
     Timer,
     Troubleshooting,
     citing,
+    figured,
     number,
 )
 from mbio.sequence import SequenceRecord, position_text
@@ -134,6 +137,10 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
         ),
     }
 )
+
+#: What a Gateway plan calls the entry clone BP makes, which is the one file no other method
+#: writes, and which the BP step's own figure draws. The rest are named by `mbio.cloning.plan`.
+ENTRY_FILE = "entry-clone.dna"
 
 #: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
 #: PCR, so the thermocycler and the gel rig are here rather than beside the attB PCR.
@@ -503,7 +510,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
     """Return the first stage, or nothing where an entry clone was given."""
     if bp is None:
         return ()
-    return (
+    setup, run, *rest = (
         Step(
             "Set up the BP reaction",
             key="set-up-bp",
@@ -589,6 +596,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
         ),
         _miniprep_step(entry),
     )
+    return (setup, figured(run, _bp_figure(bp)), *rest)
 
 
 def _miniprep_step(entry: SequenceRecord) -> Step:
@@ -637,7 +645,7 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
 
 def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
     """Return the LR stage, which every plan runs."""
-    return (
+    setup, run, *rest = (
         Step(
             "Set up the LR reaction",
             key="set-up-lr",
@@ -726,6 +734,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             ),
         ),
     )
+    return (setup, figured(run, _lr_figure(lr)), *rest)
 
 
 def _validation_steps(
@@ -831,6 +840,28 @@ def _volume_trouble() -> Troubleshooting:
         "The DNA does not fit the reaction volume",
         "Concentrate either DNA, or scale the whole reaction up keeping the enzyme mix at its "
         "stated fraction of the volume.",
+    )
+
+
+def _bp_figure(bp: PlannedReaction) -> Figure:
+    """Return the entry clone BP makes, the attL sites it writes lit."""
+    return _recombination_figure(bp, ENTRY_FILE, "entry clone")
+
+
+def _lr_figure(lr: PlannedReaction) -> Figure:
+    """Return the expression clone LR makes, the attB sites it writes lit."""
+    return _recombination_figure(lr, PRODUCT_FILE, "expression clone")
+
+
+def _recombination_figure(reaction: PlannedReaction, path: str, clone: str) -> Figure:
+    """Return the clone one reaction makes, every att site it rewrote lit."""
+    named = tuple(dict.fromkeys(one.name for one in reaction.junctions))
+    return Figure(
+        (path,),
+        f"The {clone} the reaction makes: {listed(list(named))}, the sites it writes where the "
+        f"two molecules crossed over.",
+        enzymes=(),
+        highlight=named,
     )
 
 

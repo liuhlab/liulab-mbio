@@ -17,9 +17,9 @@ from mbio.bench.inactivation import heat_inactivations
 from mbio.bench.steps import listed
 from mbio.cloning.plan import PRODUCT_FILE
 from mbio.enzymes import Enzyme
+from mbio.protocol.figures import LIGATION_CITATION, ligation_figure
 from mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
-from mbio.protocol.figures import ligation_figure
 from mbio.protocol.model import (
     Figure,
     Incubation,
@@ -183,6 +183,7 @@ def _junction_figure(
             f"The end the library is freed on, which the working vector takes: "
             f"{scheme.external.name} leaves {scheme.entry_overhang} here."
         ),
+        citation=LIGATION_CITATION,
     )
 
 

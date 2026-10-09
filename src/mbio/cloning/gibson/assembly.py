@@ -443,6 +443,11 @@ class Junction:
         """The junction's bases, as a segment of the product."""
         return Segment(self.start, self.end)
 
+    @property
+    def feature_name(self) -> str:
+        """What the product's own feature for this junction is called."""
+        return f"{self.before}-{self.after} {'bridge' if self.bridge else 'overlap'}"
+
 
 @dataclass(frozen=True, slots=True)
 class Assembly:
@@ -651,7 +656,7 @@ def _overlap_feature(junction: Junction) -> Feature:
     """Draw what carries the junction, so a map shows where it is and what holds it together."""
     if junction.bridge:
         return Feature(
-            f"{junction.before}-{junction.after} bridge",
+            junction.feature_name,
             "misc_feature",
             (Segment(junction.start, junction.end + junction.length),),
             color=OVERLAP_COLOR,
@@ -663,7 +668,7 @@ def _overlap_feature(junction: Junction) -> Feature:
             },
         )
     return Feature(
-        f"{junction.before}-{junction.after} overlap",
+        junction.feature_name,
         "misc_feature",
         (Segment(junction.start, junction.end),),
         color=OVERLAP_COLOR,

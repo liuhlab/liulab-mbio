@@ -39,7 +39,7 @@ def ligation_figure(
     caption: str,
     context: int = LIGATION_CONTEXT,
     highlight: Iterable[str] = (),
-    citation: Citation | None = LIGATION_CITATION,
+    citation: Citation | None = None,
 ) -> Figure:
     """Return a Golden Gate junction at base level: both strands, each cut, the frame above.
 
@@ -66,7 +66,9 @@ def ligation_figure(
     highlight
         What the figure points at: a feature, a primer or an enzyme. Every other item dims.
     citation
-        Where the published figure this is equivalent to was read.
+        Where the published figure this is equivalent to was read. One computed from a design,
+        as every cloning method's is, cites nothing, so a caller showing `LIGATION_CITATION`'s
+        own figure names it.
 
     Raises
     ------
@@ -83,8 +85,8 @@ def ligation_figure(
     ...     caption="The entry junction, before the part goes in",
     ...     context=8,
     ... )
-    >>> figure.span, figure.sequence_view, figure.linear
-    ((28, 48), True, True)
+    >>> figure.span, figure.sequence_view, figure.linear, figure.citation
+    ((28, 48), True, True, None)
     """
     if context < 0:
         raise ValueError(f"a ligation figure draws 0 or more bases of context, not {context}")
