@@ -50,6 +50,7 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.gibson.assembly import Assembly, Junction, Part
 from mbio.cloning.gibson.bench import SOURCES as ASSEMBLY_SOURCES
@@ -124,6 +125,10 @@ SCREENING_REFERENCES: tuple[Reference, ...] = (
         url="https://doi.org/10.1038/nmeth.1318",
     ),
 )
+
+#: The manual the colony PCR screen's troubleshooting is read from. Both NEB assembly manuals
+#: carry the same table, so one of them answers the screen whichever product the run uses.
+SCREENING_CATALOG = "E2621"
 
 #: The two documents the screening notes read their numbers from.
 SCREENING_SOURCES: Mapping[str, Source] = MappingProxyType(
@@ -233,7 +238,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, product, phenotype),
-        sources={**PCR_SOURCES, **ASSEMBLY_SOURCES, **SCREENING_SOURCES},
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **ASSEMBLY_SOURCES, **SCREENING_SOURCES},
     )
     return citing(one)
 
@@ -625,11 +630,13 @@ def _assembly_step(
                 "The DNA does not fit the reaction volume",
                 "Concentrate the fragments, or scale the whole reaction up and add master mix "
                 "in proportion.",
+                citation=Citation(product.catalog, "reaction setup, scale footnote"),
             ),
             Troubleshooting(
                 "Colonies later carry the empty vector",
                 "The backbone PCR carried its plasmid template through; digest it with DpnI "
                 "again, or gel-purify the backbone.",
+                citation=Citation(product.catalog, "troubleshooting, clones without the insert"),
             ),
         ),
     )
@@ -672,11 +679,13 @@ def _incubation_step(
                 "Few colonies later",
                 "Run the kit's positive control beside the assembly; it tells a bad master mix "
                 "from a bad design.",
+                citation=Citation(product.catalog, "troubleshooting, no colonies"),
             ),
             Troubleshooting(
                 "No colonies later",
                 "Run the reaction on a gel: an efficient assembly shows the fragments gone and "
                 "a product of the right size.",
+                citation=Citation(product.catalog, "troubleshooting, no colonies"),
             ),
         ),
     )
@@ -696,20 +705,25 @@ def _colony_pcr_step(colony: ColonyCheck, assembly: Assembly) -> Step:
                 "one measured against fragment count, and not this product's.",
                 citation=Citation("In-Fusion"),
             ),
-            "Where nothing grew at all, NEB asks for the same PCR on the assembly reaction "
-            "itself, with primers flanking the assembled product.",
         ),
         troubleshooting=(
             Troubleshooting(
+                "Nothing grew at all",
+                "Run the same PCR on the assembly reaction itself, with primers flanking the "
+                "assembled product.",
+                citation=Citation(SCREENING_CATALOG, "troubleshooting, no colonies"),
+            ),
+            Troubleshooting(
                 "Every colony reads as empty vector",
-                "NEB's answer is the template: a PCR-generated vector carries uncut plasmid "
-                "through, so digest it with DpnI again or gel-purify the backbone.",
+                "A PCR-generated vector carries uncut plasmid through; digest it with DpnI "
+                "again, or gel-purify the backbone.",
+                citation=Citation(SCREENING_CATALOG, "troubleshooting, clones without the insert"),
             ),
             Troubleshooting(
                 "A colony gives a band of the wrong size",
                 "The PCR that made a part was not a single band; gel-purify it and assemble "
-                "again. NEB suggests NEB Stable Competent E. coli (#C3040) for an insert "
-                "carrying repeats.",
+                "again. NEB Stable Competent E. coli (#C3040) suits an insert carrying repeats.",
+                citation=Citation(SCREENING_CATALOG, "troubleshooting, wrong product"),
             ),
         ),
     )

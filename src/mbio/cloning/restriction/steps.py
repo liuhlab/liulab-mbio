@@ -14,6 +14,7 @@ NEB's four controls and their ratios rather than by a number.
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
@@ -58,6 +59,7 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
@@ -100,12 +102,14 @@ from mbio.enzymes import Enzyme
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
     Gel,
     Ladder,
     Lane,
     Material,
     Protocol,
     Reference,
+    Source,
     Step,
     Timer,
     Troubleshooting,
@@ -116,6 +120,34 @@ from mbio.sequence import SequenceRecord, position_text
 #: Who sells the products this protocol names. Every catalogue number it prints comes out of an
 #: enzyme record or a product name a supplier wrote; none is written here.
 SUPPLIER = "New England Biolabs"
+
+#: The documents this method's own rows cite, beside the ones `mbio.bench.steps` brings. Each is
+#: read into `docs/research/restriction-ligation.md`, which names where it was fetched from.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "T1120": Source(
+            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+            edition="version 2.0 10.25",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-background-faq": Source(
+            "New England Biolabs FAQ, How can I reduce the number of vector-only background "
+            "colonies?",
+            edition="capture 2019-11-23",
+            read_as="Wayback Machine",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "M0371": Source(
+            "New England Biolabs #M0371 protocol, Dephosphorylation of 5\u00b4-ends of DNA "
+            "using rSAP",
+            url="https://www.neb.com/en-us/protocols/protocol-for-dephosphorylation-of-5-ends-of-dna-neb-m0371",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
+)
 
 #: The strain a protocol names unless the caller picks one. Blue/white screening needs a host
 #: that supplies the rest of the lacZ fragment the vector carries, which this one does.
@@ -215,7 +247,7 @@ def protocol(
             dephosphorylate=dephosphorylate,
         ),
         references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
-        sources=PCR_SOURCES,
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **SOURCES},
     )
     return citing(one)
 
@@ -600,11 +632,13 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
                 "Every miniprep gives the vector's bands",
                 "The background is uncut or religated vector; run the controls under the "
                 "transformation to find which.",
+                citation=Citation("NEB-cloning", "too much background"),
             ),
             Troubleshooting(
                 "One band, at the plasmid's full length",
                 "Only one site cut. Check the enzymes' methylation sensitivity against the "
                 "strain the miniprep was grown in.",
+                citation=Citation("NEB-cloning", "incomplete restriction enzyme digestion"),
             ),
         ),
     )
@@ -661,11 +695,13 @@ def _phosphatase_steps(
                     "Empty vector all over the plate",
                     "The dephosphorylation was incomplete: use fresh rSAP and give it the whole "
                     "incubation before the heat step.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
                 ),
                 Troubleshooting(
                     "No colonies at all",
                     "A phosphatase still working takes the insert's phosphates too. Check the "
                     "heat step ran, or clean the digest up on a column before the ligase.",
+                    citation=Citation("NEB-cloning", "few or no transformants"),
                 ),
             ),
         ),
@@ -800,10 +836,12 @@ def _digest_step(
                 "An uncut band remains",
                 "Add more units or incubate longer, and check the enzymes' methylation "
                 "sensitivity against the strain the plasmid was grown in.",
+                citation=Citation("NEB-cloning", "incomplete restriction enzyme digestion"),
             ),
             Troubleshooting(
                 "Extra bands",
                 "Star activity: use fewer units, a shorter incubation and the supplied buffer.",
+                citation=Citation("NEB-cloning", "extra bands"),
             ),
         ),
     )
@@ -889,10 +927,12 @@ def _purify_step(
             Troubleshooting(
                 "Two bands did not separate",
                 "Run the gel further, or pour it at a percentage that resolves that size range.",
+                citation=Citation("T1120", "agarose concentration, p. 6"),
             ),
             Troubleshooting(
                 "Little DNA comes off the column",
                 "Elute twice through the same column, and keep the agarose percentage low.",
+                citation=Citation("T1020", "troubleshooting, low DNA yield"),
             ),
         ),
     )
@@ -973,11 +1013,13 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
                 "No colonies later",
                 "At least one fragment has to carry a 5' phosphate; vary the ratio, and use a "
                 "fresh buffer aliquot, because its ATP goes over freeze-thaws.",
+                citation=Citation("NEB-cloning", "few or no transformants"),
             ),
             Troubleshooting(
                 "Empty vector on the plate",
                 "The backbone band carried some uncut plasmid; run the gel further and cut the "
                 "band clean.",
+                citation=Citation("NEB-background-faq", "reducing vector-only background colonies"),
             ),
         ),
     )

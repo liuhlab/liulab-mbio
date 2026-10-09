@@ -232,7 +232,7 @@ def test_every_cycle_count_cites_the_document_it_came_from(plan):
     }
     assert cited[("Amplify GFP", GOLDEN_GATE_PCR_CYCLES)] == Citation("E1601", "FAQ 11")
     assert cited[("Screen colonies by PCR", 30)] == Citation("M0480", "thermocycling conditions")
-    assert set(protocol.sources) == {"E1601", "M0480"}
+    assert {"E1601", "M0480"} <= set(protocol.sources)
 
 
 def test_the_equipment_is_named_apart_from_the_reagents(plan):

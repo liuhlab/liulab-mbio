@@ -10,6 +10,7 @@ cites.
 """
 
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
@@ -37,6 +38,7 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.gateway.att import REGION_BP
 from mbio.cloning.gateway.bench import (
@@ -91,9 +93,11 @@ from mbio.cloning.gateway.oligos import DesignedOligo
 from mbio.cloning.gateway.recombination import Junction, PlannedReaction
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
 from mbio.protocol.model import (
+    Citation,
     Material,
     Oligo,
     Protocol,
+    Source,
     Step,
     Timer,
     Troubleshooting,
@@ -101,6 +105,19 @@ from mbio.protocol.model import (
     number,
 )
 from mbio.sequence import SequenceRecord, position_text
+
+#: The user guide this method's own rows cite, read into `docs/research/gateway-cloning.md`,
+#: which names where it was fetched from.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "MAN0000470": Source(
+            "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
+            edition="part 25-0749, revision 2 April 2012",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        )
+    }
+)
 
 #: The hardware a run needs, which no reagent table covers. Every run screens its colonies by
 #: PCR, so the thermocycler and the gel rig are here rather than beside the attB PCR.
@@ -155,7 +172,7 @@ def protocol(
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
         references=(*REFERENCES, *BENCH_REFERENCES),
-        sources=PCR_SOURCES,
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **SOURCES},
     )
     return citing(one)
 
@@ -440,9 +457,16 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
                 "The BP reaction takes purified attB DNA: gel-purifying the product is the "
                 "manual's fix for few or no colonies, and it takes the attB primers and their "
                 "dimers away.",
-                f"An entry clone running as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid "
-                "is a BP reaction that cloned attB primer-dimers instead.",
-            )
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    f"An entry clone later runs as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled "
+                    "plasmid",
+                    "The BP reaction cloned attB primer-dimers instead; gel-purify this "
+                    "product before running BP again.",
+                    citation=Citation("MAN0000470", "pp. 43-44"),
+                ),
+            ),
         ),
     )
 
@@ -498,6 +522,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                     "Use an attB substrate with a donor vector (attP): the BP reaction takes "
                     "those and no others. Do not freeze and thaw the enzyme mix more than ten "
                     "times.",
+                    citation=Citation("MAN0000470", "p. 40"),
                 ),
             ),
         ),
@@ -518,8 +543,14 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                 "Unreacted donor vector and the by-product both keep the ccdB gene, which "
                 f"kills {host}, so they do not grow. A strain carrying F' would supply ccdA "
                 "and cancel that.",
-                "Two sizes of colony here mean the donor vector's ccdB gene has mutated or "
-                "been deleted; the negative control then gives a similar count.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Two sizes of colony on the plate",
+                    "The donor vector's ccdB gene has mutated or been deleted; the negative "
+                    "control then gives a similar count.",
+                    citation=Citation("MAN0000470", "p. 41"),
+                ),
             ),
         ),
         _miniprep_step(entry),
@@ -556,9 +587,9 @@ def _miniprep_step(entry: SequenceRecord) -> Step:
             ),
             Troubleshooting(
                 f"The prep runs as a {DIMER_ENTRY_BP / 1000:g} kb supercoiled plasmid",
-                "That size is the manual's signature for a BP reaction that cloned attB "
-                "primer-dimers. Gel-purify the attB DNA and amplify it with a hot-start "
-                "polymerase before running BP again.",
+                "That size is a BP reaction that cloned attB primer-dimers. Gel-purify the "
+                "attB DNA and amplify it with a hot-start polymerase before running BP again.",
+                citation=Citation("MAN0000470", "pp. 43-44"),
             ),
         ),
     )
@@ -610,6 +641,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                     "Use an entry clone (attL) with a destination vector (attR): the LR "
                     "reaction takes those and no others. Do not freeze and thaw the enzyme mix "
                     "more than ten times.",
+                    citation=Citation("MAN0000470", "p. 40"),
                 ),
             ),
         ),
@@ -634,9 +666,14 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                 f"restreaking a colony on {CHLORAMPHENICOL_UG_ML} µg/mL chloramphenicol "
                 "confirms it: a true expression clone does not grow there, and one carrying a "
                 "mutated ccdB gene does.",
-                f"Small colonies beside large ones are usually unreacted "
-                f"{_carrier(lr).name} co-transforming; restreak them on the entry clone's own "
-                "antibiotic to tell.",
+            ),
+            troubleshooting=(
+                Troubleshooting(
+                    "Small colonies beside large ones",
+                    f"Usually unreacted {_carrier(lr).name} co-transforming; restreak them on "
+                    "the entry clone's own antibiotic to tell.",
+                    citation=Citation("MAN0000470", "p. 41"),
+                ),
             ),
         ),
     )
@@ -675,6 +712,7 @@ def _validation_steps(
                     f"The small ones are usually unreacted {entry} co-transforming. It carries "
                     "neither of these primers, so it adds no band here; restreak on the entry "
                     "clone's own antibiotic to tell.",
+                    citation=Citation("MAN0000470", "p. 41"),
                 ),
             ),
         ),

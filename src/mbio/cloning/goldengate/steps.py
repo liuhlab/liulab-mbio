@@ -61,6 +61,7 @@ from mbio.bench.steps import (
     sequencing_step,
     transform_step,
 )
+from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
 from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
 from mbio.cloning.goldengate.design import OverhangSet
@@ -176,7 +177,7 @@ def protocol(
             polymerase=polymerase,
         ),
         references=_references(parts, overhangs, phenotype),
-        sources={**PCR_SOURCES, **GOLDEN_GATE_SOURCES},
+        sources={**BENCH_SOURCES, **PCR_SOURCES, **GOLDEN_GATE_SOURCES},
     )
     return citing(one)
 
@@ -394,6 +395,7 @@ def _steps(
                     "Every colony reads as empty vector",
                     "The template survived the DpnI digest, or the vector re-closed; check the "
                     "60 °C soak ran.",
+                    citation=Citation("E1601", "FAQ 10"),
                 ),
             ),
         )
@@ -443,6 +445,7 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
             Troubleshooting(
                 "The DNA does not fit the reaction volume",
                 "Concentrate the fragments, or scale the whole reaction up.",
+                citation=Citation("E1601", "assembly reaction, note 6"),
             ),
         ),
     )
@@ -477,10 +480,12 @@ def _cycling_step(
             Troubleshooting(
                 "Mostly empty vector later",
                 "Keep the 60 °C soak, and check the template was digested with DpnI.",
+                citation=Citation("E1601", "FAQ 10"),
             ),
             Troubleshooting(
                 "Few colonies later",
                 "Raise the cycle count, or plate more of the outgrowth.",
+                citation=Citation("E1601", "FAQ 14"),
             ),
         ),
     )
