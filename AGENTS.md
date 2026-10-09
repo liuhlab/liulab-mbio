@@ -176,3 +176,4 @@ Where a fact has to survive, it has a home that is checked:
 | Filing or working an issue | `docs/agents/issue-tracker.md` |
 | Labelling someone else's issue | `docs/agents/triage-labels.md` |
 | Writing anything | `docs/agents/writing.md` |
+| Looking for evidence already gathered | `docs/research/index.md` |
