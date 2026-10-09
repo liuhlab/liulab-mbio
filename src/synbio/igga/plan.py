@@ -176,7 +176,10 @@ class Files:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written, in that order: the sheets, the records, the protocol, the pool."""
+        """Every file written, by kind: the sheets, the records, the protocol, then the pool.
+
+        Not the order they were written: the pool is written before the pages render.
+        """
         written = (
             self.parts,
             self.barcodes,

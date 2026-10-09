@@ -271,7 +271,9 @@ class RunFiles:
         The run as JSON, which ``protocol render`` turns back into the pages.
     pages
         What was written beside it: the one page, where the run is one protocol; the index, a
-        page per protocol and the two shared pages, where it is a chain.
+        page per protocol and the two shared pages, where it is a chain. The way in leads them,
+        which `page` reads, so a folder's pages are not in the order they were written --
+        `ProjectFiles.paths` is the one that reports that.
     """
 
     data: Path
@@ -284,7 +286,7 @@ class RunFiles:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written, the data first."""
+        """Every file written: the data, then the pages with the way in leading them."""
         return (self.data, *self.pages)
 
 
