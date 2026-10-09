@@ -18,9 +18,12 @@ added here, and an example that grows a file fails here until `writes` names it.
 check working: knowing what a command writes without running it is what no discovery rule can
 do.
 
-Order matters where one generator reads another's committed output: the maps come after the
-plan that writes the record they draw, and the Gateway plan after the script that builds the
-two vectors it reads.
+A generator is fed repository paths, so one reading another's committed output reads whatever
+is committed there. Were that the whole story it would reproduce a stale input's stale output
+and pass. So such a generator names that input in `reads`, and a run that has not already shown
+the input fresh refuses to judge the generator at all. Order is what earns the judgement: the
+maps come after the plan that writes the record they draw, the Gateway plan after the script
+that builds the two vectors it reads, and the AP-1 plan and figures after both vector scripts.
 
 This is a step of the `docs` CI job and not of `pixi run check`, so the gate pays nothing for
 the seconds the example commands take.
@@ -66,7 +69,10 @@ class Generator:
     what: str
     directory: Path
     commands: tuple[str, ...]
+    #: What the commands write, named from `directory`.
     writes: tuple[str, ...]
+    #: What they read from `docs/examples/`, named from the repository root.
+    reads: tuple[str, ...] = ()
 
 
 GENERATORS: tuple[Generator, ...] = (
@@ -79,11 +85,36 @@ GENERATORS: tuple[Generator, ...] = (
         writes=("primers.tsv", "product.dna", "protocol.html", "protocol.json"),
     ),
     Generator(
+        what="the iGGA destination",
+        directory=REPO / AP1,
+        commands=(f"python scripts/build_dmx_vector.py --out {OUT}/vector.gb",),
+        writes=("vector.gb",),
+    ),
+    Generator(
+        what="the domesticated working vector and its protocol",
+        directory=REPO / AP1,
+        commands=(f"python scripts/build_working_vector.py --out {OUT}",),
+        writes=(
+            "working-vector-domestication.html",
+            "working-vector-domestication.json",
+            "working-vector.gb",
+        ),
+    ),
+    Generator(
         what="the AP-1 library plan",
         directory=REPO / AP1,
         commands=(
             f"synbio igga plan {AP1}/project.json --out {OUT} "
             f"--working-site EGFP --prices {AP1}/prices.csv",
+        ),
+        reads=(
+            f"{AP1}/carrier.gb",
+            f"{AP1}/parts.fasta",
+            f"{AP1}/prices.csv",
+            f"{AP1}/primers.tsv",
+            f"{AP1}/project.json",
+            f"{AP1}/vector.gb",
+            f"{AP1}/working-vector.gb",
         ),
         writes=(
             "barcodes.tsv",
@@ -125,6 +156,12 @@ GENERATORS: tuple[Generator, ...] = (
             f"mbio plot map {AP1}/product.dna "
             f"--region 1368..1442 --sequence-view -o {OUT}/barcode-block.pdf",
         ),
+        reads=(
+            f"{AP1}/product.dna",
+            f"{AP1}/round-1.dna",
+            f"{AP1}/round-2.dna",
+            f"{AP1}/vector.gb",
+        ),
         writes=(
             "barcode-block.pdf",
             "product-map.pdf",
@@ -134,25 +171,10 @@ GENERATORS: tuple[Generator, ...] = (
         ),
     ),
     Generator(
-        what="the iGGA destination",
-        directory=REPO / AP1,
-        commands=(f"python scripts/build_dmx_vector.py --out {OUT}/vector.gb",),
-        writes=("vector.gb",),
-    ),
-    Generator(
-        what="the domesticated working vector and its protocol",
-        directory=REPO / AP1,
-        commands=(f"python scripts/build_working_vector.py --out {OUT}",),
-        writes=(
-            "working-vector-domestication.html",
-            "working-vector-domestication.json",
-            "working-vector.gb",
-        ),
-    ),
-    Generator(
         what="the AP-1 cargo read-back",
         directory=REPO / READBACK,
         commands=(f"synbio dmx plan {READBACK}/build.json --out {OUT}",),
+        reads=(f"{READBACK}/build.json", f"{READBACK}/designs.tsv"),
         writes=("protocol.html", "protocol.json"),
     ),
     Generator(
@@ -182,6 +204,7 @@ GENERATORS: tuple[Generator, ...] = (
             f"mbio cloning gateway plan tests/data/GFP.dna {GATEWAY}/destination.gb "
             f"--donor {GATEWAY}/donor.gb --amplify --out {OUT}",
         ),
+        reads=(f"{GATEWAY}/destination.gb", f"{GATEWAY}/donor.gb"),
         writes=(
             "entry-clone.dna",
             "primers.tsv",
@@ -222,6 +245,7 @@ GENERATORS: tuple[Generator, ...] = (
             f"mbio plot map {PUC19}/product.dna --region GFP -o {OUT}/product-insert.pdf",
             f"mbio plot map {PUC19}/product.dna --sequence-view -o {OUT}/product-map.html",
         ),
+        reads=(f"{PUC19}/product.dna",),
         writes=("product-insert.pdf", "product-map.html", "puc19-map.pdf"),
     ),
 )
@@ -241,24 +265,42 @@ def run(generator: Generator, into: Path) -> list[str]:
     return failures
 
 
-def compare(generator: Generator, into: Path) -> list[str]:
-    """Return one line for every file of `generator` the command no longer writes as committed."""
+def compare(generator: Generator, into: Path) -> list[tuple[str, str]]:
+    """Return the path and the reason for every file `generator` no longer writes as committed."""
     differences = []
     for name in generator.writes:
         fresh, committed = into / name, generator.directory / name
         if not fresh.exists():
-            differences.append(f"{_said(committed)}: the command wrote no such file")
+            differences.append((_said(committed), "the command wrote no such file"))
         elif not committed.exists():
-            differences.append(f"{_said(committed)}: written by the command, not committed")
+            differences.append((_said(committed), "written by the command, not committed"))
         elif fresh.read_bytes() != committed.read_bytes():
-            differences.append(f"{_said(committed)}: the command writes other bytes")
+            differences.append((_said(committed), "the command writes other bytes"))
     for found in sorted(one for one in into.rglob("*") if one.is_file()):
         if str(found.relative_to(into)) not in generator.writes:
             differences.append(
-                f"{_said(generator.directory / found.relative_to(into))}: written by the "
-                "command, and this check does not name it"
+                (
+                    _said(generator.directory / found.relative_to(into)),
+                    "written by the command, and this check does not name it",
+                )
             )
     return differences
+
+
+def owned(generator: Generator) -> list[str]:
+    """Return the repository path of every file `generator` writes."""
+    return [_said(generator.directory / name) for name in generator.writes]
+
+
+def unproven(generator: Generator, fresh: frozenset[str]) -> list[str]:
+    """Return each input of `generator` another generator writes and this run has not proven.
+
+    A generator reads repository paths, so it inherits whatever staleness its input carries:
+    its own bytes matching says nothing until that input has been shown fresh in this run.
+    Whether the input comes earlier and drifted, or later and so has not run, the answer is
+    the same — this run cannot judge the generator.
+    """
+    return [one for one in generator.reads if one in MADE_HERE and one not in fresh]
 
 
 def _said(path: Path) -> str:
@@ -266,24 +308,39 @@ def _said(path: Path) -> str:
     return str(path.relative_to(REPO))
 
 
+#: Every published file a generator writes, so one reading it knows to wait for the run to
+#: prove it rather than trusting what is committed there.
+MADE_HERE = frozenset(one for generator in GENERATORS for one in owned(generator))
+
+
 def main() -> int:
     """Check every generator, print all of them, and fail if any example has drifted."""
-    drifted = 0
+    failing = 0
+    fresh: set[str] = set()
     for generator in GENERATORS:
-        with TemporaryDirectory() as made:
-            into = Path(made)
-            reported = run(generator, into) or compare(generator, into)
+        waiting = unproven(generator, frozenset(fresh))
+        if waiting:
+            reported = [f"{one}: read here, and this run has not shown it fresh" for one in waiting]
+        else:
+            with TemporaryDirectory() as made:
+                into = Path(made)
+                broken = run(generator, into)
+                drift = [] if broken else compare(generator, into)
+            reported = broken or [f"{one}: {why}" for one, why in drift]
+            if not broken:
+                fresh.update(set(owned(generator)) - {one for one, _ in drift})
         if reported:
-            drifted += 1
+            failing += 1
             print(f"DRIFTED    {generator.what}")
             for line in reported:
                 print(f"           {line}")
         else:
             print(f"ok         {generator.what}, {len(generator.writes)} files")
-    if drifted:
+    if failing:
         print(
-            f"\n{drifted} of {len(GENERATORS)} generators no longer write what is committed. "
-            "Run the command on the example's own page and commit what it writes.",
+            f"\n{failing} of {len(GENERATORS)} generators no longer stand on what is committed. "
+            "Run each one's own command, in the order this file lists them, and commit what it "
+            "writes.",
             file=sys.stderr,
         )
         return 1
