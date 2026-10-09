@@ -16,18 +16,39 @@ site_description: "Molecular biology design and analysis tools for DNA sequences
 # green and publishes a menu item that 404s, so conformance rule `nav-target-exists` fails
 # it instead. Never add a page under docs/adr/, docs/agents/ or docs/research/: conformance
 # rule `agent-docs-unpublished` fails the build if you do.
+#
+# The five sections are the reader's intent, not the package's shape: what this is, which
+# method to use, what to do at the bench, what the lab runs end to end, and what to look up.
+# A nav label and the page's own `H1` are the same string, because two titles for one page
+# drift apart and the reader searches the `H1`.
 nav:
-  - Home: index.md
-  - Put GFP into pUC19: golden-gate.md
-  - Example plan: examples/pUC19-GFP/index.md
-  - Join GFP into pUC19 by Gibson: gibson.md
-  - Clone GFP into pUC19 with two enzymes: restriction-ligation.md
-  - Move a gene into an expression vector with Gateway: gateway.md
-  - Check primers on a genome: genome-check.md
-  - Highly parallel DNA synthesis and assembly: synthesis-and-assembly.md
-  - Example library: examples/ap1-library/index.md
-  - Example read-back: examples/ap1-readback/index.md
-  - API reference: api.md
+  - Home:
+      - liulab-mbio: index.md
+      - Two commands: two-packages.md
+  - Methods:
+      - Choosing a method: methods/index.md
+      - Golden Gate assembly: methods/golden-gate.md
+      - Gibson assembly: methods/gibson.md
+      - Restriction and ligation: methods/restriction-ligation.md
+      - Gateway cloning: methods/gateway.md
+      - Primer design: methods/primers.md
+      - Barcode sets: methods/barcodes.md
+      - Codon optimisation: methods/codon-optimisation.md
+      - Maps and figures: methods/maps.md
+  - Protocols:
+      - Protocols: protocols/index.md
+      - How to read a protocol page: protocols/reading.md
+      - Change a protocol: protocols/editing.md
+  - Projects:
+      - Projects: projects/index.md
+      - "iGGA: a barcoded combinatorial library": projects/igga.md
+      - "DMX: reading back many wells": projects/dmx.md
+  - Reference:
+      - Command line: reference/cli.md
+      - Python reference: reference/python.md
+      - How fidelity is predicted: reference/ligation-fidelity.md
+      - The DMX barcode kit: reference/dmx-barcode-kit.md
+      - What ships with it: reference/data.md
 
 # What `--strict` catches. Every row was built against the pinned zensical and watched, not
 # taken from what a strict mkdocs build used to do:

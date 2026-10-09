@@ -1,6 +1,33 @@
 # liulab-mbio
 
-Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.
+Molecular biology design tools for sequences, enzymes, primers and cloning. You give it your
+own files; it picks the enzymes, designs the oligos, builds the plasmid you should get, and
+writes the bench protocol. One command plans a whole job. Everything it writes is a file you
+can open — a map in SnapGene, a sheet in a spreadsheet, one page in a browser.
+
+## Pick a job
+
+Each row is one job, with a worked run you can repeat. For a cloning job,
+[Choosing a method](methods/index.md) weighs the four against each other.
+
+| What you want | Start here |
+| --- | --- |
+| Join fragments in one tube, in the order you choose | [Golden Gate assembly](methods/golden-gate.md) |
+| Join fragments by their overlaps, with no enzyme | [Gibson assembly](methods/gibson.md) |
+| Cut and paste with a pair of enzymes both plasmids carry | [Restriction and ligation](methods/restriction-ligation.md) |
+| Move a gene between plasmids that carry att sites | [Gateway cloning](methods/gateway.md) |
+| A primer pair for a fragment, checked against a whole genome | [Primer design](methods/primers.md) |
+| Barcodes far enough apart that no two can be read as one | [Barcode sets](methods/barcodes.md) |
+| A protein written as DNA for a host, free of the sites you name | [Codon optimisation](methods/codon-optimisation.md) |
+| A plasmid map to look at, or a figure for a paper | [Maps and figures](methods/maps.md) |
+
+The next two are whole projects rather than single reactions: many plates, and a chain of
+protocol pages instead of one page.
+
+| What you want | Start here |
+| --- | --- |
+| Every combination of several protein lists, each part barcoded | [iGGA](projects/igga.md) |
+| Read back which design landed in each well of a plate | [DMX](projects/dmx.md) |
 
 ## Install it
 
@@ -12,90 +39,62 @@ pixi install
 ```
 
 That reads `pyproject.toml` and builds the environment from the lock file, so you get the
-same versions the tests ran on.
+same versions the tests ran on. You now have two commands, `mbio` and `synbio`.
+[Two commands](two-packages.md) says which one a job wants.
 
-## Use it
+## Run it
 
-Plan a Golden Gate cloning job from a vector file and an insert file:
-
-```bash
-pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
-```
-
-Four files land in `plan/`. `product.dna` is the assembled plasmid, with its features and
-primers marked. `primers.tsv` is the oligos to order. `protocol.json` is the protocol written
-as data. `protocol.html` is the page made from that data, one page you can follow at the bench.
-
-If you edit `protocol.json`, turn it back into a page:
+Golden Gate, from a vector file and an insert file that ship with the repo. `--out` names the
+folder to write into, and makes it if it is not there:
 
 ```bash
-pixi run mbio protocol render plan/protocol.json
+pixi run mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/
 ```
 
-The same thing from Python:
+It prints the design in one line, then the four files it wrote:
+
+```text
+pUC19-GFP: 3347 bp, BbsI, 2 fragments, overhangs ATGA, TGGC, fidelity 100% (measured), checks warn
+plan/product.dna
+plan/primers.tsv
+plan/protocol.json
+plan/protocol.html
+```
+
+| File | What it is |
+| --- | --- |
+| [product.dna](examples/pUC19-GFP/product.dna) | the finished plasmid, features carried over and both joins marked. Opens in SnapGene |
+| [primers.tsv](examples/pUC19-GFP/primers.tsv) | the nine oligos to order, with length and melting temperature |
+| [protocol.json](examples/pUC19-GFP/protocol.json) | the same protocol as data |
+| [protocol.html](examples/pUC19-GFP/protocol.html) | the protocol as one page: no network, nothing to install |
+
+Each name links to what that run wrote, published here unedited. Nothing in it is typed by
+hand, so the same two input files always give the same four. To change the design, change the
+command and run it again. To change what the page says, edit `protocol.json` and
+[make the page from it again](protocols/editing.md).
+
+[Golden Gate assembly](methods/golden-gate.md) reads that run line by line, and
+[Protocols](protocols/index.md) covers the page it wrote.
+
+## Do it from Python
 
 ```python
 from mbio.cloning.goldengate import plan_assembly
 
-plan = plan_assembly("vector.dna", "insert.dna")
+plan = plan_assembly("tests/data/pUC19.dna", "tests/data/GFP.dna")
 plan.write("plan/")
 ```
 
-Sequence files are read into one shared model, whatever their format:
+Each method has one function like that as its way in. Sequence files read into one shared
+model, whatever their format:
 
 ```python
 from mbio.io import read_record
 
-record = read_record("vector.dna")
+record = read_record("tests/data/pUC19.dna")
 ```
 
-A primer pair can also be checked against a whole genome, so you learn where else it would
-amplify before you order it — see [check primers on a genome](genome-check.md).
-
-A second package, `synbio`, comes with the same install. It holds the methods this lab
-works by. One of them joins several lists of proteins into a library of every combination, a
-list at a time, and tags each protein so that sequencing says which ones a plasmid carries.
-Write down what you want in a file, then plan the whole run:
-
-```bash
-pixi run synbio igga plan project.json --out library/
-```
-
-[Put GFP into pUC19](golden-gate.md) walks through one job from end to end.
-[The same job by Gibson](gibson.md) does it with no enzyme at all, and
-[with two enzymes](restriction-ligation.md) does it the oldest way. To move a gene between
-plasmids that already carry att sites, see [Gateway](gateway.md). The
-[API reference](api.md) has the full list, built from the docstrings in `src/`.
-
-## Check your work
-
-One command runs the linters, the type checker and the tests:
-
-```bash
-pixi run check
-```
-
-It runs every step, then prints all the failures at once. Read to the bottom before you
-fix anything.
-
-The docs site is built by a separate command, because it needs a heavier environment:
-
-```bash
-pixi run docs-build
-```
-
-## Where things live
-
-| Path | What it holds |
-| --- | --- |
-| `src/mbio/` | the general package: sequences, enzymes, primers, maps, protocols and the four cloning methods |
-| `src/synbio/` | the lab's own methods and what they plan, built on the first |
-| `tests/` | the tests |
-| `docs/` | this site |
-| `scripts/check.sh` | the gate every commit has to pass |
-| `CONTEXT.md` | the glossary: the words this repo uses |
-
-Some notes are written for coding agents, not for people. Conventions go under
-`docs/agents/`, decision records under `docs/adr/`, and research notes under
-`docs/research/`. Nothing in those three directories shows up in the menu or the search
-box, and a page written there is still reachable by its own URL.
+[Python reference](reference/python.md) has the rest, and [Command line](reference/cli.md)
+every verb. The code is at
+[liuhlab/liulab-mbio](https://github.com/liuhlab/liulab-mbio), where `pixi run check` runs
+the linters, the type checker and the tests.

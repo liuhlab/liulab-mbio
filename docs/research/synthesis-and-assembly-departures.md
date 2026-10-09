@@ -5,7 +5,7 @@ search:
 
 # How our design departs from the paper
 
-Every way the iGGA design in `docs/synthesis-and-assembly.md` differs from Takacsi-Nagy et al.,
+Every way the iGGA design differs from Takacsi-Nagy et al.,
 what forced each change, and whether the reason survives checking. The paper itself, and what
 was measured from it, are in `docs/research/protein-library-assembly.md`. The design's other
 sources, and every decision still open, are in `docs/research/synthesis-and-assembly.md`.

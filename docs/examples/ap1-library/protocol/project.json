@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "53859f57eca0922c",
+  "key": "61dd82fff408607c",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -11812,7 +11812,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "52c33f7390522692",
+      "key": "5d71b8ca20412104",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -13891,8 +13891,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": "https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/"
+          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
         }
       ],
       "sources": {
@@ -13942,7 +13942,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "d078549babdb36f9",
+      "key": "ae42b1b405a19eef",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -14627,8 +14627,8 @@
           "url": "https://www.idtdna.com/page/?p=890"
         },
         {
-          "text": "The method this build was planned by: docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The 34-base internal stuffer is the method page's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": "https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/"
+          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
         },
         {
           "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",

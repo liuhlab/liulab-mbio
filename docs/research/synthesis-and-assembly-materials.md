@@ -5,8 +5,9 @@ search:
 
 # Materials, by the process that uses them
 
-Answers "what do I need for this step". The method page, `docs/synthesis-and-assembly.md`,
-answers the other question, "what do I buy", under `## Reagents and equipment`, and owns the
+Answers "what do I need for this step". The specification in
+`docs/research/synthesis-and-assembly.md` answers the other question, "what do I buy", under
+`## Reagents and equipment`, and owns the
 catalogue: vendors, accessions and part numbers live there and are not repeated here.
 
 What this file adds is the per-process grouping and the sequences. Each is quoted from a source

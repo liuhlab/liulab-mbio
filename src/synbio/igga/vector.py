@@ -441,10 +441,9 @@ def cargo_enzyme(
     """Choose the enzyme that admits cargo to a working vector, over the molecules sharing its pot.
 
     The method fixes every other enzyme, because every other enzyme is carried by DNA already on
-    the shelf. This one is searched per vector, against the rule
-    `docs/synthesis-and-assembly.md` states: distinct from the enzyme that inserts the working
-    cassette, a 4 nt 5' overhang so the method's four junction overhangs are unchanged, and no
-    site in any molecule sharing its reaction.
+    the shelf. This one is searched per vector, against the method's own rule: distinct from the
+    enzyme that inserts the working cassette, a 4 nt 5' overhang so the method's four junction
+    overhangs are unchanged, and no site in any molecule sharing its reaction.
 
     Parameters
     ----------

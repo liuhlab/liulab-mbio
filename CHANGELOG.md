@@ -272,8 +272,7 @@ sets one.
 - Primer design and evaluation against NEB's published rules, per polymerase.
 - Fidelity scoring against a ligase matrix the user holds, by `--ligase-matrix` or
   `LIULAB_MBIO_LIGASE_MATRIX`. Nothing from that archive ships here.
-- Docs: a walkthrough of GFP into pUC19, the plan it writes published as a live example, and
-  an API reference covering every public module.
+- Docs: a walkthrough of GFP into pUC19, with the plan it writes published as a live example.
 - Docs: five reference pages, each written for a lookup rather than a tour of the modules.
   `reference/python.md` names the 61 calls a script makes, grouped by the job they do, and each
   heading prints the import line to copy. `reference/cli.md` documents every verb of both
@@ -284,6 +283,14 @@ sets one.
   ships with the package against what it reads from your disk.
 
 ### Changed
+
+- The documentation site is arranged by what a reader is doing: Home, Methods, Protocols,
+  Projects and Reference. A page is named for the thing it covers, so the menu now lists what
+  the package ships. Protocols is a catalogue of the bench procedures it writes, with two pages
+  under it on reading one and changing one. Projects holds the two methods this lab runs end to
+  end. `Highly parallel DNA synthesis and assembly` becomes a page for iGGA and a page for DMX,
+  each taking its worked run from the example it already had, and the specification behind both
+  moves to the note that holds its evidence.
 
 - What one library run chooses is a **build** everywhere, as it already is for a read-back:
   `LibraryPlan.build`, `plan_igga(build, ...)` and every `build=` the gate takes. A project is

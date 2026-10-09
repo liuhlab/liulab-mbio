@@ -350,14 +350,14 @@ IGGA = Scheme(
     cloning_scar="TTCC",
     reserved=("BsmBI",),
     source=(
-        "docs/synthesis-and-assembly.md, the iGGA cargo and pipeline sections. The "
-        f"{len(_STUFFER_PREFIX) + len(_STUFFER_CORE)}-base internal stuffer is the method page's "
+        "docs/projects/igga.md, the iGGA method page. The "
+        f"{len(_STUFFER_PREFIX) + len(_STUFFER_CORE)}-base internal stuffer is the method's "
         f"own, and a round excises the {len(_STUFFER_CORE)}-base core of it: the two figures are "
         "the same stuffer, counted whole and counted after the entry overhang it opens on. The "
         "external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so "
         "every overhang is read off the DNA rather than stated."
     ),
-    source_url="https://liuhlab.github.io/liulab-mbio/synthesis-and-assembly/",
+    source_url="https://liuhlab.github.io/liulab-mbio/projects/igga/",
 )
 
 

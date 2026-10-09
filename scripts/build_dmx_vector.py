@@ -4,7 +4,7 @@
     pixi run python scripts/build_dmx_vector.py [--from PATH] [--marker-from PATH] [--out PATH]
 
 The method's rounds run in a DMX vector, which the lab builds from DMX0001 by the steps
-`docs/synthesis-and-assembly.md` lists under *Lab resources*. Those steps are this script, so the
+`docs/research/synthesis-and-assembly.md` lists under *Lab resources*. Those steps are this script, so the
 record ships as a measurement of the parent rather than as a sequence someone typed:
 `docs/research/dmx-destination.md` records what each one does and why, and every number the
 script prints is reproduced from the parent on each run.

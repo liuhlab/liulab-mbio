@@ -59,7 +59,7 @@ are sequence.
 
 ### 2.1 The reframing holds: Route B reads the DMX vector
 
-`docs/synthesis-and-assembly.md`, "Cargo validation (optional)", opens: *"The cargo sits in the
+`docs/research/synthesis-and-assembly.md`, "Cargo validation (optional)", opens: *"The cargo sits in the
 DMX vector either way; this section only reads each well."* Three other places in the same
 document agree:
 

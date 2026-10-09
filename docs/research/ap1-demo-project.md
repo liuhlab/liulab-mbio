@@ -5,9 +5,9 @@ search:
 
 # The AP-1 demo build
 
-Specification for issue #217, under the spec at #210. One real build against
-`docs/synthesis-and-assembly.md`, end to end, so development has something concrete to build
-toward.
+Specification for issue #217, under the spec at #210. One real build against the method
+specified in `docs/research/synthesis-and-assembly.md`, end to end, so development has
+something concrete to build toward.
 
 **Everything decided here is decided for this build only.** The method page keeps carrying
 each question as open, and nothing below is a package default. Where this note answers a
@@ -852,4 +852,5 @@ Every measurement cited above is recorded in one of these, and none is recompute
 - `docs/research/barcode-design.md` — the distance metric, the absent GC band, the homopolymer
   cap and the draw order.
 - `docs/research/codon-usage.md` — the `human` table, counted from hg38 through liulab-genome.
-- `docs/synthesis-and-assembly.md` — the method itself, which keeps every question above open.
+- `docs/research/synthesis-and-assembly.md`, *The method as specified* — the method itself,
+  which keeps every question above open.

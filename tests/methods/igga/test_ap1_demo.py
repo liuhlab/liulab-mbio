@@ -864,7 +864,7 @@ def test_the_method_reference_links_the_page_it_names(plan):
     final = next(one for one in plan.chain().protocols if one.title == FINAL)
     named = next(one for one in final.references if "The method this build" in one.text)
 
-    assert "docs/synthesis-and-assembly.md" in named.text
+    assert "docs/projects/igga.md" in named.text
     assert named.url.startswith("https://")
 
 
