@@ -27,7 +27,9 @@ from mbio.protocol.model import (
     Step,
     Timer,
     Troubleshooting,
+    figured,
     number,
+    sectioned,
 )
 from mbio.protocol.model import Item as Handed
 from mbio.sequence import span_text
@@ -59,7 +61,7 @@ from synbio.igga.bench import (
 from synbio.igga.figures import assembly_rows
 from synbio.igga.method import Scheme
 from synbio.igga.parts import Part
-from synbio.igga.protocols.protocol import Protocol, figured, labelled
+from synbio.igga.protocols.protocol import READ_BACK_SECTION, Protocol
 from synbio.igga.protocols.run import (
     CUVETTES,
     PREP_KIT,
@@ -95,22 +97,17 @@ class Assembly(Protocol):
 
     def steps(self, run: Run) -> tuple[Step, ...]:
         """Return the pool, every round's eight steps, and the two reads that close the protocol."""
-        made = [labelled(_pool_step(run), "Pool the part lists")]
+        made = list(sectioned("Pool the part lists", _pool_step(run)))
         vector = _vector_record(run)
         for place, (one, row) in enumerate(zip(run.rounds, run.bench, strict=True), 1):
             rows = assembly_rows(run.rounds, lit=place, vector=vector, at=run.records_at)
-            made += [labelled(step, f"Round {place}") for step in _round_steps(run, one, row, rows)]
+            made += sectioned(f"Round {place}", *_round_steps(run, one, row, rows))
         reads = run.reads
-        made += [
-            labelled(
-                _linkage_step(run, None if reads is None else reads.linkage),
-                "Read the library back",
-            ),
-            labelled(
-                _representation_step(run, None if reads is None else reads.representation),
-                "Read the library back",
-            ),
-        ]
+        made += sectioned(
+            READ_BACK_SECTION,
+            _linkage_step(run, None if reads is None else reads.linkage),
+            _representation_step(run, None if reads is None else reads.representation),
+        )
         return tuple(made)
 
     def consumes(self, run: Run) -> tuple[Handed, ...]:

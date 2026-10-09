@@ -15,10 +15,10 @@ from mbio.bench.pcr import polymerase_name
 from mbio.bench.steps import catalogued, listed
 from mbio.primers.polymerase import Q5, Polymerase
 from mbio.protocol.model import Item as Handed
-from mbio.protocol.model import Material, Reference, Step, Troubleshooting
+from mbio.protocol.model import Material, Reference, Step, Troubleshooting, sectioned
 from synbio.igga.cargo import PoolPlan
 from synbio.igga.method import SYNTHESIS_ENZYME
-from synbio.igga.protocols.protocol import Protocol, labelled
+from synbio.igga.protocols.protocol import Protocol
 from synbio.igga.protocols.run import Run
 
 #: What the page is headed and what the chain names it by.
@@ -94,7 +94,7 @@ class Ordering(Protocol):
             )
         else:
             made = (_order_step(run),)
-        return tuple(labelled(one, "Order and store") for one in made)
+        return sectioned("Order and store", *made)
 
     def produces(self, run: Run) -> tuple[Handed, ...]:
         """Return the pool, or the blocks the vendor shipped."""

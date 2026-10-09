@@ -1333,6 +1333,39 @@ class Step:
         return tuple(c.name for table in self.tables for c in table.components)
 
 
+def sectioned(section: str, *steps: Step) -> tuple[Step, ...]:
+    """Return `steps` labelled as one stretch of a protocol.
+
+    A section labels a run of consecutive steps, so it is named once where the list is
+    assembled. Sentence case, in the voice a step title has, naming what the bench achieves
+    over that stretch.
+
+    Examples
+    --------
+    >>> made = sectioned("Day 1", Step("Thaw the cells"), Step("Plate them"))
+    >>> [step.section for step in made]
+    ['Day 1', 'Day 1']
+    """
+    return tuple(replace(step, section=section) for step in steps)
+
+
+def figured(step: Step, figure: Figure | None) -> Step:
+    """Return `step` showing `figure`, or unchanged where there is no record to draw.
+
+    What a step draws is the plan's to choose, so a builder that knows the chemistry hands the
+    step over without one.
+
+    Examples
+    --------
+    >>> drawn = figured(Step("Ligate"), Figure(("product.dna",), "the join"))
+    >>> drawn.figures[0].caption
+    'the join'
+    >>> figured(Step("Ligate"), None).figures
+    ()
+    """
+    return step if figure is None else replace(step, figures=(figure,))
+
+
 @dataclass(frozen=True, slots=True)
 class Protocol:
     """A bench protocol.

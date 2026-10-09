@@ -29,7 +29,9 @@ from mbio.protocol.model import (
     Step,
     ThermocyclerProgram,
     Troubleshooting,
+    figured,
     number,
+    sectioned,
 )
 from mbio.protocol.model import Item as Handed
 from mbio.sequence import Segment, SequenceRecord
@@ -54,7 +56,7 @@ from synbio.igga.bench import (
 )
 from synbio.igga.method import Scheme
 from synbio.igga.project import FinalAssembly
-from synbio.igga.protocols.protocol import Protocol, figured, labelled
+from synbio.igga.protocols.protocol import READ_BACK_SECTION, Protocol
 from synbio.igga.protocols.run import (
     CUVETTES,
     FINAL_SELECTIVE,
@@ -94,26 +96,21 @@ class FinalLigation(Protocol):
         freeing = (scheme.external, *_shredders(scheme, product, span))
         reads = run.reads
         return (
-            labelled(
-                _pick_working_step(scheme, working, run.working_file),
+            *sectioned(
                 "Choose the working vector",
+                _pick_working_step(scheme, working, run.working_file),
             ),
-            labelled(
-                _free_step(scheme, product, span, freeing, run.assembled),
+            *sectioned(
                 "Move the library across",
-            ),
-            labelled(
+                _free_step(scheme, product, span, freeing, run.assembled),
                 figured(
                     _assemble_step(scheme, product, span, working, run.final_assembly),
                     _junction_figure(scheme, product, span, run.records_at),
                 ),
-                "Move the library across",
-            ),
-            labelled(
                 _growth_step(run.constructs, run.bench[-1].coverage.completeness, working),
-                "Move the library across",
             ),
-            labelled(
+            *sectioned(
+                READ_BACK_SECTION,
                 _representation_step(
                     run.barcodes,
                     working,
@@ -122,7 +119,6 @@ class FinalLigation(Protocol):
                     run.marks,
                     run.read_sheet,
                 ),
-                "Read the library back",
             ),
         )
 
