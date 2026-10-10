@@ -72,6 +72,10 @@ CITED_BY_BILL = "the bill"
 #: What heads a protocol's highlights, so its sentences read as a block of their own.
 HIGHLIGHTS_HEADING = "Keep in mind"
 
+#: What a calculator's field says while the step's ticks hold it still, so a reader who meant
+#: to correct a number is told why it will not take one.
+FIELD_HELD = "clear the step's ticks to change"
+
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
 PROTOCOL_FILE = "protocol.html"
@@ -2441,7 +2445,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
         if component.calculator is not None:
             assumed = component.calculator.nanograms / component.volume_ul
             field = _reader_number(f"{key}.row.{row}", assumed, "ng/µL", component.name)
-            cells.append(f'<td class="calc">{field}</td>')
+            cells.append(f"<td>{field}</td>")
         elif stock:
             cells.append(f"<td>{escape(component.stock)}</td>")
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
@@ -2499,15 +2503,18 @@ def _reader_number(key: str, plan: float, unit: str, label: str) -> str:
     """Return a field the reader types a number over, opening at the protocol's `plan`.
 
     `protocol.js` keeps what they type under `key` and offers `plan` back, so every calculator's
-    input is this one. `label` names what is typed, for a reader who cannot see the row.
+    input is this one. `label` names what is typed, for a reader who cannot see the row, and
+    the word beside it says why a ticked step will not take a number.
     """
     shown = number(plan)
     return (
+        '<span class="calc">'
         f'<label><input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
         f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
         f' aria-label="{escape(label)}, {escape(unit)}"> {escape(unit)}</label>'
         '<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
         f"Back to {shown}</button>"
+        f'<span class="calc-held" hidden>{escape(FIELD_HELD)}</span></span>'
     )
 
 

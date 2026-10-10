@@ -254,11 +254,15 @@
   // Every calculator's input is a reader's number: a field over the number the protocol gives,
   // its `data-plan`. The page keeps the reader's only where it differs, offers the protocol's
   // back on the button beside it, and holds the field still while anything in its step is
-  // ticked, as a timer's time does while it runs. `changed` hears each value it takes.
-  function readerNumber(field, back, changed) {
+  // ticked, as a timer's time does while it runs. A held field says so, in render.py's words,
+  // beside it and on itself. `changed` hears each value it takes.
+  function readerNumber(field, changed) {
     var key = field.getAttribute("data-key");
     var plan = parseFloat(field.getAttribute("data-plan"));
     var shown = field.defaultValue;
+    var box = field.closest(".calc");
+    var back = box.querySelector(".calc-plan");
+    var held = box.querySelector(".calc-held");
     var step = field.closest(".step");
     var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
     var value = typeof state[key] === "number" && state[key] > 0 ? state[key] : plan;
@@ -279,7 +283,9 @@
     function show() {
       field.value = value === plan ? shown : String(value);
       field.readOnly = locked();
-      if (back) back.hidden = value === plan || locked();
+      field.title = locked() ? held.textContent : "";
+      held.hidden = !locked();
+      back.hidden = value === plan || locked();
     }
 
     function take(to) {
@@ -294,11 +300,11 @@
       var to = typed();
       if (to === null || locked()) return;
       take(to);
-      if (back) back.hidden = value === plan;
+      back.hidden = value === plan;
     });
     // A slip leaves the number as it was, and the field says so once the reader moves on.
     field.addEventListener("change", show);
-    if (back) back.addEventListener("click", function () { take(plan); show(); });
+    back.addEventListener("click", function () { take(plan); show(); });
     if (step) {
       step.addEventListener("change", function (event) {
         if (event.target.type === "checkbox") show();
@@ -326,7 +332,7 @@
         fill: Number(row.getAttribute("data-fill")),
         nanograms: parseFloat(row.getAttribute("data-ng")),
         least: parseFloat(row.getAttribute("data-least-ul")),
-        input: readerNumber(row.querySelector(".calc-value"), row.querySelector(".calc-plan"), redraw)
+        input: readerNumber(row.querySelector(".calc-value"), redraw)
       };
     });
 

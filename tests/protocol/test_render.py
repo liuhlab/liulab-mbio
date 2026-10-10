@@ -37,7 +37,7 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
-from mbio.protocol.render import HIGHLIGHTS_HEADING, NO_NUMBER, page_key
+from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -393,6 +393,8 @@ def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
     assert measured.attrs["data-fill"] == "1"
     [field] = measured.find_all("input", cls="calc-value")
     assert (field.attrs["data-plan"], field.attrs["value"]) == ("40.99", "41")
+    [held] = measured.find_all(cls="calc-held")
+    assert (held.text, "hidden" in held.attrs) == (FIELD_HELD, True)
     [warning] = figure.find_all(cls="calc-warning")
     assert "hidden" in warning.attrs
     assert warning.text == "Too dilute. Concentrate it."

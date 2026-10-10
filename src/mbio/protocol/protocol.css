@@ -196,6 +196,7 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
 .calc-value:read-only { border-bottom-color: transparent; }
 .calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+.calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
 .calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }
 .reaction tr.is-over td, .reaction.is-over tfoot .one { color: var(--caution); font-weight: 700; }
 
@@ -401,7 +402,7 @@ tfoot .muted { font-weight: 400; }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
   .calc-value { border: none; }
-  .calc-plan { display: none !important; }
+  .calc-plan, .calc-held { display: none !important; }
   .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
 }
