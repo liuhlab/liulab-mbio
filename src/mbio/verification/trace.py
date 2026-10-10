@@ -8,20 +8,15 @@ their Phred qualities, ``PLOC2`` the scan at each call's peak, and the analysed 
 from collections.abc import Sequence
 from pathlib import Path
 
+from mbio.sequence import IUPAC_BASES
 from mbio.verification.result import SequencingResult
 
-#: A second peak this share of the called base's peak, or more, makes the call mixed.
+#: A second peak this share of the called base's peak, or more, makes the call mixed: the top of
+#: Applied Biosystems' recommended 15 to 25%, so a clean trace calls the fewest
+#: (``docs/research/sequencing-read-evidence.md`` section 2.5).
 MIXED_SHARE = 0.25
 
-#: The IUPAC code for each pair of bases.
-_PAIR_CODE = {
-    frozenset("AC"): "M",
-    frozenset("AG"): "R",
-    frozenset("AT"): "W",
-    frozenset("CG"): "S",
-    frozenset("CT"): "Y",
-    frozenset("GT"): "K",
-}
+_PAIR_CODE = {bases: code for code, bases in IUPAC_BASES.items() if len(bases) == 2}
 
 
 def read_trace(path: str | Path) -> SequencingResult:

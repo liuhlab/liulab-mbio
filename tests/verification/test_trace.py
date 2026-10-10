@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.verification.judge import verify
 from mbio.verification.result import SequencingResult
 from mbio.verification.trace import read_trace
 
@@ -35,3 +37,25 @@ def test_a_trace_with_no_quality_trusts_nothing(data_dir: Path):
     assert result.trusted == (0, 0)
     assert result.quality is not None
     assert not any(result.quality)
+
+
+def test_a_trace_verifies_against_its_own_calls_until_a_substitution_is_planted(clean):
+    """A record built from the read's trusted calls reads true, and one changed base fails it."""
+    start, end = clean.trusted
+    calls = clean.bases[start:end]
+    insert = (Feature("insert", "misc_feature", (Segment(100, 900),)),)
+    assert verify(SequenceRecord(calls), (clean,), insert).verified
+    planted = calls[:500] + next(one for one in "ACGT" if one != calls[500]) + calls[501:]
+    found = verify(SequenceRecord(planted), (clean,), insert)
+    assert [(one.kind, one.start, one.end) for one in found.disagreements] == [
+        ("substitution", 500, 501)
+    ]
+    assert found.checks[0].status == "fail"
+
+
+def test_a_trace_with_no_quality_says_so_through_verify(data_dir: Path):
+    """A 310 trace trusts nothing, so it carries no verdict, and the detail says why."""
+    result = read_trace(data_dir / "310.ab1")
+    found = verify(SequenceRecord("GATTACA"), (result,), ())
+    assert found.result_checks[0].status is None
+    assert found.result_checks[0].detail == "the trace carries no quality values"

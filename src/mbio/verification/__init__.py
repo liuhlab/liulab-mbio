@@ -6,6 +6,7 @@ Every public name in its modules imports from here as well:
   them by. Each reader converts its file into one at its own boundary.
 - `align`: laying one result on a record, on either strand and across a circular record's
   origin.
+- `trace`: `read_trace`, a Sanger trace read into the calls it trusts.
 - `judge`: `verify`, which gives each region the record must read true a verdict, and lists
   every disagreement and where each result landed.
 """
@@ -23,11 +24,13 @@ from mbio.verification.judge import (
     verify,
 )
 from mbio.verification.result import SequencingResult
+from mbio.verification.trace import MIXED_SHARE, read_trace
 
 __all__ = [
     "DEPTH_FLOOR",
     "DEPTH_WANTED",
     "MISREAD_SHARE",
+    "MIXED_SHARE",
     "QUALITY_FLOOR",
     "Aligned",
     "Column",
@@ -37,5 +40,6 @@ __all__ = [
     "SequencingResult",
     "Verification",
     "place",
+    "read_trace",
     "verify",
 ]
