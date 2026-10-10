@@ -51,7 +51,8 @@ DEPTH_WANTED = 20
 MISREAD_SHARE = 0.1
 
 #: The qualifier each cloning plan writes on the junction features of its product. Its value
-#: names the part that begins after the junction, reading along the top strand.
+#: names what begins after the junction, reading along the top strand: the part, or the record
+#: a restriction piece was cut from or a Gateway segment moved from.
 JUNCTION_TAG = "mbio_junction"
 
 
@@ -432,8 +433,8 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
 
     These are the junctions tagged with `JUNCTION_TAG`, and the insert between each two
     consecutive ones, named for the part the first one's tag names. The stretch holding base 0
-    is the vector's backbone, since a product keeps its vector's origin, and is left out. A name
-    that repeats takes an ordinal. Given `names`, the features of `record` so named are
+    is the vector's backbone, since a product keeps its vector's origin, and is left out, as is
+    the stretch whose closing junction holds base 0. A name that repeats takes an ordinal. Given `names`, the features of `record` so named are
     returned instead.
 
     Raises
@@ -463,25 +464,29 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
 
 
 def _inserts(record: SequenceRecord, junctions: list[Feature]) -> list[Feature]:
-    """Return the stretch between each two consecutive junctions but the one holding base 0.
+    """Return the stretch between each two consecutive junctions, but the backbone.
 
-    A circular record's last junction is followed by its first, one turn on.
+    A circular record's last junction is followed by its first, one turn on. The backbone is the
+    stretch holding base 0, or, where the junction closing a stretch holds it, that stretch: the
+    product keeps its vector's origin, so base 0 is a vector base and the junction straddling it
+    is where the backbone gives way.
     """
     length = len(record)
-    gaps: list[tuple[int, int, Feature]] = []
+    # Each stretch, its opening junction, and where the junction closing it ends.
+    gaps: list[tuple[int, int, Feature, int]] = []
     reach = 0
     for before, after in pairwise(junctions):
         reach = max(reach, _end(before))
-        gaps.append((reach, after.segments[0].start, before))
+        gaps.append((reach, after.segments[0].start, before, _end(after)))
     if junctions and record.topology == "circular":
-        last = max(junctions, key=_end)
-        gaps.append((_end(last), junctions[0].segments[0].start + length, last))
+        last, first = max(junctions, key=_end), junctions[0]
+        gaps.append((_end(last), first.segments[0].start + length, last, _end(first) + length))
     # A stretch starting a turn on is brought back into the record.
     kept = sorted(
         (
             (start % length, end - start // length * length, opener)
-            for start, end, opener in gaps
-            if start < end and not _holds_origin(start, end, length)
+            for start, end, opener, closed in gaps
+            if start < end and not _holds_origin(start, closed, length)
         ),
         key=lambda gap: gap[:2],
     )
@@ -499,7 +504,7 @@ def _inserts(record: SequenceRecord, junctions: list[Feature]) -> list[Feature]:
 
 
 def _holds_origin(start: int, end: int, length: int) -> bool:
-    """Whether the stretch from `start` to `end` holds base 0, at a multiple of `length`."""
+    """Whether the span from `start` to `end` holds base 0, which lies at a multiple of `length`."""
     return -(-start // length) * length < end
 
 

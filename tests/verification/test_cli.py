@@ -16,7 +16,7 @@ from mbio.verification.result import SequencingResult
 #: The Golden Gate plan's product: its GFP insert between two tagged junctions.
 PRODUCT = Path(__file__).parents[2] / "docs" / "examples" / "pUC19-GFP" / "product.dna"
 
-#: A base inside the GFP insert, which reads 400 .. 1112.
+#: A base inside the GFP insert, which spans 399 to 1112.
 PLANTED = 700
 
 
@@ -70,7 +70,7 @@ def test_the_same_consensus_unchanged_verifies(bases, tmp_path):
     assert lines[-1] == "verified"
 
 
-def test_a_feature_named_is_judged_in_place_of_the_tagged_regions():
+def test_a_feature_the_product_does_not_hold_is_refused():
     code, lines = _run(PRODUCT, PRODUCT, "--feature", "GFP", "--feature", "mCherry")
     assert code == 1
     assert lines == ["error: pUC19-GFP has no feature named 'mCherry'"]

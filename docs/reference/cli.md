@@ -295,17 +295,18 @@ pixi run mbio sequence-verify PRODUCT RESULT
 | `--feature` | none | A feature to judge, in place of the junctions and inserts. Repeat it once per feature |
 
 A cloning plan marks each junction in the product it writes, so the command finds the junctions
-and the inserts between them on its own. The stretch holding base 1 is the vector, so it is
-left out. On a plasmid no plan wrote, name what to judge with `--feature`.
+and the inserts between them on its own. The vector is left out: it is the stretch holding base
+1, or the one before the junction that holds it. On a plasmid no plan wrote, name what to judge
+with `--feature`.
 
 It prints one line for each junction and insert, with its verdict: pass, fail, warn or no
 verdict. Any difference outside them is listed with the feature it falls in, and judges nothing.
 Then comes a line for each result, and last the clone's line, `verified` or `not verified`.
 
 A consensus can't show a mixed sample: the plasmid read most becomes the consensus, so each one
-says so. A result where more than a tenth of the bases it trusts disagree prints one line, that
-it does not read as this plasmid, and nothing else. The vendor's table of reads at each base is not read yet, so give the consensus
-file rather than the folder.
+says so. A result where more than a tenth of the bases it trusts disagree, or fail to line up,
+prints one line, that it does not read as this plasmid, and nothing else. The vendor's table of
+reads at each base is not read yet, so give the consensus file rather than the folder.
 
 The command exits with 1 when the clone is not verified, so a script can stop on it.
 

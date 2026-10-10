@@ -73,20 +73,28 @@ def _junction(start: int, end: int, part: str) -> Feature:
     return Feature("j", "misc_feature", (Segment(start, end),), qualifiers={JUNCTION_TAG: (part,)})
 
 
-def test_a_repeated_part_takes_an_ordinal_and_an_insert_past_the_origin_comes_back():
-    # The junction at 95 runs across the origin, so no stretch holds base 0 and the one after
-    # it starts a turn on.
+def test_a_repeated_part_takes_an_ordinal():
     record = SequenceRecord(
         "A" * 100,
         topology="circular",
-        features=(_junction(20, 30, "GFP"), _junction(60, 70, "GFP"), _junction(95, 105, "ori")),
+        features=(_junction(20, 30, "GFP"), _junction(40, 50, "GFP"), _junction(60, 70, "vector")),
     )
     inserts = [(one.name, one.segments[0]) for one in regions(record) if one.name != "j"]
-    assert inserts == [
-        ("ori insert", Segment(5, 20)),
-        ("GFP insert", Segment(30, 60)),
-        ("GFP insert 2", Segment(70, 95)),
-    ]
+    assert inserts == [("GFP insert", Segment(30, 40)), ("GFP insert 2", Segment(50, 60))]
+
+
+def test_a_junction_holding_base_0_leaves_the_backbone_it_closes_out():
+    # A plan given a vector turned to within a junction's own bases writes this: the product
+    # keeps that origin, so no stretch holds base 0 and the junction straddling it does.
+    record = SequenceRecord(
+        "A" * 100,
+        topology="circular",
+        features=(_junction(20, 30, "GFP"), _junction(95, 105, "vector")),
+    )
+    inserts = [(one.name, one.segments[0]) for one in regions(record) if one.name != "j"]
+    # The stretch that junction opens is counted back into the record; the one it closes, the
+    # 65 bases of backbone from 30, is left out.
+    assert inserts == [("vector insert", Segment(5, 20))]
 
 
 def test_a_linear_record_has_no_stretch_round_from_its_last_junction():
