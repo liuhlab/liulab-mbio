@@ -10,16 +10,19 @@ from mbio.bench.goldengate import (
     FRAGMENT_PMOL,
     GOLDEN_GATE_ENZYMES,
     KIT,
-    REFERENCES,
+    LIGASE_MASTER_MIX,
+    SOURCES,
+    System,
     assembly_amounts,
     assembly_program,
     assembly_reaction,
     enzyme_component,
+    fidelity_citation,
     golden_gate_temperature,
     ligase_master_mix_component,
 )
 from mbio.enzymes import get_enzyme
-from mbio.overhangs import ligation_source
+from mbio.overhangs import fidelity, ligation_source
 
 from ..reactions import total, volumes
 
@@ -167,10 +170,25 @@ def test_the_kit_program_counts_inserts_and_not_fragments() -> None:
     assert (eleven.cycles, eleven.incubations[0].seconds) == (30, 300)
 
 
-def test_the_ligation_fidelity_reference_reads_as_the_paper_the_data_ships() -> None:
-    """The citation lives in the data file; the reference list prints it from there, whole."""
+def test_a_measured_fidelity_cites_the_paper_the_data_ships() -> None:
+    """The citation lives in the data file; the source prints it from there, whole."""
     source = ligation_source()
-    named = [one for one in REFERENCES if "Pryor" in one.text]
-    assert len(named) == 1
-    assert named[0].text.startswith(source.citation)
-    assert named[0].url == source.doi_url
+    assert (SOURCES["pryor-2020"].document, SOURCES["pryor-2020"].url) == (
+        source.citation,
+        source.doi_url,
+    )
+    cited = fidelity_citation(fidelity(["AATG", "GCTT"], "BsaI-HFv2"))
+    assert cited is not None
+    assert cited.source == "pryor-2020"
+
+
+@pytest.mark.parametrize("system", [LIGASE_MASTER_MIX, KIT])
+def test_every_row_and_stage_names_the_document_it_is_read_from(system: System) -> None:
+    """Each document is cited where its number stands, so a page lists only what it uses."""
+    enzyme = get_enzyme("BsaI")
+    table = assembly_reaction(enzyme, two_fragments(), system=system)
+    program = assembly_program(enzyme, fragments=2, system=system)
+    # Between the DNA rows and the water that fills the rest.
+    supplied = table.components[len(two_fragments()) : -1]
+    cited = [one.citation for one in (*supplied, *program.stages)]
+    assert all(one is not None and one.source in SOURCES for one in cited)

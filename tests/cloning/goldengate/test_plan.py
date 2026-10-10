@@ -314,9 +314,9 @@ def test_the_protocol_carries_the_numbers_the_package_computed(plan):
 
 
 def test_the_protocol_cites_the_data_its_fidelity_came_from(plan):
-    citations = " ".join(reference.text for reference in plan.protocol().references)
-    assert "Pryor" in citations
-    assert "NEBridge" in citations
+    documents = " ".join(one.document for one in plan.protocol().sources.values())
+    assert "Pryor" in documents
+    assert "NEBridge" in documents
 
 
 def test_one_insert_plans_exactly_what_it_did_before(plan):
