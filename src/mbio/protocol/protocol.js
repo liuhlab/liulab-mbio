@@ -256,9 +256,15 @@
   // back on the button beside it, and holds the field still while anything in its step is
   // ticked, as a timer's time does while it runs. A held field says so, in render.py's words,
   // beside it and on itself. `changed` hears each value it takes.
+  //
+  // A field with no `data-plan` is one the protocol has no number for, such as a plate nobody
+  // has counted: it opens empty, its value reads null until the reader types, and the button
+  // empties it again.
   function readerNumber(field, changed) {
     var key = field.getAttribute("data-key");
-    var plan = parseFloat(field.getAttribute("data-plan"));
+    var plan = field.hasAttribute("data-plan")
+      ? parseFloat(field.getAttribute("data-plan"))
+      : null;
     var shown = field.defaultValue;
     var box = field.closest(".calc");
     var back = box.querySelector(".calc-plan");
@@ -280,15 +286,15 @@
       return isNaN(least) ? given > 0 : given >= least;
     }
 
-    // What the reader typed: null for anything the field will not take. The number the page
-    // opened with reads as the protocol's own, though it is printed rounded.
+    // What the reader typed: undefined for anything the field will not take. The text the page
+    // opened with reads as the protocol's own, though a number is printed rounded.
     function typed() {
       var text = field.value.trim();
       if (text === shown) return plan;
       // The page groups a long number, so the reader may type the groups back.
       text = text.replace(/,/g, "");
-      if (!/^\d*\.?\d+$/.test(text)) return null;
-      return allowed(Number(text)) ? Number(text) : null;
+      if (!/^\d*\.?\d+$/.test(text)) return undefined;
+      return allowed(Number(text)) ? Number(text) : undefined;
     }
 
     function show() {
@@ -309,7 +315,7 @@
 
     field.addEventListener("input", function () {
       var to = typed();
-      if (to === null || locked()) return;
+      if (to === undefined || locked()) return;
       take(to);
       back.hidden = value === plan;
     });
@@ -408,12 +414,15 @@
 
   // A count the bench took: the control comes off it, the dilution scales it back up, and the
   // net is read against the floor render.py wrote. The floor itself is never worked out here,
-  // and neither is anything the plan says about it.
+  // and neither is anything the plan says about it. Until the plate is counted there is no net
+  // and no verdict: the line keeps the dash render.py wrote, so nothing reads as a pass.
   all(".net-count").forEach(function (block) {
     var floor = parseFloat(block.getAttribute("data-floor"));
     var net = block.querySelector(".net-sum");
     var shown = block.querySelector(".net-value");
+    var said = block.querySelector(".net-said");
     var verdict = block.querySelector(".net-verdict");
+    var unread = shown.textContent;
 
     function part(name) {
       var input = block.querySelector("." + name + " .calc-value");
@@ -425,13 +434,20 @@
     var dilution = part("net-dilution");
 
     function draw() {
-      var total = (counted.value() - (control ? control.value() : 0)) * dilution.value();
-      var clears = total >= floor;
+      var plate = counted.value();
+      var read = plate !== null;
+      var total = read ? (plate - (control ? control.value() : 0)) * dilution.value() : 0;
+      var clears = read && total >= floor;
       // A count is a number of things, so however many there are it is written out in full.
-      shown.textContent = total.toLocaleString("en-US", { maximumFractionDigits: 2 });
-      verdict.textContent = net.getAttribute(clears ? "data-clears" : "data-short");
-      net.classList.toggle("is-short", !clears);
-      all(".calc-warning", block).forEach(function (warning) { warning.hidden = clears; });
+      shown.textContent = read
+        ? total.toLocaleString("en-US", { maximumFractionDigits: 2 })
+        : unread;
+      said.hidden = !read;
+      verdict.textContent = read ? net.getAttribute(clears ? "data-clears" : "data-short") : "";
+      net.classList.toggle("is-short", read && !clears);
+      all(".calc-warning", block).forEach(function (warning) {
+        warning.hidden = !read || clears;
+      });
     }
 
     draw();

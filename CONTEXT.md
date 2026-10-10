@@ -248,14 +248,15 @@ _Avoid_: mix table, recipe
 
 ### Calculator
 
-A named calculation a step shows: a default the package wrote, a number the reader types over,
-and a result the page works out again from the two. It is a view and never a store: what the
-reader types is the page's to keep, as a timer's time is, and the protocol never holds it. Its
-warning is a troubleshooting entry a step already carries. Its kinds are a closed set, each
-named: a reaction row whose DNA the bench measured, which gives the volume that carries the
-row's amount while another row makes up the difference; and a plated count, which takes the
-control off, scales by the dilution and says whether the net clears the floor the design asked
-for.
+A named calculation a step shows: a default the package wrote where it has one, a number the
+reader types over, and a result the page works out again from the two. It is a view and never a
+store: what the reader types is the page's to keep, as a timer's time is, and the protocol never
+holds it. A field the package can default nothing to, such as a plate nobody has counted, opens
+empty, and the calculation reads as a dash until it is filled. Its warning is a troubleshooting
+entry a step already carries. Its kinds are a closed set, each named: a reaction row whose DNA
+the bench measured, which gives the volume that carries the row's amount while another row makes
+up the difference; and a plated count, which takes the control off, scales by the dilution and
+says whether the net clears the floor the design asked for.
 _Avoid_: widget, formula, converter, panel
 
 ### Thermocycler program

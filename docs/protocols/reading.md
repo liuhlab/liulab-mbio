@@ -131,7 +131,9 @@ it has gone wrong.
 
 Where the result is a count you have to work out, the expected result gives you the sum. Each
 round of [the library page](../examples/ap1-library/protocol/06-library-assembly-in-rounds.html)
-asks for a number of colonies. Type what you counted, what grew on the control plate and how
+asks for a number of colonies. The count box starts empty, with the floor greyed inside it as
+the number to beat, and the line below reads `—` until you fill it in: a plate nobody has
+counted has passed nothing. Type what you counted, what grew on the control plate and how
 far you diluted, and the line below says how many colonies that comes to and whether it clears
 the floor the round asked for. Short of it, the step's own troubleshooting line appears. The
 chance a member is missing stays as planned: that one is not worked out again for your count.

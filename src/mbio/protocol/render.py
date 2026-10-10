@@ -77,6 +77,10 @@ HIGHLIGHTS_HEADING = "Keep in mind"
 #: to correct a number is told why it will not take one.
 FIELD_HELD = "untick to change"
 
+#: What a worked-out number reads as while the reading it needs is missing, so a page states no
+#: result for a plate nobody has counted.
+UNREAD = "—"
+
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
 PROTOCOL_FILE = "protocol.html"
@@ -2503,7 +2507,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
 
 def _reader_number(
     key: str,
-    plan: float,
+    plan: float | None,
     *,
     label: str = "",
     unit: str = "",
@@ -2511,6 +2515,7 @@ def _reader_number(
     part: str = "",
     held: bool = True,
     counts: bool = False,
+    hint: str = "",
 ) -> str:
     """Return a field the reader types a number over, opening at the protocol's `plan`.
 
@@ -2518,24 +2523,34 @@ def _reader_number(
     input is this one. `before` and `unit` are what the field reads between, `label` what names
     it to a reader who cannot see where it sits, and `part` what its own calculator calls it.
 
+    A `plan` of `None` is a number the protocol has none to give, such as a plate nobody has
+    counted: the field opens empty, `hint` stands in it greyed, and the button beside it empties
+    it again.
+
     `held` is for a number the bench pipettes against: the step's ticks hold the field still,
     and the word beside it says so. A reading the step only records is left open. `counts` is
     for a number of things rather than a measurement: none of them is a reading of its own, and
     however many there are they are written out in full.
     """
-    shown = f"{plan:,.0f}" if counts else number(plan)
+    shown = "" if plan is None else f"{plan:,.0f}" if counts else number(plan)
+    opens = f' data-plan="{plan!r}"' if plan is not None else f' placeholder="{escape(hint)}"'
     aria = ", ".join(text for text in (label or before, unit) if text)
     return (
         f'<span class="calc{" " + part if part else ""}">'
         f"<label>{escape(before) + ' ' if before else ''}"
-        f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
-        f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
+        f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"{opens}'
+        f' data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
         + (' data-least="0"' if counts else "")
         + f' aria-label="{escape(aria)}">'
         + (f" {escape(unit)}" if unit else "")
         + "</label>"
-        '<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
-        f"Back to {shown}</button>"
+        + (
+            f'<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
+            f"Back to {shown}</button>"
+            if plan is not None
+            else '<button type="button" class="calc-plan" title="Take what you typed back out"'
+            " hidden>Clear</button>"
+        )
         + (f'<span class="calc-held" hidden>{escape(FIELD_HELD)}</span>' if held else "")
         + "</span>"
     )
@@ -2592,19 +2607,35 @@ def _warning(problem: str, trouble: Sequence[Troubleshooting]) -> str:
 def _net_count(key: str, count: CountToNet, trouble: Sequence[Troubleshooting]) -> str:
     """Return the count the reader works out, read against the floor this writes into the page.
 
-    It opens at the floor, with nothing on the control and no dilution, so the page states the
-    plan until the bench types. `protocol.js` does the subtraction, the scaling and the
-    comparison; the two verdicts and the floor are written here.
+    The counted plate opens empty, with the floor greyed in it as the number to beat, so a plate
+    nobody has counted yet shows no net and no verdict rather than a pass. The control opens at
+    nothing and the dilution at none, which is what the plan expects of them. `protocol.js` does
+    the subtraction, the scaling and the comparison; the two verdicts and the floor are here.
     """
     floor = f"{count.floor:,}"
     clears = f"at least the floor of {floor}"
-    plates = [(f"{key}.counted", count.floor, f"Counted on {count.counted}", "counted")]
-    if count.control:
-        plates.append((f"{key}.control", 0, f"less {count.control}", "control"))
     fields = [
-        _reader_number(at, plan, before=before, part=f"net-{part}", held=False, counts=True)
-        for at, plan, before, part in plates
+        _reader_number(
+            f"{key}.counted",
+            None,
+            before=f"Counted on {count.counted}",
+            part="net-counted",
+            held=False,
+            counts=True,
+            hint=floor,
+        )
     ]
+    if count.control:
+        fields.append(
+            _reader_number(
+                f"{key}.control",
+                0,
+                before=f"less {count.control}",
+                part="net-control",
+                held=False,
+                counts=True,
+            )
+        )
     fields.append(
         _reader_number(
             f"{key}.dilution", 1, before="Dilution factor", part="net-dilution", held=False
@@ -2615,8 +2646,8 @@ def _net_count(key: str, count: CountToNet, trouble: Sequence[Troubleshooting]) 
         f'<p class="net-fields">{"".join(fields)}</p>'
         f'<p class="net-sum" data-clears="{escape(clears)}"'
         f' data-short="short of the floor of {floor}">'
-        f'<strong><span class="net-value">{floor}</span> net {escape(count.counting)}</strong>'
-        f' — <span class="net-verdict">{clears}</span>.</p>'
+        f'<strong><span class="net-value">{UNREAD}</span> net {escape(count.counting)}</strong>'
+        f'<span class="net-said" hidden> — <span class="net-verdict"></span></span>.</p>'
         + (_warning(count.below_floor, trouble) if count.below_floor else "")
         + "</div>\n"
     )

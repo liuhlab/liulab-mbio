@@ -195,6 +195,8 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .calc { white-space: nowrap; }
 .calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
 .calc-value:read-only { border-bottom-color: transparent; }
+/* The number to beat stands in an uncounted field light, so it never reads as what was counted. */
+.calc-value::placeholder { font-weight: 400; color: var(--muted); opacity: 1; }
 .calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
 .calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
 .calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }

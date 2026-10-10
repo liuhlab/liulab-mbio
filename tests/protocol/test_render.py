@@ -401,8 +401,8 @@ def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
     assert warning.text == "Too dilute. Concentrate it."
 
 
-def test_a_counted_plate_opens_at_the_floor_it_is_read_against() -> None:
-    """The plan's count stands until the bench types, and the short verdict is the step's own."""
+def test_a_plate_nobody_counted_shows_no_net_and_no_verdict() -> None:
+    """An uncounted plate reads as a dash, and the short verdict is the step's own."""
     count = CountToNet(
         183,
         counted="round 1 titre",
@@ -425,11 +425,19 @@ def test_a_counted_plate_opens_at_the_floor_it_is_read_against() -> None:
 
     assert block.attrs["data-floor"] == "183"
     fields = block.find_all("input", cls="calc-value")
-    assert [one.attrs["value"] for one in fields] == ["183", "0", "1"]
+    assert [one.attrs["value"] for one in fields] == ["", "0", "1"]
+    # The floor stands in the counted field as the number to beat, not as a number counted.
+    assert "data-plan" not in fields[0].attrs
+    assert fields[0].attrs["placeholder"] == "183"
     # A count is read rather than pipetted against, so no tick of the step holds it still.
     assert block.find_all(cls="calc-held") == []
     [said] = block.find_all(cls="net-sum")
-    assert said.text == "183 net colonies — at least the floor of 183."
+    assert said.text.startswith("— net colonies")
+    # Both verdicts are written for the page to pick from, and neither stands until it counts.
+    [held_back] = block.find_all(cls="net-said")
+    assert "hidden" in held_back.attrs
+    assert block.find_all(cls="net-verdict")[0].text == ""
+    assert said.attrs["data-clears"] == "at least the floor of 183"
     assert said.attrs["data-short"] == "short of the floor of 183"
     [warning] = block.find_all(cls="calc-warning")
     assert warning.text == "Fewer net colonies. Run it again."

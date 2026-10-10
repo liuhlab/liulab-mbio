@@ -476,9 +476,9 @@ class CountToNet:
     """A calculator on an expected result: what a plated count comes to, against its floor.
 
     The reader counts the plate and the control beside it and says what the dilution was; the
-    page takes the control off, scales back up and reads the net against `floor`. It opens at
-    the floor itself, undiluted and with nothing on the control, so an untouched page states
-    what the plan asked for.
+    page takes the control off, scales back up and reads the net against `floor`. The counted
+    plate opens empty, so until someone counts it the page shows no net and no verdict: a floor
+    is what the plan asked for, not a reading, and an uncounted plate has passed nothing.
 
     Parameters
     ----------
