@@ -20,7 +20,7 @@ a method's name, which inverts the package boundary. The grouping belongs in thi
 note can sit under two headings at once. Within the directory, a note in a family takes the
 family's name as a prefix, so `ls` clusters it at no cost.
 
-Thirty-eight notes, under nine headings. Four of them earn a second heading, listed at the end.
+Thirty-nine notes, under nine headings. Four of them earn a second heading, listed at the end.
 
 ## Shipped data and where it came from
 
@@ -97,6 +97,7 @@ Thirty-eight notes, under nine headings. Four of them earn a second heading, lis
 | Note | What it settled |
 | --- | --- |
 | [`bench-facing-documentation.md`](bench-facing-documentation.md) | how five comparable tools document themselves for a wet-lab reader, and which page shape to take from each |
+| [`docs-site-diagrams.md`](docs-site-diagrams.md) | whether the docs site renders a mermaid fence, what the theme gives unconfigured, and what shape the orientation schematic takes |
 
 ## Surveys whose answer was no
 
