@@ -366,9 +366,10 @@ def render_html(
     """Return `protocol` as one HTML page with its styles and script inline.
 
     The page loads nothing over the network, remembers check marks and reaction counts in the
-    browser's local storage when it can, and prints without its controls. Given the `folder` it
-    stands in and its own address in it, the page gains the run's nav bar, a column either side
-    and a line naming its neighbours, and the line prints with it.
+    browser's local storage when it can, and prints without its controls. Its steps are listed
+    in a column beside it that stays on screen. Given the `folder` it stands in and its own
+    address in it, the page gains the run's nav bar, a column listing the run's protocols and a
+    line naming its neighbours, and the line prints with it.
 
     A `Figure` names its record by a path relative to `base`, the directory the protocol was read
     from; the current directory where nobody says.
@@ -385,7 +386,7 @@ def render_html(
     sections = [""] + [step.section for step in protocol.steps]
     body = "".join(
         [
-            _header(protocol, keys, toc=folder is None, place=place),
+            _header(protocol, place=place),
             _background(protocol.background, protocol.files),
             _materials(protocol.materials, protocol.equipment, paths=protocol.files),
             _oligos(protocol),
@@ -1182,13 +1183,19 @@ def _write(html: str, path: Path) -> Path:
 def _page(
     title: str, key: str, body: str, folder: Folder | None, here: str, within: str = ""
 ) -> str:
-    """Wrap one page's body in the document, and in the run's frame where it is part of one."""
+    """Wrap one page's body in the document, and in the run's frame where it is part of one.
+
+    A page outside a run still takes the column listing its steps, so its frame has two columns
+    and no left one: there is no run to list.
+    """
     frame = main = f'<main class="page">\n{body}</main>\n'
     if folder is not None:
         right = within or '<div class="column within"></div>'
         frame = (
             f'{_bar(folder, here)}<div class="frame">{_chain(folder, here)}{main}{right}</div>\n'
         )
+    elif within:
+        frame = f'<div class="frame alone">{main}{within}</div>\n'
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -1427,7 +1434,7 @@ def _copy(text: str, label: str = "Copy") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text)}">{escape(label)}</button>'
 
 
-def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place: str = "") -> str:
+def _header(protocol: Protocol, *, place: str = "") -> str:
     parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
         parts.append(f'<p class="summary">{_linked(protocol.summary, protocol.files)}</p>\n')
@@ -1451,10 +1458,6 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
             '<button type="button" class="print">Print</button>'
             '<button type="button" class="reset">Reset page</button></div>\n'
         )
-        if toc:
-            parts.append(
-                f'<nav class="toc" aria-label="Steps">{_step_nav(protocol.steps, keys)}</nav>\n'
-            )
     parts.append("</header>\n")
     return "".join(parts)
 

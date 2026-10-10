@@ -204,8 +204,8 @@ _Avoid_: task, procedure
 ### Section
 
 Where in a protocol a step belongs, such as `Day 1` or `Round 2`. A label, not a container: the
-steps stay one list and the numbering runs through them. Both navigation lists group by it, one
-collapsible group each, counted from the bench's own marks.
+steps stay one list and the numbering runs through them. The column listing a page's steps groups
+by it, one collapsible group each, counted from the bench's own marks.
 
 It is written in sentence case, in the voice a step title has, naming what the bench achieves
 over that stretch. It labels a run of consecutive steps, so `sectioned` names it once where the

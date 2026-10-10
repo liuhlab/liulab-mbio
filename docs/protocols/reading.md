@@ -47,12 +47,17 @@ mean.
 
 ## The steps
 
-Eleven numbered steps run from the two PCRs to sequencing. Each step and each instruction has a
-tick box. Tick every instruction of a step and the step ticks itself; clear one and it clears.
-A step partly done shows a dash in its box. Tick the step and all its instructions tick with it.
-The bar at the top counts steps: `0 of 11 steps done`. The page remembers your ticks, your
-reaction counts and your running timers, so closing the tab does not lose the sitting.
-`Reset page` puts all three back to what was written. `Print` lays the page out for paper.
+Eleven numbered steps run from the two PCRs to sequencing. A column on the right lists them,
+grouped by section, and stays in view as you scroll: click a step to jump to it. Each section
+counts its own ticks, and the one you are in opens when you come back. On a narrow screen the list
+sits above the title instead.
+
+Each step and each instruction has a tick box. Tick every instruction of a step and the step ticks
+itself; clear one and it clears. A step partly done shows a dash in its box. Tick the step and all
+its instructions tick with it. The bar at the top counts steps: `0 of 11 steps done`. The page
+remembers your ticks, your reaction counts and your running timers, so closing the tab does not
+lose the sitting. `Reset page` puts all three back to what was written. `Print` lays the page out
+for paper.
 
 A step holds some of these, always in this order: cautions, instructions, a reaction table, a
 thermocycler program, timers, the expected result, troubleshooting, and notes. A note is the one

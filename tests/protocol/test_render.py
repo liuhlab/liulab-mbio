@@ -214,7 +214,7 @@ def rounds() -> Protocol:
 
 
 def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> None:
-    [nav] = parse(render_html(rounds())).find_all("nav", cls="toc")
+    [nav] = parse(render_html(rounds())).find_all("nav", cls="within")
     groups = nav.find_all("details")
     assert [g.attrs["data-steps"] for g in groups] == [
         "round-1-open round-1-ligate",
@@ -234,22 +234,26 @@ def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> 
     assert nav.find_all("a")[-1].text == "6 Read the library back"
 
 
-def test_both_navigation_lists_of_one_page_are_the_same_list() -> None:
-    """The right column of a page in a run and the standalone list it shows alone, alike."""
+def test_a_page_lists_its_steps_in_the_column_beside_it_alone_or_in_a_run() -> None:
+    """The right column stays on screen; a page alone has it too, and no run's left column."""
     one = rounds()
-    [standalone] = parse(render_html(one)).find_all("nav", cls="toc")
+    alone = parse(render_html(one))
+    [frame] = alone.find_all("div", cls="alone")
+    kinds = [n.attrs.get("class", "") for n in frame.children if isinstance(n, Node)]
+    assert kinds == ["page", "column within"]
     [column] = parse(
         render_html(one, folder=Folder((Page.of(1, one),)), here="01-x.html")
     ).find_all("nav", cls="within")
+    [beside] = frame.find_all("nav", cls="within")
     assert [g.attrs["data-steps"] for g in column.find_all("details")] == [
-        g.attrs["data-steps"] for g in standalone.find_all("details")
+        g.attrs["data-steps"] for g in beside.find_all("details")
     ]
-    # One or the other: a page shows the list in its header or in its column, never twice.
-    assert not parse(render_html(one)).find_all("nav", cls="within")
+    # One list a page: the header no longer carries a copy that scrolls away.
+    assert len(alone.find_all("nav")) == 1
 
 
 def test_steps_naming_no_section_stay_the_one_list_they_were(page: Node) -> None:
-    [nav] = page.find_all("nav", cls="toc")
+    [nav] = page.find_all("nav", cls="within")
     assert not nav.find_all("details")
     assert next(a.attrs["href"] for a in nav.find_all("a")).startswith("#step-")
 
