@@ -291,7 +291,9 @@ def protocol(
             dephosphorylate=dephosphorylate,
             cleanup_kit=cleanup_kit,
         ),
-        references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
+        references=_references(
+            amplicon, phenotype, dephosphorylate=dephosphorylate, cleanup_kit=cleanup_kit
+        ),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
@@ -1131,14 +1133,20 @@ def _blunt_cost(ligation: Ligation) -> tuple[str, ...]:
 
 
 def _references(
-    amplicon: Amplicon | None, phenotype: Phenotype, *, dephosphorylate: bool
+    amplicon: Amplicon | None,
+    phenotype: Phenotype,
+    *,
+    dephosphorylate: bool,
+    cleanup_kit: Material,
 ) -> tuple[Reference, ...]:
-    """Where the numbers come from."""
+    """Where the numbers come from: the column's manual only where `_recovery_note` quotes it."""
     items = [*REFERENCES, *BENCH_REFERENCES]
     if dephosphorylate:
         items.append(PHOSPHATASE_REFERENCE)
     if amplicon is not None:
-        items.extend((CLEAVAGE_REFERENCE, COLUMN_REFERENCE))
+        items.append(CLEAVAGE_REFERENCE)
+        if _recovery_note(cleanup_kit):
+            items.append(COLUMN_REFERENCE)
         if amplicon.dpni:
             items.append(DPNI_REFERENCE)
     if phenotype.blue_white:
