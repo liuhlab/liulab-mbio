@@ -12,16 +12,17 @@ enzyme, fragments, overhangs, fidelity, product and selection. Here they read `p
 `GFP, 717 bp`, `BbsI-HF (R3539) at 37 °C`, `2 in one reaction`, `ATGA and TGGC`,
 `100%, measured`, `pUC19-GFP, 3347 bp` and `ampicillin or carbenicillin`.
 
-Four sentences follow, about this clone in particular. GFP reads on the opposite strand from the
-lac promoter. No ribosome binding site is annotated ahead of it, so the clone is not expected to
-glow. The insertion interrupts lacZα, so correct colonies are white. All four are read off the
-finished plasmid, so they cannot disagree with the map.
+Below a thin line, under the heading **Keep in mind**, four sentences follow, about this clone in
+particular. GFP reads on the opposite strand from the lac promoter. No ribosome binding site is
+annotated ahead of it, so the clone is not expected to glow. The insertion interrupts lacZα, so
+correct colonies are white. All four are read off the finished plasmid, so they cannot disagree
+with the map.
 
 ## The badges
 
-A row of badges comes next: `sites`, `pUC19 backbone`, `GFP`, `junctions` and `primers`. Four
-are green. `primers` is amber, and only a badge that is not green prints its line. That line
-says nine oligos were designed, two carry a warning and none fails.
+Another thin line, then a row of badges: `sites`, `pUC19 backbone`, `GFP`, `junctions` and
+`primers`. Four are green. `primers` is amber, and only a badge that is not green prints its line.
+That line says nine oligos were designed, two carry a warning and none fails.
 
 A badge can also read **not judged**. That is not a pass and not a failure. It means nothing
 judged it, because no sourced threshold fits what this run does.

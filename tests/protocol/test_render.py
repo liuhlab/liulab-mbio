@@ -36,7 +36,7 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
-from mbio.protocol.render import NO_NUMBER, page_key
+from mbio.protocol.render import HIGHLIGHTS, NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -76,10 +76,11 @@ def test_text_from_the_protocol_is_escaped() -> None:
     assert page.find_all("button", cls="copy")[0].attrs["data-copy"] == 'AC"GT'
 
 
-def test_the_header_reads_title_summary_facts_sentences_then_badges(page: Node) -> None:
+def test_the_header_reads_in_bands_and_its_sentences_carry_a_heading(page: Node) -> None:
     header = page.find_all("header", cls="intro")[0]
     blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
-    assert blocks[:5] == ["h1", "summary", "overview", "highlights", "checks"]
+    assert blocks == ["h1", "summary", "overview", "highlights", "status", "toolbar"]
+    assert header.find_all(cls="highlights")[0].find_all("h3")[0].text == HIGHLIGHTS
 
 
 def test_a_card_holds_a_fact_and_a_sentence_is_prose(page: Node) -> None:

@@ -68,6 +68,9 @@ NO_NUMBER = "no sourced number"
 #: What the references page prints as citing a source the run itself names.
 CITED_BY_BILL = "the bill"
 
+#: What heads a protocol's highlights, so its sentences read as a block of their own.
+HIGHLIGHTS = "Keep in mind"
+
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
 PROTOCOL_FILE = "protocol.html"
@@ -1435,6 +1438,11 @@ def _copy(text: str, label: str = "Copy") -> str:
 
 
 def _header(protocol: Protocol, *, place: str = "") -> str:
+    """Return the head of a protocol's page as bands, each a block of its own.
+
+    What it is, its facts, what the bench is handed and left with, its sentences under a
+    heading, its verdicts, then the bar counting the steps.
+    """
     parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
         parts.append(f'<p class="summary">{_linked(protocol.summary, protocol.files)}</p>\n')
@@ -1447,9 +1455,10 @@ def _header(protocol: Protocol, *, place: str = "") -> str:
     parts.append(_handover(protocol))
     if protocol.highlights:
         lines = "".join(f"<p>{_linked(one, protocol.files)}</p>" for one in protocol.highlights)
-        parts.append(f'<div class="highlights">{lines}</div>\n')
-    parts.append(_checks(protocol.checks))
-    parts.append(_hole_count(protocol.all_holes))
+        parts.append(f'<section class="highlights"><h3>{HIGHLIGHTS}</h3>{lines}</section>\n')
+    status = _checks(protocol.checks) + _hole_count(protocol.all_holes)
+    if status:
+        parts.append(f'<div class="status">{status}</div>\n')
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
