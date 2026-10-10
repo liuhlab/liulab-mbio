@@ -47,6 +47,7 @@ from mbio.sites import (
     find_sites,
     primer_tail,
 )
+from mbio.verification.judge import JUNCTION_TAG
 
 #: What a junction is drawn in, and the overhang on an amplicon that becomes one. A feature
 #: built in code has no colour of its own, and `mbio.snapgene` writes SnapGene's default grey
@@ -576,7 +577,10 @@ def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Fea
         "misc_feature",
         (Segment(at, at + len(overhang)),),
         color=JUNCTION_COLOR,
-        qualifiers={"note": (f"{before.name} to {after.name}, {enzyme.name} overhang",)},
+        qualifiers={
+            "note": (f"{before.name} to {after.name}, {enzyme.name} overhang",),
+            JUNCTION_TAG: (after.name,),
+        },
     )
 
 

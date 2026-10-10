@@ -30,6 +30,7 @@ from mbio.protocol import OVERVIEW_CHARS, read_protocol, render_html, sectioned
 from mbio.protocol.render import minted
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import read_dna
+from mbio.verification.judge import JUNCTION_TAG
 
 #: Where the fixture's own MCS feature sits.
 MCS = (395, 452)
@@ -406,6 +407,7 @@ def test_a_bridging_oligo_joins_two_fragments_and_neither_carries_a_tail(routed)
         bridged.start,
         bridged.end + BRIDGE_HOMOLOGY_BP,
     )
+    assert mark.qualifiers[JUNCTION_TAG] == (second.name,)
 
 
 def test_the_product_and_the_validation_are_the_same_whichever_route_made_a_part(routed, several):

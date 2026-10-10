@@ -27,6 +27,7 @@ from mbio.sequence import (
 )
 from mbio.sites import find_sites, has_site, insert_site
 from mbio.snapgene import read_dna, write_dna
+from mbio.verification.judge import JUNCTION_TAG
 
 #: How many bases `primer_tail` puts 5' of the recognition site.
 SPACER = 6
@@ -245,6 +246,10 @@ def test_each_junction_is_annotated(assembly, overhangs):
     drawn = [one for one in assembly.product.features if one.color == JUNCTION_COLOR]
     assert [one.name for one in drawn] == [f"{one} junction" for one in overhangs]
     assert _spans(drawn[0]) == [(395, 399)]
+    # Each is tagged with the part it opens onto, and nothing else is tagged.
+    tagged = [one for one in assembly.product.features if JUNCTION_TAG in one.qualifiers]
+    assert tagged == drawn
+    assert [one.qualifiers[JUNCTION_TAG] for one in drawn] == [("GFP",), ("pUC19 backbone",)]
 
 
 def test_the_designed_primers_are_annotated_where_they_anneal(assembly):

@@ -32,6 +32,7 @@ from mbio.sequence import (
     reverse_complement,
 )
 from mbio.sites import CutSite, find_sites
+from mbio.verification.judge import JUNCTION_TAG
 
 #: What a junction is drawn in. A feature built in code has no colour of its own, and
 #: `mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -228,8 +229,13 @@ def ligate(backbone: Piece, insert: Piece, *, name: str = "") -> Ligation:
             key=lambda junction: junction.start,
         )
     )
+    sources = {piece.name: piece.source.name for piece in pieces}
     marked = dataclasses.replace(
-        turned, features=(*turned.features, *(_junction_feature(one) for one in junctions))
+        turned,
+        features=(
+            *turned.features,
+            *(_junction_feature(one, sources[one.after]) for one in junctions),
+        ),
     )
     return Ligation(ordered(marked), pieces, junctions)
 
@@ -293,8 +299,12 @@ def _restored(
     return None
 
 
-def _junction_feature(junction: Junction) -> Feature:
-    """Draw the junction, named for the site it spells."""
+def _junction_feature(junction: Junction, following: str) -> Feature:
+    """Draw the junction, named for the site it spells and tagged with the record `following` it.
+
+    The tag names the record the piece after it was cut from, not the piece, whose name already
+    says it is the insert.
+    """
     note = f"{junction.before} to {junction.after}"
     if junction.enzyme:
         note += f", {junction.enzyme} site restored"
@@ -303,7 +313,7 @@ def _junction_feature(junction: Junction) -> Feature:
         "misc_feature",
         (junction.marked,),
         color=JUNCTION_COLOR,
-        qualifiers={"note": (note,)},
+        qualifiers={"note": (note,), JUNCTION_TAG: (following,)},
     )
 
 

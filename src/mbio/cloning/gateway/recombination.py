@@ -42,6 +42,7 @@ from mbio.sequence import (
     counted_round,
     position_text,
 )
+from mbio.verification.judge import JUNCTION_TAG
 
 #: What an att junction is drawn in. A feature built in code has no colour of its own, and
 #: `mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -321,7 +322,11 @@ def recombine(
         )
         features.extend(one for one in over if not _superseded(one, junctions))
         primers.extend(kept)
-    features.extend(_junction_feature(one) for one in junctions)
+    # Site 1 opens onto the segment that moved, and site 2 back onto the backbone.
+    features.extend(
+        _junction_feature(one, following)
+        for one, following in zip(junctions, (moved.name, backbone.name), strict=True)
+    )
     product = SequenceRecord(
         bases,
         topology="circular",
@@ -424,8 +429,11 @@ def _superseded(feature: Feature, junctions: tuple[Junction, Junction]) -> bool:
     )
 
 
-def _junction_feature(junction: Junction) -> Feature:
-    """Draw one att junction, saying what it spells and which record gave which side."""
+def _junction_feature(junction: Junction, following: str) -> Feature:
+    """Draw one att junction, saying what it spells and which record gave which side.
+
+    Its tag names `following`, the record whose bases come after it on the top strand.
+    """
     return Feature(
         junction.name,
         "misc_recomb",
@@ -436,6 +444,7 @@ def _junction_feature(junction: Junction) -> Feature:
             "note": (
                 f"{junction.bases}; the first {CROSSOVER} bases from {junction.before} and the "
                 f"rest from {junction.after}",
-            )
+            ),
+            JUNCTION_TAG: (following,),
         },
     )

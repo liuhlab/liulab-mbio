@@ -12,6 +12,7 @@ import pytest
 from mbio.cloning.restriction.digest import excised, opened, resolve
 from mbio.cloning.restriction.ligation import ligate
 from mbio.sequence import SequenceRecord
+from mbio.verification.judge import JUNCTION_TAG
 
 #: Bases spelling no site of the enzymes named below: the vector's, and what it is given.
 FILLER = "TAAGGTCA" * 2
@@ -80,5 +81,8 @@ def test_each_junction_is_marked_on_the_product_and_spells_the_site_its_ends_cam
     for one in made.junctions:
         feature = drawn[f"{one.spells} junction"]
         assert made.product.extract(feature.segments[0]) == one.spells
+        # Tagged with the record the piece after it was cut from, not with the piece.
+        after = next(piece for piece in made.pieces if piece.name == one.after)
+        assert feature.qualifiers[JUNCTION_TAG] == (after.source.name,)
         assert one.span is not None
         assert made.product.extract(one.span) == one.overhang

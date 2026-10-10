@@ -46,6 +46,7 @@ from mbio.sequence import (
     position_text,
     reverse_complement,
 )
+from mbio.verification.judge import JUNCTION_TAG
 
 #: What an overlap is drawn in. A feature built in code has no colour of its own, and
 #: `mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -664,7 +665,8 @@ def _overlap_feature(junction: Junction) -> Feature:
                 "note": (
                     f"{junction.bridge}, {junction.length} bp of {junction.before} and as many "
                     f"of {junction.after}; neither carries a tail",
-                )
+                ),
+                JUNCTION_TAG: (junction.after,),
             },
         )
     return Feature(
@@ -676,7 +678,8 @@ def _overlap_feature(junction: Junction) -> Feature:
             "note": (
                 f"{junction.length} bp shared with {junction.before}, taken from "
                 f"{junction.taken_from}",
-            )
+            ),
+            JUNCTION_TAG: (junction.after,),
         },
     )
 

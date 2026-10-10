@@ -16,8 +16,9 @@ nothing, because whether it matters depends on what that feature does. The thres
 in ``docs/research/sequencing-read-evidence.md``, cited by section beside each.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import KW_ONLY, dataclass, field
+from itertools import pairwise
 from typing import Literal
 
 from mbio.checks import Check, Status, counted, worst_of
@@ -48,6 +49,10 @@ DEPTH_WANTED = 20
 #: The share of its trusted bases a result may misread and still read as this product, chosen
 #: as ten times the error a Q20 base allows (section 2.4).
 MISREAD_SHARE = 0.1
+
+#: The qualifier each cloning plan writes on the junction features of its product. Its value
+#: names the part that begins after the junction, reading along the top strand.
+JUNCTION_TAG = "mbio_junction"
 
 
 #: The kinds of disagreement.
@@ -420,3 +425,89 @@ def _region_check(
     if warning:
         return Check(region.name, "warn", read, "; ".join(warning))
     return Check(region.name, "pass", read, "every base read, and none disagrees")
+
+
+def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature, ...]:
+    """Return the features a verification of `record` judges, in record order.
+
+    These are the junctions tagged with `JUNCTION_TAG`, and the insert between each two
+    consecutive ones, named for the part the first one's tag names. The stretch holding base 0
+    is the vector's backbone, since a product keeps its vector's origin, and is left out. A name
+    that repeats takes an ordinal. Given `names`, the features of `record` so named are
+    returned instead.
+
+    Raises
+    ------
+    ValueError
+        If one of `names` names no feature of `record`.
+
+    Examples
+    --------
+    >>> joins = [Feature("j", "misc_feature", (Segment(at, at + 2),),
+    ...          qualifiers={JUNCTION_TAG: (part,)}) for at, part in ((10, "GFP"), (30, "pUC19"))]
+    >>> plasmid = SequenceRecord("A" * 50, topology="circular", features=tuple(joins))
+    >>> [(one.name, one.segments[0].start) for one in regions(plasmid)]
+    [('j', 10), ('GFP insert', 12), ('j', 30)]
+    """
+    wanted = tuple(names)
+    if wanted:
+        missing = sorted(set(wanted) - {one.name for one in record.features})
+        if missing:
+            raise ValueError(f"{record.name or 'the record'} has no feature named {missing[0]!r}")
+        found = (one for one in record.features if one.name in wanted)
+        return tuple(sorted(found, key=_place))
+    junctions = sorted(
+        (one for one in record.features if JUNCTION_TAG in one.qualifiers), key=_place
+    )
+    return tuple(sorted((*junctions, *_inserts(record, junctions)), key=_place))
+
+
+def _inserts(record: SequenceRecord, junctions: list[Feature]) -> list[Feature]:
+    """Return the stretch between each two consecutive junctions but the one holding base 0.
+
+    A circular record's last junction is followed by its first, one turn on.
+    """
+    length = len(record)
+    gaps: list[tuple[int, int, Feature]] = []
+    reach = 0
+    for before, after in pairwise(junctions):
+        reach = max(reach, _end(before))
+        gaps.append((reach, after.segments[0].start, before))
+    if junctions and record.topology == "circular":
+        last = max(junctions, key=_end)
+        gaps.append((_end(last), junctions[0].segments[0].start + length, last))
+    # A stretch starting a turn on is brought back into the record.
+    kept = sorted(
+        (
+            (start % length, end - start // length * length, opener)
+            for start, end, opener in gaps
+            if start < end and not _holds_origin(start, end, length)
+        ),
+        key=lambda gap: gap[:2],
+    )
+    taken: set[str] = set()
+    inserts = []
+    for start, end, opener in kept:
+        stem = f"{opener.qualifiers[JUNCTION_TAG][0]} insert"
+        chosen, n = stem, 1
+        while chosen in taken:
+            n += 1
+            chosen = f"{stem} {n}"
+        taken.add(chosen)
+        inserts.append(Feature(chosen, "misc_feature", (Segment(start, end),)))
+    return inserts
+
+
+def _holds_origin(start: int, end: int, length: int) -> bool:
+    """Whether the stretch from `start` to `end` holds base 0, at a multiple of `length`."""
+    return -(-start // length) * length < end
+
+
+def _end(feature: Feature) -> int:
+    """Where a feature's last base ends, past the length where it runs across the origin."""
+    return max(one.end for one in feature.segments)
+
+
+def _place(feature: Feature) -> tuple[int, int]:
+    """Order features by where each begins, as a product lists them."""
+    return feature.segments[0].start, feature.segments[0].end
