@@ -38,6 +38,7 @@ from mbio.bench.steps import (
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
     IPTG_UM,
+    MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
     PLATE_REFERENCE,
@@ -501,7 +502,7 @@ def _materials(
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
         Material(_plate(phenotype), amount="one plate per transformation"),
-        Material("Plasmid miniprep kit", note="for the clones that go for sequencing"),
+        MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=SUPPLIER,
@@ -833,22 +834,20 @@ def _amplify_steps(
     )
 
 
-def _recovery_note(cleanup_kit: Material) -> tuple[Note | str, ...]:
-    """Say what the column does, with the fraction it recovers only where this kit states one.
+def _recovery_note(cleanup_kit: Material) -> tuple[Note, ...]:
+    """Say what fraction the column recovers, where the run cleans up on the kit that states one.
 
-    The fraction is `COLUMN_RECOVERY`, which is NEB #T1130's. A run cleaning up on another kit
-    gets the sentence without a number rather than that kit's number guessed.
+    `COLUMN_RECOVERY` is NEB #T1130's. A run on another kit gets no sentence rather than that
+    kit's number guessed; what the column is for is the step's own `expected`.
     """
-    does = (
-        "takes the polymerase, the primers and the dNTPs away, so the digest cuts the amplicon "
-        "and nothing else"
-    )
     if not cleanup_kit.catalog.startswith(COLUMN_KIT):
-        return (f"A column {does}.",)
+        return ()
     low, high = COLUMN_RECOVERY
     return (
         Note(
-            f"A column recovers {low:.0%} to {high:.0%} of the reaction and {does}.",
+            f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
+            "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon and "
+            "nothing else.",
             citation=Citation(COLUMN_KIT, "typical recovery"),
         ),
     )
@@ -1000,7 +999,7 @@ def _purify_step(
             Troubleshooting(
                 "Two bands did not separate",
                 "Run the gel further, or use a percentage that resolves that size range.",
-                citation=Citation("T1120", "agarose concentration, p. 6"),
+                citation=Citation(GEL_KIT, "agarose concentration, p. 6"),
             ),
             Troubleshooting(
                 "Little DNA comes off the column",

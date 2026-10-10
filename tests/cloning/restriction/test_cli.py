@@ -55,6 +55,8 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
         "phusion",
         "--host",
         HOST,
+        "--cleanup-kit",
+        "D4003",
         "--name",
         "pUC19-GFP",
     )
@@ -70,6 +72,9 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
     materials = [one.name for one in read_protocol(out / "protocol.json").materials]
     assert "Phusion DNA Polymerase and its reaction buffer" in materials
     assert HOST in materials
+    # The clean-up kit the run named is the one listed; the gel kit is the method's own.
+    assert "DNA Clean & Concentrator-5" in materials
+    assert "Monarch Spin DNA Gel Extraction Kit" in materials
 
 
 def test_an_enzyme_that_cuts_the_insert_twice_is_refused_before_anything_is_written(

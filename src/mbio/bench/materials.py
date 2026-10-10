@@ -260,8 +260,8 @@ def kit(named: str = "", *, note: str = "") -> Material:
     found = KITS.get(_key(text))
     if found is None:
         return material(text, note=note)
-    sold, supplier = found
-    return material(sold, supplier=supplier, catalog=text.lstrip("#").upper(), note=note)
+    product, supplier = found
+    return material(product, supplier=supplier, catalog=text.lstrip("#").upper(), note=note)
 
 
 def material(

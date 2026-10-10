@@ -5,7 +5,8 @@ from typing import Annotated
 
 import typer
 
-from mbio.cloning.cli import plan_command, read_orientations, read_site
+from mbio.bench.materials import DEFAULT_CLEANUP_KIT
+from mbio.cloning.cli import CleanupKit, plan_command, read_orientations, read_site
 from mbio.cloning.goldengate.plan import DEFAULT_HOST, Plan, plan_assembly
 from mbio.codons import DEFAULT_TABLE
 from mbio.ligase import LIGASE_MATRIX_ENV
@@ -78,13 +79,7 @@ def plan(
     ] = False,
     polymerase: Annotated[str, typer.Option(help="Polymerase for the two PCRs.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
-    cleanup_kit: Annotated[
-        str,
-        typer.Option(
-            "--cleanup-kit",
-            help="Spin-column kit the protocol names, by catalogue number or by name.",
-        ),
-    ] = "",
+    cleanup_kit: CleanupKit = DEFAULT_CLEANUP_KIT,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Plan an assembly and write the product, the primer sheet and the protocol into OUT."""

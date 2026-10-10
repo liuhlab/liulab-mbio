@@ -13,12 +13,22 @@ but its verb is that same spine, so it uses this module too.
 
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from mbio.cloning.plan import Orientation, Planned, Site
 
 app = typer.Typer(help="Plan a cloning experiment, one command per method.", no_args_is_help=True)
+
+#: The clean-up kit option, written once because every method's clean-up step is the same one.
+CleanupKit = Annotated[
+    str,
+    typer.Option(
+        "--cleanup-kit",
+        help="Spin-column kit the protocol names, by catalogue number or by name.",
+    ),
+]
 
 
 def plan_command[Plan: Planned](

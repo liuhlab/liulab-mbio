@@ -39,6 +39,8 @@ def test_the_cli_plans_every_option_it_was_given_and_prints_the_files_it_wrote(
         "onetaq",
         "--host",
         HOST,
+        "--cleanup-kit",
+        "D4003",
         "--name",
         "pEXP-GFP",
     ]

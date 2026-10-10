@@ -29,6 +29,7 @@ from mbio.bench.steps import (
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
     IPTG_UM,
+    MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
     PLATE_REFERENCE,
@@ -396,7 +397,7 @@ def _materials(
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
         Material(_plate(phenotype), amount="one plate per transformation"),
-        Material("Plasmid miniprep kit", note="for the clones that go for sequencing"),
+        MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=product.supplier,

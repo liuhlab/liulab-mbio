@@ -69,6 +69,8 @@ def test_the_cli_writes_the_four_outputs_and_wires_every_option_it_takes(
             "q5",
             "--host",
             "NEB 5-alpha",
+            "--cleanup-kit",
+            "D4003",
             "--name",
             "pUC19-GFP halves",
         ],

@@ -16,7 +16,6 @@ from mbio import checks as judged
 from mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from mbio.bench.gels import agarose_percent, choose_ladder
 from mbio.bench.materials import POLYMERASE_ON_ICE, material
-from mbio.bench.materials import kit as cleanup_kit
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
     colony_pcr_program,
@@ -140,6 +139,10 @@ PLATE_REFERENCE = Reference(
 #: What quantifies a purified fragment, which every method that purifies one needs. The
 #: measurement is named first and the instrument a bench says beside it.
 QUANTIFY_EQUIPMENT = "Spectrophotometer (NanoDrop) or fluorometer (Qubit)"
+
+#: The kit the sequencing step's miniprep takes. Which one is the user's call, so the row
+#: names no product; it is here because three methods ask for the same miniprep.
+MINIPREP_KIT = Material("Plasmid miniprep kit", note="for the clones that go to sequencing")
 
 #: Where a plate of primers waits between runs.
 PRIMER_PLATE_STORAGE = "-20 °C"
@@ -506,9 +509,10 @@ def column(kit: Material) -> str:
 
     Examples
     --------
-    >>> column(cleanup_kit("T1120"))
+    >>> from mbio.bench.materials import kit
+    >>> column(kit("T1120"))
     'Monarch Spin DNA Gel Extraction column'
-    >>> column(cleanup_kit("Wizard SV Gel and PCR Clean-Up System"))
+    >>> column(kit("Wizard SV Gel and PCR Clean-Up System"))
     'Wizard SV Gel and PCR Clean-Up column'
     """
     name = kit.name
@@ -519,7 +523,7 @@ def column(kit: Material) -> str:
 
 def cleanup_step(
     *,
-    kit: Material | None = None,
+    kit: Material,
     cautions: Sequence[Caution | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
@@ -527,16 +531,14 @@ def cleanup_step(
     """Return the spin-column cleanup of every amplicon, carrying the caller's own words.
 
     `kit` is the product the run cleans up with, which the step names and the protocol's
-    materials list; `mbio.bench.materials.kit` resolves what the caller was told, and the
-    default is that function's.
+    materials list it as; `mbio.bench.materials.kit` resolves what the caller was told.
     """
-    named = cleanup_kit() if kit is None else kit
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
         cautions=tuple(cautions),
         instructions=(
-            f"Run each reaction over a {column(named)} and elute in the smallest volume the "
+            f"Run each reaction over a {column(kit)} and elute in the smallest volume the "
             "kit allows.",
         ),
         expected=("Clean DNA, free of polymerase, primers and dNTPs.",),

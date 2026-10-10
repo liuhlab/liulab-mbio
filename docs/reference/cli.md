@@ -112,7 +112,7 @@ FASTA files, and writes four files into `--out`:
 
 Gateway writes a fifth file, `entry-clone.dna`, where it also plans a BP reaction.
 
-Every one of the four prints a summary line, then each file it wrote. Four options are shared:
+Every one of the four prints a summary line, then each file it wrote. Five options are shared:
 
 | Option | Default | What it is |
 | --- | --- | --- |
@@ -125,9 +125,9 @@ Every one of the four prints a summary line, then each file it wrote. Four optio
 Gateway's `--host` starts at `TOP10 chemically competent E. coli` instead. A strain it
 recognises also gets its ccdB selection checked.
 
-`--cleanup-kit` takes a catalogue number the package knows — `T1130` or `T1120` from New England
-Biolabs, `D4003` or `D4007` from Zymo Research — or any other kit's own name, which the page then
-names with no catalogue number beside it.
+`--cleanup-kit` takes a catalogue number the package knows — `T1130`, the Monarch Spin PCR &
+DNA Cleanup Kit, or `D4003`, Zymo Research's DNA Clean & Concentrator-5 — or any other kit's own
+name, which the page then names with no catalogue number beside it.
 
 ### Golden Gate
 
