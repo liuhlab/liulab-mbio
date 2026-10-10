@@ -956,9 +956,9 @@ _Avoid_: sequence panel, text view
 ### Track
 
 Values along a record's bases, such as the four channels of a Sanger trace, drawn as curves in a
-strip under each row of a **sequence view** they reach. Each peak lies over the middle of the base
-it was called for, so the signal behind every call stands under it.
-_Avoid_: chromatogram (one kind of it), lane, signal
+strip under each row of a **sequence view** they reach. Where the values come with peak positions,
+each peak sits over the middle of its base, so the signal behind every base stands under it.
+_Avoid_: chromatogram (one kind of it), lane, signal, trace (a Sanger file)
 
 ### Highlight
 
