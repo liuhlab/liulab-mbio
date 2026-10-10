@@ -424,7 +424,7 @@ tfoot .muted { font-weight: 400; }
 }
 </style>
 </head>
-<body data-protocol="125831d76b821ad3">
+<body data-protocol="b367710cda61665f">
 <div class="frame alone"><main class="page">
 <header class="intro">
 <h1>Gibson assembly: GFP into pUC19</h1>
@@ -540,7 +540,7 @@ Sequencing reverse	CGCAACGCAATTAATGTGAG">Copy all sequences</button></p>
 </section>
 <section class="step" id="step-sequencing">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-sequencing"><span class="step-n">11</span><span>Confirm the clone by sequencing</span></label></h2>
-<ol class="instructions"><li><label><input type="checkbox" data-key="step-sequencing.1"><span>Miniprep two or three colonies that read as correct.</span></label></li><li><label><input type="checkbox" data-key="step-sequencing.2"><span>Send each miniprep with both sequencing primers.</span></label></li><li><label><input type="checkbox" data-key="step-sequencing.3"><span>Check the read across every junction and the whole of each insert.</span></label></li></ol>
+<ol class="instructions"><li><label><input type="checkbox" data-key="step-sequencing.1"><span>Miniprep two or three colonies that read as correct.</span></label></li><li><label><input type="checkbox" data-key="step-sequencing.2"><span>Send each miniprep with both sequencing primers.</span></label></li><li><label><input type="checkbox" data-key="step-sequencing.3"><span>Check each read against <a href="product.dna">product.dna</a>; keep a clone only when every junction and insert reads true.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.</li><li>Sequencing reverse anneals 118 bp from its own junction and has to read 835 bp to cover the far one.</li><li>The junctions read as TAAAACGACGGCCAGT and GGCGTAATCATGGTCA, and the parts match GFP.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The read starts too close to the junction</dt><dd>Move the primer further out; the first bases after a primer are unreadable.<a class="cite" href="#source-genewiz-sanger" title="Azenta/Genewiz, Sanger sequencing FAQ and technical notes · sequencing primer design"><sup>[14]</sup></a></dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Only a read across the junctions confirms the assembly, whatever the screen said.</li><li>A provider whose read is shorter than the lengths above needs a further primer inside the inserts.</li><li>About one error per 50 molecules joined was found in 210 sequenced junctions, so a gel that reads right is not the same as a junction that is right.<a class="cite" href="#source-gibson-2009" title="Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several hundred kilobases. Nat. Methods 6, 343-345"><sup>[15]</sup></a></li></ul></div>

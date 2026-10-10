@@ -1,6 +1,6 @@
 {
   "title": "Gateway BP then LR: attB-GFP into pDEST-demo",
-  "key": "71d581ec3bd90d06",
+  "key": "76aa0fe526427748",
   "summary": "Recombine the 751 bp between attB-GFP's attB sites into pDONR-demo, giving the entry clone pDONR-demo-attB-GFP; grow that up and recombine it into pDEST-demo. Two staged reactions, each with its own incubation, stop, transformation and plate.",
   "overview": {
     "attB PCR": "775 bp product, 29 and 29 bp tails",
@@ -398,7 +398,8 @@
   ],
   "order_sheet": "primers.tsv",
   "files": [
-    "primers.tsv"
+    "primers.tsv",
+    "product.dna"
   ],
   "equipment": [
     "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
@@ -1547,7 +1548,7 @@
         "Miniprep two or three colonies that read as correct.",
         "Send each miniprep with both sequencing primers.",
         "Send at least 500 ng of plasmid with 5-50 pmol of each primer.",
-        "Check the read across every junction and the whole of each insert."
+        "Check each read against product.dna; keep a clone only when every junction and insert reads true."
       ],
       "cautions": [],
       "notes": [
