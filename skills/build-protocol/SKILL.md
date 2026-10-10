@@ -31,8 +31,8 @@ write_html(Protocol(title="...", steps=(...)), "protocol.html")  # built in code
 ```
 
 The page needs no network, keeps check marks in the browser, rescales its tables and prints.
-Never hand-edit the HTML: change the data and render again. A figure's record gets its map
-written beside the page, as `NAME-map.html`, which the figure opens: keep the two together.
+Never hand-edit the HTML: change the data and render again. Keep each `NAME-map.html` beside
+the page: its figures open them.
 
 ## The data format
 
