@@ -83,7 +83,6 @@ from mbio.protocol.model import (
     Reference,
     Source,
     Step,
-    Timer,
     Troubleshooting,
     citing,
     figured,
@@ -671,7 +670,6 @@ def _incubation_step(
             "Put the reaction on ice afterwards, or keep it at -20 °C.",
         ),
         programs=(assembly_program(product, fragments=fragments),),
-        timers=(Timer("Assembly", tier.incubation_seconds),),
         expected=(
             "Nothing visible. One exonuclease, one polymerase and one ligase work together at "
             "this one temperature; there is nothing to cycle.",
