@@ -130,6 +130,9 @@ def test_one_command_plans_the_library_and_prints_the_paths(build, tmp_path):
         "03-final-cargo-ligation.html",
         "reagents.html",
         "references.html",
+        "round-1-map.html",
+        "round-2-map.html",
+        "product-map.html",
         "library-read-primers.tsv",
     ]
     for path in written:

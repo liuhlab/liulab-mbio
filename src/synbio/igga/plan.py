@@ -159,6 +159,8 @@ class Files:
     working_vector
         The working vector the final assembly opens, cassette and all, or ``None`` where the
         build names none.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the record.
     """
 
     parts: Path
@@ -173,6 +175,7 @@ class Files:
     read_primers: Path | None = None
     block_vectors: tuple[Path, ...] = ()
     working_vector: Path | None = None
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -189,6 +192,7 @@ class Files:
             self.working_vector,
             self.protocol_data,
             *self.protocol,
+            *self.maps,
             self.pool,
             self.pool_primers,
             self.oligo,
@@ -443,6 +447,7 @@ class LibraryPlan:
             reads,
             tuple(blocks),
             working,
+            written.maps,
         )
 
 

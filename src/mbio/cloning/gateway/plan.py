@@ -9,7 +9,7 @@ a plain insert it amplifies that insert onto attB ends first.
 
 `Plan.write` puts four files in one directory -- the annotated expression clone, the oligo order
 sheet, the protocol as JSON data and the interactive HTML page rendered from that data -- and
-the entry clone as a fifth where BP was planned.
+the entry clone as a fifth where BP was planned, with the map each figure opens to beside them.
 
 Every number the protocol prints is computed here or is one `mbio.cloning.gateway.bench`
 cites from `docs/research/gateway-cloning.md`.
@@ -80,6 +80,8 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the record.
     """
 
     entry: Path | None
@@ -87,12 +89,13 @@ class Files:
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
         """Every file written, the first written first, whichever size the set is."""
-        written = (self.entry, self.product, self.primers, self.protocol_data, self.protocol)
-        return tuple(path for path in written if path is not None)
+        written = (self.entry, self.product, self.primers, self.protocol_data, *self.maps)
+        return (*(path for path in written if path is not None), self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,7 +239,7 @@ class Plan:
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(entry, product, sheet, written.data, written.page)
+        return Files(entry, product, sheet, written.data, written.page, written.maps)
 
 
 def plan_gateway(

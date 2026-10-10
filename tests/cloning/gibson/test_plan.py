@@ -199,19 +199,22 @@ def test_the_protocol_is_enough_to_run_the_experiment(made):
     ]
 
 
-def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
+def test_the_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
     outputs = made.write(tmp_path / "run")
     assert [(path.parent, path.name) for path in outputs.paths] == [
         (tmp_path / "run", "product.dna"),
         (tmp_path / "run", "primers.tsv"),
         (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "product-map.html"),
         (tmp_path / "run", "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == made.plasmid
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
+        read_protocol(outputs.protocol_data),
+        base=outputs.protocol.parent,
+        maps={"product.dna": "product-map.html"},
     )
 
 

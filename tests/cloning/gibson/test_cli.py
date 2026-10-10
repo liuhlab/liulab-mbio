@@ -37,7 +37,7 @@ def halves(gfp_file: Path, tmp_path: Path) -> tuple[Path, Path]:
     return written[0], written[1]
 
 
-def test_the_cli_writes_the_four_outputs_and_wires_every_option_it_takes(
+def test_the_cli_writes_the_outputs_and_wires_every_option_it_takes(
     puc19_file: Path, halves: tuple[Path, Path], tmp_path: Path
 ) -> None:
     out = tmp_path / "run"
@@ -77,7 +77,7 @@ def test_the_cli_writes_the_four_outputs_and_wires_every_option_it_takes(
     )
     assert result.exit_code == 0, result.output
     summary, *paths = plain(result.output).splitlines()
-    names = ["product.dna", "primers.tsv", "protocol.json", "protocol.html"]
+    names = ["product.dna", "primers.tsv", "protocol.json", "product-map.html", "protocol.html"]
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     # The name and the site are the ones asked for, and the second insert went in turned round,

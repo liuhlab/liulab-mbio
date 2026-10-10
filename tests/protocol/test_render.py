@@ -653,6 +653,46 @@ def test_a_figure_reads_its_record_from_beside_the_page(data_dir: Path, tmp_path
     assert "<svg" in path.read_text(encoding="utf-8")
 
 
+def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Path) -> None:
+    """ "Run the program below" names the program, so nothing stands between the two."""
+    program = ThermocyclerProgram((Stage((Incubation("Hold", 37.0, 60),)),), title="Assembly")
+    step = Step(
+        "Run it",
+        instructions=("Run the program below.",),
+        programs=(program,),
+        figures=(Figure(("pUC19.dna",), "The product"),),
+    )
+    page = parse(render_html(Protocol("Clone", steps=(step,)), base=data_dir))
+
+    [section] = page.find_all("section", cls="step")
+    order = [
+        n.attrs["class"] for n in section.children if isinstance(n, Node) and n.tag == "figure"
+    ]
+    assert order == ["program", "drawing map"]
+
+
+def test_a_figure_opens_to_its_record_s_map_written_beside_the_record(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    """One map a record, with every enzyme its figures name, linked from the page that draws it."""
+    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    figures = tuple(
+        Figure(("../pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
+        for enzyme in ("EcoRI", "HindIII")
+    )
+    one = Protocol("Clone", steps=(Step("Cut", figures=figures),))
+    (tmp_path / "pages").mkdir()
+
+    page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
+
+    written = (tmp_path / "pUC19-map.html").read_text(encoding="utf-8")
+    assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
+    opened = [figure.find_all("details", cls="opened")[0] for figure in page.find_all("figure")]
+    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == ["../pUC19-map.html"] * 2
+    # A page rendered with no map written has nothing to open.
+    assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opened")
+
+
 def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path: Path) -> None:
     one = Protocol("Clone", steps=(Step("Cut", figures=(Figure(("gone.dna",), "The vector"),)),))
     with pytest.raises(FileNotFoundError, match=r"step 1 'Cut'.*gone\.dna"):

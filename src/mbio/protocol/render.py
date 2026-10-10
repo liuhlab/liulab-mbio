@@ -232,6 +232,8 @@ class ProjectFiles:
         One page per protocol, in the order they are run.
     reagents, references
         The two pages the whole run shares.
+    maps
+        The map each record a figure draws opens to, written beside the record.
     """
 
     data: Path
@@ -239,11 +241,13 @@ class ProjectFiles:
     protocols: tuple[Path, ...]
     reagents: Path
     references: Path
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
         """Every file written, the first written first."""
-        return (self.data, *self.protocols, self.index, self.reagents, self.references)
+        pages = (*self.protocols, self.index, self.reagents, self.references)
+        return (self.data, *self.maps, *pages)
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,15 +260,18 @@ class ProtocolFiles:
         The bench protocol as JSON, which ``protocol render`` turns back into the page.
     page
         The interactive bench protocol, as one self-contained HTML page.
+    maps
+        The map each record a figure draws opens to, written beside the record.
     """
 
     data: Path
     page: Path
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Both, in the order they were written."""
-        return (self.data, self.page)
+        """Every file, in the order they were written."""
+        return (self.data, *self.maps, self.page)
 
 
 @dataclass(frozen=True, slots=True)
@@ -280,10 +287,13 @@ class RunFiles:
         page per protocol and the two shared pages, where it is a chain. The way in leads them,
         which `page` reads, so a folder's pages are not in the order they were written --
         `ProjectFiles.paths` is the one that reports that.
+    maps
+        The map each record a figure draws opens to, written beside the record.
     """
 
     data: Path
     pages: tuple[Path, ...]
+    maps: tuple[Path, ...] = ()
 
     @property
     def page(self) -> Path:
@@ -292,8 +302,8 @@ class RunFiles:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written: the data, then the pages with the way in leading them."""
-        return (self.data, *self.pages)
+        """Every file written: the data, the pages with the way in leading them, then the maps."""
+        return (self.data, *self.pages, *self.maps)
 
 
 def page_key(value: Protocol | Project) -> str:
@@ -367,6 +377,7 @@ def render_html(
     folder: Folder | None = None,
     here: str = "",
     base: str | os.PathLike[str] | None = None,
+    maps: Mapping[str, str] | None = None,
 ) -> str:
     """Return `protocol` as one HTML page with its styles and script inline.
 
@@ -377,7 +388,9 @@ def render_html(
     line naming its neighbours, and the line prints with it.
 
     A `Figure` names its record by a path relative to `base`, the directory the protocol was read
-    from; the current directory where nobody says.
+    from; the current directory where nobody says. `maps` holds the address, from the page, of
+    the map each record opens to, keyed as a figure names the record; a figure of a record with
+    none opens to nothing. `write_html` writes those maps.
 
     Raises
     ------
@@ -405,6 +418,7 @@ def render_html(
                     protocol,
                     beside,
                     step.section if step.section != sections[n - 1] else "",
+                    maps or {},
                 )
                 for n, step in enumerate(protocol.steps, 1)
             ),
@@ -427,14 +441,56 @@ def write_html(
 
     Inside a `folder`, the file's own name is the address the other pages link it by. A figure's
     record is read from `base`, and from beside the page where nobody says: a pipeline writes the
-    records, the data and the page into one directory.
+    records, the data and the page into one directory. The map each record opens to is written
+    beside the record first, as `_write_maps` writes it.
     """
     out = Path(path)
+    beside = out.parent if base is None else Path(base)
+    maps = _write_maps((protocol,), beside)
     page = render_html(
-        protocol, folder=folder, here=out.name, base=out.parent if base is None else base
+        protocol, folder=folder, here=out.name, base=beside, maps=_addressed(maps, out.parent)
     )
     out.write_text(page, encoding="utf-8")
     return out
+
+
+def _write_maps(protocols: Iterable[Protocol], base: str | os.PathLike[str]) -> dict[str, Path]:
+    """Write the map each record a figure draws opens to, and return where, keyed by the record.
+
+    One map a record, however many figures draw it, beside the record and named after it:
+    ``product.dna`` opens to ``product-map.html``, or to ``product.dna-map.html`` where another
+    record of its directory shares the stem. It is the whole record behind the page's switches,
+    so a reader explores what a figure shows only part of, with every enzyme the record's
+    figures name, or the unique cutters where none names one. Records are named relative to
+    `base`, as `render_html` reads them, and one that is not there is left for it to refuse.
+    """
+    named: dict[Path, list[str]] = {}
+    enzymes: dict[Path, set[str] | None] = {}
+    for protocol in protocols:
+        for step in protocol.steps:
+            for figure in step.figures:
+                for record in figure.records:
+                    path = Path(os.path.normpath(Path(base) / record))
+                    named.setdefault(path, []).append(record)
+                    kept = enzymes.setdefault(path, None)
+                    if figure.enzymes is not None:
+                        enzymes[path] = (kept or set()) | set(figure.enzymes)
+    stems = [path.with_suffix("") for path in named]
+    written: dict[str, Path] = {}
+    for path, records in named.items():
+        if not path.is_file():
+            continue
+        shared = stems.count(path.with_suffix("")) > 1
+        page = path.with_name(f"{path.name if shared else path.stem}-map.html")
+        chosen = enzymes[path]
+        draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(page)
+        written |= dict.fromkeys(records, page)
+    return written
+
+
+def _addressed(maps: Mapping[str, Path], here: Path) -> dict[str, str]:
+    """Return each map's address from a page in `here`, as a link spells it."""
+    return {record: Path(os.path.relpath(page, here)).as_posix() for record, page in maps.items()}
 
 
 def render_index(project: Project, folder: Folder) -> str:
@@ -1134,8 +1190,14 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
     data = write_project(minted(project), out / PROJECT_DATA_FILE)
     written = read_project(data)
     folder = Folder.of(written)
+    # Written once for the run, since one record is often drawn on several of its pages.
+    maps = _write_maps(written.protocols, out)
+    addressed = _addressed(maps, out)
     protocols = tuple(
-        write_html(one, out / page.href, folder=folder)
+        _write(
+            render_html(one, folder=folder, here=page.href, base=out, maps=addressed),
+            out / page.href,
+        )
         for one, page in zip(written.protocols, folder.pages, strict=True)
     )
     return ProjectFiles(
@@ -1144,6 +1206,7 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
         protocols,
         _write(render_reagents(written, folder), out / folder.reagents),
         _write(render_references(written, folder), out / folder.references),
+        tuple(dict.fromkeys(maps.values())),
     )
 
 
@@ -1158,7 +1221,12 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
     data = write_protocol(minted(protocol), out / PROTOCOL_DATA_FILE)
-    return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+    written = read_protocol(data)
+    maps = _write_maps((written,), out)
+    page = render_html(written, here=PROTOCOL_FILE, base=out, maps=_addressed(maps, out))
+    return ProtocolFiles(
+        data, _write(page, out / PROTOCOL_FILE), tuple(dict.fromkeys(maps.values()))
+    )
 
 
 def write_run_files(project: Project, directory: str | os.PathLike[str]) -> RunFiles:
@@ -1171,10 +1239,12 @@ def write_run_files(project: Project, directory: str | os.PathLike[str]) -> RunF
     """
     if len(project.protocols) == 1:
         alone = write_protocol_files(_alone(project), directory)
-        return RunFiles(alone.data, (alone.page,))
+        return RunFiles(alone.data, (alone.page,), alone.maps)
     folder = write_project_files(project, Path(directory) / PROTOCOL_DIR)
     return RunFiles(
-        folder.data, (folder.index, *folder.protocols, folder.reagents, folder.references)
+        folder.data,
+        (folder.index, *folder.protocols, folder.reagents, folder.references),
+        folder.maps,
     )
 
 
@@ -2019,12 +2089,17 @@ def _plate(one: Plate) -> str:
     )
 
 
-def _figure(figure: Figure, base: Path, where: str) -> str:
+def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> str:
     """Return the figure's records drawn as maps and inlined, as `_plate` inlines a plate.
 
     Laid out here and never stored, so the figure follows the design it is drawn from. Several
     records stack as rows in the order they are named, each labelled by the record's own name,
     which is how a figure shows one molecule becoming the next. One record draws as it did.
+
+    The figure stands in a frame of its own with its caption inside, so it never reads as one of
+    the step's instructions. A record with a map in `maps` gets a control under its drawing that
+    opens the map in place, whole and to explore, and closes it again; the page prints the
+    drawing alone.
 
     A highlight lights each row that answers to it and dims every other row whole, so a name only
     the lit round's record carries lights that round. A name no record answers to is a mistake.
@@ -2037,28 +2112,50 @@ def _figure(figure: Figure, base: Path, where: str) -> str:
         If no record of the figure answers to a name the highlight lights.
     """
     rows = [_row(figure, base / named, where) for named in figure.records]
-    lit = frozenset().union(*(answering for _, answering in rows))
+    lit = frozenset().union(*(answering for _, answering, _ in rows))
     unlit = [name for name in figure.highlight if name.casefold() not in lit]
     if unlit:
         listed = ", ".join(repr(name) for name in unlit)
         raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
+    caption = f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption>"
+    opened = [
+        _opened(maps.get(named), name)
+        for named, (_, _, name) in zip(figure.records, rows, strict=True)
+    ]
     if len(rows) == 1:
-        ((element, _),) = rows
-        drawn, stacked = element, ""
+        ((element, _, _),) = rows
+        drawn, stacked = f"{element}{caption}{opened[0]}", ""
     else:
-        drawn = "".join(element for element, _ in rows)
-        stacked = " rows"
+        # A stacked row carries the record's own name, so a reader knows which molecule it is.
+        drawn = "".join(
+            f'<div class="row"><p class="row-name">{escape(name)}</p>{element}{one}</div>'
+            for (element, _, name), one in zip(rows, opened, strict=True)
+        )
+        drawn, stacked = drawn + caption, " rows"
+    return f'<figure class="drawing map{stacked}">{drawn}</figure>\n'
+
+
+def _opened(href: str | None, name: str) -> str:
+    """Return the control that opens a record's map in place, and the map; nothing without one.
+
+    The map is the figure opened: the whole record behind its switches, to explore. It loads the
+    first time it is opened, from its `data-src`, so a page of several costs nothing until asked,
+    and a new tab shows it whole.
+    """
+    if href is None:
+        return ""
+    address = escape(href, quote=True)
     return (
-        f'<figure class="drawing map{stacked}">{drawn}'
-        f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption></figure>\n"
+        '<details class="opened"><summary><span class="to-open">Explore the map</span>'
+        '<span class="to-close">Close the map</span></summary>'
+        f'<iframe data-src="{address}" title="{escape(name, quote=True)}, to explore"></iframe>'
+        f'<a class="new-tab" href="{address}" target="_blank" rel="noopener">Open it in a new '
+        "tab</a></details>"
     )
 
 
-def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
-    """Return one record of a figure as its SVG element, and every name it answers to.
-
-    A stacked row carries the record's own name beside it, so a reader knows which molecule it is.
-    """
+def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str], str]:
+    """Return one record of a figure as its SVG element, every name it answers to, and its own."""
     if not path.is_file():
         raise FileNotFoundError(f"{where}: no record at {path} to draw")
     drawn = draw_map(
@@ -2072,12 +2169,7 @@ def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
         # Lit here rather than by `draw_map`, which refuses a name its one record does not draw:
         # across rows a name belongs to the row it names, and dims every other row whole.
         drawn = replace(drawn, highlight=figure.highlight)
-    answering = drawn.answering
-    element = drawn.element()
-    if len(figure.records) == 1:
-        return element, answering
-    label = f'<p class="row-name">{escape(drawn.record.name)}</p>'
-    return f'<div class="row">{label}{element}</div>', answering
+    return drawn.element(), drawn.answering, drawn.record.name
 
 
 def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
@@ -2252,7 +2344,15 @@ def _sources(
     )
 
 
-def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section: str = "") -> str:
+def _step(
+    n: int,
+    step: Step,
+    key: str,
+    protocol: Protocol,
+    base: Path,
+    section: str,
+    maps: Mapping[str, str],
+) -> str:
     """One step, addressed by its own key, so a reworded title keeps the bench's tick.
 
     Everything inside it is marked by that anchor, a dot and what it is. A key is a slug and
@@ -2274,7 +2374,6 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
-    parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
     elsewhere = (t for s in protocol.steps if s is not step for t in s.troubleshooting)
     trouble = (*step.troubleshooting, *elsewhere)
     parts += [_table(f"{anchor}.table.{i}", t, trouble) for i, t in enumerate(step.tables, 1)]
@@ -2287,6 +2386,9 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         timers = "".join(_timer(f"{anchor}.timer.{i}", t) for i, t in enumerate(step.timers, 1))
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
+    # After everything the instructions point at, so "the program below" is never the map.
+    where = f"step {n} {step.title!r}"
+    parts += [_figure(f, base, where, maps) for f in step.figures]
     if step.expected or step.gels:
         gels = "".join(_gel(g) for g in step.gels)
         parts.append(

@@ -49,7 +49,15 @@ def test_the_cli_plans_every_option_it_was_given_and_prints_the_files_it_wrote(
 
     assert result.exit_code == 0, result.output
     summary, *paths = re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
-    names = ["entry-clone.dna", "product.dna", "primers.tsv", "protocol.json", "protocol.html"]
+    names = [
+        "entry-clone.dna",
+        "product.dna",
+        "primers.tsv",
+        "protocol.json",
+        "entry-clone-map.html",
+        "product-map.html",
+        "protocol.html",
+    ]
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     assert summary.startswith("pEXP-GFP:")

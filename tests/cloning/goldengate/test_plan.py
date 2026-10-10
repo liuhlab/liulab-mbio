@@ -130,20 +130,23 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     }
 
 
-def test_the_four_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, tmp_path):
+def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, tmp_path):
     outputs = plan.write(tmp_path / "run")
-    paths = (outputs.product, outputs.primers, outputs.protocol_data, outputs.protocol)
-    assert [(path.parent, path.name) for path in paths] == [
+    assert [(path.parent, path.name) for path in outputs.paths] == [
         (tmp_path / "run", "product.dna"),
         (tmp_path / "run", "primers.tsv"),
         (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "product-map.html"),
         (tmp_path / "run", "protocol.html"),
     ]
-    assert all(path.stat().st_size > 0 for path in paths)
+    assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == plan.product
     assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
-    assert page == render_html(read_protocol(outputs.protocol_data), base=tmp_path / "run")
+    # The figure of the product opens to the map written beside it.
+    opened = {"product.dna": "product-map.html"}
+    data = read_protocol(outputs.protocol_data)
+    assert page == render_html(data, base=tmp_path / "run", maps=opened)
 
 
 def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):

@@ -32,9 +32,7 @@ def plan(
     ],
     out: Annotated[
         Path,
-        typer.Option(
-            "--out", "-o", file_okay=False, help="Directory to write the four outputs into."
-        ),
+        typer.Option("--out", "-o", file_okay=False, help="Directory to write the outputs into."),
     ],
     site: Annotated[
         str,

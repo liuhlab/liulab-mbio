@@ -59,10 +59,10 @@ def planned(puc19_file: Path, insert_files: tuple[Path, ...], tmp_path_factory):
     return out, plain(result.output)
 
 
-def test_one_run_writes_the_four_outputs_the_options_asked_for(planned) -> None:
+def test_one_run_writes_the_outputs_the_options_asked_for(planned) -> None:
     out, output = planned
     summary, *paths = output.splitlines()
-    names = ["product.dna", "primers.tsv", "protocol.json", "protocol.html"]
+    names = ["product.dna", "primers.tsv", "protocol.json", "product-map.html", "protocol.html"]
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     # The span was read as coordinates, the enzyme was taken as given, and the product is the

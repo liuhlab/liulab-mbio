@@ -5,7 +5,8 @@ replace, choose the overlap at each junction, design the primers that carry it, 
 product, work out what the assembly reaction takes, and design the colony PCR and the
 sequencing that say whether the clone is the one the design asked for. `Plan.write` puts four
 files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
-data, and the interactive HTML page rendered from that data.
+data, and the interactive HTML page rendered from that data -- with the map its figure opens to
+beside them.
 
 Every number the protocol prints is computed here or by the modules this one calls, and every
 supplier's number behind them is `mbio.cloning.gibson.bench`, through
@@ -93,7 +94,7 @@ type Route = Literal["amplify", "stitch"]
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The four files a plan writes.
+    """The files a plan writes: four, and the map each figure opens to.
 
     Parameters
     ----------
@@ -106,17 +107,20 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the record.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """The four, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, self.protocol)
+        """Every file, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, *self.maps, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,7 +268,7 @@ class Plan:
     def write(self, directory: str | os.PathLike[str]) -> Files:
         """Write the plasmid, the oligo sheet, the protocol data and its page into `directory`.
 
-        The directory is made when it is not there. The four files are named by
+        The directory is made when it is not there. The files are named by
         `mbio.cloning.plan` and `mbio.protocol.render`, and a second run over the same inputs
         writes the same bytes.
         """
@@ -275,7 +279,7 @@ class Plan:
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports, oligos=self.ordered_oligos), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(plasmid, sheet, written.data, written.page)
+        return Files(plasmid, sheet, written.data, written.page, written.maps)
 
 
 def plan_gibson(

@@ -56,6 +56,7 @@ def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
         "product.dna",
         "primers.tsv",
         "protocol.json",
+        "product-map.html",
         "protocol.html",
     ]
     assert all(path.exists() for path in written.paths)
@@ -170,6 +171,8 @@ def test_the_bp_route_writes_the_entry_clone_as_a_file_of_its_own(
         "product.dna",
         "primers.tsv",
         "protocol.json",
+        "entry-clone-map.html",
+        "product-map.html",
         "protocol.html",
     ]
     assert written.entry is not None

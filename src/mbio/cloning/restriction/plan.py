@@ -4,7 +4,7 @@
 to the same two ends, check they anneal, simulate the ligation, and design the colony PCR and
 the sequencing that confirm the clone. `Plan.write` puts four files in one directory -- the
 annotated product, an oligo order sheet, the protocol as JSON data, and the interactive HTML page
-rendered from that data.
+rendered from that data -- with the map its figure opens to beside them.
 
 There are two routes to the insert and the record handed in picks one. A record already carrying
 the enzymes' sites is cut and the piece between them goes in. A record carrying none is amplified
@@ -86,7 +86,7 @@ from mbio.snapgene import write_dna
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The four files a plan writes.
+    """The files a plan writes: four, and the map each figure opens to.
 
     Parameters
     ----------
@@ -99,17 +99,20 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the record.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...] = ()
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """The four, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, self.protocol)
+        """Every file, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, *self.maps, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,7 +296,7 @@ class Plan:
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(product, sheet, written.data, written.page)
+        return Files(product, sheet, written.data, written.page, written.maps)
 
 
 def plan_restriction(

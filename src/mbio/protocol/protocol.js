@@ -186,6 +186,17 @@
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
+  // A figure opens to its record's map, which loads the first time it is opened. Nothing is
+  // remembered: an opened map is not a mark.
+  all("details.opened").forEach(function (opened) {
+    opened.addEventListener("toggle", function () {
+      var frame = opened.querySelector("iframe[data-src]");
+      if (opened.open && frame && !frame.getAttribute("src")) {
+        frame.setAttribute("src", frame.getAttribute("data-src"));
+      }
+    });
+  });
+
   // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
   // protocol.model.number, so the column reads the same after the count changes.
   var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
