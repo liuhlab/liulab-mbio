@@ -250,11 +250,10 @@ _Avoid_: mix table, recipe
 
 A named calculation a step shows: a default the package wrote, a number the reader types over,
 and a result the page works out again from the two. It is a view and never a store: what the
-reader types is the page's to keep, as a timer's time is, and the protocol never holds it. The
-page does arithmetic only over numbers the renderer wrote, never a constant or a package
-formula, and its warning is a troubleshooting entry a step already carries. The kinds are a
-closed set, each named. The first is a reaction row whose DNA the bench measured: it gives the
-volume that carries the row's amount, and another row of the table makes up the difference.
+reader types is the page's to keep, as a timer's time is, and the protocol never holds it. Its
+warning is a troubleshooting entry a step already carries. Its kinds are a closed set, each
+named, such as a reaction row whose DNA the bench measured, which gives the volume that carries
+the row's amount while another row makes up the difference.
 _Avoid_: widget, formula, converter, panel
 
 ### Thermocycler program

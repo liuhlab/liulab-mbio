@@ -438,10 +438,7 @@ class Oligo:
 class AmountToVolume:
     """A calculator on a reaction row: the volume that carries its DNA at the bench's concentration.
 
-    The row's `volume_ul` is the plan's, and the page offers it at the concentration that volume
-    assumes. The reader types the one they measured, the page divides, and the row it names
-    gives way, so the reaction keeps its volume. What they type is the page's to keep, never
-    the protocol's, as a timer's time is.
+    The page opens it at the concentration the row's `volume_ul` assumes.
 
     Parameters
     ----------

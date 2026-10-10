@@ -577,7 +577,7 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
         key="quantify",
         instructions=(
             "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
-            "Type each concentration into the next table, which gives the volume to pipette.",
+            "Enter each concentration in the next table's Stock column.",
         ),
         expected=wanted,
         troubleshooting=(TOO_DILUTE,),

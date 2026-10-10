@@ -24,7 +24,6 @@ from mbio.plot.drawing import draw_map, draw_plate
 from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
 from mbio.protocol.model import (
-    AmountToVolume,
     Bill,
     Caution,
     Check,
@@ -2276,7 +2275,8 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
-    trouble = (*step.troubleshooting, *(t for s in protocol.steps for t in s.troubleshooting))
+    elsewhere = (t for s in protocol.steps if s is not step for t in s.troubleshooting)
+    trouble = (*step.troubleshooting, *elsewhere)
     parts += [_table(f"{anchor}.table.{i}", t, trouble) for i, t in enumerate(step.tables, 1)]
     parts += [_program(f"{anchor}.program.{i}", p) for i, p in enumerate(step.programs, 1)]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
@@ -2341,24 +2341,25 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
     stock = live or any(c.stock for c in table.components)
     final = any(c.final for c in table.components)
     scale = table.reactions * (1 + table.overage)
-    one = "num one" if live else "num"
+    volume_class = "num one" if live else "num"
     rows = []
     for row, component in enumerate(table.components):
         cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
         if component.calculator is not None:
-            cells.append(_concentration(component.name, component.calculator, component.volume_ul))
+            assumed = component.calculator.nanograms / component.volume_ul
+            cells.append(_concentration(component.name, assumed))
         elif stock:
             cells.append(f"<td>{escape(component.stock)}</td>")
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
-        cells.append(f'<td class="{one}">{number(component.volume_ul)}</td>')
+        cells.append(f'<td class="{volume_class}">{number(component.volume_ul)}</td>')
         if component.master_mix:
             # `protocol.js` writes this cell again from `data-ul`, by the same arithmetic.
             mix = number(component.volume_ul * scale)
             cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{mix}</td>')
         else:
             cells.append('<td class="num per-tube">each tube</td>')
-        marks = _live_row(f"{key}.row.{row}", component, table) if live else ""
-        rows.append(f"<tr{marks}>{''.join(cells)}</tr>")
+        attrs = _live_row(f"{key}.row.{row}", component, table) if live else ""
+        rows.append(f"<tr{attrs}>{''.join(cells)}</tr>")
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
     total = sum(c.volume_ul for c in table.components)
@@ -2374,7 +2375,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
         + f'<th class="num">Mix for <span class="rxn-n">{table.reactions}</span> (µL)</th>'
     )
     foot = (
-        f'<tr><th>Total</th>{blanks}<td class="{one}">{number(total)}</td>'
+        f'<tr><th>Total</th>{blanks}<td class="{volume_class}">{number(total)}</td>'
         f'<td class="num mix"><span data-ul="{in_mix!r}">{number(in_mix * scale)}</span>'
         f"{only}</td></tr>"
     )
@@ -2400,18 +2401,18 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
     )
 
 
-def _concentration(name: str, calculator: AmountToVolume, volume_ul: float) -> str:
+def _concentration(name: str, assumed: float) -> str:
     """Return the stock cell of a row the bench measures, at the concentration the plan assumes.
 
     The reader types over it; the plan's own goes back on the button beside it.
     """
-    assumed = number(calculator.nanograms / volume_ul)
+    shown = number(assumed)
     return (
         '<td class="calc"><label><input type="text" class="calc-value" inputmode="decimal"'
-        f' value="{assumed}" size="5" autocomplete="off" spellcheck="false"'
+        f' value="{shown}" size="5" autocomplete="off" spellcheck="false"'
         f' aria-label="{escape(name)}, ng/µL measured"> ng/µL</label>'
-        '<button type="button" class="calc-plan" title="The concentration the plan assumes"'
-        f" hidden>Back to {assumed}</button></td>"
+        '<button type="button" class="calc-plan" title="The concentration the protocol assumes"'
+        f" hidden>Back to {shown}</button></td>"
     )
 
 
@@ -2421,23 +2422,23 @@ def _live_row(key: str, component: Component, table: ReactionTable) -> str:
     The plan's volume, and for a row a calculator reaches, what it carries, the concentration
     the plan assumes and the row that gives way.
     """
-    marks = f' data-rxn-ul="{component.volume_ul!r}"'
+    attrs = f' data-rxn-ul="{component.volume_ul!r}"'
     calculator = component.calculator
     if calculator is None:
-        return marks
+        return attrs
     fill = [c.name for c in table.components].index(calculator.made_up_by)
-    marks += (
+    attrs += (
         f' class="measured" data-key="{key}" data-ng="{calculator.nanograms!r}"'
         f' data-ng-ul="{calculator.nanograms / component.volume_ul!r}" data-fill="{fill}"'
     )
     if calculator.too_dilute:
-        marks += f' data-too-dilute="{escape(calculator.too_dilute)}"'
+        attrs += f' data-too-dilute="{escape(calculator.too_dilute)}"'
     if calculator.least_ul is not None:
-        marks += (
+        attrs += (
             f' data-least-ul="{calculator.least_ul!r}"'
             f' data-too-concentrated="{escape(calculator.too_concentrated)}"'
         )
-    return marks
+    return attrs
 
 
 def _warnings(table: ReactionTable, trouble: Sequence[Troubleshooting]) -> str:
