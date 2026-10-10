@@ -501,12 +501,20 @@ def dpni_step(
 def column(kit: Material) -> str:
     """Return what a step at the bench calls one column of this kit.
 
+    A vendor calls the product a kit or a system; the bench calls one column by the rest of
+    that name.
+
     Examples
     --------
     >>> column(cleanup_kit("T1120"))
     'Monarch Spin DNA Gel Extraction column'
+    >>> column(cleanup_kit("Wizard SV Gel and PCR Clean-Up System"))
+    'Wizard SV Gel and PCR Clean-Up column'
     """
-    return f"{kit.name.removesuffix(' Kit')} column"
+    name = kit.name
+    for ending in (" Kit", " System"):
+        name = name.removesuffix(ending)
+    return f"{name} column"
 
 
 def cleanup_step(
