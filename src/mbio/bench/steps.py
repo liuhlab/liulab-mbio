@@ -623,8 +623,10 @@ def transform_step(
         ),
         cautions=("Competent cells die if they warm up; keep them on ice until the shock.",),
         timers=(
+            *(() if protocol.thaw_seconds is None else (Timer("Thaw", protocol.thaw_seconds),)),
             Timer("On ice", protocol.ice_seconds),
             Timer("Heat shock", protocol.heat_shock_seconds),
+            Timer("Back on ice", protocol.recover_seconds),
             Timer("Outgrowth", protocol.outgrowth_seconds),
         ),
         expected=tuple(results),
