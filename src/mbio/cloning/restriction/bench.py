@@ -21,8 +21,8 @@ from mbio.protocol.model import (
     Caution,
     Citation,
     Component,
+    Expectation,
     Incubation,
-    Observation,
     ReactionTable,
     Source,
     Stage,
@@ -476,8 +476,8 @@ CONTROLS_CITATION = Citation("NEB-cloning", "transformation controls")
 #: NEB's four transformation controls and what each should give relative to the others. No
 #: supplier states an absolute colony count for this method, so what each line promises is a
 #: ratio, and each carries where it was read. §12.
-CONTROLS: tuple[Observation, ...] = tuple(
-    Observation(text, citation=CONTROLS_CITATION)
+CONTROLS: tuple[Expectation, ...] = tuple(
+    Expectation(text, citation=CONTROLS_CITATION)
     for text in (
         "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
         "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",

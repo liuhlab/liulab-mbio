@@ -255,7 +255,7 @@ def test_no_step_spells_emphasis_the_page_renders_as_asterisks():
         for text in (
             *step.instructions,
             *(n.text for n in step.noted),
-            *(one.text for one in step.observed),
+            *(one.text for one in step.expectations),
         )
     ]
     assert [text for text in said if "*" in text] == []

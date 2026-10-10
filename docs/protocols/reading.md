@@ -123,7 +123,7 @@ cut sites on and off, zoom in, or show the bases. `Close the map` puts the small
 
 ## Expected result and troubleshooting
 
-Every step ends with what you should see, written as an observation: `One band at 2662 bp.`
+Every step ends with what you should see if it worked: `One band at 2662 bp.`
 after the first PCR, `Clean DNA, free of polymerase, primers and dNTPs.` after the spin columns.
 A step that shows you nothing at the time says so, and says when it will show. Troubleshooting
 follows: a short list of a problem and what to do about it. Read it before the step, not after

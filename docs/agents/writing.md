@@ -67,7 +67,7 @@ cannot ask you anything. Nothing checks these, so the rule is on you.
 | --- | --- |
 | `instructions` | one imperative sentence an arm can execute: the action, the thing, the amount, the vessel, the time or temperature. No clause explaining the choice |
 | `cautions` | what would hurt the person or the material, written as the action to take |
-| `expected` | what the reader sees if it worked, written as an observation |
+| `expected` | what the reader sees if it worked, written as a result and not an action |
 | `notes` | the only place a *why* may stand. Three kinds, and no fourth: what this run computed or chose, which cites nothing; what a document says, which carries the document's `Citation`; what the reader can check against the page's own numbers. A *why* from memory is not a note |
 | `figures` | one, on a step that changes a molecule: a PCR, a digest, a ligation, an assembly, a recombination. It draws what the step makes, with what the step changed lit. A step that moves, waits, incubates or reads carries none, and a plate draws itself. A figure that replaces no explanation is decoration |
 
@@ -83,7 +83,7 @@ nothing, and where a reader could mistake it for a published figure, say whose i
 run measured, not a published figure"). **A document** — attach its `Citation` and take the
 vendor's name back out of the sentence, so the page carries the link and the note carries the
 reason. **Nobody** — go and find the document, or delete the sentence. A sentence an arm could
-execute, a hazard, an observation or a fix for something gone wrong is not a note at all: it
+execute, a hazard, an expectation or a fix for something gone wrong is not a note at all: it
 belongs in `instructions`, `cautions`, `expected` or `troubleshooting`.
 
 The explanation you delete has a home already. A decision true for this run goes in the

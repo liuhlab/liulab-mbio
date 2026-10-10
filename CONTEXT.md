@@ -197,9 +197,18 @@ _Package_: synbio
 
 ### Step
 
-One numbered unit of a protocol: what to do, what it needs, what a successful result looks
-like, and what to do when the result is wrong.
+One numbered unit of a protocol: what to do, what it needs, the **expectations** it ends with,
+and what to do when the result is wrong.
 _Avoid_: task, procedure
+
+### Expectation
+
+What a step's reader should see if it worked, written before anyone looks: one sentence naming
+the result, never an instruction and never a hazard. Where a document states it, it carries that
+document's **citation**; where this run computed or chose the result, it cites nothing. A step
+ends with its expectations, and where the reader has a count of their own to work out, the
+**calculator** beside them is what they read it against.
+_Avoid_: observation, assertion, acceptance criterion
 
 ### Section
 

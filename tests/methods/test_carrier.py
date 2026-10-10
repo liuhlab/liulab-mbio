@@ -92,7 +92,7 @@ def test_the_carrier_reaction_is_topoisomerase_and_names_no_enzyme_the_user_adds
     assert ENZYME not in " ".join(step.instructions)
     assert not any(ENZYME in material.name for material in materials())
     assert "topoisomerase" in " ".join(step.instructions).lower()
-    said = " ".join(one.text for one in step.observed)
+    said = " ".join(one.text for one in step.expectations)
     assert "2 carrier plasmids" in said
     assert "no pool and no library" in said.lower()
 

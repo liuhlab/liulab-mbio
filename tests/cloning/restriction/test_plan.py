@@ -190,7 +190,7 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
     assert lanes["pUC19"] == (made.backbone.length, STUFFER)
     assert lanes["pTrc-GFP"] == (made.insert.length, made.source_pieces[1].length)
     # No supplier states a colony count for this method, so the plate promises a ratio.
-    plate = " ".join(one.text for one in steps["Transform and plate"].observed)
+    plate = " ".join(one.text for one in steps["Transform and plate"].expectations)
     assert "No supplier states a colony count" in plate
     assert "under 1% of the colonies the uncut vector gave" in plate
 
