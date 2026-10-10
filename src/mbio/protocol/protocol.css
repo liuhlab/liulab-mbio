@@ -244,11 +244,10 @@ tfoot .muted { font-weight: 400; }
    nothing keeps the raised number from opening the line. */
 .cite { text-decoration: none; padding: 0.35em 0.2em; margin: 0 -0.2em; border-radius: 4px; }
 .cite:hover { text-decoration: underline; }
+.cite:focus-visible { outline-offset: 0; }
 .cite sup { font-size: 0.72em; line-height: 0; font-variant-numeric: tabular-nums; }
-/* A cell holding the number alone is a column of sources, and reads it on the line. */
-td > .cite:only-child sup { vertical-align: baseline; font-size: 0.85em; }
 .sources ol { padding-left: 1.8rem; }
-.sources li { margin-bottom: 0.4rem; }
+.sources li { margin-bottom: 0.4rem; scroll-margin-top: calc(var(--bar) + 1rem); }
 .sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
 .sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
 
