@@ -465,7 +465,6 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
         ),
         tables=(table,),
         expected=(f"A {total:g} µL reaction holding every fragment.",),
-        notes=("The volumes above assume the concentrations measured in the step before.",),
         troubleshooting=(
             Troubleshooting(
                 "The DNA does not fit the reaction volume",

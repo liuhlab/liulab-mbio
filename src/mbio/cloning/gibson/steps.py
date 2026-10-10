@@ -624,8 +624,6 @@ def _assembly_step(
         expected=(f"A {total:g} µL reaction holding every fragment.",),
         notes=(
             ratio,
-            "The volumes above assume each fragment is concentrated enough to carry its "
-            "picomoles in the microlitre the table gives.",
             unpurified,
             *(
                 Note(
