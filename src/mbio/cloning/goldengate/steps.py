@@ -501,8 +501,8 @@ def _cycling_step(
         expected=tuple(expected),
         notes=(
             Note(
-                f"The chance that every junction ligates to its own partner is "
-                f"{fidelity.value:.0%}.",
+                "The fidelity this design was scored on is read from ligation counts "
+                "measured for this enzyme.",
                 citation=fidelity_citation(fidelity),
             ),
             "Junction positions are 1-based, on the product.",
